@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import pytest
@@ -6,17 +8,21 @@ import vtk
 import pyvista as pv
 from pyvista import colors
 from pyvista.examples.downloads import download_file
-from pyvista.plotting.themes import DarkTheme, Theme, _set_plot_theme_from_env
+import pyvista.plotting
+from pyvista.plotting.themes import DarkTheme
+from pyvista.plotting.themes import Theme
+from pyvista.plotting.themes import _set_plot_theme_from_env
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
-@pytest.fixture
+@pytest.fixture()
 def default_theme():
     return pv.plotting.themes.Theme()
 
 
 @pytest.mark.parametrize(
-    'parm', [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)]
+    'parm',
+    [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)],
 )
 def test_depth_peeling_config(default_theme, parm):
     attr, value = parm
@@ -58,9 +64,9 @@ def test_depth_silhouette_eq(default_theme):
 
 def test_depth_silhouette_opacity_outside_clamp(default_theme):
     my_theme = pv.plotting.themes.Theme()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         my_theme.silhouette.opacity = 10
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         my_theme.silhouette.opacity = -1
 
 
@@ -77,7 +83,7 @@ def test_depth_silhouette_opacity_outside_clamp(default_theme):
         ('cap_width', 0.04),
     ],
 )
-@pytest.mark.parametrize('style', ('modern', 'classic'))
+@pytest.mark.parametrize('style', [('modern'), ('classic')])
 def test_slider_style_config(default_theme, parm, style):
     attr, value = parm
 
@@ -99,25 +105,25 @@ def test_slider_style_eq(default_theme):
 
 
 def test_invalid_color_str_single_char():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         colors.Color('x')
 
 
 def test_color_str():
     clr = colors.Color("k")
-    assert (0.0, 0.0, 0.0) == clr
+    assert clr == (0.0, 0.0, 0.0)
     clr = colors.Color("black")
-    assert (0.0, 0.0, 0.0) == clr
+    assert clr == (0.0, 0.0, 0.0)
     clr = colors.Color("white")
-    assert (1.0, 1.0, 1.0) == clr
-    with pytest.raises(ValueError):
+    assert clr == (1.0, 1.0, 1.0)
+    with pytest.raises(ValueError):  # noqa: PT011
         colors.Color('not a color')
 
 
 def test_font():
     font = pv.parse_font_family('times')
     assert font == vtk.VTK_TIMES
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.parse_font_family('not a font')
 
 
@@ -135,7 +141,7 @@ def test_font_family(default_theme):
     default_theme.font.family = font
     assert default_theme.font.family == font
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         default_theme.font.family = 'bla'
 
 
@@ -191,6 +197,22 @@ def test_axes_box(default_theme):
     assert default_theme.axes.box == new_value
 
 
+def test_axes_color(default_theme):
+    new_value = pyvista.plotting.Color('black')
+    assert default_theme.axes.x_color != new_value
+    default_theme.axes.x_color = new_value
+    assert default_theme.axes.x_color == new_value
+
+    assert default_theme.axes.y_color != new_value
+    default_theme.axes.y_color = new_value
+    assert default_theme.axes.y_color == new_value
+
+    new_value = pyvista.plotting.Color('black')
+    assert default_theme.axes.z_color != new_value
+    default_theme.axes.z_color = new_value
+    assert default_theme.axes.z_color == new_value
+
+
 def test_axes_show(default_theme):
     new_value = not default_theme.axes.show
     default_theme.axes.show = new_value
@@ -240,7 +262,7 @@ def test_themes(theme):
 
 
 def test_invalid_theme():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.set_plot_theme('this is not a valid theme')
 
 
@@ -265,7 +287,7 @@ def test_invalid_load_theme(default_theme):
 
 
 def test_window_size(default_theme):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         default_theme.window_size = [1, 2, 3]
 
     with pytest.raises(ValueError, match='Window size must be a positive value'):
@@ -277,18 +299,41 @@ def test_window_size(default_theme):
 
 
 def test_camera(default_theme):
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="camera value must either be a"):
         default_theme.camera = [1, 0, 0]
 
-    with pytest.raises(KeyError, match='Expected the "viewup"'):
-        default_theme.camera = {'position': [1, 0, 0]}
+    # test _CameraConfig usage
+    default_theme.camera = {'position': [1, 0, 0]}
+    default_theme.camera = {'viewup': [1, 0, 0]}
 
-    with pytest.raises(KeyError, match='Expected the "position"'):
-        default_theme.camera = {'viewup': [1, 0, 0]}
-
-    camera = {'position': [1, 0, 0], 'viewup': [1, 0, 0]}
+    # test dict style usage
+    camera = {'position': [1, 0, 1], 'viewup': [1, 0, 1]}
     default_theme.camera = camera
-    assert default_theme.camera == camera
+
+    assert default_theme.camera.position == camera['position']
+    assert default_theme.camera.viewup == camera['viewup']
+
+
+def test_camera_parallel_projection(default_theme):
+    assert not default_theme.camera.parallel_projection
+    pl = pv.Plotter(theme=default_theme)
+    assert not pl.parallel_projection
+
+    default_theme.camera.parallel_projection = True
+    assert default_theme.camera.parallel_projection
+    pl2 = pv.Plotter(theme=default_theme)
+    assert pl2.parallel_projection
+
+
+def test_camera_parallel_scale(default_theme):
+    assert default_theme.camera.parallel_scale == 1.0
+    pl = pv.Plotter(theme=default_theme)
+    assert pl.parallel_scale == 1.0
+
+    default_theme.camera.parallel_scale = 2.0
+    assert default_theme.camera.parallel_scale == 2.0
+    pl2 = pv.Plotter(theme=default_theme)
+    assert pl2.parallel_scale == 2.0
 
 
 def test_cmap(default_theme):
@@ -357,7 +402,7 @@ def test_theme_colorbar_orientation(default_theme):
     default_theme.colorbar_orientation = orient
     assert default_theme.colorbar_orientation == orient
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         default_theme.colorbar_orientation = 'invalid'
 
 
@@ -585,3 +630,41 @@ def test_set_plot_theme_from_env():
             _set_plot_theme_from_env()
     finally:
         os.environ.pop('PYVISTA_PLOT_THEME', None)
+
+
+def test_trame_config():
+    trame_config = pv.plotting.themes._TrameConfig()
+
+    # Enabling extension when extension is not available should raise exception
+    assert not trame_config.jupyter_extension_available
+    with pytest.raises(Exception):  # noqa: B017, PT011
+        trame_config.jupyter_extension_enabled = True
+
+    # Pretend the extension is available
+    trame_config._jupyter_extension_available = True
+    assert trame_config.jupyter_extension_available
+
+    # Enabling server proxy should disable extension and vice-versa
+    assert not trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+    trame_config.jupyter_extension_enabled = True
+    assert trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+    trame_config.server_proxy_enabled = True
+    assert not trame_config.jupyter_extension_enabled
+    assert trame_config.server_proxy_enabled
+
+    trame_config.jupyter_extension_enabled = True
+    assert trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+    trame_config.jupyter_extension_enabled = False
+    assert not trame_config.jupyter_extension_enabled
+    assert not trame_config.server_proxy_enabled
+
+
+def test_box_axes(default_theme):
+    default_theme.axes.box = True
+    _ = pv.Sphere().plot(theme=default_theme)

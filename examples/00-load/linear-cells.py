@@ -15,16 +15,24 @@ For more details regarding what a :class:`pyvista.UnstructuredGrid` is, please
 see :ref:`point_sets_api`.
 
 """
+
+# sphinx_gallery_start_ignore
+from __future__ import annotations
+
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import numpy as np
 
 import pyvista as pv
-from pyvista.examples import cells as example_cells, plot_cell
+from pyvista.examples import cells as example_cells
+from pyvista.examples import plot_cell
 
 # random generator for examples
 rng = np.random.default_rng(2)
 
 
-###############################################################################
+# %%
 # Plot an example cell
 # ~~~~~~~~~~~~~~~~~~~~
 # PyVista contains a simple utility to plot a single cell, which is the
@@ -35,13 +43,13 @@ grid = example_cells.Wedge()
 example_cells.plot_cell(grid)
 
 
-###############################################################################
+# %%
 # This linear cell is composed of 6 points.
 
 grid.points
 
 
-###############################################################################
+# %%
 # The UnstructuredGrid is also composed of a single cell and the point indices
 # of that cell are defined in :attr:`cells <pyvista.UnstructuredGrid.cells>`.
 #
@@ -51,7 +59,7 @@ grid.points
 grid.cells
 
 
-###############################################################################
+# %%
 # Combine two UnstructuredGrids
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can combine two unstructured grids to create a single unstructured grid
@@ -72,7 +80,7 @@ combined = grid_b + grid_a
 plot_cell(combined, cpos='iso')
 
 
-###############################################################################
+# %%
 # This example helps to illustrate meaning behind the :attr:`cells
 # <pyvista.UnstructuredGrid.cells>` attribute. The first cell, a hexahedron
 # contains 8 points and the hexagonal prism contains 12 points. The ``cells``
@@ -81,7 +89,7 @@ plot_cell(combined, cpos='iso')
 combined.cells
 
 
-###############################################################################
+# %%
 # Cell Types
 # ~~~~~~~~~~
 # PyVista contains the :class:`pyvista.CellType` enumerator, which contains all the
@@ -92,10 +100,10 @@ combined.cells
 # ``pv.CellType.HEXAGONAL_PRISM`` cell types.
 
 print(pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
-(pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM) == combined.celltypes
+combined.celltypes == (pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 
 
-###############################################################################
+# %%
 # Create an UnstructuredGrid with a single linear cell
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now that you know the three main inputs of an
@@ -112,12 +120,12 @@ points = [
     [1.0, -1.0, 0.0],
     [0.0, 0.0, 1.60803807],
 ]
-cells = [len(points)] + list(range(len(points)))
+cells = [len(points), *list(range(len(points)))]
 pyrmaid = pv.UnstructuredGrid(cells, [pv.CellType.PYRAMID], points)
 example_cells.plot_cell(pyrmaid)
 
 
-###############################################################################
+# %%
 # Plot all linear cell Types
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Let's create a ``(4, 4)`` :class:`pyvista.Plotter` and plot all 16 linear
@@ -158,7 +166,11 @@ add_cell_helper(pl, f'LINE ({pv.CellType.LINE})', example_cells.Line(), (0, 2))
 add_cell_helper(pl, f'POLY_LINE ({pv.CellType.POLY_LINE})', example_cells.PolyLine(), (0, 3))
 
 add_cell_helper(
-    pl, f'TRIANGLE ({pv.CellType.TRIANGLE})', example_cells.Triangle(), (1, 0), cpos='xy'
+    pl,
+    f'TRIANGLE ({pv.CellType.TRIANGLE})',
+    example_cells.Triangle(),
+    (1, 0),
+    cpos='xy',
 )
 add_cell_helper(
     pl,
@@ -192,8 +204,13 @@ add_cell_helper(
     (3, 2),
 )
 add_cell_helper(
-    pl, f'HEXAGONAL_PRISM ({pv.CellType.HEXAGONAL_PRISM})', example_cells.HexagonalPrism(), (3, 3)
+    pl,
+    f'HEXAGONAL_PRISM ({pv.CellType.HEXAGONAL_PRISM})',
+    example_cells.HexagonalPrism(),
+    (3, 3),
 )
 
 pl.background_color = 'w'
 pl.show()
+# %%
+# .. tags:: load

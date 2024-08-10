@@ -19,10 +19,12 @@ These types are captured in the :class:`pyvista.plotting.opts.ElementType` enum 
 """
 
 # sphinx_gallery_thumbnail_number = 1
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista.plotting.opts import ElementType
 
-###############################################################################
+# %%
 # Pick Face on Voxel Cell
 # +++++++++++++++++++++++
 #
@@ -49,7 +51,7 @@ except AttributeError:
     # ignore this section when manually closing the window
     pass
 
-###############################################################################
+# %%
 # Pick an Edge of a Cell
 # ++++++++++++++++++++++
 #
@@ -75,3 +77,5 @@ try:
 except AttributeError:
     # ignore this section when manually closing the window
     pass
+# %%
+# .. tags:: plot

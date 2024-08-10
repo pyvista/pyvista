@@ -10,19 +10,21 @@ This example dataset was read using the :class:`pyvista.POpenFOAMReader`. See
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Download and load the example dataset.
 
 block = examples.download_openfoam_tubes()
 block
 
 
-###############################################################################
+# %%
 # Plot Cross Section
 # ~~~~~~~~~~~~~~~~~~
 # Plot the outline of the dataset along with a cross section of the flow velocity.
@@ -40,7 +42,7 @@ pl.enable_anti_aliasing()
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot Streamlines - Flow Velocity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Generate streamlines using :func:`streamlines_from_source()
@@ -56,7 +58,7 @@ pl.add_legend(face=None)
 pl.show()
 
 
-###############################################################################
+# %%
 # Now, actually generate the streamlines. Since the original inlet contains
 # 1000 points, let's reduce this to around 200 points by using every 5th point.
 #
@@ -87,7 +89,7 @@ pl.camera_position = 'xz'
 pl.show()
 
 
-###############################################################################
+# %%
 # Volumetric Plot - Visualize Turbulent Kinematic Viscosity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The turbulent kinematic viscosity of a fluid is a derived quantity used in
@@ -98,6 +100,11 @@ pl.show()
 # :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.ImageData` using
 # :func:`sample() <pyvista.DataSetFilters.sample>`. This is so we can visualize
 # it using :func:`add_volume() <pyvista.Plotter.add_volume>`
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 
 bounds = np.array(air.bounds) * 1.2
 origin = (bounds[0], bounds[2], bounds[4])

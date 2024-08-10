@@ -170,15 +170,21 @@ tab:cyan
 from __future__ import annotations
 
 import inspect
-from typing import Optional, Tuple, Union
 
-from cycler import Cycler, cycler
+from cycler import Cycler
+from cycler import cycler
 
 try:
-    from matplotlib import colormaps, colors
-except ImportError:  # pragma: no cover
-    from matplotlib import cm as colormaps
+    from matplotlib import colormaps
     from matplotlib import colors
+except ImportError:  # pragma: no cover
+    # typing for newer versions of matplotlib
+    # in newer versions cm is a module
+    from matplotlib import cm as colormaps  # type: ignore[assignment]
+    from matplotlib import colors
+
+from typing import TYPE_CHECKING
+from typing import Any
 
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
@@ -188,7 +194,9 @@ import pyvista
 from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
-from ._typing import ColorLike
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing import ColorLike
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -689,15 +697,9 @@ class Color:
     The internally used representation is an integer RGBA sequence (values
     between 0 and 255). This might however change in future releases.
 
-    .. raw:: html
-
-       <details><summary>Refer to the table below for a list of supported colors.</summary>
+    Refer to the table below for a list of supported colors
 
     .. include:: ../color_table/color_table.rst
-
-    .. raw:: html
-
-       </details>
 
     Examples
     --------
@@ -726,10 +728,10 @@ class Color:
 
     def __init__(
         self,
-        color: Optional[ColorLike] = None,
-        opacity: Optional[Union[int, float, str]] = None,
-        default_color: Optional[ColorLike] = None,
-        default_opacity: Union[int, float, str] = 255,
+        color: ColorLike | None = None,
+        opacity: float | str | None = None,
+        default_color: ColorLike | None = None,
+        default_opacity: float | str = 255,
     ):
         """Initialize new instance."""
         self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
@@ -738,10 +740,7 @@ class Color:
 
         # Use default color if no color is provided
         if color is None:
-            if default_color is None:
-                color = pyvista.global_theme.color
-            else:
-                color = default_color
+            color = pyvista.global_theme.color if default_color is None else default_color
 
         try:
             if isinstance(color, Color):
@@ -771,7 +770,7 @@ class Color:
                 "\t\tcolor='w'\n"
                 "\t\tcolor=[1.0, 1.0, 1.0]\n"
                 "\t\tcolor=[255, 255, 255]\n"
-                "\t\tcolor='#FFFFFF'"
+                "\t\tcolor='#FFFFFF'",
             ) from e
 
         # Overwrite opacity if it is provided
@@ -785,7 +784,7 @@ class Color:
                 "\tMust be an integer, float or string.  For example:\n"
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
-                "\t\topacity='#FF'"
+                "\t\topacity='#FF'",
             ) from e
 
     @staticmethod
@@ -809,7 +808,9 @@ class Color:
         return h
 
     @staticmethod
-    def convert_color_channel(val: Union[int, np.integer, float, np.floating, str]) -> int:
+    def convert_color_channel(
+        val: float | np.floating[Any] | str,
+    ) -> int:
         """Convert the given color channel value to the integer representation.
 
         Parameters
@@ -895,7 +896,7 @@ class Color:
                 raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
-    def int_rgba(self) -> Tuple[int, int, int, int]:  # numpydoc ignore=RT01
+    def int_rgba(self) -> tuple[int, int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA integer tuple.
 
         Examples
@@ -921,7 +922,7 @@ class Color:
         return self._red, self._green, self._blue, self._opacity
 
     @property
-    def int_rgb(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
+    def int_rgb(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGB integer tuple.
 
         Examples
@@ -947,7 +948,7 @@ class Color:
         return self.int_rgba[:3]
 
     @property
-    def float_rgba(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
+    def float_rgba(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA float tuple.
 
         Examples
@@ -973,7 +974,7 @@ class Color:
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
 
     @property
-    def float_rgb(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def float_rgb(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGB float tuple.
 
         Examples
@@ -1053,7 +1054,7 @@ class Color:
         return self.hex_rgba[:-2]
 
     @property
-    def name(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
         Returns

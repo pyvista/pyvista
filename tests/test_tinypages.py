@@ -1,8 +1,11 @@
 """Tests for tinypages build using sphinx extensions."""
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
-from subprocess import PIPE, Popen
+from subprocess import PIPE
+from subprocess import Popen
 import sys
 
 import pytest
@@ -51,16 +54,16 @@ def test_tinypages(tmpdir):
 
     assert html_dir.is_dir()
 
-    def plot_file(plt, num, subnum):
-        return html_dir / f'some_plots-{plt}_{num:02d}_{subnum:02d}.png'
+    def plot_file(plt, num, subnum, extension="vtksz"):
+        return html_dir / f'some_plots-{plt}_{num:02d}_{subnum:02d}.{extension}'
 
     # verify directives generating a figure generated figures
     assert plot_file(1, 0, 0).exists()
     assert plot_file(2, 0, 0).exists()
     assert plot_file(4, 0, 0).exists()
-    assert plot_file(8, 0, 0).exists()
-    assert plot_file(9, 0, 0).exists()
-    assert plot_file(9, 1, 0).exists()
+    assert plot_file(8, 0, 0, "png").exists()
+    assert plot_file(9, 0, 0, "png").exists()
+    assert plot_file(9, 1, 0, "png").exists()
 
     # test skip directive
     assert not plot_file(10, 0, 0).exists()
@@ -83,3 +86,6 @@ def test_tinypages(tmpdir):
 
     assert b'you should not be reading this right now' not in html_contents
     assert b'should be printed: include-source with no args' in html_contents
+
+    # check that caption with tabs works
+    assert html_contents.count(b'Plot __ uses the caption option with tabbed UI.') == 1

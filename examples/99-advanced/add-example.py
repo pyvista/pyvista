@@ -36,12 +36,42 @@ Example file names should be hyphen separated snake case:
 After this preamble is complete, the first code block begins. This is where you
 typically set up your imports.
 
+.. note::
+   By default, the documentation scrapper will generate both a static image and
+   an interactive widget for each plot. If you want to turn this feature off
+   define at the top of your file:
+
+
+   ``# sphinx_gallery_start_ignore``
+
+   ``PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True``
+
+   ``# sphinx_gallery_end_ignore``
+
+   If you want to use static images only for some of your plots. Define
+   ``PYVISTA_GALLERY_FORCE_STATIC`` before the ``plot``/``show`` command that
+   produces the image you want to turn into static.
+
+   .. code-block::
+
+       ...
+       pl.show()  # this will be interactive plot
+
+       # sphinx_gallery_start_ignore
+       PYVISTA_GALLERY_FORCE_STATIC = True
+       # sphinx_gallery_end_ignore
+       ...
+       pl.show()  # this will be static plot
+
+
 """
+
+from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Section Title
 # ~~~~~~~~~~~~~
 # Code blocks can be broken up with text "sections" which are interpreted as
@@ -62,7 +92,7 @@ dataset = pv.Sphere()
 dataset
 
 
-###############################################################################
+# %%
 # Plots and images
 # ~~~~~~~~~~~~~~~~
 # If you use anything that outputs an image (for example,
@@ -79,7 +109,7 @@ dataset
 dataset.plot(text='Example Figure')
 
 
-###############################################################################
+# %%
 # Caveat - Plotter must be within One Cell
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # It's not possible for a single :class:`pyvista.Plotter` object across
@@ -95,7 +125,7 @@ actor = pl.add_mesh(dataset)
 actor
 
 
-###############################################################################
+# %%
 # This Cell Cannot Run the Plotter
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The plotter will already be closed by ``sphinx_gallery``.
@@ -108,7 +138,7 @@ actor
 pl.close()
 
 
-###############################################################################
+# %%
 # Animations
 # ~~~~~~~~~~
 # You can even create animations, and while there is a full example in
@@ -140,7 +170,7 @@ for i in range(n_frames):
 pl.close()
 
 
-###############################################################################
+# %%
 # Adding Example Files
 # ~~~~~~~~~~~~~~~~~~~~
 # PyVista has a variety of example files all stored at `pyvista/vtk_data
@@ -155,7 +185,7 @@ filename = examples.download_file('bunny.ply')
 filename
 
 
-###############################################################################
+# %%
 # Adding a Wrapped Example
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # While it's possible to simply download a file and then read it in, it's

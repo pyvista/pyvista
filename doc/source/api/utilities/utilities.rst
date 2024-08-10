@@ -37,10 +37,12 @@ Features
    grid_from_sph_coords
    merge
    perlin_noise
+   principal_axes
    sample_function
    spherical_to_cartesian
    transform_vectors_sph_to_cart
    voxelize
+   voxelize_volume
 
 File IO
 ~~~~~~~
@@ -103,6 +105,18 @@ Miscellaneous
 
    Report
 
+PyVista Version Information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The PyVista library provides a way of getting the version installed in your
+environment.
+
+.. code:: python
+
+   Output the version of PyVista.
+
+   >>> import pyvista
+   >>> pyvista.version_info
+   (0, 44, 0)
 
 VTK Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~

@@ -9,10 +9,18 @@ Use a checkbox to turn on/off the visibility of meshes in a scene.
 See :func:`pyvista.Plotter.add_checkbox_button_widget` for more details.
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_start_ignore
+# widgets do not work in interactive examples
+from __future__ import annotations
+
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import pyvista as pv
 
-###############################################################################
+# %%
 # Single Checkbox
 # +++++++++++++++
 
@@ -29,7 +37,7 @@ def toggle_vis(flag):
 p.add_checkbox_button_widget(toggle_vis, value=True)
 p.show()
 
-###############################################################################
+# %%
 # Multiple Checkboxes
 # +++++++++++++++++++
 #
@@ -56,7 +64,7 @@ class SetVisibilityCallback:
         self.actor.SetVisibility(state)
 
 
-###############################################################################
+# %%
 
 # Widget size
 size = 50
@@ -82,3 +90,5 @@ for i, lst in enumerate(colors):
         Startpos = Startpos + size + (size // 10)
 
 p.show()
+# %%
+# .. tags:: widgets

@@ -19,10 +19,18 @@ This example is inspired by `planet3D-MATLAB
    if you wish to use Python for astronomical calculations.
 
 """
+
+from __future__ import annotations
+
 import pyvista
 from pyvista import examples
 
-###############################################################################
+# sphinx_gallery_start_ignore
+# background images do not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
+# %%
 # Plot the Solar System with Stars in the Background
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This section relies on calculations in `Visualizing Celestial Bodies in 3D
@@ -89,7 +97,7 @@ pl.add_mesh(pluto, texture=pluto_texture, smooth_shading=True)
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot the Planets and their Textures
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Each planet here is in a different subplot. The planet's textures are from
@@ -114,7 +122,7 @@ pl.add_mesh(mars, texture=mars_texture)
 pl.show(cpos="xy")
 
 
-###############################################################################
+# %%
 # Plot the Atmosphere and Surface of Venus
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we plot Venus with and without its atmosphere.

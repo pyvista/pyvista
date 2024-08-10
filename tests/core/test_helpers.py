@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import trimesh
@@ -6,7 +8,8 @@ from vtk.util import numpy_support
 
 import pyvista as pv
 from pyvista.core import _vtk_core
-from pyvista.core.errors import AmbiguousDataError, MissingDataError
+from pyvista.core.errors import AmbiguousDataError
+from pyvista.core.errors import MissingDataError
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.points import make_tri_mesh
 
@@ -70,10 +73,10 @@ def test_wrap_trimesh():
 
 
 def test_make_tri_mesh(sphere):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         make_tri_mesh(sphere.points, sphere.faces)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         make_tri_mesh(sphere.points[:, :1], sphere.faces)
 
     faces = sphere.faces.reshape(-1, 4)[:, 1:]
@@ -90,8 +93,6 @@ def test_wrappers():
 
     class Foo(pv.PolyData):
         """A user defined subclass of pv.PolyData."""
-
-        pass
 
     default_wrappers = pv._wrappers.copy()
     # Use try...finally to set and reset _wrappers
@@ -339,7 +340,10 @@ def test_vtk_points_deep_shallow():
     assert np.array_equal(points[0], [0.0, 0.0, 0.0])
 
 
-@pytest.mark.parametrize("force_float,expected_data_type", [(False, np.int64), (True, np.float32)])
+@pytest.mark.parametrize(
+    ("force_float", "expected_data_type"),
+    [(False, np.int64), (True, np.float32)],
+)
 def test_vtk_points_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], dtype=np.int64)
     if force_float:

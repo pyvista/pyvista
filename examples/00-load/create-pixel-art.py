@@ -9,10 +9,17 @@ Pixel string `source <https://commons.wikimedia.org/wiki/File:Noto_Emoji_Pie_1f4
 and `license <https://github.com/googlefonts/noto-emoji/blob/main/LICENSE>`_.
 
 """
+
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista.demos import logo
 
-###############################################################################
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = False
+# sphinx_gallery_end_ignore
+
+# %%
 # Convert pixel art to an array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -40,7 +47,7 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
     alien.append([line[i : i + 2] == '% ' for i in range(0, len(line), 2)])
 
 
-###############################################################################
+# %%
 # Define function to draw pixels
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Define a helper function to add pixel boxes to plotter.
@@ -69,7 +76,7 @@ def draw_pixels(plotter, pixels, center, color):
     return plotter
 
 
-###############################################################################
+# %%
 # Now you can plot a pixel art of ALIEN MONSTERS.
 
 # Display MONSTERS
@@ -90,3 +97,5 @@ text.translate([-20.0, 24.0, 0.0], inplace=True)
 
 p.add_mesh(text, color="yellow")
 p.show(cpos="xy")
+# %%
+# .. tags:: load

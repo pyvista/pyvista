@@ -1,23 +1,27 @@
 documentation:
-- doc/**/*
-- examples/**/*
-- examples_trame/**/*
-- ./*.md
+  - any:
+      - changed-files:
+          - any-glob-to-any-file: "doc/**/*"
+          - any-glob-to-any-file: "examples/**/*"
+          - any-glob-to-any-file: "examples_trame/**/*"
+          - any-glob-to-any-file: "*.md"
 maintenance:
-- .github/**/*
-- codecov.yml
-- .flake8
-- .coveragerc
-- .codecimate.yml
-- Makefile
-- ignore_words.txt
-- mypy.ini
-- pyproject.toml
-- .pre-commit-config.yaml
+  - any:
+      - changed-files:
+          - any-glob-to-any-file: ".github/**/*"
+          - any-glob-to-any-file: "codecov.yml"
+          - any-glob-to-any-file: ".flake8"
+          - any-glob-to-any-file: "Makefile"
+          - any-glob-to-any-file: "pyproject.toml"
+          - any-glob-to-any-file: ".pre-commit-config.yaml"
 dependencies:
-- requirements*
-- environment.yml
-- .pre-commit-config.yaml
+  - any:
+      - changed-files:
+          - any-glob-to-any-file: "requirements*"
+          - any-glob-to-any-file: "environment.yml"
+          - any-glob-to-any-file: ".pre-commit-config.yaml"
 docker:
-- docker/**/*
-- .dockerignore
+  - any:
+      - changed-files:
+          - any-glob-to-any-file: "docker/**/*"
+          - any-glob-to-any-file: ".dockerignore"

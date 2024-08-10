@@ -64,6 +64,9 @@ The ``pyvista-plot`` directive supports the following options:
         figure. This overwrites the caption given in the content, when the plot
         is generated from a file.
 
+    force_static : bool
+        If specified, static images will be used instead of an interactive scene.
+
 Additionally, this directive supports all of the options of the `image`
 directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
@@ -97,6 +100,8 @@ These options can be set by defining global variables of the same name in
 
 """
 
+from __future__ import annotations
+
 import doctest
 import os
 from os.path import relpath
@@ -105,14 +110,20 @@ import re
 import shutil
 import textwrap
 import traceback
+from typing import TYPE_CHECKING
+from typing import ClassVar
 
-from docutils.parsers.rst import Directive, directives
+from docutils.parsers.rst import Directive
+from docutils.parsers.rst import directives
 from docutils.parsers.rst.directives.images import Image
 import jinja2  # Sphinx dependency.
 
 # must enable BUILDING_GALLERY to keep windows active
 # enable offscreen to hide figures when generating them.
 import pyvista
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
 
 pyvista.BUILDING_GALLERY = True
 pyvista.OFF_SCREEN = True
@@ -150,7 +161,7 @@ class PlotDirective(Directive):
     required_arguments = 0
     optional_arguments = 2
     final_argument_whitespace = False
-    option_spec = {
+    option_spec: ClassVar[dict[str, Callable]] = {
         'alt': directives.unchanged,
         'height': directives.length_or_unitless,
         'width': directives.length_or_percentage_or_unitless,
@@ -162,6 +173,7 @@ class PlotDirective(Directive):
         'nofigs': directives.flag,
         'encoding': directives.encoding,
         'caption': directives.unchanged,
+        'force_static': directives.flag,
     }
 
     def run(self):
@@ -201,12 +213,17 @@ def _contains_doctest(text):
     try:
         # check if it's valid Python as-is
         compile(text, '<string>', 'exec')
-        return False
     except SyntaxError:
         pass
+    else:
+        return False
     r = re.compile(r'^\s*>>>', re.M)
     m = r.search(text)
     return bool(m)
+
+
+def _contains_pyvista_plot(text):
+    return '.. pyvista-plot::' in text
 
 
 def _strip_comments(code):
@@ -263,12 +280,31 @@ TEMPLATE = """
 .. only:: html
 
    {% for img in images %}
+   {% if img.extension == 'vtksz' %}
+
+   .. tab-set::
+
+       .. tab-item:: Static Scene
+
+           .. figure:: {{ build_dir }}/{{ img.stem }}.png
+              {% for option in options -%}
+              {{ option }}
+              {% endfor %}
+
+
+       .. tab-item:: Interactive Scene
+
+           .. offlineviewer:: {{ build_dir }}/{{ img.stem }}.vtksz
+
+   {{ caption }}  {# appropriate leading whitespace added beforehand #}
+   {% else %}
    .. figure:: {{ build_dir }}/{{ img.basename }}
       {% for option in options -%}
       {{ option }}
       {% endfor %}
 
-      {{ caption }}  {# appropriate leading whitespace added beforehand #}
+   {{ caption }}  {# appropriate leading whitespace added beforehand #}
+   {% endif %}
    {% endfor %}
 
 """
@@ -294,27 +330,40 @@ class ImageFile:
         """Construct ImageFile."""
         self.basename = basename
         self.dirname = dirname
+        self.extension = Path(basename).suffix[1:]
 
     @property
-    def filename(self):  # numpydoc ignore=RT01
+    def filename(self):
         """Return the filename of this image."""
-        return os.path.join(self.dirname, self.basename)
+        return str(Path(self.dirname) / self.basename)
+
+    @property
+    def stem(self):
+        """Return the basename without the suffix."""
+        return Path(self.basename).stem
+
+    def __repr__(self) -> str:  # pragma no cover
+        return self.filename
 
 
 class PlotError(RuntimeError):
     """More descriptive plot error."""
 
-    pass
-
 
 def _run_code(code, code_path, ns=None, function_name=None):
-    """Run a docstring example if it does not contain ``'doctest:+SKIP'``.
+    """Run a docstring example if it does not contain ``'doctest:+SKIP'``, or a
+    ```pyvista-plot::`` directive.  In the later case, the doctest parser will
+    present the code-block again with the ```pyvista-plot::`` directive
+    and its options removed.
 
     Import a Python module from a path, and run the function given by
     name, if function_name is not None.
     """
     # do not execute code containing any SKIP directives
     if 'doctest:+SKIP' in code:
+        return ns
+
+    if 'pyvista-plot::' in code:
         return ns
 
     try:
@@ -335,6 +384,7 @@ def render_figures(
     context,
     function_name,
     config,
+    force_static,
 ):
     """Run a pyplot script and save the images in *output_dir*.
 
@@ -342,8 +392,16 @@ def render_figures(
     *output_base*. Closed plotters are ignored if they were never
     rendered.
     """
-    # Try to determine if all images already exist
-    is_doctest, code_pieces = _split_code_at_show(code)
+
+    # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
+    # The doctest parser will present the code-block once again with the ```pyvista-plot::`` directive
+    # and its options properly parsed.
+    if _contains_pyvista_plot(code):
+        is_doctest = True
+        code_pieces = [code]
+    else:
+        # Try to determine if all images already exist
+        is_doctest, code_pieces = _split_code_at_show(code)
 
     # Otherwise, we didn't find the files, so build them
     results = []
@@ -380,6 +438,13 @@ def render_figures(
                     except RuntimeError:  # pragma no cover
                         # ignore closed, unrendered plotters
                         continue
+                    if force_static or (plotter.last_vtksz is None):
+                        images.append(image_file)
+                        continue
+                    else:
+                        image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
+                        with Path(image_file.filename).open("wb") as f:
+                            f.write(plotter.last_vtksz)
                 images.append(image_file)
 
             pyvista.close_all()  # close and clear all plotters
@@ -397,6 +462,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     document = state_machine.document
     config = document.settings.env.config
     nofigs = 'nofigs' in options
+    force_static = 'force_static' in options
 
     default_fmt = 'png'
 
@@ -405,14 +471,14 @@ def run(arguments, content, options, state_machine, state, lineno):
     _ = None if not keep_context else options['context']
 
     rst_file = document.attributes['source']
-    rst_dir = os.path.dirname(rst_file)
+    rst_dir = str(Path(rst_file).parent)
 
     if len(arguments):
         if not config.plot_basedir:
-            source_file_name = os.path.join(setup.app.builder.srcdir, directives.uri(arguments[0]))
+            source_file_name = str(Path(setup.app.builder.srcdir) / directives.uri(arguments[0]))
         else:
-            source_file_name = os.path.join(
-                setup.confdir, config.plot_basedir, directives.uri(arguments[0])
+            source_file_name = str(
+                Path(setup.confdir) / config.plot_basedir / directives.uri(arguments[0]),
             )
 
         # If there is content, it will be passed as a caption.
@@ -422,30 +488,27 @@ def run(arguments, content, options, state_machine, state, lineno):
         if "caption" in options:
             if caption:  # pragma: no cover
                 raise ValueError(
-                    'Caption specified in both content and options. Please remove ambiguity.'
+                    'Caption specified in both content and options. Please remove ambiguity.',
                 )
             # Use caption option
             caption = options["caption"]
 
         # If the optional function name is provided, use it
-        if len(arguments) == 2:
-            function_name = arguments[1]
-        else:
-            function_name = None
+        function_name = arguments[1] if len(arguments) == 2 else None
 
         code = Path(source_file_name).read_text(encoding='utf-8')
-        output_base = os.path.basename(source_file_name)
+        output_base = Path(source_file_name).name
     else:
         source_file_name = rst_file
         code = textwrap.dedent("\n".join(map(str, content)))
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
-        base, ext = os.path.splitext(os.path.basename(source_file_name))
+        base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
         output_base = '%s-%d.py' % (base, counter)
         function_name = None
         caption = options.get('caption', '')
 
-    base, source_ext = os.path.splitext(output_base)
+    base, source_ext = os.path.splitext(output_base)  # noqa: PTH122
     if source_ext in ('.py', '.rst', '.txt'):
         output_base = base
     else:
@@ -457,33 +520,29 @@ def run(arguments, content, options, state_machine, state, lineno):
     # is it in doctest format?
     is_doctest = _contains_doctest(code)
     if 'format' in options:
-        if options['format'] == 'python':
-            is_doctest = False
-        else:
-            is_doctest = True
+        is_doctest = options['format'] != 'python'
 
     # determine output directory name fragment
     source_rel_name = relpath(source_file_name, setup.confdir)
-    source_rel_dir = os.path.dirname(source_rel_name).lstrip(os.path.sep)
+    source_rel_dir = str(Path(source_rel_name).parent).lstrip(os.path.sep)
 
     # build_dir: where to place output files (temporarily)
-    build_dir = os.path.join(
-        os.path.dirname(setup.app.doctreedir), 'plot_directive', source_rel_dir
-    )
+    build_dir = str(Path(setup.app.doctreedir).parent / 'plot_directive' / source_rel_dir)
     # get rid of .. in paths, also changes pathsep
     # see note in Python docs for warning about symbolic links on Windows.
     # need to compare source and dest paths at end
     build_dir = os.path.normpath(build_dir)
-    os.makedirs(build_dir, exist_ok=True)
+    Path(build_dir).mkdir(parents=True, exist_ok=True)
 
     # output_dir: final location in the builder's directory
-    dest_dir = os.path.abspath(os.path.join(setup.app.builder.outdir, source_rel_dir))
-    os.makedirs(dest_dir, exist_ok=True)
+    dest_dir = str((Path(setup.app.builder.outdir) / source_rel_dir).resolve())
+    Path(dest_dir).mkdir(parents=True, exist_ok=True)
 
     # how to link to files from the RST file
-    dest_dir_link = os.path.join(relpath(setup.confdir, rst_dir), source_rel_dir).replace(
-        os.path.sep, '/'
-    )
+    dest_dir_link = os.path.join(  # noqa: PTH118
+        relpath(setup.confdir, rst_dir),
+        source_rel_dir,
+    ).replace(os.path.sep, '/')
     try:
         build_dir_link = relpath(build_dir, rst_dir).replace(os.path.sep, '/')
     except ValueError:  # pragma: no cover
@@ -495,23 +554,28 @@ def run(arguments, content, options, state_machine, state, lineno):
     # make figures
     try:
         results = render_figures(
-            code, source_file_name, build_dir, output_base, keep_context, function_name, config
+            code,
+            source_file_name,
+            build_dir,
+            output_base,
+            keep_context,
+            function_name,
+            config,
+            force_static,
         )
         errors = []
     except PlotError as err:  # pragma: no cover
         reporter = state.memo.reporter
         sm = reporter.system_message(
             2,
-            "Exception occurred in plotting {}\n from {}:\n{}".format(
-                output_base, source_file_name, err
-            ),
+            f"Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}",
             line=lineno,
         )
         results = [(code, [])]
         errors = [sm]
 
     # Properly indent the caption
-    caption = '\n' + '\n'.join('      ' + line.strip() for line in caption.split('\n'))
+    caption = '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
 
     # generate output restructuredtext
     total_lines = []
@@ -562,7 +626,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     for _, images in results:
         for image in images:
-            destimg = os.path.join(dest_dir, image.basename)
+            destimg = str(Path(dest_dir) / image.basename)
             if image.filename != destimg:
                 shutil.copyfile(image.filename, destimg)
 

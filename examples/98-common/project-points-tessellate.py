@@ -10,17 +10,21 @@ This demonstrates how to use
 function that projects points to a plane.
 
 """
+
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Project Points
 # ~~~~~~~~~~~~~~
 # Create a point cloud and project it to a plane.
 
 num_points = 100
-point_cloud = np.random.random((num_points, 3))
+rng = np.random.default_rng(seed=0)  # Seed rng for reproducibility
+point_cloud = rng.random((num_points, 3))
 
 # Define a plane
 origin = [0, 0, 0]
@@ -44,13 +48,18 @@ polydata = pv.PolyData(projected_points)
 mesh = polydata.delaunay_2d()
 
 
-###############################################################################
+# %%
 # Visualize the Result
 # ~~~~~~~~~~~~~~~~~~~~
 
 # Create a plane for visualization
 plane_vis = pv.Plane(
-    center=origin, direction=normal, i_size=2, j_size=2, i_resolution=10, j_resolution=10
+    center=origin,
+    direction=normal,
+    i_size=2,
+    j_size=2,
+    i_resolution=10,
+    j_resolution=10,
 )
 
 # plot it

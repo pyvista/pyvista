@@ -1,6 +1,10 @@
 """Contains a variety of cells to serve as examples."""
+
+from __future__ import annotations
+
 import pyvista
-from pyvista import CellType, UnstructuredGrid
+from pyvista import CellType
+from pyvista import UnstructuredGrid
 
 
 def plot_cell(grid, cpos=None, **kwargs):
@@ -117,7 +121,7 @@ def Vertex() -> UnstructuredGrid:
 
     """
     points = [[0.0, 0.0, 0.0]]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.VERTEX], points)
 
 
@@ -161,7 +165,7 @@ def PolyVertex() -> UnstructuredGrid:
 
     """
     points = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0.4], [0, 1, 0.6]]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.POLY_VERTEX], points)
 
 
@@ -199,7 +203,7 @@ def Line() -> UnstructuredGrid:
 
     """
     points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.LINE], points)
 
 
@@ -247,7 +251,7 @@ def PolyLine() -> UnstructuredGrid:
         [0.0, 1.0, 0.0],
     ]
 
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.POLY_LINE], points)
 
 
@@ -286,7 +290,7 @@ def Triangle() -> UnstructuredGrid:
 
     """
     points = [[1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.TRIANGLE], points)
 
 
@@ -339,7 +343,7 @@ def TriangleStrip() -> UnstructuredGrid:
         [1.0, 3.0, 0.0],
         [0.0, 3.0, 0.0],
     ]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.TRIANGLE_STRIP], points)
 
 
@@ -381,7 +385,7 @@ def Polygon() -> UnstructuredGrid:
 
     """
     points = [[0, 0, 0], [1, -0.1, 0], [0.8, 0.5, 0], [1, 1, 0], [0.6, 1.2, 0], [0, 0.8, 0]]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.POLYGON], points)
 
 
@@ -417,7 +421,7 @@ def Polyhedron() -> UnstructuredGrid:
     """
     points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5, 0], [0, 0, 1]]
     cells = [4, 3, 0, 1, 2, 3, 0, 1, 3, 3, 0, 2, 3, 3, 1, 2, 3]
-    cells = [len(cells)] + cells
+    cells = [len(cells), *cells]
     return UnstructuredGrid(cells, [CellType.POLYHEDRON], points)
 
 
@@ -457,7 +461,7 @@ def Pixel() -> UnstructuredGrid:
 
     """
     points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0]]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.PIXEL], points)
 
 
@@ -497,7 +501,7 @@ def Quadrilateral() -> UnstructuredGrid:
 
     """
     points = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.QUAD], points)
 
 
@@ -542,7 +546,7 @@ def Tetrahedron() -> UnstructuredGrid:
         [-1.0, 1.0, -1.0],
         [-1.0, -1.0, 1.0],
     ]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.TETRA], points)
 
 
@@ -595,7 +599,7 @@ def Hexahedron() -> UnstructuredGrid:
         [1.0, 1.0, 1.0],
         [0.0, 1.0, 1.0],
     ]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.HEXAHEDRON], points)
 
 
@@ -656,7 +660,7 @@ def HexagonalPrism() -> UnstructuredGrid:
         [0.0, 1.0, 0.0],
         [-0.5, 0.5, 0.0],
     ]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.HEXAGONAL_PRISM], points)
 
 
@@ -698,7 +702,7 @@ def Wedge() -> UnstructuredGrid:
 
     """
     points = [[0, 1, 0], [0, 0, 0], [0, 0.5, 0.5], [1, 1, 0], [1, 0.0, 0.0], [1, 0.5, 0.5]]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.WEDGE], points)
 
 
@@ -755,7 +759,7 @@ def PentagonalPrism() -> UnstructuredGrid:
         [2.0, 4.0, 4.0],
         [0.0, 2.0, 4.0],
     ]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.PENTAGONAL_PRISM], points)
 
 
@@ -802,7 +806,7 @@ def Pyramid() -> UnstructuredGrid:
         [1.0, -1.0, 0.0],
         [0.0, 0.0, 1.60803807],
     ]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.PYRAMID], points)
 
 
@@ -855,5 +859,5 @@ def Voxel() -> UnstructuredGrid:
         [0.0, 1.0, 1.0],
         [1.0, 1.0, 1.0],
     ]
-    cells = [len(points)] + list(range(len(points)))
+    cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.VOXEL], points)

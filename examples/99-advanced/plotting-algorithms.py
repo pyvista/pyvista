@@ -21,12 +21,20 @@ pipeline when adding data to the scene through methods like
 This example will walk through using a few ``vtkAlgorithm`` filters directly
 and passing them to PyVista for dynamic visualization.
 """
+
+from __future__ import annotations
+
 import vtk
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# sphinx_gallery_start_ignore
+# widgets do not currently work in interactive examples
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
+# %%
 # Use ``vtkConeSource`` as a source algorithm. This source will dynamically
 # create a cone object depending on the instances's parameters. In this
 # example, we will connect a callback to set the cone source algorithm's
@@ -40,7 +48,7 @@ def update_resolution(value):
     algo.resolution = res
 
 
-###############################################################################
+# %%
 # Pass the ``vtkConeSource`` (a ``vtkAlgorithm`` subclass) directly to the
 # plotter and connect a slider widget to our callback that adjusts the
 # resolution.
@@ -49,7 +57,7 @@ p.add_mesh(algo, color='red')
 p.add_slider_widget(update_resolution, [5, 100], title='Resolution')
 p.show()
 
-###############################################################################
+# %%
 # Here is another example using ``vtkRegularPolygonSource``.
 poly_source = vtk.vtkRegularPolygonSource()
 poly_source.GeneratePolygonOff()
@@ -70,7 +78,7 @@ p.view_xy()
 p.show()
 
 
-###############################################################################
+# %%
 # Filter Pipeline
 # +++++++++++++++
 # We can do this with any ``vtkAlgorithm`` subclass for dynamically generating

@@ -13,14 +13,21 @@ This also explores how to extract a volume of interest (VOI) from a
 """
 
 # sphinx_gallery_thumbnail_number = 3
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
 
 # Download a volumetric dataset
 vol = examples.download_knee_full()
 vol
 
-###############################################################################
+# %%
 # Simple Volume Render
 # ++++++++++++++++++++
 #
@@ -31,7 +38,7 @@ cpos = [(-381.74, -46.02, 216.54), (74.8305, 89.2905, 100.0), (0.23, 0.072, 0.97
 vol.plot(volume=True, cmap="bone", cpos=cpos)
 
 
-###############################################################################
+# %%
 # Opacity Mappings
 # ++++++++++++++++
 #
@@ -43,7 +50,7 @@ pl.add_volume(vol, cmap="bone", opacity="sigmoid")
 pl.camera_position = cpos
 pl.show()
 
-###############################################################################
+# %%
 # You can also use a custom opacity mapping
 opacity = [0, 0, 0, 0.1, 0.3, 0.6, 1]
 
@@ -52,7 +59,7 @@ pl.add_volume(vol, cmap="viridis", opacity=opacity)
 pl.camera_position = cpos
 pl.show()
 
-###############################################################################
+# %%
 # We can also use a shading technique when volume rendering with the ``shade``
 # option
 pl = pv.Plotter(shape=(1, 2))
@@ -65,14 +72,14 @@ pl.add_text("Shading")
 pl.link_views()
 pl.show()
 
-###############################################################################
+# %%
 # Cool Volume Examples
 # ++++++++++++++++++++
 #
 # Here are a few more cool volume rendering examples.
 
 
-###############################################################################
+# %%
 # Head Dataset
 # """"""""""""
 
@@ -85,7 +92,7 @@ pl.camera.zoom(1.5)
 pl.show()
 
 
-###############################################################################
+# %%
 # Bolt-Nut MultiBlock Dataset
 # """""""""""""""""""""""""""
 # .. note::
@@ -104,7 +111,7 @@ pl.camera_position = [(127.4, -68.3, 88.2), (30.3, 54.3, 26.0), (-0.25, 0.28, 0.
 cpos = pl.show(return_cpos=True)
 
 
-###############################################################################
+# %%
 # Frog Dataset
 # """"""""""""
 
@@ -117,7 +124,7 @@ pl.camera.zoom(1.5)
 pl.show()
 
 
-###############################################################################
+# %%
 # Extracting a VOI
 # ++++++++++++++++
 #
@@ -130,7 +137,7 @@ pl.show()
 large_vol = examples.download_damavand_volcano()
 large_vol
 
-###############################################################################
+# %%
 opacity = [0, 0.75, 0, 0.75, 1.0]
 clim = [0, 100]
 
@@ -145,7 +152,7 @@ pl.add_volume(
 pl.show()
 
 
-###############################################################################
+# %%
 # Woah, that's a big volume. We probably don't want to volume render the
 # whole thing. So let's extract a region of interest under the volcano.
 #
@@ -160,7 +167,7 @@ pl.add_mesh(large_vol.outline(), color="k")
 pl.add_mesh(voi, cmap="magma")
 pl.show()
 
-###############################################################################
+# %%
 # Ah, much better. Let's now volume render that region of interest.
 
 pl = pv.Plotter()
@@ -171,3 +178,5 @@ pl.camera_position = [
     (0.3738545892415734, 0.244312810377319, 0.8947312427698892),
 ]
 pl.show()
+# %%
+# .. tags:: plot

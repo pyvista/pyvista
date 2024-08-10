@@ -57,8 +57,10 @@ field arrays.
 Geometry in PyVista is represented as points and cells. For example,
 consider a single cell within a |PolyData|:
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :context:
+   :include-source: false
+   :force_static:
 
    import pyvista
    pyvista.set_plot_theme('document')
@@ -81,8 +83,10 @@ we've done above (lists of arrays with indices). VTK (and hence
 PyVista) have multiple classes that represent different data
 shapes. The most important dataset classes are shown below:
 
-.. jupyter-execute::
-   :hide-code:
+.. pyvista-plot::
+   :context:
+   :include-source: false
+
 
    from pyvista import demos
    demos.plot_datasets()
@@ -291,7 +295,7 @@ in the same order as we defined earlier.
 
    ``[Number of elements, Number of faces, Face1NPoints, Point1, Point2, ..., PointN, Face2NPoints, ...]``.
 
-   Where `number of elements` is the total number of elements in the array that describe this cell.
+   Where ``number of elements`` is the total number of elements in the array that describe this cell.
 
 Now we have all the necessary pieces to assemble an instance of
 |PolyData| that contains a single triangle. To do
@@ -316,6 +320,7 @@ While we're at it, let's annotate this plot to describe this mesh.
 
 .. pyvista-plot::
    :context:
+   :force_static:
 
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(mesh, show_edges=True, line_width=5)
@@ -410,6 +415,7 @@ Let's also plot this basic mesh:
 
 .. pyvista-plot::
    :context:
+   :force_static:
 
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
@@ -486,6 +492,7 @@ assigned.
 
 .. pyvista-plot::
    :context:
+   :force_static:
 
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)
@@ -561,6 +568,7 @@ lowest value at ``Point 0`` to the highest value at ``Point 8``.
 
 .. pyvista-plot::
    :context:
+   :force_static:
 
    >>> pl = pyvista.Plotter()
    >>> pl.add_mesh(ugrid, show_edges=True, line_width=5)

@@ -6,25 +6,28 @@ Streamlines
 
 Integrate a vector field to generate streamlines.
 """
-###############################################################################
+
+# %%
 # This example generates streamlines of blood velocity. An isosurface of speed
 # provides context. The starting positions for the streamtubes were determined
 # by experimenting with the data.
 
 # sphinx_gallery_thumbnail_number = 3
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Carotid
 # +++++++
 # Download a sample dataset containing a vector field that can be integrated.
 
 mesh = examples.download_carotid()
 
-###############################################################################
+# %%
 # Run the stream line filtering algorithm using random seed points inside a
 # sphere with radius of 2.0.
 
@@ -38,7 +41,7 @@ streamlines, src = mesh.streamlines(
     source_center=(133.1, 116.3, 5.0),
 )
 
-###############################################################################
+# %%
 # Display the results. Please note that because this dataset's velocity field
 # was measured with low resolution, many streamlines travel outside the artery.
 
@@ -51,7 +54,7 @@ p.camera_position = [(182.0, 177.0, 50), (139, 105, 19), (-0.2, -0.2, 1)]
 p.show()
 
 
-###############################################################################
+# %%
 # Blood Vessels
 # +++++++++++++
 # Here is another example of blood flow:
@@ -59,11 +62,13 @@ p.show()
 mesh = examples.download_blood_vessels().cell_data_to_point_data()
 mesh.set_active_scalars("velocity")
 streamlines, src = mesh.streamlines(
-    return_source=True, source_radius=10, source_center=(92.46, 74.37, 135.5)
+    return_source=True,
+    source_radius=10,
+    source_center=(92.46, 74.37, 135.5),
 )
 
 
-###############################################################################
+# %%
 boundary = mesh.decimate_boundary().extract_all_edges()
 
 sargs = dict(vertical=True, title_font_size=16)
@@ -75,7 +80,7 @@ p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
 p.show()
 
 
-###############################################################################
+# %%
 # A source mesh can also be provided using the
 # :func:`pyvista.DataSetFilters.streamlines_from_source`
 # filter, for example if an inlet surface is available.  In this example, the
@@ -90,7 +95,7 @@ streamlines = mesh.streamlines_from_source(seed_mesh, integration_direction="for
 print("Added arrays from streamlines filter:")
 print([array_name for array_name in streamlines.array_names if array_name not in mesh.array_names])
 
-###############################################################################
+# %%
 # Plot streamlines colored by the time along the streamlines.
 
 sargs = dict(vertical=True, title_font_size=16)
@@ -108,7 +113,7 @@ p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
 p.show()
 
 
-###############################################################################
+# %%
 # Kitchen
 # +++++++
 #
@@ -117,10 +122,10 @@ kpos = [(-6.68, 11.9, 11.6), (3.5, 2.5, 1.26), (0.45, -0.4, 0.8)]
 mesh = examples.download_kitchen()
 kitchen = examples.download_kitchen(split=True)
 
-###############################################################################
+# %%
 streamlines = mesh.streamlines(n_points=40, source_center=(0.08, 3, 0.71))
 
-###############################################################################
+# %%
 p = pv.Plotter()
 p.add_mesh(mesh.outline(), color="k")
 p.add_mesh(kitchen, color=True)
@@ -129,7 +134,7 @@ p.camera_position = kpos
 p.show()
 
 
-###############################################################################
+# %%
 # Custom 3D Vector Field
 # ++++++++++++++++++++++
 #
@@ -149,10 +154,16 @@ vectors[:, 1] = -np.cos(np.pi * x) * np.sin(np.pi * y) * np.cos(np.pi * z)
 vectors[:, 2] = np.sqrt(3.0 / 3.0) * np.cos(np.pi * x) * np.cos(np.pi * y) * np.sin(np.pi * z)
 
 mesh['vectors'] = vectors
-###############################################################################
+# %%
 stream, src = mesh.streamlines(
-    'vectors', return_source=True, terminal_speed=0.0, n_points=200, source_radius=0.1
+    'vectors',
+    return_source=True,
+    terminal_speed=0.0,
+    n_points=200,
+    source_radius=0.1,
 )
-###############################################################################
+# %%
 cpos = [(1.2, 1.2, 1.2), (-0.0, -0.0, -0.0), (0.0, 0.0, 1.0)]
 stream.tube(radius=0.0015).plot(cpos=cpos)
+# %%
+# .. tags:: filter

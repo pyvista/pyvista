@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pyvista as pv
 
 
@@ -13,6 +15,25 @@ def make_sphere():
     >>> from samples import make_sphere
     >>> sphere = make_sphere()
     >>> sphere.plot()
+
+    """
+    return pv.Sphere()
+
+
+def make_sphere_second():
+    """Make a sphere.
+
+    Test that the pyvista-plot directive works correctly when it is part of the doctest.
+
+    Examples
+    --------
+    .. pyvista-plot::
+      :include-source: False
+
+      >>> import pyvista  # must import pyvista for the plotting directive to work
+      >>> from samples import make_sphere
+      >>> sphere = make_sphere()
+      >>> sphere.plot()
 
     """
     return pv.Sphere()

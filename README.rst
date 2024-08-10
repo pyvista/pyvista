@@ -2,89 +2,11 @@
 PyVista
 #######
 
+    3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
+
 .. image:: https://github.com/pyvista/pyvista/raw/main/doc/source/_static/pyvista_banner_small.png
    :target: https://docs.pyvista.org/examples/index.html
    :alt: pyvista
-
-
-.. |zenodo| image:: https://zenodo.org/badge/92974124.svg
-   :target: https://zenodo.org/badge/latestdoi/92974124
-
-.. |joss| image:: http://joss.theoj.org/papers/10.21105/joss.01450/status.svg
-   :target: https://doi.org/10.21105/joss.01450
-
-.. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
-   :target: https://pypi.org/project/pyvista/
-
-.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
-   :target: https://anaconda.org/conda-forge/pyvista
-
-.. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
-   :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
-
-.. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/pyvista/pyvista
-
-.. |codacy| image:: https://app.codacy.com/project/badge/Grade/779ac6aed37548839384acfc0c1aab44
-   :target: https://www.codacy.com/gh/pyvista/pyvista/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=pyvista/pyvista&amp;utm_campaign=Badge_Grade
-
-.. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
-   :target: https://opensource.org/licenses/MIT
-
-.. |slack| image:: https://img.shields.io/badge/Slack-pyvista-green.svg?logo=slack
-   :target: http://slack.pyvista.org
-
-.. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
-   :target: https://pypi.org/project/pyvista/
-
-.. |condaact| image:: https://img.shields.io/conda/dn/conda-forge/pyvista.svg?label=Conda%20downloads
-   :target: https://anaconda.org/conda-forge/pyvista
-
-.. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
-   :target: https://github.com/pyvista/pyvista/discussions
-
-.. |isort| image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat
-  :target: https://timothycrosley.github.io/isort
-  :alt: isort
-
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg?style=flat
-  :target: https://github.com/psf/black
-  :alt: black
-
-.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
-   :target: https://www.python.org/downloads/
-
-.. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
-   :target: https://numfocus.org/sponsored-projects/affiliated-projects
-
-.. |pre-commit.ci status| image:: https://results.pre-commit.ci/badge/github/pyvista/pyvista/main.svg
-   :target: https://results.pre-commit.ci/latest/github/pyvista/pyvista/main
-
-
-+----------------------+------------------------+-------------+
-| Deployment           | |pypi|                 | |conda|     |
-+----------------------+------------------------+-------------+
-| Build Status         | |GH-CI|                | |python|    |
-|                      +------------------------+-------------+
-|                      | |pre-commit.ci status| |             |
-+----------------------+------------------------+-------------+
-| Metrics              | |codacy|               | |codecov|   |
-+----------------------+------------------------+-------------+
-| Activity             | |PyPIact|              | |condaact|  |
-+----------------------+------------------------+-------------+
-| Citation             | |joss|                 | |zenodo|    |
-+----------------------+------------------------+-------------+
-| License              | |MIT|                  |             |
-+----------------------+------------------------+-------------+
-| Community            | |slack|                | |discuss|   |
-+----------------------+------------------------+-------------+
-| Formatter            | |black|                | |isort|     |
-+----------------------+------------------------+-------------+
-| Affiliated           | |NumFOCUS Affiliated|                |
-+----------------------+------------------------+-------------+
-
-
-    3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
 
 PyVista is:
 
@@ -93,6 +15,9 @@ PyVista is:
 * 3D plotting made simple and built for large/complex data geometries
 
 .. _Visualization Toolkit: https://vtk.org
+
+.. image:: https://github.com/pyvista/pyvista/raw/main/assets/pyvista_ipython_demo.gif
+   :alt: pyvista ipython demo
 
 PyVista is a helper module for the Visualization Toolkit (VTK) that wraps the VTK library
 through NumPy and direct array access through a variety of methods and classes.
@@ -118,6 +43,95 @@ PyVista is a NumFOCUS affiliated project
    :target: https://numfocus.org/sponsored-projects/affiliated-projects
    :alt: NumFOCUS affiliated projects
    :height: 60px
+
+Status badges
+=============
+
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8415866.svg
+   :target: https://zenodo.org/records/8415866
+
+.. |joss| image:: http://joss.theoj.org/papers/10.21105/joss.01450/status.svg
+   :target: https://doi.org/10.21105/joss.01450
+
+.. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
+   :target: https://pypi.org/project/pyvista/
+
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
+   :target: https://anaconda.org/conda-forge/pyvista
+
+.. |GH-CI| image:: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml/badge.svg
+   :target: https://github.com/pyvista/pyvista/actions/workflows/testing-and-deployment.yml
+
+.. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/main/graph/badge.svg
+   :target: https://app.codecov.io/gh/pyvista/pyvista
+
+.. |codacy| image:: https://app.codacy.com/project/badge/Grade/779ac6aed37548839384acfc0c1aab44
+   :target: https://app.codacy.com/gh/pyvista/pyvista/dashboard
+
+.. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://opensource.org/license/mit/
+
+.. |slack| image:: https://img.shields.io/badge/Slack-pyvista-green.svg?logo=slack
+   :target: https://communityinviter.com/apps/pyvista/pyvista
+
+.. |PyPIact| image:: https://img.shields.io/pypi/dm/pyvista.svg?label=PyPI%20downloads
+   :target: https://pypi.org/project/pyvista/
+
+.. |condaact| image:: https://img.shields.io/conda/dn/conda-forge/pyvista.svg?label=Conda%20downloads
+   :target: https://anaconda.org/conda-forge/pyvista
+
+.. |discuss| image:: https://img.shields.io/badge/GitHub-Discussions-green?logo=github
+   :target: https://github.com/pyvista/pyvista/discussions
+
+.. |prettier| image:: https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat
+  :target: https://github.com/prettier/prettier
+  :alt: prettier
+
+.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+   :target: https://www.python.org/downloads/
+
+.. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
+   :target: https://numfocus.org/sponsored-projects/affiliated-projects
+
+.. |pre-commit.ci status| image:: https://results.pre-commit.ci/badge/github/pyvista/pyvista/main.svg
+   :target: https://results.pre-commit.ci/latest/github/pyvista/pyvista/main
+
+.. |Ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+   :target: https://github.com/astral-sh/ruff
+   :alt: Ruff
+
+.. |Awesome Scientific Computing| image:: https://awesome.re/mentioned-badge.svg
+   :target: https://github.com/nschloe/awesome-scientific-computing
+
+.. |Packaging status| image:: https://repology.org/badge/tiny-repos/python:pyvista.svg
+   :target: https://repology.org/project/python:pyvista/versions
+
+.. |Good first issue| image:: https://img.shields.io/github/issues/pyvista/pyvista/good%20first%20issue
+   :target: https://github.com/pyvista/pyvista/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+
++----------------------+------------------------------------------------+
+| Deployment           | |pypi| |conda| |Packaging status|              |
++----------------------+------------------------------------------------+
+| Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
++----------------------+------------------------------------------------+
+| Metrics              | |codacy| |codecov|                             |
++----------------------+------------------------------------------------+
+| Activity             | |PyPIact| |condaact|                           |
++----------------------+------------------------------------------------+
+| Citation             | |joss| |zenodo|                                |
++----------------------+------------------------------------------------+
+| License              | |MIT|                                          |
++----------------------+------------------------------------------------+
+| Community            | |slack| |discuss| |Good first issue|           |
++----------------------+------------------------------------------------+
+| Formatter            | |prettier|                                     |
++----------------------+------------------------------------------------+
+| Linter               | |Ruff|                                         |
++----------------------+------------------------------------------------+
+| Affiliated           | |NumFOCUS Affiliated|                          |
++----------------------+------------------------------------------------+
+| Mentioned            | |Awesome Scientific Computing|                 |
++----------------------+------------------------------------------------+
 
 
 Highlights
@@ -166,7 +180,7 @@ where the community can collectively address your questions. You are also
 welcome to join us on Slack_.
 
 .. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
-.. _Slack: http://slack.pyvista.org
+.. _Slack: https://communityinviter.com/apps/pyvista/pyvista
 
 
 Installation

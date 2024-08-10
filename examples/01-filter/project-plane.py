@@ -7,13 +7,15 @@ plane defined by a normal and origin
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
 poly = examples.load_random_hills()
 poly.plot()
 
-###############################################################################
+# %%
 # Project that surface to a plane underneath the surface
 origin = poly.center
 origin[-1] -= poly.length / 3.0
@@ -24,3 +26,5 @@ p = pv.Plotter()
 p.add_mesh(poly)
 p.add_mesh(projected)
 p.show()
+# %%
+# .. tags:: filter

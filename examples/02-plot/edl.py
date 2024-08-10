@@ -11,13 +11,21 @@ To learn more, please see `this blog post`_.
 .. _this blog post: https://blog.kitware.com/eye-dome-lighting-a-non-photorealistic-shading-technique/
 
 """
-###############################################################################
+
+# %%
 
 # sphinx_gallery_thumbnail_number = 1
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# sphinx_gallery_start_ignore
+# lighting does not seem to work in interactive mode
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
+# %%
 # Statue
 # +++++++++++
 #
@@ -28,7 +36,7 @@ from pyvista import examples
 nefertiti = examples.download_nefertiti()
 nefertiti.plot(eye_dome_lighting=True, cpos=[-1, -1, 0.2], color=True)
 
-###############################################################################
+# %%
 # Here we will compare a EDL shading side by side with normal shading
 
 p = pv.Plotter(shape=(1, 2), border=False)
@@ -48,7 +56,7 @@ p.camera_position = [-1, -1, 0.2]
 
 p.show()
 
-###############################################################################
+# %%
 # Point Cloud
 # +++++++++++
 #
@@ -58,7 +66,7 @@ p.show()
 point_cloud = examples.download_lidar()
 
 
-###############################################################################
+# %%
 # And now plot this point cloud as-is:
 
 # Plot a typical point cloud with no EDL
@@ -67,7 +75,7 @@ p.add_mesh(point_cloud, color='lightblue', point_size=5)
 p.show()
 
 
-###############################################################################
+# %%
 # We can improve the depth mapping by enabling eye dome lighting on the
 # renderer with :func:`pyvista.Renderer.enable_eye_dome_lighting`.
 
@@ -78,7 +86,7 @@ p.enable_eye_dome_lighting()
 p.show()
 
 
-###############################################################################
+# %%
 # The eye dome lighting mode can also handle plotting scalar arrays:
 
 # Plot with EDL and scalar data
@@ -86,3 +94,5 @@ p = pv.Plotter()
 p.add_mesh(point_cloud, scalars="Elevation", point_size=5)
 p.enable_eye_dome_lighting()
 p.show()
+# %%
+# .. tags:: plot

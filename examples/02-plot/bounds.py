@@ -8,12 +8,14 @@ This example demonstrates to show bounds within a :class:`pyvista.Plotter`
 using :func:`show_grid() <pyvista.Plotter.show_grid>`
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Show All Bounds
 # ~~~~~~~~~~~~~~~
 # In this plot we show the bounds for all axes by setting ``location='all'``.
@@ -24,7 +26,7 @@ plotter.show_bounds(location='all')
 plotter.show()
 
 
-###############################################################################
+# %%
 # Override Shown Values Limits
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In this example, we override the values shown along the X and Y axes with our
@@ -42,7 +44,7 @@ plotter.show()
 print(f'Actual dataset bounds: {gears.bounds}')
 
 
-###############################################################################
+# %%
 # Show Bounds for Only One Dataset
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This example shows only the bounds for a single dataset. Again we use
@@ -55,9 +57,10 @@ central_gear = split_gears.pop(1)
 central_gear.translate([0, 60, 60], inplace=True)
 
 # also, grab the size of the central gear
-x_size = central_gear.bounds[1] - central_gear.bounds[0]
-y_size = central_gear.bounds[3] - central_gear.bounds[2]
-z_size = central_gear.bounds[5] - central_gear.bounds[4]
+bnds = central_gear.bounds
+x_size = bnds.x_max - bnds.x_min
+y_size = bnds.y_max - bnds.y_min
+z_size = bnds.z_max - bnds.z_min
 
 plotter = pv.Plotter()
 plotter.add_mesh(split_gears, smooth_shading=True, split_sharp_edges=True)
@@ -70,3 +73,5 @@ plotter.show_grid(
     grid=False,
 )
 plotter.show()
+# %%
+# .. tags:: plot

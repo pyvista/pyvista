@@ -6,7 +6,8 @@ Show Edges
 
 Show the edges of all geometries within a mesh
 """
-###############################################################################
+
+# %%
 # Sometimes it can be useful to show all of the edges of a mesh when rendering
 # to communicate aspects of the dataset like resolution.
 #
@@ -14,6 +15,8 @@ Show the edges of all geometries within a mesh
 # the ``show_edges`` keyword argument to ``True`` when plotting a dataset.
 
 # sphinx_gallery_thumbnail_number = 1
+from __future__ import annotations
+
 from pyvista import examples
 
 nefertiti = examples.download_nefertiti()
@@ -27,3 +30,5 @@ face_view = [
 
 
 nefertiti.plot(cpos=face_view, show_edges=True, color=True)
+# %%
+# .. tags:: plot

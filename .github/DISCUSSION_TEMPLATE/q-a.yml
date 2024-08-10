@@ -1,0 +1,78 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to open this discussion to help improve PyVista!
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: First check
+      options:
+        - label: I added a very descriptive title here.
+          required: true
+        - label: I used the GitHub search to find a similar question and didn't find it.
+          required: true
+        - label: I searched the PyVista documentation, with the integrated search.
+          required: true
+        - label: I already searched in Google "How to X in PyVista" and didn't find any information.
+          required: true
+        - label: I already read and followed all the tutorial in the docs and didn't find an answer.
+          required: true
+        - label: I will NOT make duplicate discussions or issues in the future.
+          required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Commit to Help
+      description: |
+        After submitting this, I commit to one of:
+          * Read open questions until I find 2 where I can help someone and add a comment to help there.
+          * I already hit the "watch" button in this repository to receive notifications and I commit to help at least 2 people that ask questions in the future.
+      options:
+        - label: I commit to help with one of those options.
+          required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: Sample Code
+        What is the problem, question, or error?
+
+        Write a short description telling me what you are doing, what you expect to happen, and what is currently happening.
+      placeholder: Provide some code for us to reproduce your question
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        What is the problem, question, or error?
+
+        Write a short description telling me what you are doing, what you expect to happen, and what is currently happening.
+      placeholder: |
+        * It returns ...
+        * But I expected it to ...
+    validations:
+      required: true
+  - type: textarea
+    id: system-information
+    attributes:
+      label: System Information
+      placeholder: The log will automatically be formatted! No need to type backticks.
+      description: |
+        Please run the following code wherever you are experiencing the bug, and paste the output below.
+        This report helps us track down bugs and will be critical to addressing your bug.
+        ```python
+        # Get system info
+        import pyvista as pv
+        print(pv.Report())
+        ```
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, please add screenshots to the text box below

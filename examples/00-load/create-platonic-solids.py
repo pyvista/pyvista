@@ -7,12 +7,19 @@ Platonic Solids
 PyVista wraps the ``vtk.vtkPlatonicSolidSource`` filter as
 :func:`pyvista.PlatonicSolid`.
 """
+
+# sphinx_gallery_start_ignore
+from __future__ import annotations
+
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # We can either use the generic :func:`PlatonicSolid() <pyvista.PlatonicSolid>`
 # and specify the different kinds of solids to generate, or we can use the thin
 # wrappers:
@@ -51,7 +58,7 @@ teapot.scale(0.16, inplace=True)
 teapot.points += np.array([-1, 1, 0]) - teapot.center
 solids.append(teapot)
 
-###############################################################################
+# %%
 # Now let's plot them all.
 #
 # .. note::
@@ -66,13 +73,19 @@ for ind, solid in enumerate(solids):
     # only use smooth shading for the teapot
     smooth_shading = ind == len(solids) - 1
     p.add_mesh(
-        solid, color='silver', smooth_shading=smooth_shading, specular=1.0, specular_power=10
+        solid,
+        color='silver',
+        smooth_shading=smooth_shading,
+        specular=1.0,
+        specular_power=10,
     )
 p.view_vector((5.0, 2, 3))
 p.add_floor('-z', lighting=True, color='lightblue', pad=1.0)
 p.enable_shadows()
 p.show()
 
-###############################################################################
+# %%
 # The Platonic solids come with cell scalars that index each face of the
 # solids.
+#
+# .. tags:: load

@@ -1,4 +1,8 @@
 """PyVista Scalar bar module."""
+
+from __future__ import annotations
+
+import contextlib
 import weakref
 
 import numpy as np
@@ -43,11 +47,14 @@ class ScalarBars:
         for title in self._scalar_bar_actors:
             interactive = title in self._scalar_bar_widgets
             title = f'"{title}"'
-            lines.append(f'{title:20} {str(interactive):5}')
+            lines.append(f'{title:20} {interactive!s:5}')
         return '\n'.join(lines)
 
     def _remove_mapper_from_plotter(
-        self, actor, reset_camera=False, render=False
+        self,
+        actor,
+        reset_camera=False,
+        render=False,
     ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
@@ -62,10 +69,8 @@ class ScalarBars:
 
         # NOTE: keys to list to prevent iterator changing during loop
         for name in list(self._scalar_bar_mappers):
-            try:
+            with contextlib.suppress(ValueError):
                 self._scalar_bar_mappers[name].remove(mapper)
-            except ValueError:
-                pass
 
             if not self._scalar_bar_mappers[name]:
                 slot = self._plotter._scalar_bar_slot_lookup.pop(name, None)
@@ -73,7 +78,9 @@ class ScalarBars:
                     self._scalar_bar_mappers.pop(name)
                     self._scalar_bar_ranges.pop(name)
                     self._plotter.remove_actor(
-                        self._scalar_bar_actors.pop(name), reset_camera=reset_camera, render=render
+                        self._scalar_bar_actors.pop(name),
+                        reset_camera=reset_camera,
+                        render=render,
                     )
                     self._plotter._scalar_bar_slots.add(slot)
             return
@@ -110,10 +117,10 @@ class ScalarBars:
                 titles = ', '.join(f'"{key}"' for key in self._scalar_bar_actors)
                 raise ValueError(
                     'Multiple scalar bars found.  Pick title of the'
-                    f'scalar bar from one of the following:\n{titles}'
+                    f'scalar bar from one of the following:\n{titles}',
                 )
             else:
-                title = list(self._scalar_bar_actors.keys())[0]
+                title = next(iter(self._scalar_bar_actors.keys()))
 
         actor = self._scalar_bar_actors.pop(title)
         self._plotter.remove_actor(actor, render=render)
@@ -182,6 +189,7 @@ class ScalarBars:
         fill=False,
         render=False,
         theme=None,
+        unconstrained_font_size=False,
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -304,6 +312,14 @@ class ScalarBars:
             ``Plotter``, will use the plotter theme.  Setting to
             ``None`` will use the global theme.
 
+        unconstrained_font_size : bool, default: False
+            Whether the font size of title and labels is unconstrained.
+            When it is constrained, the size of the scalar bar will constrain the font size.
+            When it is not, the size of the font will always be respected.
+            Using custom labels will force this to be ``True``.
+
+            .. versionadded:: 0.44.0
+
         Returns
         -------
         vtk.vtkScalarBarActor
@@ -352,16 +368,12 @@ class ScalarBars:
             title_font_size = theme.font.title_size
         if fmt is None:
             fmt = theme.font.fmt
-        if vertical is None:
-            if theme.colorbar_orientation.lower() == 'vertical':
-                vertical = True
+        if vertical is None and theme.colorbar_orientation.lower() == 'vertical':
+            vertical = True
 
         # Automatically choose size if not specified
         if width is None:
-            if vertical:
-                width = theme.colorbar_vertical.width
-            else:
-                width = theme.colorbar_horizontal.width
+            width = theme.colorbar_vertical.width if vertical else theme.colorbar_horizontal.width
         if height is None:
             if vertical:
                 height = theme.colorbar_vertical.height
@@ -385,7 +397,7 @@ class ScalarBars:
             self._scalar_bar_ranges[title] = clim
             self._scalar_bar_actors[title].SetLookupTable(mapper.lookup_table)
             # Color bar already present and ready to be used so returning
-            return
+            return None
 
         # Automatically choose location if not specified
         if position_x is None or position_y is None:
@@ -551,6 +563,9 @@ class ScalarBars:
             frame_prop.SetColor(color.float_rgb)
         else:
             scalar_bar.SetDrawFrame(False)
+
+        if unconstrained_font_size:
+            scalar_bar.SetUnconstrainedFontSize(True)
 
         # finally, add to the actor and return the scalar bar
         self._plotter.add_actor(scalar_bar, reset_camera=False, pickable=False, render=render)

@@ -1,6 +1,7 @@
 """Module containing geometry helper functions."""
 
-import collections.abc
+from __future__ import annotations
+
 import os
 import sys
 from typing import Sequence
@@ -64,7 +65,7 @@ def voxelize(mesh, density=None, check_surface=True):
         density = mesh.length / 100
     if isinstance(density, (int, float, np.number)):
         density_x, density_y, density_z = [density] * 3
-    elif isinstance(density, (collections.abc.Sequence, np.ndarray)):
+    elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
         raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
@@ -95,8 +96,116 @@ def voxelize(mesh, density=None, check_surface=True):
     mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
-    vox = ugrid.extract_points(mask)
-    return vox
+    return ugrid.extract_points(mask)
+
+
+def voxelize_volume(mesh, density=None, check_surface=True):
+    """Voxelize mesh to create a RectilinearGrid voxel volume.
+
+    Creates a voxel volume that encloses the input mesh and discretizes the cells
+    within the volume that intersect or are contained within the input mesh.
+    ``InsideMesh``, an array in ``cell_data``, is ``1`` for cells inside and ``0`` outside.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Mesh to voxelize.
+
+    density : float | array_like[float]
+        The uniform size of the voxels when single float passed.
+        Nonuniform voxel size if a list of values are passed along x,y,z directions.
+        Defaults to 1/100th of the mesh length.
+
+    check_surface : bool, default: True
+        Specify whether to check the surface for closure. If on, then the
+        algorithm first checks to see if the surface is closed and
+        manifold. If the surface is not closed and manifold, a runtime
+        error is raised.
+
+    Returns
+    -------
+    pyvista.RectilinearGrid
+        RectilinearGrid as voxelized volume with discretized cells.
+
+    See Also
+    --------
+    pyvista.voxelize
+    pyvista.DataSetFilters.select_enclosed_points
+
+    Examples
+    --------
+    Create an equal density voxel volume from input mesh.
+
+    >>> import pyvista as pv
+    >>> import numpy as np
+
+    Load file from PyVista examples.
+
+    >>> from pyvista import examples
+    >>> mesh = examples.download_cow()
+
+    Create an equal density voxel volume and plot the result.
+
+    >>> vox = pv.voxelize_volume(mesh, density=0.15)
+    >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+    Slice the voxel volume to view ``InsideMesh``.
+
+    >>> slices = vox.slice_orthogonal()
+    >>> slices.plot(scalars='InsideMesh', show_edges=True)
+
+    Create a voxel volume from unequal density dimensions and plot result.
+
+    >>> vox = pv.voxelize_volume(mesh, density=[0.15, 0.15, 0.5])
+    >>> vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+    Slice the unequal density voxel volume to view ``InsideMesh``.
+
+    >>> slices = vox.slice_orthogonal()
+    >>> slices.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
+
+    """
+    mesh = wrap(mesh)
+    if density is None:
+        density = mesh.length / 100
+    if isinstance(density, (int, float, np.number)):
+        density_x, density_y, density_z = [density] * 3
+    elif isinstance(density, (Sequence, np.ndarray)):
+        density_x, density_y, density_z = density
+    else:
+        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
+
+    # check and pre-process input mesh
+    surface = mesh.extract_geometry()  # filter preserves topology
+    if not surface.faces.size:
+        # we have a point cloud or an empty mesh
+        raise ValueError('Input mesh must have faces for voxelization.')
+    if not surface.is_all_triangles:
+        # reduce chance for artifacts, see gh-1743
+        surface.triangulate(inplace=True)
+
+    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+    x = np.arange(x_min, x_max, density_x)
+    y = np.arange(y_min, y_max, density_y)
+    z = np.arange(z_min, z_max, density_z)
+
+    # Create a RectilinearGrid
+    voi = pyvista.RectilinearGrid(x, y, z)
+
+    # get part of the mesh within the mesh's bounding surface.
+    selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
+    mask_vol = selection.point_data['SelectedPoints'].view(np.bool_)
+
+    # Get voxels that fall within input mesh boundaries
+    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))["vtkOriginalCellIds"])
+
+    # Create new element of grid where all cells _within_ mesh boundary are
+    # given new name 'MeshCells' and a discrete value of 1
+    voi['InsideMesh'] = np.zeros(voi.n_cells)
+    voi['InsideMesh'][cell_ids] = 1
+
+    return voi
 
 
 def create_grid(dataset, dimensions=(101, 101, 101)):
@@ -322,7 +431,7 @@ def merge(
     >>> mesh.plot()
 
     """
-    if not isinstance(datasets, collections.abc.Sequence):
+    if not isinstance(datasets, Sequence):
         raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
 
     if len(datasets) < 1:
@@ -410,7 +519,7 @@ def sample_function(
     bounds: Sequence[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
     dim: Sequence[int] = (50, 50, 50),
     compute_normals: bool = False,
-    output_type: np.dtype = np.double,  # type: ignore
+    output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
     capping: bool = False,
     cap_value: float = sys.float_info.max,
     scalar_arr_name: str = "scalars",
@@ -438,7 +547,7 @@ def sample_function(
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
         Specify the bounds in the format of:
 
-        - ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+        - ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     dim : sequence[float], default: (50, 50, 50)
         Dimensions of the data on which to sample in the format of

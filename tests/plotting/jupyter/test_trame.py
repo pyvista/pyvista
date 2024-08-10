@@ -1,4 +1,6 @@
-import os
+from __future__ import annotations
+
+from pathlib import Path
 
 from IPython.display import IFrame
 import numpy as np
@@ -10,30 +12,27 @@ from pyvista import examples
 has_trame = True
 try:
     from trame.app import get_server
-    from trame.ui.vuetify3 import VAppLayout as vue3_VAppLayout
-    from trame.ui.vuetify import VAppLayout as vue2_VAppLayout
 
-    from pyvista.trame.jupyter import EmbeddableWidget, Widget, build_url
-    from pyvista.trame.ui import base_viewer, get_viewer, plotter_ui
-    from pyvista.trame.ui.vuetify2 import (
-        divider as vue2_divider,
-        select as vue2_select,
-        slider as vue2_slider,
-        text_field as vue2_text_field,
-    )
-    from pyvista.trame.ui.vuetify3 import (
-        divider as vue3_divider,
-        select as vue3_select,
-        slider as vue3_slider,
-        text_field as vue3_text_field,
-    )
-    from pyvista.trame.views import (
-        PyVistaLocalView,
-        PyVistaRemoteLocalView,
-        PyVistaRemoteView,
-        _BasePyVistaView,
-    )
-except:  # noqa: E722
+    from pyvista.trame.jupyter import EmbeddableWidget
+    from pyvista.trame.jupyter import Widget
+    from pyvista.trame.jupyter import build_url
+    from pyvista.trame.jupyter import elegantly_launch
+    from pyvista.trame.ui import base_viewer
+    from pyvista.trame.ui import get_viewer
+    from pyvista.trame.ui import plotter_ui
+    from pyvista.trame.ui.vuetify2 import divider as vue2_divider
+    from pyvista.trame.ui.vuetify2 import select as vue2_select
+    from pyvista.trame.ui.vuetify2 import slider as vue2_slider
+    from pyvista.trame.ui.vuetify2 import text_field as vue2_text_field
+    from pyvista.trame.ui.vuetify3 import divider as vue3_divider
+    from pyvista.trame.ui.vuetify3 import select as vue3_select
+    from pyvista.trame.ui.vuetify3 import slider as vue3_slider
+    from pyvista.trame.ui.vuetify3 import text_field as vue3_text_field
+    from pyvista.trame.views import PyVistaLocalView
+    from pyvista.trame.views import PyVistaRemoteLocalView
+    from pyvista.trame.views import PyVistaRemoteView
+    from pyvista.trame.views import _BasePyVistaView
+except:
     has_trame = False
 
 # skip all tests if VTK<9.1.0
@@ -58,7 +57,9 @@ def test_set_jupyter_backend_trame():
 
 def test_trame_server_launch():
     pv.set_jupyter_backend('trame')
-    server = get_server(name=pv.global_theme.trame.jupyter_server_name)
+    name = pv.global_theme.trame.jupyter_server_name
+    elegantly_launch(name)
+    server = get_server(name=name)
     assert server.running
 
 
@@ -73,7 +74,8 @@ def test_base_viewer_ui():
 def test_trame_plotter_ui(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
-    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    pv.set_jupyter_backend('trame')
+    elegantly_launch(name, client_type=client_type)
     server = get_server(name=name)
     assert server.running
 
@@ -97,7 +99,8 @@ def test_trame_plotter_ui(client_type):
 def test_trame(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
-    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    pv.set_jupyter_backend('trame')
+    elegantly_launch(name, client_type=client_type)
     server = get_server(name=name)
     assert server.running
 
@@ -121,31 +124,31 @@ def test_trame(client_type):
 
     orig_value = actor.prop.show_edges
     server.state[viewer.EDGES] = not orig_value
-    viewer.on_edge_visiblity_change(**server.state.to_dict())
+    viewer.on_edge_visibility_change(**server.state.to_dict())
     assert actor.prop.show_edges != orig_value
 
     server.state[viewer.GRID] = True
     assert len(pl.actors) == 1
-    viewer.on_grid_visiblity_change(**server.state.to_dict())
+    viewer.on_grid_visibility_change(**server.state.to_dict())
     assert len(pl.actors) == 2
     server.state[viewer.GRID] = False
-    viewer.on_grid_visiblity_change(**server.state.to_dict())
+    viewer.on_grid_visibility_change(**server.state.to_dict())
     assert len(pl.actors) == 1
 
     server.state[viewer.OUTLINE] = True
     assert len(pl.actors) == 1
-    viewer.on_outline_visiblity_change(**server.state.to_dict())
+    viewer.on_outline_visibility_change(**server.state.to_dict())
     assert len(pl.actors) == 2
     server.state[viewer.OUTLINE] = False
-    viewer.on_outline_visiblity_change(**server.state.to_dict())
+    viewer.on_outline_visibility_change(**server.state.to_dict())
     assert len(pl.actors) == 1
 
     server.state[viewer.AXIS] = True
     assert not hasattr(pl.renderer, 'axes_actor')
-    viewer.on_axis_visiblity_change(**server.state.to_dict())
+    viewer.on_axis_visibility_change(**server.state.to_dict())
     assert hasattr(pl.renderer, 'axes_actor')
     server.state[viewer.AXIS] = False
-    viewer.on_axis_visiblity_change(**server.state.to_dict())
+    viewer.on_axis_visibility_change(**server.state.to_dict())
     assert not pl.renderer.axes_widget.GetEnabled()
 
     server.state[viewer.SERVER_RENDERING] = False
@@ -170,7 +173,8 @@ def test_trame(client_type):
 def test_trame_custom_menu_items(client_type):
     # give different names for servers so different instances are created
     name = f'{pv.global_theme.trame.jupyter_server_name}-{client_type}'
-    pv.set_jupyter_backend('trame', name=name, client_type=client_type)
+    pv.set_jupyter_backend('trame')
+    elegantly_launch(name, client_type=client_type)
     server = get_server(name=name)
     assert server.running
 
@@ -181,7 +185,6 @@ def test_trame_custom_menu_items(client_type):
     viewer = get_viewer(pl, server=server)
 
     # setup vuetify items
-    VAppLayout = vue2_VAppLayout if client_type == "vue2" else vue3_VAppLayout
     slider = vue2_slider if client_type == "vue2" else vue3_slider
     text_field = vue2_text_field if client_type == "vue2" else vue3_text_field
     select = vue2_select if client_type == "vue2" else vue3_select
@@ -205,7 +208,7 @@ def test_trame_custom_menu_items(client_type):
             items=['Visibility', ["Hide", "Show"]],
         )
 
-    with VAppLayout(server, template_name=pl._id_name):
+    with viewer.make_layout(server, template_name=pl._id_name):
         viewer.ui(
             mode="trame",
             default_server_rendering=True,
@@ -270,6 +273,7 @@ def test_trame_closed_plotter():
         PyVistaRemoteLocalView(pl)
 
 
+@pytest.mark.skipif(True, reason="#5262")
 def test_trame_views():
     server = get_server('foo')
 
@@ -340,13 +344,13 @@ def test_trame_int64():
     assert isinstance(widget, Widget)
 
 
-@pytest.mark.skip_plotting
+@pytest.mark.skip_plotting()
 def test_trame_export_html(tmpdir):
     filename = str(tmpdir.join('tmp.html'))
     plotter = pv.Plotter()
     plotter.add_mesh(pv.Wavelet())
     plotter.export_html(filename)
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
 
 def test_export_single(tmpdir, skip_check_gc):
@@ -357,7 +361,7 @@ def test_export_single(tmpdir, skip_check_gc):
     plotter.add_mesh(data)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_multi(tmpdir, skip_check_gc):
@@ -374,7 +378,7 @@ def test_export_multi(tmpdir, skip_check_gc):
     plotter.add_mesh(multi)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_texture(tmpdir, skip_check_gc):
@@ -386,18 +390,18 @@ def test_export_texture(tmpdir, skip_check_gc):
     plotter.add_mesh(data, texture=texture)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_verts(tmpdir, skip_check_gc):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
-    data = pv.PolyData(np.random.rand(100, 3))
+    data = pv.PolyData(np.random.default_rng().random((100, 3)))
     # Create the scene
     plotter = pv.Plotter()
     plotter.add_mesh(data)
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_export_color(tmpdir, skip_check_gc):
@@ -408,7 +412,7 @@ def test_export_color(tmpdir, skip_check_gc):
     plotter.add_mesh(data, color='yellow')
     plotter.export_vtksz(filename)
     # Now make sure the file is there
-    assert os.path.isfile(f'{filename}')
+    assert Path(f'{filename}').is_file()
 
 
 def test_embeddable_widget(skip_check_gc):

@@ -22,7 +22,9 @@ Examples
 >>> iso = dataset.contour()
 
 """
-# flake8: noqa: F401
+
+# ruff: noqa: F401
+from __future__ import annotations
 
 import pyvista
 from pyvista.core.utilities.helpers import wrap
@@ -39,7 +41,12 @@ def _update_alg(alg, progress_bar=False, message=''):
 
 
 def _get_output(
-    algorithm, iport=0, iconnection=0, oport=0, active_scalars=None, active_scalars_field='point'
+    algorithm,
+    iport=0,
+    iconnection=0,
+    oport=0,
+    active_scalars=None,
+    active_scalars_field='point',
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = wrap(algorithm.GetInputDataObject(iport, iconnection))

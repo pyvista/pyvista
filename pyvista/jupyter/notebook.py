@@ -9,6 +9,9 @@ Includes:
 * ``html``
 
 """
+
+from __future__ import annotations
+
 import warnings
 
 
@@ -32,7 +35,7 @@ def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
 
     except ImportError as e:
         warnings.warn(
-            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.'
+            f'Failed to use notebook backend: \n\n{e}\n\nFalling back to a static output.',
         )
 
     return show_static_image(plotter, screenshot)

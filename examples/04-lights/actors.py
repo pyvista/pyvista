@@ -12,7 +12,10 @@ so they can be visualized using a cone.
 This is exactly the purpose of a ``vtk.vtkLightActor``, the
 functionality of which can be enabled for spotlights:
 """
+
 # sphinx_gallery_thumbnail_number = 1
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -40,7 +43,7 @@ plotter.camera_position = [(28, 30, 22), (0.77, 0, -0.44), (0, 0, 1)]
 plotter.show()
 
 
-###############################################################################
+# %%
 # Light actors can be very useful when designing complex scenes where
 # spotlights are involved in lighting.
 
@@ -65,7 +68,7 @@ for color in colors:
 plotter.show()
 
 
-###############################################################################
+# %%
 # One thing to watch out for is that the light actors are represented such that
 # their cone has a fixed height. This implies that for very large cone angles
 # we typically end up with enormous light actors, in which case setting a manual
@@ -87,3 +90,5 @@ UFO.show_actor()
 plotter.add_light(UFO)
 
 plotter.show()
+# %%
+# .. tags:: lights

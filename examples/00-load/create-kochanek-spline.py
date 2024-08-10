@@ -5,13 +5,20 @@ Create a Kochanek Spline
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a Kochanek spline/polyline from a numpy array of XYZ vertices.
+Uses :func:`pyvista.KochanekSpline`.
 """
+
+# sphinx_gallery_start_ignore
+from __future__ import annotations
+
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
 
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create a dataset to plot
 
 
@@ -28,7 +35,7 @@ def make_points():
 points = make_points()
 points[0:5, :]
 
-###############################################################################
+# %%
 # Interpolate those points onto a parametric Kochanek spline
 
 # Create Kochanek spline with 6 interpolation points
@@ -74,3 +81,5 @@ for i in range(5):
     )
 
 p.show(cpos="xy")
+# %%
+# .. tags:: load

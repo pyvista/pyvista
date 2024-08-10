@@ -6,14 +6,17 @@ Geodesic Paths
 
 Calculates the geodesic path between two vertices using Dijkstra's algorithm
 """
+
 # sphinx_gallery_thumbnail_number = 1
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
 # Load a global topography surface and decimate it
 land = examples.download_topo_land().triangulate().decimate(0.98)
 
-###############################################################################
+# %%
 # Get the geodesic path as a new :class:`pyvista.PolyData` object:
 cape_town = land.find_closest_point((0.790801, 0.264598, -0.551942))
 dubai = land.find_closest_point((0.512642, 0.745898, 0.425255))
@@ -24,7 +27,7 @@ a = land.geodesic(cape_town, dubai)
 b = land.geodesic(cape_town, bangkok)
 c = land.geodesic(cape_town, rome)
 
-###############################################################################
+# %%
 # Render the path along the land surface
 
 p = pv.Plotter()
@@ -39,7 +42,9 @@ p.camera_position = [
 
 p.show()
 
-###############################################################################
+# %%
 # How long is that path?
 distance = land.geodesic_distance(cape_town, rome)
 distance
+# %%
+# .. tags:: filter

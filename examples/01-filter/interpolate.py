@@ -23,11 +23,14 @@ For :func:`pyvista.DataSetFilters.sample`, see :ref:`resampling_example`.
 Interpolate one mesh's point/cell arrays onto another mesh's nodes using a
 Gaussian Kernel.
 """
+
 # sphinx_gallery_thumbnail_number = 4
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Simple Surface Interpolation
 # ++++++++++++++++++++++++++++
 # Resample the points' arrays onto a surface
@@ -41,7 +44,7 @@ p.add_mesh(points, scalars="val", point_size=30.0, render_points_as_spheres=True
 p.add_mesh(surface)
 p.show()
 
-###############################################################################
+# %%
 # Run the interpolation
 
 interpolated = surface.interpolate(points, radius=12.0)
@@ -53,7 +56,7 @@ p.add_mesh(interpolated, scalars="val")
 p.show()
 
 
-###############################################################################
+# %%
 # Complex Interpolation
 # +++++++++++++++++++++
 # In this example, we will in interpolate sparse points in 3D space into a
@@ -67,14 +70,14 @@ p.show()
 # Download the sparse data
 probes = examples.download_thermal_probes()
 
-###############################################################################
+# %%
 # Create the interpolation grid around the sparse data
 grid = pv.ImageData()
 grid.origin = (329700, 4252600, -2700)
 grid.spacing = (250, 250, 50)
 grid.dimensions = (60, 75, 100)
 
-###############################################################################
+# %%
 dargs = dict(cmap="coolwarm", clim=[0, 300], scalars="temperature (C)")
 cpos = [
     (364280.5723737897, 4285326.164400684, 14093.431895014139),
@@ -88,12 +91,18 @@ p.add_mesh(probes, render_points_as_spheres=True, **dargs)
 p.show(cpos=cpos)
 
 
-###############################################################################
+# %%
 # Run an interpolation
 interp = grid.interpolate(probes, radius=15000, sharpness=10, strategy='mask_points')
 
-###############################################################################
+# %%
 # Visualize the results
+
+# sphinx_gallery_start_ignore
+# volume rendering does not work in interactive plots currently
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 vol_opac = [0, 0, 0.2, 0.2, 0.5, 0.5]
 
 p = pv.Plotter(shape=(1, 2), window_size=[1024 * 3, 768 * 2])
@@ -104,3 +113,5 @@ p.add_mesh(interp.contour(5), opacity=0.5, **dargs)
 p.add_mesh(probes, render_points_as_spheres=True, point_size=10, **dargs)
 p.link_views()
 p.show(cpos=cpos)
+# %%
+# .. tags:: filter

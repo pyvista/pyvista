@@ -1,0 +1,11 @@
+[[redirects]]
+from = "/version/stable/*"
+to = "/:splat"
+status = 301
+force = true
+
+[[redirects]]
+from = "/version/dev/*"
+to = "https://dev.pyvista.org/:splat"
+status = 301
+force = true

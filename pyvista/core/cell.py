@@ -1,17 +1,31 @@
 """Contains the pyvista.Cell class."""
+
 from __future__ import annotations
 
-from typing import List, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING
+from typing import Tuple
+from typing import cast
+import warnings
 
 import numpy as np
 
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import IntMatrix, IntVector, NumpyIntArray
+from ._typing_core import BoundsTuple
 from .celltype import CellType
 from .dataset import DataObject
-from .utilities.cells import ncells_from_cells, numpy_to_idarr
+from .errors import CellSizeError
+from .errors import PyVistaDeprecationWarning
+from .utilities.cells import numpy_to_idarr
+
+if TYPE_CHECKING:  # pragma: no cover
+    from typing import Sequence
+
+    from ._typing_core import CellsLike
+    from ._typing_core import MatrixLike
+    from ._typing_core import NumpyArray
+    from ._typing_core import VectorLike
 
 
 def _get_vtk_id_type():
@@ -24,7 +38,7 @@ def _get_vtk_id_type():
     return np.int32
 
 
-class Cell(_vtk.vtkGenericCell, DataObject):
+class Cell(DataObject, _vtk.vtkGenericCell):
     """Wrapping of vtkCell.
 
     This class provides the capability to access a given cell topology and can
@@ -108,7 +122,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
                 self.ShallowCopy(vtk_cell)
 
     @property
-    def type(self) -> CellType:  # numpydoc ignore=RT01
+    def type(self) -> CellType:
         """Get the cell type from the enum :class:`pyvista.CellType`.
 
         Returns
@@ -126,7 +140,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return CellType(self.GetCellType())
 
     @property
-    def is_linear(self) -> bool:  # numpydoc ignore=RT01
+    def is_linear(self) -> bool:
         """Return if the cell is linear.
 
         Returns
@@ -163,6 +177,46 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         """
         self.cast_to_unstructured_grid().plot(**kwargs)
 
+    def cast_to_polydata(self) -> pyvista.PolyData:
+        """Cast this cell to PolyData.
+
+        Can only be used for 0D, 1D, or 2D cells.
+
+        Returns
+        -------
+        pyvista.PolyData
+            This cell cast to a :class:`pyvista.PolyData`.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_sphere()
+        >>> cell = mesh.get_cell(0)
+        >>> grid = cell.cast_to_polydata()
+        >>> grid  # doctest: +SKIP
+        PolyData (0x7f09ae437b80)
+          N Cells:    1
+          N Points:   3
+          N Strips:   0
+           X Bounds:   0.000e+00, 1.000e+01
+          Y Bounds:   0.000e+00, 2.500e+01
+          Z Bounds:   -1.270e+02, -1.250e+02
+          N Arrays:   0
+
+        """
+        cells = [len(self.point_ids), *list(range(len(self.point_ids)))]
+        if self.dimension == 0:
+            return pyvista.PolyData(self.points.copy(), verts=cells)
+        if self.dimension == 1:
+            return pyvista.PolyData(self.points.copy(), lines=cells)
+        if self.dimension == 2:
+            if self.type == CellType.TRIANGLE_STRIP:
+                return pyvista.PolyData(self.points.copy(), strips=cells)
+            else:
+                return pyvista.PolyData(self.points.copy(), faces=cells)
+        else:
+            raise ValueError(f"3D cells cannot be cast to PolyData: got cell type {self.type}")
+
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Cast this cell to an unstructured grid.
 
@@ -195,7 +249,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
                 cell_ids.extend(self.point_ids.index(i) for i in face.point_ids)
             cell_ids.insert(0, len(cell_ids))
         else:
-            cell_ids = [len(self.point_ids)] + list(range(len(self.point_ids)))
+            cell_ids = [len(self.point_ids), *list(range(len(self.point_ids)))]
         return pyvista.UnstructuredGrid(
             cell_ids,
             [int(self.type)],
@@ -203,7 +257,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         )
 
     @property
-    def dimension(self) -> int:  # numpydoc ignore=RT01
+    def dimension(self) -> int:
         """Return the cell dimension.
 
         This returns the dimensionality of the cell. For example, 1 for an edge,
@@ -224,7 +278,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return self.GetCellDimension()
 
     @property
-    def n_points(self) -> int:  # numpydoc ignore=RT01
+    def n_points(self) -> int:
         """Get the number of points composing the cell.
 
         Returns
@@ -242,7 +296,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return self.GetNumberOfPoints()
 
     @property
-    def n_faces(self) -> int:  # numpydoc ignore=RT01
+    def n_faces(self) -> int:
         """Get the number of faces composing the cell.
 
         Returns
@@ -260,7 +314,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return self.GetNumberOfFaces()
 
     @property
-    def n_edges(self) -> int:  # numpydoc ignore=RT01
+    def n_edges(self) -> int:
         """Get the number of edges composing the cell.
 
         Returns
@@ -278,12 +332,12 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return self.GetNumberOfEdges()
 
     @property
-    def point_ids(self) -> List[int]:  # numpydoc ignore=RT01
+    def point_ids(self) -> list[int]:
         """Get the point IDs composing the cell.
 
         Returns
         -------
-        List[int]
+        list[int]
             The point IDs composing the cell.
 
         Examples
@@ -297,7 +351,7 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
 
     @property
-    def points(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def points(self) -> NumpyArray[float]:
         """Get the point coordinates of the cell.
 
         Returns
@@ -350,12 +404,12 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return Cell(self.GetEdge(index), deep=True)
 
     @property
-    def edges(self) -> List[Cell]:  # numpydoc ignore=RT01
+    def edges(self) -> list[Cell]:
         """Return a list of edges composing the cell.
 
         Returns
         -------
-        List[Cell]
+        list[Cell]
             A list of edges composing the cell.
 
         Examples
@@ -371,12 +425,12 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return [self.get_edge(i) for i in range(self.n_edges)]
 
     @property
-    def faces(self) -> List[Cell]:  # numpydoc ignore=RT01
+    def faces(self) -> list[Cell]:
         """Return a list of faces composing the cell.
 
         Returns
         -------
-        List[Cell]
+        list[Cell]
             A list of faces composing the cell.
 
         Examples
@@ -426,33 +480,33 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return Cell(cell, deep=True, cell_type=cell.GetCellType())
 
     @property
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:  # numpydoc ignore=RT01
-        """Get the cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+    def bounds(self) -> BoundsTuple:
+        """Get the cell bounds in ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Returns
         -------
-        Tuple[float, float, float, float, float, float]
-            The cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+        BoundsTuple
+            The cell bounds in ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).bounds
-        (0.0, 0.05405950918793678, 0.0, 0.011239604093134403, 0.49706897139549255, 0.5)
+        BoundsTuple(x_min=0.0, x_max=0.05405950918793678, y_min=0.0, y_max=0.011239604093134403, z_min=0.49706897139549255, z_max=0.5)
 
         """
-        return self.GetBounds()
+        return BoundsTuple(*self.GetBounds())
 
     @property
-    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:
         """Get the center of the cell.
 
         Uses parametric coordinate center to determine x-y-z center.
 
         Returns
         -------
-        Tuple[float, float, float]
+        tuple[float, float, float]
             The center of the cell.
 
         Examples
@@ -542,6 +596,9 @@ class CellArray(_vtk.vtkCellArray):
     Provides convenience functions to simplify creating a CellArray from
     a numpy array or list.
 
+    .. deprecated:: 0.44.0
+       The parameters ``n_cells`` and ``deep`` are deprecated and no longer used.
+
     Parameters
     ----------
     cells : np.ndarray or list, optional
@@ -573,35 +630,27 @@ class CellArray(_vtk.vtkCellArray):
 
     def __init__(
         self,
-        cells: Optional[Union[IntMatrix, IntVector]] = None,
-        n_cells: Optional[int] = None,
-        deep: bool = False,
+        cells: CellsLike | None = None,
+        n_cells: int | None = None,
+        deep: bool | None = None,
     ):
         """Initialize a vtkCellArray."""
-        self.__offsets: Optional[_vtk.vtkIdTypeArray] = None
-        self.__connectivity: Optional[_vtk.vtkIdTypeArray] = None
+        super().__init__()
+        self.__offsets: _vtk.vtkIdTypeArray | None = None
+        self.__connectivity: _vtk.vtkIdTypeArray | None = None
         if cells is not None:
-            self._set_cells(np.asarray(cells), n_cells, deep)
+            self.cells = cells  # type: ignore[assignment]
 
-    def _set_cells(self, cells: NumpyIntArray, n_cells: Optional[int], deep: bool) -> None:
-        """Set a vtkCellArray."""
-        vtk_idarr, cells = numpy_to_idarr(cells, deep=deep, return_ind=True)  # type: ignore
-
-        # Get number of cells if None.  This is quite a performance
-        # bottleneck and we can consider adding a warning.  Good
-        # candidate for Cython or JIT compilation
-        if n_cells is None:
-            if cells.ndim == 1:
-                n_cells = ncells_from_cells(cells)
-            else:
-                n_cells = cells.shape[0]
-
-        self.SetCells(n_cells, vtk_idarr)
-        self.__offsets = self.__connectivity = None
-        return None
+        # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
+        for k, v in (('n_cells', n_cells), ('deep', deep)):
+            if v is not None:
+                warnings.warn(
+                    f"`CellArray parameter `{k}` is deprecated and no longer used.",
+                    PyVistaDeprecationWarning,
+                )
 
     @property
-    def cells(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def cells(self) -> NumpyArray[int]:
         """Return a numpy array of the cells.
 
         Returns
@@ -609,10 +658,30 @@ class CellArray(_vtk.vtkCellArray):
         np.ndarray
             A numpy array of the cells.
         """
-        return _vtk.vtk_to_numpy(self.GetData()).ravel()
+        cells = _vtk.vtkIdTypeArray()
+        self.ExportLegacyFormat(cells)
+        return _vtk.vtk_to_numpy(cells)
+
+    @cells.setter
+    def cells(self, cells: CellsLike):  # numpydoc ignore=GL08
+        cells = np.asarray(cells)
+        vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
+        self.ImportLegacyFormat(vtk_idarr)
+        imported_size = self.GetNumberOfConnectivityEntries()
+
+        # https://github.com/pyvista/pyvista/pull/5404
+        if imported_size != cells.size:
+            raise CellSizeError(
+                message=(
+                    f"Cell array size is invalid. Size ({cells.size}) does not"
+                    f" match expected size ({imported_size}). This is likely"
+                    " due to invalid connectivity array."
+                ),
+            )
+        self.__offsets = self.__connectivity = None
 
     @property
-    def n_cells(self) -> int:  # numpydoc ignore=RT01
+    def n_cells(self) -> int:
         """Return the number of cells.
 
         Returns
@@ -623,7 +692,7 @@ class CellArray(_vtk.vtkCellArray):
         return self.GetNumberOfCells()
 
     @property
-    def connectivity_array(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+    def connectivity_array(self) -> NumpyArray[int]:
         """Return the array with the point ids that define the cells' connectivity.
 
         Returns
@@ -634,7 +703,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_connectivity_array(self)
 
     @property
-    def offset_array(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+    def offset_array(self) -> NumpyArray[int]:
         """Return the array used to store cell offsets.
 
         Returns
@@ -644,7 +713,12 @@ class CellArray(_vtk.vtkCellArray):
         """
         return _get_offset_array(self)
 
-    def _set_data(self, offsets: IntMatrix, connectivity: IntMatrix, deep: bool = False) -> None:
+    def _set_data(
+        self,
+        offsets: MatrixLike[int],
+        connectivity: MatrixLike[int],
+        deep: bool = False,
+    ) -> None:
         """Set the offsets and connectivity arrays."""
         vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))
         vtk_connectivity = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(connectivity, deep=deep))
@@ -654,12 +728,11 @@ class CellArray(_vtk.vtkCellArray):
         # garbage collected. Keep a reference to them for safety
         self.__offsets = vtk_offsets
         self.__connectivity = vtk_connectivity
-        return None
 
     @staticmethod
     def from_arrays(
-        offsets: IntMatrix,
-        connectivity: IntMatrix,
+        offsets: MatrixLike[int],
+        connectivity: MatrixLike[int],
         deep: bool = False,
     ) -> CellArray:
         """Construct a CellArray from offsets and connectivity arrays.
@@ -686,7 +759,7 @@ class CellArray(_vtk.vtkCellArray):
         return cellarr
 
     @property
-    def regular_cells(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+    def regular_cells(self) -> NumpyArray[int]:
         """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size.
 
         Returns
@@ -703,7 +776,7 @@ class CellArray(_vtk.vtkCellArray):
         return _get_regular_cells(self)
 
     @classmethod
-    def from_regular_cells(cls, cells: IntMatrix, deep: bool = False) -> pyvista.CellArray:
+    def from_regular_cells(cls, cells: MatrixLike[int], deep: bool = False) -> pyvista.CellArray:
         """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
 
         Parameters
@@ -726,6 +799,25 @@ class CellArray(_vtk.vtkCellArray):
         cellarr._set_data(offsets, cells, deep=deep)
         return cellarr
 
+    @classmethod
+    def from_irregular_cells(cls, cells: Sequence[VectorLike[int]]) -> pyvista.CellArray:
+        """Construct a ``CellArray`` from a (n_cells, cell_size) array of cell indices.
+
+        Parameters
+        ----------
+        cells : numpy.ndarray or list[list[int]]
+            Cell array of shape (n_cells, cell_size) where all cells have the same size `cell_size`.
+
+        Returns
+        -------
+        pyvista.CellArray
+            Constructed ``CellArray``.
+        """
+        offsets = np.cumsum([len(c) for c in cells])
+        offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)
+        connectivity = np.concatenate(cells, dtype=pyvista.ID_TYPE)
+        return cls.from_arrays(offsets, connectivity)
+
 
 # The following methods would be much nicer bound to CellArray,
 # but then they wouldn't be available on bare vtkCellArrays. In the future,
@@ -733,17 +825,17 @@ class CellArray(_vtk.vtkCellArray):
 # returned as CellArrays
 
 
-def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> NumpyIntArray:
+def _get_connectivity_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     """Return the array with the point ids that define the cells' connectivity."""
     return _vtk.vtk_to_numpy(cellarr.GetConnectivityArray())
 
 
-def _get_offset_array(cellarr: _vtk.vtkCellArray) -> np.ndarray:
+def _get_offset_array(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     """Return the array used to store cell offsets."""
     return _vtk.vtk_to_numpy(cellarr.GetOffsetsArray())
 
 
-def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyIntArray:
+def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyArray[int]:
     """Return an array of shape (n_cells, cell_size) of point indices when all faces have the same size."""
     cells = _get_connectivity_array(cellarr)
     if len(cells) == 0:
@@ -752,3 +844,13 @@ def _get_regular_cells(cellarr: _vtk.vtkCellArray) -> NumpyIntArray:
     offsets = _get_offset_array(cellarr)
     cell_size = offsets[1] - offsets[0]
     return cells.reshape(-1, cell_size)
+
+
+def _get_irregular_cells(cellarr: _vtk.vtkCellArray) -> tuple[NumpyArray[int], ...]:
+    """Return a tuple of length n_cells of each cell's point indices."""
+    cells = _get_connectivity_array(cellarr)
+    if len(cells) == 0:
+        return ()
+
+    offsets = _get_offset_array(cellarr)
+    return tuple(np.split(cells, offsets[1:-1]))

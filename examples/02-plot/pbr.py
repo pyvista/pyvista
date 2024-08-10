@@ -17,6 +17,13 @@ a statue as though it were metallic.
 
 """
 
+# sphinx_gallery_start_ignore
+# physically based rendering does not seem to work in vtk-js
+from __future__ import annotations
+
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 from itertools import product
 
 import pyvista as pv
@@ -30,7 +37,7 @@ mesh.rotate_x(-90.0, inplace=True)  # rotate to orient with the skybox
 cubemap = examples.download_sky_box_cube_map()
 
 
-###############################################################################
+# %%
 # Let's render the mesh with a base color of "linen" to give it a metal looking
 # finish.
 p = pv.Plotter()
@@ -44,7 +51,7 @@ cpos = [(-313.40, 66.09, 1000.61), (0.0, 0.0, 0.0), (0.018, 0.99, -0.06)]
 p.show(cpos=cpos)
 
 
-###############################################################################
+# %%
 # Show the variation of the metallic and roughness parameters.
 #
 # Plot with metallic increasing from left to right and roughness
@@ -63,7 +70,7 @@ p.view_vector((-1, 0, 0), (0, 1, 0))
 p.show()
 
 
-###############################################################################
+# %%
 # Combine custom lighting and physically based rendering.
 
 # download louis model
@@ -90,3 +97,5 @@ plotter.add_light(light)
 # plot with a good camera position
 plotter.camera_position = [(9.51, 13.92, 15.81), (-2.836, -0.93, 10.2), (-0.22, -0.18, 0.959)]
 cpos = plotter.show()
+# %%
+# .. tags:: plot

@@ -10,9 +10,17 @@ to highlight part of your plot.
 
 """
 
+from __future__ import annotations
+
 import pyvista as pv
 
-###############################################################################
+# sphinx_gallery_start_ignore
+# blurring does not work in interactive examples probably because interactive
+# plot resets some properties of the camera.
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
+# %%
 # Create several spheres
 # ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -23,7 +31,7 @@ grid = pv.ImageData(dimensions=(4, 4, 4), spacing=(1, 1, 1))
 spheres = grid.glyph(geom=pv.Sphere(), scale=False, orient=False)
 
 
-###############################################################################
+# %%
 # Blur the plot
 # ~~~~~~~~~~~~~
 # Add a few blur passes to blur the plot
@@ -38,7 +46,7 @@ pl.enable_anti_aliasing('ssaa')
 pl.show()
 
 
-###############################################################################
+# %%
 # Note how this is different than selectively blurring part of the mesh behind
 # the focal plane
 
@@ -48,3 +56,5 @@ pl.enable_depth_of_field()
 pl.camera.zoom(1.5)
 pl.enable_anti_aliasing('ssaa')
 pl.show()
+# %%
+# .. tags:: plot

@@ -7,13 +7,15 @@ Plotting Glyphs (Vectors or PolyData)
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Glyphying can be done via the :func:`pyvista.DataSetFilters.glyph` filter
 
 mesh = examples.download_carotid().threshold(145, scalars="scalars")
@@ -37,7 +39,7 @@ pl.camera_position = [
 cpos = pl.show(return_cpos=True)
 
 
-###############################################################################
+# %%
 # Another approach is to load the vectors directly to the mesh object and then
 # access the :attr:`pyvista.DataSet.arrows` property.
 
@@ -49,7 +51,7 @@ vectors = np.vstack(
         np.sin(sphere.points[:, 0]),
         np.cos(sphere.points[:, 1]),
         np.cos(sphere.points[:, 2]),
-    )
+    ),
 ).T
 
 # add and scale
@@ -59,7 +61,7 @@ sphere.set_active_vectors("vectors")
 # plot just the arrows
 sphere.arrows.plot()
 
-###############################################################################
+# %%
 # Plot the arrows and the sphere.
 
 p = pv.Plotter()
@@ -68,7 +70,7 @@ p.add_mesh(sphere, color="grey", ambient=0.6, opacity=0.5, show_edges=False)
 p.show()
 
 
-###############################################################################
+# %%
 # Subset of Glyphs
 # ++++++++++++++++
 #
@@ -87,3 +89,5 @@ p = pv.Plotter()
 p.add_mesh(arrows, color="black")
 p.add_mesh(mesh, scalars="Elevation", cmap="terrain", smooth_shading=True)
 p.show()
+# %%
+# .. tags:: filter

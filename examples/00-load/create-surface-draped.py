@@ -22,13 +22,16 @@ where you collected the data on the surface of topography). Attached below are
 some example data for this: 1) XYZ coordinates of a GPR path and 2) a 2D array
 of data values produced from the GPR.
 
-the data here are wacky (it's difficult to get shareable data of decent
+The data here are wacky (it's difficult to get shareable data of decent
 quality), so ignore them but pay attention to the structure. The coordinates we
 have are technically shifted up and we have some NaN filler above the surface
 - its weird and just ignore it. You'll typically have a more uniform looking
 profile in 2D with the coordinates associated to the top of each column in your
 2D array.
 """
+
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -42,12 +45,12 @@ path = examples.download_gpr_path().points
 # 2D array of the data values from the imaging equipment
 data = examples.download_gpr_data_array()
 
-###############################################################################
+# %%
 plt.figure(figsize=(15, 3))
 plt.pcolormesh(data, cmap="seismic", clim=[-1, 1])
 plt.gca().invert_yaxis()
 
-###############################################################################
+# %%
 # View the path of the GPR profile from a top-down perspective.
 # Since we have the full coordinates (XY and Z), we can create a structured
 # mesh "draping" down from those coordinates to hold the GPR image data.
@@ -56,7 +59,7 @@ plt.axis("image")
 plt.xlabel("Northing")
 plt.ylabel("Easting")
 
-###############################################################################
+# %%
 
 assert len(path) in data.shape, "Make sure coordinates are present for every trace."
 # If not, you'll need to interpolate the path
@@ -74,7 +77,7 @@ tp = np.arange(0, z_spacing * nsamples, z_spacing)
 tp = path[:, 2][:, None] - tp
 points[:, -1] = tp.ravel()
 
-###############################################################################
+# %%
 # Make a StructuredGrid from the structured points
 grid = pv.StructuredGrid()
 grid.points = points
@@ -83,7 +86,7 @@ grid.dimensions = nsamples, ntraces, 1
 # Add the data array - note the ordering
 grid["values"] = data.ravel(order="F")
 
-###############################################################################
+# %%
 # And now we can plot it, process it, or do anything, because it is a PyVista
 # mesh and the possibilities are endless with PyVista.
 
@@ -97,3 +100,5 @@ p = pv.Plotter()
 p.add_mesh(grid, cmap="seismic", clim=[-1, 1])
 p.add_mesh(pv.PolyData(path), color='orange')
 p.show(cpos=cpos)
+# %%
+# .. tags:: load

@@ -1,18 +1,22 @@
 """Module containing composite data mapper."""
+
+from __future__ import annotations
+
 from itertools import cycle
 import sys
-from typing import Optional
 import weakref
 
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.arrays import convert_array, convert_string_array
+from pyvista import vtk_version_info
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
-from pyvista.report import vtk_version_info
 
 from . import _vtk
-from .colors import Color, get_cycler
+from .colors import Color
+from .colors import get_cycler
 from .mapper import _BaseMapper
 
 
@@ -133,7 +137,7 @@ class BlockAttributes:
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
     @property
-    def visible(self) -> Optional[bool]:  # numpydoc ignore=RT01
+    def visible(self) -> bool | None:  # numpydoc ignore=RT01
         """Get or set the visibility of a block.
 
         Examples
@@ -166,7 +170,7 @@ class BlockAttributes:
         self._attr.SetBlockVisibility(self._block, new_visible)
 
     @property
-    def opacity(self) -> Optional[float]:  # numpydoc ignore=RT01
+    def opacity(self) -> float | None:  # numpydoc ignore=RT01
         """Get or set the opacity of a block.
 
         If opacity has not been set this will be ``None``.
@@ -208,7 +212,7 @@ class BlockAttributes:
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
-    def pickable(self) -> Optional[bool]:  # numpydoc ignore=RT01
+    def pickable(self) -> bool | None:  # numpydoc ignore=RT01
         """Get or set the pickability of a block.
 
         Examples
@@ -253,7 +257,7 @@ class BlockAttributes:
                 f'Opacity:   {self.opacity}',
                 f'Color:     {self.color}',
                 f'Pickable   {self.pickable}',
-            ]
+            ],
         )
 
 
@@ -484,11 +488,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
                 block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
-        if block is None:
-            if index > len(self) - 1:
-                raise KeyError(
-                    f'index {index} is out of bounds. There are only {len(self)} blocks.'
-                ) from None
+        if block is None and index > len(self) - 1:
+            raise KeyError(
+                f'index {index} is out of bounds. There are only {len(self)} blocks.',
+            ) from None
         return block
 
     def __getitem__(self, index):
@@ -516,10 +519,12 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
 
 class CompositePolyDataMapper(
-    _vtk.vtkCompositePolyDataMapper  # type: ignore
-    if vtk_version_info >= (9, 3)
-    else _vtk.vtkCompositePolyDataMapper2,  # type: ignore
     _BaseMapper,
+    (
+        _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
+        if vtk_version_info >= (9, 3)
+        else _vtk.vtkCompositePolyDataMapper2
+    ),
 ):
     """Composite PolyData mapper.
 
@@ -545,7 +550,11 @@ class CompositePolyDataMapper(
     """
 
     def __init__(
-        self, dataset=None, theme=None, color_missing_with_nan=None, interpolate_before_map=None
+        self,
+        dataset=None,
+        theme=None,
+        color_missing_with_nan=None,
+        interpolate_before_map=None,
     ):
         """Initialize this composite mapper."""
         super().__init__(theme=theme)
@@ -560,7 +569,7 @@ class CompositePolyDataMapper(
             self.interpolate_before_map = interpolate_before_map
 
     @property
-    def dataset(self) -> 'pyvista.MultiBlock':  # numpydoc ignore=RT01
+    def dataset(self) -> pyvista.MultiBlock:  # numpydoc ignore=RT01
         """Return the composite dataset assigned to this mapper.
 
         Examples
@@ -582,7 +591,7 @@ class CompositePolyDataMapper(
         return self._dataset
 
     @dataset.setter
-    def dataset(self, obj: 'pyvista.MultiBlock'):  # numpydoc ignore=GL08
+    def dataset(self, obj: pyvista.MultiBlock):  # numpydoc ignore=GL08
         self.SetInputDataObject(obj)
         self._dataset = obj
         self._attr._dataset = obj
@@ -808,12 +817,15 @@ class CompositePolyDataMapper(
         self._orig_scalars_name = scalars_name
 
         field, scalars_name, dtype = self._dataset._activate_plotting_scalars(
-            scalars_name, preference, component, rgb
+            scalars_name,
+            preference,
+            component,
+            rgb,
         )
 
         self.scalar_visibility = True
         if rgb:
-            self.scalar_mode = 'direct'
+            self.color_mode = 'direct'
             return scalar_bar_args
         else:
             self.scalar_map_mode = field.name.lower()
@@ -824,9 +836,8 @@ class CompositePolyDataMapper(
             clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
         self.scalar_range = clim
 
-        if log_scale:
-            if clim[0] <= 0:
-                clim = [sys.float_info.min, clim[1]]
+        if log_scale and clim[0] <= 0:
+            clim = [sys.float_info.min, clim[1]]
 
         if isinstance(cmap, pyvista.LookupTable):
             self.lookup_table = cmap
@@ -855,10 +866,7 @@ class CompositePolyDataMapper(
                 scalar_bar_args.setdefault('below_label', 'below')
 
             if cmap is None:
-                if self._theme is None:
-                    cmap = pyvista.global_theme.cmap
-                else:
-                    cmap = self._theme.cmap
+                cmap = pyvista.global_theme.cmap if self._theme is None else self._theme.cmap
 
             if cmap is not None:
                 self.lookup_table.apply_cmap(cmap, n_colors, flip_scalars)

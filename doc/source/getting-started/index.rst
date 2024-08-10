@@ -166,7 +166,7 @@ where the community can collectively address your questions. You are also
 welcome to join us on Slack_.
 
 .. _pyvista/discussions: https://github.com/pyvista/pyvista/discussions
-.. _Slack: http://slack.pyvista.org
+.. _Slack: https://communityinviter.com/apps/pyvista/pyvista
 .. _info@pyvista.org: mailto:info@pyvista.org
 
 

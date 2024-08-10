@@ -14,15 +14,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
-          cache: 'pip'
-          cache-dependency-path:  |
+          cache: "pip"
+          cache-dependency-path: |
             requirements.txt
             requirements_test.txt
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.local/share/pyvista/examples
           key: Examples-Data-${{ hashFiles('*') }}
@@ -53,18 +53,18 @@ jobs:
     name: Vale
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
-    # this is equivalent to
-    # vale --config doc/.vale.ini doc pyvista examples
-    - name: "Run Vale"
-      uses: errata-ai/vale-action@reviewdog
-      with:
-        files: '["doc", "pyvista", "examples"]'
-        vale_flags: "--config=doc/.vale.ini"
-        reporter: github-pr-check
-        level: error
-        filter_mode: nofilter
-        fail_on_error: true
-        version: 2.29.5
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+      # this is equivalent to
+      # vale --config doc/.vale.ini doc pyvista examples
+      - name: "Run Vale"
+        uses: errata-ai/vale-action@reviewdog
+        with:
+          files: '["doc", "pyvista", "examples"]'
+          vale_flags: "--config=doc/.vale.ini"
+          reporter: github-pr-check
+          level: error
+          filter_mode: nofilter
+          fail_on_error: true
+          version: 2.29.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

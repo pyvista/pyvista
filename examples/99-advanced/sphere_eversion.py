@@ -21,7 +21,10 @@ order to unfold the sphere. It's not obvious that the transformation is truly
 smooth; this was proved in the paper by Bednorz and Bednorz.
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -36,7 +39,7 @@ alpha_final = 1  # arbitrary > 1
 eta_final = 2  # arbitrary > 1
 kappa = (n - 1) / (2 * n)
 
-###############################################################################
+# %%
 # Let's define the chain of mappings we'll need for implementing the eversion:
 
 
@@ -130,7 +133,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
             - t / n * np.cos(n * phi)
         )
         - (1 - lamda) * eta**(1 + kappa) * t * abs(t)**(2 * kappa)
-            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa
+            * np.sin(theta) / np.cos(theta)**(2 * n)  # noqa: E131
     )
     # fmt: on
 
@@ -142,7 +145,7 @@ def unfold_sphere(theta, phi, t, q, eta, lamda):
     return x2, y2, z2
 
 
-###############################################################################
+# %%
 # Now chain the functions by performing the process in Table 1 of the paper.
 # Start from the bottom for ``t = -1/Q``, keep stepping up, linearly changing
 # parameters that change from row to row, then at the top go from ``t = -1/Q``
@@ -236,10 +239,16 @@ for lamda in np.linspace(1, 0, n_steps + 1)[1:]:
 plotter.close()
 
 
-###############################################################################
+# %%
 # Looking at the still image of the middle state with ``t = 0``, we see a nice
 # symmetric configuration where two "inside" and two "outside" lobes of the
 # sphere are visible.
+
+# sphinx_gallery_start_ignore
+# lighting does not work for this interactive plot
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
+
 t = q = 0
 xi = p = 1
 eta = eta_final

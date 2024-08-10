@@ -9,11 +9,13 @@ Calculate mass properties such as the volume or area of datasets
 """
 
 # sphinx_gallery_thumbnail_number = 4
+from __future__ import annotations
+
 import numpy as np
 
 from pyvista import examples
 
-###############################################################################
+# %%
 # Computing mass properties such as the volume or area of datasets in PyVista
 # is quite easy using the :func:`pyvista.DataSetFilters.compute_cell_sizes`
 # filter and the :attr:`pyvista.DataSet.volume` property on all PyVista meshes.
@@ -24,7 +26,7 @@ from pyvista import examples
 dataset = examples.load_uniform()
 dataset.set_active_scalars("Spatial Cell Data")
 
-###############################################################################
+# %%
 # We can then calculate the volume of every cell in the array using the
 # ``.compute_cell_sizes`` filter which will add arrays to the cell data of the
 # mesh core the volume and area by default.
@@ -35,14 +37,14 @@ sized = dataset.compute_cell_sizes()
 # Grab volumes for all cells in the mesh
 cell_volumes = sized.cell_data["Volume"]
 
-###############################################################################
+# %%
 # We can also compute the total volume of the mesh using the ``.volume``
 # property:
 
 # Compute the total volume of the mesh
 volume = dataset.volume
 
-###############################################################################
+# %%
 # But what if we have a dataset that we threshold with two
 # volumetric bodies left over in one dataset? Take this for example:
 
@@ -50,7 +52,7 @@ volume = dataset.volume
 threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
 threshed.plot(show_grid=True, cpos=[-2, 5, 3])
 
-###############################################################################
+# %%
 # We could then assign a classification array for the two bodies, compute the
 # cell sizes, then extract the volumes of each body. Note that there is a
 # simpler implementation of this below in :ref:`split_vol`.
@@ -74,7 +76,7 @@ print(f"Low grade volume: {lvol}")
 print(f"High grade volume: {hvol}")
 print(f"Original volume: {dataset.volume}")
 
-###############################################################################
+# %%
 # Or better yet, you could simply extract the largest volume from your
 # dataset directly by passing ``'largest'`` to the ``connectivity`` and
 # specifying the scalar range of interest.
@@ -90,7 +92,7 @@ large_volume = largest.volume
 largest.plot(show_grid=True, cpos=[-2, 5, 3])
 
 
-###############################################################################
+# %%
 # -----
 #
 # .. _split_vol:
@@ -115,13 +117,13 @@ bodies = threshed.split_bodies()
 for i, body in enumerate(bodies):
     print(f"Body {i} volume: {body.volume:.3f}")
 
-###############################################################################
+# %%
 
 
 bodies.plot(show_grid=True, multi_colors=True, cpos=[-2, 5, 3])
 
 
-###############################################################################
+# %%
 # -----
 #
 # A Real Dataset
@@ -136,7 +138,7 @@ bodies.plot(show_grid=True, multi_colors=True, cpos=[-2, 5, 3])
 data = examples.load_channels()
 channels = data.threshold([0.9, 1.1])
 
-###############################################################################
+# %%
 # Now extract all the different bodies and compute their volumes:
 
 bodies = channels.split_bodies()
@@ -150,13 +152,15 @@ for key in bodies.keys():
     # Now lets add a volume array to all blocks
     b.cell_data["TOTAL VOLUME"] = np.full(b.n_cells, vol)
 
-###############################################################################
+# %%
 # Print out the volumes for each body:
 
 for i, body in enumerate(bodies):
     print(f"Body {i:02d} volume: {body.volume:.3f}")
 
-###############################################################################
+# %%
 # And visualize all the different volumes:
 
 bodies.plot(scalars="TOTAL VOLUME", cmap="viridis", show_grid=True)
+# %%
+# .. tags:: filter

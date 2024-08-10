@@ -97,7 +97,8 @@ object in VTK cannot. It then makes sense that a
 :func:`pyvista.PolyDataFilters.subdivide` method be added to the existing
 triangular surface mesh. That way, subdivision can be performed with:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import pyvista
     mesh = pyvista.Plane().triangulate()
@@ -120,7 +121,9 @@ meshes. This data can be easily accessed from the dataset attributes
 like :attr:`pyvista.DataSet.points`. For example the first 10 points
 of a circle from pyvista can be accessed with:
 
-.. jupyter-execute::
+.. pyvista-plot::
+   :context:
+   :nofigs:
 
    circle = pyvista.Circle()
    circle.points[:10]
@@ -132,7 +135,8 @@ At the same time, a variety of PyVista objects can be generated
 directly from numpy arrays. For example, below we generate a vector
 field of arrows using :func:`numpy.meshgrid`:
 
-.. jupyter-execute::
+.. pyvista-plot::
+    :context:
 
     import pyvista
     import numpy as np

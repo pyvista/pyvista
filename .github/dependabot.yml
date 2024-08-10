@@ -5,6 +5,20 @@ updates:
     insecure-external-code-execution: allow
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 100
+    groups:
+      trame:
+        patterns:
+          - "trame"
+          - "trame-*"
+      sphinx:
+        patterns:
+          - "*sphinx*"
+          - "pypandoc"
+      pytest:
+        patterns:
+          - "pytest"
+          - "pytest-*"
     labels:
       - "maintenance"
       - "dependencies"
@@ -12,6 +26,20 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 100
+    groups:
+      artifacts:
+        patterns:
+          - "actions/upload-artifact"
+          - "actions/download-artifact"
+    labels:
+      - "maintenance"
+      - "dependencies"
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 100
     labels:
       - "maintenance"
       - "dependencies"

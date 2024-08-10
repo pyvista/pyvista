@@ -9,9 +9,16 @@ This example demonstrates how to pick points on meshes using
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 
-###############################################################################
+# sphinx_gallery_start_ignore
+# picking not work in interactive plots
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
+# %%
 # Pick points on a sphere
 # +++++++++++++++++++++++
 #
@@ -22,7 +29,7 @@ p.add_mesh(sphere, pickable=True)
 p.enable_point_picking()
 p.show()
 
-###############################################################################
+# %%
 # Ignore the 3D window
 # ++++++++++++++++++++
 #
@@ -35,7 +42,7 @@ p.add_mesh(sphere, pickable=True)
 p.enable_point_picking(pickable_window=False)  # Make the 3D window unpickable
 p.show()
 
-###############################################################################
+# %%
 # Modify which actors are pickable
 # ++++++++++++++++++++++++++++++++
 #
@@ -52,7 +59,7 @@ p.pickable_actors = [sphere_actor, cube_actor]  # now both are pickable
 p.view_xy()
 p.show()
 
-###############################################################################
+# %%
 # Pick using the left-mouse button
 # ++++++++++++++++++++++++++++++++
 #
@@ -62,3 +69,5 @@ p = pv.Plotter()
 p.add_mesh(sphere, pickable=True)
 p.enable_point_picking(left_clicking=True)
 p.show()
+# %%
+# .. tags:: plot

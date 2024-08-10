@@ -1,10 +1,14 @@
 """Module containing pyvista wrappers for the vtk Charts API."""
 
+from __future__ import annotations
+
 from functools import wraps
 import inspect
 import itertools
 import re
-from typing import Dict, Optional, Sequence
+from typing import TYPE_CHECKING
+from typing import ClassVar
+from typing import Sequence
 import weakref
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -12,11 +16,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
-from pyvista.report import vtk_version_info
+from pyvista import vtk_version_info
 
 from . import _vtk
-from ._typing import Chart
-from .colors import COLOR_SCHEMES, SCHEME_NAMES, Color, color_synonyms, hexcolors
+from .colors import COLOR_SCHEMES
+from .colors import SCHEME_NAMES
+from .colors import Color
+from .colors import color_synonyms
+from .colors import hexcolors
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing import Chart
 
 
 # region Some metaclass wrapping magic
@@ -67,9 +77,9 @@ class DocSubs:
     """Helper class to easily substitute the docstrings of the listed member functions or properties."""
 
     # The substitutions to use for this (sub)class
-    _DOC_SUBS: Optional[Dict[str, str]] = None
+    _DOC_SUBS: dict[str, str] | None = None
     # Internal dictionary to store registered member functions/properties and their (to be substituted) docs.
-    _DOC_STORE = {}  # type: ignore
+    _DOC_STORE = {}  # type: ignore[var-annotated] # noqa: RUF012
     # Tag used to mark members that require docstring substitutions.
     _DOC_TAG = ":DOC_SUBS:"
 
@@ -116,7 +126,7 @@ class DocSubs:
             mem_sub = property(member.fget, member.fset, member.fdel)
         else:
             raise NotImplementedError(
-                "Members other than methods and properties are currently not supported."
+                "Members other than methods and properties are currently not supported.",
             )
         return mem_sub
 
@@ -130,9 +140,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     Still, only methods can be marked for doc substitution (as for
     properties the docstring seems to be overwritten when specifying
     setters or deleters), hence this decorator should be applied
-    before the property decorator. And 'type: ignore' comments are
-    necessary because mypy cannot handle decorated properties (see
-    https://github.com/python/mypy/issues/1362)
+    before the property decorator.
     """
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
@@ -172,7 +180,9 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
     """
 
-    LINE_STYLES = {  # descr is used in the documentation, set to None to hide it from the docs.
+    LINE_STYLES: ClassVar[
+        dict[str, dict[str, int | str]]
+    ] = {  # descr is used in the documentation, set to None to hide it from the docs.
         "": {"id": _vtk.vtkPen.NO_PEN, "descr": "Hidden"},
         "-": {"id": _vtk.vtkPen.SOLID_LINE, "descr": "Solid"},
         "--": {"id": _vtk.vtkPen.DASH_LINE, "descr": "Dashed"},
@@ -196,11 +206,14 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         --------
         Set the pen's color to red.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
-        >>> plot.pen.color = 'r'
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+           >>> plot.pen.color = 'r'
+           >>> chart.show()
 
         """
         return self._color
@@ -218,11 +231,14 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         --------
         Set the pen's width to 10
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
-        >>> plot.pen.width = 10
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+           >>> plot.pen.width = 10
+           >>> chart.show()
 
         """
         return self.GetWidth()
@@ -239,11 +255,14 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
 
         Examples
         --------
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
-        >>> plot.pen.style = '-.'
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+           >>> plot.pen.style = '-.'
+           >>> chart.show()
 
         """
         return self._line_style
@@ -292,11 +311,14 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         --------
         Set the brush's color to red.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
-        >>> plot.brush.color = 'r'
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+           >>> plot.brush.color = 'r'
+           >>> chart.show()
 
         """
         return self._color
@@ -314,12 +336,15 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         --------
         Set the brush's texture to the sample puppy texture.
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
-        >>> plot.brush.texture = examples.download_puppy_texture()
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> from pyvista import examples
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+           >>> plot.brush.texture = examples.download_puppy_texture()
+           >>> chart.show()
 
         """
         return self._texture
@@ -346,17 +371,20 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         --------
         Set up a brush with a texture.
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
-        >>> plot.brush.texture = examples.download_puppy_texture()
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Disable linear interpolation.
+           >>> import pyvista as pv
+           >>> from pyvista import examples
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+           >>> plot.brush.texture = examples.download_puppy_texture()
+           >>> chart.show()
 
-        >>> plot.brush.texture_interpolate = False
-        >>> chart.show()
+           Disable linear interpolation.
+
+           >>> plot.brush.texture_interpolate = False
+           >>> chart.show()
 
         """
         return self._interpolate
@@ -379,17 +407,20 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         --------
         Set up a brush with a texture.
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
-        >>> plot.brush.texture = examples.download_puppy_texture()
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Enable texture repeat.
+           >>> import pyvista as pv
+           >>> from pyvista import examples
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])
+           >>> plot.brush.texture = examples.download_puppy_texture()
+           >>> chart.show()
 
-        >>> plot.brush.texture_repeat = True
-        >>> chart.show()
+           Enable texture repeat.
+
+           >>> plot.brush.texture_repeat = True
+           >>> chart.show()
 
         """
         return self._repeat
@@ -433,9 +464,9 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     """
 
-    BEHAVIORS = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
+    BEHAVIORS: ClassVar[dict[str, int]] = {"auto": _vtk.vtkAxis.AUTO, "fixed": _vtk.vtkAxis.FIXED}
 
-    def __init__(self, label="", range=None, grid=True):
+    def __init__(self, label="", range=None, grid=True):  # noqa: A002
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -463,11 +494,14 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Set the axis label to ``"Axis Label"``.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.label = "Axis Label"
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.label = "Axis Label"
+           >>> chart.show()
 
         """
         return self.GetTitle()
@@ -484,11 +518,14 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Hide the x-axis label of a 2D chart.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.label_visible = False
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.label_visible = False
+           >>> chart.show()
 
         """
         return self.GetTitleVisible()
@@ -505,13 +542,16 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Set the x-axis label font size of a 2D chart to 20.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.label_size = 20
-        >>> chart.x_axis.label_size
-        20
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.label_size = 20
+           >>> chart.x_axis.label_size
+           20
+           >>> chart.show()
 
         """
         return self.GetTitleProperties().GetFontSize()
@@ -532,16 +572,19 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Manually specify the x-axis range of a 2D chart.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.range = [0, 5]
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Revert to automatic axis scaling.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.range = [0, 5]
+           >>> chart.show()
 
-        >>> chart.x_axis.range = None
-        >>> chart.show()
+           Revert to automatic axis scaling.
+
+           >>> chart.x_axis.range = None
+           >>> chart.show()
 
         """
         r = [0.0, 0.0]
@@ -568,18 +611,21 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Manually specify the x-axis range of a 2D chart.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.range = [0, 5]
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Revert to automatic axis scaling.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.range = [0, 5]
+           >>> chart.show()
 
-        >>> chart.x_axis.behavior = "auto"
-        >>> chart.show()
-        >>> chart.x_axis.range
-        [0.0, 2.0]
+           Revert to automatic axis scaling.
+
+           >>> chart.x_axis.behavior = "auto"
+           >>> chart.show()
+           >>> chart.x_axis.range
+           [0.0, 2.0]
 
         """
         return self._behavior
@@ -601,18 +647,21 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> chart.background_color = 'c'
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Manually specify a larger (bottom) margin for the x-axis and a
-        larger (left) margin for the y-axis.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> chart.background_color = 'c'
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.show()
 
-        >>> chart.x_axis.margin = 50
-        >>> chart.y_axis.margin = 50
-        >>> chart.show()
+           Manually specify a larger (bottom) margin for the x-axis and a
+           larger (left) margin for the y-axis.
+
+           >>> chart.x_axis.margin = 50
+           >>> chart.y_axis.margin = 50
+           >>> chart.show()
 
         """
         return self.GetMargins()[0]
@@ -635,17 +684,20 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2, 3, 4], [1e0, 1e1, 1e2, 1e3, 1e4])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Try to enable the log scale on the y-axis.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2, 3, 4], [1e0, 1e1, 1e2, 1e3, 1e4])
+           >>> chart.show()
 
-        >>> chart.y_axis.log_scale = True
-        >>> chart.show()
-        >>> chart.y_axis.log_scale
-        True
+           Try to enable the log scale on the y-axis.
+
+           >>> chart.y_axis.log_scale = True
+           >>> chart.show()
+           >>> chart.y_axis.log_scale
+           True
 
         """
         return self.GetLogScaleActive()
@@ -663,11 +715,14 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart with grid lines disabled for the x-axis.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.grid = False
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.grid = False
+           >>> chart.show()
 
         """
         return self.GetGridVisible()
@@ -684,11 +739,14 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart with no visible y-axis.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.y_axis.visible = False
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.y_axis.visible = False
+           >>> chart.show()
 
         """
         return self.GetAxisVisible()
@@ -704,15 +762,18 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Toggle the visibility of the y-axis.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.show()
 
-        >>> chart.y_axis.toggle()
-        >>> chart.show()
+           Toggle the visibility of the y-axis.
+
+           >>> chart.y_axis.toggle()
+           >>> chart.show()
 
         """
         self.visible = not self.visible
@@ -730,16 +791,19 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart with a reduced number of ticks on the x-axis.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.tick_count = 5
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Revert back to automatic tick behavior.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.tick_count = 5
+           >>> chart.show()
 
-        >>> chart.x_axis.tick_count = None
-        >>> chart.show()
+           Revert back to automatic tick behavior.
+
+           >>> chart.x_axis.tick_count = None
+           >>> chart.show()
 
         """
         return self.GetNumberOfTicks()
@@ -761,20 +825,23 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart with custom tick locations and labels on the y-axis.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
-        >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
-        ...                             "Small?", "Not large", "Large?",
-        ...                             "Very large"]
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Revert back to automatic tick placement.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
+           >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
+           ...                             "Small?", "Not large", "Large?",
+           ...                             "Very large"]
+           >>> chart.show()
 
-        >>> chart.y_axis.tick_locations = None
-        >>> chart.y_axis.tick_labels = None
-        >>> chart.show()
+           Revert back to automatic tick placement.
+
+           >>> chart.y_axis.tick_locations = None
+           >>> chart.y_axis.tick_labels = None
+           >>> chart.show()
 
         """
         positions = self.GetTickPositions()
@@ -808,25 +875,28 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart with custom tick locations and labels on the y-axis.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
-        >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
-        ...                             "Small?", "Not large", "Large?",
-        ...                             "Very large"]
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Revert back to automatic tick placement.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
+           >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
+           ...                             "Small?", "Not large", "Large?",
+           ...                             "Very large"]
+           >>> chart.show()
 
-        >>> chart.y_axis.tick_locations = None
-        >>> chart.y_axis.tick_labels = None
-        >>> chart.show()
+           Revert back to automatic tick placement.
 
-        Specify a custom label format to use (fixed notation with precision 2).
+           >>> chart.y_axis.tick_locations = None
+           >>> chart.y_axis.tick_labels = None
+           >>> chart.show()
 
-        >>> chart.y_axis.tick_labels = "2f"
-        >>> chart.show()
+           Specify a custom label format to use (fixed notation with precision 2).
+
+           >>> chart.y_axis.tick_labels = "2f"
+           >>> chart.show()
 
         """
         labels = self.GetTickLabels()
@@ -858,13 +928,16 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Set the x-axis tick label font size of a 2D chart to 20.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.tick_label_size = 20
-        >>> chart.x_axis.tick_label_size
-        20
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.tick_label_size = 20
+           >>> chart.x_axis.tick_label_size
+           20
+           >>> chart.show()
 
         """
         return self.GetLabelProperties().GetFontSize()
@@ -882,12 +955,15 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         Create a 2D chart with an x-axis with an increased tick size
         and adjusted offset for the tick labels.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.tick_size += 10
-        >>> chart.x_axis.tick_labels_offset += 12
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.tick_size += 10
+           >>> chart.x_axis.tick_labels_offset += 12
+           >>> chart.show()
 
         """
         return self.GetTickLength()
@@ -905,12 +981,15 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         Create a 2D chart with an x-axis with an increased tick size
         and adjusted offset for the tick labels.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.tick_size += 10
-        >>> chart.x_axis.tick_labels_offset += 12
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.tick_size += 10
+           >>> chart.x_axis.tick_labels_offset += 12
+           >>> chart.show()
 
         """
         return self.GetLabelOffset()
@@ -927,11 +1006,14 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart with hidden tick labels on the y-axis.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.y_axis.tick_labels_visible = False
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.y_axis.tick_labels_visible = False
+           >>> chart.show()
 
         """
         return self.GetLabelsVisible()
@@ -949,11 +1031,14 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         --------
         Create a 2D chart with hidden ticks on the y-axis.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.y_axis.ticks_visible = False
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.y_axis.ticks_visible = False
+           >>> chart.show()
 
         """
         return self.GetTicksVisible()
@@ -1006,7 +1091,7 @@ class _ChartBackground(_CustomContextItem):
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
-                self.ActiveBackgroundBrush if self._chart._interactive else self.BackgroundBrush
+                self.ActiveBackgroundBrush if self._chart._interactive else self.BackgroundBrush,
             )
             l, b, w, h = self._chart._geometry
             painter.DrawRect(l, b, w, h)
@@ -1023,7 +1108,7 @@ class _Chart(DocSubs):
     """Common pythonic interface for vtkChart, vtkChartBox, vtkChartPie and ChartMPL instances."""
 
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
-    _DOC_SUBS: Optional[Dict[str, str]] = None
+    _DOC_SUBS: dict[str, str] | None = None
 
     def __init__(self, size=(1, 1), loc=(0, 0)):
         super().__init__()
@@ -1065,7 +1150,7 @@ class _Chart(DocSubs):
         """
         # edge race case
         if self._renderer is None:  # pragma: no cover
-            return
+            return None
 
         r_w, r_h = self._renderer.GetSize()
         # Alternatively: self.scene.GetViewWidth(), self.scene.GetViewHeight()
@@ -1110,7 +1195,7 @@ class _Chart(DocSubs):
         l, b, w, h = self._geometry
         return l <= pos[0] <= l + w and b <= pos[1] <= b + h
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def size(self):  # numpydoc ignore=RT01
         """Return or set the chart size in normalized coordinates.
@@ -1122,11 +1207,14 @@ class _Chart(DocSubs):
         Create a half-sized {chart_name} centered in the middle of the
         renderer.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.size = (0.5, 0.5)
-        >>> chart.loc = (0.25, 0.25)
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.size = (0.5, 0.5)
+           >>> chart.loc = (0.25, 0.25)
+           >>> chart.show()
 
         """
         return self._size
@@ -1137,7 +1225,7 @@ class _Chart(DocSubs):
             raise ValueError(f'Invalid size {val}.')
         self._size = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def loc(self):  # numpydoc ignore=RT01
         """Return or set the chart position in normalized coordinates.
@@ -1149,11 +1237,14 @@ class _Chart(DocSubs):
         Create a half-sized {chart_name} centered in the middle of the
         renderer.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.size = (0.5, 0.5)
-        >>> chart.loc = (0.25, 0.25)
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.size = (0.5, 0.5)
+           >>> chart.loc = (0.25, 0.25)
+           >>> chart.show()
 
         """
         return self._loc
@@ -1164,7 +1255,7 @@ class _Chart(DocSubs):
             raise ValueError(f'Invalid loc {val}.')
         self._loc = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color.
@@ -1173,12 +1264,15 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name} with a thick, dashed red border.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.border_color = 'r'
-        >>> chart.border_width = 5
-        >>> chart.border_style = '--'
-        >>> chart.show(interactive=False)
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.border_color = 'r'
+           >>> chart.border_width = 5
+           >>> chart.border_style = '--'
+           >>> chart.show(interactive=False)
 
         """
         return self._background.BorderPen.color
@@ -1187,7 +1281,7 @@ class _Chart(DocSubs):
     def border_color(self, val):  # numpydoc ignore=GL08
         self._background.BorderPen.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def border_width(self):  # numpydoc ignore=RT01
         """Return or set the chart's border width.
@@ -1196,12 +1290,15 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name} with a thick, dashed red border.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.border_color = 'r'
-        >>> chart.border_width = 5
-        >>> chart.border_style = '--'
-        >>> chart.show(interactive=False)
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.border_color = 'r'
+           >>> chart.border_width = 5
+           >>> chart.border_style = '--'
+           >>> chart.show(interactive=False)
 
         """
         return self._background.BorderPen.width
@@ -1211,7 +1308,7 @@ class _Chart(DocSubs):
         self._background.BorderPen.width = val
         self._background.ActiveBorderPen.width = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def border_style(self):  # numpydoc ignore=RT01
         """Return or set the chart's border style.
@@ -1220,12 +1317,15 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name} with a thick, dashed red border.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.border_color = 'r'
-        >>> chart.border_width = 5
-        >>> chart.border_style = '--'
-        >>> chart.show(interactive=False)
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.border_color = 'r'
+           >>> chart.border_width = 5
+           >>> chart.border_style = '--'
+           >>> chart.show(interactive=False)
 
         """
         return self._background.BorderPen.style
@@ -1235,7 +1335,7 @@ class _Chart(DocSubs):
         self._background.BorderPen.style = val
         self._background.ActiveBorderPen.style = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def active_border_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's border color in interactive mode.
@@ -1244,17 +1344,20 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name} with a thick, dashed red border.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.border_color = 'r'
-        >>> chart.border_width = 5
-        >>> chart.border_style = '--'
-        >>> chart.show(interactive=False)
+        .. pyvista-plot::
+           :force_static:
 
-        Set the active border color to yellow and activate the chart.
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.border_color = 'r'
+           >>> chart.border_width = 5
+           >>> chart.border_style = '--'
+           >>> chart.show(interactive=False)
 
-        >>> chart.active_border_color = 'y'
-        >>> chart.show(interactive=True)
+           Set the active border color to yellow and activate the chart.
+
+           >>> chart.active_border_color = 'y'
+           >>> chart.show(interactive=True)
 
         """
         return self._background.ActiveBorderPen.color
@@ -1263,7 +1366,7 @@ class _Chart(DocSubs):
     def active_border_color(self, val):  # numpydoc ignore=GL08
         self._background.ActiveBorderPen.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color.
@@ -1272,10 +1375,13 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name} with a green background.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.background_color = (0.5, 0.9, 0.5)
-        >>> chart.show(interactive=False)
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.background_color = (0.5, 0.9, 0.5)
+           >>> chart.show(interactive=False)
 
         """
         return self._background.BackgroundBrush.color
@@ -1284,7 +1390,7 @@ class _Chart(DocSubs):
     def background_color(self, val):  # numpydoc ignore=GL08
         self._background.BackgroundBrush.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def background_texture(self):  # numpydoc ignore=RT01
         """Return or set the chart's background texture.
@@ -1293,11 +1399,14 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name} with an emoji as its background.
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.background_texture = examples.download_emoji_texture()
-        >>> chart.show(interactive=False)
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> from pyvista import examples
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.background_texture = examples.download_emoji_texture()
+           >>> chart.show(interactive=False)
 
         """
         return self._background.BackgroundBrush.texture
@@ -1307,7 +1416,7 @@ class _Chart(DocSubs):
         self._background.BackgroundBrush.texture = val
         self._background.ActiveBackgroundBrush.texture = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def active_background_color(self):  # numpydoc ignore=RT01
         """Return or set the chart's background color in interactive mode.
@@ -1316,15 +1425,18 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name} with a green background.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.background_color = (0.5, 0.9, 0.5)
-        >>> chart.show(interactive=False)
+        .. pyvista-plot::
+           :force_static:
 
-        Set the active background color to blue and activate the chart.
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.background_color = (0.5, 0.9, 0.5)
+           >>> chart.show(interactive=False)
 
-        >>> chart.active_background_color = 'b'
-        >>> chart.show(interactive=True)
+           Set the active background color to blue and activate the chart.
+
+           >>> chart.active_background_color = 'b'
+           >>> chart.show(interactive=True)
 
         """
         return self._background.ActiveBackgroundBrush.color
@@ -1333,7 +1445,7 @@ class _Chart(DocSubs):
     def active_background_color(self, val):  # numpydoc ignore=GL08
         self._background.ActiveBackgroundBrush.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def visible(self):  # numpydoc ignore=RT01
         """Return or set the chart's visibility.
@@ -1342,14 +1454,17 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name}.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Hide it.
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.show()
 
-        >>> chart.visible = False
-        >>> chart.show()
+           Hide it.
+
+           >>> chart.visible = False
+           >>> chart.show()
 
         """
         return self.GetVisible()
@@ -1366,19 +1481,22 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name}.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Hide it.
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.show()
 
-        >>> chart.toggle()
-        >>> chart.show()
+           Hide it.
+
+           >>> chart.toggle()
+           >>> chart.show()
 
         """
         self.visible = not self.visible
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def title(self):  # numpydoc ignore=RT01
         """Return or set the chart's title.
@@ -1387,10 +1505,13 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name} with title 'My Chart'.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.title = 'My Chart'
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.title = 'My Chart'
+           >>> chart.show()
 
         """
         return self.GetTitle()
@@ -1399,7 +1520,7 @@ class _Chart(DocSubs):
     def title(self, val):  # numpydoc ignore=GL08
         self.SetTitle(val)
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def legend_visible(self):  # numpydoc ignore=RT01
         """Return or set the visibility of the chart's legend.
@@ -1408,15 +1529,18 @@ class _Chart(DocSubs):
         --------
         Create a {chart_name} with custom labels.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> {chart_set_labels}
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Hide the legend.
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> {chart_set_labels}
+           >>> chart.show()
 
-        >>> chart.legend_visible = False
-        >>> chart.show()
+           Hide the legend.
+
+           >>> chart.legend_visible = False
+           >>> chart.show()
 
         """
         return self.GetShowLegend()
@@ -1435,7 +1559,7 @@ class _Chart(DocSubs):
         window_size=None,
         notebook=None,
         background='w',
-        dev_kwargs={},
+        dev_kwargs=None,
     ):
         """Show this chart in a self contained plotter.
 
@@ -1491,11 +1615,16 @@ class _Chart(DocSubs):
         --------
         Create a simple {chart_name} and show it.
 
-        >>> import pyvista as pv
-        >>> chart = pv.{cls}({chart_args}){chart_init}
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.{cls}({chart_args}){chart_init}
+           >>> chart.show()
 
         """
+        if dev_kwargs is None:
+            dev_kwargs = {}
         if off_screen is None:
             off_screen = pyvista.OFF_SCREEN
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
@@ -1514,7 +1643,7 @@ class _Plot(DocSubs):
     """Common pythonic interface for vtkPlot and vtkPlot3D instances."""
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
-    _DOC_SUBS: Optional[Dict[str, str]] = None
+    _DOC_SUBS: dict[str, str] | None = None
 
     def __init__(self, chart):
         super().__init__()
@@ -1527,7 +1656,7 @@ class _Plot(DocSubs):
         if hasattr(self, "SetBrush"):
             self.SetBrush(self._brush)
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
@@ -1538,11 +1667,14 @@ class _Plot(DocSubs):
         --------
         Set the {plot_name}'s color to red.
 
-        >>> import pyvista as pv
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> plot.color = 'r'
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> plot.color = 'r'
+           >>> chart.show()
 
         """
         return self.pen.color
@@ -1552,7 +1684,7 @@ class _Plot(DocSubs):
         self.pen.color = val
         self.brush.color = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def pen(self):  # numpydoc ignore=RT01
         """Pen object controlling how lines in this plot are drawn.
@@ -1566,17 +1698,20 @@ class _Plot(DocSubs):
         --------
         Increase the line width of the {plot_name}'s pen object.
 
-        >>> import pyvista as pv
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> plot.line_style = '-'  # Make sure all lines are visible
-        >>> plot.pen.width = 10
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> plot.line_style = '-'  # Make sure all lines are visible
+           >>> plot.pen.width = 10
+           >>> chart.show()
 
         """
         return self._pen
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def brush(self):  # numpydoc ignore=RT01
         """Brush object controlling how shapes in this plot are filled.
@@ -1590,17 +1725,20 @@ class _Plot(DocSubs):
         --------
         Use a custom texture for the {plot_name}'s brush object.
 
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> plot.brush.texture = examples.download_puppy_texture()
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> from pyvista import examples
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> plot.brush.texture = examples.download_puppy_texture()
+           >>> chart.show()
 
         """
         return self._brush
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def line_width(self):  # numpydoc ignore=RT01
         """Return or set the line width of all lines drawn in this plot.
@@ -1611,12 +1749,15 @@ class _Plot(DocSubs):
         --------
         Set the line width to 10
 
-        >>> import pyvista as pv
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> plot.line_style = '-'  # Make sure all lines are visible
-        >>> plot.line_width = 10
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> plot.line_style = '-'  # Make sure all lines are visible
+           >>> plot.line_width = 10
+           >>> chart.show()
 
         """
         return self.pen.width
@@ -1625,7 +1766,7 @@ class _Plot(DocSubs):
     def line_width(self, val):  # numpydoc ignore=GL08
         self.pen.width = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def line_style(self):  # numpydoc ignore=RT01
         """Return or set the line style of all lines drawn in this plot.
@@ -1636,11 +1777,14 @@ class _Plot(DocSubs):
         --------
         Set a custom line style.
 
-        >>> import pyvista as pv
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> plot.line_style = '-.'
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> plot.line_style = '-.'
+           >>> chart.show()
 
         """
         return self.pen.style
@@ -1649,7 +1793,7 @@ class _Plot(DocSubs):
     def line_style(self, val):  # numpydoc ignore=GL08
         self.pen.style = val
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.
@@ -1658,11 +1802,14 @@ class _Plot(DocSubs):
         --------
         Create a {plot_name} with custom label.
 
-        >>> import pyvista as pv
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> plot.label = "My awesome plot"
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> plot.label = "My awesome plot"
+           >>> chart.show()
 
         """
         return self._label
@@ -1672,7 +1819,7 @@ class _Plot(DocSubs):
         self._label = "" if val is None else val
         self.SetLabel(self._label)
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def visible(self):  # numpydoc ignore=RT01
         """Return or set the this plot's visibility.
@@ -1681,15 +1828,18 @@ class _Plot(DocSubs):
         --------
         Create a {plot_name}.
 
-        >>> import pyvista as pv
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Hide it.
+           >>> import pyvista as pv
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> chart.show()
 
-        >>> plot.visible = False
-        >>> chart.show()
+           Hide it.
+
+           >>> plot.visible = False
+           >>> chart.show()
 
         """
         return self.GetVisible()
@@ -1706,15 +1856,18 @@ class _Plot(DocSubs):
         --------
         Create a {plot_name}.
 
-        >>> import pyvista as pv
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Hide it.
+           >>> import pyvista as pv
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> chart.show()
 
-        >>> plot.toggle()
-        >>> chart.show()
+           Hide it.
+
+           >>> plot.toggle()
+           >>> chart.show()
 
         """
         self.visible = not self.visible
@@ -1729,7 +1882,7 @@ class _MultiCompPlot(_Plot):
     DEFAULT_COLOR_SCHEME = "qual_accent"
 
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
-    _DOC_SUBS: Optional[Dict[str, str]] = None
+    _DOC_SUBS: dict[str, str] | None = None
 
     def __init__(self, chart):
         super().__init__(chart)
@@ -1739,7 +1892,7 @@ class _MultiCompPlot(_Plot):
         self.SetLabels(self._labels)
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def color_scheme(self):  # numpydoc ignore=RT01
         """Return or set the plot's color scheme.
@@ -1761,11 +1914,14 @@ class _MultiCompPlot(_Plot):
         --------
         Set the {plot_name}'s color scheme to warm.
 
-        >>> import pyvista as pv
-        >>> chart = {multichart_init}
-        >>> plot = {multiplot_init}
-        >>> plot.color_scheme = "warm"
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = {multichart_init}
+           >>> plot = {multiplot_init}
+           >>> plot.color_scheme = "warm"
+           >>> chart.show()
 
         """
         return SCHEME_NAMES.get(self._color_series.GetColorScheme(), "custom")
@@ -1776,7 +1932,7 @@ class _MultiCompPlot(_Plot):
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def colors(self):  # numpydoc ignore=RT01
         """Return or set the plot's colors.
@@ -1788,11 +1944,14 @@ class _MultiCompPlot(_Plot):
         --------
         Set the {plot_name}'s colors manually.
 
-        >>> import pyvista as pv
-        >>> chart = {multichart_init}
-        >>> plot = {multiplot_init}
-        >>> plot.colors = ["b", "g", "r", "c"]
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = {multichart_init}
+           >>> plot = {multiplot_init}
+           >>> plot.colors = ["b", "g", "r", "c"]
+           >>> chart.show()
 
         """
         return [
@@ -1814,16 +1973,17 @@ class _MultiCompPlot(_Plot):
                 for i, color in enumerate(val):
                     self._color_series.SetColor(i, Color(color).vtk_c3ub)
                 self._color_series.BuildLookupTable(
-                    self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL
+                    self._lookup_table,
+                    _vtk.vtkColorSeries.CATEGORICAL,
                 )
                 self.brush.color = self.colors[0]  # Synchronize "color" and "colors" properties
             except ValueError as e:
                 self.color_scheme = self.DEFAULT_COLOR_SCHEME
                 raise ValueError(
-                    "Invalid colors specified, falling back to default color scheme."
+                    "Invalid colors specified, falling back to default color scheme.",
                 ) from e
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def color(self):  # numpydoc ignore=RT01
         """Return or set the plot's color.
@@ -1835,11 +1995,14 @@ class _MultiCompPlot(_Plot):
         --------
         Set the {plot_name}'s color to red.
 
-        >>> import pyvista as pv
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> plot.color = 'r'
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> plot.color = 'r'
+           >>> chart.show()
 
         """
         return self.brush.color
@@ -1850,7 +2013,7 @@ class _MultiCompPlot(_Plot):
         # (and their internal representations through color series, lookup tables and brushes) stay synchronized.
         self.colors = [val]
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def labels(self):  # numpydoc ignore=RT01
         """Return or set the this plot's labels, as shown in the chart's legend.
@@ -1859,15 +2022,18 @@ class _MultiCompPlot(_Plot):
         --------
         Create a {plot_name}.
 
-        >>> import pyvista as pv
-        >>> chart = {multichart_init}
-        >>> plot = {multiplot_init}
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Modify the labels.
+           >>> import pyvista as pv
+           >>> chart = {multichart_init}
+           >>> plot = {multiplot_init}
+           >>> chart.show()
 
-        >>> plot.labels = ["A", "B", "C", "D"]
-        >>> chart.show()
+           Modify the labels.
+
+           >>> plot.labels = ["A", "B", "C", "D"]
+           >>> chart.show()
 
         """
         return [self._labels.GetValue(i) for i in range(self._labels.GetNumberOfValues())]
@@ -1884,7 +2050,7 @@ class _MultiCompPlot(_Plot):
         except TypeError:
             raise ValueError("Invalid labels specified.")
 
-    @property  # type: ignore
+    @property
     @doc_subs
     def label(self):  # numpydoc ignore=RT01
         """Return or set the this plot's label, as shown in the chart's legend.
@@ -1893,16 +2059,19 @@ class _MultiCompPlot(_Plot):
         --------
         Create a {plot_name} with custom label.
 
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> chart = {chart_init}
-        >>> plot = {plot_init}
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Modify the label.
+           >>> import pyvista as pv
+           >>> import numpy as np
+           >>> chart = {chart_init}
+           >>> plot = {plot_init}
+           >>> chart.show()
 
-        >>> plot.label = "My awesome plot"
-        >>> chart.show()
+           Modify the label.
+
+           >>> plot.label = "My awesome plot"
+           >>> chart.show()
 
         """
         return self.labels[0] if self._labels.GetNumberOfValues() > 0 else ""
@@ -1914,7 +2083,7 @@ class _MultiCompPlot(_Plot):
         self.labels = None if val is None else [val]
 
 
-class LinePlot2D(_vtk.vtkPlotLine, _Plot):
+class LinePlot2D(_Plot, _vtk.vtkPlotLine):
     """Class representing a 2D line plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -1948,27 +2117,38 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
     Create a 2D chart plotting an approximate satellite
     trajectory.
 
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>> import numpy as np
-    >>> chart = pv.Chart2D()
-    >>> x = np.linspace(0, 1, 100)
-    >>> y = np.sin(6.5*x-1)
-    >>> _ = chart.line(x, y, "y", 4)
-    >>> chart.background_texture = examples.load_globe_texture()
-    >>> chart.hide_axes()
-    >>> chart.show()
+
+    .. pyvista-plot::
+       :force_static:
+
+       >>> import pyvista as pv
+       >>> from pyvista import examples
+       >>> import numpy as np
+       >>> chart = pv.Chart2D()
+       >>> x = np.linspace(0, 1, 100)
+       >>> y = np.sin(6.5*x-1)
+       >>> _ = chart.line(x, y, "y", 4)
+       >>> chart.background_texture = examples.load_globe_texture()
+       >>> chart.hide_axes()
+       >>> chart.show()
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "2D line plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.line([0, 1, 2], [2, 1, 3])",
     }
 
     def __init__(
-        self, chart, x, y, color="b", width=1.0, style="-", label=""
+        self,
+        chart,
+        x,
+        y,
+        color="b",
+        width=1.0,
+        style="-",
+        label="",
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
@@ -1988,12 +2168,15 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         --------
         Create a line plot and display the x coordinates.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
-        >>> plot.x
-        pyvista_ndarray([0, 1, 2])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+           >>> plot.x
+           pyvista_ndarray([0, 1, 2])
+           >>> chart.show()
 
         """
         return self._table["x"]
@@ -2006,12 +2189,15 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         --------
         Create a line plot and display the y coordinates.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
-        >>> plot.y
-        pyvista_ndarray([2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+           >>> plot.y
+           pyvista_ndarray([2, 1, 3])
+           >>> chart.show()
 
         """
         return self._table["y"]
@@ -2031,26 +2217,29 @@ class LinePlot2D(_vtk.vtkPlotLine, _Plot):
         --------
         Create a line plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Update the line's y coordinates.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.show()
 
-        >>> plot.update([0, 1, 2], [3, 1, 2])
-        >>> chart.show()
+           Update the line's y coordinates.
+
+           >>> plot.update([0, 1, 2], [3, 1, 2])
+           >>> chart.show()
 
         """
         if len(x) > 1:
-            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+            self._table.update({"x": np.asarray(x), "y": np.asarray(y)})
             self.visible = True
         else:
             # Turn off visibility for fewer than 2 points as otherwise an error message is shown
             self.visible = False
 
 
-class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
+class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
     """Class representing a 2D scatter plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -2092,17 +2281,22 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
     --------
     Plot a simple sine wave as a scatter plot.
 
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> x = np.linspace(0, 2*np.pi, 20)
-    >>> y = np.sin(x)
-    >>> chart = pv.Chart2D()
-    >>> _ = chart.scatter(x, y)
-    >>> chart.show()
+    .. pyvista-plot::
+       :force_static:
+
+       >>> import pyvista as pv
+       >>> import numpy as np
+       >>> x = np.linspace(0, 2*np.pi, 20)
+       >>> y = np.sin(x)
+       >>> chart = pv.Chart2D()
+       >>> _ = chart.scatter(x, y)
+       >>> chart.show()
 
     """
 
-    MARKER_STYLES = {  # descr is used in the documentation, set to None to hide it from the docs.
+    MARKER_STYLES: ClassVar[
+        dict[str, dict[str, int | str]]
+    ] = {  # descr is used in the documentation, set to None to hide it from the docs.
         "": {"id": _vtk.vtkPlotPoints.NONE, "descr": "Hidden"},
         "x": {"id": _vtk.vtkPlotPoints.CROSS, "descr": "Cross"},
         "+": {"id": _vtk.vtkPlotPoints.PLUS, "descr": "Plus"},
@@ -2110,14 +2304,21 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         "o": {"id": _vtk.vtkPlotPoints.CIRCLE, "descr": "Circle"},
         "d": {"id": _vtk.vtkPlotPoints.DIAMOND, "descr": "Diamond"},
     }
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "2D scatter plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])",
     }
 
     def __init__(
-        self, chart, x, y, color="b", size=10, style="o", label=""
+        self,
+        chart,
+        x,
+        y,
+        color="b",
+        size=10,
+        style="o",
+        label="",
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
@@ -2137,12 +2338,15 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         --------
         Create a scatter plot and display the x coordinates.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
-        >>> plot.x
-        pyvista_ndarray([0, 1, 2, 3, 4])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
+           >>> plot.x
+           pyvista_ndarray([0, 1, 2, 3, 4])
+           >>> chart.show()
 
         """
         return self._table["x"]
@@ -2155,12 +2359,15 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         --------
         Create a scatter plot and display the y coordinates.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
-        >>> plot.y
-        pyvista_ndarray([2, 1, 3, 4, 2])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
+           >>> plot.y
+           pyvista_ndarray([2, 1, 3, 4, 2])
+           >>> chart.show()
 
         """
         return self._table["y"]
@@ -2180,19 +2387,22 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         --------
         Create a scatter plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Update the marker locations.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
+           >>> chart.show()
 
-        >>> plot.update([0, 1, 2, 3, 4], [3, 2, 4, 2, 1])
-        >>> chart.show()
+           Update the marker locations.
+
+           >>> plot.update([0, 1, 2, 3, 4], [3, 2, 4, 2, 1])
+           >>> chart.show()
 
         """
         if len(x) > 0:
-            self._table.update({"x": np.array(x, copy=False), "y": np.array(y, copy=False)})
+            self._table.update({"x": np.asarray(x), "y": np.asarray(y)})
             self.visible = True
         else:
             self.visible = False
@@ -2205,15 +2415,18 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         --------
         Create a 2D scatter plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Increase the marker size.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
+           >>> chart.show()
 
-        >>> plot.marker_size = 30
-        >>> chart.show()
+           Increase the marker size.
+
+           >>> plot.marker_size = 30
+           >>> chart.show()
 
         """
         return self.GetMarkerSize()
@@ -2230,15 +2443,18 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
         --------
         Create a 2D scatter plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Change the marker style.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.scatter([0, 1, 2, 3, 4], [2, 1, 3, 4, 2])
+           >>> chart.show()
 
-        >>> plot.marker_style = "d"
-        >>> chart.show()
+           Change the marker style.
+
+           >>> plot.marker_style = "d"
+           >>> chart.show()
 
         """
         return self._marker_style
@@ -2255,7 +2471,7 @@ class ScatterPlot2D(_vtk.vtkPlotPoints, _Plot):
             raise ValueError(f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"")
 
 
-class AreaPlot(_vtk.vtkPlotArea, _Plot):
+class AreaPlot(_Plot, _vtk.vtkPlotArea):
     """Class representing a 2D area plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -2285,24 +2501,27 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
     --------
     Create an area plot showing the minimum and maximum precipitation observed in each month.
 
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> x = np.arange(12)
-    >>> p_min = [11, 0, 16, 2, 23, 18, 25, 17, 9, 12, 14, 21]
-    >>> p_max = [87, 64, 92, 73, 91, 94, 107, 101, 84, 88, 95, 103]
-    >>> chart = pv.Chart2D()
-    >>> _ = chart.area(x, p_min, p_max)
-    >>> chart.x_axis.tick_locations = x
-    >>> chart.x_axis.tick_labels = ["Jan", "Feb", "Mar", "Apr", "May",
-    ...                             "Jun", "Jul", "Aug", "Sep", "Oct",
-    ...                             "Nov", "Dec"]
-    >>> chart.x_axis.label = "Month"
-    >>> chart.y_axis.label = "Precipitation [mm]"
-    >>> chart.show()
+    .. pyvista-plot::
+       :force_static:
+
+       >>> import pyvista as pv
+       >>> import numpy as np
+       >>> x = np.arange(12)
+       >>> p_min = [11, 0, 16, 2, 23, 18, 25, 17, 9, 12, 14, 21]
+       >>> p_max = [87, 64, 92, 73, 91, 94, 107, 101, 84, 88, 95, 103]
+       >>> chart = pv.Chart2D()
+       >>> _ = chart.area(x, p_min, p_max)
+       >>> chart.x_axis.tick_locations = x
+       >>> chart.x_axis.tick_labels = ["Jan", "Feb", "Mar", "Apr", "May",
+       ...                             "Jun", "Jul", "Aug", "Sep", "Oct",
+       ...                             "Nov", "Dec"]
+       >>> chart.x_axis.label = "Month"
+       >>> chart.y_axis.label = "Precipitation [mm]"
+       >>> chart.show()
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "area plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])",
@@ -2316,7 +2535,7 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                 "x": np.empty(0, np.float32),
                 "y1": np.empty(0, np.float32),
                 "y2": np.empty(0, np.float32),
-            }
+            },
         )
         self.SetInputData(self._table)
         self.SetInputArray(0, "x")
@@ -2334,12 +2553,15 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         --------
         Create an area plot and display the x coordinates.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [1, 0, 1])
-        >>> plot.x
-        pyvista_ndarray([0, 1, 2])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.area([0, 1, 2], [2, 1, 3], [1, 0, 1])
+           >>> plot.x
+           pyvista_ndarray([0, 1, 2])
+           >>> chart.show()
 
         """
         return self._table["x"]
@@ -2352,12 +2574,15 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         --------
         Create an area plot and display the y1 coordinates.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [1, 0, 1])
-        >>> plot.y1
-        pyvista_ndarray([2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.area([0, 1, 2], [2, 1, 3], [1, 0, 1])
+           >>> plot.y1
+           pyvista_ndarray([2, 1, 3])
+           >>> chart.show()
 
         """
         return self._table["y1"]
@@ -2370,12 +2595,15 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         --------
         Create an area plot and display the y2 coordinates.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [2, 1, 3], [1, 0, 1])
-        >>> plot.y2
-        pyvista_ndarray([1, 0, 1])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.area([0, 1, 2], [2, 1, 3], [1, 0, 1])
+           >>> plot.y2
+           pyvista_ndarray([1, 0, 1])
+           >>> chart.show()
 
         """
         return self._table["y2"]
@@ -2399,15 +2627,18 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
         --------
         Create an area plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Update the points on the second outline of the area.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.area([0, 1, 2], [2, 1, 3])
+           >>> chart.show()
 
-        >>> plot.update([0, 1, 2], [2, 1, 3], [1, 0, 1])
-        >>> chart.show()
+           Update the points on the second outline of the area.
+
+           >>> plot.update([0, 1, 2], [2, 1, 3], [1, 0, 1])
+           >>> chart.show()
 
         """
         if len(x) > 0:
@@ -2415,17 +2646,17 @@ class AreaPlot(_vtk.vtkPlotArea, _Plot):
                 y2 = np.zeros_like(x)
             self._table.update(
                 {
-                    "x": np.array(x, copy=False),
-                    "y1": np.array(y1, copy=False),
-                    "y2": np.array(y2, copy=False),
-                }
+                    "x": np.asarray(x),
+                    "y1": np.asarray(y1),
+                    "y2": np.asarray(y2),
+                },
             )
             self.visible = True
         else:
             self.visible = False
 
 
-class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
+class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
     """Class representing a 2D bar plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -2457,28 +2688,34 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     Create a stacked bar chart showing the average time spent on activities
     throughout the week.
 
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> x = np.arange(1, 8)
-    >>> y_s = [7, 8, 7.5, 8, 7.5, 9, 10]
-    >>> y_h = [2, 3, 2, 2.5, 1.5, 4, 6.5]
-    >>> y_w = [8, 8, 7, 8, 7, 0, 0]
-    >>> y_r = [5, 2.5, 4.5, 3.5, 6, 9, 6.5]
-    >>> y_t = [2, 2.5, 3, 2, 2, 2, 1]
-    >>> labels = ["Sleep", "Household", "Work", "Relax", "Transport"]
-    >>> chart = pv.Chart2D()
-    >>> _ = chart.bar(x, [y_s, y_h, y_w, y_r, y_t], label=labels)
-    >>> chart.x_axis.tick_locations = x
-    >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    >>> chart.x_label = "Day of week"
-    >>> chart.y_label = "Average time spent"
-    >>> chart.grid = False  # Disable the grid lines
-    >>> chart.show()
+    .. pyvista-plot::
+       :force_static:
+
+       >>> import pyvista as pv
+       >>> import numpy as np
+       >>> x = np.arange(1, 8)
+       >>> y_s = [7, 8, 7.5, 8, 7.5, 9, 10]
+       >>> y_h = [2, 3, 2, 2.5, 1.5, 4, 6.5]
+       >>> y_w = [8, 8, 7, 8, 7, 0, 0]
+       >>> y_r = [5, 2.5, 4.5, 3.5, 6, 9, 6.5]
+       >>> y_t = [2, 2.5, 3, 2, 2, 2, 1]
+       >>> labels = ["Sleep", "Household", "Work", "Relax", "Transport"]
+       >>> chart = pv.Chart2D()
+       >>> _ = chart.bar(x, [y_s, y_h, y_w, y_r, y_t], label=labels)
+       >>> chart.x_axis.tick_locations = x
+       >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+       >>> chart.x_label = "Day of week"
+       >>> chart.y_label = "Average time spent"
+       >>> chart.grid = False  # Disable the grid lines
+       >>> chart.show()
 
     """
 
-    ORIENTATIONS = {"H": _vtk.vtkPlotBar.HORIZONTAL, "V": _vtk.vtkPlotBar.VERTICAL}
-    _DOC_SUBS = {
+    ORIENTATIONS: ClassVar[dict[str, int]] = {
+        "H": _vtk.vtkPlotBar.HORIZONTAL,
+        "V": _vtk.vtkPlotBar.VERTICAL,
+    }
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "bar plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.bar([1, 2, 3], [2, 1, 3])",
@@ -2487,7 +2724,13 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
     }
 
     def __init__(
-        self, chart, x, y, color=None, orientation="V", label=None
+        self,
+        chart,
+        x,
+        y,
+        color=None,
+        orientation="V",
+        label=None,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D bar plot instance."""
         super().__init__(chart)
@@ -2518,12 +2761,15 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         --------
         Create a bar plot and display the positions.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.bar([1, 2, 3], [[2, 1, 3], [1, 2, 0]])
-        >>> plot.x
-        pyvista_ndarray([1, 2, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.bar([1, 2, 3], [[2, 1, 3], [1, 2, 0]])
+           >>> plot.x
+           pyvista_ndarray([1, 2, 3])
+           >>> chart.show()
 
         """
         return self._table["x"]
@@ -2536,12 +2782,15 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         --------
         Create a bar plot and display the sizes.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.bar([1, 2, 3], [[2, 1, 3], [1, 2, 0]])
-        >>> plot.y
-        (pyvista_ndarray([2, 1, 3]), pyvista_ndarray([1, 2, 0]))
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.bar([1, 2, 3], [[2, 1, 3], [1, 2, 0]])
+           >>> plot.y
+           (pyvista_ndarray([2, 1, 3]), pyvista_ndarray([1, 2, 0]))
+           >>> chart.show()
 
         """
         return tuple(self._table[f"y{i}"] for i in range(self._table.n_arrays - 1))
@@ -2561,22 +2810,25 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         --------
         Create a bar plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.bar([1, 2, 3], [2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Update the bar sizes.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.bar([1, 2, 3], [2, 1, 3])
+           >>> chart.show()
 
-        >>> plot.update([1, 2, 3], [3, 1, 2])
-        >>> chart.show()
+           Update the bar sizes.
+
+           >>> plot.update([1, 2, 3], [3, 1, 2])
+           >>> chart.show()
 
         """
         if len(x) > 0:
             if not isinstance(y[0], (Sequence, np.ndarray)):
                 y = (y,)
-            y_data = {f"y{i}": np.array(y[i], copy=False) for i in range(len(y))}
-            self._table.update({"x": np.array(x, copy=False), **y_data})
+            y_data = {f"y{i}": np.asarray(y[i]) for i in range(len(y))}
+            self._table.update({"x": np.asarray(x), **y_data})
             self.visible = True
         else:
             self.visible = False
@@ -2589,15 +2841,18 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         --------
         Create a bar plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.bar([1, 2, 3], [[2, 1, 3], [1, 3, 2]])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Change the orientation to horizontal.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.bar([1, 2, 3], [[2, 1, 3], [1, 3, 2]])
+           >>> chart.show()
 
-        >>> plot.orientation = "H"
-        >>> chart.show()
+           Change the orientation to horizontal.
+
+           >>> plot.orientation = "H"
+           >>> chart.show()
 
         """
         return self._orientation
@@ -2610,11 +2865,11 @@ class BarPlot(_vtk.vtkPlotBar, _MultiCompPlot):
         except KeyError:
             formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
             raise ValueError(
-                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\""
+                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"",
             )
 
 
-class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
+class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
     """Class representing a 2D stack plot.
 
     Users should typically not directly create new plot instances, but use the dedicated 2D chart's plotting methods.
@@ -2644,28 +2899,31 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
     --------
     Create a stack plot showing the amount of vehicles sold per type.
 
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> year = [f"{y}" for y in np.arange(2011, 2021)]
-    >>> x = np.arange(len(year))
-    >>> n_e = [1739, 4925, 9515, 21727, 31452, 29926, 40648,
-    ...        57761, 76370, 93702]
-    >>> n_h = [5563, 7642, 11937, 13905, 22807, 46700, 60875,
-    ...        53689, 46650, 50321]
-    >>> n_f = [166556, 157249, 151552, 138183, 129669,
-    ...        113985, 92965, 73683, 57097, 29499]
-    >>> chart = pv.Chart2D()
-    >>> plot = chart.stack(x, [n_e, n_h, n_f])
-    >>> plot.labels = ["Electric", "Hybrid", "Fossil"]
-    >>> chart.x_axis.label = "Year"
-    >>> chart.x_axis.tick_locations = x
-    >>> chart.x_axis.tick_labels = year
-    >>> chart.y_axis.label = "New car sales"
-    >>> chart.show()
+    .. pyvista-plot::
+       :force_static:
+
+       >>> import pyvista as pv
+       >>> import numpy as np
+       >>> year = [f"{y}" for y in np.arange(2011, 2021)]
+       >>> x = np.arange(len(year))
+       >>> n_e = [1739, 4925, 9515, 21727, 31452, 29926, 40648,
+       ...        57761, 76370, 93702]
+       >>> n_h = [5563, 7642, 11937, 13905, 22807, 46700, 60875,
+       ...        53689, 46650, 50321]
+       >>> n_f = [166556, 157249, 151552, 138183, 129669,
+       ...        113985, 92965, 73683, 57097, 29499]
+       >>> chart = pv.Chart2D()
+       >>> plot = chart.stack(x, [n_e, n_h, n_f])
+       >>> plot.labels = ["Electric", "Hybrid", "Fossil"]
+       >>> chart.x_axis.label = "Year"
+       >>> chart.x_axis.tick_locations = x
+       >>> chart.x_axis.tick_labels = year
+       >>> chart.y_axis.label = "New car sales"
+       >>> chart.show()
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "stack plot",
         "chart_init": "pv.Chart2D()",
         "plot_init": "chart.stack([0, 1, 2], [2, 1, 3])",
@@ -2702,12 +2960,15 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         --------
         Create a stack plot and display the x coordinates.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
-        >>> plot.x
-        pyvista_ndarray([0, 1, 2])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+           >>> plot.x
+           pyvista_ndarray([0, 1, 2])
+           >>> chart.show()
 
         """
         return self._table["x"]
@@ -2720,12 +2981,15 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         --------
         Create a stack plot and display the sizes.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
-        >>> plot.ys
-        (pyvista_ndarray([2, 1, 3]), pyvista_ndarray([1, 2, 0]))
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
+           >>> plot.ys
+           (pyvista_ndarray([2, 1, 3]), pyvista_ndarray([1, 2, 0]))
+           >>> chart.show()
 
         """
         return tuple(self._table[f"y{i}"] for i in range(self._table.n_arrays - 1))
@@ -2745,28 +3009,31 @@ class StackPlot(_vtk.vtkPlotStacked, _MultiCompPlot):
         --------
         Create a stack plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Update the stack sizes.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
+           >>> chart.show()
 
-        >>> plot.update([0, 1, 2], [[3, 1, 2], [0, 3, 1]])
-        >>> chart.show()
+           Update the stack sizes.
+
+           >>> plot.update([0, 1, 2], [[3, 1, 2], [0, 3, 1]])
+           >>> chart.show()
 
         """
         if len(x) > 0:
             if not isinstance(ys[0], (Sequence, np.ndarray)):
                 ys = (ys,)
-            y_data = {f"y{i}": np.array(ys[i], copy=False) for i in range(len(ys))}
-            self._table.update({"x": np.array(x, copy=False), **y_data})
+            y_data = {f"y{i}": np.asarray(ys[i]) for i in range(len(ys))}
+            self._table.update({"x": np.asarray(x), **y_data})
             self.visible = True
         else:
             self.visible = False
 
 
-class Chart2D(_vtk.vtkChartXY, _Chart):
+class Chart2D(_Chart, _vtk.vtkChartXY):
     """2D chart class similar to a ``matplotlib`` figure.
 
     Parameters
@@ -2795,59 +3062,77 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
     --------
     Plot a simple sine wave as a scatter and line plot.
 
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> x = np.linspace(0, 2*np.pi, 20)
-    >>> y = np.sin(x)
-    >>> chart = pv.Chart2D()
-    >>> _ = chart.scatter(x, y)
-    >>> _ = chart.line(x, y, 'r')
-    >>> chart.show()
+    .. pyvista-plot::
+       :force_static:
 
-    Combine multiple types of plots in the same chart.
+       >>> import pyvista as pv
+       >>> import numpy as np
+       >>> x = np.linspace(0, 2*np.pi, 20)
+       >>> y = np.sin(x)
+       >>> chart = pv.Chart2D()
+       >>> _ = chart.scatter(x, y)
+       >>> _ = chart.line(x, y, 'r')
+       >>> chart.show()
 
-    >>> rng = np.random.default_rng(1)
-    >>> x = np.arange(1, 8)
-    >>> y = rng.integers(5, 15, 7)
-    >>> e = np.abs(rng.normal(scale=2, size=7))
-    >>> z = rng.integers(0, 5, 7)
-    >>> chart = pv.Chart2D()
-    >>> _ = chart.area(x, y-e, y+e, color=(0.12, 0.46, 0.71, 0.2))
-    >>> _ = chart.line(x, y, color="tab:blue", style="--", label="Scores")
-    >>> _ = chart.scatter(x, y, color="tab:blue", style="d")
-    >>> _ = chart.bar(x, z, color="tab:orange", label="Violations")
-    >>> chart.x_axis.tick_locations = x
-    >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri",
-    ...                             "Sat", "Sun"]
-    >>> chart.x_label = "Day of week"
-    >>> chart.show()
+       Combine multiple types of plots in the same chart.
+
+       >>> rng = np.random.default_rng(1)
+       >>> x = np.arange(1, 8)
+       >>> y = rng.integers(5, 15, 7)
+       >>> e = np.abs(rng.normal(scale=2, size=7))
+       >>> z = rng.integers(0, 5, 7)
+       >>> chart = pv.Chart2D()
+       >>> _ = chart.area(x, y-e, y+e, color=(0.12, 0.46, 0.71, 0.2))
+       >>> _ = chart.line(x, y, color="tab:blue", style="--", label="Scores")
+       >>> _ = chart.scatter(x, y, color="tab:blue", style="d")
+       >>> _ = chart.bar(x, z, color="tab:orange", label="Violations")
+       >>> chart.x_axis.tick_locations = x
+       >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri",
+       ...                             "Sat", "Sun"]
+       >>> chart.x_label = "Day of week"
+       >>> chart.show()
 
     """
 
-    PLOT_TYPES = {
+    PLOT_TYPES: ClassVar[
+        dict[
+            str,
+            (type[ScatterPlot2D | LinePlot2D | AreaPlot | BarPlot | StackPlot]),
+        ]
+    ] = {
         "scatter": ScatterPlot2D,
         "line": LinePlot2D,
         "area": AreaPlot,
         "bar": BarPlot,
         "stack": StackPlot,
     }
-    _PLOT_CLASSES = {plot_class: plot_type for (plot_type, plot_class) in PLOT_TYPES.items()}
-    _DOC_SUBS = {
+    _PLOT_CLASSES: ClassVar[
+        dict[
+            (type[ScatterPlot2D | LinePlot2D | AreaPlot | BarPlot | StackPlot]),
+            str,
+        ]
+    ] = {plot_class: plot_type for (plot_type, plot_class) in PLOT_TYPES.items()}
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "2D chart",
         "chart_args": "",
         "chart_init": """
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])""",
+           >>> plot = chart.line([0, 1, 2], [2, 1, 3])""",
         "chart_set_labels": 'plot.label = "My awesome plot"',
     }
 
     def __init__(
-        self, size=(1, 1), loc=(0, 0), x_label="x", y_label="y", grid=True
+        self,
+        size=(1, 1),
+        loc=(0, 0),
+        x_label="x",
+        y_label="y",
+        grid=True,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
         self.SetAutoSize(False)  # We manually set the appropriate size
-        # Overwrite custom X and Y axis using a wrapper object, as using the
+        # Overwrite custom x-axis and y-axis using a wrapper object, as using the
         # SetAxis method causes a crash at the end of the script's execution (nonzero exit code).
         self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))
         self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))
@@ -2942,7 +3227,9 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             if style in fmt:
                 marker_style = style
                 fmt = fmt.replace(
-                    marker_style, "", 1
+                    marker_style,
+                    "",
+                    1,
                 )  # Remove found marker_style from format string
                 break
         # Extract line style from format string
@@ -2991,16 +3278,19 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Generate a line plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _, line_plot = chart.plot(range(10), range(10))
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Generate a line and scatter plot.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _, line_plot = chart.plot(range(10), range(10))
+           >>> chart.show()
 
-        >>> chart = pv.Chart2D()
-        >>> scatter_plot, line_plot = chart.plot(range(10), fmt='o-')
-        >>> chart.show()
+           Generate a line and scatter plot.
+
+           >>> chart = pv.Chart2D()
+           >>> scatter_plot, line_plot = chart.plot(range(10), fmt='o-')
+           >>> chart.show()
 
         """
         if y is None:
@@ -3053,10 +3343,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Generate a scatter plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.scatter([0, 1, 2], [2, 1, 3])
+           >>> chart.show()
 
         """
         return self._add_plot("scatter", x, y, color=color, size=size, style=style, label=label)
@@ -3096,10 +3389,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Generate a line plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.show()
 
         """
         return self._add_plot("line", x, y, color=color, width=width, style=style, label=label)
@@ -3135,10 +3431,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Generate an area plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.area([0, 1, 2], [2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.area([0, 1, 2], [2, 1, 3])
+           >>> chart.show()
 
         """
         return self._add_plot("area", x, y1, y2, color=color, label=label)
@@ -3178,10 +3477,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Generate a bar plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.bar([0, 1, 2], [2, 1, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.bar([0, 1, 2], [2, 1, 3])
+           >>> chart.show()
 
         """
         return self._add_plot("bar", x, y, color=color, orientation=orientation, label=label)
@@ -3216,10 +3518,13 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Generate a stack plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
+           >>> chart.show()
 
         """
         return self._add_plot("stack", x, ys, colors=colors, labels=labels)
@@ -3245,22 +3550,25 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Create a 2D chart with a line and scatter plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Retrieve all plots in the chart.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+           >>> chart.show()
 
-        >>> plots = [*chart.plots()]
-        >>> scatter_plot in plots and line_plot in plots
-        True
+           Retrieve all plots in the chart.
 
-        Retrieve all line plots in the chart.
+           >>> plots = [*chart.plots()]
+           >>> scatter_plot in plots and line_plot in plots
+           True
 
-        >>> line_plots = [*chart.plots("line")]
-        >>> line_plot == line_plots[0]
-        True
+           Retrieve all line plots in the chart.
+
+           >>> line_plots = [*chart.plots("line")]
+           >>> line_plot == line_plots[0]
+           True
 
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
@@ -3279,15 +3587,18 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Create a 2D chart with a line and scatter plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Remove the scatter plot from the chart.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+           >>> chart.show()
 
-        >>> chart.remove_plot(scatter_plot)
-        >>> chart.show()
+           Remove the scatter plot from the chart.
+
+           >>> chart.remove_plot(scatter_plot)
+           >>> chart.show()
 
         """
         try:
@@ -3314,16 +3625,19 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Create a 2D chart with multiple line and scatter plot.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.plot([0, 1, 2], [2, 1, 3], "o-b")
-        >>> _ = chart.plot([-2, -1, 0], [3, 1, 2], "d-r")
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Remove all scatter plots from the chart.
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.plot([0, 1, 2], [2, 1, 3], "o-b")
+           >>> _ = chart.plot([-2, -1, 0], [3, 1, 2], "d-r")
+           >>> chart.show()
 
-        >>> chart.clear("scatter")
-        >>> chart.show()
+           Remove all scatter plots from the chart.
+
+           >>> chart.clear("scatter")
+           >>> chart.show()
 
         """
         plot_types = self.PLOT_TYPES.keys() if plot_type is None else [plot_type]
@@ -3339,13 +3653,16 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Examples
         --------
-        Create a 2D plot and hide the x axis.
+        Create a 2D plot and hide the x-axis.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_axis.toggle()
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_axis.toggle()
+           >>> chart.show()
 
         """
         return self._x_axis
@@ -3356,31 +3673,37 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
         Examples
         --------
-        Create a 2D plot and hide the y axis.
+        Create a 2D plot and hide the y-axis.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.y_axis.toggle()
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.y_axis.toggle()
+           >>> chart.show()
 
         """
         return self._y_axis
 
     @property
     def x_label(self):  # numpydoc ignore=RT01
-        """Return or set the label of this chart's x axis.
+        """Return or set the label of this chart's x-axis.
 
         Examples
         --------
         Create a 2D plot and set custom axis labels.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_label = "Horizontal axis"
-        >>> chart.y_label = "Vertical axis"
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_label = "Horizontal axis"
+           >>> chart.y_label = "Vertical axis"
+           >>> chart.show()
 
         """
         return self.x_axis.label
@@ -3391,18 +3714,21 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def y_label(self):  # numpydoc ignore=RT01
-        """Return or set the label of this chart's y axis.
+        """Return or set the label of this chart's y-axis.
 
         Examples
         --------
         Create a 2D plot and set custom axis labels.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_label = "Horizontal axis"
-        >>> chart.y_label = "Vertical axis"
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_label = "Horizontal axis"
+           >>> chart.y_label = "Vertical axis"
+           >>> chart.show()
 
         """
         return self.y_axis.label
@@ -3413,18 +3739,21 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def x_range(self):  # numpydoc ignore=RT01
-        """Return or set the range of this chart's x axis.
+        """Return or set the range of this chart's x-axis.
 
         Examples
         --------
         Create a 2D plot and set custom axis ranges.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_range = [-2, 2]
-        >>> chart.y_range = [0, 5]
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_range = [-2, 2]
+           >>> chart.y_range = [0, 5]
+           >>> chart.show()
 
         """
         return self.x_axis.range
@@ -3435,18 +3764,21 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
 
     @property
     def y_range(self):  # numpydoc ignore=RT01
-        """Return or set the range of this chart's y axis.
+        """Return or set the range of this chart's y-axis.
 
         Examples
         --------
         Create a 2D plot and set custom axis ranges.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.x_range = [-2, 2]
-        >>> chart.y_range = [0, 5]
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.x_range = [-2, 2]
+           >>> chart.y_range = [0, 5]
+           >>> chart.show()
 
         """
         return self.y_axis.range
@@ -3463,19 +3795,22 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Create a 2D chart with the grid disabled.
 
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> x = np.linspace(0, 2*np.pi, 20)
-        >>> y = np.sin(x)
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line(x, y, 'r')
-        >>> chart.grid = False
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Enable the grid
+           >>> import pyvista as pv
+           >>> import numpy as np
+           >>> x = np.linspace(0, 2*np.pi, 20)
+           >>> y = np.sin(x)
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line(x, y, 'r')
+           >>> chart.grid = False
+           >>> chart.show()
 
-        >>> chart.grid = True
-        >>> chart.show()
+           Enable the grid
+
+           >>> chart.grid = True
+           >>> chart.show()
 
         """
         return self.x_axis.grid and self.y_axis.grid
@@ -3494,11 +3829,14 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
         --------
         Create a 2D plot and hide the axes.
 
-        >>> import pyvista as pv
-        >>> chart = pv.Chart2D()
-        >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-        >>> chart.hide_axes()
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.Chart2D()
+           >>> _ = chart.line([0, 1, 2], [2, 1, 3])
+           >>> chart.hide_axes()
+           >>> chart.show()
 
         """
         for axis in (self.x_axis, self.y_axis):
@@ -3509,7 +3847,7 @@ class Chart2D(_vtk.vtkChartXY, _Chart):
             axis.grid = False
 
 
-class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
+class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
     """Class representing a box plot.
 
     Users should typically not directly create new plot instances, but
@@ -3537,16 +3875,19 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
     --------
     Create boxplots for datasets sampled from shifted normal distributions.
 
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
-    >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
-    >>> chart = pv.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
-    >>> chart.show()
+    .. pyvista-plot::
+       :force_static:
+
+       >>> import pyvista as pv
+       >>> import numpy as np
+       >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
+       >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
+       >>> chart = pv.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
+       >>> chart.show()
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "box plot",
         "chart_init": "pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])",
         "plot_init": "chart.plot",
@@ -3558,7 +3899,7 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
-            {f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)}
+            {f"data_{i}": np.asarray(d) for i, d in enumerate(data)},
         )
         self._quartiles = _vtk.vtkComputeQuartiles()
         self._quartiles.SetInputData(self._table)
@@ -3576,11 +3917,14 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         --------
         Create a box plot and display the datasets.
 
-        >>> import pyvista as pv
-        >>> chart = pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
-        >>> chart.plot.data
-        (pyvista_ndarray([0, 1, 1, 2, 3, 3, 4]),)
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
+           >>> chart.plot.data
+           (pyvista_ndarray([0, 1, 1, 2, 3, 3, 4]),)
+           >>> chart.show()
 
         """
         return tuple(self._table[f"data_{i}"] for i in range(self._table.n_arrays))
@@ -3593,11 +3937,14 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         --------
         Create a box plot and display the statistics.
 
-        >>> import pyvista as pv
-        >>> chart = pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
-        >>> chart.plot.stats
-        (pyvista_ndarray([0., 1., 2., 3., 4.]),)
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
+           >>> chart.plot.stats
+           (pyvista_ndarray([0., 1., 2., 3., 4.]),)
+           >>> chart.show()
 
         """
         stats_table = pyvista.Table(self._quartiles.GetOutput())
@@ -3615,23 +3962,26 @@ class BoxPlot(_vtk.vtkPlotBox, _MultiCompPlot):
         --------
         Create a box plot from a standard Gaussian dataset.
 
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
-        >>> chart = pv.ChartBox([rng.normal(size=100)])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Update the box plot (shift the standard Gaussian distribution).
+           >>> import pyvista as pv
+           >>> import numpy as np
+           >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
+           >>> chart = pv.ChartBox([rng.normal(size=100)])
+           >>> chart.show()
 
-        >>> chart.plot.update([rng.normal(loc=2, size=100)])
-        >>> chart.show()
+           Update the box plot (shift the standard Gaussian distribution).
+
+           >>> chart.plot.update([rng.normal(loc=2, size=100)])
+           >>> chart.show()
 
         """
-        self._table.update({f"data_{i}": np.array(d, copy=False) for i, d in enumerate(data)})
+        self._table.update({f"data_{i}": np.asarray(d) for i, d in enumerate(data)})
         self._quartiles.Update()
 
 
-class ChartBox(_vtk.vtkChartBox, _Chart):
+class ChartBox(_Chart, _vtk.vtkChartBox):
     """Dedicated chart for drawing box plots.
 
     Parameters
@@ -3663,16 +4013,19 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     --------
     Create boxplots for datasets sampled from shifted normal distributions.
 
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
-    >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
-    >>> chart = pv.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
-    >>> chart.show()
+    .. pyvista-plot::
+       :force_static:
+
+       >>> import pyvista as pv
+       >>> import numpy as np
+       >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
+       >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
+       >>> chart = pv.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
+       >>> chart.show()
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "boxplot chart",
         "chart_args": "[[0, 1, 1, 2, 3, 3, 4]]",
         "chart_init": "",
@@ -3680,7 +4033,12 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
     }
 
     def __init__(
-        self, data, colors=None, labels=None, size=None, loc=None
+        self,
+        data,
+        colors=None,
+        labels=None,
+        size=None,
+        loc=None,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
         if vtk_version_info >= (9, 2, 0):
@@ -3725,16 +4083,19 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         --------
         Create a box plot from a standard Gaussian dataset.
 
-        >>> import pyvista as pv
-        >>> import numpy as np
-        >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
-        >>> chart = pv.ChartBox([rng.normal(size=100)])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Update the box plot (shift the standard Gaussian distribution).
+           >>> import pyvista as pv
+           >>> import numpy as np
+           >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
+           >>> chart = pv.ChartBox([rng.normal(size=100)])
+           >>> chart.show()
 
-        >>> chart.plot.update([rng.normal(loc=2, size=100)])
-        >>> chart.show()
+           Update the box plot (shift the standard Gaussian distribution).
+
+           >>> chart.plot.update([rng.normal(loc=2, size=100)])
+           >>> chart.show()
 
         """
         return self._plot
@@ -3756,11 +4117,14 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         Create a half-sized boxplot chart centered in the middle of the
         renderer.
 
-        >>> import pyvista as pv
-        >>> chart = pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
-        >>> chart.size = (0.5, 0.5)
-        >>> chart.loc = (0.25, 0.25)
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
+           >>> chart.size = (0.5, 0.5)
+           >>> chart.loc = (0.25, 0.25)
+           >>> chart.show()
 
         """
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
@@ -3773,7 +4137,7 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.size.fset(self, val)
@@ -3795,11 +4159,14 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         Create a half-sized boxplot chart centered in the middle of the
         renderer.
 
-        >>> import pyvista as pv
-        >>> chart = pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
-        >>> chart.size = (0.5, 0.5)
-        >>> chart.loc = (0.25, 0.25)
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.ChartBox([[0, 1, 1, 2, 3, 3, 4]])
+           >>> chart.size = (0.5, 0.5)
+           >>> chart.loc = (0.25, 0.25)
+           >>> chart.show()
 
         """
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
@@ -3812,13 +4179,13 @@ class ChartBox(_vtk.vtkChartBox, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartBox geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.loc.fset(self, val)
 
 
-class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
+class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
     """Class representing a pie plot.
 
     Users should typically not directly create new plot instances, but
@@ -3845,15 +4212,18 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
     --------
     Create a pie plot showing the usage of tax money.
 
-    >>> import pyvista as pv
-    >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
-    >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
-    >>> chart = pv.ChartPie(x, labels=l)
-    >>> chart.show()
+    .. pyvista-plot::
+       :force_static:
+
+       >>> import pyvista as pv
+       >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
+       >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
+       >>> chart = pv.ChartPie(x, labels=l)
+       >>> chart.show()
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "plot_name": "pie plot",
         "chart_init": "pv.ChartPie([4, 3, 2, 1])",
         "plot_init": "chart.plot",
@@ -3882,11 +4252,14 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         --------
         Create a pie plot and display the sizes.
 
-        >>> import pyvista as pv
-        >>> chart = pv.ChartPie([1, 2, 3])
-        >>> chart.plot.data
-        pyvista_ndarray([1, 2, 3])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.ChartPie([1, 2, 3])
+           >>> chart.plot.data
+           pyvista_ndarray([1, 2, 3])
+           >>> chart.show()
 
         """
         return self._table[0]
@@ -3903,20 +4276,23 @@ class PiePlot(_vtkWrapper, _vtk.vtkPlotPie, _MultiCompPlot):
         --------
         Create a pie plot with segments of increasing size.
 
-        >>> import pyvista as pv
-        >>> chart = pv.ChartPie([1, 2, 3, 4, 5])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Update the pie plot (segments of equal size).
+           >>> import pyvista as pv
+           >>> chart = pv.ChartPie([1, 2, 3, 4, 5])
+           >>> chart.show()
 
-        >>> chart.plot.update([1, 1, 1, 1, 1])
-        >>> chart.show()
+           Update the pie plot (segments of equal size).
+
+           >>> chart.plot.update([1, 1, 1, 1, 1])
+           >>> chart.show()
 
         """
         self._table.update(data)
 
 
-class ChartPie(_vtk.vtkChartPie, _Chart):
+class ChartPie(_Chart, _vtk.vtkChartPie):
     """Dedicated chart for drawing pie plots.
 
     Parameters
@@ -3947,15 +4323,18 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     --------
     Create a pie plot showing the usage of tax money.
 
-    >>> import pyvista as pv
-    >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
-    >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
-    >>> chart = pv.ChartPie(x, labels=l)
-    >>> chart.show()
+    .. pyvista-plot::
+       :force_static:
+
+       >>> import pyvista as pv
+       >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
+       >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
+       >>> chart = pv.ChartPie(x, labels=l)
+       >>> chart.show()
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "pie chart",
         "chart_args": "[5, 4, 3, 2, 1]",
         "chart_init": "",
@@ -3963,7 +4342,12 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
     }
 
     def __init__(
-        self, data, colors=None, labels=None, size=None, loc=None
+        self,
+        data,
+        colors=None,
+        labels=None,
+        size=None,
+        loc=None,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
         if vtk_version_info >= (9, 2, 0):
@@ -4013,14 +4397,17 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         --------
         Create a pie plot with segments of increasing size.
 
-        >>> import pyvista as pv
-        >>> chart = pv.ChartPie([1, 2, 3, 4, 5])
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
 
-        Update the pie plot (segments of equal size).
+           >>> import pyvista as pv
+           >>> chart = pv.ChartPie([1, 2, 3, 4, 5])
+           >>> chart.show()
 
-        >>> chart.plot.update([1, 1, 1, 1, 1])
-        >>> chart.show()
+           Update the pie plot (segments of equal size).
+
+           >>> chart.plot.update([1, 1, 1, 1, 1])
+           >>> chart.show()
 
         """
         return self._plot
@@ -4042,11 +4429,14 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         Create a half-sized pie chart centered in the middle of the
         renderer.
 
-        >>> import pyvista as pv
-        >>> chart = pv.ChartPie([5, 4, 3, 2, 1])
-        >>> chart.size = (0.5, 0.5)
-        >>> chart.loc = (0.25, 0.25)
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.ChartPie([5, 4, 3, 2, 1])
+           >>> chart.size = (0.5, 0.5)
+           >>> chart.loc = (0.25, 0.25)
+           >>> chart.show()
 
         """
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
@@ -4059,7 +4449,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.size.fset(self, val)
@@ -4081,11 +4471,14 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         Create a half-sized pie chart centered in the middle of the
         renderer.
 
-        >>> import pyvista as pv
-        >>> chart = pv.ChartPie([5, 4, 3, 2, 1])
-        >>> chart.size = (0.5, 0.5)
-        >>> chart.loc = (0.25, 0.25)
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> chart = pv.ChartPie([5, 4, 3, 2, 1])
+           >>> chart.size = (0.5, 0.5)
+           >>> chart.loc = (0.25, 0.25)
+           >>> chart.show()
 
         """
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
@@ -4098,7 +4491,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise ValueError(
                 "Cannot set ChartPie geometry, it fills up the entire viewport by default. "
-                "Upgrade to VTK v9.2 or newer."
+                "Upgrade to VTK v9.2 or newer.",
             )
         else:
             _Chart.loc.fset(self, val)
@@ -4112,7 +4505,7 @@ class ChartPie(_vtk.vtkChartPie, _Chart):
 # endregion
 
 
-class ChartMPL(_vtk.vtkImageItem, _Chart):
+class ChartMPL(_Chart, _vtk.vtkImageItem):
     """Create new chart from an existing matplotlib figure.
 
     Parameters
@@ -4141,39 +4534,45 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
     --------
     Plot streamlines of a vector field with varying colors (based on `this example <https://matplotlib.org/stable/gallery/images_contours_and_fields/plot_streamplot.html>`_).
 
+
     .. pyvista-plot::
+       :force_static:
 
-    >>> import pyvista as pv
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
+       >>> import pyvista as pv
+       >>> import numpy as np
+       >>> import matplotlib.pyplot as plt
 
-    >>> w = 3
-    >>> Y, X = np.mgrid[-w:w:100j, -w:w:100j]
-    >>> U = -1 - X**2 + Y
-    >>> V = 1 + X - Y**2
-    >>> speed = np.sqrt(U**2 + V**2)
+       >>> w = 3
+       >>> Y, X = np.mgrid[-w:w:100j, -w:w:100j]
+       >>> U = -1 - X**2 + Y
+       >>> V = 1 + X - Y**2
+       >>> speed = np.sqrt(U**2 + V**2)
 
-    >>> f, ax = plt.subplots()
-    >>> strm = ax.streamplot(X, Y, U, V, color=U, linewidth=2, cmap='autumn')
-    >>> _ = f.colorbar(strm.lines)
-    >>> _ = ax.set_title('Streamplot with varying Color')
-    >>> plt.tight_layout()
+       >>> f, ax = plt.subplots()
+       >>> strm = ax.streamplot(X, Y, U, V, color=U, linewidth=2, cmap='autumn')
+       >>> _ = f.colorbar(strm.lines)
+       >>> _ = ax.set_title('Streamplot with varying Color')
+       >>> plt.tight_layout()
 
-    >>> chart = pv.ChartMPL(f)
-    >>> chart.show()
+       >>> chart = pv.ChartMPL(f)
+       >>> chart.show()
 
     """
 
-    _DOC_SUBS = {
+    _DOC_SUBS = {  # noqa: RUF012
         "chart_name": "matplotlib chart",
         "chart_args": "",
         "chart_init": """
-        >>> plots = chart.figure.axes[0].plot([0, 1, 2], [2, 1, 3])""",
+           >>> plots = chart.figure.axes[0].plot([0, 1, 2], [2, 1, 3])""",
         "chart_set_labels": 'plots[0].label = "My awesome plot"',
     }
 
     def __init__(
-        self, figure=None, size=(1, 1), loc=(0, 0), redraw_on_render=True
+        self,
+        figure=None,
+        size=(1, 1),
+        loc=(0, 0),
+        redraw_on_render=True,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
@@ -4181,7 +4580,7 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
             figure, _ = plt.subplots()
         self._fig = figure
         self._canvas = FigureCanvasAgg(
-            self._fig
+            self._fig,
         )  # Switch backends and store reference to figure's canvas
         # Make figure and axes fully transparent, as the background is already dealt with by self._background.
         self._fig.patch.set_alpha(0)
@@ -4208,16 +4607,18 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         --------
         Create a matplotlib chart from an existing figure.
 
-        .. pyvista-plot::
 
-        >>> import pyvista as pv
-        >>> import matplotlib.pyplot as plt
-        >>> f, ax = plt.subplots()
-        >>> _ = ax.plot([0, 1, 2], [2, 1, 3])
-        >>> chart = pv.ChartMPL(f)
-        >>> chart.figure is f
-        True
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> import matplotlib.pyplot as plt
+           >>> f, ax = plt.subplots()
+           >>> _ = ax.plot([0, 1, 2], [2, 1, 3])
+           >>> chart = pv.ChartMPL(f)
+           >>> chart.figure is f
+           True
+           >>> chart.show()
         """
         return self._fig
 
@@ -4264,7 +4665,8 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         else:
             # Called from draw_event callback
             img = np.frombuffer(
-                self._canvas.buffer_rgba(), dtype=np.uint8
+                self._canvas.buffer_rgba(),
+                dtype=np.uint8,
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
@@ -4324,15 +4726,17 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         --------
         Create a matplotlib chart with title 'My Chart'.
 
-        .. pyvista-plot::
 
-        >>> import pyvista as pv
-        >>> import matplotlib.pyplot as plt
-        >>> f, ax = plt.subplots()
-        >>> _ = ax.plot([0, 1, 2], [2, 1, 3])
-        >>> chart = pv.ChartMPL(f)
-        >>> chart.title = 'My Chart'
-        >>> chart.show()
+        .. pyvista-plot::
+           :force_static:
+
+           >>> import pyvista as pv
+           >>> import matplotlib.pyplot as plt
+           >>> f, ax = plt.subplots()
+           >>> _ = ax.plot([0, 1, 2], [2, 1, 3])
+           >>> chart = pv.ChartMPL(f)
+           >>> chart.title = 'My Chart'
+           >>> chart.show()
 
         """
         return self._fig._suptitle.get_text()
@@ -4350,20 +4754,21 @@ class ChartMPL(_vtk.vtkImageItem, _Chart):
         Create a matplotlib chart with custom labels and show the legend.
 
         .. pyvista-plot::
+           :force_static:
 
-        >>> import pyvista as pv
-        >>> import matplotlib.pyplot as plt
-        >>> f, ax = plt.subplots()
-        >>> _ = ax.plot([0, 1, 2], [2, 1, 3], label="Line")
-        >>> _ = ax.scatter([0, 1, 2], [3, 2, 1], label="Points")
-        >>> chart = pv.ChartMPL(f)
-        >>> chart.legend_visible = True
-        >>> chart.show()
+           >>> import pyvista as pv
+           >>> import matplotlib.pyplot as plt
+           >>> f, ax = plt.subplots()
+           >>> _ = ax.plot([0, 1, 2], [2, 1, 3], label="Line")
+           >>> _ = ax.scatter([0, 1, 2], [3, 2, 1], label="Points")
+           >>> chart = pv.ChartMPL(f)
+           >>> chart.legend_visible = True
+           >>> chart.show()
 
-        Hide the legend.
+           Hide the legend.
 
-        >>> chart.legend_visible = False
-        >>> chart.show()
+           >>> chart.legend_visible = False
+           >>> chart.show()
 
         """
         legend = self._fig.axes[0].get_legend()
