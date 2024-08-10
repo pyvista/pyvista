@@ -180,6 +180,7 @@ def test_import_vrml():
         pl.import_vrml('not a file')
 
     pl.import_vrml(filename)
+    assert np.array_equal(pl.bounds, (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     pl.show()
 
 

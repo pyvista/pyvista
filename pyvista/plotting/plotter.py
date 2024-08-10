@@ -513,8 +513,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
             importer.SetFileName(str(filename))
         else:
             importer.SetFileName(filename)
-        importer.SetRenderWindow(self.render_window)
+
+        # Import to temporary plotter first
+        temp_plotter = pyvista.Plotter()
+        importer.SetRenderWindow(temp_plotter.render_window)
         importer.Update()
+
+        # Add actors from temp plotter to this plotter
+        # Need to use `add_actor` for the plotter's bounds to update correctly
+        actors = temp_plotter.renderer.GetActors()
+        actors.InitTraversal()
+        for _ in range(actors.GetNumberOfItems()):
+            self.add_actor(actors.GetNextActor(), render=False)
 
     def import_3ds(self, filename) -> None:
         """Import a 3DS file into the plotter.
