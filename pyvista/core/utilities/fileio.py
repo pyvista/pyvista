@@ -181,7 +181,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     ext = _get_ext_force(filename, force_ext)
     if ext in ['.e', '.exo']:
         return read_exodus(filename)
-    if ext in ['.wrl', 'vrml']:
+    if ext in ['.wrl', '.vrml']:
         raise ValueError(
             "VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details."
         )
