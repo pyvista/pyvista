@@ -1930,9 +1930,8 @@ class DataSetFilters:
         output = _get_output(alg)
 
         # some of these filters fail to correctly name the array
-        if scalars_name not in output.point_data:
-            if 'Unnamed_0' in output.point_data:
-                output.point_data[scalars_name] = output.point_data.pop('Unnamed_0')
+        if scalars_name not in output.point_data and 'Unnamed_0' in output.point_data:
+            output.point_data[scalars_name] = output.point_data.pop('Unnamed_0')
 
         return output
 
@@ -2391,9 +2390,12 @@ class DataSetFilters:
                 )
                 orient = False
 
-        if scale and orient:
-            if dataset.active_vectors_info.association != dataset.active_scalars_info.association:
-                raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
+        if (
+            scale
+            and orient
+            and dataset.active_vectors_info.association != dataset.active_scalars_info.association
+        ):
+            raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
 
         source_data = dataset
         set_actives_on_source_data = False
@@ -5072,10 +5074,9 @@ class DataSetFilters:
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
-        if subgrid.n_points:
-            if self.points.dtype != np.dtype('float32'):
-                ind = subgrid.point_data['vtkOriginalPointIds']
-                subgrid.points = self.points[ind]
+        if subgrid.n_points and self.points.dtype != np.dtype('float32'):
+            ind = subgrid.point_data['vtkOriginalPointIds']
+            subgrid.points = self.points[ind]
 
         return subgrid
 

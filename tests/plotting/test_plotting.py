@@ -2452,15 +2452,17 @@ def test_log_scale():
     plotter.show()
 
 
-def test_set_focus():
+@pytest.mark.parametrize('point', [(-0.5, -0.5, 0), np.array([[-0.5], [-0.5], [0]])])
+def test_set_focus(point):
     plane = pv.Plane()
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=True)
-    p.set_focus((-0.5, -0.5, 0))  # focus on corner of the plane
+    p.set_focus(point)  # focus on corner of the plane
     p.show()
 
 
-def test_set_viewup(verify_image_cache):
+@pytest.mark.parametrize('vector', [(1.0, 1.0, 1.0), np.array([[-0.5], [-0.5], [0]])])
+def test_set_viewup(verify_image_cache, vector):
     verify_image_cache.high_variance_test = True
 
     plane = pv.Plane()
@@ -2468,7 +2470,7 @@ def test_set_viewup(verify_image_cache):
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=False)
     p.add_mesh(plane_higher, color="red", show_edges=False)
-    p.set_viewup((1.0, 1.0, 1.0))
+    p.set_viewup(vector)
     p.show()
 
 
@@ -2713,6 +2715,21 @@ def test_add_remove_background(sphere):
     plotter.add_background_image(examples.mapfile, as_global=False)
     plotter.remove_background_image()
     plotter.show()
+
+
+@pytest.mark.parametrize(
+    'background', [examples.mapfile, Path(examples.mapfile), 'blue'], ids=['str', 'Path', 'color']
+)
+def test_plot_mesh_background(background):
+    globe = examples.load_globe()
+    globe.plot(texture=pv.Texture(examples.mapfile), background=background)
+
+
+def test_plot_mesh_background_raises():
+    globe = examples.load_globe()
+    match = 'Background must be color-like or a file path. Got {} instead.'
+    with pytest.raises(ValueError, match=match):
+        globe.plot(texture=pv.Texture(examples.mapfile), background={})
 
 
 def test_plot_zoom(sphere):
@@ -4555,6 +4572,30 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
 def test_orthogonal_planes_source_resolution(resolution):
     plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
+
+
+@skip_9_1_0
+@skip_windows
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        (None, None),
+        ('shrink_factor', 0.1),
+        ('shrink_factor', 1.0),
+        ('shrink_factor', 2),
+        ('explode_factor', 0.0),
+        ('explode_factor', 0.5),
+        ('explode_factor', -0.5),
+        ('frame_width', 0.1),
+        ('frame_width', 1.0),
+    ],
+)
+def test_cube_faces_source(name, value):
+    kwargs = {name: value} if name is not None else {}
+    cube_faces_source = pv.CubeFacesSource(**kwargs, x_length=1, y_length=2, z_length=3)
+    pv.merge(cube_faces_source.output, merge_points=False).plot_normals(
+        mag=0.5, show_edges=True, line_width=3, edge_color='red'
+    )
 
 
 def test_planes_assembly(airplane):
