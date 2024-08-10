@@ -215,8 +215,9 @@ class DataSetFilters:
         pyvista.DataSet
             The dataset aligned to the x-y-z axes.
 
-        matrix : numpy.ndarray
-            Transform matrix to transform the input dataset to the x-y-z axes.
+        numpy.ndarray
+            Transform matrix to transform the input dataset to the x-y-z axes if
+            ``return_matrix`` is ``True``.
 
         See Also
         --------
