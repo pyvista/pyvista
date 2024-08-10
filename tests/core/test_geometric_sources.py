@@ -401,8 +401,16 @@ def test_plane_source():
     assert algo.j_resolution == 10
     assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
     assert np.array_equal(algo.origin, (-0.5, -0.5, 0.0))
-    assert np.array_equal(algo.point_a, (0.5, -0.5, 0.0))
-    assert np.array_equal(algo.point_b, (-0.5, 0.5, 0.0))
+    point_a = (0.5, -0.5, 0.0)
+    point_b = (-0.5, 0.5, 0.0)
+    normal = (0.0, 0.0, 1.0)
+    assert np.array_equal(algo.point_a, point_a)
+    assert np.array_equal(algo.point_b, point_b)
+    assert np.array_equal(algo.normal, normal)
+    algo.flip_normal()
+    assert np.array_equal(algo.point_a, point_b)
+    assert np.array_equal(algo.point_b, point_a)
+    assert np.array_equal(algo.normal, np.array(normal) * -1)
 
 
 def test_superquadric_source():
