@@ -3269,6 +3269,8 @@ _dataset_shark = _SingleFileDownloadableDatasetLoader('shark.ply')
 def download_great_white_shark(load=True):  # pragma: no cover
     """Download great white shark dataset.
 
+    .. versionadded:: 0.45
+
     Parameters
     ----------
     load : bool, default: True
@@ -3309,6 +3311,8 @@ _dataset_great_white_shark = _SingleFileDownloadableDatasetLoader(
 
 def download_grey_nurse_shark(load=True):  # pragma: no cover
     """Download grey nurse shark dataset.
+
+    .. versionadded:: 0.45
 
     Parameters
     ----------
