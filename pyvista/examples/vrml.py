@@ -67,7 +67,7 @@ def download_grasshopper():  # pragma: no cover
     ...     (0.0, 0.931, -6.68),
     ...     (-0.20, 0.90, -0.44),
     ... ]
-    >>> pl.show(return_cpos=True)
+    >>> pl.show()
 
     """
     return download_file("grasshopper/grasshop.wrl")
