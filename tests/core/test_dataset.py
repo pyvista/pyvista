@@ -50,16 +50,6 @@ def test_invalid_copy_from(grid):
         grid.copy_from(pv.Plane())
 
 
-# floats(
-#     # Do not allow nan or inf (expected to fail these case)
-#     allow_nan=False,
-#     allow_infinity=False,
-#     # Need to stay clear from max/min precision values since vtkTransform.RotateWXYZ
-#     # produces arrays with nan when inputs are at large and cause the
-#     # test to fail
-#     min_value=1e-100,
-#     max_value=1e100,
-# ),
 @composite
 def n_numbers(draw, n):
     numbers = []

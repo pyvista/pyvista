@@ -127,10 +127,7 @@ def _cast_to_numpy(
             VisibleDeprecationWarning = np.VisibleDeprecationWarning
 
     try:
-        if dtype is not None:
-            out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)
-        else:
-            out = np.asanyarray(arr) if as_any else np.asarray(arr)
+        out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)
 
         if copy and out is arr:
             # we requested a copy but didn't end up with one
