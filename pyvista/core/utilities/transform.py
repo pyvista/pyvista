@@ -88,8 +88,8 @@ class Transform(_vtk.vtkTransform):
     ``(-0.6, -0.8, 2.1)`` to ``(-1.2, -1.6, 4.2)``, indicating that the scaling is
     applied *after* the translation.
 
-    >>> matrix_post = transform.matrix
-    >>> matrix_post
+    >>> post_matrix = transform.matrix
+    >>> post_matrix
     array([[ 2. ,  0. ,  0. , -1.2],
            [ 0. ,  2. ,  0. , -1.6],
            [ 0. ,  0. ,  2. ,  4.2],
@@ -125,8 +125,8 @@ class Transform(_vtk.vtkTransform):
     Show the concatenated matrix. Unlike before, the position is not scaled,
     and is ``(-0.6, -0.8, 2.1)`` instead of ``(-1.2, -1.6, 4.2)``.
 
-    >>> matrix_pre = transform.matrix
-    >>> matrix_pre
+    >>> pre_matrix = transform.matrix
+    >>> pre_matrix
     array([[ 2. ,  0. ,  0. , -0.6],
            [ 0. ,  2. ,  0. , -0.8],
            [ 0. ,  0. ,  2. ,  2.1],
@@ -136,8 +136,8 @@ class Transform(_vtk.vtkTransform):
     have different positions since pre- and post-multiplication produce different
     transformations.
 
-    >>> mesh_post = pv.Sphere().transform(matrix_post)
-    >>> mesh_pre = pv.Cone().transform(matrix_pre)
+    >>> mesh_post = pv.Sphere().transform(post_matrix)
+    >>> mesh_pre = pv.Cone().transform(pre_matrix)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_post, color='goldenrod')
     >>> _ = pl.add_mesh(mesh_pre, color='teal')
