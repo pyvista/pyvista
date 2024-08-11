@@ -218,6 +218,8 @@ class DataSetFilters:
         vector which approximates the axis or axes of the input. This can be useful
         for cases where the orientation of the input has a clear physical meaning.
 
+        .. versionadded:: 0.45
+
         Parameters
         ----------
         centered : bool, default: True
