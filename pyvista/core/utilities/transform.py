@@ -685,13 +685,14 @@ class Transform(_vtk.vtkTransform):
 
     @property
     def check_finite(self) -> bool:  # numpydoc ignore: RT01
-        """Check that the :attr:`matrix` and :attr:`inverse_matrix` are finite.
+        """Check that the :attr:`matrix` and :attr:`inverse_matrix` have finite values.
 
-        In rare cases, some transformations may produce matrices with ``NaN`` or ``Inf``
-        values (e.g. inputs with very large floats).
+        If ``True``, all transformations are checked to ensure they only contain
+        finite values (i.e. no ``NaN`` or ``Inf`` values) and a ``ValueError`` is raised
+        otherwise. This is useful to catch cases where the transformation(s) are poorly
+        defined and/or are numerically unstable.
 
-        Set this flag to verify that all transformations have finite values.
-        It is enabled by default.
+        This flag is enabled by default.
         """
         return self._check_finite
 
