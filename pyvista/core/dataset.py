@@ -46,6 +46,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import MatrixLike
     from ._typing_core import Number
     from ._typing_core import NumpyArray
+    from ._typing_core import RotationLike
     from ._typing_core import VectorLike
 
 # vector array names
@@ -1134,6 +1135,74 @@ class DataSet(DataSetFilters, DataObject):
         check_valid_vector(vector)
         check_valid_vector(point, "point")
         t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
+        return self.transform(
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate(
+        self,
+        rotation: RotationLike,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        rotation : RotationLike
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        point : Vector, default: (0.0, 0.0, 0.0)
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
+        60 degrees.
+
+        >>> import pyvista as pv
+        >>> rotation = [
+        ...     [0.5, -0.8660254, 0.0],
+        ...     [0.8660254, 0.5, 0.0],
+        ...     [0.0, 0.0, 1.0],
+        ... ]
+
+        Use the rotation to rotate a cone about its tip.
+
+        >>> mesh = pv.Cone()
+        >>> tip = (0.5, 0.0, 0.0)
+        >>> rot = mesh.rotate(rotation, point=tip)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+        """
+        t = transformations.rotation(rotation, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
