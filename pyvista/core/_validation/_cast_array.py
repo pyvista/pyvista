@@ -127,7 +127,10 @@ def _cast_to_numpy(
             VisibleDeprecationWarning = np.VisibleDeprecationWarning
 
     try:
-        out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)
+        if dtype is not None:
+            out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)
+        else:
+            out = np.asanyarray(arr) if as_any else np.asarray(arr)
 
         if copy and out is arr:
             # we requested a copy but didn't end up with one
@@ -137,5 +140,7 @@ def _cast_to_numpy(
     if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):
         raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
     elif out.dtype.name == 'object':
-        raise TypeError("Object arrays are not supported.")
+        raise TypeError(
+            f"Object arrays are not supported. Got {arr} when casting to a NumPy array."
+        )
     return out

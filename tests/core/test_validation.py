@@ -74,9 +74,11 @@ def test_validate_transform4x4(transform_like):
 
 
 def test_validate_transform4x4_raises():
-    with pytest.raises(TypeError, match=escape("Input transform must be one of")):
+    match = 'Transform has shape (3,) which is not allowed. Shape must be one of [(3, 3), (4, 4)].'
+    with pytest.raises(ValueError, match=escape(match)):
         validate_transform4x4(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match="must have real numbers"):
+    match = "Input transform must be one of"
+    with pytest.raises(TypeError, match=match):
         validate_transform4x4("abc")
 
 

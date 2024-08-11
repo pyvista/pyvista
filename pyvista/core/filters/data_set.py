@@ -6681,7 +6681,7 @@ class DataSetFilters:
         if inplace and isinstance(self, pyvista.Grid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
-        t = Transform(trans)
+        t = trans if isinstance(trans, Transform) else Transform(trans)
 
         if t.matrix[3, 3] == 0:
             raise ValueError("Transform element (3,3), the inverse scale term, is zero")
