@@ -515,7 +515,7 @@ def validate_transform4x4(transform, /, *, must_be_finite=True, name="Transform"
     check_string(name, name="Name")
     try:
         arr = np.eye(4)  # initialize
-        arr[:3, :3] = validate_transform3x3(transform, name=name)
+        arr[:3, :3] = validate_transform3x3(transform, must_be_finite=must_be_finite, name=name)
     except (ValueError, TypeError):
         if isinstance(transform, vtkMatrix4x4):
             arr = _array_from_vtkmatrix(transform, shape=(4, 4))
@@ -529,7 +529,7 @@ def validate_transform4x4(transform, /, *, must_be_finite=True, name="Transform"
                     must_be_finite=must_be_finite,
                     name=name,
                 )
-            except TypeError:
+            except ValueError:
                 raise TypeError(
                     'Input transform must be one of:\n'
                     '\tvtkMatrix4x4\n'
