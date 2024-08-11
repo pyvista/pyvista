@@ -198,9 +198,9 @@ class DataSetFilters:
         self,
         *,
         centered: bool = True,
-        axis_0_direction=None,
-        axis_1_direction=None,
-        axis_2_direction=None,
+        axis_0_direction: VectorLike[float] | str | None = None,
+        axis_1_direction: VectorLike[float] | str | None = None,
+        axis_2_direction: VectorLike[float] | str | None = None,
         return_matrix: bool = False,
     ):
         """Align a dataset to the x-y-z axes.
@@ -210,11 +210,12 @@ class DataSetFilters:
         the dataset for the alignment. The transformation matrix used for the alignment
         can optionally be returned.
 
-        Note that the transformation is not unique, and the directions of the principal
-        axes are arbitrary. To allow for some control of the axes directions and the
-        alignment, the sign of each axis direction may optionally be "seeded". This can
-        be useful for cases where the orientation of the input has a clear physical
-        meaning.
+        Note that the transformation is not unique, since the signs of the principal
+        axes are arbitrary. Consequently, applying this filter to similar meshes
+        may result in dissimilar alignment (e.g. one axis may point up instead of down).
+        To address this, the sign of one or two axes may optionally be "seeded" with a
+        vector which approximates the axis or axes of the input. This can be useful
+        for cases where the orientation of the input has a clear physical meaning.
 
         Parameters
         ----------
@@ -303,10 +304,13 @@ class DataSetFilters:
         in world coordinates prior to the alignment.
 
         We can see that the cone is originally pointing downward, somewhat in the
-        negative z-direction. Therefore, we can specify that the ``'-z'`` vector
-        is the "up" direction for the mesh's third axis prior to alignment.
+        negative z-direction. Therefore, we can specify the ``'-z'`` vector
+        as the "up" direction of the mesh's third axis prior to alignment.
 
         >>> aligned = mesh.align_xyz(axis_2_direction='-z')
+
+        Plot the mesh. The cone is now pointing in the desired direction.
+
         >>> axes = pv.AxesAssembly(scale=aligned.length)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(aligned)
@@ -347,11 +351,11 @@ class DataSetFilters:
             axis_1_direction = _validate_vector(axis_1_direction, name='axis 1 direction')
             axis_2_direction = _validate_vector(axis_2_direction, name='axis 2 direction')
 
-        # Swap any axes which have equal std so that 'x'
+        # Swap any axes which have equal std (e.g. so that we XYZ order instead of YXZ order)
         # Note: Swapping may create a left-handed coordinate frame. This is fixed later.
         axes = _swap_axes(axes, std)
 
-        # Flip directions of first two axes
+        # Maybe flip directions of first two axes
         if axis_0_direction is not None and np.dot(axes[0], axis_0_direction) < 0:
             axes[0] *= -1
         if axis_1_direction is not None and np.dot(axes[1], axis_1_direction) < 0:
