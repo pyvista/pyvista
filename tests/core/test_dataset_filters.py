@@ -3948,7 +3948,15 @@ def test_align_xyz_two_axis_directions(planar_mesh):
         axis_0_direction=axis_0_direction, axis_1_direction=axis_1_direction, return_matrix=True
     )
     axes = matrix[:3, :3]
-    assert np.allclose(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], atol=DELTA)
+    assert np.allclose(axes, [axis_0_direction, axis_1_direction, [0, 0, 1]], atol=DELTA)
+
+    axis_1_direction = [0, -1, 0]
+    axis_2_direction = [0, 0, -1]
+    _, matrix = planar_mesh.align_xyz(
+        axis_1_direction=axis_1_direction, axis_2_direction=axis_2_direction, return_matrix=True
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [[1, 0, 0], axis_1_direction, axis_2_direction], atol=DELTA)
 
 
 def test_align_xyz_three_axis_directions(planar_mesh):

@@ -34,6 +34,7 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
@@ -284,7 +285,7 @@ class DataSetFilters:
 
         >>> aligned = mesh.align_xyz(centered=False)
 
-        Plot the result again. The alignmed mesh has the same position as the input.
+        Plot the result again. The aligned mesh has the same position as the input.
 
         >>> axes = pv.AxesAssembly(
         ...     position=mesh.center, scale=aligned.length
@@ -377,21 +378,21 @@ class DataSetFilters:
                 axes[2] *= -1
                 # Need to flip a second vector to keep system as right-handed
                 if axis_1_direction is not None:
+                    # Second axis has been set, so modify first axis
                     axes[0] *= -1
                 else:
+                    # First axis has been set, so modify second axis
                     axes[1] *= -1
 
-        matrix = np.eye(4)
-        matrix[:3, :3] = axes
-        aligned = self.transform(matrix, inplace=False)
-        translate = -np.array(aligned.center)
+        rotation = Transform().rotate(axes)
+        aligned = self.transform(rotation, inplace=False)
+        translation = Transform().translate(-np.array(aligned.center))
         if not centered:
-            translate += self.center  # type: ignore[attr-defined]
-        matrix[:3, 3] = translate
-        aligned.translate(translate, inplace=True)
+            translation.translate(self.center)  # type: ignore[attr-defined]
+        aligned.transform(translation, inplace=True)
 
         if return_matrix:
-            return aligned, matrix
+            return aligned, rotation.concatenate(translation).matrix
         return aligned
 
     def clip(
