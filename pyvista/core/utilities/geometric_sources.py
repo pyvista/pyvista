@@ -2405,6 +2405,11 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.point_a = self.point_b
         self.point_b = point_a
 
+    def push(self, distance: float):  # numpydoc ignore: PR01
+        """Translate the plane in the direction of the normal by the distance specified."""
+        _validation.validate_number(distance, dtype_out=float)
+        self.center = (self.center + np.array(self.normal) * distance).tolist()
+
 
 @no_new_attr
 class ArrowSource(_vtk.vtkArrowSource):
@@ -3539,6 +3544,8 @@ class OrthogonalPlanesSource:
     The meshes are ordered such that the first, second, and third plane is perpendicular
     to the x, y, and z-axis, respectively.
 
+    .. versionadded:: 0.45
+
     Parameters
     ----------
     bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
@@ -3575,9 +3582,24 @@ class OrthogonalPlanesSource:
     Plot the mesh and the planes.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(human)
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
     >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
     >>> pl.show()
+
+    The planes are centered geometrically, but the frontal plane is positioned a bit
+    too far forward. Use :meth:`push` to move the frontal plane.
+
+    >>> planes_source.push(0.0, -10.0, 0)
+    >>> planes_source.update()
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
+    >>> _ = pl.add_mesh(
+    ...     output, opacity=0.3, show_edges=True, line_width=10
+    ... )
+    >>> pl.view_yz()
+    >>> pl.show()
+
     """
 
     def __init__(
@@ -3699,6 +3721,23 @@ class OrthogonalPlanesSource:
         output = self._output
         for i, name in enumerate(valid_names):
             output.set_block_name(i, name)
+
+    def push(self, *distance: float | VectorLike[float]):  # numpydoc ignore=RT01
+        """Translate each plane by the specified distance along its normal.
+
+        Internally, this method calls :meth:`pyvista.PlaneSource.push` on each
+        plane source.
+
+        Parameters
+        ----------
+        *distance : float | VectorLike[float], default: (0.0, 0.0, 0.0)
+            Distance to move each plane.
+        """
+        valid_distance = _validation.validate_array3(
+            distance, broadcast=True, dtype_out=float, to_tuple=True
+        )
+        for source, dist in zip(self.sources, valid_distance):
+            source.push(dist)
 
     def update(self):
         """Update the output of the source."""
