@@ -141,12 +141,12 @@ if _vtk.vtk_version_info < (9, 3):
             self.phi_resolution = phi_resolution
 
         @property
-        def center(self) -> Sequence[float]:
+        def center(self) -> tuple[float, float, float]:
             """Get the center in ``[x, y, z]``. Axis of the capsule passes through this point.
 
             Returns
             -------
-            sequence[float]
+            tuple[float, float, float]
                 Center in ``[x, y, z]``. Axis of the capsule passes through this
                 point.
             """
@@ -358,12 +358,12 @@ class ConeSource(_vtk.vtkConeSource):
         self.resolution = resolution
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``. Axis of the cone passes through this point.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``. Axis of the cone passes through this
             point.
         """
@@ -588,7 +588,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     The above examples are similar in terms of their behavior.
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_center', '_direction']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_center', 'center', '_direction']
 
     def __init__(
         self,
@@ -601,7 +601,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     ):
         """Initialize the cylinder source class."""
         super().__init__()
-        self._center = center
+        self.center = center
         self._direction = direction
         self.radius = radius
         self.height = height
@@ -609,12 +609,12 @@ class CylinderSource(_vtk.vtkCylinderSource):
         self.capping = capping
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get location of the centroid in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``. Axis of the cylinder passes through this
             point.
         """
@@ -630,7 +630,8 @@ class CylinderSource(_vtk.vtkCylinderSource):
             Center in ``[x, y, z]``. Axis of the cylinder passes through this
             point.
         """
-        self._center = center
+        valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
+        self._center = cast(Tuple[float, float, float], valid_center)
 
     @property
     def direction(self) -> Sequence[float]:
@@ -880,6 +881,7 @@ class Text3DSource(vtkVectorText):
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
+        'center',
         '_center',
         '_height',
         '_width',
@@ -896,8 +898,8 @@ class Text3DSource(vtkVectorText):
         depth=None,
         width=None,
         height=None,
-        center=(0, 0, 0),
-        normal=(0, 0, 1),
+        center=(0.0, 0.0, 0.0),
+        normal=(0.0, 0.0, 1.0),
         process_empty_string=True,
     ):
         """Initialize source."""
@@ -908,7 +910,7 @@ class Text3DSource(vtkVectorText):
         # Set params
         self.string = "" if string is None else string
         self._process_empty_string = process_empty_string
-        self._center = center
+        self.center = center
         self._normal = normal
         self._height = height
         self._width = width
@@ -973,7 +975,8 @@ class Text3DSource(vtkVectorText):
 
     @center.setter
     def center(self, center: Sequence[float]):  # numpydoc ignore=GL08
-        self._center = float(center[0]), float(center[1]), float(center[2])
+        valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
+        self._center = cast(Tuple[float, float, float], valid_center)
 
     @property
     def normal(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -1207,12 +1210,12 @@ class CubeSource(_vtk.vtkCubeSource):
         self.SetBounds(bounds)
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         return self.GetCenter()
@@ -1391,12 +1394,12 @@ class DiscSource(_vtk.vtkDiskSource):
         self.c_res = c_res
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
@@ -1722,12 +1725,12 @@ class SphereSource(_vtk.vtkSphereSource):
         self.end_phi = end_phi
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         if pyvista.vtk_version_info >= (9, 2):
@@ -1970,12 +1973,12 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         self.fill = fill
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         return self.GetCenter()
@@ -2283,14 +2286,14 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.SetYResolution(j_resolution)
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         The center of the plane is translated to the specified point.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
         """
         return self.GetCenter()
@@ -2745,12 +2748,12 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         self.thickness = thickness
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Center of the superquadric in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center of the superquadric in ``[x, y, z]``.
         """
         return self.GetCenter()
@@ -3141,7 +3144,7 @@ class AxesGeometrySource:
         BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
         >>> axes_geometry_source.output.center
-        array([0.0, 0.0, 0.0])
+        (0.0, 0.0, 0.0)
 
         Get the asymmetric bounds.
 
@@ -3150,7 +3153,7 @@ class AxesGeometrySource:
         BoundsTuple(x_min=-0.10000000149011612, x_max=1.0, y_min=-0.10000000149011612, y_max=1.0, z_min=-0.10000000149011612, z_max=1.0)
 
         >>> axes_geometry_source.output.center
-        array([0.45, 0.45, 0.45])
+        (0.45, 0.45, 0.45)
 
         Show the difference in camera positioning with and without
         symmetric bounds. Orientation is added for visualization.
