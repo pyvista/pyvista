@@ -4561,6 +4561,15 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
+@pytest.mark.usefixtures('skip_check_gc')  # gc fails, suspected memory leak with merge
+@pytest.mark.parametrize('distance', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
+def test_orthogonal_planes_source_push(distance):
+    source = pv.OrthogonalPlanesSource()
+    source.push(distance)
+    planes = pv.merge(source.output, merge_points=False)
+    planes.plot_normals()
+
+
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
 @skip_windows
 @skip_9_1_0
@@ -4572,6 +4581,30 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
 def test_orthogonal_planes_source_resolution(resolution):
     plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
     plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
+
+
+@skip_9_1_0
+@skip_windows
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        (None, None),
+        ('shrink_factor', 0.1),
+        ('shrink_factor', 1.0),
+        ('shrink_factor', 2),
+        ('explode_factor', 0.0),
+        ('explode_factor', 0.5),
+        ('explode_factor', -0.5),
+        ('frame_width', 0.1),
+        ('frame_width', 1.0),
+    ],
+)
+def test_cube_faces_source(name, value):
+    kwargs = {name: value} if name is not None else {}
+    cube_faces_source = pv.CubeFacesSource(**kwargs, x_length=1, y_length=2, z_length=3)
+    pv.merge(cube_faces_source.output, merge_points=False).plot_normals(
+        mag=0.5, show_edges=True, line_width=3, edge_color='red'
+    )
 
 
 def test_planes_assembly(airplane):

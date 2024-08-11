@@ -87,6 +87,7 @@ from .geometric_sources import ArrowSource
 from .geometric_sources import AxesGeometrySource
 from .geometric_sources import BoxSource
 from .geometric_sources import ConeSource
+from .geometric_sources import CubeFacesSource
 from .geometric_sources import CubeSource
 from .geometric_sources import CylinderSource
 from .geometric_sources import DiscSource
@@ -220,3 +221,4 @@ from .reader import XMLRectilinearGridReader
 from .reader import XMLStructuredGridReader
 from .reader import XMLUnstructuredGridReader
 from .reader import get_reader
+from .transform import Transform
