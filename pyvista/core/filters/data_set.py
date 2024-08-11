@@ -6851,6 +6851,11 @@ class DataSetFilters:
             input dataset is a :class:`pyvista.ImageData`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
 
+        See Also
+        --------
+        :class:`pyvista.Transform`
+            Describe linear transformations via a 4x4 matrix.
+
         Examples
         --------
         Translate a mesh by ``(50, 100, 200)``.
