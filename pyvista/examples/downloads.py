@@ -3253,11 +3253,103 @@ def download_shark(load=True):  # pragma: no cover
         :ref:`Shark Dataset <shark_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
+        :ref:`Great White Shark Dataset <great_white_shark_dataset>`
+            Similar dataset.
+
+        :ref:`Grey Nurse Shark Dataset <grey_nurse_shark_dataset>`
+            Similar dataset.
+
     """
     return _download_dataset(_dataset_shark, load=load)
 
 
 _dataset_shark = _SingleFileDownloadableDatasetLoader('shark.ply')
+
+
+def download_great_white_shark(load=True):  # pragma: no cover
+    """Download great white shark dataset.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> cpos = [(9.0, 1.0, 21.0), (-1.0, 2.0, -2.0), (0.0, 1.0, 0.0)]
+    >>> dataset = examples.download_great_white_shark()
+    >>> dataset.plot(cpos=cpos, smooth_shading=True)
+
+    .. seealso::
+
+        :ref:`Great White Shark Dataset <great_white_shark_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Shark Dataset <shark_dataset>`
+            Similar dataset.
+
+        :ref:`Grey Nurse Shark Dataset <grey_nurse_shark_dataset>`
+            Similar dataset.
+
+    """
+    return _download_dataset(_dataset_great_white_shark, load=load)
+
+
+_dataset_great_white_shark = _SingleFileDownloadableDatasetLoader(
+    'great_white_shark/greatWhite.stl'
+)
+
+
+def download_grey_nurse_shark(load=True):  # pragma: no cover
+    """Download grey nurse shark dataset.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> cpos = [
+    ...     [-200, -100, -16.0],
+    ...     [-20.0, 20.0, -2.00],
+    ...     [0.00, 0.00, 1.00],
+    ... ]
+    >>> dataset = examples.download_grey_nurse_shark()
+    >>> dataset.plot(cpos=cpos, smooth_shading=True)
+
+    .. seealso::
+
+        :ref:`Grey Nurse Shark Dataset <grey_nurse_shark_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Shark Dataset <shark_dataset>`
+            Similar dataset.
+
+        :ref:`Great White Shark Dataset <great_white_shark_dataset>`
+            Similar dataset.
+
+    """
+    return _download_dataset(_dataset_grey_nurse_shark, load=load)
+
+
+_dataset_grey_nurse_shark = _SingleFileDownloadableDatasetLoader(
+    'grey_nurse_shark/Grey_Nurse_Shark.stl'
+)
 
 
 def download_dragon(load=True):  # pragma: no cover
