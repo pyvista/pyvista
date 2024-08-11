@@ -343,21 +343,28 @@ class DataSetFilters:
 
         We can optionally return the transformation matrix.
 
-        >>> aligned, matrix = mesh.align_xyz(axis_2_direction='y')
+        >>> aligned, matrix = mesh.align_xyz(
+        ...     axis_2_direction='y', return_matrix=True
+        ... )
 
         The matrix can be inverted, for example, to transform objects from the world
         axes back to the original mesh's local coordinate system.
 
         >>> inverse = pv.Transform(matrix).inverse_matrix
 
-        Use the inverse to label the object's axes prior to alignment.
+        Use the inverse to label the object's axes prior to alignment. For actors,
+        we set the :attr:`~pyvista.Prop3D.user_matrix` as the inverse.
 
-        >>> axes_aligned = pv.AxesAssembly(scale=aligned.length)
         >>> axes_local = pv.AxesAssembly(
         ...     scale=aligned.length,
         ...     user_matrix=inverse,
         ...     labels=["X'", "Y'", "Z'"],
         ... )
+
+        Plot the original mesh with its local axes, along with the algned mesh and its
+        axes.
+
+        >>> axes_aligned = pv.AxesAssembly(scale=aligned.length)
         >>> pl = pv.Plotter()
         >>> # Add aligned mesh with axes
         >>> _ = pl.add_mesh(aligned)
