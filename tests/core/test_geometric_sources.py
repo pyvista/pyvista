@@ -413,6 +413,21 @@ def test_plane_source():
     assert np.array_equal(algo.normal, np.array(normal) * -1)
 
 
+def test_plane_source_push():
+    algo = pv.PlaneSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.normal, (0.0, 0.0, 1.0))
+
+    distance = 5.0
+    algo.push(distance)
+    assert np.array_equal(algo.center, (0, 0, distance))
+    assert np.array_equal(algo.output.center, (0, 0, distance))
+
+    algo.push(distance)
+    assert np.array_equal(algo.center, (0, 0, distance * 2))
+    assert np.array_equal(algo.output.center, (0, 0, distance * 2))
+
+
 def test_superquadric_source():
     algo = pv.SuperquadricSource()
     assert algo.center == (0.0, 0.0, 0.0)
@@ -731,6 +746,16 @@ def test_orthogonal_planes_source_names():
     match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
     with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.names = 'abc'
+
+
+@pytest.mark.parametrize('distance', [(10, 20, 30), [(10, 20, 30)]])
+def test_orthogonal_planes_source_push(distance):
+    planes_source = pv.OrthogonalPlanesSource()
+    planes_source.push(*distance)
+    output = planes_source.output
+    assert np.array_equal(output['yz'].bounds, (10.0, 10.0, -1.0, 1.0, -1.0, 1.0))
+    assert np.array_equal(output['zx'].bounds, (-1.0, 1.0, 20.0, 20.0, -1.0, 1.0))
+    assert np.array_equal(output['xy'].bounds, (-1.0, 1.0, -1.0, 1.0, 30.0, 30.0))
 
 
 def test_orthogonal_planes_source_normal_sign():
