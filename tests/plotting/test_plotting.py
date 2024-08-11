@@ -4561,6 +4561,15 @@ def test_orthogonal_planes_source_normals(normal_sign, plane):
     plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
 
 
+@pytest.mark.usefixtures('skip_check_gc')  # gc fails, suspected memory leak with merge
+@pytest.mark.parametrize('distance', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
+def test_orthogonal_planes_source_push(distance):
+    source = pv.OrthogonalPlanesSource()
+    source.push(distance)
+    planes = pv.merge(source.output, merge_points=False)
+    planes.plot_normals()
+
+
 # Add skips since Plane's edges differ (e.g. triangles instead of quads)
 @skip_windows
 @skip_9_1_0
