@@ -135,6 +135,11 @@ class DataSetFilters:
         matrix : numpy.ndarray
             Transform matrix to transform the input dataset to the target dataset.
 
+        See Also
+        --------
+        align_xyz
+            Align a dataset to the x-y-z axes.
+
         Examples
         --------
         Create a cylinder, translate it, and use iterative closest point to
@@ -262,6 +267,9 @@ class DataSetFilters:
         pyvista.principal_axes
             Best-fit axes used by this filter for the alignment.
 
+        align
+            Align a source mesh to a target mesh using iterative closest point (ICP).
+
         Examples
         --------
         Create a dataset and align it to the x-y-z axes.
@@ -301,7 +309,7 @@ class DataSetFilters:
         >>> pl.show()
 
         Note how the tip of the cone is pointing along the z-axis. This indicates that
-        the cone's axis is the third axis. It is also pointing in the negative
+        the cone's axis is the third principal axis. It is also pointing in the negative
         z-direction. To control the alignment so that the cone points upward, we can
         seed an approximate direction specifying what "up" means for the original mesh
         in world coordinates prior to the alignment.
@@ -312,7 +320,7 @@ class DataSetFilters:
 
         >>> aligned = mesh.align_xyz(axis_2_direction='-z')
 
-        Plot the mesh. The cone is now pointing in the desired direction.
+        Plot the mesh. The cone is now pointing upward in the desired direction.
 
         >>> axes = pv.AxesAssembly(scale=aligned.length)
         >>> pl = pv.Plotter()
@@ -320,15 +328,45 @@ class DataSetFilters:
         >>> _ = pl.add_actor(axes)
         >>> pl.show()
 
-        The specified direction does not have to exact. For example, we get the same
-        result by specifying the ``'y'`` direction as the mesh's original "up"
+        The specified direction only needs to be approximate. For example, we get the
+        same result by specifying the ``'y'`` direction as the mesh's original "up"
         direction.
 
-        >>> aligned = mesh.align_xyz(axis_2_direction='y')
+        >>> aligned, matrix = mesh.align_xyz(
+        ...     axis_2_direction='y', return_matrix=True
+        ... )
         >>> axes = pv.AxesAssembly(scale=aligned.length)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(aligned)
         >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        We can optionally return the transformation matrix.
+
+        >>> aligned, matrix = mesh.align_xyz(axis_2_direction='y')
+
+        The matrix can be inverted, for example, to transform objects from the world
+        axes back to the original mesh's local coordinate system.
+
+        >>> inverse = pv.Transform(matrix).inverse_matrix
+
+        Use the inverse to label the object's axes prior to alignment.
+
+        >>> axes_aligned = pv.AxesAssembly(scale=aligned.length)
+        >>> axes_local = pv.AxesAssembly(
+        ...     scale=aligned.length,
+        ...     user_matrix=inverse,
+        ...     labels=["X'", "Y'", "Z'"],
+        ... )
+        >>> pl = pv.Plotter()
+        >>> # Add aligned mesh with axes
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_actor(axes_aligned)
+        >>> # Add original mesh with axes
+        >>> _ = pl.add_mesh(
+        ...     mesh, style='wireframe', color='black', line_width=3
+        ... )
+        >>> _ = pl.add_actor(axes_local)
         >>> pl.show()
         """
 
