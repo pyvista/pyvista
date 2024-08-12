@@ -357,6 +357,31 @@ class Transform(_vtk.vtkTransform):
                [0., 4., 0., 0.],
                [0., 0., 6., 0.],
                [0., 0., 0., 1.]])
+
+        Scale from a point. Check the :attr:`matrix_list` to see that a translation
+        is added before and after the scaling.
+
+        >>> transform = pv.Transform().scale(7, point=(1, 2, 3))
+        >>> translation_to_origin = transform.matrix_list[0]
+        >>> translation_to_origin
+        array([[ 1.,  0.,  0., -1.],
+               [ 0.,  1.,  0., -2.],
+               [ 0.,  0.,  1., -3.],
+               [ 0.,  0.,  0.,  1.]])
+
+        >>> scale = transform.matrix_list[1]
+        >>> scale
+        array([[7., 0., 0., 0.],
+               [0., 7., 0., 0.],
+               [0., 0., 7., 0.],
+               [0., 0., 0., 1.]])
+
+        >>> translation_from_origin = transform.matrix_list[2]
+        >>> translation_from_origin
+        array([[1., 0., 0., 1.],
+               [0., 1., 0., 2.],
+               [0., 0., 1., 3.],
+               [0., 0., 0., 1.]])
         """
         valid_factor = _validation.validate_array3(
             factor, broadcast=True, dtype_out=float, name='scale factor'
@@ -456,6 +481,11 @@ class Transform(_vtk.vtkTransform):
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
+        See Also
+        --------
+        :meth:`pyvista.DataSet.rotate`
+            Rotate a mesh.
+
         Examples
         --------
         Concatenate a rotation matrix. In this case the rotation rotates about the
@@ -483,6 +513,33 @@ class Transform(_vtk.vtkTransform):
                [ 0., -1.,  0.,  0.],
                [ 0.,  0.,  1.,  0.],
                [ 0.,  0.,  0.,  1.]])
+
+        Rotate about a point. Check the :attr:`matrix_list` to see that a translation
+        is added before and after the rotation.
+
+        >>> transform = pv.Transform().rotate(
+        ...     rotation_z_90, point=(1, 2, 3)
+        ... )
+        >>> translation_to_origin = transform.matrix_list[0]
+        >>> translation_to_origin
+        array([[ 1.,  0.,  0., -1.],
+               [ 0.,  1.,  0., -2.],
+               [ 0.,  0.,  1., -3.],
+               [ 0.,  0.,  0.,  1.]])
+
+        >>> rotation = transform.matrix_list[1]
+        >>> rotation
+        array([[ 0., -1.,  0.,  0.],
+               [ 1.,  0.,  0.,  0.],
+               [ 0.,  0.,  1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        >>> translation_from_origin = transform.matrix_list[2]
+        >>> translation_from_origin
+        array([[1., 0., 0., 1.],
+               [0., 1., 0., 2.],
+               [0., 0., 1., 3.],
+               [0., 0., 0., 1.]])
         """
         valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
 
