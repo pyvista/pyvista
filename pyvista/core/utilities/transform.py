@@ -323,10 +323,10 @@ class Transform(_vtk.vtkTransform):
             If set, two additional transformations are concatenated and added to
             the :attr:`matrix_list`:
 
-                - :meth:`translate` to ``point`` before the transformation
-                - :meth:`translate` away from ``point`` after the transformation
+                - :meth:`translate` to ``point`` before the scaling
+                - :meth:`translate` away from ``point`` after the scaling
 
-        multiply_mode : 'pre' | 'post' | None, optional
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -383,7 +383,7 @@ class Transform(_vtk.vtkTransform):
         *vector : VectorLike[float]
             Vector to use for the translation.
 
-        multiply_mode : 'pre' | 'post' | None, optional
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -423,7 +423,11 @@ class Transform(_vtk.vtkTransform):
         return self.concatenate(transform, multiply_mode=multiply_mode)
 
     def rotate(
-        self, rotation: RotationLike, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        rotation: RotationLike,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation matrix.
 
@@ -438,7 +442,16 @@ class Transform(_vtk.vtkTransform):
         rotation : RotationLike
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
-        multiply_mode : 'pre' | 'post' | None, optional
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
+
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -472,8 +485,10 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0.,  0.,  1.]])
         """
         valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
-        self.concatenate(valid_rotation, multiply_mode=multiply_mode)
-        return self
+
+        return self._concatenate_with_translations(
+            valid_rotation, point=point, multiply_mode=multiply_mode
+        )
 
     def concatenate(
         self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None
@@ -491,7 +506,7 @@ class Transform(_vtk.vtkTransform):
         transform : TransformLike
             Any transform-like input such as a 3x3 or 4x4 array or matrix.
 
-        multiply_mode : 'pre' | 'post' | None, optional
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -770,7 +785,7 @@ class Transform(_vtk.vtkTransform):
             translate_away = Transform().translate(-point_array)
             translate_toward = Transform().translate(point_array)
             if multiply_mode == 'post' or self._multiply_mode == 'post':
-                return translate_toward, translate_away
-            else:
                 return translate_away, translate_toward
+            else:
+                return translate_toward, translate_away
         return None, None
