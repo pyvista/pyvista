@@ -17,7 +17,7 @@ poly.plot()
 
 # %%
 # Project that surface to a plane underneath the surface
-origin = poly.center
+origin = list(poly.center)
 origin[-1] -= poly.length / 3.0
 projected = poly.project_points_to_plane(origin=origin)
 
