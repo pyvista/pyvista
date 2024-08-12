@@ -3960,14 +3960,24 @@ def test_align_xyz_two_axis_directions(planar_mesh):
 
 
 def test_align_xyz_three_axis_directions(planar_mesh):
+    axis_2_direction = np.array((0.0, 0.0, -1.0))
     _, matrix = planar_mesh.align_xyz(
         axis_0_direction='x',
         axis_1_direction='-y',
-        axis_2_direction='-z',  # test has no effect
+        axis_2_direction=axis_2_direction,  # test has no effect
         return_matrix=True,
     )
     axes = matrix[:3, :3]
     assert np.allclose(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]], atol=DELTA)
+
+    match = 'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a left-handed transformation.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = planar_mesh.align_xyz(
+            axis_0_direction='x',
+            axis_1_direction='-y',
+            axis_2_direction=axis_2_direction * -1,
+            return_matrix=True,
+        )
 
 
 def test_align_xyz_swap_axes():

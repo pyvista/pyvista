@@ -247,8 +247,7 @@ class DataSetFilters:
             Approximate direction vector of this mesh's third axis prior to
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
-            name (e.g. ``'x'`` or ``'-x'``, etc.). Has no effect if
-            ``axis_0_direction`` and ``axis_1_direction`` are also set.
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
 
         return_matrix : bool, default: False
             Return the transform matrix as well as the aligned mesh.
@@ -415,21 +414,22 @@ class DataSetFilters:
 
         # Maybe flip direction of third axis
         if axis_2_direction is not None:
-            has_correct_sign = np.dot(axes[2], axis_2_direction) >= 0
-            other_directions_are_specified = (
-                axis_0_direction is not None and axis_1_direction is not None
-            )
-            if has_correct_sign or other_directions_are_specified:
-                pass
+            if np.dot(axes[2], axis_2_direction) >= 0:
+                pass  # nothing to do, sign is correct
             else:
-                axes[2] *= -1
-                # Need to flip a second vector to keep system as right-handed
-                if axis_1_direction is not None:
-                    # Second axis has been set, so modify first axis
-                    axes[0] *= -1
+                if axis_0_direction is not None and axis_1_direction is not None:
+                    raise ValueError(
+                        f"Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation."
+                    )
                 else:
-                    # First axis has been set, so modify second axis
-                    axes[1] *= -1
+                    axes[2] *= -1
+                    # Need to also flip a second vector to keep system as right-handed
+                    if axis_1_direction is not None:
+                        # Second axis has been set, so modify first axis
+                        axes[0] *= -1
+                    else:
+                        # First axis has been set, so modify second axis
+                        axes[1] *= -1
 
         rotation = Transform().rotate(axes)
         aligned = self.transform(rotation, inplace=False)
