@@ -1261,7 +1261,7 @@ def transformed_actor():
 
 @pytest.mark.parametrize('override_mode', ['pre', 'post'])
 @pytest.mark.parametrize('object_mode', ['pre', 'post'])
-def test_transform_override_multiply_mode(transform, transformed_actor, object_mode, override_mode):
+def test_transform_multiply_mode_override(transform, transformed_actor, object_mode, override_mode):
     # This test validates multiply mode by performing the same transformations
     # applied by `Prop3D` objects and comparing the results
     transform.multiply_mode = object_mode
