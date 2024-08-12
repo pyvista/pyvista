@@ -14,6 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
 
 
 class Transform(_vtk.vtkTransform):
@@ -44,6 +45,17 @@ class Transform(_vtk.vtkTransform):
         Initialize the transform with a transformation. By default, the transform
         is initialized as the identity matrix.
 
+    point : VectorLike[float], optional
+        Point to use when concatenating some transformations such as scale, rotation, etc.
+        If set, two additional transformations are concatenated and added to
+        the :attr:`matrix_list`:
+
+            - :meth:`translate` to ``point`` before the transformation
+            - :meth:`translate` away from ``point`` after the transformation
+
+        By default, this value is ``None``, which means that the scale, rotation, etc.
+        transformations are performed about the origin ``(0, 0, 0)``.
+
     See Also
     --------
     :meth:`pyvista.DataSetFilters.transform`
@@ -72,13 +84,15 @@ class Transform(_vtk.vtkTransform):
     post-multiplication is used, the translation matrix is first in the list since
     it was applied first, and the scale matrix is second.
 
-    >>> transform.matrix_list[0]  # translation
+    >>> translation = transform.matrix_list[0]
+    >>> translation
     array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
            [ 0. ,  0. ,  0. ,  1. ]])
 
-    >>> transform.matrix_list[1]  # scaling
+    >>> scaling = transform.matrix_list[1]
+    >>> scaling
     array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
@@ -110,13 +124,15 @@ class Transform(_vtk.vtkTransform):
     reversed from post-multiplication, and the scaling matrix is now first
     followed by the translation.
 
-    >>> transform.matrix_list[0]  # scaling
+    >>> scaling = transform.matrix_list[0]
+    >>> scaling
     array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
            [0., 0., 0., 1.]])
 
-    >>> transform.matrix_list[1]  # translation
+    >>> translation = transform.matrix_list[1]
+    >>> translation
     array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
@@ -131,6 +147,17 @@ class Transform(_vtk.vtkTransform):
            [ 0. ,  2. ,  0. , -0.8],
            [ 0. ,  0. ,  2. ,  2.1],
            [ 0. ,  0. ,  0. ,  1. ]])
+
+    Another way to compare pre- and post-multiplcation is by manually concatenating
+    the transformations using matrix multiplication:
+
+    >>> # Apply translation first, then scaling
+    >>> np.array_equal(post_matrix, scaling @ translation)
+    True
+
+    >>> # Apply scaling first, then translation
+    >>> np.array_equal(pre_matrix, translation @ scaling)
+    True
 
     Apply the two transformations to a dataset and plot them. Note how the meshes
     have different positions since pre- and post-multiplication produce different
@@ -178,11 +205,37 @@ class Transform(_vtk.vtkTransform):
     >>> pl.show()
     """
 
-    def __init__(self, trans: TransformLike | None = None):
+    def __init__(
+        self, trans: TransformLike | None = None, *, point: VectorLike[float] | None = None
+    ):
         super().__init__()
         self.multiply_mode = 'post'
+        self.point = point  # type: ignore[assignment]
         if trans is not None:
             self.matrix = trans  # type: ignore[assignment]
+
+    @property
+    def point(self) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
+        """Point to use when concatenating some transformations such as scale, rotation, etc.
+
+        If set, two additional transformations are concatenated and added to
+        the :attr:`matrix_list`:
+
+            - :meth:`translate` to ``point`` before the transformation
+            - :meth:`translate` away from ``point`` after the transformation
+
+        By default, this value is ``None``, which means that the scale, rotation, etc.
+        transformations are performed about the origin ``(0, 0, 0)``.
+        """
+        return self._point
+
+    @point.setter
+    def point(self, point: VectorLike[float] | None):  # numpydoc ignore=GL08
+        self._point = (
+            None
+            if point is None
+            else _validation.validate_array3(point, dtype_out=float, to_tuple=True)
+        )
 
     @property
     def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
@@ -245,7 +298,10 @@ class Transform(_vtk.vtkTransform):
         return self
 
     def scale(
-        self, *factor, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        *factor,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a scale matrix.
 
@@ -260,6 +316,15 @@ class Transform(_vtk.vtkTransform):
         *factor : float | VectorLike[float]
             Scale factor(s) to use. Use a single number for uniform scaling or
             three numbers for non-uniform scaling.
+
+        point : VectorLike[float], optional
+            Point to scale about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the transformation
+                - :meth:`translate` away from ``point`` after the transformation
 
         multiply_mode : 'pre' | 'post' | None, optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -298,7 +363,9 @@ class Transform(_vtk.vtkTransform):
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def translate(
         self, *vector, multiply_mode: Literal['pre', 'post'] | None = None
@@ -409,7 +476,7 @@ class Transform(_vtk.vtkTransform):
         return self
 
     def concatenate(
-        self, transform: TransformLike, multiply_mode: Literal['pre', 'post'] | None = None
+        self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a transformation matrix.
 
@@ -674,3 +741,36 @@ class Transform(_vtk.vtkTransform):
         This flag is modified whenever :meth:`invert` is called.
         """
         return bool(self.GetInverseFlag())
+
+    def _concatenate_with_translations(
+        self,
+        transform: TransformLike,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
+    ):
+        translate_before, translate_after = self._get_point_translations(
+            point=point, multiply_mode=multiply_mode
+        )
+        if translate_before:
+            self.concatenate(translate_before, multiply_mode=multiply_mode)
+
+        self.concatenate(transform, multiply_mode=multiply_mode)
+
+        if translate_after:
+            self.concatenate(translate_after, multiply_mode=multiply_mode)
+
+        return self
+
+    def _get_point_translations(
+        self, point: VectorLike[float] | None, multiply_mode: Literal['pre', 'post'] | None
+    ):
+        point = point if point is not None else self.point
+        if point is not None:
+            point_array = _validation.validate_array3(point, dtype_out=float)
+            translate_away = Transform().translate(-point_array)
+            translate_toward = Transform().translate(point_array)
+            if multiply_mode == 'post' or self._multiply_mode == 'post':
+                return translate_toward, translate_away
+            else:
+                return translate_away, translate_toward
+        return None, None
