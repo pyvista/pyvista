@@ -318,7 +318,7 @@ class Transform(_vtk.vtkTransform):
             three numbers for non-uniform scaling.
 
         point : VectorLike[float], optional
-            Point to scale about. By default, the object's :attr:`point` is used,
+            Point to scale from. By default, the object's :attr:`point` is used,
             but this can be overridden.
             If set, two additional transformations are concatenated and added to
             the :attr:`matrix_list`:

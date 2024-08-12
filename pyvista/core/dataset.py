@@ -16,6 +16,7 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista.core.utilities.transform import Transform
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
@@ -1176,6 +1177,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Rotated dataset.
 
+        See Also
+        --------
+        :meth:`pyvista.Transform.rotate`
+            Concatenate a rotation matrix with a transformation.
+
         Examples
         --------
         Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
@@ -1202,7 +1208,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
         """
-        t = transformations.rotation(rotation, point=point)
+        t = Transform().rotate(rotation, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1271,6 +1277,7 @@ class DataSet(DataSetFilters, DataObject):
         xyz: Number | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
+        point: VectorLike[float] = (0.0, 0.0, 0.0),
     ):
         """Scale the mesh.
 
@@ -1291,6 +1298,9 @@ class DataSet(DataSetFilters, DataObject):
 
         inplace : bool, default: False
             Updates mesh in-place.
+
+        point : Vector, default: (0.0, 0.0, 0.0)
+            Point to scale from. Defaults to origin.
 
         Returns
         -------
@@ -1323,8 +1333,7 @@ class DataSet(DataSetFilters, DataObject):
         if isinstance(xyz, (float, int, np.number)):
             xyz = [xyz] * 3
 
-        transform = _vtk.vtkTransform()
-        transform.Scale(xyz)
+        transform = Transform().scale(xyz, point=point)
         return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
