@@ -50,6 +50,8 @@ def download_sextant():  # pragma: no cover
 def download_grasshopper():  # pragma: no cover
     """Download the grasshoper example.
 
+    .. versionadded:: 0.45
+
     Returns
     -------
     str
