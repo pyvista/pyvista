@@ -1143,12 +1143,15 @@ def test_transform_scale(transform, scale_args):
     assert np.array_equal(identity, np.eye(4))
 
 
-@pytest.mark.parametrize('translate_args', [np.array((1, 2, 3)), np.array([[1, 2, 3]])])
+VECTOR = (1, 2, 3)
+
+
+@pytest.mark.parametrize('translate_args', [np.array(VECTOR), np.array([VECTOR])])
 def test_transform_translate(transform, translate_args):
     transform.translate(*translate_args)
     actual = transform.matrix
     expected = np.eye(4)
-    expected[:3, 3] = translate_args if translate_args.ndim == 1 else translate_args[0]
+    expected[:3, 3] = VECTOR
     assert np.array_equal(actual, expected)
 
     identity = transform.matrix @ transform.inverse_matrix
