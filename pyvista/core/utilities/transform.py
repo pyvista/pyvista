@@ -66,6 +66,7 @@ class Transform(_vtk.vtkTransform):
     Concatenate two transformations with :meth:`translate` and :meth:`scale` using
     post-multiplication (default).
 
+    >>> import numpy as np
     >>> import pyvista as pv
     >>> transform = pv.Transform()
     >>> transform.multiply_mode
