@@ -212,6 +212,7 @@ class Transform(_vtk.vtkTransform):
         super().__init__()
         self.multiply_mode = 'post'
         self.point = point  # type: ignore[assignment]
+        self.check_finite = True
         if trans is not None:
             self.matrix = trans  # type: ignore[assignment]
 
@@ -542,11 +543,11 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 1., 3.],
                [0., 0., 0., 1.]])
         """
-        valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
-
-        return self._concatenate_with_translations(
-            valid_rotation, point=point, multiply_mode=multiply_mode
+        valid_rotation = _validation.validate_transform3x3(
+            rotation, must_be_finite=self.check_finite, name='rotation'
         )
+        self.concatenate(valid_rotation, multiply_mode=multiply_mode)
+        return self
 
     def concatenate(
         self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None
@@ -601,11 +602,10 @@ class Transform(_vtk.vtkTransform):
         # Make sure we have a vtkTransform
         if isinstance(transform, _vtk.vtkTransform):
             vtk_transform = transform
-        elif isinstance(transform, _vtk.vtkMatrix4x4):
-            vtk_transform = _vtk.vtkTransform()
-            vtk_transform.SetMatrix(transform)
         else:
-            array = _validation.validate_transform4x4(transform, name='matrix')
+            array = _validation.validate_transform4x4(
+                transform, must_be_finite=self.check_finite, name='matrix'
+            )
             vtk_transform = _vtk.vtkTransform()
             vtk_transform.SetMatrix(vtkmatrix_from_array(array))
 
@@ -616,7 +616,7 @@ class Transform(_vtk.vtkTransform):
 
         self.Concatenate(vtk_transform)
 
-        if multiply_mode:
+        if multiply_mode is not None:
             self.multiply_mode = original_mode
 
         return self
@@ -641,12 +641,15 @@ class Transform(_vtk.vtkTransform):
         NDArray[float]
             Current transformation matrix.
         """
-        return array_from_vtkmatrix(self.GetMatrix())
+        array = array_from_vtkmatrix(self.GetMatrix())
+        if self.check_finite:
+            _validation.check_finite(array, name='matrix')
+        return array
 
     @matrix.setter
     def matrix(self, trans: TransformLike):  # numpydoc ignore=GL08
-        array = _validation.validate_transform4x4(trans)
-        self.SetMatrix(vtkmatrix_from_array(array))
+        self.identity()
+        self.concatenate(trans)
 
     @property
     def inverse_matrix(self) -> NumpyArray[float]:
@@ -668,7 +671,10 @@ class Transform(_vtk.vtkTransform):
         NDArray[float]
             Current inverse transformation matrix.
         """
-        return array_from_vtkmatrix(self.GetInverse().GetMatrix())
+        array = array_from_vtkmatrix(self.GetInverse().GetMatrix())
+        if self.check_finite:
+            _validation.check_finite(array, name='matrix')
+        return array
 
     @property
     def matrix_list(self) -> list[NumpyArray[float]]:
@@ -847,3 +853,20 @@ class Transform(_vtk.vtkTransform):
             else:
                 return translate_toward, translate_away
         return None, None
+
+    @property
+    def check_finite(self) -> bool:  # numpydoc ignore: RT01
+        """Check that the :attr:`matrix` and :attr:`inverse_matrix` have finite values.
+
+        If ``True``, all transformations are checked to ensure they only contain
+        finite values (i.e. no ``NaN`` or ``Inf`` values) and a ``ValueError`` is raised
+        otherwise. This is useful to catch cases where the transformation(s) are poorly
+        defined and/or are numerically unstable.
+
+        This flag is enabled by default.
+        """
+        return self._check_finite
+
+    @check_finite.setter
+    def check_finite(self, value: bool):  # numpydoc ignore: GL08
+        self._check_finite = bool(value)
