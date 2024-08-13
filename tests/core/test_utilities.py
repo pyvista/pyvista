@@ -1180,7 +1180,7 @@ def test_transform_rotate_x(transform):
     assert np.array_equal(actual, expected)
 
     identity = transform.matrix @ transform.inverse_matrix
-    assert np.array_equal(identity, np.eye(4))
+    assert np.allclose(identity, np.eye(4))
 
 
 def test_transform_rotate_y(transform):
@@ -1200,7 +1200,7 @@ def test_transform_rotate_z(transform):
     assert np.array_equal(actual, expected)
 
     identity = transform.matrix @ transform.inverse_matrix
-    assert np.array_equal(identity, np.eye(4))
+    assert np.allclose(identity, np.eye(4))
 
 
 def test_transform_rotate_vector(transform):
