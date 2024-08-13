@@ -427,6 +427,11 @@ class Transform(_vtk.vtkTransform):
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
+        See Also
+        --------
+        pyvista.DataSet.rotate_x
+            Rotate a mesh about the x-axis.
+
         Examples
         --------
         Concatenate a rotation about the x-axis.
@@ -475,6 +480,11 @@ class Transform(_vtk.vtkTransform):
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
 
+        See Also
+        --------
+        pyvista.DataSet.rotate_y
+            Rotate a mesh about the y-axis.
+
         Examples
         --------
         Concatenate a rotation about the y-axis.
@@ -522,6 +532,11 @@ class Transform(_vtk.vtkTransform):
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        pyvista.DataSet.rotate_z
+            Rotate a mesh about the z-axis.
 
         Examples
         --------
@@ -577,6 +592,11 @@ class Transform(_vtk.vtkTransform):
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        pyvista.DataSet.rotate_vector
+            Rotate a mesh about a vector.
 
         Examples
         --------
