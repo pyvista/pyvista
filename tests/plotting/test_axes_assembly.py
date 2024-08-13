@@ -559,7 +559,102 @@ def test_axes_assembly_set_get_actor_prop_raises(axes_assembly):
         axes_assembly.set_actor_prop('ambient', [0, 1], part='shaft')
 
 
-def test_labeled_box_assembly(box_assembly): ...
+@pytest.mark.parametrize(
+    ('name', 'default'), [('frame_width', 0.05), ('shrink_factor', None), ('explode_factor', None)]
+)
+def test_box_assembly_factors(name, default):
+    box = pv.BoxAssembly()
+    assert getattr(box, name) == default
+    value = 0.1
+    box = pv.BoxAssembly(**{name: value})
+    assert getattr(box, name) == value
+
+
+@pytest.mark.parametrize('init', [True, False])
+@pytest.mark.parametrize(
+    ('box_style', 'shrink_factor', 'explode_factor', 'frame_width'),
+    [('frames', None, None, 0.05), ('tubes', 0.99, None, None), ('faces', None, None, None)],
+)
+def test_box_assembly_box_style(
+    box_assembly, box_style, shrink_factor, explode_factor, frame_width, init
+):
+    if init:
+        box_assembly = pv.BoxAssembly(box_style=box_style)
+    box_assembly.box_style = box_style
+    assert box_assembly.box_style == box_style
+    assert box_assembly.shrink_factor == shrink_factor
+    assert box_assembly.explode_factor == explode_factor
+    assert box_assembly.frame_width == frame_width
+
+
+def test_box_assembly_labels(box_assembly):
+    assert box_assembly.labels == ('+X', '-X', '+Y', '-Y', '+Z', '-Z')
+    labels = ('+i', '-i', '+j', '-j', '+k', '-k')
+    box_assembly.labels = labels
+    assert box_assembly.labels == labels
+
+
+def test_box_assembly_labels_init():
+    labels = ('i', 'j', 'k')
+    box_assembly = pv.BoxAssembly(labels=labels)
+    assert box_assembly.labels == ('+i', '-i', '+j', '-j', '+k', '-k')
+
+
+def test_box_assembly_x_color(box_assembly):
+    box_assembly.x_color = 'black'
+    assert box_assembly.x_color[0].name == 'black'
+    assert box_assembly.x_color[1].name == 'black'
+
+
+def test_box_assembly_y_color(box_assembly):
+    box_assembly.y_color = 'black'
+    assert box_assembly.y_color[0].name == 'black'
+    assert box_assembly.y_color[1].name == 'black'
+
+
+def test_box_assembly_z_color(box_assembly):
+    box_assembly.z_color = 'black'
+    assert box_assembly.z_color[0].name == 'black'
+    assert box_assembly.z_color[1].name == 'black'
+
+
+def test_box_assembly_opacity(box_assembly):
+    assert box_assembly.opacity == tuple([1.0] * 6)
+    opacity = 0.0, 0.1, 0.2, 0.3, 0.4, 0.5
+    box_assembly.opacity = opacity
+    assert box_assembly.opacity == opacity
+
+
+def test_box_assembly_opacity_init():
+    opacity = 0.5
+    box_assembly = pv.BoxAssembly(opacity=opacity)
+    assert box_assembly.opacity == tuple([opacity] * 6)
+
+
+def test_box_assembly_culling(box_assembly):
+    assert box_assembly.culling is None
+    culling = 'back'
+    box_assembly.culling = culling
+    assert box_assembly.culling == culling
+
+
+def test_box_assembly_culling_init():
+    culling = 'front'
+    box_assembly = pv.BoxAssembly(culling=culling)
+    assert box_assembly.culling == 'front'
+
+
+def test_box_assembly_label_size(box_assembly):
+    assert box_assembly.label_size == 50
+    label_size = 10
+    box_assembly.label_size = label_size
+    assert box_assembly.label_size == label_size
+
+
+def test_box_assembly_label_size_init():
+    label_size = 10
+    box_assembly = pv.BoxAssembly(label_size=label_size)
+    assert box_assembly.label_size == label_size
 
 
 def test_planes_assembly_repr(planes_assembly):

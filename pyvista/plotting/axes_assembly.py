@@ -1742,18 +1742,6 @@ class BoxAssembly(_XYZAssembly):
             actor.prop.culling = valid_culling
 
     @property
-    def label_color(self) -> Color:  # numpydoc ignore=RT01
-        """Color of the text labels."""
-        return self._label_color
-
-    @label_color.setter
-    def label_color(self, color: ColorLike):  # numpydoc ignore=GL08
-        valid_color = Color(color)
-        self._label_color = valid_color
-        for label in self._label_actor_iterator:
-            label.prop.color = valid_color
-
-    @property
     def label_size(self) -> int:  # numpydoc ignore=RT01
         """Size of the text labels.
 
@@ -1767,6 +1755,7 @@ class BoxAssembly(_XYZAssembly):
         for label in self._label_actor_iterator:
             label.size = size
 
+    # TODO: implement label position
     @property
     def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Position of the text label along each axis.
