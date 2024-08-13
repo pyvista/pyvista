@@ -1334,6 +1334,18 @@ def test_transform_add_vector():
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
 
+def test_transform_radd():
+    transform_base = pv.Transform().pre_multiply().scale(SCALE)
+    # Translate with `translate` and `+`
+    transform_translate = transform_base.copy().translate(VECTOR)
+    transform_add = VECTOR + transform_base
+    assert np.array_equal(transform_add.matrix, transform_translate.matrix)
+
+    # Test multiply mode override to ensure post-multiply is always used
+    transform_add = VECTOR + transform_base.post_multiply()
+    assert np.array_equal(transform_add.matrix, transform_translate.matrix)
+
+
 @pytest.mark.parametrize('scale_factor', [SCALE, (SCALE, SCALE, SCALE)])
 def test_transform_mul(scale_factor):
     transform_base = pv.Transform().post_multiply().translate(VECTOR)
