@@ -1301,3 +1301,30 @@ def test_transform_chain_methods():
         .matrix
     )
     assert np.array_equal(matrix, eye4)
+
+
+VECTOR = (1, 2, 3)
+
+
+def test_transform_add():
+    scale = Transform().scale(SCALE)
+    translate = Transform().translate(VECTOR)
+
+    transform = pv.Transform().post_multiply().translate(VECTOR).scale(SCALE)
+    transform_add = translate + scale
+    assert np.array_equal(transform_add.matrix, transform.matrix)
+
+    matrix_numpy = scale.matrix @ translate.matrix
+    assert np.array_equal(transform_add.matrix, matrix_numpy)
+
+
+def test_transform_matmul():
+    scale = Transform().scale(SCALE)
+    translate = Transform().translate(VECTOR)
+
+    transform = pv.Transform().pre_multiply().translate(VECTOR).scale(SCALE)
+    transform_matmul = translate @ scale
+    assert np.array_equal(transform_matmul.matrix, transform.matrix)
+
+    matrix_numpy = translate.matrix @ scale.matrix
+    assert np.array_equal(transform_matmul.matrix, matrix_numpy)

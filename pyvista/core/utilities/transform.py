@@ -184,6 +184,56 @@ class Transform(_vtk.vtkTransform):
         if trans is not None:
             self.matrix = trans  # type: ignore[assignment]
 
+    def __add__(self, other) -> Transform:
+        """:meth:`concatenate` this transform using post-multiply semantics."""
+        copied = self.copy()
+        return copied.concatenate(other, multiply_mode='post')
+
+    def __matmul__(self, other) -> Transform:
+        """:meth:`concatenate` this transform using pre-multiply semantics."""
+        copied = self.copy()
+        return copied.concatenate(other, multiply_mode='pre')
+
+    def copy(self) -> Transform:
+        """Return a deep copy of the transform.
+
+        Returns
+        -------
+        Transform
+            Deep copy of this transform.
+
+        Examples
+        --------
+        Create a scaling transform.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform().scale(1, 2, 3)
+        >>> transform.matrix
+        array([[1., 0., 0., 0.],
+               [0., 2., 0., 0.],
+               [0., 0., 3., 0.],
+               [0., 0., 0., 1.]])
+
+        Copy the transform.
+
+        >>> copied = transform.copy()
+        >>> copied.matrix
+        array([[1., 0., 0., 0.],
+               [0., 2., 0., 0.],
+               [0., 0., 3., 0.],
+               [0., 0., 0., 1.]])
+
+        >>> copied is transform
+        False
+        """
+        new_transform = Transform()
+        new_transform.DeepCopy(self)
+
+        # Need to copy other props not stored by vtkTransform
+        new_transform.multiply_mode = self.multiply_mode
+
+        return new_transform
+
     @property
     def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
         """Set or get the multiplication mode.
