@@ -216,13 +216,11 @@ class Transform(_vtk.vtkTransform):
 
     def __add__(self, other) -> Transform:
         """:meth:`concatenate` this transform using post-multiply semantics."""
-        copied = self.copy()
-        return copied.concatenate(other, multiply_mode='post')
+        return self.copy().concatenate(other, multiply_mode='post')
 
     def __matmul__(self, other) -> Transform:
         """:meth:`concatenate` this transform using pre-multiply semantics."""
-        copied = self.copy()
-        return copied.concatenate(other, multiply_mode='pre')
+        return self.copy().concatenate(other, multiply_mode='pre')
 
     def copy(self) -> Transform:
         """Return a deep copy of the transform.

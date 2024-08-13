@@ -1328,3 +1328,13 @@ def test_transform_matmul():
 
     matrix_numpy = translate.matrix @ scale.matrix
     assert np.array_equal(transform_matmul.matrix, matrix_numpy)
+
+
+@pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
+def test_transform_copy(multiply_mode):
+    t1 = Transform().scale(SCALE)
+    t1.multiply_mode = multiply_mode
+    t2 = t1.copy()
+    assert np.array_equal(t1.matrix, t2.matrix)
+    assert t1 is not t2
+    assert t2.multiply_mode == t1.multiply_mode
