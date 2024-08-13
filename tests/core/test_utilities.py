@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import pickle
+import re
 import shutil
 import sys
 from unittest import mock
@@ -1322,15 +1323,18 @@ def test_transform_add():
     assert np.array_equal(transform_add.matrix, matrix_numpy)
 
 
-def test_transform_add_vector():
+@pytest.mark.parametrize(
+    'other', [VECTOR, Transform().translate(VECTOR), Transform().translate(VECTOR).matrix]
+)
+def test_transform_add_other(other):
     transform_base = pv.Transform().post_multiply().scale(SCALE)
     # Translate with `translate` and `+`
     transform_translate = transform_base.copy().translate(VECTOR)
-    transform_add = transform_base + VECTOR
+    transform_add = transform_base + other
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
     # Test multiply mode override to ensure post-multiply is always used
-    transform_add = transform_base.pre_multiply() + VECTOR
+    transform_add = transform_base.pre_multiply() + other
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
 
@@ -1388,6 +1392,86 @@ def test_transform_matmul():
     # Validate with numpy matmul
     matrix_numpy = translate.matrix @ scale.matrix
     assert np.array_equal(transform_matmul.matrix, matrix_numpy)
+
+
+def test_transform_add_raises():
+    match = (
+        "Unsupported operand value(s) for +: 'Transform' and 'int'\n"
+        "The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Transform() + 1
+
+    match = (
+        "Unsupported operand type(s) for +: 'Transform' and 'dict'\n"
+        "The right-side argument must be transform-like."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.Transform() + {}
+
+
+def test_transform_radd_raises():
+    match = (
+        "Unsupported operand value(s) for +: 'int' and 'Transform'\n"
+        "The left-side argument must be a length-3 vector."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        1 + pv.Transform()
+
+    match = (
+        "Unsupported operand type(s) for +: 'dict' and 'Transform'\n"
+        "The left-side argument must be a length-3 vector."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        {} + pv.Transform()
+
+
+def test_transform_rmul_raises():
+    match = (
+        "Unsupported operand value(s) for *: 'tuple' and 'Transform'\n"
+        "The left-side argument must be a single number or a length-3 vector."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        (1, 2, 3, 4) * pv.Transform()
+
+    match = (
+        "Unsupported operand type(s) for *: 'dict' and 'Transform'\n"
+        "The left-side argument must be a single number or a length-3 vector."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        {} * pv.Transform()
+
+
+def test_transform_mul_raises():
+    match = (
+        "Unsupported operand value(s) for *: 'Transform' and 'tuple'\n"
+        "The right-side argument must be a single number or a length-3 vector."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Transform() * (1, 2, 3, 4)
+
+    match = (
+        "Unsupported operand type(s) for *: 'Transform' and 'dict'\n"
+        "The right-side argument must be a single number or a length-3 vector."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.Transform() * {}
+
+
+def test_transform_matmul_raises():
+    match = (
+        "Unsupported operand value(s) for @: 'Transform' and 'tuple'\n"
+        "The right-side argument must be transform-like."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.Transform() @ (1, 2, 3, 4)
+
+    match = (
+        "Unsupported operand type(s) for @: 'Transform' and 'dict'\n"
+        "The right-side argument must be transform-like."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.Transform() @ {}
 
 
 @pytest.mark.parametrize('multiply_mode', ['pre', 'post'])

@@ -222,35 +222,83 @@ class Transform(_vtk.vtkTransform):
         otherwise for transform-like inputs.
         """
         copied = self.copy()
-        transform = None
         try:
             transform = copied.translate(other, multiply_mode='post')
-        except TypeError:
-            transform = copied.concatenate(other, multiply_mode='post')
-        finally:
-            if transform is None:
-                # TODO: properly handle ValueError where array has wrong shape
+        except (ValueError, TypeError):
+            try:
+                transform = copied.concatenate(other, multiply_mode='post')
+            except TypeError:
                 raise TypeError(
-                    f"Unsupported operand type(s) for +: '{self.__class__}' and '{type(other)}'\n"
-                    f"Transform can only be concatenated with transform-like types or length-3 vectors."
+                    f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f"The right-side argument must be transform-like."
+                )
+            except ValueError:
+                raise ValueError(
+                    f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f"The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape."
                 )
         return transform
 
     def __radd__(self, other) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
-        return self.copy().translate(other, multiply_mode='pre')
+        try:
+            return self.copy().translate(other, multiply_mode='pre')
+        except TypeError:
+            raise TypeError(
+                f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"The left-side argument must be a length-3 vector."
+            )
+        except ValueError:
+            raise ValueError(
+                f"Unsupported operand value(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"The left-side argument must be a length-3 vector."
+            )
 
     def __mul__(self, other) -> Transform:
         """:meth:`scale` this transform using post-multiply semantics."""
-        return self.copy().scale(other, multiply_mode='post')
+        try:
+            return self.copy().scale(other, multiply_mode='post')
+
+        except TypeError:
+            raise TypeError(
+                f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"The right-side argument must be a single number or a length-3 vector."
+            )
+        except ValueError:
+            raise ValueError(
+                f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"The right-side argument must be a single number or a length-3 vector."
+            )
 
     def __rmul__(self, other) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics."""
-        return self.copy().scale(other, multiply_mode='pre')
+        try:
+            return self.copy().scale(other, multiply_mode='pre')
+        except TypeError:
+            raise TypeError(
+                f"Unsupported operand type(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"The left-side argument must be a single number or a length-3 vector."
+            )
+        except ValueError:
+            raise ValueError(
+                f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
+                f"The left-side argument must be a single number or a length-3 vector."
+            )
 
     def __matmul__(self, other) -> Transform:
         """:meth:`concatenate` this transform using pre-multiply semantics."""
-        return self.copy().concatenate(other, multiply_mode='pre')
+        try:
+            return self.copy().concatenate(other, multiply_mode='pre')
+        except TypeError:
+            raise TypeError(
+                f"Unsupported operand type(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"The right-side argument must be transform-like."
+            )
+        except ValueError:
+            raise ValueError(
+                f"Unsupported operand value(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f"The right-side argument must be transform-like."
+            )
 
     def copy(self) -> Transform:
         """Return a deep copy of the transform.
