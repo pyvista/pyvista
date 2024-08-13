@@ -217,7 +217,20 @@ class Transform(_vtk.vtkTransform):
 
     def __add__(self, other) -> Transform:
         """:meth:`concatenate` this transform using post-multiply semantics."""
-        return self.copy().concatenate(other, multiply_mode='post')
+        copied = self.copy()
+        transform = None
+        try:
+            transform = copied.translate(other, multiply_mode='post')
+        except TypeError:
+            transform = copied.concatenate(other, multiply_mode='post')
+        finally:
+            if transform is None:
+                # TODO: properly handle ValueError where array has wrong shape
+                raise TypeError(
+                    f"Unsupported operand type(s) for +: '{self.__class__}' and '{type(other)}'\n"
+                    f"Transform can only be concatenated with transform-like types or length-3 vectors."
+                )
+        return transform
 
     def __matmul__(self, other) -> Transform:
         """:meth:`concatenate` this transform using pre-multiply semantics."""

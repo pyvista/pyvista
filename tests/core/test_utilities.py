@@ -1321,6 +1321,13 @@ def test_transform_add():
     assert np.array_equal(transform_add.matrix, matrix_numpy)
 
 
+def test_transform_add_vector():
+    transform_scale = pv.Transform().post_multiply().scale(SCALE)
+    transform_translate = transform_scale.copy().translate(VECTOR)
+    transform_add = transform_scale + VECTOR
+    assert np.array_equal(transform_add.matrix, transform_translate.matrix)
+
+
 def test_transform_matmul():
     scale = Transform().scale(SCALE)
     translate = Transform().translate(VECTOR)
