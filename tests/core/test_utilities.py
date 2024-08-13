@@ -1301,3 +1301,27 @@ def test_transform_chain_methods():
         .matrix
     )
     assert np.array_equal(matrix, eye4)
+
+
+def test_transform_repr(transform):
+    def _repr_no_first_line():
+        return "\n".join(repr(transform).split('\n')[1:])
+
+    repr_ = _repr_no_first_line()
+    assert repr_ == (
+        '  Num Transformations: 0\n'
+        '  Matrix:  [[ 1.    ,  0.    ,  0.    ,  0.    ],\n'
+        '            [ 0.    ,  1.    ,  0.    ,  0.    ],\n'
+        '            [ 0.    ,  0.    ,  1.    ,  0.    ],\n'
+        '            [ 0.    ,  0.    ,  0.    ,  1.    ]]'
+    )
+
+    transform.concatenate(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
+    repr_ = _repr_no_first_line()
+    assert repr_ == (
+        '  Num Transformations: 1\n'
+        '  Matrix:  [[ 0.7071, -0.7071,  0.    ,  0.    ],\n'
+        '            [ 0.7071,  0.7071,  0.    ,  0.    ],\n'
+        '            [ 0.    ,  0.    ,  1.    ,  0.    ],\n'
+        '            [ 0.    ,  0.    ,  0.    ,  1.    ]]'
+    )

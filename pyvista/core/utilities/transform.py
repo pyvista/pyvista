@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 
+import numpy as np
+
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -183,6 +185,47 @@ class Transform(_vtk.vtkTransform):
         self.multiply_mode = 'post'
         if trans is not None:
             self.matrix = trans  # type: ignore[assignment]
+
+    def __repr__(self):
+        """Representation of the transform."""
+
+        def _matrix_repr():
+            def _remove_trailing_zeros(char: str):
+                return (
+                    elements_str.replace('0000' + char, '    ' + char)
+                    .replace('000' + char, '   ' + char)
+                    .replace('00' + char, '  ' + char)
+                    .replace('0' + char, ' ' + char)
+                )
+
+            precision = 4
+            elements = self.matrix.ravel()
+            elements_repr: list[str] = [
+                np.array2string(
+                    np.array(elem),
+                    precision=precision,
+                    suppress_small=True,
+                    floatmode='fixed',
+                    sign=' ',
+                )
+                for elem in elements
+            ]
+            elements_str = np.array2string(
+                np.reshape(elements_repr, (4, 4)), separator=', '
+            ).replace("'", "")
+            elements_str = _remove_trailing_zeros(',')
+            return _remove_trailing_zeros(']')
+
+        matrix_repr_lines = _matrix_repr().split('\n')
+        lines = [
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Num Transformations: {self.n_transformations}',
+            f'  Matrix:  {matrix_repr_lines[0]}',
+            f'           {matrix_repr_lines[1]}',
+            f'           {matrix_repr_lines[2]}',
+            f'           {matrix_repr_lines[3]}',
+        ]
+        return "\n".join(lines)
 
     @property
     def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
