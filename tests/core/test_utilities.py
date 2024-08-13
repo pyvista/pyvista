@@ -1314,7 +1314,13 @@ def test_transform_asarray(transform, dtype, copy):
     assert matrix is not transform.matrix
 
     # Test cast to numpy
-    array = np.asarray(matrix, dtype=dtype, copy=copy)
+    try:
+        array = np.asarray(matrix, dtype=dtype, copy=copy)
+    except TypeError as e:
+        # Will fail for older python 3.8/3.9 on Linux/Windows
+        if "asarray() got an unexpected keyword argument 'copy'" in repr(e):
+            pytest.xfail('Copy not supported')
+
     assert array.dtype == dtype
     if dtype is int or copy:
         assert array is not matrix
