@@ -51,93 +51,123 @@ class Transform(_vtk.vtkTransform):
 
     Examples
     --------
-    Concatenate two transformations with :meth:`translate` and :meth:`scale` using
-    post-multiplication (default).
+    Create two transformations using :meth:`translate` and :meth:`scale`.
 
+    >>> import numpy as np
     >>> import pyvista as pv
-    >>> transform = pv.Transform()
-    >>> transform.multiply_mode
-    'post'
     >>> position = (-0.6, -0.8, 2.1)
-    >>> scale = 2.0
-    >>> _ = transform.translate(position)
-    >>> _ = transform.scale(scale)
+    >>> translation = Transform().translate(position)
+    >>> translation.matrix
+    array([[ 1. ,  0. ,  0. , -0.6],
+           [ 0. ,  1. ,  0. , -0.8],
+           [ 0. ,  0. ,  1. ,  2.1],
+           [ 0. ,  0. ,  0. ,  1. ]])
 
-    Use :attr:`n_transformations` to verify that there are two transformations.
+    >>> scale_factor = 2.0
+    >>> scaling = Transform().scale(scale_factor)
+    >>> scaling.matrix
+    array([[2., 0., 0., 0.],
+           [0., 2., 0., 0.],
+           [0., 0., 2., 0.],
+           [0., 0., 0., 1.]])
 
-    >>> transform.n_transformations
+    Concatenate the transformations using addition. This will concatenate with
+    post-multiplication such that the transformations are applied in order from left to
+    right, i.e. translate first, then scale.
+
+    >>> transform_post = translation + scaling
+    >>> transform_post.matrix
+    array([[ 2. ,  0. ,  0. , -1.2],
+           [ 0. ,  2. ,  0. , -1.6],
+           [ 0. ,  0. ,  2. ,  4.2],
+           [ 0. ,  0. ,  0. ,  1. ]])
+
+    Post-multiplication is equivalent to using matrix multiplication on the
+    arrays directly but with the arguments reversed:
+
+    >>> mat_mul = scaling.matrix @ translation.matrix
+    >>> np.array_equal(transform_post.matrix, mat_mul)
+    True
+
+    Alternatively, concatenate the transformations by chaining the methods with a
+    single :class:`Transform` instance. Note that post-multiply is used by default.
+
+    >>> transform_post = Transform()
+    >>> transform_post.multiply_mode
+    'post'
+    >>> _ = transform_post.translate(position).scale(scale_factor)
+    >>> transform_post.matrix
+    array([[ 2. ,  0. ,  0. , -1.2],
+           [ 0. ,  2. ,  0. , -1.6],
+           [ 0. ,  0. ,  2. ,  4.2],
+           [ 0. ,  0. ,  0. ,  1. ]])
+
+    Use :attr:`n_transformations` to check that there are two transformations.
+
+    >>> transform_post.n_transformations
     2
 
     Use :attr:`matrix_list` to get a list of the transformations. Since
     post-multiplication is used, the translation matrix is first in the list since
     it was applied first, and the scale matrix is second.
 
-    >>> transform.matrix_list[0]  # translation
+    >>> transform_post.matrix_list[0]  # translation
     array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
            [ 0. ,  0. ,  0. ,  1. ]])
 
-    >>> transform.matrix_list[1]  # scaling
+    >>> transform_post.matrix_list[1]  # scaling
     array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
            [0., 0., 0., 1.]])
 
-    Show the concatenated matrix. Note that the position has doubled from
-    ``(-0.6, -0.8, 2.1)`` to ``(-1.2, -1.6, 4.2)``, indicating that the scaling is
-    applied *after* the translation.
+    Create a similar transform but use pre-multiplication this time. Concatenate the
+    transformations in the same order as before using :meth:`translate` and :meth`scale`.
 
-    >>> post_matrix = transform.matrix
-    >>> post_matrix
-    array([[ 2. ,  0. ,  0. , -1.2],
-           [ 0. ,  2. ,  0. , -1.6],
-           [ 0. ,  0. ,  2. ,  4.2],
-           [ 0. ,  0. ,  0. ,  1. ]])
+    >>> transform_pre = pv.Transform().pre_multiply()
+    >>> _ = transform_pre.translate(position).scale(scale_factor)
 
-    Reset the transform to the identity matrix and set :attr:`multiply_mode` to
-    use pre-multiplication instead.
+    Alternatively, create the transform using matrix multiplication. Matrix
+    multiplication concatenates the transformations using pre-multiply semantics such
+    that the transformations are applied in order from right to left, i.e. scale first,
+    then translate.
 
-    >>> _ = transform.identity()
-    >>> transform.multiply_mode = 'pre'
-
-    Apply the same two transformations as before and in the same order. Note that the
-    function calls can be chained together.
-
-    >>> _ = transform.translate(position).scale(scale)
-
-    Show the matrix list again. Note how with pre-multiplication, the order is
-    reversed from post-multiplication, and the scaling matrix is now first
-    followed by the translation.
-
-    >>> transform.matrix_list[0]  # scaling
-    array([[2., 0., 0., 0.],
-           [0., 2., 0., 0.],
-           [0., 0., 2., 0.],
-           [0., 0., 0., 1.]])
-
-    >>> transform.matrix_list[1]  # translation
-    array([[ 1. ,  0. ,  0. , -0.6],
-           [ 0. ,  1. ,  0. , -0.8],
-           [ 0. ,  0. ,  1. ,  2.1],
-           [ 0. ,  0. ,  0. ,  1. ]])
-
-    Show the concatenated matrix. Unlike before, the position is not scaled,
-    and is ``(-0.6, -0.8, 2.1)`` instead of ``(-1.2, -1.6, 4.2)``.
-
-    >>> pre_matrix = transform.matrix
-    >>> pre_matrix
+    >>> transform_pre = translation @ scaling
+    >>> transform_pre.matrix
     array([[ 2. ,  0. ,  0. , -0.6],
            [ 0. ,  2. ,  0. , -0.8],
            [ 0. ,  0. ,  2. ,  2.1],
            [ 0. ,  0. ,  0. ,  1. ]])
 
-    Apply the two transformations to a dataset and plot them. Note how the meshes
-    have different positions since pre- and post-multiplication produce different
-    transformations.
+    This is equivalent to using matrix multiplication directly on the arrays:
 
-    >>> mesh_post = pv.Sphere().transform(post_matrix)
-    >>> mesh_pre = pv.Cone().transform(pre_matrix)
+    >>> mat_mul = translation.matrix @ scaling.matrix
+    >>> np.array_equal(transform_pre.matrix, mat_mul)
+    True
+
+    Show the matrix list again. Note how the order with pre-multiplication is the
+    reverse of post-multiplication.
+
+    >>> transform_pre.matrix_list[0]  # scaling
+    array([[2., 0., 0., 0.],
+           [0., 2., 0., 0.],
+           [0., 0., 2., 0.],
+           [0., 0., 0., 1.]])
+
+    >>> transform_pre.matrix_list[1]  # translation
+    array([[ 1. ,  0. ,  0. , -0.6],
+           [ 0. ,  1. ,  0. , -0.8],
+           [ 0. ,  0. ,  1. ,  2.1],
+           [ 0. ,  0. ,  0. ,  1. ]])
+
+    Apply the two post- and pre-multiplied transformations to a dataset and plot them.
+    Note how the meshes have different positions since post- and pre-multiplication
+    produce different transformations.
+
+    >>> mesh_post = pv.Sphere().transform(transform_post)
+    >>> mesh_pre = pv.Cone().transform(transform_pre)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_post, color='goldenrod')
     >>> _ = pl.add_mesh(mesh_pre, color='teal')
@@ -146,7 +176,7 @@ class Transform(_vtk.vtkTransform):
 
     Get the concatenated inverse transformation matrix of the pre-multiplication case.
 
-    >>> inverse_matrix = transform.inverse_matrix
+    >>> inverse_matrix = transform_pre.inverse_matrix
     >>> inverse_matrix
     array([[ 0.5 ,  0.  ,  0.  ,  0.3 ],
            [ 0.  ,  0.5 ,  0.  ,  0.4 ],
@@ -156,13 +186,13 @@ class Transform(_vtk.vtkTransform):
     Similar to using :attr:`matrix_list`, we can inspect the individual transformation
     inverses with :attr:`inverse_matrix_list`.
 
-    >>> transform.inverse_matrix_list[0]  # inverse scaling
+    >>> transform_pre.inverse_matrix_list[0]  # inverse scaling
     array([[0.5, 0. , 0. , 0. ],
            [0. , 0.5, 0. , 0. ],
            [0. , 0. , 0.5, 0. ],
            [0. , 0. , 0. , 1. ]])
 
-    >>> transform.inverse_matrix_list[1]  # inverse translation
+    >>> transform_pre.inverse_matrix_list[1]  # inverse translation
     array([[ 1. ,  0. ,  0. ,  0.6],
            [ 0. ,  1. ,  0. ,  0.8],
            [ 0. ,  0. ,  1. , -2.1],
