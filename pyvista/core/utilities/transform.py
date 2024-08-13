@@ -190,31 +190,8 @@ class Transform(_vtk.vtkTransform):
         """Representation of the transform."""
 
         def _matrix_repr():
-            def _remove_trailing_zeros(char: str):
-                return (
-                    elements_str.replace('0000' + char, '    ' + char)
-                    .replace('000' + char, '   ' + char)
-                    .replace('00' + char, '  ' + char)
-                    .replace('0' + char, ' ' + char)
-                )
-
-            precision = 4
-            elements = self.matrix.ravel()
-            elements_repr: list[str] = [
-                np.array2string(
-                    np.array(elem),
-                    precision=precision,
-                    suppress_small=True,
-                    floatmode='fixed',
-                    sign=' ',
-                )
-                for elem in elements
-            ]
-            elements_str = np.array2string(
-                np.reshape(elements_repr, (4, 4)), separator=', '
-            ).replace("'", "")
-            elements_str = _remove_trailing_zeros(',')
-            return _remove_trailing_zeros(']')
+            repr_ = np.array_repr(self.matrix, precision=4, suppress_small=True)
+            return repr_.replace('array(', '      ').replace(')', '').replace('      [', '[')
 
         matrix_repr_lines = _matrix_repr().split('\n')
         lines = [

@@ -1304,24 +1304,38 @@ def test_transform_chain_methods():
 
 
 def test_transform_repr(transform):
-    def _repr_no_first_line():
-        return "\n".join(repr(transform).split('\n')[1:])
+    def _repr_no_first_line(trans):
+        return "\n".join(repr(trans).split('\n')[1:])
 
-    repr_ = _repr_no_first_line()
+    # Test compact format with no unnecessary spacing
+    repr_ = _repr_no_first_line(transform)
     assert repr_ == (
         '  Num Transformations: 0\n'
-        '  Matrix:  [[ 1.    ,  0.    ,  0.    ,  0.    ],\n'
-        '            [ 0.    ,  1.    ,  0.    ,  0.    ],\n'
-        '            [ 0.    ,  0.    ,  1.    ,  0.    ],\n'
-        '            [ 0.    ,  0.    ,  0.    ,  1.    ]]'
+        '  Matrix:  [[1., 0., 0., 0.],\n'
+        '            [0., 1., 0., 0.],\n'
+        '            [0., 0., 1., 0.],\n'
+        '            [0., 0., 0., 1.]]'
     )
 
+    # Test precision limited to 4 decimals
     transform.concatenate(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
-    repr_ = _repr_no_first_line()
+    repr_ = _repr_no_first_line(transform)
     assert repr_ == (
         '  Num Transformations: 1\n'
         '  Matrix:  [[ 0.7071, -0.7071,  0.    ,  0.    ],\n'
         '            [ 0.7071,  0.7071,  0.    ,  0.    ],\n'
         '            [ 0.    ,  0.    ,  1.    ,  0.    ],\n'
         '            [ 0.    ,  0.    ,  0.    ,  1.    ]]'
+    )
+
+    # Test suppression of small values
+    transform.identity().matrix += 1e-8
+    assert '1.00000001e+00' in repr(transform.matrix)
+    repr_ = _repr_no_first_line(transform)
+    assert repr_ == (
+        '  Num Transformations: 1\n'
+        '  Matrix:  [[1., 0., 0., 0.],\n'
+        '            [0., 1., 0., 0.],\n'
+        '            [0., 0., 1., 0.],\n'
+        '            [0., 0., 0., 1.]]'
     )
