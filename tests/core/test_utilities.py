@@ -1317,6 +1317,7 @@ def test_transform_add():
     transform_add = translate + scale
     assert np.array_equal(transform_add.matrix, transform.matrix)
 
+    # Validate with numpy matmul
     matrix_numpy = scale.matrix @ translate.matrix
     assert np.array_equal(transform_add.matrix, matrix_numpy)
 
@@ -1328,6 +1329,10 @@ def test_transform_add_vector():
     transform_add = transform_base + VECTOR
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
+    # Test multiply mode override to ensure post-multiply is always used
+    transform_add = transform_base.pre_multiply() + VECTOR
+    assert np.array_equal(transform_add.matrix, transform_translate.matrix)
+
 
 @pytest.mark.parametrize('scale_factor', [SCALE, (SCALE, SCALE, SCALE)])
 def test_transform_mul(scale_factor):
@@ -1335,6 +1340,24 @@ def test_transform_mul(scale_factor):
     # Scale with `scale` and `*`
     transform_scale = transform_base.copy().scale(scale_factor)
     transform_mul = transform_base * scale_factor
+    assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
+
+    # Test multiply mode override to ensure post-multiply is always used
+    transform_mul = transform_base.pre_multiply() * scale_factor
+    assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
+
+
+@pytest.mark.parametrize('scale_factor', [SCALE, (SCALE, SCALE, SCALE)])
+def test_transform_rmul(scale_factor):
+    transform_base = pv.Transform().pre_multiply().translate(VECTOR)
+    # Scale with `scale` and `*`
+    transform_scale = transform_base.copy().scale(scale_factor)
+    transform_mul = scale_factor * transform_base
+    assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
+
+    # Test multiply mode override to ensure pre-multiply is always used
+    transform_scale = transform_base.copy().scale(scale_factor)
+    transform_mul = scale_factor * transform_base.post_multiply()
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
 
@@ -1346,6 +1369,11 @@ def test_transform_matmul():
     transform_matmul = translate @ scale
     assert np.array_equal(transform_matmul.matrix, transform.matrix)
 
+    # Test multiply mode override to ensure pre-multiply is always used
+    transform_matmul = translate.post_multiply() @ scale.post_multiply()
+    assert np.array_equal(transform_matmul.matrix, transform.matrix)
+
+    # Validate with numpy matmul
     matrix_numpy = translate.matrix @ scale.matrix
     assert np.array_equal(transform_matmul.matrix, matrix_numpy)
 

@@ -240,6 +240,10 @@ class Transform(_vtk.vtkTransform):
         """:meth:`concatenate` this transform with a scaling matrix using post-multiply semantics."""
         return self.copy().scale(other, multiply_mode='post')
 
+    def __rmul__(self, other) -> Transform:
+        """:meth:`concatenate` this transform with a scaling matrix using pre-multiply semantics."""
+        return self.copy().scale(other, multiply_mode='pre')
+
     def __matmul__(self, other) -> Transform:
         """:meth:`concatenate` this transform using pre-multiply semantics."""
         return self.copy().concatenate(other, multiply_mode='pre')
