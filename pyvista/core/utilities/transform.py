@@ -216,7 +216,11 @@ class Transform(_vtk.vtkTransform):
             self.matrix = trans  # type: ignore[assignment]
 
     def __add__(self, other) -> Transform:
-        """:meth:`concatenate` this transform using post-multiply semantics."""
+        """:meth:`concatenate` this transform using post-multiply semantics.
+
+        Allow concatenation with any transform, or concatenate a translation matrix
+        if the input is a length-3 vector.
+        """
         copied = self.copy()
         transform = None
         try:
@@ -231,6 +235,10 @@ class Transform(_vtk.vtkTransform):
                     f"Transform can only be concatenated with transform-like types or length-3 vectors."
                 )
         return transform
+
+    def __mul__(self, other) -> Transform:
+        """:meth:`concatenate` this transform with a scaling matrix using post-multiply semantics."""
+        return self.copy().scale(other, multiply_mode='post')
 
     def __matmul__(self, other) -> Transform:
         """:meth:`concatenate` this transform using pre-multiply semantics."""

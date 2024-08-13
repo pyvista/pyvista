@@ -1322,10 +1322,20 @@ def test_transform_add():
 
 
 def test_transform_add_vector():
-    transform_scale = pv.Transform().post_multiply().scale(SCALE)
-    transform_translate = transform_scale.copy().translate(VECTOR)
-    transform_add = transform_scale + VECTOR
+    transform_base = pv.Transform().post_multiply().scale(SCALE)
+    # Translate with `translate` and `+`
+    transform_translate = transform_base.copy().translate(VECTOR)
+    transform_add = transform_base + VECTOR
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
+
+
+@pytest.mark.parametrize('scale_factor', [SCALE, (SCALE, SCALE, SCALE)])
+def test_transform_mul(scale_factor):
+    transform_base = pv.Transform().post_multiply().translate(VECTOR)
+    # Scale with `scale` and `*`
+    transform_scale = transform_base.copy().scale(scale_factor)
+    transform_mul = transform_base * scale_factor
+    assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
 
 def test_transform_matmul():
