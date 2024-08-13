@@ -1167,6 +1167,50 @@ def test_transform_rotate(transform):
     assert np.array_equal(identity, np.eye(4))
 
 
+ANGLE = 30
+
+
+def test_transform_rotate_x(transform):
+    transform.rotate_x(ANGLE)
+    actual = transform.matrix
+    expected = transformations.axis_angle_rotation((1, 0, 0), ANGLE)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
+def test_transform_rotate_y(transform):
+    transform.rotate_y(ANGLE)
+    actual = transform.matrix
+    expected = transformations.axis_angle_rotation((0, 1, 0), ANGLE)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
+
+
+def test_transform_rotate_z(transform):
+    transform.rotate_z(ANGLE)
+    actual = transform.matrix
+    expected = transformations.axis_angle_rotation((0, 0, 1), ANGLE)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
+def test_transform_rotate_vector(transform):
+    VECTOR = (1, 2, 3)
+    transform.rotate_vector(VECTOR, ANGLE)
+    actual = transform.matrix
+    expected = transformations.axis_angle_rotation(VECTOR, ANGLE)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
+
+
 def test_transform_concatenate_vtkmatrix(transform):
     scale_array = np.diag((1, 2, 3, 1))
     vtkmatrix = pv.vtkmatrix_from_array(scale_array)
