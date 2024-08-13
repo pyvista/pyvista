@@ -181,13 +181,17 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     ext = _get_ext_force(filename, force_ext)
     if ext in ['.e', '.exo']:
         return read_exodus(filename)
+    if ext in ['.wrl', '.vrml']:
+        raise ValueError(
+            "VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details."
+        )
 
     try:
         reader = pyvista.get_reader(filename, force_ext)
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            raise OSError("This file was not able to be automatically read by pvista.")
+            raise OSError("This file was not able to be automatically read by pyvista.")
         from meshio._exceptions import ReadError
 
         try:
