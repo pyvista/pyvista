@@ -187,7 +187,11 @@ class Transform(_vtk.vtkTransform):
 
     def __array__(self, dtype=None, copy=None):
         """Cast this transform to a NumPy array."""
-        return self.matrix.astype(dtype=dtype, copy=copy) if copy is not None else self.matrix.astype(dtype=dtype)
+        return (
+            self.matrix.astype(dtype=dtype, copy=copy)
+            if copy is not None
+            else self.matrix.astype(dtype=dtype)
+        )
 
     @property
     def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
