@@ -546,8 +546,9 @@ class Transform(_vtk.vtkTransform):
         valid_rotation = _validation.validate_transform3x3(
             rotation, must_be_finite=self.check_finite, name='rotation'
         )
-        self.concatenate(valid_rotation, multiply_mode=multiply_mode)
-        return self
+        return self._concatenate_with_translations(
+            valid_rotation, point=point, multiply_mode=multiply_mode
+        )
 
     def concatenate(
         self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None
