@@ -14,6 +14,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
 
 
 class Transform(_vtk.vtkTransform):
@@ -51,31 +52,47 @@ class Transform(_vtk.vtkTransform):
 
     Examples
     --------
-    Create two transformations using :meth:`translate` and :meth:`scale`.
+    Create a transformation and use ``+`` to concatenate a translation.
 
     >>> import numpy as np
     >>> import pyvista as pv
     >>> position = (-0.6, -0.8, 2.1)
-    >>> translation = pv.Transform().translate(position)
-    >>> translation.matrix
+    >>> translation_T = pv.Transform() + position
+    >>> translation_T.matrix
     array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
            [ 0. ,  0. ,  0. ,  1. ]])
 
+    Using ``+`` performs the same concatenation as calling :meth:`translate`.
+
+    >>> np.array_equal(
+    ...     translation_T.matrix, pv.Transform().translate(position).matrix
+    ... )
+    True
+
+    Create a transformation and use ``*`` to concatenate a scaling matrix.
+
     >>> scale_factor = 2.0
-    >>> scaling = pv.Transform().scale(scale_factor)
-    >>> scaling.matrix
+    >>> scaling_T = pv.Transform() * scale_factor
+    >>> scaling_T.matrix
     array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
            [0., 0., 0., 1.]])
 
-    Concatenate the transformations using addition. This will concatenate with
+    Using ``*`` performs the same concatenation as calling :meth:`scale`.
+
+    >>> np.array_equal(
+    ...     scaling_T.matrix, pv.Transform().scale(scale_factor).matrix
+    ... )
+    True
+
+    Concatenate the two transformations using addition. This will concatenate with
     post-multiplication such that the transformations are applied in order from left to
     right, i.e. translate first, then scale.
 
-    >>> transform_post = translation + scaling
+    >>> transform_post = translation_T + scaling_T
     >>> transform_post.matrix
     array([[ 2. ,  0. ,  0. , -1.2],
            [ 0. ,  2. ,  0. , -1.6],
@@ -85,7 +102,7 @@ class Transform(_vtk.vtkTransform):
     Post-multiplication is equivalent to using matrix multiplication on the
     arrays directly but with the arguments reversed:
 
-    >>> mat_mul = scaling.matrix @ translation.matrix
+    >>> mat_mul = scaling_T.matrix @ translation_T.matrix
     >>> np.array_equal(transform_post.matrix, mat_mul)
     True
 
@@ -134,7 +151,7 @@ class Transform(_vtk.vtkTransform):
     that the transformations are applied in order from right to left, i.e. scale first,
     then translate.
 
-    >>> transform_pre = translation @ scaling
+    >>> transform_pre = translation_T @ scaling_T
     >>> transform_pre.matrix
     array([[ 2. ,  0. ,  0. , -0.6],
            [ 0. ,  2. ,  0. , -0.8],
@@ -143,7 +160,7 @@ class Transform(_vtk.vtkTransform):
 
     This is equivalent to using matrix multiplication directly on the arrays:
 
-    >>> mat_mul = translation.matrix @ scaling.matrix
+    >>> mat_mul = translation_T.matrix @ scaling_T.matrix
     >>> np.array_equal(transform_pre.matrix, mat_mul)
     True
 
@@ -215,7 +232,7 @@ class Transform(_vtk.vtkTransform):
         if trans is not None:
             self.matrix = trans  # type: ignore[assignment]
 
-    def __add__(self, other) -> Transform:
+    def __add__(self, other: VectorLike[float] | TransformLike) -> Transform:
         """:meth:`concatenate` this transform using post-multiply semantics.
 
         Use :meth:`translate` for length-3 vector inputs, and :meth:`concatenate`
@@ -239,7 +256,7 @@ class Transform(_vtk.vtkTransform):
                 )
         return transform
 
-    def __radd__(self, other) -> Transform:
+    def __radd__(self, other: VectorLike[float] | TransformLike) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
             return self.copy().translate(other, multiply_mode='pre')
@@ -254,7 +271,7 @@ class Transform(_vtk.vtkTransform):
                 f"The left-side argument must be a length-3 vector."
             )
 
-    def __mul__(self, other) -> Transform:
+    def __mul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
         """:meth:`scale` this transform using post-multiply semantics."""
         try:
             return self.copy().scale(other, multiply_mode='post')
@@ -270,7 +287,7 @@ class Transform(_vtk.vtkTransform):
                 f"The right-side argument must be a single number or a length-3 vector."
             )
 
-    def __rmul__(self, other) -> Transform:
+    def __rmul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics."""
         try:
             return self.copy().scale(other, multiply_mode='pre')
@@ -285,7 +302,7 @@ class Transform(_vtk.vtkTransform):
                 f"The left-side argument must be a single number or a length-3 vector."
             )
 
-    def __matmul__(self, other) -> Transform:
+    def __matmul__(self, other: TransformLike) -> Transform:
         """:meth:`concatenate` this transform using pre-multiply semantics."""
         try:
             return self.copy().concatenate(other, multiply_mode='pre')
@@ -372,8 +389,7 @@ class Transform(_vtk.vtkTransform):
         Examples
         --------
         >>> import pyvista as pv
-        >>> transform = pv.Transform()
-        >>> _ = transform.pre_multiply()
+        >>> transform = pv.Transform().pre_multiply()
         >>> transform.multiply_mode
         'pre'
         """
@@ -391,8 +407,7 @@ class Transform(_vtk.vtkTransform):
         Examples
         --------
         >>> import pyvista as pv
-        >>> transform = pv.Transform()
-        >>> _ = transform.post_multiply()
+        >>> transform = pv.Transform().post_multiply()
         >>> transform.multiply_mode
         'post'
         """
@@ -432,17 +447,16 @@ class Transform(_vtk.vtkTransform):
         Concatenate a scale matrix.
 
         >>> import pyvista as pv
-        >>> transform = pv.Transform()
-        >>> _ = transform.scale(1, 2, 3)
+        >>> transform = pv.Transform().scale(1, 2, 3)
         >>> transform.matrix
         array([[1., 0., 0., 0.],
                [0., 2., 0., 0.],
                [0., 0., 3., 0.],
                [0., 0., 0., 1.]])
 
-        Concatenate a second scale matrix.
+        Concatenate a second scale matrix using ``*``.
 
-        >>> _ = transform.scale(2)
+        >>> transform = transform * 2
         >>> transform.matrix
         array([[2., 0., 0., 0.],
                [0., 4., 0., 0.],
@@ -487,17 +501,16 @@ class Transform(_vtk.vtkTransform):
         Concatenate a translation matrix.
 
         >>> import pyvista as pv
-        >>> transform = pv.Transform()
-        >>> _ = transform.translate(1, 2, 3)
+        >>> transform = pv.Transform().translate(1, 2, 3)
         >>> transform.matrix
         array([[1., 0., 0., 1.],
                [0., 1., 0., 2.],
                [0., 0., 1., 3.],
                [0., 0., 0., 1.]])
 
-        Concatenate a second translation matrix.
+        Concatenate a second translation matrix using ``+``.
 
-        >>> _ = transform.translate((1, 1, 1))
+        >>> transform = transform + (1, 1, 1)
         >>> transform.matrix
         array([[1., 0., 0., 2.],
                [0., 1., 0., 3.],
@@ -539,8 +552,7 @@ class Transform(_vtk.vtkTransform):
 
         >>> import pyvista as pv
         >>> rotation_z_90 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-        >>> transform = pv.Transform()
-        >>> _ = transform.rotate(rotation_z_90)
+        >>> transform = pv.Transform().rotate(rotation_z_90)
         >>> transform.matrix
         array([[ 0., -1.,  0.,  0.],
                [ 1.,  0.,  0.,  0.],
@@ -598,18 +610,17 @@ class Transform(_vtk.vtkTransform):
         ...     [0, 0, 1, 1.5],
         ...     [0, 0, 0, 2],
         ... ]
-        >>> transform = pv.Transform()
-        >>> _ = transform.concatenate(array)
+        >>> transform = pv.Transform().concatenate(array)
         >>> transform.matrix
         array([[ 0.707, -0.707,  0.   ,  0.   ],
                [ 0.707,  0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   ,  1.   ,  1.5  ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
-        Define a second transformation and concatenate it.
+        Define a second transformation and use ``+`` to concatenate it.
 
         >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
-        >>> _ = transform.concatenate(array)
+        >>> transform = transform + array
         >>> transform.matrix
         array([[ 0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   , -1.   , -1.5  ],
@@ -760,8 +771,7 @@ class Transform(_vtk.vtkTransform):
         Concatenate an arbitrary transformation.
 
         >>> import pyvista as pv
-        >>> transform = pv.Transform()
-        >>> _ = transform.scale(2.0)
+        >>> transform = pv.Transform().scale(2.0)
         >>> transform.matrix
         array([[2., 0., 0., 0.],
                [0., 2., 0., 0.],
@@ -810,8 +820,7 @@ class Transform(_vtk.vtkTransform):
         Concatenate an arbitrary transformation.
 
         >>> import pyvista as pv
-        >>> transform = pv.Transform()
-        >>> _ = transform.scale(2.0)
+        >>> transform = pv.Transform().scale(2.0)
         >>> transform.matrix
         array([[2., 0., 0., 0.],
                [0., 2., 0., 0.],
