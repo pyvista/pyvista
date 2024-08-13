@@ -185,6 +185,10 @@ class Transform(_vtk.vtkTransform):
         if trans is not None:
             self.matrix = trans  # type: ignore[assignment]
 
+    def __array__(self):
+        """Cast this transform to a NumPy array."""
+        return self.matrix
+
     @property
     def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
         """Set or get the multiplication mode.

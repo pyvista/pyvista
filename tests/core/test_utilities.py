@@ -1304,3 +1304,20 @@ def test_transform_chain_methods():
         .matrix
     )
     assert np.array_equal(matrix, eye4)
+
+
+@pytest.mark.parametrize('array_func', [np.array, np.asarray, np.asanyarray])
+def test_transform_asarray(transform, array_func):
+    # Test a copy is always returned by default
+    transform.scale(SCALE)
+    matrix = transform.matrix
+    assert matrix is not transform.matrix
+
+    # Test cast to numpy
+    array = array_func(matrix)
+    if array_func is np.array:
+        assert array is not matrix
+    else:
+        assert array is matrix
+
+    assert np.array_equal(array, matrix)
