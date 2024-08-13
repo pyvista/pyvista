@@ -489,7 +489,7 @@ def validate_transform4x4(transform, /, *, must_be_finite=True, name="Transform"
         Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
         or as a vtkTransform.
 
-    must_be_finite : bool, default: False
+    must_be_finite : bool, default: True
         :func:`Check <pyvista.core.validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
         and not Not a Number (``NaN``).
@@ -559,7 +559,7 @@ def validate_transform3x3(transform, /, *, must_be_finite=True, name="Transform"
            to verify that the transformation is a actually a rotation.
            Therefore, any 3x3 transformation is acceptable.
 
-    must_be_finite : bool, default: False
+    must_be_finite : bool, default: True
         :func:`Check <pyvista.core.validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
         and not Not a Number (``NaN``).
@@ -601,7 +601,7 @@ def validate_transform3x3(transform, /, *, must_be_finite=True, name="Transform"
                 if isinstance(transform, Rotation):
                     # Get matrix output and try validating again
                     return validate_transform3x3(
-                        transform.as_matrix(), must_be_finite=must_be_finite
+                        transform.as_matrix(), must_be_finite=must_be_finite, name=name
                     )
 
     error_message = (
