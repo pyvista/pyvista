@@ -495,9 +495,9 @@ class Transform(_vtk.vtkTransform):
         >>> import pyvista as pv
         >>> transform = pv.Transform().rotate_y(90)
         >>> transform.matrix
-        array([[ 1.,  0.,  0.,  0.],
-               [ 0.,  0., -1.,  0.],
+        array([[ 0.,  0.,  1.,  0.],
                [ 0.,  1.,  0.,  0.],
+               [-1.,  0.,  0.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
         Concatenate a second rotation about the y-axis.
@@ -608,18 +608,18 @@ class Transform(_vtk.vtkTransform):
         >>> import pyvista as pv
         >>> transform = pv.Transform().rotate_vector((1, 1, 1), 30)
         >>> transform.matrix
-        array([[ 1.       ,  0.       ,  0.       ,  0.       ],
-               [ 0.       ,  0.8660254, -0.5      ,  0.       ],
-               [ 0.       ,  0.5      ,  0.8660254,  0.       ],
-               [ 0.       ,  0.       ,  0.       ,  1.       ]])
+        array([[ 0.9106836 , -0.24401694,  0.33333333,  0.        ],
+               [ 0.33333333,  0.9106836 , -0.24401694,  0.        ],
+               [-0.24401694,  0.33333333,  0.9106836 ,  0.        ],
+               [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
         Concatenate a second rotation of 45 degrees about the ``(1, 2, 3)`` axis.
 
         >>> _ = transform.rotate_vector((1, 2, 3), 45)
         >>> transform.matrix
-        array([[ 1.        ,  0.        ,  0.        ,  0.        ],
-               [ 0.        ,  0.25881905, -0.96592583,  0.        ],
-               [ 0.        ,  0.96592583,  0.25881905,  0.        ],
+        array([[ 0.38042304, -0.50894634,  0.77217351,  0.        ],
+               [ 0.83349512,  0.55045308, -0.04782562,  0.        ],
+               [-0.40070461,  0.66179682,  0.63360933,  0.        ],
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
         """
         transform = axis_angle_rotation(vector, angle, deg=True)
