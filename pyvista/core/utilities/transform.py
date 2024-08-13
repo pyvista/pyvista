@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class Transform(_vtk.vtkTransform):
     """Describes linear transformations via a 4x4 matrix.
 
-    A :class:`Transform` can be used to describe the full range of linear (also known
+    A :class:`` can be used to describe the full range of linear (also known
     as affine) coordinate transformations in three dimensions, which are internally
     represented as a 4x4 homogeneous transformation matrix.
 
@@ -56,7 +56,7 @@ class Transform(_vtk.vtkTransform):
     >>> import numpy as np
     >>> import pyvista as pv
     >>> position = (-0.6, -0.8, 2.1)
-    >>> translation = Transform().translate(position)
+    >>> translation = pv.Transform().translate(position)
     >>> translation.matrix
     array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
@@ -64,7 +64,7 @@ class Transform(_vtk.vtkTransform):
            [ 0. ,  0. ,  0. ,  1. ]])
 
     >>> scale_factor = 2.0
-    >>> scaling = Transform().scale(scale_factor)
+    >>> scaling = pv.Transform().scale(scale_factor)
     >>> scaling.matrix
     array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
@@ -92,7 +92,7 @@ class Transform(_vtk.vtkTransform):
     Alternatively, concatenate the transformations by chaining the methods with a
     single :class:`Transform` instance. Note that post-multiply is used by default.
 
-    >>> transform_post = Transform()
+    >>> transform_post = pv.Transform()
     >>> transform_post.multiply_mode
     'post'
     >>> _ = transform_post.translate(position).scale(scale_factor)
