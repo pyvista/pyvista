@@ -329,25 +329,25 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a scale matrix.
+        Concatenate a reflection matrix.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
         >>> _ = transform.relect(0, 0, 1)
         >>> transform.matrix
-        array([[1., 0., 0., 0.],
-               [0., 2., 0., 0.],
-               [0., 0., 3., 0.],
-               [0., 0., 0., 1.]])
+        array([[ 1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0., -1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second scale matrix.
+        Concatenate a second reflection matrix.
 
-        >>> _ = transform.reflect((0, 0, 1))
+        >>> _ = transform.reflect((1, 0, 0))
         >>> transform.matrix
-        array([[2., 0., 0., 0.],
-               [0., 4., 0., 0.],
-               [0., 0., 6., 0.],
-               [0., 0., 0., 1.]])
+        array([[-1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0., -1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
         """
         valid_normal = _validation.validate_array3(
             normal, dtype_out=float, name='reflection normal'
