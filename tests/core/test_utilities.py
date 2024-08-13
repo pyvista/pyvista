@@ -1304,6 +1304,7 @@ def test_transform_chain_methods():
     zeros = (0, 0, 0)
     matrix = (
         Transform()
+        .reflect(ones)
         .identity()
         .scale(ones)
         .translate(zeros)

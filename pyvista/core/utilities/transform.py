@@ -333,7 +333,7 @@ class Transform(_vtk.vtkTransform):
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
-        >>> _ = transform.relect(0, 0, 1)
+        >>> _ = transform.reflect(0, 0, 1)
         >>> transform.matrix
         array([[ 1.,  0.,  0.,  0.],
                [ 0.,  1.,  0.,  0.],
