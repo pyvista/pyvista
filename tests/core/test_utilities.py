@@ -38,6 +38,13 @@ from pyvista.core.utilities.misc import has_module
 from pyvista.core.utilities.misc import no_new_attr
 from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
+from pyvista.core.utilities.transform import Transform
+from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
+
+
+@pytest.fixture()
+def transform():
+    return Transform()
 
 
 def test_version():
@@ -1120,3 +1127,180 @@ def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_fo
     assert repr(serial_dict_empty) == '{"foo": 42}'
     serial_dict_with_foobar.setdefault('foo', 42)
     assert repr(serial_dict_with_foobar) == '{"foo": "bar"}'
+
+
+SCALE = 2
+
+
+@pytest.mark.parametrize('scale_args', [(SCALE,), (SCALE, SCALE, SCALE), [(SCALE, SCALE, SCALE)]])
+def test_transform_scale(transform, scale_args):
+    transform.scale(*scale_args)
+    actual = transform.matrix
+    expected = np.diag((SCALE, SCALE, SCALE, 1))
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
+VECTOR = (1, 2, 3)
+
+
+@pytest.mark.parametrize('translate_args', [np.array(VECTOR), np.array([VECTOR])])
+def test_transform_translate(transform, translate_args):
+    transform.translate(*translate_args)
+    actual = transform.matrix
+    expected = np.eye(4)
+    expected[:3, 3] = VECTOR
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
+def test_transform_rotate(transform):
+    rotate_z_90 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+    transform.rotate(rotate_z_90)
+    actual = transform.matrix
+    expected = np.eye(4)
+    expected[:3, :3] = rotate_z_90
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
+def test_transform_concatenate_vtkmatrix(transform):
+    scale_array = np.diag((1, 2, 3, 1))
+    vtkmatrix = pv.vtkmatrix_from_array(scale_array)
+    transform.concatenate(vtkmatrix)
+    actual = transform.matrix
+    expected = scale_array
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.array_equal(identity, np.eye(4))
+
+
+def test_transform_invert(transform):
+    assert transform.is_inverted is False
+
+    # Add a transformation and check its output
+    transform.scale(SCALE)
+    inverse = transform.inverse_matrix
+    transform.invert()
+    assert transform.is_inverted is True
+    assert np.array_equal(inverse, transform.matrix)
+
+    transform.invert()
+    assert transform.is_inverted is False
+
+
+@pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
+def test_transform_matrix_list(transform, attr):
+    matrix_list = getattr(transform, attr)
+    assert isinstance(matrix_list, list)
+    assert len(matrix_list) == 0
+    assert transform.n_transformations == 0
+
+    transform.scale(SCALE)
+    matrix_list = getattr(transform, attr)
+    assert len(matrix_list) == 1
+    assert transform.n_transformations == 1
+    assert isinstance(matrix_list[0], np.ndarray)
+    assert matrix_list[0].shape == (4, 4)
+
+    transform.rotate([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+    matrix_list = getattr(transform, attr)
+    assert len(matrix_list) == 2
+
+    identity = transform.matrix_list[0] @ transform.inverse_matrix_list[0]
+    assert np.array_equal(identity, np.eye(4))
+
+
+@pytest.fixture()
+def transformed_actor():
+    actor = pv.Actor()
+    actor.position = (-0.5, -0.5, 1)
+    actor.orientation = (10, 20, 30)
+    actor.scale = (1.5, 2, 2.5)
+    actor.origin = (2, 1.5, 1)
+    actor.user_matrix = pv.array_from_vtkmatrix(actor.GetMatrix())
+    return actor
+
+
+@pytest.mark.parametrize('override_mode', ['pre', 'post'])
+@pytest.mark.parametrize('object_mode', ['pre', 'post'])
+def test_transform_multiply_mode_override(transform, transformed_actor, object_mode, override_mode):
+    # This test validates multiply mode by performing the same transformations
+    # applied by `Prop3D` objects and comparing the results
+
+    transform.multiply_mode = object_mode
+
+    # Center data at the origin
+    transform.translate(np.array(transformed_actor.origin) * -1, multiply_mode=override_mode)
+
+    # Scale and rotate
+    transform.scale(transformed_actor.scale, multiply_mode=override_mode)
+    rotation = _orientation_as_rotation_matrix(transformed_actor.orientation)
+    transform.rotate(rotation, multiply_mode=override_mode)
+
+    # Move to position
+    transform.translate(np.array(transformed_actor.origin), multiply_mode=override_mode)
+    transform.translate(transformed_actor.position, multiply_mode=override_mode)
+
+    # Apply user matrix
+    transform.concatenate(transformed_actor.user_matrix, multiply_mode=override_mode)
+
+    # Check result
+    transform_matrix = transform.matrix
+    actor_matrix = pv.array_from_vtkmatrix(transformed_actor.GetMatrix())
+    if override_mode == 'post':
+        assert np.allclose(transform_matrix, actor_matrix)
+    else:
+        # Pre-multiplication produces a totally different result
+        assert not np.allclose(transform_matrix, actor_matrix)
+
+
+def test_transform_multiply_mode(transform):
+    assert transform.multiply_mode == 'post'
+    transform.multiply_mode = 'pre'
+    assert transform.multiply_mode == 'pre'
+
+    transform.post_multiply()
+    assert transform.multiply_mode == 'post'
+    transform.pre_multiply()
+    assert transform.multiply_mode == 'pre'
+
+
+def test_transform_identity(transform):
+    transform.scale(2)
+    assert not np.array_equal(transform.matrix, np.eye(4))
+    transform.identity()
+    assert np.array_equal(transform.matrix, np.eye(4))
+
+
+def test_transform_init():
+    matrix = np.diag((SCALE, SCALE, SCALE, 1))
+    transform = Transform(matrix)
+    assert np.array_equal(transform.matrix, matrix)
+
+
+def test_transform_chain_methods():
+    eye3 = np.eye(3)
+    eye4 = np.eye(4)
+    ones = (1, 1, 1)
+    zeros = (0, 0, 0)
+    matrix = (
+        Transform()
+        .identity()
+        .scale(ones)
+        .translate(zeros)
+        .rotate(eye3)
+        .concatenate(eye4)
+        .invert()
+        .post_multiply()
+        .pre_multiply()
+        .matrix
+    )
+    assert np.array_equal(matrix, eye4)

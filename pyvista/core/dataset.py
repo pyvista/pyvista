@@ -46,6 +46,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import MatrixLike
     from ._typing_core import Number
     from ._typing_core import NumpyArray
+    from ._typing_core import RotationLike
     from ._typing_core import VectorLike
 
 # vector array names
@@ -1140,6 +1141,74 @@ class DataSet(DataSetFilters, DataObject):
             inplace=inplace,
         )
 
+    def rotate(
+        self,
+        rotation: RotationLike,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        rotation : RotationLike
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        point : Vector, default: (0.0, 0.0, 0.0)
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        Examples
+        --------
+        Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
+        60 degrees.
+
+        >>> import pyvista as pv
+        >>> rotation = [
+        ...     [0.5, -0.8660254, 0.0],
+        ...     [0.8660254, 0.5, 0.0],
+        ...     [0.0, 0.0, 1.0],
+        ... ]
+
+        Use the rotation to rotate a cone about its tip.
+
+        >>> mesh = pv.Cone()
+        >>> tip = (0.5, 0.0, 0.0)
+        >>> rot = mesh.rotate(rotation, point=tip)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+        """
+        t = transformations.rotation(rotation, point=point)
+        return self.transform(
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
     def translate(
         self,
         xyz: VectorLike[float],
@@ -1171,6 +1240,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Translated dataset.
 
+        See Also
+        --------
+        :meth:`pyvista.Transform.translate`
+            Concatenate a translation matrix with a transformation.
+
         Examples
         --------
         Create a sphere and translate it by ``(2, 1, 2)``.
@@ -1178,10 +1252,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.center
-        [0.0, 0.0, 0.0]
+        (0.0, 0.0, 0.0)
         >>> trans = mesh.translate((2, 1, 2), inplace=False)
         >>> trans.center
-        [2.0, 1.0, 2.0]
+        (2.0, 1.0, 2.0)
 
         """
         transform = _vtk.vtkTransform()
@@ -1222,6 +1296,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Scaled dataset.
+
+        See Also
+        --------
+        :meth:`pyvista.Transform.scale`
+            Concatenate a scale matrix with a transformation.
 
         Examples
         --------
@@ -1776,12 +1855,12 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> list[float]:
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the bounding box.
 
         Returns
         -------
-        Vector
+        tuple[float, float, float]
             Center of the bounding box.
 
         Examples
@@ -1791,10 +1870,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(center=(1, 2, 0))
         >>> mesh.center
-        [1.0, 2.0, 0.0]
+        (1.0, 2.0, 0.0)
 
         """
-        return list(self.GetCenter())
+        return self.GetCenter()
 
     @property
     def volume(self) -> float:
