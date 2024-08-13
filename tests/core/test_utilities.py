@@ -1306,18 +1306,24 @@ def test_transform_chain_methods():
     assert np.array_equal(matrix, eye4)
 
 
-@pytest.mark.parametrize('array_func', [np.array, np.asarray, np.asanyarray])
-def test_transform_asarray(transform, array_func):
+@pytest.mark.parametrize(('copy', 'dtype'), [(True, int), (True, float), (False, float)])
+def test_transform_asarray(transform, dtype, copy):
     # Test a copy is always returned by default
     transform.scale(SCALE)
     matrix = transform.matrix
     assert matrix is not transform.matrix
 
     # Test cast to numpy
-    array = array_func(matrix)
-    if array_func is np.array:
+    array = np.asarray(matrix, dtype=dtype, copy=copy)
+    assert array.dtype == dtype
+    if dtype is int or copy:
         assert array is not matrix
     else:
         assert array is matrix
 
     assert np.array_equal(array, matrix)
+
+
+def test_transform_array_dunder(transform):
+    array = transform.__array__()
+    assert isinstance(array, np.ndarray)
