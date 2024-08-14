@@ -1158,6 +1158,20 @@ def test_transform_translate(transform, translate_args):
     assert np.array_equal(identity, np.eye(4))
 
 
+NORMAL = (1, 2, 3)
+
+
+@pytest.mark.parametrize('reflect_args', [NORMAL, [NORMAL]])
+def test_transform_reflect(transform, reflect_args):
+    transform.reflect(*NORMAL)
+    actual = transform.matrix
+    expected = transformations.reflection(NORMAL)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
+
+
 def test_transform_rotate(transform):
     rotate_z_90 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
     transform.rotate(rotate_z_90)
@@ -1337,6 +1351,7 @@ def test_transform_chain_methods():
     zeros = (0, 0, 0)
     matrix = (
         Transform()
+        .reflect(ones)
         .identity()
         .scale(ones)
         .translate(zeros)
