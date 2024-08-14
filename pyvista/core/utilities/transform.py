@@ -191,7 +191,7 @@ class Transform(_vtk.vtkTransform):
         """Representation of the transform."""
 
         def _matrix_repr():
-            repr_ = np.array_repr(self.matrix, precision=4, suppress_small=True)
+            repr_ = np.array_repr(self.matrix)
             return repr_.replace('array(', '      ').replace(')', '').replace('      [', '[')
 
         matrix_repr_lines = _matrix_repr().split('\n')
