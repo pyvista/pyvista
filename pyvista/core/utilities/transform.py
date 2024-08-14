@@ -9,6 +9,7 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
@@ -299,6 +300,60 @@ class Transform(_vtk.vtkTransform):
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
+        return self.concatenate(transform, multiply_mode=multiply_mode)
+
+    def reflect(
+        self, *normal, multiply_mode: Literal['pre', 'post'] | None = None
+    ) -> Transform:  # numpydoc ignore=RT01
+        """Concatenate a reflection matrix.
+
+        Create a reflection matrix and :meth:`concatenate` it with the current
+        transformation :attr:`matrix` according to pre-multiply or post-multiply
+        semantics.
+
+        Internally, the matrix is stored in the :attr:`matrix_list`.
+
+        Parameters
+        ----------
+        *normal : VectorLike[float]
+            Normal direction for reflection.
+
+        multiply_mode : 'pre' | 'post' | None, optional
+            Multiplication mode to use when concatenating the matrix. By default, the
+            object's :attr:`multiply_mode` is used, but this can be overridden. Set this
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        :meth:`pyvista.DataSet.reflect`
+            Reflect a mesh.
+
+        Examples
+        --------
+        Concatenate a reflection matrix.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> _ = transform.reflect(0, 0, 1)
+        >>> transform.matrix
+        array([[ 1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0., -1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        Concatenate a second reflection matrix.
+
+        >>> _ = transform.reflect((1, 0, 0))
+        >>> transform.matrix
+        array([[-1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0., -1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+        """
+        valid_normal = _validation.validate_array3(
+            normal, dtype_out=float, name='reflection normal'
+        )
+        transform = reflection(valid_normal)
         return self.concatenate(transform, multiply_mode=multiply_mode)
 
     def translate(
