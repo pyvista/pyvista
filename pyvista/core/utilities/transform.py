@@ -47,6 +47,17 @@ class Transform(_vtk.vtkTransform):
         Initialize the transform with a transformation. By default, the transform
         is initialized as the identity matrix.
 
+    point : VectorLike[float], optional
+        Point to use when concatenating some transformations such as scale, rotation, etc.
+        If set, two additional transformations are concatenated and added to
+        the :attr:`matrix_list`:
+
+            - :meth:`translate` to ``point`` before the transformation
+            - :meth:`translate` away from ``point`` after the transformation
+
+        By default, this value is ``None``, which means that the scale, rotation, etc.
+        transformations are performed about the origin ``(0, 0, 0)``.
+
     See Also
     --------
     :meth:`pyvista.DataSetFilters.transform`
@@ -57,6 +68,7 @@ class Transform(_vtk.vtkTransform):
     Concatenate two transformations with :meth:`translate` and :meth:`scale` using
     post-multiplication (default).
 
+    >>> import numpy as np
     >>> import pyvista as pv
     >>> transform = pv.Transform()
     >>> transform.multiply_mode
@@ -75,13 +87,15 @@ class Transform(_vtk.vtkTransform):
     post-multiplication is used, the translation matrix is first in the list since
     it was applied first, and the scale matrix is second.
 
-    >>> transform.matrix_list[0]  # translation
+    >>> translation = transform.matrix_list[0]
+    >>> translation
     array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
            [ 0. ,  0. ,  0. ,  1. ]])
 
-    >>> transform.matrix_list[1]  # scaling
+    >>> scaling = transform.matrix_list[1]
+    >>> scaling
     array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
@@ -113,13 +127,15 @@ class Transform(_vtk.vtkTransform):
     reversed from post-multiplication, and the scaling matrix is now first
     followed by the translation.
 
-    >>> transform.matrix_list[0]  # scaling
+    >>> scaling = transform.matrix_list[0]
+    >>> scaling
     array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
            [0., 0., 0., 1.]])
 
-    >>> transform.matrix_list[1]  # translation
+    >>> translation = transform.matrix_list[1]
+    >>> translation
     array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
@@ -181,12 +197,38 @@ class Transform(_vtk.vtkTransform):
     >>> pl.show()
     """
 
-    def __init__(self, trans: TransformLike | None = None):
+    def __init__(
+        self, trans: TransformLike | None = None, *, point: VectorLike[float] | None = None
+    ):
         super().__init__()
         self.multiply_mode = 'post'
+        self.point = point  # type: ignore[assignment]
         self.check_finite = True
         if trans is not None:
             self.matrix = trans  # type: ignore[assignment]
+
+    @property
+    def point(self) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
+        """Point to use when concatenating some transformations such as scale, rotation, etc.
+
+        If set, two additional transformations are concatenated and added to
+        the :attr:`matrix_list`:
+
+            - :meth:`translate` to ``point`` before the transformation
+            - :meth:`translate` away from ``point`` after the transformation
+
+        By default, this value is ``None``, which means that the scale, rotation, etc.
+        transformations are performed about the origin ``(0, 0, 0)``.
+        """
+        return self._point
+
+    @point.setter
+    def point(self, point: VectorLike[float] | None):  # numpydoc ignore=GL08
+        self._point = (
+            None
+            if point is None
+            else _validation.validate_array3(point, dtype_out=float, to_tuple=True, name='point')
+        )
 
     @property
     def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
@@ -249,7 +291,10 @@ class Transform(_vtk.vtkTransform):
         return self
 
     def scale(
-        self, *factor, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        *factor,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a scale matrix.
 
@@ -265,7 +310,16 @@ class Transform(_vtk.vtkTransform):
             Scale factor(s) to use. Use a single number for uniform scaling or
             three numbers for non-uniform scaling.
 
-        multiply_mode : 'pre' | 'post' | None, optional
+        point : VectorLike[float], optional
+            Point to scale from. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the scaling
+                - :meth:`translate` away from ``point`` after the scaling
+
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -295,16 +349,46 @@ class Transform(_vtk.vtkTransform):
                [0., 4., 0., 0.],
                [0., 0., 6., 0.],
                [0., 0., 0., 1.]])
+
+        Scale from a point. Check the :attr:`matrix_list` to see that a translation
+        is added before and after the scaling.
+
+        >>> transform = pv.Transform().scale(7, point=(1, 2, 3))
+        >>> translation_to_origin = transform.matrix_list[0]
+        >>> translation_to_origin
+        array([[ 1.,  0.,  0., -1.],
+               [ 0.,  1.,  0., -2.],
+               [ 0.,  0.,  1., -3.],
+               [ 0.,  0.,  0.,  1.]])
+
+        >>> scale = transform.matrix_list[1]
+        >>> scale
+        array([[7., 0., 0., 0.],
+               [0., 7., 0., 0.],
+               [0., 0., 7., 0.],
+               [0., 0., 0., 1.]])
+
+        >>> translation_from_origin = transform.matrix_list[2]
+        >>> translation_from_origin
+        array([[1., 0., 0., 1.],
+               [0., 1., 0., 2.],
+               [0., 0., 1., 3.],
+               [0., 0., 0., 1.]])
         """
         valid_factor = _validation.validate_array3(
             factor, broadcast=True, dtype_out=float, name='scale factor'
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def reflect(
-        self, *normal, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        *normal,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a reflection matrix.
 
@@ -318,6 +402,15 @@ class Transform(_vtk.vtkTransform):
         ----------
         *normal : VectorLike[float]
             Normal direction for reflection.
+
+        point : VectorLike[float], optional
+            Point to reflect about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the reflection
+                - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post' | None, optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -355,7 +448,9 @@ class Transform(_vtk.vtkTransform):
             normal, dtype_out=float, name='reflection normal'
         )
         transform = reflection(valid_normal)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def translate(
         self, *vector, multiply_mode: Literal['pre', 'post'] | None = None
@@ -373,7 +468,7 @@ class Transform(_vtk.vtkTransform):
         *vector : VectorLike[float]
             Vector to use for the translation.
 
-        multiply_mode : 'pre' | 'post' | None, optional
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -412,7 +507,11 @@ class Transform(_vtk.vtkTransform):
         return self.concatenate(transform, multiply_mode=multiply_mode)
 
     def rotate(
-        self, rotation: RotationLike, *, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        rotation: RotationLike,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation matrix.
 
@@ -427,10 +526,24 @@ class Transform(_vtk.vtkTransform):
         rotation : RotationLike
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
-        multiply_mode : 'pre' | 'post' | None, optional
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
+
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        :meth:`pyvista.DataSet.rotate`
+            Rotate a mesh.
 
         Examples
         --------
@@ -458,14 +571,47 @@ class Transform(_vtk.vtkTransform):
                [ 0., -1.,  0.,  0.],
                [ 0.,  0.,  1.,  0.],
                [ 0.,  0.,  0.,  1.]])
+
+        Rotate about a point. Check the :attr:`matrix_list` to see that a translation
+        is added before and after the rotation.
+
+        >>> transform = pv.Transform().rotate(
+        ...     rotation_z_90, point=(1, 2, 3)
+        ... )
+        >>> translation_to_origin = transform.matrix_list[0]
+        >>> translation_to_origin
+        array([[ 1.,  0.,  0., -1.],
+               [ 0.,  1.,  0., -2.],
+               [ 0.,  0.,  1., -3.],
+               [ 0.,  0.,  0.,  1.]])
+
+        >>> rotation = transform.matrix_list[1]
+        >>> rotation
+        array([[ 0., -1.,  0.,  0.],
+               [ 1.,  0.,  0.,  0.],
+               [ 0.,  0.,  1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        >>> translation_from_origin = transform.matrix_list[2]
+        >>> translation_from_origin
+        array([[1., 0., 0., 1.],
+               [0., 1., 0., 2.],
+               [0., 0., 1., 3.],
+               [0., 0., 0., 1.]])
         """
         valid_rotation = _validation.validate_transform3x3(
             rotation, must_be_finite=self.check_finite, name='rotation'
         )
-        return self.concatenate(valid_rotation, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            valid_rotation, point=point, multiply_mode=multiply_mode
+        )
 
     def rotate_x(
-        self, angle: float, *, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        angle: float,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about the x-axis.
 
@@ -479,6 +625,15 @@ class Transform(_vtk.vtkTransform):
         ----------
         angle : float
             Angle in degrees to rotate about the x-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -515,10 +670,16 @@ class Transform(_vtk.vtkTransform):
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
         """
         transform = axis_angle_rotation((1, 0, 0), angle, deg=True)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def rotate_y(
-        self, angle: float, *, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        angle: float,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about the y-axis.
 
@@ -532,6 +693,15 @@ class Transform(_vtk.vtkTransform):
         ----------
         angle : float
             Angle in degrees to rotate about the y-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -568,10 +738,16 @@ class Transform(_vtk.vtkTransform):
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
         """
         transform = axis_angle_rotation((0, 1, 0), angle, deg=True)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def rotate_z(
-        self, angle: float, *, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        angle: float,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about the z-axis.
 
@@ -585,6 +761,15 @@ class Transform(_vtk.vtkTransform):
         ----------
         angle : float
             Angle in degrees to rotate about the z-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -621,13 +806,16 @@ class Transform(_vtk.vtkTransform):
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
         """
         transform = axis_angle_rotation((0, 0, 1), angle, deg=True)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def rotate_vector(
         self,
         vector: VectorLike[float],
         angle: float,
         *,
+        point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about a vector.
@@ -645,6 +833,15 @@ class Transform(_vtk.vtkTransform):
 
         angle : float
             Angle in degrees to rotate about the vector.
+
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -678,7 +875,9 @@ class Transform(_vtk.vtkTransform):
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
         """
         transform = axis_angle_rotation(vector, angle, deg=True)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def concatenate(
         self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None
@@ -950,6 +1149,39 @@ class Transform(_vtk.vtkTransform):
         This flag is modified whenever :meth:`invert` is called.
         """
         return bool(self.GetInverseFlag())
+
+    def _concatenate_with_translations(
+        self,
+        transform: TransformLike,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
+    ):
+        translate_before, translate_after = self._get_point_translations(
+            point=point, multiply_mode=multiply_mode
+        )
+        if translate_before:
+            self.concatenate(translate_before, multiply_mode=multiply_mode)
+
+        self.concatenate(transform, multiply_mode=multiply_mode)
+
+        if translate_after:
+            self.concatenate(translate_after, multiply_mode=multiply_mode)
+
+        return self
+
+    def _get_point_translations(
+        self, point: VectorLike[float] | None, multiply_mode: Literal['pre', 'post'] | None
+    ):
+        point = point if point is not None else self.point
+        if point is not None:
+            point_array = _validation.validate_array3(point, dtype_out=float, name='point')
+            translate_away = Transform().translate(-point_array)
+            translate_toward = Transform().translate(point_array)
+            if multiply_mode == 'post' or self._multiply_mode == 'post':
+                return translate_away, translate_toward
+            else:
+                return translate_toward, translate_away
+        return None, None
 
     @property
     def check_finite(self) -> bool:  # numpydoc ignore: RT01

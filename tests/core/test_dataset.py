@@ -1262,9 +1262,10 @@ def test_rotate_x():
     mesh = examples.load_uniform()
     out = mesh.rotate_x(30)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(TypeError):
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_x(30, point=5)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_x(30, point=[1, 3])
 
 
@@ -1273,10 +1274,11 @@ def test_rotate_y():
     mesh = examples.load_uniform()
     out = mesh.rotate_y(30)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(TypeError):
-        out = mesh.rotate_y(30, point=5)
-    with pytest.raises(ValueError):  # noqa: PT011
-        out = mesh.rotate_y(30, point=[1, 3])
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_x(30, point=5)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_x(30, point=[1, 3])
 
 
 def test_rotate_z():
@@ -1284,10 +1286,11 @@ def test_rotate_z():
     mesh = examples.load_uniform()
     out = mesh.rotate_z(30)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(TypeError):
-        out = mesh.rotate_z(30, point=5)
-    with pytest.raises(ValueError):  # noqa: PT011
-        out = mesh.rotate_z(30, point=[1, 3])
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_x(30, point=5)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_x(30, point=[1, 3])
 
 
 def test_rotate_vector():
@@ -1295,9 +1298,10 @@ def test_rotate_vector():
     mesh = examples.load_uniform()
     out = mesh.rotate_vector([1, 1, 1], 33)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(ValueError):  # noqa: PT011
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_vector([1, 1], 33)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_vector(30, 33)
 
 

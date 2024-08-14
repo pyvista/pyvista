@@ -26,7 +26,6 @@ from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
-from .utilities import transformations
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _coerce_pointslike_arg
 from .utilities.arrays import get_array
@@ -35,7 +34,6 @@ from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
-from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
 from .utilities.transform import Transform
 
@@ -955,8 +953,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
+        t = Transform().rotate_x(angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1019,8 +1016,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
+        t = Transform().rotate_y(angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1084,8 +1080,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
+        t = Transform().rotate_z(angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1153,9 +1148,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(vector)
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
+        t = Transform().rotate_vector(vector, angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1197,6 +1190,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Rotated dataset.
 
+        See Also
+        --------
+        pyvista.Transform.rotate
+            Concatenate a rotation matrix with a transformation.
+
         Examples
         --------
         Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
@@ -1223,7 +1221,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
         """
-        t = transformations.rotation(rotation, point=point)
+        t = Transform().rotate(rotation, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1263,7 +1261,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        :meth:`pyvista.Transform.translate`
+        pyvista.Transform.translate
             Concatenate a translation matrix with a transformation.
 
         Examples
@@ -1291,6 +1289,7 @@ class DataSet(DataSetFilters, DataObject):
         xyz: Number | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
+        point: VectorLike[float] = (0.0, 0.0, 0.0),
     ):
         """Scale the mesh.
 
@@ -1312,6 +1311,9 @@ class DataSet(DataSetFilters, DataObject):
         inplace : bool, default: False
             Updates mesh in-place.
 
+        point : Vector, default: (0.0, 0.0, 0.0)
+            Point to scale from. Defaults to origin.
+
         Returns
         -------
         pyvista.DataSet
@@ -1319,7 +1321,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        :meth:`pyvista.Transform.scale`
+        pyvista.Transform.scale
             Concatenate a scale matrix with a transformation.
 
         Examples
@@ -1340,7 +1342,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
 
         """
-        transform = Transform().scale(xyz)
+        transform = Transform().scale(xyz, point=point)
         return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1379,6 +1381,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Flipped dataset.
 
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1397,8 +1404,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((1, 0, 0), point=point)
+        t = Transform().reflect((1, 0, 0), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1437,6 +1443,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Flipped dataset.
 
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1455,8 +1466,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((0, 1, 0), point=point)
+        t = Transform().reflect((0, 1, 0), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1495,6 +1505,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Flipped dataset.
 
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1513,8 +1528,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((0, 0, 1), point=point)
+        t = Transform().reflect((0, 0, 1), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1557,6 +1571,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Dataset flipped about its normal.
 
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1575,9 +1594,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(normal, 'normal')
-        check_valid_vector(point, 'point')
-        t = transformations.reflection(normal, point=point)
+        t = Transform().reflect(normal, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,

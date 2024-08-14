@@ -21,7 +21,6 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
-from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -6803,8 +6802,8 @@ class DataSetFilters:
 
         See Also
         --------
-        :class:`pyvista.Transform`
-            Describe linear transformations via a 4x4 matrix.
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
 
         Examples
         --------
@@ -6816,7 +6815,7 @@ class DataSetFilters:
         See the :ref:`reflect_example` for more examples using this filter.
 
         """
-        t = transformations.reflection(normal, point=point)
+        t = Transform().reflect(normal, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
