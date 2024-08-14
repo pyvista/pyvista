@@ -68,7 +68,6 @@ class Transform(_vtk.vtkTransform):
     Concatenate two transformations with :meth:`translate` and :meth:`scale` using
     post-multiplication (default).
 
-    >>> import numpy as np
     >>> import pyvista as pv
     >>> transform = pv.Transform()
     >>> transform.multiply_mode
@@ -87,15 +86,13 @@ class Transform(_vtk.vtkTransform):
     post-multiplication is used, the translation matrix is first in the list since
     it was applied first, and the scale matrix is second.
 
-    >>> translation = transform.matrix_list[0]
-    >>> translation
+    >>> transform.matrix_list[0]  # translation
     array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
            [ 0. ,  0. ,  0. ,  1. ]])
 
-    >>> scaling = transform.matrix_list[1]
-    >>> scaling
+    >>> transform.matrix_list[1]  # scaling
     array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
@@ -127,15 +124,13 @@ class Transform(_vtk.vtkTransform):
     reversed from post-multiplication, and the scaling matrix is now first
     followed by the translation.
 
-    >>> scaling = transform.matrix_list[0]
-    >>> scaling
+    >>> transform.matrix_list[0]  # scaling
     array([[2., 0., 0., 0.],
            [0., 2., 0., 0.],
            [0., 0., 2., 0.],
            [0., 0., 0., 1.]])
 
-    >>> translation = transform.matrix_list[1]
-    >>> translation
+    >>> transform.matrix_list[1]  # translation
     array([[ 1. ,  0. ,  0. , -0.6],
            [ 0. ,  1. ,  0. , -0.8],
            [ 0. ,  0. ,  1. ,  2.1],
@@ -150,17 +145,6 @@ class Transform(_vtk.vtkTransform):
            [ 0. ,  2. ,  0. , -0.8],
            [ 0. ,  0. ,  2. ,  2.1],
            [ 0. ,  0. ,  0. ,  1. ]])
-
-    Another way to compare pre- and post-multiplcation is by manually concatenating
-    the transformations using matrix multiplication:
-
-    >>> # Apply translation first, then scaling
-    >>> np.array_equal(post_matrix, scaling @ translation)
-    True
-
-    >>> # Apply scaling first, then translation
-    >>> np.array_equal(pre_matrix, translation @ scaling)
-    True
 
     Apply the two transformations to a dataset and plot them. Note how the meshes
     have different positions since pre- and post-multiplication produce different
@@ -553,7 +537,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.rotate`
+        pyvista.DataSet.rotate
             Rotate a mesh.
 
         Examples
