@@ -933,6 +933,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Rotated dataset.
 
+        See Also
+        --------
+        pyvista.Transform.rotate_x
+            Concatenate a rotation about the x-axis with a transformation.
+
         Examples
         --------
         Rotate a mesh 30 degrees about the x-axis.
@@ -991,6 +996,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_y
+            Concatenate a rotation about the y-axis with a transformation.
 
         Examples
         --------
@@ -1051,6 +1061,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_z
+            Concatenate a rotation about the z-axis with a transformation.
 
         Examples
         --------
@@ -1115,6 +1130,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_vector
+            Concatenate a rotation about a vector with a transformation.
 
         Examples
         --------

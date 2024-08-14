@@ -9,11 +9,14 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.transformations import axis_angle_rotation
+from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
 
 
 class Transform(_vtk.vtkTransform):
@@ -277,8 +280,7 @@ class Transform(_vtk.vtkTransform):
         Concatenate a scale matrix.
 
         >>> import pyvista as pv
-        >>> transform = pv.Transform()
-        >>> _ = transform.scale(1, 2, 3)
+        >>> transform = pv.Transform().scale(1, 2, 3)
         >>> transform.matrix
         array([[1., 0., 0., 0.],
                [0., 2., 0., 0.],
@@ -299,6 +301,60 @@ class Transform(_vtk.vtkTransform):
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
+        return self.concatenate(transform, multiply_mode=multiply_mode)
+
+    def reflect(
+        self, *normal, multiply_mode: Literal['pre', 'post'] | None = None
+    ) -> Transform:  # numpydoc ignore=RT01
+        """Concatenate a reflection matrix.
+
+        Create a reflection matrix and :meth:`concatenate` it with the current
+        transformation :attr:`matrix` according to pre-multiply or post-multiply
+        semantics.
+
+        Internally, the matrix is stored in the :attr:`matrix_list`.
+
+        Parameters
+        ----------
+        *normal : VectorLike[float]
+            Normal direction for reflection.
+
+        multiply_mode : 'pre' | 'post' | None, optional
+            Multiplication mode to use when concatenating the matrix. By default, the
+            object's :attr:`multiply_mode` is used, but this can be overridden. Set this
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        :meth:`pyvista.DataSet.reflect`
+            Reflect a mesh.
+
+        Examples
+        --------
+        Concatenate a reflection matrix.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> _ = transform.reflect(0, 0, 1)
+        >>> transform.matrix
+        array([[ 1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0., -1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        Concatenate a second reflection matrix.
+
+        >>> _ = transform.reflect((1, 0, 0))
+        >>> transform.matrix
+        array([[-1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0., -1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+        """
+        valid_normal = _validation.validate_array3(
+            normal, dtype_out=float, name='reflection normal'
+        )
+        transform = reflection(valid_normal)
         return self.concatenate(transform, multiply_mode=multiply_mode)
 
     def translate(
@@ -332,8 +388,7 @@ class Transform(_vtk.vtkTransform):
         Concatenate a translation matrix.
 
         >>> import pyvista as pv
-        >>> transform = pv.Transform()
-        >>> _ = transform.translate(1, 2, 3)
+        >>> transform = pv.Transform().translate(1, 2, 3)
         >>> transform.matrix
         array([[1., 0., 0., 1.],
                [0., 1., 0., 2.],
@@ -357,7 +412,7 @@ class Transform(_vtk.vtkTransform):
         return self.concatenate(transform, multiply_mode=multiply_mode)
 
     def rotate(
-        self, rotation: RotationLike, multiply_mode: Literal['pre', 'post'] | None = None
+        self, rotation: RotationLike, *, multiply_mode: Literal['pre', 'post'] | None = None
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation matrix.
 
@@ -384,8 +439,7 @@ class Transform(_vtk.vtkTransform):
 
         >>> import pyvista as pv
         >>> rotation_z_90 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-        >>> transform = pv.Transform()
-        >>> _ = transform.rotate(rotation_z_90)
+        >>> transform = pv.Transform().rotate(rotation_z_90)
         >>> transform.matrix
         array([[ 0., -1.,  0.,  0.],
                [ 1.,  0.,  0.,  0.],
@@ -408,11 +462,226 @@ class Transform(_vtk.vtkTransform):
         valid_rotation = _validation.validate_transform3x3(
             rotation, must_be_finite=self.check_finite, name='rotation'
         )
-        self.concatenate(valid_rotation, multiply_mode=multiply_mode)
-        return self
+        return self.concatenate(valid_rotation, multiply_mode=multiply_mode)
+
+    def rotate_x(
+        self, angle: float, *, multiply_mode: Literal['pre', 'post'] | None = None
+    ) -> Transform:  # numpydoc ignore=RT01
+        """Concatenate a rotation about the x-axis.
+
+        Create a matrix for rotation about the x-axis and :meth:`concatenate`
+        it with the current transformation :attr:`matrix` according to pre-multiply or
+        post-multiply semantics.
+
+        Internally, the matrix is stored in the :attr:`matrix_list`.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the x-axis.
+
+        multiply_mode : 'pre' | 'post', optional
+            Multiplication mode to use when concatenating the matrix. By default, the
+            object's :attr:`multiply_mode` is used, but this can be overridden. Set this
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        pyvista.DataSet.rotate_x
+            Rotate a mesh about the x-axis.
+
+        Examples
+        --------
+        Concatenate a rotation about the x-axis.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform().rotate_x(90)
+        >>> transform.matrix
+        array([[ 1.,  0.,  0.,  0.],
+               [ 0.,  0., -1.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        Concatenate a second rotation about the x-axis.
+
+        >>> _ = transform.rotate_x(45)
+
+        The result is a matrix that rotates about the x-axis by 135 degrees.
+
+        >>> transform.matrix
+        array([[ 1.        ,  0.        ,  0.        ,  0.        ],
+               [ 0.        , -0.70710678, -0.70710678,  0.        ],
+               [ 0.        ,  0.70710678, -0.70710678,  0.        ],
+               [ 0.        ,  0.        ,  0.        ,  1.        ]])
+        """
+        transform = axis_angle_rotation((1, 0, 0), angle, deg=True)
+        return self.concatenate(transform, multiply_mode=multiply_mode)
+
+    def rotate_y(
+        self, angle: float, *, multiply_mode: Literal['pre', 'post'] | None = None
+    ) -> Transform:  # numpydoc ignore=RT01
+        """Concatenate a rotation about the y-axis.
+
+        Create a matrix for rotation about the y-axis and :meth:`concatenate`
+        it with the current transformation :attr:`matrix` according to pre-multiply or
+        post-multiply semantics.
+
+        Internally, the matrix is stored in the :attr:`matrix_list`.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the y-axis.
+
+        multiply_mode : 'pre' | 'post', optional
+            Multiplication mode to use when concatenating the matrix. By default, the
+            object's :attr:`multiply_mode` is used, but this can be overridden. Set this
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        pyvista.DataSet.rotate_y
+            Rotate a mesh about the y-axis.
+
+        Examples
+        --------
+        Concatenate a rotation about the y-axis.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform().rotate_y(90)
+        >>> transform.matrix
+        array([[ 0.,  0.,  1.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [-1.,  0.,  0.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        Concatenate a second rotation about the y-axis.
+
+        >>> _ = transform.rotate_y(45)
+
+        The result is a matrix that rotates about the y-axis by 135 degrees.
+
+        >>> transform.matrix
+        array([[-0.70710678,  0.        ,  0.70710678,  0.        ],
+               [ 0.        ,  1.        ,  0.        ,  0.        ],
+               [-0.70710678,  0.        , -0.70710678,  0.        ],
+               [ 0.        ,  0.        ,  0.        ,  1.        ]])
+        """
+        transform = axis_angle_rotation((0, 1, 0), angle, deg=True)
+        return self.concatenate(transform, multiply_mode=multiply_mode)
+
+    def rotate_z(
+        self, angle: float, *, multiply_mode: Literal['pre', 'post'] | None = None
+    ) -> Transform:  # numpydoc ignore=RT01
+        """Concatenate a rotation about the z-axis.
+
+        Create a matrix for rotation about the z-axis and :meth:`concatenate`
+        it with the current transformation :attr:`matrix` according to pre-multiply or
+        post-multiply semantics.
+
+        Internally, the matrix is stored in the :attr:`matrix_list`.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the z-axis.
+
+        multiply_mode : 'pre' | 'post', optional
+            Multiplication mode to use when concatenating the matrix. By default, the
+            object's :attr:`multiply_mode` is used, but this can be overridden. Set this
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        pyvista.DataSet.rotate_z
+            Rotate a mesh about the z-axis.
+
+        Examples
+        --------
+        Concatenate a rotation about the z-axis.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform().rotate_z(90)
+        >>> transform.matrix
+        array([[ 0., -1.,  0.,  0.],
+               [ 1.,  0.,  0.,  0.],
+               [ 0.,  0.,  1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        Concatenate a second rotation about the z-axis.
+
+        >>> _ = transform.rotate_z(45)
+
+        The result is a matrix that rotates about the z-axis by 135 degrees.
+
+        >>> transform.matrix
+        array([[-0.70710678, -0.70710678,  0.        ,  0.        ],
+               [ 0.70710678, -0.70710678,  0.        ,  0.        ],
+               [ 0.        ,  0.        ,  1.        ,  0.        ],
+               [ 0.        ,  0.        ,  0.        ,  1.        ]])
+        """
+        transform = axis_angle_rotation((0, 0, 1), angle, deg=True)
+        return self.concatenate(transform, multiply_mode=multiply_mode)
+
+    def rotate_vector(
+        self,
+        vector: VectorLike[float],
+        angle: float,
+        *,
+        multiply_mode: Literal['pre', 'post'] | None = None,
+    ) -> Transform:  # numpydoc ignore=RT01
+        """Concatenate a rotation about a vector.
+
+        Create a matrix for rotation about the vector and :meth:`concatenate`
+        it with the current transformation :attr:`matrix` according to pre-multiply or
+        post-multiply semantics.
+
+        Internally, the matrix is stored in the :attr:`matrix_list`.
+
+        Parameters
+        ----------
+        vector : VectorLike[float]
+            Vector to rotate about.
+
+        angle : float
+            Angle in degrees to rotate about the vector.
+
+        multiply_mode : 'pre' | 'post', optional
+            Multiplication mode to use when concatenating the matrix. By default, the
+            object's :attr:`multiply_mode` is used, but this can be overridden. Set this
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        pyvista.DataSet.rotate_vector
+            Rotate a mesh about a vector.
+
+        Examples
+        --------
+        Concatenate a rotation of 30 degrees about the ``(1, 1, 1)`` axis.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform().rotate_vector((1, 1, 1), 30)
+        >>> transform.matrix
+        array([[ 0.9106836 , -0.24401694,  0.33333333,  0.        ],
+               [ 0.33333333,  0.9106836 , -0.24401694,  0.        ],
+               [-0.24401694,  0.33333333,  0.9106836 ,  0.        ],
+               [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
+        Concatenate a second rotation of 45 degrees about the ``(1, 2, 3)`` axis.
+
+        >>> _ = transform.rotate_vector((1, 2, 3), 45)
+        >>> transform.matrix
+        array([[ 0.38042304, -0.50894634,  0.77217351,  0.        ],
+               [ 0.83349512,  0.55045308, -0.04782562,  0.        ],
+               [-0.40070461,  0.66179682,  0.63360933,  0.        ],
+               [ 0.        ,  0.        ,  0.        ,  1.        ]])
+        """
+        transform = axis_angle_rotation(vector, angle, deg=True)
+        return self.concatenate(transform, multiply_mode=multiply_mode)
 
     def concatenate(
-        self, transform: TransformLike, multiply_mode: Literal['pre', 'post'] | None = None
+        self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a transformation matrix.
 
@@ -427,7 +696,7 @@ class Transform(_vtk.vtkTransform):
         transform : TransformLike
             Any transform-like input such as a 3x3 or 4x4 array or matrix.
 
-        multiply_mode : 'pre' | 'post' | None, optional
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -443,8 +712,7 @@ class Transform(_vtk.vtkTransform):
         ...     [0, 0, 1, 1.5],
         ...     [0, 0, 0, 2],
         ... ]
-        >>> transform = pv.Transform()
-        >>> _ = transform.concatenate(array)
+        >>> transform = pv.Transform().concatenate(array)
         >>> transform.matrix
         array([[ 0.707, -0.707,  0.   ,  0.   ],
                [ 0.707,  0.707,  0.   ,  0.   ],
