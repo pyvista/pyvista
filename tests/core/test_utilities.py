@@ -1167,7 +1167,7 @@ VECTOR = (1, 2, 3)
 
 @pytest.mark.parametrize('reflect_args', [NORMAL, [NORMAL]])
 def test_transform_reflect(transform, reflect_args):
-    transform.reflect(*NORMAL)
+    transform.reflect(*reflect_args)
     actual = transform.matrix
     expected = transformations.reflection(NORMAL)
     assert np.array_equal(actual, expected)

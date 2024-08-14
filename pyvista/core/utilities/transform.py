@@ -238,7 +238,7 @@ class Transform(_vtk.vtkTransform):
         self._point = (
             None
             if point is None
-            else _validation.validate_array3(point, dtype_out=float, to_tuple=True)
+            else _validation.validate_array3(point, dtype_out=float, to_tuple=True, name='point')
         )
 
     @property
@@ -1185,7 +1185,7 @@ class Transform(_vtk.vtkTransform):
     ):
         point = point if point is not None else self.point
         if point is not None:
-            point_array = _validation.validate_array3(point, dtype_out=float)
+            point_array = _validation.validate_array3(point, dtype_out=float, name='point')
             translate_away = Transform().translate(-point_array)
             translate_toward = Transform().translate(point_array)
             if multiply_mode == 'post' or self._multiply_mode == 'post':
