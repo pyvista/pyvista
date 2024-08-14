@@ -16,7 +16,6 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.transform import Transform
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
@@ -27,6 +26,7 @@ from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities import transformations
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _coerce_pointslike_arg
 from .utilities.arrays import get_array
@@ -35,6 +35,7 @@ from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
+from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -953,7 +954,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        t = Transform().rotate_x(angle, point=point)
+        check_valid_vector(point, "point")
+        t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1016,7 +1018,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        t = Transform().rotate_y(angle, point=point)
+        check_valid_vector(point, "point")
+        t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1080,7 +1083,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        t = Transform().rotate_z(angle, point=point)
+        check_valid_vector(point, "point")
+        t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1148,7 +1152,9 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        t = Transform().rotate_vector(vector, angle, point=point)
+        check_valid_vector(vector)
+        check_valid_vector(point, "point")
+        t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1221,7 +1227,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
         """
-        t = Transform().rotate(rotation, point=point)
+        t = transformations.rotation(rotation, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1290,7 +1296,6 @@ class DataSet(DataSetFilters, DataObject):
         xyz: Number | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
     ):
         """Scale the mesh.
 
@@ -1311,9 +1316,6 @@ class DataSet(DataSetFilters, DataObject):
 
         inplace : bool, default: False
             Updates mesh in-place.
-
-        point : Vector, default: (0.0, 0.0, 0.0)
-            Point to scale from. Defaults to origin.
 
         Returns
         -------
@@ -1343,7 +1345,11 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
 
         """
-        transform = Transform().scale(xyz, point=point)
+        if isinstance(xyz, (float, int, np.number)):
+            xyz = [xyz] * 3
+
+        transform = _vtk.vtkTransform()
+        transform.Scale(xyz)
         return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1405,7 +1411,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        t = Transform().reflect((1, 0, 0), point=point)
+        check_valid_vector(point, 'point')
+        t = transformations.reflection((1, 0, 0), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1467,7 +1474,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        t = Transform().reflect((0, 1, 0), point=point)
+        check_valid_vector(point, 'point')
+        t = transformations.reflection((0, 1, 0), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1529,7 +1537,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        t = Transform().reflect((0, 0, 1), point=point)
+        check_valid_vector(point, 'point')
+        t = transformations.reflection((0, 0, 1), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1595,7 +1604,9 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        t = Transform().reflect(normal, point=point)
+        check_valid_vector(normal, 'normal')
+        check_valid_vector(point, 'point')
+        t = transformations.reflection(normal, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,

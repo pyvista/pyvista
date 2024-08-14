@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import multiprocessing
 import pickle
-import re
 from typing import TYPE_CHECKING
 
 from hypothesis import HealthCheck
@@ -1203,8 +1202,8 @@ def test_multiprocessing(datasets, pickle_format):
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets)
-    for r, dataset in zip(res, datasets):
-        assert r == dataset.n_points
+    for re, dataset in zip(res, datasets):
+        assert re == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():
@@ -1248,10 +1247,9 @@ def test_rotate_x():
     mesh = examples.load_uniform()
     out = mesh.rotate_x(30)
     assert isinstance(out, pv.StructuredGrid)
-    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with pytest.raises(TypeError):
         out = mesh.rotate_x(30, point=5)
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with pytest.raises(ValueError):  # noqa: PT011
         out = mesh.rotate_x(30, point=[1, 3])
 
 
@@ -1260,11 +1258,10 @@ def test_rotate_y():
     mesh = examples.load_uniform()
     out = mesh.rotate_y(30)
     assert isinstance(out, pv.StructuredGrid)
-    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=5)
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=[1, 3])
+    with pytest.raises(TypeError):
+        out = mesh.rotate_y(30, point=5)
+    with pytest.raises(ValueError):  # noqa: PT011
+        out = mesh.rotate_y(30, point=[1, 3])
 
 
 def test_rotate_z():
@@ -1272,11 +1269,10 @@ def test_rotate_z():
     mesh = examples.load_uniform()
     out = mesh.rotate_z(30)
     assert isinstance(out, pv.StructuredGrid)
-    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=5)
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=[1, 3])
+    with pytest.raises(TypeError):
+        out = mesh.rotate_z(30, point=5)
+    with pytest.raises(ValueError):  # noqa: PT011
+        out = mesh.rotate_z(30, point=[1, 3])
 
 
 def test_rotate_vector():
@@ -1284,10 +1280,9 @@ def test_rotate_vector():
     mesh = examples.load_uniform()
     out = mesh.rotate_vector([1, 1, 1], 33)
     assert isinstance(out, pv.StructuredGrid)
-    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with pytest.raises(ValueError):  # noqa: PT011
         out = mesh.rotate_vector([1, 1], 33)
-    with pytest.raises(ValueError, match=re.escape(match)):
+    with pytest.raises(TypeError):
         out = mesh.rotate_vector(30, 33)
 
 

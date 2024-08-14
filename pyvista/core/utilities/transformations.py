@@ -104,9 +104,13 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     if angle % (2 * np.pi) == 0:
         return np.eye(4)
 
-    axis = _validation.validate_array3(axis, dtype_out=float, name='axis')
+    axis = np.asarray(axis, dtype='float64')
+    if axis.shape != (3,):
+        raise ValueError('Axis must be a 3-length array-like.')
     if point is not None:
-        point = _validation.validate_array3(point, dtype_out=float, name='point')
+        point = np.asarray(point)
+        if point.shape != (3,):
+            raise ValueError('Rotation center must be a 3-length array-like.')
 
     # check and normalize
     axis_norm = np.linalg.norm(axis)
