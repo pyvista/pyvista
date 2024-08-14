@@ -1197,7 +1197,7 @@ def test_transform_rotate(transform):
 )
 def test_transform_with_point(transform, multiply_mode, method, args):
     func = getattr(Transform, method)
-    vector = np.array((1, 2, 3))
+    vector = np.array(NORMAL)
 
     transform.multiply_mode = multiply_mode
     transform.point = vector
