@@ -1217,8 +1217,10 @@ def test_transform_rotate_z(transform):
     assert np.allclose(identity, np.eye(4))
 
 
+VECTOR = (1, 2, 3)
+
+
 def test_transform_rotate_vector(transform):
-    VECTOR = (1, 2, 3)
     transform.rotate_vector(VECTOR, ANGLE)
     actual = transform.matrix
     expected = transformations.axis_angle_rotation(VECTOR, ANGLE)

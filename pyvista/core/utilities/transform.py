@@ -480,7 +480,7 @@ class Transform(_vtk.vtkTransform):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        multiply_mode : 'pre' | 'post, optional
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -533,7 +533,7 @@ class Transform(_vtk.vtkTransform):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        multiply_mode : 'pre' | 'post, optional
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -696,7 +696,7 @@ class Transform(_vtk.vtkTransform):
         transform : TransformLike
             Any transform-like input such as a 3x3 or 4x4 array or matrix.
 
-        multiply_mode : 'pre' | 'post, optional
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
