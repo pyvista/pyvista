@@ -396,7 +396,10 @@ class Transform(_vtk.vtkTransform):
         )
 
     def reflect(
-        self, *normal, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        *normal,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a reflection matrix.
 
@@ -410,6 +413,15 @@ class Transform(_vtk.vtkTransform):
         ----------
         *normal : VectorLike[float]
             Normal direction for reflection.
+
+        point : VectorLike[float], optional
+            Point to reflect about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the reflection
+                - :meth:`translate` away from ``point`` after the reflection
 
         multiply_mode : 'pre' | 'post' | None, optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -447,7 +459,9 @@ class Transform(_vtk.vtkTransform):
             normal, dtype_out=float, name='reflection normal'
         )
         transform = reflection(valid_normal)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def translate(
         self, *vector, multiply_mode: Literal['pre', 'post'] | None = None
@@ -604,7 +618,11 @@ class Transform(_vtk.vtkTransform):
         )
 
     def rotate_x(
-        self, angle: float, *, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        angle: float,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about the x-axis.
 
@@ -618,6 +636,15 @@ class Transform(_vtk.vtkTransform):
         ----------
         angle : float
             Angle in degrees to rotate about the x-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -654,10 +681,16 @@ class Transform(_vtk.vtkTransform):
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
         """
         transform = axis_angle_rotation((1, 0, 0), angle, deg=True)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def rotate_y(
-        self, angle: float, *, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        angle: float,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about the y-axis.
 
@@ -671,6 +704,15 @@ class Transform(_vtk.vtkTransform):
         ----------
         angle : float
             Angle in degrees to rotate about the y-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -707,10 +749,16 @@ class Transform(_vtk.vtkTransform):
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
         """
         transform = axis_angle_rotation((0, 1, 0), angle, deg=True)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def rotate_z(
-        self, angle: float, *, multiply_mode: Literal['pre', 'post'] | None = None
+        self,
+        angle: float,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about the z-axis.
 
@@ -724,6 +772,15 @@ class Transform(_vtk.vtkTransform):
         ----------
         angle : float
             Angle in degrees to rotate about the z-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -760,13 +817,16 @@ class Transform(_vtk.vtkTransform):
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
         """
         transform = axis_angle_rotation((0, 0, 1), angle, deg=True)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def rotate_vector(
         self,
         vector: VectorLike[float],
         angle: float,
         *,
+        point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about a vector.
@@ -784,6 +844,15 @@ class Transform(_vtk.vtkTransform):
 
         angle : float
             Angle in degrees to rotate about the vector.
+
+        point : VectorLike[float], optional
+            Point to rotate about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the rotation
+                - :meth:`translate` away from ``point`` after the rotation
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -817,7 +886,9 @@ class Transform(_vtk.vtkTransform):
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
         """
         transform = axis_angle_rotation(vector, angle, deg=True)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self._concatenate_with_translations(
+            transform, point=point, multiply_mode=multiply_mode
+        )
 
     def concatenate(
         self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None

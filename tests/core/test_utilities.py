@@ -1188,17 +1188,28 @@ def test_transform_rotate(transform):
 
 
 @pytest.mark.parametrize('multiply_mode', ['post', 'pre'])
-@pytest.mark.parametrize(('method', 'arg'), [('scale', SCALE), ('rotate', ROTATION)])
-def test_transform_with_point(transform, multiply_mode, method, arg):
+@pytest.mark.parametrize(
+    ('method', 'args'),
+    [
+        ('scale', (SCALE,)),
+        ('reflect', (VECTOR,)),
+        ('rotate', (ROTATION,)),
+        ('rotate_x', (ANGLE,)),
+        ('rotate_y', (ANGLE,)),
+        ('rotate_z', (ANGLE,)),
+        ('rotate_vector', (VECTOR, ANGLE)),
+    ],
+)
+def test_transform_with_point(transform, multiply_mode, method, args):
     func = getattr(Transform, method)
     vector = np.array((1, 2, 3))
 
     transform.multiply_mode = multiply_mode
     transform.point = vector
-    func(transform, arg)
+    func(transform, *args)
 
     expected_transform = Transform().translate(-vector)
-    func(expected_transform, arg)
+    func(expected_transform, *args)
     expected_transform.translate(vector)
 
     assert np.array_equal(transform.matrix, expected_transform.matrix)
@@ -1207,10 +1218,10 @@ def test_transform_with_point(transform, multiply_mode, method, arg):
     # Test override point with kwarg
     vector2 = vector * 2  # new point
     transform.identity()  # reset
-    func(transform, arg, point=vector2)  # override point
+    func(transform, *args, point=vector2)  # override point
 
     expected_transform = Transform().translate(-vector2)
-    func(expected_transform, arg)
+    func(expected_transform, *args)
     expected_transform.translate(vector2)
 
     assert np.array_equal(transform.matrix, expected_transform.matrix)
