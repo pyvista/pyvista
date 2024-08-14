@@ -899,7 +899,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_x(
         self,
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -915,7 +915,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -963,7 +963,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_y(
         self,
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -979,7 +979,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about.
 
         transform_all_input_vectors : bool, default: False
@@ -1042,8 +1042,8 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
-            Point to rotate about.  Defaults to origin.
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
@@ -1091,7 +1091,7 @@ class DataSet(DataSetFilters, DataObject):
         self,
         vector: VectorLike[float],
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1110,7 +1110,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle to rotate.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1174,7 +1174,7 @@ class DataSet(DataSetFilters, DataObject):
         rotation : RotationLike
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1289,7 +1289,7 @@ class DataSet(DataSetFilters, DataObject):
         xyz: Number | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
     ):
         """Scale the mesh.
 
@@ -1311,7 +1311,7 @@ class DataSet(DataSetFilters, DataObject):
         inplace : bool, default: False
             Updates mesh in-place.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to scale from. Defaults to origin.
 
         Returns
@@ -1426,7 +1426,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : sequence[float], optional
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1488,7 +1488,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Vector, optional
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1551,10 +1551,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        normal : sequence[float]
+        normal : VectorLike[float]
            Normal vector to flip about.
 
-        point : sequence[float]
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
