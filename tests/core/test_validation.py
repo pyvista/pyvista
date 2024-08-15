@@ -716,7 +716,7 @@ def test_check_length():
     match = '_input must have a length equal to any of: 1. Got length 2 instead.'
     with pytest.raises(ValueError, match=match):
         check_length((1, 2), exact_length=1, name="_input")
-    match = '_input must have a length equal to any of: [3 4]. Got length 2 instead.'
+    match = '_input must have a length equal to any of: [3, 4]. Got length 2 instead.'
     with pytest.raises(ValueError, match=escape(match)):
         check_length((1, 2), exact_length=[3, 4], name="_input")
 
