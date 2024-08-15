@@ -1196,6 +1196,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Rotated dataset.
 
+        See Also
+        --------
+        pyvista.Transform.rotate
+            Concatenate a rotation matrix with a transformation.
+
         Examples
         --------
         Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
@@ -1262,7 +1267,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        :meth:`pyvista.Transform.translate`
+        pyvista.Transform.translate
             Concatenate a translation matrix with a transformation.
 
         Examples
@@ -1319,7 +1324,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        :meth:`pyvista.Transform.scale`
+        pyvista.Transform.scale
             Concatenate a scale matrix with a transformation.
 
         Examples
@@ -1383,6 +1388,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Flipped dataset.
 
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1441,6 +1451,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Flipped dataset.
 
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1498,6 +1513,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
 
         Examples
         --------
@@ -1560,6 +1580,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Dataset flipped about its normal.
+
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
 
         Examples
         --------
