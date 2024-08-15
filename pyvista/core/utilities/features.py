@@ -14,6 +14,42 @@ from pyvista.core import _vtk_core as _vtk
 from .helpers import wrap
 
 
+def padded_bins(mesh, density):
+    """Construct bin edges for voxelization.
+
+    Parameters
+    ----------
+        mesh : pyvista.DataSet
+            Mesh to voxelize.
+
+        density : array_like[float]
+            A list of densities along x,y,z directions.
+
+        density (_type_): _description_
+        bounds (_type_, optional): _description_. Defaults to None.
+
+    Returns
+    -------
+    list[np.ndarray]
+        List of bin edges for each axis.
+
+    Notes
+    -----
+    Ensures limits of voxelization are padded to ensure the mesh is fully enclosed.
+    """
+
+    bounds = np.array(mesh.bounds).reshape(3, 2)
+    bin_count = np.ceil((bounds[:, 1] - bounds[:, 0]) / density)
+    pad = (bin_count * density - (bounds[:, 1] - bounds[:, 0])) / 2
+
+    bin_edges = [
+        np.arange(bounds[i, 0] - pad[i], bounds[i, 1] + pad[i] + density[i] / 2, density[i])
+        for i in range(3)
+    ]
+
+    return bin_edges
+
+
 def voxelize(mesh, density=None, check_surface=True):
     """Voxelize mesh to UnstructuredGrid.
 
@@ -79,10 +115,8 @@ def voxelize(mesh, density=None, check_surface=True):
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
 
-    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-    x = np.arange(x_min, x_max, density_x)
-    y = np.arange(y_min, y_max, density_y)
-    z = np.arange(z_min, z_max, density_z)
+    # Get x, y, z bin edges
+    x, y, z = padded_bins(mesh, [density_x, density_y, density_z])
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
     # see https://github.com/pyvista/pyvista/pull/4365
@@ -185,10 +219,8 @@ def voxelize_volume(mesh, density=None, check_surface=True):
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
 
-    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-    x = np.arange(x_min, x_max, density_x)
-    y = np.arange(y_min, y_max, density_y)
-    z = np.arange(z_min, z_max, density_z)
+    # Get x, y, z bin edges
+    x, y, z = padded_bins(mesh, [density_x, density_y, density_z])
 
     # Create a RectilinearGrid
     voi = pyvista.RectilinearGrid(x, y, z)
