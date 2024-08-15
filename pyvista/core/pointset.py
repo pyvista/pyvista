@@ -2807,26 +2807,37 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         """
         if len(dims) != 3:
             raise ValueError("Expected dimensions to be length 3.")
+        
+        ni, nj, nk = np.asanyarray(dims) - 1
+        xcorners = corners[:, 0].reshape((2 * ni, 2 * nj, 2 * nk), order="F")
+        ycorners = corners[:, 1].reshape((2 * ni, 2 * nj, 2 * nk), order="F")
+        zcorners = corners[:, 2].reshape((2 * ni, 2 * nj, 2 * nk), order="F")
 
-        shape0 = np.asanyarray(dims) - 1
-        shape1 = 2 * shape0
-        ncells = np.prod(shape0)
-        cells = 8 * np.ones((ncells, 9), dtype=int)
-        points, indices = np.unique(corners, axis=0, return_inverse=True)
-        indices = indices.ravel()
-        connectivity = np.asarray(
-            [[0, 1, 1, 0, 0, 1, 1, 0], [0, 0, 1, 1, 0, 0, 1, 1], [0, 0, 0, 0, 1, 1, 1, 1]],
+        points = np.column_stack(
+            [
+                np.column_stack(
+                    (
+                        corners[::2, :: 2, ::2].ravel(order="F"),
+                        corners[1::2, ::2, ::2].ravel(order="F"),
+                        corners[1::2, 1::2, ::2].ravel(order="F"),
+                        corners[::2, 1::2, ::2].ravel(order="F"),
+                        corners[::2, ::2, 1::2].ravel(order="F"),
+                        corners[1::2, ::2, 1::2].ravel(order="F"),
+                        corners[1::2, 1::2, 1::2].ravel(order="F"),
+                        corners[::2, 1::2, 1::2].ravel(order="F"),
+                    )
+                ).ravel()
+                for corners in (xcorners, ycorners, zcorners)
+            ]
         )
-        for c in range(ncells):
-            i, j, k = np.unravel_index(c, shape0, order='F')
-            coord = (2 * i + connectivity[0], 2 * j + connectivity[1], 2 * k + connectivity[2])
-            cinds = np.ravel_multi_index(coord, shape1, order='F')  # type: ignore[call-overload]
-            cells[c, 1:] = indices[cinds]
-        cells = cells.flatten()
-        points = vtk_points(points)
-        self.SetDimensions(dims[0], dims[1], dims[2])
-        self.SetPoints(points)
-        self.SetCells(CellArray(cells))
+        cells = np.arange(8 * ni * nj * nk).reshape((ni * nj * nk, 8))
+        points, pinv = np.unique(
+            points,
+            axis=0,
+            return_inverse=True,
+        )
+        cells = pinv[cells]
+        self._from_cells_points(dims, {CellType.HEXAHEDRON: cells}, points)
 
     def _from_cells_points(
         self,
