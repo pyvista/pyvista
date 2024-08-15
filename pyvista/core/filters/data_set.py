@@ -7070,6 +7070,11 @@ class DataSetFilters:
         pyvista.DataSet
             Reflected dataset.  Return type matches input.
 
+        See Also
+        --------
+        :class:`pyvista.Transform`
+            Describe linear transformations via a 4x4 matrix.
+
         Examples
         --------
         >>> from pyvista import examples
