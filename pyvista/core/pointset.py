@@ -2696,6 +2696,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     - From a ``vtk.vtkExplicitStructuredGrid`` or ``vtk.vtkUnstructuredGrid`` object
     - From a VTU or VTK file
     - From ``dims`` and ``corners`` arrays
+    - From ``dims``, ``cells`` and ``points`` arrays
 
     Parameters
     ----------
@@ -2749,7 +2750,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)
-        if n > 2:
+        if n > 3:
             raise ValueError("Too many args to create ExplicitStructuredGrid.")
         if n == 1:
             arg0 = args[0]
@@ -2775,6 +2776,12 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             arg1_is_arr = isinstance(arg1, np.ndarray)
             if all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(arg0, arg1)
+        elif n == 3:
+            arg0, arg1, arg2 = args
+            arg0 = np.asarray(arg0)
+            arg1 = np.asarray(arg1) if not isinstance(arg1, dict) else arg1
+            arg2 = np.asarray(arg2)
+            self._from_cells_points(arg0, arg1, arg2)
 
     def __repr__(self) -> str:
         """Return the standard representation."""
@@ -2820,6 +2827,51 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         self.SetDimensions(dims[0], dims[1], dims[2])
         self.SetPoints(points)
         self.SetCells(CellArray(cells))
+
+    def _from_cells_points(
+        self,
+        dims: VectorLike[int],
+        cells: VectorLike[int] | dict[int, MatrixLike[int]],
+        points: MatrixLike[float],
+    ) -> None:
+        """Create a VTK explicit structured grid from NumPy arrays.
+
+        Parameters
+        ----------
+        dims : VectorLike[int]
+            A sequence of integers with shape (3,) containing the
+            topological dimensions of the grid.
+
+        corners : MatrixLike[float]
+            A sequence of numbers with shape ``(number of corners, 3)``
+            containing the coordinates of the corner points.
+
+        """
+        if len(dims) != 3:
+            raise ValueError("Expected dimensions to be length 3.")
+        
+        else:
+            nx, ny, nz = dims - 1
+            n_cells = nx * ny * nz
+
+        if isinstance(cells, dict):
+            celltypes = list(cells)
+            
+            if not (len(celltypes) == 1 and celltypes[0] == CellType.HEXAHEDRON):
+                raise ValueError(f"Expected cells to be a single cell of type {CellType.HEXAHEDRON}.")
+            
+            cells = np.asarray(cells[celltypes[0]])
+            if cells.shape != (n_cells, 8):
+                raise ValueError(f"Expected cells to be of shape ({n_cells}, 8)")
+
+            cells = np.column_stack((np.full(n_cells, 8), cells)).flatten()
+
+        elif len(cells) != 9 * n_cells:
+            raise ValueError(f"Expected cells to be length {9 * n_cells}")
+        
+        self.SetDimensions(dims[0], dims[1], dims[2])
+        self.SetCells(CellArray(cells))
+        self.SetPoints(vtk_points(points))
 
     def cast_to_unstructured_grid(self) -> UnstructuredGrid:
         """Cast to an unstructured grid.
