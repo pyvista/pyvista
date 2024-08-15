@@ -2677,30 +2677,28 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         # add but do not make active
         self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
 
-    def cast_to_explicit_structured_grid(
-        self,
-        order: Optional[Literal["C", "F"]] = None,
-    ) -> ExplicitStructuredGrid:
+    def cast_to_explicit_structured_grid(self) -> ExplicitStructuredGrid:
         """Cast to an explicit structured grid.
-
-        Parameters
-        ----------
-        order : {'C', 'F'}, optional, default: 'F'
-            Specifies whether cells are indexed in row-major (C-style) or column-major (Fortran-style) order.
 
         Returns
         -------
         pyvista.ExplicitStructuredGrid
             An explicit structured grid.
 
+        Raises
+        ------
+        TypeError
+            If the structured grid is not 3D (i.e., any dimension is 1).
+
         """
-        order = order if order else "F"
+        if any(n == 1 for n in self.dimensions):
+            raise TypeError("Only 3D structured grid can be casted to an explicit structured grid.")
 
         ni, nj, nk = self.dimensions
         I, J, K = np.unravel_index(
             np.arange(self.n_cells),
             shape=(ni - 1, nj - 1, nk - 1),
-            order=order,
+            order="F",
         )
 
         grid = self.cast_to_unstructured_grid()
