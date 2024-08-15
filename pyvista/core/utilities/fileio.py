@@ -1,8 +1,10 @@
 """Contains a dictionary that maps file extensions to VTK readers."""
 
 from __future__ import annotations
+from typing import Callable, Optional, TextIO
 
 from pathlib import Path
+import itertools
 import warnings
 
 import numpy as np
@@ -181,6 +183,8 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     ext = _get_ext_force(filename, force_ext)
     if ext in ['.e', '.exo']:
         return read_exodus(filename)
+    if ext.lower() in ['.grdecl']:
+        return read_grdecl(filename)
     if ext in ['.wrl', '.vrml']:
         raise ValueError(
             "VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details."
@@ -378,6 +382,255 @@ def read_exodus(
 
     reader.Update()
     return wrap(reader.GetOutput())
+
+
+def read_grdecl(
+    filename: str | Path,
+    elevation: bool = True,
+    return_others: bool = False,
+) -> pyvista.ExplicitStructuredGrid:
+    """
+    Read a GRDECL file (``'.GRDECL'``).
+
+    Parameters
+    ----------
+    filename : str | Path
+        The path to the GRDECL file to read.
+    elevation : bool, default: True
+        If True, convert depths to elevations and flips grid along Z axis.
+    return_others : bool, default: False
+        If True, return additional keywords contained in input file.
+
+    Returns
+    -------
+    pyvista.ExplicitStructuredGrid
+        Output explicit structured grid.
+    dict
+        Additional keywords stored in a dictionary which keys correspond to the keyword (e.g., `MAPUNITS`, `GRIDUNIT`, ...).
+
+    """
+
+    def read_keyword(
+        f: TextIO,
+        split: bool = True,
+        converter: Optional[Callable] = None,
+    ) -> list | str:
+        """Read a keyword."""
+        out = []
+
+        while True:
+            line = f.readline().strip()
+
+            if line.endswith("/"):
+                line = line[:-1].strip()
+
+                if line:
+                    end = True
+
+                else:
+                    break
+
+            elif line.startswith("--") or not line:
+                continue
+
+            else:
+                end = False
+
+            if split:
+                line = line.split()
+                out += [converter(x) for x in line] if converter is not None else line
+
+            else:
+                out.append(line)
+
+            if end:
+                break
+
+        if not split:
+            out = " ".join(out)
+
+        return out
+
+    def read_buffer(f: TextIO) -> tuple[dict, list[str]]:
+        """Read a file buffer."""
+        keywords = {}
+        includes = []
+
+        for line in f:
+            line = line.strip()
+
+            if line.startswith("MAPUNITS"):
+                keywords["MAPUNITS"] = read_keyword(f, split=False).replace("'", "").strip()
+
+            elif line.startswith("MAPAXES"):
+                keywords["MAPAXES"] = read_keyword(f, converter=float)
+
+            elif line.startswith("GRIDUNIT"):
+                keywords["GRIDUNIT"] = read_keyword(f, split=False).replace("'", "").strip()
+
+            elif line.startswith("SPECGRID"):
+                data = read_keyword(f)
+                keywords["SPECGRID"] = [
+                    int(data[0]),
+                    int(data[1]),
+                    int(data[2]),
+                    int(data[3]),
+                    data[4].strip(),
+                ]
+
+            elif line.startswith("INCLUDE"):
+                filename = read_keyword(f, split=False)
+                includes.append(filename.replace("'", ""))
+
+            elif line.startswith(property_keys):
+                for key in property_keys:
+                    if line.startswith(key):
+                        break
+
+                data = read_keyword(f)
+                keywords[key] = []
+
+                for x in data:
+                    if "*" in x:
+                        size, x = x.split("*")
+                        keywords[key] += int(size) * [float(x)]
+
+                    else:
+                        keywords[key].append(float(x))
+
+        return keywords, includes
+    
+    def read_keywords(filename: str | Path) -> dict:
+        """Read a GRDECL file and return its keywords."""
+        with open(filename) as f:
+            keywords, includes = read_buffer(f)
+
+        if includes:
+            path = Path(filename).parent
+
+            for include in includes:
+                with open(path / include) as f:
+                    keywords_, _ = read_buffer(f)
+
+                keywords.update(keywords_)
+
+        return keywords
+    
+    property_keys = (
+        "ACTNUM",
+        "COORD",
+        "ZCORN",
+        "PERMEABILITY",
+        "PERMX",
+        "PERMY",
+        "PERMZ",
+        "POROSITY",
+        "PORO",
+        "LAYERS",
+        "ZONES",
+    )
+
+    # Read keywords
+    keywords = read_keywords(filename)
+
+    try:
+        ni, nj, nk = keywords["SPECGRID"][:3]
+        cylindric = keywords["SPECGRID"][4] == "T"
+
+        if cylindric:
+            raise TypeError("Cylindric grids are not supported.")
+
+    except KeyError:
+        raise ValueError("Unable to generated grid without keyword 'SPECGRID'.")
+    
+    relative = False
+
+    if "GRIDUNIT" in keywords:
+        grid_unit = keywords["GRIDUNIT"].lower()
+
+        if not grid_unit.endswith("map"):
+            try:
+                cond1 = grid_unit.startswith(keywords["MAPUNITS"].lower())
+
+                if not cond1:
+                    warnings.warn("Unable to convert relative coordinates with different grid and map units. Skipping conversion.")
+
+            except KeyError:
+                warnings.warn("Unable to convert relative coordinates without keyword 'MAPUNITS'. Skipping conversion.")
+                cond1 = False
+
+            try:
+                origin = keywords["MAPAXES"][2:4]
+
+            except KeyError:
+                warnings.warn("Unable to convert relative coordinates without keyword 'MAPAXES'. Skipping conversion.")
+                origin = None
+
+            relative = cond1 and origin is not None
+
+    # Pillars and Z corner points
+    pillars = np.reshape(keywords["COORD"], ((ni + 1) * (nj + 1), 6), order="C")
+    zcorners = np.reshape(keywords["ZCORN"], (2 * ni, 2 * nj, 2 * nk), order="F")
+
+    # Convert depth to elevation
+    if elevation:
+        zcorners = -zcorners[..., ::-1]
+        pillars[:, [2, 5]] *= -1.0
+
+    # Shift relative to absolute units
+    if relative:
+        pillars[:, [0, 3]] += origin[0]
+        pillars[:, [1, 4]] += origin[1]
+
+    # Interpolate X and Y corner points
+    xcorners = np.empty_like(zcorners)
+    ycorners = np.empty_like(zcorners)
+
+    for i, j in itertools.product(range(2 * ni), range(2 * nj)):
+        ip = np.ravel_multi_index(
+            ((i + 1) // 2, (j + 1) // 2), (ni + 1, nj + 1), order="F"
+        )
+        z = pillars[ip, [2, 5]]
+        xcorners[i, j] = np.interp(zcorners[i, j], z, pillars[ip, [0, 3]])
+        ycorners[i, j] = np.interp(zcorners[i, j], z, pillars[ip, [1, 4]])
+
+    # Generate explicit structured grid
+    dims = (ni + 1, nj + 1, nk + 1)
+    corners = np.column_stack(
+        (
+            xcorners.ravel(order="F"),
+            ycorners.ravel(order="F"),
+            zcorners.ravel(order="F"),
+        )
+    )
+    grid = pyvista.ExplicitStructuredGrid(dims, corners)
+
+    # Add property data
+    for key in property_keys:
+        if key in {"ACTNUM", "COORD", "ZCORN"}:
+            continue
+
+        if key in keywords:
+            v = keywords[key]
+
+            if elevation:
+                v = np.reshape(v, (ni, nj, nk), order="F")
+                v = v[..., ::-1].ravel(order="F")
+
+            grid[key] = v
+
+    # Active cells
+    if "ACTNUM" in keywords:
+        active = np.array(keywords["ACTNUM"]) > 0.0
+        grid.hide_cells(~active, inplace=True)
+
+    if return_others:
+        others = {k: v for k, v in keywords.items() if k not in property_keys}
+
+        return grid, others
+
+    else:
+        return grid
 
 
 def is_meshio_mesh(obj):
