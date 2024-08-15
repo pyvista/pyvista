@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class Transform(_vtk.vtkTransform):
     """Describes linear transformations via a 4x4 matrix.
 
-    A :class:`` can be used to describe the full range of linear (also known
+    A :class:`Transform` can be used to describe the full range of linear (also known
     as affine) coordinate transformations in three dimensions, which are internally
     represented as a 4x4 homogeneous transformation matrix.
 
