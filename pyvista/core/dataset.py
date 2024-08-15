@@ -932,6 +932,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Rotated dataset.
 
+        See Also
+        --------
+        pyvista.Transform.rotate_x
+            Concatenate a rotation about the x-axis with a transformation.
+
         Examples
         --------
         Rotate a mesh 30 degrees about the x-axis.
@@ -990,6 +995,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_y
+            Concatenate a rotation about the y-axis with a transformation.
 
         Examples
         --------
@@ -1050,6 +1060,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_z
+            Concatenate a rotation about the z-axis with a transformation.
 
         Examples
         --------
@@ -1115,6 +1130,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Rotated dataset.
 
+        See Also
+        --------
+        pyvista.Transform.rotate_vector
+            Concatenate a rotation about a vector with a transformation.
+
         Examples
         --------
         Rotate a mesh 30 degrees about the ``(1, 1, 1)`` axis.
@@ -1175,6 +1195,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate
+            Concatenate a rotation matrix with a transformation.
 
         Examples
         --------
@@ -1242,7 +1267,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        :meth:`pyvista.Transform.translate`
+        pyvista.Transform.translate
             Concatenate a translation matrix with a transformation.
 
         Examples
@@ -1299,7 +1324,7 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        :meth:`pyvista.Transform.scale`
+        pyvista.Transform.scale
             Concatenate a scale matrix with a transformation.
 
         Examples
@@ -1363,6 +1388,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Flipped dataset.
 
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1421,6 +1451,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Flipped dataset.
 
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1478,6 +1513,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
 
         Examples
         --------
@@ -1540,6 +1580,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Dataset flipped about its normal.
+
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
 
         Examples
         --------

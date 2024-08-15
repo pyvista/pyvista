@@ -1130,6 +1130,9 @@ def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_fo
 
 
 SCALE = 2
+ROTATION = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # rotate 90 deg about z axis
+VECTOR = (1, 2, 3)
+ANGLE = 30
 
 
 @pytest.mark.parametrize('scale_args', [(SCALE,), (SCALE, SCALE, SCALE), [(SCALE, SCALE, SCALE)]])
@@ -1138,33 +1141,125 @@ def test_transform_scale(transform, scale_args):
     actual = transform.matrix
     expected = np.diag((SCALE, SCALE, SCALE, 1))
     assert np.array_equal(actual, expected)
+    assert transform.n_transformations == 1
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
 
 
-def test_transform_translate(transform):
-    vector = (1, 2, 3)
-    transform.translate(vector)
+@pytest.mark.parametrize('translate_args', [np.array(VECTOR), np.array([VECTOR])])
+def test_transform_translate(transform, translate_args):
+    transform.translate(*translate_args)
     actual = transform.matrix
     expected = np.eye(4)
-    expected[:3, 3] = vector
+    expected[:3, 3] = VECTOR
     assert np.array_equal(actual, expected)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
+
+
+@pytest.mark.parametrize('reflect_args', [VECTOR, [VECTOR]])
+def test_transform_reflect(transform, reflect_args):
+    transform.reflect(*reflect_args)
+    actual = transform.matrix
+    expected = transformations.reflection(VECTOR)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
 
 
 def test_transform_rotate(transform):
-    rotate_z_90 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-    transform.rotate(rotate_z_90)
+    transform.rotate(ROTATION)
     actual = transform.matrix
     expected = np.eye(4)
-    expected[:3, :3] = rotate_z_90
+    expected[:3, :3] = ROTATION
     assert np.array_equal(actual, expected)
 
     identity = transform.matrix @ transform.inverse_matrix
     assert np.array_equal(identity, np.eye(4))
+
+
+@pytest.mark.parametrize('multiply_mode', ['post', 'pre'])
+@pytest.mark.parametrize(
+    ('method', 'args'),
+    [
+        ('scale', (SCALE,)),
+        ('reflect', (VECTOR,)),
+        ('rotate', (ROTATION,)),
+        ('rotate_x', (ANGLE,)),
+        ('rotate_y', (ANGLE,)),
+        ('rotate_z', (ANGLE,)),
+        ('rotate_vector', (VECTOR, ANGLE)),
+    ],
+)
+def test_transform_with_point(transform, multiply_mode, method, args):
+    func = getattr(Transform, method)
+    vector = np.array(VECTOR)
+
+    transform.multiply_mode = multiply_mode
+    transform.point = vector
+    func(transform, *args)
+
+    expected_transform = Transform().translate(-vector)
+    func(expected_transform, *args)
+    expected_transform.translate(vector)
+
+    assert np.array_equal(transform.matrix, expected_transform.matrix)
+    assert transform.n_transformations == 3
+
+    # Test override point with kwarg
+    vector2 = vector * 2  # new point
+    transform.identity()  # reset
+    func(transform, *args, point=vector2)  # override point
+
+    expected_transform = Transform().translate(-vector2)
+    func(expected_transform, *args)
+    expected_transform.translate(vector2)
+
+    assert np.array_equal(transform.matrix, expected_transform.matrix)
+    assert transform.n_transformations == 3
+
+
+def test_transform_rotate_x(transform):
+    transform.rotate_x(ANGLE)
+    actual = transform.matrix
+    expected = transformations.axis_angle_rotation((1, 0, 0), ANGLE)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
+
+
+def test_transform_rotate_y(transform):
+    transform.rotate_y(ANGLE)
+    actual = transform.matrix
+    expected = transformations.axis_angle_rotation((0, 1, 0), ANGLE)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
+
+
+def test_transform_rotate_z(transform):
+    transform.rotate_z(ANGLE)
+    actual = transform.matrix
+    expected = transformations.axis_angle_rotation((0, 0, 1), ANGLE)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
+
+
+def test_transform_rotate_vector(transform):
+    transform.rotate_vector(VECTOR, ANGLE)
+    actual = transform.matrix
+    expected = transformations.axis_angle_rotation(VECTOR, ANGLE)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
 
 
 def test_transform_concatenate_vtkmatrix(transform):
@@ -1231,7 +1326,6 @@ def transformed_actor():
 def test_transform_multiply_mode_override(transform, transformed_actor, object_mode, override_mode):
     # This test validates multiply mode by performing the same transformations
     # applied by `Prop3D` objects and comparing the results
-
     transform.multiply_mode = object_mode
 
     # Center data at the origin
@@ -1290,6 +1384,11 @@ def test_transform_chain_methods():
     zeros = (0, 0, 0)
     matrix = (
         Transform()
+        .reflect(ones)
+        .rotate_x(0)
+        .rotate_y(0)
+        .rotate_z(0)
+        .rotate_vector(ones, 0)
         .identity()
         .scale(ones)
         .translate(zeros)
