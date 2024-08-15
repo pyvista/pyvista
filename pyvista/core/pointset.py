@@ -2867,12 +2867,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             ]
         )
         cells = np.arange(8 * ni * nj * nk).reshape((ni * nj * nk, 8))
-        points, pinv = np.unique(
-            points,
-            axis=0,
-            return_inverse=True,
-        )
-        cells = pinv[cells]
         self._from_cells_points(dims, {CellType.HEXAHEDRON: cells}, points)
 
     def _from_cells_points(
