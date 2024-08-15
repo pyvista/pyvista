@@ -2898,8 +2898,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             raise ValueError("Expected dimensions to be length 3.")
         
         else:
-            nx, ny, nz = dims - 1
-            n_cells = nx * ny * nz
+            n_cells = np.prod([n - 1 for n in dims])
 
         if isinstance(cells, dict):
             celltypes = list(cells)
