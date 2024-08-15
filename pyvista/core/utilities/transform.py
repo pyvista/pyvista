@@ -412,7 +412,7 @@ class Transform(_vtk.vtkTransform):
                 - :meth:`translate` to ``point`` before the reflection
                 - :meth:`translate` away from ``point`` after the reflection
 
-        multiply_mode : 'pre' | 'post' | None, optional
+        multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
             object's :attr:`multiply_mode` is used, but this can be overridden. Set this
             to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
@@ -542,7 +542,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.rotate`
+        pyvista.DataSet.rotate
             Rotate a mesh.
 
         Examples

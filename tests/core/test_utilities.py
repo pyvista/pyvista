@@ -1131,9 +1131,8 @@ def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_fo
 
 SCALE = 2
 ROTATION = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]  # rotate 90 deg about z axis
-NORMAL = (1, 2, 3)
-ANGLE = 30
 VECTOR = (1, 2, 3)
+ANGLE = 30
 
 
 @pytest.mark.parametrize('scale_args', [(SCALE,), (SCALE, SCALE, SCALE), [(SCALE, SCALE, SCALE)]])
@@ -1160,11 +1159,11 @@ def test_transform_translate(transform, translate_args):
     assert np.array_equal(identity, np.eye(4))
 
 
-@pytest.mark.parametrize('reflect_args', [NORMAL, [NORMAL]])
+@pytest.mark.parametrize('reflect_args', [VECTOR, [VECTOR]])
 def test_transform_reflect(transform, reflect_args):
     transform.reflect(*reflect_args)
     actual = transform.matrix
-    expected = transformations.reflection(NORMAL)
+    expected = transformations.reflection(VECTOR)
     assert np.array_equal(actual, expected)
 
     identity = transform.matrix @ transform.inverse_matrix
@@ -1197,7 +1196,7 @@ def test_transform_rotate(transform):
 )
 def test_transform_with_point(transform, multiply_mode, method, args):
     func = getattr(Transform, method)
-    vector = np.array((1, 2, 3))
+    vector = np.array(VECTOR)
 
     transform.multiply_mode = multiply_mode
     transform.point = vector
