@@ -42,12 +42,10 @@ def padded_bins(mesh, density):
     bin_count = np.ceil((bounds[:, 1] - bounds[:, 0]) / density)
     pad = (bin_count * density - (bounds[:, 1] - bounds[:, 0])) / 2
 
-    bin_edges = [
+    return [
         np.arange(bounds[i, 0] - pad[i], bounds[i, 1] + pad[i] + density[i] / 2, density[i])
         for i in range(3)
     ]
-
-    return bin_edges
 
 
 def voxelize(mesh, density=None, check_surface=True):
