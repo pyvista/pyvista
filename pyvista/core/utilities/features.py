@@ -25,9 +25,6 @@ def padded_bins(mesh, density):
         density : array_like[float]
             A list of densities along x,y,z directions.
 
-        density (_type_): _description_
-        bounds (_type_, optional): _description_. Defaults to None.
-
     Returns
     -------
     list[np.ndarray]
@@ -37,7 +34,6 @@ def padded_bins(mesh, density):
     -----
     Ensures limits of voxelization are padded to ensure the mesh is fully enclosed.
     """
-
     bounds = np.array(mesh.bounds).reshape(3, 2)
     bin_count = np.ceil((bounds[:, 1] - bounds[:, 0]) / density)
     pad = (bin_count * density - (bounds[:, 1] - bounds[:, 0])) / 2
