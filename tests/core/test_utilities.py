@@ -1400,3 +1400,32 @@ def test_transform_chain_methods():
         .matrix
     )
     assert np.array_equal(matrix, eye4)
+
+
+@pytest.mark.parametrize(('copy', 'dtype'), [(True, int), (True, float), (False, float)])
+def test_transform_asarray(transform, dtype, copy):
+    # Test a copy is always returned by default
+    transform.scale(SCALE)
+    matrix = transform.matrix
+    assert matrix is not transform.matrix
+
+    # Test cast to numpy
+    try:
+        array = np.asarray(matrix, dtype=dtype, copy=copy)
+    except TypeError as e:
+        # Will fail for older python 3.8/3.9 on Linux/Windows
+        if "asarray() got an unexpected keyword argument 'copy'" in repr(e):
+            pytest.xfail('Copy not supported')
+
+    assert array.dtype == dtype
+    if dtype is int or copy:
+        assert array is not matrix
+    else:
+        assert array is matrix
+
+    assert np.array_equal(array, matrix)
+
+
+def test_transform_array_dunder(transform):
+    array = transform.__array__()
+    assert isinstance(array, np.ndarray)

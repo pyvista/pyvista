@@ -202,6 +202,14 @@ class Transform(_vtk.vtkTransform):
         if trans is not None:
             self.matrix = trans  # type: ignore[assignment]
 
+    def __array__(self, dtype=None, copy=None):
+        """Cast this transform to a NumPy array."""
+        return (
+            self.matrix.astype(dtype=dtype, copy=copy)
+            if copy is not None
+            else self.matrix.astype(dtype=dtype)
+        )
+
     @property
     def point(self) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
         """Point to use when concatenating some transformations such as scale, rotation, etc.
