@@ -493,6 +493,11 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     .. versionadded:: 0.45.0
 
+    See Also
+    --------
+    pyvista.DataSetFilters.align_xyz
+        Filter which aligns principal axes to the x-y-z axes.
+
     Parameters
     ----------
     points : MatrixLike[float]

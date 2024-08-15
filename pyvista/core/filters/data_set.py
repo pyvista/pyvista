@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -33,6 +34,7 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
@@ -133,6 +135,11 @@ class DataSetFilters:
         matrix : numpy.ndarray
             Transform matrix to transform the input dataset to the target dataset.
 
+        See Also
+        --------
+        align_xyz
+            Align a dataset to the x-y-z axes.
+
         Examples
         --------
         Create a cylinder, translate it, and use iterative closest point to
@@ -192,6 +199,248 @@ class DataSetFilters:
         if return_matrix:
             return self.transform(matrix, inplace=False), matrix
         return self.transform(matrix, inplace=False)
+
+    def align_xyz(
+        self,
+        *,
+        centered: bool = True,
+        axis_0_direction: VectorLike[float] | str | None = None,
+        axis_1_direction: VectorLike[float] | str | None = None,
+        axis_2_direction: VectorLike[float] | str | None = None,
+        return_matrix: bool = False,
+    ):
+        """Align a dataset to the x-y-z axes.
+
+        This filter aligns a mesh's :func:`~pyvista.principal_axes` to the world x-y-z
+        axes. The principal axes are effectively used as a rotation matrix to rotate
+        the dataset for the alignment. The transformation matrix used for the alignment
+        can optionally be returned.
+
+        Note that the transformation is not unique, since the signs of the principal
+        axes are arbitrary. Consequently, applying this filter to similar meshes
+        may result in dissimilar alignment (e.g. one axis may point up instead of down).
+        To address this, the sign of one or two axes may optionally be "seeded" with a
+        vector which approximates the axis or axes of the input. This can be useful
+        for cases where the orientation of the input has a clear physical meaning.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        centered : bool, default: True
+            Center the mesh at the origin. If ``False``, the aligned dataset has the
+            same center as the input.
+
+        axis_0_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's primary axis prior to
+            alignment. If set, this axis is flipped such that it best aligns with
+            the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        axis_1_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's secondary axis prior to
+            alignment. If set, this axis is flipped such that it best aligns with
+            the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        axis_2_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's third axis prior to
+            alignment. If set, this axis is flipped such that it best aligns with
+            the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        return_matrix : bool, default: False
+            Return the transform matrix as well as the aligned mesh.
+
+        Returns
+        -------
+        pyvista.DataSet
+            The dataset aligned to the x-y-z axes.
+
+        numpy.ndarray
+            Transform matrix to transform the input dataset to the x-y-z axes if
+            ``return_matrix`` is ``True``.
+
+        See Also
+        --------
+        pyvista.principal_axes
+            Best-fit axes used by this filter for the alignment.
+
+        align
+            Align a source mesh to a target mesh using iterative closest point (ICP).
+
+        Examples
+        --------
+        Create a dataset and align it to the x-y-z axes.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_oblique_cone()
+        >>> aligned = mesh.align_xyz()
+
+        Plot the aligned mesh along with the original. Show axes at the origin for
+        context.
+
+        >>> axes = pv.AxesAssembly(scale=aligned.length)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_mesh(
+        ...     mesh, style='wireframe', color='black', line_width=3
+        ... )
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        Align the mesh but don't center it.
+
+        >>> aligned = mesh.align_xyz(centered=False)
+
+        Plot the result again. The aligned mesh has the same position as the input.
+
+        >>> axes = pv.AxesAssembly(
+        ...     position=mesh.center, scale=aligned.length
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_mesh(
+        ...     mesh, style='wireframe', color='black', line_width=3
+        ... )
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        Note how the tip of the cone is pointing along the z-axis. This indicates that
+        the cone's axis is the third principal axis. It is also pointing in the negative
+        z-direction. To control the alignment so that the cone points upward, we can
+        seed an approximate direction specifying what "up" means for the original mesh
+        in world coordinates prior to the alignment.
+
+        We can see that the cone is originally pointing downward, somewhat in the
+        negative z-direction. Therefore, we can specify the ``'-z'`` vector
+        as the "up" direction of the mesh's third axis prior to alignment.
+
+        >>> aligned = mesh.align_xyz(axis_2_direction='-z')
+
+        Plot the mesh. The cone is now pointing upward in the desired direction.
+
+        >>> axes = pv.AxesAssembly(scale=aligned.length)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        The specified direction only needs to be approximate. For example, we get the
+        same result by specifying the ``'y'`` direction as the mesh's original "up"
+        direction.
+
+        >>> aligned, matrix = mesh.align_xyz(
+        ...     axis_2_direction='y', return_matrix=True
+        ... )
+        >>> axes = pv.AxesAssembly(scale=aligned.length)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        We can optionally return the transformation matrix.
+
+        >>> aligned, matrix = mesh.align_xyz(
+        ...     axis_2_direction='y', return_matrix=True
+        ... )
+
+        The matrix can be inverted, for example, to transform objects from the world
+        axes back to the original mesh's local coordinate system.
+
+        >>> inverse = pv.Transform(matrix).inverse_matrix
+
+        Use the inverse to label the object's axes prior to alignment. For actors,
+        we set the :attr:`~pyvista.Prop3D.user_matrix` as the inverse.
+
+        >>> axes_local = pv.AxesAssembly(
+        ...     scale=aligned.length,
+        ...     user_matrix=inverse,
+        ...     labels=["X'", "Y'", "Z'"],
+        ... )
+
+        Plot the original mesh with its local axes, along with the algned mesh and its
+        axes.
+
+        >>> axes_aligned = pv.AxesAssembly(scale=aligned.length)
+        >>> pl = pv.Plotter()
+        >>> # Add aligned mesh with axes
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_actor(axes_aligned)
+        >>> # Add original mesh with axes
+        >>> _ = pl.add_mesh(
+        ...     mesh, style='wireframe', color='black', line_width=3
+        ... )
+        >>> _ = pl.add_actor(axes_local)
+        >>> pl.show()
+        """
+
+        def _validate_vector(vector, name):
+            if vector is not None:
+                if isinstance(vector, str):
+                    vector = vector.lower()
+                    valid_strings = list(NORMALS.keys())
+                    _validation.check_contains(item=vector, container=valid_strings, name=name)
+                    vector = NORMALS[vector]
+                vector = _validation.validate_array3(vector, dtype_out=float, name=name)
+            return vector
+
+        axes, std = pyvista.principal_axes(self.points, return_std=True)
+
+        # Set directions to +X,+Y,+Z by default
+        if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
+            axis_0_direction = (1.0, 0.0, 0.0)
+            axis_1_direction = (0.0, 1.0, 0.0)
+            axis_2_direction = (0.0, 0.0, 1.0)
+        else:
+            axis_0_direction = _validate_vector(axis_0_direction, name='axis 0 direction')
+            axis_1_direction = _validate_vector(axis_1_direction, name='axis 1 direction')
+            axis_2_direction = _validate_vector(axis_2_direction, name='axis 2 direction')
+
+        # Swap any axes which have equal std (e.g. so that we XYZ order instead of YXZ order)
+        # Note: Swapping may create a left-handed coordinate frame. This is fixed later.
+        axes = _swap_axes(axes, std)
+
+        # Maybe flip directions of first two axes
+        if axis_0_direction is not None and np.dot(axes[0], axis_0_direction) < 0:
+            axes[0] *= -1
+        if axis_1_direction is not None and np.dot(axes[1], axis_1_direction) < 0:
+            axes[1] *= -1
+
+        # Ensure axes form a right-handed coordinate frame
+        if np.linalg.det(axes) < 0:
+            axes[2] *= -1
+
+        # Maybe flip direction of third axis
+        if axis_2_direction is not None:
+            if np.dot(axes[2], axis_2_direction) >= 0:
+                pass  # nothing to do, sign is correct
+            else:
+                if axis_0_direction is not None and axis_1_direction is not None:
+                    raise ValueError(
+                        f"Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation."
+                    )
+                else:
+                    axes[2] *= -1
+                    # Need to also flip a second vector to keep system as right-handed
+                    if axis_1_direction is not None:
+                        # Second axis has been set, so modify first axis
+                        axes[0] *= -1
+                    else:
+                        # First axis has been set, so modify second axis
+                        axes[1] *= -1
+
+        rotation = Transform().rotate(axes)
+        aligned = self.transform(rotation, inplace=False)
+        translation = Transform().translate(-np.array(aligned.center))
+        if not centered:
+            translation.translate(self.center)  # type: ignore[attr-defined]
+        aligned.transform(translation, inplace=True)
+
+        if return_matrix:
+            return aligned, rotation.concatenate(translation).matrix
+        return aligned
 
     def clip(
         self,
@@ -6823,8 +7072,8 @@ class DataSetFilters:
 
         See Also
         --------
-        :class:`pyvista.Transform`
-            Describe linear transformations via a 4x4 matrix.
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
 
         Examples
         --------
@@ -7432,3 +7681,33 @@ def _set_threshold_limit(alg, value, method, invert):
                 alg.ThresholdByUpper(value)
             else:
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')
+
+
+def _swap_axes(vectors, values):
+    """Swap axes vectors based on their respective values.
+
+    The vector with the larger component along its projected axis is selected to precede
+    the vector with the smaller component. E.g. a symmetric point cloud with equal
+    std in any direction could have its principal axes computed such that the first
+    axis is +Y, second is +X, and third is +Z. This function will swap the first two
+    axes so that the order is XYZ instead of YXZ.
+
+    This function is intended to be used by `align_xyz` and is only exposed as a
+    module-level function for testing purposes.
+    """
+
+    def _swap(axis_a, axis_b):
+        axis_order = np.argmax(np.abs(vectors), axis=1)
+        if axis_order[axis_a] > axis_order[axis_b]:
+            vectors[[axis_a, axis_b]] = vectors[[axis_b, axis_a]]
+
+    if np.isclose(values[0], values[1]) and np.isclose(values[1], values[2]):
+        # Sort all axes by largest 'x' component
+        vectors = vectors[np.argsort(np.abs(vectors)[:, 0])[::-1]]
+        _swap(1, 2)
+    else:
+        if np.isclose(values[0], values[1]):
+            _swap(0, 1)
+        elif np.isclose(values[1], values[2]):
+            _swap(1, 2)
+    return vectors
