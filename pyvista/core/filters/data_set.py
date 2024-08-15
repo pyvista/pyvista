@@ -6823,8 +6823,8 @@ class DataSetFilters:
 
         See Also
         --------
-        :class:`pyvista.Transform`
-            Describe linear transformations via a 4x4 matrix.
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
 
         Examples
         --------
