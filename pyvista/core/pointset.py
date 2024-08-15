@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Sequence
 from typing import cast
+from typing import Literal, Optional
 import warnings
 
 import numpy as np
@@ -2675,6 +2676,43 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         # add but do not make active
         self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
+
+    def cast_to_explicit_structured_grid(
+        self,
+        order: Optional[Literal["C", "F"]] = None,
+    ) -> ExplicitStructuredGrid:
+        """Cast to an explicit structured grid.
+
+        Parameters
+        ----------
+        order : {'C', 'F'}, optional, default: 'F'
+            Specifies whether cells are indexed in row-major (C-style) or column-major (Fortran-style) order.
+
+        Returns
+        -------
+        pyvista.ExplicitStructuredGrid
+            An explicit structured grid.
+
+        """
+        order = order if order else "F"
+
+        ni, nj, nk = self.dimensions
+        I, J, K = np.unravel_index(
+            np.arange(self.n_cells),
+            shape=(ni - 1, nj - 1, nk - 1),
+            order=order,
+        )
+
+        grid = self.cast_to_unstructured_grid()
+        grid.cell_data["BLOCK_I"] = I
+        grid.cell_data["BLOCK_J"] = J
+        grid.cell_data["BLOCK_K"] = K
+
+        grid = grid.cast_to_explicit_structured_grid()
+        for i in ["I", "J", "K"]:
+            grid.cell_data.pop(f"BLOCK_{i}", None)
+
+        return grid
 
     def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
