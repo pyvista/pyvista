@@ -1403,9 +1403,6 @@ def test_transform_chain_methods():
     assert np.array_equal(matrix, eye4)
 
 
-VECTOR = (1, 2, 3)
-
-
 def test_transform_add():
     scale = Transform().scale(SCALE)
     translate = Transform().translate(VECTOR)
