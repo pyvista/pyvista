@@ -1575,3 +1575,29 @@ def test_transform_copy(multiply_mode):
     assert np.array_equal(t1.matrix, t2.matrix)
     assert t1 is not t2
     assert t2.multiply_mode == t1.multiply_mode
+
+
+def test_transform_repr(transform):
+    def _repr_no_first_line(trans):
+        return "\n".join(repr(trans).split('\n')[1:])
+
+    # Test compact format with no unnecessary spacing
+    repr_ = _repr_no_first_line(transform)
+    assert repr_ == (
+        '  Num Transformations: 0\n'
+        '  Matrix:  [[1., 0., 0., 0.],\n'
+        '            [0., 1., 0., 0.],\n'
+        '            [0., 0., 1., 0.],\n'
+        '            [0., 0., 0., 1.]]'
+    )
+
+    # Test with floats which have many decimals
+    transform.concatenate(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
+    repr_ = _repr_no_first_line(transform)
+    assert repr_ == (
+        '  Num Transformations: 1\n'
+        '  Matrix:  [[ 0.70710678, -0.70710678,  0.        ,  0.        ],\n'
+        '            [ 0.70710678,  0.70710678,  0.        ,  0.        ],\n'
+        '            [ 0.        ,  0.        ,  1.        ,  0.        ],\n'
+        '            [ 0.        ,  0.        ,  0.        ,  1.        ]]'
+    )
