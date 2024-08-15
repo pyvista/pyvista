@@ -2935,6 +2935,78 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         ugrid.cell_data.remove('vtkOriginalCellIds')  # unrequired
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
         return ugrid
+    
+    def clean(
+        self,
+        tolerance=0,
+        remove_unused_points=True,
+        produce_merge_map=True,
+        average_point_data=True,
+        merging_array_name=None,
+        progress_bar=False,
+    ) -> ExplicitStructuredGrid:
+        """Merge duplicate points and remove unused points in an ExplicitStructuredGrid.
+
+        This filter, merging coincident points as defined by a merging
+        tolerance and optionally removes unused points. The filter does not
+        modify the topology of the input dataset, nor change the types of
+        cells. It may however, renumber the cell connectivity ids.
+
+        This filter casts the grid to an UnstructuredGrid to clean it, then casts the cleaned unstructured grid to an explicit strutured grid.
+
+        Parameters
+        ----------
+        tolerance : float, default: 0.0
+            The absolute point merging tolerance.
+
+        remove_unused_points : bool, default: True
+            Indicate whether points unused by any cell are removed from the
+            output. Note that when this is off, the filter can successfully
+            process datasets with no cells (and just points). If on in this
+            case, and there are no cells, the output will be empty.
+
+        produce_merge_map : bool, default: False
+            Indicate whether a merge map should be produced on output.
+            The merge map, if requested, maps each input point to its
+            output point id, or provides a value of -1 if the input point
+            is not used in the output. The merge map is associated with
+            the filter's output field data and is named ``"PointMergeMap"``.
+
+        average_point_data : bool, default: True
+            Indicate whether point coordinates and point data of merged points
+            are averaged. When ``True``, the data coordinates and attribute
+            values of all merged points are averaged. When ``False``, the point
+            coordinate and data of the single remaining merged point is
+            retained.
+
+        merging_array_name : str, optional
+            If a ``merging_array_name`` is specified and exists in the
+            ``point_data``, then point merging will switch into a mode where
+            merged points must be both geometrically coincident and have
+            matching point data. When set, ``tolerance`` has no effect.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ExplicitStructuredGrid
+            Cleaned explicit structured grid.
+
+        """
+        grid = self.cast_to_unstructured_grid().clean(
+            tolerance=tolerance,
+            remove_unused_points=remove_unused_points,
+            produce_merge_map=produce_merge_map,
+            average_point_data=average_point_data,
+            merging_array_name=merging_array_name,
+            progress_bar=progress_bar,
+        ).cast_to_explicit_structured_grid()
+
+        for i in ["I", "J", "K"]:
+            grid.cell_data.pop(f"BLOCK_{i}", None)
+
+        return grid
 
     def save(
         self,
