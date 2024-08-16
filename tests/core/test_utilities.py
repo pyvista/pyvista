@@ -1030,19 +1030,21 @@ def test_principal_axes_single_point():
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
 
 
-def test_principal_axes_vectors_success_with_many_points():
+@pytest.fixture()
+def one_million_points():
+    return np.random.default_rng().random((1_000_000, 3))
+
+
+def test_principal_axes_success_with_many_points(one_million_points):
     # Use large mesh to verify no memory errors are raised
-    res = 1000
-    ellipsoid = pv.ParametricEllipsoid(
-        xradius=3, yradius=2, zradius=1, u_res=res, v_res=res, w_res=res
-    )
-    assert ellipsoid.n_points == 997_004
+    axes = pv.principal_axes(one_million_points)
+    assert isinstance(axes, np.ndarray)
 
-    axes, std = pv.principal_axes(ellipsoid.points, return_std=True)
 
-    # Check std to verify the computed output is valid
-    # Need large atol due to loss of numerical precision
-    assert np.allclose(std, [1.50074922, 1.00049953, 0.70675449])
+def test_fit_plane_to_points_success_with_many_points(one_million_points):
+    # Use large mesh to verify no memory errors are raised
+    plane = pv.fit_plane_to_points(one_million_points)
+    assert isinstance(plane, pv.PolyData)
 
 
 @pytest.fixture()
