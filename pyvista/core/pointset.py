@@ -2875,7 +2875,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         cells: VectorLike[int] | dict[int, MatrixLike[int]],
         points: MatrixLike[float],
     ) -> None:
-        """Create a VTK explicit structured grid from NumPy arrays.
+        """Create a VTK explicit structured grid from cells and points arrays.
 
         Parameters
         ----------
@@ -2883,9 +2883,12 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             A sequence of integers with shape (3,) containing the
             topological dimensions of the grid.
 
-        corners : MatrixLike[float]
-            A sequence of numbers with shape ``(number of corners, 3)``
-            containing the coordinates of the corner points.
+        cells : VectorLike[int] | dict[int, MatrixLike[int]]
+            Array of cells.  Each cell contains the number of points in the
+            cell and the node numbers of the cell.
+
+        points : MatrixLike[float]
+            Numpy array containing point locations.
 
         """
         if len(dims) != 3:
