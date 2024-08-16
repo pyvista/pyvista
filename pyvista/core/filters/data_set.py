@@ -388,11 +388,11 @@ class DataSetFilters:
 
         axes, std = pyvista.principal_axes(self.points, return_std=True)
 
-        # Set directions to +X,+Y,+Z by default
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
+            # Set directions of first two axes to +X,+Y by default
+            # Keep third axis as None (direction cannot be set if first two are set)
             axis_0_direction = (1.0, 0.0, 0.0)
             axis_1_direction = (0.0, 1.0, 0.0)
-            axis_2_direction = (0.0, 0.0, 1.0)
         else:
             axis_0_direction = _validate_vector(axis_0_direction, name='axis 0 direction')
             axis_1_direction = _validate_vector(axis_1_direction, name='axis 1 direction')
