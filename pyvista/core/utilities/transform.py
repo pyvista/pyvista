@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Literal
 
+import numpy as np
+
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -201,6 +203,24 @@ class Transform(_vtk.vtkTransform):
         self.check_finite = True
         if trans is not None:
             self.matrix = trans  # type: ignore[assignment]
+
+    def __repr__(self):
+        """Representation of the transform."""
+
+        def _matrix_repr():
+            repr_ = np.array_repr(self.matrix)
+            return repr_.replace('array(', '      ').replace(')', '').replace('      [', '[')
+
+        matrix_repr_lines = _matrix_repr().split('\n')
+        lines = [
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Num Transformations: {self.n_transformations}',
+            f'  Matrix:  {matrix_repr_lines[0]}',
+            f'           {matrix_repr_lines[1]}',
+            f'           {matrix_repr_lines[2]}',
+            f'           {matrix_repr_lines[3]}',
+        ]
+        return "\n".join(lines)
 
     @property
     def point(self) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
