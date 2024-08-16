@@ -185,11 +185,19 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta=False):
+def fit_plane_to_points(points, return_meta=False, resolution=10):
     """Fit a plane to a set of points using the SVD algorithm.
 
     The plane is automatically sized and oriented to fit the extents of
     the points.
+
+    .. versionchanged:: 0.42.0
+        The generated plane is now sized to match the size of the points.
+
+    .. versionchanged:: 0.42.0
+        The center of the plane (returned if ``return_meta=True``) is now
+        computed as the center of the generated plane mesh. In previous
+        versions, the center of the input points was returned.
 
     Parameters
     ----------
@@ -199,6 +207,13 @@ def fit_plane_to_points(points, return_meta=False):
     return_meta : bool, default: False
         If ``True``, also returns the center and normal of the
         generated plane.
+
+    resolution : int, default: 10
+        Number of points on the plane mesh along its edges. Specify two numbers to
+        set the resolution along the plane's long and short edge, respectively, or
+        a single number for both edges to have the same resolution.
+
+        .. versionadded:: 0.45.0
 
     Returns
     -------
@@ -266,41 +281,40 @@ def fit_plane_to_points(points, return_meta=False):
     >>> pl.show()
 
     """
-    # Apply SVD to get orthogonal basis vectors to define the plane
-    data = np.array(points)
-    data_center = data.mean(axis=0)
-    _, _, Vh = np.linalg.svd(data - data_center)
-    i_vector = Vh[0]
-    j_vector = Vh[1]
-    normal = np.cross(i_vector, j_vector)
+    valid_resolution = _validation.validate_array(
+        resolution,
+        must_have_shape=[(), (2,)],
+        must_be_integer=True,
+        broadcast_to=(2,),
+        dtype_out=int,
+    )
 
-    # Create rotation matrix from basis vectors
-    rotate_transform = np.eye(4)
-    rotate_transform[:3, :3] = np.vstack((i_vector, j_vector, normal))
-    rotate_transform_inv = rotate_transform.T
-
-    # Project and transform points to align and center data to the XY plane
+    # Align data to the xyz-axes
     poly = pyvista.PolyData(points)
-    projected = poly.project_points_to_plane(origin=data_center, normal=normal)
-    projected.points -= data_center
-    projected.transform(rotate_transform)
+    aligned, matrix = poly.align_xyz(return_matrix=True)
 
-    # Compute size of the plane
-    i_size = projected.bounds.x_max - projected.bounds.x_min
-    j_size = projected.bounds.y_max - projected.bounds.y_min
+    # Fit plane to xyz-aligned mesh
+    aligned_bnds = aligned.bounds
+    i_size = aligned_bnds.x_max - aligned_bnds.x_min
+    j_size = aligned_bnds.y_max - aligned_bnds.y_min
+    i_resolution, j_resolution = valid_resolution
+    plane = pyvista.Plane(
+        i_size=i_size, j_size=j_size, i_resolution=i_resolution, j_resolution=j_resolution
+    )
 
-    # The center of the input data does not necessarily coincide with
-    # the center of the plane. The true center of the plane is the
-    # middle of the bounding box of the projected + transformed data
-    # relative to the input data's center
-    center = rotate_transform_inv[:3, :3] @ projected.center + data_center
-
-    # Initialize plane then move to final position
-    plane = pyvista.Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=i_size, j_size=j_size)
-    plane.transform(rotate_transform_inv)
-    plane.points += center
+    # Transform plane back to dataset position
+    inverse_matrix = pyvista.Transform(matrix).inverse_matrix
+    plane.transform(inverse_matrix, inplace=True)
 
     if return_meta:
+        # Center of plane does NOT equal plane.center after the transformation
+        # because plane.center is the center of its bounding box, not its actual center.
+        # Instead, its aligned center (initially at the origin) is transformed directly
+        # This is equivalent to returning the position of the inverse transformation
+        center = inverse_matrix[:3, 3]
+
+        # Compute normal from the plane's actual normals
+        normal = np.mean(plane.point_normals, axis=0)
         return plane, center, normal
     return plane
 

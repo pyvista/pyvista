@@ -901,23 +901,49 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
-def test_fit_plane_to_points():
-    points = ex.load_airplane().points
-    plane, center, normal = fit_plane_to_points(points, return_meta=True)
+@pytest.fixture()
+def expected_best_fit_plane(airplane):
+    # Create mesh and orthogonal planes aligned with the xyz axes
+    aligned, matrix = airplane.align_xyz(return_matrix=True)
+    planes = pv.OrthogonalPlanesSource(aligned.bounds).output
+    inverse = pv.Transform(matrix).inverse_matrix
+    assert planes.bounds == aligned.bounds
 
-    assert np.allclose(normal, [-2.5999512e-08, 0.121780515, -0.99255705])
-    assert np.allclose(center, [896.9954860028446, 686.6470205328502, 78.13187948615939])
-    assert np.allclose(
-        plane.bounds,
-        [
-            139.06036376953125,
-            1654.9306640625,
-            38.0776252746582,
-            1335.2164306640625,
-            -1.4434913396835327,
-            157.70724487304688,
-        ],
-    )
+    # Transform back to original position
+    for plane in planes:
+        plane.transform(inverse)
+
+    # Return the single fitted plane
+    return airplane, planes['xy']
+
+
+def test_fit_plane_to_points(expected_best_fit_plane):
+    DEFAULT_RESOLUTION = 10
+    airplane, expected_plane = expected_best_fit_plane
+    plane = fit_plane_to_points(airplane.points)
+    assert plane.n_points == (DEFAULT_RESOLUTION + 1) ** 2
+    assert plane.bounds == expected_plane.bounds
+
+    resolution = (1.0, 2.0)  # Test with integer-valued floats
+    plane = fit_plane_to_points(airplane.points, resolution=resolution)
+    assert plane.n_points == (resolution[0] + 1) * (resolution[1] + 1)
+
+
+def test_fit_plane_to_points_return_meta(expected_best_fit_plane):
+    airplane, expected_plane = expected_best_fit_plane
+    plane, center, normal = fit_plane_to_points(airplane.points, return_meta=True, resolution=1)
+    assert plane.bounds == expected_plane.bounds
+
+    # Test plane center by setting resolution to 1 and check that the center (mean)
+    # of the cross-corner points is the plane's center
+    assert plane.n_points == 4
+    cross_corner_center1 = np.mean(plane.points[[0, 3]], axis=0)
+    cross_corner_center2 = np.mean(plane.points[[1, 2]], axis=0)
+    assert np.allclose(cross_corner_center1, center)
+    assert np.allclose(cross_corner_center2, center)
+
+    assert np.allclose(normal, plane.point_normals[0])
+    assert np.allclose(normal, expected_plane.point_normals[0])
 
 
 # Default output from `np.linalg.eigh`
