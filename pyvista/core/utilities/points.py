@@ -207,6 +207,11 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
 
         .. versionadded:: 0.45.0
 
+    See Also
+    --------
+    principal_axes
+        Compute axes vectors which best fit a set of points.
+
     Returns
     -------
     pyvista.PolyData
@@ -224,22 +229,18 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
 
     >>> import pyvista as pv
     >>> import numpy as np
+    >>> from pyvista import examples
     >>>
-    >>> # Create point cloud
     >>> rng = np.random.default_rng(seed=0)
     >>> cloud = rng.random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>
-    >>> # Fit plane
-    >>> plane, center, normal = pv.fit_plane_to_points(
-    ...     cloud, return_meta=True
-    ... )
-    >>>
-    >>> # Plot the fitted plane
+    >>> plane = pv.fit_plane_to_points(cloud)
+
+    Plot the point cloud and fitted plane.
+
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     plane, color='lightblue', style='wireframe', line_width=4
-    ... )
+    >>> _ = pl.add_mesh(plane, style='wireframe', line_width=4)
     >>> _ = pl.add_points(
     ...     cloud,
     ...     render_points_as_spheres=True,
@@ -248,22 +249,18 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     ... )
     >>> pl.show()
 
-    Fit a plane to a mesh.
+    Fit a plane to a mesh and return its meta-data. Set the plane resolution to 1
+    so that the plane has no internal points or edges.
 
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>>
-    >>> # Create mesh
     >>> mesh = examples.download_shark()
-    >>>
-    >>> # Fit plane
-    >>> plane = pv.fit_plane_to_points(mesh.points)
-    >>>
-    >>> # Plot the fitted plane
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     plane, show_edges=True, color='lightblue', opacity=0.25
+    >>> plane, center, normal = pv.fit_plane_to_points(
+    ...     mesh.points, return_meta=True, resolution=1
     ... )
+
+    Plot the mesh and fitted plane.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(plane, show_edges=True, opacity=0.25)
     >>> _ = pl.add_mesh(mesh, color='gray')
     >>> pl.camera_position = [
     ...     (-117, 76, 235),
@@ -272,6 +269,24 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     ... ]
     >>> pl.show()
 
+    Use the meta data with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
+    two.
+
+    >>> first_half, second_half = mesh.clip(
+    ...     origin=center, normal=normal, return_clipped=True
+    ... )
+
+    Plot the two halves of the clipped mesh.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(first_half, color='red')
+    >>> _ = pl.add_mesh(second_half, color='blue')
+    >>> pl.camera_position = [
+    ...     (-143, 43, 40),
+    ...     (-8.7, -11, -14),
+    ...     (0.25, 0.92, -0.29),
+    ... ]
+    >>> pl.show()
     """
     valid_resolution = _validation.validate_array(
         resolution,
@@ -501,6 +516,9 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     See Also
     --------
+    principal_axes
+        Fit a plane to points using the first two principal axes.
+
     pyvista.DataSetFilters.align_xyz
         Filter which aligns principal axes to the x-y-z axes.
 
