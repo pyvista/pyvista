@@ -3889,10 +3889,23 @@ def test_align_xyz():
     aligned = mesh.align_xyz()
     assert np.allclose(aligned.center, (0, 0, 0))
 
-    aligned, matrix = mesh.align_xyz(centered=False, return_matrix=True)
+    aligned = mesh.align_xyz(centered=False)
     assert np.allclose(aligned.center, mesh.center)
+
+
+def test_align_xyz_matrix():
+    mesh = examples.download_oblique_cone()
+    initial_bounds = mesh.bounds
+
+    aligned, matrix = mesh.align_xyz(return_matrix=True)
     assert isinstance(matrix, np.ndarray)
     assert matrix.shape == (4, 4)
+
+    inverse_matrix = pv.Transform(matrix).inverse_matrix
+    inverted_mesh = aligned.transform(inverse_matrix, inplace=False)
+    inverted_bounds = inverted_mesh.bounds
+
+    assert np.allclose(inverted_bounds, initial_bounds)
 
 
 DELTA = 0.1
