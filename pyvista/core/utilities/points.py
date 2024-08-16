@@ -191,14 +191,6 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     The plane is automatically sized and oriented to fit the extents of
     the points.
 
-    .. versionchanged:: 0.42.0
-        The generated plane is now sized to match the size of the points.
-
-    .. versionchanged:: 0.42.0
-        The center of the plane (returned if ``return_meta=True``) is now
-        computed as the center of the generated plane mesh. In previous
-        versions, the center of the input points was returned.
-
     Parameters
     ----------
     points : array_like[float]
