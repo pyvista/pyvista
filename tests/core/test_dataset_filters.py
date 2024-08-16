@@ -3893,7 +3893,7 @@ def test_align_xyz():
     assert np.allclose(aligned.center, mesh.center)
 
 
-def test_align_xyz_matrix():
+def test_align_xyz_return_matrix():
     mesh = examples.download_oblique_cone()
     initial_bounds = mesh.bounds
 
