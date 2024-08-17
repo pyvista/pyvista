@@ -3913,7 +3913,8 @@ def test_oriented_bounding_box_oriented():
 
 
 @pytest.mark.parametrize('oriented', [True, False])
-def test_bounding_box_return_meta(oriented):
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_bounding_box_return_meta(oriented, as_composite):
     # Generate a random rotation matrix
     vector = np.random.default_rng().random((3,))
     angle = np.random.default_rng().random((1,)) * 360
@@ -3923,7 +3924,7 @@ def test_bounding_box_return_meta(oriented):
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
     box_mesh.transform(rotation)
     obb, point, axes = box_mesh.bounding_box(
-        oriented=oriented, return_meta=True, as_composite=False
+        oriented=oriented, return_meta=True, as_composite=as_composite
     )
 
     if oriented:
@@ -3938,7 +3939,15 @@ def test_bounding_box_return_meta(oriented):
         assert np.array_equal(point, (bnds.x_min, bnds.y_min, bnds.z_min))
 
     # Test the returned point is one of the box's points
-    assert point in obb.points
+    if as_composite:
+        assert any(point in face.points for face in obb)
+
+        # Also test that box's normals are aligned with the axes directions
+        assert np.allclose(axes[0], obb['+X'].cell_normals[0])
+        assert np.allclose(axes[1], obb['+Y'].cell_normals[0])
+        assert np.allclose(axes[2], obb['+Z'].cell_normals[0])
+    else:
+        assert point in obb.points
 
 
 DELTA = 0.1

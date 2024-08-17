@@ -7253,6 +7253,15 @@ class DataSetFilters:
             may not be valid. E.g. the block with name ``'+X'`` may not be facing the
             `'+X'`` direction due to its orientation.
 
+        .. note::
+
+                The names of the blocks of the returned :class:`~pyvista.MultiBlock`
+                correspond to the oriented box's local axes, not the global x-y-z axes.
+                E.g. the normal of the ``'+X'`` face of the returned box has the same
+                direction as the first axis in the returned ``axes`` metadata (enabled
+                using the ``return_meta`` option), and is not necessarily pointing in
+                the +x direction ``(1, 0, 0)``.
+
         .. versionadded:: 0.45
 
         Parameters
@@ -7354,11 +7363,15 @@ class DataSetFilters:
             Orient the box using this dataset's :func:`~pyvista.principal_axes`. This
             will generate a box that best fits this dataset's points.
 
-            .. warning::
+            .. note::
 
                 The names of the blocks of the returned :class:`~pyvista.MultiBlock`
-                when using this option may no longer be valid. E.g. the block with
-                name ``'+X'`` may no longer be facing the `'+X'`` direction.
+                when using this option correspond to the oriented box's local axes, not
+                the global x-y-z axes. E.g. the normal of the ``'+X'`` face of the
+                returned box has the same direction as the first axis in the returned
+                ``axes`` metadata (enabled using the ``return_meta`` option), and is not
+                necessarily pointing in the ``(1, 0, 0)`` direction.
+
 
         frame_width : float, optional
             Set the width of the frame. Only has an effect if ``box_style`` is
