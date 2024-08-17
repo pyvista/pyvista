@@ -7231,6 +7231,93 @@ class DataSetFilters:
             return pyvista.merge(list(output), merge_points=False)
         return output
 
+    def oriented_bounding_box(
+        self,
+        box_style: Literal['frame', 'outline', 'cube'] = 'cube',
+        *,
+        frame_width: float = 0.1,
+        return_meta: bool = False,
+        as_composite: bool = True,
+    ):
+        """Return an oriented bounding box for this dataset.
+
+        By default, the bounding box is a :class:`~pyvista.MultiBlock` with six
+        :class:`PolyData` comprising the faces of a cube. The blocks are named and
+        ordered as ``('+X','-X','+Y','-Y','+Z','-Z')``.
+
+        The box can optionally be styled as an outline or frame.
+
+        .. warning::
+
+            The names of the blocks of the returned :class:`~pyvista.MultiBlock`
+            may not be valid. E.g. the block with name ``'+X'`` may not be facing the
+            `'+X'`` direction due to its orientation.
+
+        Parameters
+        ----------
+        box_style : 'frame' | 'outline' | 'cube', default: 'cube'
+            Choose the style of the box. If ``'cube'`` (default), each face of the cube
+            is a single quad cell. If ``'outline'``, the edges of each face are returned
+            as line cells. If ``'frame'``, the center portion of each face is removed to
+            create a picture-frame style border with each face having four quads (one
+            for each side of the frame). Use ``frame_width`` to control the size of the
+            frame.
+
+        frame_width : float, optional
+            Set the width of the frame. Only has an effect if ``box_style`` is
+            ``'frame'``. Values must be between ``0.0`` (minimal frame) and ``1.0``
+            (large frame). The frame is scaled to ensure it has a constant width.
+
+        return_meta : bool, default: False
+            If ``True``, also returns the corner point and the three axes vectors
+            defining the orientation of the box.
+
+        as_composite : bool, default: True
+            Return the box as a :class:`pyvista.MultiBlock` with six blocks: one for
+            each face. Set this ``False`` to merge the output and return
+            :class:`~pyvista.PolyData`.
+
+        See Also
+        --------
+        bounding_box
+            Similar filter for an axis-aligned bounding box (AABB).
+
+        pyvista.Plotter.add_bounding_box
+            Add a bounding box to a scene.
+
+        pyvista.CubeFacesSource
+            Generate the faces of a cube. Used internally by this filter.
+
+        Returns
+        -------
+        pyvista.MultiBlock or pyvista.PolyData
+            MultiBlock with six named cube faces when ``as_composite=True`` and
+            PolyData otherwise.
+
+        Examples
+        --------
+        Create a bounding box for a dataset.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_oblique_cone()
+        >>> box = mesh.oriented_bounding_box()
+
+        Plot the mesh and its bounding box.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(box, opacity=0.5)
+        >>> pl.show()
+        """
+        return self.bounding_box(
+            box_style=box_style,
+            oriented=True,
+            frame_width=frame_width,
+            return_meta=return_meta,
+            as_composite=as_composite,
+        )
+
     def bounding_box(
         self,
         box_style: Literal['frame', 'outline', 'cube'] = 'cube',
@@ -7242,11 +7329,11 @@ class DataSetFilters:
     ):
         """Return a bounding box for this dataset.
 
-        By default, the bounding box is a :class:`~pyvista.MultiBlock` with six
-        :class:`PolyData` comprising the faces of a cube. The blocks are named and
-        ordered as ``('+X','-X','+Y','-Y','+Z','-Z')``.
+        By default, the box is an axis-aligned bounding box (AABB) returned as a
+        :class:`~pyvista.MultiBlock` with six :class:`PolyData` comprising the faces of
+        the box. The blocks are named and ordered as ``('+X','-X','+Y','-Y','+Z','-Z')``.
 
-        The box can optionally be styled as an outline or frame. The box may also be
+        The box can optionally be styled as an outline or frame. It may also be
         oriented to generate an oriented bounding box (OBB).
 
         Parameters
@@ -7285,6 +7372,9 @@ class DataSetFilters:
 
         See Also
         --------
+        oriented_bounding_box
+            Similar filter with ``oriented=True`` by default.
+
         pyvista.Plotter.add_bounding_box
             Add a bounding box to a scene.
 
