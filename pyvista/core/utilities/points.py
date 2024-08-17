@@ -279,9 +279,8 @@ def fit_plane_to_points(points, return_meta=False):
     >>> pl.show()
 
     """
-    # Align data to the xyz-axes
-    poly = pyvista.PolyData(points)
-    aligned, matrix = poly.align_xyz(return_matrix=True)
+    # Align points to the xyz-axes
+    aligned, matrix = pyvista.PolyData(points).align_xyz(return_matrix=True)
 
     # Fit plane to xyz-aligned mesh
     aligned_bnds = aligned.bounds
@@ -292,7 +291,7 @@ def fit_plane_to_points(points, return_meta=False):
         j_size=j_size,
     )
 
-    # Transform plane back to dataset position
+    # Transform plane back to input points positioning
     inverse_matrix = pyvista.Transform(matrix).inverse_matrix
     plane.transform(inverse_matrix, inplace=True)
 
