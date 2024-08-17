@@ -637,13 +637,10 @@ def read_grdecl(
         active = np.array(keywords["ACTNUM"]) > 0.0
         grid.hide_cells(~active, inplace=True)
 
-    if return_others:
-        others = {k: v for k, v in keywords.items() if k not in property_keys}
-
-        return grid, others
-
-    else:
-        return grid
+    # Store keywords in user dict
+    others = {k: v for k, v in keywords.items() if k not in property_keys}
+    grid.user_dict = others
+    return grid
 
 
 def is_meshio_mesh(obj):
