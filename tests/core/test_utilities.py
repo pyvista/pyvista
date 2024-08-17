@@ -902,6 +902,16 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
+def test_fit_plane_to_points_resolution(airplane):
+    DEFAULT_RESOLUTION = 10
+    plane = fit_plane_to_points(airplane.points)
+    assert plane.n_points == (DEFAULT_RESOLUTION + 1) ** 2
+
+    resolution = (1.0, 2.0)  # Test with integer-valued floats
+    plane = fit_plane_to_points(airplane.points, resolution=resolution)
+    assert plane.n_points == (resolution[0] + 1) * (resolution[1] + 1)
+
+
 def test_fit_plane_to_points():
     points = ex.load_airplane().points
     plane, center, normal = fit_plane_to_points(points, return_meta=True)
@@ -1011,9 +1021,15 @@ def one_million_points():
 
 
 def test_principal_axes_success_with_many_points(one_million_points):
-    # Use large mesh to verify no memory errors are raised
+    # Use many points to verify no memory errors are raised
     axes = pv.principal_axes(one_million_points)
     assert isinstance(axes, np.ndarray)
+
+
+def test_fit_plane_to_points_success_with_many_points(one_million_points):
+    # Use many points to verify no memory errors are raised
+    plane = pv.fit_plane_to_points(one_million_points)
+    assert isinstance(plane, pv.PolyData)
 
 
 @pytest.fixture()
