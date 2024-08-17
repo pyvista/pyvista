@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Sequence
 from typing import cast
-from typing import Literal, Optional
 import warnings
 
 import numpy as np
@@ -2843,7 +2842,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         """
         if len(dims) != 3:
             raise ValueError("Expected dimensions to be length 3.")
-        
+
         ni, nj, nk = np.asanyarray(dims) - 1
         xcorners = corners[:, 0].reshape((2 * ni, 2 * nj, 2 * nk), order="F")
         ycorners = corners[:, 1].reshape((2 * ni, 2 * nj, 2 * nk), order="F")
@@ -2853,7 +2852,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             [
                 np.column_stack(
                     (
-                        corners[::2, :: 2, ::2].ravel(order="F"),
+                        corners[::2, ::2, ::2].ravel(order="F"),
                         corners[1::2, ::2, ::2].ravel(order="F"),
                         corners[1::2, 1::2, ::2].ravel(order="F"),
                         corners[::2, 1::2, ::2].ravel(order="F"),
@@ -2893,16 +2892,18 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         """
         if len(dims) != 3:
             raise ValueError("Expected dimensions to be length 3.")
-        
+
         else:
             n_cells = np.prod([n - 1 for n in dims])
 
         if isinstance(cells, dict):
             celltypes = list(cells)
-            
+
             if not (len(celltypes) == 1 and celltypes[0] == CellType.HEXAHEDRON):
-                raise ValueError(f"Expected cells to be a single cell of type {CellType.HEXAHEDRON}.")
-            
+                raise ValueError(
+                    f"Expected cells to be a single cell of type {CellType.HEXAHEDRON}."
+                )
+
             cells = np.asarray(cells[celltypes[0]])
             if cells.shape != (n_cells, 8):
                 raise ValueError(f"Expected cells to be of shape ({n_cells}, 8)")
@@ -2911,7 +2912,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         elif len(cells) != 9 * n_cells:
             raise ValueError(f"Expected cells to be length {9 * n_cells}")
-        
+
         self.SetDimensions(dims[0], dims[1], dims[2])
         self.SetCells(CellArray(cells))
         self.SetPoints(vtk_points(points))
@@ -2967,7 +2968,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         ugrid.cell_data.remove('vtkOriginalCellIds')  # unrequired
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
         return ugrid
-    
+
     def clean(
         self,
         tolerance=0,
@@ -3026,14 +3027,18 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             Cleaned explicit structured grid.
 
         """
-        grid = self.cast_to_unstructured_grid().clean(
-            tolerance=tolerance,
-            remove_unused_points=remove_unused_points,
-            produce_merge_map=produce_merge_map,
-            average_point_data=average_point_data,
-            merging_array_name=merging_array_name,
-            progress_bar=progress_bar,
-        ).cast_to_explicit_structured_grid()
+        grid = (
+            self.cast_to_unstructured_grid()
+            .clean(
+                tolerance=tolerance,
+                remove_unused_points=remove_unused_points,
+                produce_merge_map=produce_merge_map,
+                average_point_data=average_point_data,
+                merging_array_name=merging_array_name,
+                progress_bar=progress_bar,
+            )
+            .cast_to_explicit_structured_grid()
+        )
 
         for i in ["I", "J", "K"]:
             grid.cell_data.pop(f"BLOCK_{i}", None)

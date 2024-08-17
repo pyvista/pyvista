@@ -1,10 +1,12 @@
 """Contains a dictionary that maps file extensions to VTK readers."""
 
 from __future__ import annotations
-from typing import Callable, Optional, TextIO
 
-from pathlib import Path
 import itertools
+from pathlib import Path
+from typing import Callable
+from typing import Optional
+from typing import TextIO
 import warnings
 
 import numpy as np
@@ -407,19 +409,19 @@ def read_grdecl(
         Output explicit structured grid.
     dict
         Additional keywords stored in a dictionary which keys correspond to the keyword (e.g., `MAPUNITS`, `GRIDUNIT`, ...).
-        
+
     Examples
     --------
     Read a ``'.GRDECL'`` file.
-    
+
     >>> import pyvista as pv
     >>> mesh = pv.read_grdecl('file.GRDECL')
-    
+
     Keywords contained in the file are stored in the :attr:`pyvista.DataObject.user_dict`:
-    
-    >>> mesh. user_dict
+
+    >>> mesh.user_dict
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
-    
+
 
     """
 
@@ -512,7 +514,7 @@ def read_grdecl(
                         keywords[key].append(float(x))
 
         return keywords, includes
-    
+
     def read_keywords(filename: str | Path) -> dict:
         """Read a GRDECL file and return its keywords."""
         with open(filename) as f:
@@ -528,7 +530,7 @@ def read_grdecl(
                 keywords.update(keywords_)
 
         return keywords
-    
+
     property_keys = (
         "ACTNUM",
         "COORD",
@@ -555,7 +557,7 @@ def read_grdecl(
 
     except KeyError:
         raise ValueError("Unable to generated grid without keyword 'SPECGRID'.")
-    
+
     relative = False
 
     if "GRIDUNIT" in keywords:
@@ -566,17 +568,23 @@ def read_grdecl(
                 cond1 = grid_unit.startswith(keywords["MAPUNITS"].lower())
 
                 if not cond1:
-                    warnings.warn("Unable to convert relative coordinates with different grid and map units. Skipping conversion.")
+                    warnings.warn(
+                        "Unable to convert relative coordinates with different grid and map units. Skipping conversion."
+                    )
 
             except KeyError:
-                warnings.warn("Unable to convert relative coordinates without keyword 'MAPUNITS'. Skipping conversion.")
+                warnings.warn(
+                    "Unable to convert relative coordinates without keyword 'MAPUNITS'. Skipping conversion."
+                )
                 cond1 = False
 
             try:
                 origin = keywords["MAPAXES"][2:4]
 
             except KeyError:
-                warnings.warn("Unable to convert relative coordinates without keyword 'MAPAXES'. Skipping conversion.")
+                warnings.warn(
+                    "Unable to convert relative coordinates without keyword 'MAPAXES'. Skipping conversion."
+                )
                 origin = None
 
             relative = cond1 and origin is not None
@@ -600,9 +608,7 @@ def read_grdecl(
     ycorners = np.empty_like(zcorners)
 
     for i, j in itertools.product(range(2 * ni), range(2 * nj)):
-        ip = np.ravel_multi_index(
-            ((i + 1) // 2, (j + 1) // 2), (ni + 1, nj + 1), order="F"
-        )
+        ip = np.ravel_multi_index(((i + 1) // 2, (j + 1) // 2), (ni + 1, nj + 1), order="F")
         z = pillars[ip, [2, 5]]
         xcorners[i, j] = np.interp(zcorners[i, j], z, pillars[ip, [0, 3]])
         ycorners[i, j] = np.interp(zcorners[i, j], z, pillars[ip, [1, 4]])
