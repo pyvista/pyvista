@@ -1417,6 +1417,38 @@ def test_ExplicitStructuredGrid_raise_init():
         pv.ExplicitStructuredGrid(1, 2, 3, True)
 
 
+def test_ExplicitStructuredGrid_clean():
+    grid = examples.load_explicit_structured()
+
+    # Duplicate points
+    ugrid = grid.cast_to_unstructured_grid().copy()
+    cells = ugrid.cells.reshape((ugrid.n_cells, 9))[:, 1:]
+    ugrid.cells = np.column_stack(
+        (
+            np.full(ugrid.n_cells, 8),
+            np.arange(8 * ugrid.n_cells).reshape((ugrid.n_cells, 8)),
+        )
+    ).ravel()
+    ugrid.points = np.concatenate(ugrid.points[cells])
+    assert ugrid.n_points == 960
+
+    egrid = ugrid.cast_to_explicit_structured_grid().clean()
+    assert egrid.n_points == grid.n_points
+
+
+def test_StructuredGrid_cast_to_explicit_structured_grid():
+    grid = examples.download_office()
+    grid = grid.hide_cells(range(80, 120))
+    grid = grid.cast_to_explicit_structured_grid()
+    assert grid.n_cells == 7220
+    assert grid.n_points == 8400
+    assert 'BLOCK_I' in grid.cell_data
+    assert 'BLOCK_J' in grid.cell_data
+    assert 'BLOCK_K' in grid.cell_data
+    assert 'vtkGhostType' in grid.cell_data
+    assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
+
+
 def test_copy_no_copy_wrap_object(datasets):
     for dataset in datasets:
         # different dataset types have different copy behavior for points
