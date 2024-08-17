@@ -7253,6 +7253,8 @@ class DataSetFilters:
             may not be valid. E.g. the block with name ``'+X'`` may not be facing the
             `'+X'`` direction due to its orientation.
 
+        .. versionadded:: 0.45
+
         Parameters
         ----------
         box_style : 'frame' | 'outline' | 'cube', default: 'cube'
@@ -7335,6 +7337,8 @@ class DataSetFilters:
 
         The box can optionally be styled as an outline or frame. It may also be
         oriented to generate an oriented bounding box (OBB).
+
+        .. versionadded:: 0.45
 
         Parameters
         ----------
