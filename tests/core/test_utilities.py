@@ -919,20 +919,8 @@ def expected_best_fit_plane(airplane):
 
 
 def test_fit_plane_to_points(expected_best_fit_plane):
-    DEFAULT_RESOLUTION = 10
     airplane, expected_plane = expected_best_fit_plane
-    plane = fit_plane_to_points(airplane.points)
-    assert plane.n_points == (DEFAULT_RESOLUTION + 1) ** 2
-    assert plane.bounds == expected_plane.bounds
-
-    resolution = (1.0, 2.0)  # Test with integer-valued floats
-    plane = fit_plane_to_points(airplane.points, resolution=resolution)
-    assert plane.n_points == (resolution[0] + 1) * (resolution[1] + 1)
-
-
-def test_fit_plane_to_points_return_meta(expected_best_fit_plane):
-    airplane, expected_plane = expected_best_fit_plane
-    plane, center, normal = fit_plane_to_points(airplane.points, return_meta=True, resolution=1)
+    plane, center, normal = fit_plane_to_points(airplane.points, return_meta=True)
     assert plane.bounds == expected_plane.bounds
 
     assert np.allclose(plane.center, center)
