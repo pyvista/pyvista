@@ -529,7 +529,7 @@ def validate_transform4x4(transform, /, *, must_be_finite=True, name="Transform"
                     must_be_finite=must_be_finite,
                     name=name,
                 )
-            except ValueError:
+            except TypeError:
                 raise TypeError(
                     'Input transform must be one of:\n'
                     '\tvtkMatrix4x4\n'
