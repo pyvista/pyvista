@@ -935,13 +935,8 @@ def test_fit_plane_to_points_return_meta(expected_best_fit_plane):
     plane, center, normal = fit_plane_to_points(airplane.points, return_meta=True, resolution=1)
     assert plane.bounds == expected_plane.bounds
 
-    # Test plane center by setting resolution to 1 and check that the center (mean)
-    # of the cross-corner points is the plane's center
-    assert plane.n_points == 4
-    cross_corner_center1 = np.mean(plane.points[[0, 3]], axis=0)
-    cross_corner_center2 = np.mean(plane.points[[1, 2]], axis=0)
-    assert np.allclose(cross_corner_center1, center)
-    assert np.allclose(cross_corner_center2, center)
+    assert np.allclose(plane.center, center)
+    assert np.allclose(plane.points.mean(axis=0), center)
 
     assert np.allclose(normal, plane.point_normals[0])
     assert np.allclose(normal, expected_plane.point_normals[0])

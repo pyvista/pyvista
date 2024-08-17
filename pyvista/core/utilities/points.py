@@ -314,13 +314,8 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     plane.transform(inverse_matrix, inplace=True)
 
     if return_meta:
-        # Center of plane does NOT equal plane.center after the transformation
-        # because plane.center is the center of its bounding box, not its actual center.
-        # Instead, its aligned center (initially at the origin) is transformed directly
-        # This is equivalent to returning the position of the inverse transformation
-        center = inverse_matrix[:3, 3]
-
-        # Compute normal from the plane's actual normals
+        # Compute center and normal from the plane's points and normals
+        center = np.mean(plane.points, axis=0)
         normal = np.mean(plane.point_normals, axis=0)
         return plane, center, normal
     return plane
@@ -516,7 +511,7 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     See Also
     --------
-    principal_axes
+    fit_plane_to_points
         Fit a plane to points using the first two principal axes.
 
     pyvista.DataSetFilters.align_xyz
