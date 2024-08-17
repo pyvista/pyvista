@@ -7172,7 +7172,7 @@ class DataSetFilters:
             This is stored as ``"vtkGlobalCellIds"`` within the ``cell_data``
             of the output dataset(s).
 
-        as_composite : bool, default: False
+        as_composite : bool, default: True
             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
 
         See Also
