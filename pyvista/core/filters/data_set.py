@@ -7567,14 +7567,14 @@ class DataSetFilters:
 
     def _bounding_box(
         self,
-        matrix: None | NumpyArray[float],
-        inverse_matrix: None | NumpyArray[float],
-        box_style: Literal['frame', 'outline', 'cube'] = 'cube',
         *,
-        oriented: bool = False,
-        frame_width: float = 0.1,
-        return_meta: bool = False,
-        as_composite: bool = True,
+        matrix: NumpyArray[float] | None,
+        inverse_matrix: NumpyArray[float] | None,
+        box_style: Literal['frame', 'outline', 'cube'],
+        oriented: bool,
+        frame_width: float,
+        return_meta: bool,
+        as_composite: bool,
     ):
         def _multiblock_to_polydata(multiblock):
             return multiblock.combine(merge_points=False).extract_geometry()
