@@ -8,6 +8,7 @@ import functools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import Sequence
+from typing import cast
 import warnings
 
 import matplotlib.pyplot as plt
@@ -7229,6 +7230,160 @@ class DataSetFilters:
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18632
             return pyvista.merge(list(output), merge_points=False)
         return output
+
+    def bounding_box(
+        self,
+        box_style: Literal['frame', 'outline', 'cube'] = 'cube',
+        *,
+        oriented: bool = False,
+        frame_width: float = 0.1,
+        return_meta: bool = False,
+        as_composite: bool = True,
+    ):
+        """Return a bounding box for this dataset.
+
+        By default, the bounding box is a :class:`~pyvista.MultiBlock` with six
+        :class:`PolyData` comprising the faces of a cube. The blocks are named and
+        ordered as ``('+X','-X','+Y','-Y','+Z','-Z')``.
+
+        The box can optionally be styled as an outline or frame. The box may also be
+        oriented to generate an oriented bounding box (OBB).
+
+        Parameters
+        ----------
+        box_style : 'frame' | 'outline' | 'cube', default: 'cube'
+            Choose the style of the box. If ``'cube'`` (default), each face of the cube
+            is a single quad cell. If ``'outline'``, the edges of each face are returned
+            as line cells. If ``'frame'``, the center portion of each face is removed to
+            create a picture-frame style border with each face having four quads (one
+            for each side of the frame). Use ``frame_width`` to control the size of the
+            frame.
+
+        oriented : bool, default: False
+            Orient the box using this dataset's :func:`~pyvista.principal_axes`. This
+            will generate a box that best fits this dataset's points.
+
+            .. warning::
+
+                The names of the blocks of the returned :class:`~pyvista.MultiBlock`
+                when using this option may no longer be valid. E.g. the block with
+                name ``'+X'`` may no longer be facing the `'+X'`` direction.
+
+        frame_width : float, optional
+            Set the width of the frame. Only has an effect if ``box_style`` is
+            ``'frame'``. Values must be between ``0.0`` (minimal frame) and ``1.0``
+            (large frame). The frame is scaled to ensure it has a constant width.
+
+        return_meta : bool, default: False
+            If ``True``, also returns the corner point and the three axes vectors
+            defining the orientation of the box.
+
+        as_composite : bool, default: True
+            Return the box as a :class:`pyvista.MultiBlock` with six blocks: one for
+            each face. Set this ``False`` to merge the output and return
+            :class:`~pyvista.PolyData`.
+
+        See Also
+        --------
+        pyvista.Plotter.add_bounding_box
+            Add a bounding box to a scene.
+
+        pyvista.CubeFacesSource
+            Generate the faces of a cube. Used internally by this filter.
+
+        Returns
+        -------
+        pyvista.MultiBlock or pyvista.PolyData
+            MultiBlock with six named cube faces when ``as_composite=True`` and
+            PolyData otherwise.
+
+        Examples
+        --------
+        Create a bounding box for a dataset.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_oblique_cone()
+        >>> box = mesh.bounding_box()
+
+        Plot the mesh and its bounding box.
+
+        >>> pl = pv.Plotter()
+        >>> pl.add_mesh(mesh, color='red')
+        >>> pl.add_mesh(box, opacity=0.5)
+        >>> pl.show()
+
+        Create a frame instead.
+
+        >>> frame = mesh.bounding_box('frame')
+
+        >>> pl = pv.Plotter()
+        >>> pl.add_mesh(mesh, color='red')
+        >>> pl.add_mesh(frame, show_edges=True)
+        >>> pl.show()
+
+        Create an oriented bounding box (OBB) and compare it to the non-oriented one.
+        Use the outline style for both.
+
+        >>> box = mesh.bounding_box('outline')
+        >>> obb = mesh.bounding_box('outline', oriented=True)
+
+        >>> pl = pv.Plotter()
+        >>> pl.add_mesh(mesh)
+        >>> pl.add_mesh(box, color='red', line_width=5)
+        >>> pl.add_mesh(obb, color='blue', line_width=5)
+        >>> pl.show()
+
+        """
+        # Validate style
+        _validation.check_contains(item=box_style, container=['frame', 'outline', 'cube'])
+
+        if oriented:
+            # Align data to the xyz-axes
+            alg_input, matrix = self.align_xyz(return_matrix=True)
+            inverse_matrix = Transform(matrix).inverse_matrix
+        else:
+            alg_input = self
+
+        # Create box
+        source = pyvista.CubeFacesSource(bounds=alg_input.bounds)
+        if box_style == 'frame':
+            source.frame_width = frame_width
+        box = source.output
+
+        # Modify output
+        for face in box:
+            face = cast(pyvista.PolyData, face)
+            if box_style == 'outline':
+                face.copy_from(pyvista.lines_from_points(face.points))
+            if oriented:
+                face.transform(inverse_matrix)
+
+        alg_output = box if as_composite else box.combine(merge_points=False).extract_geometry()
+        if return_meta:
+            if not oriented:
+                axes = np.eye(3)
+                point = np.reshape(alg_output.bounds, (3, 2))[:, 0]  # point at min bounds
+            else:
+                axes = matrix[:3, :3]  # principal axes
+                point = np.array((0, 0, 0))
+                # # Need to figure out which corner of the box to position the axes
+                # # To do this we make a new box and check all of its edges to see which
+                # # ones match the axes vectors
+                # point_id_candidates = []
+                # temp_box = pyvista.Cube(bounds=alg_input.bounds)
+                # temp_box.transform(inverse_matrix)
+                # edges = temp_box.clean().extract_all_edges()
+                # for i in range(edges.points):
+                #     cell = edges.get_cell(i)
+                #     vector = np.diff(cell.points, axis=0)[0]
+                #     vector /= np.linalg.norm(vector)
+                #     for axis in axes:
+                #         dot = np.dot(axis, vector)
+                #         if np.isclose(dot, 1, atol=1e-4):
+                #             point_id_candidates.extend(cell.point_ids)
+            return point, axes
+        return alg_output
 
     def explode(self, factor=0.1):
         """Push each individual cell away from the center of the dataset.

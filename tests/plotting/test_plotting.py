@@ -4676,3 +4676,24 @@ def test_planes_assembly_label_size(bounds, label_size):
         plot.add_actor(actor)
         actor.camera = plot.camera
     plot.show()
+
+
+@pytest.fixture()
+def oblique_cone():
+    return pv.examples.download_oblique_cone()
+
+
+@pytest.mark.parametrize('box_style', ['outline', 'cube', 'frame'])
+def test_bounding_box(oblique_cone, box_style):
+    pl = pv.Plotter()
+    box = oblique_cone.bounding_box(box_style)
+    oriented_box = oblique_cone.bounding_box(box_style, oriented=True)
+
+    box_mesh_kwargs = dict(show_edges=True, line_width=5)
+    pl.add_mesh(oblique_cone)
+    if box_style == 'cube':
+        box_mesh_kwargs['opacity'] = 0.5
+    pl.add_mesh(box, color='red', **box_mesh_kwargs)
+    pl.add_mesh(oriented_box, color='blue', **box_mesh_kwargs)
+    pl.camera.zoom(1.2)
+    pl.show()

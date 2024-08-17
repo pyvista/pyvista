@@ -3895,6 +3895,34 @@ def test_align_xyz():
     assert matrix.shape == (4, 4)
 
 
+@pytest.mark.parametrize(
+    ('as_composite', 'mesh_type'), [(True, pv.MultiBlock), (False, pv.PolyData)]
+)
+def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
+    box = sphere.bounding_box(as_composite=as_composite)
+    assert isinstance(box, mesh_type)
+    assert box.bounds == sphere.bounds
+
+
+def test_bounding_box_oriented():
+    rotation = pv.transformations.axis_angle_rotation((1, 2, 3), 30)
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb = box_mesh.bounding_box(oriented=True)
+    assert obb.bounds == box_mesh.bounds
+
+
+def test_bounding_box_return_meta():
+    vector = np.random.default_rng().random((3,))
+    angle = np.random.default_rng().random((1,))
+    rotation = pv.transformations.axis_angle_rotation(vector, angle)
+
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb, point, axes = box_mesh.bounding_box(oriented=True, return_meta=True)
+    assert np.array_equal(pv.principal_axes(box_mesh.points), axes)
+
+
 DELTA = 0.1
 
 
