@@ -2705,11 +2705,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         grid.cell_data["BLOCK_J"] = J
         grid.cell_data["BLOCK_K"] = K
 
-        grid = grid.cast_to_explicit_structured_grid()
-        for i in ["I", "J", "K"]:
-            grid.cell_data.pop(f"BLOCK_{i}", None)
-
-        return grid
+        return grid.cast_to_explicit_structured_grid()
 
     def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
@@ -3027,7 +3023,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             Cleaned explicit structured grid.
 
         """
-        grid = (
+        return (
             self.cast_to_unstructured_grid()
             .clean(
                 tolerance=tolerance,
@@ -3039,11 +3035,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             )
             .cast_to_explicit_structured_grid()
         )
-
-        for i in ["I", "J", "K"]:
-            grid.cell_data.pop(f"BLOCK_{i}", None)
-
-        return grid
 
     def save(
         self,
