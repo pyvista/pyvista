@@ -47,6 +47,8 @@ if not Path(pyvista.FIGURE_PATH).exists():
 pyvista.BUILDING_GALLERY = True
 os.environ['PYVISTA_BUILDING_GALLERY'] = 'true'
 
+pyvista.FORCE_STATIC_PLOTS = True
+
 # SG warnings
 import warnings
 

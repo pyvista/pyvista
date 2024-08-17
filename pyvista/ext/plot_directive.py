@@ -438,7 +438,7 @@ def render_figures(
                     except RuntimeError:  # pragma no cover
                         # ignore closed, unrendered plotters
                         continue
-                    if force_static or (plotter.last_vtksz is None):
+                    if force_static or (plotter.last_vtksz is None) or pyvista.FORCE_STATIC_PLOTS:
                         images.append(image_file)
                         continue
                     else:
