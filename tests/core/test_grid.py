@@ -1414,7 +1414,7 @@ def test_ExplicitStructuredGrid_compute_connections():
 
 def test_ExplicitStructuredGrid_raise_init():
     with pytest.raises(ValueError, match="Too many args"):
-        pv.ExplicitStructuredGrid(1, 2, True)
+        pv.ExplicitStructuredGrid(1, 2, 3, True)
 
 
 def test_copy_no_copy_wrap_object(datasets):
