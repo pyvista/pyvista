@@ -1114,3 +1114,14 @@ def test_prostar_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_grdecl_reader():
+    filename = Path(__file__).parent.parent / "example_files" / "3x3x3.grdecl"
+    grid = pv.core.utilities.fileio.read_grdecl(filename, other_keywords=["KEYWORD"])
+
+    assert grid.n_cells == 27
+    assert grid.n_points == 216
+    assert "KEYWORD" in grid.user_dict
+    assert "vtkGhostType" in grid.cell_data
+    assert np.count_nonzero(grid.cell_data["vtkGhostType"]) == 5
