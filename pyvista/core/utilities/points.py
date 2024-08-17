@@ -186,7 +186,7 @@ def lines_from_points(points, close=False):
 
 
 def fit_plane_to_points(points, return_meta=False):
-    """Fit a plane to points using its :func:`principal_axes:.
+    """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
     the points.
