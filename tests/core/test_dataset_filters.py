@@ -3912,18 +3912,30 @@ def test_oriented_bounding_box_oriented():
     assert obb.bounds == box_mesh.bounds
 
 
-def test_bounding_box_return_meta():
+@pytest.mark.parametrize('oriented', [True, False])
+def test_bounding_box_return_meta(oriented):
+    # Generate a random rotation matrix
     vector = np.random.default_rng().random((3,))
     angle = np.random.default_rng().random((1,)) * 360
     rotation = pv.transformations.axis_angle_rotation(vector, angle)
-    pv.OFF_SCREEN = False
+
+    # Transform a box manually and get its OBB
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
     box_mesh.transform(rotation)
-    obb, point, axes = box_mesh.bounding_box(oriented=True, return_meta=True, as_composite=False)
+    obb, point, axes = box_mesh.bounding_box(
+        oriented=oriented, return_meta=True, as_composite=False
+    )
 
-    # Test axes are equal (up to a difference in sign)
-    identity = np.abs(pv.principal_axes(box_mesh.points @ axes.T))
-    assert np.allclose(identity, np.eye(3), atol=1e-6)
+    if oriented:
+        # Test axes are equal (up to a difference in sign)
+        expected_axes = pv.principal_axes(box_mesh.points)
+        identity = np.abs(expected_axes @ axes.T)
+        assert np.allclose(identity, np.eye(3), atol=1e-6)
+    else:
+        # Test identity always returned for non-oriented box
+        assert np.array_equal(axes, np.eye(3))
+        bnds = box_mesh.bounds
+        assert np.array_equal(point, (bnds.x_min, bnds.y_min, bnds.z_min))
 
     # Test the returned point is one of the box's points
     assert point in obb.points
