@@ -407,6 +407,19 @@ def read_grdecl(
         Output explicit structured grid.
     dict
         Additional keywords stored in a dictionary which keys correspond to the keyword (e.g., `MAPUNITS`, `GRIDUNIT`, ...).
+        
+    Examples
+    --------
+    Read a ``'.GRDECL'`` file.
+    
+    >>> import pyvista as pv
+    >>> mesh = pv.read_grdecl('file.GRDECL')
+    
+    Keywords contained in the file are stored in the :attr:`pyvista.DataObject.user_dict`:
+    
+    >>> mesh. user_dict
+    {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
+    
 
     """
 
