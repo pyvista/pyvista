@@ -7380,7 +7380,7 @@ class DataSetFilters:
         Plot the box and axes again. This time, use :class:`~pyvista.AxesAssemblySymmetric`
         and position the axes in the center of the box.
 
-        >>> center = np.mean(pv.merge(box).points, axis=0)
+        >>> center = pv.merge(box).points.mean(axis=0)
         >>> scale = box.length / 2
         >>> transform = (
         ...     pv.Transform()
