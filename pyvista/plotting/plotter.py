@@ -162,8 +162,7 @@ def _warn_xserver():  # pragma: no cover
             '\n'
             'This system does not appear to be running an xserver.\n'
             'PyVista will likely segfault when rendering.\n\n'
-            'Try starting a virtual frame buffer with xvfb, or using\n '
-            ' ``pyvista.start_xvfb()``\n',
+            'Alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available.\n',
         )
 
 
