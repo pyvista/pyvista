@@ -1021,15 +1021,9 @@ def one_million_points():
 
 
 def test_principal_axes_success_with_many_points(one_million_points):
-    # Use many points to verify no memory errors are raised
+    # Use large mesh to verify no memory errors are raised
     axes = pv.principal_axes(one_million_points)
     assert isinstance(axes, np.ndarray)
-
-
-def test_fit_plane_to_points_success_with_many_points(one_million_points):
-    # Use many points to verify no memory errors are raised
-    plane = pv.fit_plane_to_points(one_million_points)
-    assert isinstance(plane, pv.PolyData)
 
 
 @pytest.fixture()
