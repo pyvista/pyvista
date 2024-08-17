@@ -389,7 +389,7 @@ def read_exodus(
 def read_grdecl(
     filename: str | Path,
     elevation: bool = True,
-    return_others: bool = False,
+    other_keywords: Optional[list[str]] = None,
 ) -> pyvista.ExplicitStructuredGrid:
     """
     Read a GRDECL file (``'.GRDECL'``).
@@ -398,32 +398,45 @@ def read_grdecl(
     ----------
     filename : str | Path
         The path to the GRDECL file to read.
+
     elevation : bool, default: True
-        If True, convert depths to elevations and flips grid along Z axis.
-    return_others : bool, default: False
-        If True, return additional keywords contained in input file.
+        If True, convert depths to elevations and flip grid along Z axis.
+
+    other_keywords : sequence[str], optional
+        Additional keywords to read that are ignored by default.
 
     Returns
     -------
     pyvista.ExplicitStructuredGrid
         Output explicit structured grid.
-    dict
-        Additional keywords stored in a dictionary which keys correspond to the keyword (e.g., `MAPUNITS`, `GRIDUNIT`, ...).
 
     Examples
     --------
     Read a ``'.GRDECL'`` file.
 
     >>> import pyvista as pv
-    >>> mesh = pv.read_grdecl('file.GRDECL')
+    >>> grid = pv.read_grdecl('file.GRDECL')
 
-    Keywords contained in the file are stored in the :attr:`pyvista.DataObject.user_dict`:
+    Unused keywords contained in the file are stored in :attr:`pyvista.ExplicitStructuredGrid.user_dict`:
 
-    >>> mesh.user_dict
+    >>> grid.user_dict
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
 
-
     """
+
+    property_keywords = (
+        "ACTNUM",
+        "COORD",
+        "ZCORN",
+        "PERMEABILITY",
+        "PERMX",
+        "PERMY",
+        "PERMZ",
+        "POROSITY",
+        "PORO",
+        "LAYERS",
+        "ZONES",
+    )
 
     def read_keyword(
         f: TextIO,
@@ -466,8 +479,11 @@ def read_grdecl(
 
         return out
 
-    def read_buffer(f: TextIO) -> tuple[dict, list[str]]:
+    def read_buffer(f: TextIO, other_keywords: list[str]) -> tuple[dict, list[str]]:
         """Read a file buffer."""
+        keys = list(property_keywords) + other_keywords
+        keys = tuple(keys)
+
         keywords = {}
         includes = []
 
@@ -497,56 +513,45 @@ def read_grdecl(
                 filename = read_keyword(f, split=False)
                 includes.append(filename.replace("'", ""))
 
-            elif line.startswith(property_keys):
-                for key in property_keys:
-                    if line.startswith(key):
-                        break
-
+            elif line.startswith(keys):
+                key = line.split()[0]
                 data = read_keyword(f)
-                keywords[key] = []
 
-                for x in data:
-                    if "*" in x:
-                        size, x = x.split("*")
-                        keywords[key] += int(size) * [float(x)]
+                if key in property_keywords:
+                    keywords[key] = []
 
-                    else:
-                        keywords[key].append(float(x))
+                    for x in data:
+                        if "*" in x:
+                            size, x = x.split("*")
+                            keywords[key] += int(size) * [float(x)]
+
+                        else:
+                            keywords[key].append(float(x))
+
+                else:
+                    keywords[key] = data
 
         return keywords, includes
 
-    def read_keywords(filename: str | Path) -> dict:
+    def read_keywords(filename: str | Path, other_keywords: list[str]) -> dict:
         """Read a GRDECL file and return its keywords."""
         with open(filename) as f:
-            keywords, includes = read_buffer(f)
+            keywords, includes = read_buffer(f, other_keywords)
 
         if includes:
             path = Path(filename).parent
 
             for include in includes:
                 with open(path / include) as f:
-                    keywords_, _ = read_buffer(f)
+                    keywords_, _ = read_buffer(f, other_keywords)
 
                 keywords.update(keywords_)
 
         return keywords
 
-    property_keys = (
-        "ACTNUM",
-        "COORD",
-        "ZCORN",
-        "PERMEABILITY",
-        "PERMX",
-        "PERMY",
-        "PERMZ",
-        "POROSITY",
-        "PORO",
-        "LAYERS",
-        "ZONES",
-    )
-
     # Read keywords
-    keywords = read_keywords(filename)
+    other_keywords = other_keywords if other_keywords else []
+    keywords = read_keywords(filename, other_keywords)
 
     try:
         ni, nj, nk = keywords["SPECGRID"][:3]
@@ -556,7 +561,7 @@ def read_grdecl(
             raise TypeError("Cylindric grids are not supported.")
 
     except KeyError:
-        raise ValueError("Unable to generated grid without keyword 'SPECGRID'.")
+        raise ValueError("Unable to generate grid without keyword 'SPECGRID'.")
 
     relative = False
 
@@ -614,7 +619,7 @@ def read_grdecl(
         ycorners[i, j] = np.interp(zcorners[i, j], z, pillars[ip, [1, 4]])
 
     # Generate explicit structured grid
-    dims = (ni + 1, nj + 1, nk + 1)
+    dims = ni + 1, nj + 1, nk + 1
     corners = np.column_stack(
         (
             xcorners.ravel(order="F"),
@@ -625,7 +630,7 @@ def read_grdecl(
     grid = pyvista.ExplicitStructuredGrid(dims, corners)
 
     # Add property data
-    for key in property_keys:
+    for key in property_keywords:
         if key in {"ACTNUM", "COORD", "ZCORN"}:
             continue
 
@@ -643,9 +648,9 @@ def read_grdecl(
         active = np.array(keywords["ACTNUM"]) > 0.0
         grid.hide_cells(~active, inplace=True)
 
-    # Store keywords in user dict
-    others = {k: v for k, v in keywords.items() if k not in property_keys}
-    grid.user_dict = others
+    # Store unused keywords in user dict
+    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
+
     return grid
 
 
