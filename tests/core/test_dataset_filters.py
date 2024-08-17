@@ -20,6 +20,7 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters.data_set import _swap_axes
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -3881,6 +3882,148 @@ def test_align():
     _, closest_points = aligned.find_closest_cell(source.points, return_closest_point=True)
     dist = np.linalg.norm(source.points - closest_points, axis=1)
     assert np.abs(dist).mean() < 1e-3
+
+
+def test_align_xyz():
+    mesh = examples.download_oblique_cone()
+    aligned = mesh.align_xyz()
+    assert np.allclose(aligned.center, (0, 0, 0))
+
+    aligned, matrix = mesh.align_xyz(centered=False, return_matrix=True)
+    assert np.allclose(aligned.center, mesh.center)
+    assert isinstance(matrix, np.ndarray)
+    assert matrix.shape == (4, 4)
+
+
+DELTA = 0.1
+
+
+@pytest.fixture()
+def planar_mesh():
+    # Define planar data with largest variation in x, then y
+    # Use a delta to make data slightly asymmetric so the principal axes
+    # are not computed as the identity matrix (we want some negative axes for the tests)
+    points = np.array([[2 + DELTA, 1 + DELTA, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]])
+    axes = pv.principal_axes(points)
+    assert np.allclose(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], atol=DELTA)
+    return pv.PolyData(points)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('axis_0_direction', [1, 0, 0]),
+        ('axis_0_direction', [-1, 0, 0]),
+        ('axis_1_direction', [0, 1, 0]),
+        ('axis_1_direction', [0, -1, 0]),
+        ('axis_2_direction', [0, 0, 1]),
+        ('axis_2_direction', [0, 0, -1]),
+    ],
+)
+def test_align_xyz_single_axis_direction(planar_mesh, name, value):
+    _, matrix = planar_mesh.align_xyz(**{name: value}, return_matrix=True)
+    axes = matrix[:3, :3]
+
+    # Test that the axis has the right direction
+    axis = np.flatnonzero(value)
+    assert np.allclose(axes[axis], value, atol=DELTA)
+
+
+def test_align_xyz_no_axis_direction(planar_mesh):
+    # Test that axis-aligned principal axes with negative directions are "converted"
+    # into the identity matrix (i.e. the negative directions are flipped to be positive)
+    axes_in = pv.principal_axes(planar_mesh.points)
+    _, matrix = planar_mesh.align_xyz(return_matrix=True)
+    axes_out = matrix[:3, :3]
+
+    identity = np.eye(3)
+    assert not np.allclose(axes_in, identity, atol=DELTA)
+    assert np.allclose(axes_out, identity, atol=DELTA)
+
+
+def test_align_xyz_two_axis_directions(planar_mesh):
+    axis_0_direction = [-1, 0, 0]
+    axis_1_direction = [0, -1, 0]
+    _, matrix = planar_mesh.align_xyz(
+        axis_0_direction=axis_0_direction, axis_1_direction=axis_1_direction, return_matrix=True
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [axis_0_direction, axis_1_direction, [0, 0, 1]], atol=DELTA)
+
+    axis_1_direction = [0, -1, 0]
+    axis_2_direction = [0, 0, -1]
+    _, matrix = planar_mesh.align_xyz(
+        axis_1_direction=axis_1_direction, axis_2_direction=axis_2_direction, return_matrix=True
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [[1, 0, 0], axis_1_direction, axis_2_direction], atol=DELTA)
+
+
+def test_align_xyz_three_axis_directions(planar_mesh):
+    axis_2_direction = np.array((0.0, 0.0, -1.0))
+    _, matrix = planar_mesh.align_xyz(
+        axis_0_direction='x',
+        axis_1_direction='-y',
+        axis_2_direction=axis_2_direction,  # test has no effect
+        return_matrix=True,
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]], atol=DELTA)
+
+    match = 'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a left-handed transformation.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = planar_mesh.align_xyz(
+            axis_0_direction='x',
+            axis_1_direction='-y',
+            axis_2_direction=axis_2_direction * -1,
+            return_matrix=True,
+        )
+
+
+def test_align_xyz_swap_axes():
+    # create planar data with equal variance in x and z
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
+    _, matrix = pv.PolyData(points).align_xyz(return_matrix=True)
+    axes = matrix[:3, :3]
+    assert np.array_equal(axes, [[1, 0, 0], [0, 0, 1], [0, -1, 0]])  # XZY (instead of ZXY)
+
+    # create planar data with equal variance in x and y
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
+    _, matrix = pv.PolyData(points).align_xyz(return_matrix=True)
+    axes = matrix[:3, :3]
+    assert np.array_equal(axes, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ (instead of YXZ)
+
+
+@pytest.mark.parametrize('x', [(1, 0, 0), (-1, 0, 0)])
+@pytest.mark.parametrize('y', [(0, 1, 0), (0, -1, 0)])
+@pytest.mark.parametrize('z', [(0, 0, 1), (0, 0, -1)])
+@pytest.mark.parametrize('order', itertools.permutations([0, 1, 2]))
+@pytest.mark.parametrize(
+    ('test_case', 'values'),
+    [
+        ('swap_all', [1, 1, 1]),
+        ('swap_none', [3, 2, 1]),
+        ('swap_0_1', [2, 2, 1]),
+        ('swap_1_2', [2, 1, 1]),
+    ],
+)
+def test_swap_axes(x, y, z, order, test_case, values):
+    axes = np.array((x, y, z))[list(order)]
+    swapped = _swap_axes(axes, values)
+    if test_case == "swap_all":
+        # All axes have the same weight, expect swap to have x-y-z order
+        assert np.array_equal(np.abs(swapped), np.eye(3))
+    elif test_case == "swap_none":
+        # Expect no swapping, output is input
+        assert np.array_equal(axes, swapped)
+    elif test_case == "swap_0_1":
+        first_index = np.flatnonzero(swapped[0])[0]
+        second_index = np.flatnonzero(swapped[1])[0]
+        assert first_index < second_index
+    elif test_case == "swap_1_2":
+        first_index = np.flatnonzero(swapped[1])[0]
+        second_index = np.flatnonzero(swapped[2])[0]
+        assert first_index < second_index
 
 
 def test_subdivide_tetra(tetbeam):

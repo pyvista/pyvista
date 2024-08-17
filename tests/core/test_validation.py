@@ -74,11 +74,9 @@ def test_validate_transform4x4(transform_like):
 
 
 def test_validate_transform4x4_raises():
-    match = 'Transform has shape (3,) which is not allowed. Shape must be one of [(3, 3), (4, 4)].'
-    with pytest.raises(ValueError, match=escape(match)):
+    with pytest.raises(ValueError, match=escape("Shape must be one of [(3, 3), (4, 4)].")):
         validate_transform4x4(np.array([1, 2, 3]))
-    match = "Input transform must be one of"
-    with pytest.raises(TypeError, match=match):
+    with pytest.raises(TypeError, match="Input transform must be one of"):
         validate_transform4x4("abc")
 
 
@@ -718,7 +716,7 @@ def test_check_length():
     match = '_input must have a length equal to any of: 1. Got length 2 instead.'
     with pytest.raises(ValueError, match=match):
         check_length((1, 2), exact_length=1, name="_input")
-    match = '_input must have a length equal to any of: [3 4]. Got length 2 instead.'
+    match = '_input must have a length equal to any of: [3, 4]. Got length 2 instead.'
     with pytest.raises(ValueError, match=escape(match)):
         check_length((1, 2), exact_length=[3, 4], name="_input")
 

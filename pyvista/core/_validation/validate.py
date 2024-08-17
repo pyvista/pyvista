@@ -307,7 +307,7 @@ def validate_array(
             exact_length=must_have_length,
             min_length=must_have_min_length,
             max_length=must_have_max_length,
-            allow_scalars=True,
+            allow_scalar=True,
             name=name,
         )
 
