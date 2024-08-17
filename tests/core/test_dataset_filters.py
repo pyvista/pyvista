@@ -3914,13 +3914,19 @@ def test_bounding_box_oriented():
 
 def test_bounding_box_return_meta():
     vector = np.random.default_rng().random((3,))
-    angle = np.random.default_rng().random((1,))
+    angle = np.random.default_rng().random((1,)) * 360
     rotation = pv.transformations.axis_angle_rotation(vector, angle)
-
+    pv.OFF_SCREEN = False
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
     box_mesh.transform(rotation)
-    obb, point, axes = box_mesh.bounding_box(oriented=True, return_meta=True)
-    assert np.array_equal(pv.principal_axes(box_mesh.points), axes)
+    obb, point, axes = box_mesh.bounding_box(oriented=True, return_meta=True, as_composite=False)
+
+    # Test axes are equal (up to a difference in sign)
+    identity = np.abs(pv.principal_axes(box_mesh.points @ axes.T))
+    assert np.allclose(identity, np.eye(3), atol=1e-6)
+
+    # Test the returned point is one of the box's points
+    assert point in obb.points
 
 
 DELTA = 0.1

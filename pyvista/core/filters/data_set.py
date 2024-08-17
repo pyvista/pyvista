@@ -7366,23 +7366,34 @@ class DataSetFilters:
                 point = np.reshape(alg_output.bounds, (3, 2))[:, 0]  # point at min bounds
             else:
                 axes = matrix[:3, :3]  # principal axes
-                point = np.array((0, 0, 0))
-                # # Need to figure out which corner of the box to position the axes
-                # # To do this we make a new box and check all of its edges to see which
-                # # ones match the axes vectors
-                # point_id_candidates = []
-                # temp_box = pyvista.Cube(bounds=alg_input.bounds)
-                # temp_box.transform(inverse_matrix)
-                # edges = temp_box.clean().extract_all_edges()
-                # for i in range(edges.points):
-                #     cell = edges.get_cell(i)
-                #     vector = np.diff(cell.points, axis=0)[0]
-                #     vector /= np.linalg.norm(vector)
-                #     for axis in axes:
-                #         dot = np.dot(axis, vector)
-                #         if np.isclose(dot, 1, atol=1e-4):
-                #             point_id_candidates.extend(cell.point_ids)
-            return point, axes
+                point = np.ones(3)
+                # We need to figure out which corner of the box to position the axes
+                # To do this we compare output axes to expected axes for all 8 corners
+                # of the box
+                diagonals = [
+                    [1, 1, 1],
+                    [-1, 1, 1],
+                    [1, -1, 1],
+                    [1, 1, -1],
+                    [1, -1, -1],
+                    [-1, -1, 1],
+                    [-1, 1, -1],
+                    [-1, -1, -1],
+                ]
+                dots = [np.dot(axes, diag) for diag in diagonals]
+                match = diagonals[np.argmax(np.sum(dots, axis=1))]
+                bnds = alg_input.bounds
+                point[0] = bnds.x_min if match[0] else bnds.x_max
+                point[1] = bnds.y_min if match[1] else bnds.y_max
+                point[2] = bnds.z_min if match[2] else bnds.z_max
+
+                # Transform point
+                point = (inverse_matrix @ [*point, 1])[:3]
+                # Make sure the point we return is one of the box's points
+                point_id = alg_output.find_closest_point(point)
+                point = alg_output.points[point_id]
+
+            return alg_output, point, axes
         return alg_output
 
     def explode(self, factor=0.1):
