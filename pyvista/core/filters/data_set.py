@@ -7309,8 +7309,8 @@ class DataSetFilters:
         Plot the mesh and its bounding box.
 
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh(mesh, color='red')
-        >>> pl.add_mesh(box, opacity=0.5)
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(box, opacity=0.5)
         >>> pl.show()
 
         Create a frame instead.
@@ -7318,8 +7318,8 @@ class DataSetFilters:
         >>> frame = mesh.bounding_box('frame')
 
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh(mesh, color='red')
-        >>> pl.add_mesh(frame, show_edges=True)
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(frame, show_edges=True)
         >>> pl.show()
 
         Create an oriented bounding box (OBB) and compare it to the non-oriented one.
@@ -7329,12 +7329,42 @@ class DataSetFilters:
         >>> obb = mesh.bounding_box('outline', oriented=True)
 
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh(mesh)
-        >>> pl.add_mesh(box, color='red', line_width=5)
-        >>> pl.add_mesh(obb, color='blue', line_width=5)
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(box, color='red', line_width=5)
+        >>> _ = pl.add_mesh(obb, color='blue', line_width=5)
+        >>> pl.show()
+
+        Return the meta data for the box and use it to plot the box's axes with
+        :class:`~pyvista.AxesAssembly`.
+
+        >>> box, point, axes = mesh.bounding_box(
+        ...     'outline', oriented=True, return_meta=True
+        ... )
+        >>> axes_assembly = pv.AxesAssembly()
+
+        The assembly is aligned with the x-y-z axes and positioned at the origin by
+        default. Create a transformation to scale, then rotate, then translate the
+        assembly. We transpose the axes and use them as an inverted rotation matrix.
+
+        >>> scale = box.length / 4
+        >>> transform = (
+        ...     pv.Transform().scale(scale).rotate(axes.T).translate(point)
+        ... )
+        >>> axes_assembly.user_matrix = transform.matrix
+
+        Plot the box and the axes.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(box, color='black', line_width=5)
+        >>> _ = pl.add_actor(axes_assembly)
         >>> pl.show()
 
         """
+
+        def _multiblock_to_polydata(multiblock):
+            return multiblock.combine(merge_points=False).extract_geometry()
+
         # Validate style
         _validation.check_contains(item=box_style, container=['frame', 'outline', 'cube'])
 
@@ -7359,7 +7389,7 @@ class DataSetFilters:
             if oriented:
                 face.transform(inverse_matrix)
 
-        alg_output = box if as_composite else box.combine(merge_points=False).extract_geometry()
+        alg_output = box if as_composite else _multiblock_to_polydata(box)
         if return_meta:
             if not oriented:
                 axes = np.eye(3)
@@ -7391,8 +7421,13 @@ class DataSetFilters:
                 # Transform point
                 point = (inverse_matrix @ [*point, 1])[:3]
                 # Make sure the point we return is one of the box's points
-                point_id = alg_output.find_closest_point(point)
-                point = alg_output.points[point_id]
+                box_poly = (
+                    _multiblock_to_polydata(alg_output)
+                    if isinstance(alg_output, pyvista.MultiBlock)
+                    else alg_output
+                )
+                point_id = box_poly.find_closest_point(point)
+                point = box_poly.points[point_id]
 
             return alg_output, point, axes
         return alg_output
