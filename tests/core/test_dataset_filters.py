@@ -3904,7 +3904,7 @@ def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
     assert box.bounds == sphere.bounds
 
 
-def test_oriented_bounding_box_oriented():
+def test_oriented_bounding_box():
     rotation = pv.transformations.axis_angle_rotation((1, 2, 3), 30)
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
     box_mesh.transform(rotation)

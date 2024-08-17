@@ -16,6 +16,7 @@ import numpy as np
 
 import pyvista
 from pyvista.core import _validation
+from pyvista.core._typing_core import NumpyArray
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -39,7 +40,6 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
@@ -7235,11 +7235,14 @@ class DataSetFilters:
         self,
         box_style: Literal['frame', 'outline', 'cube'] = 'cube',
         *,
+        axis_0_direction: VectorLike[float] | str | None = None,
+        axis_1_direction: VectorLike[float] | str | None = None,
+        axis_2_direction: VectorLike[float] | str | None = None,
         frame_width: float = 0.1,
         return_meta: bool = False,
         as_composite: bool = True,
     ):
-        """Return an oriented bounding box for this dataset.
+        """Return an oriented bounding box (OBB) for this dataset.
 
         By default, the bounding box is a :class:`~pyvista.MultiBlock` with six
         :class:`PolyData` comprising the faces of a cube. The blocks are named and
@@ -7247,20 +7250,14 @@ class DataSetFilters:
 
         The box can optionally be styled as an outline or frame.
 
-        .. warning::
-
-            The names of the blocks of the returned :class:`~pyvista.MultiBlock`
-            may not be valid. E.g. the block with name ``'+X'`` may not be facing the
-            `'+X'`` direction due to its orientation.
-
         .. note::
 
-                The names of the blocks of the returned :class:`~pyvista.MultiBlock`
-                correspond to the oriented box's local axes, not the global x-y-z axes.
-                E.g. the normal of the ``'+X'`` face of the returned box has the same
-                direction as the first axis in the returned ``axes`` metadata (enabled
-                using the ``return_meta`` option), and is not necessarily pointing in
-                the +x direction ``(1, 0, 0)``.
+            The names of the blocks of the returned :class:`~pyvista.MultiBlock`
+            correspond to the oriented box's local axes, not the global x-y-z axes.
+            E.g. the normal of the ``'+X'`` face of the returned box has the same
+            direction as the first axis in the returned ``axes`` metadata (enabled
+            using the ``return_meta`` option), and is not necessarily pointing in
+            the +x direction ``(1, 0, 0)``.
 
         .. versionadded:: 0.45
 
@@ -7274,6 +7271,24 @@ class DataSetFilters:
             for each side of the frame). Use ``frame_width`` to control the size of the
             frame.
 
+        axis_0_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's primary axis. If set, the first
+            axis in the returned ``axes`` metadata is flipped such that it best aligns
+            with the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        axis_1_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's secondary axis. If set, the second
+            axis in the returned ``axes`` metadata is flipped such that it best aligns
+            with the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        axis_2_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's third axis. If set, the third
+            axis in the returned ``axes`` metadata is flipped such that it best aligns
+            with the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
         frame_width : float, optional
             Set the width of the frame. Only has an effect if ``box_style`` is
             ``'frame'``. Values must be between ``0.0`` (minimal frame) and ``1.0``
@@ -7281,7 +7296,8 @@ class DataSetFilters:
 
         return_meta : bool, default: False
             If ``True``, also returns the corner point and the three axes vectors
-            defining the orientation of the box.
+            defining the orientation of the box. The sign of the axes vectors can be
+            controlled using the ``axis_#_direction`` arguments.
 
         as_composite : bool, default: True
             Return the box as a :class:`pyvista.MultiBlock` with six blocks: one for
@@ -7292,6 +7308,9 @@ class DataSetFilters:
         --------
         bounding_box
             Similar filter for an axis-aligned bounding box (AABB).
+
+        align_xyz
+            Align a mesh to the world x-y-z axes. Used internally by this filter.
 
         pyvista.Plotter.add_bounding_box
             Add a bounding box to a scene.
@@ -7320,10 +7339,79 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(mesh, color='red')
         >>> _ = pl.add_mesh(box, opacity=0.5)
         >>> pl.show()
+
+        Return the metadata for the box and use it to plot the box's axes with
+        :class:`~pyvista.AxesAssembly`.
+
+        Return the metadata for the box.
+
+        >>> box, point, axes = mesh.oriented_bounding_box(
+        ...     'outline', return_meta=True
+        ... )
+
+        Use the metadata to plot the box's axes using :class:`~pyvista.AxesAssembly`.
+        The assembly is aligned with the x-y-z axes and positioned at the origin by
+        default. Create a transformation to scale, then rotate, then translate the
+        assembly to the corner point of the box. The transpose of the axes is used
+        as an inverted rotation matrix.
+
+        >>> scale = box.length / 4
+        >>> transform = (
+        ...     pv.Transform().scale(scale).rotate(axes.T).translate(point)
+        ... )
+        >>> axes_assembly = pv.AxesAssembly(user_matrix=transform.matrix)
+
+        Plot the box and the axes.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(box, color='black', line_width=5)
+        >>> _ = pl.add_actor(axes_assembly)
+        >>> pl.show()
+
+        Note how the box's z-axis is pointing from the cone's tip to its base. If we
+        want to flip this axis, we can "seed" its direction as the ``'-z'`` direction.
+
+        >>> box, _, axes = mesh.oriented_bounding_box(
+        ...     'outline', axis_2_direction='-z', return_meta=True
+        ... )
+        >>>
+
+        Plot the box and axes again. This time, use :class:`~pyvista.AxesAssemblySymmetric`
+        and position the axes in the center of the box.
+
+        >>> center = np.mean(pv.merge(box).points, axis=0)
+        >>> scale = box.length / 2
+        >>> transform = (
+        ...     pv.Transform()
+        ...     .scale(scale)
+        ...     .rotate(axes.T)
+        ...     .translate(center)
+        ... )
+        >>> axes_assembly = pv.AxesAssemblySymmetric(
+        ...     user_matrix=transform.matrix
+        ... )
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(box, color='black', line_width=5)
+        >>> _ = pl.add_actor(axes_assembly)
+        >>> pl.show()
         """
-        return self.bounding_box(
+        alg_input, matrix = self.align_xyz(
+            axis_0_direction=axis_0_direction,
+            axis_1_direction=axis_1_direction,
+            axis_2_direction=axis_2_direction,
+            return_matrix=True,
+        )
+        oriented = True
+        inverse_matrix = Transform(matrix).inverse_matrix
+
+        return alg_input._bounding_box(
+            matrix=matrix,
+            inverse_matrix=inverse_matrix,
             box_style=box_style,
-            oriented=True,
+            oriented=oriented,
             frame_width=frame_width,
             return_meta=return_meta,
             as_composite=as_composite,
@@ -7361,17 +7449,8 @@ class DataSetFilters:
 
         oriented : bool, default: False
             Orient the box using this dataset's :func:`~pyvista.principal_axes`. This
-            will generate a box that best fits this dataset's points.
-
-            .. note::
-
-                The names of the blocks of the returned :class:`~pyvista.MultiBlock`
-                when using this option correspond to the oriented box's local axes, not
-                the global x-y-z axes. E.g. the normal of the ``'+X'`` face of the
-                returned box has the same direction as the first axis in the returned
-                ``axes`` metadata (enabled using the ``return_meta`` option), and is not
-                necessarily pointing in the ``(1, 0, 0)`` direction.
-
+            will generate a box that best fits this dataset's points. See
+            :meth:`oriented_bounding_box` for more details.
 
         frame_width : float, optional
             Set the width of the frame. Only has an effect if ``box_style`` is
@@ -7385,7 +7464,8 @@ class DataSetFilters:
         as_composite : bool, default: True
             Return the box as a :class:`pyvista.MultiBlock` with six blocks: one for
             each face. Set this ``False`` to merge the output and return
-            :class:`~pyvista.PolyData`.
+            :class:`~pyvista.PolyData` with six cells instead. The faces in both
+            outputs are separate, i.e. there are duplicate points at the corners.
 
         See Also
         --------
@@ -7441,23 +7521,18 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(obb, color='blue', line_width=5)
         >>> pl.show()
 
-        Return the meta data for the box and use it to plot the box's axes with
-        :class:`~pyvista.AxesAssembly`.
+        Return the metadata for the box.
 
         >>> box, point, axes = mesh.bounding_box(
-        ...     'outline', oriented=True, return_meta=True
+        ...     'outline', return_meta=True
         ... )
-        >>> axes_assembly = pv.AxesAssembly()
 
-        The assembly is aligned with the x-y-z axes and positioned at the origin by
-        default. Create a transformation to scale, then rotate, then translate the
-        assembly. We transpose the axes and use them as an inverted rotation matrix.
+        Use the metadata to plot the box's axes using :class:`~pyvista.AxesAssembly`.
+        Create the assembly and position it at the box's corner. Scale it to a fraction
+        of the box's length.
 
         >>> scale = box.length / 4
-        >>> transform = (
-        ...     pv.Transform().scale(scale).rotate(axes.T).translate(point)
-        ... )
-        >>> axes_assembly.user_matrix = transform.matrix
+        >>> axes_assembly = pv.AxesAssembly(position=point, scale=scale)
 
         Plot the box and the axes.
 
@@ -7465,30 +7540,55 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(mesh)
         >>> _ = pl.add_mesh(box, color='black', line_width=5)
         >>> _ = pl.add_actor(axes_assembly)
+        >>> _ = pl.view_yz()
         >>> pl.show()
-
         """
+        if oriented:
+            return self.oriented_bounding_box(
+                box_style=box_style,
+                frame_width=frame_width,
+                return_meta=return_meta,
+                as_composite=as_composite,
+            )
+        else:
+            alg_input = self
+            matrix = None
+            inverse_matrix = None
 
+            return alg_input._bounding_box(
+                matrix=matrix,
+                inverse_matrix=inverse_matrix,
+                box_style=box_style,
+                oriented=oriented,
+                frame_width=frame_width,
+                return_meta=return_meta,
+                as_composite=as_composite,
+            )
+
+    def _bounding_box(
+        self,
+        matrix: None | NumpyArray[float],
+        inverse_matrix: None | NumpyArray[float],
+        box_style: Literal['frame', 'outline', 'cube'] = 'cube',
+        *,
+        oriented: bool = False,
+        frame_width: float = 0.1,
+        return_meta: bool = False,
+        as_composite: bool = True,
+    ):
         def _multiblock_to_polydata(multiblock):
             return multiblock.combine(merge_points=False).extract_geometry()
 
         # Validate style
         _validation.check_contains(item=box_style, container=['frame', 'outline', 'cube'])
 
-        if oriented:
-            # Align data to the xyz-axes
-            alg_input, matrix = self.align_xyz(return_matrix=True)
-            inverse_matrix = Transform(matrix).inverse_matrix
-        else:
-            alg_input = self
-
         # Create box
-        source = pyvista.CubeFacesSource(bounds=alg_input.bounds)
+        source = pyvista.CubeFacesSource(bounds=self.bounds)  # type: ignore[attr-defined]
         if box_style == 'frame':
             source.frame_width = frame_width
         box = source.output
 
-        # Modify output
+        # Modify box
         for face in box:
             face = cast(pyvista.PolyData, face)
             if box_style == 'outline':
@@ -7496,14 +7596,16 @@ class DataSetFilters:
             if oriented:
                 face.transform(inverse_matrix)
 
+        # Get output
         alg_output = box if as_composite else _multiblock_to_polydata(box)
         if return_meta:
             if not oriented:
                 axes = np.eye(3)
                 point = np.reshape(alg_output.bounds, (3, 2))[:, 0]  # point at min bounds
             else:
+                matrix = cast(NumpyArray[float], matrix)
+                inverse_matrix = cast(NumpyArray[float], inverse_matrix)
                 axes = matrix[:3, :3]  # principal axes
-                point = np.ones(3)
                 # We need to figure out which corner of the box to position the axes
                 # To do this we compare output axes to expected axes for all 8 corners
                 # of the box
@@ -7517,10 +7619,12 @@ class DataSetFilters:
                     [-1, 1, -1],
                     [-1, -1, -1],
                 ]
-                # Choose the axes which have the highest combined dot product
+                # Choose the best-aligned axes (whichever has the largest combined dot product)
                 dots = [np.dot(axes, diag) for diag in diagonals]
                 match = diagonals[np.argmax(np.sum(dots, axis=1))]
-                bnds = alg_input.bounds
+                # Choose min bound for positive direction, max bound for negative
+                bnds = self.bounds  # type: ignore[attr-defined]
+                point = np.ones(3)
                 point[0] = bnds.x_min if match[0] else bnds.x_max
                 point[1] = bnds.y_min if match[1] else bnds.y_max
                 point[2] = bnds.z_min if match[2] else bnds.z_max
