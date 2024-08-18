@@ -902,6 +902,16 @@ def test_has_module():
     assert not has_module('not_a_module')
 
 
+def test_fit_plane_to_points_resolution(airplane):
+    DEFAULT_RESOLUTION = 10
+    plane = fit_plane_to_points(airplane.points)
+    assert plane.n_points == (DEFAULT_RESOLUTION + 1) ** 2
+
+    resolution = (1.0, 2.0)  # Test with integer-valued floats
+    plane = fit_plane_to_points(airplane.points, resolution=resolution)
+    assert plane.n_points == (resolution[0] + 1) * (resolution[1] + 1)
+
+
 @pytest.fixture()
 def expected_best_fit_plane(airplane):
     # Create mesh and orthogonal planes aligned with the xyz axes
