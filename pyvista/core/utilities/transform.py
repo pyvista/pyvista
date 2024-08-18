@@ -1300,6 +1300,7 @@ class Transform(_vtk.vtkTransform):
         --------
         Apply a transformation to a point.
 
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> point = (1, 2, 3)
         >>> transform = pv.Transform().scale(2)
