@@ -1122,6 +1122,8 @@ def test_grdecl_reader():
 
     assert grid.n_cells == 27
     assert grid.n_points == 216
-    assert "KEYWORD" in grid.user_dict
-    assert "vtkGhostType" in grid.cell_data
+    assert grid.user_dict["MAPAXES"] == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+    assert grid.user_dict["MAPUNITS"] == "METRES"
+    assert grid.user_dict["GRIDUNIT"] == "METRES MAP"
+    assert "".join(grid.user_dict["KEYWORD"]) == "1234"
     assert np.count_nonzero(grid.cell_data["vtkGhostType"]) == 5
