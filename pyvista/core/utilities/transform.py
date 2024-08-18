@@ -1272,9 +1272,10 @@ class Transform(_vtk.vtkTransform):
     ):
         """Apply the current transformation to a point, points, or a dataset.
 
-        See Also
-        --------
-        pyvista.DataSetFilters.transform
+        .. note::
+
+            Points with integer values are cast to a float type before the
+            transformation is applied.
 
         Parameters
         ----------
@@ -1283,13 +1284,44 @@ class Transform(_vtk.vtkTransform):
 
         inplace : bool, default: False
             Update the object in-place. The object is always returned even if
-            this value is ``True``.
+            this value is ``True``. Only NumPy arrays and datasets may be modified
+            in-place.
 
         Returns
         -------
         np.ndarray or pyvista.DataSet
             Transformed array or dataset.
 
+        See Also
+        --------
+        pyvista.DataSetFilters.transform
+
+        Examples
+        --------
+        Apply a transformation to a point.
+
+        >>> import pyvista as pv
+        >>> point = (1, 2, 3)
+        >>> transform = pv.Transform().scale(2)
+        >>> new_point = transform.apply(point)
+        >>> new_point
+        array([2., 4., 6.])
+
+        Apply a transformation to a points array.
+
+        >>> points = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> new_points = transform.apply(points)
+        >>> new_points
+        array([[ 2.,  4.,  6.],
+               [ 8., 10., 12.]])
+
+        Apply a transformation to a dataset.
+
+        >>> dataset = pv.PolyData(points)
+        >>> new_dataset = transform.apply(dataset)
+        >>> new_dataset.points
+        pyvista_ndarray([[ 2.,  4.,  6.],
+                         [ 8., 10., 12.]], dtype=float32)
         """
         from pyvista.core.dataset import DataSet  # avoid circular import
 
