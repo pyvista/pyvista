@@ -1276,9 +1276,9 @@ def test_rotate_y():
     assert isinstance(out, pv.StructuredGrid)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=5)
+        out = mesh.rotate_y(30, point=5)
     with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=[1, 3])
+        out = mesh.rotate_y(30, point=[1, 3])
 
 
 def test_rotate_z():
@@ -1288,9 +1288,9 @@ def test_rotate_z():
     assert isinstance(out, pv.StructuredGrid)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=5)
+        out = mesh.rotate_z(30, point=5)
     with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=[1, 3])
+        out = mesh.rotate_z(30, point=[1, 3])
 
 
 def test_rotate_vector():
