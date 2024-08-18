@@ -1285,6 +1285,48 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
+@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize(
+    ('obj', 'return_self', 'return_type', 'return_dtype'),
+    [
+        (list(VECTOR), False, np.ndarray, float),
+        (VECTOR, False, np.ndarray, float),
+        (np.array(VECTOR), False, np.ndarray, float),
+        (np.array([VECTOR]), False, np.ndarray, float),
+        (np.array(VECTOR, dtype=float), True, np.ndarray, float),
+        (np.array([VECTOR], dtype=float), True, np.ndarray, float),
+        (pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32),
+        (pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32),
+        (pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float),
+    ],
+    ids=[
+        'list-int',
+        'tuple-int',
+        'array1d-int',
+        'array2d-int',
+        'array1d-float',
+        'array2d-float',
+        'polydata-float32',
+        'polydata-int',
+        'polydata-float',
+    ],
+)
+def test_transform_apply(transform, obj, return_self, return_type, return_dtype, inplace):
+    points_in_array = np.array(obj.points if isinstance(obj, pv.DataSet) else obj)
+    out = transform.scale(SCALE).apply(obj, inplace=inplace)
+
+    if inplace and return_self:
+        assert out is obj
+    else:
+        assert out is not obj
+    assert isinstance(out, return_type)
+
+    points_out = out.points if isinstance(out, pv.DataSet) else out
+    assert isinstance(points_out, np.ndarray)
+    assert points_out.dtype == return_dtype
+    assert np.array_equal(points_in_array * SCALE, points_out)
+
+
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
 def test_transform_matrix_list(transform, attr):
     matrix_list = getattr(transform, attr)

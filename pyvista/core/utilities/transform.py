@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import overload
 
 import numpy as np
 
@@ -11,10 +12,13 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import DataSet
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -1242,6 +1246,72 @@ class Transform(_vtk.vtkTransform):
     def n_transformations(self) -> int:  # numpydoc ignore: RT01
         """Return the current number of concatenated transformations."""
         return self.GetNumberOfConcatenatedTransforms()
+
+    @overload
+    def apply(  # numpydoc ignore: GL08
+        self,
+        obj: VectorLike[float] | MatrixLike[float],
+        /,
+        *,
+        inplace: bool,
+    ) -> NumpyArray[float]: ...
+    @overload
+    def apply(  # numpydoc ignore: GL08
+        self,
+        obj: DataSet,
+        /,
+        *,
+        inplace: bool,
+    ) -> DataSet: ...
+    def apply(
+        self,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet,
+        /,
+        *,
+        inplace: bool = False,
+    ):
+        """Apply the current transformation to a point, points, or a dataset.
+
+        See Also
+        --------
+        pyvista.DataSetFilters.transform
+
+        Parameters
+        ----------
+        obj : VectorLike[float] | MatrixLike[float] | pyvista.DataSet
+            Object to apply the transformation to.
+
+        inplace : bool, default: False
+            Update the object in-place. The object is always returned even if
+            this value is ``True``.
+
+        Returns
+        -------
+        np.ndarray or pyvista.DataSet
+            Transformed array or dataset.
+
+        """
+        from pyvista.core.dataset import DataSet  # avoid circular import
+
+        # Transform dataset
+        if isinstance(obj, DataSet):
+            return obj.transform(self, inplace=inplace)
+
+        # Validate array - make sure we have floats
+        array = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
+        array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
+
+        # Transform a single point
+        if array.shape == (3,):
+            out = (self.matrix @ (*array, 1))[:3]
+            if inplace:
+                array[:] = out
+                out = array
+            return out
+
+        # Transform many points
+        out = apply_transformation_to_points(self.matrix, array, inplace=inplace)
+        return array if inplace else out
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
