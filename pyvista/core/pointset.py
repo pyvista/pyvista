@@ -2694,18 +2694,26 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             raise TypeError("Only 3D structured grid can be casted to an explicit structured grid.")
 
         ni, nj, nk = self.dimensions
-        I, J, K = np.unravel_index(
-            np.arange(self.n_cells),
-            shape=(ni - 1, nj - 1, nk - 1),
-            order="F",
-        )
-
         grid = self.cast_to_unstructured_grid()
-        grid.cell_data["BLOCK_I"] = I
-        grid.cell_data["BLOCK_J"] = J
-        grid.cell_data["BLOCK_K"] = K
 
-        return grid.cast_to_explicit_structured_grid()
+        s1 = {"BLOCK_I", "BLOCK_J", "BLOCK_K"}
+        if not s1.issubset(self.cell_data):
+            I, J, K = np.unravel_index(
+                np.arange(self.n_cells),
+                shape=(ni - 1, nj - 1, nk - 1),
+                order="F",
+            )
+            grid.cell_data["BLOCK_I"] = I
+            grid.cell_data["BLOCK_J"] = J
+            grid.cell_data["BLOCK_K"] = K
+
+        grid = grid.cast_to_explicit_structured_grid()
+
+        if not s1.issubset(self.cell_data):
+            for key in s1:
+                grid.cell_data.pop(key, None)
+
+        return grid
 
     def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
@@ -3023,7 +3031,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             Cleaned explicit structured grid.
 
         """
-        return (
+        grid = (
             self.cast_to_unstructured_grid()
             .clean(
                 tolerance=tolerance,
@@ -3035,6 +3043,13 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             )
             .cast_to_explicit_structured_grid()
         )
+
+        s1 = {"BLOCK_I", "BLOCK_J", "BLOCK_K"}
+        if not s1.issubset(self.cell_data):
+            for key in s1:
+                grid.cell_data.pop(key, None)
+
+        return grid
 
     def save(
         self,
