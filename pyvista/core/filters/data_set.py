@@ -7625,9 +7625,9 @@ class DataSetFilters:
                 # Choose min bound for positive direction, max bound for negative
                 bnds = self.bounds  # type: ignore[attr-defined]
                 point = np.ones(3)
-                point[0] = bnds.x_min if match[0] else bnds.x_max
-                point[1] = bnds.y_min if match[1] else bnds.y_max
-                point[2] = bnds.z_min if match[2] else bnds.z_max
+                point[0] = bnds.x_min if match[0] == 1 else bnds.x_max
+                point[1] = bnds.y_min if match[1] == 1 else bnds.y_max
+                point[2] = bnds.z_min if match[2] == 1 else bnds.z_max
 
                 # Transform point
                 point = (inverse_matrix @ [*point, 1])[:3]
