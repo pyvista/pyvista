@@ -873,7 +873,7 @@ def test_image_data_empty_init(dims):
     assert image.volume == 0
 
     points = image.points
-    assert np.array_equal(points, np.empty((0, 3)))
+    assert np.array_equal(points, np.zeros((0, 3)))
 
 
 def test_image_data_invald_args():
