@@ -1143,6 +1143,7 @@ def test_grdecl_reader():
 
     assert grid.n_cells == 27
     assert grid.n_points == 216
+    assert np.allclose(grid.cell_data["PORO"].sum(), 0.1 * 27)
     assert grid.user_dict["MAPAXES"] == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
     assert grid.user_dict["MAPUNITS"] == "METRES"
     assert grid.user_dict["GRIDUNIT"] == "METRES MAP"
