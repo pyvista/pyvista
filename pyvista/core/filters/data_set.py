@@ -22,12 +22,10 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
-from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -38,7 +36,7 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -388,11 +386,11 @@ class DataSetFilters:
 
         axes, std = pyvista.principal_axes(self.points, return_std=True)
 
-        # Set directions to +X,+Y,+Z by default
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
+            # Set directions of first two axes to +X,+Y by default
+            # Keep third axis as None (direction cannot be set if first two are set)
             axis_0_direction = (1.0, 0.0, 0.0)
             axis_1_direction = (0.0, 1.0, 0.0)
-            axis_2_direction = (0.0, 0.0, 1.0)
         else:
             axis_0_direction = _validate_vector(axis_0_direction, name='axis 0 direction')
             axis_1_direction = _validate_vector(axis_1_direction, name='axis 1 direction')
@@ -6849,7 +6847,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: _vtk.vtkMatrix4x4 | _vtk.vtkTransform | NumpyArray[float],
+        trans: TransformLike,
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
@@ -6877,7 +6875,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
+        trans : TransformLike
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
@@ -6912,9 +6910,8 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here a 4x4 :class:`numpy.ndarray` is used, but
-        ``vtk.vtkMatrix4x4`` and ``vtk.vtkTransform`` are also
-        accepted.
+        Here a 4x4 :class:`numpy.ndarray` is used, but any :class:`~pyvista.TransformLike`
+        is accepted.
 
         >>> transform_matrix = np.array(
         ...     [
@@ -6931,28 +6928,9 @@ class DataSetFilters:
         if inplace and isinstance(self, pyvista.Grid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
-        if isinstance(trans, _vtk.vtkMatrix4x4):
-            m = trans
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        elif isinstance(trans, _vtk.vtkTransform):
-            t = trans
-            m = trans.GetMatrix()
-        elif isinstance(trans, np.ndarray):
-            if trans.shape != (4, 4):
-                raise ValueError('Transformation array must be 4x4')
-            m = vtkmatrix_from_array(trans)
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        else:
-            raise TypeError(
-                'Input transform must be either:\n'
-                '\tvtk.vtkMatrix4x4\n'
-                '\tvtk.vtkTransform\n'
-                '\t4x4 np.ndarray\n',
-            )
+        t = trans if isinstance(trans, Transform) else Transform(trans)
 
-        if m.GetElement(3, 3) == 0:
+        if t.matrix[3, 3] == 0:
             raise ValueError("Transform element (3,3), the inverse scale term, is zero")
 
         # vtkTransformFilter truncates the result if the input is an integer type
@@ -7085,7 +7063,7 @@ class DataSetFilters:
         See the :ref:`reflect_example` for more examples using this filter.
 
         """
-        t = transformations.reflection(normal, point=point)
+        t = Transform().reflect(normal, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -7171,7 +7149,7 @@ class DataSetFilters:
             This is stored as ``"vtkGlobalCellIds"`` within the ``cell_data``
             of the output dataset(s).
 
-        as_composite : bool, default: False
+        as_composite : bool, default: True
             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
 
         See Also

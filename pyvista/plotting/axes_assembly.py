@@ -484,6 +484,8 @@ class AxesAssembly(_XYZAssembly):
             prop = label.prop
             prop.bold = True
             prop.italic = True
+            prop.enable_shadow()
+            prop.SetShadowOffset(-1, 1)
 
     def __repr__(self):
         """Representation of the axes assembly."""
