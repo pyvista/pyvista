@@ -250,22 +250,19 @@ class DataSetFilters:
             name (e.g. ``'x'`` or ``'-x'``, etc.).
 
         merge_points : bool, default: True
-            Merge points before computing the :func:`~pyvista.principal_axes` for the
-            alignment. Enabled by default to ensure only unique points are used. Set
-            this to ``False`` to use the mesh's points as-is without merging. Setting
-            this to ``False`` is not recommended since any redundant points may skew or
-            bias the alignment in an undesired manner.
+            Merge points before computing the mesh's :func:`~pyvista.principal_axes`
+            for the alignment. Enabled by default since duplicate points can negatively
+            impact the alignment. Set this to ``False`` to use the mesh's points as-is
+            without merging.
 
             .. note::
 
-                The points only are merged to compute the mesh's principal axes. This
-                only affects the transformation used for the alignment.
-                The points of the returned mesh are *not* merged and are passed-through
-                as-is from the input.
+                The points are only merged for the alignment. The points of the returned
+                mesh are *not* merged.
 
         cell_centers : bool, default: False
-            Use the mesh's :meth:`cell_centers` instead of its points to compute the
-            :func:`~pyvista.principal_axes` for the alignment.
+            Use the mesh's :meth:`cell_centers` instead of its points when computing the
+            mesh's :func:`~pyvista.principal_axes` for the alignment.
 
         return_matrix : bool, default: False
             Return the transform matrix as well as the aligned mesh.
