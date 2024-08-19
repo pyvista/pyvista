@@ -452,9 +452,15 @@ def test_transform_filter(ant, sphere, uniform, airplane, tetbeam):
     NUMBER = 42
     transform = pv.Transform().translate(NUMBER, NUMBER, NUMBER)
     bounds_before = np.array(multi.bounds)
+    n_blocks_before = multi.n_blocks
+
     multi.transform(transform, inplace=False, transform_all_input_vectors=False, progress_bar=False)
+
     bounds_after = np.array(multi.bounds)
+    n_blocks_after = multi.n_blocks
+
     assert np.allclose(bounds_before + 42, bounds_after)
+    assert n_blocks_before == n_blocks_after
 
 
 def test_multi_block_copy(ant, sphere, uniform, airplane, tetbeam):

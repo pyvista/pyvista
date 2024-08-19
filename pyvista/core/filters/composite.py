@@ -271,15 +271,12 @@ class CompositeFilters:
 
         """
         trans = pyvista.Transform(trans)
-        kwargs = dict(
-            trans=trans,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-            progress_bar=progress_bar,
-        )
         for i, block in enumerate(self):  # type: ignore[var-annotated, arg-type]
-            if isinstance(block, pyvista.DataSet):
-                self[i] = block.transform(**kwargs)  # type: ignore[index]
-            elif isinstance(block, pyvista.MultiBlock):
-                return block.transform(**kwargs)
+            if block is not None:
+                self[i] = block.transform(  # type: ignore[index]
+                    trans,
+                    transform_all_input_vectors=transform_all_input_vectors,
+                    inplace=inplace,
+                    progress_bar=progress_bar,
+                )
         return self
