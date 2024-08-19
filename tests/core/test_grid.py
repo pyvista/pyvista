@@ -1444,6 +1444,10 @@ def test_ExplicitStructuredGrid_raise_init():
         pv.ExplicitStructuredGrid((2, 3, 4), {CellType.HEXAHEDRON: np.random.randint(10, size=(10, 8))}, np.random.rand(8, 3))
 
 
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 2, 2),
+    reason="Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean",
+)
 def test_ExplicitStructuredGrid_clean():
     grid = examples.load_explicit_structured()
 
