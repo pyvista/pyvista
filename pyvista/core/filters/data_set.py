@@ -205,6 +205,8 @@ class DataSetFilters:
         axis_0_direction: VectorLike[float] | str | None = None,
         axis_1_direction: VectorLike[float] | str | None = None,
         axis_2_direction: VectorLike[float] | str | None = None,
+        merge_points: bool = True,
+        cell_centers: bool = False,
         return_matrix: bool = False,
     ):
         """Align a dataset to the x-y-z axes.
@@ -246,6 +248,24 @@ class DataSetFilters:
             alignment. If set, this axis is flipped such that it best aligns with
             the specified vector. Can be a vector or string specifying the axis by
             name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        merge_points : bool, default: True
+            Merge points before computing the :func:`~pyvista.principal_axes` for the
+            alignment. Enabled by default to ensure only unique points are used. Set
+            this to ``False`` to use the mesh's points as-is without merging. Setting
+            this to ``False`` is not recommended since any redundant points may skew or
+            bias the alignment in an undesired manner.
+
+            .. note::
+
+                The points only are merged to compute the mesh's principal axes. This
+                only affects the transformation used for the alignment.
+                The points of the returned mesh are *not* merged and are passed-through
+                as-is from the input.
+
+        cell_centers : bool, default: False
+            Use the mesh's :meth:`cell_centers` instead of its points to compute the
+            :func:`~pyvista.principal_axes` for the alignment.
 
         return_matrix : bool, default: False
             Return the transform matrix as well as the aligned mesh.
@@ -384,7 +404,18 @@ class DataSetFilters:
                 vector = _validation.validate_array3(vector, dtype_out=float, name=name)
             return vector
 
-        axes, std = pyvista.principal_axes(self.points, return_std=True)
+        # Compute principal axes from points
+        if cell_centers:
+            points = self.cell_centers().points
+        elif merge_points:
+            append_filter = _vtk.vtkAppendFilter()
+            append_filter.MergePointsOn()
+            append_filter.AddInputData(self)
+            append_filter.Update()
+            points = pyvista.wrap(append_filter.GetOutput()).points  # type: ignore[union-attr]
+        else:
+            points = self.points
+        axes, std = pyvista.principal_axes(points, return_std=True)
 
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
             # Set directions of first two axes to +X,+Y by default
