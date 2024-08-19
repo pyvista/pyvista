@@ -7217,7 +7217,7 @@ class DataSetFilters:
 
     def oriented_bounding_box(
         self,
-        box_style: Literal['frame', 'outline', 'cube'] = 'cube',
+        box_style: Literal['frame', 'outline', 'face'] = 'face',
         *,
         axis_0_direction: VectorLike[float] | str | None = None,
         axis_1_direction: VectorLike[float] | str | None = None,
@@ -7246,8 +7246,8 @@ class DataSetFilters:
 
         Parameters
         ----------
-        box_style : 'frame' | 'outline' | 'cube', default: 'cube'
-            Choose the style of the box. If ``'cube'`` (default), each face of the cube
+        box_style : 'frame' | 'outline' | 'face', default: 'face'
+            Choose the style of the box. If ``'face'`` (default), each face of the cube
             is a single quad cell. If ``'outline'``, the edges of each face are returned
             as line cells. If ``'frame'``, the center portion of each face is removed to
             create a picture-frame style border with each face having four quads (one
@@ -7399,7 +7399,7 @@ class DataSetFilters:
 
     def bounding_box(
         self,
-        box_style: Literal['frame', 'outline', 'cube'] = 'cube',
+        box_style: Literal['frame', 'outline', 'face'] = 'face',
         *,
         oriented: bool = False,
         frame_width: float = 0.1,
@@ -7419,8 +7419,8 @@ class DataSetFilters:
 
         Parameters
         ----------
-        box_style : 'frame' | 'outline' | 'cube', default: 'cube'
-            Choose the style of the box. If ``'cube'`` (default), each face of the cube
+        box_style : 'frame' | 'outline' | 'face', default: 'face'
+            Choose the style of the box. If ``'face'`` (default), each face of the cube
             is a single quad cell. If ``'outline'``, the edges of each face are returned
             as line cells. If ``'frame'``, the center portion of each face is removed to
             create a picture-frame style border with each face having four quads (one
@@ -7553,7 +7553,7 @@ class DataSetFilters:
         *,
         matrix: NumpyArray[float] | None,
         inverse_matrix: NumpyArray[float] | None,
-        box_style: Literal['frame', 'outline', 'cube'],
+        box_style: Literal['frame', 'outline', 'face'],
         oriented: bool,
         frame_width: float,
         return_meta: bool,
@@ -7563,7 +7563,7 @@ class DataSetFilters:
             return multiblock.combine(merge_points=False).extract_geometry()
 
         # Validate style
-        _validation.check_contains(item=box_style, container=['frame', 'outline', 'cube'])
+        _validation.check_contains(item=box_style, container=['frame', 'outline', 'face'])
 
         # Create box
         source = pyvista.CubeFacesSource(bounds=self.bounds)  # type: ignore[attr-defined]
