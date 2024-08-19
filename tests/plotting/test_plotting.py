@@ -4685,7 +4685,7 @@ def oblique_cone():
     return pv.examples.download_oblique_cone()
 
 
-@pytest.mark.parametrize('box_style', ['outline', 'cube', 'frame'])
+@pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
 def test_bounding_box(oblique_cone, box_style):
     pl = pv.Plotter()
     box = oblique_cone.bounding_box(box_style)
