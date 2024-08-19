@@ -443,7 +443,26 @@ def read_grdecl(
         split: bool = True,
         converter: Optional[Callable] = None,
     ) -> list | str:
-        """Read a keyword."""
+        """
+        Read a keyword.
+        
+        Parameters
+        ----------
+        f : TextIO
+            File buffer.
+
+        split : bool, default: True
+            If True, split strings.
+
+        converter : callable, optional
+            Function to apply to split strings.
+        
+        Returns
+        -------
+        list | str
+            A list or a string.
+
+        """
         out = []
 
         while True:
@@ -480,7 +499,26 @@ def read_grdecl(
         return out
 
     def read_buffer(f: TextIO, other_keywords: list[str]) -> tuple[dict, list[str]]:
-        """Read a file buffer."""
+        """
+        Read a file buffer.
+        
+        Parameters
+        ----------
+        f : TextIO
+            File buffer.
+
+        other_keywords : sequence[str], optional
+            Additional keywords to read that are ignored by default.
+
+        Returns
+        -------
+        dict
+            Dictionary of read keywords.
+
+        sequence[str]
+            Included file names.
+        
+        """
         keys = list(property_keywords) + other_keywords
         keys = tuple(keys)
 
@@ -534,7 +572,23 @@ def read_grdecl(
         return keywords, includes
 
     def read_keywords(filename: str | Path, other_keywords: list[str]) -> dict:
-        """Read a GRDECL file and return its keywords."""
+        """
+        Read a GRDECL file and return its keywords.
+        
+        Parameters
+        ----------
+        filename : str | Path
+            The path to the GRDECL file to read.
+
+        other_keywords : sequence[str], optional
+            Additional keywords to read that are ignored by default.
+
+        Returns
+        -------
+        dict
+            Dictionary of read keywords.
+
+        """
         with open(filename) as f:
             keywords, includes = read_buffer(f, other_keywords)
 
