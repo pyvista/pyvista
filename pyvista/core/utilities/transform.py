@@ -1253,8 +1253,9 @@ class Transform(_vtk.vtkTransform):
         obj: VectorLike[float] | MatrixLike[float],
         /,
         *,
-        inverse: bool,
-        copy: bool,
+        inverse: bool = ...,
+        copy: bool = ...,
+        transform_all_input_vectors: bool = ...,
     ) -> NumpyArray[float]: ...
     @overload
     def apply(  # numpydoc ignore: GL08
@@ -1262,8 +1263,9 @@ class Transform(_vtk.vtkTransform):
         obj: DataSet,
         /,
         *,
-        inverse: bool,
-        copy: bool,
+        inverse: bool = ...,
+        copy: bool = ...,
+        transform_all_input_vectors: bool = ...,
     ) -> DataSet: ...
     def apply(
         self,
