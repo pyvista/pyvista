@@ -3884,17 +3884,13 @@ def test_align():
     assert np.abs(dist).mean() < 1e-3
 
 
-@pytest.fixture()
-def oblique_cone():
-    return examples.download_oblique_cone()
-
-
-def test_align_xyz(oblique_cone):
-    aligned = oblique_cone.align_xyz()
+def test_align_xyz():
+    mesh = examples.download_oblique_cone()
+    aligned = mesh.align_xyz()
     assert np.allclose(aligned.center, (0, 0, 0))
 
-    aligned = oblique_cone.align_xyz(centered=False)
-    assert np.allclose(aligned.center, oblique_cone.center)
+    aligned = mesh.align_xyz(centered=False)
+    assert np.allclose(aligned.center, mesh.center)
 
 
 def test_align_xyz_merge_points():
@@ -3938,10 +3934,11 @@ def test_align_xyz_cell_centers():
     assert np.array_equal(np.abs(axes), np.abs(expected_axes))
 
 
-def test_align_xyz_return_matrix(oblique_cone):
-    initial_bounds = oblique_cone.bounds
+def test_align_xyz_return_matrix():
+    mesh = examples.download_oblique_cone()
+    initial_bounds = mesh.bounds
 
-    aligned, matrix = oblique_cone.align_xyz(return_matrix=True)
+    aligned, matrix = mesh.align_xyz(return_matrix=True)
     assert isinstance(matrix, np.ndarray)
     assert matrix.shape == (4, 4)
 
