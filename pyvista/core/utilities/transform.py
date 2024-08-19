@@ -1253,6 +1253,7 @@ class Transform(_vtk.vtkTransform):
         obj: VectorLike[float] | MatrixLike[float],
         /,
         *,
+        invert: bool,
         copy: bool,
     ) -> NumpyArray[float]: ...
     @overload
@@ -1261,6 +1262,7 @@ class Transform(_vtk.vtkTransform):
         obj: DataSet,
         /,
         *,
+        invert: bool,
         copy: bool,
     ) -> DataSet: ...
     def apply(
@@ -1268,9 +1270,10 @@ class Transform(_vtk.vtkTransform):
         obj: VectorLike[float] | MatrixLike[float] | DataSet,
         /,
         *,
+        invert: bool = False,
         copy: bool = True,
     ):
-        """Apply the current transformation to a point, points, or a dataset.
+        """Apply the current transformation :attr:`matrix` to points or a dataset.
 
         .. note::
 
@@ -1281,6 +1284,10 @@ class Transform(_vtk.vtkTransform):
         ----------
         obj : VectorLike[float] | MatrixLike[float] | pyvista.DataSet
             Object to apply the transformation to.
+
+        invert : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
 
         copy : bool, default: True
             Return a copy of the input with the transformation applied. Set this to
@@ -1296,6 +1303,7 @@ class Transform(_vtk.vtkTransform):
         See Also
         --------
         pyvista.DataSetFilters.transform
+            Transform a dataset. Used internally by this method.
 
         Examples
         --------
@@ -1330,22 +1338,23 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, DataSet):
-            return obj.transform(self, inplace=inplace)
+            return obj.transform(self.copy().invert() if invert else self, inplace=inplace)
 
+        matrix = self.inverse_matrix if invert else self.matrix
         # Validate array - make sure we have floats
         array = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
 
         # Transform a single point
         if array.shape == (3,):
-            out = (self.matrix @ (*array, 1))[:3]
+            out = (matrix @ (*array, 1))[:3]
             if inplace:
                 array[:] = out
                 out = array
             return out
 
         # Transform many points
-        out = apply_transformation_to_points(self.matrix, array, inplace=inplace)
+        out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return array if inplace else out
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
