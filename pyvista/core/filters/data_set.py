@@ -1715,6 +1715,11 @@ class DataSetFilters:
         pyvista.PolyData
             Mesh containing an outline of the original dataset.
 
+        See Also
+        --------
+        bounding_box
+            Similar filter with additional options.
+
         Examples
         --------
         Generate and plot the outline of a sphere.  This is
@@ -7234,8 +7239,7 @@ class DataSetFilters:
             The names of the blocks of the returned :class:`~pyvista.MultiBlock`
             correspond to the oriented box's local axes, not the global x-y-z axes.
             E.g. the normal of the ``'+X'`` face of the returned box has the same
-            direction as the first axis in the returned ``axes`` metadata (enabled
-            using the ``return_meta`` option), and is not necessarily pointing in
+            direction as the box's primary axis, and is not necessarily pointing in
             the +x direction ``(1, 0, 0)``.
 
         .. versionadded:: 0.45
@@ -7318,9 +7322,6 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(mesh, color='red')
         >>> _ = pl.add_mesh(box, opacity=0.5)
         >>> pl.show()
-
-        Return the metadata for the box and use it to plot the box's axes with
-        :class:`~pyvista.AxesAssembly`.
 
         Return the metadata for the box.
 
@@ -7448,8 +7449,11 @@ class DataSetFilters:
 
         See Also
         --------
+        outline
+            Lightweight version of this filter with fewer options.
+
         oriented_bounding_box
-            Similar filter with ``oriented=True`` by default.
+            Similar filter with ``oriented=True`` by default and more options.
 
         pyvista.Plotter.add_bounding_box
             Add a bounding box to a scene.
