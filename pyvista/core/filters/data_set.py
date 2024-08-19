@@ -250,7 +250,7 @@ class DataSetFilters:
             name (e.g. ``'x'`` or ``'-x'``, etc.).
 
         merge_points : bool, default: True
-            Merge points before computing the mesh's :func:`~pyvista.principal_axes`
+            Merge coincident points before computing the mesh's :func:`~pyvista.principal_axes`
             for the alignment. Enabled by default since duplicate points can negatively
             impact the alignment. Set this to ``False`` to use the mesh's points as-is
             without merging.
