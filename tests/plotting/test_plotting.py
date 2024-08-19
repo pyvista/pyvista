@@ -2182,7 +2182,7 @@ def test_user_matrix_volume(uniform):
     volume = p.add_volume(uniform, user_matrix=shear)
     np.testing.assert_almost_equal(volume.user_matrix, shear)
 
-    match = 'Shape must be (4, 4)'
+    match = 'Shape must be one of [(3, 3), (4, 4)].'
     with pytest.raises(ValueError, match=re.escape(match)):
         p.add_volume(uniform, user_matrix=np.eye(5))
 
@@ -2198,7 +2198,7 @@ def test_user_matrix_mesh(sphere):
     actor = p.add_mesh(sphere, user_matrix=shear)
     np.testing.assert_almost_equal(actor.user_matrix, shear)
 
-    match = 'Shape must be (4, 4)'
+    match = 'Shape must be one of [(3, 3), (4, 4)].'
     with pytest.raises(ValueError, match=re.escape(match)):
         p.add_mesh(sphere, user_matrix=np.eye(5))
 
