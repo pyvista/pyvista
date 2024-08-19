@@ -415,7 +415,7 @@ def read_grdecl(
     Read a ``'.GRDECL'`` file.
 
     >>> import pyvista as pv
-    >>> grid = pv.read_grdecl('file.GRDECL')
+    >>> grid = pv.read('file.GRDECL')
 
     Unused keywords contained in the file are stored in :attr:`pyvista.ExplicitStructuredGrid.user_dict`:
 
