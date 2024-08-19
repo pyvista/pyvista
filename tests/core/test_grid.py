@@ -1469,12 +1469,12 @@ def test_ExplicitStructuredGrid_clean():
 
 def test_StructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.download_office()
-    grid = grid.hide_cells(range(80, 120))
+    grid = grid.hide_cells(np.arange(80, 120))
     grid = pv.ExplicitStructuredGrid(grid)
     assert grid.n_cells == 7220
     assert grid.n_points == 8400
     assert 'vtkGhostType' in grid.cell_data
-    assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
+    assert (grid.cell_data['vtkGhostType'] > 0).sum() == 40
 
 
 def test_copy_no_copy_wrap_object(datasets):
