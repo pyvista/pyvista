@@ -652,6 +652,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                [1., 1., 1.]])
 
         """
+        # Handle empty case
+        if not all(self.dimensions):
+            return np.zeros((0, 3))
+
         # Get grid dimensions
         nx, ny, nz = self.dimensions
         nx -= 1

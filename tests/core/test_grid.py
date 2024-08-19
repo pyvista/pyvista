@@ -864,6 +864,18 @@ def test_create_image_data_from_specs():
     assert grid != grid_from_grid
 
 
+@pytest.mark.parametrize('dims', [None, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)])
+def test_image_data_empty_init(dims):
+    image = pv.ImageData(dimensions=dims)
+    assert image.n_points == 0
+    assert image.n_cells == 0
+    assert image.area == 0
+    assert image.volume == 0
+
+    points = image.points
+    assert np.array_equal(points, np.zeros((0, 3)))
+
+
 def test_image_data_invald_args():
     with pytest.raises(TypeError):
         pv.ImageData(1)
