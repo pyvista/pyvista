@@ -443,6 +443,20 @@ def test_combine_filter(ant, sphere, uniform, airplane, tetbeam):
     assert isinstance(geom, pv.UnstructuredGrid)
 
 
+def test_transform_filter(ant, sphere, uniform, airplane, tetbeam):
+    multi = multi_from_datasets(ant, sphere, uniform)
+    nested = multi_from_datasets(airplane, tetbeam)
+    multi.append(nested)
+    multi.append(None)
+
+    NUMBER = 42
+    transform = pv.Transform().translate(NUMBER, NUMBER, NUMBER)
+    bounds_before = np.array(multi.bounds)
+    multi.transform(transform, inplace=False, transform_all_input_vectors=False, progress_bar=False)
+    bounds_after = np.array(multi.bounds)
+    assert np.allclose(bounds_before + 42, bounds_after)
+
+
 def test_multi_block_copy(ant, sphere, uniform, airplane, tetbeam):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     # Now check everything

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista
@@ -11,6 +13,9 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import TransformLike
 
 
 @abstract_class
@@ -209,3 +214,72 @@ class CompositeFilters:
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
+
+    def transform(
+        self,
+        trans: TransformLike,
+        transform_all_input_vectors=False,
+        inplace=True,
+        progress_bar=False,
+    ):
+        """Transform all blocks in this composite dataset.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        trans : TransformLike
+            Accepts any transformation input such as a :class:`~pyvista.Transform`
+            or a 3x3 or 4x4 array.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all arrays with three components are
+            transformed. Otherwise, only the normals and vectors are
+            transformed.  See the warning for more details.
+
+        inplace : bool, default: False
+            When ``True``, modifies the dataset inplace.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Transformed dataset. Return type of all blocks matches input unless
+            input dataset is a :class:`pyvista.ImageData`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
+
+        See Also
+        --------
+        :class:`pyvista.Transform`
+            Describe linear transformations via a 4x4 matrix.
+
+        Examples
+        --------
+        Translate a mesh by ``(50, 100, 200)``. Here a :class:`~pyvista.Transform` is
+        used, but any :class:`~pyvista.TransformLike` is accepted.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.MultiBlock([pv.Sphere(), pv.Plane()])
+        >>> transform = pv.Transform().translate(50, 100, 200)
+        >>> transformed = mesh.transform(transform)
+        >>> transformed.plot(show_edges=True)
+
+        """
+        trans = pyvista.Transform(trans)
+        kwargs = dict(
+            trans=trans,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+            progress_bar=progress_bar,
+        )
+        for i, block in enumerate(self):  # type: ignore[var-annotated, arg-type]
+            if isinstance(block, pyvista.DataSet):
+                self[i] = block.transform(**kwargs)  # type: ignore[index]
+            elif isinstance(block, pyvista.MultiBlock):
+                return block.transform(**kwargs)
+        return self
