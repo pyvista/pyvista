@@ -1336,7 +1336,7 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
     assert points_out.dtype == return_dtype
     assert np.array_equal(points_in_array * SCALE, points_out)
 
-    inverted = transform.apply(out, invert=True)
+    inverted = transform.apply(out, inverse=True)
     inverted_points = inverted.points if isinstance(inverted, pv.DataSet) else inverted
     assert np.array_equal(inverted_points, points_in_array)
     assert not transform.is_inverted

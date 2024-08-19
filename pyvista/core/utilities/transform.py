@@ -1253,7 +1253,7 @@ class Transform(_vtk.vtkTransform):
         obj: VectorLike[float] | MatrixLike[float],
         /,
         *,
-        invert: bool,
+        inverse: bool,
         copy: bool,
     ) -> NumpyArray[float]: ...
     @overload
@@ -1262,7 +1262,7 @@ class Transform(_vtk.vtkTransform):
         obj: DataSet,
         /,
         *,
-        invert: bool,
+        inverse: bool,
         copy: bool,
     ) -> DataSet: ...
     def apply(
@@ -1270,22 +1270,25 @@ class Transform(_vtk.vtkTransform):
         obj: VectorLike[float] | MatrixLike[float] | DataSet,
         /,
         *,
-        invert: bool = False,
+        inverse: bool = False,
         copy: bool = True,
+        transform_all_input_vectors: bool = False,
     ):
         """Apply the current transformation :attr:`matrix` to points or a dataset.
 
         .. note::
 
             Points with integer values are cast to a float type before the
-            transformation is applied.
+            transformation is applied. A similar casting is also performed when
+            transforming datasets. See also the notes at :func:`~pyvista.DataSetFilters.transform`
+            which is used by this filter under the hood.
 
         Parameters
         ----------
         obj : VectorLike[float] | MatrixLike[float] | pyvista.DataSet
             Object to apply the transformation to.
 
-        invert : bool, default: False
+        inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
             :attr:`matrix`.
 
@@ -1295,6 +1298,11 @@ class Transform(_vtk.vtkTransform):
             NumPy arrays and datasets. A copy is always returned for tuple and list
             inputs or point arrays with integers.
 
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only the points,
+            normals and active vectors are transformed. Has no effect if the input is
+            not a dataset.
+
         Returns
         -------
         np.ndarray or pyvista.DataSet
@@ -1303,7 +1311,7 @@ class Transform(_vtk.vtkTransform):
         See Also
         --------
         pyvista.DataSetFilters.transform
-            Transform a dataset. Used internally by this method.
+            Transform a dataset.
 
         Examples
         --------
@@ -1313,34 +1321,45 @@ class Transform(_vtk.vtkTransform):
         >>> import pyvista as pv
         >>> point = (1, 2, 3)
         >>> transform = pv.Transform().scale(2)
-        >>> new_point = transform.apply(point)
-        >>> new_point
+        >>> transformed_point = transform.apply(point)
+        >>> transformed_point
         array([2., 4., 6.])
 
         Apply a transformation to a points array.
 
         >>> points = np.array([[1, 2, 3], [4, 5, 6]])
-        >>> new_points = transform.apply(points)
-        >>> new_points
+        >>> transformed_points = transform.apply(points)
+        >>> transformed_points
         array([[ 2.,  4.,  6.],
                [ 8., 10., 12.]])
 
         Apply a transformation to a dataset.
 
         >>> dataset = pv.PolyData(points)
-        >>> new_dataset = transform.apply(dataset)
-        >>> new_dataset.points
+        >>> transformed_dataset = transform.apply(dataset)
+        >>> transformed_dataset.points
         pyvista_ndarray([[ 2.,  4.,  6.],
                          [ 8., 10., 12.]], dtype=float32)
+
+        Apply the inverse.
+
+        >>> inverted_dataset = transform.apply(dataset, inverse=True)
+        >>> inverted_dataset.points
+        pyvista_ndarray([[0.5, 1. , 1.5],
+                         [2. , 2.5, 3. ]], dtype=float32)
         """
         from pyvista.core.dataset import DataSet  # avoid circular import
 
         inplace = not copy
         # Transform dataset
         if isinstance(obj, DataSet):
-            return obj.transform(self.copy().invert() if invert else self, inplace=inplace)
+            return obj.transform(
+                self.copy().invert() if inverse else self,
+                inplace=inplace,
+                transform_all_input_vectors=transform_all_input_vectors,
+            )
 
-        matrix = self.inverse_matrix if invert else self.matrix
+        matrix = self.inverse_matrix if inverse else self.matrix
         # Validate array - make sure we have floats
         array = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
