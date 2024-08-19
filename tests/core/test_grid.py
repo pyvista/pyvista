@@ -1195,6 +1195,18 @@ def test_ExplicitStructuredGrid_init():
     assert 'N Points' in str(grid)
     assert 'N Arrays' in str(grid)
 
+    dims = (2, 2, 3)
+    cells = {pv.CellType.HEXAHEDRON: np.arange(16).reshape(2, 8)}
+    points = [
+        [0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 1.0, 1.0],
+        [0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 1.0, 1.0],
+        [0.0, 0.0, 2.0], [1.0, 0.0, 2.0], [1.0, 1.0, 2.0], [0.0, 1.0, 2.0],
+    ]
+    grid = pv.ExplicitStructuredGrid(dims, cells, points)
+    assert grid.n_cells == 2
+    assert grid.n_points == 16
+
 
 def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
     block_i = np.fromstring(
@@ -1416,6 +1428,21 @@ def test_ExplicitStructuredGrid_raise_init():
     with pytest.raises(ValueError, match="Too many args"):
         pv.ExplicitStructuredGrid(1, 2, 3, True)
 
+    with pytest.raises(ValueError, match="Expected dimensions to be length 3"):
+        pv.ExplicitStructuredGrid((1, 2), np.random.rand(4, 3))
+
+    with pytest.raises(ValueError, match="Expected dimensions to be length 3"):
+        pv.ExplicitStructuredGrid((1, 2), np.random.randint(10, size=9), np.random.rand(8, 3))
+
+    with pytest.raises(ValueError, match="Expected cells to be length 54"):
+        pv.ExplicitStructuredGrid((2, 3, 4), np.random.randint(10, size=9 * 6 - 1), np.random.rand(8, 3))
+
+    with pytest.raises(ValueError, match="Expected cells to be a single cell of type 12"):
+        pv.ExplicitStructuredGrid((2, 3, 4), {CellType.QUAD: np.random.randint(10, size=(10, 8))}, np.random.rand(8, 3))
+
+    with pytest.raises(ValueError, match="Expected cells to be of shape"):
+        pv.ExplicitStructuredGrid((2, 3, 4), {CellType.HEXAHEDRON: np.random.randint(10, size=(10, 8))}, np.random.rand(8, 3))
+
 
 def test_ExplicitStructuredGrid_clean():
     grid = examples.load_explicit_structured()
@@ -1439,12 +1466,9 @@ def test_ExplicitStructuredGrid_clean():
 def test_StructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.download_office()
     grid = grid.hide_cells(range(80, 120))
-    grid = grid.cast_to_explicit_structured_grid()
+    grid = pv.ExplicitStructuredGrid(grid)
     assert grid.n_cells == 7220
     assert grid.n_points == 8400
-    assert 'BLOCK_I' in grid.cell_data
-    assert 'BLOCK_J' in grid.cell_data
-    assert 'BLOCK_K' in grid.cell_data
     assert 'vtkGhostType' in grid.cell_data
     assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 40
 
