@@ -1253,7 +1253,7 @@ class Transform(_vtk.vtkTransform):
         obj: VectorLike[float] | MatrixLike[float],
         /,
         *,
-        inplace: bool,
+        copy: bool,
     ) -> NumpyArray[float]: ...
     @overload
     def apply(  # numpydoc ignore: GL08
@@ -1261,14 +1261,14 @@ class Transform(_vtk.vtkTransform):
         obj: DataSet,
         /,
         *,
-        inplace: bool,
+        copy: bool,
     ) -> DataSet: ...
     def apply(
         self,
         obj: VectorLike[float] | MatrixLike[float] | DataSet,
         /,
         *,
-        inplace: bool = False,
+        copy: bool = True,
     ):
         """Apply the current transformation to a point, points, or a dataset.
 
@@ -1282,10 +1282,11 @@ class Transform(_vtk.vtkTransform):
         obj : VectorLike[float] | MatrixLike[float] | pyvista.DataSet
             Object to apply the transformation to.
 
-        inplace : bool, default: False
-            Update the object in-place. The object is always returned even if
-            this value is ``True``. Only NumPy arrays and datasets may be modified
-            in-place.
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it. Only applies to
+            NumPy arrays and datasets. A copy is always returned for tuple and list
+            inputs or point arrays with integers.
 
         Returns
         -------
@@ -1326,6 +1327,7 @@ class Transform(_vtk.vtkTransform):
         """
         from pyvista.core.dataset import DataSet  # avoid circular import
 
+        inplace = not copy
         # Transform dataset
         if isinstance(obj, DataSet):
             return obj.transform(self, inplace=inplace)

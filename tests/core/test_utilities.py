@@ -1295,7 +1295,7 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
-@pytest.mark.parametrize('inplace', [True, False])
+@pytest.mark.parametrize('copy', [True, False])
 @pytest.mark.parametrize(
     ('obj', 'return_self', 'return_type', 'return_dtype'),
     [
@@ -1321,11 +1321,11 @@ def test_transform_invert(transform):
         'polydata-float',
     ],
 )
-def test_transform_apply(transform, obj, return_self, return_type, return_dtype, inplace):
+def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
     points_in_array = np.array(obj.points if isinstance(obj, pv.DataSet) else obj)
-    out = transform.scale(SCALE).apply(obj, inplace=inplace)
+    out = transform.scale(SCALE).apply(obj, copy=copy)
 
-    if inplace and return_self:
+    if not copy and return_self:
         assert out is obj
     else:
         assert out is not obj
