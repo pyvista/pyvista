@@ -1323,7 +1323,7 @@ def test_transform_invert(transform):
 )
 def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
     points_in_array = np.array(obj.points if isinstance(obj, pv.DataSet) else obj)
-    out = transform.scale(SCALE).apply(obj, copy=copy)
+    out = transform.scale(SCALE).apply(obj, copy=copy, transform_all_input_vectors=True)
 
     if not copy and return_self:
         assert out is obj
