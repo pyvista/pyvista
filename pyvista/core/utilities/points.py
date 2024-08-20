@@ -226,6 +226,14 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     numpy.ndarray
         Plane normal if ``return_meta=True``.
 
+    See Also
+    --------
+    fit_line_to_points
+        Fit a line using the first principal axis of the points.
+
+    principal_axes
+        Compute axes vectors which best fit a set of points.
+
     Examples
     --------
     Fit a plane to a random point cloud.
@@ -344,6 +352,77 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     if return_meta:
         return plane, center, normal
     return plane
+
+
+def fit_line_to_points(points, resolution=1):
+    """Fit a line to points using its :func:`principal_axes`.
+
+    The line is automatically sized and oriented to fit the extents of
+    the points.
+
+    .. versionadded:: 0.45.0
+
+    Parameters
+    ----------
+    points : array_like[float]
+        Size ``[N x 3]`` sequence of points to fit a line through.
+
+    resolution : int, default: 1
+        Number of pieces to divide the line into.
+
+    See Also
+    --------
+    fit_plane_to_points
+        Fit a plane using the first two principal axes of the points.
+
+    principal_axes
+        Compute axes vectors which best fit a set of points.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Line mesh.
+
+    Examples
+    --------
+    Fit a line to a dense point cloud. The point cloud traces a path along a
+    topographical surface.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.download_gpr_path()
+    >>> line = pv.fit_line_to_points(mesh.points)
+
+    Plot the result. The line of best fit is colored red.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, color='black', line_width=10)
+    >>> _ = pl.add_mesh(line, color='red', line_width=5)
+    >>> pl.show()
+
+    Fit a line to a mesh and plot it.
+
+    >>> mesh = examples.download_human()
+    >>> line = pv.fit_line_to_points(mesh.points)
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, opacity=0.5)
+    >>> _ = pl.add_mesh(line, color='red', line_width=5)
+    >>> pl.show()
+
+    """
+    # Align points to the xyz-axes
+    aligned, matrix = pyvista.PolyData(points).align_xyz(return_matrix=True)
+
+    # Fit line to xyz-aligned mesh
+    point_a = (aligned.bounds.x_min, 0, 0)
+    point_b = (aligned.bounds.x_max, 0, 0)
+    line_mesh = pyvista.LineSource(point_a, point_b, resolution=resolution).output
+
+    # Transform line back to input points positioning
+    inverse_matrix = pyvista.Transform(matrix).inverse_matrix
+    line_mesh.transform(inverse_matrix, inplace=True)
+    return line_mesh
 
 
 def make_tri_mesh(points, faces):
