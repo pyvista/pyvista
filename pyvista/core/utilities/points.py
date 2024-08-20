@@ -199,6 +199,16 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
         computed as the center of the generated plane mesh. In previous
         versions, the center of the input points was returned.
 
+    .. versionchanged:: 0.45.0
+        The internal method used for fitting the plane has changed. Previously, singular
+        value decomposition (SVD) was used, but eigenvectors are now used instead.
+        See warning below.
+
+    .. warning::
+        The normal direction of the plane prior to version 0.45 may differ
+        from the latest version of this function. This may impact methods which
+        rely on the plane's direction.
+
     Parameters
     ----------
     points : array_like[float]
