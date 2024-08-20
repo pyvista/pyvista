@@ -225,9 +225,8 @@ class CompositeFilters:
         """Transform all blocks in this composite dataset.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
+            See also the notes at :func:`pyvista.DataSetFilters.transform` which is
+            used by this filter under the hood.
 
         Parameters
         ----------
@@ -236,9 +235,8 @@ class CompositeFilters:
             or a 3x3 or 4x4 array.
 
         transform_all_input_vectors : bool, default: False
-            When ``True``, all arrays with three components are
-            transformed. Otherwise, only the normals and vectors are
-            transformed.  See the warning for more details.
+            When ``True``, all arrays with three components are transformed.
+            Otherwise, only the normals and vectors are transformed.
 
         inplace : bool, default: False
             When ``True``, modifies the dataset inplace.
@@ -271,12 +269,13 @@ class CompositeFilters:
 
         """
         trans = pyvista.Transform(trans)
+        multi = self if inplace else self.copy(deep=False)
         for i, block in enumerate(self):  # type: ignore[var-annotated, arg-type]
             if block is not None:
-                self[i] = block.transform(  # type: ignore[index]
+                multi[i] = block.transform(  # type: ignore[index]
                     trans,
                     transform_all_input_vectors=transform_all_input_vectors,
                     inplace=inplace,
                     progress_bar=progress_bar,
                 )
-        return self
+        return multi
