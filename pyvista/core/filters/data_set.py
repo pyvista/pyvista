@@ -6323,8 +6323,8 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            Mesh with merged points.
+        pyvista.PolyData or pyvista.UnstructuredGrid
+            Mesh with merged points. PolyData is returned only if the input is PolyData.
 
         Examples
         --------
