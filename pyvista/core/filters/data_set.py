@@ -205,7 +205,7 @@ class DataSetFilters:
         axis_0_direction: VectorLike[float] | str | None = None,
         axis_1_direction: VectorLike[float] | str | None = None,
         axis_2_direction: VectorLike[float] | str | None = None,
-        merge_points: bool = True,
+        merge_points: bool = False,
         cell_centers: bool = False,
         return_matrix: bool = False,
     ):
@@ -249,11 +249,11 @@ class DataSetFilters:
             the specified vector. Can be a vector or string specifying the axis by
             name (e.g. ``'x'`` or ``'-x'``, etc.).
 
-        merge_points : bool, default: True
+        merge_points : bool, default: False
             Merge coincident points before computing the mesh's :func:`~pyvista.principal_axes`
-            for the alignment. Enabled by default since duplicate points can negatively
-            impact the alignment. Set this to ``False`` to use the mesh's points as-is
-            without merging.
+            for the alignment. Enabling this option can improve the alignment since
+            duplicate points can bias the principal axes computation. By default this
+            is ``False`` and the mesh's points are used as-is without merging.
 
             .. note::
 
@@ -401,17 +401,16 @@ class DataSetFilters:
                 vector = _validation.validate_array3(vector, dtype_out=float, name=name)
             return vector
 
-        # Compute principal axes from points
-        if cell_centers:
-            points = self.cell_centers().points
-        elif merge_points:
+        # Get points and compute principal axes
+        input_mesh = self.cell_centers() if cell_centers else self
+        if merge_points:
             append_filter = _vtk.vtkAppendFilter()
             append_filter.MergePointsOn()
-            append_filter.AddInputData(self)
+            append_filter.AddInputData(input_mesh)
             append_filter.Update()
             points = pyvista.wrap(append_filter.GetOutput()).points  # type: ignore[union-attr]
         else:
-            points = self.points
+            points = input_mesh.points
         axes, std = pyvista.principal_axes(points, return_std=True)
 
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
