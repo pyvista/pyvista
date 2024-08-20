@@ -912,32 +912,27 @@ def test_fit_plane_to_points_resolution(airplane):
     assert plane.n_points == (resolution[0] + 1) * (resolution[1] + 1)
 
 
-@pytest.fixture()
-def expected_best_fit_plane(airplane):
-    # Create mesh and orthogonal planes aligned with the xyz axes
-    aligned, matrix = airplane.align_xyz(return_matrix=True)
-    planes = pv.OrthogonalPlanesSource(aligned.bounds).output
-    inverse = pv.Transform(matrix).inverse_matrix
-    assert planes.bounds == aligned.bounds
+def test_fit_plane_to_points():
+    # Fit a plane to a plane's points
+    center = (1, 2, 3)
+    direction = np.array((4.0, 5.0, 6.0))
+    direction /= np.linalg.norm(direction)
+    expected_plane = pv.Plane(center=center, direction=direction, i_size=2, j_size=3)
+    fitted_plane, fitted_center, fitted_normal = fit_plane_to_points(
+        expected_plane.points, return_meta=True
+    )
 
-    # Transform back to original position
-    for plane in planes:
-        plane.transform(inverse)
+    # Test bounds
+    assert np.allclose(fitted_plane.bounds, expected_plane.bounds, atol=1e-6)
 
-    # Return the single fitted plane
-    return airplane, planes['xy']
+    # Test center
+    assert np.allclose(fitted_plane.center, center)
+    assert np.allclose(fitted_center, center)
+    assert np.allclose(fitted_plane.points.mean(axis=0), center)
 
-
-def test_fit_plane_to_points(expected_best_fit_plane):
-    airplane, expected_plane = expected_best_fit_plane
-    plane, center, normal = fit_plane_to_points(airplane.points, return_meta=True)
-    assert plane.bounds == expected_plane.bounds
-
-    assert np.allclose(plane.center, center)
-    assert np.allclose(plane.points.mean(axis=0), center)
-
-    assert np.allclose(normal, plane.point_normals[0])
-    assert np.allclose(normal, expected_plane.point_normals[0])
+    # Test normal
+    assert np.allclose(fitted_normal, direction)
+    assert np.allclose(fitted_plane.point_normals.mean(axis=0), direction)
 
 
 # Default output from `np.linalg.eigh`
