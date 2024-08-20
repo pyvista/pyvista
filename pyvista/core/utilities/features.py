@@ -44,7 +44,7 @@ def padded_bins(mesh, density):
     ]
 
 
-def voxelize(mesh, density=None, check_surface=True):
+def voxelize(mesh, density=None, check_surface=True, enclosed=False):
     """Voxelize mesh to UnstructuredGrid.
 
     Parameters
@@ -62,6 +62,10 @@ def voxelize(mesh, density=None, check_surface=True):
         algorithm first checks to see if the surface is closed and
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
+        
+    enclosed: bool, default: False
+        If True, the voxel bounds will be outside the mesh.
+        If False, the voxel bounds will be at or inside the mesh bounds.
 
     Returns
     -------
@@ -109,8 +113,15 @@ def voxelize(mesh, density=None, check_surface=True):
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
 
-    # Get x, y, z bin edges
-    x, y, z = padded_bins(mesh, [density_x, density_y, density_z])
+    if enclosed:
+        # Get x, y, z bin edges
+        x, y, z = padded_bins(mesh, [density_x, density_y, density_z])
+    else:
+        x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+        x = np.arange(x_min, x_max, density_x)
+        y = np.arange(y_min, y_max, density_y)
+        z = np.arange(z_min, z_max, density_z)
+        
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
     # see https://github.com/pyvista/pyvista/pull/4365
@@ -127,7 +138,7 @@ def voxelize(mesh, density=None, check_surface=True):
     return ugrid.extract_points(mask)
 
 
-def voxelize_volume(mesh, density=None, check_surface=True):
+def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
@@ -149,6 +160,10 @@ def voxelize_volume(mesh, density=None, check_surface=True):
         algorithm first checks to see if the surface is closed and
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
+        
+    enclosed: bool, default: False
+        If True, the voxel bounds will be outside the mesh.
+        If False, the voxel bounds will be at or inside the mesh bounds.
 
     Returns
     -------
@@ -213,9 +228,16 @@ def voxelize_volume(mesh, density=None, check_surface=True):
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
 
-    # Get x, y, z bin edges
-    x, y, z = padded_bins(mesh, [density_x, density_y, density_z])
-
+    
+    if enclosed:
+        # Get x, y, z bin edges
+        x, y, z = padded_bins(mesh, [density_x, density_y, density_z])
+    else:
+        x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+        x = np.arange(x_min, x_max, density_x)
+        y = np.arange(y_min, y_max, density_y)
+        z = np.arange(z_min, z_max, density_z)
+        
     # Create a RectilinearGrid
     voi = pyvista.RectilinearGrid(x, y, z)
 
