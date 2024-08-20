@@ -185,7 +185,7 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta=False, resolution=10):
+def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=None):
     """Fit a plane to a set of points using the SVD algorithm.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -212,6 +212,12 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
         Number of points on the plane mesh along its edges. Specify two numbers to
         set the resolution along the plane's long and short edge (respectively) or
         a single number to set both edges to have the same resolution.
+
+        .. versionadded:: 0.45.0
+
+    init_normal : VectorLike[float], default: None
+        Flip the normal of the plane such that it best aligns with this vector. Can be
+        a vector or string specifying the axis by name (e.g. ``'x'`` or ``'-x'``, etc.).
 
         .. versionadded:: 0.45.0
 
@@ -301,7 +307,9 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     i_resolution, j_resolution = valid_resolution
 
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(return_matrix=True)
+    aligned, matrix = pyvista.PolyData(points).align_xyz(
+        return_matrix=True, axis_2_direction=init_normal
+    )
 
     # Fit plane to xyz-aligned mesh
     aligned_bnds = aligned.bounds

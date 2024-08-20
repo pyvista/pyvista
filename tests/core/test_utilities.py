@@ -939,6 +939,12 @@ def test_fit_plane_to_points(expected_best_fit_plane):
     assert np.allclose(normal, plane.point_normals[0])
     assert np.allclose(normal, expected_plane.point_normals[0])
 
+    flipped_normal = normal * -1
+    _, _, new_normal = fit_plane_to_points(
+        airplane.points, return_meta=True, init_normal=flipped_normal
+    )
+    assert np.allclose(new_normal, flipped_normal)
+
 
 # Default output from `np.linalg.eigh`
 DEFAULT_PRINCIPAL_AXES = [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]]
