@@ -215,7 +215,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
 
         .. versionadded:: 0.45.0
 
-    init_normal : VectorLike[float], default: None
+    init_normal : VectorLike[float], optional
         Flip the normal of the plane such that it best aligns with this vector. Can be
         a vector or string specifying the axis by name (e.g. ``'x'`` or ``'-x'``, etc.).
 
