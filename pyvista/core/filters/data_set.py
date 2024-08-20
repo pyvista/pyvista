@@ -6338,13 +6338,10 @@ class DataSetFilters:
         >>> mesh.n_points
         8
         """
-        # A second mesh with duplicate points required for merge points to work correctly
-        # Duplicate points are not required for PolyData inputs
-        other_mesh = (
-            pyvista.PolyData(self.points)
-            if isinstance(self, pyvista.UnstructuredGrid)
-            else pyvista.PolyData()
-        )
+        # Create a second mesh with points. This is required for the merge
+        # to work correctly. Additional points are not required for PolyData inputs
+        other_points = None if isinstance(self, pyvista.PolyData) else self.points
+        other_mesh = pyvista.PolyData(other_points)
         return self.merge(
             other_mesh,
             merge_points=True,
