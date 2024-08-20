@@ -300,48 +300,28 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     )
     i_resolution, j_resolution = valid_resolution
 
-    # Apply SVD to get orthogonal basis vectors to define the plane
-    data = np.array(points)
-    data_center = data.mean(axis=0)
-    _, _, Vh = np.linalg.svd(data - data_center)
-    i_vector = Vh[0]
-    j_vector = Vh[1]
-    normal = np.cross(i_vector, j_vector)
+    # Align points to the xyz-axes
+    aligned, matrix = pyvista.PolyData(points).align_xyz(return_matrix=True)
 
-    # Create rotation matrix from basis vectors
-    rotate_transform = np.eye(4)
-    rotate_transform[:3, :3] = np.vstack((i_vector, j_vector, normal))
-    rotate_transform_inv = rotate_transform.T
-
-    # Project and transform points to align and center data to the XY plane
-    poly = pyvista.PolyData(points)
-    projected = poly.project_points_to_plane(origin=data_center, normal=normal)
-    projected.points -= data_center
-    projected.transform(rotate_transform)
-
-    # Compute size of the plane
-    i_size = projected.bounds.x_max - projected.bounds.x_min
-    j_size = projected.bounds.y_max - projected.bounds.y_min
-
-    # The center of the input data does not necessarily coincide with
-    # the center of the plane. The true center of the plane is the
-    # middle of the bounding box of the projected + transformed data
-    # relative to the input data's center
-    center = rotate_transform_inv[:3, :3] @ projected.center + data_center
-
-    # Initialize plane then move to final position
+    # Fit plane to xyz-aligned mesh
+    aligned_bnds = aligned.bounds
+    i_size = aligned_bnds.x_max - aligned_bnds.x_min
+    j_size = aligned_bnds.y_max - aligned_bnds.y_min
     plane = pyvista.Plane(
-        center=(0, 0, 0),
-        direction=(0, 0, 1),
         i_size=i_size,
         j_size=j_size,
         i_resolution=i_resolution,
         j_resolution=j_resolution,
     )
-    plane.transform(rotate_transform_inv)
-    plane.points += center
+
+    # Transform plane back to input points positioning
+    inverse_matrix = pyvista.Transform(matrix).inverse_matrix
+    plane.transform(inverse_matrix, inplace=True)
 
     if return_meta:
+        # Compute center and normal from the plane's points and normals
+        center = np.mean(plane.points, axis=0)
+        normal = np.mean(plane.point_normals, axis=0)
         return plane, center, normal
     return plane
 
