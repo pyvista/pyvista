@@ -326,15 +326,16 @@ def test_voxelize_volume_enclosed_bounds():
     mesh_bounds = mesh.bounds
     vox_bounds = vox.bounds
     for i in range(6):
-        assert vox_bounds[i] * (-1)**i <= mesh_bounds[i] * (-1)**i
-        
+        assert vox_bounds[i] * (-1) ** i <= mesh_bounds[i] * (-1) ** i
+
+
 def test_voxelize_enclosed_bounds():
     mesh = pv.Sphere()
     vox = pv.voxelize(mesh, density=0.15, enclosed=True)
     mesh_bounds = mesh.bounds
     vox_bounds = vox.bounds
     for i in range(6):
-        assert vox_bounds[i] * (-1)**i <= mesh_bounds[i] * (-1)**i
+        assert vox_bounds[i] * (-1) ** i <= mesh_bounds[i] * (-1) ** i
 
 
 def test_report():
