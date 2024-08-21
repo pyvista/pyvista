@@ -356,7 +356,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
 
 
 def fit_line_to_points(
-    points: VectorLike[float],
+    points: MatrixLike[float],
     *,
     resolution: int = 1,
     init_direction: VectorLike[float] | None = None,
@@ -371,7 +371,7 @@ def fit_line_to_points(
 
     Parameters
     ----------
-    points : VectorLike[float]
+    points : MatrixLike[float]
         Size ``[N x 3]`` array of points to fit a line through.
 
     resolution : int, default: 1
@@ -400,27 +400,31 @@ def fit_line_to_points(
 
     Examples
     --------
-    Fit a line to a point cloud. The points trace a path along a
-    topographical surface.
+    Download a point cloud. The points trace a path along topographical surface.
 
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> mesh = examples.download_gpr_path()
-    >>> line = pv.fit_line_to_points(mesh.points)
 
-    Plot the result. The line of best fit is colored red.
+    Fit a line to the points and plot the result. The line of best fit is colored red.
+
+    >>> line = pv.fit_line_to_points(mesh.points)
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh, color='black', line_width=10)
     >>> _ = pl.add_mesh(line, color='red', line_width=5)
     >>> pl.show()
 
-    Fit a line to a mesh.
+    Fit a line to a mesh and return the metadata.
 
     >>> mesh = examples.download_human()
     >>> line, length, direction = pv.fit_line_to_points(
     ...     mesh.points, return_meta=True
     ... )
+
+    Show the length of the line.
+    >>> length
+    167.6145387545247
 
     Plot the line as an arrow to show its direction.
 
@@ -444,6 +448,8 @@ def fit_line_to_points(
     >>> line, length, direction = pv.fit_line_to_points(
     ...     mesh.points, init_direction='z', return_meta=True
     ... )
+
+    Plot the results again with an arrow.
 
     >>> arrow = pv.Arrow(
     ...     start=line.points[0],
