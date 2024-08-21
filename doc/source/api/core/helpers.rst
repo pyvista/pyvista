@@ -32,7 +32,7 @@ Convert to and from VTK Data Types
 
 Fit Line to Points
 ~~~~~~~~~~~~~~~~~~~
-.. automethod:: pyvista.core.utilities.points.fit_plane_to_points
+.. automethod:: pyvista.core.utilities.points.fit_line_to_points
 
 
 Fit Plane to Points
