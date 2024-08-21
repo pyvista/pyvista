@@ -424,7 +424,7 @@ def fit_line_to_points(
 
     Show the length of the line.
     >>> length
-    167.6145387545247
+    167.6145387467733
 
     Plot the line as an arrow to show its direction.
 
