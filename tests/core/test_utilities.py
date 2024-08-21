@@ -41,12 +41,6 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
-from tests.conftest import flaky_test
-
-
-@flaky_test(times=3)
-def test_some_flaky_test():
-    assert 42 == 24
 
 
 @pytest.fixture()
