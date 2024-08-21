@@ -2240,6 +2240,10 @@ class DataSet(DataSetFilters, DataObject):
 
             def format_array(name, arr, field):
                 """Format array information for printing (internal helper)."""
+                if isinstance(arr, str):
+                    # Convert string scalar into a numpy array. Otherwise, get_data_range
+                    # will treat the string as an array name, not an array value.
+                    arr = np.array(arr)
                 dl, dh = self.get_data_range(arr)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
