@@ -354,7 +354,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     return plane
 
 
-def fit_line_to_points(points, resolution=1):
+def fit_line_to_points(points, *, resolution=1):
     """Fit a line to points using its :func:`principal_axes`.
 
     The line is automatically sized and oriented to fit the extents of
@@ -364,8 +364,8 @@ def fit_line_to_points(points, resolution=1):
 
     Parameters
     ----------
-    points : array_like[float]
-        Size ``[N x 3]`` sequence of points to fit a line through.
+    points : VectorLike[float]
+        Size ``[N x 3]`` array of points to fit a line through.
 
     resolution : int, default: 1
         Number of pieces to divide the line into.
@@ -385,7 +385,7 @@ def fit_line_to_points(points, resolution=1):
 
     Examples
     --------
-    Fit a line to a dense point cloud. The point cloud traces a path along a
+    Fit a line to a point cloud. The points trace a path along a
     topographical surface.
 
     >>> import pyvista as pv
