@@ -1298,8 +1298,11 @@ def test_n_faces_etc_deprecated(cells: str):
             raise RuntimeError(f"Remove `PolyData` `{n_cells} constructor kwarg")
 
 
-def test_merge_points():
+@pytest.mark.parametrize('inplace', [True, False])
+def test_merge_points(inplace):
     mesh = pv.Cylinder(resolution=4)
     assert mesh.n_points == 8 * 2
-    mesh.merge_points(inplace=True)
-    assert mesh.n_points == 8
+    output = mesh.merge_points(inplace=inplace)
+    assert output.n_points == 8
+    assert isinstance(mesh, pv.PolyData)
+    assert (mesh is output) == inplace
