@@ -1308,6 +1308,12 @@ def test_transform_invert(transform):
         (pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32),
         (pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32),
         (pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float),
+        (
+            pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
+            True,
+            pv.MultiBlock,
+            float,
+        ),
     ],
     ids=[
         'list-int',
@@ -1319,10 +1325,20 @@ def test_transform_invert(transform):
         'polydata-float32',
         'polydata-int',
         'polydata-float',
+        'multiblock-float',
     ],
 )
 def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
-    points_in_array = np.array(obj.points if isinstance(obj, pv.DataSet) else obj)
+    def _get_points_from_object(obj_):
+        return (
+            obj_.points
+            if isinstance(obj_, pv.DataSet)
+            else obj_[0].points
+            if isinstance(obj_, pv.MultiBlock)
+            else obj_
+        )
+
+    points_in_array = np.array(_get_points_from_object(obj))
     out = transform.scale(SCALE).apply(obj, copy=copy, transform_all_input_vectors=True)
 
     if not copy and return_self:
@@ -1331,13 +1347,13 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
         assert out is not obj
     assert isinstance(out, return_type)
 
-    points_out = out.points if isinstance(out, pv.DataSet) else out
+    points_out = _get_points_from_object(out)
     assert isinstance(points_out, np.ndarray)
     assert points_out.dtype == return_dtype
     assert np.array_equal(points_in_array * SCALE, points_out)
 
     inverted = transform.apply(out, inverse=True)
-    inverted_points = inverted.points if isinstance(inverted, pv.DataSet) else inverted
+    inverted_points = _get_points_from_object(inverted)
     assert np.array_equal(inverted_points, points_in_array)
     assert not transform.is_inverted
 

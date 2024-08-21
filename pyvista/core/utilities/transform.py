@@ -18,6 +18,7 @@ from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
+    from pyvista import MultiBlock
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -1267,9 +1268,19 @@ class Transform(_vtk.vtkTransform):
         copy: bool = ...,
         transform_all_input_vectors: bool = ...,
     ) -> DataSet: ...
+    @overload
+    def apply(  # numpydoc ignore: GL08
+        self,
+        obj: MultiBlock,
+        /,
+        *,
+        inverse: bool = ...,
+        copy: bool = ...,
+        transform_all_input_vectors: bool = ...,
+    ) -> MultiBlock: ...
     def apply(
         self,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
         /,
         *,
         inverse: bool = False,
@@ -1350,11 +1361,13 @@ class Transform(_vtk.vtkTransform):
         pyvista_ndarray([[0.5, 1. , 1.5],
                          [2. , 2.5, 3. ]], dtype=float32)
         """
-        from pyvista.core.dataset import DataSet  # avoid circular import
+        # avoid circular import
+        from pyvista.core.composite import MultiBlock
+        from pyvista.core.dataset import DataSet
 
         inplace = not copy
         # Transform dataset
-        if isinstance(obj, DataSet):
+        if isinstance(obj, (DataSet, MultiBlock)):
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
