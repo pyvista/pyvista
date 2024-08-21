@@ -11,6 +11,53 @@ import pyvista
 from pyvista import examples
 
 pyvista.OFF_SCREEN = True
+import functools
+
+
+def flaky_test(times=3, exceptions: tuple[Exception, ...] = (AssertionError,)):
+    """Decorator for re-trying flaky tests.
+
+    Parameters
+    ----------
+    times : int, default: 3
+        Number of times to try to test.
+
+    exceptions : tuple[Exception, ...], default: (AssertionError,)
+        Exceptions will cause the test to be re-tried. By default, tests are only
+        retried for assertion errors. Customize this to retry for other exceptions
+        depending on the cause(s) of the flaky test, e.g. `(ValueError, TypeError)`.
+    """
+
+    def decorator(test_function):
+        @functools.wraps(test_function)
+        def wrapper(*args, **kwargs):
+            for i in range(times):
+                try:
+                    test_function(*args, **kwargs)
+                except exceptions as e:
+                    if i == times - 1:
+                        raise  # Re-raise the last failure if all retries fail
+                    func_name = test_function.__name__
+                    module_name = test_function.__module__
+                    error_name = e.__class__.__name__
+                    print(
+                        f"FLAKY TEST FAILED (Attempt {i + 1} of {times}) - {module_name}::{func_name} - {error_name}, retrying..."
+                    )
+                else:
+                    return  # Exit if the test passes
+
+        return wrapper
+
+    return decorator
+
+
+@pytest.fixture()
+def request_test_function_name(request):
+    return request.function.__name__
+
+
+def expensive_computation():
+    print("running expensive computation...")
 
 
 @pytest.fixture()
