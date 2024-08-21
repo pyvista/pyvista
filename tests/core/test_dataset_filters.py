@@ -780,11 +780,19 @@ def test_compute_cell_sizes_composite(composite):
     assert output.n_blocks == composite.n_blocks
 
 
-def test_cell_centers(datasets, airplane):
-    for dataset in [*datasets, airplane.cast_to_pointset()]:
+def test_cell_centers(datasets):
+    for dataset in datasets:
         result = dataset.cell_centers(progress_bar=True)
         assert result is not None
         assert isinstance(result, pv.PolyData)
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_cell_center_pointset(airplane):
+    pointset = airplane.cast_to_pointset()
+    result = pointset.cell_centers(progress_bar=True)
+    assert result is not None
+    assert isinstance(result, pv.PolyData)
 
 
 def test_cell_centers_composite(composite):
