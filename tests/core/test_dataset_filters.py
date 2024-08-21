@@ -4114,6 +4114,22 @@ def test_merge_points():
     )
 
 
+@pytest.mark.parametrize('inplace', [True, False])
+def test_merge_points_filter(inplace):
+    # Set up
+    cells = [2, 0, 1]
+    celltypes = [pv.CellType.LINE]
+    points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
+    mesh = pv.UnstructuredGrid(cells, celltypes, points)
+    assert mesh.n_points == 2
+
+    # Do test
+    output = mesh.merge_points(inplace=inplace, tolerance=1.0)
+    assert output.n_points == 1
+    assert isinstance(mesh, pv.UnstructuredGrid)
+    assert (mesh is output) == inplace
+
+
 @pytest.fixture()
 def labeled_image():
     image = pv.ImageData(dimensions=(2, 2, 2))
