@@ -938,11 +938,18 @@ def test_fit_line_to_points():
     point_b = (4, 5, 6)
     resolution = 42
     expected_line = pv.Line(point_a, point_b, resolution=resolution)
-    fitted_line = fit_line_to_points(expected_line.points, resolution=resolution)
+    fitted_line, length, direction = fit_line_to_points(
+        expected_line.points, resolution=resolution, return_meta=True
+    )
 
     assert np.allclose(fitted_line.bounds, expected_line.bounds)
     assert np.allclose(fitted_line.points[0], point_a)
     assert np.allclose(fitted_line.points[-1], point_b)
+    assert np.allclose(direction, np.abs(pv.principal_axes(fitted_line.points)[0]))
+    assert np.allclose(length, fitted_line.length)
+
+    fitted_line = fit_line_to_points(expected_line.points, resolution=resolution, return_meta=False)
+    assert np.allclose(fitted_line.bounds, expected_line.bounds)
 
 
 # Default output from `np.linalg.eigh`

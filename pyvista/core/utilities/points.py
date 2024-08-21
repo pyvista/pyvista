@@ -13,6 +13,7 @@ from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import VectorLike
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -354,7 +355,13 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     return plane
 
 
-def fit_line_to_points(points, *, resolution=1):
+def fit_line_to_points(
+    points: VectorLike[float],
+    *,
+    resolution: int = 1,
+    init_direction: VectorLike[float] | None = None,
+    return_meta: bool = False,
+):
     """Fit a line to points using its :func:`principal_axes`.
 
     The line is automatically sized and oriented to fit the extents of
@@ -369,6 +376,14 @@ def fit_line_to_points(points, *, resolution=1):
 
     resolution : int, default: 1
         Number of pieces to divide the line into.
+
+    init_direction : VectorLike[float], optional
+        Flip the direction of the line's points such that it best aligns with this
+        vector. Can be a vector or string specifying the axis by name (e.g. ``'x'``
+        or ``'-x'``, etc.).
+
+    return_meta : bool, default: False
+        If ``True``, also returns the length (magnitude) and direction of the line.
 
     See Also
     --------
@@ -400,19 +415,55 @@ def fit_line_to_points(points, *, resolution=1):
     >>> _ = pl.add_mesh(line, color='red', line_width=5)
     >>> pl.show()
 
-    Fit a line to a mesh and plot it.
+    Fit a line to a mesh.
 
     >>> mesh = examples.download_human()
-    >>> line = pv.fit_line_to_points(mesh.points)
+    >>> line, length, direction = pv.fit_line_to_points(
+    ...     mesh.points, return_meta=True
+    ... )
+
+    Plot the line as an arrow to show its direction.
+
+    >>> arrow = pv.Arrow(
+    ...     start=line.points[0],
+    ...     direction=direction,
+    ...     scale=length,
+    ...     tip_length=0.2,
+    ...     tip_radius=0.04,
+    ...     shaft_radius=0.01,
+    ... )
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh, opacity=0.5)
-    >>> _ = pl.add_mesh(line, color='red', line_width=5)
+    >>> _ = pl.add_mesh(arrow, color='red')
+    >>> pl.show()
+
+    Set ``init_direction`` to the positive z-axis to flip the line's direction.
+
+    >>> mesh = examples.download_human()
+    >>> line, length, direction = pv.fit_line_to_points(
+    ...     mesh.points, init_direction='z', return_meta=True
+    ... )
+
+    >>> arrow = pv.Arrow(
+    ...     start=line.points[0],
+    ...     direction=direction,
+    ...     scale=length,
+    ...     tip_length=0.2,
+    ...     tip_radius=0.04,
+    ...     shaft_radius=0.01,
+    ... )
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, opacity=0.5)
+    >>> _ = pl.add_mesh(arrow, color='red')
     >>> pl.show()
 
     """
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(return_matrix=True)
+    aligned, matrix = pyvista.PolyData(points).align_xyz(
+        axis_0_direction=init_direction, return_matrix=True
+    )
 
     # Fit line to xyz-aligned mesh
     point_a = (aligned.bounds.x_min, 0, 0)
@@ -422,6 +473,9 @@ def fit_line_to_points(points, *, resolution=1):
     # Transform line back to input points positioning
     inverse_matrix = pyvista.Transform(matrix).inverse_matrix
     line_mesh.transform(inverse_matrix, inplace=True)
+
+    if return_meta:
+        return line_mesh, line_mesh.length, matrix[0, :3]
     return line_mesh
 
 
