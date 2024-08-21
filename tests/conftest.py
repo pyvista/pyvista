@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 from importlib import metadata
 import re
 
@@ -11,7 +12,6 @@ import pyvista
 from pyvista import examples
 
 pyvista.OFF_SCREEN = True
-import functools
 
 
 def flaky_test(times=3, exceptions: tuple[Exception, ...] = (AssertionError,)):
@@ -23,7 +23,7 @@ def flaky_test(times=3, exceptions: tuple[Exception, ...] = (AssertionError,)):
         Number of times to try to test.
 
     exceptions : tuple[Exception, ...], default: (AssertionError,)
-        Exceptions will cause the test to be re-tried. By default, tests are only
+        Exceptions which will cause the test to be re-tried. By default, tests are only
         retried for assertion errors. Customize this to retry for other exceptions
         depending on the cause(s) of the flaky test, e.g. `(ValueError, TypeError)`.
     """
