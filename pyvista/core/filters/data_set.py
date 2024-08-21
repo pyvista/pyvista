@@ -403,14 +403,7 @@ class DataSetFilters:
 
         # Get points and compute principal axes
         input_mesh = self.cell_centers() if cell_centers else self
-        if merge_points:
-            append_filter = _vtk.vtkAppendFilter()
-            append_filter.MergePointsOn()
-            append_filter.AddInputData(input_mesh)
-            append_filter.Update()
-            points = pyvista.wrap(append_filter.GetOutput()).points  # type: ignore[union-attr]
-        else:
-            points = input_mesh.points
+        points = input_mesh.merge_points().points if merge_points else input_mesh.points
         axes, std = pyvista.principal_axes(points, return_std=True)
 
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
