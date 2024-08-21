@@ -63,7 +63,7 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
         
-    enclosed: bool, default: False
+    enclosed : bool, default: False
         If True, the voxel bounds will be outside the mesh.
         If False, the voxel bounds will be at or inside the mesh bounds.
 
@@ -161,7 +161,7 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
         
-    enclosed: bool, default: False
+    enclosed : bool, default: False
         If True, the voxel bounds will be outside the mesh.
         If False, the voxel bounds will be at or inside the mesh bounds.
 
