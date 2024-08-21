@@ -52,15 +52,6 @@ def flaky_test(times=3, exceptions: tuple[Exception, ...] = (AssertionError,)):
 
 
 @pytest.fixture()
-def request_test_function_name(request):
-    return request.function.__name__
-
-
-def expensive_computation():
-    print("running expensive computation...")
-
-
-@pytest.fixture()
 def global_variables_reset():  # noqa: PT004
     tmp_screenshots = pyvista.ON_SCREENSHOT
     tmp_figurepath = pyvista.FIGURE_PATH
