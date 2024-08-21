@@ -35,7 +35,7 @@ def padded_bins(mesh, density):
     Ensures limits of voxelization are padded to ensure the mesh is fully enclosed.
     """
     bounds = np.array(mesh.bounds).reshape(3, 2)
-    bin_count = np.ceil((bounds[:, 1] - bounds[:, 0]) / density)
+    bin_count = np.ceil(1e-10 + (bounds[:, 1] - bounds[:, 0]) / density)
     pad = (bin_count * density - (bounds[:, 1] - bounds[:, 0])) / 2
 
     return [
