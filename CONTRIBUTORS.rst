@@ -6,10 +6,8 @@ Contributors
 We follow the |icon| `all-contributors`_ specification.
 Contributions of any kind to ``pyvista`` are welcome!
 
-It's important that we recognise and acknowledge **all** our contributors,
-not just the ones who push code.
-So no matter how large or small,
-we're grateful for your contribution and caring enough to make a difference.
+It's important that we recognise and acknowledge **all** our contributors, not just the ones who push code.
+So no matter how large or small, we're grateful for your contribution and caring enough to make a difference.
 
 - Maksym Kalaidov (`@mkskalai <https://github.com/mkskalai>`_) (Promotion)
 
