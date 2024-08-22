@@ -2462,8 +2462,9 @@ class DataSetFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
+        input_mesh = self.cast_to_poly_points() if isinstance(self, pyvista.PointSet) else self
         alg = _vtk.vtkCellCenters()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetVertexCells(vertex)
         _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
         return _get_output(alg)
