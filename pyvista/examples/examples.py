@@ -530,7 +530,9 @@ def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     yi = np.arange(0.0, (nj + 1) * sj, sj)
     zi = np.arange(0.0, (nk + 1) * sk, sk)
 
-    return pyvista.StructuredGrid(*np.meshgrid(xi, yi, zi, indexing="ij")).cast_to_explicit_structured_grid()
+    return pyvista.StructuredGrid(
+        *np.meshgrid(xi, yi, zi, indexing="ij")
+    ).cast_to_explicit_structured_grid()
 
 
 _dataset_explicit_structured = _DatasetLoader(_explicit_structured_load_func)

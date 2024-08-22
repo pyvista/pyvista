@@ -1210,10 +1210,22 @@ def test_ExplicitStructuredGrid_init():
     dims = (2, 2, 3)
     cells = {pv.CellType.HEXAHEDRON: np.arange(16).reshape(2, 8)}
     points = [
-        [0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0],
-        [0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 1.0, 1.0],
-        [0.0, 0.0, 1.0], [1.0, 0.0, 1.0], [1.0, 1.0, 1.0], [0.0, 1.0, 1.0],
-        [0.0, 0.0, 2.0], [1.0, 0.0, 2.0], [1.0, 1.0, 2.0], [0.0, 1.0, 2.0],
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [0.0, 0.0, 2.0],
+        [1.0, 0.0, 2.0],
+        [1.0, 1.0, 2.0],
+        [0.0, 1.0, 2.0],
     ]
     grid = pv.ExplicitStructuredGrid(dims, cells, points)
     assert grid.n_cells == 2
@@ -1447,13 +1459,21 @@ def test_ExplicitStructuredGrid_raise_init():
         pv.ExplicitStructuredGrid((1, 2), np.random.randint(10, size=9), np.random.rand(8, 3))
 
     with pytest.raises(ValueError, match="Expected cells to be length 54"):
-        pv.ExplicitStructuredGrid((2, 3, 4), np.random.randint(10, size=9 * 6 - 1), np.random.rand(8, 3))
+        pv.ExplicitStructuredGrid(
+            (2, 3, 4), np.random.randint(10, size=9 * 6 - 1), np.random.rand(8, 3)
+        )
 
     with pytest.raises(ValueError, match="Expected cells to be a single cell of type 12"):
-        pv.ExplicitStructuredGrid((2, 3, 4), {CellType.QUAD: np.random.randint(10, size=(10, 8))}, np.random.rand(8, 3))
+        pv.ExplicitStructuredGrid(
+            (2, 3, 4), {CellType.QUAD: np.random.randint(10, size=(10, 8))}, np.random.rand(8, 3)
+        )
 
     with pytest.raises(ValueError, match="Expected cells to be of shape"):
-        pv.ExplicitStructuredGrid((2, 3, 4), {CellType.HEXAHEDRON: np.random.randint(10, size=(10, 8))}, np.random.rand(8, 3))
+        pv.ExplicitStructuredGrid(
+            (2, 3, 4),
+            {CellType.HEXAHEDRON: np.random.randint(10, size=(10, 8))},
+            np.random.rand(8, 3),
+        )
 
 
 @pytest.mark.skipif(

@@ -1118,7 +1118,6 @@ def test_prostar_reader():
 
 
 def test_grdecl_reader():
-
     def read(content, include_content, **kwargs):
         path = Path(tempfile.mkdtemp())
 
@@ -1129,7 +1128,7 @@ def test_grdecl_reader():
             f.write("".join(include_content))
 
         return pv.core.utilities.fileio.read_grdecl(path / "3x3x3.grdecl", **kwargs)
-    
+
     path = Path(__file__).parent.parent / "example_files"
 
     with open(path / "3x3x3.grdecl") as f:

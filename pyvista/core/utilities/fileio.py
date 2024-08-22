@@ -4,9 +4,6 @@ from __future__ import annotations
 
 import itertools
 from pathlib import Path
-from typing import Callable
-from typing import Optional
-from typing import TextIO
 import warnings
 
 import numpy as np
@@ -386,13 +383,8 @@ def read_exodus(
     return wrap(reader.GetOutput())
 
 
-def read_grdecl(
-    filename: str | Path,
-    elevation: bool = True,
-    other_keywords: Optional[list[str]] = None,
-) -> pyvista.ExplicitStructuredGrid:
-    """
-    Read a GRDECL file (``'.GRDECL'``).
+def read_grdecl(filename, elevation, other_keywords=None):
+    """Read a GRDECL file (``'.GRDECL'``).
 
     Parameters
     ----------
@@ -423,7 +415,6 @@ def read_grdecl(
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
 
     """
-
     property_keywords = (
         "ACTNUM",
         "COORD",
@@ -438,14 +429,9 @@ def read_grdecl(
         "ZONES",
     )
 
-    def read_keyword(
-        f: TextIO,
-        split: bool = True,
-        converter: Optional[Callable] = None,
-    ) -> list | str:
-        """
-        Read a keyword.
-        
+    def read_keyword(f, split=True, converter=None):
+        """Read a keyword.
+
         Parameters
         ----------
         f : TextIO
@@ -456,7 +442,7 @@ def read_grdecl(
 
         converter : callable, optional
             Function to apply to split strings.
-        
+
         Returns
         -------
         list | str
@@ -498,10 +484,9 @@ def read_grdecl(
 
         return out
 
-    def read_buffer(f: TextIO, other_keywords: list[str]) -> tuple[dict, list[str]]:
-        """
-        Read a file buffer.
-        
+    def read_buffer(f, other_keywords):
+        """Read a file buffer.
+
         Parameters
         ----------
         f : TextIO
@@ -517,7 +502,7 @@ def read_grdecl(
 
         sequence[str]
             Included file names.
-        
+
         """
         keys = list(property_keywords) + other_keywords
         keys = tuple(keys)
@@ -571,10 +556,9 @@ def read_grdecl(
 
         return keywords, includes
 
-    def read_keywords(filename: str | Path, other_keywords: list[str]) -> dict:
-        """
-        Read a GRDECL file and return its keywords.
-        
+    def read_keywords(filename, other_keywords):
+        """Read a GRDECL file and return its keywords.
+
         Parameters
         ----------
         filename : str | Path
