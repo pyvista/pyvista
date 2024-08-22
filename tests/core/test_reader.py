@@ -1121,20 +1121,20 @@ def test_grdecl_reader():
     def read(content, include_content, **kwargs):
         path = Path(tempfile.mkdtemp())
 
-        with open(path / "3x3x3.grdecl", "w") as f:
+        with Path.open(path / "3x3x3.grdecl", "w") as f:
             f.write("".join(content))
 
-        with open(path / "3x3x3_include.grdecl", "w") as f:
+        with Path.open(path / "3x3x3_include.grdecl", "w") as f:
             f.write("".join(include_content))
 
         return pv.core.utilities.fileio.read_grdecl(path / "3x3x3.grdecl", **kwargs)
 
     path = Path(__file__).parent.parent / "example_files"
 
-    with open(path / "3x3x3.grdecl") as f:
+    with Path.open(path / "3x3x3.grdecl") as f:
         content = list(f)
 
-    with open(path / "3x3x3_include.grdecl") as f:
+    with Path.open(path / "3x3x3_include.grdecl") as f:
         include_content = list(f)
 
     # Test base sample file
@@ -1152,15 +1152,15 @@ def test_grdecl_reader():
 
     # Test fails
     match = "Cylindric grids are not supported"
+    content_copy = list(content)
+    content_copy[1] = content_copy[1].replace("F", "T")
     with pytest.raises(TypeError, match=match):
-        content_copy = list(content)
-        content_copy[1] = content_copy[1].replace("F", "T")
         _ = read(content_copy, include_content)
 
     match = "Unable to generate grid without keyword 'SPECGRID'"
+    content_copy = list(content)
+    content_copy[0] = content_copy[0].replace("SPECGRID", "PLACEHOLDER")
     with pytest.raises(ValueError, match=match):
-        content_copy = list(content)
-        content_copy[0] = content_copy[0].replace("SPECGRID", "PLACEHOLDER")
         _ = read(content_copy, include_content)
 
     # Test relative coordinates
@@ -1170,19 +1170,19 @@ def test_grdecl_reader():
 
     # Test relative warnings
     match = "Unable to convert relative coordinates with different grid and map units"
+    include_content_copy = list(include_content)
+    include_content_copy[3] = include_content_copy[3].replace("METRES", "FEET")
     with pytest.warns(UserWarning, match=match):
-        include_content_copy = list(include_content)
-        include_content_copy[3] = include_content_copy[3].replace("METRES", "FEET")
         _ = read(content, include_content_copy)
 
     match = "Unable to convert relative coordinates without keyword 'MAPUNITS'"
+    include_content_copy = list(include_content)
+    include_content_copy[2] = include_content_copy[2].replace("MAPUNITS", "PLACEHOLDER")
     with pytest.warns(UserWarning, match=match):
-        include_content_copy = list(include_content)
-        include_content_copy[2] = include_content_copy[2].replace("MAPUNITS", "PLACEHOLDER")
         _ = read(content, include_content_copy)
 
     match = "Unable to convert relative coordinates without keyword 'MAPAXES'"
+    include_content_copy = list(include_content)
+    include_content_copy[0] = include_content_copy[0].replace("MAPAXES", "PLACEHOLDER")
     with pytest.warns(UserWarning, match=match):
-        include_content_copy = list(include_content)
-        include_content_copy[0] = include_content_copy[0].replace("MAPAXES", "PLACEHOLDER")
         _ = read(content, include_content_copy)

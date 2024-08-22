@@ -2848,25 +2848,22 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             raise ValueError("Expected dimensions to be length 3.")
 
         ni, nj, nk = np.asanyarray(dims) - 1
-        xcorners = corners[:, 0].reshape((2 * ni, 2 * nj, 2 * nk), order="F")
-        ycorners = corners[:, 1].reshape((2 * ni, 2 * nj, 2 * nk), order="F")
-        zcorners = corners[:, 2].reshape((2 * ni, 2 * nj, 2 * nk), order="F")
-
+        corners = np.reshape(corners, (2 * ni, 2 * nj, 2 * nk, 3), order="F")
         points = np.column_stack(
             [
                 np.column_stack(
                     (
-                        corners[::2, ::2, ::2].ravel(order="F"),
-                        corners[1::2, ::2, ::2].ravel(order="F"),
-                        corners[1::2, 1::2, ::2].ravel(order="F"),
-                        corners[::2, 1::2, ::2].ravel(order="F"),
-                        corners[::2, ::2, 1::2].ravel(order="F"),
-                        corners[1::2, ::2, 1::2].ravel(order="F"),
-                        corners[1::2, 1::2, 1::2].ravel(order="F"),
-                        corners[::2, 1::2, 1::2].ravel(order="F"),
+                        corners_[::2, ::2, ::2].ravel(order="F"),
+                        corners_[1::2, ::2, ::2].ravel(order="F"),
+                        corners_[1::2, 1::2, ::2].ravel(order="F"),
+                        corners_[::2, 1::2, ::2].ravel(order="F"),
+                        corners_[::2, ::2, 1::2].ravel(order="F"),
+                        corners_[1::2, ::2, 1::2].ravel(order="F"),
+                        corners_[1::2, 1::2, 1::2].ravel(order="F"),
+                        corners_[::2, 1::2, 1::2].ravel(order="F"),
                     )
                 ).ravel()
-                for corners in (xcorners, ycorners, zcorners)
+                for corners_ in corners.transpose((3, 0, 1, 2))
             ]
         )
         cells = np.arange(8 * ni * nj * nk).reshape((ni * nj * nk, 8))

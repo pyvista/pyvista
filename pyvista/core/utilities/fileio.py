@@ -383,7 +383,7 @@ def read_exodus(
     return wrap(reader.GetOutput())
 
 
-def read_grdecl(filename, elevation, other_keywords=None):
+def read_grdecl(filename, elevation=True, other_keywords=None):
     """Read a GRDECL file (``'.GRDECL'``).
 
     Parameters
@@ -407,7 +407,7 @@ def read_grdecl(filename, elevation, other_keywords=None):
     Read a ``'.GRDECL'`` file.
 
     >>> import pyvista as pv
-    >>> grid = pv.read('file.GRDECL')
+    >>> grid = pv.read('file.GRDECL')  # doctest:+SKIP
 
     Unused keywords contained in the file are stored in :attr:`pyvista.ExplicitStructuredGrid.user_dict`:
 
@@ -573,14 +573,14 @@ def read_grdecl(filename, elevation, other_keywords=None):
             Dictionary of read keywords.
 
         """
-        with open(filename) as f:
+        with Path.open(filename) as f:
             keywords, includes = read_buffer(f, other_keywords)
 
         if includes:
             path = Path(filename).parent
 
             for include in includes:
-                with open(path / include) as f:
+                with Path.open(path / include) as f:
                     keywords_, _ = read_buffer(f, other_keywords)
 
                 keywords.update(keywords_)
