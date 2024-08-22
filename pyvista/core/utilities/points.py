@@ -186,7 +186,7 @@ def lines_from_points(points, close=False):
 
 
 def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=None):
-    """Fit a plane to a set of points using the SVD algorithm.
+    """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
     the points.
@@ -198,6 +198,16 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
         The center of the plane (returned if ``return_meta=True``) is now
         computed as the center of the generated plane mesh. In previous
         versions, the center of the input points was returned.
+
+    .. versionchanged:: 0.45.0
+        The internal method used for fitting the plane has changed. Previously, singular
+        value decomposition (SVD) was used, but eigenvectors are now used instead.
+        See warning below.
+
+    .. warning::
+        The normal direction of the plane prior to version 0.45 may differ
+        from the latest version of this function. This may impact methods which
+        rely on the plane's direction.
 
     Parameters
     ----------
@@ -220,6 +230,11 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
         a vector or string specifying the axis by name (e.g. ``'x'`` or ``'-x'``, etc.).
 
         .. versionadded:: 0.45.0
+
+    See Also
+    --------
+    principal_axes
+        Compute axes vectors which best fit a set of points.
 
     Returns
     -------
