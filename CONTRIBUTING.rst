@@ -1211,7 +1211,7 @@ created the following will occur:
     .. code:: bash
 
        git push origin HEAD
-       git push origin --tags
+       git push origin v$(python -c "import pyvista as pv; print(pv.__version__)")
 
 #.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare
