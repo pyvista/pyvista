@@ -11,7 +11,7 @@ not just the ones who push code.
 So no matter how large or small,
 we're grateful for your contribution and caring enough to make a difference.
 
-- Maksym Kalaidov([@mkskalai](https://github.com/mkskalai)) (Promotion)
+- Maksym Kalaidov (`@mkskalai <https://github.com/mkskalai>`_) (Promotion)
 
 .. note::
     If you have contributed to ``pyvista`` and your name is not listed here,
