@@ -398,6 +398,12 @@ def fit_line_to_points(
     pyvista.PolyData
         Line mesh.
 
+    numpy.ndarray
+        Line length if ``return_meta=True``.
+
+    numpy.ndarray
+        Line direction (unit vector) if ``return_meta=True``.
+
     Examples
     --------
     Download a point cloud. The points trace a path along topographical surface.
