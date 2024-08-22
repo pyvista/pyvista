@@ -1113,17 +1113,6 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
-Preview the Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Once you have make a Pull Request. You can comment
-``@pyvista-bot preview`` on a pull request to preview documentation.
-Since this command is only available for
-`@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
-new contributors kindly request them to comment command.
-This is essential to safeguard the deployment site against
-potentially harmful commits.
-
 Branching Model
 ~~~~~~~~~~~~~~~
 
