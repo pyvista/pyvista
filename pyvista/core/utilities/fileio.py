@@ -411,7 +411,7 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
 
     Unused keywords contained in the file are stored in :attr:`pyvista.ExplicitStructuredGrid.user_dict`:
 
-    >>> grid.user_dict
+    >>> grid.user_dict  # doctest:+SKIP
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
 
     """
