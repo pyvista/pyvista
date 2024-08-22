@@ -636,6 +636,183 @@ class Transform(_vtk.vtkTransform):
             transform, point=point, multiply_mode=multiply_mode
         )
 
+    def flip_x(
+        self,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
+    ) -> Transform:  # numpydoc ignore=RT01
+        """Concatenate a reflection matrix over the x-axis.
+
+        Create a reflection matrix to flip over the x-axis and :meth:`concatenate` it
+        with the current transformation :attr:`matrix` according to pre-multiply or
+        post-multiply semantics.
+
+        Internally, the matrix is stored in the :attr:`matrix_list`.
+
+        Parameters
+        ----------
+        point : VectorLike[float], optional
+            Point to reflect about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the reflection
+                - :meth:`translate` away from ``point`` after the reflection
+
+        multiply_mode : 'pre' | 'post', optional
+            Multiplication mode to use when concatenating the matrix. By default, the
+            object's :attr:`multiply_mode` is used, but this can be overridden. Set this
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        pyvista.DataSet.flip_x
+            Flip a mesh over the x-axis.
+
+        Examples
+        --------
+        Concatenate a reflection matrix over the x-axis.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> _ = transform.flip_x()
+        >>> transform.matrix
+        array([[-1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0.,  1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        Concatenate a second reflection matrix, but this time about a point.
+
+        >>> _ = transform.flip_x(point=(4, 5, 6))
+        >>> transform.matrix
+        array([[1., 0., 0., 8.],
+               [0., 1., 0., 0.],
+               [0., 0., 1., 0.],
+               [0., 0., 0., 1.]])
+        """
+        return self.reflect((1, 0, 0), point=point, multiply_mode=multiply_mode)
+
+    def flip_y(
+        self,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
+    ) -> Transform:  # numpydoc ignore=RT01
+        """Concatenate a reflection matrix over the y-axis.
+
+        Create a reflection matrix to flip over the y-axis and :meth:`concatenate` it
+        with the current transformation :attr:`matrix` according to pre-multiply or
+        post-multiply semantics.
+
+        Internally, the matrix is stored in the :attr:`matrix_list`.
+
+        Parameters
+        ----------
+        point : VectorLike[float], optional
+            Point to reflect about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the reflection
+                - :meth:`translate` away from ``point`` after the reflection
+
+        multiply_mode : 'pre' | 'post', optional
+            Multiplication mode to use when concatenating the matrix. By default, the
+            object's :attr:`multiply_mode` is used, but this can be overridden. Set this
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        pyvista.DataSet.flip_y
+            Flip a mesh over the y-axis.
+
+        Examples
+        --------
+        Concatenate a reflection matrix over the y-axis.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> _ = transform.flip_y()
+        >>> transform.matrix
+        array([[ 1.,  0.,  0.,  0.],
+               [ 0., -1.,  0.,  0.],
+               [ 0.,  0.,  1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        Concatenate a second reflection matrix, but this time about a point.
+
+        >>> _ = transform.flip_y(point=(4, 5, 6))
+        >>> transform.matrix
+        array([[ 1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0., 10.],
+               [ 0.,  0.,  1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+        """
+        return self.reflect((0, 1, 0), point=point, multiply_mode=multiply_mode)
+
+    def flip_z(
+        self,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
+    ) -> Transform:  # numpydoc ignore=RT01
+        """Concatenate a reflection matrix over the z-axis.
+
+        Create a reflection matrix to flip over the z-axis and :meth:`concatenate` it
+        with the current transformation :attr:`matrix` according to pre-multiply or
+        post-multiply semantics.
+
+        Internally, the matrix is stored in the :attr:`matrix_list`.
+
+        Parameters
+        ----------
+        point : VectorLike[float], optional
+            Point to reflect about. By default, the object's :attr:`point` is used,
+            but this can be overridden.
+            If set, two additional transformations are concatenated and added to
+            the :attr:`matrix_list`:
+
+                - :meth:`translate` to ``point`` before the reflection
+                - :meth:`translate` away from ``point`` after the reflection
+
+        multiply_mode : 'pre' | 'post', optional
+            Multiplication mode to use when concatenating the matrix. By default, the
+            object's :attr:`multiply_mode` is used, but this can be overridden. Set this
+            to ``'pre'`` for pre-multiplication or ``'post'`` for post-multiplication.
+
+        See Also
+        --------
+        pyvista.DataSet.flip_z
+            Flip a mesh over the z-axis.
+
+        Examples
+        --------
+        Concatenate a reflection matrix over the z-axis.
+
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> _ = transform.flip_z()
+        >>> transform.matrix
+        array([[ 1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0., -1.,  0.],
+               [ 0.,  0.,  0.,  1.]])
+
+        Concatenate a second reflection matrix, but this time about a point.
+
+        >>> _ = transform.flip_z(point=(4, 5, 6))
+        >>> transform.matrix
+        array([[ 1.,  0.,  0.,  0.],
+               [ 0.,  1.,  0.,  0.],
+               [ 0.,  0.,  1., 12.],
+               [ 0.,  0.,  0.,  1.]])
+        """
+        return self.reflect((0, 0, 1), point=point, multiply_mode=multiply_mode)
+
     def translate(
         self, *vector, multiply_mode: Literal['pre', 'post'] | None = None
     ) -> Transform:  # numpydoc ignore=RT01
