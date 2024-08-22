@@ -226,11 +226,6 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
 
         .. versionadded:: 0.45.0
 
-    See Also
-    --------
-    principal_axes
-        Compute axes vectors which best fit a set of points.
-
     Returns
     -------
     pyvista.PolyData
