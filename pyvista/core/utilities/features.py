@@ -160,7 +160,7 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
         algorithm first checks to see if the surface is closed and
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
-        
+
     enclosed : bool, default: False
         If True, the voxel bounds will be outside the mesh.
         If False, the voxel bounds will be at or inside the mesh bounds.
@@ -227,7 +227,6 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
-
 
     if enclosed:
         # Get x, y, z bin edges
