@@ -320,21 +320,18 @@ def test_voxelize_volume_no_face_mesh(rectilinear):
         pv.voxelize_volume(pv.PolyData())
 
 
-def test_voxelize_volume_enclosed_bounds():
-    mesh = pv.Sphere()
-    vox = pv.voxelize_volume(mesh, density=0.15, enclosed=True)
-    mesh_bounds = mesh.bounds
-    vox_bounds = vox.bounds
-    for i in range(6):
-        assert vox_bounds[i] * (-1)**i <= mesh_bounds[i] * (-1)**i
-        
-def test_voxelize_enclosed_bounds():
-    mesh = pv.Sphere()
-    vox = pv.voxelize(mesh, density=0.15, enclosed=True)
-    mesh_bounds = mesh.bounds
-    vox_bounds = vox.bounds
-    for i in range(6):
-        assert vox_bounds[i] * (-1)**i <= mesh_bounds[i] * (-1)**i
+@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
+@pytest.mark.parametrize('enclosed', [True, False])
+def test_voxelize_enclosed_bounds(airplane, function, enclosed):
+    vox = function(airplane, density=0.15, enclosed=enclosed)
+
+    assert (vox.bounds.x_min <= airplane.bounds.x_min) == enclosed
+    assert (vox.bounds.y_min <= airplane.bounds.y_min) == enclosed
+    assert (vox.bounds.z_min <= airplane.bounds.z_min) == enclosed
+
+    assert (vox.bounds.x_max >= airplane.bounds.x_max) == enclosed
+    assert (vox.bounds.y_max >= airplane.bounds.y_max) == enclosed
+    assert (vox.bounds.z_max >= airplane.bounds.z_max) == enclosed
 
 
 def test_report():
