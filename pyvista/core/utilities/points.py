@@ -398,7 +398,7 @@ def fit_line_to_points(
     pyvista.PolyData
         Line mesh.
 
-    numpy.ndarray
+    float
         Line length if ``return_meta=True``.
 
     numpy.ndarray
