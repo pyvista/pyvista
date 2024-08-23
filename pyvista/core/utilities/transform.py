@@ -642,9 +642,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a reflection matrix over the x-axis.
+        """Concatenate a reflection about the x-axis.
 
-        Create a reflection matrix to flip over the x-axis and :meth:`concatenate` it
+        Create a reflection about the x-axis and :meth:`concatenate` it
         with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -669,11 +669,11 @@ class Transform(_vtk.vtkTransform):
         See Also
         --------
         pyvista.DataSet.flip_x
-            Flip a mesh over the x-axis.
+            Flip a mesh about the x-axis.
 
         Examples
         --------
-        Concatenate a reflection matrix over the x-axis.
+        Concatenate a reflection about the x-axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
@@ -684,7 +684,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0.,  1.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second reflection matrix, but this time about a point.
+        Concatenate a second reflection, but this time about a point.
 
         >>> _ = transform.flip_x(point=(4, 5, 6))
         >>> transform.matrix
@@ -701,9 +701,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a reflection matrix over the y-axis.
+        """Concatenate a reflection about the y-axis.
 
-        Create a reflection matrix to flip over the y-axis and :meth:`concatenate` it
+        Create a reflection about the y-axis and :meth:`concatenate` it
         with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -728,11 +728,11 @@ class Transform(_vtk.vtkTransform):
         See Also
         --------
         pyvista.DataSet.flip_y
-            Flip a mesh over the y-axis.
+            Flip a mesh about the y-axis.
 
         Examples
         --------
-        Concatenate a reflection matrix over the y-axis.
+        Concatenate a reflection about the y-axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
@@ -743,7 +743,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0.,  1.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second reflection matrix, but this time about a point.
+        Concatenate a second reflection, but this time about a point.
 
         >>> _ = transform.flip_y(point=(4, 5, 6))
         >>> transform.matrix
@@ -760,9 +760,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a reflection matrix over the z-axis.
+        """Concatenate a reflection about the z-axis.
 
-        Create a reflection matrix to flip over the z-axis and :meth:`concatenate` it
+        Create a reflection about the z-axis and :meth:`concatenate` it
         with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -787,11 +787,11 @@ class Transform(_vtk.vtkTransform):
         See Also
         --------
         pyvista.DataSet.flip_z
-            Flip a mesh over the z-axis.
+            Flip a mesh about the z-axis.
 
         Examples
         --------
-        Concatenate a reflection matrix over the z-axis.
+        Concatenate a reflection about the z-axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
@@ -802,7 +802,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0., -1.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second reflection matrix, but this time about a point.
+        Concatenate a second reflection, but this time about a point.
 
         >>> _ = transform.flip_z(point=(4, 5, 6))
         >>> transform.matrix
