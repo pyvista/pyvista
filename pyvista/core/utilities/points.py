@@ -324,7 +324,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
     ...     mesh.points, return_meta=True, init_normal='-z'
     ... )
     >>> normal
-    pyvista_ndarray([-3.3133538e-11,  1.3480459e-09, -1.0000000e+00],
+    pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
                     dtype=float32)
     """
     valid_resolution = _validation.validate_array(
