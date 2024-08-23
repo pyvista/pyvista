@@ -315,7 +315,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
     Show the normal vector. Note that it is pointing in the positive z-direction.
 
     >>> normal
-    pyvista_ndarray([ 3.3133555e-11, -1.3480468e-09,  1.0000000e+00],
+    pyvista_ndarray([5.2734075e-09, 6.7008443e-08, 1.0000000e+00],
                     dtype=float32)
 
     Use ``init_normal`` to flip the sign and make it negative instead.
