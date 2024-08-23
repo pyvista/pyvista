@@ -2439,8 +2439,9 @@ class DataSetFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
+        input_mesh = self.cast_to_poly_points() if isinstance(self, pyvista.PointSet) else self
         alg = _vtk.vtkCellCenters()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetVertexCells(vertex)
         _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
         return _get_output(alg)
@@ -6302,6 +6303,54 @@ class DataSetFilters:
         if clear_data:
             output.clear_data()
         return output
+
+    def merge_points(self, tolerance=0.0, inplace=False, progress_bar=False):
+        """Merge duplicate points in this mesh.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        tolerance : float, optional
+            Specify a tolerance to use when comparing points. Points within
+            this tolerance will be merged.
+
+        inplace : bool, default: False
+            Overwrite the original mesh with the result. Only possible if the input
+            is :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData or pyvista.UnstructuredGrid
+            Mesh with merged points. PolyData is returned only if the input is PolyData.
+
+        Examples
+        --------
+        Merge duplicate points in a mesh.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cylinder(resolution=4)
+        >>> mesh.n_points
+        16
+        >>> _ = mesh.merge_points(inplace=True)
+        >>> mesh.n_points
+        8
+        """
+        # Create a second mesh with points. This is required for the merge
+        # to work correctly. Additional points are not required for PolyData inputs
+        other_points = None if isinstance(self, pyvista.PolyData) else self.points
+        other_mesh = pyvista.PolyData(other_points)
+        return self.merge(
+            other_mesh,
+            merge_points=True,
+            tolerance=tolerance,
+            inplace=inplace,
+            main_has_priority=True,
+            progress_bar=progress_bar,
+        )
 
     def merge(
         self,

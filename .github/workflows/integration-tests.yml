@@ -82,7 +82,6 @@ jobs:
       run:
         shell: bash -l {0}
     env:
-      CARTOPY_FEATURE: "https://raw.githubusercontent.com/SciTools/cartopy/v0.22.x/tools/cartopy_feature_download.py"
       CARTOPY_SHARE_DIR: ~/.local/share/cartopy
       GEOVISTA_POOCH_MUTE: true
     steps:
@@ -102,9 +101,8 @@ jobs:
         working-directory: geovista
       - name: Download cartopy assets
         run: |
-          wget --quiet ${CARTOPY_FEATURE}
           mkdir -p ${CARTOPY_SHARE_DIR}
-          python cartopy_feature_download.py physical --output ${CARTOPY_SHARE_DIR} --no-warn
+          python -m cartopy.feature.download physical --output ${CARTOPY_SHARE_DIR} --no-warn
       - run: pytest
         working-directory: geovista
 
