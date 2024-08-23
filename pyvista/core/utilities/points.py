@@ -205,9 +205,9 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
         See warning below.
 
     .. warning::
-        The normal direction of the plane prior to version 0.45 may differ
-        from the latest version of this function. This may impact methods which
-        rely on the plane's direction.
+        The sign of the plane's normal vector prior to version 0.45 may differ
+        from the latest version. This may impact methods which rely on the plane's
+        direction. Use ``init_normal`` to control the sign explicitly.
 
     Parameters
     ----------
@@ -241,10 +241,10 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
     pyvista.PolyData
         Plane mesh.
 
-    numpy.ndarray
+    pyvista.pyvista_ndarray
         Plane center if ``return_meta=True``.
 
-    numpy.ndarray
+    pyvista.pyvista_ndarray
         Plane normal if ``return_meta=True``.
 
     Examples
@@ -273,7 +273,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
     ... )
     >>> pl.show()
 
-    Fit a plane to a mesh and return its meta-data. Set the plane resolution to 1
+    Fit a plane to a mesh and return its metadata. Set the plane resolution to 1
     so that the plane has no internal points or edges.
 
     >>> mesh = examples.download_shark()
@@ -293,7 +293,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
     ... ]
     >>> pl.show()
 
-    Use the meta data with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
+    Use the metadata with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
     two.
 
     >>> first_half, second_half = mesh.clip(
@@ -311,6 +311,21 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
     ...     (0.25, 0.92, -0.29),
     ... ]
     >>> pl.show()
+
+    Show the normal vector. Note that it is pointing in the positive z-direction.
+
+    >>> normal
+    pyvista_ndarray([ 3.3133555e-11, -1.3480468e-09,  1.0000000e+00],
+                    dtype=float32)
+
+    Use ``init_normal`` to flip the sign and make it negative instead.
+
+    >>> _, _, normal = pv.fit_plane_to_points(
+    ...     mesh.points, return_meta=True, init_normal='-z'
+    ... )
+    >>> normal
+    pyvista_ndarray([-3.3133538e-11,  1.3480459e-09, -1.0000000e+00],
+                    dtype=float32)
     """
     valid_resolution = _validation.validate_array(
         resolution,
