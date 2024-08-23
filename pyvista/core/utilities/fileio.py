@@ -640,6 +640,7 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
     if elevation:
         zcorners = -zcorners[..., ::-1]
         pillars[:, [2, 5]] *= -1.0
+        pillars[:] = pillars[:, [3, 4, 5, 0, 1, 2]]
 
     # Shift relative to absolute units
     if relative:
