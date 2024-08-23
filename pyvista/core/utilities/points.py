@@ -185,8 +185,8 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta=False):
-    """Fit a plane to a set of points using the SVD algorithm.
+def fit_plane_to_points(points, return_meta=False, resolution=10):
+    """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
     the points.
@@ -199,6 +199,16 @@ def fit_plane_to_points(points, return_meta=False):
         computed as the center of the generated plane mesh. In previous
         versions, the center of the input points was returned.
 
+    .. versionchanged:: 0.45.0
+        The internal method used for fitting the plane has changed. Previously, singular
+        value decomposition (SVD) was used, but eigenvectors are now used instead.
+        See warning below.
+
+    .. warning::
+        The normal direction of the plane prior to version 0.45 may differ
+        from the latest version of this function. This may impact methods which
+        rely on the plane's direction.
+
     Parameters
     ----------
     points : array_like[float]
@@ -207,6 +217,18 @@ def fit_plane_to_points(points, return_meta=False):
     return_meta : bool, default: False
         If ``True``, also returns the center and normal of the
         generated plane.
+
+    resolution : int, default: 10
+        Number of points on the plane mesh along its edges. Specify two numbers to
+        set the resolution along the plane's long and short edge (respectively) or
+        a single number to set both edges to have the same resolution.
+
+        .. versionadded:: 0.45.0
+
+    See Also
+    --------
+    principal_axes
+        Compute axes vectors which best fit a set of points.
 
     Returns
     -------
@@ -225,22 +247,18 @@ def fit_plane_to_points(points, return_meta=False):
 
     >>> import pyvista as pv
     >>> import numpy as np
+    >>> from pyvista import examples
     >>>
-    >>> # Create point cloud
     >>> rng = np.random.default_rng(seed=0)
     >>> cloud = rng.random((10, 3))
     >>> cloud[:, 2] *= 0.1
     >>>
-    >>> # Fit plane
-    >>> plane, center, normal = pv.fit_plane_to_points(
-    ...     cloud, return_meta=True
-    ... )
-    >>>
-    >>> # Plot the fitted plane
+    >>> plane = pv.fit_plane_to_points(cloud)
+
+    Plot the point cloud and fitted plane.
+
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     plane, color='lightblue', style='wireframe', line_width=4
-    ... )
+    >>> _ = pl.add_mesh(plane, style='wireframe', line_width=4)
     >>> _ = pl.add_points(
     ...     cloud,
     ...     render_points_as_spheres=True,
@@ -249,22 +267,18 @@ def fit_plane_to_points(points, return_meta=False):
     ... )
     >>> pl.show()
 
-    Fit a plane to a mesh.
+    Fit a plane to a mesh and return its meta-data. Set the plane resolution to 1
+    so that the plane has no internal points or edges.
 
-    >>> import pyvista as pv
-    >>> from pyvista import examples
-    >>>
-    >>> # Create mesh
     >>> mesh = examples.download_shark()
-    >>>
-    >>> # Fit plane
-    >>> plane = pv.fit_plane_to_points(mesh.points)
-    >>>
-    >>> # Plot the fitted plane
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     plane, show_edges=True, color='lightblue', opacity=0.25
+    >>> plane, center, normal = pv.fit_plane_to_points(
+    ...     mesh.points, return_meta=True, resolution=1
     ... )
+
+    Plot the mesh and fitted plane.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(plane, show_edges=True, opacity=0.25)
     >>> _ = pl.add_mesh(mesh, color='gray')
     >>> pl.camera_position = [
     ...     (-117, 76, 235),
@@ -273,42 +287,56 @@ def fit_plane_to_points(points, return_meta=False):
     ... ]
     >>> pl.show()
 
+    Use the meta data with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
+    two.
+
+    >>> first_half, second_half = mesh.clip(
+    ...     origin=center, normal=normal, return_clipped=True
+    ... )
+
+    Plot the two halves of the clipped mesh.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(first_half, color='red')
+    >>> _ = pl.add_mesh(second_half, color='blue')
+    >>> pl.camera_position = [
+    ...     (-143, 43, 40),
+    ...     (-8.7, -11, -14),
+    ...     (0.25, 0.92, -0.29),
+    ... ]
+    >>> pl.show()
     """
-    # Apply SVD to get orthogonal basis vectors to define the plane
-    data = np.array(points)
-    data_center = data.mean(axis=0)
-    _, _, Vh = np.linalg.svd(data - data_center)
-    i_vector = Vh[0]
-    j_vector = Vh[1]
-    normal = np.cross(i_vector, j_vector)
+    valid_resolution = _validation.validate_array(
+        resolution,
+        must_have_shape=[(), (2,)],
+        must_be_integer=True,
+        broadcast_to=(2,),
+        dtype_out=int,
+    )
+    i_resolution, j_resolution = valid_resolution
 
-    # Create rotation matrix from basis vectors
-    rotate_transform = np.eye(4)
-    rotate_transform[:3, :3] = np.vstack((i_vector, j_vector, normal))
-    rotate_transform_inv = rotate_transform.T
+    # Align points to the xyz-axes
+    aligned, matrix = pyvista.PolyData(points).align_xyz(return_matrix=True)
 
-    # Project and transform points to align and center data to the XY plane
-    poly = pyvista.PolyData(points)
-    projected = poly.project_points_to_plane(origin=data_center, normal=normal)
-    projected.points -= data_center
-    projected.transform(rotate_transform)
+    # Fit plane to xyz-aligned mesh
+    aligned_bnds = aligned.bounds
+    i_size = aligned_bnds.x_max - aligned_bnds.x_min
+    j_size = aligned_bnds.y_max - aligned_bnds.y_min
+    plane = pyvista.Plane(
+        i_size=i_size,
+        j_size=j_size,
+        i_resolution=i_resolution,
+        j_resolution=j_resolution,
+    )
 
-    # Compute size of the plane
-    i_size = projected.bounds.x_max - projected.bounds.x_min
-    j_size = projected.bounds.y_max - projected.bounds.y_min
-
-    # The center of the input data does not necessarily coincide with
-    # the center of the plane. The true center of the plane is the
-    # middle of the bounding box of the projected + transformed data
-    # relative to the input data's center
-    center = rotate_transform_inv[:3, :3] @ projected.center + data_center
-
-    # Initialize plane then move to final position
-    plane = pyvista.Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=i_size, j_size=j_size)
-    plane.transform(rotate_transform_inv)
-    plane.points += center
+    # Transform plane back to input points positioning
+    inverse_matrix = pyvista.Transform(matrix).inverse_matrix
+    plane.transform(inverse_matrix, inplace=True)
 
     if return_meta:
+        # Compute center and normal from the plane's points and normals
+        center = np.mean(plane.points, axis=0)
+        normal = np.mean(plane.point_normals, axis=0)
         return plane, center, normal
     return plane
 
@@ -503,6 +531,9 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     See Also
     --------
+    fit_plane_to_points
+        Fit a plane to points using the first two principal axes.
+
     pyvista.DataSetFilters.align_xyz
         Filter which aligns principal axes to the x-y-z axes.
 

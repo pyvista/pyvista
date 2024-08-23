@@ -26,7 +26,6 @@ from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
-from .utilities import transformations
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _coerce_pointslike_arg
 from .utilities.arrays import get_array
@@ -35,8 +34,8 @@ from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
-from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
+from .utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -900,7 +899,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_x(
         self,
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -916,7 +915,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -954,8 +953,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
+        t = Transform().rotate_x(angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -965,7 +963,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_y(
         self,
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -981,7 +979,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about.
 
         transform_all_input_vectors : bool, default: False
@@ -1018,8 +1016,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
+        t = Transform().rotate_y(angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1045,8 +1042,8 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
-            Point to rotate about.  Defaults to origin.
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
@@ -1083,8 +1080,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
+        t = Transform().rotate_z(angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1095,7 +1091,7 @@ class DataSet(DataSetFilters, DataObject):
         self,
         vector: VectorLike[float],
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1114,7 +1110,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle to rotate.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1152,9 +1148,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(vector)
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
+        t = Transform().rotate_vector(vector, angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1180,7 +1174,7 @@ class DataSet(DataSetFilters, DataObject):
         rotation : RotationLike
             3x3 rotation matrix or a SciPy ``Rotation`` object.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1227,7 +1221,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
         """
-        t = transformations.rotation(rotation, point=point)
+        t = Transform().rotate(rotation, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1283,8 +1277,7 @@ class DataSet(DataSetFilters, DataObject):
         (2.0, 1.0, 2.0)
 
         """
-        transform = _vtk.vtkTransform()
-        transform.Translate(cast(Sequence[float], xyz))
+        transform = Transform().translate(xyz)
         return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1296,6 +1289,7 @@ class DataSet(DataSetFilters, DataObject):
         xyz: Number | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
+        point: VectorLike[float] | None = None,
     ):
         """Scale the mesh.
 
@@ -1316,6 +1310,9 @@ class DataSet(DataSetFilters, DataObject):
 
         inplace : bool, default: False
             Updates mesh in-place.
+
+        point : VectorLike[float], optional
+            Point to scale from. Defaults to origin.
 
         Returns
         -------
@@ -1345,11 +1342,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
 
         """
-        if isinstance(xyz, (float, int, np.number)):
-            xyz = [xyz] * 3
-
-        transform = _vtk.vtkTransform()
-        transform.Scale(xyz)
+        transform = Transform().scale(xyz, point=point)
         return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1411,8 +1404,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((1, 0, 0), point=point)
+        t = Transform().reflect((1, 0, 0), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1434,7 +1426,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : sequence[float], optional
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1474,8 +1466,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((0, 1, 0), point=point)
+        t = Transform().reflect((0, 1, 0), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1497,7 +1488,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Vector, optional
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1537,8 +1528,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((0, 0, 1), point=point)
+        t = Transform().reflect((0, 0, 1), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1561,10 +1551,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        normal : sequence[float]
+        normal : VectorLike[float]
            Normal vector to flip about.
 
-        point : sequence[float]
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1604,9 +1594,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(normal, 'normal')
-        check_valid_vector(point, 'point')
-        t = transformations.reflection(normal, point=point)
+        t = Transform().reflect(normal, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -2252,6 +2240,10 @@ class DataSet(DataSetFilters, DataObject):
 
             def format_array(name, arr, field):
                 """Format array information for printing (internal helper)."""
+                if isinstance(arr, str):
+                    # Convert string scalar into a numpy array. Otherwise, get_data_range
+                    # will treat the string as an array name, not an array value.
+                    arr = np.array(arr)
                 dl, dh = self.get_data_range(arr)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)

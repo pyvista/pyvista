@@ -22,12 +22,10 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
-from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -38,7 +36,7 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -2441,8 +2439,9 @@ class DataSetFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
+        input_mesh = self.cast_to_poly_points() if isinstance(self, pyvista.PointSet) else self
         alg = _vtk.vtkCellCenters()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetVertexCells(vertex)
         _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
         return _get_output(alg)
@@ -6305,6 +6304,54 @@ class DataSetFilters:
             output.clear_data()
         return output
 
+    def merge_points(self, tolerance=0.0, inplace=False, progress_bar=False):
+        """Merge duplicate points in this mesh.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        tolerance : float, optional
+            Specify a tolerance to use when comparing points. Points within
+            this tolerance will be merged.
+
+        inplace : bool, default: False
+            Overwrite the original mesh with the result. Only possible if the input
+            is :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData or pyvista.UnstructuredGrid
+            Mesh with merged points. PolyData is returned only if the input is PolyData.
+
+        Examples
+        --------
+        Merge duplicate points in a mesh.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cylinder(resolution=4)
+        >>> mesh.n_points
+        16
+        >>> _ = mesh.merge_points(inplace=True)
+        >>> mesh.n_points
+        8
+        """
+        # Create a second mesh with points. This is required for the merge
+        # to work correctly. Additional points are not required for PolyData inputs
+        other_points = None if isinstance(self, pyvista.PolyData) else self.points
+        other_mesh = pyvista.PolyData(other_points)
+        return self.merge(
+            other_mesh,
+            merge_points=True,
+            tolerance=tolerance,
+            inplace=inplace,
+            main_has_priority=True,
+            progress_bar=progress_bar,
+        )
+
     def merge(
         self,
         grid=None,
@@ -6849,7 +6896,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: _vtk.vtkMatrix4x4 | _vtk.vtkTransform | NumpyArray[float],
+        trans: TransformLike,
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
@@ -6877,7 +6924,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
+        trans : TransformLike
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
@@ -6912,9 +6959,8 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here a 4x4 :class:`numpy.ndarray` is used, but
-        ``vtk.vtkMatrix4x4`` and ``vtk.vtkTransform`` are also
-        accepted.
+        Here a 4x4 :class:`numpy.ndarray` is used, but any :class:`~pyvista.TransformLike`
+        is accepted.
 
         >>> transform_matrix = np.array(
         ...     [
@@ -6931,28 +6977,9 @@ class DataSetFilters:
         if inplace and isinstance(self, pyvista.Grid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
-        if isinstance(trans, _vtk.vtkMatrix4x4):
-            m = trans
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        elif isinstance(trans, _vtk.vtkTransform):
-            t = trans
-            m = trans.GetMatrix()
-        elif isinstance(trans, np.ndarray):
-            if trans.shape != (4, 4):
-                raise ValueError('Transformation array must be 4x4')
-            m = vtkmatrix_from_array(trans)
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        else:
-            raise TypeError(
-                'Input transform must be either:\n'
-                '\tvtk.vtkMatrix4x4\n'
-                '\tvtk.vtkTransform\n'
-                '\t4x4 np.ndarray\n',
-            )
+        t = trans if isinstance(trans, Transform) else Transform(trans)
 
-        if m.GetElement(3, 3) == 0:
+        if t.matrix[3, 3] == 0:
             raise ValueError("Transform element (3,3), the inverse scale term, is zero")
 
         # vtkTransformFilter truncates the result if the input is an integer type
@@ -7085,7 +7112,7 @@ class DataSetFilters:
         See the :ref:`reflect_example` for more examples using this filter.
 
         """
-        t = transformations.reflection(normal, point=point)
+        t = Transform().reflect(normal, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
