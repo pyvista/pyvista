@@ -606,6 +606,8 @@ tags_output_dir = "tags"
 tags_page_header = "Gallery examples contain this tag:"  # tag sub-page, header text
 tags_page_title = "Tag"  # tag sub-page, title appended with the tag name
 
+# sphinx-sitemap options ---------------------------------------------------------
+html_baseurl = 'https://docs.pyvista.org/'
 
 def setup(app):
     app.connect("html-page-context", pv_html_page_context)
