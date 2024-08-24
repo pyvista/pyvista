@@ -935,6 +935,12 @@ def test_fit_plane_to_points():
     assert np.allclose(fitted_normal, direction)
     assert np.allclose(fitted_plane.point_normals.mean(axis=0), direction)
 
+    flipped_normal = direction * -1
+    _, _, new_normal = fit_plane_to_points(
+        expected_plane.points, return_meta=True, init_normal=flipped_normal
+    )
+    assert np.allclose(new_normal, flipped_normal)
+
 
 def test_fit_line_to_points():
     # Fit a line to a line's points

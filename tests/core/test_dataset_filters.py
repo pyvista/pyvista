@@ -3916,6 +3916,61 @@ def test_align_xyz_return_matrix():
     assert np.allclose(inverted_bounds, initial_bounds)
 
 
+@pytest.mark.parametrize(
+    ('as_composite', 'mesh_type'), [(True, pv.MultiBlock), (False, pv.PolyData)]
+)
+def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
+    box = sphere.bounding_box(as_composite=as_composite)
+    assert isinstance(box, mesh_type)
+    assert box.bounds == sphere.bounds
+
+
+def test_oriented_bounding_box():
+    rotation = pv.transformations.axis_angle_rotation((1, 2, 3), 30)
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb = box_mesh.oriented_bounding_box()
+    assert obb.bounds == box_mesh.bounds
+
+
+@pytest.mark.parametrize('oriented', [True, False])
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_bounding_box_return_meta(oriented, as_composite):
+    # Generate a random rotation matrix
+    vector = np.random.default_rng().random((3,))
+    angle = np.random.default_rng().random((1,)) * 360
+    rotation = pv.transformations.axis_angle_rotation(vector, angle)
+
+    # Transform a box manually and get its OBB
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb, point, axes = box_mesh.bounding_box(
+        oriented=oriented, return_meta=True, as_composite=as_composite
+    )
+    ATOL = 1e-6  # Needed for numerical error from calculating the principal axes
+    if oriented:
+        # Test axes are equal (up to a difference in sign)
+        expected_axes = pv.principal_axes(box_mesh.points)
+        identity = np.abs(expected_axes @ axes.T)
+        assert np.allclose(identity, np.eye(3), atol=ATOL)
+    else:
+        # Test identity always returned for non-oriented box
+        assert np.array_equal(axes, np.eye(3))
+        bnds = box_mesh.bounds
+        assert np.array_equal(point, (bnds.x_min, bnds.y_min, bnds.z_min))
+
+    # Test the returned point is one of the box's points
+    if as_composite:
+        assert any(point in face.points for face in obb)
+
+        # Also test that box's normals are aligned with the axes directions
+        assert np.allclose(axes[0], obb['+X'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[1], obb['+Y'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[2], obb['+Z'].cell_normals[0], atol=ATOL)
+    else:
+        assert point in obb.points
+
+
 DELTA = 0.1
 
 
