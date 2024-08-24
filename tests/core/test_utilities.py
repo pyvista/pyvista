@@ -913,22 +913,26 @@ def test_fit_plane_to_points_resolution(airplane):
 
 
 def test_fit_plane_to_points():
-    points = ex.load_airplane().points
-    plane, center, normal = fit_plane_to_points(points, return_meta=True)
-
-    assert np.allclose(normal, [-2.5999512e-08, 0.121780515, -0.99255705])
-    assert np.allclose(center, [896.9954860028446, 686.6470205328502, 78.13187948615939])
-    assert np.allclose(
-        plane.bounds,
-        [
-            139.06036376953125,
-            1654.9306640625,
-            38.0776252746582,
-            1335.2164306640625,
-            -1.4434913396835327,
-            157.70724487304688,
-        ],
+    # Fit a plane to a plane's points
+    center = (1, 2, 3)
+    direction = np.array((4.0, 5.0, 6.0))
+    direction /= np.linalg.norm(direction)
+    expected_plane = pv.Plane(center=center, direction=direction, i_size=2, j_size=3)
+    fitted_plane, fitted_center, fitted_normal = fit_plane_to_points(
+        expected_plane.points, return_meta=True
     )
+
+    # Test bounds
+    assert np.allclose(fitted_plane.bounds, expected_plane.bounds, atol=1e-6)
+
+    # Test center
+    assert np.allclose(fitted_plane.center, center)
+    assert np.allclose(fitted_center, center)
+    assert np.allclose(fitted_plane.points.mean(axis=0), center)
+
+    # Test normal
+    assert np.allclose(fitted_normal, direction)
+    assert np.allclose(fitted_plane.point_normals.mean(axis=0), direction)
 
 
 # Default output from `np.linalg.eigh`
@@ -1021,9 +1025,15 @@ def one_million_points():
 
 
 def test_principal_axes_success_with_many_points(one_million_points):
-    # Use large mesh to verify no memory errors are raised
+    # Use many points to verify no memory errors are raised
     axes = pv.principal_axes(one_million_points)
     assert isinstance(axes, np.ndarray)
+
+
+def test_fit_plane_to_points_success_with_many_points(one_million_points):
+    # Use many points to verify no memory errors are raised
+    plane = pv.fit_plane_to_points(one_million_points)
+    assert isinstance(plane, pv.PolyData)
 
 
 @pytest.fixture()
@@ -1177,6 +1187,19 @@ def test_transform_reflect(transform, reflect_args):
     assert np.allclose(identity, np.eye(4))
 
 
+@pytest.mark.parametrize(
+    ('method', 'vector'), [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))]
+)
+def test_transform_flip_xyz(transform, method, vector):
+    getattr(transform, method)()
+    actual = transform.matrix
+    expected = transformations.reflection(vector)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
+
+
 def test_transform_rotate(transform):
     transform.rotate(ROTATION)
     actual = transform.matrix
@@ -1194,6 +1217,9 @@ def test_transform_rotate(transform):
     [
         ('scale', (SCALE,)),
         ('reflect', (VECTOR,)),
+        ('flip_x', ()),
+        ('flip_y', ()),
+        ('flip_z', ()),
         ('rotate', (ROTATION,)),
         ('rotate_x', (ANGLE,)),
         ('rotate_y', (ANGLE,)),
@@ -1455,6 +1481,9 @@ def test_transform_chain_methods():
     matrix = (
         Transform()
         .reflect(ones)
+        .flip_x()
+        .flip_y()
+        .flip_z()
         .rotate_x(0)
         .rotate_y(0)
         .rotate_z(0)
