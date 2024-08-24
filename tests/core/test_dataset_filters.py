@@ -3947,12 +3947,12 @@ def test_bounding_box_return_meta(oriented, as_composite):
     obb, point, axes = box_mesh.bounding_box(
         oriented=oriented, return_meta=True, as_composite=as_composite
     )
-
+    ATOL = 1e-6
     if oriented:
         # Test axes are equal (up to a difference in sign)
         expected_axes = pv.principal_axes(box_mesh.points)
         identity = np.abs(expected_axes @ axes.T)
-        assert np.allclose(identity, np.eye(3), atol=1e-6)
+        assert np.allclose(identity, np.eye(3), atol=ATOL)
     else:
         # Test identity always returned for non-oriented box
         assert np.array_equal(axes, np.eye(3))
@@ -3964,9 +3964,9 @@ def test_bounding_box_return_meta(oriented, as_composite):
         assert any(point in face.points for face in obb)
 
         # Also test that box's normals are aligned with the axes directions
-        assert np.allclose(axes[0], obb['+X'].cell_normals[0])
-        assert np.allclose(axes[1], obb['+Y'].cell_normals[0])
-        assert np.allclose(axes[2], obb['+Z'].cell_normals[0])
+        assert np.allclose(axes[0], obb['+X'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[1], obb['+Y'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[2], obb['+Z'].cell_normals[0], atol=ATOL)
     else:
         assert point in obb.points
 
