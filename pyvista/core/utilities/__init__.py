@@ -153,6 +153,7 @@ from .parametric_objects import ParametricTorus
 from .parametric_objects import Spline
 from .parametric_objects import parametric_keywords
 from .parametric_objects import surface_from_para
+from .points import fit_line_to_points
 from .points import fit_plane_to_points
 from .points import line_segments_from_points
 from .points import lines_from_points
