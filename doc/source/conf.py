@@ -92,7 +92,7 @@ extensions = [
     "sphinx_toolbox.more_autodoc.overloads",
     "sphinx_toolbox.more_autodoc.typevars",
     "sphinx_toolbox.more_autodoc.autonamedtuple",
-   "sphinxext.opengraph",
+    "sphinxext.opengraph",
 ]
 
 # Configuration of pyvista.ext.coverage
@@ -610,6 +610,7 @@ tags_page_title = "Tag"  # tag sub-page, title appended with the tag name
 
 ogp_site_url = "https://docs.pyvista.org/"
 ogp_image = "https://docs.pyvista.org/_static/pyvista_banner_small.png"
+
 
 def setup(app):
     app.connect("html-page-context", pv_html_page_context)
