@@ -7296,7 +7296,7 @@ class DataSetFilters:
         Parameters
         ----------
         box_style : 'frame' | 'outline' | 'face', default: 'face'
-            Choose the style of the box. If ``'face'`` (default), each face of the cube
+            Choose the style of the box. If ``'face'`` (default), each face of the box
             is a single quad cell. If ``'outline'``, the edges of each face are returned
             as line cells. If ``'frame'``, the center portion of each face is removed to
             create a picture-frame style border with each face having four quads (one
@@ -7355,6 +7355,13 @@ class DataSetFilters:
         pyvista.MultiBlock or pyvista.PolyData
             MultiBlock with six named cube faces when ``as_composite=True`` and
             PolyData otherwise.
+
+        numpy.ndarray
+            The box's corner point corresponding to the origin of its axes if
+            ``return_meta=True``.
+
+        numpy.ndarray
+            The box's orthonormal axes vectors if ``return_meta=True``.
 
         Examples
         --------
@@ -7469,7 +7476,7 @@ class DataSetFilters:
         Parameters
         ----------
         box_style : 'frame' | 'outline' | 'face', default: 'face'
-            Choose the style of the box. If ``'face'`` (default), each face of the cube
+            Choose the style of the box. If ``'face'`` (default), each face of the box
             is a single quad cell. If ``'outline'``, the edges of each face are returned
             as line cells. If ``'frame'``, the center portion of each face is removed to
             create a picture-frame style border with each face having four quads (one
@@ -7515,6 +7522,13 @@ class DataSetFilters:
         pyvista.MultiBlock or pyvista.PolyData
             MultiBlock with six named cube faces when ``as_composite=True`` and
             PolyData otherwise.
+
+        numpy.ndarray
+            The box's corner point corresponding to the origin of its axes if
+            ``return_meta=True``.
+
+        numpy.ndarray
+            The box's orthonormal axes vectors if ``return_meta=True``.
 
         Examples
         --------
