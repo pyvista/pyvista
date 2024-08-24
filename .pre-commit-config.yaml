@@ -86,7 +86,7 @@ repos:
       - id: mixed-line-ending
       - id: file-contents-sorter
         verbose: true
-        files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
+        files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt|requirements_.*\.txt)$
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
