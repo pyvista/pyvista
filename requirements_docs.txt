@@ -31,3 +31,4 @@ trame==3.6.3
 trame-vtk==2.8.10
 trame-vuetify==2.6.2
 trimesh==4.4.6
+sphinxext-opengraph==0.9.1
