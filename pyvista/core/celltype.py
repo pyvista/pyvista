@@ -7,7 +7,18 @@ from enum import IntEnum
 from . import _vtk_core as _vtk
 
 
-class CellType(IntEnum):
+class _DocIntEnum(IntEnum):
+    """Enable documentation for enum members."""
+
+    def __new__(cls, value, doc=None):
+        self = int.__new__(cls, value)
+        self._value_ = value
+        if doc is not None:
+            self.__doc__ = doc
+        return self
+
+
+class CellType(_DocIntEnum):
     """Define types of cells.
 
     Notes
@@ -52,10 +63,13 @@ class CellType(IntEnum):
     """
 
     # Linear cells
-    EMPTY_CELL = _vtk.VTK_EMPTY_CELL
+    EMPTY_CELL = _vtk.VTK_EMPTY_CELL, "Empty cell"
     VERTEX = _vtk.VTK_VERTEX
     POLY_VERTEX = _vtk.VTK_POLY_VERTEX
-    LINE = _vtk.VTK_LINE
+    LINE = (
+        _vtk.VTK_LINE,
+        "Line cell\n\n.. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-Line-1_00_00.png\n\n",
+    )
     POLY_LINE = _vtk.VTK_POLY_LINE
     TRIANGLE = _vtk.VTK_TRIANGLE
     TRIANGLE_STRIP = _vtk.VTK_TRIANGLE_STRIP
