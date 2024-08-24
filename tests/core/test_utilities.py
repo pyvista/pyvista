@@ -1193,6 +1193,19 @@ def test_transform_reflect(transform, reflect_args):
     assert np.allclose(identity, np.eye(4))
 
 
+@pytest.mark.parametrize(
+    ('method', 'vector'), [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))]
+)
+def test_transform_flip_xyz(transform, method, vector):
+    getattr(transform, method)()
+    actual = transform.matrix
+    expected = transformations.reflection(vector)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
+
+
 def test_transform_rotate(transform):
     transform.rotate(ROTATION)
     actual = transform.matrix
@@ -1210,6 +1223,9 @@ def test_transform_rotate(transform):
     [
         ('scale', (SCALE,)),
         ('reflect', (VECTOR,)),
+        ('flip_x', ()),
+        ('flip_y', ()),
+        ('flip_z', ()),
         ('rotate', (ROTATION,)),
         ('rotate_x', (ANGLE,)),
         ('rotate_y', (ANGLE,)),
@@ -1408,6 +1424,9 @@ def test_transform_chain_methods():
     matrix = (
         Transform()
         .reflect(ones)
+        .flip_x()
+        .flip_y()
+        .flip_z()
         .rotate_x(0)
         .rotate_y(0)
         .rotate_z(0)
