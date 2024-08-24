@@ -92,6 +92,7 @@ extensions = [
     "sphinx_toolbox.more_autodoc.overloads",
     "sphinx_toolbox.more_autodoc.typevars",
     "sphinx_toolbox.more_autodoc.autonamedtuple",
+    "sphinx-sitemap",
 ]
 
 # Configuration of pyvista.ext.coverage
