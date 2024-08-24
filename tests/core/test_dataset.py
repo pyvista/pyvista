@@ -527,6 +527,13 @@ def test_html_repr(grid):
     assert grid._repr_html_() is not None
 
 
+def test_html_repr_string_scalar(grid):
+    array_data = "data"
+    array_name = "name"
+    grid.add_field_data(array_data, array_name)
+    assert grid._repr_html_() is not None
+
+
 @pytest.mark.parametrize('html', [True, False])
 @pytest.mark.parametrize('display', [True, False])
 def test_print_repr(grid, display, html):
