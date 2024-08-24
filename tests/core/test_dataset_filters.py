@@ -3947,7 +3947,7 @@ def test_bounding_box_return_meta(oriented, as_composite):
     obb, point, axes = box_mesh.bounding_box(
         oriented=oriented, return_meta=True, as_composite=as_composite
     )
-    ATOL = 1e-6
+    ATOL = 1e-6  # Needed for numerical error from calculating the principal axes
     if oriented:
         # Test axes are equal (up to a difference in sign)
         expected_axes = pv.principal_axes(box_mesh.points)
