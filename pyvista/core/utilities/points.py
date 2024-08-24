@@ -806,6 +806,6 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     if return_std:
         # Compute standard deviation and swap order from ascending -> descending
-        std = np.sqrt(eig_vals / len(points))[::-1]
+        std = np.sqrt(np.abs(eig_vals) / len(points))[::-1]
         return axes, std
     return axes
