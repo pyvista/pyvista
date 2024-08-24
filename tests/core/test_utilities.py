@@ -20,6 +20,7 @@ import pyvista as pv
 from pyvista import examples as ex
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
+from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
@@ -933,6 +934,26 @@ def test_fit_plane_to_points():
     # Test normal
     assert np.allclose(fitted_normal, direction)
     assert np.allclose(fitted_plane.point_normals.mean(axis=0), direction)
+
+
+def test_fit_line_to_points():
+    # Fit a line to a line's points
+    point_a = (1, 2, 3)
+    point_b = (4, 5, 6)
+    resolution = 42
+    expected_line = pv.Line(point_a, point_b, resolution=resolution)
+    fitted_line, length, direction = fit_line_to_points(
+        expected_line.points, resolution=resolution, return_meta=True
+    )
+
+    assert np.allclose(fitted_line.bounds, expected_line.bounds)
+    assert np.allclose(fitted_line.points[0], point_a)
+    assert np.allclose(fitted_line.points[-1], point_b)
+    assert np.allclose(direction, np.abs(pv.principal_axes(fitted_line.points)[0]))
+    assert np.allclose(length, fitted_line.length)
+
+    fitted_line = fit_line_to_points(expected_line.points, resolution=resolution, return_meta=False)
+    assert np.allclose(fitted_line.bounds, expected_line.bounds)
 
 
 # Default output from `np.linalg.eigh`
