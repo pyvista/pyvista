@@ -273,6 +273,7 @@ class CellType(_DocIntEnum):
     PIXEL = _CellTypeTuple(
         value=_vtk.VTK_PIXEL,
         cell_class=_vtk.vtkPixel,
+        example='Pixel',
         short_doc="""
         Represents a 2D orthogonal quadrilateral.
 
