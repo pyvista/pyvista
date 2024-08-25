@@ -7,13 +7,13 @@ from typing import NamedTuple
 
 from . import _vtk_core as _vtk
 
-_DROPDOWN = """
+_DROPDOWN_TEMPLATE = """
         .. dropdown:: :octicon:`info` More info
 
             {}
 """
 
-_GRID_NO_IMAGE = """
+_GRID_TEMPLATE_NO_IMAGE = """
 .. grid:: 1
     :margin: 1
 
@@ -22,8 +22,7 @@ _GRID_NO_IMAGE = """
         {}{}
 """
 
-
-_GRID_WITH_IMAGE = """
+_GRID_TEMPLATE_WITH_IMAGE = """
 .. grid:: 1 2 2 2
     :reverse:
     :margin: 1
@@ -57,7 +56,7 @@ def _indent_multi_line_string(string, indent_level):
 class _CellTypeTuple(NamedTuple):
     value: int
     cell_class: type[_vtk.vtkCell] | None = None
-    short_doc: str = ''
+    short_doc: str | None = None
     long_doc: str | None = None
     example: str | None = None
 
@@ -65,36 +64,67 @@ class _CellTypeTuple(NamedTuple):
 class _DocIntEnum(IntEnum):
     """Enable documentation for enum members."""
 
-    def __new__(cls, value, _cell_class=None, _short_doc=None, _long_doc=None, _example=None):
+    def __new__(
+        cls,
+        value,
+        _cell_class: type[_vtk.vtkCell] | None = None,
+        _short_doc: str | None = None,
+        _long_doc: str | None = None,
+        _example: str | None = None,
+    ):
         """Create new enum.
 
         Optionally specify documentation info.
+
+        Parameters
+        ----------
+        value : int
+            Integer value of the cell type.
+
+        _cell_class : type[_vtk.vtkCell], optional
+            VTK class for this cell type.
+
+        _short_doc : str, optional
+            Short description of this cell type. Typically a single line but no more
+            than 3-4 lines. Should only include a general description and no technical
+            details or cell connectivity.
+
+        _long_doc : str, optional
+            Long description of this cell type. This information is hidden inside a
+            drop-down. Include cell connectivity here or any other technical details.
+
+        _example : str, optional
+            Name of the example for this cell type in `pyvista.examples.cell.<NAME>`.
+            When specified, the first figure from this example is used as the image for
+            the cell.
+
         """
         self = int.__new__(cls, value)
         self._value_ = value
+        self.__doc__ = ''
+
+        # Generate cell type documentation if specified
         if _short_doc or _long_doc or _example:
-            if _short_doc is None:
-                _short_doc = ''
-            else:
-                _short_doc = _indent_multi_line_string(_short_doc, indent_level=2)
-                _short_doc = _short_doc.rstrip('\n')
-
-            if _long_doc is None:
-                _long_doc = ''
-
-            else:
-                _long_doc = _indent_multi_line_string(_long_doc, indent_level=3)
-                _long_doc = _DROPDOWN.format(_long_doc)
-                _long_doc = _long_doc.rstrip('\n')
-
-            doc = (
-                _GRID_NO_IMAGE.format(_short_doc, _long_doc)
-                if _example is None
-                else _GRID_WITH_IMAGE.format(_short_doc, _long_doc, _example)
+            _short_doc = (
+                ''
+                if _short_doc is None
+                else _indent_multi_line_string(_short_doc, indent_level=2).rstrip('\n')
             )
-        else:
-            doc = ''
-        self.__doc__ = doc
+
+            _long_doc = (
+                ''
+                if _long_doc is None
+                else _DROPDOWN_TEMPLATE.format(
+                    _indent_multi_line_string(_long_doc, indent_level=3)
+                ).rstrip('\n')
+            )
+
+            self.__doc__ = (
+                _GRID_TEMPLATE_NO_IMAGE.format(_short_doc, _long_doc)
+                if _example is None
+                else _GRID_TEMPLATE_WITH_IMAGE.format(_short_doc, _long_doc, _example)
+            )
+
         return self
 
 
@@ -153,13 +183,13 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_VERTEX,
         cell_class=_vtk.vtkVertex,
         example="Vertex",
-        short_doc="""Represent a 3D point.""",
+        short_doc="""Represent a point in 3D space.""",
     )
     POLY_VERTEX = _CellTypeTuple(
         value=_vtk.VTK_POLY_VERTEX,
         cell_class=_vtk.vtkPolyVertex,
         example="PolyVertex",
-        short_doc="""Represent a set of 0D vertices.""",
+        short_doc="""Represent a set of points in 3D space.""",
     )
     LINE = _CellTypeTuple(
         value=_vtk.VTK_LINE,
@@ -177,7 +207,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_TRIANGLE,
         cell_class=_vtk.vtkTriangle,
         example="Triangle",
-        short_doc="""Represent a triangle located in 3D-space.""",
+        short_doc="""Represent a 2D triangle.""",
     )
     TRIANGLE_STRIP = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE_STRIP,
@@ -226,7 +256,7 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represent a 2D quadrilateral.
 
-        It is defined by the four points (0,1,2,3) in counterclockwise order.
+        It is defined by the four points ``(0,1,2,3)`` in counterclockwise order.
         """,
     )
     TETRA = _CellTypeTuple(
@@ -235,7 +265,7 @@ class CellType(_DocIntEnum):
         example="Tetrahedron",
         short_doc="""Represents a 3D tetrahedron.""",
         long_doc="""
-        The tetrahedron is defined by the four points (0-3); where (0,1,2)
+        The tetrahedron is defined by the four points ``(0-3)`` where ``(0,1,2)``
         is the base of the tetrahedron which, using the right hand rule, forms a
         triangle whose normal points in the direction of the fourth point.
         """,
@@ -247,8 +277,8 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represents a 3D orthogonal parallelepiped.
 
-        Unlike ``HEXAHEDRON``, ``VOXEL`` has interior angles of 90 degrees, and
-        sides are parallel to coordinate axes.
+        Unlike ``HEXAHEDRON``, ``VOXEL`` has interior angles of 90 degrees, and its
+        sides are parallel to the coordinate axes.
         """,
     )
     HEXAHEDRON = _CellTypeTuple(
@@ -257,10 +287,10 @@ class CellType(_DocIntEnum):
         example="Hexahedron",
         short_doc="""Represent a 3D rectangular hexahedron.""",
         long_doc="""
-        The hexahedron is defined by the eight points (0-7) where (0,1,2,3)
+        The hexahedron is defined by the eight points ``(0-7)`` where ``(0,1,2,3)``
         is the base of the hexahedron which, using the right hand rule, forms a
-        quadrilaterial whose normal points in the direction of the opposite face
-        (4,5,6,7).
+        quadrilateral whose normal points in the direction of the opposite face
+        ``(4,5,6,7)``.
         """,
     )
     WEDGE = _CellTypeTuple(
@@ -273,9 +303,9 @@ class CellType(_DocIntEnum):
         A wedge consists of two triangular and three quadrilateral faces.
         """,
         long_doc="""
-        The cell is defined by the six points (0-5) where (0,1,2) is the
+        The cell is defined by the six points ``(0-5)`` where ``(0,1,2)`` is the
         base of the wedge which, using the right hand rule, forms a triangle whose
-        normal points outward (away from the triangular face (3,4,5)).
+        normal points outward (away from the triangular face ``(3,4,5)``).
         """,
     )
     PYRAMID = _CellTypeTuple(
@@ -288,10 +318,10 @@ class CellType(_DocIntEnum):
         A pyramid consists of a rectangular base with four triangular faces.
         """,
         long_doc="""
-        The pyramid is defined by the five points (0-4) where (0,1,2,3) is
+        The pyramid is defined by the five points ``(0-4)`` where ``(0,1,2,3)`` is
         the base of the pyramid which, using the right hand rule, forms a
-        quadrilaterial whose normal points in the direction of the pyramid apex at
-        vertex #4. The parametric location of vertex #4 is [0, 0, 1].
+        quadrilateral whose normal points in the direction of the pyramid apex at
+        vertex ``(4)``. The parametric location of vertex ``(4)`` is ``[0, 0, 1]``.
         """,
     )
     PENTAGONAL_PRISM = _CellTypeTuple(
@@ -300,9 +330,9 @@ class CellType(_DocIntEnum):
         example="PentagonalPrism",
         short_doc="""Represent a convex 3D prism with a pentagonal base.""",
         long_doc="""
-        The prism is defined by the ten points (0-9), where (0,1,2,3,4) is
+        The prism is defined by the ten points ``(0-9)``, where ``(0,1,2,3,4)`` is
         the base of the prism which, using the right hand rule, forms a pentagon
-        whose normal points is in the direction of the opposite face (5,6,7,8,9).
+        whose normal points is in the direction of the opposite face ``(5,6,7,8,9)``.
         """,
     )
     HEXAGONAL_PRISM = _CellTypeTuple(
@@ -311,9 +341,9 @@ class CellType(_DocIntEnum):
         example="HexagonalPrism",
         short_doc="""Represent a 3D prism with hexagonal base.""",
         long_doc="""
-        The prism is defined by the twelve points (0-12) where (0,1,2,3,4,5)
+        The prism is defined by the twelve points ``(0-11)`` where (0,1,2,3,4,5)
         is the base of the prism which, using the right hand rule, forms a hexagon
-        whose normal points is in the direction of the opposite face (6,7,8,9,10,11).
+        whose normal points is in the direction of the opposite face ``(6,7,8,9,10,11)``.
         """,
     )
     ####################################################################################
@@ -328,7 +358,7 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the three points defining the cell is point ids
-        (0,1,2) where id #2 is the mid-edge node.
+        ``(0,1,2)`` where id ``(2)`` is the mid-edge node.
         """,
     )
     QUADRATIC_TRIANGLE = _CellTypeTuple(
@@ -340,12 +370,12 @@ class CellType(_DocIntEnum):
         The cell includes a mid-edge node for each of the three edges of the cell.
         """,
         long_doc="""
-        The ordering of the three points defining the cell is point ids
-        (0-2,3-5) where:
+        The ordering of the siex points defining the cell is point ids
+        ``(0-2, 3-5)`` where:
 
-        - id #3 is the mid-edge node between points (0,1).
-        - id #4 is the mid-edge node between points (1,2).
-        - id #5 is the mid-edge node between points (2,0).
+        - id ``(3)`` is the mid-edge node between points ``(0,1)``.
+        - id ``(4)`` is the mid-edge node between points ``(1,2)``.
+        - id ``(5)`` is the mid-edge node between points ``(2,0)``.
         """,
     )
     QUADRATIC_QUAD = _CellTypeTuple(
@@ -358,10 +388,10 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the eight points defining the cell are point ids
-        (0-3,4-7) where:
+        ``(0-3, 4-7)`` where:
 
-        - ids 0-3 define the four corner vertices of the quad.
-        - ids 4-7 define the mid-edge nodes (0,1), (1,2), (2,3), (3,0).
+        - ids ``(0-3)`` define the four corner vertices of the quad.
+        - ids ``(4-7)`` define the mid-edge nodes ``(0,1)``, ``(1,2)``, ``(2,3)``, ``(3,0)``.
         """,
     )
     QUADRATIC_POLYGON = _CellTypeTuple(
@@ -375,10 +405,10 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the 2*n points defining the cell are point ids
-        (0..n-1 and n..2*n-1) where:
+        ``(0..n-1, n..2*n-1)`` where:
 
-        - ids 0..n-1 define the corner vertices of the polygon
-        - ids n..2*n-1 define the mid-edge nodes.
+        - ids ``(0..n-1)`` define the corner vertices of the polygon.
+        - ids ``(n..2*n-1)`` define the mid-edge nodes.
 
         Define the polygon with points ordered in the counter-clockwise direction.
         Do not repeat the last point.
@@ -390,15 +420,15 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represent a 3D, 10-node, iso-parametric parabolic tetrahedron.
 
-        The cell includes a mid-edge node on each of the size edges of the
-        tetrahedron.""",
+        The cell includes a mid-edge node on each of the side edges of the tetrahedron.
+        """,
         long_doc="""
-        The ordering of the ten points defining the cell is point
-        ids (0-3,4-9) where:
+        The ordering of the ten points defining the cell is point ids ``(0-3, 4-9)``
+        where:
 
-        - ids 0-3 are the four tetra vertices.
-        - ids 4-9 are the mid-edge nodes between (0,1), (1,2), (2,0), (0,3), (1,3),
-          and (2,3).
+        - ids ``(0-3)`` are the four tetra vertices.
+        - ids ``(4-9)`` are the mid-edge nodes between ``(0,1)``, ``(1,2)``, ``(2,0)``,
+          ``(0,3)``, ``(1,3)``, and ``(2,3)``.
         """,
     )
     QUADRATIC_HEXAHEDRON = _CellTypeTuple(
@@ -411,13 +441,14 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the twenty points defining the cell is point ids
-        (0-7,8-19) where:
+        ``(0-7, 8-19)`` where:
 
-        - ids 0-7 are the eight corner vertices of the cube
-        - ids 8-19 are the twelve mid-edge nodes.
+        - ids ``(0-7)`` are the eight corner vertices of the cube.
+        - ids ``(8-19)`` are the twelve mid-edge nodes.
 
-        The mid-edge nodes lie on the edges defined by (0,1), (1,2), (2,3), (3,0),
-        (4,5), (5,6), (6,7), (7,4), (0,4), (1,5), (2,6), (3,7).
+        The mid-edge nodes lie on the edges defined by ``(0,1)``, ``(1,2)``, ``(2,3)``,
+        ``(3,0)``, ``(4,5)``, ``(5,6)``, ``(6,7)``, ``(7,4)``, ``(0,4)``, ``(1,5)``,
+        ``(2,6)``, ``(3,7)``.
         """,
     )
     QUADRATIC_WEDGE = _CellTypeTuple(
@@ -430,16 +461,16 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the fifteen points defining the cell is point ids
-        (0-5,6-14) where:
+        ``(0-5, 6-14)`` where:
 
-        - ids 0-5 are the six corner vertices of the wedge, defined analogously to
-          the six points in ``WEDGE`` (points (0,1,2) form the base of the wedge
+        - ids ``(0-5)`` are the six corner vertices of the wedge, defined analogously to
+          the six points in ``WEDGE`` (points ``(0,1,2)`` form the base of the wedge
           which, using the right hand rule, forms a triangle whose normal points
-          away from the triangular face (3,4,5)).
-        - ids 6-14 are the nine mid-edge nodes
+          away from the triangular face ``(3,4,5)``).
+        - ids ``(6-14)`` are the nine mid-edge nodes.
 
-        The mid-edge nodes lie on the edges defined by (0,1), (1,2), (2,0), (3,4),
-        (4,5), (5,3), (0,3), (1,4), (2,5).
+        The mid-edge nodes lie on the edges defined by ``(0,1)``, ``(1,2)``, ``(2,0)``,
+        ``(3,4)``, ``(4,5)``, ``(5,3)``, ``(0,3)``, ``(1,4)``, ``(2,5)``.
         """,
     )
     QUADRATIC_PYRAMID = _CellTypeTuple(
@@ -452,14 +483,14 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the thirteen points defining the cell is point ids
-        (0-4,5-12) where:
+        ``(0-4, 5-12)`` where:
 
-        - ids 0-4 are the five corner vertices of the pyramid
-        - ids (5-12) are the eight mid-edge nodes.
+        - ids ``(0-4)`` are the five corner vertices of the pyramid
+        - ids ``(5-12)`` are the eight mid-edge nodes.
 
-        The mid-edge nodes lie on the edges defined by (0,1), (1,2), (2,3), (3,0),
-        (0,4), (1,4), (2,4), (3,4), respectively. The parametric location of vertex
-        #4 is [0, 0, 1].
+        The mid-edge nodes lie on the edges defined by ``(0,1)``, ``(1,2)``, ``(2,3)``,
+        ``(3,0)``, ``(0,4)``, ``(1,4)``, ``(2,4)``, ``(3,4)``, respectively.
+        The parametric location of vertex ``(4)`` is ``[0, 0, 1]``.
         """,
     )
     BIQUADRATIC_QUAD = _CellTypeTuple(
@@ -473,11 +504,11 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the eight points defining the cell are point ids
-        (0-3,4-8) where:
+        ``(0-3, 4-8)`` where:
 
-        - ids 0-3 define the four corner vertices of the quad.
-        - ids 4-7 define the mid-edge nodes (0,1), (1,2), (2,3), (3,0).
-        - id #8 defines the face center node.
+        - ids ``(0-3)`` define the four corner vertices of the quad.
+        - ids ``(4-7)`` define the mid-edge nodes ``(0,1)``, ``(1,2)``, ``(2,3)``, ``(3,0)``.
+        - id ``(8)`` defines the face center node.
         """,
     )
     TRIQUADRATIC_HEXAHEDRON = _CellTypeTuple(
@@ -491,26 +522,27 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the 27 points defining the cell is point ids
-        (0-7,8-19, 20-25, 26) where:
+        ``(0-7, 8-19, 20-25, 26)`` where:
 
-        - ids (0-7) are the eight corner vertices of the cube
-        - ids (8-19) are the twelve midedge nodes
-        - ids (20-25) are the 6 mid-face nodes
-        - id #26 is the mid-volume node.
+        - ids ``(0-7)`` are the eight corner vertices of the cube.
+        - ids ``(8-19)`` are the twelve mid-edge nodes.
+        - ids ``(20-25)`` are the six mid-face nodes.
+        - id ``(26)`` is the mid-volume node.
 
-        The mid-edge nodes lie on the edges defined by (0,1), (1,2), (2,3),
-        (3,0), (4,5), (5,6), (6,7), (7,4), (0,4), (1,5), (2,6), (3,7).
+        The mid-edge nodes lie on the edges defined by ``(0,1)``, ``(1,2)``, ``(2,3)``,
+        ``(3,0)``, ``(4,5)``, ``(5,6)``, ``(6,7)``, ``(7,4)``, ``(0,4)``, ``(1,5)``,
+        ``(2,6)``, ``(3,7)``.
 
         The mid-surface nodes lies on the faces defined by (first edge nodes
         ids, then mid-edge nodes ids):
-        - (0,1,5,4; 8,17,12,16)
-        - (1,2,6,5; 9,18,13,17)
-        - (2,3,7,6, 10,19,14,18)
-        - (3,0,4,7; 11,16,15,19)
-        - (0,1,2,3; 8,9,10,11)
-        - (4,5,6,7; 12,13,14,15)
+        - ``(0,1,5,4; 8,17,12,16)``
+        - ``(1,2,6,5; 9,18,13,17)``
+        - ``(2,3,7,6, 10,19,14,18)``
+        - ``(3,0,4,7; 11,16,15,19)``
+        - ``(0,1,2,3; 8,9,10,11)``
+        - ``(4,5,6,7; 12,13,14,15)``
 
-        The last point lies in the center of the cell (0,1,2,3,4,5,6,7).
+        The last point lies in the center of the cell ``(0,1,2,3,4,5,6,7)``.
         """,
     )
     if hasattr(_vtk, "VTK_TRIQUADRATIC_PYRAMID"):
@@ -525,27 +557,28 @@ class CellType(_DocIntEnum):
             """,
             long_doc="""
             The ordering of the nineteen points defining the cell is point
-            ids (0-4, 5-12, 13-17, 18), where:
+            ids ``(0-4, 5-12, 13-17, 18)``, where:
 
-            - ids (0-4) are the five corner vertices of the pyramid.
-            - ids (5-12) are the 8 mid-edge nodes.
-            - ids (13-17) are the 5 mid-face nodes.
-            - id #19 is the volumetric centroid node.
+            - ids ``(0-4)`` are the five corner vertices of the pyramid.
+            - ids ``(5-12)`` are the 8 mid-edge nodes.
+            - ids ``(13-17)`` are the 5 mid-face nodes.
+            - id ``(19)`` is the volumetric centroid node.
 
-            The mid-edge nodes lie on the edges defined by (0, 1), (1, 2), (2, 3),
-            (3, 0), (0, 4), (1, 4), (2, 4), (3, 4), respectively.
+            The mid-edge nodes lie on the edges defined by ``(0, 1)``, ``(1, 2)``,
+            ``(2, 3)``, ``(3, 0)``, ``(0, 4)``, ``(1, 4)``, ``(2, 4)``, ``(3, 4)``,
+            respectively.
 
             The mid-face nodes lie on the faces defined by (first corner nodes ids,
             then mid-edge node ids):
 
-            - quadrilateral face: (0, 3, 2, 1; 8, 7, 6, 5)
-            - triangle face 1: (0, 1, 4; 5, 10, 9)
-            - triangle face 2: (1, 2, 4; 6, 11, 10)
-            - triangle face 3: (2, 3, 4; 7, 12, 11)
-            - triangle face 5: (3, 0, 4; 8, 9, 12)
+            - quadrilateral face: ``(0,3,2,1; 8,7,6,5)``
+            - triangle face 1: ``(0,1,4; 5,10,9)``
+            - triangle face 2: ``(1,2,4; 6,11,10)``
+            - triangle face 3: ``(2,3,4; 7,12,11)``
+            - triangle face 5: ``(3,0,4; 8,9,12)``
 
-            The last point lies in the center of the cell (0, 1, 2, 3, 4).
-            The parametric location of vertex #4 is [0.5, 0.5, 1].
+            The last point lies in the center of the cell ``(0,1,2,3,4)``.
+            The parametric location of vertex ``(4)`` is ``[0.5, 0.5, 1]``.
             """,
         )
     QUADRATIC_LINEAR_QUAD = _CellTypeTuple(
@@ -558,10 +591,10 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the six points defining the cell are point ids
-        (0-3,4-5) where:
+        ``(0-3, 4-5)`` where:
 
-        - ids (0-3) define the four corner vertices of the quad.
-        - ids (4-7) define the mid-edge nodes (0,1) and (2,3) .
+        - ids ``(0-3)`` define the four corner vertices of the quad.
+        - ids ``(4-7)`` define the mid-edge nodes ``(0,1)`` and ``(2,3)``.
         """,
     )
     QUADRATIC_LINEAR_WEDGE = _CellTypeTuple(
@@ -574,13 +607,14 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the 12 points defining the cell is point ids
-        (0-5, 6-12) where:
+        ``(0-5, 6-12)`` where:
 
-        - ids (0-5) are the six corner vertices of the wedge.
-        - ids (6-12) are the six mid-edge nodes.
+        - ids ``(0-5`` are the six corner vertices of the wedge.
+        - ids ``(6-12)`` are the six mid-edge nodes.
 
-        The mid-edge nodes lie on the edges defined by (0,1), (1,2), (2,0), (3,4),
-        (4,5), (5,3). The edges (0,3), (1,4), (2,5) don't have mid-edge nodes.
+        The mid-edge nodes lie on the edges defined by ``(0,1)``, ``(1,2)``, ``(2,0)``,
+        ``(3,4)``, ``(4,5)``, ``(5,3)``.
+        The edges ``(0,3)``, ``(1,4)``, ``(2,5)`` don't have mid-edge nodes.
         """,
     )
     BIQUADRATIC_QUADRATIC_WEDGE = _CellTypeTuple(
@@ -593,17 +627,17 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the 18 points defining the cell is point ids
-        (0-5, 6-15, 16-18) where:
+        ``(0-5, 6-15, 16-18)`` where:
 
-        - ids (0-5) are the six corner vertices of the wedge
-        - ids (6-15) are the nine mid-edge nodes
-        - ids (16-18) are the three center-face nodes.
+        - ids ``(0-5)`` are the six corner vertices of the wedge.
+        - ids ``(6-15)`` are the nine mid-edge nodes.
+        - ids ``(16-18)`` are the three center-face nodes.
 
-        Note that these mid-edge nodes lie on the edges defined by (0,1), (1,2),
-        (2,0), (3,4), (4,5), (5,3), (0,3), (1,4), (2,5).
+        The mid-edge nodes lie on the edges defined by ``(0,1)``, ``(1,2)``, ``(2,0)``,
+        ``(3,4)``, ``(4,5)``, ``(5,3)``, ``(0,3)``, ``(1,4)``, ``(2,5)``.
 
-        The center-face nodes are lie in quads 16-(0,1,4,3), 17-(1,2,5,4) and
-        18-(2,0,3,5).
+        The center-face nodes are lie in quads ``16-(0,1,4,3)``, ``17-(1,2,5,4)`` and
+        ``18-(2,0,3,5)``.
         """,
     )
     BIQUADRATIC_QUADRATIC_HEXAHEDRON = _CellTypeTuple(
@@ -616,17 +650,18 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the 24 points defining the cell is point ids
-        (0-7, 8-19, 20-23) where:
+        ``(0-7, 8-19, 20-23)`` where:
 
-        - ids (0-7) are the eight corner vertices of the cube.
-        - ids (8-19) are the twelve mid-edge nodes.
-        - ids (20-23) are the center-face nodes.
+        - ids ``(0-7)`` are the eight corner vertices of the cube.
+        - ids ``(8-19)`` are the twelve mid-edge nodes.
+        - ids ``(20-23)`` are the center-face nodes.
 
-        Note that these mid-edge nodes lie on the edges defined by (0,1), (1,2),
-        (2,3), (3,0), (4,5), (5,6), (6,7), (7,4), (0,4), (1,5), (2,6), (3,7).
+        The mid-edge nodes lie on the edges defined by ``(0,1)``, ``(1,2)``, ``(2,3)``,
+        ``(3,0)``, ``(4,5)``, ``(5,6)``, ``(6,7)``, ``(7,4)``, ``(0,4)``, ``(1,5)``,
+        ``(2,6)``, ``(3,7)``.
 
-        The center face nodes laying in quad 22-(0,1,5,4), 21-(1,2,6,5),
-        23-(2,3,7,6) and 22-(3,0,4,7)
+        The center face nodes lie in quads ``22-(0,1,5,4)``, ``21-(1,2,6,5)``,
+        ``23-(2,3,7,6)`` and ``22-(3,0,4,7)``.
         """,
     )
     BIQUADRATIC_TRIANGLE = _CellTypeTuple(
@@ -640,12 +675,12 @@ class CellType(_DocIntEnum):
         """,
         long_doc="""
         The ordering of the three points defining the cell is point ids
-        (0-2,3-6) where:
+        ``(0-2, 3-6)`` where:
 
-        - id #3 is the mid-edge node between points (0,1)
-        - id #4 is the mid-edge node between points (1,2)
-        - id #5 is the mid-edge node between points (2,0)
-        - id #6 is the center node of the cell.
+        - id ``(3)`` is the mid-edge node between points ``(0,1)``.
+        - id ``(4)`` is the mid-edge node between points ``(1,2)``.
+        - id ``(5)`` is the mid-edge node between points ``(2,0)``.
+        - id ``(6)`` is the center node of the cell.
         """,
     )
 
