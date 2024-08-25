@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from typing import Literal
 from typing import NamedTuple
 
 from . import _vtk_core as _vtk
@@ -19,7 +20,7 @@ _GRID_TEMPLATE_NO_IMAGE = """
 
     .. grid-item::
 
-        {}{}
+        {}{}{}
 """
 
 _GRID_TEMPLATE_WITH_IMAGE = """
@@ -30,7 +31,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
     .. grid-item::
         :columns: 12 8 8 8
 
-        {}{}
+        {}{}{}
 
     .. grid-item::
         :columns: 12 4 4 4
@@ -47,10 +48,33 @@ def _indent_multi_line_string(string, indent_level):
     if len(lines) > 0:
         indentation = "".join(['    '] * indent_level)
         for i, line in enumerate(lines):
-            if i == 0:
-                continue
             lines[i] = indentation + line.strip()
     return "\n".join(lines)
+
+
+_SemanticColors = Literal['primary', 'secondary', 'success', 'danger', 'muted']
+
+
+def _generate_linearity_badge(is_linear: bool):
+    LINEAR_BADGE = ':bdg-primary:`Linear`'
+    NON_LINEAR_BADGE = ':bdg-secondary:`Non-linear`'
+    return LINEAR_BADGE if is_linear else NON_LINEAR_BADGE
+
+
+def _generate_dimension_badge(dimension: int):
+    return f':bdg-success:`{dimension}D`'
+
+
+def _generate_points_badge(num_points: int):
+    return f':bdg-muted-line:`Points: {num_points}`'
+
+
+def _generate_edges_badge(num_edges: int):
+    return f':bdg-muted-line:`Edges: {num_edges}`'
+
+
+def _generate_faces_badge(num_faces: int):
+    return f':bdg-muted-line:`Faces: {num_faces}`'
 
 
 class _CellTypeTuple(NamedTuple):
@@ -104,25 +128,32 @@ class _DocIntEnum(IntEnum):
         self.__doc__ = ''
 
         # Generate cell type documentation if specified
-        if _short_doc or _long_doc or _example:
+        if _cell_class or _short_doc or _long_doc or _example:
+            if _cell_class:
+                cell = _cell_class()
+                linearity_badge = _generate_linearity_badge(cell.IsLinear())
+                dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
+                points_badge = _generate_points_badge(cell.GetNumberOfPoints())
+                edges_badge = _generate_edges_badge(cell.GetNumberOfEdges())
+                faces_badge = _generate_faces_badge(cell.GetNumberOfFaces())
+                badges = f'{linearity_badge} {dimension_badge} {points_badge} {edges_badge} {faces_badge}\n\n'
+            else:
+                badges = ''
+
             _short_doc = (
-                ''
-                if _short_doc is None
-                else _indent_multi_line_string(_short_doc, indent_level=2).rstrip('\n')
+                '' if _short_doc is None else _indent_multi_line_string(_short_doc, indent_level=2)
             )
 
             _long_doc = (
                 ''
                 if _long_doc is None
-                else _DROPDOWN_TEMPLATE.format(
-                    _indent_multi_line_string(_long_doc, indent_level=3)
-                ).rstrip('\n')
+                else _DROPDOWN_TEMPLATE.format(_indent_multi_line_string(_long_doc, indent_level=3))
             )
 
-            self.__doc__ = (
-                _GRID_TEMPLATE_NO_IMAGE.format(_short_doc, _long_doc)
+            self.__doc__ += (
+                _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
                 if _example is None
-                else _GRID_TEMPLATE_WITH_IMAGE.format(_short_doc, _long_doc, _example)
+                else _GRID_TEMPLATE_WITH_IMAGE.format(badges, _short_doc, _long_doc, _example)
             )
 
         return self
@@ -535,6 +566,7 @@ class CellType(_DocIntEnum):
 
         The mid-surface nodes lies on the faces defined by (first edge nodes
         ids, then mid-edge nodes ids):
+
         - ``(0,1,5,4; 8,17,12,16)``
         - ``(1,2,6,5; 9,18,13,17)``
         - ``(2,3,7,6, 10,19,14,18)``
