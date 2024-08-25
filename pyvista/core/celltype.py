@@ -147,7 +147,6 @@ class CellType(_DocIntEnum):
     EMPTY_CELL = _CellTypeTuple(
         value=_vtk.VTK_EMPTY_CELL,
         cell_class=_vtk.vtkEmptyCell,
-        example="Empty",
         short_doc="""Used as a place-holder during processing.""",
     )
     VERTEX = _CellTypeTuple(
