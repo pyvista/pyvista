@@ -7,6 +7,52 @@ from typing import NamedTuple
 
 from . import _vtk_core as _vtk
 
+_DROPDOWN = """
+        .. dropdown:: :octicon:`info` More info
+
+            {}
+"""
+
+_GRID_NO_IMAGE = """
+.. grid:: 1
+    :margin: 1
+
+    .. grid-item::
+
+        {}{}
+"""
+
+
+_GRID_WITH_IMAGE = """
+.. grid:: 1 2 2 2
+    :reverse:
+    :margin: 1
+
+    .. grid-item::
+        :columns: 12 8 8 8
+
+        {}{}
+
+    .. grid-item::
+        :columns: 12 4 4 4
+
+        .. card::
+            :class-body: sd-px-0 sd-py-0 sd-rounded-3
+
+            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
+"""
+
+
+def _indent_multi_line_string(string, indent_level):
+    lines = string.splitlines()
+    if len(lines) > 0:
+        indentation = "".join(['    '] * indent_level)
+        for i, line in enumerate(lines):
+            if i == 0:
+                continue
+            lines[i] = indentation + line.strip()
+    return "\n".join(lines)
+
 
 class _CellTypeTuple(NamedTuple):
     value: int
@@ -27,11 +73,19 @@ class _DocIntEnum(IntEnum):
         self = int.__new__(cls, value)
         self._value_ = value
         if _short_doc or _long_doc or _example:
-            _short_doc = '' if _short_doc is None else _short_doc
-            _short_doc = _short_doc.rstrip('\n')
+            if _short_doc is None:
+                _short_doc = ''
+            else:
+                _short_doc = _indent_multi_line_string(_short_doc, indent_level=2)
+                _short_doc = _short_doc.rstrip('\n')
 
-            _long_doc = '' if _long_doc is None else _DROPDOWN.format(_long_doc)
-            _long_doc = _long_doc.rstrip('\n')
+            if _long_doc is None:
+                _long_doc = ''
+
+            else:
+                _long_doc = _indent_multi_line_string(_long_doc, indent_level=3)
+                _long_doc = _DROPDOWN.format(_long_doc)
+                _long_doc = _long_doc.rstrip('\n')
 
             doc = (
                 _GRID_NO_IMAGE.format(_short_doc, _long_doc)
@@ -42,43 +96,6 @@ class _DocIntEnum(IntEnum):
             doc = ''
         self.__doc__ = doc
         return self
-
-
-_DROPDOWN = """
-.. dropdown:: :octicon:`info` More info
-
-    {}
-"""
-
-_GRID_NO_IMAGE = """
-.. grid:: 1
-    :margin: 1
-
-    .. grid-item::
-
-         {}
-         {}
-"""
-
-_GRID_WITH_IMAGE = """
-.. grid:: 1 2 2 2
-    :reverse:
-    :margin: 1
-
-    .. grid-item::
-        :columns: 12 8 8 8
-
-         {}
-         {}
-
-    .. grid-item::
-        :columns: 12 4 4 4
-
-        .. card::
-            :class-body: sd-px-0 sd-py-0 sd-rounded-3
-
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
-"""
 
 
 class CellType(_DocIntEnum):
