@@ -20,6 +20,10 @@ class _DocIntEnum(IntEnum):
     """Enable documentation for enum members."""
 
     def __new__(cls, value, _cell_class=None, _short_doc=None, _long_doc=None, _example=None):
+        """Create new enum.
+
+        Optionally specify documentation info.
+        """
         self = int.__new__(cls, value)
         self._value_ = value
         _long_doc = '' if _long_doc is None else _DROPDOWN.format(_long_doc)

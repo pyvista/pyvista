@@ -231,7 +231,6 @@ from vtkmodules.vtkCommonDataModel import vtkTetra
 from vtkmodules.vtkCommonDataModel import vtkTriangle
 from vtkmodules.vtkCommonDataModel import vtkTriangleStrip
 from vtkmodules.vtkCommonDataModel import vtkTriQuadraticHexahedron
-from vtkmodules.vtkCommonDataModel import vtkTriQuadraticPyramid
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
 from vtkmodules.vtkCommonDataModel import vtkVertex
 from vtkmodules.vtkCommonDataModel import vtkVoxel
@@ -239,6 +238,7 @@ from vtkmodules.vtkCommonDataModel import vtkWedge
 
 with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.2
     from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID
+    from vtkmodules.vtkCommonDataModel import vtkTriQuadraticPyramid
 
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithm
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithmOutput
