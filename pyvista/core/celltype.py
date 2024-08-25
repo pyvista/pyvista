@@ -71,6 +71,7 @@ _GRID_WITH_IMAGE = """
 
         .. card::
             :class-body: sd-px-0 sd-py-0 sd-rounded-3
+
             .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
 """
 
