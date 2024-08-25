@@ -9,7 +9,8 @@ from typing import NamedTuple
 from . import _vtk_core as _vtk
 
 _DROPDOWN_TEMPLATE = """
-        .. dropdown:: :octicon:`info` More info
+        .. dropdown:: More info
+            :icon: info
 
             {}
 """
