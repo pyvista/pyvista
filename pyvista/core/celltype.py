@@ -27,12 +27,17 @@ class _DocIntEnum(IntEnum):
         self = int.__new__(cls, value)
         self._value_ = value
         if _short_doc or _long_doc or _example:
-            _long_doc = '' if _long_doc is None else _DROPDOWN.format(_long_doc)
+            _short_doc = '' if _short_doc is None else _short_doc
+            _short_doc = _short_doc.rstrip('\n')
 
-            if _example is None:
-                doc = _GRID_NO_IMAGE.format(_short_doc, _long_doc)
-            else:
-                doc = _GRID_WITH_IMAGE.format(_short_doc, _long_doc, _example)
+            _long_doc = '' if _long_doc is None else _DROPDOWN.format(_long_doc)
+            _long_doc = _long_doc.rstrip('\n')
+
+            doc = (
+                _GRID_NO_IMAGE.format(_short_doc, _long_doc)
+                if _example is None
+                else _GRID_WITH_IMAGE.format(_short_doc, _long_doc, _example)
+            )
         else:
             doc = ''
         self.__doc__ = doc
