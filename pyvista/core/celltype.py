@@ -26,13 +26,15 @@ class _DocIntEnum(IntEnum):
         """
         self = int.__new__(cls, value)
         self._value_ = value
-        _long_doc = '' if _long_doc is None else _DROPDOWN.format(_long_doc)
+        if _short_doc or _long_doc or _example:
+            _long_doc = '' if _long_doc is None else _DROPDOWN.format(_long_doc)
 
-        if _example is None:
-            doc = _GRID_NO_IMAGE.format(_short_doc, _long_doc)
+            if _example is None:
+                doc = _GRID_NO_IMAGE.format(_short_doc, _long_doc)
+            else:
+                doc = _GRID_WITH_IMAGE.format(_short_doc, _long_doc, _example)
         else:
-            doc = _GRID_WITH_IMAGE.format(_short_doc, _long_doc, _example)
-
+            doc = ''
         self.__doc__ = doc
         return self
 
@@ -69,8 +71,7 @@ _GRID_WITH_IMAGE = """
 
         .. card::
             :class-body: sd-px-0 sd-py-0 sd-rounded-3
-
-            .. image:: /../_build/plot_directive/api/examples/_autosummary/{}
+            .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
 """
 
 
