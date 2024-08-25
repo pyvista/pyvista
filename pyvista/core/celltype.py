@@ -57,12 +57,12 @@ _SemanticColors = Literal['primary', 'secondary', 'success', 'danger', 'muted']
 
 def _generate_linearity_badge(is_linear: bool):
     LINEAR_BADGE = ':bdg-primary:`Linear`'
-    NON_LINEAR_BADGE = ':bdg-secondary:`Non-linear`'
+    NON_LINEAR_BADGE = ':bdg-success:`Non-linear`'
     return LINEAR_BADGE if is_linear else NON_LINEAR_BADGE
 
 
 def _generate_dimension_badge(dimension: int):
-    return f':bdg-success:`{dimension}D`'
+    return f':bdg-secondary:`{dimension}D`'
 
 
 def _generate_points_badge(num_points: int):
