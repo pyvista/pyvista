@@ -83,6 +83,9 @@ class _CellTypeTuple(NamedTuple):
     short_doc: str | None = None
     long_doc: str | None = None
     example: str | None = None
+    points_override: Literal['variable', 'n/a'] | None = None
+    edges_override: Literal['variable', 'n/a'] | None = None
+    faces_override: Literal['variable', 'n/a'] | None = None
 
 
 class _DocIntEnum(IntEnum):
@@ -95,6 +98,9 @@ class _DocIntEnum(IntEnum):
         _short_doc: str | None = None,
         _long_doc: str | None = None,
         _example: str | None = None,
+        _points_override: Literal['variable', 'n/a'] | None = None,
+        _edges_override: Literal['variable', 'n/a'] | None = None,
+        _faces_override: Literal['variable', 'n/a'] | None = None,
     ):
         """Create new enum.
 
@@ -122,6 +128,23 @@ class _DocIntEnum(IntEnum):
             When specified, the first figure from this example is used as the image for
             the cell.
 
+        _points_override: 'variable' | 'n/a', optional
+            Override the value shown for this cell type's `Points` badge. May be
+            useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
+            of ``0`` may otherwise be shown. By default, the value from ``cell_class``
+            is used.
+
+        _edges_override: 'variable' | 'n/a', optional
+            Override the value shown for this cell type's `Edges` badge. May be
+            useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
+            of ``0`` may otherwise be shown. By default, the value from ``cell_class``
+            is used.
+
+        _faces_override: 'variable' | 'n/a', optional
+            Override the value shown for this cell type's `Faces` badge. May be
+            useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
+            of ``0`` may otherwise be shown. By default, the value from ``cell_class``
+            is used.
         """
         self = int.__new__(cls, value)
         self._value_ = value
@@ -133,9 +156,16 @@ class _DocIntEnum(IntEnum):
                 cell = _cell_class()
                 linearity_badge = _generate_linearity_badge(cell.IsLinear())
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
-                points_badge = _generate_points_badge(cell.GetNumberOfPoints())
-                edges_badge = _generate_edges_badge(cell.GetNumberOfEdges())
-                faces_badge = _generate_faces_badge(cell.GetNumberOfFaces())
+
+                points = _points_override if _points_override else cell.GetNumberOfPoints()
+                points_badge = _generate_points_badge(points)
+
+                edges = _edges_override if _edges_override else cell.GetNumberOfEdges()
+                edges_badge = _generate_edges_badge(edges)
+
+                faces = _faces_override if _faces_override else cell.GetNumberOfFaces()
+                faces_badge = _generate_faces_badge(faces)
+
                 badges = f'{linearity_badge} {dimension_badge} {points_badge} {edges_badge} {faces_badge}\n\n'
             else:
                 badges = ''
@@ -220,6 +250,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_POLY_VERTEX,
         cell_class=_vtk.vtkPolyVertex,
         example="PolyVertex",
+        points_override='variable',
         short_doc="""Represent a set of points in 3D space.""",
     )
     LINE = _CellTypeTuple(
@@ -232,6 +263,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_POLY_LINE,
         cell_class=_vtk.vtkPolyLine,
         example="PolyLine",
+        points_override='variable',
         short_doc="""Represent a set of 1D lines.""",
     )
     TRIANGLE = _CellTypeTuple(
@@ -244,6 +276,8 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_TRIANGLE_STRIP,
         cell_class=_vtk.vtkTriangleStrip,
         example="TriangleStrip",
+        points_override='variable',
+        edges_override='variable',
         short_doc="""
         Represent a 2D triangle strip.
 
@@ -260,6 +294,8 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_POLYGON,
         cell_class=_vtk.vtkPolygon,
         example="Polygon",
+        points_override='variable',
+        edges_override='variable',
         short_doc="""
         Represent a 2D n-sided polygon.
 
