@@ -2032,6 +2032,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         vtk.vtkActor
             VTK actor of the bounding box.
 
+        See Also
+        --------
+        pyvista.DataSetFilter.bounding_box
+            Create a bounding box or oriented bounding box for a dataset.
+
         Examples
         --------
         >>> import pyvista as pv
