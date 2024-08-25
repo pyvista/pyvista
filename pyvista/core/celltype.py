@@ -124,42 +124,43 @@ class CellType(_DocIntEnum):
     EMPTY_CELL = _CellTypeTuple(
         value=_vtk.VTK_EMPTY_CELL,
         cell_class=_vtk.vtkEmptyCell,
-        short_doc="""Used as a place-holder during processing.""",
         example="Empty",
+        short_doc="""Used as a place-holder during processing.""",
     )
     VERTEX = _CellTypeTuple(
         value=_vtk.VTK_VERTEX,
         cell_class=_vtk.vtkVertex,
-        short_doc="""Represent a 3D point.""",
         example="Vertex",
+        short_doc="""Represent a 3D point.""",
     )
     POLY_VERTEX = _CellTypeTuple(
         value=_vtk.VTK_POLY_VERTEX,
         cell_class=_vtk.vtkPolyVertex,
-        short_doc="""Represent a set of 0D vertices.""",
         example="PolyVertex",
+        short_doc="""Represent a set of 0D vertices.""",
     )
     LINE = _CellTypeTuple(
         value=_vtk.VTK_LINE,
         cell_class=_vtk.vtkLine,
-        short_doc="""Represent a 1D line.""",
         example="Line",
+        short_doc="""Represent a 1D line.""",
     )
     POLY_LINE = _CellTypeTuple(
         value=_vtk.VTK_POLY_LINE,
         cell_class=_vtk.vtkPolyLine,
-        short_doc="""Represent a set of 1D lines.""",
         example="PolyLine",
+        short_doc="""Represent a set of 1D lines.""",
     )
     TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE,
         cell_class=_vtk.vtkTriangle,
-        short_doc="""Represent a triangle located in 3D-space.""",
         example="Triangle",
+        short_doc="""Represent a triangle located in 3D-space.""",
     )
     TRIANGLE_STRIP = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE_STRIP,
         cell_class=_vtk.vtkTriangleStrip,
+        example="TriangleStrip",
         short_doc="""
         Represent a 2D triangle strip.
 
@@ -171,11 +172,11 @@ class CellType(_DocIntEnum):
         initial triangle, then for each additional triangle, a single point that,
         combined with the previous two points, defines the next triangle.
         """,
-        example="TriangleStrip",
     )
     POLYGON = _CellTypeTuple(
         value=_vtk.VTK_POLYGON,
         cell_class=_vtk.vtkPolygon,
+        example="Polygon",
         short_doc="""
         Represent a 2D n-sided polygon.
 
@@ -185,54 +186,54 @@ class CellType(_DocIntEnum):
         Define the polygon with n-points ordered in the counter-clockwise
         direction. Do not repeat the last point.
         """,
-        example="Polygon",
     )
     PIXEL = _CellTypeTuple(
         value=_vtk.VTK_PIXEL,
         cell_class=_vtk.vtkPixel,
+        example="Pixel",
         short_doc="""
         Represents a 2D orthogonal quadrilateral.
 
         Unlike ``QUAD`` cells, the corners are at right angles, and aligned along
         x-y-z coordinate axes.
         """,
-        example="Pixel",
     )
     QUAD = _CellTypeTuple(
         value=_vtk.VTK_QUAD,
         cell_class=_vtk.vtkQuad,
+        example="Quadrilateral",
         short_doc="""
         Represent a 2D quadrilateral.
 
         It is defined by the four points (0,1,2,3) in counterclockwise order.
         """,
-        example="Quadrilateral",
     )
     TETRA = _CellTypeTuple(
         value=_vtk.VTK_TETRA,
         cell_class=_vtk.vtkTetra,
+        example="Tetrahedron",
         short_doc="""Represents a 3D tetrahedron.""",
         long_doc="""
         The tetrahedron is defined by the four points (0-3); where (0,1,2)
         is the base of the tetrahedron which, using the right hand rule, forms a
         triangle whose normal points in the direction of the fourth point.
         """,
-        example="Tetrahedron",
     )
     VOXEL = _CellTypeTuple(
         value=_vtk.VTK_VOXEL,
         cell_class=_vtk.vtkVoxel,
+        example="Voxel",
         short_doc="""
         Represents a 3D orthogonal parallelepiped.
 
         Unlike ``HEXAHEDRON``, ``VOXEL`` has interior angles of 90 degrees, and
         sides are parallel to coordinate axes.
         """,
-        example="Voxel",
     )
     HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_HEXAHEDRON,
         cell_class=_vtk.vtkHexahedron,
+        example="Hexahedron",
         short_doc="""Represent a 3D rectangular hexahedron.""",
         long_doc="""
         The hexahedron is defined by the eight points (0-7) where (0,1,2,3)
@@ -240,11 +241,11 @@ class CellType(_DocIntEnum):
         quadrilaterial whose normal points in the direction of the opposite face
         (4,5,6,7).
         """,
-        example="Hexahedron",
     )
     WEDGE = _CellTypeTuple(
         value=_vtk.VTK_WEDGE,
         cell_class=_vtk.vtkWedge,
+        example="Wedge",
         short_doc="""
         Represent a linear 3D wedge.
 
@@ -255,11 +256,11 @@ class CellType(_DocIntEnum):
         base of the wedge which, using the right hand rule, forms a triangle whose
         normal points outward (away from the triangular face (3,4,5)).
         """,
-        example="Wedge",
     )
     PYRAMID = _CellTypeTuple(
         value=_vtk.VTK_PYRAMID,
         cell_class=_vtk.vtkPyramid,
+        example="Pyramid",
         short_doc="""
         Represent a 3D pyramid.
 
@@ -271,29 +272,28 @@ class CellType(_DocIntEnum):
         quadrilaterial whose normal points in the direction of the pyramid apex at
         vertex #4. The parametric location of vertex #4 is [0, 0, 1].
         """,
-        example="Pyramid",
     )
     PENTAGONAL_PRISM = _CellTypeTuple(
         value=_vtk.VTK_PENTAGONAL_PRISM,
         cell_class=_vtk.vtkPentagonalPrism,
+        example="PentagonalPrism",
         short_doc="""Represent a convex 3D prism with a pentagonal base.""",
         long_doc="""
         The prism is defined by the ten points (0-9), where (0,1,2,3,4) is
         the base of the prism which, using the right hand rule, forms a pentagon
         whose normal points is in the direction of the opposite face (5,6,7,8,9).
         """,
-        example="PentagonalPrism",
     )
     HEXAGONAL_PRISM = _CellTypeTuple(
         value=_vtk.VTK_HEXAGONAL_PRISM,
         cell_class=_vtk.vtkHexagonalPrism,
+        example="HexagonalPrism",
         short_doc="""Represent a 3D prism with hexagonal base.""",
         long_doc="""
         The prism is defined by the twelve points (0-12) where (0,1,2,3,4,5)
         is the base of the prism which, using the right hand rule, forms a hexagon
         whose normal points is in the direction of the opposite face (6,7,8,9,10,11).
         """,
-        example="HexagonalPrism",
     )
     ####################################################################################
     # Quadratic, isoparametric cells
