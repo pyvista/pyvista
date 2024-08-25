@@ -102,7 +102,7 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
 
     >>> vox = pv.voxelize(mesh, density=0.15, enclosed=True)
     >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
