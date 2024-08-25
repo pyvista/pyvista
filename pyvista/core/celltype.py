@@ -407,6 +407,7 @@ class CellType(_DocIntEnum):
         - id ``(3)`` is the mid-edge node between points ``(0,1)``.
         - id ``(4)`` is the mid-edge node between points ``(1,2)``.
         - id ``(5)`` is the mid-edge node between points ``(2,0)``.
+
         """,
     )
     QUADRATIC_QUAD = _CellTypeTuple(
@@ -423,6 +424,7 @@ class CellType(_DocIntEnum):
 
         - ids ``(0-3)`` define the four corner vertices of the quad.
         - ids ``(4-7)`` define the mid-edge nodes ``(0,1)``, ``(1,2)``, ``(2,3)``, ``(3,0)``.
+
         """,
     )
     QUADRATIC_POLYGON = _CellTypeTuple(
@@ -460,6 +462,7 @@ class CellType(_DocIntEnum):
         - ids ``(0-3)`` are the four tetra vertices.
         - ids ``(4-9)`` are the mid-edge nodes between ``(0,1)``, ``(1,2)``, ``(2,0)``,
           ``(0,3)``, ``(1,3)``, and ``(2,3)``.
+
         """,
     )
     QUADRATIC_HEXAHEDRON = _CellTypeTuple(
@@ -540,6 +543,7 @@ class CellType(_DocIntEnum):
         - ids ``(0-3)`` define the four corner vertices of the quad.
         - ids ``(4-7)`` define the mid-edge nodes ``(0,1)``, ``(1,2)``, ``(2,3)``, ``(3,0)``.
         - id ``(8)`` defines the face center node.
+
         """,
     )
     TRIQUADRATIC_HEXAHEDRON = _CellTypeTuple(
@@ -627,6 +631,7 @@ class CellType(_DocIntEnum):
 
         - ids ``(0-3)`` define the four corner vertices of the quad.
         - ids ``(4-7)`` define the mid-edge nodes ``(0,1)`` and ``(2,3)``.
+
         """,
     )
     QUADRATIC_LINEAR_WEDGE = _CellTypeTuple(
@@ -713,6 +718,7 @@ class CellType(_DocIntEnum):
         - id ``(4)`` is the mid-edge node between points ``(1,2)``.
         - id ``(5)`` is the mid-edge node between points ``(2,0)``.
         - id ``(6)`` is the center node of the cell.
+
         """,
     )
 
