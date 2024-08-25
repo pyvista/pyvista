@@ -55,6 +55,7 @@ _GRID_NO_IMAGE = """
 
 _GRID_WITH_IMAGE = """
 .. grid:: 1 2 2 2
+    :reverse:
     :margin: 1
 
     .. grid-item::
