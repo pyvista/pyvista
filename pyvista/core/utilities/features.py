@@ -96,7 +96,7 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
 
     >>> vox = pv.voxelize(mesh, density=0.15)
     >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
 
     Create an equal density voxel volume enclosing input mesh.
 
