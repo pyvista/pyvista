@@ -8,7 +8,6 @@ from functools import partial
 from functools import wraps
 from typing import ClassVar
 from typing import Sequence
-from typing import cast
 import warnings
 
 import numpy as np
@@ -16,7 +15,7 @@ import numpy as np
 import pyvista
 from pyvista import MAX_N_COLOR_BARS
 from pyvista import vtk_version_info
-from pyvista.core._typing_core import BoundsLike
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import assert_empty_kwargs
@@ -409,9 +408,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.view_vector(camera_location)
         else:
             # check if a valid camera position
-            if not isinstance(camera_location, CameraPosition):
-                if not len(camera_location) == 3 or any(len(item) != 3 for item in camera_location):
-                    raise InvalidCameraError
+            if not isinstance(camera_location, CameraPosition) and (
+                not len(camera_location) == 3 or any(len(item) != 3 for item in camera_location)
+            ):
+                raise InvalidCameraError
 
             # everything is set explicitly
             self.camera.position = scale_point(self.camera, camera_location[0], invert=False)
@@ -448,7 +448,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
@@ -476,7 +476,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             the_bounds[the_bounds == np.inf] = -1.0
             the_bounds[the_bounds == -np.inf] = 1.0
 
-        return cast(BoundsLike, tuple(the_bounds.tolist()))
+        return BoundsTuple(*the_bounds.tolist())
 
     @property
     def length(self):  # numpydoc ignore=RT01
@@ -499,10 +499,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Cartesian coordinates of the center.
 
         """
-        bounds = self.bounds
-        x = (bounds[1] + bounds[0]) / 2
-        y = (bounds[3] + bounds[2]) / 2
-        z = (bounds[5] + bounds[4]) / 2
+        bnds = self.bounds
+        x = (bnds.x_max + bnds.x_min) / 2
+        y = (bnds.y_max + bnds.y_min) / 2
+        z = (bnds.z_max + bnds.z_min) / 2
         return x, y, z
 
     @property
@@ -1544,7 +1544,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             to manually display different values. These values must be in the
             form:
 
-            ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         show_xaxis : bool, default: True
             Makes x-axis visible.
@@ -1858,7 +1858,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # set the axes ranges
             if axes_ranges.shape != (6,):
                 raise ValueError(
-                    '`axes_ranges` must be passed as a [xmin, xmax, ymin, ymax, zmin, zmax] sequence.',
+                    '`axes_ranges` must be passed as a (x_min, x_max, y_min, y_max, z_min, z_max) sequence.',
                 )
 
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
@@ -2032,6 +2032,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         vtk.vtkActor
             VTK actor of the bounding box.
 
+        See Also
+        --------
+        pyvista.DataSetFilter.bounding_box
+            Create a bounding box or oriented bounding box for a dataset.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -2185,32 +2190,32 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ranges += ranges * pad
         center = np.array(self.center)
         if face.lower() in '-z':
-            center[2] = self.bounds[4] - (ranges[2] * offset)
+            center[2] = self.bounds.z_min - (ranges[2] * offset)
             normal = (0, 0, 1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '-y':
-            center[1] = self.bounds[2] - (ranges[1] * offset)
+            center[1] = self.bounds.y_min - (ranges[1] * offset)
             normal = (0, 1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '-x':
-            center[0] = self.bounds[0] - (ranges[0] * offset)
+            center[0] = self.bounds.x_min - (ranges[0] * offset)
             normal = (1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         elif face.lower() in '+z':
-            center[2] = self.bounds[5] + (ranges[2] * offset)
+            center[2] = self.bounds.z_max + (ranges[2] * offset)
             normal = (0, 0, -1)
             i_size = ranges[0]
             j_size = ranges[1]
         elif face.lower() in '+y':
-            center[1] = self.bounds[3] + (ranges[1] * offset)
+            center[1] = self.bounds.y_max + (ranges[1] * offset)
             normal = (0, -1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
         elif face.lower() in '+x':
-            center[0] = self.bounds[1] + (ranges[0] * offset)
+            center[0] = self.bounds.x_max + (ranges[0] * offset)
             normal = (-1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
@@ -2404,9 +2409,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(point, np.ndarray):
-            if point.ndim != 1:
-                point = point.ravel()
+        if isinstance(point, np.ndarray) and point.ndim != 1:
+            point = point.ravel()
         self.camera.focal_point = scale_point(self.camera, point, invert=False)
         self.camera_set = True
         self.Modified()
@@ -2439,9 +2443,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(point, np.ndarray):
-            if point.ndim != 1:
-                point = point.ravel()
+        if isinstance(point, np.ndarray) and point.ndim != 1:
+            point = point.ravel()
         self.camera.position = scale_point(self.camera, point, invert=False)
         if reset:
             self.reset_camera(render=render)
@@ -2475,9 +2478,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if isinstance(vector, np.ndarray):
-            if vector.ndim != 1:
-                vector = vector.ravel()
+        if isinstance(vector, np.ndarray) and vector.ndim != 1:
+            vector = vector.ravel()
 
         self.camera.up = vector
         if reset:
@@ -2787,7 +2789,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2837,7 +2839,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2878,7 +2880,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         """
         focal_pt = self.center
@@ -2902,7 +2904,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2933,7 +2935,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2964,7 +2966,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -2995,7 +2997,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -3026,7 +3028,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -3057,7 +3059,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         bounds : iterable(int), optional
             Automatically set up the camera based on a specified bounding box
-            ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -3962,8 +3964,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Measure x direction of cone and place ruler slightly below.
 
         >>> _ = plotter.add_ruler(
-        ...     pointa=[cone.bounds[0], cone.bounds[2] - 0.1, 0.0],
-        ...     pointb=[cone.bounds[1], cone.bounds[2] - 0.1, 0.0],
+        ...     pointa=[cone.bounds.x_min, cone.bounds.y_min - 0.1, 0.0],
+        ...     pointb=[cone.bounds.x_max, cone.bounds.y_min - 0.1, 0.0],
         ...     title="X Distance",
         ... )
 
@@ -3972,8 +3974,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         traveling from ``pointa`` to ``pointb``.
 
         >>> _ = plotter.add_ruler(
-        ...     pointa=[cone.bounds[0] - 0.1, cone.bounds[3], 0.0],
-        ...     pointb=[cone.bounds[0] - 0.1, cone.bounds[2], 0.0],
+        ...     pointa=[cone.bounds.x_min - 0.1, cone.bounds.y_max, 0.0],
+        ...     pointb=[cone.bounds.x_min - 0.1, cone.bounds.y_min, 0.0],
         ...     flip_range=True,
         ...     title="Y Distance",
         ... )

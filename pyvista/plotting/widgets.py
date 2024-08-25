@@ -500,7 +500,7 @@ class WidgetHelper:
         >>> def callback(normal, origin):
         ...     slc = mesh.slice(normal=normal, origin=origin)
         ...     origin = list(origin)
-        ...     origin[2] = slc.bounds[5]
+        ...     origin[2] = slc.bounds.z_max
         ...     peak_plane = pv.Plane(
         ...         center=origin,
         ...         direction=[0, 0, 1],

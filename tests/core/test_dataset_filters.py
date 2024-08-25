@@ -20,6 +20,7 @@ from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters.data_set import _swap_axes
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -679,7 +680,7 @@ def test_elevation():
     elev = dataset.elevation(progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert elev.active_scalars_name == 'Elevation'
-    assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
+    assert elev.get_data_range() == (dataset.bounds.z_min, dataset.bounds.z_max)
     # test vector args
     c = list(dataset.center)
     t = list(c)  # cast so it does not point to `c`
@@ -687,7 +688,7 @@ def test_elevation():
     elev = dataset.elevation(low_point=c, high_point=t, progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert elev.active_scalars_name == 'Elevation'
-    assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
+    assert elev.get_data_range() == (dataset.center[2], dataset.bounds.z_max)
     # Test not setting active
     elev = dataset.elevation(set_active=False, progress_bar=True)
     assert 'Elevation' in elev.array_names
@@ -725,8 +726,8 @@ def test_texture_map_to_plane():
     # Define the plane explicitly
     bnds = dataset.bounds
     origin = bnds[0::2]
-    point_u = (bnds[1], bnds[2], bnds[4])
-    point_v = (bnds[0], bnds[3], bnds[4])
+    point_u = (bnds.x_max, bnds.y_max, bnds.z_min)
+    point_v = (bnds.x_min, bnds.y_min, bnds.z_min)
     out = dataset.texture_map_to_plane(
         origin=origin,
         point_u=point_u,
@@ -784,6 +785,14 @@ def test_cell_centers(datasets):
         result = dataset.cell_centers(progress_bar=True)
         assert result is not None
         assert isinstance(result, pv.PolyData)
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_cell_center_pointset(airplane):
+    pointset = airplane.cast_to_pointset()
+    result = pointset.cell_centers(progress_bar=True)
+    assert result is not None
+    assert isinstance(result, pv.PolyData)
 
 
 def test_cell_centers_composite(composite):
@@ -1018,14 +1027,14 @@ def test_glyph_orient_and_scale():
     glyph2 = grid.glyph(geom=geom, orient=False, scale="z_axis")
     glyph3 = grid.glyph(geom=geom, orient="z_axis", scale=False)
     glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
-    assert glyph1.bounds[4] == geom.bounds[0] * scale
-    assert glyph1.bounds[5] == geom.bounds[1] * scale
-    assert glyph2.bounds[0] == geom.bounds[0] * scale
-    assert glyph2.bounds[1] == geom.bounds[1] * scale
-    assert glyph3.bounds[4] == geom.bounds[0]
-    assert glyph3.bounds[5] == geom.bounds[1]
-    assert glyph4.bounds[0] == geom.bounds[0]
-    assert glyph4.bounds[1] == geom.bounds[1]
+    assert glyph1.bounds.z_min == geom.bounds.x_min * scale
+    assert glyph1.bounds.z_max == geom.bounds.x_max * scale
+    assert glyph2.bounds.x_min == geom.bounds.x_min * scale
+    assert glyph2.bounds.x_max == geom.bounds.x_max * scale
+    assert glyph3.bounds.z_min == geom.bounds.x_min
+    assert glyph3.bounds.z_max == geom.bounds.x_max
+    assert glyph4.bounds.x_min == geom.bounds.x_min
+    assert glyph4.bounds.x_max == geom.bounds.x_max
 
 
 @pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
@@ -1813,8 +1822,8 @@ def test_plot_over_line(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
     # Make two points to construct the line between
-    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
+    b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
     mesh.plot_over_line(a, b, resolution=1000, show=False, progress_bar=True)
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
@@ -1868,11 +1877,11 @@ def test_sample_over_circular_arc():
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    xmin = uniform.bounds[0]
-    xmax = uniform.bounds[1]
-    ymin = uniform.bounds[2]
-    zmin = uniform.bounds[4]
-    zmax = uniform.bounds[5]
+    xmin = uniform.bounds.x_min
+    xmax = uniform.bounds.x_max
+    ymin = uniform.bounds.y_min
+    zmin = uniform.bounds.z_min
+    zmax = uniform.bounds.z_max
     pointa = [xmin, ymin, zmax]
     pointb = [xmax, ymin, zmin]
     center = [xmin, ymin, zmin]
@@ -1904,11 +1913,11 @@ def test_sample_over_circular_arc_normal():
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    xmin = uniform.bounds[0]
-    ymin = uniform.bounds[2]
-    ymax = uniform.bounds[3]
-    zmin = uniform.bounds[4]
-    zmax = uniform.bounds[5]
+    xmin = uniform.bounds.x_min
+    ymin = uniform.bounds.y_min
+    ymax = uniform.bounds.y_max
+    zmin = uniform.bounds.z_min
+    zmax = uniform.bounds.z_max
     normal = [xmin, ymax, zmin]
     polar = [xmin, ymin, zmax]
     angle = 90.0 * np.random.default_rng().random()
@@ -1948,9 +1957,9 @@ def test_plot_over_circular_arc(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
 
     # Make two points and center to construct the circular arc between
-    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-    b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
-    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+    b = [mesh.bounds.x_max, mesh.bounds.y_min, mesh.bounds.z_min]
+    center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc(
         a,
         b,
@@ -1996,10 +2005,10 @@ def test_plot_over_circular_arc_normal(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
 
     # Make center and normal/polar vector to construct the circular arc between
-    # normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-    polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
+    # normal = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+    polar = [mesh.bounds.x_min, mesh.bounds.y_max, mesh.bounds.z_min]
     angle = 90
-    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc_normal(
         center,
         polar=polar,
@@ -2041,7 +2050,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
-    x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
+    x = y = z = np.linspace(model.bounds.x_min, model.bounds.x_max, num=n)
     points = np.c_[x, y, z]
     spline = pv.Spline(points, n)
     slc = model.slice_along_line(spline, progress_bar=True)
@@ -2049,14 +2058,14 @@ def test_slice_along_line():
     slc = model.slice_along_line(spline, contour=True, progress_bar=True)
     assert slc.n_points > 0
     # Now check a simple line
-    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
-    b = [model.bounds[1], model.bounds[3], model.bounds[5]]
+    a = [model.bounds.x_min, model.bounds.y_min, model.bounds.z_min]
+    b = [model.bounds.x_max, model.bounds.y_max, model.bounds.z_max]
     line = pv.Line(a, b, resolution=10)
     slc = model.slice_along_line(line, progress_bar=True)
     assert slc.n_points > 0
     # Now check a bad input
-    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
-    b = [model.bounds[1], model.bounds[2], model.bounds[5]]
+    a = [model.bounds.x_min, model.bounds.y_min, model.bounds.z_min]
+    b = [model.bounds.x_max, model.bounds.y_min, model.bounds.z_max]
     line2 = pv.Line(a, b, resolution=10)
     line = line2.cast_to_unstructured_grid().merge(line.cast_to_unstructured_grid())
     with pytest.raises(ValueError):  # noqa: PT011
@@ -2752,8 +2761,8 @@ def test_extract_values_raises(grid4x4):
 
 def test_slice_along_line_composite(composite):
     # Now test composite data structures
-    a = [composite.bounds[0], composite.bounds[2], composite.bounds[4]]
-    b = [composite.bounds[1], composite.bounds[3], composite.bounds[5]]
+    a = [composite.bounds.x_min, composite.bounds.y_min, composite.bounds.z_min]
+    b = [composite.bounds.x_max, composite.bounds.y_max, composite.bounds.z_max]
     line = pv.Line(a, b, resolution=10)
     output = composite.slice_along_line(line, progress_bar=True)
     assert output.n_blocks == composite.n_blocks
@@ -3650,20 +3659,20 @@ def test_extrude_rotate():
         progress_bar=True,
         capping=True,
     )
-    zmax = poly.bounds[5]
+    zmax = poly.bounds.z_max
     assert zmax == translation
-    xmax = poly.bounds[1]
-    assert xmax == line.bounds[1] + dradius
+    xmax = poly.bounds.x_max
+    assert xmax == line.bounds.x_max + dradius
 
     poly = line.extrude_rotate(angle=90.0, progress_bar=True, capping=True)
-    xmin = poly.bounds[0]
-    xmax = poly.bounds[1]
-    ymin = poly.bounds[2]
-    ymax = poly.bounds[3]
-    assert xmin == line.bounds[0]
-    assert xmax == line.bounds[1]
-    assert ymin == line.bounds[0]
-    assert ymax == line.bounds[1]
+    xmin = poly.bounds.x_min
+    xmax = poly.bounds.x_max
+    ymin = poly.bounds.y_min
+    ymax = poly.bounds.y_max
+    assert xmin == line.bounds.x_min
+    assert xmax == line.bounds.x_max
+    assert ymin == line.bounds.x_min
+    assert ymax == line.bounds.x_max
 
     rotation_axis = (0, 1, 0)
     if not pv.vtk_version_info >= (9, 1, 0):
@@ -3883,6 +3892,216 @@ def test_align():
     assert np.abs(dist).mean() < 1e-3
 
 
+def test_align_xyz():
+    mesh = examples.download_oblique_cone()
+    aligned = mesh.align_xyz()
+    assert np.allclose(aligned.center, (0, 0, 0))
+
+    aligned = mesh.align_xyz(centered=False)
+    assert np.allclose(aligned.center, mesh.center)
+
+
+def test_align_xyz_return_matrix():
+    mesh = examples.download_oblique_cone()
+    initial_bounds = mesh.bounds
+
+    aligned, matrix = mesh.align_xyz(return_matrix=True)
+    assert isinstance(matrix, np.ndarray)
+    assert matrix.shape == (4, 4)
+
+    inverse_matrix = pv.Transform(matrix).inverse_matrix
+    inverted_mesh = aligned.transform(inverse_matrix, inplace=False)
+    inverted_bounds = inverted_mesh.bounds
+
+    assert np.allclose(inverted_bounds, initial_bounds)
+
+
+@pytest.mark.parametrize(
+    ('as_composite', 'mesh_type'), [(True, pv.MultiBlock), (False, pv.PolyData)]
+)
+def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
+    box = sphere.bounding_box(as_composite=as_composite)
+    assert isinstance(box, mesh_type)
+    assert box.bounds == sphere.bounds
+
+
+def test_oriented_bounding_box():
+    rotation = pv.transformations.axis_angle_rotation((1, 2, 3), 30)
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb = box_mesh.oriented_bounding_box()
+    assert obb.bounds == box_mesh.bounds
+
+
+@pytest.mark.parametrize('oriented', [True, False])
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_bounding_box_return_meta(oriented, as_composite):
+    # Generate a random rotation matrix
+    vector = np.random.default_rng().random((3,))
+    angle = np.random.default_rng().random((1,)) * 360
+    rotation = pv.transformations.axis_angle_rotation(vector, angle)
+
+    # Transform a box manually and get its OBB
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb, point, axes = box_mesh.bounding_box(
+        oriented=oriented, return_meta=True, as_composite=as_composite
+    )
+    ATOL = 1e-6  # Needed for numerical error from calculating the principal axes
+    if oriented:
+        # Test axes are equal (up to a difference in sign)
+        expected_axes = pv.principal_axes(box_mesh.points)
+        identity = np.abs(expected_axes @ axes.T)
+        assert np.allclose(identity, np.eye(3), atol=ATOL)
+    else:
+        # Test identity always returned for non-oriented box
+        assert np.array_equal(axes, np.eye(3))
+        bnds = box_mesh.bounds
+        assert np.array_equal(point, (bnds.x_min, bnds.y_min, bnds.z_min))
+
+    # Test the returned point is one of the box's points
+    if as_composite:
+        assert any(point in face.points for face in obb)
+
+        # Also test that box's normals are aligned with the axes directions
+        assert np.allclose(axes[0], obb['+X'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[1], obb['+Y'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[2], obb['+Z'].cell_normals[0], atol=ATOL)
+    else:
+        assert point in obb.points
+
+
+DELTA = 0.1
+
+
+@pytest.fixture()
+def planar_mesh():
+    # Define planar data with largest variation in x, then y
+    # Use a delta to make data slightly asymmetric so the principal axes
+    # are not computed as the identity matrix (we want some negative axes for the tests)
+    points = np.array([[2 + DELTA, 1 + DELTA, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]])
+    axes = pv.principal_axes(points)
+    assert np.allclose(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], atol=DELTA)
+    return pv.PolyData(points)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('axis_0_direction', [1, 0, 0]),
+        ('axis_0_direction', [-1, 0, 0]),
+        ('axis_1_direction', [0, 1, 0]),
+        ('axis_1_direction', [0, -1, 0]),
+        ('axis_2_direction', [0, 0, 1]),
+        ('axis_2_direction', [0, 0, -1]),
+    ],
+)
+def test_align_xyz_single_axis_direction(planar_mesh, name, value):
+    _, matrix = planar_mesh.align_xyz(**{name: value}, return_matrix=True)
+    axes = matrix[:3, :3]
+
+    # Test that the axis has the right direction
+    axis = np.flatnonzero(value)
+    assert np.allclose(axes[axis], value, atol=DELTA)
+
+
+def test_align_xyz_no_axis_direction(planar_mesh):
+    # Test that axis-aligned principal axes with negative directions are "converted"
+    # into the identity matrix (i.e. the negative directions are flipped to be positive)
+    axes_in = pv.principal_axes(planar_mesh.points)
+    _, matrix = planar_mesh.align_xyz(return_matrix=True)
+    axes_out = matrix[:3, :3]
+
+    identity = np.eye(3)
+    assert not np.allclose(axes_in, identity, atol=DELTA)
+    assert np.allclose(axes_out, identity, atol=DELTA)
+
+
+def test_align_xyz_two_axis_directions(planar_mesh):
+    axis_0_direction = [-1, 0, 0]
+    axis_1_direction = [0, -1, 0]
+    _, matrix = planar_mesh.align_xyz(
+        axis_0_direction=axis_0_direction, axis_1_direction=axis_1_direction, return_matrix=True
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [axis_0_direction, axis_1_direction, [0, 0, 1]], atol=DELTA)
+
+    axis_1_direction = [0, -1, 0]
+    axis_2_direction = [0, 0, -1]
+    _, matrix = planar_mesh.align_xyz(
+        axis_1_direction=axis_1_direction, axis_2_direction=axis_2_direction, return_matrix=True
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [[1, 0, 0], axis_1_direction, axis_2_direction], atol=DELTA)
+
+
+def test_align_xyz_three_axis_directions(planar_mesh):
+    axis_2_direction = np.array((0.0, 0.0, -1.0))
+    _, matrix = planar_mesh.align_xyz(
+        axis_0_direction='x',
+        axis_1_direction='-y',
+        axis_2_direction=axis_2_direction,  # test has no effect
+        return_matrix=True,
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]], atol=DELTA)
+
+    match = 'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a left-handed transformation.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = planar_mesh.align_xyz(
+            axis_0_direction='x',
+            axis_1_direction='-y',
+            axis_2_direction=axis_2_direction * -1,
+            return_matrix=True,
+        )
+
+
+def test_align_xyz_swap_axes():
+    # create planar data with equal variance in x and z
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
+    _, matrix = pv.PolyData(points).align_xyz(return_matrix=True)
+    axes = matrix[:3, :3]
+    assert np.array_equal(axes, [[1, 0, 0], [0, 0, 1], [0, -1, 0]])  # XZY (instead of ZXY)
+
+    # create planar data with equal variance in x and y
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
+    _, matrix = pv.PolyData(points).align_xyz(return_matrix=True)
+    axes = matrix[:3, :3]
+    assert np.array_equal(axes, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ (instead of YXZ)
+
+
+@pytest.mark.parametrize('x', [(1, 0, 0), (-1, 0, 0)])
+@pytest.mark.parametrize('y', [(0, 1, 0), (0, -1, 0)])
+@pytest.mark.parametrize('z', [(0, 0, 1), (0, 0, -1)])
+@pytest.mark.parametrize('order', itertools.permutations([0, 1, 2]))
+@pytest.mark.parametrize(
+    ('test_case', 'values'),
+    [
+        ('swap_all', [1, 1, 1]),
+        ('swap_none', [3, 2, 1]),
+        ('swap_0_1', [2, 2, 1]),
+        ('swap_1_2', [2, 1, 1]),
+    ],
+)
+def test_swap_axes(x, y, z, order, test_case, values):
+    axes = np.array((x, y, z))[list(order)]
+    swapped = _swap_axes(axes, values)
+    if test_case == "swap_all":
+        # All axes have the same weight, expect swap to have x-y-z order
+        assert np.array_equal(np.abs(swapped), np.eye(3))
+    elif test_case == "swap_none":
+        # Expect no swapping, output is input
+        assert np.array_equal(axes, swapped)
+    elif test_case == "swap_0_1":
+        first_index = np.flatnonzero(swapped[0])[0]
+        second_index = np.flatnonzero(swapped[1])[0]
+        assert first_index < second_index
+    elif test_case == "swap_1_2":
+        first_index = np.flatnonzero(swapped[1])[0]
+        second_index = np.flatnonzero(swapped[2])[0]
+        assert first_index < second_index
+
+
 def test_subdivide_tetra(tetbeam):
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
@@ -3915,6 +4134,22 @@ def test_merge_points():
     assert (
         pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=0.1).n_points == 2
     )
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_merge_points_filter(inplace):
+    # Set up
+    cells = [2, 0, 1]
+    celltypes = [pv.CellType.LINE]
+    points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
+    mesh = pv.UnstructuredGrid(cells, celltypes, points)
+    assert mesh.n_points == 2
+
+    # Do test
+    output = mesh.merge_points(inplace=inplace, tolerance=1.0)
+    assert output.n_points == 1
+    assert isinstance(mesh, pv.UnstructuredGrid)
+    assert (mesh is output) == inplace
 
 
 @pytest.fixture()

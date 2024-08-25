@@ -307,7 +307,7 @@ def validate_array(
             exact_length=must_have_length,
             min_length=must_have_min_length,
             max_length=must_have_max_length,
-            allow_scalars=True,
+            allow_scalar=True,
             name=name,
         )
 
@@ -474,7 +474,7 @@ def validate_axes(
     return axes_array
 
 
-def validate_transform4x4(transform, /, *, name="Transform"):
+def validate_transform4x4(transform, /, *, must_be_finite=True, name="Transform"):
     """Validate transform-like input as a 4x4 ndarray.
 
     This function supports inputs with a 3x3 or 4x4 shape. If the input is 3x3,
@@ -488,6 +488,11 @@ def validate_transform4x4(transform, /, *, name="Transform"):
 
         Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
         or as a vtkTransform.
+
+    must_be_finite : bool, default: True
+        :func:`Check <pyvista.core.validation.check.check_finite>`
+        if all elements of the array are finite, i.e. not ``infinity``
+        and not Not a Number (``NaN``).
 
     name : str, default: "Transform"
         Variable name to use in the error messages if any of the
@@ -510,7 +515,7 @@ def validate_transform4x4(transform, /, *, name="Transform"):
     check_string(name, name="Name")
     try:
         arr = np.eye(4)  # initialize
-        arr[:3, :3] = validate_transform3x3(transform, name=name)
+        arr[:3, :3] = validate_transform3x3(transform, must_be_finite=must_be_finite, name=name)
     except (ValueError, TypeError):
         if isinstance(transform, vtkMatrix4x4):
             arr = _array_from_vtkmatrix(transform, shape=(4, 4))
@@ -520,11 +525,11 @@ def validate_transform4x4(transform, /, *, name="Transform"):
             try:
                 arr = validate_array(
                     transform,
-                    must_have_shape=(4, 4),
-                    must_be_finite=True,
+                    must_have_shape=[(3, 3), (4, 4)],
+                    must_be_finite=must_be_finite,
                     name=name,
                 )
-            except ValueError:
+            except TypeError:
                 raise TypeError(
                     'Input transform must be one of:\n'
                     '\tvtkMatrix4x4\n'
@@ -539,7 +544,7 @@ def validate_transform4x4(transform, /, *, name="Transform"):
     return arr
 
 
-def validate_transform3x3(transform, /, *, name="Transform"):
+def validate_transform3x3(transform, /, *, must_be_finite=True, name="Transform"):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
@@ -553,6 +558,11 @@ def validate_transform3x3(transform, /, *, name="Transform"):
            Although ``RotationLike`` inputs are accepted, no checks are done
            to verify that the transformation is a actually a rotation.
            Therefore, any 3x3 transformation is acceptable.
+
+    must_be_finite : bool, default: True
+        :func:`Check <pyvista.core.validation.check.check_finite>`
+        if all elements of the array are finite, i.e. not ``infinity``
+        and not Not a Number (``NaN``).
 
     name : str, default: "Transform"
         Variable name to use in the error messages if any of the
@@ -577,7 +587,9 @@ def validate_transform3x3(transform, /, *, name="Transform"):
         return _array_from_vtkmatrix(transform, shape=(3, 3))
     else:
         try:
-            return validate_array(transform, must_have_shape=(3, 3), must_be_finite=True, name=name)
+            return validate_array(
+                transform, must_have_shape=(3, 3), must_be_finite=must_be_finite, name=name
+            )
         except ValueError:
             pass
         except TypeError:
@@ -588,7 +600,9 @@ def validate_transform3x3(transform, /, *, name="Transform"):
             else:
                 if isinstance(transform, Rotation):
                     # Get matrix output and try validating again
-                    return validate_transform3x3(transform.as_matrix())
+                    return validate_transform3x3(
+                        transform.as_matrix(), must_be_finite=must_be_finite, name=name
+                    )
 
     error_message = (
         f'Input transform must be one of:\n'

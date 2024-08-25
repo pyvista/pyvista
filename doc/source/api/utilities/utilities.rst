@@ -37,6 +37,7 @@ Features
    grid_from_sph_coords
    merge
    perlin_noise
+   principal_axes
    sample_function
    spherical_to_cartesian
    transform_vectors_sph_to_cart
@@ -60,6 +61,7 @@ Mesh Creation
    :toctree: _autosummary
 
    CellType
+   fit_line_to_points
    fit_plane_to_points
    lines_from_points
    vector_poly_data
@@ -77,6 +79,13 @@ Array Access
    get_array
    point_array
 
+
+Transformations
+~~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: _autosummary
+
+   Transform
 
 Image Comparison and Regression
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
