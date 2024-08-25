@@ -194,6 +194,7 @@ class CellType(_DocIntEnum):
         Unlike ``QUAD`` cells, the corners are at right angles, and aligned along
         x-y-z coordinate axes.
         """,
+        example="Pixel",
     )
     QUAD = _CellTypeTuple(
         value=_vtk.VTK_QUAD,
