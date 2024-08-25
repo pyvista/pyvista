@@ -320,9 +320,9 @@ def test_voxelize_volume_no_face_mesh(rectilinear):
         pv.voxelize_volume(pv.PolyData())
 
 
-@pytest.mark.parametrize('function', [pv.voxelize_volume])
-def test_voxelize_enclosed_bounds(function):
-    mesh = ex.load_ant()
+@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
+def test_voxelize_enclosed_bounds(function, ant):
+    mesh = ant
     vox = function(mesh, density=1, enclosed=True)
 
     assert (vox.bounds.x_min <= mesh.bounds.x_min)
