@@ -22,6 +22,7 @@ sphinx-copybutton==0.5.2
 sphinx-design==0.6.1
 sphinx-gallery==0.17.1
 sphinx-notfound-page==1.0.4
+sphinx-sitemap==2.6.0
 sphinx-tags==0.4.0
 sphinx-toolbox==3.8.0
 sphinxcontrib-asciinema==0.4.2
