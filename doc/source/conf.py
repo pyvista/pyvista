@@ -92,6 +92,7 @@ extensions = [
     "sphinx_toolbox.more_autodoc.overloads",
     "sphinx_toolbox.more_autodoc.typevars",
     "sphinx_toolbox.more_autodoc.autonamedtuple",
+    "sphinxext.opengraph",
     "sphinx_sitemap",
 ]
 
@@ -605,6 +606,11 @@ tags_overview_title = "Tags"  # title for the tags landing page
 tags_output_dir = "tags"
 tags_page_header = "Gallery examples contain this tag:"  # tag sub-page, header text
 tags_page_title = "Tag"  # tag sub-page, title appended with the tag name
+
+# sphinxext.opengraph ---------------------------------------------------------
+
+ogp_site_url = "https://docs.pyvista.org/"
+ogp_image = "https://docs.pyvista.org/_static/pyvista_banner_small.png"
 
 # sphinx-sitemap options ---------------------------------------------------------
 html_baseurl = 'https://docs.pyvista.org/'

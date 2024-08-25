@@ -186,7 +186,7 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta=False, resolution=10):
+def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=None):
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -206,9 +206,9 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
         See warning below.
 
     .. warning::
-        The normal direction of the plane prior to version 0.45 may differ
-        from the latest version of this function. This may impact methods which
-        rely on the plane's direction.
+        The sign of the plane's normal vector prior to version 0.45 may differ
+        from the latest version. This may impact methods which rely on the plane's
+        direction. Use ``init_normal`` to control the sign explicitly.
 
     Parameters
     ----------
@@ -226,15 +226,21 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
 
         .. versionadded:: 0.45.0
 
+    init_normal : VectorLike[float] | str, optional
+        Flip the normal of the plane such that it best aligns with this vector. Can be
+        a vector or string specifying the axis by name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        .. versionadded:: 0.45.0
+
     Returns
     -------
     pyvista.PolyData
         Plane mesh.
 
-    numpy.ndarray
+    pyvista.pyvista_ndarray
         Plane center if ``return_meta=True``.
 
-    numpy.ndarray
+    pyvista.pyvista_ndarray
         Plane normal if ``return_meta=True``.
 
     See Also
@@ -271,7 +277,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     ... )
     >>> pl.show()
 
-    Fit a plane to a mesh and return its meta-data. Set the plane resolution to 1
+    Fit a plane to a mesh and return its metadata. Set the plane resolution to 1
     so that the plane has no internal points or edges.
 
     >>> mesh = examples.download_shark()
@@ -291,7 +297,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     ... ]
     >>> pl.show()
 
-    Use the meta data with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
+    Use the metadata with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
     two.
 
     >>> first_half, second_half = mesh.clip(
@@ -309,6 +315,21 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     ...     (0.25, 0.92, -0.29),
     ... ]
     >>> pl.show()
+
+    Note that it is pointing in the positive z-direction.
+
+    >>> normal
+    pyvista_ndarray([5.2734075e-09, 6.7008443e-08, 1.0000000e+00],
+                    dtype=float32)
+
+    Use ``init_normal`` to flip the sign and make it negative instead.
+
+    >>> _, _, normal = pv.fit_plane_to_points(
+    ...     mesh.points, return_meta=True, init_normal='-z'
+    ... )
+    >>> normal
+    pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
+                    dtype=float32)
     """
     valid_resolution = _validation.validate_array(
         resolution,
@@ -320,7 +341,9 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     i_resolution, j_resolution = valid_resolution
 
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(return_matrix=True)
+    aligned, matrix = pyvista.PolyData(points).align_xyz(
+        return_matrix=True, axis_2_direction=init_normal
+    )
 
     # Fit plane to xyz-aligned mesh
     aligned_bnds = aligned.bounds

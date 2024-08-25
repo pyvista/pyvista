@@ -27,6 +27,7 @@ sphinx-tags==0.4.0
 sphinx-toolbox==3.8.0
 sphinxcontrib-asciinema==0.4.2
 sphinxcontrib-websupport==2.0.0
+sphinxext-opengraph==0.9.1
 sympy==1.13.2
 trame==3.6.3
 trame-vtk==2.8.10
