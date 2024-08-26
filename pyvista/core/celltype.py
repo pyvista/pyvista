@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 from enum import IntEnum
+import textwrap
 from typing import Literal
 from typing import NamedTuple
 
 from . import _vtk_core as _vtk
 
 _DROPDOWN_TEMPLATE = """
-        .. dropdown:: More info
-            :icon: info
+.. dropdown:: More info
+    :icon: info
 
-            {}
+{}
 """
 
 _GRID_TEMPLATE_NO_IMAGE = """
@@ -30,30 +31,23 @@ _GRID_TEMPLATE_WITH_IMAGE = """
     :margin: 1
 
     .. grid-item::
-        :columns: 12 8 8 8
-
-        {}{}{}
-
-    .. grid-item::
         :columns: 12 4 4 4
 
         .. card::
             :class-body: sd-px-0 sd-py-0 sd-rounded-3
 
             .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
+
+    .. grid-item::
+        :columns: 12 8 8 8
+
+        {}{}{}
 """
 
 
-def _indent_multi_line_string(string, indent_level):
-    lines = string.splitlines()
-    if len(lines) > 0:
-        indentation = "".join(['    '] * indent_level)
-        for i, line in enumerate(lines):
-            lines[i] = indentation + line.strip()
-    return "\n".join(lines)
-
-
-_SemanticColors = Literal['primary', 'secondary', 'success', 'danger', 'muted']
+def _indent_paragraph(string, level):
+    indentation = "".join(['    '] * level)
+    return textwrap.indent(textwrap.dedent(string).strip(), indentation)
 
 
 def _generate_linearity_badge(is_linear: bool):
@@ -171,20 +165,22 @@ class _DocIntEnum(IntEnum):
             else:
                 badges = ''
 
-            _short_doc = (
-                '' if _short_doc is None else _indent_multi_line_string(_short_doc, indent_level=2)
-            )
+            _short_doc = '' if _short_doc is None else _indent_paragraph(_short_doc, level=2)
 
             _long_doc = (
                 ''
                 if _long_doc is None
-                else _DROPDOWN_TEMPLATE.format(_indent_multi_line_string(_long_doc, indent_level=3))
+                else _indent_paragraph(
+                    _DROPDOWN_TEMPLATE.format(_indent_paragraph(_long_doc, level=1)), level=2
+                )
             )
+            if _short_doc and _long_doc:
+                _short_doc += '\n\n'
 
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
                 if _example is None
-                else _GRID_TEMPLATE_WITH_IMAGE.format(badges, _short_doc, _long_doc, _example)
+                else _GRID_TEMPLATE_WITH_IMAGE.format(_example, badges, _short_doc, _long_doc)
             )
 
         return self
@@ -439,7 +435,7 @@ class CellType(_DocIntEnum):
         The cell includes a mid-edge node for each of the three edges of the cell.
         """,
         long_doc="""
-        The ordering of the siex points defining the cell is point ids
+        The ordering of the six points defining the cell is point ids
         ``(0-2, 3-5)`` where:
 
         - id ``(3)`` is the mid-edge node between points ``(0,1)``.
