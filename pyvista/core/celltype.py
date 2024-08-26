@@ -101,6 +101,12 @@ class _DocIntEnum(IntEnum):
 
         Optionally specify documentation info.
 
+        .. note::
+
+            When specifying multi-line ``short_doc`` or ``long_doc`` strings, the
+            lines *must* be all aligned. I.e. do not put the first line immediately
+            after the triple quotes; instead put the first line of text on a new line.
+
         Parameters
         ----------
         value : int
@@ -277,7 +283,8 @@ class CellType(_DocIntEnum):
         cell_class=_vtk.vtkPolyVertex,
         example="PolyVertex",
         points_override='variable',
-        short_doc="""Represents a set of points in 3D space.
+        short_doc="""
+        Represents a set of points in 3D space.
 
         The polyvertex is a composite zero-dimensional cell. It is defined by an
         arbitrarily ordered list of points.
@@ -287,7 +294,8 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_LINE,
         cell_class=_vtk.vtkLine,
         example="Line",
-        short_doc="""Represents a 1D line.
+        short_doc="""
+        Represents a 1D line.
 
         The line is a primary one-dimensional cell. It is defined by two points.
         The direction along the line is from the first point to the second point.
@@ -298,7 +306,8 @@ class CellType(_DocIntEnum):
         cell_class=_vtk.vtkPolyLine,
         example="PolyLine",
         points_override='variable',
-        short_doc="""Represents a set of 1D lines.
+        short_doc="""
+        Represents a set of 1D lines.
 
         The polyline is a composite one-dimensional cell consisting of one or more
         connected lines.
@@ -312,7 +321,8 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_TRIANGLE,
         cell_class=_vtk.vtkTriangle,
         example="Triangle",
-        short_doc="""Represents a 2D triangle.
+        short_doc="""
+        Represents a 2D triangle.
 
         The triangle is a primary two-dimensional cell. The triangle is defined by a
         counter-clockwise ordered list of three points.
