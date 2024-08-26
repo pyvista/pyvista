@@ -35,6 +35,8 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 
         .. card::
             :class-body: sd-px-0 sd-py-0 sd-rounded-3
+            :link: pyvista.examples.cells.{}
+            :link-type: ref
 
             .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
 
@@ -180,7 +182,9 @@ class _DocIntEnum(IntEnum):
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
                 if _example is None
-                else _GRID_TEMPLATE_WITH_IMAGE.format(_example, badges, _short_doc, _long_doc)
+                else _GRID_TEMPLATE_WITH_IMAGE.format(
+                    _example, _example, badges, _short_doc, _long_doc
+                )
             )
 
         return self
