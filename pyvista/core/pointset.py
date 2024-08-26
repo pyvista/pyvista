@@ -2166,7 +2166,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return lgrid
 
     @property
-    def celltypes(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def celltypes(self) -> NumpyArray[np.uint8]:  # numpydoc ignore=RT01
         """Return the cell types array.
 
         The array contains integer values corresponding to the :attr:`pyvista.Cell.type`
