@@ -1408,7 +1408,8 @@ class DatasetCardFetcher:
         """Add cell type badge(s) to every dataset."""
         for card in cls.DATASET_CARDS_OBJ.values():
             for cell_type in card.loader.unique_cell_types:
-                card.add_badge(CellTypeBadge(cell_type.name))
+                name = cell_type.name
+                card.add_badge(CellTypeBadge(name, 'pyvista.CellType.' + name))
 
     @classmethod
     def fetch_dataset_names_by_datatype(cls, datatype) -> Iterator[str]:
