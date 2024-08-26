@@ -194,6 +194,7 @@ from vtkmodules.vtkCommonDataModel import vtkPolyLine
 from vtkmodules.vtkCommonDataModel import vtkPolyPlane
 from vtkmodules.vtkCommonDataModel import vtkPyramid
 from vtkmodules.vtkCommonDataModel import vtkQuadraticEdge
+from vtkmodules.vtkCommonDataModel import vtkQuadraticTriangle
 from vtkmodules.vtkCommonDataModel import vtkRectf
 from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 from vtkmodules.vtkCommonDataModel import vtkSelection
