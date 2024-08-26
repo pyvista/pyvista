@@ -198,6 +198,7 @@ from vtkmodules.vtkCommonDataModel import vtkQuadraticHexahedron
 from vtkmodules.vtkCommonDataModel import vtkQuadraticQuad
 from vtkmodules.vtkCommonDataModel import vtkQuadraticTetra
 from vtkmodules.vtkCommonDataModel import vtkQuadraticTriangle
+from vtkmodules.vtkCommonDataModel import vtkQuadraticWedge
 from vtkmodules.vtkCommonDataModel import vtkRectf
 from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 from vtkmodules.vtkCommonDataModel import vtkSelection
