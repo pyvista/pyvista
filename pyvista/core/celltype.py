@@ -189,11 +189,36 @@ class _DocIntEnum(IntEnum):
 class CellType(_DocIntEnum):
     """Define types of cells.
 
-    Notes
-    -----
-    See `vtkCellType.h
-    <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ for all
-    cell types.
+    Cells are defined by specifying a type in combination with an ordered list of points.
+    The ordered list, often referred to as the connectivity list, combined with the
+    type specification, implicitly defines the topology of the cell. The x-y-z point
+    coordinates define the cell geometry.
+
+    Although point coordinates are defined in three dimensions, the cell topology can
+    be 0, 1, 2, or 3-dimensional.
+
+    Cells can be primary (e.g. triangle) or composite (e.g. triangle strip). Composite
+    cells consist of one or more primary cells, while primary cells cannot be
+    decomposed.
+
+    Cells can also be characterized as linear or non-linear. Linear cells use
+    linear or constant interpolation. Non-linear cells may use quadratic or
+    cubic interpolation.
+
+    This enumeration defines all cell types used in VTK and supported by PyVista. The
+    type(s) of cell(s) to use is typically chosen based on application need, such as
+    graphics rendering or numerical simulation.
+
+    See Also
+    --------
+    `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
+        List of all cell types defined in VTK.
+
+    :ref:`linear_cells_example`
+        Detailed example using linear cells.
+
+    :ref:`examples_cells`
+        Examples creating a mesh comprising a single cell.
 
     Examples
     --------
@@ -241,33 +266,61 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_VERTEX,
         cell_class=_vtk.vtkVertex,
         example="Vertex",
-        short_doc="""Represents a point in 3D space.""",
+        short_doc="""
+        Represents a point in 3D space.
+
+        The vertex is a primary zero-dimensional cell. It is defined by a single point.
+        """,
     )
     POLY_VERTEX = _CellTypeTuple(
         value=_vtk.VTK_POLY_VERTEX,
         cell_class=_vtk.vtkPolyVertex,
         example="PolyVertex",
         points_override='variable',
-        short_doc="""Represents a set of points in 3D space.""",
+        short_doc="""Represents a set of points in 3D space.
+
+        The polyvertex is a composite zero-dimensional cell. It is defined by an
+        arbitrarily ordered list of points.
+        """,
     )
     LINE = _CellTypeTuple(
         value=_vtk.VTK_LINE,
         cell_class=_vtk.vtkLine,
         example="Line",
-        short_doc="""Represents a 1D line.""",
+        short_doc="""Represents a 1D line.
+
+        The line is a primary one-dimensional cell. It is defined by two points.
+        The direction along the line is from the first point to the second point.
+        """,
     )
     POLY_LINE = _CellTypeTuple(
         value=_vtk.VTK_POLY_LINE,
         cell_class=_vtk.vtkPolyLine,
         example="PolyLine",
         points_override='variable',
-        short_doc="""Represents a set of 1D lines.""",
+        short_doc="""Represents a set of 1D lines.
+
+        The polyline is a composite one-dimensional cell consisting of one or more
+        connected lines.
+        """,
+        long_doc="""
+        The polyline is defined by an ordered list of n+1 points, where n is the number
+        of lines in the polyline. Each pair of points ``(i, i+1)`` defines a line.
+        """,
     )
     TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE,
         cell_class=_vtk.vtkTriangle,
         example="Triangle",
-        short_doc="""Represents a 2D triangle.""",
+        short_doc="""Represents a 2D triangle.
+
+        The triangle is a primary two-dimensional cell. The triangle is defined by a
+        counter-clockwise ordered list of three points.
+        """,
+        long_doc="""
+        The order of the points specifies the direction of the surface normal using the
+        right-hand rule.
+        """,
     )
     TRIANGLE_STRIP = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE_STRIP,
@@ -278,13 +331,19 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represents a 2D triangle strip.
 
-        A triangle strip is a compact representation of triangles connected
-        edge-to-edge in strip fashion.
+        The triangle strip is a composite two-dimensional cell consisting of one or more
+        triangles. It is a compact representation of triangles connected edge-to-edge.
         """,
         long_doc="""
+        The triangle strip is defined by an ordered list of n+2 points, where n is the
+        number of triangles. The ordering of the points is such that each set of three
+        points ``(i,i+1,i+2)`` with ``0≤i≤n`` defines a triangle.
+
         The connectivity of a triangle strip is three points defining an
         initial triangle, then for each additional triangle, a single point that,
         combined with the previous two points, defines the next triangle.
+
+        The points defining the triangle strip need not lie in a plane.
         """,
     )
     POLYGON = _CellTypeTuple(
@@ -296,11 +355,19 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represents a 2D n-sided polygon.
 
-        The polygons cannot have any internal holes, and cannot self-intersect.
+        The polygon is a primary two-dimensional cell. It is defined by an ordered list
+        of three or more points lying in a plane.
         """,
         long_doc="""
-        Define the polygon with n-points ordered in the counter-clockwise
-        direction. Do not repeat the last point.
+        The polygon has n edges, where n is the number of points in the polygon.
+        Define the polygon with n-points ordered in the counter-clockwise direction.
+        Do not repeat the last point.
+
+        The polygon normal is implicitly defined by a counterclockwise ordering of its
+        points using the right-hand rule.
+
+        The polygon may be non-convex, but may not have any internal holes, and cannot
+        self-intersect.
         """,
     )
     PIXEL = _CellTypeTuple(
@@ -310,8 +377,22 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represents a 2D orthogonal quadrilateral.
 
-        Unlike ``QUAD`` cells, the corners are at right angles, and aligned along
-        x-y-z coordinate axes.
+        The pixel is a primary two-dimensional cell defined by an ordered list of four
+        points.
+
+        .. warning::
+            This definition of a pixel differs from the conventional definition which
+            describes a single constant-valued element in an image. The meaning of this
+            term can vary depending on context. See :ref:`image_representations_example`
+            for examples.
+        """,
+        long_doc="""
+        The points are ordered in the direction of increasing axis coordinate, starting
+        with x, then y, then z.
+
+        Unlike a quadrilateral cell, the corners or a pixel are at right angles and
+        aligned along x-y-z coordinate axes. It is used to improve computational
+        performance.
         """,
     )
     QUAD = _CellTypeTuple(
@@ -321,14 +402,26 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represents a 2D quadrilateral.
 
-        It is defined by the four points ``(0,1,2,3)`` in counterclockwise order.
+        The quadrilateral is a primary two-dimensional cell. It is defined by an ordered
+        list of four points lying in a plane.
+        """,
+        long_doc="""
+        The four points ``(0,1,2,3)`` are ordered counterclockwise around the
+        quadrilateral, defining a surface normal using the right-hand rule.
+
+        The quadrilateral is convex and its edges must not intersect.
         """,
     )
     TETRA = _CellTypeTuple(
         value=_vtk.VTK_TETRA,
         cell_class=_vtk.vtkTetra,
         example="Tetrahedron",
-        short_doc="""Represents a 3D tetrahedron.""",
+        short_doc="""
+        Represents a 3D tetrahedron.
+
+        The tetrahedron is a primary three-dimensional cell. The tetrahedron is defined
+        by a list of four non-planar points. It has six edges and four triangular faces.
+        """,
         long_doc="""
         The tetrahedron is defined by the four points ``(0-3)`` where ``(0,1,2)``
         is the base of the tetrahedron which, using the right hand rule, forms a
@@ -342,20 +435,41 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represents a 3D orthogonal parallelepiped.
 
-        Unlike ``HEXAHEDRON``, ``VOXEL`` has interior angles of 90 degrees, and its
-        sides are parallel to the coordinate axes.
+        The voxel is a primary three-dimensional cell defined by an ordered list of
+        eight points.
+
+        .. warning::
+            This definition of a voxel differs from the conventional definition which
+            describes a single constant-valued volume element. The meaning of this
+            term can vary depending on context. See :ref:`image_representations_example`
+            for examples.
+        """,
+        long_doc="""
+        The points are ordered in the direction of increasing coordinate value.
+
+        Unlike a hexahedron cell, a voxel has interior angles of 90 degrees, and its
+        sides are parallel to the coordinate axes. It is used to improve computational
+        performance.
         """,
     )
     HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_HEXAHEDRON,
         cell_class=_vtk.vtkHexahedron,
         example="Hexahedron",
-        short_doc="""Represents a 3D rectangular hexahedron.""",
+        short_doc="""
+        Represents a 3D rectangular hexahedron.
+
+        The hexahedron is a primary three-dimensional cell consisting of six
+        quadrilateral faces, twelve edges, and eight vertices.
+        """,
         long_doc="""
         The hexahedron is defined by the eight points ``(0-7)`` where ``(0,1,2,3)``
         is the base of the hexahedron which, using the right hand rule, forms a
         quadrilateral whose normal points in the direction of the opposite face
         ``(4,5,6,7)``.
+
+        The faces and edges must not intersect any other faces and edges, and the
+        hexahedron must be convex.
         """,
     )
     WEDGE = _CellTypeTuple(
@@ -365,12 +479,16 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represents a linear 3D wedge.
 
-        A wedge consists of two triangular and three quadrilateral faces.
+        The wedge is a primary three-dimensional cell consisting of two triangular
+        and three quadrilateral faces.
         """,
         long_doc="""
         The cell is defined by the six points ``(0-5)`` where ``(0,1,2)`` is the
         base of the wedge which, using the right hand rule, forms a triangle whose
         normal points outward (away from the triangular face ``(3,4,5)``).
+
+        The faces and edges must not intersect any other faces and edges, and the wedge
+        must be convex.
         """,
     )
     PYRAMID = _CellTypeTuple(
@@ -380,35 +498,56 @@ class CellType(_DocIntEnum):
         short_doc="""
         Represents a 3D pyramid.
 
-        A pyramid consists of a rectangular base with four triangular faces.
+        The pyramid is a primary three-dimensional cell consisting of a rectangular base
+        with four triangular faces. It is defined by an ordered list of five points.
         """,
         long_doc="""
         The pyramid is defined by the five points ``(0-4)`` where ``(0,1,2,3)`` is
         the base of the pyramid which, using the right hand rule, forms a
         quadrilateral whose normal points in the direction of the pyramid apex at
         vertex ``(4)``. The parametric location of vertex ``(4)`` is ``[0, 0, 1]``.
+
+        The four points defining the quadrilateral base plane must be convex.
+
+        The fifth apex point must not be co-planar with the base points.
         """,
     )
     PENTAGONAL_PRISM = _CellTypeTuple(
         value=_vtk.VTK_PENTAGONAL_PRISM,
         cell_class=_vtk.vtkPentagonalPrism,
         example="PentagonalPrism",
-        short_doc="""Represents a convex 3D prism with a pentagonal base.""",
+        short_doc="""
+        Represents a convex 3D prism with a pentagonal base and five quadrilateral faces.
+
+        The pentagonal prism is a primary three-dimensional cell defined by an ordered
+        list of ten points.
+        """,
         long_doc="""
         The prism is defined by the ten points ``(0-9)``, where ``(0,1,2,3,4)`` is
         the base of the prism which, using the right hand rule, forms a pentagon
         whose normal points is in the direction of the opposite face ``(5,6,7,8,9)``.
+
+        The faces and edges must not intersect any other faces and edges and the
+        pentagon must be convex.
         """,
     )
     HEXAGONAL_PRISM = _CellTypeTuple(
         value=_vtk.VTK_HEXAGONAL_PRISM,
         cell_class=_vtk.vtkHexagonalPrism,
         example="HexagonalPrism",
-        short_doc="""Represents a 3D prism with hexagonal base.""",
+        short_doc="""
+        Represents a 3D prism with hexagonal base and six quadrilateral faces.
+
+        The hexagonal prism is a primary three-dimensional cell defined by an ordered
+        list of twelve points.
+        """,
         long_doc="""
         The prism is defined by the twelve points ``(0-11)`` where ``(0,1,2,3,4,5)``
         is the base of the prism which, using the right hand rule, forms a hexagon
         whose normal points is in the direction of the opposite face ``(6,7,8,9,10,11)``.
+
+        The faces and edges must not intersect any other faces and edges and the
+        hexagon must be convex.
         """,
     )
     ####################################################################################
