@@ -241,33 +241,33 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_VERTEX,
         cell_class=_vtk.vtkVertex,
         example="Vertex",
-        short_doc="""Represent a point in 3D space.""",
+        short_doc="""Represents a point in 3D space.""",
     )
     POLY_VERTEX = _CellTypeTuple(
         value=_vtk.VTK_POLY_VERTEX,
         cell_class=_vtk.vtkPolyVertex,
         example="PolyVertex",
         points_override='variable',
-        short_doc="""Represent a set of points in 3D space.""",
+        short_doc="""Represents a set of points in 3D space.""",
     )
     LINE = _CellTypeTuple(
         value=_vtk.VTK_LINE,
         cell_class=_vtk.vtkLine,
         example="Line",
-        short_doc="""Represent a 1D line.""",
+        short_doc="""Represents a 1D line.""",
     )
     POLY_LINE = _CellTypeTuple(
         value=_vtk.VTK_POLY_LINE,
         cell_class=_vtk.vtkPolyLine,
         example="PolyLine",
         points_override='variable',
-        short_doc="""Represent a set of 1D lines.""",
+        short_doc="""Represents a set of 1D lines.""",
     )
     TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE,
         cell_class=_vtk.vtkTriangle,
         example="Triangle",
-        short_doc="""Represent a 2D triangle.""",
+        short_doc="""Represents a 2D triangle.""",
     )
     TRIANGLE_STRIP = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE_STRIP,
@@ -276,7 +276,7 @@ class CellType(_DocIntEnum):
         points_override='variable',
         edges_override='variable',
         short_doc="""
-        Represent a 2D triangle strip.
+        Represents a 2D triangle strip.
 
         A triangle strip is a compact representation of triangles connected
         edge-to-edge in strip fashion.
@@ -294,7 +294,7 @@ class CellType(_DocIntEnum):
         points_override='variable',
         edges_override='variable',
         short_doc="""
-        Represent a 2D n-sided polygon.
+        Represents a 2D n-sided polygon.
 
         The polygons cannot have any internal holes, and cannot self-intersect.
         """,
@@ -319,7 +319,7 @@ class CellType(_DocIntEnum):
         cell_class=_vtk.vtkQuad,
         example="Quadrilateral",
         short_doc="""
-        Represent a 2D quadrilateral.
+        Represents a 2D quadrilateral.
 
         It is defined by the four points ``(0,1,2,3)`` in counterclockwise order.
         """,
@@ -350,7 +350,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_HEXAHEDRON,
         cell_class=_vtk.vtkHexahedron,
         example="Hexahedron",
-        short_doc="""Represent a 3D rectangular hexahedron.""",
+        short_doc="""Represents a 3D rectangular hexahedron.""",
         long_doc="""
         The hexahedron is defined by the eight points ``(0-7)`` where ``(0,1,2,3)``
         is the base of the hexahedron which, using the right hand rule, forms a
@@ -363,7 +363,7 @@ class CellType(_DocIntEnum):
         cell_class=_vtk.vtkWedge,
         example="Wedge",
         short_doc="""
-        Represent a linear 3D wedge.
+        Represents a linear 3D wedge.
 
         A wedge consists of two triangular and three quadrilateral faces.
         """,
@@ -378,7 +378,7 @@ class CellType(_DocIntEnum):
         cell_class=_vtk.vtkPyramid,
         example="Pyramid",
         short_doc="""
-        Represent a 3D pyramid.
+        Represents a 3D pyramid.
 
         A pyramid consists of a rectangular base with four triangular faces.
         """,
@@ -393,7 +393,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_PENTAGONAL_PRISM,
         cell_class=_vtk.vtkPentagonalPrism,
         example="PentagonalPrism",
-        short_doc="""Represent a convex 3D prism with a pentagonal base.""",
+        short_doc="""Represents a convex 3D prism with a pentagonal base.""",
         long_doc="""
         The prism is defined by the ten points ``(0-9)``, where ``(0,1,2,3,4)`` is
         the base of the prism which, using the right hand rule, forms a pentagon
@@ -404,9 +404,9 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_HEXAGONAL_PRISM,
         cell_class=_vtk.vtkHexagonalPrism,
         example="HexagonalPrism",
-        short_doc="""Represent a 3D prism with hexagonal base.""",
+        short_doc="""Represents a 3D prism with hexagonal base.""",
         long_doc="""
-        The prism is defined by the twelve points ``(0-11)`` where (0,1,2,3,4,5)
+        The prism is defined by the twelve points ``(0-11)`` where ``(0,1,2,3,4,5)``
         is the base of the prism which, using the right hand rule, forms a hexagon
         whose normal points is in the direction of the opposite face ``(6,7,8,9,10,11)``.
         """,
@@ -417,7 +417,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_QUADRATIC_EDGE,
         cell_class=_vtk.vtkQuadraticEdge,
         short_doc="""
-        Represent a 1D, 3-node, iso-parametric parabolic line.
+        Represents a 1D, 3-node, iso-parametric parabolic line.
 
         The cell includes a mid-edge node.
         """,
@@ -430,7 +430,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_QUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkQuadraticTriangle,
         short_doc="""
-        Represent a 2D, 6-node, iso-parametric parabolic triangle.
+        Represents a 2D, 6-node, iso-parametric parabolic triangle.
 
         The cell includes a mid-edge node for each of the three edges of the cell.
         """,
@@ -448,7 +448,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_QUADRATIC_QUAD,
         cell_class=_vtk.vtkQuadraticQuad,
         short_doc="""
-        Represent a 2D, 8-node iso-parametric parabolic quadrilateral element.
+        Represents a 2D, 8-node iso-parametric parabolic quadrilateral element.
 
         The cell includes a mid-edge node for each of the four edges of the cell.
         """,
@@ -467,7 +467,7 @@ class CellType(_DocIntEnum):
         points_override='variable',
         edges_override='variable',
         short_doc="""
-        Represent a 2D n-sided (2*n nodes) parabolic polygon.
+        Represents a 2D n-sided (2*n nodes) parabolic polygon.
 
         The polygon cannot have any internal holes, and cannot self-intersect.
         The cell includes a mid-edge node for each of the n edges of the cell.
@@ -487,7 +487,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_QUADRATIC_TETRA,
         cell_class=_vtk.vtkQuadraticTetra,
         short_doc="""
-        Represent a 3D, 10-node, iso-parametric parabolic tetrahedron.
+        Represents a 3D, 10-node, iso-parametric parabolic tetrahedron.
 
         The cell includes a mid-edge node on each of the side edges of the tetrahedron.
         """,
@@ -505,7 +505,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkQuadraticHexahedron,
         short_doc="""
-        Represent a 3D, 20-node iso-parametric parabolic hexahedron.
+        Represents a 3D, 20-node iso-parametric parabolic hexahedron.
 
         The cell includes a mid-edge node.
         """,
@@ -525,7 +525,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkQuadraticWedge,
         short_doc="""
-        Represent a 3D, 15-node iso-parametric parabolic wedge.
+        Represents a 3D, 15-node iso-parametric parabolic wedge.
 
         The cell includes a mid-edge node.
         """,
@@ -547,7 +547,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_QUADRATIC_PYRAMID,
         cell_class=_vtk.vtkQuadraticPyramid,
         short_doc="""
-        Represent a 3D, 13-node iso-parametric parabolic pyramid.
+        Represents a 3D, 13-node iso-parametric parabolic pyramid.
 
         The cell includes a mid-edge node.
         """,
@@ -567,7 +567,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_BIQUADRATIC_QUAD,
         cell_class=_vtk.vtkBiQuadraticQuad,
         short_doc="""
-        Represent a 2D, 9-node iso-parametric parabolic quadrilateral element with a center-point.
+        Represents a 2D, 9-node iso-parametric parabolic quadrilateral element with a center-point.
 
         The cell includes a mid-edge node for each of the four edges of the cell and
         a center node at the surface.
@@ -586,7 +586,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_TRIQUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkTriQuadraticHexahedron,
         short_doc="""
-        Represent a 3D, 27-node iso-parametric triquadratic hexahedron.
+        Represents a 3D, 27-node iso-parametric triquadratic hexahedron.
 
         The cell includes 8 edge nodes, 12 mid-edge nodes, 6 mid-face nodes and one
         mid-volume node.
@@ -622,7 +622,7 @@ class CellType(_DocIntEnum):
             value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
             cell_class=_vtk.vtkTriQuadraticPyramid,
             short_doc="""
-            Represent a second order 3D iso-parametric 19-node pyramid.
+            Represents a second order 3D iso-parametric 19-node pyramid.
 
             The cell includes 5 corner nodes, 8 mid-edge nodes, 5 mid-face nodes,
             and 1 volumetric centroid node.
@@ -657,7 +657,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
         cell_class=_vtk.vtkQuadraticLinearQuad,
         short_doc="""
-        Represent a 2D, 6-node iso-parametric quadratic-linear quadrilateral element.
+        Represents a 2D, 6-node iso-parametric quadratic-linear quadrilateral element.
 
         The cell includes a mid-edge node for two of the four edges.
         """,
@@ -674,7 +674,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_QUADRATIC_LINEAR_WEDGE,
         cell_class=_vtk.vtkQuadraticLinearWedge,
         short_doc="""
-        Represent a 3D, 12-node iso-parametric linear quadratic wedge.
+        Represents a 3D, 12-node iso-parametric linear quadratic wedge.
 
         The cell includes mid-edge node in the triangle edges.
         """,
@@ -694,7 +694,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkBiQuadraticQuadraticWedge,
         short_doc="""
-        Represent a 3D, 18-node iso-parametric bi-quadratic wedge.
+        Represents a 3D, 18-node iso-parametric bi-quadratic wedge.
 
         The cell includes a mid-edge node.
         """,
@@ -717,7 +717,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkBiQuadraticQuadraticHexahedron,
         short_doc="""
-        Represent a 3D, 24-node iso-parametric biquadratic hexahedron.
+        Represents a 3D, 24-node iso-parametric biquadratic hexahedron.
 
         The cell includes mid-edge and center-face nodes.
         """,
@@ -741,7 +741,7 @@ class CellType(_DocIntEnum):
         value=_vtk.VTK_BIQUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkBiQuadraticTriangle,
         short_doc="""
-        Represent a 2D, 7-node, iso-parametric parabolic triangle.
+        Represents a 2D, 7-node, iso-parametric parabolic triangle.
 
         The cell includes three mid-edge nodes besides the three triangle vertices
         and a center node.
