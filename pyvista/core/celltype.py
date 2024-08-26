@@ -22,7 +22,7 @@ _GRID_TEMPLATE_NO_IMAGE = """
 
     .. grid-item::
 
-        {}{}{}
+{}{}{}
 """
 
 _GRID_TEMPLATE_WITH_IMAGE = """
@@ -41,7 +41,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
     .. grid-item::
         :columns: 12 8 8 8
 
-        {}{}{}
+{}{}{}
 """
 
 
@@ -50,26 +50,36 @@ def _indent_paragraph(string, level):
     return textwrap.indent(textwrap.dedent(string).strip(), indentation)
 
 
-def _generate_linearity_badge(is_linear: bool):
-    LINEAR_BADGE = ':bdg-primary:`Linear`'
-    NON_LINEAR_BADGE = ':bdg-success:`Non-linear`'
-    return LINEAR_BADGE if is_linear else NON_LINEAR_BADGE
+# See link for color names: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
+_BADGE_COLORS = dict(
+    linear='primary', primary='success', dimension='secondary', geometry='muted-line'
+)
+
+
+def _generate_linear_badge(is_linear: bool):
+    text = 'Linear' if is_linear else 'Non-linear'
+    return f":bdg-{_BADGE_COLORS['linear']}:`{text}`"
+
+
+def _generate_primary_badge(is_primary: bool):
+    text = 'Primary' if is_primary else 'Composite'
+    return f":bdg-{_BADGE_COLORS['primary']}:`{text}`"
 
 
 def _generate_dimension_badge(dimension: int):
-    return f':bdg-secondary:`{dimension}D`'
+    return f":bdg-{_BADGE_COLORS['dimension']}:`{dimension}D`"
 
 
 def _generate_points_badge(num_points: int):
-    return f':bdg-muted-line:`Points: {num_points}`'
+    return f":bdg-{_BADGE_COLORS['geometry']}:`Points: {num_points}`"
 
 
 def _generate_edges_badge(num_edges: int):
-    return f':bdg-muted-line:`Edges: {num_edges}`'
+    return f":bdg-{_BADGE_COLORS['geometry']}:`Edges: {num_edges}`"
 
 
 def _generate_faces_badge(num_faces: int):
-    return f':bdg-muted-line:`Faces: {num_faces}`'
+    return f":bdg-{_BADGE_COLORS['geometry']}:`Faces: {num_faces}`"
 
 
 class _CellTypeTuple(NamedTuple):
@@ -155,7 +165,8 @@ class _DocIntEnum(IntEnum):
         if _cell_class or _short_doc or _long_doc or _example:
             if _cell_class:
                 cell = _cell_class()
-                linearity_badge = _generate_linearity_badge(cell.IsLinear())
+                linear_badge = _generate_linear_badge(cell.IsLinear())
+                primary_badge = _generate_primary_badge(cell.IsPrimaryCell())
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
 
                 points = _points_override if _points_override else cell.GetNumberOfPoints()
@@ -167,7 +178,14 @@ class _DocIntEnum(IntEnum):
                 faces = _faces_override if _faces_override else cell.GetNumberOfFaces()
                 faces_badge = _generate_faces_badge(faces)
 
-                badges = f'{linearity_badge} {dimension_badge} {points_badge} {edges_badge} {faces_badge}\n\n'
+                badges = (
+                    _indent_paragraph(
+                        f'{linear_badge} {primary_badge} {dimension_badge}\n'
+                        f'{points_badge} {edges_badge} {faces_badge}',
+                        level=2,
+                    )
+                    + '\n\n'
+                )
             else:
                 badges = ''
 
