@@ -464,6 +464,8 @@ class CellType(_DocIntEnum):
     QUADRATIC_POLYGON = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_POLYGON,
         cell_class=_vtk.vtkQuadraticPolygon,
+        points_override='variable',
+        edges_override='variable',
         short_doc="""
         Represent a 2D n-sided (2*n nodes) parabolic polygon.
 
@@ -763,12 +765,20 @@ class CellType(_DocIntEnum):
     ####################################################################################
     # Special class of cells formed by convex group of points
     CONVEX_POINT_SET = _CellTypeTuple(
-        value=_vtk.VTK_CONVEX_POINT_SET, cell_class=_vtk.vtkConvexPointSet
+        value=_vtk.VTK_CONVEX_POINT_SET,
+        cell_class=_vtk.vtkConvexPointSet,
+        points_override='variable',
     )
 
     ####################################################################################
     # Polyhedron cell (consisting of polygonal faces)
-    POLYHEDRON = _CellTypeTuple(value=_vtk.VTK_POLYHEDRON, cell_class=_vtk.vtkPolyhedron)
+    POLYHEDRON = _CellTypeTuple(
+        value=_vtk.VTK_POLYHEDRON,
+        cell_class=_vtk.vtkPolyhedron,
+        points_override='variable',
+        edges_override='variable',
+        faces_override='variable',
+    )
 
     ####################################################################################
     # Higher order cells in parametric form
