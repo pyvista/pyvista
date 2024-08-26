@@ -233,16 +233,16 @@ class CellType(_DocIntEnum):
     type(s) of cell(s) to use is typically chosen based on application need, such as
     graphics rendering or numerical simulation.
 
-    See Also
-    --------
-    `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
-        List of all cell types defined in VTK.
+    .. seealso::
 
-    :ref:`linear_cells_example`
-        Detailed example using linear cells.
+        `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
+            List of all cell types defined in VTK.
 
-    :ref:`examples_cells`
-        Examples creating a mesh comprising a single cell.
+        :ref:`linear_cells_example`
+            Detailed example using linear cells.
+
+        :ref:`examples_cells`
+            Examples creating a mesh comprising a single cell.
 
     Examples
     --------
