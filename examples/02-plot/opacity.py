@@ -9,6 +9,8 @@ based on a scalar array.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -17,7 +19,7 @@ image = examples.download_st_helens()
 mesh = image.warp_by_scalar()
 
 
-###############################################################################
+# %%
 # Global Value
 # ++++++++++++
 #
@@ -32,12 +34,12 @@ p.add_mesh(
 p.add_mesh(mesh, opacity=0.85, color=True)
 p.show()
 
-###############################################################################
+# %%
 # Note that you can specify ``use_transparency=True`` to convert opacities to
 # transparencies in any of the following examples.
 
 
-###############################################################################
+# %%
 # Transfer Functions
 # ++++++++++++++++++
 #
@@ -58,18 +60,18 @@ p.show()
 # Show the linear opacity transfer function
 mesh.plot(opacity="linear")
 
-###############################################################################
+# %%
 
 # Show the sigmoid opacity transfer function
 mesh.plot(opacity="sigmoid")
 
-###############################################################################
+# %%
 # It's also possible to use your own transfer function that will be linearly
 # mapped to the scalar array plotted. For example, we can create an opacity
 # mapping as:
 opacity = [0, 0.2, 0.9, 0.6, 0.3]
 
-###############################################################################
+# %%
 # When given a minimized opacity mapping like that above, PyVista interpolates
 # it across a range of how many colors are shown when mapping the scalars.
 # If ``scipy`` is available, then a quadratic interpolation is used -
@@ -87,19 +89,19 @@ plt.ylabel('Opacity')
 plt.xlabel('Index along scalar mapping')
 plt.show()
 
-###############################################################################
+# %%
 # That opacity mapping will have an opacity of 0.0 at the minimum scalar range,
 # a value or 0.9 at the middle of the scalar range, and a value of 0.3 at the
 # maximum of the scalar range:
 
 mesh.plot(opacity=opacity)
 
-###############################################################################
+# %%
 # Opacity mapping is often useful when plotting DICOM images. For example,
 # download the sample knee DICOM image:
 knee = examples.download_knee()
 
-###############################################################################
+# %%
 # And here we inspect the DICOM image with a few different opacity mappings:
 p = pv.Plotter(shape=(2, 2), border=False)
 
@@ -120,7 +122,7 @@ p.view_xy()
 
 p.show()
 
-###############################################################################
+# %%
 # Opacity by Array
 # ++++++++++++++++
 #
@@ -136,7 +138,7 @@ model = examples.download_model_with_variance()
 contours = model.contour(10, scalars='Temperature')
 contours.array_names
 
-###############################################################################
+# %%
 # Make sure to flag ``use_transparency=True`` since we want areas of high
 # variance to have high transparency.
 #
@@ -162,3 +164,5 @@ p.subplot(0, 1)
 p.add_text('No Opacity')
 p.add_mesh(contours, scalars='Temperature', cmap='bwr')
 p.show()
+# %%
+# .. tags:: plot

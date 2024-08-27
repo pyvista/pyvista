@@ -42,13 +42,15 @@ must be all triangle meshes, which you can check with
 """
 
 # sphinx_gallery_thumbnail_number = 6
+from __future__ import annotations
+
 import pyvista as pv
 
 sphere_a = pv.Sphere()
 sphere_b = pv.Sphere(center=(0.5, 0, 0))
 
 
-###############################################################################
+# %%
 # Boolean Union
 # +++++++++++++
 #
@@ -70,7 +72,7 @@ pl.camera_position = 'xz'
 pl.show()
 
 
-###############################################################################
+# %%
 # Boolean Difference
 # ++++++++++++++++++
 #
@@ -92,7 +94,7 @@ pl.camera_position = 'xz'
 pl.show()
 
 
-###############################################################################
+# %%
 # Boolean Intersection
 # ++++++++++++++++++++
 #
@@ -114,7 +116,7 @@ pl.camera_position = 'xz'
 pl.show()
 
 
-###############################################################################
+# %%
 # Behavior due to flipped normals
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Note that these boolean filters behave differently depending on the
@@ -129,7 +131,7 @@ result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
-###############################################################################
+# %%
 # Boolean difference with cube normals outward, sphere inward.
 
 cube = pv.Cube().triangulate().subdivide(3)
@@ -139,7 +141,7 @@ result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
-###############################################################################
+# %%
 # Boolean difference with cube normals inward, sphere outward.
 
 cube = pv.Cube().triangulate().subdivide(3)
@@ -149,7 +151,7 @@ result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
-###############################################################################
+# %%
 # Both cube and sphere normals inward.
 
 cube = pv.Cube().triangulate().subdivide(3)
@@ -158,3 +160,5 @@ sphere = pv.Sphere(radius=0.6)
 sphere.flip_normals()
 result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
+# %%
+# .. tags:: filter

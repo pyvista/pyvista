@@ -1,17 +1,27 @@
+from __future__ import annotations
+
 import os
 import platform
-from string import ascii_letters, digits, whitespace
+import re
+from string import ascii_letters
+from string import digits
+from string import whitespace
 import sys
 
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck
+from hypothesis import given
+from hypothesis import settings
 from hypothesis.extra.numpy import arrays
-from hypothesis.strategies import integers, lists, text
+from hypothesis.strategies import integers
+from hypothesis.strategies import lists
+from hypothesis.strategies import text
 import numpy as np
 import pytest
 
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.arrays import FieldAssociation, convert_array
+from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import convert_array
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_apple_silicon = pytest.mark.skipif(
@@ -160,6 +170,29 @@ def test_active_scalars_name(sphere):
 
     sphere.point_data.active_scalars_name = None
     assert sphere.point_data.active_scalars_name is None
+
+
+def test_active_normals_name():
+    # Load dataset known to have active normals by default
+    sphere = pv.Sphere()
+    assert sphere.point_data._active_normals_name == 'Normals'
+    sphere.clear_data()
+    assert sphere.point_data._active_normals_name is None
+
+    # Set name of custom normals
+    key = 'data0'
+    normals = np.array([[0, 1, 0]] * sphere.n_points)
+    sphere.point_data[key] = normals
+    assert sphere.point_data._active_normals_name is None
+    sphere.point_data._active_normals_name = key
+    assert sphere.point_data._active_normals_name == 'data0'
+
+    # Test raises
+    sphere.point_data[key] = range(sphere.n_points)
+    with pytest.raises(ValueError, match=re.escape('data0 needs 3 components, has (1)')):
+        sphere.point_data._active_normals_name = key
+    with pytest.raises(KeyError, match='DataSetAttribute does not contain "foobar"'):
+        sphere.point_data._active_normals_name = 'foobar'
 
 
 def test_set_scalars(sphere):
@@ -365,7 +398,7 @@ def test_set_array_string_array_should_equal(arr, hexbeam_field_attributes):
 
 def test_hexbeam_field_attributes_active_scalars(hexbeam_field_attributes):
     with pytest.raises(TypeError):
-        hexbeam_field_attributes.active_scalars
+        _ = hexbeam_field_attributes.active_scalars
 
 
 def test_should_remove_array(insert_arange_narray):
@@ -569,7 +602,7 @@ def test_normals_name(plane):
 
 def test_normals_raise_field(plane):
     with pytest.raises(AttributeError):
-        plane.field_data.active_normals
+        _ = plane.field_data.active_normals
 
 
 def test_add_two_vectors():

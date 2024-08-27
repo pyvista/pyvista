@@ -15,6 +15,8 @@ interaction with the 3D scene.
 
 """
 
+from __future__ import annotations
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -25,13 +27,13 @@ import pyvista as pv
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Data to display
 t = np.linspace(0, 5, 50)
 h = np.sin(t)
 v = np.cos(t)
 
-###############################################################################
+# %%
 # Define a Matplotlib figure.
 # Use a tight layout to keep axis labels visible on smaller figures.
 
@@ -42,7 +44,7 @@ ax.set_xlabel('Time (s)')
 _ = ax.set_ylabel('Height (m)')
 # sphinx_gallery_defer_figures
 
-###############################################################################
+# %%
 # Define plotter, add the created matplotlib figure as the first (left) chart
 # to the scene, and define a second (right) chart.
 
@@ -91,3 +93,5 @@ for i in range(1, 50):
     update_time(t[i])
 
 p.show()  # Keep plotter open to let user play with time slider
+# %%
+# .. tags:: plot

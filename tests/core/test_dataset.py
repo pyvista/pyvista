@@ -1,11 +1,22 @@
 """Tests for pyvista.core.dataset."""
 
+from __future__ import annotations
+
 import multiprocessing
 import pickle
+import re
+from typing import TYPE_CHECKING
 
-from hypothesis import HealthCheck, assume, given, settings
-from hypothesis.extra.numpy import array_shapes, arrays
-from hypothesis.strategies import composite, floats, integers, one_of
+from hypothesis import HealthCheck
+from hypothesis import assume
+from hypothesis import given
+from hypothesis import settings
+from hypothesis.extra.numpy import array_shapes
+from hypothesis.extra.numpy import arrays
+from hypothesis.strategies import composite
+from hypothesis.strategies import floats
+from hypothesis.strategies import integers
+from hypothesis.strategies import one_of
 import numpy as np
 import pytest
 import vtk
@@ -13,17 +24,18 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.dataset import DataSet
-from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
-from pyvista.examples import (
-    load_airplane,
-    load_explicit_structured,
-    load_hexbeam,
-    load_rectilinear,
-    load_structured,
-    load_tetbeam,
-    load_uniform,
-)
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.examples import load_airplane
+from pyvista.examples import load_explicit_structured
+from pyvista.examples import load_hexbeam
+from pyvista.examples import load_rectilinear
+from pyvista.examples import load_structured
+from pyvista.examples import load_tetbeam
+from pyvista.examples import load_uniform
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core.dataset import DataSet
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
@@ -42,7 +54,9 @@ def test_invalid_copy_from(grid):
 def n_numbers(draw, n):
     numbers = []
     for _ in range(n):
-        number = draw(one_of(floats(), integers()))
+        number = draw(
+            one_of(floats(), integers(max_value=np.iinfo(int).max, min_value=np.iinfo(int).min))
+        )
         numbers.append(number)
     return numbers
 
@@ -267,42 +281,53 @@ def test_copy_metadata(globe):
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
-def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
-    trans = vtk.vtkTransform()
+def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
+    trans = pv.Transform()
+    trans.check_finite = False
     trans.RotateWXYZ(*rotate_amounts)
-    trans.Translate(translate_amounts)
+    trans.translate(translate_amounts)
     trans.Update()
 
+    # Apply transform with pyvista filter
     grid_a = grid.copy()
-    grid_b = grid.copy()
-    grid_c = grid.copy()
     grid_a.transform(trans)
-    grid_b.transform(trans.GetMatrix())
-    grid_c.transform(pv.array_from_vtkmatrix(trans.GetMatrix()))
+
+    # Apply transform with vtk filter
+    grid_b = grid.copy()
+    f = vtk.vtkTransformFilter()
+    f.SetInputDataObject(grid_b)
+    f.SetTransform(trans)
+    f.Update()
+    grid_b = pv.wrap(f.GetOutput())
 
     # treat INF as NAN (necessary for allclose)
     grid_a.points[np.isinf(grid_a.points)] = np.nan
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
-    assert np.allclose(grid_a.points, grid_c.points, equal_nan=True)
 
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@given(rotate_amounts=n_numbers(4))
+def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amounts, grid):
     # test non homogeneous transform
-    trans_rotate_only = vtk.vtkTransform()
+    trans_rotate_only = pv.Transform()
+    trans_rotate_only.check_finite = False
     trans_rotate_only.RotateWXYZ(*rotate_amounts)
     trans_rotate_only.Update()
 
-    grid_d = grid.copy()
-    grid_d.transform(trans_rotate_only)
+    grid_copy = grid.copy()
+    grid_copy.transform(trans_rotate_only)
 
     from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-    trans_arr = pv.array_from_vtkmatrix(trans_rotate_only.GetMatrix())[:3, :3]
+    trans_arr = trans_rotate_only.matrix[:3, :3]
     trans_pts = apply_transformation_to_points(trans_arr, grid.points)
-    assert np.allclose(grid_d.points, trans_pts, equal_nan=True)
+    assert np.allclose(grid_copy.points, trans_pts, equal_nan=True)
 
 
-def test_translate_should_fail_given_none(grid):
-    with pytest.raises(TypeError):
-        grid.transform(None)
+def test_translate_should_not_fail_given_none(grid):
+    bounds = grid.bounds
+    grid.transform(None)
+    assert grid.bounds == bounds
 
 
 def test_set_points():
@@ -329,8 +354,9 @@ def test_translate_should_fail_bad_points_or_transform(grid):
 )
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
 def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
-    assume(array.shape != (4, 4))
-    with pytest.raises(ValueError):  # noqa: PT011
+    assume(array.shape not in [(3, 3), (4, 4)])
+    match = 'Shape must be one of [(3, 3), (4, 4)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         grid.transform(array)
 
 
@@ -498,6 +524,13 @@ def test_html_repr(grid):
     This just tests to make sure no errors are thrown on the HTML
     representation method for DataSet.
     """
+    assert grid._repr_html_() is not None
+
+
+def test_html_repr_string_scalar(grid):
+    array_data = "data"
+    array_name = "name"
+    grid.add_field_data(array_data, array_name)
     assert grid._repr_html_() is not None
 
 
@@ -1009,23 +1042,23 @@ def test_find_cells_within_bounds():
     mesh = pv.Cube()
 
     bounds = [
-        mesh.bounds[0] * 2.0,
-        mesh.bounds[1] * 2.0,
-        mesh.bounds[2] * 2.0,
-        mesh.bounds[3] * 2.0,
-        mesh.bounds[4] * 2.0,
-        mesh.bounds[5] * 2.0,
+        mesh.bounds.x_min * 2.0,
+        mesh.bounds.x_max * 2.0,
+        mesh.bounds.y_min * 2.0,
+        mesh.bounds.y_max * 2.0,
+        mesh.bounds.z_min * 2.0,
+        mesh.bounds.z_max * 2.0,
     ]
     indices = mesh.find_cells_within_bounds(bounds)
     assert len(indices) == mesh.n_cells
 
     bounds = [
-        mesh.bounds[0] * 0.5,
-        mesh.bounds[1] * 0.5,
-        mesh.bounds[2] * 0.5,
-        mesh.bounds[3] * 0.5,
-        mesh.bounds[4] * 0.5,
-        mesh.bounds[5] * 0.5,
+        mesh.bounds.x_min * 0.5,
+        mesh.bounds.x_max * 0.5,
+        mesh.bounds.y_min * 0.5,
+        mesh.bounds.y_max * 0.5,
+        mesh.bounds.z_min * 0.5,
+        mesh.bounds.z_max * 0.5,
     ]
     indices = mesh.find_cells_within_bounds(bounds)
     assert len(indices) == 0
@@ -1191,8 +1224,8 @@ def test_multiprocessing(datasets, pickle_format):
     pv.set_pickle_format(pickle_format)
     with multiprocessing.Pool(2) as p:
         res = p.map(n_points, datasets)
-    for res, dataset in zip(res, datasets):
-        assert res == dataset.n_points
+    for r, dataset in zip(res, datasets):
+        assert r == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():
@@ -1236,9 +1269,10 @@ def test_rotate_x():
     mesh = examples.load_uniform()
     out = mesh.rotate_x(30)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(TypeError):
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_x(30, point=5)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_x(30, point=[1, 3])
 
 
@@ -1247,9 +1281,10 @@ def test_rotate_y():
     mesh = examples.load_uniform()
     out = mesh.rotate_y(30)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(TypeError):
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_y(30, point=5)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_y(30, point=[1, 3])
 
 
@@ -1258,9 +1293,10 @@ def test_rotate_z():
     mesh = examples.load_uniform()
     out = mesh.rotate_z(30)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(TypeError):
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_z(30, point=5)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_z(30, point=[1, 3])
 
 
@@ -1269,10 +1305,18 @@ def test_rotate_vector():
     mesh = examples.load_uniform()
     out = mesh.rotate_vector([1, 1, 1], 33)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(ValueError):  # noqa: PT011
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_vector([1, 1], 33)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_vector(30, 33)
+
+
+def test_rotate():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+    assert isinstance(out, pv.StructuredGrid)
 
 
 def test_transform_integers():

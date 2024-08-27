@@ -1,9 +1,15 @@
 """PyVista volume module."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from . import _vtk
-from ._property import Property
-from .mapper import _BaseMapper
 from .prop3d import Prop3D
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._property import Property
+    from .mapper import _BaseMapper
 
 
 class Volume(Prop3D, _vtk.vtkVolume):
@@ -33,7 +39,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
         >>> pl = pv.Plotter()
         >>> actor = pl.add_volume(vol)
         >>> actor.mapper.bounds
-        (0.0, 9.0, 0.0, 9.0, 0.0, 9.0)
+        BoundsTuple(x_min=0.0, x_max=9.0, y_min=0.0, y_max=9.0, z_min=0.0, z_max=9.0)
         """
         return self.GetMapper()
 

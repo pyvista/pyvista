@@ -13,6 +13,8 @@ mesh-generating/altering code.
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -39,12 +41,12 @@ class MyCustomRoutine:
         self.output.copy_from(result)
 
 
-###############################################################################
+# %%
 
 starting_mesh = pv.Sphere()
 engine = MyCustomRoutine(starting_mesh)
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(starting_mesh, show_edges=True)
@@ -76,3 +78,5 @@ p.add_slider_widget(
     style='modern',
 )
 p.show()
+# %%
+# .. tags:: widgets

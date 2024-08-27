@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from types import GeneratorType
 
 import numpy as np
@@ -6,18 +8,17 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
-from pyvista import Cell, CellType
+from pyvista import Cell
+from pyvista import CellType
 from pyvista.core.utilities.cells import numpy_to_idarr
-from pyvista.examples import (
-    cells as example_cells,
-    load_airplane,
-    load_explicit_structured,
-    load_hexbeam,
-    load_rectilinear,
-    load_structured,
-    load_tetbeam,
-    load_uniform,
-)
+from pyvista.examples import cells as example_cells
+from pyvista.examples import load_airplane
+from pyvista.examples import load_explicit_structured
+from pyvista.examples import load_hexbeam
+from pyvista.examples import load_rectilinear
+from pyvista.examples import load_structured
+from pyvista.examples import load_tetbeam
+from pyvista.examples import load_uniform
 
 grids = [
     load_hexbeam(),
@@ -287,9 +288,9 @@ def test_cell_center(grid):
     bounds = grid.get_cell(0).bounds
 
     assert isinstance(center, tuple)
-    assert bounds[0] <= center[0] <= bounds[1]
-    assert bounds[2] <= center[1] <= bounds[3]
-    assert bounds[4] <= center[2] <= bounds[5]
+    assert bounds.x_min <= center[0] <= bounds.x_max
+    assert bounds.y_min <= center[1] <= bounds.y_max
+    assert bounds.z_min <= center[2] <= bounds.z_max
 
 
 def test_cell_center_value():

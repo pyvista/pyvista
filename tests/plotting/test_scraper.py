@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 from matplotlib.pyplot import imread
 import pytest
 
 import pyvista as pv
-from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper, Scraper
+from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
+from pyvista.plotting.utilities.sphinx_gallery import Scraper
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting

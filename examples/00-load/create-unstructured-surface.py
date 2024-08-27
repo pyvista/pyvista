@@ -8,12 +8,14 @@ Create an irregular, unstructured grid from NumPy arrays.
 This example uses :class:`pyvista.UnstructuredGrid`.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 from pyvista import CellType
 
-###############################################################################
+# %%
 # An unstructured grid can be created directly from NumPy arrays.
 # This is useful when creating a grid from scratch or copying it from another
 # format.  See `vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_
@@ -71,7 +73,7 @@ grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells_hex}, points)
 # plot the grid (and suppress the camera position output)
 _ = grid.plot(show_edges=True)
 
-###############################################################################
+# %%
 # UnstructuredGrid with Shared Points
 # -----------------------------------
 #
@@ -132,7 +134,7 @@ cells = np.array(
 celltypes = np.full(8, CellType.HEXAHEDRON, dtype=np.uint8)
 
 
-###############################################################################
+# %%
 # Finally, create the unstructured grid and plot it
 grid = pv.UnstructuredGrid(cells, celltypes, points)
 
@@ -147,7 +149,7 @@ grid = pv.UnstructuredGrid(
 _ = grid.plot(show_edges=True)
 
 
-###############################################################################
+# %%
 # Tetrahedral Grid
 # ~~~~~~~~~~~~~~~~
 # Here is how we can create an unstructured tetrahedral grid.
@@ -196,9 +198,11 @@ grid = pv.UnstructuredGrid(cells, celltypes, points)
 grid.plot(show_edges=True)
 
 
-###############################################################################
+# %%
 # For fun, let's separate all the cells and plot out the individual cells. Shift
 # them a little bit from the center to create an "exploded view".
 
 split_cells = grid.explode(0.5)
 split_cells.plot(show_edges=True, ssao=True)
+# %%
+# .. tags:: load

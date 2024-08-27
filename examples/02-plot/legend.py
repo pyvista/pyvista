@@ -5,6 +5,8 @@ Legends and glyphs
 Using custom legends and glyphs within PyVista.
 """
 
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -15,7 +17,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 # sphinx_gallery_thumbnail_number = 3
 
-###############################################################################
+# %%
 # Default legend for glyphs
 # +++++++++++++++++++++++++
 #
@@ -46,7 +48,7 @@ pl.add_legend()
 # Plot
 pl.show()
 
-###############################################################################
+# %%
 # Using custom legends
 # ++++++++++++++++++++
 #
@@ -74,7 +76,7 @@ pl.add_legend(legend)
 pl.show()
 
 
-###############################################################################
+# %%
 # Using custom legend and glyphs
 # ++++++++++++++++++++++++++++++
 #
@@ -102,3 +104,5 @@ pl.add_legend(legend)
 
 # Plot
 pl.show()
+# %%
+# .. tags:: plot

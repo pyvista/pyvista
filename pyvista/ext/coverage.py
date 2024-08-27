@@ -11,6 +11,8 @@ Modified slightly for ``pyvista``.
 
 """
 
+from __future__ import annotations
+
 import glob
 from importlib import import_module
 import inspect
@@ -18,15 +20,20 @@ from os import path
 from pathlib import Path
 import pickle
 import re
-from typing import IO, Any, Dict, List, Pattern, Set, Tuple
+from re import Pattern
+from typing import IO
+from typing import TYPE_CHECKING
+from typing import Any
 
 import sphinx
-from sphinx.application import Sphinx
 from sphinx.builders import Builder
 from sphinx.locale import __
 from sphinx.util import logging
 from sphinx.util.console import red
 from sphinx.util.inspect import safe_getattr
+
+if TYPE_CHECKING:  # pragma: no cover
+    from sphinx.application import Sphinx
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +44,7 @@ def write_header(f: IO, text: str, char: str = '-') -> None:
     f.write(char * len(text) + '\n')
 
 
-def compile_regex_list(name: str, exps: str) -> List[Pattern]:
+def compile_regex_list(name: str, exps: str) -> list[Pattern]:
     lst = []
     for exp in exps:
         try:
@@ -70,19 +77,19 @@ class CoverageBuilder(Builder):
     )
 
     def init(self) -> None:
-        self.c_sourcefiles: List[str] = []
+        self.c_sourcefiles: list[str] = []
         for pattern in self.config.coverage_c_path:
             pattern = path.join(self.srcdir, pattern)  # noqa: PTH118
             self.c_sourcefiles.extend(glob.glob(pattern))  # noqa: PTH207
 
-        self.c_regexes: List[Tuple[str, Pattern]] = []
+        self.c_regexes: list[tuple[str, Pattern]] = []
         for name, exp in self.config.coverage_c_regexes.items():
             try:
                 self.c_regexes.append((name, re.compile(exp)))
             except Exception:
                 logger.warning(__('invalid regex %r in coverage_c_regexes'), exp)
 
-        self.c_ignorexps: Dict[str, List[Pattern]] = {}
+        self.c_ignorexps: dict[str, list[Pattern]] = {}
         for name, exps in self.config.coverage_ignore_c_items.items():
             self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items', exps)
         self.mod_ignorexps = compile_regex_list(
@@ -107,11 +114,11 @@ class CoverageBuilder(Builder):
         return 'coverage overview'
 
     def write(self, *ignored: Any) -> None:
-        self.py_undoc: Dict[str, Dict[str, Any]] = {}
+        self.py_undoc: dict[str, dict[str, Any]] = {}
         self.build_py_coverage()
         self.write_py_coverage()
 
-        self.c_undoc: Dict[str, Set[Tuple[str, str]]] = {}
+        self.c_undoc: dict[str, set[tuple[str, str]]] = {}
         self.build_c_coverage()
         self.write_c_coverage()
 
@@ -119,7 +126,7 @@ class CoverageBuilder(Builder):
         # Fetch all the info from the header files
         c_objects = self.env.domaindata['c']['objects']
         for filename in self.c_sourcefiles:
-            undoc: Set[Tuple[str, str]] = set()
+            undoc: set[tuple[str, str]] = set()
             with Path(filename).open() as f:
                 for line in f:
                     for key, regex in self.c_regexes:
@@ -203,7 +210,7 @@ class CoverageBuilder(Builder):
                 continue
 
             funcs = []
-            classes: Dict[str, List[str]] = {}
+            classes: dict[str, list[str]] = {}
 
             for name, obj in inspect.getmembers(mod):
                 # diverse module attributes are ignored:
@@ -242,7 +249,7 @@ class CoverageBuilder(Builder):
                             classes[name] = []
                             continue
 
-                        attrs: List[str] = []
+                        attrs: list[str] = []
 
                         for attr_name in dir(obj):
                             if attr_name not in obj.__dict__:
@@ -291,7 +298,7 @@ class CoverageBuilder(Builder):
                     write_header(op, name)
                     if undoc['funcs']:
                         op.write('Functions:\n')
-                        op.writelines(' * %s\n' % x for x in undoc['funcs'])
+                        op.writelines(' * %s\n' % x for x in undoc['funcs'])  # noqa: UP031
                         if self.config.coverage_show_missing_items:
                             if self.app.quiet or self.app.warningiserror:
                                 for func in undoc['funcs']:
@@ -315,7 +322,7 @@ class CoverageBuilder(Builder):
                         op.write('Classes:\n')
                         for class_name, methods in sorted(undoc['classes'].items()):
                             if not methods:
-                                op.write(' * %s\n' % class_name)
+                                op.write(' * %s\n' % class_name)  # noqa: UP031
                                 if self.config.coverage_show_missing_items:
                                     if self.app.quiet or self.app.warningiserror:
                                         logger.warning(
@@ -333,8 +340,10 @@ class CoverageBuilder(Builder):
                                             + name,
                                         )
                             else:
-                                op.write(' * %s -- missing methods:\n\n' % class_name)
-                                op.writelines('   - %s\n' % x for x in methods)
+                                op.write(
+                                    ' * %s -- missing methods:\n\n' % class_name,  # noqa: UP031
+                                )
+                                op.writelines('   - %s\n' % x for x in methods)  # noqa: UP031
                                 if self.config.coverage_show_missing_items:
                                     if self.app.quiet or self.app.warningiserror:
                                         for meth in methods:
@@ -358,7 +367,7 @@ class CoverageBuilder(Builder):
 
             if failed:
                 write_header(op, 'Modules that failed to import')
-                op.writelines(' * %s -- %s\n' % x for x in failed)
+                op.writelines(' * %s -- %s\n' % x for x in failed)  # noqa: UP031
 
     def finish(self) -> None:
         # dump the coverage data to a pickle file too
@@ -367,7 +376,7 @@ class CoverageBuilder(Builder):
             pickle.dump((self.py_undoc, self.c_undoc), dumpfile)
 
 
-def setup(app: Sphinx) -> Dict[str, Any]:
+def setup(app: Sphinx) -> dict[str, Any]:
     app.add_builder(CoverageBuilder)
     app.add_config_value('coverage_additional_modules', [], False)
     app.add_config_value('coverage_ignore_modules', [], False)

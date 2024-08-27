@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 from IPython.display import IFrame
@@ -11,26 +13,25 @@ has_trame = True
 try:
     from trame.app import get_server
 
-    from pyvista.trame.jupyter import EmbeddableWidget, Widget, build_url, elegantly_launch
-    from pyvista.trame.ui import base_viewer, get_viewer, plotter_ui
-    from pyvista.trame.ui.vuetify2 import (
-        divider as vue2_divider,
-        select as vue2_select,
-        slider as vue2_slider,
-        text_field as vue2_text_field,
-    )
-    from pyvista.trame.ui.vuetify3 import (
-        divider as vue3_divider,
-        select as vue3_select,
-        slider as vue3_slider,
-        text_field as vue3_text_field,
-    )
-    from pyvista.trame.views import (
-        PyVistaLocalView,
-        PyVistaRemoteLocalView,
-        PyVistaRemoteView,
-        _BasePyVistaView,
-    )
+    from pyvista.trame.jupyter import EmbeddableWidget
+    from pyvista.trame.jupyter import Widget
+    from pyvista.trame.jupyter import build_url
+    from pyvista.trame.jupyter import elegantly_launch
+    from pyvista.trame.ui import base_viewer
+    from pyvista.trame.ui import get_viewer
+    from pyvista.trame.ui import plotter_ui
+    from pyvista.trame.ui.vuetify2 import divider as vue2_divider
+    from pyvista.trame.ui.vuetify2 import select as vue2_select
+    from pyvista.trame.ui.vuetify2 import slider as vue2_slider
+    from pyvista.trame.ui.vuetify2 import text_field as vue2_text_field
+    from pyvista.trame.ui.vuetify3 import divider as vue3_divider
+    from pyvista.trame.ui.vuetify3 import select as vue3_select
+    from pyvista.trame.ui.vuetify3 import slider as vue3_slider
+    from pyvista.trame.ui.vuetify3 import text_field as vue3_text_field
+    from pyvista.trame.views import PyVistaLocalView
+    from pyvista.trame.views import PyVistaRemoteLocalView
+    from pyvista.trame.views import PyVistaRemoteView
+    from pyvista.trame.views import _BasePyVistaView
 except:
     has_trame = False
 
@@ -123,31 +124,31 @@ def test_trame(client_type):
 
     orig_value = actor.prop.show_edges
     server.state[viewer.EDGES] = not orig_value
-    viewer.on_edge_visiblity_change(**server.state.to_dict())
+    viewer.on_edge_visibility_change(**server.state.to_dict())
     assert actor.prop.show_edges != orig_value
 
     server.state[viewer.GRID] = True
     assert len(pl.actors) == 1
-    viewer.on_grid_visiblity_change(**server.state.to_dict())
+    viewer.on_grid_visibility_change(**server.state.to_dict())
     assert len(pl.actors) == 2
     server.state[viewer.GRID] = False
-    viewer.on_grid_visiblity_change(**server.state.to_dict())
+    viewer.on_grid_visibility_change(**server.state.to_dict())
     assert len(pl.actors) == 1
 
     server.state[viewer.OUTLINE] = True
     assert len(pl.actors) == 1
-    viewer.on_outline_visiblity_change(**server.state.to_dict())
+    viewer.on_outline_visibility_change(**server.state.to_dict())
     assert len(pl.actors) == 2
     server.state[viewer.OUTLINE] = False
-    viewer.on_outline_visiblity_change(**server.state.to_dict())
+    viewer.on_outline_visibility_change(**server.state.to_dict())
     assert len(pl.actors) == 1
 
     server.state[viewer.AXIS] = True
     assert not hasattr(pl.renderer, 'axes_actor')
-    viewer.on_axis_visiblity_change(**server.state.to_dict())
+    viewer.on_axis_visibility_change(**server.state.to_dict())
     assert hasattr(pl.renderer, 'axes_actor')
     server.state[viewer.AXIS] = False
-    viewer.on_axis_visiblity_change(**server.state.to_dict())
+    viewer.on_axis_visibility_change(**server.state.to_dict())
     assert not pl.renderer.axes_widget.GetEnabled()
 
     server.state[viewer.SERVER_RENDERING] = False

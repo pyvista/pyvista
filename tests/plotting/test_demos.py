@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import platform
 
@@ -49,6 +51,11 @@ def test_plot_logo():
 def test_plot_datasets():
     # simply should not fail
     demos.plot_datasets()
+
+
+def test_plot_datasets_dataset_type():
+    with pytest.raises(ValueError, match="Invalid dataset_type"):
+        demos.plot_datasets(dataset_type='foo')
 
 
 @skip_no_plotting

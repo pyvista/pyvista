@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import os
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
+from pathlib import PureWindowsPath
 
 import pytest
 import requests
@@ -7,11 +10,9 @@ import requests
 import pyvista as pv
 from pyvista import examples
 from pyvista.examples import downloads
-from tests.examples.test_dataset_loader import (
-    DatasetLoaderTestCase,
-    _generate_dataset_loader_test_cases_from_module,
-    _get_mismatch_fail_msg,
-)
+from tests.examples.test_dataset_loader import DatasetLoaderTestCase
+from tests.examples.test_dataset_loader import _generate_dataset_loader_test_cases_from_module
+from tests.examples.test_dataset_loader import _get_mismatch_fail_msg
 
 
 def pytest_generate_tests(metafunc):
@@ -31,9 +32,10 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
 def _is_valid_url(url):
     try:
         requests.get(url)
-        return True
     except requests.RequestException:
         return False
+    else:
+        return True
 
 
 def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):

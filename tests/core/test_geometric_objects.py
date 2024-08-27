@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from itertools import permutations
 import re
 
@@ -433,6 +435,15 @@ def test_capsule():
     assert np.any(capsule.faces)
 
 
+# https://github.com/pyvista/pyvista/pull/6119
+@pytest.mark.parametrize('center', [(4, 5, 6), (1, 1, 1)])
+@pytest.mark.parametrize('direction', [(0, 1, -1), (1, 1, 0)])
+def test_capsule_center(center, direction):
+    capsule = pv.Capsule(center, direction)
+    cylinder = pv.Cylinder(center, direction)
+    assert np.allclose(capsule.center, cylinder.center)
+
+
 def test_cube():
     cube = pv.Cube()
     assert np.any(cube.points)
@@ -525,9 +536,9 @@ def test_text_3d():
 
     bnds = mesh.bounds
     actual_width, actual_height, actual_depth = (
-        bnds[1] - bnds[0],
-        bnds[3] - bnds[2],
-        bnds[5] - bnds[4],
+        bnds.x_max - bnds.x_min,
+        bnds.y_max - bnds.y_min,
+        bnds.z_max - bnds.z_min,
     )
     assert np.isclose(actual_width, 2.0)
     assert np.isclose(actual_height, 3.0)

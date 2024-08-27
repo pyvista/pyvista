@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 from pathlib import Path
 import re
@@ -13,7 +15,7 @@ templates_path = ['_templates']
 source_suffix = '.rst'
 root_doc = 'index'
 project = 'tinypages'
-year = datetime.date.today().year
+year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
 copyright = f"2021-{year}, PyVista developers"  # noqa: A001
 version = '0.1'
 release = '0.1'
@@ -33,7 +35,7 @@ plot_setup = plot_cleanup = 'import pyvista'
 
 # -- Options for HTML output ----------------------------------------------
 
-html_theme = 'pydata_sphinx_theme'
+html_theme = 'sphinx_book_theme'
 
 html_static_path = ['_static']
 

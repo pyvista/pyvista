@@ -1,5 +1,7 @@
 """PyVista Scalar bar module."""
 
+from __future__ import annotations
+
 import contextlib
 import weakref
 
@@ -366,9 +368,8 @@ class ScalarBars:
             title_font_size = theme.font.title_size
         if fmt is None:
             fmt = theme.font.fmt
-        if vertical is None:
-            if theme.colorbar_orientation.lower() == 'vertical':
-                vertical = True
+        if vertical is None and theme.colorbar_orientation.lower() == 'vertical':
+            vertical = True
 
         # Automatically choose size if not specified
         if width is None:
@@ -396,7 +397,7 @@ class ScalarBars:
             self._scalar_bar_ranges[title] = clim
             self._scalar_bar_actors[title].SetLookupTable(mapper.lookup_table)
             # Color bar already present and ready to be used so returning
-            return
+            return None
 
         # Automatically choose location if not specified
         if position_x is None or position_y is None:

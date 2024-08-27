@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+import functools
 import itertools
 from pathlib import Path
 import platform
-from unittest.mock import Mock, patch
+import re
+from typing import Any
+from typing import NamedTuple
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -10,12 +17,10 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
-from pyvista.core.errors import (
-    MissingDataError,
-    NotAllTrianglesError,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters.data_set import _swap_axes
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -93,11 +98,16 @@ def test_clip_filter(datasets):
                 assert isinstance(clp, pv.UnstructuredGrid)
 
     # crinkle clip
-    clp = pv.Wavelet().clip(normal=(1, 1, 1), crinkle=True)
+    mesh = pv.Wavelet()
+    clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
     assert clp is not None
-    clp1, clp2 = pv.Wavelet().clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
+    set_a = set(clp1.cell_data['cell_ids'])
+    set_b = set(clp2.cell_data['cell_ids'])
+    assert set_a.isdisjoint(set_b)
+    assert set_a.union(set_b) == set(range(mesh.n_cells))
 
 
 @skip_mac
@@ -670,7 +680,7 @@ def test_elevation():
     elev = dataset.elevation(progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert elev.active_scalars_name == 'Elevation'
-    assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
+    assert elev.get_data_range() == (dataset.bounds.z_min, dataset.bounds.z_max)
     # test vector args
     c = list(dataset.center)
     t = list(c)  # cast so it does not point to `c`
@@ -678,7 +688,7 @@ def test_elevation():
     elev = dataset.elevation(low_point=c, high_point=t, progress_bar=True)
     assert 'Elevation' in elev.array_names
     assert elev.active_scalars_name == 'Elevation'
-    assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
+    assert elev.get_data_range() == (dataset.center[2], dataset.bounds.z_max)
     # Test not setting active
     elev = dataset.elevation(set_active=False, progress_bar=True)
     assert 'Elevation' in elev.array_names
@@ -716,8 +726,8 @@ def test_texture_map_to_plane():
     # Define the plane explicitly
     bnds = dataset.bounds
     origin = bnds[0::2]
-    point_u = (bnds[1], bnds[2], bnds[4])
-    point_v = (bnds[0], bnds[3], bnds[4])
+    point_u = (bnds.x_max, bnds.y_max, bnds.z_min)
+    point_v = (bnds.x_min, bnds.y_min, bnds.z_min)
     out = dataset.texture_map_to_plane(
         origin=origin,
         point_u=point_u,
@@ -775,6 +785,14 @@ def test_cell_centers(datasets):
         result = dataset.cell_centers(progress_bar=True)
         assert result is not None
         assert isinstance(result, pv.PolyData)
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_cell_center_pointset(airplane):
+    pointset = airplane.cast_to_pointset()
+    result = pointset.cell_centers(progress_bar=True)
+    assert result is not None
+    assert isinstance(result, pv.PolyData)
 
 
 def test_cell_centers_composite(composite):
@@ -1009,14 +1027,26 @@ def test_glyph_orient_and_scale():
     glyph2 = grid.glyph(geom=geom, orient=False, scale="z_axis")
     glyph3 = grid.glyph(geom=geom, orient="z_axis", scale=False)
     glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
-    assert glyph1.bounds[4] == geom.bounds[0] * scale
-    assert glyph1.bounds[5] == geom.bounds[1] * scale
-    assert glyph2.bounds[0] == geom.bounds[0] * scale
-    assert glyph2.bounds[1] == geom.bounds[1] * scale
-    assert glyph3.bounds[4] == geom.bounds[0]
-    assert glyph3.bounds[5] == geom.bounds[1]
-    assert glyph4.bounds[0] == geom.bounds[0]
-    assert glyph4.bounds[1] == geom.bounds[1]
+    assert glyph1.bounds.z_min == geom.bounds.x_min * scale
+    assert glyph1.bounds.z_max == geom.bounds.x_max * scale
+    assert glyph2.bounds.x_min == geom.bounds.x_min * scale
+    assert glyph2.bounds.x_max == geom.bounds.x_max * scale
+    assert glyph3.bounds.z_min == geom.bounds.x_min
+    assert glyph3.bounds.z_max == geom.bounds.x_max
+    assert glyph4.bounds.x_min == geom.bounds.x_min
+    assert glyph4.bounds.x_max == geom.bounds.x_max
+
+
+@pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
+def test_glyph_color_mode(sphere, color_mode):
+    # define vector data
+    sphere.point_data['velocity'] = sphere.points[:, [1, 0, 2]] * [-1, 1, 0]
+    sphere.glyph(color_mode=color_mode)
+
+
+def test_glyph_raises(sphere):
+    with pytest.raises(ValueError, match="Invalid color mode 'foo'"):
+        sphere.glyph(color_mode="foo", scale=False, orient=False)
 
 
 @pytest.fixture()
@@ -1610,30 +1640,6 @@ def test_sample_composite():
     assert "vtkGhostType" in result[0].point_data
 
 
-@pytest.mark.parametrize('use_points', [True, False])
-@pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, _vtk_core.vtkStaticCellLocator()])
-def test_probe(categorical, use_points, locator):
-    mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
-    data_to_probe = examples.load_uniform()
-    dataset = np.array(mesh.points) if use_points else mesh
-    with pytest.warns(PyVistaDeprecationWarning):
-        result = data_to_probe.probe(
-            dataset,
-            tolerance=1e-5,
-            categorical=categorical,
-            progress_bar=True,
-            locator=locator,
-        )
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
-    result = mesh.sample(data_to_probe, tolerance=1.0, progress_bar=True)
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
-
-
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
 def test_streamlines_dir(uniform_vec, integration_direction):
     stream = uniform_vec.streamlines(
@@ -1816,8 +1822,8 @@ def test_plot_over_line(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
     # Make two points to construct the line between
-    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
+    b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
     mesh.plot_over_line(a, b, resolution=1000, show=False, progress_bar=True)
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
@@ -1871,11 +1877,11 @@ def test_sample_over_circular_arc():
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    xmin = uniform.bounds[0]
-    xmax = uniform.bounds[1]
-    ymin = uniform.bounds[2]
-    zmin = uniform.bounds[4]
-    zmax = uniform.bounds[5]
+    xmin = uniform.bounds.x_min
+    xmax = uniform.bounds.x_max
+    ymin = uniform.bounds.y_min
+    zmin = uniform.bounds.z_min
+    zmax = uniform.bounds.z_max
     pointa = [xmin, ymin, zmax]
     pointb = [xmax, ymin, zmin]
     center = [xmin, ymin, zmin]
@@ -1907,11 +1913,11 @@ def test_sample_over_circular_arc_normal():
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    xmin = uniform.bounds[0]
-    ymin = uniform.bounds[2]
-    ymax = uniform.bounds[3]
-    zmin = uniform.bounds[4]
-    zmax = uniform.bounds[5]
+    xmin = uniform.bounds.x_min
+    ymin = uniform.bounds.y_min
+    ymax = uniform.bounds.y_max
+    zmin = uniform.bounds.z_min
+    zmax = uniform.bounds.z_max
     normal = [xmin, ymax, zmin]
     polar = [xmin, ymin, zmax]
     angle = 90.0 * np.random.default_rng().random()
@@ -1951,9 +1957,9 @@ def test_plot_over_circular_arc(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
 
     # Make two points and center to construct the circular arc between
-    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-    b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
-    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+    b = [mesh.bounds.x_max, mesh.bounds.y_min, mesh.bounds.z_min]
+    center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc(
         a,
         b,
@@ -1999,10 +2005,10 @@ def test_plot_over_circular_arc_normal(tmpdir):
     filename = str(tmp_dir.join('tmp.png'))
 
     # Make center and normal/polar vector to construct the circular arc between
-    # normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-    polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
+    # normal = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+    polar = [mesh.bounds.x_min, mesh.bounds.y_max, mesh.bounds.z_min]
     angle = 90
-    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc_normal(
         center,
         polar=polar,
@@ -2044,7 +2050,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
-    x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
+    x = y = z = np.linspace(model.bounds.x_min, model.bounds.x_max, num=n)
     points = np.c_[x, y, z]
     spline = pv.Spline(points, n)
     slc = model.slice_along_line(spline, progress_bar=True)
@@ -2052,14 +2058,14 @@ def test_slice_along_line():
     slc = model.slice_along_line(spline, contour=True, progress_bar=True)
     assert slc.n_points > 0
     # Now check a simple line
-    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
-    b = [model.bounds[1], model.bounds[3], model.bounds[5]]
+    a = [model.bounds.x_min, model.bounds.y_min, model.bounds.z_min]
+    b = [model.bounds.x_max, model.bounds.y_max, model.bounds.z_max]
     line = pv.Line(a, b, resolution=10)
     slc = model.slice_along_line(line, progress_bar=True)
     assert slc.n_points > 0
     # Now check a bad input
-    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
-    b = [model.bounds[1], model.bounds[2], model.bounds[5]]
+    a = [model.bounds.x_min, model.bounds.y_min, model.bounds.z_min]
+    b = [model.bounds.x_max, model.bounds.y_min, model.bounds.z_max]
     line2 = pv.Line(a, b, resolution=10)
     line = line2.cast_to_unstructured_grid().merge(line.cast_to_unstructured_grid())
     with pytest.raises(ValueError):  # noqa: PT011
@@ -2078,7 +2084,8 @@ def extract_points_invalid(sphere):
         sphere.extract_points(object)
 
 
-def test_extract_points():
+@pytest.fixture()
+def grid4x4():
     # mesh points (4x4 regular grid)
     vertices = np.array(
         [
@@ -2115,30 +2122,647 @@ def test_extract_points():
             [4, 10, 11, 15, 14],  # square
         ],
     )
-    # create pv object
     surf = pv.PolyData(vertices, faces)
+    surf.point_data['labels'] = range(surf.n_points)
+    surf.cell_data['labels'] = range(surf.n_cells)
+    return surf
+
+
+@pytest.fixture()
+def extracted_with_adjacent_False(grid4x4):
+    """Return expected output for adjacent_cells=False and include_cells=True"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0]
+    expected_point_ids = [0, 1, 4, 5]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [4, 0, 1, 3, 2]
+    celltypes = np.full(1, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.fixture()
+def extracted_with_adjacent_True(grid4x4):
+    """Return expected output for adjacent_cells=True and include_cells=True"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0, 1, 3, 4]
+    expected_point_ids = [0, 1, 2, 4, 5, 6, 8, 9, 10]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7]
+    celltypes = np.full(4, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.fixture()
+def extracted_with_include_cells_False(grid4x4):
+    """Return expected output for adjacent_cells=True and include_cells=False"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0, 0, 0, 0]
+    expected_point_ids = [0, 1, 4, 5]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [1, 0, 1, 1, 1, 2, 1, 3]
+    celltypes = np.full(4, CellType.VERTEX, dtype=np.uint8)
+    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjacent_True):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+
     # extract sub-surface with adjacent cells
-    sub_surf_adj = surf.extract_points(np.array([0, 1, 4, 5]), progress_bar=True)
+    sub_surf_adj = dataset_filter(
+        input_surf,
+        input_point_ids,
+        adjacent_cells=True,
+        progress_bar=True,
+    )
+
+    assert sub_surf_adj.n_points == 9
+    assert np.array_equal(sub_surf_adj.points, expected_surf.points)
+    assert sub_surf_adj.n_cells == 4
+    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
     # extract sub-surface without adjacent cells
-    sub_surf = surf.extract_points(np.array([0, 1, 4, 5]), adjacent_cells=False, progress_bar=True)
+    sub_surf = dataset_filter(input_surf, input_point_ids, adjacent_cells=False, progress_bar=True)
+
+    assert sub_surf.n_points == 4
+    assert np.array_equal(sub_surf.points, expected_surf.points)
+    assert sub_surf.n_cells == 1
+    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_include_cells_False(
+    dataset_filter,
+    grid4x4,
+    extracted_with_include_cells_False,
+):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_False
     # extract sub-surface without cells
-    sub_surf_nocells = surf.extract_points(
-        np.array([0, 1, 4, 5]),
+    sub_surf_nocells = dataset_filter(
+        input_surf,
+        input_point_ids,
+        adjacent_cells=True,
         include_cells=False,
         progress_bar=True,
     )
-    # check sub-surface size
-    assert sub_surf.n_points == 4
-    assert sub_surf.n_cells == 1
-    assert sub_surf_adj.n_points == 9
-    assert sub_surf_adj.n_cells == 4
-    assert sub_surf_nocells.cells[0] == 1
+    assert np.array_equal(sub_surf_nocells.points, expected_surf.points)
+    assert np.array_equal(sub_surf_nocells.cells, expected_surf.cells)
+    assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
+
+
+def test_extract_points_default(extracted_with_adjacent_True):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+    # test adjacent_cells=True and include_cells=True by default
+    sub_surf_adj = input_surf.extract_points(input_point_ids)
+
+    assert np.array_equal(sub_surf_adj.points, expected_surf.points)
+    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+@pytest.mark.parametrize('adjacent_fixture', [True, False])
+def test_extract_values_preference(
+    preference,
+    adjacent_fixture,
+    extracted_with_adjacent_True,
+    extracted_with_adjacent_False,
+):
+    # test points are extracted with point data (with adjacent = False by default)
+    # test cells are extracted with cell data
+    fixture = extracted_with_adjacent_True if adjacent_fixture else extracted_with_adjacent_False
+    input_surf, input_point_ids, input_cell_ids, expected_surf = fixture
+
+    func = functools.partial(input_surf.extract_values, scalars='labels', preference=preference)
+    if preference == 'point':
+        sub_surf = func(input_point_ids)
+        if not adjacent_fixture:
+            pytest.xfail(
+                'Will not match expected output since adjacent is True by default for point data ',
+            )
+    else:
+        sub_surf = func(input_cell_ids)
+
+    assert np.array_equal(sub_surf.points, expected_surf.points)
+    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+
+
+def extract_values_values():
+    # Define values to extract all 16 points or all 9 cells of the 4x4 grid
+    point_values = [
+        range(16),
+        list(range(16)),
+        np.array(range(16)),
+    ]
+    cell_values = [
+        range(10),
+        list(range(10)),
+        np.array(range(10)),
+    ]
+
+    return list(zip(point_values, cell_values))
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize('values', extract_values_values())
+def test_extract_values_input_values_and_invert(preference, values, invert, grid4x4):
+    # test extracting all points or cells
+    values = values[0] if preference == 'point' else values[1]
+    extracted = grid4x4.extract_values(values, preference=preference, invert=invert)
+    if invert:
+        assert extracted.n_points == 0
+        assert extracted.n_cells == 0
+        assert extracted.n_arrays == 0
+    else:
+        assert np.array_equal(extracted.points, grid4x4.points)
+        assert np.array_equal(extracted.cells, grid4x4.faces)
+
+
+def test_extract_values_open_intervals(grid4x4):
+    extracted = grid4x4.extract_values(ranges=[float('-inf'), float('inf')])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+    extracted = grid4x4.extract_values(ranges=[0, np.inf])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+    extracted = grid4x4.extract_values(ranges=[-np.inf, 16])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+
+SMALL_VOLUME = 1**3
+BIG_VOLUME = 2**3
+
+
+@pytest.fixture()
+def labeled_data():
+    bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
+    small_box = pv.Box(bounds=bounds)
+    big_box = pv.Box(bounds=bounds * 2)
+    labeled = (small_box + big_box).extract_geometry().connectivity()
+    assert isinstance(labeled, pv.PolyData)
+    assert labeled.array_names == ['RegionId', 'RegionId']
+    assert np.allclose(small_box.volume, SMALL_VOLUME)
+    assert np.allclose(big_box.volume, BIG_VOLUME)
+    return small_box, big_box, labeled
+
+
+def add_component_to_labeled_data(labeled_data, offset):
+    """Add second component to scalars by duplicating first component and adding offset."""
+    if offset is None:
+        return labeled_data
+    small_box, big_box, labeled_data = labeled_data
+
+    point_data = labeled_data.point_data['RegionId']
+    point_data = np.vstack([point_data, point_data + offset]).T
+    labeled_data.point_data['RegionId'] = point_data
+
+    cell_data = labeled_data.cell_data['RegionId']
+    cell_data = np.vstack([cell_data, cell_data + offset]).T
+    labeled_data.cell_data['RegionId'] = cell_data
+
+    return small_box, big_box, labeled_data
+
+
+class SplitComponentTestCase(NamedTuple):
+    component_offset: Any
+    component_mode: Any
+    expected_n_blocks: Any
+    expected_volume: Any
+
+
+split_component_test_cases = [
+    SplitComponentTestCase(
+        component_offset=None,
+        component_mode=0,
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=None,
+        component_mode='any',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=None,
+        component_mode='all',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='0',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='1',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='any',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='all',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode=0,
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode=1,
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode='any',
+        expected_n_blocks=4,
+        expected_volume=[SMALL_VOLUME, SMALL_VOLUME, BIG_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode='all',
+        expected_n_blocks=4,
+        expected_volume=[0, 0, 0, 0],
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ('component_offset', 'component_mode', 'expected_n_blocks', 'expected_volume'),
+    split_component_test_cases,
+)
+@pytest.mark.parametrize(
+    ('dataset_filter', 'kwargs'),
+    [
+        (pv.DataSetFilters.split_values, {}),
+        (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
+    ],
+)
+def test_split_values_extract_values_component(
+    dataset_filter,
+    kwargs,
+    labeled_data,
+    component_offset,
+    component_mode,
+    expected_n_blocks,
+    expected_volume,
+):
+    # Add second component to fixture for test as needed
+    small_box, big_box, labeled_data = add_component_to_labeled_data(
+        labeled_data,
+        component_offset,
+    )
+    multiblock = dataset_filter(labeled_data, component_mode=component_mode, **kwargs)
+    assert isinstance(multiblock, pv.MultiBlock)
+    assert multiblock.n_blocks == expected_n_blocks
+    assert all(isinstance(block, pv.UnstructuredGrid) for block in multiblock)
+
+    # Convert to polydata to test volume
+    multiblock = multiblock.as_polydata_blocks()
+    assert expected_n_blocks == len(expected_volume)
+    assert all(
+        np.allclose(block.volume, volume) for block, volume in zip(multiblock, expected_volume)
+    )
+
+
+def test_extract_values_split_ranges_values(labeled_data):
+    _, _, labeled_data = labeled_data
+    extracted = labeled_data.extract_values(values=[0, 1], ranges=[[0, 0], [1, 1]], split=True)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == 4
+    extracted_value0 = extracted[0]
+    extracted_value1 = extracted[1]
+    extracted_range00 = extracted[2]
+    extracted_range11 = extracted[3]
+    assert extracted_value0 == extracted_range00
+    assert extracted_value1 == extracted_range11
+
+
+# Test cases with and/or without dict inputs
+# Include swapped [name, value] or [value, name] inputs
+values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
+values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
+values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
+values_component_dict = (
+    dict(values=dict(val0=[0], val1=[1]), component_mode='multi'),
+    [
+        'val0',
+        'val1',
+    ],
+)
+
+
+@pytest.mark.parametrize(
+    ('dict_inputs', 'block_names'),
+    [
+        values_nodict_ranges_dict,
+        values_dict_ranges_nodict,
+        values_dict_ranges_dict,
+        values_component_dict,
+    ],
+)
+def test_extract_values_dict_input(labeled_data, dict_inputs, block_names):
+    _, _, labeled_data = labeled_data
+    extracted = labeled_data.extract_values(**dict_inputs, split=True)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == 2
+    assert extracted.keys() == block_names
+
+
+BLACK = [0.0, 0.0, 0.0]
+WHITE = [1.0, 1.0, 1.0]
+RED = [1.0, 0.0, 0.0]
+GREEN = [0.0, 1.0, 0.0]
+BLUE = [0.0, 0.0, 1.0]
+COLORS_LIST = [BLACK, WHITE, RED, GREEN, BLUE]
+
+
+@pytest.fixture()
+def point_cloud_colors():
+    # Define point cloud where the points and rgb scalars are the same
+    array = COLORS_LIST
+    point_cloud = pv.PointSet(array)
+    point_cloud['colors'] = array
+    return point_cloud
+
+
+@pytest.fixture()
+def point_cloud_colors_duplicates(point_cloud_colors):
+    # Same fixture as point_cloud_colors but with double the points
+    copied = point_cloud_colors.copy()
+    copied.points += 0.5
+    return point_cloud_colors + copied
+
+
+class ComponentModeTestCase(NamedTuple):
+    values: Any
+    component_mode: Any
+    expected: Any
+    expected_invert: Any
+
+
+component_mode_test_cases = [
+    ComponentModeTestCase(
+        values=0,
+        component_mode=0,
+        expected=[BLACK, GREEN, BLUE],
+        expected_invert=[WHITE, RED],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode=1,
+        expected=[BLACK, RED, BLUE],
+        expected_invert=[WHITE, GREEN],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode=2,
+        expected=[BLACK, RED, GREEN],
+        expected_invert=[WHITE, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode='any',
+        expected=[BLACK, RED, GREEN, BLUE],
+        expected_invert=[WHITE],
+    ),
+    ComponentModeTestCase(
+        values=1,
+        component_mode='any',
+        expected=[WHITE, RED, GREEN, BLUE],
+        expected_invert=[BLACK],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode='all',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=1,
+        component_mode='all',
+        expected=[WHITE],
+        expected_invert=[BLACK, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=BLACK,
+        component_mode='multi',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=[WHITE, RED],
+        component_mode='multi',
+        expected=[WHITE, RED],
+        expected_invert=[BLACK, GREEN, BLUE],
+    ),
+]
+
+
+@pytest.mark.parametrize('values_as_ranges', [True, False])
+@pytest.mark.parametrize(('split', 'invert'), [(True, False), (False, True), (False, False)])
+@pytest.mark.parametrize(
+    ('values', 'component_mode', 'expected', 'expected_invert'),
+    component_mode_test_cases,
+)
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_extract_values_component_mode(
+    point_cloud_colors,
+    values,
+    component_mode,
+    expected,
+    expected_invert,
+    invert,
+    split,
+    values_as_ranges,
+):
+    values_kwarg = dict(values=values)
+    if values_as_ranges:
+        # Get additional test coverage by converting single value inputs into a range
+        if component_mode == 'multi':
+            pytest.skip("Cannot use ranges with 'multi' mode.")
+        values_kwarg = dict(ranges=[values - 0.5, values + 0.5])
+
+    extracted = point_cloud_colors.extract_values(
+        **values_kwarg,
+        component_mode=component_mode,
+        split=split,
+        invert=invert,
+    )
+    single_mesh = extracted.combine() if split else extracted
+    actual_points = single_mesh.points
+    actual_colors = single_mesh['colors']
+    assert np.array_equal(actual_points, expected_invert if invert else expected)
+    assert np.array_equal(actual_colors, expected_invert if invert else expected)
+
+
+@pytest.mark.parametrize(
+    ('dataset_filter', 'kwargs'),
+    [
+        (pv.DataSetFilters.split_values, {}),
+        (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
+    ],
+)
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_extract_values_component_values_split_unique(
+    point_cloud_colors_duplicates,
+    dataset_filter,
+    kwargs,
+):
+    extracted = dataset_filter(point_cloud_colors_duplicates, component_mode='multi', **kwargs)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == len(COLORS_LIST)
+    assert (
+        np.array_equal(block['colors'], [color, color])
+        for block, color in zip(extracted, COLORS_LIST)
+    )
+
+
+@pytest.mark.parametrize('pass_point_ids', [True, False])
+@pytest.mark.parametrize('pass_cell_ids', [True, False])
+def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
+    POINT_IDS = 'vtkOriginalPointIds'
+    CELL_IDS = 'vtkOriginalCellIds'
+    extracted = grid4x4.extract_values(ranges=grid4x4.get_data_range())
+    assert extracted.point_data.keys() == ['labels', POINT_IDS]
+    assert extracted.cell_data.keys() == ['labels', CELL_IDS]
+
+    extracted = grid4x4.extract_values(
+        ranges=grid4x4.get_data_range(),
+        pass_point_ids=pass_point_ids,
+        pass_cell_ids=pass_cell_ids,
+    )
+    if pass_cell_ids:
+        assert CELL_IDS in extracted.cell_data
+    if pass_point_ids:
+        assert POINT_IDS in extracted.point_data
+
+    extracted = grid4x4.extract_values(
+        ranges=grid4x4.get_data_range(preference='point'),
+        invert=True,
+        pass_point_ids=pass_point_ids,
+        pass_cell_ids=pass_cell_ids,
+    )
+    if pass_cell_ids:
+        assert extracted.cell_data.keys() == []
+    if pass_point_ids:
+        assert extracted.point_data.keys() == []
+
+
+def test_extract_values_empty():
+    assert pv.PolyData().extract_values()
+
+
+def test_extract_values_raises(grid4x4):
+    match = 'Values must be numeric.'
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values('abc')
+
+    match = 'Values must be one-dimensional. Got 2d values.'
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values([[2, 3]])
+
+    match = 'Ranges must be 2 dimensional. Got 3.'
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(ranges=[[[0, 1]]])
+
+    match = 'Ranges must be numeric.'
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values(ranges='abc')
+
+    match = 'Invalid range [1 0] specified. Lower value cannot be greater than upper value.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[1, 0])
+
+    match = 'No ranges or values were specified. At least one must be specified.'
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values()
+
+    match = "Invalid dict mapping. The dict's keys or values must contain strings."
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values({0: 1})
+
+    match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(0, scalars='invalid_scalars')
+
+    match = 'No point data or cell data found. Scalar data is required to use this filter.'
+    grid = grid4x4.copy()
+    grid.clear_data()
+    with pytest.raises(ValueError, match=match):
+        grid.extract_values([0])
+
+    match = "Invalid component index '1' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(component_mode=1)
+
+    match = "Invalid component index '-1' specified"
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(component_mode=-1)
+
+    match = "Invalid component 'foo'. Must be an integer, 'any', 'all', or 'multi'."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(component_mode='foo')
+
+    match = "Ranges cannot be extracted using component mode 'multi'. Expected None, got [0, 1]."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[0, 1], component_mode='multi')
+
+    match = "Component values cannot be more than 2 dimensions. Got 3."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(values=[[[0]]], component_mode='multi')
+
+    match = "Invalid component index '2' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(component_mode=2)
+
+    match = 'Num components in values array (2) must match num components in data array (1).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(values=[0, 1], component_mode='multi')
 
 
 def test_slice_along_line_composite(composite):
     # Now test composite data structures
-    a = [composite.bounds[0], composite.bounds[2], composite.bounds[4]]
-    b = [composite.bounds[1], composite.bounds[3], composite.bounds[5]]
+    a = [composite.bounds.x_min, composite.bounds.y_min, composite.bounds.z_min]
+    b = [composite.bounds.x_max, composite.bounds.y_max, composite.bounds.z_max]
     line = pv.Line(a, b, resolution=10)
     output = composite.slice_along_line(line, progress_bar=True)
     assert output.n_blocks == composite.n_blocks
@@ -2245,6 +2869,29 @@ def test_merge_general(uniform):
     # Pure PolyData inputs should yield poly data output
     merged = uniform.extract_surface() + con
     assert isinstance(merged, pv.PolyData)
+
+
+def test_merge_active_normals():
+    plane = pv.Plane()
+
+    # Check default normals
+    default_normal = np.array([0, 0, 1])
+    assert np.array_equal(plane["Normals"][0], default_normal)
+    assert np.array_equal(plane.active_normals[0], default_normal)
+    assert np.array_equal(plane.point_normals[0], default_normal)
+
+    # Customize the normals
+    plane["Normals"] *= -1
+    negative_normal = -default_normal
+    assert np.array_equal(plane["Normals"][0], negative_normal)
+    assert np.array_equal(plane.active_normals[0], negative_normal)
+    assert np.array_equal(plane.point_normals[0], negative_normal)
+
+    # Now test merge
+    merged = pv.merge([plane])
+    assert np.array_equal(merged["Normals"][0], negative_normal)
+    assert np.array_equal(merged.active_normals[0], negative_normal)
+    assert np.array_equal(merged.point_normals[0], negative_normal)
 
 
 def test_iadd_general(uniform, hexbeam, sphere):
@@ -2528,13 +3175,38 @@ def test_image_dilate_erode_cell_data_active():
         volume.image_dilate_erode()
 
 
-def test_image_threshold_output_type():
+def test_image_threshold_output_type(uniform):
     threshold = 10  # 'random' value
-    volume = examples.load_uniform()
-    volume_thresholded = volume.image_threshold(threshold)
+    volume_thresholded = uniform.image_threshold(threshold)
     assert isinstance(volume_thresholded, pv.ImageData)
-    volume_thresholded = volume.image_threshold(threshold, scalars='Spatial Point Data')
+    volume_thresholded = uniform.image_threshold(threshold, scalars='Spatial Point Data')
     assert isinstance(volume_thresholded, pv.ImageData)
+
+
+def test_image_threshold_raises(uniform):
+    match = 'Threshold must have one or two values, got 3.'
+    with pytest.raises(ValueError, match=match):
+        uniform.image_threshold([1, 2, 3])
+
+
+@pytest.mark.parametrize('value_dtype', [float, int])
+@pytest.mark.parametrize('array_dtype', [float, int, np.uint8])
+def test_image_threshold_dtype(value_dtype, array_dtype):
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    thresh_value = value_dtype(4)
+    assert type(thresh_value) is value_dtype
+
+    data_array = np.array(range(8), dtype=array_dtype)
+    image['Data'] = data_array
+
+    thresh = image.image_threshold(thresh_value)
+    assert thresh['Data'].dtype == np.dtype(array_dtype)
+
+    expected_array = [0, 0, 0, 0, 1, 1, 1, 1]
+    actual_array = thresh['Data']
+    assert np.array_equal(actual_array, expected_array)
+
+    assert image['Data'].dtype == thresh['Data'].dtype
 
 
 def test_image_threshold_wrong_threshold_length():
@@ -2987,20 +3659,20 @@ def test_extrude_rotate():
         progress_bar=True,
         capping=True,
     )
-    zmax = poly.bounds[5]
+    zmax = poly.bounds.z_max
     assert zmax == translation
-    xmax = poly.bounds[1]
-    assert xmax == line.bounds[1] + dradius
+    xmax = poly.bounds.x_max
+    assert xmax == line.bounds.x_max + dradius
 
     poly = line.extrude_rotate(angle=90.0, progress_bar=True, capping=True)
-    xmin = poly.bounds[0]
-    xmax = poly.bounds[1]
-    ymin = poly.bounds[2]
-    ymax = poly.bounds[3]
-    assert xmin == line.bounds[0]
-    assert xmax == line.bounds[1]
-    assert ymin == line.bounds[0]
-    assert ymax == line.bounds[1]
+    xmin = poly.bounds.x_min
+    xmax = poly.bounds.x_max
+    ymin = poly.bounds.y_min
+    ymax = poly.bounds.y_max
+    assert xmin == line.bounds.x_min
+    assert xmax == line.bounds.x_max
+    assert ymin == line.bounds.x_min
+    assert ymax == line.bounds.x_max
 
     rotation_axis = (0, 1, 0)
     if not pv.vtk_version_info >= (9, 1, 0):
@@ -3220,6 +3892,216 @@ def test_align():
     assert np.abs(dist).mean() < 1e-3
 
 
+def test_align_xyz():
+    mesh = examples.download_oblique_cone()
+    aligned = mesh.align_xyz()
+    assert np.allclose(aligned.center, (0, 0, 0))
+
+    aligned = mesh.align_xyz(centered=False)
+    assert np.allclose(aligned.center, mesh.center)
+
+
+def test_align_xyz_return_matrix():
+    mesh = examples.download_oblique_cone()
+    initial_bounds = mesh.bounds
+
+    aligned, matrix = mesh.align_xyz(return_matrix=True)
+    assert isinstance(matrix, np.ndarray)
+    assert matrix.shape == (4, 4)
+
+    inverse_matrix = pv.Transform(matrix).inverse_matrix
+    inverted_mesh = aligned.transform(inverse_matrix, inplace=False)
+    inverted_bounds = inverted_mesh.bounds
+
+    assert np.allclose(inverted_bounds, initial_bounds)
+
+
+@pytest.mark.parametrize(
+    ('as_composite', 'mesh_type'), [(True, pv.MultiBlock), (False, pv.PolyData)]
+)
+def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
+    box = sphere.bounding_box(as_composite=as_composite)
+    assert isinstance(box, mesh_type)
+    assert box.bounds == sphere.bounds
+
+
+def test_oriented_bounding_box():
+    rotation = pv.transformations.axis_angle_rotation((1, 2, 3), 30)
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb = box_mesh.oriented_bounding_box()
+    assert obb.bounds == box_mesh.bounds
+
+
+@pytest.mark.parametrize('oriented', [True, False])
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_bounding_box_return_meta(oriented, as_composite):
+    # Generate a random rotation matrix
+    vector = np.random.default_rng().random((3,))
+    angle = np.random.default_rng().random((1,)) * 360
+    rotation = pv.transformations.axis_angle_rotation(vector, angle)
+
+    # Transform a box manually and get its OBB
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb, point, axes = box_mesh.bounding_box(
+        oriented=oriented, return_meta=True, as_composite=as_composite
+    )
+    ATOL = 1e-6  # Needed for numerical error from calculating the principal axes
+    if oriented:
+        # Test axes are equal (up to a difference in sign)
+        expected_axes = pv.principal_axes(box_mesh.points)
+        identity = np.abs(expected_axes @ axes.T)
+        assert np.allclose(identity, np.eye(3), atol=ATOL)
+    else:
+        # Test identity always returned for non-oriented box
+        assert np.array_equal(axes, np.eye(3))
+        bnds = box_mesh.bounds
+        assert np.array_equal(point, (bnds.x_min, bnds.y_min, bnds.z_min))
+
+    # Test the returned point is one of the box's points
+    if as_composite:
+        assert any(point in face.points for face in obb)
+
+        # Also test that box's normals are aligned with the axes directions
+        assert np.allclose(axes[0], obb['+X'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[1], obb['+Y'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[2], obb['+Z'].cell_normals[0], atol=ATOL)
+    else:
+        assert point in obb.points
+
+
+DELTA = 0.1
+
+
+@pytest.fixture()
+def planar_mesh():
+    # Define planar data with largest variation in x, then y
+    # Use a delta to make data slightly asymmetric so the principal axes
+    # are not computed as the identity matrix (we want some negative axes for the tests)
+    points = np.array([[2 + DELTA, 1 + DELTA, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]])
+    axes = pv.principal_axes(points)
+    assert np.allclose(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], atol=DELTA)
+    return pv.PolyData(points)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('axis_0_direction', [1, 0, 0]),
+        ('axis_0_direction', [-1, 0, 0]),
+        ('axis_1_direction', [0, 1, 0]),
+        ('axis_1_direction', [0, -1, 0]),
+        ('axis_2_direction', [0, 0, 1]),
+        ('axis_2_direction', [0, 0, -1]),
+    ],
+)
+def test_align_xyz_single_axis_direction(planar_mesh, name, value):
+    _, matrix = planar_mesh.align_xyz(**{name: value}, return_matrix=True)
+    axes = matrix[:3, :3]
+
+    # Test that the axis has the right direction
+    axis = np.flatnonzero(value)
+    assert np.allclose(axes[axis], value, atol=DELTA)
+
+
+def test_align_xyz_no_axis_direction(planar_mesh):
+    # Test that axis-aligned principal axes with negative directions are "converted"
+    # into the identity matrix (i.e. the negative directions are flipped to be positive)
+    axes_in = pv.principal_axes(planar_mesh.points)
+    _, matrix = planar_mesh.align_xyz(return_matrix=True)
+    axes_out = matrix[:3, :3]
+
+    identity = np.eye(3)
+    assert not np.allclose(axes_in, identity, atol=DELTA)
+    assert np.allclose(axes_out, identity, atol=DELTA)
+
+
+def test_align_xyz_two_axis_directions(planar_mesh):
+    axis_0_direction = [-1, 0, 0]
+    axis_1_direction = [0, -1, 0]
+    _, matrix = planar_mesh.align_xyz(
+        axis_0_direction=axis_0_direction, axis_1_direction=axis_1_direction, return_matrix=True
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [axis_0_direction, axis_1_direction, [0, 0, 1]], atol=DELTA)
+
+    axis_1_direction = [0, -1, 0]
+    axis_2_direction = [0, 0, -1]
+    _, matrix = planar_mesh.align_xyz(
+        axis_1_direction=axis_1_direction, axis_2_direction=axis_2_direction, return_matrix=True
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [[1, 0, 0], axis_1_direction, axis_2_direction], atol=DELTA)
+
+
+def test_align_xyz_three_axis_directions(planar_mesh):
+    axis_2_direction = np.array((0.0, 0.0, -1.0))
+    _, matrix = planar_mesh.align_xyz(
+        axis_0_direction='x',
+        axis_1_direction='-y',
+        axis_2_direction=axis_2_direction,  # test has no effect
+        return_matrix=True,
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]], atol=DELTA)
+
+    match = 'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a left-handed transformation.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = planar_mesh.align_xyz(
+            axis_0_direction='x',
+            axis_1_direction='-y',
+            axis_2_direction=axis_2_direction * -1,
+            return_matrix=True,
+        )
+
+
+def test_align_xyz_swap_axes():
+    # create planar data with equal variance in x and z
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
+    _, matrix = pv.PolyData(points).align_xyz(return_matrix=True)
+    axes = matrix[:3, :3]
+    assert np.array_equal(axes, [[1, 0, 0], [0, 0, 1], [0, -1, 0]])  # XZY (instead of ZXY)
+
+    # create planar data with equal variance in x and y
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
+    _, matrix = pv.PolyData(points).align_xyz(return_matrix=True)
+    axes = matrix[:3, :3]
+    assert np.array_equal(axes, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ (instead of YXZ)
+
+
+@pytest.mark.parametrize('x', [(1, 0, 0), (-1, 0, 0)])
+@pytest.mark.parametrize('y', [(0, 1, 0), (0, -1, 0)])
+@pytest.mark.parametrize('z', [(0, 0, 1), (0, 0, -1)])
+@pytest.mark.parametrize('order', itertools.permutations([0, 1, 2]))
+@pytest.mark.parametrize(
+    ('test_case', 'values'),
+    [
+        ('swap_all', [1, 1, 1]),
+        ('swap_none', [3, 2, 1]),
+        ('swap_0_1', [2, 2, 1]),
+        ('swap_1_2', [2, 1, 1]),
+    ],
+)
+def test_swap_axes(x, y, z, order, test_case, values):
+    axes = np.array((x, y, z))[list(order)]
+    swapped = _swap_axes(axes, values)
+    if test_case == "swap_all":
+        # All axes have the same weight, expect swap to have x-y-z order
+        assert np.array_equal(np.abs(swapped), np.eye(3))
+    elif test_case == "swap_none":
+        # Expect no swapping, output is input
+        assert np.array_equal(axes, swapped)
+    elif test_case == "swap_0_1":
+        first_index = np.flatnonzero(swapped[0])[0]
+        second_index = np.flatnonzero(swapped[1])[0]
+        assert first_index < second_index
+    elif test_case == "swap_1_2":
+        first_index = np.flatnonzero(swapped[1])[0]
+        second_index = np.flatnonzero(swapped[2])[0]
+        assert first_index < second_index
+
+
 def test_subdivide_tetra(tetbeam):
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
@@ -3252,6 +4134,22 @@ def test_merge_points():
     assert (
         pdata.merge(pdata, main_has_priority=True, merge_points=True, tolerance=0.1).n_points == 2
     )
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_merge_points_filter(inplace):
+    # Set up
+    cells = [2, 0, 1]
+    celltypes = [pv.CellType.LINE]
+    points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
+    mesh = pv.UnstructuredGrid(cells, celltypes, points)
+    assert mesh.n_points == 2
+
+    # Do test
+    output = mesh.merge_points(inplace=inplace, tolerance=1.0)
+    assert output.n_points == 1
+    assert isinstance(mesh, pv.UnstructuredGrid)
+    assert (mesh is output) == inplace
 
 
 @pytest.fixture()

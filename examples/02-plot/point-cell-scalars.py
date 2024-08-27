@@ -10,18 +10,20 @@ a dataset.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 from pyvista import examples
 
-###############################################################################
+# %%
 # load the first 4 cells from the example UnstructuredGrid. Note how the number
 # of points is less than 32 since all the points are joined in the center.
 grid = examples.load_hexbeam().extract_cells(range(4))
 grid
 
 
-###############################################################################
+# %%
 # Plot Point Scalars
 # ~~~~~~~~~~~~~~~~~~
 # At this point it's possible to assign only point or cell scalars to this
@@ -31,7 +33,7 @@ grid.point_data['Point Data'] = range(grid.n_points)
 grid.plot(scalars='Point Data')
 
 
-###############################################################################
+# %%
 # Plot Cell Scalars
 # ~~~~~~~~~~~~~~~~~
 # Next, let's plot cell scalars. We're simply assigning based on the cell
@@ -40,7 +42,7 @@ grid.cell_data['Cell Data'] = range(grid.n_cells)
 grid.plot(scalars='Cell Data')
 
 
-###############################################################################
+# %%
 # Splitting the Cells
 # ~~~~~~~~~~~~~~~~~~~
 # If you wanted to assign data to each point of each cell and plot that, it's
@@ -56,7 +58,7 @@ split_cells = grid.separate_cells()
 split_cells
 
 
-###############################################################################
+# %%
 # Plot Point Cell Data
 # ~~~~~~~~~~~~~~~~~~~~
 # Now we can plot values for each point for each cell. This will still be
@@ -78,3 +80,5 @@ split_cells.point_data['Point Cell Data'] = np.hstack(
     ),
 )
 split_cells.plot(scalars='Point Cell Data')
+# %%
+# .. tags:: plot

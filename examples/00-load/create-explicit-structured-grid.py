@@ -9,6 +9,8 @@ Create an explicit structured grid from NumPy arrays using
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -40,3 +42,5 @@ dims = np.asarray((ni, nj, nk)) + 1
 grid = pv.ExplicitStructuredGrid(dims, corners)
 grid = grid.compute_connectivity()
 grid.plot(show_edges=True)
+# %%
+# .. tags:: load

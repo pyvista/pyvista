@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import UserDict
 import json
 
@@ -196,3 +198,15 @@ def test_user_dict_persists_with_pack_labels_filter():
     image.user_dict['name'] = 'image'
     image = image.pack_labels()
     assert image.user_dict['name'] == 'image'
+
+
+def test_user_dict_persists_with_points_to_cells(uniform):
+    uniform.user_dict['name'] = 'image'
+    uniform.cells_to_points()
+    assert uniform.user_dict['name'] == 'image'
+
+
+def test_user_dict_persists_with_cells_to_points(uniform):
+    uniform.user_dict['name'] = 'image'
+    uniform.points_to_cells()
+    assert uniform.user_dict['name'] == 'image'

@@ -1,7 +1,13 @@
 """Contains a variety of cells to serve as examples."""
 
+from __future__ import annotations
+
+import numpy as np
+
 import pyvista
-from pyvista import CellType, UnstructuredGrid
+from pyvista import CellType
+from pyvista import UnstructuredGrid
+from pyvista.core import _vtk_core as _vtk
 
 
 def plot_cell(grid, cpos=None, **kwargs):
@@ -30,9 +36,13 @@ def plot_cell(grid, cpos=None, **kwargs):
     pl = pyvista.Plotter()
     pl.add_mesh(grid, opacity=0.5)
     edges = grid.extract_all_edges()
-    if edges.n_cells:
-        pl.add_mesh(grid.extract_all_edges(), line_width=5, color='k', render_lines_as_tubes=True)
-    pl.add_points(grid, render_points_as_spheres=True, point_size=30, color='r')
+    if edges.n_cells or next(grid.cell).type in [
+        CellType.LINE,
+        CellType.POLY_LINE,
+        CellType.QUADRATIC_EDGE,
+    ]:
+        pl.add_mesh(grid, style='wireframe', line_width=10, color='k', render_lines_as_tubes=True)
+    pl.add_points(grid, render_points_as_spheres=True, point_size=80, color='r')
     pl.add_point_labels(
         grid.points,
         range(grid.n_points),
@@ -40,7 +50,7 @@ def plot_cell(grid, cpos=None, **kwargs):
         fill_shape=False,
         margin=0,
         shape_opacity=0.0,
-        font_size=20,
+        font_size=50,
     )
     pl.enable_anti_aliasing()
     if cpos is None:
@@ -858,3 +868,277 @@ def Voxel() -> UnstructuredGrid:
     ]
     cells = [len(points), *list(range(len(points)))]
     return UnstructuredGrid(cells, [CellType.VOXEL], points)
+
+
+def QuadraticEdge() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single quadratic edge.
+
+    This cell corresponds to the :attr:`pyvista.CellType.QUADRATIC_EDGE` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single quadratic edge.
+
+    Examples
+    --------
+    Create and plot a single quadratic edge.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.QuadraticEdge()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([3, 0, 1, 2])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [0.5, 0. , 0. ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_EDGE
+    array([21], dtype=uint8)
+    """
+    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticEdge())
+
+
+def QuadraticTriangle() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single quadratic triangle.
+
+    This cell corresponds to the :attr:`pyvista.CellType.QUADRATIC_TRIANGLE` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single quadratic triangle.
+
+    Examples
+    --------
+    Create and plot a single quadratic triangle.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.QuadraticTriangle()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([6, 0, 1, 2, 3, 4, 5])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0.5, 0. , 0. ],
+                     [0.5, 0.5, 0. ],
+                     [0. , 0.5, 0. ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_TRIANGLE
+    array([22], dtype=uint8)
+    """
+    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticTriangle())
+
+
+def QuadraticQuadrilateral() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single quadratic quadrilateral.
+
+    This cell corresponds to the :attr:`pyvista.CellType.QUADRATIC_QUAD` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single quadratic quadrilateral.
+
+    Examples
+    --------
+    Create and plot a single quadratic quadrilateral.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.QuadraticQuadrilateral()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [1. , 1. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0.5, 0. , 0. ],
+                     [1. , 0.5, 0. ],
+                     [0.5, 1. , 0. ],
+                     [0. , 0.5, 0. ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_QUAD
+    array([23], dtype=uint8)
+    """
+    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticQuad())
+
+
+def QuadraticTetrahedron() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single quadratic tetrahedron.
+
+    This cell corresponds to the :attr:`pyvista.CellType.QUADRATIC_TETRA` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single quadratic tetrahedron.
+
+    Examples
+    --------
+    Create and plot a single quadratic tetrahedron.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.QuadraticTetrahedron()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([10,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0. , 0. , 1. ],
+                     [0.5, 0. , 0. ],
+                     [0.5, 0.5, 0. ],
+                     [0. , 0.5, 0. ],
+                     [0. , 0. , 0.5],
+                     [0.5, 0. , 0.5],
+                     [0. , 0.5, 0.5]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_TETRA
+    array([24], dtype=uint8)
+    """
+    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticTetra())
+
+
+def QuadraticHexahedron() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single quadratic hexahedron.
+
+    This cell corresponds to the :attr:`pyvista.CellType.QUADRATIC_HEXAHEDRON` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single quadratic hexahedron.
+
+    Examples
+    --------
+    Create and plot a single quadratic hexahedron.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.QuadraticHexahedron()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([20,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
+           16, 17, 18, 19])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [1. , 1. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0. , 0. , 1. ],
+                     [1. , 0. , 1. ],
+                     [1. , 1. , 1. ],
+                     [0. , 1. , 1. ],
+                     [0.5, 0. , 0. ],
+                     [1. , 0.5, 0. ],
+                     [0.5, 1. , 0. ],
+                     [0. , 0.5, 0. ],
+                     [0.5, 0. , 1. ],
+                     [1. , 0.5, 1. ],
+                     [0.5, 1. , 1. ],
+                     [0. , 0.5, 1. ],
+                     [0. , 0. , 0.5],
+                     [1. , 0. , 0.5],
+                     [1. , 1. , 0.5],
+                     [0. , 1. , 0.5]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_HEXAHEDRON
+    array([25], dtype=uint8)
+    """
+    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticHexahedron())
+
+
+def QuadraticWedge() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single quadratic wedge.
+
+    This cell corresponds to the :attr:`pyvista.CellType.QUADRATIC_WEDGE` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single quadratic wedge.
+
+    Examples
+    --------
+    Create and plot a single quadratic wedge.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.QuadraticWedge()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([15,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0. , 0. , 1. ],
+                     [1. , 0. , 1. ],
+                     [0. , 1. , 1. ],
+                     [0.5, 0. , 0. ],
+                     [0.5, 0.5, 0. ],
+                     [0. , 0.5, 0. ],
+                     [0.5, 0. , 1. ],
+                     [0.5, 0.5, 1. ],
+                     [0. , 0.5, 1. ],
+                     [0. , 0. , 0.5],
+                     [1. , 0. , 0.5],
+                     [0. , 1. , 0.5]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_WEDGE
+    array([26], dtype=uint8)
+    """
+    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticWedge())
+
+
+def _make_isoparametric_unstructured_grid(vtk_cell: _vtk.vtkCell):
+    cell = pyvista.Cell(vtk_cell)
+
+    # Create points
+    pcoords = cell.GetParametricCoords()
+    points = np.zeros((cell.n_points, 3))
+    for i in range(len(points)):
+        points[i] = (pcoords[3 * i], pcoords[3 * i + 1], pcoords[3 * i + 2])
+
+    cells = [len(points), *list(range(len(points)))]
+    return UnstructuredGrid(cells, [cell.type], points)

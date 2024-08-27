@@ -61,6 +61,7 @@ Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
 
    getting-started/index
    user-guide/index
+   tags/tagsindex
    examples/index
    api/index
    extras/index
@@ -127,7 +128,8 @@ the points directly.
     import numpy as np
     import pyvista
 
-    point_cloud = np.random.random((100, 3))
+    rng = np.random.default_rng(seed=0)
+    point_cloud = rng.random((100, 3))
     pdata = pyvista.PolyData(point_cloud)
     pdata['orig_sphere'] = np.arange(100)
 

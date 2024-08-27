@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
 from weakref import proxy
 import xml.dom.minidom as md
 from xml.etree import ElementTree
@@ -85,11 +84,7 @@ class Camera(_vtk.vtkCamera):
         if trans_count == 1:
             # either but not both are None
             return False
-        if trans_count == 2:
-            if not np.array_equal(this_trans, that_trans):
-                return False
-
-        return True
+        return not (trans_count == 2 and not np.array_equal(this_trans, that_trans))
 
     def __del__(self):
         """Delete the camera."""
@@ -106,7 +101,7 @@ class Camera(_vtk.vtkCamera):
         self._is_set = bool(value)
 
     @classmethod
-    def from_paraview_pvcc(cls, filename: Union[str, Path]) -> Camera:
+    def from_paraview_pvcc(cls, filename: str | Path) -> Camera:
         """Load a Paraview camera file (.pvcc extension).
 
         Returns a pyvista.Camera object for which attributes has been read
@@ -168,7 +163,7 @@ class Camera(_vtk.vtkCamera):
         camera.is_set = True
         return camera
 
-    def to_paraview_pvcc(self, filename: Union[str, Path]):
+    def to_paraview_pvcc(self, filename: str | Path):
         """Write the camera parameters to a Paraview camera file (.pvcc extension).
 
         Parameters
@@ -637,8 +632,7 @@ class Camera(_vtk.vtkCamera):
         frustum_source.SetPlanes(planes)
         frustum_source.Update()
 
-        frustum = pyvista.wrap(frustum_source.GetOutput())
-        return frustum
+        return pyvista.wrap(frustum_source.GetOutput())
 
     @property
     def roll(self):  # numpydoc ignore=RT01

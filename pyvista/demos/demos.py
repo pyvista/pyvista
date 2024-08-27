@@ -1,5 +1,7 @@
 """Demos to show off the functionality of PyVista."""
 
+from __future__ import annotations
+
 import time
 
 import numpy as np
@@ -34,11 +36,13 @@ def glyphs(grid_sz=3):
     >>> mesh.plot()
 
     """
+    # Seed rng for reproducible plots
+    rng = np.random.default_rng(seed=0)
+
     n = 10
     values = np.arange(n)  # values for scalars to look up glyphs by
 
     # taken from:
-    rng = np.random.default_rng()
     params = rng.uniform(0.5, 2, size=(n, 2))  # (n1, n2) parameters for the toroids
 
     geoms = [pyvista.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
@@ -466,12 +470,11 @@ def plot_datasets(dataset_type=None):
         'RectilinearGrid',
         'StructuredGrid',
     ]
-    if dataset_type is not None:
-        if dataset_type not in allowable_types:
-            raise ValueError(
-                f'Invalid dataset_type {dataset_type}.  Must be one '
-                f'of the following: {allowable_types}',
-            )
+    if dataset_type is not None and dataset_type not in allowable_types:
+        raise ValueError(
+            f'Invalid dataset_type {dataset_type}.  Must be one '
+            f'of the following: {allowable_types}',
+        )
 
     ###########################################################################
     # uniform grid

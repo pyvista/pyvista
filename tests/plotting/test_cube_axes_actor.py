@@ -1,5 +1,7 @@
 """Test the CubeAxesActor wrapping."""
 
+from __future__ import annotations
+
 import numpy as np
 import pytest
 
@@ -44,7 +46,7 @@ def test_labels(cube_axes_actor):
     cube_axes_actor.y_label_format = ''
     assert len(cube_axes_actor.y_labels) == 5
     values = np.array(cube_axes_actor.y_labels, float)
-    expected = np.linspace(cube_axes_actor.bounds[2], cube_axes_actor.bounds[3], 5)
+    expected = np.linspace(cube_axes_actor.bounds.y_min, cube_axes_actor.bounds.y_max, 5)
     assert np.allclose(values, expected)
 
     # standard format

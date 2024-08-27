@@ -56,6 +56,8 @@ API Reference
    examples.examples
    examples.downloads
    examples.planets
+   examples.vrml
+   examples.download_3ds
    demos.demos
 
 Usage Considerations
@@ -142,6 +144,7 @@ cell types.
    Triangle
    TriangleStrip
    Polygon
+   Pixel
    Quadrilateral
    Tetrahedron
    Voxel
@@ -150,3 +153,9 @@ cell types.
    Pyramid
    PentagonalPrism
    HexagonalPrism
+   QuadraticEdge
+   QuadraticTriangle
+   QuadraticQuadrilateral
+   QuadraticTetrahedron
+   QuadraticHexahedron
+   QuadraticWedge

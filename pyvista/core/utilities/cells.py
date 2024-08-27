@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections import deque
-from itertools import count, islice
-from typing import TYPE_CHECKING, Tuple, Union
+from itertools import count
+from itertools import islice
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -12,7 +13,8 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import MatrixLike, NumpyArray
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
 
 
 def ncells_from_cells(cells: NumpyArray[int]) -> int:
@@ -43,7 +45,7 @@ def numpy_to_idarr(
     ind: MatrixLike[int],
     deep: bool = False,
     return_ind: bool = False,
-) -> Union[Tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
+) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
     """Safely convert a numpy array to a vtkIdTypeArray.
 
     Parameters

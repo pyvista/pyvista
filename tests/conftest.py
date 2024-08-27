@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import functools
 from importlib import metadata
 import re
 
@@ -9,6 +12,51 @@ import pyvista
 from pyvista import examples
 
 pyvista.OFF_SCREEN = True
+
+
+def flaky_test(
+    test_function=None, *, times: int = 3, exceptions: tuple[Exception, ...] = (AssertionError,)
+):
+    """Decorator for re-trying flaky tests.
+
+    Parameters
+    ----------
+    test_function : optional
+        Flaky test function. This parameter exists to allow using `@flaky_test`
+        instead of `@flaky_test(). It should not be used when applying the decorator
+        and can safely be ignored.
+
+    times : int, default: 3
+        Number of times to try to test.
+
+    exceptions : tuple[Exception, ...], default: (AssertionError,)
+        Exceptions which will cause the test to be re-tried. By default, tests are only
+        retried for assertion errors. Customize this to retry for other exceptions
+        depending on the cause(s) of the flaky test, e.g. `(ValueError, TypeError)`.
+    """
+    if test_function is None:
+        # Allow decorator is called without parentheses
+        return lambda func: flaky_test(func, times=times, exceptions=exceptions)
+
+    @functools.wraps(test_function)
+    def wrapper(*args, **kwargs):
+        for i in range(times):
+            try:
+                test_function(*args, **kwargs)
+            except exceptions as e:
+                func_name = test_function.__name__
+                module_name = test_function.__module__
+                error_name = e.__class__.__name__
+                msg = f"FLAKY TEST FAILED (Attempt {i + 1} of {times}) - {module_name}::{func_name} - {error_name}"
+                if i == times - 1:
+                    print(msg)
+                    raise  # Re-raise the last failure if all retries fail
+                else:
+                    print(msg + ', retrying...')
+            else:
+                return  # Exit if the test passes
+
+    return wrapper
 
 
 @pytest.fixture()

@@ -4,18 +4,19 @@ from __future__ import annotations
 
 from itertools import cycle
 import sys
-from typing import Optional
 import weakref
 
 import numpy as np
 
 import pyvista
 from pyvista import vtk_version_info
-from pyvista.core.utilities.arrays import convert_array, convert_string_array
+from pyvista.core.utilities.arrays import convert_array
+from pyvista.core.utilities.arrays import convert_string_array
 from pyvista.core.utilities.misc import _check_range
 
 from . import _vtk
-from .colors import Color, get_cycler
+from .colors import Color
+from .colors import get_cycler
 from .mapper import _BaseMapper
 
 
@@ -136,7 +137,7 @@ class BlockAttributes:
         self._attr.SetBlockColor(self._block, Color(new_color).float_rgb)
 
     @property
-    def visible(self) -> Optional[bool]:  # numpydoc ignore=RT01
+    def visible(self) -> bool | None:  # numpydoc ignore=RT01
         """Get or set the visibility of a block.
 
         Examples
@@ -169,7 +170,7 @@ class BlockAttributes:
         self._attr.SetBlockVisibility(self._block, new_visible)
 
     @property
-    def opacity(self) -> Optional[float]:  # numpydoc ignore=RT01
+    def opacity(self) -> float | None:  # numpydoc ignore=RT01
         """Get or set the opacity of a block.
 
         If opacity has not been set this will be ``None``.
@@ -211,7 +212,7 @@ class BlockAttributes:
         self._attr.SetBlockOpacity(self._block, new_opacity)
 
     @property
-    def pickable(self) -> Optional[bool]:  # numpydoc ignore=RT01
+    def pickable(self) -> bool | None:  # numpydoc ignore=RT01
         """Get or set the pickability of a block.
 
         Examples
@@ -487,11 +488,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
                 block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
-        if block is None:
-            if index > len(self) - 1:
-                raise KeyError(
-                    f'index {index} is out of bounds. There are only {len(self)} blocks.',
-                ) from None
+        if block is None and index > len(self) - 1:
+            raise KeyError(
+                f'index {index} is out of bounds. There are only {len(self)} blocks.',
+            ) from None
         return block
 
     def __getitem__(self, index):
@@ -519,12 +519,12 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
 
 class CompositePolyDataMapper(
+    _BaseMapper,
     (
         _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
         if vtk_version_info >= (9, 3)
         else _vtk.vtkCompositePolyDataMapper2
     ),
-    _BaseMapper,
 ):
     """Composite PolyData mapper.
 
@@ -825,7 +825,7 @@ class CompositePolyDataMapper(
 
         self.scalar_visibility = True
         if rgb:
-            self.scalar_mode = 'direct'
+            self.color_mode = 'direct'
             return scalar_bar_args
         else:
             self.scalar_map_mode = field.name.lower()
@@ -836,9 +836,8 @@ class CompositePolyDataMapper(
             clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
         self.scalar_range = clim
 
-        if log_scale:
-            if clim[0] <= 0:
-                clim = [sys.float_info.min, clim[1]]
+        if log_scale and clim[0] <= 0:
+            clim = [sys.float_info.min, clim[1]]
 
         if isinstance(cmap, pyvista.LookupTable):
             self.lookup_table = cmap

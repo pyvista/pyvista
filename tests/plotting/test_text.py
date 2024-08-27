@@ -2,6 +2,8 @@
 Tests for text objects
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
@@ -44,6 +46,63 @@ def test_text_position(text):
     position = np.random.default_rng().random(2)
     text.position = position
     assert np.all(text.position == position)
+
+
+def test_label():
+    label = pv.Label('text', (1, 2, 3), size=42, prop=pv.Property())
+
+    assert label.input == 'text'
+    label.input = 'new'
+    assert label.input == 'new'
+
+    assert label.position == (1, 2, 3)
+    label.position = (4, 5, 6)
+    assert label.position == (4, 5, 6)
+
+    assert label.size == 42
+    label.size = 99
+    assert label.size == 99
+
+
+def test_label_prop3d():
+    position = (1.0, 2.0, 3.0)
+    label = pv.Label(position=position)
+    bounds = (1.0, 1.0, 2.0, 2.0, 3.0, 3.0)
+    assert label.bounds == bounds
+    assert label.center == position
+    assert label.length == 0.0
+
+    # Test correct bounds with more complex transformations
+    # Add offset along x-axis
+    offset = 100
+    label.relative_position = (offset, 0, 0)
+    # Rotate about z-axis
+    label.orientation = (0, 0, 90)
+    # Expect offset to be applied along y-axis (due to the rotation)
+    bounds = (
+        position[0],
+        position[0],
+        position[1] + offset,
+        position[1] + offset,
+        position[2],
+        position[2],
+    )
+    assert np.allclose(label.bounds, bounds)
+
+
+def test_label_relative_position():
+    label = pv.Label()
+    position = (1, 2, 3)
+    label.position = position
+    assert label.position == position
+    assert label._prop3d.position == position
+    assert label._label_position == position
+
+    relative_position = np.array(position) * -1
+    label.relative_position = relative_position
+    assert label.position == position
+    assert label._prop3d.position == position
+    assert label._label_position == tuple((position + relative_position).tolist())
 
 
 @pytest.fixture()
