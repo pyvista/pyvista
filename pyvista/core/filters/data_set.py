@@ -444,7 +444,7 @@ class DataSetFilters:
 
     def clip(
         self,
-        normal='x',
+        normal=None,
         origin=None,
         invert=True,
         value=0.0,
@@ -452,6 +452,7 @@ class DataSetFilters:
         return_clipped=False,
         progress_bar=False,
         crinkle=False,
+        plane=None,
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
 
@@ -490,6 +491,14 @@ class DataSetFilters:
             attribute that tracks the original cell IDs of the original
             dataset.
 
+        plane : PolyData, optional
+            Plane mesh to use for the projection. Use this as an alternative to
+            setting ``origin`` and/or ``normal``. The plane's normal vectors are used
+            for the ``normal`` parameter and the mean of the plane's points is used for
+            the ``origin`` parameter.
+
+            .. versionadded:: 0.45
+
         Returns
         -------
         pyvista.PolyData or tuple[pyvista.PolyData]
@@ -518,6 +527,10 @@ class DataSetFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
+        if plane is not None:
+            origin, normal = _validate_origin_and_normal_from_plane(origin, normal, plane)
+        else:
+            normal = 'x' if normal is None else normal
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
         # find center of data if origin not specified
@@ -992,11 +1005,12 @@ class DataSetFilters:
 
     def slice(
         self,
-        normal='x',
+        normal=None,
         origin=None,
         generate_triangles=False,
         contour=False,
         progress_bar=False,
+        plane=None,
     ):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
 
@@ -1024,6 +1038,14 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
+        plane : PolyData, optional
+            Plane mesh to use for the projection. Use this as an alternative to
+            setting ``origin`` and/or ``normal``. The plane's normal vectors are used
+            for the ``normal`` parameter and the mean of the plane's points is used for
+            the ``origin`` parameter.
+
+            .. versionadded:: 0.45
+
         Returns
         -------
         pyvista.PolyData
@@ -1044,11 +1066,15 @@ class DataSetFilters:
         See :ref:`slice_example` for more examples using this filter.
 
         """
-        if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
-        # find center of data if origin not specified
-        if origin is None:
-            origin = self.center
+        if plane is not None:
+            origin, normal = _validate_origin_and_normal_from_plane(origin, normal, plane)
+        else:
+            normal = 'x' if normal is None else normal
+            if isinstance(normal, str):
+                normal = NORMALS[normal.lower()]
+            # find center of data if origin not specified
+            if origin is None:
+                origin = self.center
         # create the plane for clipping
         plane = generate_plane(normal, origin)
         return DataSetFilters.slice_implicit(
@@ -8170,3 +8196,21 @@ def _swap_axes(vectors, values):
         elif np.isclose(values[1], values[2]):
             _swap(1, 2)
     return vectors
+
+
+def _validate_origin_and_normal_from_plane(origin, normal, plane):
+    if normal is not None or origin is not None:
+        raise TypeError(
+            "The `normal` and `origin` parameters cannot be set when `plane` is specified."
+        )
+    _validation.check_instance(plane, pyvista.PolyData, name='plane')
+    # Check the plane is planar
+    aligned_plane = plane.align_xyz()
+    thickness = aligned_plane.bounds.z_max - aligned_plane.bounds.z_min
+    if not np.allclose(thickness, 0.0, atol=1e-6):
+        raise ValueError(
+            "The plane mesh must be planar. Got a non-planar mesh with 3D shape instead."
+        )
+    origin = plane.points.mean(axis=0)
+    normal = plane.point_normals.mean(axis=0)
+    return origin, normal

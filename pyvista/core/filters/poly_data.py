@@ -16,6 +16,7 @@ from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
+from pyvista.core.filters.data_set import _validate_origin_and_normal_from_plane
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
@@ -1737,11 +1738,12 @@ class PolyDataFilters(DataSetFilters):
 
     def clip_closed_surface(
         self,
-        normal='x',
+        normal=None,
         origin=None,
         tolerance=1e-06,
         inplace=False,
         progress_bar=False,
+        plane=None,
     ):
         """Clip a closed polydata surface with a plane.
 
@@ -1760,7 +1762,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        normal : str, list, optional
+        normal : str, list, default: 'x'
             Plane normal to clip with.  Plane is centered at
             ``origin``.  Normal can be either a 3 member list
             (e.g. ``[0, 0, 1]``) or one of the following strings:
@@ -1781,6 +1783,14 @@ class PolyDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        plane : PolyData, optional
+            Plane mesh to use for the projection. Use this as an alternative to
+            setting ``origin`` and/or ``normal``. The plane's normal vectors are used
+            for the ``normal`` parameter and the mean of the plane's points is used for
+            the ``origin`` parameter.
+
+            .. versionadded:: 0.45
 
         Returns
         -------
@@ -1810,11 +1820,15 @@ class PolyDataFilters(DataSetFilters):
         # verify it is manifold
         if self.n_open_edges > 0:
             raise ValueError("This surface appears to be non-manifold.")
-        if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
-        # find center of data if origin not specified
-        if origin is None:
-            origin = self.center
+        if plane is not None:
+            origin, normal = _validate_origin_and_normal_from_plane(origin, normal, plane)
+        else:
+            normal = 'x' if normal is None else normal
+            if isinstance(normal, str):
+                normal = NORMALS[normal.lower()]
+            # find center of data if origin not specified
+            if origin is None:
+                origin = self.center
 
         # create the plane for clipping
         plane = generate_plane(normal, origin)
@@ -2769,7 +2783,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Computing the Arc Length')
         return _get_output(alg)
 
-    def project_points_to_plane(self, origin=None, normal=(0.0, 0.0, 1.0), inplace=False):
+    def project_points_to_plane(self, origin=None, normal=None, inplace=False, plane=None):
         """Project points of this mesh to a plane.
 
         Parameters
@@ -2786,6 +2800,14 @@ class PolyDataFilters(DataSetFilters):
             Whether to overwrite the original mesh with the projected
             points.
 
+        plane : PolyData, optional
+            Plane mesh to use for the projection. Use this as an alternative to
+            setting ``origin`` and/or ``normal``. The plane's normal vectors are used
+            for the ``normal`` parameter and the mean of the plane's points is used for
+            the ``origin`` parameter.
+
+            .. versionadded:: 0.45
+
         Returns
         -------
         pyvista.PolyData
@@ -2801,10 +2823,15 @@ class PolyDataFilters(DataSetFilters):
         >>> projected.plot(show_edges=True, line_width=3)
 
         """
-        if not isinstance(normal, (np.ndarray, Sequence)) or len(normal) != 3:
-            raise TypeError('Normal must be a length three vector')
-        if origin is None:
-            origin = np.array(self.center) - np.array(normal) * self.length / 2.0
+        if plane is not None:
+            origin, normal = _validate_origin_and_normal_from_plane(origin, normal, plane)
+        else:
+            normal = (0.0, 0.0, 1.0) if normal is None else normal
+            if not isinstance(normal, (np.ndarray, Sequence)) or len(normal) != 3:
+                raise TypeError('Normal must be a length three vector')
+            if origin is None:
+                origin = np.array(self.center) - np.array(normal) * self.length / 2.0
+
         # choose what mesh to use
         mesh = self.copy() if not inplace else self
         # Make plane

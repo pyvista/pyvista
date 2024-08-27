@@ -983,6 +983,15 @@ def test_project_points_to_plane():
     assert np.allclose(poly.points, projected.points)
 
 
+def test_project_points_to_plane_with_plane(ant):
+    origin = (1, 2, 3)
+    normal = (4, 5, 6)
+    plane = pv.Plane(center=origin, direction=normal)
+    output_no_plane = ant.project_points_to_plane(origin=origin, normal=normal)
+    output_with_plane = ant.project_points_to_plane(plane=plane)
+    assert np.allclose(output_no_plane.bounds, output_with_plane.bounds)
+
+
 def test_tube(spline):
     # Simple
     line = pv.Line()

@@ -110,6 +110,15 @@ def test_clip_filter(datasets):
     assert set_a.union(set_b) == set(range(mesh.n_cells))
 
 
+def test_clip_filter_plane(ant):
+    origin = (1, 2, 3)
+    normal = (4, 5, 6)
+    plane = pv.Plane(center=origin, direction=normal)
+    output_no_plane = ant.clip(origin=origin, normal=normal)
+    output_with_plane = ant.clip(plane=plane)
+    assert np.allclose(output_no_plane.bounds, output_with_plane.bounds)
+
+
 @skip_mac
 @pytest.mark.parametrize('both', [False, True])
 @pytest.mark.parametrize('invert', [False, True])
@@ -256,6 +265,15 @@ def test_clip_closed_surface():
         _ = open_surface.clip_closed_surface()
 
 
+def test_clip_closed_surface_plane(ant):
+    origin = (1, 2, 3)
+    normal = (4, 5, 6)
+    plane = pv.Plane(center=origin, direction=normal)
+    output_no_plane = ant.clip_closed_surface(origin=origin, normal=normal)
+    output_with_plane = ant.clip_closed_surface(plane=plane)
+    assert np.allclose(output_no_plane.bounds, output_with_plane.bounds)
+
+
 def test_implicit_distance():
     surface = pv.Cone(
         direction=(0, 0, -1),
@@ -283,6 +301,24 @@ def test_slice_filter(datasets):
     assert isinstance(slc, pv.PolyData)
     result = dataset.slice(origin=(10, 15, 15), progress_bar=True)
     assert result.n_points < 1
+
+
+def test_slice_filter_plane(ant):
+    origin = (1, 2, 3)
+    normal = (4, 5, 6)
+    plane = pv.Plane(center=origin, direction=normal)
+    output_no_plane = ant.slice(origin=origin, normal=normal)
+    output_with_plane = ant.slice(plane=plane)
+    assert np.allclose(output_no_plane.bounds, output_with_plane.bounds)
+
+    match = 'The `normal` and `origin` parameters cannot be set when `plane` is specified.'
+    with pytest.raises(TypeError, match=match):
+        ant.slice(origin=origin, plane=plane)
+    with pytest.raises(TypeError, match=match):
+        ant.slice(normal=normal, plane=plane)
+    match = 'The plane mesh must be planar. Got a non-planar mesh with 3D shape instead.'
+    with pytest.raises(ValueError, match=match):
+        ant.slice(plane=ant)
 
 
 def test_slice_filter_composite(composite):
