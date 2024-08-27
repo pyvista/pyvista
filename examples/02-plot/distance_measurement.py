@@ -26,3 +26,5 @@ def callback(a, b, distance):
 
 pl.add_measurement_widget(callback)
 pl.show()
+# %%
+# .. tags:: plot

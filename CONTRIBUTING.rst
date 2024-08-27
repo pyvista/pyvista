@@ -875,6 +875,20 @@ is successful.
    `Notes Regarding Image Regression Testing`_ for testing methods which should
    be considered first.
 
+Controlling Cache for CI Documentation Build
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To reduce build times of the documentation for PRs, cached sphinx gallery, example data, and sphinx build directories
+are used in the CI on GitHub.  In some cases, the caching action can cause problems for a specific
+PR.  To invalidate a cache for a specific PR, one of the following labels can be applied to the PR.
+
+- ``no-example-data-cache``
+- ``no-gallery-cache``
+- ``no-sphinx-build-cache``
+
+The PR either needs a new commit, e.g. updating the branch from ``main``, or to be closed/re-opened to
+rerun the CI with the labels applied.
+
 
 Contributing to the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1099,17 +1113,6 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
-Preview the Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Once you have make a Pull Request. You can comment
-``@pyvista-bot preview`` on a pull request to preview documentation.
-Since this command is only available for
-`@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
-new contributors kindly request them to comment command.
-This is essential to safeguard the deployment site against
-potentially harmful commits.
-
 Branching Model
 ~~~~~~~~~~~~~~~
 
@@ -1197,7 +1200,7 @@ created the following will occur:
     .. code:: bash
 
        git push origin HEAD
-       git push origin --tags
+       git push origin v$(python -c "import pyvista as pv; print(pv.__version__)")
 
 #.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare

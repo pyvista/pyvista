@@ -35,6 +35,7 @@ from pyvista.plotting.colors import matplotlib_default_colors
 from pyvista.plotting.errors import InvalidCameraError
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.plotter import SUPPORTED_FORMATS
+import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
@@ -173,6 +174,11 @@ def test_export_gltf(tmpdir, sphere, airplane, hexbeam, verify_image_cache):
 
 def test_import_vrml():
     filename = str(Path(THIS_PATH) / '..' / 'example_files' / 'Box.wrl')
+
+    match = 'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
+    with pytest.raises(ValueError, match=match):
+        pv.read(filename)
+
     pl = pv.Plotter()
 
     with pytest.raises(FileNotFoundError):
@@ -2176,7 +2182,8 @@ def test_user_matrix_volume(uniform):
     volume = p.add_volume(uniform, user_matrix=shear)
     np.testing.assert_almost_equal(volume.user_matrix, shear)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    match = 'Shape must be one of [(3, 3), (4, 4)].'
+    with pytest.raises(ValueError, match=re.escape(match)):
         p.add_volume(uniform, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):
@@ -2191,7 +2198,8 @@ def test_user_matrix_mesh(sphere):
     actor = p.add_mesh(sphere, user_matrix=shear)
     np.testing.assert_almost_equal(actor.user_matrix, shear)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    match = 'Shape must be one of [(3, 3), (4, 4)].'
+    with pytest.raises(ValueError, match=re.escape(match)):
         p.add_mesh(sphere, user_matrix=np.eye(5))
 
     with pytest.raises(TypeError):
@@ -2451,15 +2459,17 @@ def test_log_scale():
     plotter.show()
 
 
-def test_set_focus():
+@pytest.mark.parametrize('point', [(-0.5, -0.5, 0), np.array([[-0.5], [-0.5], [0]])])
+def test_set_focus(point):
     plane = pv.Plane()
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=True)
-    p.set_focus((-0.5, -0.5, 0))  # focus on corner of the plane
+    p.set_focus(point)  # focus on corner of the plane
     p.show()
 
 
-def test_set_viewup(verify_image_cache):
+@pytest.mark.parametrize('vector', [(1.0, 1.0, 1.0), np.array([[-0.5], [-0.5], [0]])])
+def test_set_viewup(verify_image_cache, vector):
     verify_image_cache.high_variance_test = True
 
     plane = pv.Plane()
@@ -2467,7 +2477,7 @@ def test_set_viewup(verify_image_cache):
     p = pv.Plotter()
     p.add_mesh(plane, color="tan", show_edges=False)
     p.add_mesh(plane_higher, color="red", show_edges=False)
-    p.set_viewup((1.0, 1.0, 1.0))
+    p.set_viewup(vector)
     p.show()
 
 
@@ -2714,6 +2724,21 @@ def test_add_remove_background(sphere):
     plotter.show()
 
 
+@pytest.mark.parametrize(
+    'background', [examples.mapfile, Path(examples.mapfile), 'blue'], ids=['str', 'Path', 'color']
+)
+def test_plot_mesh_background(background):
+    globe = examples.load_globe()
+    globe.plot(texture=pv.Texture(examples.mapfile), background=background)
+
+
+def test_plot_mesh_background_raises():
+    globe = examples.load_globe()
+    match = 'Background must be color-like or a file path. Got {} instead.'
+    with pytest.raises(ValueError, match=match):
+        globe.plot(texture=pv.Texture(examples.mapfile), background={})
+
+
 def test_plot_zoom(sphere):
     # it's difficult to verify that zoom actually worked since we
     # can't get the output with cpos or verify the image cache matches
@@ -2907,7 +2932,7 @@ def test_plot_complex_value(plane, verify_image_cache):
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except:
-        ComplexWarning = np.ComplexWarning
+        ComplexWarning = np.ComplexWarning  # noqa: NPY201
 
     with pytest.warns(ComplexWarning):
         plane.plot(scalars=data)
@@ -3210,7 +3235,7 @@ def test_plot_composite_poly_complex(multiblock_poly):
     try:
         ComplexWarning = np.exceptions.ComplexWarning
     except:
-        ComplexWarning = np.ComplexWarning
+        ComplexWarning = np.ComplexWarning  # noqa: NPY201
 
     pl = pv.Plotter()
     with pytest.warns(ComplexWarning, match='Casting complex'):
@@ -3992,6 +4017,96 @@ def test_add_remove_scalar_bar(sphere):
     pl.show()
 
 
+@pytest.mark.parametrize('geometry_type', [*pv.AxesGeometrySource.GEOMETRY_TYPES, 'custom'])
+def test_axes_geometry_shaft_type_tip_type(geometry_type):
+    if geometry_type == 'custom':
+        geometry_type = pv.ParametricConicSpiral()
+    pv.AxesGeometrySource(
+        shaft_length=0.4,
+        shaft_radius=0.05,
+        tip_radius=0.1,
+        shaft_type=geometry_type,
+        tip_type=geometry_type,
+    ).output.plot()
+
+
+POSITION = (-0.5, -0.5, 1)
+ORIENTATION = (10, 20, 30)
+SCALE = (1.5, 2, 2.5)
+ORIGIN = (2, 1.5, 1)
+actor = pv.Actor()
+actor.position = POSITION
+actor.orientation = ORIENTATION
+actor.scale = SCALE
+actor.origin = ORIGIN
+USER_MATRIX = pv.array_from_vtkmatrix(actor.GetMatrix())
+
+XYZ_ASSEMBLY_TEST_CASES = dict(
+    default={},
+    position=dict(position=POSITION),
+    orientation=dict(orientation=ORIENTATION),
+    scale=dict(scale=SCALE),
+    origin=dict(origin=ORIGIN, orientation=ORIENTATION),
+    user_matrix=dict(user_matrix=USER_MATRIX),
+)
+
+
+@pytest.mark.parametrize(
+    'test_kwargs',
+    XYZ_ASSEMBLY_TEST_CASES.values(),
+    ids=XYZ_ASSEMBLY_TEST_CASES.keys(),
+)
+@pytest.mark.parametrize(
+    ('Assembly', 'obj_kwargs'),
+    [
+        (pv.AxesAssembly, {}),
+        (pv.AxesAssemblySymmetric, dict(label_size=25)),
+        (pv.PlanesAssembly, dict(opacity=1)),
+    ],
+    ids=['Axes', 'AxesSymmetric', 'Planes'],
+)
+def test_xyz_assembly(test_kwargs, Assembly, obj_kwargs):
+    plot = pv.Plotter()
+    assembly = Assembly(**test_kwargs, **obj_kwargs, label_color='white')
+    plot.add_actor(assembly)
+    if isinstance(assembly, pv.PlanesAssembly):
+        assembly.camera = plot.camera
+    if test_kwargs:
+        # Add second axes at the origin for visual reference
+        plot.add_axes_at_origin(x_color='black', y_color='black', z_color='black', labels_off=True)
+    plot.show()
+
+
+@pytest.mark.parametrize(
+    'Assembly',
+    [pv.AxesAssembly, pv.AxesAssemblySymmetric, pv.PlanesAssembly],
+    ids=['Axes', 'AxesSymmetric', 'Planes'],
+)
+def test_xyz_assembly_show_labels_false(Assembly):
+    plot = pv.Plotter()
+    assembly = Assembly(show_labels=False)
+    plot.add_actor(assembly)
+    if isinstance(assembly, pv.PlanesAssembly):
+        assembly.camera = plot.camera
+    plot.show()
+
+
+@pytest.mark.parametrize('relative_position', [(0, 0, -0.5), (0, 0, 0.5)], ids=['bottom', 'top'])
+def test_label_prop3d(relative_position):
+    dataset = pv.Cone(direction=(0, 0, 1))
+    actor = pv.Actor(mapper=pv.DataSetMapper(dataset=dataset))
+    actor.user_matrix = USER_MATRIX
+
+    label = pv.Label(text='TEXT', size=100, relative_position=relative_position)
+    label.prop.justification_horizontal = 'center'
+    label.user_matrix = USER_MATRIX
+
+    pl = pv.Plotter()
+    pl.add_actor(label)
+    pl.add_actor(actor)
+    pl.show()
+
+
 def test_axes_actor_default_colors():
     axes = pv.AxesActor()
     axes.shaft_type = pv.AxesActor.ShaftType.CYLINDER
@@ -4435,3 +4550,148 @@ def test_direction_objects(direction_obj_test_case):
     plot.add_axes(**axes_kwargs)
 
     plot.show()
+
+
+@skip_windows  # Windows colors all plane cells red (bug?)
+@pytest.mark.parametrize('normal_sign', ['+', '-'])
+@pytest.mark.parametrize('plane', ['yz', 'zx', 'xy'])
+def test_orthogonal_planes_source_normals(normal_sign, plane):
+    plane_source = pv.OrthogonalPlanesSource(normal_sign=normal_sign, resolution=2)
+    output = plane_source.output
+    plane = output[plane]
+    plane['_rgb'] = [
+        pv.Color('red').float_rgb,
+        pv.Color('green').float_rgb,
+        pv.Color('blue').float_rgb,
+        pv.Color('yellow').float_rgb,
+    ]
+    plane.plot_normals(mag=0.8, color='white', lighting=False, show_edges=True)
+
+
+@pytest.mark.usefixtures('skip_check_gc')  # gc fails, suspected memory leak with merge
+@pytest.mark.parametrize('distance', [(1, 1, 1), (-1, -1, -1)], ids=['+', '-'])
+def test_orthogonal_planes_source_push(distance):
+    source = pv.OrthogonalPlanesSource()
+    source.push(distance)
+    planes = pv.merge(source.output, merge_points=False)
+    planes.plot_normals()
+
+
+# Add skips since Plane's edges differ (e.g. triangles instead of quads)
+@skip_windows
+@skip_9_1_0
+@pytest.mark.parametrize(
+    'resolution',
+    [(10, 1, 1), (1, 10, 1), (1, 1, 10)],
+    ids=['x_resolution', 'y_resolution', 'z_resolution'],
+)
+def test_orthogonal_planes_source_resolution(resolution):
+    plane_source = pv.OrthogonalPlanesSource(resolution=resolution)
+    plane_source.output.plot(show_edges=True, line_width=5, lighting=False)
+
+
+@skip_9_1_0
+@skip_windows
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        (None, None),
+        ('shrink_factor', 0.1),
+        ('shrink_factor', 1.0),
+        ('shrink_factor', 2),
+        ('explode_factor', 0.0),
+        ('explode_factor', 0.5),
+        ('explode_factor', -0.5),
+        ('frame_width', 0.1),
+        ('frame_width', 1.0),
+    ],
+)
+def test_cube_faces_source(name, value):
+    kwargs = {name: value} if name is not None else {}
+    cube_faces_source = pv.CubeFacesSource(**kwargs, x_length=1, y_length=2, z_length=3)
+    pv.merge(cube_faces_source.output, merge_points=False).plot_normals(
+        mag=0.5, show_edges=True, line_width=3, edge_color='red'
+    )
+
+
+def test_planes_assembly(airplane):
+    plot = pv.Plotter()
+    actor = pv.PlanesAssembly()
+    plot.add_actor(actor)
+    actor.camera = plot.camera
+    plot.add_axes()
+    plot.show()
+
+
+@skip_9_1_0  # Difference in clipping generates error of approx 500
+@pytest.mark.parametrize('label_offset', [0.05, 0, -0.05])
+@pytest.mark.parametrize(
+    ('label_kwarg', 'camera_position'), [('x_label', 'yz'), ('y_label', 'zx'), ('z_label', 'xy')]
+)
+@pytest.mark.parametrize(('label_mode', 'label_size'), [('2D', 25), ('3D', 40)])
+def test_planes_assembly_label_position(
+    plane, label_kwarg, camera_position, label_mode, label_size, label_offset
+):
+    plot = pv.Plotter()
+
+    for edge in ('right', 'top', 'left', 'bottom'):
+        for position in (-1, -0.5, 0, 0.5, 1):
+            actor = pv.PlanesAssembly(
+                labels=['', '', ''],
+                opacity=0.01,
+                label_edge=edge,
+                label_position=position,
+                label_mode=label_mode,
+                label_offset=label_offset,
+                label_size=label_size,
+            )
+            label_name = str(position) + edge[0].upper()
+            setattr(actor, label_kwarg, label_name)
+            plot.add_actor(actor)
+            actor.camera = plot.camera
+    plot.camera_position = camera_position
+    plot.add_axes_at_origin()
+    plot.show()
+
+
+BOUNDS = (-50, 50, -10, 30, -80, 80)
+
+
+@pytest.mark.parametrize(
+    'bounds',
+    [BOUNDS, BOUNDS * np.array(0.01)],
+)
+@pytest.mark.parametrize('label_size', [25, 50])
+def test_planes_assembly_label_size(bounds, label_size):
+    plot = pv.Plotter()
+    labels = ['FIRST ', 'SECOND ', 'THIRD ']
+    common_kwargs = dict(bounds=bounds, label_size=label_size, opacity=0.1)
+    for label_mode in ['2D', '3D']:
+        actor = pv.PlanesAssembly(
+            x_label=labels[0] + label_mode,
+            y_label=labels[1] + label_mode,
+            z_label=labels[2] + label_mode,
+            label_mode=label_mode,
+            label_color='white' if label_mode == '3D' else 'black',
+            **common_kwargs,
+        )
+        plot.add_actor(actor)
+        actor.camera = plot.camera
+    plot.show()
+
+
+@pytest.fixture()
+def oblique_cone():
+    return pv.examples.download_oblique_cone()
+
+
+@pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
+def test_bounding_box(oblique_cone, box_style):
+    pl = pv.Plotter()
+    box = oblique_cone.bounding_box(box_style)
+    oriented_box = oblique_cone.bounding_box(box_style, oriented=True)
+
+    pl.add_mesh(oblique_cone)
+    pl.add_mesh(box, color='red', opacity=0.5, line_width=5)
+    pl.add_mesh(oriented_box, color='blue', opacity=0.5, line_width=5)
+    pl.show()

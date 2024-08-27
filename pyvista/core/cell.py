@@ -12,6 +12,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
+from ._typing_core import BoundsTuple
 from .celltype import CellType
 from .dataset import DataObject
 from .errors import CellSizeError
@@ -37,7 +38,7 @@ def _get_vtk_id_type():
     return np.int32
 
 
-class Cell(_vtk.vtkGenericCell, DataObject):
+class Cell(DataObject, _vtk.vtkGenericCell):
     """Wrapping of vtkCell.
 
     This class provides the capability to access a given cell topology and can
@@ -479,23 +480,23 @@ class Cell(_vtk.vtkGenericCell, DataObject):
         return Cell(cell, deep=True, cell_type=cell.GetCellType())
 
     @property
-    def bounds(self) -> tuple[float, float, float, float, float, float]:
-        """Get the cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+    def bounds(self) -> BoundsTuple:
+        """Get the cell bounds in ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Returns
         -------
-        tuple[float, float, float, float, float, float]
-            The cell bounds in ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+        BoundsTuple
+            The cell bounds in ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).bounds
-        (0.0, 0.05405950918793678, 0.0, 0.011239604093134403, 0.49706897139549255, 0.5)
+        BoundsTuple(x_min=0.0, x_max=0.05405950918793678, y_min=0.0, y_max=0.011239604093134403, z_min=0.49706897139549255, z_max=0.5)
 
         """
-        return self.GetBounds()
+        return BoundsTuple(*self.GetBounds())
 
     @property
     def center(self) -> tuple[float, float, float]:
@@ -634,6 +635,7 @@ class CellArray(_vtk.vtkCellArray):
         deep: bool | None = None,
     ):
         """Initialize a vtkCellArray."""
+        super().__init__()
         self.__offsets: _vtk.vtkIdTypeArray | None = None
         self.__connectivity: _vtk.vtkIdTypeArray | None = None
         if cells is not None:

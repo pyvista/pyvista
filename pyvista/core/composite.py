@@ -22,8 +22,11 @@ import pyvista
 from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike
-from ._typing_core import NumpyArray
+from ._typing_core import BoundsTuple
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import NumpyArray
+
 from .dataset import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
@@ -40,10 +43,10 @@ _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
 class MultiBlock(
-    _vtk.vtkMultiBlockDataSet,
     CompositeFilters,
     DataObject,
     MutableSequence,  # type: ignore[type-arg]
+    _vtk.vtkMultiBlockDataSet,
 ):
     """A composite class to hold many data sets which can be iterated over.
 
@@ -170,7 +173,7 @@ class MultiBlock(
                 self.SetBlock(i, wrap(block))
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsTuple:
         """Find min/max for bounds across blocks.
 
         Returns
@@ -190,7 +193,7 @@ class MultiBlock(
         ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
-        (-0.5, 2.5, -0.5, 2.5, -0.5, 0.5)
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=2.5, z_min=-0.5, z_max=0.5)
 
         """
         # apply reduction of min and max over each block
@@ -198,24 +201,22 @@ class MultiBlock(
         all_bounds = [cast(List[float], block.bounds) for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
-            minima = np.array([0.0, 0.0, 0.0])
-            maxima = np.array([0.0, 0.0, 0.0])
+            minima = (0.0, 0.0, 0.0)
+            maxima = (0.0, 0.0, 0.0)
         else:
-            minima = np.minimum.reduce(all_bounds)[::2]
-            maxima = np.maximum.reduce(all_bounds)[1::2]
+            minima = np.minimum.reduce(all_bounds)[::2].tolist()
+            maxima = np.maximum.reduce(all_bounds)[1::2].tolist()
 
         # interleave minima and maxima for bounds
-        the_bounds = np.stack([minima, maxima]).ravel('F')
-
-        return cast(BoundsLike, tuple(the_bounds))
+        return BoundsTuple(minima[0], maxima[0], minima[1], maxima[1], minima[2], maxima[2])
 
     @property
-    def center(self) -> NumpyArray[float]:
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the bounding box.
 
         Returns
         -------
-        np.ndarray
+        tuple[float, float, float]
             Center of the bounding box.
 
         Examples
@@ -231,8 +232,7 @@ class MultiBlock(
         array([1., 1., 0.])
 
         """
-        # (typing.cast necessary to make mypy happy with np.reshape())
-        return np.reshape(cast(List[float], self.bounds), (3, 2)).mean(axis=1)
+        return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
 
     @property
     def length(self) -> float:
@@ -780,10 +780,7 @@ class MultiBlock(
         if not self.keys() == other.keys():
             return False
 
-        if any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
-            return False
-
-        return True
+        return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
 
     def __next__(self) -> _TypeMultiBlockLeaf | None:
         """Get the next block from the iterator."""

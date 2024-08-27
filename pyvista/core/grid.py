@@ -7,10 +7,14 @@ import pathlib
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Sequence
+from typing import cast
 
 import numpy as np
 
 import pyvista
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
@@ -21,17 +25,10 @@ from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import NumpyArray
-
 
 @abstract_class
 class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize the grid."""
-        super().__init__()
 
     @property
     def dimensions(self) -> tuple[int, int, int]:
@@ -75,7 +72,7 @@ class Grid(DataSet):
         return attrs
 
 
-class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
+class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
 
     Can be initialized in several ways:
@@ -153,7 +150,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
-        super().__init__()
+        super().__init__(**kwargs)
 
         if len(args) == 1:
             if isinstance(args[0], _vtk.vtkRectilinearGrid):
@@ -255,7 +252,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         self._update_dimensions()
 
     @property
-    def meshgrid(self) -> list[NumpyArray[float]]:
+    def meshgrid(self) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -264,11 +261,18 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
 
         Returns
         -------
-        list[numpy.ndarray]
-            List of numpy arrays representing the points of this mesh.
+        tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
+            Tuple of numpy arrays representing the points of this mesh.
 
         """
-        return np.meshgrid(self.x, self.y, self.z, indexing='ij')
+        # Converting to tuple needed to be consistent type across numpy version
+        # Remove when support is dropped for numpy 1.x
+        # We also know this is 3-length so make it so in typing
+        out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
+        # Python 3.8 does not allow subscripting tuple, but only used for type checking
+        if TYPE_CHECKING:  # pragma: no cover
+            out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
+        return out
 
     @property  # type: ignore[explicit-override, override]
     def points(self) -> NumpyArray[float]:
@@ -461,7 +465,7 @@ class RectilinearGrid(_vtk.vtkRectilinearGrid, Grid, RectilinearGridFilters):
         return _get_output(alg)
 
 
-class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
+class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     """Models datasets with uniform spacing in the three coordinate directions.
 
     Can be initialized in one of several ways:
@@ -648,6 +652,10 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
                [1., 1., 1.]])
 
         """
+        # Handle empty case
+        if not all(self.dimensions):
+            return np.zeros((0, 3))
+
         # Get grid dimensions
         nx, ny, nz = self.dimensions
         nx -= 1
@@ -862,7 +870,7 @@ class ImageData(_vtk.vtkImageData, Grid, ImageDataFilters):
         use default spacing of 1 here, the bounds match the extent exactly.
 
         >>> grid.bounds
-        (2.0, 5.0, 2.0, 5.0, 2.0, 5.0)
+        BoundsTuple(x_min=2.0, x_max=5.0, y_min=2.0, y_max=5.0, z_min=2.0, z_max=5.0)
         >>> grid.dimensions
         (4, 4, 4)
 

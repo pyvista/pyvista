@@ -122,7 +122,9 @@ def _cast_to_numpy(
     try:
         VisibleDeprecationWarning = np.exceptions.VisibleDeprecationWarning
     except AttributeError:
-        VisibleDeprecationWarning = np.VisibleDeprecationWarning
+        # we only type for newer numpy, and this branch only touched in older numpy
+        if not TYPE_CHECKING:
+            VisibleDeprecationWarning = np.VisibleDeprecationWarning
 
     try:
         out = np.asanyarray(arr, dtype=dtype) if as_any else np.asarray(arr, dtype=dtype)
@@ -135,5 +137,7 @@ def _cast_to_numpy(
     if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):
         raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
     elif out.dtype.name == 'object':
-        raise TypeError("Object arrays are not supported.")
+        raise TypeError(
+            f"Object arrays are not supported. Got {arr} when casting to a NumPy array."
+        )
     return out

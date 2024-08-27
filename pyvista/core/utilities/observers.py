@@ -11,6 +11,7 @@ import threading
 import traceback
 from typing import NamedTuple
 
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 
@@ -19,7 +20,7 @@ def set_error_output_file(filename):
 
     Parameters
     ----------
-    filename : str
+    filename : str, Path
         Path to the file to write VTK errors to.
 
     Returns
@@ -30,9 +31,12 @@ def set_error_output_file(filename):
         VTK output window.
 
     """
-    filename = str(Path(filename).expanduser().resolve())
+    filename = Path(filename).expanduser().resolve()
     fileOutputWindow = _vtk.vtkFileOutputWindow()
-    fileOutputWindow.SetFileName(filename)
+    if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+        fileOutputWindow.SetFileName(str(filename))
+    else:
+        fileOutputWindow.SetFileName(filename)
     outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow

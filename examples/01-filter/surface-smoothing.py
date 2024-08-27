@@ -13,7 +13,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Suppose you extract a volumetric subset of a dataset that has roughly defined
 # edges. Perhaps you'd like a smooth representation of that model region. This
 # can be achieved by extracting the bounding surface of the volume and applying
@@ -30,7 +30,7 @@ data = examples.load_uniform()
 vol = data.threshold_percent(30, invert=1)
 vol.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
 
-###############################################################################
+# %%
 # Extract the outer surface of the volume using the
 # :func:`pyvista.DataSetFilters.extract_geometry` filter and then apply the
 # smoothing filter:
@@ -42,7 +42,7 @@ smooth = surf.smooth()
 smooth.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # Not smooth enough? Try increasing the number of iterations for the Laplacian
 # smoothing algorithm:
 
@@ -51,7 +51,7 @@ smooth = surf.smooth(n_iter=100)
 smooth.plot(show_edges=True, cpos=cpos, show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # Still not smooth enough? Increase the number of iterations for the Laplacian
 # smoothing algorithm to a crazy high value. Note how this causes the mesh to
 # "shrink":
@@ -69,7 +69,7 @@ pl.add_mesh(orig_edges, show_scalar_bar=False, color='k', line_width=2)
 pl.show()
 
 
-###############################################################################
+# %%
 # Taubin Smoothing
 # ~~~~~~~~~~~~~~~~
 # You can reduce the amount of surface shrinkage by using Taubin smoothing
@@ -91,3 +91,5 @@ pl.show()
 print(f'Original surface volume:   {surf.volume:.1f}')
 print(f'Laplacian smoothed volume: {smooth.volume:.1f}')
 print(f'Taubin smoothed volume:    {smooth_w_taubin.volume:.1f}')
+# %%
+# .. tags:: filter

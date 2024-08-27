@@ -16,7 +16,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # PyVista meshes have several slicing filters bound directly to all datasets.
 # These filters allow you to slice through a volumetric dataset to extract and
 # view sections through the volume of data.
@@ -33,7 +33,7 @@ cmap = plt.get_cmap("viridis", 4)
 
 mesh.plot(cmap=cmap)
 
-###############################################################################
+# %%
 # Note that this dataset is a 3D volume and there might be regions within this
 # volume that we would like to inspect. We can create slices through the mesh
 # to gain further insight about the internals of the volume.
@@ -43,12 +43,12 @@ slices = mesh.slice_orthogonal()
 slices.plot(cmap=cmap)
 
 
-###############################################################################
+# %%
 # The orthogonal slices can be easily translated throughout the volume:
 
 slices = mesh.slice_orthogonal(x=20, y=20, z=30)
 slices.plot(cmap=cmap)
-###############################################################################
+# %%
 # We can also add just a single slice of the volume by specifying the origin
 # and normal of the slicing plane with the :func:`pyvista.DataSetFilters.slice`
 # filter:
@@ -60,7 +60,7 @@ p = pv.Plotter()
 p.add_mesh(mesh.outline(), color="k")
 p.add_mesh(single_slice, cmap=cmap)
 p.show()
-###############################################################################
+# %%
 # Adding slicing planes uniformly across an axial direction can also be
 # automated with the :func:`pyvista.DataSetFilters.slice_along_axis` filter:
 
@@ -69,7 +69,7 @@ slices = mesh.slice_along_axis(n=7, axis="y")
 slices.plot(cmap=cmap)
 
 
-###############################################################################
+# %%
 # Slice Along Line
 # ++++++++++++++++
 #
@@ -91,19 +91,19 @@ def path(y):
     return x, y
 
 
-x, y = path(np.arange(model.bounds[2], model.bounds[3], 15.0))
+x, y = path(np.arange(model.bounds.y_min, model.bounds.y_max, 15.0))
 zo = np.linspace(9.0, 11.0, num=len(y))
 points = np.c_[x, y, zo]
 spline = pv.Spline(points, 15)
 spline
 
 
-###############################################################################
+# %%
 # Then run the filter
 slc = model.slice_along_line(spline)
 slc
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(slc, cmap=cmap)
@@ -111,7 +111,7 @@ p.add_mesh(model.outline())
 p.show(cpos=[1, -1, 1])
 
 
-###############################################################################
+# %%
 # Multiple Slices in Vector Direction
 # +++++++++++++++++++++++++++++++++++
 #
@@ -137,7 +137,7 @@ slices = pv.MultiBlock()
 for point in line.points:
     slices.append(mesh.slice(normal=normal, origin=point))
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(mesh.outline(), color="k")
@@ -146,7 +146,7 @@ p.add_mesh(line, color="red", line_width=5)
 p.show()
 
 
-###############################################################################
+# %%
 # Slice At Different Bearings
 # +++++++++++++++++++++++++++
 #
@@ -159,7 +159,7 @@ p.show()
 ranges = np.ptp(np.array(model.bounds).reshape(-1, 2), axis=1)
 point = np.array(model.center) - ranges * 0.25
 
-###############################################################################
+# %%
 # Now generate a few normal vectors to rotate a slice around the z-axis.
 # Use equation for circle since its about the Z-axis.
 increment = np.pi / 6.0
@@ -171,9 +171,11 @@ for theta in np.arange(0, np.pi, increment):
     slices[name] = model.slice(origin=point, normal=normal)
 slices
 
-###############################################################################
+# %%
 # And now display it.
 p = pv.Plotter()
 p.add_mesh(slices, cmap=cmap)
 p.add_mesh(model.outline())
 p.show()
+# %%
+# .. tags:: filter

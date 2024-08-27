@@ -8,7 +8,18 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from dataclasses import dataclass
-from enum import StrEnum
+import sys
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        def __str__(self) -> str:
+            return self.value
+
+
 from enum import auto
 import inspect
 import io
@@ -62,6 +73,18 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     "single_sphere_animation": ".gif",
     "dual_sphere_animation": ".gif",
 }
+
+
+class classproperty(property):
+    """Read-only class property decorator.
+
+    Used as an alternative to chaining @classmethod and @property which is deprecated.
+
+    See https://stackoverflow.com/a/13624858
+    """
+
+    def __get__(self, owner_self, owner_cls):
+        return self.fget(owner_cls)
 
 
 def _aligned_dedent(txt):
@@ -1110,11 +1133,20 @@ class DatasetPropsGenerator:
     def generate_file_ext(loader: _SingleFilePropsProtocol | _MultiFilePropsProtocol):
         # Format extension as single str with rst backticks
         # Multiple extensions are comma-separated
+        def _format_ext(file_ext_: list[str]):
+            return sep.join(["``" + ext + "``" for ext in file_ext_])
+
+        sep = ",\n"
         file_ext = DatasetPropsGenerator._try_getattr(loader, "unique_extension")
         if file_ext:
             file_ext = loader.unique_extension
             file_ext = [file_ext] if isinstance(file_ext, str) else file_ext
-            return "\n".join(["``'" + ext + "'``" for ext in file_ext])
+            if len(file_ext) > 10:
+                # Limit number of extensions displayed
+                first = _format_ext(file_ext[:3])
+                last = _format_ext(file_ext[-3:])
+                return first + sep + '...' + sep + last
+            return _format_ext(file_ext)
         return None
 
     @staticmethod
@@ -1173,9 +1205,7 @@ class DatasetPropsGenerator:
         urls = [url] if isinstance(url, str) else url
 
         # Use dict to create an ordered set to make sure links are unique
-        url_dict = {}
-        for name, url in zip(names, urls):
-            url_dict[url] = name
+        url_dict = {url: name for name, url in zip(names, urls)}
 
         rst_links = [_rst_link(name, url) for url, name in url_dict.items()]
         return "\n".join(rst_links)
@@ -1348,7 +1378,15 @@ class DatasetCardFetcher:
         # Get mapping of alphabet letters to first dataset name which begins with each letter
         alphabet_dict = {}
         for dataset_name in sorted(dataset_names):
-            alphabet_dict.setdefault(dataset_name[0].upper(), dataset_name)
+            index_character = dataset_name[0].upper()
+            try:
+                int(index_character)
+            except ValueError:
+                pass
+            else:
+                index_character = '#'
+
+            alphabet_dict.setdefault(index_character, dataset_name)
 
         buttons = []
         for letter, dataset_name in alphabet_dict.items():
@@ -1370,7 +1408,8 @@ class DatasetCardFetcher:
         """Add cell type badge(s) to every dataset."""
         for card in cls.DATASET_CARDS_OBJ.values():
             for cell_type in card.loader.unique_cell_types:
-                card.add_badge(CellTypeBadge(cell_type.name))
+                name = cell_type.name
+                card.add_badge(CellTypeBadge(name, 'pyvista.CellType.' + name))
 
     @classmethod
     def fetch_dataset_names_by_datatype(cls, datatype) -> Iterator[str]:
@@ -1437,12 +1476,14 @@ class DatasetCardFetcher:
 class _BaseDatasetBadge:
     class SemanticColorEnum(StrEnum):
         """Enum of badge colors.
-        See: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html"""
+
+        See: https://sphinx-design.readthedocs.io/en/pydata-theme/badges_buttons.html
+        """
 
         primary = auto()
         secondary = auto()
         success = auto()
-        dark = auto()
+        muted = auto()
 
     # Name of the badge
     name: str
@@ -1554,7 +1595,7 @@ class CellTypeBadge(_BaseDatasetBadge):
     @classmethod
     def __post_init__(cls):
         cls.filled = False
-        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.dark
+        cls.semantic_color = _BaseDatasetBadge.SemanticColorEnum.muted
 
 
 class DatasetGalleryCarousel(DocTable):
@@ -1649,9 +1690,9 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
 
     name = "all_datasets_carousel"
 
-    @property
-    def doc(self):
-        return DatasetCardFetcher.generate_alphabet_index(self.dataset_names)
+    @classproperty
+    def doc(cls):
+        return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
 
     @classmethod
     def fetch_dataset_names(cls):

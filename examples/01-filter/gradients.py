@@ -24,19 +24,19 @@ from pyvista import examples
 # A vtkStructuredGrid - but could be any mesh type
 mesh = examples.download_carotid()
 mesh
-###############################################################################
+# %%
 # Now compute the gradients of the ``vectors`` vector field in the point data
 # of that mesh. This is as simple as calling
 # :func:`pyvista.DataSetFilters.compute_derivative`.
 mesh_g = mesh.compute_derivative(scalars="vectors")
 mesh_g["gradient"]
 
-###############################################################################
+# %%
 # .. note:: You can also use :func:`pyvista.DataSetFilters.compute_derivative` for
 #   computing other derivative based quantities, such as divergence, vorticity,
 #   and Q-criterion. See function documentation for options.
 
-###############################################################################
+# %%
 # ``mesh_g["gradient"]`` is an ``N`` by 9 NumPy array of the gradients, so we
 # could make a dictionary of NumPy arrays of the gradients like:
 
@@ -53,13 +53,13 @@ def gradients_to_dict(arr):
 gradients = gradients_to_dict(mesh_g["gradient"])
 gradients
 
-###############################################################################
+# %%
 # And we can add all of those components as individual arrays back to the mesh
 # by:
 mesh_g.point_data.update(gradients)
 mesh_g
 
-###############################################################################
+# %%
 
 keys = np.array(list(gradients.keys())).reshape(3, 3)
 
@@ -73,7 +73,7 @@ p.view_isometric()
 p.show()
 
 
-###############################################################################
+# %%
 # And there you have it, the gradients for a vector field. We could also do
 # this for a scalar  field like for the ``scalars`` field in the given dataset.
 mesh_g = mesh.compute_derivative(scalars="scalars")
@@ -81,7 +81,7 @@ mesh_g = mesh.compute_derivative(scalars="scalars")
 gradients = gradients_to_dict(mesh_g["gradient"])
 gradients
 
-###############################################################################
+# %%
 
 mesh_g.point_data.update(gradients)
 
@@ -97,3 +97,5 @@ for (i, j), name in np.ndenumerate(keys):
 p.link_views()
 p.view_isometric()
 p.show()
+# %%
+# .. tags:: filter

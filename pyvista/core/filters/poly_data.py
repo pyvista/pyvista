@@ -78,15 +78,14 @@ class PolyDataFilters(DataSetFilters):
         edges = _get_output(featureEdges)
         orig_id = pyvista.point_array(edges, 'point_ind')
 
-        return np.in1d(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
+        return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar=False):
         """Perform boolean operation."""
-        if self.n_points == other_mesh.n_points:
-            if np.allclose(self.points, other_mesh.points):
-                raise ValueError(
-                    "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.",
-                )
+        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):
+            raise ValueError(
+                "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.",
+            )
         if not isinstance(other_mesh, pyvista.PolyData):
             raise TypeError("Input mesh must be PolyData.")
         if not self.is_all_triangles or not other_mesh.is_all_triangles:
@@ -537,18 +536,22 @@ class PolyDataFilters(DataSetFilters):
                     faces=merged.GetCells(),
                     deep=False,
                 )
-                # Calling update() will modify the active scalars in this specific
-                # case. Store values to restore after updating.
+                # Calling update() will modify the active scalars and normals in this
+                # specific case. Store values to restore after updating.
                 active_point_scalars_name = merged.point_data.active_scalars_name
                 active_cell_scalars_name = merged.cell_data.active_scalars_name
+                active_point_normals_name = merged.point_data._active_normals_name
+                active_cell_normals_name = merged.cell_data._active_normals_name
 
                 polydata_merged.point_data.update(merged.point_data)
                 polydata_merged.cell_data.update(merged.cell_data)
                 polydata_merged.field_data.update(merged.field_data)
 
-                # restore active scalars
+                # restore active scalars and normals
                 polydata_merged.point_data.active_scalars_name = active_point_scalars_name
                 polydata_merged.cell_data.active_scalars_name = active_cell_scalars_name
+                polydata_merged.point_data._active_normals_name = active_point_normals_name
+                polydata_merged.cell_data._active_normals_name = active_cell_normals_name
 
                 merged = polydata_merged
 

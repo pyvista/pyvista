@@ -260,6 +260,7 @@ exclude = [  # don't report on objects that match any of these regex
     '\.BoundsLike$',
     '\.CellsLike$',
     '\.CellsArrayLike$',
+    '\.RotationLike$',
     # PointSet *args and **kwargs for wrapped parameters
     '\.PointSet(\.|$)',
     # Mixin methods from collections.abc
@@ -345,6 +346,7 @@ extend-select = [
     "A",
     "AIR",
     "ASYNC",
+    "ASYNC1",
     "B",
     "C4",
     "COM",
@@ -378,7 +380,6 @@ extend-select = [
     "SIM",
     "T10",
     "TCH",
-    "TRIO",
     "TRY201",
     "TRY300",
     "TRY302",

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import inspect
 from itertools import product
+import reprlib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -306,7 +307,7 @@ def validate_array(
             exact_length=must_have_length,
             min_length=must_have_min_length,
             max_length=must_have_max_length,
-            allow_scalars=True,
+            allow_scalar=True,
             name=name,
         )
 
@@ -473,14 +474,25 @@ def validate_axes(
     return axes_array
 
 
-def validate_transform4x4(transform, /, *, name="Transform"):
+def validate_transform4x4(transform, /, *, must_be_finite=True, name="Transform"):
     """Validate transform-like input as a 4x4 ndarray.
+
+    This function supports inputs with a 3x3 or 4x4 shape. If the input is 3x3,
+    the array is padded using a 4x4 identity matrix.
 
     Parameters
     ----------
-    transform : array_like | vtkTransform | vtkMatrix4x4 | vtkMatrix3x3
+    transform : TransformLike
+        Transformation matrix as a 3x3 or 4x4 array or vtk matrix, or a
+        SciPy ``Rotation`` instance.
+
         Transformation matrix as a 3x3 or 4x4 array, 3x3 or 4x4 vtkMatrix,
         or as a vtkTransform.
+
+    must_be_finite : bool, default: True
+        :func:`Check <pyvista.core.validation.check.check_finite>`
+        if all elements of the array are finite, i.e. not ``infinity``
+        and not Not a Number (``NaN``).
 
     name : str, default: "Transform"
         Variable name to use in the error messages if any of the
@@ -501,45 +513,56 @@ def validate_transform4x4(transform, /, *, name="Transform"):
 
     """
     check_string(name, name="Name")
-    arr = np.eye(4)  # initialize
-    if isinstance(transform, vtkMatrix4x4):
-        arr = _array_from_vtkmatrix(transform, shape=(4, 4))
-    elif isinstance(transform, vtkMatrix3x3):
-        arr[:3, :3] = _array_from_vtkmatrix(transform, shape=(3, 3))
-    elif isinstance(transform, vtkTransform):
-        arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))
-    else:
-        try:
-            valid_arr = validate_array(
-                transform,
-                must_have_shape=[(3, 3), (4, 4)],
-                must_be_finite=True,
-                name=name,
-            )
-            if valid_arr.shape == (3, 3):
-                arr[:3, :3] = valid_arr
-            else:
-                arr = valid_arr
-        except ValueError:
-            raise TypeError(
-                'Input transform must be one of:\n'
-                '\tvtkMatrix4x4\n'
-                '\tvtkMatrix3x3\n'
-                '\tvtkTransform\n'
-                '\t4x4 np.ndarray\n'
-                '\t3x3 np.ndarray\n',
-            )
+    try:
+        arr = np.eye(4)  # initialize
+        arr[:3, :3] = validate_transform3x3(transform, must_be_finite=must_be_finite, name=name)
+    except (ValueError, TypeError):
+        if isinstance(transform, vtkMatrix4x4):
+            arr = _array_from_vtkmatrix(transform, shape=(4, 4))
+        elif isinstance(transform, vtkTransform):
+            arr = _array_from_vtkmatrix(transform.GetMatrix(), shape=(4, 4))
+        else:
+            try:
+                arr = validate_array(
+                    transform,
+                    must_have_shape=[(3, 3), (4, 4)],
+                    must_be_finite=must_be_finite,
+                    name=name,
+                )
+            except TypeError:
+                raise TypeError(
+                    'Input transform must be one of:\n'
+                    '\tvtkMatrix4x4\n'
+                    '\tvtkMatrix3x3\n'
+                    '\tvtkTransform\n'
+                    '\t4x4 np.ndarray\n'
+                    '\t3x3 np.ndarray\n',
+                    '\tscipy.spatial.transform.Rotation\n'
+                    f'Got {reprlib.repr(transform)} with type {type(transform)} instead.',
+                )
 
     return arr
 
 
-def validate_transform3x3(transform, /, *, name="Transform"):
+def validate_transform3x3(transform, /, *, must_be_finite=True, name="Transform"):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
     ----------
-    transform : array_like | vtkMatrix3x3
-        Transformation matrix as a 3x3 array or vtkMatrix3x3.
+    transform : RotationLike
+        Transformation matrix as a 3x3 array, vtk matrix, or a SciPy ``Rotation``
+        instance.
+
+        .. note::
+
+           Although ``RotationLike`` inputs are accepted, no checks are done
+           to verify that the transformation is a actually a rotation.
+           Therefore, any 3x3 transformation is acceptable.
+
+    must_be_finite : bool, default: True
+        :func:`Check <pyvista.core.validation.check.check_finite>`
+        if all elements of the array are finite, i.e. not ``infinity``
+        and not Not a Number (``NaN``).
 
     name : str, default: "Transform"
         Variable name to use in the error messages if any of the
@@ -560,15 +583,35 @@ def validate_transform3x3(transform, /, *, name="Transform"):
 
     """
     check_string(name, name="Name")
-    arr = np.eye(3)  # initialize
     if isinstance(transform, vtkMatrix3x3):
-        arr[:3, :3] = _array_from_vtkmatrix(transform, shape=(3, 3))
+        return _array_from_vtkmatrix(transform, shape=(3, 3))
     else:
         try:
-            arr = validate_array(transform, must_have_shape=(3, 3), name=name)
+            return validate_array(
+                transform, must_have_shape=(3, 3), must_be_finite=must_be_finite, name=name
+            )
         except ValueError:
-            raise TypeError('Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n')
-    return arr
+            pass
+        except TypeError:
+            try:
+                from scipy.spatial.transform import Rotation
+            except ModuleNotFoundError:  # pragma: no cover
+                pass
+            else:
+                if isinstance(transform, Rotation):
+                    # Get matrix output and try validating again
+                    return validate_transform3x3(
+                        transform.as_matrix(), must_be_finite=must_be_finite, name=name
+                    )
+
+    error_message = (
+        f'Input transform must be one of:\n'
+        '\tvtkMatrix3x3\n'
+        '\t3x3 np.ndarray\n'
+        '\tscipy.spatial.transform.Rotation\n'
+        f'Got {reprlib.repr(transform)} with type {type(transform)} instead.'
+    )
+    raise TypeError(error_message)
 
 
 def _array_from_vtkmatrix(

@@ -31,7 +31,7 @@ plotter.add_mesh(shifted, color='brown', show_edges=True, lighting=False)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Due to the obvious lack of depth detail this mostly makes sense for meshes
 # with non-trivial colors or textures. If it weren't for the edges being drawn,
 # the second mesh would be practically impossible to understand even with the
@@ -39,6 +39,8 @@ plotter.show()
 
 shifted.plot(color='brown', lighting=False)
 
-###############################################################################
+# %%
 # For further examples about fine-tuning mesh properties that affect
 # light rendering, see the :ref:`lighting_properties_example` example.
+#
+# .. tags:: lights

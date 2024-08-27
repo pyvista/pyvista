@@ -20,6 +20,7 @@ import warnings
 from vtkmodules.vtkCommonCore import vtkVersion
 from vtkmodules.vtkImagingSources import vtkImageEllipsoidSource
 from vtkmodules.vtkImagingSources import vtkImageGaussianSource
+from vtkmodules.vtkImagingSources import vtkImageGridSource
 from vtkmodules.vtkImagingSources import vtkImageMandelbrotSource
 from vtkmodules.vtkImagingSources import vtkImageNoiseSource
 from vtkmodules.vtkImagingSources import vtkImageSinusoidSource
@@ -193,6 +194,12 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkCommonDataModel import vtkPolyLine
 from vtkmodules.vtkCommonDataModel import vtkPolyPlane
 from vtkmodules.vtkCommonDataModel import vtkPyramid
+from vtkmodules.vtkCommonDataModel import vtkQuadraticEdge
+from vtkmodules.vtkCommonDataModel import vtkQuadraticHexahedron
+from vtkmodules.vtkCommonDataModel import vtkQuadraticQuad
+from vtkmodules.vtkCommonDataModel import vtkQuadraticTetra
+from vtkmodules.vtkCommonDataModel import vtkQuadraticTriangle
+from vtkmodules.vtkCommonDataModel import vtkQuadraticWedge
 from vtkmodules.vtkCommonDataModel import vtkRectf
 from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 from vtkmodules.vtkCommonDataModel import vtkSelection

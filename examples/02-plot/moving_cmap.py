@@ -77,3 +77,5 @@ for t in np.linspace(0, 2 * np.pi, 60, endpoint=False):
     pltr.write_frame()
 
 pltr.show()
+# %%
+# .. tags:: plot

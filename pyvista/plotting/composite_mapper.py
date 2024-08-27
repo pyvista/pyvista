@@ -488,11 +488,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
                 block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
-        if block is None:
-            if index > len(self) - 1:
-                raise KeyError(
-                    f'index {index} is out of bounds. There are only {len(self)} blocks.',
-                ) from None
+        if block is None and index > len(self) - 1:
+            raise KeyError(
+                f'index {index} is out of bounds. There are only {len(self)} blocks.',
+            ) from None
         return block
 
     def __getitem__(self, index):
@@ -520,12 +519,12 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
 
 
 class CompositePolyDataMapper(
+    _BaseMapper,
     (
         _vtk.vtkCompositePolyDataMapper  # type: ignore[misc]
         if vtk_version_info >= (9, 3)
         else _vtk.vtkCompositePolyDataMapper2
     ),
-    _BaseMapper,
 ):
     """Composite PolyData mapper.
 
@@ -826,7 +825,7 @@ class CompositePolyDataMapper(
 
         self.scalar_visibility = True
         if rgb:
-            self.scalar_mode = 'direct'
+            self.color_mode = 'direct'
             return scalar_bar_args
         else:
             self.scalar_map_mode = field.name.lower()
@@ -837,9 +836,8 @@ class CompositePolyDataMapper(
             clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
         self.scalar_range = clim
 
-        if log_scale:
-            if clim[0] <= 0:
-                clim = [sys.float_info.min, clim[1]]
+        if log_scale and clim[0] <= 0:
+            clim = [sys.float_info.min, clim[1]]
 
         if isinstance(cmap, pyvista.LookupTable):
             self.lookup_table = cmap

@@ -36,7 +36,7 @@ points = np.array(
     ],
 )
 
-###############################################################################
+# %%
 # Build the connectivity of the strips
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The first element is the number of points in the strip next three elements is the
@@ -49,7 +49,7 @@ mesh = pv.PolyData(points, strips=strips)
 mesh
 
 
-###############################################################################
+# %%
 # Plot the triangle strips
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the ``PolyData`` and include the point labels using
@@ -64,7 +64,7 @@ pl.camera.zoom(1.2)
 pl.show()
 
 
-###############################################################################
+# %%
 # Convert strips to triangles
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can convert strips to triangle faces using :func:`triangulate
@@ -73,7 +73,7 @@ pl.show()
 trimesh = mesh.triangulate()
 trimesh
 
-###############################################################################
+# %%
 # We can use this new :class:`pyvista.PolyData` to see how VTK represents
 # triangle strips as individual faces.
 #
@@ -89,7 +89,7 @@ faces = trimesh.faces.reshape(-1, 4)
 faces
 
 
-###############################################################################
+# %%
 # Convert triangles to strips
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Convert faces from a :class:`pyvista.PolyData` to strips using :func:`strip()
@@ -100,7 +100,9 @@ restripped = trimesh.strip()
 restripped
 
 
-###############################################################################
+# %%
 # The output from the ``strip`` filter is, as expected, identical to the
 # original ``mesh``.
 restripped == mesh
+# %%
+# .. tags:: load

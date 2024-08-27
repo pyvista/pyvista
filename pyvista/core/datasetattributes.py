@@ -310,7 +310,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
 
         """
-        self._raise_field_data_no_scalars_vectors()
+        self._raise_field_data_no_scalars_vectors_normals()
         if self.GetScalars() is not None:
             array = pyvista_ndarray(
                 self.GetScalars(),
@@ -351,7 +351,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         (8, 3)
 
         """
-        self._raise_field_data_no_scalars_vectors()
+        self._raise_field_data_no_scalars_vectors_normals()
         vectors = self.GetVectors()
         if vectors is not None:
             return pyvista_ndarray(vectors, dataset=self.dataset, association=self.association)
@@ -1084,10 +1084,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if not 0 <= index < max_index:
                 raise KeyError(f'Array index ({index}) out of range [0, {max_index - 1}]')
 
-    def _raise_field_data_no_scalars_vectors(self):
+    def _raise_field_data_no_scalars_vectors_normals(self):
         """Raise a ``TypeError`` if FieldData."""
         if self.association == FieldAssociation.NONE:
-            raise TypeError('FieldData does not have active scalars or vectors.')
+            raise TypeError('FieldData does not have active scalars or vectors or normals.')
 
     @property
     def active_scalars_name(self) -> str | None:
@@ -1140,11 +1140,63 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if name is None:
             self.SetActiveScalars(None)
             return
-        self._raise_field_data_no_scalars_vectors()
+        self._raise_field_data_no_scalars_vectors_normals()
         dtype = self[name].dtype
         # only vtkDataArray subclasses can be set as active attributes
-        if np.issubdtype(dtype, np.number) or dtype == bool:
+        if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
             self.SetActiveScalars(name)
+
+    @property
+    def _active_normals_name(self) -> str | None:
+        """Return name of the active normals.
+
+        Returns
+        -------
+        Optional[str]
+            Name of the active normals.
+
+        Examples
+        --------
+        Create a mesh add a new point array with normals.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> mesh = pv.Sphere()
+        >>> normals = np.random.default_rng().random((mesh.n_points, 3))
+        >>> mesh.point_data['my-normals'] = normals
+
+        Set the active normals.
+
+        >>> mesh.point_data._active_normals_name = 'my-normals'
+        >>> mesh.point_data._active_normals_name
+        'my-normals'
+        """
+        if self.GetNormals() is not None:
+            return str(self.GetNormals().GetName())
+        return None
+
+    @_active_normals_name.setter
+    def _active_normals_name(self, name: str) -> None:  # numpydoc ignore=GL08
+        """Set name of the active normals.
+
+        Parameters
+        ----------
+        name : str
+            Name of the active normals.
+
+        """
+        # permit setting no active
+        if name is None:
+            self.SetActiveNormals(None)
+            return
+        self._raise_field_data_no_scalars_vectors_normals()
+        if name not in self:
+            raise KeyError(f'DataSetAttribute does not contain "{name}"')
+        # verify that the array has the correct number of components
+        n_comp = self.GetArray(name).GetNumberOfComponents()
+        if n_comp != 3:
+            raise ValueError(f'{name} needs 3 components, has ({n_comp})')
+        self.SetActiveNormals(name)
 
     @property
     def active_vectors_name(self) -> str | None:
@@ -1186,7 +1238,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if name is None:
             self.SetActiveVectors(None)
             return
-        self._raise_field_data_no_scalars_vectors()
+        self._raise_field_data_no_scalars_vectors_normals()
         if name not in self:
             raise KeyError(f'DataSetAttribute does not contain "{name}"')
         # verify that the array has the correct number of components
@@ -1458,5 +1510,5 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self._raise_no_texture_coordinates()
         dtype = self[name].dtype
         # only vtkDataArray subclasses can be set as active attributes
-        if np.issubdtype(dtype, np.number) or dtype == bool:
+        if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
             self.SetActiveTCoords(name)

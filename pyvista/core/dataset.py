@@ -18,11 +18,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike
-from ._typing_core import MatrixLike
-from ._typing_core import Number
-from ._typing_core import NumpyArray
-from ._typing_core import VectorLike
+from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
@@ -30,7 +26,6 @@ from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
-from .utilities import transformations
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _coerce_pointslike_arg
 from .utilities.arrays import get_array
@@ -39,13 +34,19 @@ from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
-from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
+from .utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterator
+
+    from ._typing_core import MatrixLike
+    from ._typing_core import Number
+    from ._typing_core import NumpyArray
+    from ._typing_core import RotationLike
+    from ._typing_core import VectorLike
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -147,7 +148,7 @@ class DataSet(DataSetFilters, DataObject):
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the common object."""
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self._last_active_scalars_name: str | None = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
@@ -898,7 +899,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_x(
         self,
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -914,7 +915,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -929,6 +930,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_x
+            Concatenate a rotation about the x-axis with a transformation.
 
         Examples
         --------
@@ -947,8 +953,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
+        t = Transform().rotate_x(angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -958,7 +963,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_y(
         self,
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -974,7 +979,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about.
 
         transform_all_input_vectors : bool, default: False
@@ -988,6 +993,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_y
+            Concatenate a rotation about the y-axis with a transformation.
 
         Examples
         --------
@@ -1006,8 +1016,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
+        t = Transform().rotate_y(angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1033,8 +1042,8 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
-            Point to rotate about.  Defaults to origin.
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
@@ -1048,6 +1057,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_z
+            Concatenate a rotation about the z-axis with a transformation.
 
         Examples
         --------
@@ -1066,8 +1080,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
+        t = Transform().rotate_z(angle, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1078,7 +1091,7 @@ class DataSet(DataSetFilters, DataObject):
         self,
         vector: VectorLike[float],
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1097,7 +1110,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle to rotate.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1112,6 +1125,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_vector
+            Concatenate a rotation about a vector with a transformation.
 
         Examples
         --------
@@ -1130,9 +1148,80 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(vector)
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
+        t = Transform().rotate_vector(vector, angle, point=point)
+        return self.transform(
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate(
+        self,
+        rotation: RotationLike,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        rotation : RotationLike
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate
+            Concatenate a rotation matrix with a transformation.
+
+        Examples
+        --------
+        Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
+        60 degrees.
+
+        >>> import pyvista as pv
+        >>> rotation = [
+        ...     [0.5, -0.8660254, 0.0],
+        ...     [0.8660254, 0.5, 0.0],
+        ...     [0.0, 0.0, 1.0],
+        ... ]
+
+        Use the rotation to rotate a cone about its tip.
+
+        >>> mesh = pv.Cone()
+        >>> tip = (0.5, 0.0, 0.0)
+        >>> rot = mesh.rotate(rotation, point=tip)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+        """
+        t = Transform().rotate(rotation, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1170,6 +1259,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Translated dataset.
 
+        See Also
+        --------
+        pyvista.Transform.translate
+            Concatenate a translation matrix with a transformation.
+
         Examples
         --------
         Create a sphere and translate it by ``(2, 1, 2)``.
@@ -1177,14 +1271,13 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.center
-        [0.0, 0.0, 0.0]
+        (0.0, 0.0, 0.0)
         >>> trans = mesh.translate((2, 1, 2), inplace=False)
         >>> trans.center
-        [2.0, 1.0, 2.0]
+        (2.0, 1.0, 2.0)
 
         """
-        transform = _vtk.vtkTransform()
-        transform.Translate(cast(Sequence[float], xyz))
+        transform = Transform().translate(xyz)
         return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1196,6 +1289,7 @@ class DataSet(DataSetFilters, DataObject):
         xyz: Number | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
+        point: VectorLike[float] | None = None,
     ):
         """Scale the mesh.
 
@@ -1217,10 +1311,18 @@ class DataSet(DataSetFilters, DataObject):
         inplace : bool, default: False
             Updates mesh in-place.
 
+        point : VectorLike[float], optional
+            Point to scale from. Defaults to origin.
+
         Returns
         -------
         pyvista.DataSet
             Scaled dataset.
+
+        See Also
+        --------
+        pyvista.Transform.scale
+            Concatenate a scale matrix with a transformation.
 
         Examples
         --------
@@ -1240,11 +1342,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
 
         """
-        if isinstance(xyz, (float, int, np.number)):
-            xyz = [xyz] * 3
-
-        transform = _vtk.vtkTransform()
-        transform.Scale(xyz)
+        transform = Transform().scale(xyz, point=point)
         return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1283,6 +1381,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Flipped dataset.
 
+        See Also
+        --------
+        pyvista.Transform.flip_x
+            Concatenate a reflection about the x-axis with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1301,8 +1404,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((1, 0, 0), point=point)
+        t = Transform().reflect((1, 0, 0), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1324,7 +1426,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : sequence[float], optional
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1340,6 +1442,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_y
+            Concatenate a reflection about the y-axis with a transformation.
 
         Examples
         --------
@@ -1359,8 +1466,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((0, 1, 0), point=point)
+        t = Transform().reflect((0, 1, 0), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1382,7 +1488,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Vector, optional
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1398,6 +1504,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_z
+            Concatenate a reflection about the z-axis with a transformation.
 
         Examples
         --------
@@ -1417,8 +1528,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((0, 0, 1), point=point)
+        t = Transform().reflect((0, 0, 1), point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1441,10 +1551,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        normal : sequence[float]
+        normal : VectorLike[float]
            Normal vector to flip about.
 
-        point : sequence[float]
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1460,6 +1570,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Dataset flipped about its normal.
+
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
 
         Examples
         --------
@@ -1479,9 +1594,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(normal, 'normal')
-        check_valid_vector(point, 'point')
-        t = transformations.reflection(normal, point=point)
+        t = Transform().reflect(normal, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -1730,14 +1843,14 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsTuple:
         """Return the bounding box of this dataset.
 
         Returns
         -------
         BoundsLike
             Bounding box of this dataset.
-            The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -1746,10 +1859,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> cube = pv.Cube()
         >>> cube.bounds
-        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
 
         """
-        return cast(BoundsLike, self.GetBounds())
+        return BoundsTuple(*self.GetBounds())
 
     @property
     def length(self) -> float:
@@ -1775,12 +1888,12 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> list[float]:
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the bounding box.
 
         Returns
         -------
-        Vector
+        tuple[float, float, float]
             Center of the bounding box.
 
         Examples
@@ -1790,10 +1903,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(center=(1, 2, 0))
         >>> mesh.center
-        [1.0, 2.0, 0.0]
+        (1.0, 2.0, 0.0)
 
         """
-        return list(self.GetCenter())
+        return self.GetCenter()
 
     @property
     def volume(self) -> float:
@@ -1823,7 +1936,8 @@ class DataSet(DataSetFilters, DataObject):
         0.0
 
         :class:`pyvista.PolyData` is special as a 2D surface can
-        enclose a 3D volume.
+        enclose a 3D volume. This case uses a different methodology,
+        see :func:`pyvista.PolyData.volume`.
 
         >>> mesh = pv.Sphere()
         >>> mesh.volume
@@ -1831,7 +1945,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
-        return sizes.cell_data['Volume'].sum()
+        return sizes.cell_data['Volume'].sum().item()
 
     @property
     def area(self) -> float:
@@ -1862,15 +1976,16 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh.area
         0.0
 
-        Get the area of a sphere.
+        Get the area of a sphere. Discretization error results
+        in slight difference from ``pi``.
 
         >>> mesh = pv.Sphere()
-        >>> mesh.volume
-        0.51825
+        >>> mesh.area
+        3.13
 
         """
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
-        return sizes.cell_data['Area'].sum()
+        return sizes.cell_data['Area'].sum().item()
 
     def get_array(
         self,
@@ -2125,6 +2240,10 @@ class DataSet(DataSetFilters, DataObject):
 
             def format_array(name, arr, field):
                 """Format array information for printing (internal helper)."""
+                if isinstance(arr, str):
+                    # Convert string scalar into a numpy array. Otherwise, get_data_range
+                    # will treat the string as an array name, not an array value.
+                    arr = np.array(arr)
                 dl, dh = self.get_data_range(arr)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
@@ -2443,7 +2562,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> relative_position = cell_centers.points - point
         >>> distance = np.linalg.norm(relative_position, axis=1)
         >>> np.argmin(distance)
-        338
+        np.int64(338)
 
         Find the nearest cells to several random points that
         are centered on the origin.
@@ -2704,13 +2823,13 @@ class DataSet(DataSetFilters, DataObject):
         )
         return vtk_id_list_to_array(id_list)
 
-    def find_cells_within_bounds(self, bounds: BoundsLike) -> NumpyArray[int]:
+    def find_cells_within_bounds(self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
 
         Parameters
         ----------
         bounds : sequence[float]
-            Bounding box. The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+            Bounding box. The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Returns
         -------
@@ -3346,7 +3465,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
         >>> mesh.get_cell(0).bounds
-        (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
+        BoundsTuple(x_min=0.0, x_max=0.5, y_min=0.0, y_max=0.5, z_min=0.0, z_max=0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
         True
 
@@ -3378,7 +3497,7 @@ class DataSet(DataSetFilters, DataObject):
             in_cell[i] = bool(is_inside)
 
         if singular:
-            return in_cell[0]
+            return in_cell[0].item()
         return in_cell
 
     @property

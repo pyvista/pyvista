@@ -10,6 +10,7 @@ from typing import get_origin
 
 import numpy as np
 import pytest
+import scipy
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
@@ -73,9 +74,9 @@ def test_validate_transform4x4(transform_like):
 
 
 def test_validate_transform4x4_raises():
-    with pytest.raises(TypeError, match=escape("Input transform must be one of")):
+    with pytest.raises(ValueError, match=escape("Shape must be one of [(3, 3), (4, 4)].")):
         validate_transform4x4(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match="must have real numbers"):
+    with pytest.raises(TypeError, match="Input transform must be one of"):
         validate_transform4x4("abc")
 
 
@@ -85,7 +86,9 @@ def test_validate_transform4x4_raises():
         np.eye(3),
         np.eye(3).tolist(),
         vtkmatrix_from_array(np.eye(3)),
+        scipy.spatial.transform.Rotation.from_matrix(np.eye(3)),
     ],
+    ids=['numpy', 'list', 'vtk', 'scipy'],
 )
 def test_validate_transform3x3(transform_like):
     result = validate_transform3x3(transform_like)
@@ -94,9 +97,11 @@ def test_validate_transform3x3(transform_like):
 
 
 def test_validate_transform3x3_raises():
-    with pytest.raises(TypeError, match=escape("Input transform must be one of")):
+    match = "Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n\tscipy.spatial.transform.Rotation\nGot array([1, 2, 3]) with type <class 'numpy.ndarray'> instead."
+    with pytest.raises(TypeError, match=escape(match)):
         validate_transform3x3(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match="must have real numbers."):
+    match = "Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n\tscipy.spatial.transform.Rotation\nGot 'abc' with type <class 'str'> instead."
+    with pytest.raises(TypeError, match=match):
         validate_transform3x3("abc")
 
 
@@ -711,7 +716,7 @@ def test_check_length():
     match = '_input must have a length equal to any of: 1. Got length 2 instead.'
     with pytest.raises(ValueError, match=match):
         check_length((1, 2), exact_length=1, name="_input")
-    match = '_input must have a length equal to any of: [3 4]. Got length 2 instead.'
+    match = '_input must have a length equal to any of: [3, 4]. Got length 2 instead.'
     with pytest.raises(ValueError, match=escape(match)):
         check_length((1, 2), exact_length=[3, 4], name="_input")
 

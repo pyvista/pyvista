@@ -103,8 +103,17 @@ Status badges
 .. |Awesome Scientific Computing| image:: https://awesome.re/mentioned-badge.svg
    :target: https://github.com/nschloe/awesome-scientific-computing
 
+.. |Packaging status| image:: https://repology.org/badge/tiny-repos/python:pyvista.svg
+   :target: https://repology.org/project/python:pyvista/versions
+
+.. |Good first issue| image:: https://img.shields.io/github/issues/pyvista/pyvista/good%20first%20issue
+   :target: https://github.com/pyvista/pyvista/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
+
+.. |GitHub Repo stars| image:: https://img.shields.io/github/stars/pyvista/pyvista
+   :target: https://github.com/pyvista/pyvista/stargazers
+
 +----------------------+------------------------------------------------+
-| Deployment           | |pypi| |conda|                                 |
+| Deployment           | |pypi| |conda| |Packaging status|              |
 +----------------------+------------------------------------------------+
 | Build Status         | |GH-CI| |python| |pre-commit.ci status|        |
 +----------------------+------------------------------------------------+
@@ -116,7 +125,8 @@ Status badges
 +----------------------+------------------------------------------------+
 | License              | |MIT|                                          |
 +----------------------+------------------------------------------------+
-| Community            | |slack| |discuss|                              |
+| Community            | |slack| |discuss| |Good first issue|           |
+|                      | |GitHub Repo stars|                            |
 +----------------------+------------------------------------------------+
 | Formatter            | |prettier|                                     |
 +----------------------+------------------------------------------------+
@@ -253,6 +263,12 @@ their ideas. To learn more about contributing to PyVista, please see the
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
 .. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
 
+Star History
+============
+
+.. image:: https://api.star-history.com/svg?repos=pyvista/pyvista&type=Date
+   :alt: Star History Chart
+   :target: https://star-history.com/#pyvista/pyvista&Date
 
 Citing PyVista
 ==============
