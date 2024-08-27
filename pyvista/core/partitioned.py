@@ -13,6 +13,7 @@ from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
+import collections
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
 
