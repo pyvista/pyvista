@@ -144,6 +144,7 @@ cell types.
    Triangle
    TriangleStrip
    Polygon
+   Pixel
    Quadrilateral
    Tetrahedron
    Voxel

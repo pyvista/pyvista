@@ -33,9 +33,9 @@ def plot_cell(grid, cpos=None, **kwargs):
     pl = pyvista.Plotter()
     pl.add_mesh(grid, opacity=0.5)
     edges = grid.extract_all_edges()
-    if edges.n_cells:
-        pl.add_mesh(grid.extract_all_edges(), line_width=5, color='k', render_lines_as_tubes=True)
-    pl.add_points(grid, render_points_as_spheres=True, point_size=30, color='r')
+    if edges.n_cells or next(grid.cell).type in [CellType.LINE, CellType.POLY_LINE]:
+        pl.add_mesh(grid, style='wireframe', line_width=10, color='k', render_lines_as_tubes=True)
+    pl.add_points(grid, render_points_as_spheres=True, point_size=80, color='r')
     pl.add_point_labels(
         grid.points,
         range(grid.n_points),
@@ -43,7 +43,7 @@ def plot_cell(grid, cpos=None, **kwargs):
         fill_shape=False,
         margin=0,
         shape_opacity=0.0,
-        font_size=20,
+        font_size=50,
     )
     pl.enable_anti_aliasing()
     if cpos is None:
