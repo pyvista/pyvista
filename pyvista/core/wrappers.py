@@ -29,9 +29,8 @@ from .composite import MultiBlock
 from .grid import ImageData
 from .grid import RectilinearGrid
 from .objects import Table
-from .partitioned import PartitionedDataSet, PartitionedDataSetCollection
-from .pointset import ExplicitStructuredGrid, PointSet, PolyData, StructuredGrid, UnstructuredGrid
 from .partitioned import PartitionedDataSet
+from .partitioned import PartitionedDataSetCollection
 from .pointset import ExplicitStructuredGrid
 from .pointset import PointSet
 from .pointset import PolyData

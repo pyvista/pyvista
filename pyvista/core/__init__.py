@@ -33,16 +33,8 @@ from .grid import Grid
 from .grid import ImageData
 from .grid import RectilinearGrid
 from .objects import Table
-from .partitioned import PartitionedDataSet, PartitionedDataSetCollection
-from .pointset import (
-    ExplicitStructuredGrid,
-    PointGrid,
-    PointSet,
-    PolyData,
-    StructuredGrid,
-    UnstructuredGrid,
-)
 from .partitioned import PartitionedDataSet
+from .partitioned import PartitionedDataSetCollection
 from .pointset import ExplicitStructuredGrid
 from .pointset import PointGrid
 from .pointset import PointSet
