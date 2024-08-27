@@ -2187,10 +2187,9 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> from pyvista import examples
         >>> hex_beam = examples.load_hexbeam()
         >>> hex_beam.celltypes
-        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
-               dtype=uint8)
+        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12], dtype=uint8)
 
         """
         return _vtk.vtk_to_numpy(self.GetCellTypesArray())
