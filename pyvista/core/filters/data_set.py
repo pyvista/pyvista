@@ -492,8 +492,8 @@ class DataSetFilters:
             dataset.
 
         plane : PolyData, optional
-            Plane mesh to use for the projection. Use this as an alternative to
-            setting ``origin`` and/or ``normal``. The plane's normal vectors are used
+            Plane mesh to use for clipping. Use this as an alternative to
+            setting ``origin`` and ``normal``. The plane's normal vectors are used
             for the ``normal`` parameter and the mean of the plane's points is used for
             the ``origin`` parameter.
 
@@ -1039,8 +1039,8 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         plane : PolyData, optional
-            Plane mesh to use for the projection. Use this as an alternative to
-            setting ``origin`` and/or ``normal``. The plane's normal vectors are used
+            Plane mesh to use for slicing. Use this as an alternative to
+            setting ``origin`` and ``normal``. The plane's normal vectors are used
             for the ``normal`` parameter and the mean of the plane's points is used for
             the ``origin`` parameter.
 
