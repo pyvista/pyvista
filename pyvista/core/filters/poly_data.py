@@ -140,7 +140,7 @@ class PolyDataFilters(DataSetFilters):
            Behavior changed to match default VTK behavior.
 
         .. versionchanged:: 0.45.0
-           Define ``or`` operator to perform boolean union.
+           Define ``|`` operator to perform boolean union.
 
         Parameters
         ----------
@@ -167,7 +167,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere_a = pv.Sphere()
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
-        >>> result = sphere_a or sphere_b
+        >>> result = sphere_a | sphere_b
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
@@ -216,7 +216,7 @@ class PolyDataFilters(DataSetFilters):
         .. versionadded:: 0.32.0
 
         .. versionchanged:: 0.45.0
-           Define ``and`` operator to perform boolean intersection.
+           Define ``&`` operator to perform boolean intersection.
 
         Parameters
         ----------
@@ -243,7 +243,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere_a = pv.Sphere()
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
-        >>> result = sphere_a and sphere_b
+        >>> result = sphere_a & sphere_b
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
