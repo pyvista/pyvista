@@ -144,6 +144,7 @@ cell types.
    Triangle
    TriangleStrip
    Polygon
+   Pixel
    Quadrilateral
    Tetrahedron
    Voxel
@@ -152,3 +153,9 @@ cell types.
    Pyramid
    PentagonalPrism
    HexagonalPrism
+   QuadraticEdge
+   QuadraticTriangle
+   QuadraticQuadrilateral
+   QuadraticTetrahedron
+   QuadraticHexahedron
+   QuadraticWedge
