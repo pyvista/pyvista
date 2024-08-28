@@ -249,13 +249,13 @@ def check_sorted(
     second_item = array[tuple(second_slice)]
 
     if ascending and not strict:
-        is_sorted = np.all(first_item <= second_item)
+        is_sorted = np.all(first_item <= second_item)  # type: ignore[operator]
     elif ascending and strict:
-        is_sorted = np.all(first_item < second_item)
+        is_sorted = np.all(first_item < second_item)  # type: ignore[operator]
     elif not ascending and not strict:
-        is_sorted = np.all(first_item >= second_item)
+        is_sorted = np.all(first_item >= second_item)  # type: ignore[operator]
     else:  # not ascending and strict
-        is_sorted = np.all(first_item > second_item)
+        is_sorted = np.all(first_item > second_item)  # type: ignore[operator]
 
     if not is_sorted:
         # Show the array's elements in error msg if array is small

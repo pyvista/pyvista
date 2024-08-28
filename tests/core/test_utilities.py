@@ -935,6 +935,12 @@ def test_fit_plane_to_points():
     assert np.allclose(fitted_normal, direction)
     assert np.allclose(fitted_plane.point_normals.mean(axis=0), direction)
 
+    flipped_normal = direction * -1
+    _, _, new_normal = fit_plane_to_points(
+        expected_plane.points, return_meta=True, init_normal=flipped_normal
+    )
+    assert np.allclose(new_normal, flipped_normal)
+
 
 def test_fit_line_to_points():
     # Fit a line to a line's points
@@ -1340,6 +1346,69 @@ def test_transform_invert(transform):
 
     transform.invert()
     assert transform.is_inverted is False
+
+
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize(
+    ('obj', 'return_self', 'return_type', 'return_dtype'),
+    [
+        (list(VECTOR), False, np.ndarray, float),
+        (VECTOR, False, np.ndarray, float),
+        (np.array(VECTOR), False, np.ndarray, float),
+        (np.array([VECTOR]), False, np.ndarray, float),
+        (np.array(VECTOR, dtype=float), True, np.ndarray, float),
+        (np.array([VECTOR], dtype=float), True, np.ndarray, float),
+        (pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32),
+        (pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32),
+        (pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float),
+        (
+            pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
+            True,
+            pv.MultiBlock,
+            float,
+        ),
+    ],
+    ids=[
+        'list-int',
+        'tuple-int',
+        'array1d-int',
+        'array2d-int',
+        'array1d-float',
+        'array2d-float',
+        'polydata-float32',
+        'polydata-int',
+        'polydata-float',
+        'multiblock-float',
+    ],
+)
+def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
+    def _get_points_from_object(obj_):
+        return (
+            obj_.points
+            if isinstance(obj_, pv.DataSet)
+            else obj_[0].points
+            if isinstance(obj_, pv.MultiBlock)
+            else obj_
+        )
+
+    points_in_array = np.array(_get_points_from_object(obj))
+    out = transform.scale(SCALE).apply(obj, copy=copy, transform_all_input_vectors=True)
+
+    if not copy and return_self:
+        assert out is obj
+    else:
+        assert out is not obj
+    assert isinstance(out, return_type)
+
+    points_out = _get_points_from_object(out)
+    assert isinstance(points_out, np.ndarray)
+    assert points_out.dtype == return_dtype
+    assert np.array_equal(points_in_array * SCALE, points_out)
+
+    inverted = transform.apply(out, inverse=True)
+    inverted_points = _get_points_from_object(inverted)
+    assert np.array_equal(inverted_points, points_in_array)
+    assert not transform.is_inverted
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])

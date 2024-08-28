@@ -2166,68 +2166,30 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return lgrid
 
     @property
-    def celltypes(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def celltypes(self) -> NumpyArray[np.uint8]:  # numpydoc ignore=RT01
         """Return the cell types array.
+
+        The array contains integer values corresponding to the :attr:`pyvista.Cell.type`
+        of each cell in the dataset. See the :class:`pyvista.CellType` enum for more
+        information about cell type.
 
         Returns
         -------
         numpy.ndarray
             Array of cell types.
 
-        Notes
-        -----
-        Here are some of the most popular cell types:
-
-        * ``EMPTY_CELL = 0``
-        * ``VERTEX = 1``
-        * ``POLY_VERTEX = 2``
-        * ``LINE = 3``
-        * ``POLY_LINE = 4``
-        * ``TRIANGLE = 5``
-        * ``TRIANGLE_STRIP = 6``
-        * ``POLYGON = 7``
-        * ``PIXEL = 8``
-        * ``QUAD = 9``
-        * ``TETRA = 10``
-        * ``VOXEL = 11``
-        * ``HEXAHEDRON = 12``
-        * ``WEDGE = 13``
-        * ``PYRAMID = 14``
-        * ``PENTAGONAL_PRISM = 15``
-        * ``HEXAGONAL_PRISM = 16``
-        * ``QUADRATIC_EDGE = 21``
-        * ``QUADRATIC_TRIANGLE = 22``
-        * ``QUADRATIC_QUAD = 23``
-        * ``QUADRATIC_POLYGON = 36``
-        * ``QUADRATIC_TETRA = 24``
-        * ``QUADRATIC_HEXAHEDRON = 25``
-        * ``QUADRATIC_WEDGE = 26``
-        * ``QUADRATIC_PYRAMID = 27``
-        * ``BIQUADRATIC_QUAD = 28``
-        * ``TRIQUADRATIC_HEXAHEDRON = 29``
-        * ``QUADRATIC_LINEAR_QUAD = 30``
-        * ``QUADRATIC_LINEAR_WEDGE = 31``
-        * ``BIQUADRATIC_QUADRATIC_WEDGE = 32``
-        * ``BIQUADRATIC_QUADRATIC_HEXAHEDRON = 33``
-        * ``BIQUADRATIC_TRIANGLE = 34``
-
-        See `vtkCellType.h
-        <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ for all
-        cell types.
-
         Examples
         --------
         This mesh contains only linear hexahedral cells, type
-        ``CellType.HEXAHEDRON``, which evaluates to 12.
+        :attr:`pyvista.CellType.HEXAHEDRON`, which evaluates to 12.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pv.read(examples.hexbeamfile)
-        >>> hex_beam.celltypes  # doctest:+SKIP
-        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
-               dtype=uint8)
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.celltypes
+        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12], dtype=uint8)
 
         """
         return _vtk.vtk_to_numpy(self.GetCellTypesArray())
