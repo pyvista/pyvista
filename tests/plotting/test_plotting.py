@@ -4695,3 +4695,20 @@ def test_bounding_box(oblique_cone, box_style):
     pl.add_mesh(box, color='red', opacity=0.5, line_width=5)
     pl.add_mesh(oriented_box, color='blue', opacity=0.5, line_width=5)
     pl.show()
+
+
+@pytest.mark.parametrize('operator', ['|', '&'])
+def test_bitwise_and_or_of_polydata(operator):
+    radius = 0.5
+    sphere = pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
+    sphere_shifted = pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
+    if operator == '|':
+        result = sphere | sphere_shifted
+    elif operator == '&':
+        result = sphere & sphere_shifted
+    pl = pv.Plotter()
+    _ = pl.add_mesh(sphere, color='r', style='wireframe', line_width=3)
+    _ = pl.add_mesh(sphere_shifted, color='b', style='wireframe', line_width=3)
+    _ = pl.add_mesh(result, color='lightblue')
+    pl.camera_position = 'xz'
+    pl.show()
