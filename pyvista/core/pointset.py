@@ -618,6 +618,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> import pyvista as pv
 
     Seed random number generator for reproducible plots
+    
     >>> rng = np.random.default_rng(seed=0)
 
     Create an empty mesh.
