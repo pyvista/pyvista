@@ -886,6 +886,7 @@ class _AxesConfig(_ThemeConfig):
         Color(name='seagreen', hex='#2e8b57ff', opacity=255)
 
         Change the default color.
+        
         >>> pv.global_theme.axes.y_color = 'green'
         """
         return self._y_color
