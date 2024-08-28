@@ -139,6 +139,9 @@ class PolyDataFilters(DataSetFilters):
         .. versionchanged:: 0.32.0
            Behavior changed to match default VTK behavior.
 
+        .. versionchanged:: 0.45.0
+           Define ``or`` operator to perform boolean union.
+
         Parameters
         ----------
         other_mesh : pyvista.PolyData
@@ -211,6 +214,9 @@ class PolyDataFilters(DataSetFilters):
            :func:`PolyDataFilters.triangulate`.
 
         .. versionadded:: 0.32.0
+
+        .. versionchanged:: 0.45.0
+           Define ``and`` operator to perform boolean intersection.
 
         Parameters
         ----------
