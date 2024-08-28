@@ -226,8 +226,8 @@ class CellType(_DocIntEnum):
     decomposed.
 
     Cells can also be characterized as linear or non-linear. Linear cells use
-    linear or constant interpolation. Non-linear cells may use quadratic or
-    cubic interpolation.
+    linear or constant interpolation. Non-linear cells may use quadratic,
+    cubic, or some other interpolation.
 
     This enumeration defines all cell types used in VTK and supported by PyVista. The
     type(s) of cell(s) to use is typically chosen based on application need, such as
@@ -583,6 +583,7 @@ class CellType(_DocIntEnum):
     QUADRATIC_EDGE = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_EDGE,
         cell_class=_vtk.vtkQuadraticEdge,
+        example='QuadraticEdge',
         short_doc="""
         Represents a 1D, 3-node, iso-parametric parabolic line.
 
@@ -596,6 +597,7 @@ class CellType(_DocIntEnum):
     QUADRATIC_TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkQuadraticTriangle,
+        example='QuadraticTriangle',
         short_doc="""
         Represents a 2D, 6-node, iso-parametric parabolic triangle.
 
@@ -614,6 +616,7 @@ class CellType(_DocIntEnum):
     QUADRATIC_QUAD = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_QUAD,
         cell_class=_vtk.vtkQuadraticQuad,
+        example='QuadraticQuadrilateral',
         short_doc="""
         Represents a 2D, 8-node iso-parametric parabolic quadrilateral element.
 
@@ -653,6 +656,7 @@ class CellType(_DocIntEnum):
     QUADRATIC_TETRA = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_TETRA,
         cell_class=_vtk.vtkQuadraticTetra,
+        example='QuadraticTetrahedron',
         short_doc="""
         Represents a 3D, 10-node, iso-parametric parabolic tetrahedron.
 
@@ -671,6 +675,7 @@ class CellType(_DocIntEnum):
     QUADRATIC_HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkQuadraticHexahedron,
+        example='QuadraticHexahedron',
         short_doc="""
         Represents a 3D, 20-node iso-parametric parabolic hexahedron.
 
@@ -691,6 +696,7 @@ class CellType(_DocIntEnum):
     QUADRATIC_WEDGE = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkQuadraticWedge,
+        example='QuadraticWedge',
         short_doc="""
         Represents a 3D, 15-node iso-parametric parabolic wedge.
 
