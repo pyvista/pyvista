@@ -60,7 +60,6 @@ Protobuf
 Ptera
 PyInstaller
 PyPI
-PyThreeJS
 PyVista
 Pydocstyle
 Python
@@ -115,7 +114,6 @@ https
 imageio
 img
 initializer
-ipygany
 itkwidgets
 jupyter
 kubernetes
@@ -148,7 +146,6 @@ pypi
 pyprocar
 pytest
 python
-pythreejs
 pyvista
 relicense
 renderers
