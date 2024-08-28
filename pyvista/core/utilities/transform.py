@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import overload
 
 import numpy as np
 
@@ -11,10 +12,14 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import DataSet
+    from pyvista import MultiBlock
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -1419,6 +1424,149 @@ class Transform(_vtk.vtkTransform):
     def n_transformations(self) -> int:  # numpydoc ignore: RT01
         """Return the current number of concatenated transformations."""
         return self.GetNumberOfConcatenatedTransforms()
+
+    @overload
+    def apply(  # numpydoc ignore: GL08
+        self,
+        obj: VectorLike[float] | MatrixLike[float],
+        /,
+        *,
+        inverse: bool = ...,
+        copy: bool = ...,
+        transform_all_input_vectors: bool = ...,
+    ) -> NumpyArray[float]: ...
+    @overload
+    def apply(  # numpydoc ignore: GL08
+        self,
+        obj: DataSet,
+        /,
+        *,
+        inverse: bool = ...,
+        copy: bool = ...,
+        transform_all_input_vectors: bool = ...,
+    ) -> DataSet: ...
+    @overload
+    def apply(  # numpydoc ignore: GL08
+        self,
+        obj: MultiBlock,
+        /,
+        *,
+        inverse: bool = ...,
+        copy: bool = ...,
+        transform_all_input_vectors: bool = ...,
+    ) -> MultiBlock: ...
+    def apply(
+        self,
+        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
+        /,
+        *,
+        inverse: bool = False,
+        copy: bool = True,
+        transform_all_input_vectors: bool = False,
+    ):
+        """Apply the current transformation :attr:`matrix` to points or a dataset.
+
+        .. note::
+
+            Points with integer values are cast to a float type before the
+            transformation is applied. A similar casting is also performed when
+            transforming datasets. See also the notes at :func:`~pyvista.DataSetFilters.transform`
+            which is used by this filter under the hood.
+
+        Parameters
+        ----------
+        obj : VectorLike[float] | MatrixLike[float] | pyvista.DataSet
+            Object to apply the transformation to.
+
+        inverse : bool, default: False
+            Apply the transformation using the :attr:`inverse_matrix` instead of the
+            :attr:`matrix`.
+
+        copy : bool, default: True
+            Return a copy of the input with the transformation applied. Set this to
+            ``False`` to transform the input directly and return it. Only applies to
+            NumPy arrays and datasets. A copy is always returned for tuple and list
+            inputs or point arrays with integers.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only the points,
+            normals and active vectors are transformed. Has no effect if the input is
+            not a dataset.
+
+        Returns
+        -------
+        np.ndarray or pyvista.DataSet
+            Transformed array or dataset.
+
+        See Also
+        --------
+        pyvista.DataSetFilters.transform
+            Transform a dataset.
+
+        Examples
+        --------
+        Apply a transformation to a point.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> point = (1, 2, 3)
+        >>> transform = pv.Transform().scale(2)
+        >>> transformed_point = transform.apply(point)
+        >>> transformed_point
+        array([2., 4., 6.])
+
+        Apply a transformation to a points array.
+
+        >>> points = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> transformed_points = transform.apply(points)
+        >>> transformed_points
+        array([[ 2.,  4.,  6.],
+               [ 8., 10., 12.]])
+
+        Apply a transformation to a dataset.
+
+        >>> dataset = pv.PolyData(points)
+        >>> transformed_dataset = transform.apply(dataset)
+        >>> transformed_dataset.points
+        pyvista_ndarray([[ 2.,  4.,  6.],
+                         [ 8., 10., 12.]], dtype=float32)
+
+        Apply the inverse.
+
+        >>> inverted_dataset = transform.apply(dataset, inverse=True)
+        >>> inverted_dataset.points
+        pyvista_ndarray([[0.5, 1. , 1.5],
+                         [2. , 2.5, 3. ]], dtype=float32)
+        """
+        # avoid circular import
+        from pyvista.core.composite import MultiBlock
+        from pyvista.core.dataset import DataSet
+
+        inplace = not copy
+        # Transform dataset
+        if isinstance(obj, (DataSet, MultiBlock)):
+            return obj.transform(
+                self.copy().invert() if inverse else self,
+                inplace=inplace,
+                transform_all_input_vectors=transform_all_input_vectors,
+            )
+
+        matrix = self.inverse_matrix if inverse else self.matrix
+        # Validate array - make sure we have floats
+        array = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
+        array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
+
+        # Transform a single point
+        if array.shape == (3,):
+            out = (matrix @ (*array, 1))[:3]
+            if inplace:
+                array[:] = out
+                out = array
+            return out
+
+        # Transform many points
+        out = apply_transformation_to_points(matrix, array, inplace=inplace)
+        return array if inplace else out
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
