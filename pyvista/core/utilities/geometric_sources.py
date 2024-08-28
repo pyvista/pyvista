@@ -3159,6 +3159,7 @@ class AxesGeometrySource:
         symmetric bounds. Orientation is added for visualization.
 
         Create actors.
+        
         >>> axes_sym = pv.AxesAssembly(
         ...     orientation=(90, 0, 0), symmetric_bounds=True
         ... )
