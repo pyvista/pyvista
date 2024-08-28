@@ -1603,7 +1603,7 @@ class Transform(_vtk.vtkTransform):
                [0. , 0. , 0. , 1. ]])
 
         Check that the transformation is inverted.
-        
+
         >>> transform.is_inverted
         True
 
