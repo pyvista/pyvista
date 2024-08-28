@@ -17,6 +17,7 @@ from numbers import Number
 import reprlib
 from typing import TYPE_CHECKING
 from typing import Sequence
+from typing import Sized
 from typing import Tuple
 from typing import Union
 from typing import cast
@@ -33,6 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
     from pyvista.core._typing_core._array_like import _NumberType
+
 
 _Shape = Union[Tuple[()], Tuple[int, ...]]
 _ShapeLike = Union[int, _Shape]
@@ -98,7 +100,7 @@ def check_subdtype(
     if not isinstance(base_dtype, (tuple, list)):
         base_dtype = [base_dtype]
 
-    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):
+    if not any(np.issubdtype(input_dtype, base) for base in base_dtype):  # type: ignore[arg-type]
         # Not a subdtype, so raise error
         msg = f"{name} has incorrect dtype of '{input_dtype.name}'. "
         if len(base_dtype) == 1:
@@ -247,13 +249,13 @@ def check_sorted(
     second_item = array[tuple(second_slice)]
 
     if ascending and not strict:
-        is_sorted = np.all(first_item <= second_item)
+        is_sorted = np.all(first_item <= second_item)  # type: ignore[operator]
     elif ascending and strict:
-        is_sorted = np.all(first_item < second_item)
+        is_sorted = np.all(first_item < second_item)  # type: ignore[operator]
     elif not ascending and not strict:
-        is_sorted = np.all(first_item >= second_item)
+        is_sorted = np.all(first_item >= second_item)  # type: ignore[operator]
     else:  # not ascending and strict
-        is_sorted = np.all(first_item > second_item)
+        is_sorted = np.all(first_item > second_item)  # type: ignore[operator]
 
     if not is_sorted:
         # Show the array's elements in error msg if array is small
@@ -999,15 +1001,15 @@ def check_contains(*, item, container, name='Input'):
 
 
 def check_length(
-    arr,
+    sized_input: float | Sized,
     /,
+    exact_length: int | VectorLike[int] | None = None,
     *,
-    exact_length=None,
-    min_length=None,
-    max_length=None,
-    must_be_1d=False,
-    allow_scalars=False,
-    name="Array",
+    min_length: int | None = None,
+    max_length: int | None = None,
+    must_be_1d: bool = False,
+    allow_scalar: bool = False,
+    name: str = "Array",
 ):
     """Check if the length of an array meets specific requirements.
 
@@ -1020,10 +1022,10 @@ def check_length(
 
     Parameters
     ----------
-    arr : array_like
-        Array to check.
+    sized_input : float | Sized
+        Number or array to check.
 
-    exact_length : int | array_like[int, ...]
+    exact_length : int | VectorLike[int], optional
         Check if the array has the given length. If multiple
         numbers are given, the array's length must match one of the
         numbers.
@@ -1038,9 +1040,9 @@ def check_length(
         If ``True``, check if the shape of the array is one-dimensional,
         i.e. that the array's shape is ``(1,)``.
 
-    allow_scalars : bool, default: False
-        If ``True``, a scalar input will be reshaped to have a length of
-        1. Otherwise, the check will fail since a scalar does not
+    allow_scalar : bool, default: False
+        If ``True``, a scalar input will be reshaped to have a length
+        of 1. Otherwise, the check will fail since a scalar does not
         have a length.
 
     name : str, default: "Array"
@@ -1071,50 +1073,43 @@ def check_length(
     >>> _validation.check_length([[1, 2, 3], [4, 5, 6]], max_length=2)
 
     """
-    if allow_scalars:
+    if allow_scalar:
         # Reshape to 1D
-        if isinstance(arr, np.ndarray) and arr.ndim == 0:
-            arr = [arr.tolist()]
-        elif isinstance(arr, Number):
-            arr = [arr]
-    check_instance(arr, (Sequence, np.ndarray), name=name)
+        if isinstance(sized_input, np.ndarray) and sized_input.ndim == 0:
+            sized_input = [sized_input.tolist()]
+        elif isinstance(sized_input, (float, int)):
+            sized_input = [sized_input]
 
     if must_be_1d:
-        check_shape(arr, shape=(-1))
+        check_shape(sized_input, shape=(-1))  # type: ignore[arg-type]
 
+    array_len = len(sized_input)  # type: ignore[arg-type]
     if exact_length is not None:
-        exact_length = np.array(exact_length)
         check_integer(exact_length, name="'exact_length'")
-        if len(arr) not in exact_length:
+        if array_len not in np.atleast_1d(exact_length):
             raise ValueError(
                 f"{name} must have a length equal to any of: {exact_length}. "
-                f"Got length {len(arr)} instead.",
+                f"Got length {array_len} instead.",
             )
 
     # Validate min/max length
     if min_length is not None:
-        min_length = _cast_to_numpy(min_length)
-        check_number(min_length.tolist(), name="Min length")
-        check_real(min_length, name="Min length")
+        check_finite(min_length, name="Min length")
     if max_length is not None:
-        max_length = _cast_to_numpy(max_length)
-        check_number(max_length.tolist(), name="Max length")
-        check_real(max_length, name="Max length")
+        check_finite(max_length, name="Max length")
     if min_length is not None and max_length is not None:
         check_sorted((min_length, max_length), name="Range")
 
-    if min_length is not None:
-        if len(arr) < min_length:
-            raise ValueError(
-                f"{name} must have a minimum length of {min_length}. "
-                f"Got length {len(arr)} instead.",
-            )
-    if max_length is not None:
-        if len(arr) > max_length:
-            raise ValueError(
-                f"{name} must have a maximum length of {max_length}. "
-                f"Got length {len(arr)} instead.",
-            )
+    if min_length is not None and array_len < min_length:
+        raise ValueError(
+            f"{name} must have a minimum length of {min_length}. "
+            f"Got length {array_len} instead.",
+        )
+    if max_length is not None and array_len > max_length:
+        raise ValueError(
+            f"{name} must have a maximum length of {max_length}. "
+            f"Got length {array_len} instead.",
+        )
 
 
 def _validate_shape_value(shape: _ShapeLike) -> _Shape:

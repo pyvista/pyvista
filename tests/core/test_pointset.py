@@ -252,8 +252,8 @@ def test_threshold_percent(pointset):
 def test_explode(pointset):
     out = pointset.explode(1)
     assert isinstance(out, pv.PointSet)
-    ori_xlen = pointset.bounds[1] - pointset.bounds[0]
-    new_xlen = out.bounds[1] - out.bounds[0]
+    ori_xlen = pointset.bounds.x_max - pointset.bounds.x_min
+    new_xlen = out.bounds.x_max - out.bounds.x_min
     assert np.isclose(2 * ori_xlen, new_xlen)
 
 
@@ -345,3 +345,10 @@ def test_rotate_vector():
     pset = pv.PointSet(np_points)
     pset.rotate_vector([1, 2, 1], 45, inplace=True)
     assert np.allclose(pset.points, [1.1910441, 1.0976311, 0.6136938])
+
+
+def test_rotate():
+    np_points = np.array([1, 1, 1], dtype=float)
+    pset = pv.PointSet(np_points)
+    pset.rotate([[-1, 0, 0], [0, -1, 0], [0, 0, -1]], inplace=True)
+    assert np.allclose(pset.points, [-1, -1, -1])

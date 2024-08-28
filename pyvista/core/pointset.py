@@ -45,7 +45,7 @@ from .utilities.points import vtk_points
 
 if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import ArrayLike
-    from ._typing_core import BoundsLike
+    from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
@@ -217,10 +217,10 @@ class _PointSet(DataSet):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.center
-        [0.0, 0.0, 0.0]
+        (0.0, 0.0, 0.0)
         >>> trans = mesh.translate((2, 1, 2), inplace=True)
         >>> trans.center
-        [2.0, 1.0, 2.0]
+        (2.0, 1.0, 2.0)
 
         """
         if inplace:
@@ -2166,68 +2166,30 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return lgrid
 
     @property
-    def celltypes(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
+    def celltypes(self) -> NumpyArray[np.uint8]:  # numpydoc ignore=RT01
         """Return the cell types array.
+
+        The array contains integer values corresponding to the :attr:`pyvista.Cell.type`
+        of each cell in the dataset. See the :class:`pyvista.CellType` enum for more
+        information about cell type.
 
         Returns
         -------
         numpy.ndarray
             Array of cell types.
 
-        Notes
-        -----
-        Here are some of the most popular cell types:
-
-        * ``EMPTY_CELL = 0``
-        * ``VERTEX = 1``
-        * ``POLY_VERTEX = 2``
-        * ``LINE = 3``
-        * ``POLY_LINE = 4``
-        * ``TRIANGLE = 5``
-        * ``TRIANGLE_STRIP = 6``
-        * ``POLYGON = 7``
-        * ``PIXEL = 8``
-        * ``QUAD = 9``
-        * ``TETRA = 10``
-        * ``VOXEL = 11``
-        * ``HEXAHEDRON = 12``
-        * ``WEDGE = 13``
-        * ``PYRAMID = 14``
-        * ``PENTAGONAL_PRISM = 15``
-        * ``HEXAGONAL_PRISM = 16``
-        * ``QUADRATIC_EDGE = 21``
-        * ``QUADRATIC_TRIANGLE = 22``
-        * ``QUADRATIC_QUAD = 23``
-        * ``QUADRATIC_POLYGON = 36``
-        * ``QUADRATIC_TETRA = 24``
-        * ``QUADRATIC_HEXAHEDRON = 25``
-        * ``QUADRATIC_WEDGE = 26``
-        * ``QUADRATIC_PYRAMID = 27``
-        * ``BIQUADRATIC_QUAD = 28``
-        * ``TRIQUADRATIC_HEXAHEDRON = 29``
-        * ``QUADRATIC_LINEAR_QUAD = 30``
-        * ``QUADRATIC_LINEAR_WEDGE = 31``
-        * ``BIQUADRATIC_QUADRATIC_WEDGE = 32``
-        * ``BIQUADRATIC_QUADRATIC_HEXAHEDRON = 33``
-        * ``BIQUADRATIC_TRIANGLE = 34``
-
-        See `vtkCellType.h
-        <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ for all
-        cell types.
-
         Examples
         --------
         This mesh contains only linear hexahedral cells, type
-        ``CellType.HEXAHEDRON``, which evaluates to 12.
+        :attr:`pyvista.CellType.HEXAHEDRON`, which evaluates to 12.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pv.read(examples.hexbeamfile)
-        >>> hex_beam.celltypes  # doctest:+SKIP
-        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
-               dtype=uint8)
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.celltypes
+        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12], dtype=uint8)
 
         """
         return _vtk.vtk_to_numpy(self.GetCellTypesArray())
@@ -3035,7 +2997,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         return self._dimensions()
 
     @property
-    def visible_bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def visible_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounding box of the visible cells.
 
         Different from `bounds`, which returns the bounding box of the
@@ -3055,10 +3017,10 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         >>> grid = examples.load_explicit_structured()
         >>> grid = grid.hide_cells(range(80, 120))
         >>> grid.bounds
-        (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
+        BoundsTuple(x_min=0.0, x_max=80.0, y_min=0.0, y_max=50.0, z_min=0.0, z_max=6.0)
 
         >>> grid.visible_bounds
-        (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
+        BoundsTuple(x_min=0.0, x_max=80.0, y_min=0.0, y_max=50.0, z_min=0.0, z_max=4.0)
 
         """
         name = _vtk.vtkDataSetAttributes.GhostArrayName()
