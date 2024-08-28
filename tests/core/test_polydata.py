@@ -387,8 +387,8 @@ def test_boolean_union_intersection(sphere, sphere_shifted):
 
 
 def test_and_or(sphere, sphere_shifted):
-    union = sphere or sphere_shifted
-    intersection = sphere and sphere_shifted
+    union = sphere | sphere_shifted
+    intersection = sphere & sphere_shifted
 
     # union is volume of sphere + sphere_shifted minus the part intersecting
     expected_volume = sphere.volume + sphere_shifted.volume - intersection.volume
