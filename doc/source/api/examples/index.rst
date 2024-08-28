@@ -154,3 +154,9 @@ cell types.
    Pyramid
    PentagonalPrism
    HexagonalPrism
+   QuadraticEdge
+   QuadraticTriangle
+   QuadraticQuadrilateral
+   QuadraticTetrahedron
+   QuadraticHexahedron
+   QuadraticWedge
