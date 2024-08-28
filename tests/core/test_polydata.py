@@ -386,7 +386,7 @@ def test_boolean_union_intersection(sphere, sphere_shifted):
     assert np.isclose(intersection.volume, expected_volume, atol=1e-3)
 
 
-def test_and_or(sphere, sphere_shifted):
+def test_bitwise_and_or(sphere, sphere_shifted):
     union = sphere | sphere_shifted
     intersection = sphere & sphere_shifted
 
