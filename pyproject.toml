@@ -220,8 +220,6 @@ exclude = [  # don't report on objects that match any of these regex
     '\.add_field_array$',
     '\.DataSetAttributes\.append$',
     # will be removed or refactored
-    '^pv_pythreejs\..*$',
-    '^pv_ipygany\..*$',
     '^notebook\..*$',
     # Documentation extensions or utilities
     '^viewer_directive\..*$',
