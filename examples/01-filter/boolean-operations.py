@@ -28,9 +28,10 @@ must be all triangle meshes, which you can check with
 .. note::
    For merging, the ``+`` operator can be used between any two meshes
    in PyVista which simply calls the ``.merge()`` filter to combine
-   any two meshes.  This is different from ``boolean_union`` as it
-   simply superimposes the two meshes without performing additional
-   calculations on the result.
+   any two meshes.  This is different from the operator ``or`` in PyVista
+   which simply calls the ``boolean_union`` filter as it simply superimposes
+   the two meshes without performing additional calculations on the result.
+   The ``and`` operator in PyVista simply calls the ``boolean_intersection``.
 
 .. warning::
    If your boolean operations don't react the way you think they
@@ -63,7 +64,7 @@ sphere_b = pv.Sphere(center=(0.5, 0, 0))
 # Order of operands does not matter for boolean union (the operation is
 # commutative).
 
-result = sphere_a.boolean_union(sphere_b)
+result = sphere_a or sphere_b
 pl = pv.Plotter()
 _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
 _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
@@ -85,7 +86,7 @@ pl.show()
 #
 # Order of operands matters for boolean difference.
 
-result = sphere_a.boolean_difference(sphere_b)
+result = sphere_a - sphere_b
 pl = pv.Plotter()
 _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
 _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
@@ -107,7 +108,7 @@ pl.show()
 # Order of operands does not matter for boolean intersection (the
 # operation is commutative).
 
-result = sphere_a.boolean_intersection(sphere_b)
+result = sphere_a and sphere_b
 pl = pv.Plotter()
 _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
 _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
