@@ -51,9 +51,7 @@ def _indent_paragraph(string, level):
 
 
 # See link for color names: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
-_BADGE_COLORS = dict(
-    linear='primary', primary='success', dimension='secondary', geometry='muted'
-)
+_BADGE_COLORS = dict(linear='primary', primary='success', dimension='secondary', geometry='muted')
 
 
 def _generate_linear_badge(is_linear: bool):
