@@ -3168,6 +3168,7 @@ class AxesGeometrySource:
         ... )
 
         Show multi-window plot.
+        
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> _ = pl.add_text("Symmetric bounds")
