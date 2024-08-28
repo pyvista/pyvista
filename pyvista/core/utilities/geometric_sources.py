@@ -3159,6 +3159,7 @@ class AxesGeometrySource:
         symmetric bounds. Orientation is added for visualization.
 
         Create actors.
+
         >>> axes_sym = pv.AxesAssembly(
         ...     orientation=(90, 0, 0), symmetric_bounds=True
         ... )
@@ -3167,6 +3168,7 @@ class AxesGeometrySource:
         ... )
 
         Show multi-window plot.
+
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
         >>> _ = pl.add_text("Symmetric bounds")

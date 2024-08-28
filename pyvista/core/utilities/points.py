@@ -442,6 +442,7 @@ def fit_line_to_points(
     ... )
 
     Show the length of the line.
+
     >>> length
     167.6145387467733
 

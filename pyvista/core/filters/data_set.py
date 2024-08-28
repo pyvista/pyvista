@@ -5542,6 +5542,7 @@ class DataSetFilters:
         the MultiBlock directly.
 
         Clear scalar data so we can color each mesh using a single color
+
         >>> _ = [block.clear_data() for block in multiblock]
         >>>
         >>> plot = pv.Plotter()
