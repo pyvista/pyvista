@@ -270,9 +270,9 @@ class CompositeFilters:
         """
         trans = pyvista.Transform(trans)
         multi = self if inplace else self.copy(deep=False)  # type: ignore[attr-defined]
-        for i, block in enumerate(self):  # type: ignore[var-annotated, arg-type]
-            if block is not None:
-                multi[i] = block.transform(
+        for name in self.keys():  # type: ignore[attr-defined]
+            if self[name] is not None:  # type: ignore[index]
+                multi[name] = multi[name].transform(
                     trans,
                     transform_all_input_vectors=transform_all_input_vectors,
                     inplace=inplace,
