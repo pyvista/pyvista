@@ -908,6 +908,7 @@ class _AxesConfig(_ThemeConfig):
         Color(name='blue', hex='#0000ffff', opacity=255)
 
         Change the default color.
+        
         >>> pv.global_theme.axes.z_color = 'purple'
         """
         return self._z_color
