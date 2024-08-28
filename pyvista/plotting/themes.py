@@ -864,6 +864,7 @@ class _AxesConfig(_ThemeConfig):
         Color(name='tomato', hex='#ff6347ff', opacity=255)
 
         Change the default color.
+
         >>> pv.global_theme.axes.x_color = 'red'
         """
         return self._x_color
@@ -885,6 +886,7 @@ class _AxesConfig(_ThemeConfig):
         Color(name='seagreen', hex='#2e8b57ff', opacity=255)
 
         Change the default color.
+
         >>> pv.global_theme.axes.y_color = 'green'
         """
         return self._y_color
@@ -906,6 +908,7 @@ class _AxesConfig(_ThemeConfig):
         Color(name='blue', hex='#0000ffff', opacity=255)
 
         Change the default color.
+
         >>> pv.global_theme.axes.z_color = 'purple'
         """
         return self._z_color

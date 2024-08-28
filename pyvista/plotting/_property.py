@@ -897,6 +897,7 @@ class Property(_vtk.vtkProperty):
         Examples
         --------
         Get the default line width and visualize it.
+
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.line_width
