@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import collections
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 from typing import overload
@@ -13,7 +14,6 @@ from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
-import collections
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
 
