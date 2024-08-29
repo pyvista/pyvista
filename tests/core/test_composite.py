@@ -443,6 +443,37 @@ def test_combine_filter(ant, sphere, uniform, airplane, tetbeam):
     assert isinstance(geom, pv.UnstructuredGrid)
 
 
+@pytest.mark.parametrize('inplace', [True, False])
+def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
+    # Set up
+    multi = multi_from_datasets(ant, sphere)
+    nested = multi_from_datasets(airplane, tetbeam)
+    multi.append(nested)
+    multi.append(None)
+    for i, _ in enumerate(multi):
+        multi.set_block_name(i, str(i))
+
+    NUMBER = 42
+    transform = pv.Transform().translate(NUMBER, NUMBER, NUMBER)
+    bounds_before = np.array(multi.bounds)
+    n_blocks_before = multi.n_blocks
+    keys_before = multi.keys()
+
+    # Do test
+    output = multi.transform(
+        transform, inplace=inplace, transform_all_input_vectors=False, progress_bar=False
+    )
+    bounds_after = np.array(output.bounds)
+    n_blocks_after = output.n_blocks
+    keys_after = output.keys()
+
+    assert (output is multi) == inplace
+    assert [(block_in is block_out) == inplace for block_in, block_out in zip(multi, output)]
+    assert np.allclose(bounds_before + NUMBER, bounds_after)
+    assert n_blocks_before == n_blocks_after
+    assert keys_before == keys_after
+
+
 def test_multi_block_copy(ant, sphere, uniform, airplane, tetbeam):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
     # Now check everything

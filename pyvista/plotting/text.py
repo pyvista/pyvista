@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pyvista
 from pyvista.core import _validation
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -415,6 +416,11 @@ class Label(_Prop3DMixin, Text):
         vector4 = (*self.relative_position, 1)
         new_position = (matrix4x4 @ vector4)[:3]
         self._label_position = new_position
+
+    def _get_bounds(self) -> BoundsTuple:
+        # Define its 3D position as its bounds
+        x, y, z = self._label_position
+        return BoundsTuple(x, x, y, y, z, z)
 
 
 @no_new_attr

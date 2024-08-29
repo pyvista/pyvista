@@ -62,3 +62,5 @@ cpos = [
 ]
 
 top.plot(cpos=cpos, color=True)
+# %%
+# .. tags:: filter

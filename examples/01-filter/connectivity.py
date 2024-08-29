@@ -170,3 +170,5 @@ _ = p.add_mesh(peak_mesh, color='red', label='Steepest Peak')
 _ = p.add_mesh(valley_mesh, color='blue', label='Closest Valley')
 _ = p.add_legend()
 p.show()
+# %%
+# .. tags:: filter

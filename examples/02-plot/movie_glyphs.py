@@ -70,3 +70,5 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 
 # Close and finalize the gif
 plotter.close()
+# %%
+# .. tags:: plot

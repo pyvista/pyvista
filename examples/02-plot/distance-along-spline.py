@@ -84,3 +84,5 @@ pl.show_bounds()
 pl.show_axes()
 pl.camera_position = 'xz'
 pl.show()
+# %%
+# .. tags:: plot

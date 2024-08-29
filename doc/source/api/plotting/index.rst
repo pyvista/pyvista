@@ -38,6 +38,7 @@ all plotting functionality in PyVista.
    DataSetMapper
    Label
    LookupTable
+   PlanesAssembly
    Plotter
    Prop3D
    Property
