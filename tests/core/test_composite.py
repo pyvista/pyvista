@@ -464,7 +464,7 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     n_blocks_after = output.n_blocks
 
     assert (output is multi) == inplace
-    assert [(block_in is block_out) == inplace for block_in, block_out in zip(multi, output)]
+    assert all([(block_in is block_out) == inplace for block_in, block_out in zip(multi, output)])
     assert np.allclose(bounds_before + NUMBER, bounds_after)
     assert n_blocks_before == n_blocks_after
 
