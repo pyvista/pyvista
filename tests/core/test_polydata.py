@@ -417,6 +417,12 @@ def test_subtract(sphere, sphere_shifted):
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
 
 
+def test_isubtract(sphere, sphere_shifted):
+    sub_mesh = sphere.copy()
+    sub_mesh -= sphere_shifted
+    assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
+
+
 def test_append(
     sphere: pv.PolyData,
     sphere_shifted: pv.PolyData,

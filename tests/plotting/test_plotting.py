@@ -4697,7 +4697,7 @@ def test_bounding_box(oblique_cone, box_style):
     pl.show()
 
 
-@pytest.mark.parametrize('operator', ['or', 'and'])
+@pytest.mark.parametrize('operator', ['or', 'and', 'ior', 'iand'])
 def test_bitwise_and_or_of_polydata(operator):
     radius = 0.5
     sphere = pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
@@ -4706,6 +4706,12 @@ def test_bitwise_and_or_of_polydata(operator):
         result = sphere | sphere_shifted
     elif operator == 'and':
         result = sphere & sphere_shifted
+    elif operator == 'ior':
+        result = sphere.copy()
+        result |= sphere_shifted
+    elif operator == 'iand':
+        result = sphere.copy()
+        result &= sphere_shifted
     pl = pv.Plotter()
     _ = pl.add_mesh(sphere, color='r', style='wireframe', line_width=3)
     _ = pl.add_mesh(sphere_shifted, color='b', style='wireframe', line_width=3)
