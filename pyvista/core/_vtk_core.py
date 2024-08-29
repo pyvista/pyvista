@@ -182,6 +182,7 @@ from vtkmodules.vtkCommonDataModel import vtkIterativeClosestPointTransform
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from vtkmodules.vtkCommonDataModel import vtkNonMergingPointLocator
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSet
+from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSetCollection
 from vtkmodules.vtkCommonDataModel import vtkPerlinNoise
 from vtkmodules.vtkCommonDataModel import vtkPiecewiseFunction
 from vtkmodules.vtkCommonDataModel import vtkPlane
@@ -433,6 +434,10 @@ with contextlib.suppress(ImportError):
 # 9.1+ imports
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetWriter
+
+# 9.1+ imports
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkIOParallelXML import vtkXMLPartitionedDataSetCollectionWriter
 
 
 class VersionInfo(NamedTuple):

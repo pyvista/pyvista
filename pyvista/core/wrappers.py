@@ -30,6 +30,7 @@ from .grid import ImageData
 from .grid import RectilinearGrid
 from .objects import Table
 from .partitioned import PartitionedDataSet
+from .partitioned import PartitionedDataSetCollection
 from .pointset import ExplicitStructuredGrid
 from .pointset import PointSet
 from .pointset import PolyData
@@ -48,5 +49,6 @@ _wrappers = {
     'vtkTable': Table,
     'vtkPointSet': PointSet,
     'vtkPartitionedDataSet': PartitionedDataSet,
+    'vtkPartitionedDataSetCollection': PartitionedDataSetCollection,
     # 'vtkParametricSpline': pyvista.Spline,
 }

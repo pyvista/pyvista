@@ -34,6 +34,7 @@ from .grid import ImageData
 from .grid import RectilinearGrid
 from .objects import Table
 from .partitioned import PartitionedDataSet
+from .partitioned import PartitionedDataSetCollection
 from .pointset import ExplicitStructuredGrid
 from .pointset import PointGrid
 from .pointset import PointSet
