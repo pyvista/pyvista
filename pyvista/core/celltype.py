@@ -91,8 +91,74 @@ class _CellTypeTuple(NamedTuple):
     faces_override: Literal['variable', 'n/a'] | None = None
 
 
-class _DocIntEnum(IntEnum):
-    """Enable documentation for enum members."""
+class CellType(IntEnum):
+    """Define types of cells.
+
+    Cells are defined by specifying a type in combination with an ordered list of points.
+    The ordered list, often referred to as the connectivity list, combined with the
+    type specification, implicitly defines the topology of the cell. The x-y-z point
+    coordinates define the cell geometry.
+
+    Although point coordinates are defined in three dimensions, the cell topology can
+    be 0, 1, 2, or 3-dimensional.
+
+    Cells can be primary (e.g. triangle) or composite (e.g. triangle strip). Composite
+    cells consist of one or more primary cells, while primary cells cannot be
+    decomposed.
+
+    Cells can also be characterized as linear or non-linear. Linear cells use
+    linear or constant interpolation. Non-linear cells may use quadratic,
+    cubic, or some other interpolation.
+
+    This enumeration defines all cell types used in VTK and supported by PyVista. The
+    type(s) of cell(s) to use is typically chosen based on application need, such as
+    graphics rendering or numerical simulation.
+
+    .. seealso::
+
+        `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
+            List of all cell types defined in VTK.
+
+        :ref:`linear_cells_example`
+            Detailed example using linear cells.
+
+        :ref:`examples_cells`
+            Examples creating a mesh comprising a single cell.
+
+    Examples
+    --------
+    Create a single cube. Notice how the cell type is defined using the
+    ``CellType``.
+
+    >>> import numpy as np
+    >>> from pyvista import CellType
+    >>> import pyvista as pv
+    >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+    >>> cell_type = np.array([CellType.HEXAHEDRON], np.int8)
+    >>> points = np.array(
+    ...     [
+    ...         [0, 0, 0],
+    ...         [1, 0, 0],
+    ...         [1, 1, 0],
+    ...         [0, 1, 0],
+    ...         [0, 0, 1],
+    ...         [1, 0, 1],
+    ...         [1, 1, 1],
+    ...         [0, 1, 1],
+    ...     ],
+    ...     dtype=np.float32,
+    ... )
+    >>> grid = pv.UnstructuredGrid(cells, cell_type, points)
+    >>> grid
+    UnstructuredGrid (...)
+      N Cells:    1
+      N Points:   8
+      X Bounds:   0.000e+00, 1.000e+00
+      Y Bounds:   0.000e+00, 1.000e+00
+      Z Bounds:   0.000e+00, 1.000e+00
+      N Arrays:   0
+
+    """
 
     def __new__(
         cls,
@@ -206,76 +272,6 @@ class _DocIntEnum(IntEnum):
             )
 
         return self
-
-
-class CellType(_DocIntEnum):
-    """Define types of cells.
-
-    Cells are defined by specifying a type in combination with an ordered list of points.
-    The ordered list, often referred to as the connectivity list, combined with the
-    type specification, implicitly defines the topology of the cell. The x-y-z point
-    coordinates define the cell geometry.
-
-    Although point coordinates are defined in three dimensions, the cell topology can
-    be 0, 1, 2, or 3-dimensional.
-
-    Cells can be primary (e.g. triangle) or composite (e.g. triangle strip). Composite
-    cells consist of one or more primary cells, while primary cells cannot be
-    decomposed.
-
-    Cells can also be characterized as linear or non-linear. Linear cells use
-    linear or constant interpolation. Non-linear cells may use quadratic,
-    cubic, or some other interpolation.
-
-    This enumeration defines all cell types used in VTK and supported by PyVista. The
-    type(s) of cell(s) to use is typically chosen based on application need, such as
-    graphics rendering or numerical simulation.
-
-    .. seealso::
-
-        `vtkCellType.h <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_
-            List of all cell types defined in VTK.
-
-        :ref:`linear_cells_example`
-            Detailed example using linear cells.
-
-        :ref:`examples_cells`
-            Examples creating a mesh comprising a single cell.
-
-    Examples
-    --------
-    Create a single cube. Notice how the cell type is defined using the
-    ``CellType``.
-
-    >>> import numpy as np
-    >>> from pyvista import CellType
-    >>> import pyvista as pv
-    >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
-    >>> cell_type = np.array([CellType.HEXAHEDRON], np.int8)
-    >>> points = np.array(
-    ...     [
-    ...         [0, 0, 0],
-    ...         [1, 0, 0],
-    ...         [1, 1, 0],
-    ...         [0, 1, 0],
-    ...         [0, 0, 1],
-    ...         [1, 0, 1],
-    ...         [1, 1, 1],
-    ...         [0, 1, 1],
-    ...     ],
-    ...     dtype=np.float32,
-    ... )
-    >>> grid = pv.UnstructuredGrid(cells, cell_type, points)
-    >>> grid
-    UnstructuredGrid (...)
-      N Cells:    1
-      N Points:   8
-      X Bounds:   0.000e+00, 1.000e+00
-      Y Bounds:   0.000e+00, 1.000e+00
-      Z Bounds:   0.000e+00, 1.000e+00
-      N Arrays:   0
-
-    """
 
     ####################################################################################
     # Linear cells
