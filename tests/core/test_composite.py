@@ -450,7 +450,7 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     nested = multi_from_datasets(airplane, tetbeam)
     multi.append(nested)
     multi.append(None)
-    for i in enumerate(multi):
+    for i, _ in enumerate(multi):
         multi.set_block_name(i, str(i))
 
     NUMBER = 42
