@@ -4048,7 +4048,7 @@ def test_align_xyz_three_axis_directions(planar_mesh):
 
     match = 'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a left-handed transformation.'
     with pytest.raises(ValueError, match=re.escape(match)):
-        _ = planar_mesh.align_xyz(
+        planar_mesh.align_xyz(
             axis_0_direction='x',
             axis_1_direction='-y',
             axis_2_direction=axis_2_direction * -1,

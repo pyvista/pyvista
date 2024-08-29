@@ -602,7 +602,7 @@ def test_normals_name(plane):
 
 def test_normals_raise_field(plane):
     with pytest.raises(AttributeError):
-        _ = plane.field_data.active_normals
+        plane.field_data.active_normals
 
 
 def test_add_two_vectors():

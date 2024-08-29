@@ -700,7 +700,7 @@ def test_planes_assembly_label_size_init():
 
 def test_planes_assembly_camera(planes_assembly):
     with pytest.raises(ValueError, match='Camera has not been set.'):
-        _ = planes_assembly.camera
+        planes_assembly.camera
 
     camera = pv.Camera()
     planes_assembly.camera = camera

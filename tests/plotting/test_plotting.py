@@ -911,7 +911,7 @@ def test_legend_circle_face(sphere):
     plotter.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     face = "circle"
-    _ = plotter.add_legend(
+    plotter.add_legend(
         labels=legend_labels,
         border=True,
         bcolor=None,
@@ -926,7 +926,7 @@ def test_legend_rectangle_face(sphere):
     plotter.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     face = "rectangle"
-    _ = plotter.add_legend(
+    plotter.add_legend(
         labels=legend_labels,
         border=True,
         bcolor=None,
@@ -1078,7 +1078,7 @@ def test_set_background():
     plotter.set_background('k')
     plotter.background_color = "yellow"
     plotter.set_background([0, 0, 0], top=[1, 1, 1])  # Gradient
-    _ = plotter.background_color
+    plotter.background_color
     plotter.show()
 
     plotter = pv.Plotter(shape=(1, 2))
@@ -4352,7 +4352,7 @@ def test_create_axes_orientation_box():
         show_text_edges=True,
     )
     plotter = pv.Plotter()
-    _ = plotter.add_actor(actor)
+    plotter.add_actor(actor)
     plotter.show()
 
 
