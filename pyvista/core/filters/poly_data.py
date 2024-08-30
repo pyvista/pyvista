@@ -139,6 +139,9 @@ class PolyDataFilters(DataSetFilters):
         .. versionchanged:: 0.32.0
            Behavior changed to match default VTK behavior.
 
+        .. versionchanged:: 0.45.0
+           Define ``|`` operator to perform boolean union.
+
         Parameters
         ----------
         other_mesh : pyvista.PolyData
@@ -164,7 +167,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere_a = pv.Sphere()
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
-        >>> result = sphere_a.boolean_union(sphere_b)
+        >>> result = sphere_a | sphere_b
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
@@ -212,6 +215,9 @@ class PolyDataFilters(DataSetFilters):
 
         .. versionadded:: 0.32.0
 
+        .. versionchanged:: 0.45.0
+           Define ``&`` operator to perform boolean intersection.
+
         Parameters
         ----------
         other_mesh : pyvista.PolyData
@@ -237,7 +243,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere_a = pv.Sphere()
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
-        >>> result = sphere_a.boolean_intersection(sphere_b)
+        >>> result = sphere_a & sphere_b
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
@@ -314,7 +320,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere_a = pv.Sphere()
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
-        >>> result = sphere_a.boolean_difference(sphere_b)
+        >>> result = sphere_a - sphere_b
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
