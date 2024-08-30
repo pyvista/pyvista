@@ -699,7 +699,9 @@ class Color:
 
     Refer to the table below for a list of supported colors
 
-    .. include:: ../color_table/color_table.rst
+    .. dropdown:: Colors
+
+        .. include:: ../color_table/color_table.rst
 
     Examples
     --------
