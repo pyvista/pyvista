@@ -1,168 +1,6 @@
 """Color module supporting plotting module.
 
 Used code from matplotlib.colors.  Thanks for your work.
-
-
-SUPPORTED COLORS
-aliceblue
-antiquewhite
-aqua
-aquamarine
-azure
-beige
-bisque
-black
-blanchedalmond
-blue
-blueviolet
-brown
-burlywood
-cadetblue
-chartreuse
-chocolate
-coral
-cornflowerblue
-cornsilk
-crimson
-cyan
-darkblue
-darkcyan
-darkgoldenrod
-darkgray
-darkgreen
-darkgrey
-darkkhaki
-darkmagenta
-darkolivegreen
-darkorange
-darkorchid
-darkred
-darksalmon
-darkseagreen
-darkslateblue
-darkslategray
-darkslategrey
-darkturquoise
-darkviolet
-deeppink
-deepskyblue
-dimgray
-dimgrey
-dodgerblue
-firebrick
-floralwhite
-forestgreen
-fuchsia
-gainsboro
-ghostwhite
-gold
-goldenrod
-gray
-green
-greenyellow
-grey
-honeydew
-hotpink
-indianred
-indigo
-ivory
-khaki
-lavender
-lavenderblush
-lawngreen
-lemonchiffon
-lightblue
-lightcoral
-lightcyan
-lightgoldenrodyellow
-lightgray
-lightgreen
-lightgrey
-lightpink
-lightsalmon
-lightseagreen
-lightskyblue
-lightslategray
-lightslategrey
-lightsteelblue
-lightyellow
-lime
-limegreen
-linen
-magenta
-maroon
-mediumaquamarine
-mediumblue
-mediumorchid
-mediumpurple
-mediumseagreen
-mediumslateblue
-mediumspringgreen
-mediumturquoise
-mediumvioletred
-midnightblue
-mintcream
-mistyrose
-moccasin
-navajowhite
-navy
-oldlace
-olive
-olivedrab
-orange
-orangered
-orchid
-palegoldenrod
-palegreen
-paleturquoise
-palevioletred
-papayawhip
-peachpuff
-peru
-pink
-plum
-powderblue
-purple
-rebeccapurple
-red
-rosybrown
-royalblue
-saddlebrown
-salmon
-sandybrown
-seagreen
-seashell
-sienna
-silver
-skyblue
-slateblue
-slategray
-slategrey
-snow
-springgreen
-steelblue
-tan
-teal
-thistle
-tomato
-turquoise
-violet
-wheat
-white
-whitesmoke
-yellow
-yellowgreen
-tab:blue
-tab:orange
-tab:green
-tab:red
-tab:purple
-tab:brown
-tab:pink
-tab:gray
-tab:olive
-tab:cyan
-
 """
 
 # Necessary for autodoc_type_aliases to recognize the type aliases used in the signatures
@@ -208,9 +46,14 @@ def _format_color_name(string):
     return string.lower().replace('_', '')
 
 
-# Following colors are copied from matplotlib.colors, synonyms (colors with a
-# different name but same hex value) are removed and put in the `color_synonyms`
-# dictionary. An extra `paraview_background` color is added.
+# Colors include:
+# - Standard web named colors: https://www.w3.org/TR/css-color-4/#named-colors
+# - Extra `paraview_background` color is added
+# - Additional colors from vtkNamedColors with any duplicates, synonyms, or
+#   colors already defined by the web standard excluded
+#   https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html
+#
+# Synonyms (colors with a different name but same hex value) are placed in `color_synonyms`
 
 _hexcolors = {
     'alice_blue': '#F0F8FF',
@@ -223,7 +66,7 @@ _hexcolors = {
     'blanched_almond': '#FFEBCD',
     'blue': '#0000FF',
     'blue_violet': '#8A2BE2',
-    'brown': '#654321',
+    'brown': '#a52a2a',
     'burly_wood': '#DEB887',
     'cadet_blue': '#5F9EA0',
     'chartreuse': '#7FFF00',
@@ -366,17 +209,13 @@ _hexcolors = {
     'tab:cyan': '#17becf',
     # colors from vtkNamedColor:
     'alizarin_crimson': '#e32636',
-    'aquamarine_medium': '#66cdaa',
     'aureoline_yellow': '#ffa824',
     'banana': '#e3cf57',
-    'blue_light': '#add8e6',
-    'blue_medium': '#0000cd',
     'brick': '#9c661f',
     'brown_madder': '#db2929',
     'brown_ochre': '#87421f',
     'burnt_sienna': '#8a360f',
     'burnt_umber': '#8a3324',
-    'cadet': '#5f9ea0',
     'cadmium_lemon': '#ffe303',
     'cadmium_orange': '#ff6103',
     'cadmium_red_deep': '#e3170d',
@@ -391,9 +230,6 @@ _hexcolors = {
     'cobalt_green': '#3d9140',
     'cobalt_violet_deep': '#91219e',
     'cold_grey': '#808a87',
-    'coral_light': '#f08080',
-    'cornflower': '#6495ed',
-    'cyan_white': '#e0ffff',
     'deep_ochre': '#733d1a',
     'eggshell': '#fce6c9',
     'emerald_green': '#00c957',
@@ -402,18 +238,9 @@ _hexcolors = {
     'flesh_ochre': '#ff5721',
     'geranium_lake': '#e31230',
     'gold_ochre': '#c77826',
-    'goldenrod_dark': '#b8860b',
-    'goldenrod_light': '#fafad2',
-    'goldenrod_pale': '#eee8aa',
-    'green_pale': '#98fb98',
     'greenish_umber': '#ff3d0d',
-    'grey': '#c0c0c0',
     'ivory_black': '#292421',
-    'khaki_dark': '#bdb76b',
     'lamp_black': '#2e473b',
-    'light_beige': '#f5f5dc',
-    'light_goldenrod': '#eedd82',
-    'light_grey': '#d3d3d3',
     'madder_lake_deep': '#e32e30',
     'manganese_blue': '#03a89e',
     'mars_orange': '#964514',
@@ -421,47 +248,25 @@ _hexcolors = {
     'melon': '#e3a869',
     'mint': '#bdfcc9',
     'naples_yellow_deep': '#ffa812',
-    'olive_green_dark': '#556b2f',
-    'orchid_dark': '#9932cc',
-    'orchid_medium': '#ba55d3',
     'peacock': '#33a1c9',
     'permanent_green': '#0ac92b',
     'permanent_red_violet': '#db2645',
-    'pink_light': '#ffb6c1',
-    'purple_medium': '#9370db',
     'raspberry': '#872657',
     'raw_umber': '#734a12',
     'rose_madder': '#e33638',
     'sap_green': '#308014',
-    'sea_green_dark': '#8fbc8f',
-    'sea_green_light': '#20b2aa',
-    'sea_green_medium': '#3cb371',
     'sepia': '#5e2612',
-    'sky_blue_deep': '#00bfff',
-    'sky_blue_light': '#87cefa',
-    'slate_blue_dark': '#483d8b',
-    'slate_blue_light': '#8470ff',
-    'slate_blue_medium': '#7b68ee',
-    'slate_grey_dark': '#2f4f4f',
-    'spring_green_medium': '#00fa9a',
-    'steel_blue_light': '#b0c4de',
+    'light_slate_blue_': '#8470ff',
     'terre_verte': '#385e0f',
     'titanium_white': '#fcfff0',
     'turquoise_blue': '#00c78c',
-    'turquoise_dark': '#00ced1',
-    'turquoise_medium': '#48d1cc',
-    'turquoise_pale': '#afeeee',
     'ultramarine': '#120a8f',
     'ultramarine_violet': '#5c246e',
     'van_dyke_brown': '#5e2605',
     'venetian_red': '#d41a1f',
-    'violet_dark': '#9400d3',
     'violet_red': '#d02090',
-    'violet_red_medium': '#c71585',
-    'violet_red_pale': '#db7093',
     'viridian_light': '#6eff70',
     'warm_grey': '#808069',
-    'yellow_light': '#ffffe0',
     'yellow_ochre': '#e38217',
     'zinc_white': '#fcf7ff',
 }
@@ -493,45 +298,7 @@ _color_synonyms = {
     'pv': 'paraview_background',
     'paraview': 'paraview_background',
     'slate_grey': 'slate_gray',
-    # synonyms from vtkNamedColor:
-    'aquamarine_medium': 'medium_aquamarine',
-    'beige': 'light_beige',
-    'blue_light': 'light_blue',
-    'blue_medium': 'medium_blue',
-    'cadet': 'cadet_blue',
-    'coral_light': 'light_coral',
-    'cornflower': 'cornflower_blue',
-    'cyan_white': 'light_cyan',
-    'dark_goldenrod': 'goldenrod_dark',
-    'dark_green': 'green_dark',
-    'dark_khaki': 'khaki_dark',
-    'dark_olive_green': 'olive_green_dark',
-    'dark_orchid': 'orchid_dark',
-    'dark_sea_green': 'sea_green_dark',
-    'dark_slate_blue': 'slate_blue_dark',
-    'dark_slate_gray': 'slate_grey_dark',
-    'dark_turquoise': 'turquoise_dark',
-    'dark_violet': 'violet_dark',
-    'deep_sky_blue': 'sky_blue_deep',
-    'goldenrod_light': 'light_goldenrod_yellow',
-    'goldenrod_pale': 'pale_goldenrod',
-    'green_pale': 'pale_green',
-    'silver': 'gray',
-    'light_pink': 'pink_light',
-    'light_sea_green': 'sea_green_light',
-    'light_sky_blue': 'sky_blue_light',
-    'light_slate_gray': 'slate_grey_light',
-    'light_steel_blue': 'steel_blue_light',
-    'light_yellow': 'yellow_light',
-    'medium_orchid': 'orchid_medium',
-    'medium_purple': 'purple_medium',
-    'medium_sea_green': 'sea_green_medium',
-    'medium_slate_blue': 'slate_blue_medium',
-    'medium_spring_green': 'spring_green_medium',
-    'medium_turquoise': 'turquoise_medium',
-    'medium_violet_red': 'violet_red_medium',
-    'pale_turquoise': 'turquoise_pale',
-    'pale_violet_red': 'violet_red_pale',
+    'light_goldenrod': 'light_goldenrod_yellow',
 }
 color_synonyms = {
     _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
