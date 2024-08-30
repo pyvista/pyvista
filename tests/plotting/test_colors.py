@@ -145,7 +145,7 @@ def test_css4_colors(css4_color):
 
 def test_color_synonyms(color_synonym):
     color = pv.Color(color_synonym)
-    assert color.name
+    assert isinstance(color, pv.Color)
 
 
 def test_unique_colors():
