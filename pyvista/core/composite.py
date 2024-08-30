@@ -1053,6 +1053,35 @@ class MultiBlock(
         else:
             self.ShallowCopy(to_copy)
 
+        # Shallow copy creates new instances of nested multiblocks
+        # Iterate through the blocks to fix this
+        for i, this_block in enumerate(self):
+            if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
+                block_to_copy = to_copy.GetBlock(i)
+                self.replace(i, block_to_copy)
+
+    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+        """Overwrite this data object with another data object as a deep copy.
+
+        Parameters
+        ----------
+        to_copy : pyvista.DataObject or vtk.vtkDataObject
+            Data object to perform a deep copy from.
+
+        """
+
+        def _set_name_for_none_blocks(this_object_, new_object_):
+            for i, dataset in enumerate(new_object_):
+                if dataset is None:
+                    this_object_.set_block_name(i, new_object_.get_block_name(i))
+                elif isinstance(dataset, MultiBlock):
+                    _set_name_for_none_blocks(this_object_[i], dataset)
+
+        super().deep_copy(to_copy)
+        # Deep copy will not copy the block name for None blocks (name is set to None instead)
+        # Iterate through the blocks to fix this
+        _set_name_for_none_blocks(self, pyvista.wrap(pyvista.wrap(to_copy)))
+
     def set_active_scalars(
         self,
         name: str | None,

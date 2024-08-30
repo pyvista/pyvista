@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 import vtk
 
+import pyvista
 import pyvista as pv
 from pyvista import ImageData
 from pyvista import MultiBlock
@@ -17,11 +18,6 @@ from pyvista import StructuredGrid
 from pyvista import examples as ex
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
-
-
-def multi_from_datasets(*datasets):
-    """Return pyvista multiblock composed of any number of datasets."""
-    return MultiBlock(datasets)
 
 
 def test_multi_block_init_vtk():
@@ -315,17 +311,15 @@ def test_multi_block_clean(rectilinear, uniform, ant):
     assert foo.n_blocks == 1
 
 
-def test_multi_block_repr(ant, sphere, uniform, airplane):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
-    # Now check everything
-    assert multi.n_blocks == 5
+def test_multi_block_repr(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
     assert multi._repr_html_() is not None
     assert repr(multi) is not None
     assert str(multi) is not None
 
 
-def test_multi_block_eq(ant, sphere, uniform, airplane, tetbeam):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+def test_multi_block_eq(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
     other = multi.copy()
 
     assert multi is not other
@@ -349,22 +343,13 @@ def test_multi_block_eq(ant, sphere, uniform, airplane, tetbeam):
 @pytest.mark.parametrize('extension', pv.core.composite.MultiBlock._WRITERS)
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(
-    extension,
-    binary,
-    tmpdir,
-    use_pathlib,
-    ant,
-    sphere,
-    uniform,
-    airplane,
-    tetbeam,
+    extension, binary, tmpdir, use_pathlib, multiblock_all_with_nested_and_none
 ):
     filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     if use_pathlib:
         pathlib.Path(filename)
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
-    # Now check everything
-    assert multi.n_blocks == 5
+    multi = multiblock_all_with_nested_and_none
+
     # Save it out
     multi.save(filename, binary)
     foo = MultiBlock(filename)
@@ -373,10 +358,9 @@ def test_multi_block_io(
     assert foo.n_blocks == multi.n_blocks
 
 
-@skip_mac  # fails due to download examples
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
-def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, tetbeam):
+def test_ensight_multi_block_io(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))  # noqa: UP031
     # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file
@@ -421,33 +405,21 @@ def test_multi_io_erros(tmpdir):
         _ = MultiBlock(bad_ext_name)
 
 
-def test_extract_geometry(ant, sphere, uniform, airplane, tetbeam):
-    multi = multi_from_datasets(ant, sphere, uniform)
-    nested = multi_from_datasets(airplane, tetbeam)
-    multi.append(nested)
-    # Now check everything
-    assert multi.n_blocks == 4
-    # Now apply the geometry filter to combine a plethora of data blocks
-    geom = multi.extract_geometry()
+def test_extract_geometry(multiblock_all_with_nested_and_none):
+    geom = multiblock_all_with_nested_and_none.extract_geometry()
     assert isinstance(geom, PolyData)
 
 
-def test_combine_filter(ant, sphere, uniform, airplane, tetbeam):
-    multi = multi_from_datasets(ant, sphere, uniform)
-    nested = multi_from_datasets(airplane, tetbeam)
-    multi.append(nested)
-    # Now check everything
-    assert multi.n_blocks == 4
-    # Now apply the append filter to combine a plethora of data blocks
-    geom = multi.combine()
+def test_combine_filter(multiblock_all_with_nested_and_none):
+    geom = multiblock_all_with_nested_and_none.combine()
     assert isinstance(geom, pv.UnstructuredGrid)
 
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     # Set up
-    multi = multi_from_datasets(ant, sphere)
-    nested = multi_from_datasets(airplane, tetbeam)
+    multi = pv.MultiBlock([ant, sphere])
+    nested = pv.MultiBlock([airplane, tetbeam])
     multi.append(nested)
     multi.append(None)
     for i, _ in enumerate(multi):
@@ -474,26 +446,19 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     assert keys_before == keys_after
 
 
-def test_multi_block_copy(ant, sphere, uniform, airplane, tetbeam):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
-    # Now check everything
-    multi_copy = multi.copy()
-    assert multi.n_blocks == 5 == multi_copy.n_blocks
-    assert id(multi[0]) != id(multi_copy[0])
-    assert id(multi[-1]) != id(multi_copy[-1])
+@pytest.mark.parametrize('deep', [True, False])
+def test_multi_block_copy(deep, multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    multi_copy = multi.copy(deep=deep)
+    assert multi.n_blocks == multi_copy.n_blocks
     for i in range(multi_copy.n_blocks):
-        assert pv.is_pyvista_dataset(multi_copy.GetBlock(i))
-    # Now check shallow
-    multi_copy = multi.copy(deep=False)
-    assert multi.n_blocks == 5 == multi_copy.n_blocks
-    assert id(multi[0]) == id(multi_copy[0])
-    assert id(multi[-1]) == id(multi_copy[-1])
-    for i in range(multi_copy.n_blocks):
-        assert pv.is_pyvista_dataset(multi_copy.GetBlock(i))
+        block = multi_copy.GetBlock(i)
+        assert pv.is_pyvista_dataset(block) or block is None
+        assert (multi[i] is multi_copy[i]) != deep or (multi[i] is None)
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+    multi = pyvista.MultiBlock([ant, sphere, uniform, airplane, tetbeam])
     # Now check everything
     assert id(multi[-1]) == id(multi[4])
     assert id(multi[-2]) == id(multi[3])
@@ -513,7 +478,7 @@ def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
 
 
 def test_multi_slice_index(ant, sphere, uniform, airplane, tetbeam):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+    multi = pyvista.MultiBlock([ant, sphere, uniform, airplane, tetbeam])
     # Now check everything
     sub = multi[0:3]
     assert len(sub) == 3
@@ -538,13 +503,13 @@ def test_multi_slice_index(ant, sphere, uniform, airplane, tetbeam):
     assert multi[1] is tetbeam
 
 
-def test_slice_defaults(ant, sphere, uniform, airplane, tetbeam):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+def test_slice_defaults(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
     assert multi[:] == multi[0 : len(multi)]
 
 
-def test_slice_negatives(ant, sphere, uniform, airplane, tetbeam):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, tetbeam)
+def test_slice_negatives(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
     test_multi = pv.MultiBlock({key: multi[key] for key in multi.keys()[::-1]})
     assert multi[::-1] == test_multi
 
@@ -559,14 +524,14 @@ def test_slice_negatives(ant, sphere, uniform, airplane, tetbeam):
 
 
 def test_multi_block_volume(ant, airplane, sphere, uniform):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
+    multi = pyvista.MultiBlock([ant, sphere, uniform, airplane, None])
     vols = ant.volume + sphere.volume + uniform.volume + airplane.volume
     assert multi.volume == pytest.approx(vols)
 
 
-def test_multi_block_length(ant, sphere, uniform, airplane):
-    multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
-    assert multi.length
+def test_multi_block_length(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    assert multi.length == pv.Box(bounds=multi.bounds).length
 
 
 def test_multi_block_save_lines(tmpdir):

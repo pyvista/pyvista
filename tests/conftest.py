@@ -214,6 +214,14 @@ def multiblock_all(datasets):
 
 
 @pytest.fixture()
+def multiblock_all_with_nested_and_none(datasets, multiblock_all):
+    """Return datasets fixture combined in a pyvista multiblock."""
+    # nested = multiblock_all
+    # nested.append(None)
+    return pyvista.MultiBlock([*datasets, None, multiblock_all])
+
+
+@pytest.fixture()
 def noise_2d():
     freq = [10, 5, 0]
     noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
