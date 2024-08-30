@@ -568,7 +568,7 @@ class MultiBlock(
             return
         index = range(self.n_blocks)[index]
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
-        # self.Modified()
+        self.Modified()
 
     def get_block_name(self, index: int) -> str | None:
         """Return the string name of the block at the given index.
