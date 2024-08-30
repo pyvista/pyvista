@@ -1247,6 +1247,18 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """Compute boolean difference of two meshes."""
         return self.boolean_difference(cutting_mesh)
 
+    def __isub__(self, cutting_mesh):
+        """Compute boolean difference of two meshes and update this mesh."""
+        return self.boolean_difference(cutting_mesh)
+
+    def __and__(self, other_mesh):
+        """Compute boolean intersection of two meshes."""
+        return self.boolean_intersection(other_mesh)
+
+    def __or__(self, other_mesh):
+        """Compute boolean union of two meshes."""
+        return self.boolean_union(other_mesh)
+
     @property
     def _offset_array(self) -> NumpyArray[int]:
         """Return the array used to store cell offsets."""
