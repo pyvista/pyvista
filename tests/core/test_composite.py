@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 import vtk
 
-import pyvista
 import pyvista as pv
 from pyvista import ImageData
 from pyvista import MultiBlock
@@ -458,7 +457,7 @@ def test_multi_block_copy(deep, multiblock_all_with_nested_and_none):
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
-    multi = pyvista.MultiBlock([ant, sphere, uniform, airplane, tetbeam])
+    multi = pv.MultiBlock([ant, sphere, uniform, airplane, tetbeam])
     # Now check everything
     assert id(multi[-1]) == id(multi[4])
     assert id(multi[-2]) == id(multi[3])
@@ -478,7 +477,7 @@ def test_multi_block_negative_index(ant, sphere, uniform, airplane, tetbeam):
 
 
 def test_multi_slice_index(ant, sphere, uniform, airplane, tetbeam):
-    multi = pyvista.MultiBlock([ant, sphere, uniform, airplane, tetbeam])
+    multi = pv.MultiBlock([ant, sphere, uniform, airplane, tetbeam])
     # Now check everything
     sub = multi[0:3]
     assert len(sub) == 3
@@ -524,7 +523,7 @@ def test_slice_negatives(multiblock_all_with_nested_and_none):
 
 
 def test_multi_block_volume(ant, airplane, sphere, uniform):
-    multi = pyvista.MultiBlock([ant, sphere, uniform, airplane, None])
+    multi = pv.MultiBlock([ant, sphere, uniform, airplane, None])
     vols = ant.volume + sphere.volume + uniform.volume + airplane.volume
     assert multi.volume == pytest.approx(vols)
 
