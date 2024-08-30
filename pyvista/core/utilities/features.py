@@ -141,10 +141,20 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
     # Create unstructured grid from the structured grid
     grid = pyvista.StructuredGrid(x, y, z)
     ugrid = pyvista.UnstructuredGrid(grid)
-
-    # get part of the mesh within the mesh's bounding surface.
-    selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
-    mask = selection.point_data['SelectedPoints'].view(np.bool_)
+    
+    if enclosed:
+        # Normalise cells to unit size
+        ugrid_norm = ugrid.copy()
+        surface_norm = surface.copy()
+        ugrid_norm.points /= np.array(density)
+        surface_norm.points /= np.array(density)
+        # Select cells if they're within one unit of the surface
+        ugrid_norm = ugrid_norm.compute_implicit_distance(surface_norm)
+        mask = ugrid_norm['implicit_distance'] < 1
+    else:
+        # get part of the mesh within the mesh's bounding surface.
+        selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
+        mask = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
     return ugrid.extract_points(mask)

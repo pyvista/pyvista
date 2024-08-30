@@ -322,16 +322,15 @@ def test_voxelize_volume_no_face_mesh(rectilinear):
 
 @pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_enclosed_bounds(function, ant):
-    mesh = ant
-    vox = function(mesh, density=1, enclosed=True)
+    vox = function(ant, density=0.9, enclosed=True)
 
-    assert vox.bounds.x_min <= mesh.bounds.x_min
-    assert vox.bounds.y_min <= mesh.bounds.y_min
-    assert vox.bounds.z_min <= mesh.bounds.z_min
+    assert vox.bounds.x_min <= ant.bounds.x_min
+    assert vox.bounds.y_min <= ant.bounds.y_min
+    assert vox.bounds.z_min <= ant.bounds.z_min
 
-    assert vox.bounds.x_max >= mesh.bounds.x_max
-    assert vox.bounds.y_max >= mesh.bounds.y_max
-    assert vox.bounds.z_max >= mesh.bounds.z_max
+    assert vox.bounds.x_max >= ant.bounds.x_max
+    assert vox.bounds.y_max >= ant.bounds.y_max
+    assert vox.bounds.z_max >= ant.bounds.z_max
 
 
 def test_report():
