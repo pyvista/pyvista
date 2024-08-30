@@ -216,8 +216,7 @@ def multiblock_all(datasets):
 @pytest.fixture()
 def multiblock_all_with_nested_and_none(datasets, multiblock_all):
     """Return datasets fixture combined in a pyvista multiblock."""
-    # nested = multiblock_all
-    # nested.append(None)
+    multiblock_all.append(None)
     return pyvista.MultiBlock([*datasets, None, multiblock_all])
 
 

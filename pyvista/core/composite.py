@@ -568,7 +568,7 @@ class MultiBlock(
             return
         index = range(self.n_blocks)[index]
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
-        self.Modified()
+        # self.Modified()
 
     def get_block_name(self, index: int) -> str | None:
         """Return the string name of the block at the given index.
@@ -1036,7 +1036,6 @@ class MultiBlock(
         else:
             newobject.shallow_copy(self)
         newobject.copy_meta_from(self, deep)
-        newobject.wrap_nested()
         return newobject
 
     def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
@@ -1052,6 +1051,7 @@ class MultiBlock(
             self.CompositeShallowCopy(to_copy)
         else:
             self.ShallowCopy(to_copy)
+        self.wrap_nested()
 
         # Shallow copy creates new instances of nested multiblocks
         # Iterate through the blocks to fix this recursively
@@ -1074,6 +1074,7 @@ class MultiBlock(
 
         """
         super().deep_copy(to_copy)
+        self.wrap_nested()
 
         # Deep copy will not copy the block name for None blocks (name is set to None instead)
         # Iterate through the blocks to fix this recursively
@@ -1082,7 +1083,7 @@ class MultiBlock(
                 if dataset is None:
                     this_object_.set_block_name(i, new_object_.get_block_name(i))
                 elif isinstance(dataset, MultiBlock):
-                    _set_name_for_none_blocks(this_object_[i], dataset)
+                    _set_name_for_none_blocks(this_object_.GetBlock(i), dataset)
 
         _set_name_for_none_blocks(self, to_copy)
 
