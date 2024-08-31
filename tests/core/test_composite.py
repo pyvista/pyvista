@@ -419,6 +419,7 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     # Set up
     multi = pv.MultiBlock([ant, sphere])
     nested = pv.MultiBlock([airplane, tetbeam])
+    nested.append(None)
     multi.append(nested)
     multi.append(None)
     for i, _ in enumerate(multi):
@@ -439,7 +440,8 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     keys_after = output.keys()
 
     assert (output is multi) == inplace
-    assert [(block_in is block_out) == inplace for block_in, block_out in zip(multi, output)]
+    for block_in, block_out in zip(multi, output):
+        assert (block_in is block_out) == inplace or (block_in is None)
     assert np.allclose(bounds_before + NUMBER, bounds_after)
     assert n_blocks_before == n_blocks_after
     assert keys_before == keys_after

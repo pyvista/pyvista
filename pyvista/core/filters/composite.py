@@ -269,7 +269,7 @@ class CompositeFilters:
 
         """
         trans = pyvista.Transform(trans)
-        multi = self if inplace else self.copy(deep=False)  # type: ignore[attr-defined]
+        multi = self if inplace else self.copy()  # type: ignore[attr-defined]
         for name in self.keys():  # type: ignore[attr-defined]
             if self[name] is not None:  # type: ignore[index]
                 multi[name] = multi[name].transform(
