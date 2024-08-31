@@ -697,7 +697,7 @@ class Color:
     The internally used representation is an integer RGBA sequence (values
     between 0 and 255). This might however change in future releases.
 
-    Refer to the table below for a list of supported colors
+    Refer to the tables below for a list of supported colors.
 
     .. dropdown:: Colors Sorted By Name
 
@@ -1062,6 +1062,16 @@ class Color:
     @property
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
+
+        Refer to the tables below for a list of supported colors.
+
+        .. dropdown:: Colors Sorted By Name
+
+            .. include:: ../color_table/color_table.rst
+
+        .. dropdown:: Colors Sorted By Hue, Saturation, and Value
+
+            .. include:: ../color_table/color_table_sorted.rst
 
         Returns
         -------
