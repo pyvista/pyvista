@@ -699,11 +699,11 @@ class Color:
 
     Refer to the tables below for a list of supported colors.
 
-    .. dropdown:: Colors Sorted By Name
+    .. dropdown:: Colors Sorted by Name
 
         .. include:: ../color_table/color_table.rst
 
-    .. dropdown:: Colors Sorted By Hue, Saturation, and Value
+    .. dropdown:: Colors Sorted by Hue, Saturation, and Value
 
         .. include:: ../color_table/color_table_sorted.rst
 
@@ -1065,11 +1065,11 @@ class Color:
 
         Refer to the tables below for a list of supported colors.
 
-        .. dropdown:: Colors Sorted By Name
+        .. dropdown:: Colors Sorted by Name
 
             .. include:: ../color_table/color_table.rst
 
-        .. dropdown:: Colors Sorted By Hue, Saturation, and Value
+        .. dropdown:: Colors Sorted by Hue, Saturation, and Value
 
             .. include:: ../color_table/color_table_sorted.rst
 
