@@ -108,6 +108,11 @@ Miscellaneous
    ColorLike
    start_xvfb
 
+.. toctree::
+   :maxdepth: 3
+
+   /api/utilities/color_table
+
 .. autosummary::
    :toctree: _autosummary
 
