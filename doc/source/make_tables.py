@@ -2097,6 +2097,6 @@ def make_all_tables():
     make_all_carousels(CAROUSEL_LIST)
 
 
-if __name__ == '__main__':
-    ColorTable.generate()
-    SortedColorTable.generate()
+# if __name__ == '__main__':
+#     ColorTable.generate()
+#     SortedColorTable.generate()
