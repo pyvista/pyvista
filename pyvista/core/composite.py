@@ -1036,7 +1036,6 @@ class MultiBlock(
         else:
             newobject.shallow_copy(self)
         newobject.copy_meta_from(self, deep)
-        newobject.wrap_nested()
         return newobject
 
     def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
@@ -1052,6 +1051,41 @@ class MultiBlock(
             self.CompositeShallowCopy(to_copy)
         else:
             self.ShallowCopy(to_copy)
+        self.wrap_nested()
+
+        # Shallow copy creates new instances of nested multiblocks
+        # Iterate through the blocks to fix this recursively
+        def _replace_nested_multiblocks(this_object_, new_object):
+            for i, this_block in enumerate(this_object_):
+                if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
+                    block_to_copy = new_object.GetBlock(i)
+                    this_object_.replace(i, block_to_copy)
+                    _replace_nested_multiblocks(this_object_[i], block_to_copy)
+
+        _replace_nested_multiblocks(self, to_copy)
+
+    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+        """Overwrite this MultiBlock with another MultiBlock as a deep copy.
+
+        Parameters
+        ----------
+        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+            MultiBlock to perform a deep copy from.
+
+        """
+        super().deep_copy(to_copy)
+        self.wrap_nested()
+
+        # Deep copy will not copy the block name for None blocks (name is set to None instead)
+        # Iterate through the blocks to fix this recursively
+        def _set_name_for_none_blocks(this_object_, new_object_):
+            for i, dataset in enumerate(pyvista.wrap(new_object_)):
+                if dataset is None:
+                    this_object_.set_block_name(i, new_object_.get_block_name(i))
+                elif isinstance(dataset, MultiBlock):
+                    _set_name_for_none_blocks(this_object_.GetBlock(i), dataset)
+
+        _set_name_for_none_blocks(self, to_copy)
 
     def set_active_scalars(
         self,
