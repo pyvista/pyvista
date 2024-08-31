@@ -2059,6 +2059,7 @@ CAROUSEL_LIST = [
 def make_all_tables():
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
+    os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
