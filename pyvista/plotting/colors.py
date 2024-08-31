@@ -699,6 +699,8 @@ class Color:
 
     Refer to the table below for a list of supported colors
 
+    .. _color_table:
+
     .. dropdown:: Colors
 
         .. include:: ../color_table/color_table.rst
@@ -1059,16 +1061,12 @@ class Color:
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
+        See :ref:`color_table` for a list of supported colors.
+
         Returns
         -------
         str | None
             The color name, in case this color has a name; otherwise ``None``.
-
-        Notes
-        -----
-        Refer to the table below for a list of supported colors.
-
-        .. include:: ../colors.rst
 
         Examples
         --------
