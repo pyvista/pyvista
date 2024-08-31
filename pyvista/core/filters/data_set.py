@@ -6361,7 +6361,7 @@ class DataSetFilters:
         )
 
     def twist(self, *, angle, axis, point, inplace=False):
-        """Twist the the mesh about a given axis and point.
+        """Twist the mesh about a given axis and point.
 
         Parameters
         ----------
