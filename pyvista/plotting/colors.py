@@ -489,7 +489,9 @@ class Color:
     underlying (VTK) methods. Any color name (``str``), hex string (``str``)
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
     or ``float``) is considered a :data:`ColorLike` parameter and can be converted
-    by this class. See :ref:`color_table` for a list of supported colors.
+    by this class.
+
+    See :ref:`color_table` for a list of supported colors.
 
     .. note:
 

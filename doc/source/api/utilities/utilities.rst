@@ -95,27 +95,28 @@ Image Comparison and Regression
    compare_images
 
 
-Miscellaneous
-~~~~~~~~~~~~~
+Colors
+~~~~~~
 .. autosummary::
    :toctree: _autosummary
 
    Color
-
-.. autosummary::
-   :toctree: _autosummary
-
    ColorLike
-   start_xvfb
+
+Table of colors supported by the :class:`~pyvista.Color` class:
 
 .. toctree::
    :maxdepth: 3
 
    /api/utilities/color_table
 
+Miscellaneous
+~~~~~~~~~~~~~
+
 .. autosummary::
    :toctree: _autosummary
 
+   start_xvfb
    Report
 
 PyVista Version Information
