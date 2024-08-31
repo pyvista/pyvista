@@ -2097,8 +2097,3 @@ def make_all_tables():
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
     make_all_carousels(CAROUSEL_LIST)
-
-
-# if __name__ == '__main__':
-#     ColorTable.generate()
-#     SortedColorTable.generate()
