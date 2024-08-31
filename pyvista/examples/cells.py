@@ -1007,7 +1007,7 @@ def QuadraticPolygon() -> UnstructuredGrid:
     List the grid's cells.
 
     >>> grid.cells
-    array([9, 0, 1, 2, 3, 4, 5, 6, 7, 8])
+    array([8, 0, 1, 2, 3, 4, 5, 6, 7])
 
     List the grid's points.
 
@@ -1017,10 +1017,9 @@ def QuadraticPolygon() -> UnstructuredGrid:
                      [2., 2., 0.],
                      [0., 2., 0.],
                      [1., 0., 0.],
-                     [2., 1., 0.],
+                     [3., 1., 0.],
                      [1., 2., 0.],
-                     [0., 1., 0.],
-                     [3., 1., 0.]])
+                     [0., 1., 0.]])
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_POLYGON
     array([36], dtype=uint8)
