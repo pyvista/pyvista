@@ -986,6 +986,90 @@ def QuadraticQuadrilateral() -> UnstructuredGrid:
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticQuad())
 
 
+def QuadraticPolygon() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single quadratic polygon.
+
+    This cell corresponds to the :attr:`pyvista.CellType.QUADRATIC_POLYGON` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single quadratic polygon.
+
+    Examples
+    --------
+    Create and plot a single quadratic polygon.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.QuadraticPolygon()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([9, 0, 1, 2, 3, 4, 5, 6, 7, 8])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0., 0., 0.],
+                     [2., 0., 0.],
+                     [2., 2., 0.],
+                     [0., 2., 0.],
+                     [1., 0., 0.],
+                     [2., 1., 0.],
+                     [1., 2., 0.],
+                     [0., 1., 0.],
+                     [3., 1., 0.]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_POLYGON
+    array([36], dtype=uint8)
+    """
+    # TODO: Fix UnstructuredGrid so that this code correctly creates this cell:
+    # points = [
+    #     [0.0, 0.0, 0.0],
+    #     [2.0, 0.0, 0.0],
+    #     [2.0, 2.0, 0.0],
+    #     [0.0, 2.0, 0.0],
+    #     [1.0, 0.0, 0.0],
+    #     [2.0, 1.0, 0.0],
+    #     [1.0, 2.0, 0.0],
+    #     [0.0, 1.0, 0.0],
+    #     [3.0, 1.0, 0.0],
+    # ]
+    #
+    # cells = [len(points), *list(range(len(points)))]
+    # return UnstructuredGrid(cells, [CellType.QUADRATIC_POLYGON], points)
+
+    # Need to use VTK methods for this example to work
+    cell = _vtk.vtkQuadraticPolygon()
+    cell.GetPointIds().SetNumberOfIds(8)
+    cell.GetPointIds().SetId(0, 0)
+    cell.GetPointIds().SetId(1, 1)
+    cell.GetPointIds().SetId(2, 2)
+    cell.GetPointIds().SetId(3, 3)
+    cell.GetPointIds().SetId(4, 4)
+    cell.GetPointIds().SetId(5, 5)
+    cell.GetPointIds().SetId(6, 6)
+    cell.GetPointIds().SetId(7, 7)
+
+    cell.GetPoints().SetNumberOfPoints(8)
+    cell.GetPoints().SetPoint(0, 0.0, 0.0, 0.0)
+    cell.GetPoints().SetPoint(1, 2.0, 0.0, 0.0)
+    cell.GetPoints().SetPoint(2, 2.0, 2.0, 0.0)
+    cell.GetPoints().SetPoint(3, 0.0, 2.0, 0.0)
+    cell.GetPoints().SetPoint(4, 1.0, 0.0, 0.0)
+    cell.GetPoints().SetPoint(5, 2.0, 1.0, 0.0)
+    cell.GetPoints().SetPoint(6, 1.0, 2.0, 0.0)
+    cell.GetPoints().SetPoint(7, 0.0, 1.0, 0.0)
+    cell.GetPoints().SetPoint(5, 3.0, 1.0, 0.0)
+
+    grid = UnstructuredGrid()
+    grid.SetPoints(cell.GetPoints())
+    grid.InsertNextCell(cell.GetCellType(), cell.GetPointIds())
+    return grid
+
+
 def QuadraticTetrahedron() -> UnstructuredGrid:
     """Create a :class:`pyvista.UnstructuredGrid` containing a single quadratic tetrahedron.
 
