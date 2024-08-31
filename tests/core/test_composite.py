@@ -440,6 +440,7 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     keys_after = output.keys()
 
     assert (output is multi) == inplace
+    # https://github.com/pyvista/pyvista/pull/6599/files#r1739931261
     for i, _ in enumerate(multi):
         assert (multi[i] is output[i]) == inplace or (multi[i] is None)
     assert np.allclose(bounds_before + NUMBER, bounds_after)
