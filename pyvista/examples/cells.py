@@ -1261,6 +1261,45 @@ def QuadraticPyramid() -> UnstructuredGrid:
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticPyramid())
 
 
+def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single quadratic linear quadrilateral.
+
+    This cell corresponds to the :attr:`pyvista.CellType.QUADRATIC_LINEAR_QUAD` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single quadratic linear quadrilateral.
+
+    Examples
+    --------
+    Create and plot a single quadratic linear quadrilateral.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.QuadraticLinearQuadrilateral()
+    >>> examples.plot_cell(grid, cpos='xy')
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([6, 0, 1, 2, 3, 4, 5])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[0. , 0. , 0. ],
+                     [1. , 0. , 0. ],
+                     [1. , 1. , 0. ],
+                     [0. , 1. , 0. ],
+                     [0.5, 0. , 0. ],
+                     [0.5, 1. , 0. ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_LINEAR_QUAD
+    array([30], dtype=uint8)
+    """
+    return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticLinearQuad())
+
+
 def _make_isoparametric_unstructured_grid(vtk_cell: _vtk.vtkCell):
     cell = pyvista.Cell(vtk_cell)
 
