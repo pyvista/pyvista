@@ -6360,6 +6360,110 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
+    def twist(self, *, angle, axis, point, inplace=False):
+        """Twist the the mesh about a given axis and point.
+
+        Parameters
+        ----------
+        angle : float
+            The angle in degrees to twist the mesh.
+
+        axis : tuple(float)
+            The axis to rotate about.
+
+        point : tuple(float)
+            The point to rotate about.
+
+        inplace : bool, default: False
+            Updates mesh in-place when True.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Twisted mesh.
+
+        Examples
+        --------
+        Twist a mesh about a given axis and point.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Tube(
+        ...     pointa=(0, 0, 0),
+        ...     pointb=(0, 0, 10),
+        ...     resolution=10,
+        ...     n_sides=5,
+        ... )
+        >>> twisted = mesh.twist(angle=10, axis=(0, 0, 1), point=(0, 0, 0))
+        >>> plotter = pv.Plotter(shape=(1, 2))
+        >>> _ = plotter.add_mesh(mesh, show_edges=True)
+        >>> plotter.subplot(0, 1)
+        >>> _ = plotter.add_mesh(twisted, show_edges=True)
+        >>> plotter.link_views()
+        >>> plotter.show()
+
+        """
+        mesh = self if inplace else self.copy()
+        points = mesh.points
+
+        # Normalize the axis vector
+        axis = axis / np.linalg.norm(axis)
+
+        # Initialize an array to hold the twisted points
+        twisted_points = np.empty_like(points)
+
+        for i, p in enumerate(points):
+            # Vector from base point to the point
+            vec = p - point
+
+            # Project the vector onto the axis
+            projection_length = np.dot(vec, axis)
+            projection_point = point + projection_length * axis
+
+            # Calculate the distance from the base point to the projection
+            distance = np.linalg.norm(projection_point - point)
+
+            # Calculate the twist angle for this point (in radians)
+            angle_rad = np.deg2rad(angle * distance)
+
+            # Calculate the rotation matrix using Rodrigues' rotation formula
+            cos_angle = np.cos(angle_rad)
+            sin_angle = np.sin(angle_rad)
+            one_minus_cos = 1 - cos_angle
+
+            ux, uy, uz = axis
+
+            rotation_matrix = np.array(
+                [
+                    [
+                        cos_angle + ux * ux * one_minus_cos,
+                        ux * uy * one_minus_cos - uz * sin_angle,
+                        ux * uz * one_minus_cos + uy * sin_angle,
+                    ],
+                    [
+                        uy * ux * one_minus_cos + uz * sin_angle,
+                        cos_angle + uy * uy * one_minus_cos,
+                        uy * uz * one_minus_cos - ux * sin_angle,
+                    ],
+                    [
+                        uz * ux * one_minus_cos - uy * sin_angle,
+                        uz * uy * one_minus_cos + ux * sin_angle,
+                        cos_angle + uz * uz * one_minus_cos,
+                    ],
+                ]
+            )
+
+            # Translate point so that 'point' is at the origin
+            translated_point = p - point
+
+            # Apply the rotation
+            twisted_point = np.dot(translated_point, rotation_matrix.T)
+
+            # Translate point back to the original position
+            twisted_points[i] = twisted_point + point
+
+        mesh.points = twisted_points
+        return mesh
+
     def merge(
         self,
         grid=None,
