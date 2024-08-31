@@ -375,7 +375,7 @@ class ColorSchemeTable(DocTable):
 class ColorTable(DocTable):
     """Class to generate colors table."""
 
-    path = f"{COLORS_TABLE_DIR}/colors_table.rst"
+    path = f"{COLORS_TABLE_DIR}/color_table.rst"
     header = _aligned_dedent(
         """
         |.. list-table::
