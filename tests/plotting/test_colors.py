@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 
 import matplotlib as mpl
+from matplotlib.colors import CSS4_COLORS
 import numpy as np
 import pytest
 
@@ -121,3 +122,33 @@ def test_color():
 def test_color_opacity():
     color = pv.Color(opacity=0.5)
     assert color.opacity == 128
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'css4_color' in metafunc.fixturenames:
+        color_names = list(CSS4_COLORS.keys())
+        color_values = list(CSS4_COLORS.values())
+
+        test_cases = zip(color_names, color_values)
+        metafunc.parametrize('css4_color', test_cases, ids=color_names)
+
+    if 'color_synonym' in metafunc.fixturenames:
+        synonyms = list(pv.colors.color_synonyms.keys())
+        metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
+
+
+def test_css4_colors(css4_color):
+    name, value = css4_color
+    assert pv.Color(name).hex_rgb.lower() == value.lower()
+
+
+def test_color_synonyms(color_synonym):
+    color = pv.Color(color_synonym)
+    assert isinstance(color, pv.Color)
+
+
+def test_unique_colors():
+    duplicates = np.rec.find_duplicate(pv.hexcolors.values())
+    if len(duplicates) > 0:
+        pytest.fail(f"The following colors have duplicate definitions: {duplicates}.")
