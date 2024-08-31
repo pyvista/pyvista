@@ -1068,12 +1068,6 @@ class Color:
         str | None
             The color name, in case this color has a name; otherwise ``None``.
 
-        Notes
-        -----
-        Refer to the table below for a list of supported colors.
-
-        .. include:: ../colors.rst
-
         Examples
         --------
         Create a blue color with half opacity.

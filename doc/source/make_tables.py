@@ -403,7 +403,7 @@ class ColorTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``hexcolors`` dictionary.
-        return ColorTable._table_data_from_color_list(pv.hexcolors.keys())
+        return ColorTable._table_data_from_color_sequence(pv.hexcolors.keys())
 
     @staticmethod
     def _table_data_from_color_sequence(colors: Iterable[ColorLike]):
@@ -2095,3 +2095,8 @@ def make_all_tables():
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
     make_all_carousels(CAROUSEL_LIST)
+
+
+if __name__ == '__main__':
+    ColorTable.generate()
+    SortedColorTable.generate()
