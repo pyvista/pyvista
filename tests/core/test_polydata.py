@@ -386,6 +386,19 @@ def test_boolean_union_intersection(sphere, sphere_shifted):
     assert np.isclose(intersection.volume, expected_volume, atol=1e-3)
 
 
+def test_bitwise_and_or(sphere, sphere_shifted):
+    union = sphere | sphere_shifted
+    intersection = sphere & sphere_shifted
+
+    # union is volume of sphere + sphere_shifted minus the part intersecting
+    expected_volume = sphere.volume + sphere_shifted.volume - intersection.volume
+    assert np.isclose(union.volume, expected_volume, atol=1e-3)
+
+    # intersection volume is the volume of both isolated meshes minus the union
+    expected_volume = sphere.volume + sphere_shifted.volume - union.volume
+    assert np.isclose(intersection.volume, expected_volume, atol=1e-3)
+
+
 def test_boolean_difference(sphere, sphere_shifted):
     difference = sphere.boolean_difference(sphere_shifted, progress_bar=True)
     intersection = sphere.boolean_intersection(sphere_shifted, progress_bar=True)
@@ -401,6 +414,12 @@ def test_boolean_difference_fail(plane, sphere):
 
 def test_subtract(sphere, sphere_shifted):
     sub_mesh = sphere - sphere_shifted
+    assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
+
+
+def test_isubtract(sphere, sphere_shifted):
+    sub_mesh = sphere.copy()
+    sub_mesh -= sphere_shifted
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
 
 
