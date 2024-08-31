@@ -489,8 +489,20 @@ class Color:
     underlying (VTK) methods. Any color name (``str``), hex string (``str``)
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
     or ``float``) is considered a :data:`ColorLike` parameter and can be converted
-    by this class.
-    See :attr:`Color.name` for a list of supported color names.
+    by this class. Refer to the table below for a list of supported colors.
+
+       .. note:
+
+        The internally used representation is an integer RGBA sequence (values
+        between 0 and 255). This might however change in future releases.
+
+    .. _color_table:
+
+    Color Table
+    -----------
+    .. dropdown:: Colors
+
+        .. include:: ../color_table/color_table.rst
 
     Parameters
     ----------
@@ -529,19 +541,6 @@ class Color:
         Default opacity of the represented color. Used when ``color``
         does not specify an opacity and ``opacity`` is ``None``. Format
         is identical to ``opacity``.
-
-    Notes
-    -----
-    The internally used representation is an integer RGBA sequence (values
-    between 0 and 255). This might however change in future releases.
-
-    Refer to the table below for a list of supported colors
-
-    .. _color_table:
-
-    .. dropdown:: Colors
-
-        .. include:: ../color_table/color_table.rst
 
     Examples
     --------
