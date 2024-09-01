@@ -1024,49 +1024,18 @@ def QuadraticPolygon() -> UnstructuredGrid:
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_POLYGON
     array([36], dtype=uint8)
     """
-    # TODO: Fix UnstructuredGrid so that this code correctly creates this cell:
-    # points = [
-    #     [0.0, 0.0, 0.0],
-    #     [2.0, 0.0, 0.0],
-    #     [2.0, 2.0, 0.0],
-    #     [0.0, 2.0, 0.0],
-    #     [1.0, 0.0, 0.0],
-    #     [2.0, 1.0, 0.0],
-    #     [1.0, 2.0, 0.0],
-    #     [0.0, 1.0, 0.0],
-    #     [3.0, 1.0, 0.0],
-    # ]
-    #
-    # cells = [len(points), *list(range(len(points)))]
-    # return UnstructuredGrid(cells, [CellType.QUADRATIC_POLYGON], points)
-
-    # Need to use VTK methods for this example to work
-    cell = _vtk.vtkQuadraticPolygon()
-    cell.GetPointIds().SetNumberOfIds(8)
-    cell.GetPointIds().SetId(0, 0)
-    cell.GetPointIds().SetId(1, 1)
-    cell.GetPointIds().SetId(2, 2)
-    cell.GetPointIds().SetId(3, 3)
-    cell.GetPointIds().SetId(4, 4)
-    cell.GetPointIds().SetId(5, 5)
-    cell.GetPointIds().SetId(6, 6)
-    cell.GetPointIds().SetId(7, 7)
-
-    cell.GetPoints().SetNumberOfPoints(8)
-    cell.GetPoints().SetPoint(0, 0.0, 0.0, 0.0)
-    cell.GetPoints().SetPoint(1, 2.0, 0.0, 0.0)
-    cell.GetPoints().SetPoint(2, 2.0, 2.0, 0.0)
-    cell.GetPoints().SetPoint(3, 0.0, 2.0, 0.0)
-    cell.GetPoints().SetPoint(4, 1.0, 0.0, 0.0)
-    cell.GetPoints().SetPoint(5, 2.0, 1.0, 0.0)
-    cell.GetPoints().SetPoint(6, 1.0, 2.0, 0.0)
-    cell.GetPoints().SetPoint(7, 0.0, 1.0, 0.0)
-    cell.GetPoints().SetPoint(5, 3.0, 1.0, 0.0)
-
-    grid = UnstructuredGrid()
-    grid.SetPoints(cell.GetPoints())
-    grid.InsertNextCell(cell.GetCellType(), cell.GetPointIds())
-    return grid
+    points = [
+        [0.0, 0.0, 0.0],
+        [2.0, 0.0, 0.0],
+        [2.0, 2.0, 0.0],
+        [0.0, 2.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [3.0, 1.0, 0.0],
+        [1.0, 2.0, 0.0],
+        [0.0, 1.0, 0.0],
+    ]
+    cells = [len(points), *list(range(len(points)))]
+    return UnstructuredGrid(cells, [CellType.QUADRATIC_POLYGON], points)
 
 
 def QuadraticTetrahedron() -> UnstructuredGrid:
