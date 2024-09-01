@@ -193,6 +193,13 @@ def test_triquadratic_hexahedron():
     assert grid.n_points == 27
 
 
+def test_triquadratic_pyramid():
+    grid = cells.TriQuadraticPyramid()
+    assert grid.celltypes[0] == CellType.TRIQUADRATIC_PYRAMID
+    assert grid.n_cells == 1
+    assert grid.n_points == 19
+
+
 def test_quadratic_linear_quadrilateral():
     grid = cells.QuadraticLinearQuadrilateral()
     assert grid.celltypes[0] == CellType.QUADRATIC_LINEAR_QUAD

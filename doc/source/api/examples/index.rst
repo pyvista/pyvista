@@ -164,6 +164,7 @@ cell types.
    QuadraticPyramid
    BiQuadraticQuadrilateral
    TriQuadraticHexahedron
+   TriQuadraticPyramid
    QuadraticLinearQuadrilateral
    QuadraticLinearWedge
    BiQuadraticQuadraticWedge

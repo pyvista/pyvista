@@ -792,6 +792,7 @@ class CellType(IntEnum):
         TRIQUADRATIC_PYRAMID = _CellTypeTuple(
             value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
             cell_class=_vtk.vtkTriQuadraticPyramid,
+            example='TriQuadraticPyramid',
             short_doc="""
             Represents a second order 3D iso-parametric 19-node pyramid.
 
