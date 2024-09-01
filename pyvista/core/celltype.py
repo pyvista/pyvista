@@ -938,7 +938,20 @@ class CellType(IntEnum):
     ####################################################################################
     # Cubic, iso-parametric cell
     CUBIC_LINE = _CellTypeTuple(
-        value=_vtk.VTK_CUBIC_LINE, cell_class=_vtk.vtkCubicLine, example='CubicLine'
+        value=_vtk.VTK_CUBIC_LINE,
+        cell_class=_vtk.vtkCubicLine,
+        example='CubicLine',
+        short_doc="""
+        Represents a 1D iso-parametric cubic line.
+
+        The cell includes two mid-edge nodes.
+        """,
+        long_doc="""
+        The ordering of the four points defining the cell is point ids ``(0,1,2,3)``
+        where id #2 and #3 are the mid-edge nodes.
+
+        The parametric coordinates lie between -1 and 1.
+        """,
     )
 
     ####################################################################################
