@@ -66,7 +66,7 @@ _hexcolors = {
     'blanched_almond': '#FFEBCD',
     'blue': '#0000FF',
     'blue_violet': '#8A2BE2',
-    'brown': '#a52a2a',
+    'brown': '#A52A2A',
     'burly_wood': '#DEB887',
     'cadet_blue': '#5F9EA0',
     'chartreuse': '#7FFF00',
@@ -568,7 +568,13 @@ class Color:
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
     or ``float``) is considered a :data:`ColorLike` parameter and can be converted
     by this class.
-    See :attr:`Color.name` for a list of supported color names.
+
+    See :ref:`color_table` for a list of supported colors.
+
+    .. note:
+
+        The internally used representation is an integer RGBA sequence (values
+        between 0 and 255). This might however change in future releases.
 
     Parameters
     ----------
@@ -607,15 +613,6 @@ class Color:
         Default opacity of the represented color. Used when ``color``
         does not specify an opacity and ``opacity`` is ``None``. Format
         is identical to ``opacity``.
-
-    Notes
-    -----
-    The internally used representation is an integer RGBA sequence (values
-    between 0 and 255). This might however change in future releases.
-
-    Refer to the table below for a list of supported colors
-
-    .. include:: ../color_table/color_table.rst
 
     Examples
     --------
@@ -973,16 +970,12 @@ class Color:
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
+        See :ref:`color_table` for a list of supported colors.
+
         Returns
         -------
         str | None
             The color name, in case this color has a name; otherwise ``None``.
-
-        Notes
-        -----
-        Refer to the table below for a list of supported colors.
-
-        .. include:: ../colors.rst
 
         Examples
         --------
