@@ -20,6 +20,7 @@ import pyvista as pv
 from pyvista import examples as ex
 from pyvista.core.utilities import cells
 from pyvista.core.utilities import fileio
+from pyvista.core.utilities import fit_line_to_points
 from pyvista.core.utilities import fit_plane_to_points
 from pyvista.core.utilities import principal_axes
 from pyvista.core.utilities import transformations
@@ -947,6 +948,32 @@ def test_fit_plane_to_points():
     assert np.allclose(fitted_normal, direction)
     assert np.allclose(fitted_plane.point_normals.mean(axis=0), direction)
 
+    flipped_normal = direction * -1
+    _, _, new_normal = fit_plane_to_points(
+        expected_plane.points, return_meta=True, init_normal=flipped_normal
+    )
+    assert np.allclose(new_normal, flipped_normal)
+
+
+def test_fit_line_to_points():
+    # Fit a line to a line's points
+    point_a = (1, 2, 3)
+    point_b = (4, 5, 6)
+    resolution = 42
+    expected_line = pv.Line(point_a, point_b, resolution=resolution)
+    fitted_line, length, direction = fit_line_to_points(
+        expected_line.points, resolution=resolution, return_meta=True
+    )
+
+    assert np.allclose(fitted_line.bounds, expected_line.bounds)
+    assert np.allclose(fitted_line.points[0], point_a)
+    assert np.allclose(fitted_line.points[-1], point_b)
+    assert np.allclose(direction, np.abs(pv.principal_axes(fitted_line.points)[0]))
+    assert np.allclose(length, fitted_line.length)
+
+    fitted_line = fit_line_to_points(expected_line.points, resolution=resolution, return_meta=False)
+    assert np.allclose(fitted_line.bounds, expected_line.bounds)
+
 
 # Default output from `np.linalg.eigh`
 DEFAULT_PRINCIPAL_AXES = [[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]]
@@ -1200,6 +1227,19 @@ def test_transform_reflect(transform, reflect_args):
     assert np.allclose(identity, np.eye(4))
 
 
+@pytest.mark.parametrize(
+    ('method', 'vector'), [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))]
+)
+def test_transform_flip_xyz(transform, method, vector):
+    getattr(transform, method)()
+    actual = transform.matrix
+    expected = transformations.reflection(vector)
+    assert np.array_equal(actual, expected)
+
+    identity = transform.matrix @ transform.inverse_matrix
+    assert np.allclose(identity, np.eye(4))
+
+
 def test_transform_rotate(transform):
     transform.rotate(ROTATION)
     actual = transform.matrix
@@ -1217,6 +1257,9 @@ def test_transform_rotate(transform):
     [
         ('scale', (SCALE,)),
         ('reflect', (VECTOR,)),
+        ('flip_x', ()),
+        ('flip_y', ()),
+        ('flip_z', ()),
         ('rotate', (ROTATION,)),
         ('rotate_x', (ANGLE,)),
         ('rotate_y', (ANGLE,)),
@@ -1318,6 +1361,69 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize(
+    ('obj', 'return_self', 'return_type', 'return_dtype'),
+    [
+        (list(VECTOR), False, np.ndarray, float),
+        (VECTOR, False, np.ndarray, float),
+        (np.array(VECTOR), False, np.ndarray, float),
+        (np.array([VECTOR]), False, np.ndarray, float),
+        (np.array(VECTOR, dtype=float), True, np.ndarray, float),
+        (np.array([VECTOR], dtype=float), True, np.ndarray, float),
+        (pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32),
+        (pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32),
+        (pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float),
+        (
+            pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
+            True,
+            pv.MultiBlock,
+            float,
+        ),
+    ],
+    ids=[
+        'list-int',
+        'tuple-int',
+        'array1d-int',
+        'array2d-int',
+        'array1d-float',
+        'array2d-float',
+        'polydata-float32',
+        'polydata-int',
+        'polydata-float',
+        'multiblock-float',
+    ],
+)
+def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
+    def _get_points_from_object(obj_):
+        return (
+            obj_.points
+            if isinstance(obj_, pv.DataSet)
+            else obj_[0].points
+            if isinstance(obj_, pv.MultiBlock)
+            else obj_
+        )
+
+    points_in_array = np.array(_get_points_from_object(obj))
+    out = transform.scale(SCALE).apply(obj, copy=copy, transform_all_input_vectors=True)
+
+    if not copy and return_self:
+        assert out is obj
+    else:
+        assert out is not obj
+    assert isinstance(out, return_type)
+
+    points_out = _get_points_from_object(out)
+    assert isinstance(points_out, np.ndarray)
+    assert points_out.dtype == return_dtype
+    assert np.array_equal(points_in_array * SCALE, points_out)
+
+    inverted = transform.apply(out, inverse=True)
+    inverted_points = _get_points_from_object(inverted)
+    assert np.array_equal(inverted_points, points_in_array)
+    assert not transform.is_inverted
+
+
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
 def test_transform_matrix_list(transform, attr):
     matrix_list = getattr(transform, attr)
@@ -1415,6 +1521,9 @@ def test_transform_chain_methods():
     matrix = (
         Transform()
         .reflect(ones)
+        .flip_x()
+        .flip_y()
+        .flip_z()
         .rotate_x(0)
         .rotate_y(0)
         .rotate_z(0)

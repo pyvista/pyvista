@@ -121,3 +121,80 @@ def test_pixel():
     assert grid.celltypes[0] == CellType.PIXEL
     assert grid.n_cells == 1
     assert grid.n_points == 4
+
+
+def test_quadratic_edge():
+    grid = cells.QuadraticEdge()
+    assert grid.celltypes[0] == CellType.QUADRATIC_EDGE
+    assert grid.n_cells == 1
+    assert grid.n_points == 3
+
+
+def test_quadratic_triangle():
+    grid = cells.QuadraticTriangle()
+    assert grid.celltypes[0] == CellType.QUADRATIC_TRIANGLE
+    assert grid.n_cells == 1
+    assert grid.n_points == 6
+
+
+def test_quadratic_quadrilateral():
+    grid = cells.QuadraticQuadrilateral()
+    assert grid.celltypes[0] == CellType.QUADRATIC_QUAD
+    assert grid.n_cells == 1
+    assert grid.n_points == 8
+
+
+def test_quadratic_tetrahedron():
+    grid = cells.QuadraticTetrahedron()
+    assert grid.celltypes[0] == CellType.QUADRATIC_TETRA
+    assert grid.n_cells == 1
+    assert grid.n_points == 10
+
+
+def test_quadratic_hexahedron():
+    grid = cells.QuadraticHexahedron()
+    assert grid.celltypes[0] == CellType.QUADRATIC_HEXAHEDRON
+    assert grid.n_cells == 1
+    assert grid.n_points == 20
+
+
+def test_quadratic_wedge():
+    grid = cells.QuadraticWedge()
+    assert grid.celltypes[0] == CellType.QUADRATIC_WEDGE
+    assert grid.n_cells == 1
+    assert grid.n_points == 15
+
+
+def test_quadratic_polygon():
+    grid = cells.QuadraticPolygon()
+    assert grid.celltypes[0] == CellType.QUADRATIC_POLYGON
+    assert grid.n_cells == 1
+    assert grid.n_points == 8
+
+
+def test_quadratic_pyramid():
+    grid = cells.QuadraticPyramid()
+    assert grid.celltypes[0] == CellType.QUADRATIC_PYRAMID
+    assert grid.n_cells == 1
+    assert grid.n_points == 13
+
+
+def test_quadratic_linear_quadrilateral():
+    grid = cells.QuadraticLinearQuadrilateral()
+    assert grid.celltypes[0] == CellType.QUADRATIC_LINEAR_QUAD
+    assert grid.n_cells == 1
+    assert grid.n_points == 6
+
+
+def test_quadratic_linear_wedge():
+    grid = cells.QuadraticLinearWedge()
+    assert grid.celltypes[0] == CellType.QUADRATIC_LINEAR_WEDGE
+    assert grid.n_cells == 1
+    assert grid.n_points == 12
+
+
+def test_biquadratic_quadratic_wedge():
+    grid = cells.BiQuadraticQuadraticWedge()
+    assert grid.celltypes[0] == CellType.BIQUADRATIC_QUADRATIC_WEDGE
+    assert grid.n_cells == 1
+    assert grid.n_points == 18
