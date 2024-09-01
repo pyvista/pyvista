@@ -184,8 +184,8 @@ def test_tab_colors(tab_color):
 
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
-    # This synonym is missing from the vtkNamedColor lookup, so we manually map it
-    # These colors are technically not valid VTK colors. We need to map their
+
+    # Some pyvista colors are technically not valid VTK colors. We need to map their
     # synonym manually for the tests
     vtk_synonyms = {
         'light_slate_blue': 'slate_blue_light',
@@ -199,11 +199,13 @@ def test_vtk_colors(vtk_color):
     }
     name = vtk_synonyms.get(name, name)
 
+    # Get expected hex value from vtkNamedColors
     color3ub = vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
     if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
         pytest.fail(f"Color '{name}' is not a valid VTK color.")
     expected_hex = pv.Color(int_rgb).hex_rgb
+
     assert value.lower() == expected_hex
 
 
