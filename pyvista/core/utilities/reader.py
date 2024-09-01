@@ -99,6 +99,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.mhd``       | :class:`pyvista.MetaImageReader`            |
     +----------------+---------------------------------------------+
+    | ``.nc``        | :class:`pyvista.NetCDFReader`               |
+    +----------------+---------------------------------------------+
     | ``.nii``       | :class:`pyvista.NIFTIReader`                |
     +----------------+---------------------------------------------+
     | ``.nii.gz``    | :class:`pyvista.NIFTIReader`                |
@@ -2813,6 +2815,74 @@ class ProStarReader(BaseReader):
     _vtk_class_name = "vtkProStarReader"
 
 
+class NetCDFCFReader(BaseReader):
+    """NetCDFCFReader for .nc files.
+
+    .. versionadded:: 0.44.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_tos_O1_2001_2002(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> reader.variable_array_names
+    ['tos']
+    >>> grid = reader.read()
+    >>> _ = grid.set_active_scalars("tos")
+    >>> grid.plot()
+
+    """
+
+    _vtk_module_name = "vtkIONetCDF"
+    _vtk_class_name = "vtkNetCDFCFReader"
+
+    @property
+    def number_variable_arrays(self) -> int:
+        """Return the number of variable arrays.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfVariableArrays()
+
+    @property
+    def dimensions(self) -> int:
+        """Return the dimensions of the data.
+
+        Returns
+        -------
+        list[int]
+
+        """
+        return self.reader.GetAllDimensions()
+
+    @dimensions.setter
+    def dimensions(self, dimensions: list[int]):
+        """Set the dimension of the data.
+
+        Parameters
+        ----------
+        dimension : list[int]
+            The dimension of the data.
+
+        """
+        self.reader.SetDimensions(dimensions)
+
+    @property
+    def variable_array_names(self) -> List[str]:
+        """Return the list of all variable array names.
+
+        Returns
+        -------
+        list[str]
+
+        """
+        return [self.reader.GetVariableArrayName(i) for i in range(self.number_variable_arrays)]
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2840,6 +2910,7 @@ CLASS_READERS = {
     '.mhd': MetaImageReader,
     '.mnc': MINCImageReader,
     '.mr': GESignaReader,
+    '.nc': NetCDFCFReader,
     '.neu': GambitReader,
     '.nhdr': NRRDReader,
     '.nii': NIFTIReader,

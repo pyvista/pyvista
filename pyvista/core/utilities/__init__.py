@@ -185,6 +185,7 @@ from .reader import MetaImageReader
 from .reader import MFIXReader
 from .reader import MINCImageReader
 from .reader import MultiBlockPlot3DReader
+from .reader import NetCDFCFReader
 from .reader import NIFTIReader
 from .reader import NRRDReader
 from .reader import OBJReader

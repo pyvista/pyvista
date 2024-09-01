@@ -45,6 +45,7 @@ Reader Classes
     MetaImageReader
     MINCImageReader
     MultiBlockPlot3DReader
+    NetCDFCFReader
     NIFTIReader
     NRRDReader
     OBJReader

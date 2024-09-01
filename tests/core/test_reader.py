@@ -1114,3 +1114,14 @@ def test_prostar_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_netcdfcfreader():
+    filename = examples.download_tos_O1_2001_2002(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.NetCDFCFReader)
+    assert reader.path == filename
+    assert reader.variable_array_names == ['tos']
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

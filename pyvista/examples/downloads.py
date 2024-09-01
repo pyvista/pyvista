@@ -8149,3 +8149,44 @@ def download_3gqp(load=True):  # pragma: no cover
 
 
 _dataset_3gqp = _SingleFileDownloadableDatasetLoader('3GQP.pdb')
+
+
+def download_tos_O1_2001_2002(load=True):  # pragma: no cover
+    """Download the TOS_O1_2001_2002 dataset.
+
+    Sea surface temperatures collected by PCMDI for use by the IPCC.
+    From `Example netCDF files <https://www.unidata.ucar.edu/software/netcdf/examples/files.html>`_ .
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_tos_O1_2001_2002(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> grid = reader.read()
+    >>> _ = grid.set_active_scalars("tos")
+    >>> grid.plot()
+
+    .. seealso::
+
+        :ref:`TOS_O1_2001_2002 Dataset <tos_o1_2001_2002_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_tos_O1_2001_2002, load=load)
+
+
+_dataset_tos_O1_2001_2002 = _SingleFileDownloadableDatasetLoader('tos_O1_2001-2002.nc')
