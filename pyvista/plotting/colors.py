@@ -168,7 +168,7 @@ _hexcolors = {
     'plum': '#DDA0DD',
     'powderblue': '#B0E0E6',
     'purple': '#800080',
-    'raw_sienna': '#965434',
+    'raw_sienna': '#C76114',
     'rebecca_purple': '#663399',
     'red': '#FF0000',
     'rosy_brown': '#BC8F8F',
@@ -256,7 +256,7 @@ _hexcolors = {
     'rose_madder': '#e33638',
     'sap_green': '#308014',
     'sepia': '#5e2612',
-    'light_slate_blue_': '#8470ff',
+    'light_slate_blue': '#8470ff',
     'terre_verte': '#385e0f',
     'titanium_white': '#fcfff0',
     'turquoise_blue': '#00c78c',
@@ -299,6 +299,7 @@ _color_synonyms = {
     'paraview': 'paraview_background',
     'slate_grey': 'slate_gray',
     'light_goldenrod': 'light_goldenrod_yellow',
+    'slate_blue_light': 'light_slate_blue',
 }
 color_synonyms = {
     _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
@@ -792,7 +793,7 @@ class Color:
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
         arg = n
-        n = n.lower()
+        n = n.lower().replace('_', '')
         if n in color_synonyms:
             # Synonym of registered color name
             # Convert from synonym to full hex
