@@ -219,3 +219,10 @@ def test_biquadratic_quadratic_wedge():
     assert grid.celltypes[0] == CellType.BIQUADRATIC_QUADRATIC_WEDGE
     assert grid.n_cells == 1
     assert grid.n_points == 18
+
+
+def test_biquadratic_quadratic_hexahedron():
+    grid = cells.BiQuadraticQuadraticHexahedron()
+    assert grid.celltypes[0] == CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON
+    assert grid.n_cells == 1
+    assert grid.n_points == 24

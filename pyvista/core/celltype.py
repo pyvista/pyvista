@@ -891,6 +891,7 @@ class CellType(IntEnum):
     BIQUADRATIC_QUADRATIC_HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkBiQuadraticQuadraticHexahedron,
+        example='BiQuadraticQuadraticHexahedron',
         short_doc="""
         Represents a 3D, 24-node iso-parametric biquadratic hexahedron.
 

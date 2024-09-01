@@ -168,3 +168,4 @@ cell types.
    QuadraticLinearQuadrilateral
    QuadraticLinearWedge
    BiQuadraticQuadraticWedge
+   BiQuadraticQuadraticHexahedron
