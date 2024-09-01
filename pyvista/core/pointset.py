@@ -2698,14 +2698,14 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         s1 = {"BLOCK_I", "BLOCK_J", "BLOCK_K"}
         if not s1.issubset(self.cell_data):
-            I, J, K = np.unravel_index(
+            i, j, k = np.unravel_index(
                 np.arange(self.n_cells),
                 shape=(ni - 1, nj - 1, nk - 1),
                 order="F",
             )
-            grid.cell_data["BLOCK_I"] = I
-            grid.cell_data["BLOCK_J"] = J
-            grid.cell_data["BLOCK_K"] = K
+            grid.cell_data["BLOCK_I"] = i
+            grid.cell_data["BLOCK_J"] = j
+            grid.cell_data["BLOCK_K"] = k
 
         grid = grid.cast_to_explicit_structured_grid()
 
