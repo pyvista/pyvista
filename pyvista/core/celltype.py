@@ -916,6 +916,7 @@ class CellType(IntEnum):
     BIQUADRATIC_TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkBiQuadraticTriangle,
+        example='BiQuadraticTriangle',
         short_doc="""
         Represents a 2D, 7-node, iso-parametric parabolic triangle.
 

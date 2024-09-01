@@ -226,3 +226,10 @@ def test_biquadratic_quadratic_hexahedron():
     assert grid.celltypes[0] == CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON
     assert grid.n_cells == 1
     assert grid.n_points == 24
+
+
+def test_biquadratic_triangle():
+    grid = cells.BiQuadraticTriangle()
+    assert grid.celltypes[0] == CellType.BIQUADRATIC_TRIANGLE
+    assert grid.n_cells == 1
+    assert grid.n_points == 7
