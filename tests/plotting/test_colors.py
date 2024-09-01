@@ -167,11 +167,6 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
-@pytest.fixture()
-def vtk_named_colors():
-    return vtk.vtkNamedColors()
-
-
 def test_css4_colors(css4_color):
     name, value = css4_color
     assert pv.Color(name).hex_rgb.lower() == value.lower()
