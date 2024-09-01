@@ -40,6 +40,7 @@ def plot_cell(grid, cpos=None, **kwargs):
         CellType.LINE,
         CellType.POLY_LINE,
         CellType.QUADRATIC_EDGE,
+        CellType.CUBIC_LINE,
     ]:
         pl.add_mesh(grid, style='wireframe', line_width=10, color='k', render_lines_as_tubes=True)
     pl.add_points(grid, render_points_as_spheres=True, point_size=80, color='r')
@@ -1617,6 +1618,43 @@ def BiQuadraticTriangle() -> UnstructuredGrid:
     array([34], dtype=uint8)
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticTriangle())
+
+
+def CubicLine() -> UnstructuredGrid:
+    """Create a :class:`pyvista.UnstructuredGrid` containing a single cubic line.
+
+    This cell corresponds to the :attr:`pyvista.CellType.CUBIC_LINE` cell type.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid
+        UnstructuredGrid containing a single cubic line.
+
+    Examples
+    --------
+    Create and plot a single cubic line.
+
+    >>> from pyvista import examples
+    >>> grid = examples.cells.CubicLine()
+    >>> examples.plot_cell(grid)
+
+    List the grid's cells.
+
+    >>> grid.cells
+    array([4, 0, 1, 2, 3])
+
+    List the grid's points.
+
+    >>> grid.points
+    pyvista_ndarray([[-1.        ,  0.        ,  0.        ],
+                     [ 1.        ,  0.        ,  0.        ],
+                     [-0.33333333,  0.        ,  0.        ],
+                     [ 0.33333333,  0.        ,  0.        ]])
+
+    >>> grid.celltypes  # same as pyvista.CellType.CUBIC_LINE
+    array([35], dtype=uint8)
+    """
+    return _make_isoparametric_unstructured_grid(_vtk.vtkCubicLine())
 
 
 def _make_isoparametric_unstructured_grid(vtk_cell: _vtk.vtkCell):

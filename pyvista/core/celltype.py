@@ -937,7 +937,9 @@ class CellType(IntEnum):
 
     ####################################################################################
     # Cubic, iso-parametric cell
-    CUBIC_LINE = _CellTypeTuple(value=_vtk.VTK_CUBIC_LINE, cell_class=_vtk.vtkCubicLine)
+    CUBIC_LINE = _CellTypeTuple(
+        value=_vtk.VTK_CUBIC_LINE, cell_class=_vtk.vtkCubicLine, example='CubicLine'
+    )
 
     ####################################################################################
     # Special class of cells formed by convex group of points

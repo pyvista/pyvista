@@ -170,3 +170,4 @@ cell types.
    BiQuadraticQuadraticWedge
    BiQuadraticQuadraticHexahedron
    BiQuadraticTriangle
+   CubicLine

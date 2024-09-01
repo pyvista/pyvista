@@ -233,3 +233,10 @@ def test_biquadratic_triangle():
     assert grid.celltypes[0] == CellType.BIQUADRATIC_TRIANGLE
     assert grid.n_cells == 1
     assert grid.n_points == 7
+
+
+def test_cubic_line():
+    grid = cells.CubicLine()
+    assert grid.celltypes[0] == CellType.CUBIC_LINE
+    assert grid.n_cells == 1
+    assert grid.n_points == 4
