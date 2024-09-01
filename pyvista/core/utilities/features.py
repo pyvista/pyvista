@@ -92,18 +92,6 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
     >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])
     >>> vox.plot(show_edges=True)
 
-    Create an equal density voxel volume without enclosing input mesh.
-
-    >>> vox = pv.voxelize(mesh, density=0.15)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
-
-    Create an equal density voxel volume enclosing input mesh.
-
-    >>> vox = pv.voxelize(mesh, density=0.15, enclosed=True)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
-
     """
     if not pyvista.is_pyvista_dataset(mesh):
         mesh = wrap(mesh)
@@ -232,17 +220,6 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
     >>> slices = vox.slice_orthogonal()
     >>> slices.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
-    Create an equal density voxel volume without enclosing input mesh.
-
-    >>> vox = pv.voxelize_volume(mesh, density=0.15)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
-
-    Create an equal density voxel volume enclosing input mesh.
-
-    >>> vox = pv.voxelize_volume(mesh, density=0.15, enclosed=True)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
     """
     mesh = wrap(mesh)
     if density is None:
