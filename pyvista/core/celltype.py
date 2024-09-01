@@ -628,6 +628,7 @@ class CellType(IntEnum):
     QUADRATIC_POLYGON = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_POLYGON,
         cell_class=_vtk.vtkQuadraticPolygon,
+        example='QuadraticPolygon',
         points_override='variable',
         edges_override='variable',
         short_doc="""
@@ -713,6 +714,7 @@ class CellType(IntEnum):
     QUADRATIC_PYRAMID = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_PYRAMID,
         cell_class=_vtk.vtkQuadraticPyramid,
+        example='QuadraticPyramid',
         short_doc="""
         Represents a 3D, 13-node iso-parametric parabolic pyramid.
 
@@ -823,6 +825,7 @@ class CellType(IntEnum):
     QUADRATIC_LINEAR_QUAD = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
         cell_class=_vtk.vtkQuadraticLinearQuad,
+        example='QuadraticLinearQuadrilateral',
         short_doc="""
         Represents a 2D, 6-node iso-parametric quadratic-linear quadrilateral element.
 
@@ -840,6 +843,7 @@ class CellType(IntEnum):
     QUADRATIC_LINEAR_WEDGE = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_WEDGE,
         cell_class=_vtk.vtkQuadraticLinearWedge,
+        example='QuadraticLinearWedge',
         short_doc="""
         Represents a 3D, 12-node iso-parametric linear quadratic wedge.
 
@@ -860,6 +864,7 @@ class CellType(IntEnum):
     BIQUADRATIC_QUADRATIC_WEDGE = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkBiQuadraticQuadraticWedge,
+        example='BiQuadraticQuadraticWedge',
         short_doc="""
         Represents a 3D, 18-node iso-parametric bi-quadratic wedge.
 
