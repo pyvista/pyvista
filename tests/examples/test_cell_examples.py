@@ -179,6 +179,13 @@ def test_quadratic_pyramid():
     assert grid.n_points == 13
 
 
+def test_biquadratic_quadrilateral():
+    grid = cells.BiQuadraticQuadrilateral()
+    assert grid.celltypes[0] == CellType.BIQUADRATIC_QUAD
+    assert grid.n_cells == 1
+    assert grid.n_points == 9
+
+
 def test_quadratic_linear_quadrilateral():
     grid = cells.QuadraticLinearQuadrilateral()
     assert grid.celltypes[0] == CellType.QUADRATIC_LINEAR_QUAD

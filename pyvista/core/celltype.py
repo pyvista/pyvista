@@ -735,6 +735,7 @@ class CellType(IntEnum):
     BIQUADRATIC_QUAD = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUAD,
         cell_class=_vtk.vtkBiQuadraticQuad,
+        example='BiQuadraticQuadrilateral',
         short_doc="""
         Represents a 2D, 9-node iso-parametric parabolic quadrilateral element with a center-point.
 
