@@ -4,6 +4,7 @@ import itertools
 
 import matplotlib as mpl
 from matplotlib.colors import CSS4_COLORS
+from matplotlib.colors import TABLEAU_COLORS
 import numpy as np
 import pytest
 
@@ -133,6 +134,13 @@ def pytest_generate_tests(metafunc):
         test_cases = zip(color_names, color_values)
         metafunc.parametrize('css4_color', test_cases, ids=color_names)
 
+    if 'tab_color' in metafunc.fixturenames:
+        color_names = list(TABLEAU_COLORS.keys())
+        color_values = list(TABLEAU_COLORS.values())
+
+        test_cases = zip(color_names, color_values)
+        metafunc.parametrize('tab_color', test_cases, ids=color_names)
+
     if 'color_synonym' in metafunc.fixturenames:
         synonyms = list(pv.colors.color_synonyms.keys())
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
@@ -140,6 +148,11 @@ def pytest_generate_tests(metafunc):
 
 def test_css4_colors(css4_color):
     name, value = css4_color
+    assert pv.Color(name).hex_rgb.lower() == value.lower()
+
+
+def test_tab_colors(tab_color):
+    name, value = tab_color
     assert pv.Color(name).hex_rgb.lower() == value.lower()
 
 
