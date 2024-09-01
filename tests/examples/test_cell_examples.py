@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from pyvista import CellType
 from pyvista.examples import cells
 
@@ -193,6 +195,7 @@ def test_triquadratic_hexahedron():
     assert grid.n_points == 27
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
 def test_triquadratic_pyramid():
     grid = cells.TriQuadraticPyramid()
     assert grid.celltypes[0] == CellType.TRIQUADRATIC_PYRAMID
