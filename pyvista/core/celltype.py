@@ -755,6 +755,7 @@ class CellType(IntEnum):
     TRIQUADRATIC_HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_TRIQUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkTriQuadraticHexahedron,
+        example='TriQuadraticHexahedron',
         short_doc="""
         Represents a 3D, 27-node iso-parametric triquadratic hexahedron.
 

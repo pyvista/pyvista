@@ -186,6 +186,13 @@ def test_biquadratic_quadrilateral():
     assert grid.n_points == 9
 
 
+def test_triquadratic_hexahedron():
+    grid = cells.TriQuadraticHexahedron()
+    assert grid.celltypes[0] == CellType.TRIQUADRATIC_HEXAHEDRON
+    assert grid.n_cells == 1
+    assert grid.n_points == 27
+
+
 def test_quadratic_linear_quadrilateral():
     grid = cells.QuadraticLinearQuadrilateral()
     assert grid.celltypes[0] == CellType.QUADRATIC_LINEAR_QUAD
