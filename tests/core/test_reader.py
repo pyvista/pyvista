@@ -1117,9 +1117,9 @@ def test_prostar_reader():
     assert all([mesh.n_points, mesh.n_cells])
 
 
-def test_grdecl_reader():
+def test_grdecl_reader(tmp_path):
     def read(content, include_content, **kwargs):
-        path = Path(tempfile.mkdtemp())
+        path = tmp_path
 
         with Path.open(path / "3x3x3.grdecl", "w") as f:
             f.write("".join(content))
