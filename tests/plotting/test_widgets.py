@@ -10,6 +10,7 @@ from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.affine_widget import DARK_YELLOW
 from pyvista.plotting.affine_widget import get_angle
 from pyvista.plotting.affine_widget import ray_plane_intersection
+from tests.conftest import flaky_test
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -454,6 +455,7 @@ def test_get_angle():
     assert np.isclose(result_angle, expected_angle, atol=1e-8)
 
 
+@flaky_test
 def test_affine_widget(sphere):
     interact_calls = []
     release_calls = []

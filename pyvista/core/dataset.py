@@ -1383,8 +1383,8 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        pyvista.Transform.reflect
-            Concatenate a reflection matrix with a transformation.
+        pyvista.Transform.flip_x
+            Concatenate a reflection about the x-axis with a transformation.
 
         Examples
         --------
@@ -1445,8 +1445,8 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        pyvista.Transform.reflect
-            Concatenate a reflection matrix with a transformation.
+        pyvista.Transform.flip_y
+            Concatenate a reflection about the y-axis with a transformation.
 
         Examples
         --------
@@ -1507,8 +1507,8 @@ class DataSet(DataSetFilters, DataObject):
 
         See Also
         --------
-        pyvista.Transform.reflect
-            Concatenate a reflection matrix with a transformation.
+        pyvista.Transform.flip_z
+            Concatenate a reflection about the z-axis with a transformation.
 
         Examples
         --------

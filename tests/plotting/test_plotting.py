@@ -4678,3 +4678,43 @@ def test_planes_assembly_label_size(bounds, label_size):
         plot.add_actor(actor)
         actor.camera = plot.camera
     plot.show()
+
+
+@pytest.fixture()
+def oblique_cone():
+    return pv.examples.download_oblique_cone()
+
+
+@pytest.mark.parametrize('box_style', ['outline', 'face', 'frame'])
+def test_bounding_box(oblique_cone, box_style):
+    pl = pv.Plotter()
+    box = oblique_cone.bounding_box(box_style)
+    oriented_box = oblique_cone.bounding_box(box_style, oriented=True)
+
+    pl.add_mesh(oblique_cone)
+    pl.add_mesh(box, color='red', opacity=0.5, line_width=5)
+    pl.add_mesh(oriented_box, color='blue', opacity=0.5, line_width=5)
+    pl.show()
+
+
+@pytest.mark.parametrize('operator', ['or', 'and', 'ior', 'iand'])
+def test_bitwise_and_or_of_polydata(operator):
+    radius = 0.5
+    sphere = pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
+    sphere_shifted = pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
+    if operator == 'or':
+        result = sphere | sphere_shifted
+    elif operator == 'and':
+        result = sphere & sphere_shifted
+    elif operator == 'ior':
+        result = sphere.copy()
+        result |= sphere_shifted
+    elif operator == 'iand':
+        result = sphere.copy()
+        result &= sphere_shifted
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, color='r', style='wireframe', line_width=3)
+    pl.add_mesh(sphere_shifted, color='b', style='wireframe', line_width=3)
+    pl.add_mesh(result, color='lightblue')
+    pl.camera_position = 'xz'
+    pl.show()

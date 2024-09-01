@@ -7,6 +7,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
+import colorsys
 from dataclasses import dataclass
 import sys
 
@@ -48,10 +49,12 @@ if TYPE_CHECKING:
     from types import FunctionType
     from types import ModuleType
 
+    from pyvista.plotting.colors import ColorLike
+
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
-COLORS_TABLE_DIR = "api/utilities"
+COLORS_TABLE_DIR = "api/utilities/color_table"
 
 # Directory where auto-generated gallery rst files are saved
 DATASET_GALLERY_DIR = "api/examples/dataset-gallery"
@@ -375,7 +378,7 @@ class ColorSchemeTable(DocTable):
 class ColorTable(DocTable):
     """Class to generate colors table."""
 
-    path = f"{COLORS_TABLE_DIR}/colors.rst"
+    path = f"{COLORS_TABLE_DIR}/color_table.rst"
     header = _aligned_dedent(
         """
         |.. list-table::
@@ -400,13 +403,19 @@ class ColorTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``hexcolors`` dictionary.
-        colors = {
-            name: {"name": name, "hex": hex_, "synonyms": []} for name, hex_ in pv.hexcolors.items()
+        return ColorTable._table_data_from_color_sequence(pv.hexcolors.keys())
+
+    @staticmethod
+    def _table_data_from_color_sequence(colors: Iterable[ColorLike]):
+        colors_obj: list[pv.Color] = [pv.Color(c) for c in colors]
+        colors_dict: dict[str | None, dict[str, Any]] = {
+            c.name: {"name": c.name, "hex": c.hex_rgb, "synonyms": []} for c in colors_obj
         }
+        assert all(name is not None for name in colors_dict.keys()), 'Colors must be named.'
         # Add synonyms defined in ``color_synonyms`` dictionary.
         for s, name in pv.colors.color_synonyms.items():
-            colors[name]["synonyms"].append(s)
-        return colors.values()
+            colors_dict[name]["synonyms"].append(s)
+        return colors_dict.values()
 
     @classmethod
     def get_header(cls, data):
@@ -418,6 +427,25 @@ class ColorTable(DocTable):
         names = [row_data["name"]] + row_data["synonyms"]
         name = " or ".join(name_template.format(n) for n in names)
         return cls.row_template.format(name, row_data["hex"], row_data["hex"])
+
+
+def _sort_colors():
+    colors_rgb = [pv.Color(c).float_rgb for c in pv.hexcolors.values()]
+    # Sort colors by hue, saturation, and value (HSV)
+    return sorted(colors_rgb, key=lambda c: tuple(colorsys.rgb_to_hsv(*pv.Color(c).float_rgb)))
+
+
+SORTED_COLORS_AS_RGB_FLOAT = _sort_colors()
+
+
+class SortedColorTable(ColorTable):
+    """Class to generate sorted colors table."""
+
+    path = f"{COLORS_TABLE_DIR}/color_table_sorted.rst"
+
+    @classmethod
+    def fetch_data(cls):
+        return cls._table_data_from_color_sequence(SORTED_COLORS_AS_RGB_FLOAT)
 
 
 def _get_doc(func: Callable[[], Any]) -> str | None:
@@ -1408,7 +1436,8 @@ class DatasetCardFetcher:
         """Add cell type badge(s) to every dataset."""
         for card in cls.DATASET_CARDS_OBJ.values():
             for cell_type in card.loader.unique_cell_types:
-                card.add_badge(CellTypeBadge(cell_type.name))
+                name = cell_type.name
+                card.add_badge(CellTypeBadge(name, 'pyvista.CellType.' + name))
 
     @classmethod
     def fetch_dataset_names_by_datatype(cls, datatype) -> Iterator[str]:
@@ -2058,10 +2087,12 @@ CAROUSEL_LIST = [
 def make_all_tables():
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
+    os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
     ColorTable.generate()
+    SortedColorTable.generate()
 
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
