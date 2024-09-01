@@ -148,6 +148,8 @@ def pytest_generate_tests(metafunc):
 
         SPECIAL_CASES = {'paraview_background': '#52576e'}  # Only need to store the name
         NOT_A_VTK_COLOR = {**SPECIAL_CASES, **CSS4_COLORS, **TABLEAU_COLORS}
+
+        # vtkNamedColor expects vtk-only colors to have underscores
         colors = pv.colors._hexcolors.copy()
         for color_name in pv.colors._hexcolors:
             color_fmt = color_name if color_name in SPECIAL_CASES else color_name.replace('_', '')
@@ -183,10 +185,24 @@ def test_tab_colors(tab_color):
 def test_vtk_colors(vtk_color):
     name, value = vtk_color
     # This synonym is missing from the vtkNamedColor lookup, so we manually map it
-    name = 'slate_blue_light' if name == 'light_slate_blue' else name
+    # These colors are technically not valid VTK colors. We need to map their
+    # synonym manually for the tests
+    vtk_synonyms = {
+        'light_slate_blue': 'slate_blue_light',
+        'deep_cadmium_red': 'cadmium_red_deep',
+        'light_cadmium_red': 'cadmium_red_light',
+        'light_cadmium_yellow': 'cadmium_yellow_light',
+        'deep_cobalt_blue': 'cobalt_blue_deep',
+        'deep_cobalt_violet': 'cobalt_violet_deep',
+        'deep_naples_yellow': 'naples_yellow_deep',
+        'light_viridian': 'viridian_light',
+    }
+    name = vtk_synonyms.get(name, name)
 
     color3ub = vtk.vtkNamedColors().GetColor3ub(name)
     int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
+    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
+        pytest.fail(f"Color '{name}' is not a valid VTK color.")
     expected_hex = pv.Color(int_rgb).hex_rgb
     assert value.lower() == expected_hex
 

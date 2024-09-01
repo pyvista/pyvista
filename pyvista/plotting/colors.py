@@ -55,7 +55,10 @@ def _format_color_name(string):
 #
 # Synonyms (colors with a different name but same hex value) are placed in `color_synonyms`
 
-_hexcolors = {
+
+# Colors from the CSS standard. Matches matplotlib.colors.CSS4_COLORS
+# but with underscores added
+_CSS_COLORS = {
     'alice_blue': '#F0F8FF',
     'antique_white': '#FAEBD7',
     'aquamarine': '#7FFFD4',
@@ -166,9 +169,8 @@ _hexcolors = {
     'peru': '#CD853F',
     'pink': '#FFC0CB',
     'plum': '#DDA0DD',
-    'powderblue': '#B0E0E6',
+    'powder_blue': '#B0E0E6',
     'purple': '#800080',
-    'raw_sienna': '#C76114',
     'rebecca_purple': '#663399',
     'red': '#FF0000',
     'rosy_brown': '#BC8F8F',
@@ -197,6 +199,11 @@ _hexcolors = {
     'white_smoke': '#F5F5F5',
     'yellow': '#FFFF00',
     'yellow_green': '#9ACD32',
+}
+
+# Tableau colors. Matches matplotlib.colors.TABLEAU_COLORS
+# but with underscores added
+_TABLEAU_COLORS = {
     'tab:blue': '#1f77b4',
     'tab:orange': '#ff7f0e',
     'tab:green': '#2ca02c',
@@ -207,7 +214,20 @@ _hexcolors = {
     'tab:gray': '#7f7f7f',
     'tab:olive': '#bcbd22',
     'tab:cyan': '#17becf',
-    # colors from vtkNamedColor:
+}
+
+# Colors from https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html
+# The vtk colors are only partially supported:
+# - VTK colors with the same name as CSS colors but different values are excluded
+#   (i.e. the CSS colors take precedent)
+# - Not all VTK synonyms are supported.
+# - Colors with adjective suffixes are renamed to use a prefix instead
+#   (e.g. 'green_pale' is renamed to 'pale_green'). This is done to keep VTK color
+#   names consistent with CSS names. In many cases this altered color name is
+#   supported directly by vtkNamedColors, but in some cases this technically is no
+#   longer a valid named vtk color
+
+_VTK_NAMED_COLORS = {
     'alizarin_crimson': '#e32636',
     'aureoline_yellow': '#ffa824',
     'banana': '#e3cf57',
@@ -218,17 +238,17 @@ _hexcolors = {
     'burnt_umber': '#8a3324',
     'cadmium_lemon': '#ffe303',
     'cadmium_orange': '#ff6103',
-    'cadmium_red_deep': '#e3170d',
-    'cadmium_red_light': '#ff030d',
+    'deep_cadmium_red': '#e3170d',
+    'light_cadmium_red': '#ff030d',
     'cadmium_yellow': '#ff9912',
-    'cadmium_yellow_light': '#ffb00f',
+    'light_cadmium_yellow': '#ffb00f',
     'carrot': '#ed9121',
     'cerulean': '#05b8cc',
     'chrome_oxide_green': '#668014',
     'cinnabar_green': '#61b329',
     'cobalt': '#3d59ab',
     'cobalt_green': '#3d9140',
-    'cobalt_violet_deep': '#91219e',
+    'deep_cobalt_violet': '#91219e',
     'cold_grey': '#808a87',
     'deep_ochre': '#733d1a',
     'eggshell': '#fce6c9',
@@ -247,11 +267,12 @@ _hexcolors = {
     'mars_yellow': '#e3701a',
     'melon': '#e3a869',
     'mint': '#bdfcc9',
-    'naples_yellow_deep': '#ffa812',
+    'deep_naples_yellow': '#ffa812',
     'peacock': '#33a1c9',
     'permanent_green': '#0ac92b',
     'permanent_red_violet': '#db2645',
     'raspberry': '#872657',
+    'raw_sienna': '#C76114',
     'raw_umber': '#734a12',
     'rose_madder': '#e33638',
     'sap_green': '#308014',
@@ -265,10 +286,16 @@ _hexcolors = {
     'van_dyke_brown': '#5e2605',
     'venetian_red': '#d41a1f',
     'violet_red': '#d02090',
-    'viridian_light': '#6eff70',
+    'light_viridian': '#6eff70',
     'warm_grey': '#808069',
     'yellow_ochre': '#e38217',
     'zinc_white': '#fcf7ff',
+}
+
+_hexcolors = {
+    **_CSS_COLORS,
+    **_TABLEAU_COLORS,
+    **_VTK_NAMED_COLORS,
 }
 hexcolors = {_format_color_name(n): h.lower() for n, h in _hexcolors.items()}
 
