@@ -46,15 +46,11 @@ def _format_color_name(string):
     return string.lower().replace('_', '')
 
 
-# Colors include:
-# - Standard web named colors: https://www.w3.org/TR/css-color-4/#named-colors
-# - Extra `paraview_background` color is added
-# - Additional colors from vtkNamedColors with any duplicates, synonyms, or
-#   colors already defined by the web standard excluded
-#   https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html
-#
-# Synonyms (colors with a different name but same hex value) are placed in `color_synonyms`
-
+# Define named colors by group/origin:
+# - Define a separate dict for each group.
+# - Include underscores between words.
+# - Add single colors or special colors, e.g.`paraview_background` to `_SPECIAL_COLORS`
+# - Add synonyms (colors with a different name but same hex value) to `color_synonyms`
 
 # Colors from the CSS standard. Matches matplotlib.colors.CSS4_COLORS
 # but with underscores added
@@ -164,7 +160,6 @@ _CSS_COLORS = {
     'pale_turquoise': '#AFEEEE',
     'pale_violet_red': '#DB7093',
     'papaya_whip': '#FFEFD5',
-    'paraview_background': '#52576e',
     'peach_puff': '#FFDAB9',
     'peru': '#CD853F',
     'pink': '#FFC0CB',
@@ -292,12 +287,16 @@ _VTK_NAMED_COLORS = {
     'zinc_white': '#fcf7ff',
 }
 
-_hexcolors = {
-    **_CSS_COLORS,
+_SPECIAL_COLORS = {'paraview_background': '#52576e'}
+
+# Sort named colors alphabetically. Exclude prefixed colors (e.g. `tab:`) and place
+# them at the end
+_sorted_named_colors = dict(sorted({**_CSS_COLORS, **_VTK_NAMED_COLORS, **_SPECIAL_COLORS}.items()))
+_hexcolors_with_underscores = {
+    **_sorted_named_colors,
     **_TABLEAU_COLORS,
-    **_VTK_NAMED_COLORS,
 }
-hexcolors = {_format_color_name(n): h.lower() for n, h in _hexcolors.items()}
+hexcolors = {_format_color_name(n): h.lower() for n, h in _hexcolors_with_underscores.items()}
 
 color_names = {h: n for n, h in hexcolors.items()}
 

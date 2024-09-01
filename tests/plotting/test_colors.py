@@ -150,8 +150,8 @@ def pytest_generate_tests(metafunc):
         NOT_A_VTK_COLOR = {**SPECIAL_CASES, **CSS4_COLORS, **TABLEAU_COLORS}
 
         # vtkNamedColor expects vtk-only colors to have underscores
-        colors = pv.colors._hexcolors.copy()
-        for color_name in pv.colors._hexcolors:
+        colors = pv.colors._hexcolors_with_underscores.copy()
+        for color_name in pv.colors._hexcolors_with_underscores:
             color_fmt = color_name if color_name in SPECIAL_CASES else color_name.replace('_', '')
             if color_fmt in NOT_A_VTK_COLOR:
                 colors.pop(color_name)
