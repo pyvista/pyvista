@@ -1,168 +1,6 @@
 """Color module supporting plotting module.
 
 Used code from matplotlib.colors.  Thanks for your work.
-
-
-SUPPORTED COLORS
-aliceblue
-antiquewhite
-aqua
-aquamarine
-azure
-beige
-bisque
-black
-blanchedalmond
-blue
-blueviolet
-brown
-burlywood
-cadetblue
-chartreuse
-chocolate
-coral
-cornflowerblue
-cornsilk
-crimson
-cyan
-darkblue
-darkcyan
-darkgoldenrod
-darkgray
-darkgreen
-darkgrey
-darkkhaki
-darkmagenta
-darkolivegreen
-darkorange
-darkorchid
-darkred
-darksalmon
-darkseagreen
-darkslateblue
-darkslategray
-darkslategrey
-darkturquoise
-darkviolet
-deeppink
-deepskyblue
-dimgray
-dimgrey
-dodgerblue
-firebrick
-floralwhite
-forestgreen
-fuchsia
-gainsboro
-ghostwhite
-gold
-goldenrod
-gray
-green
-greenyellow
-grey
-honeydew
-hotpink
-indianred
-indigo
-ivory
-khaki
-lavender
-lavenderblush
-lawngreen
-lemonchiffon
-lightblue
-lightcoral
-lightcyan
-lightgoldenrodyellow
-lightgray
-lightgreen
-lightgrey
-lightpink
-lightsalmon
-lightseagreen
-lightskyblue
-lightslategray
-lightslategrey
-lightsteelblue
-lightyellow
-lime
-limegreen
-linen
-magenta
-maroon
-mediumaquamarine
-mediumblue
-mediumorchid
-mediumpurple
-mediumseagreen
-mediumslateblue
-mediumspringgreen
-mediumturquoise
-mediumvioletred
-midnightblue
-mintcream
-mistyrose
-moccasin
-navajowhite
-navy
-oldlace
-olive
-olivedrab
-orange
-orangered
-orchid
-palegoldenrod
-palegreen
-paleturquoise
-palevioletred
-papayawhip
-peachpuff
-peru
-pink
-plum
-powderblue
-purple
-rebeccapurple
-red
-rosybrown
-royalblue
-saddlebrown
-salmon
-sandybrown
-seagreen
-seashell
-sienna
-silver
-skyblue
-slateblue
-slategray
-slategrey
-snow
-springgreen
-steelblue
-tan
-teal
-thistle
-tomato
-turquoise
-violet
-wheat
-white
-whitesmoke
-yellow
-yellowgreen
-tab:blue
-tab:orange
-tab:green
-tab:red
-tab:purple
-tab:brown
-tab:pink
-tab:gray
-tab:olive
-tab:cyan
-
 """
 
 # Necessary for autodoc_type_aliases to recognize the type aliases used in the signatures
@@ -652,7 +490,13 @@ class Color:
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
     or ``float``) is considered a :data:`ColorLike` parameter and can be converted
     by this class.
-    See :attr:`Color.name` for a list of supported color names.
+
+    See :ref:`color_table` for a list of supported colors.
+
+    .. note:
+
+        The internally used representation is an integer RGBA sequence (values
+        between 0 and 255). This might however change in future releases.
 
     Parameters
     ----------
@@ -691,15 +535,6 @@ class Color:
         Default opacity of the represented color. Used when ``color``
         does not specify an opacity and ``opacity`` is ``None``. Format
         is identical to ``opacity``.
-
-    Notes
-    -----
-    The internally used representation is an integer RGBA sequence (values
-    between 0 and 255). This might however change in future releases.
-
-    Refer to the table below for a list of supported colors
-
-    .. include:: ../color_table/color_table.rst
 
     Examples
     --------
@@ -1057,16 +892,12 @@ class Color:
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
+        See :ref:`color_table` for a list of supported colors.
+
         Returns
         -------
         str | None
             The color name, in case this color has a name; otherwise ``None``.
-
-        Notes
-        -----
-        Refer to the table below for a list of supported colors.
-
-        .. include:: ../colors.rst
 
         Examples
         --------

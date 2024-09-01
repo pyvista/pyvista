@@ -51,7 +51,7 @@ if TYPE_CHECKING:
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = "api/plotting/charts"
 CHARTS_IMAGE_DIR = "images/charts"
-COLORS_TABLE_DIR = "api/utilities"
+COLORS_TABLE_DIR = "api/utilities/color_table"
 
 # Directory where auto-generated gallery rst files are saved
 DATASET_GALLERY_DIR = "api/examples/dataset-gallery"
@@ -375,7 +375,7 @@ class ColorSchemeTable(DocTable):
 class ColorTable(DocTable):
     """Class to generate colors table."""
 
-    path = f"{COLORS_TABLE_DIR}/colors.rst"
+    path = f"{COLORS_TABLE_DIR}/color_table.rst"
     header = _aligned_dedent(
         """
         |.. list-table::
@@ -2059,6 +2059,7 @@ CAROUSEL_LIST = [
 def make_all_tables():
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
+    os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
     LineStyleTable.generate()
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
