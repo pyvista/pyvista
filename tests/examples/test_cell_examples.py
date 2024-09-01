@@ -163,3 +163,38 @@ def test_quadratic_wedge():
     assert grid.celltypes[0] == CellType.QUADRATIC_WEDGE
     assert grid.n_cells == 1
     assert grid.n_points == 15
+
+
+def test_quadratic_polygon():
+    grid = cells.QuadraticPolygon()
+    assert grid.celltypes[0] == CellType.QUADRATIC_POLYGON
+    assert grid.n_cells == 1
+    assert grid.n_points == 8
+
+
+def test_quadratic_pyramid():
+    grid = cells.QuadraticPyramid()
+    assert grid.celltypes[0] == CellType.QUADRATIC_PYRAMID
+    assert grid.n_cells == 1
+    assert grid.n_points == 13
+
+
+def test_quadratic_linear_quadrilateral():
+    grid = cells.QuadraticLinearQuadrilateral()
+    assert grid.celltypes[0] == CellType.QUADRATIC_LINEAR_QUAD
+    assert grid.n_cells == 1
+    assert grid.n_points == 6
+
+
+def test_quadratic_linear_wedge():
+    grid = cells.QuadraticLinearWedge()
+    assert grid.celltypes[0] == CellType.QUADRATIC_LINEAR_WEDGE
+    assert grid.n_cells == 1
+    assert grid.n_points == 12
+
+
+def test_biquadratic_quadratic_wedge():
+    grid = cells.BiQuadraticQuadraticWedge()
+    assert grid.celltypes[0] == CellType.BIQUADRATIC_QUADRATIC_WEDGE
+    assert grid.n_cells == 1
+    assert grid.n_points == 18
