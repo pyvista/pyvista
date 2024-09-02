@@ -59,7 +59,7 @@ class GetOutput:
         return self._mock.call_args_list[-1][0][0]
 
 
-@pytest.fixture()
+@pytest.fixture
 def composite(datasets):
     return pv.MultiBlock(datasets)
 
@@ -1049,7 +1049,7 @@ def test_glyph_raises(sphere):
         sphere.glyph(color_mode="foo", scale=False, orient=False)
 
 
-@pytest.fixture()
+@pytest.fixture
 def connected_datasets():
     # This is similar to the datasets fixture, but the PolyData is fully connected
     return [
@@ -1061,12 +1061,12 @@ def connected_datasets():
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def foot_bones():
     return examples.download_foot_bones()
 
 
-@pytest.fixture()
+@pytest.fixture
 def connected_datasets_single_disconnected_cell(connected_datasets):
     # Create datasets of MultiBlocks with either 'point' or 'cell' scalar
     # data, where a single cell (or its points) has a completely different
@@ -1786,7 +1786,7 @@ def test_streamlines_evenly_spaced_2D_errors():
         mesh.streamlines_evenly_spaced_2D(step_unit="not valid")
 
 
-@pytest.mark.xfail()
+@pytest.mark.xfail
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
@@ -2084,7 +2084,7 @@ def extract_points_invalid(sphere):
         sphere.extract_points(object)
 
 
-@pytest.fixture()
+@pytest.fixture
 def grid4x4():
     # mesh points (4x4 regular grid)
     vertices = np.array(
@@ -2128,7 +2128,7 @@ def grid4x4():
     return surf
 
 
-@pytest.fixture()
+@pytest.fixture
 def extracted_with_adjacent_False(grid4x4):
     """Return expected output for adjacent_cells=False and include_cells=True"""
     input_point_ids = [0, 1, 4, 5]
@@ -2143,7 +2143,7 @@ def extracted_with_adjacent_False(grid4x4):
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
 
 
-@pytest.fixture()
+@pytest.fixture
 def extracted_with_adjacent_True(grid4x4):
     """Return expected output for adjacent_cells=True and include_cells=True"""
     input_point_ids = [0, 1, 4, 5]
@@ -2158,7 +2158,7 @@ def extracted_with_adjacent_True(grid4x4):
     return grid4x4, input_point_ids, expected_cell_ids, expected_surf
 
 
-@pytest.fixture()
+@pytest.fixture
 def extracted_with_include_cells_False(grid4x4):
     """Return expected output for adjacent_cells=True and include_cells=False"""
     input_point_ids = [0, 1, 4, 5]
@@ -2318,7 +2318,7 @@ SMALL_VOLUME = 1**3
 BIG_VOLUME = 2**3
 
 
-@pytest.fixture()
+@pytest.fixture
 def labeled_data():
     bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     small_box = pv.Box(bounds=bounds)
@@ -2515,7 +2515,7 @@ BLUE = [0.0, 0.0, 1.0]
 COLORS_LIST = [BLACK, WHITE, RED, GREEN, BLUE]
 
 
-@pytest.fixture()
+@pytest.fixture
 def point_cloud_colors():
     # Define point cloud where the points and rgb scalars are the same
     array = COLORS_LIST
@@ -2524,7 +2524,7 @@ def point_cloud_colors():
     return point_cloud
 
 
-@pytest.fixture()
+@pytest.fixture
 def point_cloud_colors_duplicates(point_cloud_colors):
     # Same fixture as point_cloud_colors but with double the points
     copied = point_cloud_colors.copy()
@@ -3282,7 +3282,7 @@ def test_extract_subset_structured():
     assert voi.dimensions == (4, 4, 1)
 
 
-@pytest.fixture()
+@pytest.fixture
 def structured_grids_split_coincident():
     """Two structured grids which are coincident along second axis (axis=1), and
     the grid from which they were extracted."""
@@ -3296,7 +3296,7 @@ def structured_grids_split_coincident():
     return voi_1, voi_2, structured
 
 
-@pytest.fixture()
+@pytest.fixture
 def structured_grids_split_disconnected():
     """Two structured grids which are disconnected."""
     structured = examples.load_structured()
@@ -3974,7 +3974,7 @@ def test_bounding_box_return_meta(oriented, as_composite):
 DELTA = 0.1
 
 
-@pytest.fixture()
+@pytest.fixture
 def planar_mesh():
     # Define planar data with largest variation in x, then y
     # Use a delta to make data slightly asymmetric so the principal axes
@@ -4152,7 +4152,7 @@ def test_merge_points_filter(inplace):
     assert (mesh is output) == inplace
 
 
-@pytest.fixture()
+@pytest.fixture
 def labeled_image():
     image = pv.ImageData(dimensions=(2, 2, 2))
     image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]

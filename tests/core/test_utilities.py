@@ -44,7 +44,7 @@ from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
 
 
-@pytest.fixture()
+@pytest.fixture
 def transform():
     return Transform()
 
@@ -1046,7 +1046,7 @@ def test_principal_axes_single_point():
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
 
 
-@pytest.fixture()
+@pytest.fixture
 def one_million_points():
     return np.random.default_rng().random((1_000_000, 3))
 
@@ -1063,7 +1063,7 @@ def test_fit_plane_to_points_success_with_many_points(one_million_points):
     assert isinstance(plane, pv.PolyData)
 
 
-@pytest.fixture()
+@pytest.fixture
 def no_new_attr_subclass():
     @no_new_attr
     class A: ...
@@ -1085,12 +1085,12 @@ def test_no_new_attr_subclass(no_new_attr_subclass):
         obj._eggs = 'ham'
 
 
-@pytest.fixture()
+@pytest.fixture
 def serial_dict_empty():
     return _SerializedDictArray()
 
 
-@pytest.fixture()
+@pytest.fixture
 def serial_dict_with_foobar():
     serial_dict = _SerializedDictArray()
     serial_dict.data = dict(foo='bar')
@@ -1433,7 +1433,7 @@ def test_transform_matrix_list(transform, attr):
     assert np.array_equal(identity, np.eye(4))
 
 
-@pytest.fixture()
+@pytest.fixture
 def transformed_actor():
     actor = pv.Actor()
     actor.position = (-0.5, -0.5, 1)
