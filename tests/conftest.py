@@ -59,7 +59,7 @@ def flaky_test(
     return wrapper
 
 
-@pytest.fixture()
+@pytest.fixture
 def global_variables_reset():  # noqa: PT004
     tmp_screenshots = pyvista.ON_SCREENSHOT
     tmp_figurepath = pyvista.FIGURE_PATH
@@ -80,52 +80,52 @@ def set_mpl():  # noqa: PT004
         mpl.use('agg', force=True)
 
 
-@pytest.fixture()
+@pytest.fixture
 def cube():
     return pyvista.Cube()
 
 
-@pytest.fixture()
+@pytest.fixture
 def airplane():
     return examples.load_airplane()
 
 
-@pytest.fixture()
+@pytest.fixture
 def rectilinear():
     return examples.load_rectilinear()
 
 
-@pytest.fixture()
+@pytest.fixture
 def sphere():
     return examples.load_sphere()
 
 
-@pytest.fixture()
+@pytest.fixture
 def uniform():
     return examples.load_uniform()
 
 
-@pytest.fixture()
+@pytest.fixture
 def ant():
     return examples.load_ant()
 
 
-@pytest.fixture()
+@pytest.fixture
 def globe():
     return examples.load_globe()
 
 
-@pytest.fixture()
+@pytest.fixture
 def hexbeam():
     return examples.load_hexbeam()
 
 
-@pytest.fixture()
+@pytest.fixture
 def tetbeam():
     return examples.load_tetbeam()
 
 
-@pytest.fixture()
+@pytest.fixture
 def struct_grid():
     x, y, z = np.meshgrid(
         np.arange(-10, 10, 2, dtype=np.float32),
@@ -135,28 +135,28 @@ def struct_grid():
     return pyvista.StructuredGrid(x, y, z)
 
 
-@pytest.fixture()
+@pytest.fixture
 def plane():
     return pyvista.Plane(direction=(0, 0, -1))
 
 
-@pytest.fixture()
+@pytest.fixture
 def spline():
     return examples.load_spline()
 
 
-@pytest.fixture()
+@pytest.fixture
 def random_hills():
     return examples.load_random_hills()
 
 
-@pytest.fixture()
+@pytest.fixture
 def tri_cylinder():
     """Triangulated cylinder"""
     return pyvista.Cylinder().triangulate()
 
 
-@pytest.fixture()
+@pytest.fixture
 def datasets():
     return [
         examples.load_uniform(),  # ImageData
@@ -167,7 +167,7 @@ def datasets():
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def multiblock_poly():
     # format and order of data (including missing) is intentional
     mesh_a = pyvista.Sphere(center=(0, 0, 0), direction=(0, 0, -1))
@@ -193,41 +193,41 @@ def multiblock_poly():
     return mblock
 
 
-@pytest.fixture()
+@pytest.fixture
 def datasets_vtk9():
     return [
         examples.load_explicit_structured(),
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def pointset():
     rng = default_rng(0)
     points = rng.random((10, 3))
     return pyvista.PointSet(points)
 
 
-@pytest.fixture()
+@pytest.fixture
 def multiblock_all(datasets):
     """Return datasets fixture combined in a pyvista multiblock."""
     return pyvista.MultiBlock(datasets)
 
 
-@pytest.fixture()
+@pytest.fixture
 def multiblock_all_with_nested_and_none(datasets, multiblock_all):
     """Return datasets fixture combined in a pyvista multiblock."""
     multiblock_all.append(None)
     return pyvista.MultiBlock([*datasets, None, multiblock_all])
 
 
-@pytest.fixture()
+@pytest.fixture
 def noise_2d():
     freq = [10, 5, 0]
     noise = pyvista.perlin_noise(1, freq, (0, 0, 0))
     return pyvista.sample_function(noise, bounds=(0, 10, 0, 10, 0, 10), dim=(2**4, 2**4, 1))
 
 
-@pytest.fixture()
+@pytest.fixture
 def texture():
     # create a basic texture by plotting a sphere and converting the image
     # buffer to a texture
@@ -238,7 +238,7 @@ def texture():
     return pyvista.Texture(pl.screenshot())
 
 
-@pytest.fixture()
+@pytest.fixture
 def image(texture):
     return texture.to_image()
 
