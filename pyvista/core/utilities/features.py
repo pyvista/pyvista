@@ -94,13 +94,13 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
 
     Create an equal density voxel volume without enclosing input mesh.
 
-    >>> vox = pv.voxelize(mesh, density=0.15)
+    >>> vox = pv.voxelize(mesh, density=0.01)
     >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
     >>> vox.plot(scalars='SelectedPoints', show_edges=True)
 
     Create an equal density voxel volume enclosing input mesh.
 
-    >>> vox = pv.voxelize(mesh, density=0.15, enclosed=True)
+    >>> vox = pv.voxelize(mesh, density=0.01, enclosed=True)
     >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
     >>> vox.plot(scalars='SelectedPoints', show_edges=True)
 
