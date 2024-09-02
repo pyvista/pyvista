@@ -13,6 +13,7 @@ from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import VectorLike
 
 
 def vtk_points(points, deep=True, force_float=False):
@@ -185,7 +186,7 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta=False, resolution=10):
+def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=None):
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -205,9 +206,9 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
         See warning below.
 
     .. warning::
-        The normal direction of the plane prior to version 0.45 may differ
-        from the latest version of this function. This may impact methods which
-        rely on the plane's direction.
+        The sign of the plane's normal vector prior to version 0.45 may differ
+        from the latest version. This may impact methods which rely on the plane's
+        direction. Use ``init_normal`` to control the sign explicitly.
 
     Parameters
     ----------
@@ -225,21 +226,30 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
 
         .. versionadded:: 0.45.0
 
-    See Also
-    --------
-    principal_axes
-        Compute axes vectors which best fit a set of points.
+    init_normal : VectorLike[float] | str, optional
+        Flip the normal of the plane such that it best aligns with this vector. Can be
+        a vector or string specifying the axis by name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        .. versionadded:: 0.45.0
 
     Returns
     -------
     pyvista.PolyData
         Plane mesh.
 
-    numpy.ndarray
+    pyvista.pyvista_ndarray
         Plane center if ``return_meta=True``.
 
-    numpy.ndarray
+    pyvista.pyvista_ndarray
         Plane normal if ``return_meta=True``.
+
+    See Also
+    --------
+    fit_line_to_points
+        Fit a line using the first principal axis of the points.
+
+    principal_axes
+        Compute axes vectors which best fit a set of points.
 
     Examples
     --------
@@ -267,7 +277,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     ... )
     >>> pl.show()
 
-    Fit a plane to a mesh and return its meta-data. Set the plane resolution to 1
+    Fit a plane to a mesh and return its metadata. Set the plane resolution to 1
     so that the plane has no internal points or edges.
 
     >>> mesh = examples.download_shark()
@@ -287,7 +297,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     ... ]
     >>> pl.show()
 
-    Use the meta data with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
+    Use the metadata with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
     two.
 
     >>> first_half, second_half = mesh.clip(
@@ -305,6 +315,21 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     ...     (0.25, 0.92, -0.29),
     ... ]
     >>> pl.show()
+
+    Note that it is pointing in the positive z-direction.
+
+    >>> normal
+    pyvista_ndarray([5.2734075e-09, 6.7008443e-08, 1.0000000e+00],
+                    dtype=float32)
+
+    Use ``init_normal`` to flip the sign and make it negative instead.
+
+    >>> _, _, normal = pv.fit_plane_to_points(
+    ...     mesh.points, return_meta=True, init_normal='-z'
+    ... )
+    >>> normal
+    pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
+                    dtype=float32)
     """
     valid_resolution = _validation.validate_array(
         resolution,
@@ -316,7 +341,9 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
     i_resolution, j_resolution = valid_resolution
 
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(return_matrix=True)
+    aligned, matrix = pyvista.PolyData(points).align_xyz(
+        return_matrix=True, axis_2_direction=init_normal
+    )
 
     # Fit plane to xyz-aligned mesh
     aligned_bnds = aligned.bounds
@@ -339,6 +366,143 @@ def fit_plane_to_points(points, return_meta=False, resolution=10):
         normal = np.mean(plane.point_normals, axis=0)
         return plane, center, normal
     return plane
+
+
+def fit_line_to_points(
+    points: MatrixLike[float],
+    *,
+    resolution: int = 1,
+    init_direction: VectorLike[float] | None = None,
+    return_meta: bool = False,
+):
+    """Fit a line to points using its :func:`principal_axes`.
+
+    The line is automatically sized and oriented to fit the extents of
+    the points.
+
+    .. versionadded:: 0.45.0
+
+    Parameters
+    ----------
+    points : MatrixLike[float]
+        Size ``[N x 3]`` array of points to fit a line through.
+
+    resolution : int, default: 1
+        Number of pieces to divide the line into.
+
+    init_direction : VectorLike[float], optional
+        Flip the direction of the line's points such that it best aligns with this
+        vector. Can be a vector or string specifying the axis by name (e.g. ``'x'``
+        or ``'-x'``, etc.).
+
+    return_meta : bool, default: False
+        If ``True``, also returns the length (magnitude) and direction of the line.
+
+    See Also
+    --------
+    fit_plane_to_points
+        Fit a plane using the first two principal axes of the points.
+
+    principal_axes
+        Compute axes vectors which best fit a set of points.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Line mesh.
+
+    float
+        Line length if ``return_meta=True``.
+
+    numpy.ndarray
+        Line direction (unit vector) if ``return_meta=True``.
+
+    Examples
+    --------
+    Download a point cloud. The points trace a path along topographical surface.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.download_gpr_path()
+
+    Fit a line to the points and plot the result. The line of best fit is colored red.
+
+    >>> line = pv.fit_line_to_points(mesh.points)
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, color='black', line_width=10)
+    >>> _ = pl.add_mesh(line, color='red', line_width=5)
+    >>> pl.show()
+
+    Fit a line to a mesh and return the metadata.
+
+    >>> mesh = examples.download_human()
+    >>> line, length, direction = pv.fit_line_to_points(
+    ...     mesh.points, return_meta=True
+    ... )
+
+    Show the length of the line.
+
+    >>> length
+    167.6145387467733
+
+    Plot the line as an arrow to show its direction.
+
+    >>> arrow = pv.Arrow(
+    ...     start=line.points[0],
+    ...     direction=direction,
+    ...     scale=length,
+    ...     tip_length=0.2,
+    ...     tip_radius=0.04,
+    ...     shaft_radius=0.01,
+    ... )
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, opacity=0.5)
+    >>> _ = pl.add_mesh(arrow, color='red')
+    >>> pl.show()
+
+    Set ``init_direction`` to the positive z-axis to flip the line's direction.
+
+    >>> mesh = examples.download_human()
+    >>> line, length, direction = pv.fit_line_to_points(
+    ...     mesh.points, init_direction='z', return_meta=True
+    ... )
+
+    Plot the results again with an arrow.
+
+    >>> arrow = pv.Arrow(
+    ...     start=line.points[0],
+    ...     direction=direction,
+    ...     scale=length,
+    ...     tip_length=0.2,
+    ...     tip_radius=0.04,
+    ...     shaft_radius=0.01,
+    ... )
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, opacity=0.5)
+    >>> _ = pl.add_mesh(arrow, color='red')
+    >>> pl.show()
+
+    """
+    # Align points to the xyz-axes
+    aligned, matrix = pyvista.PolyData(points).align_xyz(
+        axis_0_direction=init_direction, return_matrix=True
+    )
+
+    # Fit line to xyz-aligned mesh
+    point_a = (aligned.bounds.x_min, 0, 0)
+    point_b = (aligned.bounds.x_max, 0, 0)
+    line_mesh = pyvista.LineSource(point_a, point_b, resolution=resolution).output
+
+    # Transform line back to input points positioning
+    inverse_matrix = pyvista.Transform(matrix).inverse_matrix
+    line_mesh.transform(inverse_matrix, inplace=True)
+
+    if return_meta:
+        return line_mesh, line_mesh.length, matrix[0, :3]
+    return line_mesh
 
 
 def make_tri_mesh(points, faces):
@@ -666,6 +830,6 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     if return_std:
         # Compute standard deviation and swap order from ascending -> descending
-        std = np.sqrt(eig_vals / len(points))[::-1]
+        std = np.sqrt(np.abs(eig_vals) / len(points))[::-1]
         return axes, std
     return axes
