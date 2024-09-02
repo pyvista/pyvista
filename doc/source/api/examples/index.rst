@@ -157,6 +157,11 @@ cell types.
    QuadraticEdge
    QuadraticTriangle
    QuadraticQuadrilateral
+   QuadraticPolygon
    QuadraticTetrahedron
    QuadraticHexahedron
    QuadraticWedge
+   QuadraticPyramid
+   QuadraticLinearQuadrilateral
+   QuadraticLinearWedge
+   BiQuadraticQuadraticWedge
