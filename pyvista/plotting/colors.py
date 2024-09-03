@@ -311,7 +311,7 @@ color_char_to_word = {
     'w': 'white',
 }
 
-_color_synonyms = {
+_color_synonyms_with_underscores = {
     **color_char_to_word,
     'aqua': 'cyan',
     'dark_grey': 'dark_gray',
@@ -325,10 +325,10 @@ _color_synonyms = {
     'paraview': 'paraview_background',
     'slate_grey': 'slate_gray',
     'light_goldenrod': 'light_goldenrod_yellow',
-    'slate_blue_light': 'light_slate_blue',
 }
 color_synonyms = {
-    _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
+    _format_color_name(syn): _format_color_name(name)
+    for syn, name in _color_synonyms_with_underscores.items()
 }
 
 matplotlib_default_colors = [

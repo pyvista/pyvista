@@ -187,7 +187,6 @@ def test_vtk_colors(vtk_color):
         'deep_cadmium_red': 'cadmium_red_deep',
         'light_cadmium_red': 'cadmium_red_light',
         'light_cadmium_yellow': 'cadmium_yellow_light',
-        'deep_cobalt_blue': 'cobalt_blue_deep',
         'deep_cobalt_violet': 'cobalt_violet_deep',
         'deep_naples_yellow': 'naples_yellow_deep',
         'light_viridian': 'viridian_light',
