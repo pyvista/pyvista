@@ -11,7 +11,7 @@ from pyvista import examples
 VTK93 = pv.vtk_version_info >= (9, 3)
 
 
-@pytest.fixture()
+@pytest.fixture
 def logo():
     return examples.load_logo()
 
@@ -136,7 +136,7 @@ def test_contour_labeled_with_invalid_scalars():
         label_map.contour_labeled()
 
 
-@pytest.fixture()
+@pytest.fixture
 def uniform_many_scalars(uniform):
     uniform['Spatial Point Data2'] = uniform['Spatial Point Data'] * 2
     uniform['Spatial Cell Data2'] = uniform['Spatial Cell Data'] * 2
@@ -235,7 +235,7 @@ def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
     assert logo.cells_to_points().dimensions == (1919, 717, 1)
 
 
-@pytest.fixture()
+@pytest.fixture
 def single_point_image():
     image = pv.ImageData(dimensions=(1, 1, 1))
     image.point_data['image'] = 99

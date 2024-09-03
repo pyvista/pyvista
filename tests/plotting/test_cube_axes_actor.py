@@ -13,7 +13,7 @@ def skip_check_gc(skip_check_gc):  # noqa: PT004
     """A large number of tests here fail gc."""
 
 
-@pytest.fixture()
+@pytest.fixture
 def cube_axes_actor():
     pl = pv.Plotter()
     pl.add_mesh(pv.Sphere())
