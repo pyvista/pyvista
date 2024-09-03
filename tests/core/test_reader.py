@@ -1114,3 +1114,74 @@ def test_prostar_reader():
 
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_grdecl_reader(tmp_path):
+    def read(content, include_content, **kwargs):
+        path = tmp_path
+
+        with Path.open(path / "3x3x3.grdecl", "w") as f:
+            f.write("".join(content))
+
+        with Path.open(path / "3x3x3_include.grdecl", "w") as f:
+            f.write("".join(include_content))
+
+        return pv.core.utilities.fileio.read_grdecl(path / "3x3x3.grdecl", **kwargs)
+
+    path = Path(__file__).parent.parent / "example_files"
+
+    with Path.open(path / "3x3x3.grdecl") as f:
+        content = list(f)
+
+    with Path.open(path / "3x3x3_include.grdecl") as f:
+        include_content = list(f)
+
+    # Test base sample file
+    grid = read(content, include_content, other_keywords=["KEYWORD"])
+
+    assert grid.n_cells == 27
+    assert grid.n_points == 216
+    assert np.allclose(grid.cell_data["PORO"].sum(), 0.1 * 27)
+    assert grid.user_dict["MAPAXES"] == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+    assert grid.user_dict["MAPUNITS"] == "METRES"
+    assert grid.user_dict["GRIDUNIT"] == "METRES MAP"
+    assert "".join(grid.user_dict["KEYWORD"]) == "1234"
+    assert np.count_nonzero(grid.cell_data["vtkGhostType"]) == 5
+    assert np.allclose(grid.points[:, 1].sum(), 108.0)
+
+    # Test fails
+    match = "Cylindric grids are not supported"
+    content_copy = list(content)
+    content_copy[1] = content_copy[1].replace("F", "T")
+    with pytest.raises(TypeError, match=match):
+        _ = read(content_copy, include_content)
+
+    match = "Unable to generate grid without keyword 'SPECGRID'"
+    content_copy = list(content)
+    content_copy[0] = content_copy[0].replace("SPECGRID", "PLACEHOLDER")
+    with pytest.raises(ValueError, match=match):
+        _ = read(content_copy, include_content)
+
+    # Test relative coordinates
+    include_content[5] = include_content[5].replace("METRES MAP", "METRES")
+    grid = read(content, include_content)
+    assert np.allclose(grid.points[:, 1].sum(), 324.0)
+
+    # Test relative warnings
+    match = "Unable to convert relative coordinates with different grid and map units"
+    include_content_copy = list(include_content)
+    include_content_copy[3] = include_content_copy[3].replace("METRES", "FEET")
+    with pytest.warns(UserWarning, match=match):
+        _ = read(content, include_content_copy)
+
+    match = "Unable to convert relative coordinates without keyword 'MAPUNITS'"
+    include_content_copy = list(include_content)
+    include_content_copy[2] = include_content_copy[2].replace("MAPUNITS", "PLACEHOLDER")
+    with pytest.warns(UserWarning, match=match):
+        _ = read(content, include_content_copy)
+
+    match = "Unable to convert relative coordinates without keyword 'MAPAXES'"
+    include_content_copy = list(include_content)
+    include_content_copy[0] = include_content_copy[0].replace("MAPAXES", "PLACEHOLDER")
+    with pytest.warns(UserWarning, match=match):
+        _ = read(content, include_content_copy)
