@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
-from xml.etree import ElementTree
+from xml.etree import ElementTree as ET
 
 import numpy as np
 
@@ -1949,7 +1949,7 @@ class _PVDReader(BaseVTKReader):
         """Parse PVD file."""
         if self._filename is None:
             raise ValueError("Filename must be set")
-        tree = ElementTree.parse(self._filename)
+        tree = ET.parse(self._filename)
         root = tree.getroot()
         dataset_elements = root[0].findall("DataSet")
         datasets = []
