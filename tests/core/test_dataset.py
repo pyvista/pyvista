@@ -40,7 +40,7 @@ if TYPE_CHECKING:  # pragma: no cover
 HYPOTHESIS_MAX_EXAMPLES = 20
 
 
-@pytest.fixture()
+@pytest.fixture
 def grid():
     return pv.UnstructuredGrid(examples.hexbeamfile)
 
@@ -1831,7 +1831,7 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
             assert len(ids) > 0
 
 
-@pytest.fixture()
+@pytest.fixture
 def mesh():
     return examples.load_globe()
 
