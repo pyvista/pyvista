@@ -20,17 +20,17 @@ skip_mac = pytest.mark.skipif(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def actor():
     return pv.Plotter().add_mesh(pv.Plane())
 
 
-@pytest.fixture()
+@pytest.fixture
 def actor_from_multi_block():
     return pv.Plotter().add_mesh(pv.MultiBlock([pv.Plane()]))
 
 
-@pytest.fixture()
+@pytest.fixture
 def dummy_actor(actor):
     # Define prop3d-like class
     class DummyActor(_Prop3DMixin):
@@ -53,7 +53,7 @@ def dummy_actor(actor):
     return dummy_actor
 
 
-@pytest.fixture()
+@pytest.fixture
 def vol_actor():
     vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25

@@ -63,29 +63,29 @@ class PlotterChanged:
         return changed
 
 
-@pytest.fixture()
+@pytest.fixture
 def pl():
     p = pv.Plotter(window_size=(600, 600))
     p.background_color = 'w'
     return p
 
 
-@pytest.fixture()
+@pytest.fixture
 def chart_2d():
     return pv.Chart2D()
 
 
-@pytest.fixture()
+@pytest.fixture
 def chart_box():
     return pv.ChartBox([[1, 2, 3]])
 
 
-@pytest.fixture()
+@pytest.fixture
 def chart_pie():
     return pv.ChartPie([1, 2, 3])
 
 
-@pytest.fixture()
+@pytest.fixture
 def chart_mpl():
     import matplotlib.pyplot as plt
 
@@ -94,42 +94,42 @@ def chart_mpl():
     return pv.ChartMPL(f)
 
 
-@pytest.fixture()
+@pytest.fixture
 def line_plot_2d(chart_2d):
     return chart_2d.line([0, 1, 2], [3, 1, 2])
 
 
-@pytest.fixture()
+@pytest.fixture
 def scatter_plot_2d(chart_2d):
     return chart_2d.scatter([0, 1, 2], [3, 1, 2])
 
 
-@pytest.fixture()
+@pytest.fixture
 def area_plot(chart_2d):
     return chart_2d.area([0, 1, 2], [2, 1, 3], [0, 2, 0])
 
 
-@pytest.fixture()
+@pytest.fixture
 def bar_plot(chart_2d):
     return chart_2d.bar([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
 
 
-@pytest.fixture()
+@pytest.fixture
 def stack_plot(chart_2d):
     return chart_2d.stack([0, 1, 2], [[2, 1, 3], [1, 2, 0]])
 
 
-@pytest.fixture()
+@pytest.fixture
 def box_plot(chart_box):
     return chart_box.plot
 
 
-@pytest.fixture()
+@pytest.fixture
 def pie_plot(chart_pie):
     return chart_pie.plot
 
 
-@pytest.fixture()
+@pytest.fixture
 def axis(chart_2d):
     # Test properties, using the y axis of a 2D chart
     chart_2d.line([0, 1], [1, 10])
@@ -264,7 +264,7 @@ def test_axis_margin(axis):
     assert axis.GetMargins()[0] == margin
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_axis_scale(chart_2d, axis):
     axis.log_scale = True  # Log scale can be enabled for the currently drawn plot
     chart_2d.show()  # We have to call show to update all chart properties (calls Update and Paint methods of chart/plot objects).
@@ -391,7 +391,7 @@ def test_axis_label_font_size(chart_2d):
     assert axis.GetLabelProperties().GetFontSize() == font_size
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 @pytest.mark.parametrize("chart_f", [("chart_2d"), ("chart_box"), ("chart_pie"), ("chart_mpl")])
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
@@ -750,7 +750,7 @@ def test_stackplot(chart_2d, stack_plot):
     assert np.allclose(stack_plot.ys, ys)
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_chart_2d(pl, chart_2d):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -918,7 +918,7 @@ def test_chart_2d(pl, chart_2d):
         assert not axis.grid
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_chart_box(pl, chart_box, box_plot):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -955,7 +955,7 @@ def test_chart_box(pl, chart_box, box_plot):
     assert np.allclose(box_plot.stats, stats)
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_chart_pie(pl, chart_pie, pie_plot):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
@@ -990,7 +990,7 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     assert np.allclose(pie_plot.data, data)
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_chart_mpl(pl, chart_mpl):
     import matplotlib.pyplot as plt
 
@@ -1024,7 +1024,7 @@ def test_chart_mpl(pl, chart_mpl):
         chart.position = (1, 2, 3)
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_chart_mpl_update(pl):
     import matplotlib.pyplot as plt
 
@@ -1053,7 +1053,7 @@ def test_chart_mpl_update(pl):
     assert pl_changed()
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_charts(pl):
     win_size = pl.window_size
     top_left = pv.Chart2D(size=(0.5, 0.5), loc=(0, 0.5))
@@ -1093,7 +1093,7 @@ def test_charts(pl):
     assert pl.renderer._charts._scene is None
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_iren_context_style(pl):
     chart = pv.Chart2D(size=(0.5, 0.5), loc=(0.5, 0.5))
     win_size = pl.window_size
@@ -1117,7 +1117,7 @@ def test_iren_context_style(pl):
     assert pl.iren._context_style.GetScene() is None
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 @pytest.mark.needs_vtk_version(
     9,
     3,

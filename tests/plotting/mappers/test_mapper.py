@@ -7,7 +7,7 @@ import pyvista as pv
 from pyvista.plotting.mapper import DataSetMapper
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset_mapper(sphere):
     pl = pv.Plotter()
     pl.add_mesh(sphere)

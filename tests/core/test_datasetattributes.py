@@ -30,17 +30,17 @@ skip_apple_silicon = pytest.mark.skipif(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def hexbeam_point_attributes(hexbeam):
     return hexbeam.point_data
 
 
-@pytest.fixture()
+@pytest.fixture
 def hexbeam_field_attributes(hexbeam):
     return hexbeam.field_data
 
 
-@pytest.fixture()
+@pytest.fixture
 def insert_arange_narray(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.arange(n_points)
@@ -48,7 +48,7 @@ def insert_arange_narray(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
-@pytest.fixture()
+@pytest.fixture
 def insert_bool_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.ones(n_points, np.bool_)
@@ -56,7 +56,7 @@ def insert_bool_array(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
-@pytest.fixture()
+@pytest.fixture
 def insert_string_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.repeat("A", n_points)

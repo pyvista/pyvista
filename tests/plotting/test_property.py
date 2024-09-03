@@ -6,7 +6,7 @@ import pyvista as pv
 from pyvista.plotting._property import _check_range
 
 
-@pytest.fixture()
+@pytest.fixture
 def prop():
     return pv.Property()
 

@@ -118,7 +118,7 @@ def verify_image_cache_wrapper(verify_image_cache):
     return verify_image_cache
 
 
-@pytest.fixture()
+@pytest.fixture
 def multicomp_poly():
     """Create a dataset with vector values on points and cells."""
     data = pv.Plane(direction=(0, 0, -1))
@@ -4680,7 +4680,7 @@ def test_planes_assembly_label_size(bounds, label_size):
     plot.show()
 
 
-@pytest.fixture()
+@pytest.fixture
 def oblique_cone():
     return pv.examples.download_oblique_cone()
 
