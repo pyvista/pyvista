@@ -19,23 +19,23 @@ from pyvista.core.errors import PyVistaFutureWarning
 radius = 0.5
 
 
-@pytest.fixture()
+@pytest.fixture
 def sphere():
     # this shadows the main sphere fixture from conftest!
     return pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture()
+@pytest.fixture
 def sphere_shifted():
     return pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture()
+@pytest.fixture
 def sphere_dense():
     return pv.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 
-@pytest.fixture()
+@pytest.fixture
 def cube_dense():
     return pv.Cube()
 
@@ -805,7 +805,7 @@ def test_compute_normals_split_vertices(cube):
     assert len(set(cube_split_norm.point_data['pyvistaOriginalPointIds'])) == 8
 
 
-@pytest.fixture()
+@pytest.fixture
 def ant_with_normals(ant):
     ant['Scalars'] = range(ant.n_points)
     point_normals = [[0, 0, 1]] * ant.n_points
@@ -1174,7 +1174,7 @@ def test_n_faces_strict():
     assert mesh.n_faces_strict == 1
 
 
-@pytest.fixture()
+@pytest.fixture
 def default_n_faces():  # noqa: PT004
     pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False

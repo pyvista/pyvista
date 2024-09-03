@@ -526,28 +526,13 @@ def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
 def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     ni, nj, nk = np.asarray(dimensions) - 1
     si, sj, sk = spacing
+    xi = np.arange(0.0, (ni + 1) * si, si)
+    yi = np.arange(0.0, (nj + 1) * sj, sj)
+    zi = np.arange(0.0, (nk + 1) * sk, sk)
 
-    xcorn = np.arange(0, (ni + 1) * si, si)
-    xcorn = np.repeat(xcorn, 2)
-    xcorn = xcorn[1:-1]
-    xcorn = np.tile(xcorn, 4 * nj * nk)
-
-    ycorn = np.arange(0, (nj + 1) * sj, sj)
-    ycorn = np.repeat(ycorn, 2)
-    ycorn = ycorn[1:-1]
-    ycorn = np.tile(ycorn, (2 * ni, 2 * nk))
-    ycorn = np.transpose(ycorn)
-    ycorn = ycorn.flatten()
-
-    zcorn = np.arange(0, (nk + 1) * sk, sk)
-    zcorn = np.repeat(zcorn, 2)
-    zcorn = zcorn[1:-1]
-    zcorn = np.repeat(zcorn, (4 * ni * nj))
-
-    corners = np.stack((xcorn, ycorn, zcorn))
-    corners = corners.transpose()
-
-    return pyvista.ExplicitStructuredGrid(dimensions, corners)
+    return pyvista.StructuredGrid(
+        *np.meshgrid(xi, yi, zi, indexing="ij")
+    ).cast_to_explicit_structured_grid()
 
 
 _dataset_explicit_structured = _DatasetLoader(_explicit_structured_load_func)

@@ -75,7 +75,7 @@ def test_clear_key_event_callbacks():
     pl.reset_key_events()
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_track_mouse_position():
     pl = pv.Plotter()
     pl.track_mouse_position()
@@ -89,7 +89,7 @@ def test_track_mouse_position():
     assert "MouseMoveEvent" not in pl.iren._observers.values()
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_track_click_position_multi_render():
     points = []
 
@@ -113,7 +113,7 @@ def test_track_click_position_multi_render():
     assert len(points) == 1
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_track_click_position():
     events = []
 
@@ -211,7 +211,7 @@ def test_add_timer_event():
     pl.show(cpos=cpos)
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_poked_subplot_loc():
     pl = pv.Plotter(shape=(2, 2), window_size=(800, 800))
 
@@ -230,7 +230,7 @@ def test_poked_subplot_loc():
     pl.close()
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_poked_subplot_context(verify_image_cache):
     pl = pv.Plotter(shape=(2, 2), window_size=(800, 800))
 
@@ -253,7 +253,7 @@ def test_poked_subplot_context(verify_image_cache):
     pl.show()
 
 
-@pytest.mark.skip_plotting()
+@pytest.mark.skip_plotting
 def test_add_pick_observer():
     with pytest.warns(PyVistaDeprecationWarning, match='`add_pick_obeserver` is deprecated'):
         pl = pv.Plotter()
