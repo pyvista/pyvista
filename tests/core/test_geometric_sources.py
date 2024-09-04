@@ -11,12 +11,12 @@ from pyvista import examples
 from pyvista.core.utilities.geometric_objects import translate
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes_geometry_source():
     return pv.AxesGeometrySource()
 
 
-@pytest.fixture()
+@pytest.fixture
 def cube_faces_source():
     return pv.CubeFacesSource()
 
@@ -85,7 +85,7 @@ def test_multiple_lines_source():
         algo.points = points[0, :]
 
 
-@pytest.fixture()
+@pytest.fixture
 def bunny():
     return examples.download_bunny_coarse()
 
@@ -233,7 +233,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         assert np.allclose(points_center, center, atol=1e-4)
 
 
-@pytest.fixture()
+@pytest.fixture
 def text3d_source_with_text():
     return pv.Text3DSource("TEXT")
 

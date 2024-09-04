@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from weakref import proxy
 import xml.dom.minidom as md
-from xml.etree import ElementTree
+from xml.etree import ElementTree as ET
 
 import numpy as np
 
@@ -137,7 +137,7 @@ class Camera(_vtk.vtkCamera):
         }
         camera = cls()
 
-        tree = ElementTree.parse(filename)
+        tree = ET.parse(filename)
         root = tree.getroot()[0]
         for element in root:
             attrib = element.attrib
@@ -177,12 +177,12 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pv.Plotter()
         >>> pl.camera.to_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
         """
-        root = ElementTree.Element("PVCameraConfiguration")
+        root = ET.Element("PVCameraConfiguration")
         root.attrib["description"] = "ParaView camera configuration"
         root.attrib["version"] = "1.0"
 
         dico = dict(group="views", type="RenderView", id="0", servers="21")
-        proxy = ElementTree.SubElement(root, "Proxy", dico)
+        proxy = ET.SubElement(root, "Proxy", dico)
 
         # Add tuples
         to_find = {
@@ -191,14 +191,14 @@ class Camera(_vtk.vtkCamera):
             "CameraViewUp": "up",
         }
         for name, attr in to_find.items():
-            e = ElementTree.SubElement(
+            e = ET.SubElement(
                 proxy,
                 "Property",
                 dict(name=name, id=f"0.{name}", number_of_elements="3"),
             )
 
             for i in range(3):
-                tmp = ElementTree.Element("Element")
+                tmp = ET.Element("Element")
                 tmp.attrib["index"] = str(i)
                 tmp.attrib["value"] = str(getattr(self, attr)[i])
                 e.append(tmp)
@@ -211,12 +211,12 @@ class Camera(_vtk.vtkCamera):
         }
 
         for name, attr in to_find.items():
-            e = ElementTree.SubElement(
+            e = ET.SubElement(
                 proxy,
                 "Property",
                 dict(name=name, id=f"0.{name}", number_of_elements="1"),
             )
-            tmp = ElementTree.Element("Element")
+            tmp = ET.Element("Element")
             tmp.attrib["index"] = "0"
 
             val = getattr(self, attr)
@@ -226,9 +226,9 @@ class Camera(_vtk.vtkCamera):
             else:
                 tmp.attrib["value"] = "1" if val else "0"
                 e.append(tmp)
-                e.append(ElementTree.Element("Domain", dict(name="bool", id=f"0.{name}.bool")))
+                e.append(ET.Element("Domain", dict(name="bool", id=f"0.{name}.bool")))
 
-        xmlstr = ElementTree.tostring(root).decode()
+        xmlstr = ET.tostring(root).decode()
         newxml = md.parseString(xmlstr)
         with Path(filename).open('w') as outfile:
             outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))

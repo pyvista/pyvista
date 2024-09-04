@@ -14,7 +14,37 @@ from pyvista.core import _vtk_core as _vtk
 from .helpers import wrap
 
 
-def voxelize(mesh, density=None, check_surface=True):
+def _padded_bins(mesh, density):
+    """Construct bin edges for voxelization.
+
+    Parameters
+    ----------
+        mesh : pyvista.DataSet
+            Mesh to voxelize.
+
+        density : array_like[float]
+            A list of densities along x,y,z directions.
+
+    Returns
+    -------
+    list[np.ndarray]
+        List of bin edges for each axis.
+
+    Notes
+    -----
+    Ensures limits of voxelization are padded to ensure the mesh is fully enclosed.
+    """
+    bounds = np.array(mesh.bounds).reshape(3, 2)
+    bin_count = np.ceil(1e-10 + (bounds[:, 1] - bounds[:, 0]) / density)
+    pad = (bin_count * density - (bounds[:, 1] - bounds[:, 0])) / 2
+
+    return [
+        np.arange(bounds[i, 0] - pad[i], bounds[i, 1] + pad[i] + density[i] / 2, density[i])
+        for i in range(3)
+    ]
+
+
+def voxelize(mesh, density=None, check_surface=True, enclosed=False):
     """Voxelize mesh to UnstructuredGrid.
 
     Parameters
@@ -32,6 +62,10 @@ def voxelize(mesh, density=None, check_surface=True):
         algorithm first checks to see if the surface is closed and
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
+
+    enclosed : bool, default: False
+        If True, the voxel bounds will be outside the mesh.
+        If False, the voxel bounds will be at or inside the mesh bounds.
 
     Returns
     -------
@@ -58,6 +92,18 @@ def voxelize(mesh, density=None, check_surface=True):
     >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])
     >>> vox.plot(show_edges=True)
 
+    Create an equal density voxel volume without enclosing input mesh.
+
+    >>> vox = pv.voxelize(mesh, density=0.01)
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
+
+    Create an equal density voxel volume enclosing input mesh.
+
+    >>> vox = pv.voxelize(mesh, density=0.01, enclosed=True)
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
+
     """
     if not pyvista.is_pyvista_dataset(mesh):
         mesh = wrap(mesh)
@@ -79,10 +125,15 @@ def voxelize(mesh, density=None, check_surface=True):
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
 
-    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-    x = np.arange(x_min, x_max, density_x)
-    y = np.arange(y_min, y_max, density_y)
-    z = np.arange(z_min, z_max, density_z)
+    if enclosed:
+        # Get x, y, z bin edges
+        x, y, z = _padded_bins(mesh, [density_x, density_y, density_z])
+    else:
+        x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+        x = np.arange(x_min, x_max, density_x)
+        y = np.arange(y_min, y_max, density_y)
+        z = np.arange(z_min, z_max, density_z)
+
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
     # see https://github.com/pyvista/pyvista/pull/4365
@@ -91,15 +142,29 @@ def voxelize(mesh, density=None, check_surface=True):
     grid = pyvista.StructuredGrid(x, y, z)
     ugrid = pyvista.UnstructuredGrid(grid)
 
-    # get part of the mesh within the mesh's bounding surface.
-    selection = ugrid.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
-    mask = selection.point_data['SelectedPoints'].view(np.bool_)
+    if enclosed:
+        # Normalise cells to unit size
+        ugrid_norm = ugrid.copy()
+        surface_norm = surface.copy()
+        ugrid_norm.points /= np.array(density)
+        surface_norm.points /= np.array(density)
+        # Select cells if they're within one unit of the surface
+        ugrid_norm = ugrid_norm.compute_implicit_distance(surface_norm)
+        mask = ugrid_norm['implicit_distance'] < 1
+        del ugrid_norm, surface_norm
+    else:
+        # get part of the mesh within the mesh's bounding surface.
+        selection = ugrid.select_enclosed_points(
+            surface, tolerance=0.0, check_surface=check_surface
+        )
+        mask = selection.point_data['SelectedPoints'].view(np.bool_)
+        del selection
 
     # extract cells from point indices
     return ugrid.extract_points(mask)
 
 
-def voxelize_volume(mesh, density=None, check_surface=True):
+def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
@@ -121,6 +186,10 @@ def voxelize_volume(mesh, density=None, check_surface=True):
         algorithm first checks to see if the surface is closed and
         manifold. If the surface is not closed and manifold, a runtime
         error is raised.
+
+    enclosed : bool, default: False
+        If True, the voxel bounds will be outside the mesh.
+        If False, the voxel bounds will be at or inside the mesh bounds.
 
     Returns
     -------
@@ -165,6 +234,18 @@ def voxelize_volume(mesh, density=None, check_surface=True):
     >>> slices = vox.slice_orthogonal()
     >>> slices.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
+    Create an equal density voxel volume without enclosing input mesh.
+
+    >>> vox = pv.voxelize_volume(mesh, density=0.15)
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
+
+    Create an equal density voxel volume enclosing input mesh.
+
+    >>> vox = pv.voxelize_volume(mesh, density=0.15, enclosed=True)
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
+
     """
     mesh = wrap(mesh)
     if density is None:
@@ -185,10 +266,14 @@ def voxelize_volume(mesh, density=None, check_surface=True):
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
 
-    x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-    x = np.arange(x_min, x_max, density_x)
-    y = np.arange(y_min, y_max, density_y)
-    z = np.arange(z_min, z_max, density_z)
+    if enclosed:
+        # Get x, y, z bin edges
+        x, y, z = _padded_bins(mesh, [density_x, density_y, density_z])
+    else:
+        x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
+        x = np.arange(x_min, x_max, density_x)
+        y = np.arange(y_min, y_max, density_y)
+        z = np.arange(z_min, z_max, density_z)
 
     # Create a RectilinearGrid
     voi = pyvista.RectilinearGrid(x, y, z)

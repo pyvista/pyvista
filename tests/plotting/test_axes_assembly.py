@@ -8,17 +8,17 @@ import pytest
 import pyvista as pv
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes_assembly():
     return pv.AxesAssembly()
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes_assembly_symmetric():
     return pv.AxesAssemblySymmetric()
 
 
-@pytest.fixture()
+@pytest.fixture
 def planes_assembly():
     return pv.PlanesAssembly()
 
@@ -118,7 +118,7 @@ def test_axes_assembly_color_inputs(axes_assembly):
         axes_assembly.z_color = ['red', 'green', 'blue']
 
 
-@pytest.fixture()
+@pytest.fixture
 def _config_axes_theme():
     # Store values
     x_color = pv.global_theme.axes.x_color
