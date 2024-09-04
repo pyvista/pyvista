@@ -16,13 +16,17 @@ import pyvista
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
 
+from pyvista.core import _validation
+
 from . import _vtk_core as _vtk
 from .dataset import DataSet
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters
 from .filters import _get_output
+from .utilities.arrays import array_from_vtkmatrix
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
+from .utilities.arrays import vtkmatrix_from_array
 from .utilities.misc import abstract_class
 
 
@@ -887,3 +891,21 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def to_tetrahedra(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Cast to a rectangular grid and then convert to tetrahedra."""
         return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)
+
+    @property
+    def direction_matrix(self):
+        """Set or get the direction matrix.
+
+        The direction matrix is a 3x3 matrix which controls the orientation of the
+        image data.
+
+        Returns
+        -------
+        np.ndarray
+            Direction matrix as a 3x3 NumPy array.
+        """
+        return array_from_vtkmatrix(self.GetDirectionMatrix())
+
+    @direction_matrix.setter
+    def direction_matrix(self, matrix):  # numpydoc ignore: GL08
+        self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
