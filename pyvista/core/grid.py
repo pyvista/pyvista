@@ -909,3 +909,28 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     @direction_matrix.setter
     def direction_matrix(self, matrix):  # numpydoc ignore: GL08
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
+
+    def _ijk_to_world_transform(self) -> pyvista.Transform:
+        return pyvista.Transform().rotate(self.direction_matrix).translate(self.origin)
+
+    @property
+    def ijk_to_world_transform(self) -> NumpyArray[float]:
+        """Get the 4x4 transformation matrix to move from ijk indices to world coordinates.
+
+        Returns
+        -------
+        np.ndarray
+            4x4 transformation matrix.
+        """
+        return self._ijk_to_world_transform().matrix
+
+    @property
+    def world_to_ijk_transform(self) -> NumpyArray[float]:
+        """Get the 4x4 transformation matrix to move from world coordinates to ijk indices.
+
+        Returns
+        -------
+        np.ndarray
+            4x4 transformation matrix.
+        """
+        return self._ijk_to_world_transform().inverse_matrix
