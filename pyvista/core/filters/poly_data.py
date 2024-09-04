@@ -3891,3 +3891,50 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, "Generating Protein Ribbons")
         return _get_output(alg)
+
+    def generate_labelmap(self, label_value=1, reference_volume=None):  # numpydoc ignore: PR01,RT01
+        """Generate a 3D volume labelmap from polydata surface contours."""
+        if self.n_points < 2 | self.n_cells < 2:
+            raise ValueError("Invalid polydata.")
+
+        if reference_volume is None:
+            raise TypeError("Invalid input volume.")
+
+        if reference_volume.n_points == 0:
+            raise ValueError("Empty input volume file ")
+
+        # Init output
+        binary_labelmap = pyvista.ImageData()
+        binary_labelmap.copy_structure(reference_volume)
+        binary_labelmap['labelmap'] = np.zeros(
+            (binary_labelmap.n_points,)
+        )  # // background voxels are 0
+
+        # We need to apply inverse of geometry matrix to the input poly data so that we can perform
+        # the conversion in IJK space, because the filters do not support oriented image data.
+        transform = pyvista.Transform(reference_volume.GetDirectionMatrix())
+        poly_ijk = transform.apply(self, inverse=True)
+
+        # Make sure that we have a clean triangle-strip polydata
+        poly_ijk = poly_ijk.compute_normals().triangulate().strip()
+
+        # // Convert polydata to stencil
+        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
+        poly_to_stencil.SetInputData(poly_ijk)
+        poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
+        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)
+        poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
+        poly_to_stencil.Update()
+
+        # // Convert stencil to image
+        stencil = _vtk.vtkImageStencil()
+        stencil.SetInputData(binary_labelmap)
+        stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
+        stencil.ReverseStencilOn()
+        stencil.SetBackgroundValue(label_value)
+        stencil.Update()
+
+        output_volume = stencil.GetOutput()
+        output_volume.SetDirectionMatrix(reference_volume.GetDirectionMatrix())
+
+        return pyvista.wrap(output_volume)

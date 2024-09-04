@@ -74,3 +74,15 @@ def test_protein_ribbon():
     tgqp = examples.download_3gqp()
     ribbon = tgqp.protein_ribbon()
     assert ribbon.n_cells
+
+
+def test_generate_labelmap():
+    reference_volume = examples.load_frog_tissues()
+    poly = reference_volume.contour_labeled()
+    im = poly.generate_labelmap(reference_volume=reference_volume)
+
+    expected_voxels = reference_volume.points_to_cells().threshold(0.5)
+    actual_voxels = im.points_to_cells().threshold(0.5)
+
+    assert expected_voxels.bounds == actual_voxels.bounds
+    assert expected_voxels.n_cells == actual_voxels.n_cells
