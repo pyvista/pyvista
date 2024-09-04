@@ -109,16 +109,25 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
     >>> vox.plot(scalars='SelectedPoints', show_edges=True)
 
-    Create voxelized mesh that does not fit the input mesh's bounds.
+    Create a voxelized mesh that does not fit the input mesh's bounds. Notice the
+    cropped rectangular box.
+    
+    >>> mesh = pv.Cube(x_length=0.25)
+    >>> vox = pv.voxelize(mesh=cube, density=0.2)
+    >>> plotter = pv.Plotter()
+    >>> plotter.add_mesh(mesh=vox, show_edges=True, color="yellow")
+    >>> plotter.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
+    >>> plotter.show()
 
-    >>> mesh = pv.Cube()
-    >>> vox = pv.voxelize(mesh, density=0.2, fit_bounds=False)
-    >>> vox.plot(show_edges=True)
+    Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
+    now complete. Notice that the voxel size was updated to fit the bounds in the first
+    direction.
 
-    Create voxelized mesh that fits the input mesh's bounds.
-
-    >>> vox = pv.voxelize(mesh, density=0.2, fit_bounds=True)
-    >>> vox.plot(show_edges=True)
+    >>> vox = pv.voxelize(mesh=cube, density=0.2, fit_bounds=True)
+    >>> plotter = pv.Plotter()
+    >>> plotter.add_mesh(mesh=vox, show_edges=True, color="yellow")
+    >>> plotter.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
+    >>> plotter.show()
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
@@ -281,14 +290,20 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
 
     Create an equal density voxel volume that does not fit the input mesh's bounds.
 
-    >>> mesh = pv.Cube()
-    >>> vox = pv.voxelize_volume(mesh, density=0.2, fit_bounds=False)
-    >>> vox.plot(show_edges=True)
+    >>> mesh = pv.examples.load_nut()
+    >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5)
+    >>> plotter = pv.Plotter()
+    >>> plotter.add_mesh(mesh=vox, show_edges=True)
+    >>> plotter.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+    >>> plotter.show()
 
     Create an equal density voxel volume that fits the input mesh's bounds.
 
-    >>> vox = pv.voxelize_volume(mesh, density=0.2, fit_bounds=True)
-    >>> vox.plot(show_edges=True)
+    >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5, fit_bounds=True)
+    >>> plotter = pv.Plotter()
+    >>> plotter.add_mesh(mesh=vox, show_edges=True)
+    >>> plotter.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+    >>> plotter.show()
 
     """
     mesh = wrap(mesh)
