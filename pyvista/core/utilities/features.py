@@ -115,8 +115,10 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     >>> mesh = pv.Cube(x_length=0.25)
     >>> vox = pv.voxelize(mesh=mesh, density=0.2)
     >>> pl = pv.Plotter()
-    >>> pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
+    >>> _ = pl.add_mesh(
+    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
+    ... )
     >>> pl.show()
 
     Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
@@ -125,8 +127,10 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
 
     >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
     >>> pl = pv.Plotter()
-    >>> pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
+    >>> _ = pl.add_mesh(
+    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
+    ... )
     >>> pl.show()
 
     """
@@ -292,18 +296,18 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
 
     >>> mesh = pv.examples.load_nut()
     >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5)
-    >>> plotter = pv.Plotter()
-    >>> plotter.add_mesh(mesh=vox, show_edges=True)
-    >>> plotter.add_mesh(mesh=mesh, show_edges=True, opacity=1)
-    >>> plotter.show()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+    >>> pl.show()
 
     Create an equal density voxel volume that fits the input mesh's bounds.
 
     >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5, fit_bounds=True)
-    >>> plotter = pv.Plotter()
-    >>> plotter.add_mesh(mesh=vox, show_edges=True)
-    >>> plotter.add_mesh(mesh=mesh, show_edges=True, opacity=1)
-    >>> plotter.show()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+    >>> pl.show()
 
     """
     mesh = wrap(mesh)
