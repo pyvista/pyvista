@@ -1521,6 +1521,7 @@ def test_ExplicitStructuredGrid_clean():
     assert egrid.n_points == grid.n_points
 
 
+@pointsetmark
 def test_StructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.download_office()
     grid = grid.hide_cells(np.arange(80, 120))
