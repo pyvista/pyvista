@@ -1109,7 +1109,7 @@ def test_imagedata_direction_matrix():
 
     # Test bounds using a transformed reference box
     box = pv.Box(bounds=initial_bounds)
-    box.transform(image.ijk_to_world_transform)
+    box.transform(image.index_to_physical_matrix)
     expected_bounds = box.bounds
     assert image.bounds == expected_bounds
 

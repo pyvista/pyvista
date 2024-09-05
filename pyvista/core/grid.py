@@ -915,34 +915,36 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def direction_matrix(self, matrix):  # numpydoc ignore: GL08
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
 
-    def _ijk_to_world_transform(self) -> pyvista.Transform:
-        return pyvista.Transform().rotate(self.direction_matrix).translate(self.origin)
-
     @property
-    def ijk_to_world_transform(self) -> NumpyArray[float]:
-        """Get the 4x4 transformation matrix to move from ijk indices to world coordinates.
+    def index_to_physical_matrix(self) -> NumpyArray[float]:
+        """Get 4x4 matrix to convert coordinates from index space (ijk) to physical space (xyz).
 
         Returns
         -------
         np.ndarray
             4x4 transformation matrix.
         """
-        return self._ijk_to_world_transform().matrix
+        return array_from_vtkmatrix(self.GetIndexToPhysicalMatrix())
 
     @property
-    def world_to_ijk_transform(self) -> NumpyArray[float]:
-        """Get the 4x4 transformation matrix to move from world coordinates to ijk indices.
+    def physical_to_index_matrix(self) -> NumpyArray[float]:
+        """Get 4x4 matrix to convert coordinates from physical space (xyz) to index space (ijk).
 
         Returns
         -------
         np.ndarray
             4x4 transformation matrix.
         """
-        return self._ijk_to_world_transform().inverse_matrix
+        return array_from_vtkmatrix(self.GetPhysicalToIndexMatrix())
 
     @property
     @wraps(DataSet.bounds.fget)  # type: ignore[attr-defined]
-    def bounds(self):
+    def bounds(self):  # numpydoc ignore: RT01
+        """Return the bounds of this image."""
         box = pyvista.Box(bounds=(0, 1, 0, 1, 0, 1))
-        transform = self._ijk_to_world_transform()
-        return transform.apply(box).bounds
+        transform = (
+            pyvista.Transform()
+            .scale(np.array(self.dimensions) - 1)
+            .concatenate(self.index_to_physical_matrix)
+        )
+        return transform.apply(box, copy=False).bounds
