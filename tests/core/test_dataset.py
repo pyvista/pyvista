@@ -1268,7 +1268,7 @@ def test_rotate_x():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_x(30)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_x(30, point=5)
@@ -1280,7 +1280,7 @@ def test_rotate_y():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_y(30)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_y(30, point=5)
@@ -1292,7 +1292,7 @@ def test_rotate_z():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_z(30)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_z(30, point=5)
@@ -1304,7 +1304,7 @@ def test_rotate_vector():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_vector([1, 1, 1], 33)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_vector([1, 1], 33)
@@ -1316,7 +1316,7 @@ def test_rotate():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_transform_integers():
@@ -1408,7 +1408,7 @@ def test_scale():
     # test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_flip_x():
@@ -1421,7 +1421,7 @@ def test_flip_x():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_x()
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_flip_y():
@@ -1434,7 +1434,7 @@ def test_flip_y():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_y()
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_flip_z():
@@ -1447,7 +1447,7 @@ def test_flip_z():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_z()
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_flip_normal():
@@ -1473,7 +1473,7 @@ def test_flip_normal():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_active_normals(sphere):
