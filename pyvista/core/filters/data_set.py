@@ -7057,18 +7057,17 @@ class DataSetFilters:
             self.cell_data.active_scalars_name = active_cell_scalars_name
             res.cell_data.active_scalars_name = active_cell_scalars_name
 
-        if inplace:
-            self.copy_from(res, deep=False)
-            return self
-
+        output = (
+            pyvista.StructuredGrid()
+            if isinstance(self, pyvista.Grid)
+            else self
+            if inplace
+            else self.__class__()
+        )
         # The output from the transform filter contains a shallow copy
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
-        if isinstance(self, pyvista.Grid):
-            output: _vtk.vtkDataSet = pyvista.StructuredGrid()
-        else:
-            output = self.__class__()
-        output.copy_from(res, deep=True)
+        output.copy_from(res, deep=not inplace)
         return output
 
     def reflect(
