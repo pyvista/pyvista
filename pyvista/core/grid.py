@@ -914,3 +914,25 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     @direction_matrix.setter
     def direction_matrix(self, matrix):  # numpydoc ignore: GL08
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
+
+    @property
+    def index_to_physical_matrix(self) -> NumpyArray[float]:
+        """Get 4x4 matrix to convert coordinates from index space (ijk) to physical space (xyz).
+
+        Returns
+        -------
+        np.ndarray
+            4x4 transformation matrix.
+        """
+        return array_from_vtkmatrix(self.GetIndexToPhysicalMatrix())
+
+    @property
+    def physical_to_index_matrix(self) -> NumpyArray[float]:
+        """Get 4x4 matrix to convert coordinates from physical space (xyz) to index space (ijk).
+
+        Returns
+        -------
+        np.ndarray
+            4x4 transformation matrix.
+        """
+        return array_from_vtkmatrix(self.GetPhysicalToIndexMatrix())
