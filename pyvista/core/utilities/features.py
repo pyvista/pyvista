@@ -113,25 +113,21 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     cropped rectangular box.
 
     >>> mesh = pv.Cube(x_length=0.25)
-    >>> vox = pv.voxelize(mesh=cube, density=0.2)
-    >>> plotter = pv.Plotter()
-    >>> plotter.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> plotter.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
-    >>> plotter.show()
+    >>> vox = pv.voxelize(mesh=mesh, density=0.2)
+    >>> pl = pv.Plotter()
+    >>> pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
+    >>> pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
+    >>> pl.show()
 
     Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
     now complete. Notice that the voxel size was updated to fit the bounds in the first
     direction.
 
-    >>> vox = pv.voxelize(mesh=cube, density=0.2, fit_bounds=True)
-    >>> plotter = pv.Plotter()
-    >>> plotter.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> plotter.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
-    >>> plotter.show()
+    >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
+    >>> pl = pv.Plotter()
+    >>> pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
+    >>> pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
+    >>> plt.show()
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
