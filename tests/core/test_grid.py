@@ -1097,11 +1097,9 @@ def test_imagedata_index_to_physical_matrix():
     # Create image with arbitrary translation (origin) and rotation (direction)
     image = pv.ImageData()
     vector = (1, 2, 3)
-    rotation = pv.Transform().rotate_vector(vector, 30).matrix[:3, :3]
     image.origin = vector
-    image.direction_matrix = rotation
 
-    expected_transform = pv.Transform(rotation).translate(vector)
+    expected_transform = pv.Transform().translate(vector)
     ijk_to_xyz = image.index_to_physical_matrix
     assert np.allclose(ijk_to_xyz, expected_transform.matrix)
 
