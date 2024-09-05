@@ -3418,6 +3418,8 @@ def test_tessellate():
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     # rotate about x-axis by 90 degrees
     for dataset in datasets:
+        # if isinstance(dataset, (pv.ImageData)):
+        #     continue
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
@@ -3479,6 +3481,14 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
         if num_point_data:
             assert dataset.point_data == orig_dataset.point_data
 
+        assert (
+            orig_dataset.point_data.active_scalars_name
+            == transformed.point_data.active_scalars_name
+        )
+        assert (
+            orig_dataset.cell_data.active_scalars_name == transformed.cell_data.active_scalars_name
+        )
+
         assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
         assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
         assert dataset.points[:, 1] == pytest.approx(transformed.points[:, 2])
@@ -3529,21 +3539,24 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
                 _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types(dataset):
+def test_transform_inplace_rectilinear(rectilinear):
     # assert that transformations of these types throw the correct error
     tf = pv.core.utilities.transformations.axis_angle_rotation(
         (1, 0, 0),
         90,
     )  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):
-        dataset.transform(tf, inplace=True)
+        rectilinear.transform(tf, inplace=True)
+
+
+def test_transform_inplace_imagedata(uniform):
+    # assert that transformations of these types throw the correct error
+    tf = pv.core.utilities.transformations.axis_angle_rotation(
+        (1, 0, 0),
+        90,
+    )  # rotate about x-axis by 90 degrees
+    uniform.transform(tf, inplace=True)
+    assert isinstance(uniform, pv.ImageData)
 
 
 def test_reflect_mesh_about_point(datasets):
@@ -3627,17 +3640,10 @@ def test_reflect_inplace(dataset):
     assert np.allclose(dataset.points[:, 1:], orig.points[:, 1:])
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types_2(dataset):
+def test_transform_inplace_bad_types_2(rectilinear):
     # assert that transformations of these types throw the correct error
     with pytest.raises(TypeError):
-        dataset.reflect((1, 0, 0), inplace=True)
+        rectilinear.reflect((1, 0, 0), inplace=True)
 
 
 def test_extrude_rotate():

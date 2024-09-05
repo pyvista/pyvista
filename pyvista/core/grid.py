@@ -12,6 +12,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
@@ -21,8 +22,10 @@ from .dataset import DataSet
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters
 from .filters import _get_output
+from .utilities.arrays import array_from_vtkmatrix
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
+from .utilities.arrays import vtkmatrix_from_array
 from .utilities.misc import abstract_class
 
 
@@ -669,7 +672,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
         xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+
+        direction = self.direction_matrix
+        if not np.array_equal(direction, np.eye(3)):
+            return pyvista.Transform().rotate(direction, point=self.origin).apply(points)
+        return points
 
     @points.setter
     def points(self, points):  # numpydoc ignore=PR01
@@ -887,3 +895,34 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def to_tetrahedra(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Cast to a rectangular grid and then convert to tetrahedra."""
         return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)
+
+    @property
+    def direction_matrix(self):
+        """Set or get the direction matrix.
+
+        The direction matrix is a 3x3 matrix which controls the orientation of the
+        image data.
+
+        Returns
+        -------
+        np.ndarray
+            Direction matrix as a 3x3 NumPy array.
+        """
+        return array_from_vtkmatrix(self.GetDirectionMatrix())
+
+    @direction_matrix.setter
+    def direction_matrix(self, matrix):  # numpydoc ignore: GL08
+        self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
+
+    def _apply_index_to_physical_matrix(self, matrix):
+        # TODO: use ImageData::ApplyIndexToPhysicalMatrix with next vtk release (9.4?)
+        #   https://github.com/Kitware/VTK/blob/27547d83efb67b8586c5facd321a651d975ecbd1/Common/DataModel/vtkImageData.cxx#L2408
+
+        # Get origin, spacing, and direction from the source matrix
+        origin = matrix[:3, 3]
+        direction = matrix[:3, :3]
+        spacing = np.linalg.norm(direction, axis=1)
+
+        self.origin = origin
+        self.SetDirectionMatrix(vtkmatrix_from_array(direction))
+        self.spacing = spacing
