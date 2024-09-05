@@ -1093,6 +1093,23 @@ def test_grid_points():
     )
 
 
+def test_imagedata_index_to_physical_matrix():
+    # Create image with arbitrary translation (origin) and rotation (direction)
+    image = pv.ImageData()
+    translation = (1, 2, 3)
+    rotation = pv.Transform().rotate_vector((1, 2, 3), 30).matrix[:3, :3]
+    image.origin = translation
+    image.direction_matrix = rotation
+
+    # Do test
+    expected_transform = pv.Transform(rotation).translate(translation)
+    ijk_to_xyz = image.index_to_physical_matrix
+    assert np.allclose(ijk_to_xyz, expected_transform.matrix)
+
+    xyz_to_ijk = image.physical_to_index_matrix
+    assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
+
+
 def test_grid_extract_selection_points(struct_grid):
     grid = pv.UnstructuredGrid(struct_grid)
     sub_grid = grid.extract_points([0])
