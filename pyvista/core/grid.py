@@ -16,7 +16,6 @@ import pyvista
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
 
-
 from . import _vtk_core as _vtk
 from .dataset import DataSet
 from .filters import ImageDataFilters
