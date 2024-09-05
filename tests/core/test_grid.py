@@ -1111,7 +1111,7 @@ def test_imagedata_direction_matrix():
     box = pv.Box(bounds=initial_bounds)
     box.transform(image.index_to_physical_matrix)
     expected_bounds = box.bounds
-    assert image.bounds == expected_bounds
+    assert np.allclose(image.bounds, expected_bounds)
 
     # Check that filters make use of the direction matrix internally
     image['data'] = np.ones((image.n_points,))

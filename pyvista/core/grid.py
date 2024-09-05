@@ -936,15 +936,3 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             4x4 transformation matrix.
         """
         return array_from_vtkmatrix(self.GetPhysicalToIndexMatrix())
-
-    @property
-    @wraps(DataSet.bounds.fget)  # type: ignore[attr-defined]
-    def bounds(self):  # numpydoc ignore: RT01
-        """Return the bounds of this image."""
-        box = pyvista.Box(bounds=(0, 1, 0, 1, 0, 1))
-        transform = (
-            pyvista.Transform()
-            .scale(np.array(self.dimensions) - 1)
-            .concatenate(self.index_to_physical_matrix)
-        )
-        return transform.apply(box, copy=False).bounds
