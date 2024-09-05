@@ -1093,6 +1093,20 @@ def test_grid_points():
     )
 
 
+def test_imagedata_index_to_physical_matrix():
+    # Create image with arbitrary translation (origin) and rotation (direction)
+    image = pv.ImageData()
+    vector = (1, 2, 3)
+    image.origin = vector
+
+    expected_transform = pv.Transform().translate(vector)
+    ijk_to_xyz = image.index_to_physical_matrix
+    assert np.allclose(ijk_to_xyz, expected_transform.matrix)
+
+    xyz_to_ijk = image.physical_to_index_matrix
+    assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
+
+
 def test_grid_extract_selection_points(struct_grid):
     grid = pv.UnstructuredGrid(struct_grid)
     sub_grid = grid.extract_points([0])
@@ -1507,6 +1521,7 @@ def test_ExplicitStructuredGrid_clean():
     assert egrid.n_points == grid.n_points
 
 
+@pointsetmark
 def test_StructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.download_office()
     grid = grid.hide_cells(np.arange(80, 120))
