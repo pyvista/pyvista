@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pathlib
+import pickle
 import platform
 import weakref
 
@@ -838,3 +839,9 @@ def test_clear_all_cell_data(multiblock_all):
         else:
             assert block.point_data.keys() != []
             assert block.cell_data.keys() == []
+
+
+def test_pickle():
+    multi_block = [(pv.Cube(), pv.Sphere())]
+    pickled = pickle.dumps(multi_block)
+    assert isinstance(pickled, bytes)
