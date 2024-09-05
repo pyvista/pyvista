@@ -1101,7 +1101,6 @@ def test_imagedata_index_to_physical_matrix():
     image.origin = translation
     image.direction_matrix = rotation
 
-    # Do test
     expected_transform = pv.Transform(rotation).translate(translation)
     ijk_to_xyz = image.index_to_physical_matrix
     assert np.allclose(ijk_to_xyz, expected_transform.matrix)
