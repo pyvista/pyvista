@@ -1093,6 +1093,36 @@ def test_grid_points():
     )
 
 
+def test_imagedata_direction_matrix():
+    # Create image data with a single voxel cell
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    assert image.n_points == 8
+    assert image.n_cells == 1
+
+    initial_bounds = (0.0, 1.0, 0.0, 1.0, 0.0, 1.0)
+    assert image.bounds == initial_bounds
+
+    # Test set/get
+    expected_matrix = pv.Transform().rotate_vector((1, 2, 3), 30).matrix[:3, :3]
+    image.direction_matrix = expected_matrix
+    assert np.array_equal(image.direction_matrix, expected_matrix)
+
+    # Test bounds using a transformed reference box
+    box = pv.Box(bounds=initial_bounds)
+    box.transform(image.ijk_to_world_transform)
+    expected_bounds = box.bounds
+    assert image.bounds == expected_bounds
+
+    # Check that filters make use of the direction matrix internally
+    image['data'] = np.ones((image.n_points,))
+    filtered = image.threshold()
+    assert filtered.bounds == expected_bounds
+
+    # Check that points make use of the direction matrix internally
+    poly_points = pv.PolyData(image.points)
+    assert np.allclose(poly_points.bounds, expected_bounds)
+
+
 def test_grid_extract_selection_points(struct_grid):
     grid = pv.UnstructuredGrid(struct_grid)
     sub_grid = grid.extract_points([0])

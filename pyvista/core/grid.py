@@ -673,7 +673,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
         xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+
+        direction = self.direction_matrix
+        if not np.array_equal(direction, np.eye(3)):
+            return pyvista.Transform().rotate(direction, point=self.origin).apply(points)
+        return points
 
     @points.setter
     def points(self, points):  # numpydoc ignore=PR01
@@ -934,3 +939,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             4x4 transformation matrix.
         """
         return self._ijk_to_world_transform().inverse_matrix
+
+    @property
+    @wraps(DataSet.bounds.fget)  # type: ignore[attr-defined]
+    def bounds(self):
+        box = pyvista.Box(bounds=(0, 1, 0, 1, 0, 1))
+        transform = self._ijk_to_world_transform()
+        return transform.apply(box).bounds
