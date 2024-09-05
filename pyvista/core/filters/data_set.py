@@ -6951,7 +6951,7 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Transformed dataset.  Return type matches input unless
-            input dataset is a :class:`pyvista.ImageData`, in which
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
