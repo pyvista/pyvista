@@ -161,7 +161,7 @@ class Transform(_vtk.vtkTransform):
            [0., 0., 0., 1.]])
 
     Create a similar transform but use pre-multiplication this time. Concatenate the
-    transformations in the same order as before using :meth:`translate` and :meth`scale`.
+    transformations in the same order as before using :meth:`translate` and :meth:`scale`.
 
     >>> transform_pre = pv.Transform().pre_multiply()
     >>> _ = transform_pre.translate(position).scale(scale_factor)
