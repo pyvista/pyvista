@@ -1097,7 +1097,7 @@ def test_imagedata_index_to_physical_matrix():
     # Create image with arbitrary translation (origin) and rotation (direction)
     image = pv.ImageData()
     translation = (1, 2, 3)
-    rotation = pv.Transform().rotate_vector((1, 2, 3), 30).matrix[:3, :3]
+    rotation = pv.Transform().rotate_vector(translation, 30).matrix[:3, :3]
     image.origin = translation
     image.direction_matrix = rotation
 
