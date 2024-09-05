@@ -127,7 +127,7 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     >>> pl = pv.Plotter()
     >>> pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
     >>> pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
-    >>> plt.show()
+    >>> pl.show()
 
     """
     if not pyvista.is_pyvista_dataset(mesh):
