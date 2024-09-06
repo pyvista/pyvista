@@ -7057,12 +7057,15 @@ class DataSetFilters:
             self.cell_data.active_scalars_name = active_cell_scalars_name
             res.cell_data.active_scalars_name = active_cell_scalars_name
 
+        self_output = (
+            self
+            if inplace
+            else self.__class__()
+        )
         output = (
             pyvista.StructuredGrid()
             if isinstance(self, pyvista.Grid)
-            else self
-            if inplace
-            else self.__class__()
+            else self_output
         )
         # The output from the transform filter contains a shallow copy
         # of the original dataset except for the point arrays.  Here
