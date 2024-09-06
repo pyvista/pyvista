@@ -3506,13 +3506,13 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
             )
 
         # Verify active scalars are not changed
-        expected_point_scalars = orig_dataset.point_data.active_scalars_name
-        actual_point_scalars = transformed.point_data.active_scalars_name
-        assert actual_point_scalars == expected_point_scalars
+        expected_point_scalars_name = orig_dataset.point_data.active_scalars_name
+        actual_point_scalars_name = transformed.point_data.active_scalars_name
+        assert actual_point_scalars_name == expected_point_scalars_name
 
-        expected_cell_scalars = orig_dataset.cell_data.active_scalars_name
-        actual_cell_scalars = transformed.cell_data.active_scalars_name
-        assert actual_cell_scalars == expected_cell_scalars
+        expected_cell_scalars_name = orig_dataset.cell_data.active_scalars_name
+        actual_cell_scalars_name = transformed.cell_data.active_scalars_name
+        assert actual_cell_scalars_name == expected_cell_scalars_name
 
 
 @pytest.mark.parametrize(
