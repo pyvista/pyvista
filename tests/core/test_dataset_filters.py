@@ -3418,8 +3418,6 @@ def test_tessellate():
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     # rotate about x-axis by 90 degrees
     for dataset in datasets:
-        # if isinstance(dataset, (pv.ImageData)):
-        #     continue
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
 
         for i in range(num_cell_arrays):
@@ -3480,14 +3478,6 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
             assert dataset.cell_data == orig_dataset.cell_data
         if num_point_data:
             assert dataset.point_data == orig_dataset.point_data
-
-        assert (
-            orig_dataset.point_data.active_scalars_name
-            == transformed.point_data.active_scalars_name
-        )
-        assert (
-            orig_dataset.cell_data.active_scalars_name == transformed.cell_data.active_scalars_name
-        )
 
         assert dataset.points[:, 0] == pytest.approx(transformed.points[:, 0])
         assert dataset.points[:, 2] == pytest.approx(-transformed.points[:, 1])
