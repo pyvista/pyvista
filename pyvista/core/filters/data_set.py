@@ -7060,6 +7060,9 @@ class DataSetFilters:
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
         self_output = self if inplace else self.__class__()
+        output = (
+            pyvista.StructuredGrid() if isinstance(self, pyvista.RectilinearGrid) else self_output
+        )
 
         if isinstance(self, pyvista.ImageData):
             # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
@@ -7078,9 +7081,6 @@ class DataSetFilters:
 
         _restore_active_scalars(self, res)
 
-        output = (
-            pyvista.StructuredGrid() if isinstance(self, pyvista.RectilinearGrid) else self_output
-        )
         # The output from the transform filter contains a shallow copy
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.

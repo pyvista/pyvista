@@ -1137,6 +1137,17 @@ def test_copy_structure(grid):
     assert len(copy.point_data) == 0
 
 
+def test_copy_structure_self(datasets):
+    for dataset in datasets:
+        copied = dataset.copy()
+        assert copied is not dataset
+
+        # Copy structure from itself
+        copied.copy_structure(copied)
+        assert copied.n_points == dataset.n_points
+        assert copied.n_cells == dataset.n_cells
+
+
 def test_copy_attributes(grid):
     classname = grid.__class__.__name__
     copy = eval(f'pv.{classname}')()
