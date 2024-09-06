@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import UserDict
 import json
+import pickle
 
 import numpy as np
 import pytest
@@ -210,3 +211,10 @@ def test_user_dict_persists_with_cells_to_points(uniform):
     uniform.user_dict['name'] = 'image'
     uniform.points_to_cells()
     assert uniform.user_dict['name'] == 'image'
+
+
+def test_pickle(sphere):
+    pickled = pickle.dumps(sphere)
+    assert isinstance(pickled, bytes)
+    unpickled = pickle.loads(pickled)
+    assert unpickled.n_points == sphere.n_points

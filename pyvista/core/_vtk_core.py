@@ -367,7 +367,6 @@ from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
-
 from vtkmodules.vtkImagingCore import vtkExtractVOI
 from vtkmodules.vtkImagingCore import vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageDifference
@@ -422,6 +421,7 @@ from vtkmodules.vtkIOXML import vtkXMLTableWriter
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
 from vtkmodules.vtkIOXML import vtkXMLWriter
+from vtkmodules.vtkParallelCore import vtkCommunicator
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
