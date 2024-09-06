@@ -7070,7 +7070,10 @@ class DataSetFilters:
         # The output from the transform filter contains a shallow copy
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
-        output.copy_from(res, deep=not inplace)
+        if inplace:
+            output.copy_from(res)
+        else:
+            output.copy_from(res, deep=True)
         return output
 
     def reflect(
