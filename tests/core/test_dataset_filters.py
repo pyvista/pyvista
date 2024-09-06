@@ -3549,7 +3549,7 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
 
 
 def test_transform_inplace_rectilinear(rectilinear):
-    # assert that transformations of these types throw the correct error
+    # assert that transformations of this type raises the correct error
     tf = pv.core.utilities.transformations.axis_angle_rotation(
         (1, 0, 0),
         90,
@@ -3559,13 +3559,15 @@ def test_transform_inplace_rectilinear(rectilinear):
 
 
 def test_transform_inplace_imagedata(uniform):
-    # assert that transformations of these types throw the correct error
-    tf = pv.core.utilities.transformations.axis_angle_rotation(
-        (1, 0, 0),
-        90,
-    )  # rotate about x-axis by 90 degrees
-    uniform.transform(tf, inplace=True)
+    vector = np.array((1, 2, 3))
+    translation = pv.Transform().translate(vector)
+    uniform.transform(translation, inplace=True)
     assert isinstance(uniform, pv.ImageData)
+    assert np.array_equal(uniform.origin, vector)
+
+    # Test applying a second transformation
+    uniform.transform(translation, inplace=True)
+    assert np.array_equal(uniform.origin, vector * 2)
 
 
 def test_reflect_mesh_about_point(datasets):

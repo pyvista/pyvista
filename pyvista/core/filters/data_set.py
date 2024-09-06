@@ -7059,25 +7059,25 @@ class DataSetFilters:
                 output_.point_data.active_scalars_name = active_point_scalars_name
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
-        output: _vtk.vtkDataSet
+        self_output = self if inplace else self.__class__()
 
         if isinstance(self, pyvista.ImageData):
             # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
             # To keep an ImageData -> ImageData mapping, we copy the transformed data
             # from the filter output but manually transform the structure
-            output = pyvista.ImageData()
-            output.copy_structure(self)
-            output._apply_index_to_physical_matrix(t.matrix)
+            self_output.copy_structure(self)
+            current_matrix = self_output.index_to_physical_matrix
+            new_matrix = pyvista.Transform(current_matrix).concatenate(t).matrix
+            self_output._apply_index_to_physical_matrix(new_matrix)
 
-            output.point_data.update(res.point_data, copy=False)
-            output.cell_data.update(res.cell_data, copy=False)
-            output.field_data.update(res.field_data, copy=False)
-            _restore_active_scalars(self, output)
-            return output
+            self_output.point_data.update(res.point_data, copy=False)
+            self_output.cell_data.update(res.cell_data, copy=False)
+            self_output.field_data.update(res.field_data, copy=False)
+            _restore_active_scalars(self, self_output)
+            return self_output
 
         _restore_active_scalars(self, res)
 
-        self_output = self if inplace else self.__class__()
         output = (
             pyvista.StructuredGrid() if isinstance(self, pyvista.RectilinearGrid) else self_output
         )
