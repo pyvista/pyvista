@@ -1587,7 +1587,46 @@ class Transform(_vtk.vtkTransform):
             3x3 rotation matrix (or 4x4 rotation matrix if ``as_matrix`` is ``True``).
 
         numpy.ndarray
-            Length-3 translation vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+            Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
+
+
+        Examples
+        --------
+        Create a transform with arbitrary scaling, rotation, and translation.
+
+        >>> import pyvista as pv
+
+        >>> scale = (1, 2, 3)
+        >>> angle = 90
+        >>> position = (4, 5, 6)
+        >>> transform = (
+        ...     pv.Transform()
+        ...     .scale(scale)
+        ...     .rotate_z(angle)
+        ...     .translate(position)
+        ... )
+        >>> transform
+        Transform (...)
+          Num Transformations: 3
+          Matrix:  [[ 0., -2.,  0.,  4.],
+                    [ 1.,  0.,  0.,  5.],
+                    [ 0.,  0.,  3.,  6.],
+                    [ 0.,  0.,  0.,  1.]]
+
+        Decompose the matrix.
+
+        >>> scaling, rotation, translation = transform.decompose()
+        >>> scaling
+        array([1., 2., 3.])
+
+        >>> rotation
+        array([[ 0., -1.,  0.],
+               [ 1.,  0.,  0.],
+               [ 0.,  0.,  1.]])
+
+        >>> translation
+        array([4., 5., 6.])
+
         """
         matrix = self.matrix
         scaling = np.abs(self.GetScale())
