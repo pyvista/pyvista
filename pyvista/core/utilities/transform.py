@@ -1590,7 +1590,7 @@ class Transform(_vtk.vtkTransform):
             Length-3 translation vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
         """
         matrix = self.matrix
-        scaling = self.GetScale()
+        scaling = np.abs(self.GetScale())
         rotation = matrix[:3, :3] @ np.diag(_reciprocal(scaling))
         translation = matrix[:3, 3]
         if as_matrix:

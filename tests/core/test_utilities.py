@@ -1744,6 +1744,9 @@ def test_transform_repr(transform):
 def test_transform_decompose(transform):
     transform.scale(SCALE).rotate(ROTATION).translate(VECTOR)
     scale, rotation, translation = transform.decompose()
+    assert isinstance(scale, np.ndarray)
+    assert isinstance(rotation, np.ndarray)
+    assert isinstance(translation, np.ndarray)
     assert np.allclose(scale, [SCALE] * 3)
     assert np.allclose(rotation, ROTATION)
     assert np.allclose(translation, VECTOR)
