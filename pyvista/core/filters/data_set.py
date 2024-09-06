@@ -7063,7 +7063,7 @@ class DataSetFilters:
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
         if inplace:
-            output.copy_from(res)
+            output.copy_from(res, deep=False)
         else:
             output.copy_from(res, deep=True)
         return output
