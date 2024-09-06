@@ -1739,3 +1739,16 @@ def test_transform_repr(transform):
         '            [ 0.        ,  0.        ,  1.        ,  0.        ],\n'
         '            [ 0.        ,  0.        ,  0.        ,  1.        ]]'
     )
+
+
+def test_transform_decompose(transform):
+    transform.scale(SCALE).rotate(ROTATION).translate(VECTOR)
+    scale, rotation, translation = transform.decompose()
+    assert np.allclose(scale, [SCALE] * 3)
+    assert np.allclose(rotation, ROTATION)
+    assert np.allclose(translation, VECTOR)
+
+    scale, rotation, translation = transform.decompose(as_matrix=True)
+    assert np.allclose(scale, pv.Transform().scale(SCALE).matrix)
+    assert np.allclose(rotation, pv.Transform().rotate(ROTATION).matrix)
+    assert np.allclose(translation, pv.Transform().translate(VECTOR).matrix)

@@ -12,6 +12,7 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import reflection
@@ -1567,6 +1568,38 @@ class Transform(_vtk.vtkTransform):
         # Transform many points
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return array if inplace else out
+
+    def decompose(self, as_matrix: bool = False):
+        """Decompose the current transformation into its scaling, rotation, and translation components.
+
+        Parameters
+        ----------
+        as_matrix : bool, default: False
+            If ``True``, return the scaling, rotation, and translation components as
+            4x4 matrices.
+
+        Returns
+        -------
+        numpy.ndarray
+            Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+
+        numpy.ndarray
+            3x3 rotation matrix (or 4x4 rotation matrix if ``as_matrix`` is ``True``).
+
+        numpy.ndarray
+            Length-3 translation vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+        """
+        matrix = self.matrix
+        scaling = self.GetScale()
+        rotation = matrix[:3, :3] @ np.diag(_reciprocal(scaling))
+        translation = matrix[:3, 3]
+        if as_matrix:
+            return (
+                Transform().scale(scaling).matrix,
+                Transform().rotate(rotation).matrix,
+                Transform().translate(translation).matrix,
+            )
+        return scaling, rotation, translation
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.

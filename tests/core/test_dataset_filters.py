@@ -3549,18 +3549,32 @@ def test_transform_inplace_rectilinear(rectilinear):
 
 
 @pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
-def test_transform_inplace_imagedata(uniform, spacing):
+def test_transform_imagedata(uniform, spacing):
+    # Transformations affect origin, spacing, and direction, so test these here
     uniform.spacing = spacing
+
+    # Test scaling
+    vector123 = np.array((1, 2, 3))
+    uniform.scale(vector123, inplace=True)
+    expected_spacing = spacing * vector123
+    assert np.allclose(uniform.spacing, expected_spacing)
+
+    # Test direction
+    rotation = pv.Transform().rotate_vector(vector123, 30).matrix[:3, :3]
+    uniform.rotate(rotation, inplace=True)
+    assert np.allclose(uniform.direction_matrix, rotation)
+
+    # Test translation by centering data
     vector = np.array(uniform.center) * -1
     translation = pv.Transform().translate(vector)
     uniform.transform(translation, inplace=True)
     assert isinstance(uniform, pv.ImageData)
     assert np.array_equal(uniform.origin, vector)
 
-    # Test applying a second transformation
+    # Test applying a second translation
     translated = uniform.transform(translation, inplace=False)
-    assert np.array_equal(translated.origin, vector * 2)
-    assert np.array_equal(translated.center, uniform.origin)
+    assert np.allclose(translated.origin, vector * 2)
+    assert np.allclose(translated.center, uniform.origin)
 
 
 def test_reflect_mesh_about_point(datasets):

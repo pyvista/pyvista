@@ -915,16 +915,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
 
     def _apply_index_to_physical_matrix(self, matrix):
-        # TODO: use ImageData::ApplyIndexToPhysicalMatrix with next vtk release (9.4?)
-        #   https://github.com/Kitware/VTK/blob/27547d83efb67b8586c5facd321a651d975ecbd1/Common/DataModel/vtkImageData.cxx#L2408
-
-        # Get origin, spacing, and direction from the source matrix
-        origin = matrix[:3, 3]
-        direction = matrix[:3, :3]
-        spacing = np.linalg.norm(direction, axis=1)
-
+        """Set origin, spacing, and direction from a transformation matrix."""
+        spacing, direction, origin = pyvista.Transform(matrix).decompose()
         self.origin = origin
-        self.SetDirectionMatrix(vtkmatrix_from_array(direction))
+        self.direction_matrix = direction
         self.spacing = spacing
 
     @property
