@@ -866,7 +866,7 @@ class DataSetFilters:
         ----------
         surface : pyvista.PolyData
             The ``PolyData`` surface mesh to use as a clipping
-            function.  If this input mesh is not a :class`pyvista.PolyData`,
+            function.  If this input mesh is not a :class:`pyvista.PolyData`,
             the external surface will be extracted.
 
         invert : bool, default: True
@@ -3833,7 +3833,7 @@ class DataSetFilters:
         For `mesh1.sample(mesh2)`, the arrays from `mesh2` are sampled onto
         the points of `mesh1`.  This function interpolates within an
         enclosing cell.  This contrasts with
-        :function`pyvista.DataSetFilters.interpolate` that uses a distance
+        :func:`pyvista.DataSetFilters.interpolate` that uses a distance
         weighting for nearby points.  If there is cell topology, `sample` is
         usually preferred.
 
@@ -7773,7 +7773,7 @@ class DataSetFilters:
 
         The type of output dataset is always the same as the input type. Since
         structured types of data (i.e., :class:`pyvista.ImageData`,
-        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`)
+        :class:`pyvista.StructuredGrid`, :class:`pyvista.RectilnearGrid`)
         are all composed of a cell of the same
         type, the output is either empty, or a shallow copy of the input.
         Unstructured data (:class:`pyvista.UnstructuredGrid`,

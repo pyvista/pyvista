@@ -21,6 +21,7 @@ from .dataset import DataSet
 from .filters import ImageDataFilters
 from .filters import RectilinearGridFilters
 from .filters import _get_output
+from .utilities.arrays import array_from_vtkmatrix
 from .utilities.arrays import convert_array
 from .utilities.arrays import raise_has_duplicates
 from .utilities.misc import abstract_class
@@ -887,3 +888,25 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def to_tetrahedra(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01
         """Cast to a rectangular grid and then convert to tetrahedra."""
         return self.cast_to_rectilinear_grid().to_tetrahedra(*args, **kwargs)
+
+    @property
+    def index_to_physical_matrix(self) -> NumpyArray[float]:
+        """Get 4x4 matrix to convert coordinates from index space (ijk) to physical space (xyz).
+
+        Returns
+        -------
+        np.ndarray
+            4x4 transformation matrix.
+        """
+        return array_from_vtkmatrix(self.GetIndexToPhysicalMatrix())
+
+    @property
+    def physical_to_index_matrix(self) -> NumpyArray[float]:
+        """Get 4x4 matrix to convert coordinates from physical space (xyz) to index space (ijk).
+
+        Returns
+        -------
+        np.ndarray
+            4x4 transformation matrix.
+        """
+        return array_from_vtkmatrix(self.GetPhysicalToIndexMatrix())
