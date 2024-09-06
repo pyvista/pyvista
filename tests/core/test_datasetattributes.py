@@ -724,20 +724,20 @@ def test_update(uniform, copy):
     new_mesh.point_data.update(uniform.point_data, copy=copy)
     for array_name in uniform.point_data.keys():
         shares_memory = np.shares_memory(
-                new_mesh.point_data[array_name], uniform.point_data[array_name]
+            new_mesh.point_data[array_name], uniform.point_data[array_name]
         )
         if copy:
-            assert not shares_memory 
+            assert not shares_memory
         else:
-            assert shares_memory 
+            assert shares_memory
 
     # Test cell data
     new_mesh.cell_data.update(uniform.cell_data, copy=copy)
     for array_name in uniform.cell_data.keys():
         shares_memory = np.shares_memory(
-                new_mesh.cell_data[array_name], uniform.cell_data[array_name]
+            new_mesh.cell_data[array_name], uniform.cell_data[array_name]
         )
         if copy:
-            assert not shares_memory 
+            assert not shares_memory
         else:
-            assert shares_memory 
+            assert shares_memory
