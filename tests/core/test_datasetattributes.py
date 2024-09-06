@@ -714,3 +714,30 @@ def test_active_t_coords_name_deprecated():
         mesh.point_data.active_t_coords_name = name
         if pv._version.version_info >= (0, 46):
             raise RuntimeError('Remove this deprecated property')
+
+
+@pytest.mark.parametrize('copy', [True, False])
+def test_update(uniform, copy):
+    new_mesh = pv.ImageData(dimensions=uniform.dimensions)
+
+    # Test point data
+    new_mesh.point_data.update(uniform.point_data, copy=copy)
+    for array_name in uniform.point_data.keys():
+        shares_memory = np.shares_memory(
+            new_mesh.point_data[array_name], uniform.point_data[array_name]
+        )
+        if copy:
+            assert not shares_memory
+        else:
+            assert shares_memory
+
+    # Test cell data
+    new_mesh.cell_data.update(uniform.cell_data, copy=copy)
+    for array_name in uniform.cell_data.keys():
+        shares_memory = np.shares_memory(
+            new_mesh.cell_data[array_name], uniform.cell_data[array_name]
+        )
+        if copy:
+            assert not shares_memory
+        else:
+            assert shares_memory
