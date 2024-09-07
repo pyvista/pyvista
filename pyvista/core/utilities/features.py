@@ -44,7 +44,7 @@ def _padded_bins(mesh, density):
     ]
 
 
-def voxelize(mesh, density=None, check_surface=True, enclosed=False):
+def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=False):
     """Voxelize mesh to UnstructuredGrid.
 
     Parameters
@@ -66,6 +66,11 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
     enclosed : bool, default: False
         If True, the voxel bounds will be outside the mesh.
         If False, the voxel bounds will be at or inside the mesh bounds.
+
+    fit_bounds : bool, default: False
+        If enabled, the end bound of the input mesh is used as the end bound of the
+        voxel grid and the density is updated to the closest compatible one. Otherwise,
+        the end bound is excluded. Has no effect if `enclosed` is enabled.
 
     Returns
     -------
@@ -104,6 +109,30 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
     >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
     >>> vox.plot(scalars='SelectedPoints', show_edges=True)
 
+    Create a voxelized mesh that does not fit the input mesh's bounds. Notice the
+    cropped rectangular box.
+
+    >>> mesh = pv.Cube(x_length=0.25)
+    >>> vox = pv.voxelize(mesh=mesh, density=0.2)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
+    >>> _ = pl.add_mesh(
+    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
+    ... )
+    >>> pl.show()
+
+    Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
+    now complete. Notice that the voxel size was updated to fit the bounds in the first
+    direction.
+
+    >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
+    >>> _ = pl.add_mesh(
+    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
+    ... )
+    >>> pl.show()
+
     """
     if not pyvista.is_pyvista_dataset(mesh):
         mesh = wrap(mesh)
@@ -130,9 +159,21 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
         x, y, z = _padded_bins(mesh, [density_x, density_y, density_z])
     else:
         x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-        x = np.arange(x_min, x_max, density_x)
-        y = np.arange(y_min, y_max, density_y)
-        z = np.arange(z_min, z_max, density_z)
+        if fit_bounds:
+            # Calculate an integer number of voxels, floor to ensure that the voxels
+            # don't exceed the input mesh
+            nof_voxels_x = int(np.round((x_max - x_min) / density_x))
+            nof_voxels_y = int(np.round((y_max - y_min) / density_y))
+            nof_voxels_z = int(np.round((z_max - z_min) / density_z))
+
+            # One additional point is required to ensure the proper number of voxels
+            x = np.linspace(x_min, x_max, nof_voxels_x + 1)
+            y = np.linspace(y_min, y_max, nof_voxels_y + 1)
+            z = np.linspace(z_min, z_max, nof_voxels_z + 1)
+        else:
+            x = np.arange(x_min, x_max, density_x)
+            y = np.arange(y_min, y_max, density_y)
+            z = np.arange(z_min, z_max, density_z)
 
     x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
@@ -164,7 +205,7 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False):
     return ugrid.extract_points(mask)
 
 
-def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
+def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=False):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
@@ -190,6 +231,11 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
     enclosed : bool, default: False
         If True, the voxel bounds will be outside the mesh.
         If False, the voxel bounds will be at or inside the mesh bounds.
+
+    fit_bounds : bool, default: False
+        If enabled, the end bound of the input mesh is used as the end bound of the
+        voxel grid and the density is updated to the closest compatible one. Otherwise,
+        the end bound is excluded. Has no effect if `enclosed` is enabled.
 
     Returns
     -------
@@ -246,6 +292,23 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
     >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
     >>> vox.plot(scalars='SelectedPoints', show_edges=True, cpos=cpos)
 
+    Create an equal density voxel volume that does not fit the input mesh's bounds.
+
+    >>> mesh = pv.examples.load_nut()
+    >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+    >>> pl.show()
+
+    Create an equal density voxel volume that fits the input mesh's bounds.
+
+    >>> vox = pv.voxelize_volume(mesh=mesh, density=2.5, fit_bounds=True)
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+    >>> pl.show()
+
     """
     mesh = wrap(mesh)
     if density is None:
@@ -271,9 +334,21 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False):
         x, y, z = _padded_bins(mesh, [density_x, density_y, density_z])
     else:
         x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
-        x = np.arange(x_min, x_max, density_x)
-        y = np.arange(y_min, y_max, density_y)
-        z = np.arange(z_min, z_max, density_z)
+        if fit_bounds:
+            # Calculate an integer number of voxels, floor to ensure that the voxels
+            # don't exceed the input mesh
+            nof_voxels_x = int(np.round((x_max - x_min) / density_x))
+            nof_voxels_y = int(np.round((y_max - y_min) / density_y))
+            nof_voxels_z = int(np.round((z_max - z_min) / density_z))
+
+            # One additional point is required to ensure the proper number of voxels
+            x = np.linspace(x_min, x_max, nof_voxels_x + 1)
+            y = np.linspace(y_min, y_max, nof_voxels_y + 1)
+            z = np.linspace(z_min, z_max, nof_voxels_z + 1)
+        else:
+            x = np.arange(x_min, x_max, density_x)
+            y = np.arange(y_min, y_max, density_y)
+            z = np.arange(z_min, z_max, density_z)
 
     # Create a RectilinearGrid
     voi = pyvista.RectilinearGrid(x, y, z)
