@@ -226,3 +226,15 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none):
     assert isinstance(pickled, bytes)
     unpickled = pickle.loads(pickled)
     assert unpickled == multiblock
+
+
+def test_pickle_attributes(uniform):
+    custom_attr_name = 'custom_attribute'
+    custom_attr_value = 42
+    setattr(uniform, custom_attr_name, custom_attr_value)
+
+    pickled = pickle.dumps(uniform)
+    unpickled = pickle.loads(pickled)
+
+    assert hasattr(unpickled, custom_attr_name)
+    assert getattr(unpickled, custom_attr_name) == custom_attr_value
