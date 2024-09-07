@@ -709,33 +709,9 @@ class DataObject:
 
         if pyvista.PICKLE_FORMAT.lower() == 'xml':
             if pyvista.vtk_version_info >= (9, 2):
-                to_serialize = _serialize_vtk_data_object_xml(self)
+                to_serialize = _serialize_data_object_marshal(self)
             else:
-                # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
-                # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
-                # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
-                writers = {
-                    _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
-                    _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridWriter,
-                    _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridWriter,
-                    _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridWriter,
-                    _vtk.vtkPolyData: _vtk.vtkXMLPolyDataWriter,
-                    _vtk.vtkTable: _vtk.vtkXMLTableWriter,
-                }
-
-                for parent_type, writer_type in writers.items():
-                    if isinstance(self, parent_type):
-                        writer = writer_type()
-                        break
-                else:
-                    raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
-
-                writer.SetInputDataObject(self)
-                writer.SetWriteToOutputString(True)
-                writer.SetDataModeToBinary()
-                writer.SetCompressorTypeToNone()
-                writer.Write()
-                to_serialize = writer.GetOutputString()
+                to_serialize = _serialize_data_object_writer(self)
 
         elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
             writer = _vtk.vtkDataSetWriter()
@@ -765,31 +741,9 @@ class DataObject:
 
         if pickle_format.lower() == 'xml':
             if pyvista.vtk_version_info >= (9, 2):
-                vtk_mesh = _unserialize_vtk_data_object_xml(vtk_serialized)
+                vtk_mesh = _unserialize_data_object_marshal(vtk_serialized)
             else:
-                # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
-                # settings down to the sub-readers. Until this is fixed, use the dataset-specific readers
-                # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
-                readers = {
-                    _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
-                    _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridReader,
-                    _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridReader,
-                    _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridReader,
-                    _vtk.vtkPolyData: _vtk.vtkXMLPolyDataReader,
-                    _vtk.vtkTable: _vtk.vtkXMLTableReader,
-                }
-
-                for parent_type, reader_type in readers.items():
-                    if isinstance(self, parent_type):
-                        reader = reader_type()
-                        break
-                else:
-                    raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}.')
-
-                reader.ReadFromInputStringOn()
-                reader.SetInputString(vtk_serialized)
-                reader.Update()
-                vtk_mesh = reader.GetOutput()()
+                vtk_mesh = _unserialize_data_object_reader(vtk_serialized, self.__class__)
 
         elif pickle_format.lower() == 'legacy':
             reader = _vtk.vtkDataSetReader()
@@ -806,7 +760,7 @@ class DataObject:
         self.deep_copy(wrap(vtk_mesh))
 
 
-def _serialize_vtk_data_object_xml(data_object):
+def _serialize_data_object_marshal(data_object):
     """Transform a data object instance into a serialized string."""
     char_array = _vtk.vtkCharArray()
     if _vtk.vtkCommunicator.MarshalDataObject(data_object, char_array) == 0:
@@ -814,10 +768,64 @@ def _serialize_vtk_data_object_xml(data_object):
     return _vtk.vtk_to_numpy(char_array)
 
 
-def _unserialize_vtk_data_object_xml(serial_string: str):
+def _unserialize_data_object_marshal(serial_string: str):
     """Transform a serialized data object string into a data object instance."""
     char_array = _vtk.numpy_to_vtk(serial_string, array_type=_vtk.vtkCharArray().GetDataType())
     new_data_object = _vtk.vtkCommunicator.UnMarshalDataObject(char_array)
     if new_data_object is None:
         raise RuntimeError("Un-serializing data object failed.")
     return new_data_object
+
+
+def _serialize_data_object_writer(data_object):
+    # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
+    # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
+    # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+    writers = {
+        _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
+        _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridWriter,
+        _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridWriter,
+        _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridWriter,
+        _vtk.vtkPolyData: _vtk.vtkXMLPolyDataWriter,
+        _vtk.vtkTable: _vtk.vtkXMLTableWriter,
+    }
+
+    for parent_type, writer_type in writers.items():
+        if isinstance(data_object, parent_type):
+            writer = writer_type()
+            break
+    else:
+        raise TypeError(f'Cannot pickle dataset of type {data_object.__class__.__name__}')
+
+    writer.SetInputDataObject(data_object)
+    writer.SetWriteToOutputString(True)
+    writer.SetDataModeToBinary()
+    writer.SetCompressorTypeToNone()
+    writer.Write()
+    return writer.GetOutputString()
+
+
+def _unserialize_data_object_reader(vtk_serialized: str, object_class):
+    # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
+    # settings down to the sub-readers. Until this is fixed, use the dataset-specific readers
+    # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+    readers = {
+        _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
+        _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridReader,
+        _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridReader,
+        _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridReader,
+        _vtk.vtkPolyData: _vtk.vtkXMLPolyDataReader,
+        _vtk.vtkTable: _vtk.vtkXMLTableReader,
+    }
+
+    for parent_type, reader_type in readers.items():
+        if issubclass(object_class, parent_type):
+            reader = reader_type()
+            break
+    else:
+        raise TypeError(f'Cannot unpickle dataset of type {object_class.__name__}.')
+
+    reader.ReadFromInputStringOn()
+    reader.SetInputString(vtk_serialized)
+    reader.Update()
+    return reader.GetOutput()
