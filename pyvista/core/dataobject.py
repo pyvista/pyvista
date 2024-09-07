@@ -730,11 +730,6 @@ class DataObject:
 
     def __setstate__(self, state):
         """Support unpickle."""
-        if "vtk_serialized" not in state.keys():
-            raise RuntimeError(
-                "State dictionary passed to unpickle does not have a 'vtk_serialized' key."
-            )
-
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
             'PICKLE_FORMAT',
