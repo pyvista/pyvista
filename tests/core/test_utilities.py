@@ -334,6 +334,19 @@ def test_voxelize_enclosed_bounds(function, ant):
     assert vox.bounds.z_max >= ant.bounds.z_max
 
 
+@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
+def test_voxelize_fit_bounds(function, uniform):
+    vox = function(uniform, density=0.9, fit_bounds=True)
+
+    assert np.isclose(vox.bounds.x_min, uniform.bounds.x_min)
+    assert np.isclose(vox.bounds.y_min, uniform.bounds.y_min)
+    assert np.isclose(vox.bounds.z_min, uniform.bounds.z_min)
+
+    assert np.isclose(vox.bounds.x_max, uniform.bounds.x_max)
+    assert np.isclose(vox.bounds.y_max, uniform.bounds.y_max)
+    assert np.isclose(vox.bounds.z_max, uniform.bounds.z_max)
+
+
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None

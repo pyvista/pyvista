@@ -17,6 +17,7 @@ from pyvista.core import _validation
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
 
+
 from . import _vtk_core as _vtk
 from .dataset import DataSet
 from .filters import ImageDataFilters
@@ -676,7 +677,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         direction = self.direction_matrix
         if not np.array_equal(direction, np.eye(3)):
-            return pyvista.Transform().rotate(direction, point=self.origin).apply(points)
+            return (
+                pyvista.Transform().rotate(direction, point=self.origin).apply(points, copy=False)
+            )
         return points
 
     @points.setter
