@@ -238,3 +238,13 @@ def test_pickle_attributes(uniform):
 
     assert hasattr(unpickled, custom_attr_name)
     assert getattr(unpickled, custom_attr_name) == custom_attr_value
+
+
+def test_pickle_user_dict(multiblock_poly):
+    user_dict = {'custom_attribute': 42}
+    multiblock_poly.user_dict = user_dict
+
+    pickled = pickle.dumps(multiblock_poly)
+    unpickled = pickle.loads(pickled)
+
+    assert unpickled.user_dict == user_dict
