@@ -696,10 +696,7 @@ class DataObject:
         >>> target.plot(scalars='Volume', show_edges=True)
 
         """
-        if not hasattr(self, 'CopyAttributes'):
-            self.GetFieldData().PassData(dataset.GetFieldData())
-        else:
-            self.CopyAttributes(dataset)
+        self.CopyAttributes(dataset)
 
     def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
