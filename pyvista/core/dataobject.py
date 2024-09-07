@@ -747,7 +747,7 @@ class DataObject:
             reader.Update()
             vtk_mesh = reader.GetOutput()
 
-        self.deep_copy(wrap(mesh))
+        self.deep_copy(wrap(vtk_mesh))
 
 
 def _serialize_vtk_data_object_xml(data_object):
