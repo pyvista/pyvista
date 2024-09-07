@@ -29,7 +29,7 @@ def set_pickle_format(format: str):  # noqa: A002
         If the provided format is not supported.
 
     """
-    supported = {'xml', 'legacy'}
+    supported = {'vtk', 'xml', 'legacy'}
     format_ = format.lower()
     if format_ not in supported:
         raise ValueError(

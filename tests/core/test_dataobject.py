@@ -221,6 +221,7 @@ def test_pickle_dataset(sphere):
 
 
 def test_pickle_multiblock(multiblock_all_with_nested_and_none):
+    pv.PICKLE_FORMAT = 'vtk'
     multiblock = multiblock_all_with_nested_and_none
     pickled = pickle.dumps(multiblock)
     assert isinstance(pickled, bytes)

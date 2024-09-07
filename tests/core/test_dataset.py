@@ -1187,7 +1187,7 @@ def test_point_is_inside_cell():
     assert np.array_equal(in_cell, np.array([True, False]))
 
 
-@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_serialize_deserialize(datasets, pickle_format):
     pv.set_pickle_format(pickle_format)
     for dataset in datasets:
@@ -1229,7 +1229,7 @@ def n_points(dataset):
     return dataset.n_points
 
 
-@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_multiprocessing(datasets, pickle_format):
     # exercise pickling via multiprocessing
     pv.set_pickle_format(pickle_format)
