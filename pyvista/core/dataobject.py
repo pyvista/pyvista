@@ -22,6 +22,7 @@ from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import read
 from .utilities.fileio import set_vtkwriter_mode
+from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -709,87 +710,72 @@ class DataObject:
         - If `pyvista.PICKLE_FORMAT == 'xml'`, the data is serialized as an XML-formatted string.
         - If `pyvista.PICKLE_FORMAT == 'legacy'`, the data is serialized to bytes in VTK's binary format.
         """
-        return _serialize_VTK_data_object(self)
+        state = self.__dict__.copy()
+
+        if pyvista.PICKLE_FORMAT.lower() == 'xml':
+            to_serialize = _serialize_VTK_data_object(self)
+
+        elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
+            writer = _vtk.vtkDataSetWriter()
+            writer.SetInputDataObject(self)
+            writer.SetWriteToOutputString(True)
+            writer.SetFileTypeToBinary()
+            writer.Write()
+            to_serialize = writer.GetOutputStdString()
+
+        state['vtk_serialized'] = to_serialize
+
+        # this needs to be here because in multiprocessing situations, `pyvista.PICKLE_FORMAT` is not shared between
+        # processes
+        state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
+        return state
 
     def __setstate__(self, state):
         """Support unpickle."""
-        mesh = _unserialize_VTK_data_object(state)
+        #    if ("Type" not in state.keys()) or ("Serialized" not in state.keys()):
+        #        raise RuntimeError(
+        #            "State dictionary passed to unpickle does not have Type and/or\
+        # Serialized keys."
+        #        )
+
+        vtk_serialized = state.pop('vtk_serialized')
+        pickle_format = state.pop(
+            'PICKLE_FORMAT',
+            'legacy',  # backwards compatibility - assume 'legacy'
+        )
+        self.__dict__.update(state)
+
+        if pickle_format.lower() == 'xml':
+            vtk_mesh = _unserialize_VTK_data_object(vtk_serialized)
+
+        elif pickle_format.lower() == 'legacy':
+            reader = _vtk.vtkDataSetReader()
+            reader.ReadFromInputStringOn()
+            if isinstance(vtk_serialized, bytes):
+                reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
+            elif isinstance(vtk_serialized, str):
+                reader.SetInputString(vtk_serialized)
+            reader.Update()
+            vtk_mesh = reader.GetOutput()
+
+        mesh = wrap(vtk_mesh)
         self.deep_copy(mesh)
 
 
-def _unserialize_VTK_data_object(state):
-    """Transform a state dictionary with entries into a data object.
-
-    State dictionary entries expected:
-
-        - Type : a string with the class name for the data object
-        - Serialized : a numpy array with the serialized data object
-    """
-    if ("Type" not in state.keys()) or ("Serialized" not in state.keys()):
-        raise RuntimeError(
-            "State dictionary passed to unpickle does not have Type and/or\
- Serialized keys."
-        )
-
-    type_string = state["Type"]
-    from vtkmodules import vtkCommonDataModel
-
-    try:
-        DataSetClass = getattr(vtkCommonDataModel, type_string)
-    except:
-        raise TypeError(
-            f"Could not find type '{type_string.__class__}' in vtkCommonDataModel module"
-        )
-    new_data_object = pyvista.wrap(DataSetClass())
-    char_array = _vtk.numpy_to_vtk(
-        state["Serialized"], array_type=_vtk.vtkCharArray().GetDataType()
-    )
-    if _vtk.vtkCommunicator.UnMarshalDataObject(char_array, new_data_object) == 0:
-        raise RuntimeError("Marshaling data object failed")
-    return new_data_object
-
-
 def _serialize_VTK_data_object(data_object):
-    """Serialize a data object and return a state dictionary.
-
-    State dictionary entries generated:
-
-        - Type : a string with the class name for the data object
-        - Serialized : a numpy array with the serialized data object
-
-    This is exactly the state dictionary that unserialize_VTK_data_object expects.
-    """
+    """Transform a data object instance into a serialized string."""
     if not data_object.IsA("vtkDataObject"):
         raise TypeError("Object passed to pickling should be a vtkDataObject")
-    data_object_type = data_object.GetClassName()
     char_array = _vtk.vtkCharArray()
     if _vtk.vtkCommunicator.MarshalDataObject(data_object, char_array) == 0:
-        raise RuntimeError("UnMarshaling data object failed")
-    return {"Type": data_object_type, "Serialized": _vtk.vtk_to_numpy(char_array)}
+        raise RuntimeError("Serializing data object failed")
+    return _vtk.vtk_to_numpy(char_array)
 
 
-# SUPPORTED_PICKLE_DATAOBJECTS = [
-#     _vtk.vtkDataSet,
-#     _vtk.vtkPolyData,
-#     _vtk.vtkUnstructuredGrid,
-#     _vtk.vtkImageData,
-#     _vtk.vtkRectilinearGrid,
-#     _vtk.vtkStructuredGrid,
-#     _vtk.vtkExplicitStructuredGrid,
-#     # _vtk.vtkStructuredPoints,
-#     # _vtk.vtkUniformGridAMR,
-#     # _vtk.vtkOverlappingAMR,
-#     # _vtk.vtkHierarchicalBoxDataSet,
-#     # _vtk.vtkNonOverlappingAMR,
-#     _vtk.vtkTable,
-#     # _vtk.vtkTree,
-#     _vtk.vtkCompositeDataSet,
-#     # _vtk.vtkDataObjectTree,
-#     _vtk.vtkMultiBlockDataSet,
-#     _vtk.vtkPartitionedDataSet,
-#     # _vtk.vtkPartitionedDataSetCollection,
-#     # _vtk.vtkMultiPieceDataSet,
-#     # _vtk.vtkDirectedGraph,
-#     # _vtk.vtkUndirectedGraph,
-#     # _vtk.vtkMolecule,
-# ]
+def _unserialize_VTK_data_object(serial_string: str):
+    """Transform a serialized data object string into a data object instance."""
+    char_array = _vtk.numpy_to_vtk(serial_string, array_type=_vtk.vtkCharArray().GetDataType())
+    new_data_object = _vtk.vtkCommunicator.UnMarshalDataObject(char_array)
+    if new_data_object is None:
+        raise RuntimeError("Un-serializing data object failed")
+    return new_data_object
