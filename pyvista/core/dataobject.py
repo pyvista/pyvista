@@ -678,7 +678,7 @@ class DataObject:
         """
         self.CopyStructure(dataset) if dataset is not self else None
 
-    def copy_attributes(self, dataset: _vtk.vtkDataObject) -> None:
+    def copy_attributes(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the data attributes of the input dataset object.
 
         Parameters
@@ -747,8 +747,7 @@ class DataObject:
             reader.Update()
             vtk_mesh = reader.GetOutput()
 
-        mesh = wrap(vtk_mesh)
-        self.deep_copy(mesh)
+        self.deep_copy(wrap(mesh))
 
 
 def _serialize_vtk_data_object_xml(data_object):

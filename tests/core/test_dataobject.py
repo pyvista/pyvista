@@ -213,7 +213,7 @@ def test_user_dict_persists_with_cells_to_points(uniform):
     assert uniform.user_dict['name'] == 'image'
 
 
-def test_pickle_polydata(sphere):
+def test_pickle_dataset(sphere):
     pickled = pickle.dumps(sphere)
     assert isinstance(pickled, bytes)
     unpickled = pickle.loads(pickled)
