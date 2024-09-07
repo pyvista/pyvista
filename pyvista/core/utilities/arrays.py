@@ -862,7 +862,6 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         Classes that store an instance of this class must pickle this array directly.
         E.g. DataObjects can support this by storing this array as field data
         """
-        return
 
     def __setstate__(self, state):
         """Support pickling.
@@ -871,7 +870,6 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         Classes that store an instance of this class must pickle this array directly.
         E.g. DataObjects can support this by storing this array as field data
         """
-        return
 
     # Override any/all `UserDict` or `MutableMapping` methods which mutate
     # the dictionary. This ensures the serialized string is also updated

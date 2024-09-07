@@ -228,7 +228,7 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none):
     assert unpickled == multiblock
 
 
-def test_pickle_attributes(uniform):
+def test_pickle_attribute(uniform):
     custom_attr_name = 'custom_attribute'
     custom_attr_value = 42
     setattr(uniform, custom_attr_name, custom_attr_value)
