@@ -367,6 +367,7 @@ from vtkmodules.vtkFiltersVerdict import vtkCellSizeFilter
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkFiltersVerdict import vtkBoundaryMeshQuality
+
 from vtkmodules.vtkImagingCore import vtkExtractVOI
 from vtkmodules.vtkImagingCore import vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageDifference

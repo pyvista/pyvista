@@ -31,8 +31,6 @@ if TYPE_CHECKING:  # pragma: no cover
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 
-VAR = None
-
 
 @abstract_class
 class DataObject:
@@ -713,7 +711,7 @@ class DataObject:
         state = self.__dict__.copy()
 
         if pyvista.PICKLE_FORMAT.lower() == 'xml':
-            to_serialize = _serialize_VTK_data_object(self)
+            to_serialize = _serialize_vtk_data_object_xml(self)
 
         elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
             writer = _vtk.vtkDataSetWriter()
@@ -732,11 +730,10 @@ class DataObject:
 
     def __setstate__(self, state):
         """Support unpickle."""
-        #    if ("Type" not in state.keys()) or ("Serialized" not in state.keys()):
-        #        raise RuntimeError(
-        #            "State dictionary passed to unpickle does not have Type and/or\
-        # Serialized keys."
-        #        )
+        if "vtk_serialized" not in state.keys():
+            raise RuntimeError(
+                "State dictionary passed to unpickle does not have a 'vtk_serialized' key."
+            )
 
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
@@ -746,7 +743,7 @@ class DataObject:
         self.__dict__.update(state)
 
         if pickle_format.lower() == 'xml':
-            vtk_mesh = _unserialize_VTK_data_object(vtk_serialized)
+            vtk_mesh = _unserialize_vtk_data_object_xml(vtk_serialized)
 
         elif pickle_format.lower() == 'legacy':
             reader = _vtk.vtkDataSetReader()
@@ -762,7 +759,7 @@ class DataObject:
         self.deep_copy(mesh)
 
 
-def _serialize_VTK_data_object(data_object):
+def _serialize_vtk_data_object_xml(data_object):
     """Transform a data object instance into a serialized string."""
     if not data_object.IsA("vtkDataObject"):
         raise TypeError("Object passed to pickling should be a vtkDataObject")
@@ -772,7 +769,7 @@ def _serialize_VTK_data_object(data_object):
     return _vtk.vtk_to_numpy(char_array)
 
 
-def _unserialize_VTK_data_object(serial_string: str):
+def _unserialize_vtk_data_object_xml(serial_string: str):
     """Transform a serialized data object string into a data object instance."""
     char_array = _vtk.numpy_to_vtk(serial_string, array_type=_vtk.vtkCharArray().GetDataType())
     new_data_object = _vtk.vtkCommunicator.UnMarshalDataObject(char_array)
