@@ -708,7 +708,34 @@ class DataObject:
         state = self.__dict__.copy()
 
         if pyvista.PICKLE_FORMAT.lower() == 'xml':
-            to_serialize = _serialize_vtk_data_object_xml(self)
+            if pyvista.vtk_version_info >= (9, 2):
+                to_serialize = _serialize_vtk_data_object_xml(self)
+            else:
+                # the generic VTK XML writer `vtkXMLDataSetWriter` currently has a bug where it does not pass all
+                # settings down to the sub-writers. Until this is fixed, use the dataset-specific writers
+                # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+                writers = {
+                    _vtk.vtkImageData: _vtk.vtkXMLImageDataWriter,
+                    _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridWriter,
+                    _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridWriter,
+                    _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridWriter,
+                    _vtk.vtkPolyData: _vtk.vtkXMLPolyDataWriter,
+                    _vtk.vtkTable: _vtk.vtkXMLTableWriter,
+                }
+
+                for parent_type, writer_type in writers.items():
+                    if isinstance(self, parent_type):
+                        writer = writer_type()
+                        break
+                else:
+                    raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
+
+                writer.SetInputDataObject(self)
+                writer.SetWriteToOutputString(True)
+                writer.SetDataModeToBinary()
+                writer.SetCompressorTypeToNone()
+                writer.Write()
+                to_serialize = writer.GetOutputString()
 
         elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
             writer = _vtk.vtkDataSetWriter()
@@ -717,6 +744,8 @@ class DataObject:
             writer.SetFileTypeToBinary()
             writer.Write()
             to_serialize = writer.GetOutputStdString()
+        else:
+            raise ValueError(f"Invalid pickle format '{pyvista.PICKLE_FORMAT}'")
 
         state['vtk_serialized'] = to_serialize
 
@@ -735,7 +764,32 @@ class DataObject:
         self.__dict__.update(state)
 
         if pickle_format.lower() == 'xml':
-            vtk_mesh = _unserialize_vtk_data_object_xml(vtk_serialized)
+            if pyvista.vtk_version_info >= (9, 2):
+                vtk_mesh = _unserialize_vtk_data_object_xml(vtk_serialized)
+            else:
+                # the generic VTK XML reader `vtkXMLGenericDataObjectReader` currently has a bug where it does not pass all
+                # settings down to the sub-readers. Until this is fixed, use the dataset-specific readers
+                # https://gitlab.kitware.com/vtk/vtk/-/issues/18661
+                readers = {
+                    _vtk.vtkImageData: _vtk.vtkXMLImageDataReader,
+                    _vtk.vtkStructuredGrid: _vtk.vtkXMLStructuredGridReader,
+                    _vtk.vtkRectilinearGrid: _vtk.vtkXMLRectilinearGridReader,
+                    _vtk.vtkUnstructuredGrid: _vtk.vtkXMLUnstructuredGridReader,
+                    _vtk.vtkPolyData: _vtk.vtkXMLPolyDataReader,
+                    _vtk.vtkTable: _vtk.vtkXMLTableReader,
+                }
+
+                for parent_type, reader_type in readers.items():
+                    if isinstance(self, parent_type):
+                        reader = reader_type()
+                        break
+                else:
+                    raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}.')
+
+                reader.ReadFromInputStringOn()
+                reader.SetInputString(vtk_serialized)
+                reader.Update()
+                vtk_mesh = reader.GetOutput()()
 
         elif pickle_format.lower() == 'legacy':
             reader = _vtk.vtkDataSetReader()
@@ -746,6 +800,8 @@ class DataObject:
                 reader.SetInputString(vtk_serialized)
             reader.Update()
             vtk_mesh = reader.GetOutput()
+        else:
+            raise ValueError(f"Invalid pickle format {pyvista.PICKLE_FORMAT}.")
 
         self.deep_copy(wrap(vtk_mesh))
 
