@@ -676,7 +676,7 @@ class DataObject:
         >>> target.plot(show_edges=True)
 
         """
-        self.CopyStructure(dataset)
+        self.CopyStructure(dataset) if dataset is not self else None
 
     def copy_attributes(self, dataset: _vtk.vtkDataObject) -> None:
         """Copy the data attributes of the input dataset object.
