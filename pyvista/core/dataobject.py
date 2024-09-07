@@ -753,8 +753,6 @@ class DataObject:
 
 def _serialize_vtk_data_object_xml(data_object):
     """Transform a data object instance into a serialized string."""
-    if not data_object.IsA("vtkDataObject"):
-        raise TypeError("Object passed to pickling should be a vtkDataObject")
     char_array = _vtk.vtkCharArray()
     if _vtk.vtkCommunicator.MarshalDataObject(data_object, char_array) == 0:
         raise RuntimeError("Serializing data object failed")
@@ -766,5 +764,5 @@ def _unserialize_vtk_data_object_xml(serial_string: str):
     char_array = _vtk.numpy_to_vtk(serial_string, array_type=_vtk.vtkCharArray().GetDataType())
     new_data_object = _vtk.vtkCommunicator.UnMarshalDataObject(char_array)
     if new_data_object is None:
-        raise RuntimeError("Un-serializing data object failed")
+        raise RuntimeError("Un-serializing data object failed.")
     return new_data_object
