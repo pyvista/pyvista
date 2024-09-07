@@ -213,8 +213,16 @@ def test_user_dict_persists_with_cells_to_points(uniform):
     assert uniform.user_dict['name'] == 'image'
 
 
-def test_pickle(sphere):
+def test_pickle_polydata(sphere):
     pickled = pickle.dumps(sphere)
     assert isinstance(pickled, bytes)
     unpickled = pickle.loads(pickled)
     assert unpickled.n_points == sphere.n_points
+
+
+def test_pickle_multiblock(multiblock_all_with_nested_and_none):
+    multiblock = multiblock_all_with_nested_and_none
+    pickled = pickle.dumps(multiblock)
+    assert isinstance(pickled, bytes)
+    unpickled = pickle.loads(pickled)
+    assert unpickled == multiblock

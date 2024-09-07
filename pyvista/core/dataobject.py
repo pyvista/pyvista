@@ -679,7 +679,7 @@ class DataObject:
         """
         self.CopyStructure(dataset)
 
-    def copy_attributes(self, dataset: _vtk.vtkDataSet) -> None:
+    def copy_attributes(self, dataset: _vtk.vtkDataObject) -> None:
         """Copy the data attributes of the input dataset object.
 
         Parameters
@@ -697,7 +697,10 @@ class DataObject:
         >>> target.plot(scalars='Volume', show_edges=True)
 
         """
-        self.CopyAttributes(dataset)
+        if not hasattr(self, 'CopyAttributes'):
+            self.GetFieldData().PassData(dataset.GetFieldData())
+        else:
+            self.CopyAttributes(dataset)
 
     def __getstate__(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
@@ -706,21 +709,22 @@ class DataObject:
         - If `pyvista.PICKLE_FORMAT == 'xml'`, the data is serialized as an XML-formatted string.
         - If `pyvista.PICKLE_FORMAT == 'legacy'`, the data is serialized to bytes in VTK's binary format.
         """
-        return serialize_VTK_data_object(self)
+        return _serialize_VTK_data_object(self)
 
     def __setstate__(self, state):
         """Support unpickle."""
-        return unserialize_VTK_data_object(state)
+        mesh = _unserialize_VTK_data_object(state)
+        self.deep_copy(mesh)
 
 
-def unserialize_VTK_data_object(state):
-    """Takes a state dictionary with entries:
-    - Type : a string with the class name for the data object
-    - Serialized : a numpy array with the serialized data object
+def _unserialize_VTK_data_object(state):
+    """Transform a state dictionary with entries into a data object.
 
-    and transforms it into a data object.
+    State dictionary entries expected:
+
+        - Type : a string with the class name for the data object
+        - Serialized : a numpy array with the serialized data object
     """
-
     if ("Type" not in state.keys()) or ("Serialized" not in state.keys()):
         raise RuntimeError(
             "State dictionary passed to unpickle does not have Type and/or\
@@ -745,15 +749,16 @@ def unserialize_VTK_data_object(state):
     return new_data_object
 
 
-def serialize_VTK_data_object(data_object):
-    """Returns a tuple with a reference to the unpickling function and a state dictionary
-    with entries:
-      - Type : a string with the class name for the data object
-      - Serialized : a numpy array with the serialized data object
+def _serialize_VTK_data_object(data_object):
+    """Serialize a data object and return a state dictionary.
 
-      This is exactly the state dictionary that unserialize_VTK_data_object expects.
+    State dictionary entries generated:
+
+        - Type : a string with the class name for the data object
+        - Serialized : a numpy array with the serialized data object
+
+    This is exactly the state dictionary that unserialize_VTK_data_object expects.
     """
-
     if not data_object.IsA("vtkDataObject"):
         raise TypeError("Object passed to pickling should be a vtkDataObject")
     data_object_type = data_object.GetClassName()
