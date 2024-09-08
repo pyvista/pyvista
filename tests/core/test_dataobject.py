@@ -215,7 +215,7 @@ def test_user_dict_persists_with_cells_to_points(uniform):
 
 
 def test_default_pickle_format():
-    assert pv.PICKLE_FORMAT == 'vtk'
+    assert pv.PICKLE_FORMAT == 'vtk' if pv.vtk_version_info >= (9, 3) else 'xml'
 
 
 @pytest.fixture
