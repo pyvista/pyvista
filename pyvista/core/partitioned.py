@@ -66,12 +66,10 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
                 self.SetPartition(i, wrap(partition))
 
     @overload
-    def __getitem__(self, index: int) -> DataSet | None:  # noqa: D105
-        ...  # pragma: no cover
+    def __getitem__(self, index: int) -> DataSet | None: ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> PartitionedDataSet:  # noqa: D105
-        ...  # pragma: no cover
+    def __getitem__(self, index: slice) -> PartitionedDataSet: ...  # pragma: no cover
 
     def __getitem__(self, index):
         """Get a partition by its index."""
@@ -85,12 +83,10 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
             return wrap(self.GetPartition(index))
 
     @overload
-    def __setitem__(self, index: int, data: DataSet | None):  # noqa: D105
-        ...  # pragma: no cover
+    def __setitem__(self, index: int, data: DataSet | None): ...  # pragma: no cover
 
     @overload
-    def __setitem__(self, index: slice, data: Iterable[DataSet | None]):  # noqa: D105
-        ...  # pragma: no cover
+    def __setitem__(self, index: slice, data: Iterable[DataSet | None]): ...  # pragma: no cover
 
     def __setitem__(
         self,

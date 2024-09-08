@@ -30,11 +30,11 @@ class MyCustomRoutine:  # noqa: D101
             'phi_resolution': 30,
         }
 
-    def __call__(self, param, value):  # noqa: D102
+    def __call__(self, param, value):
         self.kwargs[param] = value
         self.update()
 
-    def update(self):  # noqa: D102
+    def update(self):
         # This is where you call your simulation
         result = pv.Sphere(**self.kwargs)
         self.output.copy_from(result)
