@@ -427,7 +427,6 @@ from vtkmodules.vtkIOXML import vtkXMLTableWriter
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
 from vtkmodules.vtkIOXML import vtkXMLWriter
-from vtkmodules.vtkParallelCore import vtkCommunicator
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
