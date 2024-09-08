@@ -699,7 +699,7 @@ class DataObject:
         self.CopyAttributes(dataset)
 
     def __getstate__(self):
-        """Support pickling."""
+        """Support pickle."""
         pickle_format = pyvista.PICKLE_FORMAT
         if pickle_format in ['xml', 'legacy']:
             return self._serialize_pyvista_pickle_format()
@@ -712,7 +712,7 @@ class DataObject:
     def _serialize_vtk_pickle_format(self):
         if 'Serialized' in self.__dict__ or 'Type' in self.__dict__:
             raise ValueError(
-                "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for only."
+                "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for pickling."
             )
         serialized = _serialize_VTK_data_object(self)
 
@@ -787,7 +787,7 @@ class DataObject:
         return state
 
     def __setstate__(self, state):
-        """Support unpickling."""
+        """Support unpickle."""
 
         def _is_pyvista_format(state_):
             return isinstance(state_, dict) and 'vtk_serialized' in state_
@@ -908,7 +908,7 @@ def _unserialize_VTK_data_object(state):
 
 
 def _serialize_VTK_data_object(data_object):
-    """Transform a data object into a serialized string representation..
+    """Transform a data object into a serialized string representation.
 
     This function is copied directly from `vtkmodules.util.pickle_support` which
     is new to VTK 9.3. It is copied here to support older vtk versions. It should not

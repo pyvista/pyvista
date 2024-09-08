@@ -292,3 +292,35 @@ def test_pickle_user_dict(sphere, pickle_format):
     unpickled = pickle.loads(pickled)
 
     assert unpickled.user_dict == user_dict
+
+
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
+def test_set_pickle_format(pickle_format):
+    pv.set_pickle_format(pickle_format)
+    assert pickle_format == pv.PICKLE_FORMAT
+
+
+def test_default_pickle_format():
+    assert pv.PICKLE_FORMAT == 'vtk'
+
+
+def test_pickle_invalid_format(sphere):
+    match = 'Unsupported pickle format `invalid_format`.'
+    with pytest.raises(ValueError, match=match):
+        pv.set_pickle_format('invalid_format')
+
+    pv.PICKLE_FORMAT = 'invalid_format'
+    with pytest.raises(ValueError, match=match):
+        pickle.dumps(sphere)
+
+
+def test_pickle_invalid_attributes(ant, airplane):
+    ant.Type = 'type'
+    match = "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for pickling."
+    with pytest.raises(ValueError, match=match):
+        pickle.dumps(ant)
+
+    airplane.Serialized = 'serialized'
+    match = "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for pickling."
+    with pytest.raises(ValueError, match=match):
+        pickle.dumps(airplane)
