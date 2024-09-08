@@ -21,7 +21,6 @@ repos:
         exclude: CODE_OF_CONDUCT.md
         additional_dependencies: ["tomli"]
 
-
   - repo: https://github.com/DanielNoord/pydocstringformatter
     rev: v0.7.3
     hooks:
