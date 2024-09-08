@@ -826,9 +826,6 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
     _vtk_class_name = "vtkXMLMultiBlockDataReader"
 
 
-# skip pydocstyle D102 check since docstring is taken from TimeReader
-
-
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.
 
@@ -918,7 +915,6 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
             raise IndexError(f"Time set index {time_set} not in {range(number_time_sets)}")
 
 
-# skip pydocstyle D102 check since docstring is taken from TimeReader
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     """OpenFOAM Reader for .foam files.
 
@@ -1998,7 +1994,6 @@ class _PVDReader(BaseVTKReader):
         ]
 
 
-# skip pydocstyle D102 check since docstring is taken from TimeReader
 class PVDReader(BaseReader, TimeReader):
     """PVD Reader for .pvd files.
 
