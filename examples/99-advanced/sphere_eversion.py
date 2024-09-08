@@ -44,8 +44,7 @@ kappa = (n - 1) / (2 * n)
 
 
 def sphere_to_cylinder(theta, phi):
-    """
-    Map from spherical polar coordinates to cylindrical ones.
+    """Map from spherical polar coordinates to cylindrical ones.
 
     Input theta goes from -pi/2 to pi/2, phi goes from -pi to pi.
     Output h goes from -infinity to infinity, phi goes from -phi to phi.

@@ -70,9 +70,9 @@ rng = np.random.default_rng(seed=0)
 
 
 def make_point_set():
-    """
-    Ignore the contents of this function. Just know that it returns an
-    n by 3 numpy array of structured coordinates.
+    """Return an n by 3 numpy array of structured coordinates.
+
+    The contents of this function can be ignored.
     """
     n, m = 29, 32
     x = np.linspace(-200, 200, num=n) + rng.uniform(-5, 5, size=n)
