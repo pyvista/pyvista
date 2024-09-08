@@ -873,35 +873,3 @@ class DataObject:
         # copy data
         self.copy_structure(mesh)
         self.copy_attributes(mesh)
-
-
-def _unserialize_VTK_data_object(state):  # pragma: no cover
-    """Transform a data object string into a data object instance.
-
-    This function is copied directly from `vtkmodules.util.pickle_support` which
-    is new to VTK 9.3. It is copied here to support older vtk versions. It should not
-    be modified.
-
-    Takes a state dictionary with entries:
-    - Type : a string with the class name for the data object
-    - Serialized : a numpy array with the serialized data object
-
-    and transforms it into a data object.
-    """
-    if ("Type" not in state.keys()) or ("Serialized" not in state.keys()):
-        raise RuntimeError(
-            "State dictionary passed to unpickle does not have Type and/or\
- Serialized keys."
-        )
-
-    try:
-        DataSetClass = getattr(_vtk.vtkCommonDataModel, state["Type"])
-    except:
-        raise TypeError("Could not find type " + state["Type"] + " in vtkCommonDataModel module")
-    serialized_data = state["Serialized"]
-    new_data_object = DataSetClass()
-    char_array = _vtk.vtkCharArray()
-    char_array.SetVoidArray(serialized_data, memoryview(serialized_data).nbytes, 1)
-    if _vtk.vtkCommunicator.UnMarshalDataObject(char_array, new_data_object) == 0:
-        raise RuntimeError("Marshaling data object failed")
-    return new_data_object
