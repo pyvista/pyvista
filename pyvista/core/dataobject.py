@@ -717,8 +717,8 @@ class DataObject:
         serialized = _vtk.serialize_VTK_data_object(self)
 
         # Add this object's data to the state dictionary
-        sate_dict = serialized[1][0]
-        sate_dict.update(self.__dict__)
+        state_dict = serialized[1][0]
+        state_dict.update(self.__dict__)
 
         # Unlike the PyVista formats, we do not return a dict. Instead, return
         # the same format returned by the vtk serializer.
