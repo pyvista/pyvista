@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import UserDict
 import json
+import multiprocessing
 import pickle
 
 import numpy as np
@@ -213,15 +214,61 @@ def test_user_dict_persists_with_cells_to_points(uniform):
     assert uniform.user_dict['name'] == 'image'
 
 
-def test_pickle_dataset(sphere):
-    pickled = pickle.dumps(sphere)
-    assert isinstance(pickled, bytes)
-    unpickled = pickle.loads(pickled)
-    assert unpickled.n_points == sphere.n_points
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
+def test_pickle_serialize_deserialize(datasets, pickle_format):
+    pv.set_pickle_format(pickle_format)
+    for dataset in datasets:
+        dataset_2 = pickle.loads(pickle.dumps(dataset))
+
+        # check python attributes are the same
+        for attr in dataset.__dict__:
+            assert getattr(dataset_2, attr) == getattr(dataset, attr)
+
+        # check data is the same
+        for attr in ('n_cells', 'n_points', 'n_arrays'):
+            if hasattr(dataset, attr):
+                assert getattr(dataset_2, attr) == getattr(dataset, attr)
+
+        for attr in ('cells', 'points'):
+            if hasattr(dataset, attr):
+                arr_have = getattr(dataset_2, attr)
+                arr_expected = getattr(dataset, attr)
+                assert arr_have == pytest.approx(arr_expected)
+
+        for name in dataset.point_data:
+            arr_have = dataset_2.point_data[name]
+            arr_expected = dataset.point_data[name]
+            assert arr_have == pytest.approx(arr_expected)
+
+        for name in dataset.cell_data:
+            arr_have = dataset_2.cell_data[name]
+            arr_expected = dataset.cell_data[name]
+            assert arr_have == pytest.approx(arr_expected)
+
+        for name in dataset.field_data:
+            arr_have = dataset_2.field_data[name]
+            arr_expected = dataset.field_data[name]
+            assert arr_have == pytest.approx(arr_expected)
 
 
-def test_pickle_multiblock(multiblock_all_with_nested_and_none):
-    pv.PICKLE_FORMAT = 'vtk'
+def n_points(dataset):
+    # used in multiprocessing test
+    return dataset.n_points
+
+
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
+def test_pickle_multiprocessing(datasets, pickle_format):
+    # exercise pickling via multiprocessing
+    pv.set_pickle_format(pickle_format)
+    with multiprocessing.Pool(2) as p:
+        res = p.map(n_points, datasets)
+    for r, dataset in zip(res, datasets):
+        assert r == dataset.n_points
+
+
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
+def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
+    pv.set_pickle_format(pickle_format)
     multiblock = multiblock_all_with_nested_and_none
     pickled = pickle.dumps(multiblock)
     assert isinstance(pickled, bytes)
@@ -229,23 +276,13 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none):
     assert unpickled == multiblock
 
 
-def test_pickle_attribute(uniform):
-    custom_attr_name = 'custom_attribute'
-    custom_attr_value = 42
-    setattr(uniform, custom_attr_name, custom_attr_value)
-
-    pickled = pickle.dumps(uniform)
-    unpickled = pickle.loads(pickled)
-
-    assert hasattr(unpickled, custom_attr_name)
-    assert getattr(unpickled, custom_attr_name) == custom_attr_value
-
-
-def test_pickle_user_dict(multiblock_poly):
+@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
+def test_pickle_user_dict(sphere, pickle_format):
+    pv.set_pickle_format(pickle_format)
     user_dict = {'custom_attribute': 42}
-    multiblock_poly.user_dict = user_dict
+    sphere.user_dict = user_dict
 
-    pickled = pickle.dumps(multiblock_poly)
+    pickled = pickle.dumps(sphere)
     unpickled = pickle.loads(pickled)
 
     assert unpickled.user_dict == user_dict

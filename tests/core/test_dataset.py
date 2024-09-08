@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import multiprocessing
-import pickle
 import re
 from typing import TYPE_CHECKING
 
@@ -1185,58 +1183,6 @@ def test_point_is_inside_cell():
     # multi-dimensional
     in_cell = grid.point_is_inside_cell(0, [[0.5, 0.5, 0.5], [-0.5, -0.5, -0.5]])
     assert np.array_equal(in_cell, np.array([True, False]))
-
-
-@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_serialize_deserialize(datasets, pickle_format):
-    pv.set_pickle_format(pickle_format)
-    for dataset in datasets:
-        dataset_2 = pickle.loads(pickle.dumps(dataset))
-
-        # check python attributes are the same
-        for attr in dataset.__dict__:
-            assert getattr(dataset_2, attr) == getattr(dataset, attr)
-
-        # check data is the same
-        for attr in ('n_cells', 'n_points', 'n_arrays'):
-            if hasattr(dataset, attr):
-                assert getattr(dataset_2, attr) == getattr(dataset, attr)
-
-        for attr in ('cells', 'points'):
-            if hasattr(dataset, attr):
-                arr_have = getattr(dataset_2, attr)
-                arr_expected = getattr(dataset, attr)
-                assert arr_have == pytest.approx(arr_expected)
-
-        for name in dataset.point_data:
-            arr_have = dataset_2.point_data[name]
-            arr_expected = dataset.point_data[name]
-            assert arr_have == pytest.approx(arr_expected)
-
-        for name in dataset.cell_data:
-            arr_have = dataset_2.cell_data[name]
-            arr_expected = dataset.cell_data[name]
-            assert arr_have == pytest.approx(arr_expected)
-
-        for name in dataset.field_data:
-            arr_have = dataset_2.field_data[name]
-            arr_expected = dataset.field_data[name]
-            assert arr_have == pytest.approx(arr_expected)
-
-
-def n_points(dataset):
-    # used in multiprocessing test
-    return dataset.n_points
-
-
-@pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_multiprocessing(datasets, pickle_format):
-    # exercise pickling via multiprocessing
-    pv.set_pickle_format(pickle_format)
-    with multiprocessing.Pool(2) as p:
-        res = p.map(n_points, datasets)
-    for r, dataset in zip(res, datasets):
-        assert r == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():

@@ -2247,11 +2247,11 @@ class DataSetFilters:
 
         """
         if use_bounds:
-            if isinstance(use_bounds, (int, bool)):
-                b = self.GetBounds()
-            origin = [b[0], b[2], b[4]]  # BOTTOM LEFT CORNER
-            point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
-            point_v = [b[0], b[3], b[4]]  # TOP LEFT CORNER
+            _validation.check_type(use_bounds, (int, bool))
+            bounds = self.bounds
+            origin = [bounds.x_min, bounds.y_min, bounds.z_min]  # BOTTOM LEFT CORNER
+            point_u = [bounds.x_max, bounds.y_min, bounds.z_min]  # BOTTOM RIGHT CORNER
+            point_v = [bounds.x_min, bounds.y_max, bounds.z_min]  # TOP LEFT CORNER
         alg = _vtk.vtkTextureMapToPlane()
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
