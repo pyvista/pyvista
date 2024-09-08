@@ -290,7 +290,7 @@ docstring-code-format = false
 quote-style = "preserve"
 
 [tool.ruff.lint]
-external = ["E131", "D102", "D105"]
+external = ["E131"]
 ignore = [
     # https://github.com/pyvista/pyvista/pull/6030
     "B028",
