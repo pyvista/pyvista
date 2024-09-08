@@ -229,7 +229,7 @@ def _modifies_pickle_format():
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_serialize_deserialize(datasets, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.mark.xfail('VTK version not supported.')
+        pytest.xfail('VTK version not supported.')
 
     pv.set_pickle_format(pickle_format)
     for dataset in datasets:
@@ -275,7 +275,7 @@ def n_points(dataset):
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiprocessing(datasets, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.mark.xfail('VTK version not supported.')
+        pytest.xfail('VTK version not supported.')
 
     # exercise pickling via multiprocessing
     pv.set_pickle_format(pickle_format)
@@ -289,7 +289,7 @@ def test_pickle_multiprocessing(datasets, pickle_format):
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.mark.xfail('VTK version not supported.')
+        pytest.xfail('VTK version not supported.')
 
     pv.set_pickle_format(pickle_format)
     multiblock = multiblock_all_with_nested_and_none
@@ -309,7 +309,7 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
 def test_pickle_user_dict(sphere, pickle_format):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
-        pytest.mark.xfail('VTK version not supported.')
+        pytest.xfail('VTK version not supported.')
 
     pv.set_pickle_format(pickle_format)
     user_dict = {'custom_attribute': 42}
@@ -328,9 +328,9 @@ def test_set_pickle_format(pickle_format):
         match = 'requires VTK >= 9.3'
         with pytest.raises(ValueError, match=match):
             pv.set_pickle_format(pickle_format)
-
-    pv.set_pickle_format(pickle_format)
-    assert pickle_format == pv.PICKLE_FORMAT
+    else:
+        pv.set_pickle_format(pickle_format)
+        assert pickle_format == pv.PICKLE_FORMAT
 
 
 @pytest.mark.usefixtures('_modifies_pickle_format')
@@ -344,6 +344,7 @@ def test_pickle_invalid_format(sphere):
         pickle.dumps(sphere)
 
 
+@pytest.mark.needs_vtk_version(9, 3)
 def test_pickle_invalid_attributes(ant, airplane):
     ant.Type = 'type'
     match = "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for pickling."
