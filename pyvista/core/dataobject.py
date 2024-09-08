@@ -783,15 +783,23 @@ class DataObject:
 
     def __setstate__(self, state):
         """Support unpickling."""
-        if 'vtk_serialized' in state:
+
+        def _is_pyvista_format(state_):
+            return isinstance(state_, dict) and 'vtk_serialized' in state_
+
+        def _is_vtk_format(state_):
+            # Note: The vtk state has format ( function, (dict,) )
+            return (
+                isinstance(state_, tuple)
+                and len(state_) == 2
+                and isinstance(state_[1], tuple)
+                and len(state_[1]) == 1
+                and isinstance(state_[1][0], dict)
+            )
+
+        if _is_pyvista_format(state):
             self._unserialize_pyvista_pickle_format(state)
-        elif (
-            isinstance(state, tuple)
-            and len(state) == 2
-            and isinstance(state[1], tuple)
-            and len(state[1]) == 1
-            and isinstance(state[1][0], dict)
-        ):
+        elif _is_vtk_format(state):
             self._unserialize_vtk_pickle_format(state)
         else:
             raise RuntimeError(
@@ -800,6 +808,7 @@ class DataObject:
 
     def _unserialize_vtk_pickle_format(self, state):
         """Support unpickle of VTK's format."""
+        # The vtk state has format: ( function, (dict,) )
         state_dict = state[1][0]
         self.__dict__.update(state_dict)
         obj = _unserialize_VTK_data_object(state_dict)
@@ -861,73 +870,73 @@ class DataObject:
         self.copy_attributes(mesh)
 
 
-def _unserialize_VTK_data_object(state):
-    """Transform a data object string into a data object instance.
-
-    This function is copied directly from `vtkmodules.util.pickle_support` which
-    is new to VTK 9.3. It is copied here to support older vtk versions. It should not
-    be modified.
-
-    Takes a state dictionary with entries:
-    - Type : a string with the class name for the data object
-    - Serialized : a numpy array with the serialized data object
-
-    and transforms it into a data object.
-    """
-    if ("Type" not in state.keys()) or ("Serialized" not in state.keys()):
-        raise RuntimeError(
-            "State dictionary passed to unpickle does not have Type and/or\
- Serialized keys."
-        )
-
-    try:
-        DataSetClass = getattr(_vtk.vtkCommonDataModel, state["Type"])
-    except:
-        raise TypeError("Could not find type " + state["Type"] + " in vtkCommonDataModel module")
-    serialized_data = state["Serialized"]
-    new_data_object = DataSetClass()
-    char_array = _vtk.vtkCharArray()
-    char_array.SetVoidArray(serialized_data, memoryview(serialized_data).nbytes, 1)
-    if _vtk.vtkCommunicator.UnMarshalDataObject(char_array, new_data_object) == 0:
-        raise RuntimeError("Marshaling data object failed")
-    return new_data_object
-
-
-def _serialize_VTK_data_object(data_object):
-    """Transform a data object into a serialized string representation..
-
-    This function is copied directly from `vtkmodules.util.pickle_support` which
-    is new to VTK 9.3. It is copied here to support older vtk versions. It should not
-    be modified.
-
-    Returns a tuple with a reference to the unpickling function and a state dictionary
-    with entries:
-      - Type : a string with the class name for the data object
-      - Serialized : a numpy array with the serialized data object
-
-      This is exactly the state dictionary that unserialize_VTK_data_object expects.
-    """
-    if not data_object.IsA("vtkDataObject"):
-        raise TypeError("Object passed to pickling should be a vtkDataObject")
-    data_object_type = data_object.GetClassName()
-    char_array = _vtk.vtkCharArray()
-    if _vtk.vtkCommunicator.MarshalDataObject(data_object, char_array) == 0:
-        raise RuntimeError("UnMarshaling data object failed")
-    return _unserialize_VTK_data_object, (
-        {
-            "Type": data_object_type,
-            "Serialized": np.frombuffer(char_array, np.int8, char_array.GetNumberOfValues()),
-        },
-    )
+# def _unserialize_VTK_data_object(state):
+#     """Transform a data object string into a data object instance.
+#
+#     This function is copied directly from `vtkmodules.util.pickle_support` which
+#     is new to VTK 9.3. It is copied here to support older vtk versions. It should not
+#     be modified.
+#
+#     Takes a state dictionary with entries:
+#     - Type : a string with the class name for the data object
+#     - Serialized : a numpy array with the serialized data object
+#
+#     and transforms it into a data object.
+#     """
+#     if ("Type" not in state.keys()) or ("Serialized" not in state.keys()):
+#         raise RuntimeError(
+#             "State dictionary passed to unpickle does not have Type and/or\
+#  Serialized keys."
+#         )
+#
+#     try:
+#         DataSetClass = getattr(_vtk.vtkCommonDataModel, state["Type"])
+#     except:
+#         raise TypeError("Could not find type " + state["Type"] + " in vtkCommonDataModel module")
+#     serialized_data = state["Serialized"]
+#     new_data_object = DataSetClass()
+#     char_array = _vtk.vtkCharArray()
+#     char_array.SetVoidArray(serialized_data, memoryview(serialized_data).nbytes, 1)
+#     if _vtk.vtkCommunicator.UnMarshalDataObject(char_array, new_data_object) == 0:
+#         raise RuntimeError("Marshaling data object failed")
+#     return new_data_object
+#
+#
+# def _serialize_VTK_data_object(data_object):
+#     """Transform a data object into a serialized string representation..
+#
+#     This function is copied directly from `vtkmodules.util.pickle_support` which
+#     is new to VTK 9.3. It is copied here to support older vtk versions. It should not
+#     be modified.
+#
+#     Returns a tuple with a reference to the unpickling function and a state dictionary
+#     with entries:
+#       - Type : a string with the class name for the data object
+#       - Serialized : a numpy array with the serialized data object
+#
+#       This is exactly the state dictionary that unserialize_VTK_data_object expects.
+#     """
+#     if not data_object.IsA("vtkDataObject"):
+#         raise TypeError("Object passed to pickling should be a vtkDataObject")
+#     data_object_type = data_object.GetClassName()
+#     char_array = _vtk.vtkCharArray()
+#     if _vtk.vtkCommunicator.MarshalDataObject(data_object, char_array) == 0:
+#         raise RuntimeError("UnMarshaling data object failed")
+#     return _unserialize_VTK_data_object, (
+#         {
+#             "Type": data_object_type,
+#             "Serialized": np.frombuffer(char_array, np.int8, char_array.GetNumberOfValues()),
+#         },
+#     )
 
 
 _serialize_VTK_data_object = (
     _vtk.serialize_VTK_data_object
     if 'serialize_VTK_data_object' in _vtk.__dict__
-    else _serialize_VTK_data_object
+    else _vtk.serialize_VTK_data_object
 )
 _unserialize_VTK_data_object = (
     _vtk.unserialize_VTK_data_object
     if 'unserialize_VTK_data_object' in _vtk.__dict__
-    else _unserialize_VTK_data_object
+    else _vtk.unserialize_VTK_data_object
 )
