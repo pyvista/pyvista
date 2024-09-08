@@ -270,10 +270,16 @@ def test_pickle_multiprocessing(datasets, pickle_format):
 def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
     pv.set_pickle_format(pickle_format)
     multiblock = multiblock_all_with_nested_and_none
-    pickled = pickle.dumps(multiblock)
-    assert isinstance(pickled, bytes)
-    unpickled = pickle.loads(pickled)
-    assert unpickled == multiblock
+
+    if pickle_format in ['legacy', 'xml']:
+        match = "MultiBlock is not supported with 'xml' or 'legacy' pickle formats.\nUse `pyvista.PICKLE_FORMAT='vtk'`."
+        with pytest.raises(TypeError, match=match):
+            pickle.dumps(multiblock)
+    else:
+        pickled = pickle.dumps(multiblock)
+        assert isinstance(pickled, bytes)
+        unpickled = pickle.loads(pickled)
+        assert unpickled == multiblock
 
 
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
