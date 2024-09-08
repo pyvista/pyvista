@@ -1,5 +1,4 @@
-"""
-Saving Screenshots
+"""Saving Screenshots
 ~~~~~~~~~~~~~~~~~~
 """
 

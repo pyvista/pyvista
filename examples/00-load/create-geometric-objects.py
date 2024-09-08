@@ -1,5 +1,4 @@
-"""
-.. _geometric_example:
+""".. _geometric_example:
 
 Geometric Objects
 ~~~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _chart_overlays_example:
+""".. _chart_overlays_example:
 
 Chart Overlays
 ~~~~~~~~~~~~~~

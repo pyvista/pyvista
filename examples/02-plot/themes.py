@@ -1,5 +1,4 @@
-"""
-.. _themes_example:
+""".. _themes_example:
 
 Control Global and Local Plotting Themes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

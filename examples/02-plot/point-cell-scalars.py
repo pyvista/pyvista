@@ -1,5 +1,4 @@
-"""
-.. _point_cell_scalars_example:
+""".. _point_cell_scalars_example:
 
 Point Cell Scalars
 ~~~~~~~~~~~~~~~~~~

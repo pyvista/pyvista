@@ -1,5 +1,4 @@
-"""
-.. _depth_peeling_example:
+""".. _depth_peeling_example:
 
 Depth Peeling
 ~~~~~~~~~~~~~

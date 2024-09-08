@@ -1,6 +1,4 @@
-"""
-Tests for non-spatially referenced objects
-"""
+"""Tests for non-spatially referenced objects"""
 
 from __future__ import annotations
 

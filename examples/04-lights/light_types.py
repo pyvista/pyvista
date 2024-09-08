@@ -1,5 +1,4 @@
-"""
-.. _light_types_example:
+""".. _light_types_example:
 
 Light Types
 ~~~~~~~~~~~

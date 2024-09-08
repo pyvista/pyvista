@@ -1,5 +1,4 @@
-"""
-.. _voxelize_surface_mesh_example:
+""".. _voxelize_surface_mesh_example:
 
 Voxelize a Surface Mesh
 ~~~~~~~~~~~~~~~~~~~~~~~

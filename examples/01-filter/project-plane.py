@@ -1,5 +1,4 @@
-"""
-Project to a Plane
+"""Project to a Plane
 ~~~~~~~~~~~~~~~~~~
 
 :class:`pyvista.PolyData` surfaces and pointsets can easily be projected to a

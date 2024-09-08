@@ -1,5 +1,4 @@
-"""
-.. _hertzian_contact_example:
+""".. _hertzian_contact_example:
 
 Visualize Hertzian Contact Stress
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

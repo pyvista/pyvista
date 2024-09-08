@@ -1,5 +1,4 @@
-"""
-Sphere Widget
+"""Sphere Widget
 ~~~~~~~~~~~~~
 
 The sphere widget can be enabled and disabled by the
@@ -118,7 +117,7 @@ import pyvista as pv
 
 
 def get_colors(n):
-    """A helper function to get n colors"""
+    """Get n colors."""
     from itertools import cycle
 
     import matplotlib as mpl

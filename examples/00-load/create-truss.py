@@ -1,5 +1,4 @@
-"""
-.. _create_truss:
+""".. _create_truss:
 
 Plot Truss-like FEA Solution with Cylinders
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

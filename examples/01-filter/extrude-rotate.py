@@ -1,5 +1,4 @@
-"""
-Extrude Rotation
+"""Extrude Rotation
 ~~~~~~~~~~~~~~~~
 Sweep polygonal data creating "skirt" from free edges and lines, and
 lines from vertices.

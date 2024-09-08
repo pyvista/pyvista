@@ -1,5 +1,4 @@
-"""
-.. _edl:
+""".. _edl:
 
 Eye Dome Lighting
 ~~~~~~~~~~~~~~~~~

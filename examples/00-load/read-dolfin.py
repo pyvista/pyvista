@@ -1,5 +1,4 @@
-"""
-Read FEniCS/Dolfin Meshes
+"""Read FEniCS/Dolfin Meshes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PyVista leverages `meshio`_ to read many mesh formats not natively supported

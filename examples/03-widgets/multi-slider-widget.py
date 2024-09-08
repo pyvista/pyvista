@@ -1,5 +1,4 @@
-"""
-Multiple Slider Widgets
+"""Multiple Slider Widgets
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Use a class based callback to track multiple slider widgets for updating a
@@ -21,7 +20,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 import pyvista as pv
 
 
-class MyCustomRoutine:
+class MyCustomRoutine:  # noqa: D101
     def __init__(self, mesh):
         self.output = mesh  # Expected PyVista mesh type
         # default parameters
@@ -31,11 +30,11 @@ class MyCustomRoutine:
             'phi_resolution': 30,
         }
 
-    def __call__(self, param, value):
+    def __call__(self, param, value):  # noqa: D102
         self.kwargs[param] = value
         self.update()
 
-    def update(self):
+    def update(self):  # noqa: D102
         # This is where you call your simulation
         result = pv.Sphere(**self.kwargs)
         self.output.copy_from(result)

@@ -1,5 +1,4 @@
-"""
-.. _create_pointset_example:
+""".. _create_pointset_example:
 
 Create a PointSet
 ~~~~~~~~~~~~~~~~~

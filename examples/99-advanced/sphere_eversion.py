@@ -1,5 +1,4 @@
-"""
-.. _sphere_eversion_example:
+""".. _sphere_eversion_example:
 
 Turning the sphere inside out
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -171,7 +170,7 @@ plotter.open_gif('sphere_eversion.gif')
 
 
 def save_frame(x, y, z):
-    """Helper to generate and store a frame of the eversion."""
+    """Generate and store a frame of the eversion."""
     plotter.clear()
     plotter.enable_lightkit()
     plotter.add_mesh(pv.StructuredGrid(x, y, z), **opts)

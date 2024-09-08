@@ -1,5 +1,4 @@
-"""
-.. _triangulated_surface:
+""".. _triangulated_surface:
 
 Create Triangulated Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

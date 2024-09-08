@@ -126,6 +126,7 @@ class Camera(_vtk.vtkCamera):
         ... )  # doctest:+SKIP
         >>> pl.camera.position
         (1.0, 1.0, 1.0)
+
         """
         to_find = {
             "CameraPosition": ("position", float),
@@ -176,6 +177,7 @@ class Camera(_vtk.vtkCamera):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> pl.camera.to_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
+
         """
         root = ET.Element("PVCameraConfiguration")
         root.attrib["description"] = "ParaView camera configuration"
@@ -291,6 +293,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.camera.focal_point = (2.0, 0.0, 0.0)
         >>> pl.camera.focal_point
         (2.0, 0.0, 0.0)
+
         """
         return self.GetFocalPoint()
 
@@ -511,6 +514,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl = pv.demos.orientation_plotter()
         >>> pl.disable_parallel_projection()
         >>> pl.show()
+
         """
         self._parallel_projection = False
         self.SetParallelProjection(False)
@@ -527,6 +531,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.disable_parallel_projection()
         >>> pl.parallel_projection
         False
+
         """
         return self._parallel_projection
 
@@ -649,6 +654,7 @@ class Camera(_vtk.vtkCamera):
         >>> pl.camera.roll = 45.0
         >>> pl.camera.roll
         45.0
+
         """
         return self.GetRoll()
 
@@ -753,6 +759,7 @@ class Camera(_vtk.vtkCamera):
         ... )
         >>> copied_camera == camera
         False
+
         """
         immutable_attrs = [
             'position',

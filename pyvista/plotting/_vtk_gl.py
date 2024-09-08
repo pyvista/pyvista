@@ -1,5 +1,4 @@
-"""
-GL-dependent imports from VTK.
+"""GL-dependent imports from VTK.
 
 These are the modules within VTK requiring libGL that must be loaded
 across pyvista's plotting API. These imports have the potential to

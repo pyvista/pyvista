@@ -1,5 +1,4 @@
-"""
-.. _create_draped_surf_example:
+""".. _create_draped_surf_example:
 
 Drape 2D Surface From Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

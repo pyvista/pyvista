@@ -1,5 +1,4 @@
-"""
-.. _2d_streamlines_example:
+""".. _2d_streamlines_example:
 
 2D Streamlines
 ~~~~~~~~~~~~~~

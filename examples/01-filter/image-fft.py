@@ -1,5 +1,4 @@
-"""
-.. _image_fft_example:
+""".. _image_fft_example:
 
 Fast Fourier Transform
 ~~~~~~~~~~~~~~~~~~~~~~

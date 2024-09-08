@@ -1,5 +1,4 @@
-"""
-.. _checkbox_widget_example:
+""".. _checkbox_widget_example:
 
 Checkbox Widget
 ~~~~~~~~~~~~~~~

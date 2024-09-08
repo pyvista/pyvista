@@ -1,5 +1,4 @@
-"""
-.. _bounds_example:
+""".. _bounds_example:
 
 Plotting Bounds
 ~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-.. _distance_labels_example:
+""".. _distance_labels_example:
 
 Label based on Distance on Line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

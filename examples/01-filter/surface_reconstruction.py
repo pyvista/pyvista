@@ -1,5 +1,4 @@
-"""
-.. _surface_reconstruction_example:
+""".. _surface_reconstruction_example:
 
 Surface Reconstruction
 ~~~~~~~~~~~~~~~~~~~~~~

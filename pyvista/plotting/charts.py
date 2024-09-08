@@ -4619,6 +4619,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
            >>> chart.figure is f
            True
            >>> chart.show()
+
         """
         return self._fig
 

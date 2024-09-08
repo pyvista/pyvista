@@ -17,8 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def make_axis_labels(vmin, vmax, n, fmt):
-    """
-    Create axis labels as a vtkStringArray.
+    """Create axis labels as a vtkStringArray.
 
     Parameters
     ----------
@@ -36,6 +35,7 @@ def make_axis_labels(vmin, vmax, n, fmt):
     -------
     vtkStringArray
         The created labels as a vtkStringArray object.
+
     """
     labels = _vtk.vtkStringArray()
     for v in np.linspace(vmin, vmax, n):

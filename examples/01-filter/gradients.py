@@ -1,5 +1,4 @@
-"""
-.. _gradients_example:
+""".. _gradients_example:
 
 Compute Gradients of a Field
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,7 +41,7 @@ mesh_g["gradient"]
 
 
 def gradients_to_dict(arr):
-    """A helper method to label the gradients into a dictionary."""
+    """Label the gradients into a dictionary."""
     keys = np.array(
         ["du/dx", "du/dy", "du/dz", "dv/dx", "dv/dy", "dv/dz", "dw/dx", "dw/dy", "dw/dz"],
     )

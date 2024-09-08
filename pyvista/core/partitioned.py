@@ -241,6 +241,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         -------
         int
             The number of partitions.
+
         """
         return self.GetNumberOfPartitions()
 
@@ -256,6 +257,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         ----------
         dataset : pyvista.DataSet
             Dataset to append to this partitioned dataset.
+
         """
         index = self.n_partitions
         self.n_partitions += 1

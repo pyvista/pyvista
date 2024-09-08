@@ -1,5 +1,4 @@
-"""
-.. _marching_cubes_example:
+""".. _marching_cubes_example:
 
 Marching Cubes
 ~~~~~~~~~~~~~~

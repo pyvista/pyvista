@@ -1,5 +1,4 @@
-"""
-.. _gaussian_smoothing_example:
+""".. _gaussian_smoothing_example:
 
 Gaussian Smoothing
 ~~~~~~~~~~~~~~~~~~

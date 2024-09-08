@@ -1,5 +1,4 @@
-"""
-Plotting with VTK Algorithms
+"""Plotting with VTK Algorithms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Pass a ``vtkAlgorithm`` to the ``Plotter`` for dynamic visualizations.
@@ -43,7 +42,7 @@ algo = pv.ConeSource()
 
 
 def update_resolution(value):
-    """Callback to set the resolution of the cone generator."""
+    """Set the resolution of the cone generator."""
     res = round(value)
     algo.resolution = res
 
@@ -66,7 +65,7 @@ poly_source.SetCenter(0.0, 0.0, 0.0)
 
 
 def update_n_sides(value):
-    """Callback to set the number of sides."""
+    """Set the number of sides."""
     res = round(value)
     poly_source.SetNumberOfSides(res)
 

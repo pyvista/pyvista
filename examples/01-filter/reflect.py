@@ -1,5 +1,4 @@
-"""
-.. _reflect_example:
+""".. _reflect_example:
 
 Reflect Meshes
 ~~~~~~~~~~~~~~

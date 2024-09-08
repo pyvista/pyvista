@@ -1,5 +1,4 @@
-"""
-.. _create_kochanek_spline_example:
+""".. _create_kochanek_spline_example:
 
 Create a Kochanek Spline
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,7 +22,7 @@ import pyvista as pv
 
 
 def make_points():
-    """Helper to make XYZ points"""
+    """Make XYZ points."""
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 6)
     z = np.linspace(-2, 2, 6)
     r = z**2 + 1

@@ -301,6 +301,13 @@ ignore = [
     "B028",
     # https://github.com/pyvista/pyvista/pull/6022
     "B904",
+    "D105", # Missing docstring in magic method
+    "D107", # Ignore missing init docstring
+    "D203", # May conflict with the formatter
+    "D211", # Incompatible with D203
+    "D213", # Incompatible with D212
+    "D402", # First line should not be the function's signature
+    "D416", # Section name ends in colon
     # whitespace before ':'
     "E203",
     # line break before binary operator
@@ -348,6 +355,7 @@ extend-select = [
     "B",
     "C4",
     "COM",
+    "D",
     "DJ",
     "DTZ",
     "E",
@@ -396,6 +404,12 @@ allow-dict-calls-with-keyword-arguments = true
     # https://github.com/pyvista/pyvista/pull/6019
     "B018",
 ]
+"doc/source/make_tables.py" = ["D101","D102"]
+"examples/*" = ["D102","D103","D205","D400","D415"]
+"examples_trame/*" = ["D100","D103"]
+"examples_trame/tests*" = ["D"]
+"pyvista/ext/*" = ["D100", "D101", "D102","D103"]
+"tests/*" = ["D"]
 
 [tool.ruff.lint.isort]
 # Sort by name, don't cluster "from" vs "import"

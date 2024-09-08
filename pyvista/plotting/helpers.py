@@ -1,4 +1,4 @@
-"""This module contains some convenience helper functions."""
+"""Convenience helper functions."""
 
 from __future__ import annotations
 
@@ -114,6 +114,7 @@ def plot_compare_four(
     -------
     pyvista.Plotter
         The plotter object.
+
     """
     datasets = [[data_a, data_b], [data_c, data_d]]
     labels = [labels[0:2], labels[2:4]]

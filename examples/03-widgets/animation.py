@@ -1,5 +1,4 @@
-"""
-.. _animation_example:
+""".. _animation_example:
 
 Animation
 ~~~~~~~~~

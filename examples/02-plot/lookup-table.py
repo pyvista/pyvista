@@ -1,5 +1,4 @@
-"""
-.. _lookup_table_example:
+""".. _lookup_table_example:
 
 Lookup Tables
 ~~~~~~~~~~~~~

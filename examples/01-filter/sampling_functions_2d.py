@@ -1,5 +1,4 @@
-"""
-.. _perlin_noise_2d_example:
+""".. _perlin_noise_2d_example:
 
 Sample Function: Perlin Noise in 2D
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,5 +1,4 @@
-"""
-Read Image Files
+"""Read Image Files
 ~~~~~~~~~~~~~~~~
 
 Read and plot image files (JPEG, TIFF, PNG, etc).
