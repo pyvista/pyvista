@@ -1,4 +1,5 @@
-""".. _cell_centers_example:
+"""
+.. _cell_centers_example:
 
 Extract Cell Centers
 ~~~~~~~~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
-""".. _chart_basics_example:
+"""
+.. _chart_basics_example:
 
 Chart Basics
 ~~~~~~~~~~~~

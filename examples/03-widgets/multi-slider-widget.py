@@ -1,4 +1,5 @@
-"""Multiple Slider Widgets
+"""
+Multiple Slider Widgets
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Use a class based callback to track multiple slider widgets for updating a

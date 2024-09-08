@@ -1,4 +1,5 @@
-""".. _plot_over_line_example:
+"""
+.. _plot_over_line_example:
 
 Plot Over Line
 ~~~~~~~~~~~~~~

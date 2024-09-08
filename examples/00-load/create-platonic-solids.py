@@ -1,4 +1,5 @@
-""".. _platonic_example:
+"""
+.. _platonic_example:
 
 Platonic Solids
 ~~~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
-"""Plot Scalars Over a Circular Arc
+"""
+Plot Scalars Over a Circular Arc
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Interpolate the scalars of a dataset over a circular arc.

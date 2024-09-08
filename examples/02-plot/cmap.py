@@ -1,4 +1,5 @@
-""".. _colormap_example:
+"""
+.. _colormap_example:
 
 Colormap Choices
 ~~~~~~~~~~~~~~~~

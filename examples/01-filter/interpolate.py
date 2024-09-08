@@ -1,4 +1,5 @@
-""".. _interpolate_example:
+"""
+.. _interpolate_example:
 
 Interpolating
 ~~~~~~~~~~~~~

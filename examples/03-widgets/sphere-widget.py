@@ -1,4 +1,5 @@
-"""Sphere Widget
+"""
+Sphere Widget
 ~~~~~~~~~~~~~
 
 The sphere widget can be enabled and disabled by the

@@ -1,4 +1,5 @@
-"""Distance Between Two Surfaces
+"""
+Distance Between Two Surfaces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Compute the average thickness between two surfaces.

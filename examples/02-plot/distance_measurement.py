@@ -1,4 +1,5 @@
-""".. _distance_measurement_example:
+"""
+.. _distance_measurement_example:
 
 Measuring distance
 ~~~~~~~~~~~~~~~~~~

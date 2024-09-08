@@ -1,4 +1,5 @@
-""".. _disabling_mesh_lighting_example:
+"""
+.. _disabling_mesh_lighting_example:
 
 Disabling Mesh Lighting
 ~~~~~~~~~~~~~~~~~~~~~~~

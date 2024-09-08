@@ -1,4 +1,5 @@
-""".. _clip_with_surface_example:
+"""
+.. _clip_with_surface_example:
 
 Clipping with a Surface
 ~~~~~~~~~~~~~~~~~~~~~~~

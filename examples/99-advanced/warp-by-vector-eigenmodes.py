@@ -1,4 +1,5 @@
-""".. _eigenmodes_example:
+"""
+.. _eigenmodes_example:
 
 Display Eigenmodes of Vibration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,7 +29,8 @@ import pyvista as pv
 
 
 def analytical_integral_rppd(p, q, r, a, b, c):
-    """Return the analytical value of the RPPD integral.
+    """
+    Return the analytical value of the RPPD integral.
 
     This is the integral of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c).
     """
@@ -47,7 +49,8 @@ def analytical_integral_rppd(p, q, r, a, b, c):
 
 
 def make_cijkl_E_nu(E=200, nu=0.3):
-    """Make cijkl from E and nu.
+    """
+    Make cijkl from E and nu.
 
     Default values for steel are: E=200 GPa, nu=0.3.
     """
@@ -89,7 +92,8 @@ def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
 
 
 def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
-    """Assemble the mass and stiffness matrix.
+    """
+    Assemble the mass and stiffness matrix.
 
     It first builds an index of basis functions as a quadruplet of
     component and polynomial order for (x^p, y^q, z^r) of maximum order N.

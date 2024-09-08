@@ -1,4 +1,5 @@
-""".. _shading_example:
+"""
+.. _shading_example:
 
 Types of Shading
 ~~~~~~~~~~~~~~~~

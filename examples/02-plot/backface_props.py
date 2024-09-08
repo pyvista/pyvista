@@ -1,4 +1,5 @@
-""".. _backface_props_example:
+"""
+.. _backface_props_example:
 
 Setting Backface Properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

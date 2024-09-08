@@ -1,4 +1,5 @@
-"""Legends and glyphs
+"""
+Legends and glyphs
 ~~~~~~~~~~~~~~~~~~
 
 Using custom legends and glyphs within PyVista.

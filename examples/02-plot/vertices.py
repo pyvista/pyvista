@@ -1,4 +1,5 @@
-"""Visible Vertices
+"""
+Visible Vertices
 ~~~~~~~~~~~~~~~~
 
 Display vertices on a mesh in the same fashion as edge visibility.

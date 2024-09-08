@@ -1,4 +1,5 @@
-""".. _color_cycler_example:
+"""
+.. _color_cycler_example:
 
 Color Cycling
 ~~~~~~~~~~~~~

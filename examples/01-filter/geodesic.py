@@ -1,4 +1,5 @@
-""".. _geodesic_example:
+"""
+.. _geodesic_example:
 
 Geodesic Paths
 ~~~~~~~~~~~~~~

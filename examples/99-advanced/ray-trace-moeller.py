@@ -1,4 +1,5 @@
-""".. _moeller_ray_trace_example:
+"""
+.. _moeller_ray_trace_example:
 
 Visualize the Moeller-Trumbore Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,7 +23,8 @@ import pyvista as pv
 
 
 def ray_triangle_intersection(ray_start, ray_vec, triangle):
-    """Moeller-Trumbore intersection algorithm.
+    """
+    Moeller-Trumbore intersection algorithm.
 
     Parameters
     ----------

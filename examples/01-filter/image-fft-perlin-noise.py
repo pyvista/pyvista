@@ -1,4 +1,5 @@
-""".. _image_fft_perlin_example:
+"""
+.. _image_fft_perlin_example:
 
 Fast Fourier Transform with Perlin Noise
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

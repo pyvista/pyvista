@@ -1,4 +1,5 @@
-"""Plot Vector Component
+"""
+Plot Vector Component
 ~~~~~~~~~~~~~~~~~~~~~
 
 Plot a single component of a vector as a scalar array.

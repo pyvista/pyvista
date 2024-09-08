@@ -1,4 +1,5 @@
-""".. _lighting_properties_example:
+"""
+.. _lighting_properties_example:
 
 Lighting Properties
 ~~~~~~~~~~~~~~~~~~~

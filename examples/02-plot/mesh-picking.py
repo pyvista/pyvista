@@ -1,4 +1,5 @@
-""".. _mesh_picking_example:
+"""
+.. _mesh_picking_example:
 
 Picking Meshes
 ~~~~~~~~~~~~~~

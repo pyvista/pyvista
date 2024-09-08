@@ -1,4 +1,5 @@
-"""Extract Cells Inside Surface
+"""
+Extract Cells Inside Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Extract the cells in a mesh that exist inside or outside a closed surface of

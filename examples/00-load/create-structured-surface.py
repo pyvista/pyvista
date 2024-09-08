@@ -1,4 +1,5 @@
-""".. _create_structured:
+"""
+.. _create_structured:
 
 Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,7 +70,8 @@ rng = np.random.default_rng(seed=0)
 
 
 def make_point_set():
-    """Ignore the contents of this function. Just know that it returns an
+    """
+    Ignore the contents of this function. Just know that it returns an
     n by 3 numpy array of structured coordinates.
     """
     n, m = 29, 32

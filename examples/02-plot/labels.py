@@ -1,4 +1,5 @@
-"""Label Points
+"""
+Label Points
 ~~~~~~~~~~~~
 
 Use string arrays in a point set to label points

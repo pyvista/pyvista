@@ -1,4 +1,5 @@
-""".. _composite_picking_example:
+"""
+.. _composite_picking_example:
 
 Composite Picking
 ~~~~~~~~~~~~~~~~~

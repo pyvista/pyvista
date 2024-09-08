@@ -1,4 +1,5 @@
-""".. _blur_example:
+"""
+.. _blur_example:
 
 Blurring
 ~~~~~~~~

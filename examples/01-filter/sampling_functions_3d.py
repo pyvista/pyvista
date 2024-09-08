@@ -1,4 +1,5 @@
-"""Sample Function: Perlin Noise in 3D
+"""
+Sample Function: Perlin Noise in 3D
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Here we use :func:`pyvista.core.utilities.features.sample_function` to sample
 Perlin noise over a region to generate random terrain.

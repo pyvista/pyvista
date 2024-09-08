@@ -1,4 +1,5 @@
-""".. _ssao_example:
+"""
+.. _ssao_example:
 
 Surface Space Ambient Occlusion
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

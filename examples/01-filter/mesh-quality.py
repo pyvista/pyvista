@@ -1,4 +1,5 @@
-""".. _mesh_quality_example:
+"""
+.. _mesh_quality_example:
 
 Computing Mesh Quality
 ~~~~~~~~~~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
-"""Multi-Window Plot
+"""
+Multi-Window Plot
 ~~~~~~~~~~~~~~~~~
 
 
