@@ -21,7 +21,18 @@ def set_pickle_format(format: str):  # noqa: A002
     Parameters
     ----------
     format : str
-        The format for serialization. Acceptable values are "xml" or "legacy".
+        The format for serialization. Acceptable values are:
+
+        - ``'vtk'`` (default) : objects are serialized using VTK's official
+            marshalling methods.
+        - ``'xml'``: objects are serialized as an XML-formatted string.
+        - ``'legacy'`` objects are serialized to bytes in VTK's binary format.
+
+        .. warning::
+
+            ``'xml'`` and ``'legacy'`` are not recommended. These formats are not
+            officially supported by VTK and have limitations. For example, these
+            formats cannot be used to pickle :class:`pyvista.MultiBlock`.
 
     Raises
     ------
