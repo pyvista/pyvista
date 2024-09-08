@@ -699,33 +699,43 @@ class DataObject:
         self.CopyAttributes(dataset)
 
     def __getstate__(self):
+        """Support pickling."""
         pickle_format = pyvista.PICKLE_FORMAT
         if pickle_format in ['xml', 'legacy']:
-            return self._serialize_deprecated()
+            return self._serialize_pyvista_pickle_format()
         elif pickle_format == 'vtk':
-            if 'Serialized' in self.__dict__ or 'Type' in self.__dict__:
-                raise ValueError(
-                    "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for only."
-                )
-            serialized = _serialize_VTK_data_object(self)
-
-            # Add this object's data to the state dictionary
-            sate_dict = serialized[1][0]
-            sate_dict.update(self.__dict__)
-
-            # Make sure we return the same format returned by `serialize_VTK_data_object`
-            return serialized
-
+            return self._serialize_vtk_pickle_format()
         # Invalid format, use the setter to raise an error
         pyvista.set_pickle_format(pickle_format)
         return None
 
-    def _serialize_deprecated(self):
+    def _serialize_vtk_pickle_format(self):
+        if 'Serialized' in self.__dict__ or 'Type' in self.__dict__:
+            raise ValueError(
+                "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for only."
+            )
+        serialized = _serialize_VTK_data_object(self)
+
+        # Add this object's data to the state dictionary
+        sate_dict = serialized[1][0]
+        sate_dict.update(self.__dict__)
+
+        # Unlike the PyVista formats, we do not return a dict. Instead, return
+        # the same format returned by the vtk serializer.
+        return serialized
+
+    def _serialize_pyvista_pickle_format(self):
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
 
         The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
         - If `pyvista.PICKLE_FORMAT == 'xml'`, the data is serialized as an XML-formatted string.
         - If `pyvista.PICKLE_FORMAT == 'legacy'`, the data is serialized to bytes in VTK's binary format.
+
+        .. note::
+
+            These formats are custom PyVista legacy formats. The native 'vtk' format is
+            preferred for interoperability with other libraries.
+
         """
         state = self.__dict__.copy()
 
@@ -772,8 +782,9 @@ class DataObject:
         return state
 
     def __setstate__(self, state):
+        """Support unpickling."""
         if 'vtk_serialized' in state:
-            self._unserialize_deprecated(state)
+            self._unserialize_pyvista_pickle_format(state)
         elif (
             isinstance(state, tuple)
             and len(state) == 2
@@ -781,17 +792,28 @@ class DataObject:
             and len(state[1]) == 1
             and isinstance(state[1][0], dict)
         ):
-            state_dict = state[1][0]
-            self.__dict__.update(state_dict)
-            obj = _unserialize_VTK_data_object(state_dict)
-            self.deep_copy(obj)
+            self._unserialize_vtk_pickle_format(state)
         else:
             raise RuntimeError(
                 f"Cannot unpickle '{self.__class__.__name__}'. Invalid pickle format."
             )
 
-    def _unserialize_deprecated(self, state):
-        """Support unpickle."""
+    def _unserialize_vtk_pickle_format(self, state):
+        """Support unpickle of VTK's format."""
+        state_dict = state[1][0]
+        self.__dict__.update(state_dict)
+        obj = _unserialize_VTK_data_object(state_dict)
+        self.deep_copy(obj)
+
+    def _unserialize_pyvista_pickle_format(self, state):
+        """Support unpickle of PyVista 'xml' and 'legacy' formats.
+
+        .. note::
+
+            These formats are custom PyVista legacy formats. The native 'vtk' format is
+            preferred for interoperability with other libraries.
+
+        """
         vtk_serialized = state.pop('vtk_serialized')
         pickle_format = state.pop(
             'PICKLE_FORMAT',
