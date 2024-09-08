@@ -714,7 +714,7 @@ class DataObject:
             raise ValueError(
                 "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for pickling."
             )
-        serialized = _serialize_VTK_data_object(self)
+        serialized = _vtk.serialize_VTK_data_object(self)
 
         # Add this object's data to the state dictionary
         sate_dict = serialized[1][0]
@@ -816,7 +816,7 @@ class DataObject:
         # The vtk state has format: ( function, (dict,) )
         state_dict = state[1][0]
         self.__dict__.update(state_dict)
-        obj = _unserialize_VTK_data_object(state_dict)
+        obj = _vtk.unserialize_VTK_data_object(state_dict)
         self.deep_copy(obj)
 
     def _unserialize_pyvista_pickle_format(self, state):
@@ -905,43 +905,3 @@ def _unserialize_VTK_data_object(state):  # pragma: no cover
     if _vtk.vtkCommunicator.UnMarshalDataObject(char_array, new_data_object) == 0:
         raise RuntimeError("Marshaling data object failed")
     return new_data_object
-
-
-def _serialize_VTK_data_object(data_object):  # pragma: no cover
-    """Transform a data object into a serialized string representation.
-
-    This function is copied directly from `vtkmodules.util.pickle_support` which
-    is new to VTK 9.3. It is copied here to support older vtk versions. It should not
-    be modified.
-
-    Returns a tuple with a reference to the unpickling function and a state dictionary
-    with entries:
-      - Type : a string with the class name for the data object
-      - Serialized : a numpy array with the serialized data object
-
-      This is exactly the state dictionary that unserialize_VTK_data_object expects.
-    """
-    if not data_object.IsA("vtkDataObject"):
-        raise TypeError("Object passed to pickling should be a vtkDataObject")
-    data_object_type = data_object.GetClassName()
-    char_array = _vtk.vtkCharArray()
-    if _vtk.vtkCommunicator.MarshalDataObject(data_object, char_array) == 0:
-        raise RuntimeError("UnMarshaling data object failed")
-    return _unserialize_VTK_data_object, (
-        {
-            "Type": data_object_type,
-            "Serialized": np.frombuffer(char_array, np.int8, char_array.GetNumberOfValues()),
-        },
-    )
-
-
-_serialize_VTK_data_object = (
-    _vtk.serialize_VTK_data_object
-    if 'serialize_VTK_data_object' in _vtk.__dict__
-    else _serialize_VTK_data_object
-)
-_unserialize_VTK_data_object = (
-    _vtk.unserialize_VTK_data_object
-    if 'unserialize_VTK_data_object' in _vtk.__dict__
-    else _unserialize_VTK_data_object
-)
