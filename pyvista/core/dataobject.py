@@ -734,7 +734,7 @@ class DataObject:
         .. note::
 
             These formats are custom PyVista legacy formats. The native 'vtk' format is
-            preferred for interoperability with other libraries.
+            preferred since it supports more objects (e.g. MultiBlock).
 
         """
         if isinstance(self, pyvista.MultiBlock):
@@ -825,7 +825,7 @@ class DataObject:
         .. note::
 
             These formats are custom PyVista legacy formats. The native 'vtk' format is
-            preferred for interoperability with other libraries.
+            preferred since it supports more objects (e.g. MultiBlock).
 
         """
         vtk_serialized = state.pop('vtk_serialized')
@@ -875,7 +875,7 @@ class DataObject:
         self.copy_attributes(mesh)
 
 
-def _unserialize_VTK_data_object(state):
+def _unserialize_VTK_data_object(state):  # pragma: no cover
     """Transform a data object string into a data object instance.
 
     This function is copied directly from `vtkmodules.util.pickle_support` which
@@ -907,7 +907,7 @@ def _unserialize_VTK_data_object(state):
     return new_data_object
 
 
-def _serialize_VTK_data_object(data_object):
+def _serialize_VTK_data_object(data_object):  # pragma: no cover
     """Transform a data object into a serialized string representation.
 
     This function is copied directly from `vtkmodules.util.pickle_support` which
