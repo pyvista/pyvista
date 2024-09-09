@@ -49,7 +49,6 @@ from vtkmodules.util.numpy_support import vtk_to_numpy
 
 with contextlib.suppress(ImportError):
     from vtkmodules.util.pickle_support import serialize_VTK_data_object
-    from vtkmodules.util.pickle_support import unserialize_VTK_data_object
 
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonComputationalGeometry import vtkKochanekSpline

@@ -701,24 +701,20 @@ class DataObject:
     def __getstate__(self):
         """Support pickle."""
         pickle_format = pyvista.PICKLE_FORMAT
-        if pickle_format in ['xml', 'legacy']:
-            return self._serialize_pyvista_pickle_format()
-        elif pickle_format == 'vtk':
+        if pickle_format == 'vtk':
             return self._serialize_vtk_pickle_format()
+        elif pickle_format in ['xml', 'legacy']:
+            return self._serialize_pyvista_pickle_format()
         # Invalid format, use the setter to raise an error
-        pyvista.set_pickle_format(pickle_format)
-        return None
+        pyvista.set_pickle_format(pickle_format)  # noqa:  RET503
 
     def _serialize_vtk_pickle_format(self):
-        if 'Serialized' in self.__dict__ or 'Type' in self.__dict__:
-            raise ValueError(
-                "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for pickling."
-            )
+        # Note: The serialized state has format: ( function, (dict,) )
         serialized = _vtk.serialize_VTK_data_object(self)
 
         # Add this object's data to the state dictionary
         state_dict = serialized[1][0]
-        state_dict.update(self.__dict__)
+        state_dict['_PYVISTA_STATE_DICT'] = self.__dict__.copy()
 
         # Unlike the PyVista formats, we do not return a dict. Instead, return
         # the same format returned by the vtk serializer.
@@ -789,9 +785,6 @@ class DataObject:
     def __setstate__(self, state):
         """Support unpickle."""
 
-        def _is_pyvista_format(state_):
-            return isinstance(state_, dict) and 'vtk_serialized' in state_
-
         def _is_vtk_format(state_):
             # Note: The vtk state has format ( function, (dict,) )
             return (
@@ -802,10 +795,13 @@ class DataObject:
                 and isinstance(state_[1][0], dict)
             )
 
-        if _is_pyvista_format(state):
-            self._unserialize_pyvista_pickle_format(state)
-        elif _is_vtk_format(state):
+        def _is_pyvista_format(state_):
+            return isinstance(state_, dict) and 'vtk_serialized' in state_
+
+        if _is_vtk_format(state):
             self._unserialize_vtk_pickle_format(state)
+        elif _is_pyvista_format(state):
+            self._unserialize_pyvista_pickle_format(state)
         else:
             raise RuntimeError(
                 f"Cannot unpickle '{self.__class__.__name__}'. Invalid pickle format."
@@ -814,9 +810,10 @@ class DataObject:
     def _unserialize_vtk_pickle_format(self, state):
         """Support unpickle of VTK's format."""
         # The vtk state has format: ( function, (dict,) )
+        unserialize_func = state[0]
         state_dict = state[1][0]
-        self.__dict__.update(state_dict)
-        obj = _vtk.unserialize_VTK_data_object(state_dict)
+        self.__dict__.update(state_dict['_PYVISTA_STATE_DICT'])
+        obj = unserialize_func(state_dict)
         self.deep_copy(obj)
 
     def _unserialize_pyvista_pickle_format(self, state):
