@@ -9,7 +9,6 @@ This example demonstrates how to create polar axes.
 
 from __future__ import annotations
 
-from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkRenderingAnnotation import vtkPolarAxesActor
 
 import pyvista as pv
@@ -28,11 +27,7 @@ plotter = pv.Plotter()
 actor = plotter.add_mesh(normals, color=(0.5, 0.8, 0.3), show_edges=True)
 
 # Create an outline filter using VTK and add it to the plotter
-outline = vtkOutlineFilter()
-outline.SetInputData(normals)
-outline.Update()
-outline_polydata = pv.wrap(outline.GetOutput())
-plotter.add_mesh(outline_polydata, color="white")
+plotter.add_mesh(pv.outline_algorithm(normals), color="white")
 
 # Set up the camera using VTK
 camera = pv.Camera()
