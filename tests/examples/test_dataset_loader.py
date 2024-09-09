@@ -43,7 +43,6 @@ def _generate_dataset_loader_test_cases_from_module(
     module: ModuleType,
 ) -> list[DatasetLoaderTestCase]:
     """Generate test cases by module with all dataset functions and their respective file loaders."""
-
     test_cases_dict: dict = {}
 
     def add_to_dict(func: str, dataset_function: Callable[[], Any]):
@@ -126,7 +125,6 @@ def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
 @pytest.fixture
 def examples_local_repository_tmp_dir(tmp_path):
     """Create a local repository with a bunch of datasets available for download."""
-
     # setup
     repository_path = os.path.join(tmp_path, 'repo')
     os.mkdir(repository_path)

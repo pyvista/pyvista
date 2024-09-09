@@ -1,6 +1,4 @@
-"""
-Tests for text objects
-"""
+"""Tests for text objects"""
 
 from __future__ import annotations
 

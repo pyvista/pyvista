@@ -20,7 +20,7 @@ import pyvista as pv
 
 
 def make_points():
-    """Helper to make XYZ points"""
+    """Make XYZ points."""
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
     r = z**2 + 1

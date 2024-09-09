@@ -1,4 +1,4 @@
-"""This module contains the Property class."""
+"""Wrapper for vtkProperty."""
 
 from __future__ import annotations
 
@@ -286,6 +286,7 @@ class Property(_vtk.vtkProperty):
         >>> prop.style = 'points'
         >>> prop.point_size = 5.0
         >>> prop.plot()
+
         """
         return self.GetRepresentationAsString()
 
@@ -1097,6 +1098,7 @@ class Property(_vtk.vtkProperty):
 
         >>> prop.specular_color = 'white'
         >>> prop.plot()
+
         """
         return Color(self.GetSpecularColor())
 

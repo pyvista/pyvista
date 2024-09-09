@@ -478,7 +478,6 @@ def test_fly_to_mouse_position(verify_image_cache, sphere):
 
 def test_block_picking(multiblock_poly):
     """Test we can pick a block."""
-
     pl = pv.Plotter()
     width, height = pl.window_size
     actor, mapper = pl.add_composite(multiblock_poly)

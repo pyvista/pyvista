@@ -374,6 +374,7 @@ class DataSetFilters:
         ... )
         >>> _ = pl.add_actor(axes_local)
         >>> pl.show()
+
         """
 
         def _validate_vector(vector, name):
@@ -4529,6 +4530,7 @@ class DataSetFilters:
         >>> plotter.show()
 
         See :ref:`2d_streamlines_example` for more examples using this filter.
+
         """
         if integrator_type not in [2, 4]:
             raise ValueError('Integrator type must be one of `2` or `4`.')
@@ -6346,6 +6348,7 @@ class DataSetFilters:
         >>> _ = mesh.merge_points(inplace=True)
         >>> mesh.n_points
         8
+
         """
         # Create a second mesh with points. This is required for the merge
         # to work correctly. Additional points are not required for PolyData inputs
@@ -7431,6 +7434,7 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(box, color='black', line_width=5)
         >>> _ = pl.add_actor(axes_assembly)
         >>> pl.show()
+
         """
         alg_input, matrix = self.align_xyz(
             axis_0_direction=axis_0_direction,
@@ -7586,6 +7590,7 @@ class DataSetFilters:
         >>> _ = pl.add_actor(axes_assembly)
         >>> _ = pl.view_yz()
         >>> pl.show()
+
         """
         if oriented:
             return self.oriented_bounding_box(

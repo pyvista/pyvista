@@ -161,6 +161,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     Load a meshio file.
 
     >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
+
     """
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')

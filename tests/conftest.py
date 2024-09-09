@@ -33,6 +33,7 @@ def flaky_test(
         Exceptions which will cause the test to be re-tried. By default, tests are only
         retried for assertion errors. Customize this to retry for other exceptions
         depending on the cause(s) of the flaky test, e.g. `(ValueError, TypeError)`.
+
     """
     if test_function is None:
         # Allow decorator is called without parentheses
@@ -280,7 +281,6 @@ def pytest_runtest_setup(item):
 
 def pytest_report_header(config):
     """Header for pytest to show versions of required and optional packages."""
-
     required = []
     extra = {}
     for item in metadata.requires("pyvista"):

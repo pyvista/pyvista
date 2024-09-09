@@ -1,5 +1,4 @@
-"""
-Modified sphinx.ext.coverage module.
+"""Modified sphinx.ext.coverage module.
 
 Check Python modules and C API for coverage.  Mostly written by Josip
 Dzolonga for the Google Highly Open Participation contest.
@@ -370,7 +369,7 @@ class CoverageBuilder(Builder):
                 op.writelines(' * %s -- %s\n' % x for x in failed)  # noqa: UP031
 
     def finish(self) -> None:
-        # dump the coverage data to a pickle file too
+        """Dump the coverage data to a pickle file too."""
         picklepath = str(Path(self.outdir) / 'undoc.pickle')
         with Path(picklepath).open('wb') as dumpfile:
             pickle.dump((self.py_undoc, self.c_undoc), dumpfile)

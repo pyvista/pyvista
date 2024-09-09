@@ -29,6 +29,7 @@ def get_server(*args, **kwargs):  # numpydoc ignore=RT01
     -------
     trame_server.core.Server
         Trame server.
+
     """
     server = trame_get_server(*args, **kwargs)
     if 'client_type' in kwargs:

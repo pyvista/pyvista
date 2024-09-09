@@ -74,6 +74,7 @@ def get_angle(v1, v2):
     -------
     float
         Angle between vectors in degrees.
+
     """
     return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
@@ -96,6 +97,7 @@ def ray_plane_intersection(start_point, direction, plane_point, normal):
     -------
     ndarray
         Intersection point.
+
     """
     t_value = np.dot(normal, (plane_point - start_point)) / np.dot(normal, direction)
     return start_point + t_value * direction

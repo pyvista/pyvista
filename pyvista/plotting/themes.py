@@ -866,6 +866,7 @@ class _AxesConfig(_ThemeConfig):
         Change the default color.
 
         >>> pv.global_theme.axes.x_color = 'red'
+
         """
         return self._x_color
 
@@ -888,6 +889,7 @@ class _AxesConfig(_ThemeConfig):
         Change the default color.
 
         >>> pv.global_theme.axes.y_color = 'green'
+
         """
         return self._y_color
 
@@ -910,6 +912,7 @@ class _AxesConfig(_ThemeConfig):
         Change the default color.
 
         >>> pv.global_theme.axes.z_color = 'purple'
+
         """
         return self._z_color
 
@@ -1065,6 +1068,7 @@ class _Font(_ThemeConfig):
         --------
         >>> import pyvista as pv
         >>> pv.global_theme.font.title_size = 20
+
         """
         return self._title_size
 
@@ -1085,6 +1089,7 @@ class _Font(_ThemeConfig):
         --------
         >>> import pyvista as pv
         >>> pv.global_theme.font.label_size = 20
+
         """
         return self._label_size
 
@@ -1103,6 +1108,7 @@ class _Font(_ThemeConfig):
         --------
         >>> import pyvista as pv
         >>> pv.global_theme.font.color = 'black'
+
         """
         return self._color
 
@@ -1222,6 +1228,7 @@ class _SliderStyleConfig(_ThemeConfig):
         --------
         >>> import pyvista as pv
         >>> pv.global_theme.slider_styles.modern.tube_color = 'black'
+
         """
         return self._tube_color
 
@@ -2025,6 +2032,7 @@ class Theme(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.return_cpos = False
+
         """
         return self._return_cpos
 
@@ -2042,6 +2050,7 @@ class Theme(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.background = 'white'
+
         """
         return self._background
 
@@ -2145,6 +2154,7 @@ class Theme(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.full_screen = True
+
         """
         return self._full_screen
 
@@ -2624,6 +2634,7 @@ class Theme(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.lighting = False
+
         """
         return self._lighting
 
@@ -2641,6 +2652,7 @@ class Theme(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.interactive = False
+
         """
         return self._interactive
 
@@ -2658,6 +2670,7 @@ class Theme(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.render_points_as_spheres = True
+
         """
         return self._render_points_as_spheres
 
@@ -2675,6 +2688,7 @@ class Theme(_ThemeConfig):
 
         >>> import pyvista as pv
         >>> pv.global_theme.render_lines_as_tubes = True
+
         """
         return self._render_lines_as_tubes
 

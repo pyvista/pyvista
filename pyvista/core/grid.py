@@ -910,6 +910,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         -------
         np.ndarray
             Direction matrix as a 3x3 NumPy array.
+
         """
         return array_from_vtkmatrix(self.GetDirectionMatrix())
 
@@ -925,6 +926,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         -------
         np.ndarray
             4x4 transformation matrix.
+
         """
         return array_from_vtkmatrix(self.GetIndexToPhysicalMatrix())
 
@@ -936,5 +938,6 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         -------
         np.ndarray
             4x4 transformation matrix.
+
         """
         return array_from_vtkmatrix(self.GetPhysicalToIndexMatrix())

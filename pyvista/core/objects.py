@@ -1,4 +1,4 @@
-"""This module provides wrappers for vtkDataObjects.
+"""Wrappers for vtkDataObjects.
 
 The data objects does not have any sort of spatial reference.
 
@@ -243,6 +243,7 @@ class Table(DataObject, _vtk.vtkTable):
         -------
         pyvista.pyvista_ndarray
             PyVista array.
+
         """
         return self[index]
 
