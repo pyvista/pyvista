@@ -1,8 +1,16 @@
+"""
+.. _polar_axes_example:
+
+Polar Axes
+~~~~~~~~~~
+This example demonstrates how to create polar axes.
+
+"""
+
 from __future__ import annotations
 
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkRenderingAnnotation import vtkPolarAxesActor
-from vtkmodules.vtkRenderingCore import vtkCamera
 from vtkmodules.vtkRenderingCore import vtkLight
 
 import pyvista as pv
@@ -28,7 +36,7 @@ outline_polydata = pv.wrap(outline.GetOutput())
 plotter.add_mesh(outline_polydata, color="white")
 
 # Set up the camera using VTK
-camera = vtkCamera()
+camera = pv.Camera()
 camera.SetClippingRange(1.0, 100.0)
 camera.SetFocalPoint(0.0, 0.5, 0.0)
 camera.SetPosition(5.0, 6.0, 14.0)
@@ -63,7 +71,7 @@ polaxes.SetScreenSize(9.0)
 plotter.renderer.AddActor(polaxes)
 
 # Set background color
-plotter.set_background(0.8, 0.8, 0.8)
+plotter.set_background((0.8, 0.8, 0.8))
 
 # Set the camera and light
 plotter.camera = camera
