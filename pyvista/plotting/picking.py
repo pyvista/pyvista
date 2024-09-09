@@ -98,6 +98,7 @@ class PointPickingElementHandler:
         The element type to pick.
     callback : callable, optional
         A callback function to be executed on picking events.
+
     """
 
     def __init__(self, mode: ElementType = ElementType.CELL, callback=None):

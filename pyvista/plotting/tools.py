@@ -33,8 +33,7 @@ SUPPORTS_PLOTTING = None
 
 
 def supports_open_gl():
-    """
-    Return if the system supports OpenGL.
+    """Return if the system supports OpenGL.
 
     This function checks if the system supports OpenGL by creating a VTK render
     window and querying its OpenGL support.
@@ -43,6 +42,7 @@ def supports_open_gl():
     -------
     bool
         ``True`` if the system supports OpenGL, ``False`` otherwise.
+
     """
     global SUPPORTS_OPENGL
     if SUPPORTS_OPENGL is None:
@@ -510,8 +510,7 @@ def create_north_arrow():
 
 
 def normalize(x, minimum=None, maximum=None):
-    """
-    Normalize the given value between [minimum, maximum].
+    """Normalize the given value between [minimum, maximum].
 
     Parameters
     ----------
@@ -529,6 +528,7 @@ def normalize(x, minimum=None, maximum=None):
     numpy.ndarray
         The normalized array of values, where the values are scaled to the
         range ``[minimum, maximum]``.
+
     """
     if minimum is None:
         minimum = np.nanmin(x)
@@ -678,8 +678,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadrat
 
 
 def parse_font_family(font_family: str) -> int:
-    """
-    Check and validate the given font family name.
+    """Check and validate the given font family name.
 
     Parameters
     ----------
@@ -698,6 +697,7 @@ def parse_font_family(font_family: str) -> int:
     ValueError
         If the font_family is not one of the defined font names in the ``FONTS``
         enum class.
+
     """
     font_family = font_family.lower()
     fonts = [font.name for font in FONTS]
@@ -707,8 +707,7 @@ def parse_font_family(font_family: str) -> int:
 
 
 def check_matplotlib_vtk_compatibility():
-    """
-    Check if VTK and Matplotlib versions are compatible for MathText rendering.
+    """Check if VTK and Matplotlib versions are compatible for MathText rendering.
 
     This function is primarily geared towards checking if MathText rendering is
     supported with the given versions of VTK and Matplotlib. It follows the
@@ -751,6 +750,7 @@ def check_math_text_support():
     bool
         ``True`` if both MathText and LaTeX symbols are supported, ``False``
         otherwise.
+
     """
     # Something seriously sketchy is happening with this VTK code
     # It seems to hijack stdout and stderr?

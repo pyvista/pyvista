@@ -1,5 +1,4 @@
-"""
-Support dynamic or static jupyter notebook plotting.
+"""Support dynamic or static jupyter notebook plotting.
 
 Includes:
 

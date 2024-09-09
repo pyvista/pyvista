@@ -1,6 +1,6 @@
-"""This is a helper module to generate tables that can be included in the documentation."""
+"""Generate tables that can be included in the documentation."""
 
-# ruff: noqa: PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
+# ruff: noqa:PTH102,PTH103,PTH107,PTH112,PTH113,PTH117,PTH118,PTH119,PTH122,PTH123,PTH202
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -91,7 +91,7 @@ class classproperty(property):
 
 
 def _aligned_dedent(txt):
-    """Custom variant of `textwrap.dedent`.
+    """Variant of `textwrap.dedent`.
 
     Helper method to dedent the provided text up to the special alignment character ``'|'``.
     """
@@ -161,8 +161,11 @@ class DocTable:
 
     @classmethod
     def get_row(cls, i, row_data):
-        """Get the rst for the given row. Can return ``None`` if no row should
-        be generated for the provided ``row_data``."""
+        """Get the rst for the given row.
+
+        Can return ``None`` if no row should be generated for the provided ``row_data``.
+
+        """
         raise NotImplementedError("Subclasses should specify a get_row method.")
 
 
@@ -529,7 +532,7 @@ def _indent_multi_line_string(
     indent_level: int = 1,
     omit_first_line=True,
 ) -> str:
-    """Indent each line of a multi-line string by a specified indentation level.
+    r"""Indent each line of a multi-line string by a specified indentation level.
 
     Optionally specify the indent size (e.g. 3 spaces for rst).
     Optionally omit indentation from the first line if it is already indented.
@@ -1551,7 +1554,7 @@ class _BaseDatasetBadge:
 
 @dataclass
 class ModuleBadge(_BaseDatasetBadge):
-    """Badge given to a dataset based on its source module,
+    """Badge given to a dataset based on its source module.
 
     e.g. 'Downloads' for datasets from `pyvista.examples.downloads`.
     """
@@ -2033,7 +2036,7 @@ class MedicalCarousel(DatasetGalleryCarousel):
         )
 
 
-def make_all_carousels(carousels: list[DatasetGalleryCarousel]):
+def make_all_carousels(carousels: list[DatasetGalleryCarousel]):  # noqa: D103
     # Load datasets and create card objects
     DatasetCardFetcher.init_cards()
 
@@ -2084,7 +2087,7 @@ CAROUSEL_LIST = [
 ]
 
 
-def make_all_tables():
+def make_all_tables():  # noqa: D103
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORS_TABLE_DIR, exist_ok=True)

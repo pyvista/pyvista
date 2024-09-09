@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections import UserDict
 import json
+import multiprocessing
+import pickle
 
 import numpy as np
 import pytest
@@ -210,3 +212,55 @@ def test_user_dict_persists_with_cells_to_points(uniform):
     uniform.user_dict['name'] = 'image'
     uniform.points_to_cells()
     assert uniform.user_dict['name'] == 'image'
+
+
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_pickle_serialize_deserialize(datasets, pickle_format):
+    pv.set_pickle_format(pickle_format)
+    for dataset in datasets:
+        dataset_2 = pickle.loads(pickle.dumps(dataset))
+
+        # check python attributes are the same
+        for attr in dataset.__dict__:
+            assert getattr(dataset_2, attr) == getattr(dataset, attr)
+
+        # check data is the same
+        for attr in ('n_cells', 'n_points', 'n_arrays'):
+            if hasattr(dataset, attr):
+                assert getattr(dataset_2, attr) == getattr(dataset, attr)
+
+        for attr in ('cells', 'points'):
+            if hasattr(dataset, attr):
+                arr_have = getattr(dataset_2, attr)
+                arr_expected = getattr(dataset, attr)
+                assert arr_have == pytest.approx(arr_expected)
+
+        for name in dataset.point_data:
+            arr_have = dataset_2.point_data[name]
+            arr_expected = dataset.point_data[name]
+            assert arr_have == pytest.approx(arr_expected)
+
+        for name in dataset.cell_data:
+            arr_have = dataset_2.cell_data[name]
+            arr_expected = dataset.cell_data[name]
+            assert arr_have == pytest.approx(arr_expected)
+
+        for name in dataset.field_data:
+            arr_have = dataset_2.field_data[name]
+            arr_expected = dataset.field_data[name]
+            assert arr_have == pytest.approx(arr_expected)
+
+
+def n_points(dataset):
+    # used in multiprocessing test
+    return dataset.n_points
+
+
+@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
+def test_pickle_multiprocessing(datasets, pickle_format):
+    # exercise pickling via multiprocessing
+    pv.set_pickle_format(pickle_format)
+    with multiprocessing.Pool(2) as p:
+        res = p.map(n_points, datasets)
+    for r, dataset in zip(res, datasets):
+        assert r == dataset.n_points
