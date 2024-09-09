@@ -12,6 +12,7 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import reflection
@@ -1568,42 +1569,14 @@ class Transform(_vtk.vtkTransform):
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return array if inplace else out
 
-    def decompose(self, *, pure_rotation: bool = False, as_matrix: bool = False):
-        """Decompose the current transformation into independent linear components.
-
-        Decompose the transformation matrix ``M`` into components scaling ``S``,
-        rotation ``R``, and translation ``T``. When represented as 4x4 matrices, the
-        decomposition is such that ``M=TRS``.
-
-        By default, the scaling factors are always positive, and any negative scales
-        (i.e. reflections) are lumped into the rotation component. Consequently, the
-        rotation may not be a pure rotation. The rotation matrix may also contain a shear
-        component.
-
-        Optionally, set ``pure_rotation=True`` to ensure a pure rotation is returned.
-        In this case, ``M`` is decomposed into signed scaling ``S'``, shearing ``K``,
-        pure rotation ``R'``, and translation ``T`` components. When represented as 4x4
-        matrices, the decomposition is such that ``M=TR'KS'``.
-
-        The components are returned as vectors (scaling and translation) or 3x3 matrices
-        (rotation and shearing) by default, but these can optionally be returned as 4x4
-        matrices instead.
-
-        .. note::
-
-            The components are returned in order such that the decomposition can
-            can be post-multiplied to reconstruct the input.
+    def decompose(self, as_matrix: bool = False):
+        """Decompose the current transformation into its scaling, rotation, and translation components.
 
         Parameters
         ----------
-        pure_rotation : bool, default: False
-            If ``True``, decompose the rotation component into a pure rotation. In this
-            case, the scaling component is signed (i.e. reflections are part of the
-            scaling component instead of the rotation component), and an additional
-            shear matrix is returned.
-
         as_matrix : bool, default: False
-            If ``True``, return the decomposition as 4x4 matrices.
+            If ``True``, return the scaling, rotation, and translation components as
+            4x4 matrices.
 
         Returns
         -------
@@ -1616,9 +1589,6 @@ class Transform(_vtk.vtkTransform):
         numpy.ndarray
             Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
 
-        numpy.ndarray
-            3x3 shearing matrix (or 4x4 translation matrix if ``as_matrix`` is ``True``).
-            Only returned if ``pure_rotation`` is ``True``.
 
         Examples
         --------
@@ -1657,61 +1627,18 @@ class Transform(_vtk.vtkTransform):
         >>> translation
         array([4., 5., 6.])
 
-
-        >>> transform = (
-        ...     pv.Transform().scale(scale).flip_x().translate(position)
-        ... )
-
-        Decompose the matrix.
-
-        >>> scaling, rotation, translation = transform.decompose()
-        >>> scaling
-        array([1., 2., 3.])
-
-        >>> rotation
-        array([[ 0., -1.,  0.],
-               [ 1.,  0.,  0.],
-               [ 0.,  0.,  1.]])
-
-        >>> translation
-        array([4., 5., 6.])
         """
         matrix = self.matrix
-        matrix3x3 = matrix[:3, :3]
+        scaling = np.abs(self.GetScale())
+        rotation = matrix[:3, :3] @ np.diag(_reciprocal(scaling))
         translation = matrix[:3, 3]
-
-        # Decompose using QR factorization
-        Q, R = np.linalg.qr(matrix3x3)
-        # Q is orthonormal rotation, R includes shear and scaling
-        rotation_matrix = Q
-        scaling_vector = np.diagonal(R)
-
-        # Rotation may be left-handed and scaling may be negative (reflection)
-        # We first remove reflections and apply them to the rotation
-        reflection_vector = np.sign(scaling_vector)
-        reflection_matrix = np.diag(reflection_vector)
-        rotation_matrix = rotation_matrix @ reflection_matrix
-        scaling_vector = scaling_vector @ reflection_matrix
-
-        # Check if the rotation is still left-handed
-        if np.linalg.det(rotation_matrix) < 0:
-            # Flip sign of last vector to make rotation right-handed
-            rotation_matrix[2] *= -1
-            # Need to also modify scale factor accordingly
-            scaling_vector[2] *= -1
-
-        # Upper triangular matrix includes shear and scaling.
-        # Compute shear by removing scaling component
-        # inverse_scaling_matrix = np.diag(_reciprocal(scaling_vector))
-        # shear_matrix = R @ reflection_matrix @ inverse_scaling_matrix
-
         if as_matrix:
             return (
-                Transform().scale(scaling_vector).matrix,
-                Transform().rotate(rotation_matrix).matrix,
+                Transform().scale(scaling).matrix,
+                Transform().rotate(rotation).matrix,
                 Transform().translate(translation).matrix,
             )
-        return scaling_vector, rotation_matrix, translation
+        return scaling, rotation, translation
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
