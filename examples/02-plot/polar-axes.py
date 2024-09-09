@@ -1,8 +1,11 @@
-import pyvista as pv
-from vtkmodules.vtkRenderingCore import vtkCamera, vtkLight, vtkRenderWindow, vtkRenderWindowInteractor, vtkRenderer
-from vtkmodules.vtkFiltersCore import vtkPolyDataNormals
+from __future__ import annotations
+
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkRenderingAnnotation import vtkPolarAxesActor
+from vtkmodules.vtkRenderingCore import vtkCamera
+from vtkmodules.vtkRenderingCore import vtkLight
+
+import pyvista as pv
 
 # Load the teapot geometry using PyVista's built-in methods
 filename = pv.examples.download_teapot(load=False)  # Download only, do not load
