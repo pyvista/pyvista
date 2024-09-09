@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkRenderingAnnotation import vtkPolarAxesActor
-from vtkmodules.vtkRenderingCore import vtkLight
 
 import pyvista as pv
 
@@ -42,7 +41,7 @@ camera.SetFocalPoint(0.0, 0.5, 0.0)
 camera.SetPosition(5.0, 6.0, 14.0)
 
 # Set up the light using VTK
-light = vtkLight()
+light = pv.Light()
 light.SetFocalPoint(0.21406, 1.5, 0.0)
 light.SetPosition(7.0, 7.0, 4.0)
 
