@@ -389,12 +389,11 @@ class MultiBlock(
     def __getitem__(
         self,
         index: int | str,
-    ) -> _TypeMultiBlockLeaf | None:  # noqa: D105  # numpydoc ignore=GL08
+    ) -> _TypeMultiBlockLeaf | None:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> MultiBlock:  # noqa: D105
-        ...  # pragma: no cover
+    def __getitem__(self, index: slice) -> MultiBlock: ...  # pragma: no cover
 
     def __getitem__(self, index):
         """Get a block by its index or name.
@@ -661,7 +660,7 @@ class MultiBlock(
         self,
         index: int | str,
         data: _TypeMultiBlockLeaf | None,
-    ):  # noqa: D105  # numpydoc ignore=GL08
+    ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
@@ -669,7 +668,7 @@ class MultiBlock(
         self,
         index: slice,
         data: Iterable[_TypeMultiBlockLeaf | None],
-    ):  # noqa: D105  # numpydoc ignore=GL08
+    ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     def __setitem__(

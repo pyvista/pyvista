@@ -1178,6 +1178,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.point_data._active_normals_name = 'my-normals'
         >>> mesh.point_data._active_normals_name
         'my-normals'
+
         """
         if self.GetNormals() is not None:
             return str(self.GetNormals().GetName())

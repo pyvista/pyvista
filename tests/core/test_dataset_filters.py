@@ -293,7 +293,6 @@ def test_slice_filter_composite(composite):
 
 def test_slice_orthogonal_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
-
     for dataset in datasets:
         slices = dataset.slice_orthogonal(progress_bar=True)
         assert slices is not None
@@ -1871,7 +1870,6 @@ def test_sample_over_multiple_lines():
 
 def test_sample_over_circular_arc():
     """Test that we get a circular arc."""
-
     name = 'values'
 
     uniform = examples.load_uniform()
@@ -1907,7 +1905,6 @@ def test_sample_over_circular_arc():
 
 def test_sample_over_circular_arc_normal():
     """Test that we get a circular arc_normal."""
-
     name = 'values'
 
     uniform = examples.load_uniform()
@@ -3285,7 +3282,8 @@ def test_extract_subset_structured():
 @pytest.fixture
 def structured_grids_split_coincident():
     """Two structured grids which are coincident along second axis (axis=1), and
-    the grid from which they were extracted."""
+    the grid from which they were extracted.
+    """
     structured = examples.load_structured()
     point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
     cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')

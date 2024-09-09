@@ -1,5 +1,4 @@
-"""
-Test downloading files.
+"""Test downloading files.
 
 Enable these tests with:
 

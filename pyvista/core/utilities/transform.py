@@ -243,6 +243,7 @@ class Transform(_vtk.vtkTransform):
     >>> _ = pl.add_mesh(mesh_pre_inverted, color='teal')
     >>> _ = pl.add_axes_at_origin()
     >>> pl.show()
+
     """
 
     def __init__(
@@ -371,6 +372,7 @@ class Transform(_vtk.vtkTransform):
 
         >>> copied is transform
         False
+
         """
         new_transform = Transform()
         new_transform.DeepCopy(self)
@@ -456,6 +458,7 @@ class Transform(_vtk.vtkTransform):
         >>> transform = pv.Transform().pre_multiply()
         >>> transform.multiply_mode
         'pre'
+
         """
         self._multiply_mode: Literal['pre', 'post'] = 'pre'
         self.PreMultiply()
@@ -474,6 +477,7 @@ class Transform(_vtk.vtkTransform):
         >>> transform = pv.Transform().post_multiply()
         >>> transform.multiply_mode
         'post'
+
         """
         self._multiply_mode = 'post'
         self.PostMultiply()
@@ -563,6 +567,7 @@ class Transform(_vtk.vtkTransform):
                [0., 1., 0., 2.],
                [0., 0., 1., 3.],
                [0., 0., 0., 1.]])
+
         """
         valid_factor = _validation.validate_array3(
             factor, broadcast=True, dtype_out=float, name='scale factor'
@@ -632,6 +637,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  1.,  0.,  0.],
                [ 0.,  0., -1.,  0.],
                [ 0.,  0.,  0.,  1.]])
+
         """
         valid_normal = _validation.validate_array3(
             normal, dtype_out=float, name='reflection normal'
@@ -697,6 +703,7 @@ class Transform(_vtk.vtkTransform):
                [0., 1., 0., 0.],
                [0., 0., 1., 0.],
                [0., 0., 0., 1.]])
+
         """
         return self.reflect((1, 0, 0), point=point, multiply_mode=multiply_mode)
 
@@ -756,6 +763,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  1.,  0., 10.],
                [ 0.,  0.,  1.,  0.],
                [ 0.,  0.,  0.,  1.]])
+
         """
         return self.reflect((0, 1, 0), point=point, multiply_mode=multiply_mode)
 
@@ -815,6 +823,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  1.,  0.,  0.],
                [ 0.,  0.,  1., 12.],
                [ 0.,  0.,  0.,  1.]])
+
         """
         return self.reflect((0, 0, 1), point=point, multiply_mode=multiply_mode)
 
@@ -864,6 +873,7 @@ class Transform(_vtk.vtkTransform):
                [0., 1., 0., 3.],
                [0., 0., 1., 4.],
                [0., 0., 0., 1.]])
+
         """
         valid_vector = _validation.validate_array3(
             vector, dtype_out=float, name='translation vector'
@@ -964,6 +974,7 @@ class Transform(_vtk.vtkTransform):
                [0., 1., 0., 2.],
                [0., 0., 1., 3.],
                [0., 0., 0., 1.]])
+
         """
         valid_rotation = _validation.validate_transform3x3(
             rotation, must_be_finite=self.check_finite, name='rotation'
@@ -1034,6 +1045,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.        , -0.70710678, -0.70710678,  0.        ],
                [ 0.        ,  0.70710678, -0.70710678,  0.        ],
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
         """
         transform = axis_angle_rotation((1, 0, 0), angle, deg=True)
         return self._concatenate_with_translations(
@@ -1102,6 +1114,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.        ,  1.        ,  0.        ,  0.        ],
                [-0.70710678,  0.        , -0.70710678,  0.        ],
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
         """
         transform = axis_angle_rotation((0, 1, 0), angle, deg=True)
         return self._concatenate_with_translations(
@@ -1170,6 +1183,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.70710678, -0.70710678,  0.        ,  0.        ],
                [ 0.        ,  0.        ,  1.        ,  0.        ],
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
         """
         transform = axis_angle_rotation((0, 0, 1), angle, deg=True)
         return self._concatenate_with_translations(
@@ -1239,6 +1253,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.83349512,  0.55045308, -0.04782562,  0.        ],
                [-0.40070461,  0.66179682,  0.63360933,  0.        ],
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
+
         """
         transform = axis_angle_rotation(vector, angle, deg=True)
         return self._concatenate_with_translations(
@@ -1293,6 +1308,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.   ,  0.   , -1.   , -1.5  ],
                [-0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
+
         """
         # Make sure we have a vtkTransform
         if isinstance(transform, _vtk.vtkTransform):
@@ -1335,6 +1351,7 @@ class Transform(_vtk.vtkTransform):
         -------
         NDArray[float]
             Current transformation matrix.
+
         """
         array = array_from_vtkmatrix(self.GetMatrix())
         if self.check_finite:
@@ -1365,6 +1382,7 @@ class Transform(_vtk.vtkTransform):
         -------
         NDArray[float]
             Current inverse transformation matrix.
+
         """
         array = array_from_vtkmatrix(self.GetInverse().GetMatrix())
         if self.check_finite:
@@ -1389,6 +1407,7 @@ class Transform(_vtk.vtkTransform):
         -------
         list[NDArray[float]]
             List of all current transformation matrices.
+
         """
         return [
             array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetMatrix())
@@ -1414,6 +1433,7 @@ class Transform(_vtk.vtkTransform):
         -------
         list[NDArray[float]]
             List of all current inverse transformation matrices.
+
         """
         return [
             array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetInverse().GetMatrix())
@@ -1537,6 +1557,7 @@ class Transform(_vtk.vtkTransform):
         >>> inverted_dataset.points
         pyvista_ndarray([[0.5, 1. , 1.5],
                          [2. , 2.5, 3. ]], dtype=float32)
+
         """
         # avoid circular import
         from pyvista.core.composite import MultiBlock
@@ -1617,6 +1638,7 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 0., 1.]])
         >>> transform.is_inverted
         False
+
         """
         self.Inverse()
         return self
@@ -1646,6 +1668,7 @@ class Transform(_vtk.vtkTransform):
                [0., 1., 0., 0.],
                [0., 0., 1., 0.],
                [0., 0., 0., 1.]])
+
         """
         self.Identity()
         return self

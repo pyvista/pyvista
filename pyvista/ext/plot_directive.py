@@ -351,7 +351,9 @@ class PlotError(RuntimeError):
 
 
 def _run_code(code, code_path, ns=None, function_name=None):
-    """Run a docstring example if it does not contain ``'doctest:+SKIP'``, or a
+    """Run a docstring example.
+
+     Run the example if it does not contain ``'doctest:+SKIP'``, or a
     ```pyvista-plot::`` directive.  In the later case, the doctest parser will
     present the code-block again with the ```pyvista-plot::`` directive
     and its options removed.
@@ -392,7 +394,6 @@ def render_figures(
     *output_base*. Closed plotters are ignored if they were never
     rendered.
     """
-
     # We skip snippets that contain the ```pyvista-plot::`` directive as part of their code.
     # The doctest parser will present the code-block once again with the ```pyvista-plot::`` directive
     # and its options properly parsed.

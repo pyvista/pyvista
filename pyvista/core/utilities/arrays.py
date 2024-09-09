@@ -169,6 +169,7 @@ def has_duplicates(arr):
     -------
     bool
         ``True`` if the array has any duplicates, otherwise ``False``.
+
     """
     s = np.sort(arr, axis=None)
     return (s[1:] == s[:-1]).any()
@@ -186,6 +187,7 @@ def raise_has_duplicates(arr):
     ------
     ValueError
         If the array contains duplicate values.
+
     """
     if has_duplicates(arr):
         raise ValueError("Array contains duplicate values.")
@@ -381,6 +383,7 @@ def raise_not_matching(scalars, dataset):
     ------
     ValueError
         Raises a ValueError if the size of scalars does not the dataset.
+
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
