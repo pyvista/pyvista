@@ -1755,3 +1755,11 @@ def test_transform_decompose(transform):
     assert np.allclose(scale, pv.Transform().scale(SCALE).matrix)
     assert np.allclose(rotation, pv.Transform().rotate(ROTATION).matrix)
     assert np.allclose(translation, pv.Transform().translate(VECTOR).matrix)
+
+
+def test_transform_decompose_invalid_matrix(transform):
+    invalid_matrix = [[3, 8, 2], [2, 5, 7], [1, 4, 6]]
+    transform = pv.Transform(invalid_matrix)
+    match = 'Unable to decompose matrix. It cannot be represented by a simple scale, rotation, and translation.'
+    with pytest.raises(ValueError, match=match):
+        transform.decompose()

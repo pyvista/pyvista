@@ -12,7 +12,6 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
-from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import reflection
@@ -1572,6 +1571,16 @@ class Transform(_vtk.vtkTransform):
     def decompose(self, as_matrix: bool = False):
         """Decompose the current transformation into its scaling, rotation, and translation components.
 
+        Return scaling component ``S``, rotation component ``R``, and translation
+        component ``T`` such that, when represented as 4x4 matrices, decomposes
+        the current transformation matrix ``M`` as ``M = TRS``.
+
+        .. note::
+
+            The scaling factors are always positive. Any reflections (if present)
+            are included in the rotation. Therefore, the rotation matrix may be
+            left-handed (with negative determinant) and not strictly a "pure" rotation.
+
         Parameters
         ----------
         as_matrix : bool, default: False
@@ -1588,7 +1597,6 @@ class Transform(_vtk.vtkTransform):
 
         numpy.ndarray
             Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
-
 
         Examples
         --------
@@ -1628,17 +1636,36 @@ class Transform(_vtk.vtkTransform):
         array([4., 5., 6.])
 
         """
+
+        def _polar_decomposition(a):
+            # Decompose `a=up` where u is orthonormal and p is positive semi-definite
+            # See scipy.linalg.polar for details
+            w, s, vh = np.linalg.svd(a, full_matrices=False)
+            u = w.dot(vh)
+            p = (vh.T.conj() * s).dot(vh)
+            return u, p
+
         matrix = self.matrix
-        scaling = np.abs(self.GetScale())
-        rotation = matrix[:3, :3] @ np.diag(_reciprocal(scaling))
-        translation = matrix[:3, 3]
+        translation_vector = matrix[:3, 3]
+        rotation_matrix, scaling_matrix = _polar_decomposition(matrix[:3, :3])
+        scaling_vector = np.diagonal(scaling_matrix)
+
+        # If the input is actually a TRS matrix, the off-diagonals should be zeros.
+        # Otherwise, off-diagonals may be non-zero for arbitrary inputs.
+        # See https://www.cs.cornell.edu/courses/cs4620/2014fa/lectures/polarnotes.pdf
+        off_diagonals = scaling_matrix * np.invert(np.eye(3) == 1)
+        if not np.allclose(off_diagonals, 0):
+            raise ValueError(
+                'Unable to decompose matrix. It cannot be represented by a simple scale, rotation, and translation.'
+            )
+
         if as_matrix:
             return (
-                Transform().scale(scaling).matrix,
-                Transform().rotate(rotation).matrix,
-                Transform().translate(translation).matrix,
+                Transform().scale(scaling_vector).matrix,
+                Transform().rotate(rotation_matrix).matrix,
+                Transform().translate(translation_vector).matrix,
             )
-        return scaling, rotation, translation
+        return scaling_vector, rotation_matrix, translation_vector
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
