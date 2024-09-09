@@ -418,6 +418,7 @@ class AxesActor(_vtk.vtkAxesActor):
         >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
         >>> axes_actor.labels
         ('X Axis', 'Y Axis', 'Z Axis')
+
         """
         return self.x_label, self.y_label, self.z_label
 
@@ -567,6 +568,7 @@ class AxesActor(_vtk.vtkAxesActor):
         >>> axes.axes_actor.z_label = 'This axis'
         >>> axes.axes_actor.z_label
         'This axis'
+
         """
         return self.GetZAxisLabelText()
 

@@ -37,7 +37,7 @@ pyvista.set_plot_theme("document")
 # furthest along in the (1, 0, 1) direction.
 
 
-class FooData(pyvista.PolyData):
+class FooData(pyvista.PolyData):  # noqa: D101
     @property
     def max_point(self):
         """Returns index of point that is furthest along (1, 0, 1) direction."""

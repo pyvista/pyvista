@@ -108,8 +108,7 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
         )
 
     def GetInputData(self, inInfo, port, idx):
-        """
-        Get input data object.
+        """Get input data object.
 
         This will convert ``vtkPointSet`` to ``vtkPolyData``.
 
@@ -128,6 +127,7 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
         -------
         _vtk.vtkDataObject
             The input data object.
+
         """
         inp = wrap(_vtk.VTKPythonAlgorithmBase.GetInputData(self, inInfo, port, idx))
         if isinstance(inp, pyvista.PointSet):
@@ -153,6 +153,7 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
         -------
         int
             Returns 1 if successful.
+
         """
         class_name = self.GetInputData(inInfo, 0, 0).GetClassName()
         if class_name == 'vtkPointSet':
@@ -241,8 +242,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
         )
 
     def RequestData(self, _request, inInfo, outInfo):
-        """
-        Perform algorithm execution.
+        """Perform algorithm execution.
 
         Parameters
         ----------
@@ -257,6 +257,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
         -------
         int
             1 when successful.
+
         """
         try:
             inp = wrap(self.GetInputData(inInfo, 0, 0))
@@ -287,6 +288,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
     ------
     ValueError
         If neither point IDs nor cell IDs are set.
+
     """
 
     def __init__(self, point_ids=True, cell_ids=True):
@@ -298,8 +300,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         self.cell_ids = cell_ids
 
     def RequestData(self, _request, inInfo, outInfo):
-        """
-        Perform algorithm execution.
+        """Perform algorithm execution.
 
         Parameters
         ----------
@@ -319,6 +320,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         ------
         Exception
             If the algorithm fails to execute properly.
+
         """
         try:
             inp = wrap(self.GetInputData(inInfo, 0, 0))
@@ -391,6 +393,7 @@ def outline_algorithm(inp, generate_faces=False):
     -------
     vtk.vtkOutlineFilter
         Outline filter applied to the input data.
+
     """
     alg = _vtk.vtkOutlineFilter()
     set_algorithm_input(alg, inp)
@@ -416,6 +419,7 @@ def extract_surface_algorithm(inp, pass_pointid=False, pass_cellid=False, nonlin
     -------
     vtk.vtkDataSetSurfaceFilter
         Surface filter applied to the input data.
+
     """
     surf_filter = _vtk.vtkDataSetSurfaceFilter()
     surf_filter.SetPassThroughPointIds(pass_pointid)
@@ -442,6 +446,7 @@ def active_scalars_algorithm(inp, name, preference='point'):
     -------
     vtk.vtkAlgorithm
         Active scalars filter applied to the input data.
+
     """
     alg = ActiveScalarsAlgorithm(
         name=name,
@@ -463,6 +468,7 @@ def pointset_to_polydata_algorithm(inp):
     -------
     vtk.vtkAlgorithm
         Filter that casts the input PointSet to PolyData.
+
     """
     alg = PointSetToPolyDataAlgorithm()
     set_algorithm_input(alg, inp)
@@ -485,6 +491,7 @@ def add_ids_algorithm(inp, point_ids=True, cell_ids=True):
     -------
     AddIDsAlgorithm
         AddIDsAlgorithm filter.
+
     """
     alg = AddIDsAlgorithm(point_ids=point_ids, cell_ids=cell_ids)
     set_algorithm_input(alg, inp)
@@ -527,6 +534,7 @@ def cell_data_to_point_data_algorithm(inp, pass_cell_data=False):
     -------
     vtk.vtkCellDataToPointData
         The vtkCellDataToPointData filter.
+
     """
     alg = _vtk.vtkCellDataToPointData()
     alg.SetPassCellData(pass_cell_data)
@@ -548,6 +556,7 @@ def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
     -------
     vtk.vtkPointDataToCellData
         ``vtkPointDataToCellData`` algorithm.
+
     """
     alg = _vtk.vtkPointDataToCellData()
     alg.SetPassPointData(pass_point_data)
@@ -556,8 +565,7 @@ def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
 
 
 def triangulate_algorithm(inp):
-    """
-    Triangulate the input data.
+    """Triangulate the input data.
 
     Parameters
     ----------
@@ -568,6 +576,7 @@ def triangulate_algorithm(inp):
     -------
     vtk.vtkTriangleFilter
         The triangle filter that has been applied to the input data.
+
     """
     trifilter = _vtk.vtkTriangleFilter()
     trifilter.PassVertsOff()
@@ -577,8 +586,7 @@ def triangulate_algorithm(inp):
 
 
 def decimation_algorithm(inp, target_reduction):
-    """
-    Decimate the input data to the target reduction.
+    """Decimate the input data to the target reduction.
 
     Parameters
     ----------
@@ -591,6 +599,7 @@ def decimation_algorithm(inp, target_reduction):
     -------
     vtk.vtkQuadricDecimation
         The decimation algorithm that has been applied to the input data.
+
     """
     alg = _vtk.vtkQuadricDecimation()
     alg.SetTargetReduction(target_reduction)

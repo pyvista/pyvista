@@ -518,8 +518,7 @@ def test_bitarray_field(grid):
 
 
 def test_html_repr(grid):
-    """
-    This just tests to make sure no errors are thrown on the HTML
+    """This just tests to make sure no errors are thrown on the HTML
     representation method for DataSet.
     """
     assert grid._repr_html_() is not None
@@ -535,8 +534,7 @@ def test_html_repr_string_scalar(grid):
 @pytest.mark.parametrize('html', [True, False])
 @pytest.mark.parametrize('display', [True, False])
 def test_print_repr(grid, display, html):
-    """
-    This just tests to make sure no errors are thrown on the text friendly
+    """This just tests to make sure no errors are thrown on the text friendly
     representation method for DataSet.
     """
     result = grid.head(display=display, html=html)
@@ -587,9 +585,7 @@ def test_arrows():
 
 
 def active_component_consistency_check(grid, component_type, field_association="point"):
-    """
-    Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset
-    """
+    """Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset"""
     component_type = component_type.lower()
     vtk_component_type = component_type.capitalize()
 

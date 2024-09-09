@@ -1,5 +1,4 @@
-"""
-Limited imports from VTK (excludes any GL-dependent).
+"""Limited imports from VTK (excludes any GL-dependent).
 
 These are the modules within VTK that must be loaded across pyvista's
 core API. Here, we attempt to import modules using the ``vtkmodules``
