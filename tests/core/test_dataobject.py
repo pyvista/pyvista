@@ -342,16 +342,3 @@ def test_pickle_invalid_format(sphere):
     pv.PICKLE_FORMAT = 'invalid_format'
     with pytest.raises(ValueError, match=match):
         pickle.dumps(sphere)
-
-
-# @pytest.mark.needs_vtk_version(9, 3)
-# def test_pickle_invalid_attributes(ant, airplane):
-#     ant.Type = 'type'
-#     match = "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for pickling."
-#     with pytest.raises(ValueError, match=match):
-#         pickle.dumps(ant)
-#
-#     airplane.Serialized = 'serialized'
-#     match = "Pickling failed. Attributes 'Type' and 'Serialized' are reserved for pickling."
-#     with pytest.raises(ValueError, match=match):
-#         pickle.dumps(airplane)
