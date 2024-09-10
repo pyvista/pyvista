@@ -31,14 +31,14 @@ plotter.add_mesh(pv.outline_algorithm(normals), color="white")
 
 # Set up the camera using VTK
 camera = pv.Camera()
-camera.SetClippingRange(1.0, 100.0)
-camera.SetFocalPoint(0.0, 0.5, 0.0)
-camera.SetPosition(5.0, 6.0, 14.0)
+camera.clipping_range = (1.0, 100.0)
+camera.focal_point = (0.0, 0.5, 0.0)
+camera.position = (5.0, 6.0, 14.0)
 
 # Set up the light using VTK
 light = pv.Light()
-light.SetFocalPoint(0.21406, 1.5, 0.0)
-light.SetPosition(7.0, 7.0, 4.0)
+light.focal_point = (0.21406, 1.5, 0.0)
+light.position = (7.0, 7.0, 4.0)
 
 # Set up the polar axes using VTK and add it to the plotter
 polaxes = vtkPolarAxesActor()
@@ -62,7 +62,7 @@ polaxes.GetSecondaryRadialAxesTextProperty().SetColor(0.0, 1.0, 1.0)
 polaxes.SetScreenSize(9.0)
 
 # Add the polar axes to the plotter
-plotter.renderer.AddActor(polaxes)
+plotter.add_actor(polaxes)
 
 # Set background color
 plotter.set_background((0.8, 0.8, 0.8))
