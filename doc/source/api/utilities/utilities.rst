@@ -49,10 +49,17 @@ File IO
 .. autosummary::
    :toctree: _autosummary
 
+   from_meshio
+   get_ext
+   is_meshio_mesh
    read
    read_exodus
+   read_grdecl
+   read_meshio
    read_texture
    save_meshio
+   set_pickle_format
+   set_vtkwriter_mode
 
 
 Mesh Creation
