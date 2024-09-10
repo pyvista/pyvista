@@ -1628,7 +1628,7 @@ class Transform(_vtk.vtkTransform):
 
         numpy.ndarray
             Length-3 shear vector (or 4x4 shear matrix if ``as_matrix`` is ``True``).
-            If a vector, the values are the ``xy``, ``xz``, and ``yz`` shears that that
+            If a vector, the values are the ``xy``, ``xz``, and ``yz`` shears that
             fill the upper triangle above the diagonal of the shear matrix.
 
         Examples
