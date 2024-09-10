@@ -1754,20 +1754,43 @@ def test_transform_repr(transform):
     )
 
 
-def test_transform_decompose(transform):
-    transform.scale(SCALE).rotate(ROTATION).translate(VECTOR)
+SHEAR = np.eye(4)
+SHEAR[0, 1] = 0.1
+
+
+@pytest.mark.parametrize('do_scale', [True, False])
+# @pytest.mark.parametrize('shear', [True, False])
+@pytest.mark.parametrize('do_rotate', [True, False])
+@pytest.mark.parametrize('do_translate', [True, False])
+def test_transform_decompose(transform, do_scale, do_rotate, do_translate):
+    if do_scale:
+        transform.scale(SCALE)
+    # if shear:
+    #     transform.concatenate(SHEAR)
+    if do_rotate:
+        transform.rotate(ROTATION)
+    if do_translate:
+        transform.translate(VECTOR)
+
     scale, rotation, translation = transform.decompose()
+
     assert isinstance(scale, np.ndarray)
     assert isinstance(rotation, np.ndarray)
     assert isinstance(translation, np.ndarray)
-    assert np.allclose(scale, [SCALE] * 3)
-    assert np.allclose(rotation, ROTATION)
-    assert np.allclose(translation, VECTOR)
+
+    expected_scale = [SCALE] * 3 if do_scale else np.ones((3,))
+    assert np.allclose(scale, expected_scale)
+
+    expected_rotation = ROTATION if do_rotate else np.eye(3)
+    assert np.allclose(rotation, expected_rotation)
+
+    expected_translation = VECTOR if do_translate else np.zeros((3,))
+    assert np.allclose(translation, expected_translation)
 
     scale, rotation, translation = transform.decompose(as_matrix=True)
-    assert np.allclose(scale, pv.Transform().scale(SCALE).matrix)
-    assert np.allclose(rotation, pv.Transform().rotate(ROTATION).matrix)
-    assert np.allclose(translation, pv.Transform().translate(VECTOR).matrix)
+    assert np.allclose(scale, pv.Transform().scale(expected_scale).matrix)
+    assert np.allclose(rotation, pv.Transform().rotate(expected_rotation).matrix)
+    assert np.allclose(translation, pv.Transform().translate(expected_translation).matrix)
 
 
 def test_transform_decompose_invalid_matrix(transform):
