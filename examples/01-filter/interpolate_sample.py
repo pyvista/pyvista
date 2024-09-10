@@ -96,6 +96,23 @@ pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color='red')
 pl.view_xy()
 pl.show()
 
+# While this filter is very useful for point clouds, it is possible to use
+# it to interpolate from the points on other mesh types. With
+# unstuitable choice of ``radius`` the interpolation doesn't look very good.
+# It is recommended consider using :func:`pyvista.DataSetFilters.sample`` in a
+# case like this (see next section below). However, there may be cases with
+# non-point cloud meshes where :func:`pyvista.DataSetFilters.interpolate` is
+# still preferred.
+
+sphere = pv.SolidSphere(center=(0.5, 0.5, 0), outer_radius=1.0)
+sphere["ysquared"] = sphere.points[:, 1] ** 2
+output = grid.interpolate(sphere, radius=0.1)
+
+pl = pv.Plotter()
+pl.add_mesh(output, clim=[0, 1])
+pl.add_mesh(sphere, style='wireframe', color='white')
+pl.view_xy()
+pl.show(screenshot="tmp0.png")
 
 # %%
 # Sampling from a mesh with connectivity
@@ -148,10 +165,26 @@ output
 # low interpolation error.
 
 pl = pv.Plotter()
-pl.add_mesh(grid, style='wireframe')
+pl.add_mesh(grid, style='wireframe', clim=[0, 1])
 pl.add_mesh(output, clim=[0, 1])
 pl.view_xy()
 pl.show()
+
+# Repeat the sphere interpolation example, but using
+# :func:`pyvista.DataSetFilters.sample`. This method
+# is directly able to sample from the mesh in this case without
+# fiddling with distance weighting parameters.
+
+sphere = pv.SolidSphere(center=(0.5, 0.5, 0), outer_radius=1.0)
+sphere["ysquared"] = sphere.points[:, 1] ** 2
+output = grid.sample(sphere)
+
+pl = pv.Plotter()
+pl.add_mesh(output, clim=[0, 1])
+pl.add_mesh(sphere, style='wireframe', color='white')
+pl.view_xy()
+pl.show(screenshot="tmp.png")
+
 
 # %%
 # .. tags:: filter
