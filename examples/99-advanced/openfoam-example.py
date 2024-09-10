@@ -6,10 +6,12 @@ Plot OpenFOAM data
 
 """
 
+from __future__ import annotations
+
 import pyvista
 from pyvista import examples
 
-###############################################################################
+# %%
 # This example uses data from a lid-driven cavity flow.  It is recommended to
 # use :class:`pyvista.POpenFOAMReader` for reading OpenFOAM files for more
 # control over reading data.
@@ -21,14 +23,14 @@ from pyvista import examples
 filename = examples.download_cavity(load=False)
 reader = pyvista.POpenFOAMReader(filename)
 
-###############################################################################
+# %%
 # OpenFOAM datasets include multiple sub-datasets including the internal mesh
 # and patches, typically boundaries.  This can be inspected before reading the data.
 
 print(f"All patch names: {reader.patch_array_names}")
 print(f"All patch status: {reader.all_patch_arrays_status}")
 
-###############################################################################
+# %%
 # This data is represented as a :class:`pyvista.MultiBlock` object.
 # The internal mesh will be located in the top-level MultiBlock mesh.
 
@@ -36,12 +38,12 @@ mesh = reader.read()
 print(f"Mesh patches: {mesh.keys()}")
 internal_mesh = mesh["internalMesh"]  # or internal_mesh = mesh[0]
 
-###############################################################################
+# %%
 # In this case the internal mesh is a :class:`pyvista.UnstructuredGrid`.
 
 print(internal_mesh)
 
-###############################################################################
+# %%
 # Additional Patch meshes are nested inside another MultiBlock mesh.  The name
 # of the sub-level MultiBlock mesh depends on the vtk version.
 
@@ -50,7 +52,7 @@ print(boundaries)
 print(f"Boundaries patches: {boundaries.keys()}")
 print(boundaries["movingWall"])
 
-###############################################################################
+# %%
 # The default in OpenFOAMReader is to translate the existing cell data to point
 # data.  Therefore, the cell data arrays are duplicated in point data.
 
@@ -59,7 +61,7 @@ print(internal_mesh.cell_data)
 print("\nPoint Data:")
 print(internal_mesh.point_data)
 
-###############################################################################
+# %%
 # This behavior can be turned off if only cell data is required.
 
 reader.cell_to_point_creation = False
@@ -69,7 +71,7 @@ print(internal_mesh.cell_data)
 print("\nPoint Data:")
 print(internal_mesh.point_data)
 
-###############################################################################
+# %%
 # Now we will read in all the data at the last time point.
 
 print(f"Available Time Values: {reader.time_values}")
@@ -79,7 +81,7 @@ mesh = reader.read()
 internal_mesh = mesh["internalMesh"]
 boundaries = mesh["boundary"]
 
-###############################################################################
+# %%
 # This OpenFOAM simulation is in 3D with
 # only 1 cell in the z-direction.  First, the solution is sliced in the center
 # of the z-direction.
@@ -97,10 +99,10 @@ def slice_z_center(mesh):
 
 slice_internal_mesh = slice_z_center(internal_mesh)
 slice_boundaries = pyvista.MultiBlock(
-    {key: slice_z_center(boundaries[key]) for key in boundaries.keys()}
+    {key: slice_z_center(boundaries[key]) for key in boundaries.keys()},
 )
 
-###############################################################################
+# %%
 # Streamlines are generated using the point data "U".
 
 streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
@@ -110,7 +112,7 @@ streamlines = slice_internal_mesh.streamlines_evenly_spaced_2D(
     separating_distance_ratio=0.1,
 )
 
-###############################################################################
+# %%
 # Plot streamlines colored by velocity magnitude.  Additionally, the moving
 # and fixed wall boundaries are plotted.
 

@@ -11,7 +11,10 @@ options for beam customization.
 
 Consider two hemispheres:
 """
+
 # sphinx_gallery_thumbnail_number = 5
+from __future__ import annotations
+
 import pyvista as pv
 
 plotter = pv.Plotter()
@@ -26,7 +29,7 @@ plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
 plotter.show()
 
 
-###############################################################################
+# %%
 # We can see that the default lighting does a very good job of articulating the
 # shape of the hemispheres.
 #
@@ -48,7 +51,7 @@ plotter.add_light(light)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Both hemispheres have their surface lit on the side that faces the light.
 # This is consistent with the point source positioned at infinity, directed from
 # the light's nominal position toward the focal point.
@@ -72,7 +75,7 @@ plotter.add_light(light)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Now the inner surface of both hemispheres is lit. A positional light with a
 # cone angle of 90 degrees (or more) acts as a point source located at the
 # light's nominal position. It could still display attenuation, see the
@@ -111,7 +114,7 @@ plotter.add_light(light)
 plotter.show()
 
 
-###############################################################################
+# %%
 # Even though the two lights only differ by a fraction of a degree in cone angle,
 # the beam shaping effect enabled for spotlights causes a marked difference in
 # the result.
@@ -144,6 +147,8 @@ for center, exponent in zip(centers, exponents):
 plotter.show()
 
 
-###############################################################################
+# %%
 # The spotlight with exponent 0.3 is practically uniform, and the one with
 # exponent 5 is visibly focused along the axis of the light.
+#
+# .. tags:: lights

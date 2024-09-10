@@ -59,7 +59,8 @@ You can create one by defining a 2D array of Cartesian coordinates like so:
     import numpy as np
     import pyvista as pv
 
-    points = np.random.rand(100, 3)
+    rng = np.random.default_rng(seed=0)
+    points = rng.random((100, 3))
     mesh = pv.PolyData(points)
     mesh.plot(point_size=10, style='points')
 

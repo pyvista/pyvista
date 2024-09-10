@@ -28,9 +28,10 @@ must be all triangle meshes, which you can check with
 .. note::
    For merging, the ``+`` operator can be used between any two meshes
    in PyVista which simply calls the ``.merge()`` filter to combine
-   any two meshes.  This is different from ``boolean_union`` as it
-   simply superimposes the two meshes without performing additional
-   calculations on the result.
+   any two meshes.  This is different from the operator ``|`` in PyVista
+   which simply calls the ``boolean_union`` filter as it simply superimposes
+   the two meshes without performing additional calculations on the result.
+   The ``&`` operator in PyVista simply calls the ``boolean_intersection``.
 
 .. warning::
    If your boolean operations don't react the way you think they
@@ -42,13 +43,15 @@ must be all triangle meshes, which you can check with
 """
 
 # sphinx_gallery_thumbnail_number = 6
+from __future__ import annotations
+
 import pyvista as pv
 
 sphere_a = pv.Sphere()
 sphere_b = pv.Sphere(center=(0.5, 0, 0))
 
 
-###############################################################################
+# %%
 # Boolean Union
 # +++++++++++++
 #
@@ -61,7 +64,7 @@ sphere_b = pv.Sphere(center=(0.5, 0, 0))
 # Order of operands does not matter for boolean union (the operation is
 # commutative).
 
-result = sphere_a.boolean_union(sphere_b)
+result = sphere_a | sphere_b
 pl = pv.Plotter()
 _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
 _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
@@ -70,7 +73,7 @@ pl.camera_position = 'xz'
 pl.show()
 
 
-###############################################################################
+# %%
 # Boolean Difference
 # ++++++++++++++++++
 #
@@ -83,7 +86,7 @@ pl.show()
 #
 # Order of operands matters for boolean difference.
 
-result = sphere_a.boolean_difference(sphere_b)
+result = sphere_a - sphere_b
 pl = pv.Plotter()
 _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
 _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
@@ -92,7 +95,7 @@ pl.camera_position = 'xz'
 pl.show()
 
 
-###############################################################################
+# %%
 # Boolean Intersection
 # ++++++++++++++++++++
 #
@@ -105,7 +108,7 @@ pl.show()
 # Order of operands does not matter for boolean intersection (the
 # operation is commutative).
 
-result = sphere_a.boolean_intersection(sphere_b)
+result = sphere_a & sphere_b
 pl = pv.Plotter()
 _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
 _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
@@ -114,7 +117,7 @@ pl.camera_position = 'xz'
 pl.show()
 
 
-###############################################################################
+# %%
 # Behavior due to flipped normals
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Note that these boolean filters behave differently depending on the
@@ -129,7 +132,7 @@ result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
-###############################################################################
+# %%
 # Boolean difference with cube normals outward, sphere inward.
 
 cube = pv.Cube().triangulate().subdivide(3)
@@ -139,7 +142,7 @@ result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
-###############################################################################
+# %%
 # Boolean difference with cube normals inward, sphere outward.
 
 cube = pv.Cube().triangulate().subdivide(3)
@@ -149,7 +152,7 @@ result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
-###############################################################################
+# %%
 # Both cube and sphere normals inward.
 
 cube = pv.Cube().triangulate().subdivide(3)
@@ -158,3 +161,5 @@ sphere = pv.Sphere(radius=0.6)
 sphere.flip_normals()
 result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
+# %%
+# .. tags:: filter

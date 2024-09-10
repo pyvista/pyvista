@@ -1,11 +1,20 @@
 """Tests for pyvista.core.dataset."""
 
-import multiprocessing
-import pickle
+from __future__ import annotations
 
-from hypothesis import HealthCheck, assume, given, settings
-from hypothesis.extra.numpy import array_shapes, arrays
-from hypothesis.strategies import composite, floats, integers, one_of
+import re
+from typing import TYPE_CHECKING
+
+from hypothesis import HealthCheck
+from hypothesis import assume
+from hypothesis import given
+from hypothesis import settings
+from hypothesis.extra.numpy import array_shapes
+from hypothesis.extra.numpy import arrays
+from hypothesis.strategies import composite
+from hypothesis.strategies import floats
+from hypothesis.strategies import integers
+from hypothesis.strategies import one_of
 import numpy as np
 import pytest
 import vtk
@@ -13,22 +22,23 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista as pv
 from pyvista import examples
-from pyvista.core.dataset import DataSet
-from pyvista.core.errors import PyVistaDeprecationWarning, VTKVersionError
-from pyvista.examples import (
-    load_airplane,
-    load_explicit_structured,
-    load_hexbeam,
-    load_rectilinear,
-    load_structured,
-    load_tetbeam,
-    load_uniform,
-)
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.examples import load_airplane
+from pyvista.examples import load_explicit_structured
+from pyvista.examples import load_hexbeam
+from pyvista.examples import load_rectilinear
+from pyvista.examples import load_structured
+from pyvista.examples import load_tetbeam
+from pyvista.examples import load_uniform
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core.dataset import DataSet
 
 HYPOTHESIS_MAX_EXAMPLES = 20
 
 
-@pytest.fixture()
+@pytest.fixture
 def grid():
     return pv.UnstructuredGrid(examples.hexbeamfile)
 
@@ -42,7 +52,9 @@ def test_invalid_copy_from(grid):
 def n_numbers(draw, n):
     numbers = []
     for _ in range(n):
-        number = draw(one_of(floats(), integers()))
+        number = draw(
+            one_of(floats(), integers(max_value=np.iinfo(int).max, min_value=np.iinfo(int).min))
+        )
         numbers.append(number)
     return numbers
 
@@ -81,7 +93,7 @@ def test_point_data_bad_value(grid):
     with pytest.raises(TypeError):
         grid.point_data['new_array'] = None
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.point_data['new_array'] = np.arange(grid.n_points - 1)
 
 
@@ -121,7 +133,7 @@ def test_cell_data_bad_value(grid):
     with pytest.raises(TypeError):
         grid.cell_data['new_array'] = None
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
 
 
@@ -162,11 +174,37 @@ def test_field_data(grid):
     assert isinstance(grid.field_data['foo'], np.ndarray)
     assert np.allclose(grid.field_data['foo'], foo)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_scalars('foo')
 
 
-@pytest.mark.parametrize('field', (range(5), np.ones((3, 3))[:, 0]))
+def test_field_data_string(grid):
+    # test `mesh.field_data`
+    field_name = 'foo'
+    field_value = 'bar'
+    grid.field_data[field_name] = field_value
+    returned = grid.field_data[field_name]
+    assert returned == field_value
+    assert isinstance(returned, str)
+
+    # test `mesh.add_field_data`
+    field_name = 'eggs'
+    field_value = 'ham'
+    grid.add_field_data(array=field_value, name=field_name)
+    returned = grid.field_data[field_name]
+    assert returned == field_value
+    assert isinstance(returned, str)
+
+    # test `mesh[name] = data`
+    field_name = 'baz'
+    field_value = 'a' * grid.n_points
+    grid[field_name] = field_value
+    returned = grid.field_data[field_name]
+    assert returned == field_value
+    assert isinstance(returned, str)
+
+
+@pytest.mark.parametrize('field', [range(5), np.ones((3, 3))[:, 0]])
 def test_add_field_data(grid, field):
     grid.add_field_data(field, 'foo')
     assert isinstance(grid.field_data['foo'], np.ndarray)
@@ -241,42 +279,53 @@ def test_copy_metadata(globe):
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
 @given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
-def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
-    trans = vtk.vtkTransform()
+def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
+    trans = pv.Transform()
+    trans.check_finite = False
     trans.RotateWXYZ(*rotate_amounts)
-    trans.Translate(translate_amounts)
+    trans.translate(translate_amounts)
     trans.Update()
 
+    # Apply transform with pyvista filter
     grid_a = grid.copy()
-    grid_b = grid.copy()
-    grid_c = grid.copy()
     grid_a.transform(trans)
-    grid_b.transform(trans.GetMatrix())
-    grid_c.transform(pv.array_from_vtkmatrix(trans.GetMatrix()))
+
+    # Apply transform with vtk filter
+    grid_b = grid.copy()
+    f = vtk.vtkTransformFilter()
+    f.SetInputDataObject(grid_b)
+    f.SetTransform(trans)
+    f.Update()
+    grid_b = pv.wrap(f.GetOutput())
 
     # treat INF as NAN (necessary for allclose)
     grid_a.points[np.isinf(grid_a.points)] = np.nan
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
-    assert np.allclose(grid_a.points, grid_c.points, equal_nan=True)
 
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@given(rotate_amounts=n_numbers(4))
+def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amounts, grid):
     # test non homogeneous transform
-    trans_rotate_only = vtk.vtkTransform()
+    trans_rotate_only = pv.Transform()
+    trans_rotate_only.check_finite = False
     trans_rotate_only.RotateWXYZ(*rotate_amounts)
     trans_rotate_only.Update()
 
-    grid_d = grid.copy()
-    grid_d.transform(trans_rotate_only)
+    grid_copy = grid.copy()
+    grid_copy.transform(trans_rotate_only)
 
     from pyvista.core.utilities.transformations import apply_transformation_to_points
 
-    trans_arr = pv.array_from_vtkmatrix(trans_rotate_only.GetMatrix())[:3, :3]
+    trans_arr = trans_rotate_only.matrix[:3, :3]
     trans_pts = apply_transformation_to_points(trans_arr, grid.points)
-    assert np.allclose(grid_d.points, trans_pts, equal_nan=True)
+    assert np.allclose(grid_copy.points, trans_pts, equal_nan=True)
 
 
-def test_translate_should_fail_given_none(grid):
-    with pytest.raises(TypeError):
-        grid.transform(None)
+def test_translate_should_not_fail_given_none(grid):
+    bounds = grid.bounds
+    grid.transform(None)
+    assert grid.bounds == bounds
 
 
 def test_set_points():
@@ -290,10 +339,10 @@ def test_translate_should_fail_bad_points_or_transform(grid):
     bad_points = np.random.default_rng().random((10, 2))
     trans = np.random.default_rng().random((4, 4))
     bad_trans = np.random.default_rng().random((2, 4))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
 
 
@@ -303,8 +352,9 @@ def test_translate_should_fail_bad_points_or_transform(grid):
 )
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
 def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
-    assume(array.shape != (4, 4))
-    with pytest.raises(ValueError):
+    assume(array.shape not in [(3, 3), (4, 4)])
+    match = 'Shape must be one of [(3, 3), (4, 4)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         grid.transform(array)
 
 
@@ -322,7 +372,7 @@ def test_translate_should_translate_grid(grid, axis_amounts):
     max_examples=HYPOTHESIS_MAX_EXAMPLES,
 )
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
-@pytest.mark.parametrize('axis', ('x', 'y', 'z'))
+@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
 def test_rotate_should_match_vtk_rotation(angle, axis, grid):
     trans = vtk.vtkTransform()
     getattr(trans, f'Rotate{axis.upper()}')(angle)
@@ -468,18 +518,23 @@ def test_bitarray_field(grid):
 
 
 def test_html_repr(grid):
-    """
-    This just tests to make sure no errors are thrown on the HTML
+    """This just tests to make sure no errors are thrown on the HTML
     representation method for DataSet.
     """
     assert grid._repr_html_() is not None
 
 
-@pytest.mark.parametrize('html', (True, False))
-@pytest.mark.parametrize('display', (True, False))
+def test_html_repr_string_scalar(grid):
+    array_data = "data"
+    array_name = "name"
+    grid.add_field_data(array_data, array_name)
+    assert grid._repr_html_() is not None
+
+
+@pytest.mark.parametrize('html', [True, False])
+@pytest.mark.parametrize('display', [True, False])
 def test_print_repr(grid, display, html):
-    """
-    This just tests to make sure no errors are thrown on the text friendly
+    """This just tests to make sure no errors are thrown on the text friendly
     representation method for DataSet.
     """
     result = grid.head(display=display, html=html)
@@ -490,13 +545,13 @@ def test_print_repr(grid, display, html):
 
 
 def test_invalid_vector(grid):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid["vectors"] = np.empty(10)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid["vectors"] = np.empty((3, 2))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid["vectors"] = np.empty((3, 3))
 
 
@@ -513,7 +568,7 @@ def test_arrows():
 
     # make cool swirly pattern
     vectors = np.vstack(
-        (np.sin(sphere.points[:, 0]), np.cos(sphere.points[:, 1]), np.cos(sphere.points[:, 2]))
+        (np.sin(sphere.points[:, 0]), np.cos(sphere.points[:, 1]), np.cos(sphere.points[:, 2])),
     ).T
 
     # add and scales
@@ -530,9 +585,7 @@ def test_arrows():
 
 
 def active_component_consistency_check(grid, component_type, field_association="point"):
-    """
-    Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset
-    """
+    """Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset"""
     component_type = component_type.lower()
     vtk_component_type = component_type.capitalize()
 
@@ -541,7 +594,8 @@ def active_component_consistency_check(grid, component_type, field_association="
 
     pv_arr = getattr(grid, "active_" + component_type)
     vtk_arr = getattr(
-        getattr(grid, f"Get{vtk_field_association}Data")(), f"Get{vtk_component_type}"
+        getattr(grid, f"Get{vtk_field_association}Data")(),
+        f"Get{vtk_component_type}",
     )()
 
     assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
@@ -577,18 +631,18 @@ def test_set_texture_coordinates(grid):
     with pytest.raises(TypeError):
         grid.active_texture_coordinates = [1, 2, 3]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.active_texture_coordinates = np.empty(10)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.active_texture_coordinates = np.empty((3, 3))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.active_texture_coordinates = np.empty((grid.n_points, 1))
 
 
 def test_set_active_vectors_fail(grid):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_vectors('not a vector')
 
     active_component_consistency_check(grid, "vectors", "point")
@@ -599,7 +653,7 @@ def test_set_active_vectors_fail(grid):
 
     grid.point_data['scalar_arr'] = np.zeros([grid.n_points])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_vectors('scalar_arr')
 
     assert grid.active_vectors_name == 'vector_arr'
@@ -607,7 +661,7 @@ def test_set_active_vectors_fail(grid):
 
 
 def test_set_active_tensors_fail(grid):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_tensors('not a tensor')
 
     active_component_consistency_check(grid, "tensors", "point")
@@ -619,10 +673,10 @@ def test_set_active_tensors_fail(grid):
     grid.point_data['scalar_arr'] = np.zeros([grid.n_points])
     grid.point_data['vector_arr'] = np.zeros([grid.n_points, 3])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_tensors('scalar_arr')
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_tensors('vector_arr')
 
     assert grid.active_tensors_name == 'tensor_arr'
@@ -725,7 +779,7 @@ def test_set_item(grid):
         grid['tmp'] = None
 
     # field data
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid['bad_field'] = range(5)
 
 
@@ -748,7 +802,7 @@ def test_set_cell_vectors(grid):
 
 
 def test_axis_rotation_invalid():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         pv.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
@@ -876,7 +930,7 @@ def test_find_closest_point():
     with pytest.raises(TypeError):
         sphere.find_closest_point([1, 2])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         sphere.find_closest_point([0, 0, 0], n=0)
 
     with pytest.raises(TypeError):
@@ -976,30 +1030,29 @@ def test_find_cells_intersecting_line():
     else:
         with pytest.raises(VTKVersionError):
             indices = mesh.find_cells_intersecting_line(linea, lineb)
-            assert len(indices) == 1
 
 
 def test_find_cells_within_bounds():
     mesh = pv.Cube()
 
     bounds = [
-        mesh.bounds[0] * 2.0,
-        mesh.bounds[1] * 2.0,
-        mesh.bounds[2] * 2.0,
-        mesh.bounds[3] * 2.0,
-        mesh.bounds[4] * 2.0,
-        mesh.bounds[5] * 2.0,
+        mesh.bounds.x_min * 2.0,
+        mesh.bounds.x_max * 2.0,
+        mesh.bounds.y_min * 2.0,
+        mesh.bounds.y_max * 2.0,
+        mesh.bounds.z_min * 2.0,
+        mesh.bounds.z_max * 2.0,
     ]
     indices = mesh.find_cells_within_bounds(bounds)
     assert len(indices) == mesh.n_cells
 
     bounds = [
-        mesh.bounds[0] * 0.5,
-        mesh.bounds[1] * 0.5,
-        mesh.bounds[2] * 0.5,
-        mesh.bounds[3] * 0.5,
-        mesh.bounds[4] * 0.5,
-        mesh.bounds[5] * 0.5,
+        mesh.bounds.x_min * 0.5,
+        mesh.bounds.x_max * 0.5,
+        mesh.bounds.y_min * 0.5,
+        mesh.bounds.y_max * 0.5,
+        mesh.bounds.z_min * 0.5,
+        mesh.bounds.z_max * 0.5,
     ]
     indices = mesh.find_cells_within_bounds(bounds)
     assert len(indices) == 0
@@ -1078,6 +1131,17 @@ def test_copy_structure(grid):
     assert len(copy.point_data) == 0
 
 
+def test_copy_structure_self(datasets):
+    for dataset in datasets:
+        copied = dataset.copy()
+        assert copied is not dataset
+
+        # Copy structure from itself
+        copied.copy_structure(copied)
+        assert copied.n_points == dataset.n_points
+        assert copied.n_cells == dataset.n_cells
+
+
 def test_copy_attributes(grid):
     classname = grid.__class__.__name__
     copy = eval(f'pv.{classname}')()
@@ -1097,9 +1161,9 @@ def test_point_is_inside_cell():
     assert grid.point_is_inside_cell(0, np.array([0.5, 0.5, 0.5]))
 
     # cell ind out of range
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.point_is_inside_cell(100000, [0.5, 0.5, 0.5])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.point_is_inside_cell(-1, [0.5, 0.5, 0.5])
 
     # cell ind wrong type
@@ -1109,64 +1173,12 @@ def test_point_is_inside_cell():
     # point not well formed
     with pytest.raises(TypeError):
         grid.point_is_inside_cell(0, 0.5)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         grid.point_is_inside_cell(0, [0.5, 0.5])
 
     # multi-dimensional
     in_cell = grid.point_is_inside_cell(0, [[0.5, 0.5, 0.5], [-0.5, -0.5, -0.5]])
     assert np.array_equal(in_cell, np.array([True, False]))
-
-
-@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
-def test_serialize_deserialize(datasets, pickle_format):
-    pv.set_pickle_format(pickle_format)
-    for dataset in datasets:
-        dataset_2 = pickle.loads(pickle.dumps(dataset))
-
-        # check python attributes are the same
-        for attr in dataset.__dict__:
-            assert getattr(dataset_2, attr) == getattr(dataset, attr)
-
-        # check data is the same
-        for attr in ('n_cells', 'n_points', 'n_arrays'):
-            if hasattr(dataset, attr):
-                assert getattr(dataset_2, attr) == getattr(dataset, attr)
-
-        for attr in ('cells', 'points'):
-            if hasattr(dataset, attr):
-                arr_have = getattr(dataset_2, attr)
-                arr_expected = getattr(dataset, attr)
-                assert arr_have == pytest.approx(arr_expected)
-
-        for name in dataset.point_data:
-            arr_have = dataset_2.point_data[name]
-            arr_expected = dataset.point_data[name]
-            assert arr_have == pytest.approx(arr_expected)
-
-        for name in dataset.cell_data:
-            arr_have = dataset_2.cell_data[name]
-            arr_expected = dataset.cell_data[name]
-            assert arr_have == pytest.approx(arr_expected)
-
-        for name in dataset.field_data:
-            arr_have = dataset_2.field_data[name]
-            arr_expected = dataset.field_data[name]
-            assert arr_have == pytest.approx(arr_expected)
-
-
-def n_points(dataset):
-    # used in multiprocessing test
-    return dataset.n_points
-
-
-@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
-def test_multiprocessing(datasets, pickle_format):
-    # exercise pickling via multiprocessing
-    pv.set_pickle_format(pickle_format)
-    with multiprocessing.Pool(2) as p:
-        res = p.map(n_points, datasets)
-    for res, dataset in zip(res, datasets):
-        assert res == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():
@@ -1210,9 +1222,10 @@ def test_rotate_x():
     mesh = examples.load_uniform()
     out = mesh.rotate_x(30)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(TypeError):
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_x(30, point=5)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_x(30, point=[1, 3])
 
 
@@ -1221,9 +1234,10 @@ def test_rotate_y():
     mesh = examples.load_uniform()
     out = mesh.rotate_y(30)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(TypeError):
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_y(30, point=5)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_y(30, point=[1, 3])
 
 
@@ -1232,9 +1246,10 @@ def test_rotate_z():
     mesh = examples.load_uniform()
     out = mesh.rotate_z(30)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(TypeError):
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_z(30, point=5)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_z(30, point=[1, 3])
 
 
@@ -1243,10 +1258,18 @@ def test_rotate_vector():
     mesh = examples.load_uniform()
     out = mesh.rotate_vector([1, 1, 1], 33)
     assert isinstance(out, pv.StructuredGrid)
-    with pytest.raises(ValueError):
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_vector([1, 1], 33)
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_vector(30, 33)
+
+
+def test_rotate():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+    assert isinstance(out, pv.StructuredGrid)
 
 
 def test_transform_integers():
@@ -1416,7 +1439,8 @@ def test_active_normals(sphere):
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
@@ -1436,7 +1460,8 @@ def test_cast_to_pointset(sphere):
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info < (9, 1, 0), reason="Requires VTK>=9.1.0 for a concrete PointSet class"
+    pv.vtk_version_info < (9, 1, 0),
+    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
 )
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
@@ -1583,8 +1608,8 @@ def test_point_cell_ids(grid: DataSet, i0):
     cell_ids = grid.point_cell_ids(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that the output cells contain the i0-th point but also that the
@@ -1604,8 +1629,8 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one point with the
@@ -1629,8 +1654,8 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one edge with the
@@ -1670,8 +1695,8 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
-    assert all(isinstance(id, int) for id in cell_ids)
-    assert all(0 <= id < grid.n_cells for id in cell_ids)
+    assert all(isinstance(id_, int) for id_ in cell_ids)
+    assert all(0 <= id_ < grid.n_cells for id_ in cell_ids)
     assert len(cell_ids) > 0
 
     # Check that all the neighbors cells share at least one face with the
@@ -1707,7 +1732,9 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
 @pytest.mark.parametrize("i0", i0s, ids=lambda x: f"i0={x}")
 @pytest.mark.parametrize("n_levels", [1, 3], ids=lambda x: f"n_levels={x}")
 @pytest.mark.parametrize(
-    "connections", ["points", "edges", "faces"], ids=lambda x: f"connections={x}"
+    "connections",
+    ["points", "edges", "faces"],
+    ids=lambda x: f"connections={x}",
 )
 def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
     cell_ids = grid.cell_neighbors_levels(i0, connections=connections, n_levels=n_levels)
@@ -1725,12 +1752,12 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
         assert set(cell_ids) == set(grid.cell_neighbors(i0, connections=connections))
 
     else:
-        for i, ids in enumerate(cell_ids):
+        assert len(list(cell_ids)) == n_levels
+        for ids in cell_ids:
             assert isinstance(ids, list)
-            assert all(isinstance(id, int) for id in ids)
-            assert all(0 <= id < grid.n_cells for id in ids)
+            assert all(isinstance(id_, int) for id_ in ids)
+            assert all(0 <= id_ < grid.n_cells for id_ in ids)
             assert len(ids) > 0
-        assert i == n_levels - 1
 
 
 @pytest.mark.parametrize("grid", grids, ids=ids)
@@ -1749,15 +1776,15 @@ def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
         assert set(point_ids) == set(grid.point_neighbors(i0))
 
     else:
-        for i, ids in enumerate(point_ids):
+        assert len(list(point_ids)) == n_levels
+        for ids in point_ids:
             assert isinstance(ids, list)
-            assert all(isinstance(id, int) for id in ids)
-            assert all(0 <= id < grid.n_points for id in ids)
+            assert all(isinstance(id_, int) for id_ in ids)
+            assert all(0 <= id_ < grid.n_points for id_ in ids)
             assert len(ids) > 0
-        assert i == n_levels - 1
 
 
-@pytest.fixture()
+@pytest.fixture
 def mesh():
     return examples.load_globe()
 

@@ -1,15 +1,22 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+
+from __future__ import annotations
+
 from collections.abc import Iterable
-from typing import Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from . import _vtk_core as _vtk
-from ._typing_core import Array
-from .utilities.arrays import FieldAssociation, convert_array
+from .utilities.arrays import FieldAssociation
+from .utilities.arrays import convert_array
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import ArrayLike
+    from ._typing_core import NumpyArray
 
 
-class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
+class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=PR02
     """A ndarray which references the owning dataset and the underlying vtkArray.
 
     This array can be acted upon just like a :class:`numpy.ndarray`.
@@ -45,20 +52,20 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
 
     def __new__(
         cls,
-        array: Union[Array, _vtk.vtkAbstractArray],
+        array: ArrayLike[float] | _vtk.vtkAbstractArray,
         dataset=None,
         association=FieldAssociation.NONE,
     ):
         """Allocate the array."""
-        if isinstance(array, Iterable):
-            obj = np.asarray(array).view(cls)
-        elif isinstance(array, _vtk.vtkAbstractArray):
+        if isinstance(array, _vtk.vtkAbstractArray):
             obj = convert_array(array).view(cls)
             obj.VTKObject = array
+        elif isinstance(array, Iterable):
+            obj = np.asarray(array).view(cls)
         else:
             raise TypeError(
                 f'pyvista_ndarray got an invalid type {type(array)}. '
-                'Expected an Iterable or vtk.vtkAbstractArray'
+                'Expected an Iterable or vtk.vtkAbstractArray',
             )
 
         obj.association = association
@@ -88,7 +95,7 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: Union[int, np.ndarray], value):
+    def __setitem__(self, key: int | NumpyArray[int], value):
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
@@ -104,14 +111,14 @@ class pyvista_ndarray(np.ndarray):  # numpydoc ignore=PR02
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    def __array_wrap__(self, out_arr, context=None):
+    def __array_wrap__(self, out_arr, context=None, return_scalar=False):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
         """
         if out_arr.ndim:
-            return np.ndarray.__array_wrap__(self, out_arr, context)
+            return super().__array_wrap__(out_arr, context, return_scalar)
 
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]

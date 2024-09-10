@@ -1,6 +1,9 @@
 """This conftest is here to allow for checking garbage collection and
 memory leaks for all plotting tests
 """
+
+from __future__ import annotations
+
 import gc
 import inspect
 
@@ -18,7 +21,8 @@ SKIP_PLOTTING = not system_supports_plotting()
 # Configure skip_plotting marker
 def pytest_configure(config):
     config.addinivalue_line(
-        'markers', 'skip_plotting: skip the test if system does not support plotting'
+        'markers',
+        'skip_plotting: skip the test if system does not support plotting',
     )
 
 
@@ -35,8 +39,8 @@ def _is_vtk(obj):
         return False
 
 
-@pytest.fixture()
-def skip_check_gc(check_gc):
+@pytest.fixture
+def skip_check_gc(check_gc):  # noqa: PT004
     """Skip check_gc fixture."""
     check_gc.skip = True
 
@@ -86,12 +90,12 @@ def check_gc():
             else:
                 referrers[ri] = repr(referrer)
             del ri, referrer
-        msg += f'{cn}: {referrers}\n'
+        msg += f'{cn} at {hex(id(obj))}: {referrers}\n'
         del cn, referrers
     assert len(after) == 0, msg
 
 
-@pytest.fixture()
+@pytest.fixture
 def colorful_tetrahedron():
     mesh = pv.Tetrahedron()
     mesh.cell_data["colors"] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
@@ -113,7 +117,7 @@ def make_two_char_img(text):
     return pv.Texture(pl.screenshot()).to_image()
 
 
-@pytest.fixture()
+@pytest.fixture
 def cubemap(texture):
     """Sample texture as a cubemap."""
     return pv.Texture(
@@ -124,5 +128,5 @@ def cubemap(texture):
             make_two_char_img('Y-'),
             make_two_char_img('Z+'),
             make_two_char_img('Z-'),
-        ]
+        ],
     )

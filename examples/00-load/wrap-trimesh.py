@@ -17,16 +17,19 @@ of more than one module.
 """
 
 # sphinx_gallery_start_ignore
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Wrap a point cloud composed of random points from numpy
 import numpy as np
 
 import pyvista as pv
 
-points = np.random.default_rng().random((30, 3))
+rng = np.random.default_rng(seed=0)
+points = rng.random((30, 3))
 cloud = pv.wrap(points)
 pv.plot(
     cloud,
@@ -37,7 +40,7 @@ pv.plot(
     cpos='xz',
 )
 
-###############################################################################
+# %%
 # Wrap an instance of Trimesh
 import trimesh
 
@@ -47,7 +50,7 @@ tmesh = trimesh.Trimesh(points, faces=faces, process=False)
 mesh = pv.wrap(tmesh)
 print(mesh)
 
-###############################################################################
+# %%
 # Wrap an instance of vtk.vtkPolyData
 
 import vtk
@@ -63,3 +66,5 @@ point.SetPoints(points)
 point.SetVerts(vertices)
 mesh = pv.wrap(point)
 print(mesh)
+# %%
+# .. tags:: load

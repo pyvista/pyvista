@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import vtk
@@ -135,11 +137,11 @@ def test_colors():
         light.diffuse_color = valid
         light.specular_color = valid
         light.ambient_color = valid
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         light.diffuse_color = 'invalid'
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         light.specular_color = 'invalid'
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         light.ambient_color = 'invalid'
 
 
@@ -199,7 +201,7 @@ def test_transforms():
     assert light.focal_point == focal_point
     assert np.allclose(light.world_focal_point, linear_trans @ focal_point + shift)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         light.transform_matrix = 'invalid'
 
 
@@ -250,7 +252,7 @@ def test_shape():
 
 
 @pytest.mark.parametrize(
-    'int_code,enum_code',
+    ('int_code', 'enum_code'),
     [
         (1, pv.Light.HEADLIGHT),
         (2, pv.Light.CAMERA_LIGHT),
@@ -284,7 +286,7 @@ def test_type_setters():
 def test_type_invalid():
     with pytest.raises(TypeError):
         light = pv.Light(light_type=['invalid'])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         light = pv.Light(light_type='invalid')
 
     light = pv.Light()

@@ -1,5 +1,7 @@
 """Plotting errors."""
 
+from __future__ import annotations
+
 CAMERA_ERROR_MESSAGE = """Invalid camera description
 Camera description must be one of the following:
 
@@ -32,5 +34,3 @@ class RenderWindowUnavailable(RuntimeError):  # numpydoc ignore=PR01
 
 class PyVistaPickingError(RuntimeError):
     """General picking error class."""
-
-    pass

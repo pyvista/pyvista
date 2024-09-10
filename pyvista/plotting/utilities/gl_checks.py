@@ -1,5 +1,7 @@
 """Plotting GL checks."""
 
+from __future__ import annotations
+
 from pyvista.plotting import _vtk
 
 
@@ -56,6 +58,7 @@ def uses_egl() -> bool:
     bool
         ``True`` if VTK has been compiled with EGL support via OSMesa,
         otherwise ``False``.
+
     """
     ren_win_str = str(type(_vtk.vtkRenderWindow()))
     return 'EGL' in ren_win_str or 'OSOpenGL' in ren_win_str

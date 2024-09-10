@@ -1,4 +1,10 @@
 """Affine widget module."""
+
+from __future__ import annotations
+
+from typing import Tuple
+from typing import cast
+
 import numpy as np
 
 import pyvista
@@ -68,9 +74,9 @@ def get_angle(v1, v2):
     -------
     float
         Angle between vectors in degrees.
+
     """
-    theta = np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
-    return theta
+    return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
 
 def ray_plane_intersection(start_point, direction, plane_point, normal):
@@ -91,6 +97,7 @@ def ray_plane_intersection(start_point, direction, plane_point, normal):
     -------
     ndarray
         Intersection point.
+
     """
     t_value = np.dot(normal, (plane_point - start_point)) / np.dot(normal, direction)
     return start_point + t_value * direction
@@ -260,7 +267,7 @@ class AffineWidget3D:
                     lighting=False,
                     render_lines_as_tubes=True,
                     render=False,
-                )
+                ),
             )
 
         # update origin and assign a default user_matrix
@@ -314,7 +321,7 @@ class AffineWidget3D:
         # convert camera coordinates to world coordinates
         camera = ren.GetActiveCamera()
         projection_matrix = pyvista.array_from_vtkmatrix(
-            camera.GetProjectionTransformMatrix(ren.GetTiledAspectRatio(), 0, 1)
+            camera.GetProjectionTransformMatrix(ren.GetTiledAspectRatio(), 0, 1),
         )
         inverse_projection_matrix = np.linalg.inv(projection_matrix)
         camera_coords = np.dot(inverse_projection_matrix, [ndc_x, ndc_y, ndc_z, 1])
@@ -360,7 +367,10 @@ class AffineWidget3D:
                 trans = _vtk.vtkTransform()
                 trans.Translate(self._origin)
                 trans.RotateWXYZ(
-                    angle, self._axes[index][0], self._axes[index][1], self._axes[index][2]
+                    angle,
+                    self._axes[index][0],
+                    self._axes[index][1],
+                    self._axes[index][2],
                 )
                 trans.Translate(-self._origin)
                 trans.Update()
@@ -448,7 +458,7 @@ class AffineWidget3D:
             actor.user_matrix = matrix
 
     @property
-    def origin(self) -> tuple:
+    def origin(self) -> tuple[float, float, float]:
         """Origin of the widget.
 
         This is where the origin of the widget will be located and where the
@@ -456,11 +466,11 @@ class AffineWidget3D:
 
         Returns
         -------
-        numpy.ndarray
+        tuple
             Widget origin.
 
         """
-        return tuple(self._origin)
+        return cast(Tuple[float, float, float], tuple(self._origin))
 
     @origin.setter
     def origin(self, value):  # numpydoc ignore=GL08
@@ -481,13 +491,18 @@ class AffineWidget3D:
         if not self._pl._picker_in_use:
             self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
         self._mouse_move_observer = self._pl.iren.add_observer(
-            "MouseMoveEvent", self._move_callback
+            "MouseMoveEvent",
+            self._move_callback,
         )
         self._left_press_observer = self._pl.iren.add_observer(
-            "LeftButtonPressEvent", self._press_callback, interactor_style_fallback=False
+            "LeftButtonPressEvent",
+            self._press_callback,
+            interactor_style_fallback=False,
         )
         self._left_release_observer = self._pl.iren.add_observer(
-            "LeftButtonReleaseEvent", self._release_callback, interactor_style_fallback=False
+            "LeftButtonReleaseEvent",
+            self._release_callback,
+            interactor_style_fallback=False,
         )
 
     def disable(self):

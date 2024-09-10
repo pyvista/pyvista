@@ -74,12 +74,12 @@ First, check out some common meta-properties:
 
     What are the mesh bounds?
     >>> mesh.bounds
-    [139.061, 1654.93, 32.09, 1319.95, -17.74, 282.13]
+    BoundsTuple(x_min=139.061, x_max=1654.93, y_min=32.09, y_max=1319.95, z_min-17.74, z_max=282.13)
 
     Where is the center of this mesh?
 
     >>> mesh.center
-    [897.0, 676.02, 132.19]
+    (897.0, 676.02, 132.19)
 
 
 Access the points by fetching the :attr:`points

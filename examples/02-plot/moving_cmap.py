@@ -8,6 +8,8 @@ by updating the scalars.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -28,7 +30,7 @@ def hopf_fiber(p, phi):
             p[0] * np.sin(phi) - p[1] * np.cos(phi),
             p[0] * np.cos(phi) + p[1] * np.sin(phi),
             (1 + p[2]) * np.sin(phi),
-        ]
+        ],
     ) / np.sqrt(2 * (1 + p[2]))
 
 
@@ -75,3 +77,5 @@ for t in np.linspace(0, 2 * np.pi, 60, endpoint=False):
     pltr.write_frame()
 
 pltr.show()
+# %%
+# .. tags:: plot

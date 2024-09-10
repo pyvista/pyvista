@@ -1,17 +1,22 @@
 """Miscellaneous core utilities."""
-from collections.abc import Sequence
+
+from __future__ import annotations
+
 import enum
 from functools import lru_cache
 import importlib
 import sys
 import threading
 import traceback
-from typing import Type, TypeVar, Union
+from typing import TYPE_CHECKING
+from typing import Sequence
+from typing import TypeVar
 import warnings
 
 import numpy as np
 
-from .._typing_core import Vector
+if TYPE_CHECKING:  # pragma: no cover
+    from .._typing_core import VectorLike
 
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
@@ -43,21 +48,17 @@ def assert_empty_kwargs(**kwargs):
     caller = sys._getframe(1).f_code.co_name
     keys = list(kwargs.keys())
     bad_arguments = ', '.join([f'"{key}"' for key in keys])
-    if n == 1:
-        grammar = "is an invalid keyword argument"
-    else:
-        grammar = "are invalid keyword arguments"
+    grammar = 'is an invalid keyword argument' if n == 1 else 'are invalid keyword arguments'
     message = f"{bad_arguments} {grammar} for `{caller}`"
     raise TypeError(message)
 
 
-def check_valid_vector(point: Vector, name: str = '') -> None:
-    """
-    Check if a vector contains three components.
+def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
+    """Check if a vector contains three components.
 
     Parameters
     ----------
-    point : Iterable[float]
+    point : VectorLike[float]
         Input vector to check. Must be an iterable with exactly three components.
     name : str, optional
         Name to use in the error messages. If not provided, "Vector" will be used.
@@ -76,7 +77,6 @@ def check_valid_vector(point: Vector, name: str = '') -> None:
         if name == '':
             name = 'Vector'
         raise ValueError(f'{name} must be a length three iterable of floats.')
-    return None
 
 
 def abstract_class(cls_):  # numpydoc ignore=RT01
@@ -95,7 +95,7 @@ def abstract_class(cls_):  # numpydoc ignore=RT01
     def __new__(cls, *args, **kwargs):
         if cls is cls_:
             raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
-        return object.__new__(cls)
+        return super(cls_, cls).__new__(cls)
 
     cls_.__new__ = __new__
     return cls_
@@ -131,6 +131,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         ------
         ValueError
             If there is no enum member with the specified annotation.
+
         """
         for value in cls:
             if value.annotation.lower() == input_str.lower():
@@ -138,7 +139,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         raise ValueError(f"{cls.__name__} has no value matching {input_str}")
 
     @classmethod
-    def from_any(cls: Type[T], value: Union[T, int, str]) -> T:
+    def from_any(cls: type[T], value: T | int | str) -> T:
         """Create an enum member from a string, int, etc.
 
         Parameters
@@ -155,11 +156,12 @@ class AnnotatedIntEnum(int, enum.Enum):
         ------
         ValueError
             If there is no enum member matching the specified value.
+
         """
         if isinstance(value, cls):
             return value
         elif isinstance(value, int):
-            return cls(value)  # type: ignore
+            return cls(value)  # type: ignore[call-arg]
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
@@ -179,6 +181,7 @@ def has_module(module_name):
     -------
     bool
         ``True`` if the module can be imported, otherwise ``False``.
+
     """
     module_spec = importlib.util.find_spec(module_name)
     return module_spec is not None
@@ -202,7 +205,7 @@ def try_callback(func, *args):
         etype, exc, tb = sys.exc_info()
         stack = traceback.extract_tb(tb)[1:]
         formatted_exception = 'Encountered issue in callback (most recent call last):\n' + ''.join(
-            traceback.format_list(stack) + traceback.format_exception_only(etype, exc)
+            traceback.format_list(stack) + traceback.format_exception_only(etype, exc),
         ).rstrip('\n')
         warnings.warn(formatted_exception)
 
@@ -260,7 +263,7 @@ def _check_range(value, rng, parm_name):
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
         raise ValueError(
-            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.',
         )
 
 
@@ -271,15 +274,19 @@ def no_new_attr(cls):  # numpydoc ignore=RT01
 
     def __setattr__(self, name, value):
         """Do not allow setting attributes."""
-        if hasattr(self, name) or name in cls._new_attr_exceptions:
+        if (
+            hasattr(self, name)
+            or name in cls._new_attr_exceptions
+            or name in self._new_attr_exceptions
+        ):
             object.__setattr__(self, name, value)
         else:
             raise AttributeError(
                 f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}'
+                f'{self.__class__.__name__}',
             )
 
-    setattr(cls, '__setattr__', __setattr__)
+    cls.__setattr__ = __setattr__
     return cls
 
 

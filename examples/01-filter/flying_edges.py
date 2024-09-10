@@ -12,11 +12,14 @@ Special thanks to GitHub user `stla <https://gist.github.com/stla>`_
 for providing examples.
 
 """
+
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Spider Cage
 # ~~~~~~~~~~~
 # Use the marching cubes algorithm to extract the isosurface
@@ -51,7 +54,7 @@ dist = np.linalg.norm(mesh.points, axis=1)
 mesh.plot(scalars=dist, smooth_shading=True, cmap="plasma", show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # Barth Sextic
 # ~~~~~~~~~~~~
 # Use the flying edges algorithm to extract the isosurface
@@ -93,7 +96,7 @@ dist = np.linalg.norm(mesh.points, axis=1)
 mesh.plot(scalars=dist, smooth_shading=True, cmap="plasma", show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # Animate Barth Sextic
 # ~~~~~~~~~~~~~~~~~~~~
 # Show 20 frames of various isocurves extracted from the Barth sextic
@@ -125,3 +128,5 @@ for angle in np.linspace(0, np.pi, 20, endpoint=False):
     pl.write_frame()
 
 pl.close()
+# %%
+# .. tags:: filter

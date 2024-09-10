@@ -10,13 +10,15 @@ Generate a moving gif from an active plotter.
    "jittery" GIFs, especially for the scalar bar.
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
 
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create a structured grid
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # Create a structured grid and make a "wave" my shifting the Z position based
@@ -34,7 +36,7 @@ grid["Height"] = z.ravel()
 grid.plot()
 
 
-###############################################################################
+# %%
 # Generate a GIF
 # ~~~~~~~~~~~~~~
 # Generate a GIF using ``off_screen=True`` parameter.
@@ -64,3 +66,5 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 
 # Closes and finalizes movie
 plotter.close()
+# %%
+# .. tags:: plot

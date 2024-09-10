@@ -1,11 +1,11 @@
 extends: capitalization
 message: "'%s' should use title-style capitalization."
-link: 'https://developers.google.com/style/capitalization#capitalization-in-titles-and-headings'
+link: "https://developers.google.com/style/capitalization#capitalization-in-titles-and-headings"
 level: warning
 scope: heading
 match: $title
 indicators:
-  - ':'
+  - ":"
 exceptions:
   - gRPC
   - from

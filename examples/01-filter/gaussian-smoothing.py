@@ -14,7 +14,10 @@ to reduce noise or decrease the detail of an image dataset.
 See also :func:`pyvista.ImageDataFilters.gaussian_smooth`.
 
 """
+
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -24,7 +27,7 @@ data = examples.download_gourds()
 # Define a good point of view
 cp = [(319.5, 239.5, 1053.7372980874645), (319.5, 239.5, 0.0), (0.0, 1.0, 0.0)]
 
-###############################################################################
+# %%
 # Let's apply the Gaussian smoothing with different values of standard
 # deviation.
 p = pv.Plotter(shape=(2, 2))
@@ -51,7 +54,7 @@ p.camera_position = cp
 
 p.show()
 
-###############################################################################
+# %%
 # |
 #
 # Volume Rendering
@@ -84,3 +87,5 @@ p.add_volume(smoothed_data, **dargs)
 p.link_views()
 p.camera_position = [(-162.0, 704.8, 65.02), (90.0, 108.0, 90.0), (0.0068, 0.0447, 0.999)]
 p.show()
+# %%
+# .. tags:: filter

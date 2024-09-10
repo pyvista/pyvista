@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import numpy as np
@@ -294,7 +296,8 @@ def test_point_picking(left_clicking):
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info < (9, 2, 0), reason='Hardware picker unavailable for VTK<9.2'
+    pv.vtk_version_info < (9, 2, 0),
+    reason='Hardware picker unavailable for VTK<9.2',
 )
 @pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 @pytest.mark.parametrize('pickable_window', [False, True])
@@ -475,7 +478,6 @@ def test_fly_to_mouse_position(verify_image_cache, sphere):
 
 def test_block_picking(multiblock_poly):
     """Test we can pick a block."""
-
     pl = pv.Plotter()
     width, height = pl.window_size
     actor, mapper = pl.add_composite(multiblock_poly)

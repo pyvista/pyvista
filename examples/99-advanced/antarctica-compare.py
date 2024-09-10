@@ -16,6 +16,8 @@ software.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
@@ -33,7 +35,7 @@ mesh = examples.download_antarctica_velocity()
 mesh["magnitude"] = np.linalg.norm(mesh["ssavelocity"], axis=1)
 mesh
 
-###############################################################################
+# %%
 # Here is a helper to extract regions of the mesh based on the simulation node.
 
 
@@ -42,7 +44,7 @@ def extract_node(node):
     return mesh.extract_points(idx)
 
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(mesh, scalars="node_value")
@@ -52,25 +54,25 @@ for node in np.unique(mesh["node_value"]):
 p.show(cpos="xy")
 
 
-###############################################################################
+# %%
 
 vel_dargs = dict(scalars="magnitude", clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
 
 mesh.plot(cpos="xy", **vel_dargs)
 
-###############################################################################
+# %%
 
 a = extract_node(12)
 b = extract_node(20)
 
-###############################################################################
+# %%
 
 pl = pv.Plotter()
 pl.add_mesh(a, **vel_dargs)
 pl.add_mesh(b, **vel_dargs)
 pl.show(cpos='xy')
 
-###############################################################################
+# %%
 # plot vectors without mesh
 
 pl = pv.Plotter()
@@ -84,7 +86,7 @@ pl.camera_position = [
 pl.show()
 
 
-###############################################################################
+# %%
 # Compare directions. Normalize them so we can get a reasonable direction
 # comparison.
 
@@ -107,7 +109,7 @@ pl.camera_position = [
 pl.show()
 
 
-###############################################################################
+# %%
 # flow_a that agrees with the mean flow path of flow_b
 agree = flow_a.dot(flow_b.mean(0))
 
@@ -116,7 +118,7 @@ pl.add_mesh(a, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreem
 pl.add_mesh(b, color='w')
 pl.show(cpos='xy')
 
-###############################################################################
+# %%
 agree = flow_b.dot(flow_a.mean(0))
 
 pl = pv.Plotter()

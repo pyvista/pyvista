@@ -18,14 +18,16 @@ example from the awesome `magpylib <https://github.com/magpylib/magpylib>`_
 library.
 
 """
+
 # sphinx_gallery_thumbnail_number = 3
+from __future__ import annotations
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Download the DataSet
 # ~~~~~~~~~~~~~~~~~~~~
 # Let's first download the example dataset and show that it's a
@@ -36,20 +38,18 @@ grid = examples.download_coil_magnetic_field()
 grid.point_data
 
 
-###############################################################################
+# %%
 # Create Coils
 # ~~~~~~~~~~~~
 # Create several hoops to represent the coil. This matches the geometry in the
 # original example.
 
-coils = []
-for z in np.linspace(-8, 8, 16):
-    coils.append(pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False))
+coils = [pv.Polygon((0, 0, z), radius=5, n_sides=100, fill=False) for z in np.linspace(-8, 8, 16)]
 coil_block = pv.MultiBlock(coils)
 coil_block.plot(render_lines_as_tubes=True, line_width=10)
 
 
-###############################################################################
+# %%
 # Compute and Plot Field Lines
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Next, let's compute streamlines from the center of the coil to represent the
@@ -76,7 +76,7 @@ pl.camera.zoom(3)
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot the Magnet Field Strength
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, let's bring this all together by plotting the magnetic field

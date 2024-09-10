@@ -1,4 +1,5 @@
-""".. _pump_bracket_example:
+"""
+.. _pump_bracket_example:
 
 Visualize Modal Analysis of a Pump Bracket
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -19,12 +20,15 @@ to get an understanding of how the pump bracket responds to different modes of
 vibration.
 
 """
+
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Load the dataset
 # ~~~~~~~~~~~~~~~~
 # Start by loading the dataset using :func:`download_pump_bracket()
@@ -38,7 +42,7 @@ dataset = examples.download_pump_bracket()
 dataset
 
 
-###############################################################################
+# %%
 # Plot the Dataset
 # ~~~~~~~~~~~~~~~~
 # Choose a mode shape from the available arrays in the dataset. Each "disp_N"
@@ -63,7 +67,7 @@ dataset.plot(
 )
 
 
-###############################################################################
+# %%
 # Visualize Displaced Mode Shape
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We will now visualize the mode shapes of the pump bracket by displacing the
@@ -84,7 +88,7 @@ pl.enable_anti_aliasing('fxaa')
 pl.show()
 
 
-###############################################################################
+# %%
 # Animate the Mode Shape Displacement
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Animate the mode shape's displacement by updating the vertex positions at

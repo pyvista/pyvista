@@ -1,5 +1,7 @@
 """Downloadable datasets of 3D Celestial Bodies."""
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista
@@ -65,19 +67,17 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_sun()
     >>> texture = examples.planets.download_sun_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -105,19 +105,17 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_moon()
     >>> texture = examples.planets.download_moon_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -145,19 +143,17 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_mercury()
     >>> texture = examples.planets.download_mercury_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -185,19 +181,17 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_venus()
     >>> texture = examples.planets.download_venus_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
@@ -225,19 +219,17 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_earth()
     >>> texture = examples.load_globe_texture()
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -265,19 +257,17 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_mars()
     >>> texture = examples.planets.download_mars_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -305,19 +295,17 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_jupiter()
     >>> texture = examples.planets.download_jupiter_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -345,19 +333,17 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_saturn()
     >>> texture = examples.planets.download_saturn_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
@@ -387,13 +373,10 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_saturn_rings()
     >>> texture = examples.planets.download_saturn_rings(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
     disc = pyvista.Disc(inner=inner, outer=outer, c_res=c_res)
@@ -429,19 +412,17 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_uranus()
     >>> texture = examples.planets.download_uranus_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -469,19 +450,17 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_neptune()
     >>> texture = examples.planets.download_neptune_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -509,19 +488,17 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_pluto()
     >>> texture = examples.planets.download_pluto_surface(texture=True)
-    >>> pl = pv.Plotter()
     >>> image_path = examples.planets.download_stars_sky_background(
     ...     load=False
     ... )
-    >>> pl.add_background_image(image_path)
-    >>> _ = pl.add_mesh(mesh, texture=texture)
-    >>> pl.show()
+    >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    sphere = _sphere_with_texture_map(
-        radius=radius, lat_resolution=lat_resolution, lon_resolution=lon_resolution
+    return _sphere_with_texture_map(
+        radius=radius,
+        lat_resolution=lat_resolution,
+        lon_resolution=lon_resolution,
     )
-    return sphere
 
 
 def download_sun_surface(texture=False, load=True):  # pragma: no cover

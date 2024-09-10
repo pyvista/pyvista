@@ -1,168 +1,6 @@
 """Color module supporting plotting module.
 
 Used code from matplotlib.colors.  Thanks for your work.
-
-
-SUPPORTED COLORS
-aliceblue
-antiquewhite
-aqua
-aquamarine
-azure
-beige
-bisque
-black
-blanchedalmond
-blue
-blueviolet
-brown
-burlywood
-cadetblue
-chartreuse
-chocolate
-coral
-cornflowerblue
-cornsilk
-crimson
-cyan
-darkblue
-darkcyan
-darkgoldenrod
-darkgray
-darkgreen
-darkgrey
-darkkhaki
-darkmagenta
-darkolivegreen
-darkorange
-darkorchid
-darkred
-darksalmon
-darkseagreen
-darkslateblue
-darkslategray
-darkslategrey
-darkturquoise
-darkviolet
-deeppink
-deepskyblue
-dimgray
-dimgrey
-dodgerblue
-firebrick
-floralwhite
-forestgreen
-fuchsia
-gainsboro
-ghostwhite
-gold
-goldenrod
-gray
-green
-greenyellow
-grey
-honeydew
-hotpink
-indianred
-indigo
-ivory
-khaki
-lavender
-lavenderblush
-lawngreen
-lemonchiffon
-lightblue
-lightcoral
-lightcyan
-lightgoldenrodyellow
-lightgray
-lightgreen
-lightgrey
-lightpink
-lightsalmon
-lightseagreen
-lightskyblue
-lightslategray
-lightslategrey
-lightsteelblue
-lightyellow
-lime
-limegreen
-linen
-magenta
-maroon
-mediumaquamarine
-mediumblue
-mediumorchid
-mediumpurple
-mediumseagreen
-mediumslateblue
-mediumspringgreen
-mediumturquoise
-mediumvioletred
-midnightblue
-mintcream
-mistyrose
-moccasin
-navajowhite
-navy
-oldlace
-olive
-olivedrab
-orange
-orangered
-orchid
-palegoldenrod
-palegreen
-paleturquoise
-palevioletred
-papayawhip
-peachpuff
-peru
-pink
-plum
-powderblue
-purple
-rebeccapurple
-red
-rosybrown
-royalblue
-saddlebrown
-salmon
-sandybrown
-seagreen
-seashell
-sienna
-silver
-skyblue
-slateblue
-slategray
-slategrey
-snow
-springgreen
-steelblue
-tan
-teal
-thistle
-tomato
-turquoise
-violet
-wheat
-white
-whitesmoke
-yellow
-yellowgreen
-tab:blue
-tab:orange
-tab:green
-tab:red
-tab:purple
-tab:brown
-tab:pink
-tab:gray
-tab:olive
-tab:cyan
-
 """
 
 # Necessary for autodoc_type_aliases to recognize the type aliases used in the signatures
@@ -170,15 +8,21 @@ tab:cyan
 from __future__ import annotations
 
 import inspect
-from typing import Optional, Tuple, Union
 
-from cycler import Cycler, cycler
+from cycler import Cycler
+from cycler import cycler
 
 try:
-    from matplotlib import colormaps, colors
-except ImportError:  # pragma: no cover
-    from matplotlib import cm as colormaps
+    from matplotlib import colormaps
     from matplotlib import colors
+except ImportError:  # pragma: no cover
+    # typing for newer versions of matplotlib
+    # in newer versions cm is a module
+    from matplotlib import cm as colormaps  # type: ignore[assignment]
+    from matplotlib import colors
+
+from typing import TYPE_CHECKING
+from typing import Any
 
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
@@ -188,7 +32,9 @@ import pyvista
 from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
-from ._typing import ColorLike
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing import ColorLike
 
 IPYGANY_MAP = {
     'reds': 'Reds',
@@ -209,7 +55,7 @@ hexcolors = {
     'blanchedalmond': '#FFEBCD',
     'blue': '#0000FF',
     'blueviolet': '#8A2BE2',
-    'brown': '#654321',
+    'brown': '#A52A2A',
     'burlywood': '#DEB887',
     'cadetblue': '#5F9EA0',
     'chartreuse': '#7FFF00',
@@ -644,7 +490,13 @@ class Color:
     or RGB(A) sequence (``tuple``, ``list`` or ``numpy.ndarray`` of ``int``
     or ``float``) is considered a :data:`ColorLike` parameter and can be converted
     by this class.
-    See :attr:`Color.name` for a list of supported color names.
+
+    See :ref:`color_table` for a list of supported colors.
+
+    .. note:
+
+        The internally used representation is an integer RGBA sequence (values
+        between 0 and 255). This might however change in future releases.
 
     Parameters
     ----------
@@ -684,21 +536,6 @@ class Color:
         does not specify an opacity and ``opacity`` is ``None``. Format
         is identical to ``opacity``.
 
-    Notes
-    -----
-    The internally used representation is an integer RGBA sequence (values
-    between 0 and 255). This might however change in future releases.
-
-    .. raw:: html
-
-       <details><summary>Refer to the table below for a list of supported colors.</summary>
-
-    .. include:: ../color_table/color_table.rst
-
-    .. raw:: html
-
-       </details>
-
     Examples
     --------
     Create a transparent green color using a color name, float RGBA sequence,
@@ -726,10 +563,10 @@ class Color:
 
     def __init__(
         self,
-        color: Optional[ColorLike] = None,
-        opacity: Optional[Union[int, float, str]] = None,
-        default_color: Optional[ColorLike] = None,
-        default_opacity: Union[int, float, str] = 255,
+        color: ColorLike | None = None,
+        opacity: float | str | None = None,
+        default_color: ColorLike | None = None,
+        default_opacity: float | str = 255,
     ):
         """Initialize new instance."""
         self._red, self._green, self._blue, self._opacity = 0, 0, 0, 0
@@ -738,10 +575,7 @@ class Color:
 
         # Use default color if no color is provided
         if color is None:
-            if default_color is None:
-                color = pyvista.global_theme.color
-            else:
-                color = default_color
+            color = pyvista.global_theme.color if default_color is None else default_color
 
         try:
             if isinstance(color, Color):
@@ -771,7 +605,7 @@ class Color:
                 "\t\tcolor='w'\n"
                 "\t\tcolor=[1.0, 1.0, 1.0]\n"
                 "\t\tcolor=[255, 255, 255]\n"
-                "\t\tcolor='#FFFFFF'"
+                "\t\tcolor='#FFFFFF'",
             ) from e
 
         # Overwrite opacity if it is provided
@@ -785,7 +619,7 @@ class Color:
                 "\tMust be an integer, float or string.  For example:\n"
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
-                "\t\topacity='#FF'"
+                "\t\topacity='#FF'",
             ) from e
 
     @staticmethod
@@ -809,7 +643,9 @@ class Color:
         return h
 
     @staticmethod
-    def convert_color_channel(val: Union[int, np.integer, float, np.floating, str]) -> int:
+    def convert_color_channel(
+        val: float | np.floating[Any] | str,
+    ) -> int:
         """Convert the given color channel value to the integer representation.
 
         Parameters
@@ -895,7 +731,7 @@ class Color:
                 raise ValueError(f"Invalid color name or hex string: {arg}") from None
 
     @property
-    def int_rgba(self) -> Tuple[int, int, int, int]:  # numpydoc ignore=RT01
+    def int_rgba(self) -> tuple[int, int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA integer tuple.
 
         Examples
@@ -921,7 +757,7 @@ class Color:
         return self._red, self._green, self._blue, self._opacity
 
     @property
-    def int_rgb(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
+    def int_rgb(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Get the color value as an RGB integer tuple.
 
         Examples
@@ -947,7 +783,7 @@ class Color:
         return self.int_rgba[:3]
 
     @property
-    def float_rgba(self) -> Tuple[float, float, float, float]:  # numpydoc ignore=RT01
+    def float_rgba(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGBA float tuple.
 
         Examples
@@ -973,7 +809,7 @@ class Color:
         return self._red / 255.0, self._green / 255.0, self._blue / 255.0, self._opacity / 255.0
 
     @property
-    def float_rgb(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def float_rgb(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Get the color value as an RGB float tuple.
 
         Examples
@@ -1053,19 +889,15 @@ class Color:
         return self.hex_rgba[:-2]
 
     @property
-    def name(self) -> Optional[str]:  # numpydoc ignore=RT01
+    def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
+
+        See :ref:`color_table` for a list of supported colors.
 
         Returns
         -------
         str | None
             The color name, in case this color has a name; otherwise ``None``.
-
-        Notes
-        -----
-        Refer to the table below for a list of supported colors.
-
-        .. include:: ../colors.rst
 
         Examples
         --------
@@ -1192,8 +1024,7 @@ PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
 def get_cmap_safe(cmap):
-    """
-    Fetch a colormap by name from matplotlib, colorcet, or cmocean.
+    """Fetch a colormap by name from matplotlib, colorcet, or cmocean.
 
     Parameters
     ----------
@@ -1287,8 +1118,7 @@ def get_hexcolors_cycler():
 
 
 def get_matplotlib_theme_cycler():
-    """
-    Return the color cycler of the current matplotlib theme.
+    """Return the color cycler of the current matplotlib theme.
 
     Returns
     -------
@@ -1319,6 +1149,7 @@ def color_scheme_to_cycler(scheme):
     ------
     ValueError
         If the provided `scheme` is not a valid color scheme.
+
     """
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()

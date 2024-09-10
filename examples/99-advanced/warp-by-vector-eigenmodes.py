@@ -1,4 +1,5 @@
-""".. _eigenmodes_example:
+"""
+.. _eigenmodes_example:
 
 Display Eigenmodes of Vibration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -9,14 +10,15 @@ been computed using the Ritz method, as outlined in Visscher, William M.,
 Albert Migliori, Thomas M. Bell, et Robert A. Reinert. "On the normal modes of
 free vibration of inhomogeneous and anisotropic elastic objects". The Journal
 of the Acoustical Society of America 90, n.4 (October 1991): 2154-62.
-https://asa.scitation.org/doi/10.1121/1.401643
+https://asa.scitation.org/doi/10.1121/1.401643.
 
 """
 
-###############################################################################
+# %%
 # First, let's solve the eigenvalue problem for a vibrating cube. We use
 # a crude approximation (by choosing a low max polynomial order) to get a fast
 # computation.
+from __future__ import annotations
 
 from itertools import product
 
@@ -27,13 +29,11 @@ import pyvista as pv
 
 
 def analytical_integral_rppd(p, q, r, a, b, c):
-    """Returns the analytical value of the RPPD integral, i.e. the integral
-    of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c)."""
-    if p < 0:
-        return 0.0
-    elif q < 0:
-        return 0.0
-    elif r < 0.0:
+    """Return the analytical value of the RPPD integral.
+
+    This is the integral of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c).
+    """
+    if p < 0 or q < 0 or r < 0.0:
         return 0.0
     else:
         return (
@@ -48,8 +48,11 @@ def analytical_integral_rppd(p, q, r, a, b, c):
 
 
 def make_cijkl_E_nu(E=200, nu=0.3):
-    """Makes cijkl from E and nu.
-    Default values for steel are: E=200 GPa, nu=0.3."""
+    """
+    Make cijkl from E and nu.
+
+    Default values for steel are: E=200 GPa, nu=0.3.
+    """
     lambd = E * nu / (1 + nu) / (1 - 2 * nu)
     mu = E / 2 / (1 + nu)
     cij = np.zeros((6, 6))
@@ -80,8 +83,7 @@ def make_cijkl_E_nu(E=200, nu=0.3):
 
 
 def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
-    """Returns first N unique frequencies with amplitude above threshold based
-    on first decimals."""
+    """Return first N unique frequencies with amplitude above threshold based on first decimals."""
     unique_freqs, unique_indices = np.unique(np.round(freqs, decimals=decimals), return_index=True)
     nonzero = unique_freqs > thresh
     unique_freqs, unique_indices = unique_freqs[nonzero], unique_indices[nonzero]
@@ -89,7 +91,9 @@ def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
 
 
 def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
-    """This routine assembles the mass and stiffness matrix.
+    """
+    Assemble the mass and stiffness matrix.
+
     It first builds an index of basis functions as a quadruplet of
     component and polynomial order for (x^p, y^q, z^r) of maximum order N.
 
@@ -97,11 +101,9 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     things up.
     """
     # building coordinates
-    triplets = []
-    for p in range(N + 1):
-        for q in range(N - p + 1):
-            for r in range(N - p - q + 1):
-                triplets.append((p, q, r))
+    triplets = [
+        (p, q, r) for p in range(N + 1) for q in range(N - p + 1) for r in range(N - p - q + 1)
+    ]
     assert len(triplets) == (N + 1) * (N + 2) * (N + 3) // 6
 
     quadruplets = []
@@ -169,7 +171,10 @@ l1, l2, l3 = 0.2, 0.2, 0.2  # all in cm
 geometry_parameters = {'a': l1 / 2.0, 'b': l2 / 2.0, 'c': l3 / 2.0}
 cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
 E, G, quadruplets = assemble_mass_and_stiffness(
-    N, analytical_integral_rppd, geometry_parameters, cijkl
+    N,
+    analytical_integral_rppd,
+    geometry_parameters,
+    cijkl,
 )
 
 # solving the eigenvalue problem using symmetric solver
@@ -185,7 +190,7 @@ for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)
     error = np.abs(freq2 - freq1) / freq1 * 100.0
     print(f"freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %")
 
-###############################################################################
+# %%
 # Now, let's display a mode on a mesh of the cube.
 
 # Create the 3D NumPy array of spatially referenced data
@@ -200,9 +205,9 @@ grid = pv.StructuredGrid(x, y, z)
 
 slices = []
 for zz in np.linspace(-l3 / 2.0, l3 / 2.0, nz)[::-1]:
-    slice = grid.points.copy()
-    slice[:, -1] = zz
-    slices.append(slice)
+    slice_ = grid.points.copy()
+    slice_[:, -1] = zz
+    slices.append(slice_)
 
 vol = pv.StructuredGrid()
 vol.points = np.vstack(slices)
@@ -227,7 +232,7 @@ pl.add_mesh(vol, style='wireframe', scalars=warpby, show_scalar_bar=False)
 pl.add_mesh(warped, scalars=warpby)
 pl.show()
 
-###############################################################################
+# %%
 # Finally, let's make a gallery of the first 8 unique eigenmodes.
 
 

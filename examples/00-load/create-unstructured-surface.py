@@ -5,14 +5,17 @@ Creating an Unstructured Grid
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create an irregular, unstructured grid from NumPy arrays.
+This example uses :class:`pyvista.UnstructuredGrid`.
 """
+
+from __future__ import annotations
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import CellType
 
-###############################################################################
+# %%
 # An unstructured grid can be created directly from NumPy arrays.
 # This is useful when creating a grid from scratch or copying it from another
 # format.  See `vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_
@@ -37,7 +40,7 @@ cell1 = np.array(
         [1, 0, 1],
         [1, 1, 1],
         [0, 1, 1],
-    ]
+    ],
 )
 
 cell2 = np.array(
@@ -50,7 +53,7 @@ cell2 = np.array(
         [1, 0, 3],
         [1, 1, 3],
         [0, 1, 3],
-    ]
+    ],
 )
 
 # points of the cell array
@@ -70,7 +73,7 @@ grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells_hex}, points)
 # plot the grid (and suppress the camera position output)
 _ = grid.plot(show_edges=True)
 
-###############################################################################
+# %%
 # UnstructuredGrid with Shared Points
 # -----------------------------------
 #
@@ -107,7 +110,7 @@ points = np.array(
         [0.0, 0.5, 1.0],
         [0.5, 0.5, 0.5],
         [0.5, 0.5, 1.0],
-    ]
+    ],
 )
 
 
@@ -124,28 +127,29 @@ cells = np.array(
         [8, 13, 9, 17, 25, 14, 10, 18, 26],
         [8, 23, 25, 21, 19, 24, 26, 22, 20],
         [8, 25, 17, 15, 21, 26, 18, 16, 22],
-    ]
+    ],
 ).ravel()
 
 # each cell is a HEXAHEDRON
 celltypes = np.full(8, CellType.HEXAHEDRON, dtype=np.uint8)
 
 
-###############################################################################
+# %%
 # Finally, create the unstructured grid and plot it
 grid = pv.UnstructuredGrid(cells, celltypes, points)
 
 # Alternate versions:
 grid = pv.UnstructuredGrid({CellType.HEXAHEDRON: cells.reshape([-1, 9])[:, 1:]}, points)
 grid = pv.UnstructuredGrid(
-    {CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))}, points
+    {CellType.HEXAHEDRON: np.delete(cells, np.arange(0, cells.size, 9))},
+    points,
 )
 
 # plot the grid (and suppress the camera position output)
 _ = grid.plot(show_edges=True)
 
 
-###############################################################################
+# %%
 # Tetrahedral Grid
 # ~~~~~~~~~~~~~~~~
 # Here is how we can create an unstructured tetrahedral grid.
@@ -167,7 +171,7 @@ cells = np.array(
         [4, 5, 2, 8, 3],
         [4, 5, 3, 8, 7],
         [4, 2, 6, 4, 5],
-    ]
+    ],
 )
 
 celltypes = np.full(10, fill_value=CellType.TETRA, dtype=np.uint8)
@@ -186,7 +190,7 @@ points = np.array(
         [0.43, 0.0, 0.25],
         [0.0, -0.43, -0.25],
         [0.0, -0.43, 0.25],
-    ]
+    ],
 )
 
 # Create and plot the unstructured grid
@@ -194,9 +198,11 @@ grid = pv.UnstructuredGrid(cells, celltypes, points)
 grid.plot(show_edges=True)
 
 
-###############################################################################
+# %%
 # For fun, let's separate all the cells and plot out the individual cells. Shift
 # them a little bit from the center to create an "exploded view".
 
 split_cells = grid.explode(0.5)
 split_cells.plot(show_edges=True, ssao=True)
+# %%
+# .. tags:: load

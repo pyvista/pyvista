@@ -11,6 +11,9 @@ swept surface. For example, sweeping a line results in a
 cylindrical shell, and sweeping a circle creates a torus.
 
 """
+
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista
@@ -21,7 +24,7 @@ line = pyvista.Line(pointa=(0, 0, 0), pointb=(1, 0, 0), resolution=2)
 poly = line.extrude_rotate(resolution=resolution)
 poly
 
-###############################################################################
+# %%
 # Plot the extruded line
 # ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -52,7 +55,7 @@ plotter.add_mesh(
 
 plotter.show(cpos="xy")
 
-###############################################################################
+# %%
 # Create a spring
 # ~~~~~~~~~~~~~~~
 
@@ -69,7 +72,7 @@ vertices = np.array(
         [1.4268, 0.0, 0.1768],
         [1.25, 0.0, 0.25],
         [1.0732, 0.0, 0.1768],
-    ]
+    ],
 )
 faces = np.hstack([[8, 0, 1, 2, 3, 4, 5, 6, 7]])
 profile = pyvista.PolyData(vertices, faces)
@@ -80,3 +83,5 @@ plotter.add_text("Spring", font_size=24)
 plotter.add_mesh(spring, color='lightblue', show_edges=True)
 
 plotter.show(cpos="zx")
+# %%
+# .. tags:: filter

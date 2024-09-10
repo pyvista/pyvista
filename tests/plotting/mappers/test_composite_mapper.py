@@ -1,23 +1,26 @@
+from __future__ import annotations
+
 import pytest
 from vtkmodules.vtkCommonCore import vtkLookupTable
 
 import pyvista as pv
-from pyvista.plotting.composite_mapper import BlockAttributes, CompositePolyDataMapper
+from pyvista.plotting.composite_mapper import BlockAttributes
+from pyvista.plotting.composite_mapper import CompositePolyDataMapper
 
 
-@pytest.fixture()
+@pytest.fixture
 def composite_mapper(multiblock_poly):
     pl = pv.Plotter()
     actor, mapper = pl.add_composite(multiblock_poly)
     return mapper
 
 
-@pytest.fixture()
+@pytest.fixture
 def block_attributes(composite_mapper):
     return composite_mapper.block_attr
 
 
-@pytest.fixture()
+@pytest.fixture
 def block_attr(block_attributes):
     return block_attributes[0]
 
@@ -54,7 +57,8 @@ def test_scalar_map_mode(composite_mapper):
 
 
 @pytest.mark.parametrize(
-    'value', ['default', 'point', 'cell', 'point_field', 'cell_field', 'field']
+    'value',
+    ['default', 'point', 'cell', 'point_field', 'cell_field', 'field'],
 )
 def test_scalar_map_mode_values(value, composite_mapper):
     composite_mapper.scalar_map_mode = value

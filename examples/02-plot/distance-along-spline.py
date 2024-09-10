@@ -11,11 +11,13 @@ This is an extension of the :ref:`create_spline_example`.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create a spline
 # ~~~~~~~~~~~~~~~
 # Create a spline using :func:`pyvista.Spline`.
@@ -34,7 +36,7 @@ spline = pv.Spline(points, 1000)
 spline.point_data
 
 
-###############################################################################
+# %%
 # Determine the coordinates matching distance along a spline
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we write a simple function that gets the closest point matching a distance along a spline and then generate labels for those points.
@@ -59,7 +61,7 @@ for dist in dists:
 
 labels
 
-###############################################################################
+# %%
 # Plot with Labels
 # ~~~~~~~~~~~~~~~~
 # Plot the spline with labeled points
@@ -72,9 +74,15 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 pl = pv.Plotter()
 pl.add_mesh(spline, scalars='arc_length', render_lines_as_tubes=True, line_width=10)
 pl.add_point_labels(
-    label_points, labels, always_visible=True, point_size=20, render_points_as_spheres=True
+    label_points,
+    labels,
+    always_visible=True,
+    point_size=20,
+    render_points_as_spheres=True,
 )
 pl.show_bounds()
 pl.show_axes()
 pl.camera_position = 'xz'
 pl.show()
+# %%
+# .. tags:: plot

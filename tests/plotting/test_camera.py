@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 
 import numpy as np
@@ -19,15 +21,14 @@ configuration = [
 ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def camera():
     return pv.Camera()
 
 
-@pytest.fixture()
+@pytest.fixture
 def paraview_pvcc():
     """Fixture returning a paraview camera file with values of the position"""
-
     tmp = """
     <PVCameraConfiguration description="ParaView camera configuration" version="1.0">
       <Proxy group="views" type="RenderView" id="6395" servers="21">
@@ -178,9 +179,9 @@ def test_clipping_range(camera):
     assert camera.GetClippingRange() == points
     assert camera.clipping_range == points
 
-    with pytest.raises(ValueError):
-        far_point = near_point - np.random.default_rng().random(1)
-        points = (near_point, far_point)
+    far_point = near_point - np.random.default_rng().random(1)
+    points = (near_point, far_point)
+    with pytest.raises(ValueError):  # noqa: PT011
         camera.clipping_range = points
 
 

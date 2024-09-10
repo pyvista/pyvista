@@ -13,6 +13,9 @@ to clip by a surface, and preserve the original geometry of the given mesh,
 but many folks leverage the ``clip_surface`` filter to triangulate/tessellate
 the mesh geometries along the clip.
 """
+
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 4
@@ -22,7 +25,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 surface = pv.Cone(direction=(0, 0, -1), height=3.0, radius=1, resolution=50, capping=False)
 
 # Make a gridded dataset
@@ -38,7 +41,7 @@ p.add_legend()
 p.show()
 
 
-###############################################################################
+# %%
 # Take a look at the implicit function used to perform the surface clipping by
 # using the :func:`pyvista.DataSetFilters.compute_implicit_distance` filter.
 # The clipping operation field is performed where the ``implicit_distance``
@@ -63,7 +66,7 @@ p.add_mesh(
 p.add_legend()
 p.show()
 
-###############################################################################
+# %%
 p = pv.Plotter()
 p.add_mesh(surface, color='w', label='Surface', opacity=0.75)
 p.add_mesh(
@@ -79,7 +82,7 @@ p.add_legend()
 p.show()
 
 
-###############################################################################
+# %%
 # Clip the rectilinear grid dataset using the :class:`pyvista.PolyData`
 # surface mesh via the :func:`pyvista.DataSetFilters.clip_surface` filter.
 # This will triangulate/tessellate the mesh geometries along the clip.
@@ -93,7 +96,7 @@ p.add_legend()
 p.show()
 
 
-###############################################################################
+# %%
 # Here is another example of clipping a mesh by a surface. This time, we'll
 # generate a :class:`pyvista.ImageData` around a topography surface and then
 # clip that grid using the surface to create a closed 3D model of the surface
@@ -112,3 +115,5 @@ model = grid.clip_surface(surface)
 
 # Compute height and display it
 model.elevation().plot()
+# %%
+# .. tags:: filter

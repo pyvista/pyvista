@@ -9,11 +9,14 @@ to right; the y axis is from bottom to top; and the z axis emerges from the
 image. The camera location is the same in all four images.
 
 """
+
 # sphinx_gallery_thumbnail_number = 3
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Define camera and axes
 # ++++++++++++++++++++++
 #
@@ -29,7 +32,7 @@ camera.focal_point = (5.0, 5.0, 5.0)
 axes = pv.Axes(show_actor=True, actor_scale=2.0, line_width=5)
 axes.origin = (3.0, 3.0, 3.0)
 
-###############################################################################
+# %%
 # Original Mesh
 # +++++++++++++
 #
@@ -44,7 +47,7 @@ p.add_mesh(mesh)
 
 p.show()
 
-###############################################################################
+# %%
 # Rotation about the x axis
 # +++++++++++++++++++++++++
 #
@@ -63,7 +66,7 @@ for i in range(6):
 
 p.show()
 
-###############################################################################
+# %%
 # Rotation about the y axis
 # +++++++++++++++++++++++++
 #
@@ -82,7 +85,7 @@ for i in range(6):
 
 p.show()
 
-###############################################################################
+# %%
 # Rotation about the z axis
 # +++++++++++++++++++++++++
 #
@@ -101,7 +104,7 @@ for i in range(6):
 
 p.show()
 
-###############################################################################
+# %%
 # Rotation about a custom vector
 # ++++++++++++++++++++++++++++++
 #
@@ -119,3 +122,5 @@ for i in range(6):
     p.add_mesh(rot)
 
 p.show()
+# %%
+# .. tags:: filter

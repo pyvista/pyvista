@@ -1,7 +1,12 @@
 """Examples module."""
-# flake8: noqa: F401
 
-from . import gltf, planets, vrml
+# ruff: noqa: F401
+from __future__ import annotations
+
+from . import download_3ds
+from . import gltf
+from . import planets
+from . import vrml
 from .cells import plot_cell
 from .downloads import *
 from .examples import *

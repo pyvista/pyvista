@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 
@@ -7,7 +9,7 @@ has_ipython = True
 try:
     import IPython  # noqa: F401
     from PIL.Image import Image
-except:  # noqa: E722
+except:
     has_ipython = False
 
 skip_no_ipython = pytest.mark.skipif(not has_ipython, reason="Requires IPython package")

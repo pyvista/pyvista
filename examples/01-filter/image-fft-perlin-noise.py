@@ -15,11 +15,13 @@ and then performing FFT of the sampled noise to show the frequency content of
 that noise.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Generate Perlin Noise
 # ~~~~~~~~~~~~~~~~~~~~~
 # Start by generating some `Perlin Noise
@@ -43,7 +45,7 @@ warped_noise = sampled.warp_by_scalar()
 warped_noise.plot(show_scalar_bar=False, text='Perlin Noise', lighting=False)
 
 
-###############################################################################
+# %%
 # Perform FFT of Perlin Noise
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Next, perform an FFT of the noise and plot the frequency content.
@@ -60,7 +62,7 @@ max_freq = freq.max()
 subset = sampled_fft.extract_subset((0, xdim // 2, 0, ydim // 2, 0, 0))
 
 
-###############################################################################
+# %%
 # Plot the Frequency Domain
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now, plot the noise in the frequency domain. Note how there is more high
@@ -86,7 +88,7 @@ pl.add_text('Frequency Domain of the Perlin Noise')
 pl.show()
 
 
-###############################################################################
+# %%
 # Low Pass Filter
 # ~~~~~~~~~~~~~~~
 # Let's perform a low pass filter on the frequency content and then convert it
@@ -104,7 +106,7 @@ warped_low_pass = low_pass.warp_by_scalar()
 warped_low_pass.plot(show_scalar_bar=False, text='Low Pass of the Perlin Noise', lighting=False)
 
 
-###############################################################################
+# %%
 # High Pass Filter
 # ~~~~~~~~~~~~~~~~
 # This time, let's perform a high pass filter on the frequency content and then
@@ -123,7 +125,7 @@ warped_high_pass = high_pass.warp_by_scalar()
 warped_high_pass.plot(show_scalar_bar=False, text='High Pass of the Perlin Noise', lighting=False)
 
 
-###############################################################################
+# %%
 # Sum Low and High Pass
 # ~~~~~~~~~~~~~~~~~~~~~
 # Show that the sum of the low and high passes equals the original noise.
@@ -132,7 +134,8 @@ grid = pv.ImageData(dimensions=sampled.dimensions, spacing=sampled.spacing)
 grid['scalars'] = high_pass['scalars'] + low_pass['scalars']
 
 print(
-    'Low and High Pass identical to the original:', np.allclose(grid['scalars'], sampled['scalars'])
+    'Low and High Pass identical to the original:',
+    np.allclose(grid['scalars'], sampled['scalars']),
 )
 
 pl = pv.Plotter(shape=(1, 2))
@@ -144,14 +147,16 @@ pl.add_text('Sum of the Low and High Passes')
 pl.show()
 
 
-###############################################################################
+# %%
 # Animate
 # ~~~~~~~
 # Animate the variation of the cutoff frequency.
 
 
-def warp_low_pass_noise(cfreq, scalar_ptp=sampled['scalars'].ptp()):
+def warp_low_pass_noise(cfreq, scalar_ptp=None):
     """Process the sampled FFT and warp by scalars."""
+    if scalar_ptp is None:
+        scalar_ptp = np.ptp(sampled['scalars'])
     output = sampled_fft.low_pass(cfreq, cfreq, cfreq).rfft()
 
     # on the left: raw FFT magnitude
@@ -160,7 +165,7 @@ def warp_low_pass_noise(cfreq, scalar_ptp=sampled['scalars'].ptp()):
 
     # on the right: scale to fixed warped height
     output_scaled = output.translate((-11, 11, 0), inplace=False)
-    output_scaled['scalars_warp'] = output['scalars'] / output['scalars'].ptp() * scalar_ptp
+    output_scaled['scalars_warp'] = output['scalars'] / np.ptp(output['scalars']) * scalar_ptp
     warped_scaled = output_scaled.warp_by_scalar('scalars_warp')
     warped_scaled.active_scalars_name = 'scalars'
     # push center back to xy plane due to peaks near 0 frequency
@@ -192,7 +197,7 @@ for _ in range(10):
 plotter.close()
 
 
-###############################################################################
+# %%
 # The left mesh in the above animation warps based on the raw values of the FFT
 # amplitude. This emphasizes how taking into account more and more frequencies
 # as the animation progresses, we recover a gradually larger proportion of the
@@ -204,3 +209,5 @@ plotter.close()
 # wavelength (size of the features) of the Perlin noise decreases as the
 # frequency cutoff is increased since wavelength and frequency are inversely
 # proportional.
+#
+# .. tags:: filter

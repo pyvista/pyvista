@@ -22,7 +22,10 @@ by linear attenuation.
 
 Three spotlights with three different attenuation profiles each:
 """
+
 # sphinx_gallery_thumbnail_number = 3
+from __future__ import annotations
+
 import pyvista as pv
 
 plotter = pv.Plotter(lighting='none')
@@ -43,7 +46,7 @@ plotter.view_yz()
 plotter.show()
 
 
-###############################################################################
+# %%
 # It's not too obvious but it's visible that the rightmost light with quadratic
 # attenuation has a shorter range than the middle one with linear attenuation.
 # Although it seems that even the leftmost light with constant attenuation loses
@@ -69,7 +72,7 @@ for attenuation_values, offset in zip(all_attenuation_values, offsets):
 plotter.view_yz()
 plotter.show()
 
-###############################################################################
+# %%
 # Now the relationship of the three kinds of attenuation seems clearer.
 #
 # For a more practical comparison, let's look at planes that are perpendicular
@@ -97,3 +100,5 @@ for attenuation_values, light_x in zip(all_attenuation_values, light_offsets):
 
 plotter.view_vector((1, -2, 2))
 plotter.show()
+# %%
+# .. tags:: lights

@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import pytest
 import vtk
 
 import pyvista as pv
 
 
-@pytest.fixture()
+@pytest.fixture
 def volume_mapper():
     vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25

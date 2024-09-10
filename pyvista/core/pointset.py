@@ -1,11 +1,17 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-import collections.abc
+
+from __future__ import annotations
+
+from collections.abc import Iterable
+import contextlib
 from functools import wraps
 import numbers
-import os
-import pathlib
+from pathlib import Path
 from textwrap import dedent
-from typing import Optional, Sequence, Tuple, Union, cast
+from typing import TYPE_CHECKING
+from typing import ClassVar
+from typing import Sequence
+from typing import cast
 import warnings
 
 import numpy as np
@@ -13,38 +19,37 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import (
-    BoolVector,
-    BoundsLike,
-    IntArray,
-    IntMatrix,
-    IntVector,
-    Matrix,
-    NumpyIntArray,
-    NumpyUINT8Array,
-    Vector,
-)
-from .cell import (
-    CellArray,
-    _get_connectivity_array,
-    _get_irregular_cells,
-    _get_offset_array,
-    _get_regular_cells,
-)
+from .cell import CellArray
+from .cell import _get_connectivity_array
+from .cell import _get_irregular_cells
+from .cell import _get_offset_array
+from .cell import _get_regular_cells
 from .celltype import CellType
 from .dataset import DataSet
-from .errors import (
-    PointSetCellOperationError,
-    PointSetDimensionReductionError,
-    PointSetNotSupported,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
-from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters, _get_output
-from .utilities.cells import create_mixed_cells, get_mixed_cells, numpy_to_idarr
+from .errors import CellSizeError
+from .errors import PointSetCellOperationError
+from .errors import PointSetDimensionReductionError
+from .errors import PointSetNotSupported
+from .errors import PyVistaDeprecationWarning
+from .errors import VTKVersionError
+from .filters import PolyDataFilters
+from .filters import StructuredGridFilters
+from .filters import UnstructuredGridFilters
+from .filters import _get_output
+from .utilities.cells import create_mixed_cells
+from .utilities.cells import get_mixed_cells
+from .utilities.cells import numpy_to_idarr
 from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import ArrayLike
+    from ._typing_core import BoundsTuple
+    from ._typing_core import CellArrayLike
+    from ._typing_core import MatrixLike
+    from ._typing_core import NumpyArray
+    from ._typing_core import VectorLike
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -60,9 +65,11 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
-    _WRITERS = {".xyz": _vtk.vtkSimplePointsWriter}
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {
+        ".xyz": _vtk.vtkSimplePointsWriter,
+    }
 
-    def center_of_mass(self, scalars_weight: bool = False) -> np.ndarray:
+    def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:
         """Return the coordinates for the center of mass of the mesh.
 
         Parameters
@@ -89,7 +96,7 @@ class _PointSet(DataSet):
         alg.Update()
         return np.array(alg.GetCenter())
 
-    def shallow_copy(self, to_copy: DataSet) -> None:  # type: ignore[override]
+    def shallow_copy(self, to_copy: DataSet) -> None:
         """Create a shallow copy from a different dataset into this one.
 
         This method mutates this dataset and returns ``None``.
@@ -104,14 +111,17 @@ class _PointSet(DataSet):
         if not to_copy.GetPoints():
             to_copy.SetPoints(_vtk.vtkPoints())
         DataSet.shallow_copy(self, cast(_vtk.vtkDataObject, to_copy))
-        return None
 
-    def remove_cells(self, ind: Union[BoolVector, IntVector], inplace=False) -> '_PointSet':
+    def remove_cells(
+        self,
+        ind: VectorLike[bool] | VectorLike[int],
+        inplace=False,
+    ) -> _PointSet:
         """Remove cells.
 
         Parameters
         ----------
-        ind : BoolVector | IntVector
+        ind : VectorLike[int] | VectorLike[bool]
             Cell indices to be removed.  The array can also be a
             boolean array of the same size as the number of cells.
 
@@ -133,25 +143,23 @@ class _PointSet(DataSet):
         >>> hex_mesh = pv.read(examples.hexbeamfile)
         >>> removed = hex_mesh.remove_cells(range(10, 20))
         >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
+
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError(
-                    f'Boolean array size must match the number of cells ({self.n_cells})'
+                    f'Boolean array size must match the number of cells ({self.n_cells})',
                 )
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.DUPLICATECELL
 
-        if inplace:
-            target = self
-        else:
-            target = self.copy()
+        target = self if inplace else self.copy()
 
         target.cell_data[_vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
         target.RemoveGhostCells()
         return target
 
-    def points_to_double(self) -> '_PointSet':
+    def points_to_double(self) -> _PointSet:
         """Convert the points datatype to double precision.
 
         Returns
@@ -178,11 +186,11 @@ class _PointSet(DataSet):
 
         """
         if self.points.dtype != np.double:
-            self.points = self.points.astype(np.double)  # type: ignore
+            self.points = self.points.astype(np.double)  # type: ignore[assignment]
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    def translate(self, xyz: Vector, transform_all_input_vectors=False, inplace=None):
+    def translate(self, xyz: VectorLike[float], transform_all_input_vectors=False, inplace=None):
         """Translate the mesh.
 
         Parameters
@@ -210,21 +218,23 @@ class _PointSet(DataSet):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.center
-        [0.0, 0.0, 0.0]
+        (0.0, 0.0, 0.0)
         >>> trans = mesh.translate((2, 1, 2), inplace=True)
         >>> trans.center
-        [2.0, 1.0, 2.0]
+        (2.0, 1.0, 2.0)
 
         """
         if inplace:
-            self.points += np.asarray(xyz)  # type: ignore
+            self.points += np.asarray(xyz)  # type: ignore[misc]
             return self
         return super().translate(
-            xyz, transform_all_input_vectors=transform_all_input_vectors, inplace=inplace
+            xyz,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
 
-class PointSet(_vtk.vtkPointSet, _PointSet):
+class PointSet(_PointSet, _vtk.vtkPointSet):
     """Concrete class for storing a set of points.
 
     This is a concrete class representing a set of points that specifies the
@@ -267,7 +277,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
 
     >>> import numpy as np
     >>> import pyvista as pv
-    >>> rng = np.random.default_rng()
+    >>> rng = np.random.default_rng(seed=0)
     >>> points = rng.random((10, 3))
     >>> pset = pv.PointSet(points)
 
@@ -339,7 +349,34 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
                 pdata.point_data[key] = value
         return pdata
 
-    @wraps(DataSet.plot)  # type: ignore
+    def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
+        """Cast this dataset to :class:`pyvista.UnstructuredGrid`.
+
+        A deep copy of the points and point data is made.
+
+        Returns
+        -------
+        pyvista.UnstructuredGrid
+            Dataset cast to a :class:`pyvista.UnstructuredGrid`.
+
+        Examples
+        --------
+        Cast a :class:`pyvista.PointSet` to a
+        :class:`pyvista.UnstructuredGrid`.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cloud_dark_matter()
+        >>> type(mesh)
+        <class 'pyvista.core.pointset.PointSet'>
+        >>> grid = mesh.cast_to_unstructured_grid()
+        >>> type(grid)
+        <class 'pyvista.core.pointset.UnstructuredGrid'>
+
+        """
+        return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
+
+    @wraps(DataSet.plot)
     def plot(self, *args, **kwargs):
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
@@ -389,7 +426,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
     def contour(self, *args, **kwargs):
         """Raise dimension reducing operations are not supported."""
         raise PointSetNotSupported(
-            'Contour and other dimension reducing filters are not supported on PointSets'
+            'Contour and other dimension reducing filters are not supported on PointSets',
         )
 
     def cell_data_to_point_data(self, *args, **kwargs):
@@ -461,7 +498,7 @@ class PointSet(_vtk.vtkPointSet, _PointSet):
         raise PointSetCellOperationError
 
 
-class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
+class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
     Can be initialized in several ways:
@@ -471,6 +508,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     - Using vertices
     - Using vertices and faces
     - From a file
+
+    .. deprecated:: 0.44.0
+       The parameters ``n_faces``, ``n_lines``, ``n_strips``, and
+       ``n_verts`` are deprecated and no longer used. They were
+       previously used to speed up the construction of the corresponding
+       cell arrays but no longer provide any benefit.
 
     Parameters
     ----------
@@ -484,13 +527,16 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         or ``'C:/Users/user/my_mesh.ply'``.
 
         Otherwise, this must be a points array or list containing one
-        or more points.  Each point must have 3 dimensions.  If ``faces``,
-        ``lines``, ``strips``, and ``verts`` are all ``None``, then the
-        ``PolyData`` object will be created with vertex cells with
-        ``n_verts`` equal to the number of ``points``.
+        or more points.  Each point must have 3 dimensions.  If
+        ``faces``, ``lines``, ``strips``, and ``verts`` are all
+        ``None``, then the ``PolyData`` object will be created with
+        vertex cells with ``n_verts`` equal to the number of ``points``.
 
-    faces : sequence, optional
-        Face connectivity array.  Faces must contain padding
+    faces : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+        Polygonal faces of the mesh. Can be either a padded connectivity
+        array or an explicit cell array object.
+
+        In the padded array format, faces must contain padding
         indicating the number of points in the face.  For example, the
         two faces ``[10, 11, 12]`` and ``[20, 21, 22, 23]`` will be
         represented as ``[3, 10, 11, 12, 4, 20, 21, 22, 23]``.  This
@@ -501,35 +547,35 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         clouds that have no connectivity.
 
     n_faces : int, optional
-        Number of faces in the ``faces`` connectivity array.  While
-        optional, setting this speeds up the creation of the
-        ``PolyData``.
+        Deprecated. Not used.
 
-    lines : sequence, optional
-        The line connectivity array.  Like ``faces``, this array
-        requires padding indicating the number of points in a line
-        segment.  For example, the two line segments ``[0, 1]`` and
-        ``[1, 2, 3, 4]`` will be represented as
+    lines : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+        Line connectivity. Like ``faces``, this can be either a padded
+        connectivity array or an explicit cell array object. The padded
+        array format requires padding indicating the number of points in
+        a line segment.  For example, the two line segments ``[0, 1]``
+        and ``[1, 2, 3, 4]`` will be represented as
         ``[2, 0, 1, 4, 1, 2, 3, 4]``.
 
     n_lines : int, optional
-        Number of lines in the ``lines`` connectivity array.  While
-        optional, setting this speeds up the creation of the
-        ``PolyData``.
+        Deprecated. Not used.
 
-    strips : sequence, optional
-        Triangle strips connectivity array.  Triangle strips require an initial
-        triangle, and the following points of the strip. Each
+    strips : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+        Triangle strips connectivity.  Triangle strips require an
+        initial triangle, and the following points of the strip. Each
         triangle is built with the new point and the two previous
-        points. Just as in ``lines`` and ``faces``, this array requires a
-        padding indicating the number of points. For example,
-        a single triangle strip of ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires padding of
-        ``10`` and should input as ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
+        points.
+
+        Just as in ``lines`` and ``faces``, this connectivity can be
+        specified as either a padded array or an explicit cell array
+        object. The padded array requires a padding indicating the
+        number of points. For example, a single triangle strip of the 10
+        point indices ``[0, 1, 2, 3, 6, 7, 4, 5, 0, 1]`` requires
+        padding of ``10`` and should be input as
+        ``[10, 0, 1, 2, 3, 6, 7, 4, 5, 0, 1]``.
 
     n_strips : int, optional
-        Number of strips in the ``strips`` connectivity array.  While
-        optional, setting this speeds up the creation of the
-        ``PolyData``.
+        Deprecated. Not used.
 
     deep : bool, optional
         Whether to copy the inputs, or to create a mesh from them
@@ -548,21 +594,22 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
-    verts : sequence, optional
-        The verts connectivity array.  Like ``faces``, this array
-        requires padding indicating the number of vertices in each cell.
-        For example, ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells
+    verts : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+        The verts connectivity.  Like ``faces``, ``lines``, and
+        ``strips`` this can be supplied as either a padded array or an
+        explicit cell array object. In the padded array format,
+        the padding indicates the number of vertices in each cell.  For
+        example, ``[1, 0, 1, 1, 1, 2]`` indicates three vertex cells
         each with one point, and ``[2, 0, 1, 2, 2, 3]`` indicates two
         polyvertex cells each with two points.
 
     n_verts : int, optional
-        Number of verts in the ``verts`` connectivity array.  While
-        optional, setting this speeds up the creation of the
-        ``PolyData``.
+        Deprecated. Not used.
 
     See Also
     --------
     pyvista.PolyData.from_regular_faces
+    pyvista.PolyData.from_irregular_faces
 
     Examples
     --------
@@ -570,6 +617,10 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     >>> import numpy as np
     >>> from pyvista import examples
     >>> import pyvista as pv
+
+    Seed random number generator for reproducible plots
+
+    >>> rng = np.random.default_rng(seed=0)
 
     Create an empty mesh.
 
@@ -610,6 +661,62 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
     >>> mesh = pv.PolyData(examples.antfile)
 
+    Construct a set of random line segments using a ``pv.CellArray`.
+    Because every line in this example has the same size, in this case
+    two points, we can use ``pv.CellArray.from_regular_cells`` to
+    construct the ``lines`` cell array. This is the most efficient
+    method to construct a cell array.
+
+    >>> n_points = 20
+    >>> n_lines = n_points // 2
+    >>> points = rng.random((n_points, 3))
+    >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
+    >>> mesh = pv.PolyData(
+    ...     points, lines=pv.CellArray.from_regular_cells(lines)
+    ... )
+    >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
+    >>> mesh.plot(scalars='line_idx')
+
+    Construct a set of random triangle strips using a ``pv.CellArray``.
+    Because each strip in this example can have a different number
+    of points, we use ``pv.CellArray.from_irregular_cells`` to construct
+    the ``strips`` cell array.
+
+    >>> n_strips = 4
+    >>> n_verts_per_strip = rng.integers(low=3, high=7, size=n_strips)
+    >>> n_points = 10 * sum(n_verts_per_strip)
+    >>> points = rng.random((n_points, 3))
+    >>> strips = [
+    ...     rng.integers(low=0, high=n_points, size=nv)
+    ...     for nv in n_verts_per_strip
+    ... ]
+    >>> mesh = pv.PolyData(
+    ...     points, strips=pv.CellArray.from_irregular_cells(strips)
+    ... )
+    >>> mesh.cell_data['strip_idx'] = np.arange(n_strips)
+    >>> mesh.plot(show_edges=True, scalars='strip_idx')
+
+    Construct a mesh reusing the ``faces`` ``pv.CellArray`` from another
+    mesh. The VTK methods ``GetPolys``, ``GetLines``, ``GetStrips``, and
+    ``GetVerts`` return the underlying ``CellArray``s for the ``faces``,
+    ``lines``, ``strips``, and ``verts`` properties respectively.
+    Reusing cell arrays like this can be a performance optimization for
+    large meshes because it avoids allocating new arrays.
+
+    >>> small_sphere = pv.Sphere().compute_normals()
+    >>> inflated_points = (
+    ...     small_sphere.points + 0.1 * small_sphere.point_data['Normals']
+    ... )
+    >>> larger_sphere = pv.PolyData(
+    ...     inflated_points, faces=small_sphere.GetPolys()
+    ... )
+    >>> plotter = pv.Plotter()
+    >>> _ = plotter.add_mesh(small_sphere, color='red', show_edges=True)
+    >>> _ = plotter.add_mesh(
+    ...     larger_sphere, color='blue', opacity=0.3, show_edges=True
+    ... )
+    >>> plotter.show()
+
     See :ref:`create_poly` for more examples.
 
     """
@@ -617,27 +724,45 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
     _USE_STRICT_N_FACES = False
     _WARNED_DEPRECATED_NONSTRICT_N_FACES = False
 
-    _WRITERS = {
+    _WRITERS: ClassVar[
+        dict[
+            str,
+            (
+                type[
+                    _vtk.vtkPLYWriter
+                    | _vtk.vtkXMLPolyDataWriter
+                    | _vtk.vtkSTLWriter
+                    | _vtk.vtkPolyDataWriter
+                    | _vtk.vtkHoudiniPolyDataWriter
+                    | _vtk.vtkOBJWriter
+                    | _vtk.vtkIVWriter
+                ]
+            ),
+        ]
+    ] = {
         '.ply': _vtk.vtkPLYWriter,
         '.vtp': _vtk.vtkXMLPolyDataWriter,
         '.stl': _vtk.vtkSTLWriter,
         '.vtk': _vtk.vtkPolyDataWriter,
+        '.geo': _vtk.vtkHoudiniPolyDataWriter,
+        '.obj': _vtk.vtkOBJWriter,
+        '.iv': _vtk.vtkIVWriter,
     }
 
     def __init__(
         self,
-        var_inp: Union[_vtk.vtkPolyData, str, Matrix] = None,
-        faces: Optional[IntVector] = None,
-        n_faces: Optional[int] = None,
-        lines: Optional[IntVector] = None,
-        n_lines: Optional[int] = None,
-        strips: Optional[IntVector] = None,
-        n_strips: Optional[int] = None,
+        var_inp: _vtk.vtkPolyData | str | Path | MatrixLike[float] | None = None,
+        faces: CellArrayLike | None = None,
+        n_faces: int | None = None,
+        lines: CellArrayLike | None = None,
+        n_lines: int | None = None,
+        strips: CellArrayLike | None = None,
+        n_strips: int | None = None,
         deep: bool = False,
-        force_ext: Optional[str] = None,
-        force_float: Optional[bool] = True,
-        verts: Optional[IntVector] = None,
-        n_verts: Optional[int] = None,
+        force_ext: str | None = None,
+        force_float: bool | None = True,
+        verts: CellArrayLike | None = None,
+        n_verts: int | None = None,
     ) -> None:
         """Initialize the polydata."""
         local_parms = locals()
@@ -649,11 +774,11 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         # filename
         opt_kwarg = ['faces', 'n_faces', 'lines', 'n_lines']
-        if isinstance(var_inp, (str, pathlib.Path)):
+        if isinstance(var_inp, (str, Path)):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError(
-                        'No other arguments should be set when first parameter is a string'
+                        'No other arguments should be set when first parameter is a string',
                     )
             self._from_file(var_inp, force_ext=force_ext)  # is filename
 
@@ -664,7 +789,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             for kwarg in opt_kwarg:
                 if local_parms[kwarg]:
                     raise ValueError(
-                        'No other arguments should be set when first parameter is a PolyData'
+                        'No other arguments should be set when first parameter is a PolyData',
                     )
             if deep:
                 self.deep_copy(var_inp)
@@ -694,26 +819,42 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         if faces is lines is strips is verts is None:
             # one cell per point (point cloud case)
             verts = self._make_vertex_cells(self.n_points)
-            n_verts = self.n_points
 
-        # here we use CellArray since we must specify deep and n_faces, etc.
-        if verts is not None:
-            self.verts = CellArray(verts, n_verts, deep)  # type: ignore
-        if strips is not None:
-            self.strips = CellArray(strips, n_strips, deep)  # type: ignore
-        if faces is not None:
-            self.faces = CellArray(faces, n_faces, deep)  # type: ignore
-        if lines is not None:
-            self.lines = CellArray(lines, n_lines, deep)  # type: ignore
+        for k, v in (('verts', verts), ('strips', strips), ('faces', faces), ('lines', lines)):
+            if v is None:
+                continue
+
+            # These properties can be supplied as either arrays or pre-constructed `CellArray`s
+            if not isinstance(v, _vtk.vtkCellArray):
+                try:
+                    v = CellArray(v)
+                except CellSizeError as err:
+                    # Raise an additional error so user knows which property triggered the error
+                    raise CellSizeError(f"`{k}` cell array size is invalid.") from err
+
+            setattr(self, k, v)
+
+        # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
+        for k, v in (
+            ('n_verts', n_verts),
+            ('n_strips', n_strips),
+            ('n_faces', n_faces),
+            ('n_lines', n_lines),
+        ):
+            if v is not None:
+                warnings.warn(
+                    f"`PolyData` constructor parameter `{k}` is deprecated and no longer used.",
+                    PyVistaDeprecationWarning,
+                )
+
+        self._glyph_geom = None
 
     def _post_file_load_processing(self) -> None:
         """Execute after loading a PolyData from file."""
         # When loading files with just point arrays, create and
         # set the polydata vertices
         if self.n_points > 0 and self.n_cells == 0:
-            verts = self._make_vertex_cells(self.n_points)
-            self.verts = CellArray(verts, self.n_points, deep=False)  # type: ignore
-        return None
+            self.verts = self._make_vertex_cells(self.n_points)
 
     def __repr__(self) -> str:
         """Return the standard representation."""
@@ -724,14 +865,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return DataSet.__str__(self)
 
     @staticmethod
-    def _make_vertex_cells(npoints: int) -> NumpyIntArray:
+    def _make_vertex_cells(npoints: int) -> NumpyArray[int]:
         cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
         cells[:, 0] = 1
         cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
         return cells
 
     @property
-    def verts(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+    def verts(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Get the vertex cells.
 
         Returns
@@ -745,7 +886,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> points = np.random.default_rng().random((5, 3))
+        >>> rng = np.random.default_rng(seed=0)
+        >>> points = rng.random((5, 3))
         >>> pdata = pv.PolyData(points)
         >>> pdata.verts
         array([1, 0, 1, 1, 1, 2, 1, 3, 1, 4])
@@ -766,19 +908,28 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ...     point_size=60,
         ... )
 
+        Vertex cells can also be set to a ``pyvista.CellArray``. The following
+        ``verts`` assignment is equivalent to the one above.
+
+        >>> mesh.verts = pv.CellArray.from_regular_cells(
+        ...     np.arange(mesh.n_points).reshape((-1, 1))
+        ... )
+
         """
         return _vtk.vtk_to_numpy(self.GetVerts().GetData())
 
     @verts.setter
-    def verts(self, verts: IntVector):  # numpydoc ignore=GL08
-        if isinstance(verts, CellArray):
+    def verts(self, verts: CellArrayLike):  # numpydoc ignore=GL08
+        if isinstance(verts, _vtk.vtkCellArray):
             self.SetVerts(verts)
         else:
             self.SetVerts(CellArray(verts))
 
     @property
-    def lines(self) -> NumpyIntArray:  # numpydoc ignore=RT01
-        """Return a pointer to the lines as a numpy array.
+    def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Return the connectivity array of the lines of this PolyData.
+
+        Lines can also be set by assigning a ``pyvista.CellArray``.
 
         Examples
         --------
@@ -795,14 +946,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
-    def lines(self, lines: IntVector):  # numpydoc ignore=GL08
-        if isinstance(lines, CellArray):
+    def lines(self, lines: CellArrayLike):  # numpydoc ignore=GL08
+        if isinstance(lines, _vtk.vtkCellArray):
             self.SetLines(lines)
         else:
             self.SetLines(CellArray(lines))
 
     @property
-    def faces(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+    def faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the connectivity array of the faces of this PolyData.
 
         The faces array is organized as::
@@ -818,6 +969,8 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
+        Faces can also be set by assigning a ``pyvista.CellArray`` object instead of an array.
+
         Returns
         -------
         numpy.ndarray
@@ -826,6 +979,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         See Also
         --------
         pyvista.PolyData.regular_faces
+        pyvista.PolyData.irregular_faces
 
         Notes
         -----
@@ -866,15 +1020,15 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return array
 
     @faces.setter
-    def faces(self, faces: NumpyIntArray):  # numpydoc ignore=GL08
-        if isinstance(faces, CellArray):
+    def faces(self, faces: CellArrayLike):  # numpydoc ignore=GL08
+        if isinstance(faces, _vtk.vtkCellArray):
             self.SetPolys(faces)
         else:
             # TODO: faster to mutate in-place if array is same size?
             self.SetPolys(CellArray(faces))
 
     @property
-    def regular_faces(self) -> NumpyIntArray:  # numpydoc ignore=RT01
+    def regular_faces(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return a face array of point indices when all faces have the same size.
 
         Returns
@@ -909,20 +1063,20 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _get_regular_cells(self.GetPolys())
 
     @regular_faces.setter
-    def regular_faces(self, faces: Union[np.ndarray, IntMatrix]):  # numpydoc ignore=PR01
+    def regular_faces(self, faces: MatrixLike[int]):  # numpydoc ignore=PR01
         """Set the face cells from an (n_faces, face_size) array."""
-        self.faces = CellArray.from_regular_cells(faces)  # type: ignore
+        self.faces = CellArray.from_regular_cells(faces)
 
     @classmethod
-    def from_regular_faces(cls, points: Matrix, faces: IntMatrix, deep=False):
+    def from_regular_faces(cls, points: MatrixLike[float], faces: MatrixLike[int], deep=False):
         """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
 
         Parameters
         ----------
-        points : Matrix
+        points : MatrixLike[float]
             A (n_points, 3) array of points.
 
-        faces : IntMatrix
+        faces : MatrixLike[int]
             A (n_faces, face_size) array of face indices. For a triangle mesh, ``face_size = 3``.
 
         deep : bool, default: False
@@ -946,14 +1100,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> faces = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
         >>> tetra = pv.PolyData.from_regular_faces(points, faces)
         >>> tetra.plot()
+
         """
-        p = cls()
-        p.points = points  # type: ignore
-        p.faces = CellArray.from_regular_cells(faces, deep=deep)  # type: ignore
-        return p
+        return cls(points, faces=CellArray.from_regular_cells(faces, deep=deep))
 
     @property
-    def irregular_faces(self) -> Tuple[NumpyIntArray, ...]:  # numpydoc ignore=RT01
+    def irregular_faces(self) -> tuple[NumpyArray[int], ...]:  # numpydoc ignore=RT01
         """Return a tuple of face arrays.
 
         Returns
@@ -980,12 +1132,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return _get_irregular_cells(self.GetPolys())
 
     @irregular_faces.setter
-    def irregular_faces(self, faces: Sequence[IntVector]):  # numpydoc ignore=PR01
+    def irregular_faces(self, faces: Sequence[VectorLike[int]]):  # numpydoc ignore=PR01
         """Set the faces from a sequence of face arrays."""
         self.faces = CellArray.from_irregular_cells(faces)
 
     @classmethod
-    def from_irregular_faces(cls, points: Matrix, faces: Sequence[IntVector]):
+    def from_irregular_faces(cls, points: MatrixLike[float], faces: Sequence[VectorLike[int]]):
         """Alternate `pyvista.PolyData` convenience constructor from point and ragged face arrays.
 
         Parameters
@@ -993,7 +1145,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         points : Matrix
             A (n_points, 3) array of points.
 
-        faces : Sequence[IntVector]
+        faces : Sequence[VectorLike[int]]
             A sequence of face vectors containing point indices.
 
         Returns
@@ -1026,14 +1178,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ... ]
         >>> pyramid = pv.PolyData.from_irregular_faces(points, faces)
         >>> pyramid.plot()
+
         """
-        p = cls()
-        p.points = points  # type: ignore
-        p.faces = CellArray.from_irregular_cells(faces)  # type: ignore
-        return p
+        return cls(points, faces=CellArray.from_irregular_cells(faces))
 
     @property
-    def strips(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def strips(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return a pointer to the strips as a numpy array.
 
         Returns
@@ -1048,12 +1198,13 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> extruded = polygon.extrude((0, 0, 1), capping=False)
         >>> extruded.strips
         array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
+
         """
         return _vtk.vtk_to_numpy(self.GetStrips().GetData())
 
     @strips.setter
-    def strips(self, strips):  # numpydoc ignore=GL08
-        if isinstance(strips, CellArray):
+    def strips(self, strips: CellArrayLike):  # numpydoc ignore=GL08
+        if isinstance(strips, _vtk.vtkCellArray):
             self.SetStrips(strips)
         else:
             self.SetStrips(CellArray(strips))
@@ -1095,19 +1246,31 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
             return False
 
         # next, check if there are three points per face
-        return (np.diff(self._offset_array) == 3).all()
+        return bool((np.diff(self._offset_array) == 3).all())
 
     def __sub__(self, cutting_mesh):
         """Compute boolean difference of two meshes."""
         return self.boolean_difference(cutting_mesh)
 
+    def __isub__(self, cutting_mesh):
+        """Compute boolean difference of two meshes and update this mesh."""
+        return self.boolean_difference(cutting_mesh)
+
+    def __and__(self, other_mesh):
+        """Compute boolean intersection of two meshes."""
+        return self.boolean_intersection(other_mesh)
+
+    def __or__(self, other_mesh):
+        """Compute boolean union of two meshes."""
+        return self.boolean_union(other_mesh)
+
     @property
-    def _offset_array(self) -> NumpyIntArray:
+    def _offset_array(self) -> NumpyArray[int]:
         """Return the array used to store cell offsets."""
         return _get_offset_array(self.GetPolys())
 
     @property
-    def _connectivity_array(self) -> NumpyIntArray:
+    def _connectivity_array(self) -> NumpyArray[int]:
         """Return the array with the point ids that define the cells' connectivity."""
         return _get_connectivity_array(self.GetPolys())
 
@@ -1247,6 +1410,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         ... )
         >>> mesh.n_cells, mesh.n_faces_strict
         (2, 1)
+
         """
         return self.GetNumberOfPolys()
 
@@ -1258,11 +1422,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
 
         Parameters
         ----------
-        filename : str
+        filename : str, Path
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
             ftype.  Can be one of many of the supported  the following
-            types (``'.ply'``, ``'.stl'``, ``'.vtk``).
+            types (``'.ply'``, ``'.vtp'``, ``'.stl'``, ``'.vtk``, ``'.geo'``,
+            ``'.obj'``, ``'.iv'``).
 
         binary : bool, default: True
             Writes the file as binary when ``True`` and ASCII when ``False``.
@@ -1333,19 +1498,20 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         >>> sphere.save('my_mesh.vtk')  # doctest:+SKIP
 
         """
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
+        filename = Path(filename).expanduser().resolve()
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
         if ftype in ['.stl', '.ply'] and recompute_normals:
-            self.compute_normals(inplace=True)
+            with contextlib.suppress(TypeError):
+                self.compute_normals(inplace=True)
 
         # validate texture
         if ftype == '.ply' and texture is not None:
             if isinstance(texture, str):
                 if self[texture].dtype != np.uint8:
                     raise ValueError(
-                        f'Invalid datatype {self[texture].dtype} of texture array "{texture}"'
+                        f'Invalid datatype {self[texture].dtype} of texture array "{texture}"',
                     )
             elif isinstance(texture, np.ndarray):
                 if texture.dtype != np.uint8:
@@ -1354,7 +1520,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
                 raise TypeError(
                     f'Invalid type {type(texture)} for texture.  '
                     'Should be either a string representing a point or '
-                    'cell array, or a numpy array.'
+                    'cell array, or a numpy array.',
                 )
 
         super().save(filename, binary, texture=texture)
@@ -1383,13 +1549,12 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def point_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the point normals.
 
-        If the point data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active point normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1400,31 +1565,29 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.point_normals  # doctest:+SKIP
-        pyvista_ndarray([[-2.48721432e-10, -1.08815623e-09, -1.00000000e+00],
-                         [-2.48721432e-10, -1.08815623e-09,  1.00000000e+00],
-                         [-1.18888125e-01,  3.40539310e-03, -9.92901802e-01],
+        >>> sphere.point_normals
+        pyvista_ndarray([[ 0.        ,  0.        ,  1.        ],
+                         [ 0.        ,  0.        , -1.        ],
+                         [ 0.10811902,  0.        ,  0.99413794],
                          ...,
-                         [-3.11940581e-01, -6.81432486e-02,  9.47654784e-01],
-                         [-2.09880397e-01, -4.65070531e-02,  9.76620376e-01],
-                         [-1.15582108e-01, -2.80492082e-02,  9.92901802e-01]],
-                        dtype=float32)
+                         [ 0.31232402, -0.06638652, -0.9476532 ],
+                         [ 0.21027282, -0.04469487, -0.97662055],
+                         [ 0.10575636, -0.02247921, -0.99413794]], dtype=float32)
 
         """
-        if 'Normals' in self.point_data:
-            normals = self.point_data['Normals']
+        if self.point_data.active_normals is not None:
+            normals = self.point_data.active_normals
         else:
             normals = self.compute_normals(cell_normals=False, inplace=False).point_data['Normals']
         return normals
 
     @property
-    def cell_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def cell_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
-        If the cell data already contains an array named ``'Normals'``, this
-        array will be returned. Otherwise, the normals will be computed using
-        the default options of :func:`compute_normals()
-        <pyvista.PolyDataFilters.compute_normals>` and returned.
+        The active cell normals are returned if they exist. Otherwise, they
+        are computed with :func:`~pyvista.PolyDataFilters.compute_normals`
+        using the default options.
 
         Returns
         -------
@@ -1435,24 +1598,24 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.cell_normals  # doctest:+SKIP
-        pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
-                         [-0.05177207,  0.01682176, -0.9985172 ],
-                         [-0.04714328,  0.02721819, -0.9985172 ],
+        >>> sphere.cell_normals
+        pyvista_ndarray([[ 0.05413816,  0.00569015,  0.9985172 ],
+                         [ 0.05177207,  0.01682176,  0.9985172 ],
+                         [ 0.04714328,  0.02721819,  0.9985172 ],
                          ...,
-                         [-0.26742265, -0.02810723,  0.96316934],
-                         [-0.1617585 , -0.01700151,  0.9866839 ],
-                         [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
+                         [ 0.26742265, -0.02810723, -0.96316934],
+                         [ 0.1617585 , -0.01700151, -0.9866839 ],
+                         [ 0.1617585 , -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
-        if 'Normals' in self.cell_data:
-            normals = self.cell_data['Normals']
+        if self.cell_data.active_normals is not None:
+            normals = self.cell_data.active_normals
         else:
             normals = self.compute_normals(point_normals=False, inplace=False).cell_data['Normals']
         return normals
 
     @property
-    def face_normals(self) -> 'pyvista.pyvista_ndarray':  # numpydoc ignore=RT01
+    def face_normals(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
         """Return the cell normals.
 
         Alias to :func:`PolyData.cell_normals`.
@@ -1466,14 +1629,14 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         --------
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.face_normals  # doctest:+SKIP
-        pyvista_ndarray([[-0.05413816,  0.00569015, -0.9985172 ],
-                         [-0.05177207,  0.01682176, -0.9985172 ],
-                         [-0.04714328,  0.02721819, -0.9985172 ],
+        >>> sphere.face_normals
+        pyvista_ndarray([[ 0.05413816,  0.00569015,  0.9985172 ],
+                         [ 0.05177207,  0.01682176,  0.9985172 ],
+                         [ 0.04714328,  0.02721819,  0.9985172 ],
                          ...,
-                         [-0.26742265, -0.02810723,  0.96316934],
-                         [-0.1617585 , -0.01700151,  0.9866839 ],
-                         [-0.1617585 , -0.01700151,  0.9866839 ]], dtype=float32)
+                         [ 0.26742265, -0.02810723, -0.96316934],
+                         [ 0.1617585 , -0.01700151, -0.9866839 ],
+                         [ 0.1617585 , -0.01700151, -0.9866839 ]], dtype=float32)
 
         """
         return self.cell_normals
@@ -1547,6 +1710,7 @@ class PolyData(_vtk.vtkPolyData, _PointSet, PolyDataFilters):
         """Delete the object."""
         if hasattr(self, '_obbTree'):
             del self._obbTree
+        self._glyph_geom = None
 
 
 @abstract_class
@@ -1583,7 +1747,7 @@ class PointGrid(_PointSet):
         return trisurf.plot_curvature(curv_type, **kwargs)
 
 
-class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
+class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):
     """Dataset used for arbitrary combinations of all possible cell types.
 
     Can be initialized by the following:
@@ -1639,7 +1803,15 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
 
     """
 
-    _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
+    _WRITERS: ClassVar[
+        dict[
+            str,
+            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
+        ]
+    ] = {
+        '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
+        '.vtk': _vtk.vtkUnstructuredGridWriter,
+    }
 
     def __init__(self, *args, deep=False, **kwargs) -> None:
         """Initialize the unstructured grid."""
@@ -1654,7 +1826,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 else:
                     self.shallow_copy(args[0])
 
-            elif isinstance(args[0], (str, pathlib.Path)):
+            elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
 
             elif isinstance(args[0], (_vtk.vtkStructuredGrid, _vtk.vtkPolyData)):
@@ -1673,9 +1845,9 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
             self._check_for_consistency()
 
         elif len(args) == 3:
-            arg0_is_seq = isinstance(args[0], (np.ndarray, collections.abc.Sequence))
-            arg1_is_seq = isinstance(args[1], (np.ndarray, collections.abc.Sequence))
-            arg2_is_seq = isinstance(args[2], (np.ndarray, collections.abc.Sequence))
+            arg0_is_seq = isinstance(args[0], (np.ndarray, Sequence))
+            arg1_is_seq = isinstance(args[1], (np.ndarray, Sequence))
+            arg2_is_seq = isinstance(args[2], (np.ndarray, Sequence))
 
             if all([arg0_is_seq, arg1_is_seq, arg2_is_seq]):
                 self._from_arrays(args[0], args[1], args[2], deep, **kwargs)
@@ -1685,7 +1857,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         else:
             raise TypeError(
                 'Invalid parameters.  Initialization with arrays requires the '
-                'following arrays:\n`cells`, `cell_type`, `points`'
+                'following arrays:\n`cells`, `cell_type`, `points`',
             )
 
     def __repr__(self):
@@ -1789,7 +1961,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         points = np.asarray(points)
 
         # Convert to vtk arrays
-        vtkcells = CellArray(cells, cell_type.size, deep)
+        vtkcells = CellArray(cells)
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
         cell_type = _vtk.numpy_to_vtk(cell_type, deep=deep)
@@ -1809,17 +1981,17 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         if self.n_cells != self.celltypes.size:
             raise ValueError(
                 f'Number of cell types ({self.celltypes.size}) '
-                f'must match the number of cells {self.n_cells})'
+                f'must match the number of cells {self.n_cells})',
             )
 
         if self.n_cells != self.offset.size - 1:  # pragma: no cover
             raise ValueError(
                 f'Size of the offset ({self.offset.size}) '
-                f'must be one greater than the number of cells ({self.n_cells})'
+                f'must be one greater than the number of cells ({self.n_cells})',
             )
 
     @property
-    def cells(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the cell data as a numpy object.
 
         This is the old style VTK data layout::
@@ -1877,7 +2049,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         self.GetCells().ImportLegacyFormat(vtk_idarr)
 
     @property
-    def cells_dict(self) -> dict:  # numpydoc ignore=RT01
+    def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a :class:`numpy.ndarray` for each cell
@@ -1916,11 +2088,12 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
                 [44, 26, 62, 98, 11, 10, 13, 17],
                 [89, 98, 80, 71, 16, 17, 15, 14],
                 [98, 62, 53, 80, 17, 13, 12, 15]])}
+
         """
         return get_mixed_cells(self)
 
     @property
-    def cell_connectivity(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def cell_connectivity(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return a the vtk cell connectivity as a numpy array.
 
         This is effectively :attr:`UnstructuredGrid.cells` without the
@@ -2013,74 +2186,36 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return lgrid
 
     @property
-    def celltypes(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def celltypes(self) -> NumpyArray[np.uint8]:  # numpydoc ignore=RT01
         """Return the cell types array.
+
+        The array contains integer values corresponding to the :attr:`pyvista.Cell.type`
+        of each cell in the dataset. See the :class:`pyvista.CellType` enum for more
+        information about cell type.
 
         Returns
         -------
         numpy.ndarray
             Array of cell types.
 
-        Notes
-        -----
-        Here are some of the most popular cell types:
-
-        * ``EMPTY_CELL = 0``
-        * ``VERTEX = 1``
-        * ``POLY_VERTEX = 2``
-        * ``LINE = 3``
-        * ``POLY_LINE = 4``
-        * ``TRIANGLE = 5``
-        * ``TRIANGLE_STRIP = 6``
-        * ``POLYGON = 7``
-        * ``PIXEL = 8``
-        * ``QUAD = 9``
-        * ``TETRA = 10``
-        * ``VOXEL = 11``
-        * ``HEXAHEDRON = 12``
-        * ``WEDGE = 13``
-        * ``PYRAMID = 14``
-        * ``PENTAGONAL_PRISM = 15``
-        * ``HEXAGONAL_PRISM = 16``
-        * ``QUADRATIC_EDGE = 21``
-        * ``QUADRATIC_TRIANGLE = 22``
-        * ``QUADRATIC_QUAD = 23``
-        * ``QUADRATIC_POLYGON = 36``
-        * ``QUADRATIC_TETRA = 24``
-        * ``QUADRATIC_HEXAHEDRON = 25``
-        * ``QUADRATIC_WEDGE = 26``
-        * ``QUADRATIC_PYRAMID = 27``
-        * ``BIQUADRATIC_QUAD = 28``
-        * ``TRIQUADRATIC_HEXAHEDRON = 29``
-        * ``QUADRATIC_LINEAR_QUAD = 30``
-        * ``QUADRATIC_LINEAR_WEDGE = 31``
-        * ``BIQUADRATIC_QUADRATIC_WEDGE = 32``
-        * ``BIQUADRATIC_QUADRATIC_HEXAHEDRON = 33``
-        * ``BIQUADRATIC_TRIANGLE = 34``
-
-        See `vtkCellType.h
-        <https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html>`_ for all
-        cell types.
-
         Examples
         --------
         This mesh contains only linear hexahedral cells, type
-        ``CellType.HEXAHEDRON``, which evaluates to 12.
+        :attr:`pyvista.CellType.HEXAHEDRON`, which evaluates to 12.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> hex_beam = pv.read(examples.hexbeamfile)
-        >>> hex_beam.celltypes  # doctest:+SKIP
-        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
-               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
-               dtype=uint8)
+        >>> hex_beam = examples.load_hexbeam()
+        >>> hex_beam.celltypes
+        array([12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+               12, 12, 12, 12, 12, 12], dtype=uint8)
 
         """
         return _vtk.vtk_to_numpy(self.GetCellTypesArray())
 
     @property
-    def offset(self) -> np.ndarray:  # numpydoc ignore=RT01
+    def offset(self) -> NumpyArray[float]:  # numpydoc ignore=RT01
         """Return the cell locations array.
 
         This is the location of the start of each cell in
@@ -2168,7 +2303,7 @@ class UnstructuredGrid(_vtk.vtkUnstructuredGrid, PointGrid, UnstructuredGridFilt
         return grid
 
 
-class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
+class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     """Dataset used for topologically regular arrays of data.
 
     Can be initialized in one of the following several ways:
@@ -2181,7 +2316,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     Parameters
     ----------
-    uinput : str, pathlib.Path, vtk.vtkStructuredGrid, numpy.ndarray, optional
+    uinput : str, Path, vtk.vtkStructuredGrid, numpy.ndarray, optional
         Filename, dataset, or array to initialize the structured grid from. If
         a filename is passed, pyvista will attempt to load it as a
         :class:`StructuredGrid`. If passed a ``vtk.vtkStructuredGrid``, it will
@@ -2246,7 +2381,9 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     """
 
-    _WRITERS = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
+    _WRITERS: ClassVar[
+        dict[str, type[_vtk.vtkStructuredGridWriter | _vtk.vtkXMLStructuredGridWriter]]
+    ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
 
     def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
         """Initialize the structured grid."""
@@ -2260,7 +2397,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 self.deep_copy(uinput)
             else:
                 self.shallow_copy(uinput)
-        elif isinstance(uinput, (str, pathlib.Path)):
+        elif isinstance(uinput, (str, Path)):
             self._from_file(uinput, **kwargs)
         elif (
             isinstance(uinput, np.ndarray)
@@ -2269,7 +2406,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         ):
             self._from_arrays(uinput, y, z, **kwargs)
         elif isinstance(uinput, np.ndarray) and y is None and z is None:
-            self.points = uinput  # type: ignore
+            self.points = uinput  # type: ignore[assignment]
         elif uinput is None:
             # do nothing, initialize as empty structured grid
             pass
@@ -2280,7 +2417,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
                 " - Filename as the only argument\n"
                 " - StructuredGrid as the only argument\n"
                 " - Single `numpy.ndarray` as the only argument"
-                " - Three `numpy.ndarray` as the first three arguments"
+                " - Three `numpy.ndarray` as the first three arguments",
             )
 
     def __repr__(self):
@@ -2417,7 +2554,7 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         if len(key) != 3:
             raise RuntimeError('Slices must have exactly 3 dimensions.')
         for i, k in enumerate(key):
-            if isinstance(k, collections.abc.Iterable):
+            if isinstance(k, Iterable):
                 raise RuntimeError('Fancy indexing is not supported.')
             if isinstance(k, numbers.Integral):
                 start = stop = k
@@ -2464,13 +2601,14 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid = grid.hide_cells(range(79 * 30, 79 * 50))
         >>> grid.plot(color=True, show_edges=True)
+
         """
         if not inplace:
             return self.copy().hide_cells(ind, inplace=True)
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError(
-                    f'Boolean array size must match the number of cells ({self.n_cells})'
+                    f'Boolean array size must match the number of cells ({self.n_cells})',
                 )
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = _vtk.vtkDataSetAttributes.HIDDENCELL
@@ -2485,14 +2623,14 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         self.cell_data.set_array(ghost_cells, _vtk.vtkDataSetAttributes.GhostArrayName())
         return self
 
-    def hide_points(self, ind: Union[BoolVector, IntVector]) -> None:
+    def hide_points(self, ind: VectorLike[bool] | VectorLike[int]) -> None:
         """Hide points without deleting them.
 
         Hides points by setting the ghost_points array to ``HIDDEN_CELL``.
 
         Parameters
         ----------
-        ind : BoolVector | IntVector
+        ind : VectorLike[bool] | VectorLike[int]
             Vector of point indices to be hidden. The vector can also be a
             boolean array of the same size as the number of points.
 
@@ -2509,39 +2647,79 @@ class StructuredGrid(_vtk.vtkStructuredGrid, PointGrid, StructuredGridFilters):
         >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid.hide_points(range(80 * 30, 80 * 50))
         >>> grid.plot(color=True, show_edges=True)
+
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_points:
                 raise ValueError(
-                    f'Boolean array size must match the number of points ({self.n_points})'
+                    f'Boolean array size must match the number of points ({self.n_points})',
                 )
         ghost_points = np.zeros(self.n_points, np.uint8)
         ghost_points[ind] = _vtk.vtkDataSetAttributes.HIDDENPOINT
 
         # add but do not make active
-        self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())
-        return None
+        self.point_data.set_array(ghost_points, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
 
-    def _reshape_point_array(self, array: np.ndarray) -> np.ndarray:
+    def cast_to_explicit_structured_grid(self) -> ExplicitStructuredGrid:
+        """Cast to an explicit structured grid.
+
+        Returns
+        -------
+        pyvista.ExplicitStructuredGrid
+            An explicit structured grid.
+
+        Raises
+        ------
+        TypeError
+            If the structured grid is not 3D (i.e., any dimension is 1).
+
+        """
+        if any(n == 1 for n in self.dimensions):
+            raise TypeError("Only 3D structured grid can be casted to an explicit structured grid.")
+
+        ni, nj, nk = self.dimensions
+        grid = self.cast_to_unstructured_grid()
+
+        s1 = {"BLOCK_I", "BLOCK_J", "BLOCK_K"}
+        if not s1.issubset(self.cell_data):
+            i, j, k = np.unravel_index(
+                np.arange(self.n_cells),
+                shape=(ni - 1, nj - 1, nk - 1),
+                order="F",
+            )
+            grid.cell_data["BLOCK_I"] = i
+            grid.cell_data["BLOCK_J"] = j
+            grid.cell_data["BLOCK_K"] = k
+
+        grid = grid.cast_to_explicit_structured_grid()
+
+        if not s1.issubset(self.cell_data):
+            for key in s1:
+                grid.cell_data.pop(key, None)
+
+        return grid
+
+    def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
         return array.reshape(self.dimensions, order='F')
 
-    def _reshape_cell_array(self, array: np.ndarray) -> np.ndarray:
+    def _reshape_cell_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape cell data to a 3-D matrix."""
         cell_dims = np.array(self.dimensions) - 1
         cell_dims[cell_dims == 0] = 1
         return array.reshape(cell_dims, order='F')
 
 
-class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
+class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     """Extend the functionality of the ``vtk.vtkExplicitStructuredGrid`` class.
 
     Can be initialized by the following:
 
     - Creating an empty grid
-    - From a ``vtk.vtkExplicitStructuredGrid`` or ``vtk.vtkUnstructuredGrid`` object
+    - From a ``vtk.StructuredGrid``, ``vtk.vtkExplicitStructuredGrid`` or ``vtk.vtkUnstructuredGrid`` object
     - From a VTU or VTK file
     - From ``dims`` and ``corners`` arrays
+    - From ``dims``, ``cells`` and ``points`` arrays
 
     Parameters
     ----------
@@ -2584,13 +2762,18 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
     """
 
-    _WRITERS = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
+    _WRITERS: ClassVar[
+        dict[
+            str,
+            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
+        ]
+    ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
 
     def __init__(self, *args, deep: bool = False, **kwargs):
         """Initialize the explicit structured grid."""
         super().__init__()
         n = len(args)
-        if n > 2:
+        if n > 3:
             raise ValueError("Too many args to create ExplicitStructuredGrid.")
         if n == 1:
             arg0 = args[0]
@@ -2599,10 +2782,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
                     self.deep_copy(arg0)
                 else:
                     self.shallow_copy(arg0)
-            elif isinstance(arg0, _vtk.vtkUnstructuredGrid):
+            elif isinstance(arg0, (_vtk.vtkStructuredGrid, _vtk.vtkUnstructuredGrid)):
                 grid = arg0.cast_to_explicit_structured_grid()
                 self.shallow_copy(grid)
-            elif isinstance(arg0, (str, pathlib.Path)):
+            elif isinstance(arg0, (str, Path)):
                 grid = UnstructuredGrid(arg0)
                 grid = grid.cast_to_explicit_structured_grid()
                 self.shallow_copy(grid)
@@ -2616,6 +2799,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             arg1_is_arr = isinstance(arg1, np.ndarray)
             if all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(arg0, arg1)
+        elif n == 3:
+            arg0, arg1, arg2 = args
+            arg0 = np.asarray(arg0)
+            arg1 = np.asarray(arg1) if not isinstance(arg1, dict) else arg1
+            arg2 = np.asarray(arg2)
+            self._from_cells_points(arg0, arg1, arg2)
 
     def __repr__(self) -> str:
         """Return the standard representation."""
@@ -2625,16 +2814,16 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         """Return the standard ``str`` representation."""
         return DataSet.__str__(self)
 
-    def _from_arrays(self, dims: IntVector, corners: Matrix) -> None:
+    def _from_arrays(self, dims: VectorLike[int], corners: MatrixLike[float]) -> None:
         """Create a VTK explicit structured grid from NumPy arrays.
 
         Parameters
         ----------
-        dims : IntVector
+        dims : VectorLike[int]
             A sequence of integers with shape (3,) containing the
             topological dimensions of the grid.
 
-        corners : Matrix
+        corners : MatrixLike[float]
             A sequence of numbers with shape ``(number of corners, 3)``
             containing the coordinates of the corner points.
 
@@ -2642,26 +2831,78 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         if len(dims) != 3:
             raise ValueError("Expected dimensions to be length 3.")
 
-        shape0 = np.asanyarray(dims) - 1
-        shape1 = 2 * shape0
-        ncells = np.prod(shape0)
-        cells = 8 * np.ones((ncells, 9), dtype=int)
-        points, indices = np.unique(corners, axis=0, return_inverse=True)  # type: ignore
-        connectivity = np.asarray(
-            [[0, 1, 1, 0, 0, 1, 1, 0], [0, 0, 1, 1, 0, 0, 1, 1], [0, 0, 0, 0, 1, 1, 1, 1]]
+        ni, nj, nk = np.asanyarray(dims) - 1
+        corners = np.reshape(corners, (2 * ni, 2 * nj, 2 * nk, 3), order="F")
+        points = np.column_stack(
+            [
+                np.column_stack(
+                    (
+                        corners_[::2, ::2, ::2].ravel(order="F"),
+                        corners_[1::2, ::2, ::2].ravel(order="F"),
+                        corners_[1::2, 1::2, ::2].ravel(order="F"),
+                        corners_[::2, 1::2, ::2].ravel(order="F"),
+                        corners_[::2, ::2, 1::2].ravel(order="F"),
+                        corners_[1::2, ::2, 1::2].ravel(order="F"),
+                        corners_[1::2, 1::2, 1::2].ravel(order="F"),
+                        corners_[::2, 1::2, 1::2].ravel(order="F"),
+                    )
+                ).ravel()
+                for corners_ in corners.transpose((3, 0, 1, 2))
+            ]
         )
-        for c in range(ncells):
-            i, j, k = np.unravel_index(c, shape0, order='F')
-            coord = (2 * i + connectivity[0], 2 * j + connectivity[1], 2 * k + connectivity[2])
-            cinds = np.ravel_multi_index(coord, shape1, order='F')  # type: ignore
-            cells[c, 1:] = indices[cinds]
-        cells = cells.flatten()
-        points = vtk_points(points)
-        self.SetDimensions(dims[0], dims[1], dims[2])
-        self.SetPoints(points)
-        self.SetCells(CellArray(cells, ncells))
+        cells = np.arange(8 * ni * nj * nk).reshape((ni * nj * nk, 8))
+        self._from_cells_points(dims, {CellType.HEXAHEDRON: cells}, points)
 
-    def cast_to_unstructured_grid(self) -> 'UnstructuredGrid':
+    def _from_cells_points(
+        self,
+        dims: VectorLike[int],
+        cells: VectorLike[int] | dict[int, MatrixLike[int]],
+        points: MatrixLike[float],
+    ) -> None:
+        """Create a VTK explicit structured grid from cells and points arrays.
+
+        Parameters
+        ----------
+        dims : VectorLike[int]
+            A sequence of integers with shape (3,) containing the
+            topological dimensions of the grid.
+
+        cells : VectorLike[int] | dict[int, MatrixLike[int]]
+            Array of cells.  Each cell contains the number of points in the
+            cell and the node numbers of the cell.
+
+        points : MatrixLike[float]
+            Numpy array containing point locations.
+
+        """
+        if len(dims) != 3:
+            raise ValueError("Expected dimensions to be length 3.")
+
+        else:
+            n_cells = np.prod([n - 1 for n in dims])
+
+        if isinstance(cells, dict):
+            celltypes = list(cells)
+
+            if not (len(celltypes) == 1 and celltypes[0] == CellType.HEXAHEDRON):
+                raise ValueError(
+                    f"Expected cells to be a single cell of type {CellType.HEXAHEDRON}."
+                )
+
+            cells = np.asarray(cells[celltypes[0]])
+            if cells.shape != (n_cells, 8):
+                raise ValueError(f"Expected cells to be of shape ({n_cells}, 8)")
+
+            cells = np.column_stack((np.full(n_cells, 8), cells)).flatten()
+
+        elif len(cells) != 9 * n_cells:
+            raise ValueError(f"Expected cells to be length {9 * n_cells}")
+
+        self.SetDimensions(dims[0], dims[1], dims[2])
+        self.SetCells(CellArray(cells))
+        self.SetPoints(vtk_points(points))
+
+    def cast_to_unstructured_grid(self) -> UnstructuredGrid:
         """Cast to an unstructured grid.
 
         Returns
@@ -2713,17 +2954,95 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         ugrid.copy_attributes(self)  # copy ghost cell array and other arrays
         return ugrid
 
+    def clean(
+        self,
+        tolerance=0,
+        remove_unused_points=True,
+        produce_merge_map=True,
+        average_point_data=True,
+        merging_array_name=None,
+        progress_bar=False,
+    ) -> ExplicitStructuredGrid:
+        """Merge duplicate points and remove unused points in an ExplicitStructuredGrid.
+
+        This filter, merging coincident points as defined by a merging
+        tolerance and optionally removes unused points. The filter does not
+        modify the topology of the input dataset, nor change the types of
+        cells. It may however, renumber the cell connectivity ids.
+
+        This filter casts the grid to an UnstructuredGrid to clean it, then casts the cleaned unstructured grid to an explicit structured grid.
+
+        Parameters
+        ----------
+        tolerance : float, default: 0.0
+            The absolute point merging tolerance.
+
+        remove_unused_points : bool, default: True
+            Indicate whether points unused by any cell are removed from the
+            output. Note that when this is off, the filter can successfully
+            process datasets with no cells (and just points). If on in this
+            case, and there are no cells, the output will be empty.
+
+        produce_merge_map : bool, default: False
+            Indicate whether a merge map should be produced on output.
+            The merge map, if requested, maps each input point to its
+            output point id, or provides a value of -1 if the input point
+            is not used in the output. The merge map is associated with
+            the filter's output field data and is named ``"PointMergeMap"``.
+
+        average_point_data : bool, default: True
+            Indicate whether point coordinates and point data of merged points
+            are averaged. When ``True``, the data coordinates and attribute
+            values of all merged points are averaged. When ``False``, the point
+            coordinate and data of the single remaining merged point is
+            retained.
+
+        merging_array_name : str, optional
+            If a ``merging_array_name`` is specified and exists in the
+            ``point_data``, then point merging will switch into a mode where
+            merged points must be both geometrically coincident and have
+            matching point data. When set, ``tolerance`` has no effect.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ExplicitStructuredGrid
+            Cleaned explicit structured grid.
+
+        """
+        grid = (
+            self.cast_to_unstructured_grid()
+            .clean(
+                tolerance=tolerance,
+                remove_unused_points=remove_unused_points,
+                produce_merge_map=produce_merge_map,
+                average_point_data=average_point_data,
+                merging_array_name=merging_array_name,
+                progress_bar=progress_bar,
+            )
+            .cast_to_explicit_structured_grid()
+        )
+
+        s1 = {"BLOCK_I", "BLOCK_J", "BLOCK_K"}
+        if not s1.issubset(self.cell_data):
+            for key in s1:
+                grid.cell_data.pop(key, None)
+
+        return grid
+
     def save(
         self,
-        filename: Union[pathlib.Path, str],
+        filename: Path | str,
         binary: bool = True,
-        texture: Optional[Union[NumpyUINT8Array, str]] = None,
+        texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this VTK object to file.
 
         Parameters
         ----------
-        filename : str
+        filename : Path, str
             Output file name. VTU and VTK extensions are supported.
 
         binary : bool, default: True
@@ -2762,7 +3081,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         grid = self.cast_to_unstructured_grid()
         grid.save(filename, binary)
 
-    def hide_cells(self, ind: IntVector, inplace: bool = False) -> 'ExplicitStructuredGrid':
+    def hide_cells(self, ind: VectorLike[int], inplace: bool = False) -> ExplicitStructuredGrid:
         """Hide specific cells.
 
         Hides cells by setting the ghost cell array to ``HIDDENCELL``.
@@ -2805,7 +3124,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         grid.hide_cells(ind, inplace=True)
         return grid
 
-    def show_cells(self, inplace: bool = False) -> 'ExplicitStructuredGrid':
+    def show_cells(self, inplace: bool = False) -> ExplicitStructuredGrid:
         """Show hidden cells.
 
         Shows hidden cells by setting the ghost cell array to ``0``
@@ -2847,7 +3166,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             grid.show_cells(inplace=True)
             return grid
 
-    def _dimensions(self) -> Tuple[int, int, int]:
+    def _dimensions(self) -> tuple[int, int, int]:
         # This method is required to avoid conflict if a developer extends `ExplicitStructuredGrid`
         # and reimplements `dimensions` to return, for example, the number of cells in the I, J and
         dims = np.reshape(self.GetExtent(), (3, 2))  # K directions.
@@ -2856,7 +3175,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return int(dims[0]), int(dims[1]), int(dims[2])
 
     @property
-    def dimensions(self) -> Tuple[int, int, int]:  # numpydoc ignore=RT01
+    def dimensions(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
         """Return the topological dimensions of the grid.
 
         Returns
@@ -2875,7 +3194,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         return self._dimensions()
 
     @property
-    def visible_bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def visible_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounding box of the visible cells.
 
         Different from `bounds`, which returns the bounding box of the
@@ -2895,10 +3214,10 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> grid = examples.load_explicit_structured()
         >>> grid = grid.hide_cells(range(80, 120))
         >>> grid.bounds
-        (0.0, 80.0, 0.0, 50.0, 0.0, 6.0)
+        BoundsTuple(x_min=0.0, x_max=80.0, y_min=0.0, y_max=50.0, z_min=0.0, z_max=6.0)
 
         >>> grid.visible_bounds
-        (0.0, 80.0, 0.0, 50.0, 0.0, 4.0)
+        BoundsTuple(x_min=0.0, x_max=80.0, y_min=0.0, y_max=50.0, z_min=0.0, z_max=4.0)
 
         """
         name = _vtk.vtkDataSetAttributes.GhostArrayName()
@@ -2909,12 +3228,12 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         else:
             return self.bounds
 
-    def cell_id(self, coords: IntArray) -> Union[int, np.ndarray, None]:
+    def cell_id(self, coords: ArrayLike[int]) -> int | NumpyArray[int] | None:
         """Return the cell ID.
 
         Parameters
         ----------
-        coords : IntArray
+        coords : ArrayLike[int]
             Cell structured coordinates.
 
         Returns
@@ -2931,7 +3250,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
         >>> grid.cell_id((3, 4, 0))
-        19
+        np.int64(19)
 
         >>> coords = [(3, 4, 0), (3, 2, 1), (1, 0, 2), (2, 3, 2)]
         >>> grid.cell_id(coords)
@@ -2941,7 +3260,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         # `vtk.vtkExplicitStructuredGrid.ComputeCellId` is not used
         # here because this method returns invalid cell IDs when
         # `coords` is outside the grid extent.
-        if isinstance(coords, list):
+        if isinstance(coords, Sequence):
             coords = np.asarray(coords)
         if isinstance(coords, np.ndarray) and coords.ndim == 2:
             ncol = coords.shape[1]
@@ -2949,23 +3268,26 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             coords = tuple(coords)
         dims = self._dimensions()
         try:
-            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')  # type: ignore
+            ind = np.ravel_multi_index(coords, np.array(dims) - 1, order='F')  # type: ignore[call-overload]
         except ValueError:
             return None
         else:
             return ind
 
-    def cell_coords(self, ind: Union[int, IntVector]) -> Union[None, Tuple[int], IntMatrix]:
+    def cell_coords(
+        self,
+        ind: int | VectorLike[int],
+    ) -> None | MatrixLike[int]:
         """Return the cell structured coordinates.
 
         Parameters
         ----------
-        ind : int | IntVector
+        ind : int | VectorLike[int]
             Cell IDs.
 
         Returns
         -------
-        tuple(int), numpy.ndarray, or None
+        numpy.ndarray, or None
             Cell structured coordinates. ``None`` if ``ind`` is
             outside the grid extent.
 
@@ -2978,7 +3300,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         >>> from pyvista import examples
         >>> grid = examples.load_explicit_structured()
         >>> grid.cell_coords(19)
-        (3, 4, 0)
+        array([3, 4, 0])
 
         >>> grid.cell_coords((19, 31, 41, 54))
         array([[3, 4, 0],
@@ -2995,15 +3317,14 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
         else:
             if isinstance(coords[0], np.ndarray):
                 return np.stack(coords, axis=1)
-            return coords
-        return None
+            return np.asanyarray(coords)
 
-    def neighbors(self, ind: Union[int, IntVector], rel: str = 'connectivity') -> list:
+    def neighbors(self, ind: int | VectorLike[int], rel: str = 'connectivity') -> list[int]:
         """Return the indices of neighboring cells.
 
         Parameters
         ----------
-        ind : int | IntVector
+        ind : int | VectorLike[int]
             Cell IDs.
 
         rel : str, default: "connectivity"
@@ -3129,7 +3450,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
 
         if rel not in rel_map:
             raise ValueError(
-                f'Invalid value for `rel` of {rel}. Should be one of the following\n{rel_map.keys()}'
+                f'Invalid value for `rel` of {rel}. Should be one of the following\n{rel_map.keys()}',
             )
         rel_func = rel_map[rel]
 
@@ -3138,7 +3459,7 @@ class ExplicitStructuredGrid(_vtk.vtkExplicitStructuredGrid, PointGrid):
             indices.update(rel_func(i))
         return sorted(indices)
 
-    def compute_connectivity(self, inplace: bool = False) -> 'ExplicitStructuredGrid':
+    def compute_connectivity(self, inplace: bool = False) -> ExplicitStructuredGrid:
         """Compute the faces connectivity flags array.
 
         This method checks the faces connectivity of the cells with

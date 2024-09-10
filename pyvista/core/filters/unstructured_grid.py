@@ -1,9 +1,13 @@
 """Filters module with a class to manage filters/algorithms for unstructured grid datasets."""
+
+from __future__ import annotations
+
 from functools import wraps
 
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import VTKVersionError
-from pyvista.core.filters import _get_output, _update_alg
+from pyvista.core.filters import _get_output
+from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.filters.poly_data import PolyDataFilters
 from pyvista.core.utilities.misc import abstract_class
@@ -141,7 +145,8 @@ class UnstructuredGridFilters(DataSetFilters):
             raise VTKVersionError("UnstructuredGrid.clean requires VTK >= 9.2.2") from None
 
         alg = vtkStaticCleanUnstructuredGrid()
-        alg.SetInputDataObject(self)
+        # https://github.com/pyvista/pyvista/pull/6337
+        alg.SetInputDataObject(self.copy())
         alg.SetAbsoluteTolerance(True)
         alg.SetTolerance(tolerance)
         alg.SetMergingArray(merging_array_name)

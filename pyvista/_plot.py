@@ -7,6 +7,11 @@ This is necessary for future versions of PyVista that will fully
 decouple the ``core`` and ``plotting`` APIs.
 
 """
+
+from __future__ import annotations
+
+from pathlib import Path
+
 import numpy as np
 
 import pyvista
@@ -227,7 +232,10 @@ def plot(
     if show_axes is None:
         show_axes = pl.theme.axes.show
     if show_axes:
-        pl.add_axes()
+        if pl.theme.axes.box:
+            pl.add_box_axes()
+        else:
+            pl.add_axes()
 
     if anti_aliasing:
         if anti_aliasing is True:
@@ -237,7 +245,17 @@ def plot(
     elif anti_aliasing is False:
         pl.disable_anti_aliasing()
 
-    pl.set_background(background)
+    try:
+        pl.set_background(background)
+    except (ValueError, TypeError):
+        if isinstance(background, (str, Path)):
+            path = Path(background)
+            if path.is_file():
+                pl.add_background_image(path)
+        else:
+            raise ValueError(
+                f'Background must be color-like or a file path. Got {background} instead.'
+            )
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows

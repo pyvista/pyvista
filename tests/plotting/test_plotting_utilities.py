@@ -1,7 +1,10 @@
-import os
+from __future__ import annotations
 
-from PIL import Image, ImageSequence
+from pathlib import Path
+
 import numpy as np
+from PIL import Image
+from PIL import ImageSequence
 import pytest
 
 import pyvista as pv
@@ -21,8 +24,10 @@ def test_gpuinfo():
     gpuinfo = GPUInfo()
     _repr = gpuinfo.__repr__()
     _repr_html = gpuinfo._repr_html_()
-    assert isinstance(_repr, str) and len(_repr) > 1
-    assert isinstance(_repr_html, str) and len(_repr_html) > 1
+    assert isinstance(_repr, str)
+    assert len(_repr) > 1
+    assert isinstance(_repr_html, str)
+    assert len(_repr_html) > 1
 
     # test corrupted internal infos
     gpuinfo._gpu_info = 'foo'
@@ -35,7 +40,11 @@ def test_gpuinfo():
 def test_ray_trace_plot():
     sphere = pv.Sphere(0.5, theta_resolution=10, phi_resolution=10)
     points, ind = sphere.ray_trace(
-        [0, 0, 0], [1, 1, 1], plot=True, first_point=True, off_screen=True
+        [0, 0, 0],
+        [1, 1, 1],
+        plot=True,
+        first_point=True,
+        off_screen=True,
     )
     assert np.any(points)
     assert np.any(ind)
@@ -79,7 +88,7 @@ def test_skybox(tmpdir):
     filenames = []
     for suffix in sets:
         image = Image.new('RGB', (10, 10))
-        filename = os.path.join(path, suffix + '.jpg')
+        filename = str(Path(path) / suffix) + '.jpg'
         image.save(filename)
         filenames.append(filename)
 
@@ -110,7 +119,7 @@ def test_view_vectors():
         view_vectors('invalid')
 
 
-@pytest.fixture()
+@pytest.fixture
 def gif_file(tmpdir):
     filename = str(tmpdir.join('sample.gif'))
 

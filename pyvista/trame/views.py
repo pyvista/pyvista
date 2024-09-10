@@ -1,9 +1,14 @@
 """Trame view interface for PyVista."""
+
+from __future__ import annotations
+
 import io
 import weakref
 
 from trame.app import get_server as trame_get_server
-from trame.widgets.vtk import VtkLocalView, VtkRemoteLocalView, VtkRemoteView
+from trame.widgets.vtk import VtkLocalView
+from trame.widgets.vtk import VtkRemoteLocalView
+from trame.widgets.vtk import VtkRemoteView
 from trame_vtk.tools.vtksz2html import write_html
 
 CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
@@ -24,6 +29,7 @@ def get_server(*args, **kwargs):  # numpydoc ignore=RT01
     -------
     trame_server.core.Server
         Trame server.
+
     """
     server = trame_get_server(*args, **kwargs)
     if 'client_type' in kwargs:
@@ -120,7 +126,12 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
     """
 
     def __init__(
-        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+        self,
+        plotter,
+        interactive_ratio=None,
+        still_ratio=None,
+        namespace=None,
+        **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
@@ -142,9 +153,8 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         )
         self._post_initialize()
 
-    def push_camera(self, *args, **kwargs):
+    def push_camera(self, *args, **kwargs):  # pragma: no cover
         """No-op implementation to match local viewers."""
-        pass  # pragma: no cover
 
     def update_image(self, *args, **kwargs):
         """Wrap update call."""
@@ -189,12 +199,11 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
+            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],
         )
 
-    def update_image(self, *args, **kwargs):
+    def update_image(self, *args, **kwargs):  # pragma: no cover
         """No-op implementation to match remote viewers."""
-        pass  # pragma: no cover
 
 
 class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
@@ -231,7 +240,12 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     """
 
     def __init__(
-        self, plotter, interactive_ratio=None, still_ratio=None, namespace=None, **kwargs
+        self,
+        plotter,
+        interactive_ratio=None,
+        still_ratio=None,
+        namespace=None,
+        **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
@@ -259,5 +273,5 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')]
+            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],
         )

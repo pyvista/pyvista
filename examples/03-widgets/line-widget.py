@@ -17,6 +17,8 @@ the ``name`` argument in ``add_mesh``.
 
 # sphinx_gallery_start_ignore
 # widgets do not work in interactive examples
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -33,7 +35,7 @@ furniture = examples.download_kitchen(split=True)
 arr = np.linalg.norm(mesh['velocity'], axis=1)
 clim = [arr.min(), arr.max()]
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(furniture, name='furniture', color=True)
@@ -43,7 +45,11 @@ p.add_axes()
 
 def simulate(pointa, pointb):
     streamlines = mesh.streamlines(
-        n_points=10, max_steps=100, pointa=pointa, pointb=pointb, integration_direction='forward'
+        n_points=10,
+        max_steps=100,
+        pointa=pointa,
+        pointb=pointb,
+        integration_direction='forward',
     )
     p.add_mesh(streamlines, name='streamlines', line_width=5, render_lines_as_tubes=True, clim=clim)
 
@@ -51,7 +57,10 @@ def simulate(pointa, pointb):
 p.add_line_widget(callback=simulate, use_vertices=True)
 p.show()
 
-##############################################################################
+# %%
 # And here is a screen capture of a user interacting with this
 #
 # .. image:: ../../images/gifs/line-widget-streamlines.gif
+#
+# %%
+# .. tags:: widgets

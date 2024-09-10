@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import numpy as np
@@ -40,7 +42,7 @@ def test_sample_function(dtype):
     scalar_arr_name = 'my_scalars'
 
     if os.name == 'nt' and dtype in [np.int64, np.uint64]:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             pv.sample_function(perlin, output_type=dtype)
     else:
         mesh = pv.sample_function(

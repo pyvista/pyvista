@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import pytest
 
 import pyvista as pv
 from pyvista.plotting._property import _check_range
 
 
-@pytest.fixture()
+@pytest.fixture
 def prop():
     return pv.Property()
 
@@ -40,7 +42,7 @@ def test_property_opacity(prop):
     opacity = 0.5
     prop.opacity = opacity
     assert prop.opacity == opacity
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.opacity = 2
 
 
@@ -49,7 +51,7 @@ def test_property_edge_opacity(prop):
     edge_opacity = 0.5
     prop.edge_opacity = edge_opacity
     assert prop.edge_opacity == edge_opacity
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.edge_opacity = 2
 
 
@@ -69,7 +71,7 @@ def test_property_ambient(prop):
     value = 0.45
     prop.ambient = value
     assert prop.ambient == value
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.ambient = -1
 
 
@@ -77,7 +79,7 @@ def test_property_diffuse(prop):
     value = 0.5
     prop.diffuse = value
     assert prop.diffuse == value
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.diffuse = 2
 
 
@@ -85,7 +87,7 @@ def test_property_specular(prop):
     value = 0.5
     prop.specular = value
     assert prop.specular == value
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.specular = 2
 
 
@@ -93,7 +95,7 @@ def test_property_specular_power(prop):
     value = 0.5
     prop.specular_power = value
     assert prop.specular_power == value
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.specular = 200
 
 
@@ -101,7 +103,7 @@ def test_property_metallic(prop):
     value = 0.1
     prop.metallic = value
     assert prop.metallic == value
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         prop.metallic = -1
 
 
