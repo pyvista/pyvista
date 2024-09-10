@@ -395,13 +395,7 @@ def rotation(
         return translate_from_origin @ rotate @ translate_to_origin
 
 
-def decompose(
-    transformation: TransformLike,
-    *,
-    decomposition='TRSK',
-    force_positive_scale: bool = False,
-    as_matrix: bool = False,
-):
+def decompose(transformation: TransformLike, *, as_matrix: bool = False):
     """Decompose the transformation into its scaling, rotation, and translation components.
 
     Return scaling component ``S``, rotation component ``R``, and translation
@@ -466,31 +460,23 @@ def decompose(
     """
     matrix = _validation.validate_transform4x4(transformation)
 
-    T_vec, R_3x3, S_vec, K_vec = _decompose(matrix)
-    K_3x3 = np.eye(3)
-    K_3x3[0, 1] = K_vec[0]
-    K_3x3[0, 2] = K_vec[1]
-    K_3x3[1, 2] = K_vec[2]
-
-    if decomposition == 'TRS':
-        # Lump shear into rotation
-        R_3x3 = R_3x3 @ K_3x3
-
+    T, R, S, K = _decompose(matrix)
     if as_matrix:
-        T_4x4 = np.eye(4, dtype=matrix.dtype)
-        T_4x4[:3, 3] = T_vec
+        scaling4x4 = np.diag((*S, 1))
 
-        R_4x4 = np.eye(4, dtype=matrix.dtype)
-        R_4x4[:3, :3] = R_3x3
+        rotation4x4 = np.eye(4, dtype=matrix.dtype)
+        rotation4x4[:3, :3] = R
 
-        S_4x4 = np.diag((*S_vec, 1))
+        translation4x4 = np.eye(4, dtype=matrix.dtype)
+        translation4x4[:3, 3] = T
 
-        K_4x4 = np.eye(4, dtype=matrix.dtype)
-        K_4x4[:3, :3] = K_3x3
+        shear4x4 = np.eye(4, dtype=matrix.dtype)
+        shear4x4[0, 1] = K[0]
+        shear4x4[0, 2] = K[1]
+        shear4x4[1, 2] = K[2]
+        return translation4x4, rotation4x4, scaling4x4, shear4x4
 
-        return (T_4x4, R_4x4, S_4x4) if decomposition == 'TRS' else (T_4x4, R_4x4, S_4x4, K_4x4)
-
-    return (T_vec, R_3x3, S_vec) if decomposition == 'TRS' else (T_vec, R_3x3, S_vec, K_vec)
+    return T, R, S, K
 
 
 def _decompose(matrix):

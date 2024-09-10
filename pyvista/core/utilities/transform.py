@@ -1590,20 +1590,18 @@ class Transform(_vtk.vtkTransform):
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return array if inplace else out
 
-    def decompose(
-        self, decomposition='TRSK', *, force_positive_scale: bool = False, as_matrix: bool = False
-    ):
+    def decompose(self, *, as_matrix: bool = False):
         """Decompose the current transformation into its components.
 
         Decompose the current transformation :attr:`matrix` ``M`` into separate
-        components:
+        transformations:
 
             - translation ``T``
             - rotation ``R``
             - scaling ``S``
             - shearing ``K``
 
-        such that, when represented as 4x4 matrices, yields``M = TRSK``.
+        such that, when represented as 4x4 matrices, ``M = TRSK``.
 
         .. note::
 
@@ -1614,9 +1612,8 @@ class Transform(_vtk.vtkTransform):
         Parameters
         ----------
         as_matrix : bool, default: False
-            If ``True``, return the decomposed components as 4x4 matrices. Otherwise,
-            the components are returned as vectors (translation, scaling, shear) or a
-            3x3 matrix (rotation).
+            If ``True``, return the scaling, rotation, and translation components as
+            4x4 matrices.
 
         Returns
         -------
@@ -1672,7 +1669,7 @@ class Transform(_vtk.vtkTransform):
         array([4., 5., 6.])
 
         """
-        return decompose(self.matrix, decomposition=decomposition, as_matrix=as_matrix)
+        return decompose(self.matrix, as_matrix=as_matrix)
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.

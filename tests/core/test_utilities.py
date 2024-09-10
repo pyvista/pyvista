@@ -1765,8 +1765,7 @@ SHEAR4x4[1, 2] = SHEAR[2]
 @pytest.mark.parametrize('do_shear', [True, False])
 @pytest.mark.parametrize('do_rotate', [True, False])
 @pytest.mark.parametrize('do_translate', [True, False])
-@pytest.mark.parametrize('decomposition', ['TRSK', 'TRS'])
-def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_translate, decomposition):
+def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_translate):
     if do_shear:
         transform.concatenate(SHEAR4x4)
     if do_scale:
@@ -1776,24 +1775,7 @@ def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_transl
     if do_translate:
         transform.translate(VECTOR)
 
-    expected_translation = VECTOR if do_translate else np.zeros((3,))
-    expected_rotation = ROTATION if do_rotate else np.eye(3)
-    expected_scale = [SCALE] * 3 if do_scale else np.ones((3,))
-    expected_shear = SHEAR if do_shear else np.zeros((3,))
-
-    if decomposition == 'TRSK':
-        T, R, S, K = transform.decompose()
-        T4, R4, S4, K4 = transform.decompose(as_matrix=True)
-    else:
-        if do_shear:
-            expected_rotation = expected_rotation @ SHEAR4x4[:3, :3]
-        expected_shear = None
-
-        T, R, S = transform.decompose('TRS')
-        K = np.zeros((3,))
-
-        T4, R4, S4 = transform.decompose('TRS', as_matrix=True)
-        K4 = np.eye(4)
+    T, R, S, K = transform.decompose()
 
     assert isinstance(T, np.ndarray)
     assert isinstance(R, np.ndarray)
@@ -1801,12 +1783,25 @@ def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_transl
     assert isinstance(K, np.ndarray)
     # TODO: test dtypes
 
+    expected_translation = VECTOR if do_translate else np.zeros((3,))
+    expected_rotation = ROTATION if do_rotate else np.eye(3)
+    expected_scale = [SCALE] * 3 if do_scale else np.ones((3,))
+    expected_shear = SHEAR if do_shear else np.zeros((3,))
+
     assert np.allclose(T, expected_translation)
     assert np.allclose(R, expected_rotation)
     assert np.allclose(S, expected_scale)
-    if expected_shear is not None:
-        assert np.allclose(K, expected_shear)
+    assert np.allclose(K, expected_shear)
 
     # Test composition from decomposed elements matches input
-    concatenated = T4 @ R4 @ S4 @ K4
+    T, R, S, K = transform.decompose(as_matrix=True)
+    concatenated = T @ R @ S @ K
     assert np.allclose(concatenated, transform.matrix)
+
+
+def test_transform_decompose_invalid_matrix(transform):
+    invalid_matrix = [[3, 8, 2], [2, 5, 7], [1, 4, 6]]
+    transform = pv.Transform(invalid_matrix)
+    match = 'Unable to decompose matrix. It cannot be represented by a simple scale, rotation, and translation.'
+    with pytest.raises(ValueError, match=match):
+        transform.decompose()
