@@ -54,8 +54,7 @@ def assert_empty_kwargs(**kwargs):
 
 
 def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
-    """
-    Check if a vector contains three components.
+    """Check if a vector contains three components.
 
     Parameters
     ----------
@@ -132,6 +131,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         ------
         ValueError
             If there is no enum member with the specified annotation.
+
         """
         for value in cls:
             if value.annotation.lower() == input_str.lower():
@@ -156,6 +156,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         ------
         ValueError
             If there is no enum member matching the specified value.
+
         """
         if isinstance(value, cls):
             return value
@@ -180,6 +181,7 @@ def has_module(module_name):
     -------
     bool
         ``True`` if the module can be imported, otherwise ``False``.
+
     """
     module_spec = importlib.util.find_spec(module_name)
     return module_spec is not None

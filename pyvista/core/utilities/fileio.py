@@ -21,7 +21,22 @@ def set_pickle_format(format: str):  # noqa: A002
     Parameters
     ----------
     format : str
-        The format for serialization. Acceptable values are "xml" or "legacy".
+        The format for serialization. Acceptable values are:
+
+        - ``'vtk'`` (default) : objects are serialized using VTK's official
+            marshalling methods.
+        - ``'xml'``: objects are serialized as an XML-formatted string.
+        - ``'legacy'`` objects are serialized to bytes in VTK's binary format.
+
+        .. note::
+
+            The ``'vtk'`` format requires VTK 9.3 or greater.
+
+        .. warning::
+
+            ``'xml'`` and ``'legacy'`` are not recommended. These formats are not
+            officially supported by VTK and have limitations. For example, these
+            formats cannot be used to pickle :class:`pyvista.MultiBlock`.
 
     Raises
     ------
@@ -29,12 +44,15 @@ def set_pickle_format(format: str):  # noqa: A002
         If the provided format is not supported.
 
     """
-    supported = {'xml', 'legacy'}
+    supported = {'vtk', 'xml', 'legacy'}
     format_ = format.lower()
     if format_ not in supported:
         raise ValueError(
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.',
         )
+    if format_ == 'vtk' and pyvista.vtk_version_info < (9, 3):
+        raise ValueError("'vtk' pickle format requires VTK >= 9.3")
+
     pyvista.PICKLE_FORMAT = format_
 
 
@@ -161,6 +179,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     Load a meshio file.
 
     >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
+
     """
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')

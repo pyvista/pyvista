@@ -8,8 +8,8 @@ The problem is that pytest doctests (following the standard-library
 doctest module) see the module-global namespace. So when a doctest looks
 like this:
 
-    Examples
-    --------
+Examples
+--------
     >>> import numpy
     >>> import pyvista
     >>> from pyvista import CellType
@@ -40,6 +40,7 @@ done to find the rare name mistake in our examples.
 
 If you need off-screen plotting, set the ``PYVISTA_OFF_SCREEN``
 environmental variable to ``True`` before running the script.
+
 """
 
 from __future__ import annotations

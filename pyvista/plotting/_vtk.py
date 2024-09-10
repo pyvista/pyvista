@@ -1,5 +1,4 @@
-"""
-All imports from VTK (including GL-dependent).
+"""All imports from VTK (including GL-dependent).
 
 These are the modules within VTK that must be loaded across pyvista's
 plotting API. Here, we attempt to import modules using the ``vtkmodules``

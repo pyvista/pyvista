@@ -389,12 +389,11 @@ class MultiBlock(
     def __getitem__(
         self,
         index: int | str,
-    ) -> _TypeMultiBlockLeaf | None:  # noqa: D105  # numpydoc ignore=GL08
+    ) -> _TypeMultiBlockLeaf | None:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> MultiBlock:  # noqa: D105
-        ...  # pragma: no cover
+    def __getitem__(self, index: slice) -> MultiBlock: ...  # pragma: no cover
 
     def __getitem__(self, index):
         """Get a block by its index or name.
@@ -661,7 +660,7 @@ class MultiBlock(
         self,
         index: int | str,
         data: _TypeMultiBlockLeaf | None,
-    ):  # noqa: D105  # numpydoc ignore=GL08
+    ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
@@ -669,7 +668,7 @@ class MultiBlock(
         self,
         index: slice,
         data: Iterable[_TypeMultiBlockLeaf | None],
-    ):  # noqa: D105  # numpydoc ignore=GL08
+    ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     def __setitem__(
@@ -1079,7 +1078,8 @@ class MultiBlock(
         # Deep copy will not copy the block name for None blocks (name is set to None instead)
         # Iterate through the blocks to fix this recursively
         def _set_name_for_none_blocks(this_object_, new_object_):
-            for i, dataset in enumerate(pyvista.wrap(new_object_)):
+            new_object_ = pyvista.wrap(new_object_)
+            for i, dataset in enumerate(new_object_):
                 if dataset is None:
                     this_object_.set_block_name(i, new_object_.get_block_name(i))
                 elif isinstance(dataset, MultiBlock):
