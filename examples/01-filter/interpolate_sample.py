@@ -123,7 +123,16 @@ pl.show(screenshot="tmp0.png")
 # Importantly, the cell connectivity enables direct interpolation
 # inside the domain without needing distance or weighting parametization.
 #
-# First create the mesh that will be sampled from and plot it.
+# First, show that sample does not work with point clouds with data.
+# Either :func:`pyvista.DataSetFilters.interpolate` or the
+# ``snap_to_closest_point`` parameter must be used.
+
+grid = pv.ImageData(dimensions=(11, 11, 1), spacing=[3 / 10, 1 / 10, 1])
+output = grid.sample(point_mesh)
+# value of (0, 0) shows that no data was sampled
+print(f"(min, max): {output['ysquared'].min()}, {output['ysquared'].min()}")
+
+#  Create the non-point cloud mesh that will be sampled from and plot it.
 
 grid = pv.ImageData(dimensions=(11, 11, 1), spacing=[3 / 10, 1 / 10, 1])
 grid["ysquared"] = grid.points[:, 1] ** 2
