@@ -1786,3 +1786,12 @@ def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_transl
     T, R, S, K = transform.decompose(as_matrix=True)
     concatenated = T @ R @ S @ K
     assert np.allclose(concatenated, transform.matrix)
+
+
+def test_transform_decompose_reflection():
+    rotation = np.array(ROTATION) * -1
+    assert np.linalg.det(rotation) < 0
+
+    _, R, S, _ = transformations.decompose(rotation)
+    assert np.linalg.det(R) > 0
+    assert np.array_equal(S, (-1, 1, 1))
