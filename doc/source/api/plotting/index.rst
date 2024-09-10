@@ -40,6 +40,7 @@ all plotting functionality in PyVista.
    LookupTable
    PlanesAssembly
    Plotter
+   PolarAxesActor
    Prop3D
    Property
    Renderer
