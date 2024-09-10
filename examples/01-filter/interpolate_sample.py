@@ -112,7 +112,7 @@ pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
 pl.add_mesh(sphere, style='wireframe', color='white')
 pl.view_xy()
-pl.show(screenshot="tmp0.png")
+pl.show()
 
 # %%
 # Sampling from a mesh with connectivity
@@ -192,7 +192,7 @@ pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
 pl.add_mesh(sphere, style='wireframe', color='white')
 pl.view_xy()
-pl.show(screenshot="tmp.png")
+pl.show()
 
 
 # %%
