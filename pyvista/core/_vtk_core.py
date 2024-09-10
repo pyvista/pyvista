@@ -45,6 +45,10 @@ from vtkmodules.util.numpy_support import get_vtk_array_type
 from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.util.numpy_support import numpy_to_vtkIdTypeArray
 from vtkmodules.util.numpy_support import vtk_to_numpy
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.util.pickle_support import serialize_VTK_data_object
+
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonComputationalGeometry import vtkKochanekSpline
 from vtkmodules.vtkCommonComputationalGeometry import vtkParametricBohemianDome
