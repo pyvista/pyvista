@@ -14,6 +14,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
+from pyvista.core.utilities.transformations import decompose
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -1657,36 +1658,7 @@ class Transform(_vtk.vtkTransform):
         array([4., 5., 6.])
 
         """
-
-        def _polar_decomposition(a):
-            # Decompose `a=up` where u is orthonormal and p is positive semi-definite
-            # See scipy.linalg.polar for details
-            w, s, vh = np.linalg.svd(a, full_matrices=False)
-            u = w.dot(vh)
-            p = (vh.T.conj() * s).dot(vh)
-            return u, p
-
-        matrix = self.matrix
-        translation_vector = matrix[:3, 3]
-        rotation_matrix, scaling_matrix = _polar_decomposition(matrix[:3, :3])
-        scaling_vector = np.diagonal(scaling_matrix)
-
-        # If the input is actually a TRS matrix, the off-diagonals should be zeros.
-        # Otherwise, off-diagonals may be non-zero for arbitrary inputs.
-        # See https://www.cs.cornell.edu/courses/cs4620/2014fa/lectures/polarnotes.pdf
-        off_diagonals = scaling_matrix * np.invert(np.eye(3) == 1)
-        if not np.allclose(off_diagonals, 0):
-            raise ValueError(
-                'Unable to decompose matrix. It cannot be represented by a simple scale, rotation, and translation.'
-            )
-
-        if as_matrix:
-            return (
-                Transform().scale(scaling_vector).matrix,
-                Transform().rotate(rotation_matrix).matrix,
-                Transform().translate(translation_vector).matrix,
-            )
-        return scaling_vector, rotation_matrix, translation_vector
+        return decompose(self.matrix, as_matrix=as_matrix)
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.

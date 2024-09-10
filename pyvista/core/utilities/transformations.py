@@ -10,6 +10,7 @@ from pyvista.core import _validation
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import RotationLike
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -392,3 +393,103 @@ def rotation(
         translate_from_origin[:3, 3] = valid_point
 
         return translate_from_origin @ rotate @ translate_to_origin
+
+
+def decompose(transformation: TransformLike, as_matrix: bool = False):
+    """Decompose the transformation into its scaling, rotation, and translation components.
+
+    Return scaling component ``S``, rotation component ``R``, and translation
+    component ``T`` such that, when represented as 4x4 matrices, decomposes
+    the current transformation matrix ``M`` as ``M = TRS``.
+
+    .. note::
+
+     The scaling factors are always positive. Any reflections (if present)
+     are included in the rotation. Therefore, the rotation matrix may be
+     left-handed (with negative determinant) and not strictly a "pure" rotation.
+
+    Parameters
+    ----------
+    transformation : TransformLike
+        Array or transform to decompose.
+
+    as_matrix : bool, default: False
+     If ``True``, return the scaling, rotation, and translation components as
+     4x4 matrices.
+
+    Returns
+    -------
+    numpy.ndarray
+     Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+
+    numpy.ndarray
+     3x3 rotation matrix (or 4x4 rotation matrix if ``as_matrix`` is ``True``).
+
+    numpy.ndarray
+     Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
+
+    Examples
+    --------
+    Define a 4x4 transformation matrix.
+
+    >>> import numpy as np
+    >>> from pyvista import transformations
+    >>> matrix = np.array(
+    ...     [
+    ...         [0.0, -2.0, 0.0, 4.0],
+    ...         [1.0, 0.0, 0.0, 5.0],
+    ...         [0.0, 0.0, 3.0, 6.0],
+    ...         [0.0, 0.0, 0.0, 1.0],
+    ...     ]
+    ... )
+
+    Decompose it.
+
+    >>> scaling, rotation, translation = transformations.decompose(matrix)
+    >>> scaling
+    array([1., 2., 3.])
+
+    >>> rotation
+    array([[ 0., -1.,  0.],
+           [ 1.,  0.,  0.],
+           [ 0.,  0.,  1.]])
+
+    >>> translation
+    array([4., 5., 6.])
+
+    """
+
+    def _polar_decomposition(a):
+        # Decompose `a=up` where u is orthonormal and p is positive semi-definite
+        # Copied from scipy.linalg.polar. See those docs for details.
+        w, s, vh = np.linalg.svd(a, full_matrices=False)
+        u = w.dot(vh)
+        p = (vh.T.conj() * s).dot(vh)
+        return u, p
+
+    matrix = _validation.validate_transform4x4(transformation)
+
+    translation_vector = matrix[:3, 3]
+    rotation_matrix, scaling_matrix = _polar_decomposition(matrix[:3, :3])
+    scaling_vector = np.diagonal(scaling_matrix)
+
+    # If the input is actually a TRS matrix, the off-diagonals should be zeros.
+    # Otherwise, off-diagonals may be non-zero for arbitrary inputs.
+    # See https://www.cs.cornell.edu/courses/cs4620/2014fa/lectures/polarnotes.pdf
+    off_diagonals = scaling_matrix * np.invert(np.eye(3) == 1)
+    if not np.allclose(off_diagonals, 0):
+        raise ValueError(
+            'Unable to decompose matrix. It cannot be represented by a simple scale, rotation, and translation.'
+        )
+
+    if as_matrix:
+        scaling4x4 = np.eye(4, dtype=matrix.dtype)
+        scaling4x4[:3, :3] = scaling_matrix
+
+        rotation4x4 = np.eye(4, dtype=matrix.dtype)
+        rotation4x4[:3, :3] = rotation_matrix
+
+        translation4x4 = np.eye(4, dtype=matrix.dtype)
+        translation4x4[:3, 3] = translation_vector
+        return scaling4x4, rotation4x4, translation4x4
+    return scaling_vector, rotation_matrix, translation_vector
