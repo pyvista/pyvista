@@ -43,6 +43,7 @@ from .fileio import get_ext
 from .fileio import is_meshio_mesh
 from .fileio import read
 from .fileio import read_exodus
+from .fileio import read_grdecl
 from .fileio import read_meshio
 from .fileio import read_texture
 from .fileio import save_meshio
