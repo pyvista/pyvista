@@ -1,8 +1,8 @@
 """
 .. _resampling_example:
 
-Resampling
-~~~~~~~~~~
+Detailed Resampling
+~~~~~~~~~~~~~~~~~~~
 
 This example uses :func:`pyvista.DataSetFilters.sample`.
 :func:`pyvista.DataSetFilters.interpolate` is similar, and the two
