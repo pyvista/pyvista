@@ -1593,8 +1593,7 @@ class Transform(_vtk.vtkTransform):
     def decompose(self, *, as_matrix: bool = False):
         """Decompose the current transformation into its components.
 
-        Decompose the current transformation :attr:`matrix` ``M`` into separate
-        transformations:
+        Decompose :attr:`matrix` ``M`` into
 
         - translation ``T``
         - rotation ``R``
@@ -1603,16 +1602,19 @@ class Transform(_vtk.vtkTransform):
 
         such that, when represented as 4x4 matrices, ``M = TRSK``.
 
+        By default, compact representations of the transformations are returned (e.g.
+        as vectors or). Optionally, 4x4 matrices may be returned instead.
+
         .. note::
 
+            - The transformation is not unique.
             - The rotation is a right-handed orthonormal matrix with positive determinant.
-            - The first scale component may be negative if the transformation includes
-              reflections.
+            - The first scale component may be negative if the input has reflections.
 
         Parameters
         ----------
         as_matrix : bool, default: False
-            If ``True``, return translation, rotation, scaling, shear components as
+            If ``True``, return translation, rotation, scaling, and shear components as
             4x4 matrices.
 
         Returns

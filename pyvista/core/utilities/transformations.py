@@ -398,7 +398,7 @@ def rotation(
 def decompose(transformation: TransformLike, *, as_matrix: bool = False):
     """Decompose a transformation into its components.
 
-    Decompose the transformation :attr:`matrix` ``M`` into separate transformations:
+    Decompose a transformation matrix :attr:`matrix` ``M`` into
 
     - translation ``T``
     - rotation ``R``
@@ -410,8 +410,7 @@ def decompose(transformation: TransformLike, *, as_matrix: bool = False):
     .. note::
 
         - The rotation is a right-handed orthonormal matrix with positive determinant.
-        - The first scale component may be negative if the transformation includes
-          reflections.
+        - The first scale component may be negative if the input has reflections.
 
     Parameters
     ----------
@@ -419,7 +418,7 @@ def decompose(transformation: TransformLike, *, as_matrix: bool = False):
         Array or transform to decompose.
 
     as_matrix : bool, default: False
-        If ``True``, return translation, rotation, scaling, shear components as
+        If ``True``, return translation, rotation, scaling, and shear components as
         4x4 matrices.
 
     Returns
