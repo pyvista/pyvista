@@ -395,7 +395,7 @@ def rotation(
         return translate_from_origin @ rotate @ translate_to_origin
 
 
-def decompose(transformation: TransformLike, as_matrix: bool = False):
+def decompose(transformation: TransformLike, *, as_matrix: bool = False):
     """Decompose the transformation into its scaling, rotation, and translation components.
 
     Return scaling component ``S``, rotation component ``R``, and translation
@@ -458,38 +458,88 @@ def decompose(transformation: TransformLike, as_matrix: bool = False):
     array([4., 5., 6.])
 
     """
-
-    def _polar_decomposition(a):
-        # Decompose `a=up` where u is orthonormal and p is positive semi-definite
-        # Copied from scipy.linalg.polar. See those docs for details.
-        w, s, vh = np.linalg.svd(a, full_matrices=False)
-        u = w.dot(vh)
-        p = (vh.T.conj() * s).dot(vh)
-        return u, p
-
     matrix = _validation.validate_transform4x4(transformation)
 
-    translation_vector = matrix[:3, 3]
-    rotation_matrix, scaling_matrix = _polar_decomposition(matrix[:3, :3])
-    scaling_vector = np.diagonal(scaling_matrix)
-
-    # If the input is actually a TRS matrix, the off-diagonals should be zeros.
-    # Otherwise, off-diagonals may be non-zero for arbitrary inputs.
-    # See https://www.cs.cornell.edu/courses/cs4620/2014fa/lectures/polarnotes.pdf
-    off_diagonals = scaling_matrix * np.invert(np.eye(3) == 1)
-    if not np.allclose(off_diagonals, 0):
-        raise ValueError(
-            'Unable to decompose matrix. It cannot be represented by a simple scale, rotation, and translation.'
-        )
-
+    T, R, S, K = _decompose(matrix)
     if as_matrix:
-        scaling4x4 = np.eye(4, dtype=matrix.dtype)
-        scaling4x4[:3, :3] = scaling_matrix
+        scaling4x4 = np.diag((*S, 1))
 
         rotation4x4 = np.eye(4, dtype=matrix.dtype)
-        rotation4x4[:3, :3] = rotation_matrix
+        rotation4x4[:3, :3] = R
 
         translation4x4 = np.eye(4, dtype=matrix.dtype)
-        translation4x4[:3, 3] = translation_vector
-        return scaling4x4, rotation4x4, translation4x4
-    return scaling_vector, rotation_matrix, translation_vector
+        translation4x4[:3, 3] = T
+
+        shear4x4 = np.eye(4, dtype=matrix.dtype)
+        shear4x4[0, 1] = K[0]
+        shear4x4[0, 2] = K[1]
+        shear4x4[1, 2] = K[2]
+        return translation4x4, rotation4x4, scaling4x4, shear4x4
+
+    return T, R, S, K
+
+
+def _decompose(matrix):
+    """Decompose a matrix into its parts.
+
+    Copied from:
+    https://github.com/matthew-brett/transforms3d/blob/6a43a98e3659d198ff6ce2c90d52ddef50fcf770/transforms3d/affines.py#L156
+
+    License:
+
+        Copyright (c) 2009-2024, Matthew Brett and Christoph Gohlke
+        All rights reserved.
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are
+        met:
+
+        1. Redistributions of source code must retain the above copyright notice,
+        this list of conditions and the following disclaimer.
+
+        2. Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+        IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+        THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+        PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+        CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+        EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+        PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+        PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+        LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+        NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+        SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    """
+    A44 = np.asarray(matrix)
+    T = A44[:-1, -1]
+    RZS = A44[:-1, :-1]
+    # compute scales and shears
+    M0, M1, M2 = np.array(RZS).T
+    # extract x scale and normalize
+    sx = np.sqrt(np.sum(M0**2))
+    M0 /= sx
+    # orthogonalize M1 with respect to M0
+    sx_sxy = np.dot(M0, M1)
+    M1 -= sx_sxy * M0
+    # extract y scale and normalize
+    sy = np.sqrt(np.sum(M1**2))
+    M1 /= sy
+    sxy = sx_sxy / sx
+    # orthogonalize M2 with respect to M0 and M1
+    sx_sxz = np.dot(M0, M2)
+    sy_syz = np.dot(M1, M2)
+    M2 -= sx_sxz * M0 + sy_syz * M1
+    # extract z scale and normalize
+    sz = np.sqrt(np.sum(M2**2))
+    M2 /= sz
+    sxz = sx_sxz / sx
+    syz = sy_syz / sy
+    # Reconstruct rotation matrix, ensure positive determinant
+    Rmat = np.array([M0, M1, M2]).T
+    if np.linalg.det(Rmat) < 0:
+        sx *= -1
+        Rmat[:, 0] *= -1
+    return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])

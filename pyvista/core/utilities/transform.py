@@ -1590,12 +1590,18 @@ class Transform(_vtk.vtkTransform):
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return array if inplace else out
 
-    def decompose(self, as_matrix: bool = False):
-        """Decompose the current transformation into its scaling, rotation, and translation components.
+    def decompose(self, *, as_matrix: bool = False):
+        """Decompose the current transformation into its components.
 
-        Return scaling component ``S``, rotation component ``R``, and translation
-        component ``T`` such that, when represented as 4x4 matrices, decomposes
-        the current transformation matrix ``M`` as ``M = TRS``.
+        Decompose the current transformation :attr:`matrix` ``M`` into separate
+        transformations:
+
+            - translation ``T``
+            - rotation ``R``
+            - scaling ``S``
+            - shearing ``K``
+
+        such that, when represented as 4x4 matrices, ``M = TRSK``.
 
         .. note::
 
@@ -1612,13 +1618,18 @@ class Transform(_vtk.vtkTransform):
         Returns
         -------
         numpy.ndarray
-            Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+            Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
 
         numpy.ndarray
             3x3 rotation matrix (or 4x4 rotation matrix if ``as_matrix`` is ``True``).
 
         numpy.ndarray
-            Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
+            Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+
+        numpy.ndarray
+            Length-3 shear vector (or 4x4 shear matrix if ``as_matrix`` is ``True``).
+            If a vector, the values are the ``xy``, ``xz``, and ``yz`` shears that that
+            fill the upper triangle above the diagonal of the shear matrix.
 
         Examples
         --------
