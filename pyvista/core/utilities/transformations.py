@@ -396,17 +396,22 @@ def rotation(
 
 
 def decompose(transformation: TransformLike, *, as_matrix: bool = False):
-    """Decompose the transformation into its scaling, rotation, and translation components.
+    """Decompose a transformation into its components.
 
-    Return scaling component ``S``, rotation component ``R``, and translation
-    component ``T`` such that, when represented as 4x4 matrices, decomposes
-    the current transformation matrix ``M`` as ``M = TRS``.
+    Decompose the transformation :attr:`matrix` ``M`` into separate transformations:
+
+    - translation ``T``
+    - rotation ``R``
+    - scaling ``S``
+    - shearing ``K``
+
+    such that, when represented as 4x4 matrices, ``M = TRSK``.
 
     .. note::
 
-     The scaling factors are always positive. Any reflections (if present)
-     are included in the rotation. Therefore, the rotation matrix may be
-     left-handed (with negative determinant) and not strictly a "pure" rotation.
+        - The rotation is a right-handed orthonormal matrix with positive determinant.
+        - The first scale component may be negative if the transformation includes
+          reflections.
 
     Parameters
     ----------
@@ -414,47 +419,50 @@ def decompose(transformation: TransformLike, *, as_matrix: bool = False):
         Array or transform to decompose.
 
     as_matrix : bool, default: False
-     If ``True``, return the scaling, rotation, and translation components as
-     4x4 matrices.
+        If ``True``, return translation, rotation, scaling, shear components as
+        4x4 matrices.
 
     Returns
     -------
     numpy.ndarray
-     Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+        Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
 
     numpy.ndarray
-     3x3 rotation matrix (or 4x4 rotation matrix if ``as_matrix`` is ``True``).
+        3x3 rotation matrix (or 4x4 rotation matrix if ``as_matrix`` is ``True``).
 
     numpy.ndarray
-     Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
+        Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+
+    numpy.ndarray
+        Length-3 shear vector (or 4x4 shear matrix if ``as_matrix`` is ``True``).
+        If a vector, the values are the ``xy``, ``xz``, and ``yz`` shears that that
+        fill the upper triangle above the diagonal of the shear matrix.
 
     Examples
     --------
-    Define a 4x4 transformation matrix.
+    Decompose a transformation matrix.
 
-    >>> import numpy as np
-    >>> from pyvista import transformations
-    >>> matrix = np.array(
-    ...     [
-    ...         [0.0, -2.0, 0.0, 4.0],
-    ...         [1.0, 0.0, 0.0, 5.0],
-    ...         [0.0, 0.0, 3.0, 6.0],
-    ...         [0.0, 0.0, 0.0, 1.0],
-    ...     ]
-    ... )
+    >>> import pyvista as pv
+    >>> matrix = [
+    ...     [0.0, -2.0, 0.0, 4.0],
+    ...     [1.0, 0.25, 0.0, 5.0],
+    ...     [0.0, 0.0, 3.0, 6.0],
+    ...     [0.0, 0.0, 0.0, 1.0],
+    ... ]
 
-    Decompose it.
+    >>> T, R, S, K = pv.transformations.decompose(matrix)
+    >>> K  # shear
+    array([0.25, 0.  , 0.  ])
 
-    >>> scaling, rotation, translation = transformations.decompose(matrix)
-    >>> scaling
+    >>> S  # scale
     array([1., 2., 3.])
 
-    >>> rotation
+    >>> R  # rotation
     array([[ 0., -1.,  0.],
            [ 1.,  0.,  0.],
            [ 0.,  0.,  1.]])
 
-    >>> translation
+    >>> T  # translation
     array([4., 5., 6.])
 
     """
@@ -462,19 +470,19 @@ def decompose(transformation: TransformLike, *, as_matrix: bool = False):
 
     T, R, S, K = _decompose(matrix)
     if as_matrix:
-        scaling4x4 = np.diag((*S, 1))
+        T4 = np.eye(4, dtype=matrix.dtype)
+        T4[:3, 3] = T
 
-        rotation4x4 = np.eye(4, dtype=matrix.dtype)
-        rotation4x4[:3, :3] = R
+        R4 = np.eye(4, dtype=matrix.dtype)
+        R4[:3, :3] = R
 
-        translation4x4 = np.eye(4, dtype=matrix.dtype)
-        translation4x4[:3, 3] = T
+        S4 = np.diag((*S, 1))
 
-        shear4x4 = np.eye(4, dtype=matrix.dtype)
-        shear4x4[0, 1] = K[0]
-        shear4x4[0, 2] = K[1]
-        shear4x4[1, 2] = K[2]
-        return translation4x4, rotation4x4, scaling4x4, shear4x4
+        K4 = np.eye(4, dtype=matrix.dtype)
+        K4[0, 1] = K[0]
+        K4[0, 2] = K[1]
+        K4[1, 2] = K[2]
+        return T4, R4, S4, K4
 
     return T, R, S, K
 

@@ -1596,23 +1596,23 @@ class Transform(_vtk.vtkTransform):
         Decompose the current transformation :attr:`matrix` ``M`` into separate
         transformations:
 
-            - translation ``T``
-            - rotation ``R``
-            - scaling ``S``
-            - shearing ``K``
+        - translation ``T``
+        - rotation ``R``
+        - scaling ``S``
+        - shearing ``K``
 
         such that, when represented as 4x4 matrices, ``M = TRSK``.
 
         .. note::
 
-            The scaling factors are always positive. Any reflections (if present)
-            are included in the rotation. Therefore, the rotation matrix may be
-            left-handed (with negative determinant) and not strictly a "pure" rotation.
+            - The rotation is a right-handed orthonormal matrix with positive determinant.
+            - The first scale component may be negative if the transformation includes
+              reflections.
 
         Parameters
         ----------
         as_matrix : bool, default: False
-            If ``True``, return the scaling, rotation, and translation components as
+            If ``True``, return translation, rotation, scaling, shear components as
             4x4 matrices.
 
         Returns
@@ -1633,39 +1633,47 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Create a transform with arbitrary scaling, rotation, and translation.
+        Create a transform with arbitrary scaling ``S``, rotation ``R``,
+        translation ``T`` and shear ``K``. Note how the transformations are applied in
+        the order K-S-R-T.
 
         >>> import pyvista as pv
 
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.25  # xy shear
         >>> scale = (1, 2, 3)
-        >>> angle = 90
+        >>> rotation_angle = 90
         >>> position = (4, 5, 6)
         >>> transform = (
         ...     pv.Transform()
+        ...     .concatenate(shear)
         ...     .scale(scale)
-        ...     .rotate_z(angle)
+        ...     .rotate_z(rotation_angle)
         ...     .translate(position)
         ... )
         >>> transform
         Transform (...)
-          Num Transformations: 3
-          Matrix:  [[ 0., -2.,  0.,  4.],
-                    [ 1.,  0.,  0.,  5.],
-                    [ 0.,  0.,  3.,  6.],
-                    [ 0.,  0.,  0.,  1.]]
+          Num Transformations: 4
+          Matrix:  [[ 0.  , -2.  ,  0.  ,  4.  ],
+                    [ 1.  ,  0.25,  0.  ,  5.  ],
+                    [ 0.  ,  0.  ,  3.  ,  6.  ],
+                    [ 0.  ,  0.  ,  0.  ,  1.  ]]
 
         Decompose the matrix.
 
-        >>> scaling, rotation, translation = transform.decompose()
-        >>> scaling
+        >>> T, R, S, K = transform.decompose()
+        >>> K  # shear
+        array([0.25, 0.  , 0.  ])
+
+        >>> S  # scale
         array([1., 2., 3.])
 
-        >>> rotation
+        >>> R  # rotation
         array([[ 0., -1.,  0.],
                [ 1.,  0.,  0.],
                [ 0.,  0.,  1.]])
 
-        >>> translation
+        >>> T  # translation
         array([4., 5., 6.])
 
         """
