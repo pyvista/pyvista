@@ -1637,13 +1637,11 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Create a transform with arbitrary scaling ``S``, rotation ``R``,
-        translation ``T`` and shear ``K``. Note how the transformations are applied in
-        the order K-S-R-T.
+        Create a transform with scaling ``S``, rotation ``R``, translation ``T`` and
+        shear ``K``. Note how the transformations are applied in the order K-S-R-T.
 
         >>> import numpy as np
         >>> import pyvista as pv
-
         >>> shear = np.eye(4)
         >>> shear[0, 1] = 0.25  # xy shear
         >>> scale = (1, 2, 3)
@@ -1656,6 +1654,7 @@ class Transform(_vtk.vtkTransform):
         ...     .rotate_z(rotation_angle)
         ...     .translate(position)
         ... )
+
         >>> transform
         Transform (...)
           Num Transformations: 4
