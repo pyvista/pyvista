@@ -397,23 +397,37 @@ def rotation(
 
 
 def decompose(
-    transformation: TransformLike, *, as_matrix: bool = False
+    transformation: TransformLike, *, as_matrix: bool = False, allow_negative_scale: bool = False
 ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
     """Decompose a transformation into its components.
 
-    Decompose a transformation matrix :attr:`matrix` ``M`` into
+    Decompose a transformation matrix ``M`` into
 
-    - translation ``T``
-    - rotation ``R``
-    - scaling ``S``
-    - shearing ``K``
+        - translation ``T``
+        - rotation ``R``
+        - scaling ``S``
+        - shearing ``K``
 
-    such that, when represented as 4x4 matrices, ``M = TRSK``.
+        such that, when represented as 4x4 matrices, ``M = TRSK``.
 
-    .. note::
+        Reflections are represented implicitly in the decomposition:
 
-        - The rotation is a right-handed orthonormal matrix with positive determinant.
-        - The first scale component may be negative if the input has reflections.
+        - When ``allow_negative_scale`` is ``False`` (default), reflections are included
+          with the rotation ``R``. The rotation is left-handed (negative determinant) if
+          there is a reflection in the decomposition, and right-handed (positive
+          determinant) if there is no reflection.
+
+        - When ``allow_negative_scale`` is ``True``, reflections are included with the
+          scaling ``S``. The first scaling factor is negative if there is a reflection
+          in the decomposition, and positive if there is no reflection. The y and z
+          scaling factors are always positive.
+
+        By default, compact representations of the transformations are returned (e.g.
+        as vectors or 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
+
+        .. note::
+
+            The transformation is not unique.
 
     Parameters
     ----------
@@ -423,6 +437,10 @@ def decompose(
     as_matrix : bool, default: False
         If ``True``, return translation, rotation, scaling, and shear components as
         4x4 matrices.
+
+    allow_negative_scale : bool, default: False
+        If ``True``, the first scaling term may be negative. By default, the
+        scaling factors are always positive.
 
     Returns
     -------
@@ -470,7 +488,7 @@ def decompose(
     """
     matrix = _validation.validate_transform4x4(transformation)
 
-    T, R, S, K = _decompose(matrix)
+    T, R, S, K = _decompose(matrix, allow_negative_scale=allow_negative_scale)
     if as_matrix:
         T4 = np.eye(4, dtype=matrix.dtype)
         T4[:3, 3] = T
@@ -489,7 +507,7 @@ def decompose(
     return T, R, S, K
 
 
-def _decompose(matrix):
+def _decompose(matrix, allow_negative_scale=False):
     """Decompose a matrix into its parts.
 
     Copied from:
@@ -549,7 +567,7 @@ def _decompose(matrix):
     syz = sy_syz / sy
     # Reconstruct rotation matrix, ensure positive determinant
     Rmat = np.array([M0, M1, M2]).T
-    if np.linalg.det(Rmat) < 0:
+    if np.linalg.det(Rmat) < 0 and allow_negative_scale:
         sx *= -1
         Rmat[:, 0] *= -1
     return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])

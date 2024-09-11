@@ -920,12 +920,14 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     def _apply_index_to_physical_matrix(self, matrix):
         """Set origin, spacing, and direction from a transformation matrix."""
-        T, R, S, K = pyvista.Transform(matrix).decompose()
-        # Make sure we have positive scale factors
-        if S[0] == -1:
-            # Remove reflection from scale and add it to rotation instead.
-            S[0] *= -1
-            R[0] *= -1
+        transform = pyvista.Transform(matrix)
+        T, R, S, K = transform.decompose()
+        if not np.allclose(K, 0):
+            # Input has shear, which is not directly supported
+            # Approximate rotation and scale by normalizing direction vectors instead
+            matrix3x3 = transform.matrix[:3, :3]
+            S = np.linalg.norm(matrix3x3, axis=1)
+            R = matrix3x3 / S[:, np.newaxis]
         self.origin = T
         self.direction_matrix = R
         self.spacing = S
