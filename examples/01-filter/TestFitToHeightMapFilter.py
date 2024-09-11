@@ -1,39 +1,33 @@
 #!/usr/bin/env python
-from vtkmodules.vtkCommonCore import (
-    vtkLookupTable,
-    vtkPoints,
-)
-from vtkmodules.vtkCommonDataModel import (
-    vtkCellArray,
-    vtkPolyData,
-)
+from __future__ import annotations
+
+from vtkmodules.util.misc import vtkGetDataRoot
+from vtkmodules.vtkCommonCore import vtkLookupTable
+from vtkmodules.vtkCommonCore import vtkPoints
+from vtkmodules.vtkCommonDataModel import vtkCellArray
+from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersCore import vtkTriangleFilter
 from vtkmodules.vtkFiltersGeneral import vtkWarpScalar
 from vtkmodules.vtkFiltersGeometry import vtkImageDataGeometryFilter
 from vtkmodules.vtkFiltersModeling import vtkFitToHeightMapFilter
 from vtkmodules.vtkIOImage import vtkDEMReader
-from vtkmodules.vtkRenderingCore import (
-    vtkActor,
-    vtkPolyDataMapper,
-    vtkRenderWindow,
-    vtkRenderWindowInteractor,
-    vtkRenderer,
-)
-import vtkmodules.vtkInteractionStyle
-import vtkmodules.vtkRenderingFreeType
-import vtkmodules.vtkRenderingOpenGL2
-from vtkmodules.util.misc import vtkGetDataRoot
+from vtkmodules.vtkRenderingCore import vtkActor
+from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
+from vtkmodules.vtkRenderingCore import vtkRenderer
+from vtkmodules.vtkRenderingCore import vtkRenderWindow
+from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor
+
 VTK_DATA_ROOT = vtkGetDataRoot()
 
 # Create the RenderWindow, Renderer
 #
 ren0 = vtkRenderer()
-ren0.SetViewport(0,0,0.5,1)
+ren0.SetViewport(0, 0, 0.5, 1)
 ren1 = vtkRenderer()
-ren1.SetViewport(0.5,0,1,1)
+ren1.SetViewport(0.5, 0, 1, 1)
 renWin = vtkRenderWindow()
-renWin.AddRenderer( ren0 )
-renWin.AddRenderer( ren1 )
+renWin.AddRenderer(ren0)
+renWin.AddRenderer(ren1)
 
 iren = vtkRenderWindowInteractor()
 iren.SetRenderWindow(renWin)
@@ -53,7 +47,7 @@ demReader.Update()
 lo = demReader.GetOutput().GetScalarRange()[0]
 hi = demReader.GetOutput().GetScalarRange()[1]
 bds = demReader.GetOutput().GetBounds()
-#print("Bounds: {0}".format(bds))
+# print("Bounds: {0}".format(bds))
 
 surface = vtkImageDataGeometryFilter()
 surface.SetInputConnection(demReader.GetOutputPort())
@@ -134,7 +128,7 @@ mapper.ScalarVisibilityOff()
 
 actor = vtkActor()
 actor.SetMapper(mapper)
-actor.GetProperty().SetColor(1,0,0)
+actor.GetProperty().SetColor(1, 0, 0)
 
 # Fit polygons to surface (cell strategy)
 fit2 = vtkFitToHeightMapFilter()
@@ -150,7 +144,7 @@ mapper2.ScalarVisibilityOff()
 
 actor2 = vtkActor()
 actor2.SetMapper(mapper2)
-actor2.GetProperty().SetColor(1,0,0)
+actor2.GetProperty().SetColor(1, 0, 0)
 
 # Render it
 ren0.AddActor(demActor)
@@ -158,12 +152,12 @@ ren0.AddActor(actor)
 ren1.AddActor(demActor)
 ren1.AddActor(actor2)
 
-ren0.GetActiveCamera().SetPosition( 560752, 5110002, 2110)
-ren0.GetActiveCamera().SetFocalPoint( 560750, 5110000, 2100)
+ren0.GetActiveCamera().SetPosition(560752, 5110002, 2110)
+ren0.GetActiveCamera().SetFocalPoint(560750, 5110000, 2100)
 ren0.ResetCamera()
 ren0.GetActiveCamera().SetClippingRange(269.775, 34560.4)
-ren0.GetActiveCamera().SetFocalPoint(562026, 5.1135e+006, -400.794)
-ren0.GetActiveCamera().SetPosition(556898, 5.10151e+006, 7906.19)
+ren0.GetActiveCamera().SetFocalPoint(562026, 5.1135e006, -400.794)
+ren0.GetActiveCamera().SetPosition(556898, 5.10151e006, 7906.19)
 
 ren1.SetActiveCamera(ren0.GetActiveCamera())
 
