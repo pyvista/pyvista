@@ -838,3 +838,17 @@ def test_clear_all_cell_data(multiblock_all):
         else:
             assert block.point_data.keys() != []
             assert block.cell_data.keys() == []
+
+
+def test_multi_block_zip():
+    # This tests `__iter__` and `__next__` inheritance
+    list_ = [None, None]
+    multi = MultiBlock(list_)
+    zipped_multi = list(zip(multi, multi))
+    zipped_list = list(zip(list_, list_))
+
+    assert len(zipped_multi) == len(zipped_list)
+    assert len(zipped_multi[0]) == len(zipped_list[0])
+    for i in range(2):
+        for j in range(2):
+            assert zipped_multi[i][j] is zipped_list[i][j] is None

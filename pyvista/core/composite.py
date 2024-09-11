@@ -761,11 +761,6 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
-    def __iter__(self) -> MultiBlock:
-        """Return the iterator across all blocks."""
-        self._iter_n = 0
-        return self
-
     def __eq__(self, other):
         """Equality comparison."""
         if not isinstance(other, MultiBlock):
@@ -781,14 +776,6 @@ class MultiBlock(
             return False
 
         return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
-
-    def __next__(self) -> _TypeMultiBlockLeaf | None:
-        """Get the next block from the iterator."""
-        if self._iter_n < self.n_blocks:
-            result = self[self._iter_n]
-            self._iter_n += 1
-            return result
-        raise StopIteration
 
     def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: str | None = None) -> None:
         """Insert data before index.
