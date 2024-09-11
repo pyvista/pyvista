@@ -1641,6 +1641,7 @@ class Transform(_vtk.vtkTransform):
         translation ``T`` and shear ``K``. Note how the transformations are applied in
         the order K-S-R-T.
 
+        >>> import numpy as np
         >>> import pyvista as pv
 
         >>> shear = np.eye(4)
