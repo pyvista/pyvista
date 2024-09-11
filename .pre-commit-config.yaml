@@ -21,14 +21,6 @@ repos:
         exclude: CODE_OF_CONDUCT.md
         additional_dependencies: ["tomli"]
 
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.3.0
-    hooks:
-      - id: pydocstyle
-        additional_dependencies: [tomli==2.0.1]
-        files: ^(pyvista/|other/)
-        exclude: ^pyvista/ext/
-
   - repo: https://github.com/DanielNoord/pydocstringformatter
     rev: v0.7.3
     hooks:

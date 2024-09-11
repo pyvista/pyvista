@@ -277,6 +277,7 @@ class BaseReader:
     ----------
     path : str, Path
         Path of the file to read.
+
     """
 
     _class_reader: Any = None
@@ -402,6 +403,7 @@ class BaseReader:
         -------
         pyvista.DataSet
             PyVista Dataset.
+
         """
         from pyvista.core.filters import _update_alg  # avoid circular import
 
@@ -460,6 +462,7 @@ class PointCellDataSelection:
         -------
         int
             Number of point arrays.
+
         """
         return self.reader.GetNumberOfPointArrays()
 
@@ -471,6 +474,7 @@ class PointCellDataSelection:
         -------
         list[str]
             List of all point array names.
+
         """
         return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
 
@@ -530,6 +534,7 @@ class PointCellDataSelection:
         -------
         dict[str, bool]
             Status of all point arrays.
+
         """
         return {name: self.point_array_status(name) for name in self.point_array_names}
 
@@ -541,6 +546,7 @@ class PointCellDataSelection:
         -------
         int
             Number of cell arrays.
+
         """
         return self.reader.GetNumberOfCellArrays()
 
@@ -552,6 +558,7 @@ class PointCellDataSelection:
         -------
         list[str]
             List of all cell array names.
+
         """
         return [self.reader.GetCellArrayName(i) for i in range(self.number_cell_arrays)]
 
@@ -611,6 +618,7 @@ class PointCellDataSelection:
         -------
         dict[str, bool]
             Name and if the cell array is available.
+
         """
         return {name: self.cell_array_status(name) for name in self.cell_array_names}
 
@@ -818,9 +826,6 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
     _vtk_class_name = "vtkXMLMultiBlockDataReader"
 
 
-# skip pydocstyle D102 check since docstring is taken from TimeReader
-
-
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.
 
@@ -885,6 +890,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         -------
         int
             Index of the active time set.
+
         """
         return self._active_time_set
 
@@ -900,6 +906,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         ------
         IndexError
             If the desired time set does not exist.
+
         """
         number_time_sets = self.reader.GetTimeSets().GetNumberOfItems()
         if time_set in range(number_time_sets):
@@ -908,7 +915,6 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
             raise IndexError(f"Time set index {time_set} not in {range(number_time_sets)}")
 
 
-# skip pydocstyle D102 check since docstring is taken from TimeReader
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     """OpenFOAM Reader for .foam files.
 
@@ -1228,6 +1234,7 @@ class POpenFOAMReader(OpenFOAMReader):
         >>> reader.case_type = 'reconstructed'
         >>> reader.case_type
         'reconstructed'
+
         """
         return 'reconstructed' if self.reader.GetCaseType() else 'decomposed'
 
@@ -1558,6 +1565,7 @@ class MultiBlockPlot3DReader(BaseReader):
         ----------
         value : int | Plot3DFunctionEnum
             The function to remove.
+
         """
         if isinstance(value, enum.Enum):
             value = value.value
@@ -1731,6 +1739,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> filename = examples.download_cgns_multi(load=False)
         >>> reader = pv.CGNSReader(filename)
         >>> reader.enable_all_bases()
+
         """
         self._reader.EnableAllBases()
 
@@ -1748,6 +1757,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> filename = examples.download_cgns_multi(load=False)
         >>> reader = pv.CGNSReader(filename)
         >>> reader.disable_all_bases()
+
         """
         self._reader.DisableAllBases()
 
@@ -1803,6 +1813,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> filename = examples.download_cgns_multi(load=False)
         >>> reader = pv.CGNSReader(filename)
         >>> reader.enable_all_families()
+
         """
         self._reader.EnableAllFamilies()
 
@@ -1818,6 +1829,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         >>> filename = examples.download_cgns_multi(load=False)
         >>> reader = pv.CGNSReader(filename)
         >>> reader.disable_all_families()
+
         """
         self._reader.DisableAllFamilies()
 
@@ -1982,7 +1994,6 @@ class _PVDReader(BaseVTKReader):
         ]
 
 
-# skip pydocstyle D102 check since docstring is taken from TimeReader
 class PVDReader(BaseReader, TimeReader):
     """PVD Reader for .pvd files.
 
@@ -2542,6 +2553,7 @@ class XMLPartitionedDataSetReader(BaseReader):
     ... )
     >>> partitions.save("my_partitions.vtpd")
     >>> _ = pv.read("my_partitions.vtpd")
+
     """
 
     _vtk_module_name = "vtkIOXML"
@@ -2560,6 +2572,7 @@ class FLUENTCFFReader(BaseReader):
     >>> blocks = reader.read()
     >>> mesh = blocks[0]
     >>> mesh.plot(cpos="xy", scalars="SV_T")
+
     """
 
     _vtk_module_name = "vtkIOFLUENTCFF"
@@ -2610,6 +2623,7 @@ class GaussianCubeReader(BaseReader):
         ----------
         grid : bool, default: False
             Output as a grid if ``True``, otherwise return the polydata.
+
         """
         from pyvista.core.filters import _update_alg  # avoid circular import
 

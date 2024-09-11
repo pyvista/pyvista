@@ -32,6 +32,7 @@ def _cast_to_list(
     -------
     list
         List or nested list array.
+
     """
     return _cast_to_numpy(arr).tolist()
 
@@ -50,6 +51,7 @@ def _cast_to_tuple(
     -------
     tuple
         Tuple or nested tuple array.
+
     """
     arr = _cast_to_numpy(arr).tolist()
 

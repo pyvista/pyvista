@@ -972,6 +972,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
         ... )
         >>> actor.mapper.scale_array = 'radius'
         >>> pl.show()
+
         """
         return self.GetScaleArray()
 
@@ -1001,6 +1002,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
         -----
         This very close to ParaView's PointGaussianMapper, but uses opacity to
         modify the scale as the opacity cannot be set from the actor's property.
+
         """
         self.SetSplatShaderCode(
             "//VTK::Color::Impl\n"

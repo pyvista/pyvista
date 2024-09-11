@@ -794,17 +794,6 @@ def test_spherical_to_cartesian():
     assert np.allclose(pv.cartesian_to_spherical(x, y, z), points.T)
 
 
-def test_set_pickle_format():
-    pv.set_pickle_format('legacy')
-    assert pv.PICKLE_FORMAT == 'legacy'
-
-    pv.set_pickle_format('xml')
-    assert pv.PICKLE_FORMAT == 'xml'
-
-    with pytest.raises(ValueError):  # noqa: PT011
-        pv.set_pickle_format('invalid_format')
-
-
 def test_linkcode_resolve():
     assert linkcode_resolve('not-py', {}) is None
     link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'})

@@ -6,7 +6,7 @@ from io import StringIO
 from pathlib import Path
 
 
-def format_icon(title, link, image):
+def format_icon(title, link, image):  # noqa: D103
     body = r"""
    .. grid-item-card:: {}
       :link: {}
@@ -18,13 +18,13 @@ def format_icon(title, link, image):
     return body.format(title, link, image)
 
 
-class Example:
+class Example:  # noqa: D101
     def __init__(self, title, link, image):
         self.title = title
         self.link = link
         self.image = image
 
-    def format(self):
+    def format(self):  # noqa: D102
         return format_icon(self.title, self.link, self.image)
 
 

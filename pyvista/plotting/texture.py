@@ -1,4 +1,4 @@
-"""This module provides a wrapper for vtk.vtkTexture."""
+"""Wrapper for vtk.vtkTexture."""
 
 from __future__ import annotations
 
@@ -395,6 +395,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         -------
         pyvista.Texture
             Copied texture.
+
         """
         return Texture(self.to_image().copy())
 

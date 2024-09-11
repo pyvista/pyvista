@@ -374,6 +374,7 @@ class DataSetFilters:
         ... )
         >>> _ = pl.add_actor(axes_local)
         >>> pl.show()
+
         """
 
         def _validate_vector(vector, name):
@@ -2247,11 +2248,11 @@ class DataSetFilters:
 
         """
         if use_bounds:
-            if isinstance(use_bounds, (int, bool)):
-                b = self.GetBounds()
-            origin = [b[0], b[2], b[4]]  # BOTTOM LEFT CORNER
-            point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
-            point_v = [b[0], b[3], b[4]]  # TOP LEFT CORNER
+            _validation.check_type(use_bounds, (int, bool))
+            bounds = self.bounds
+            origin = [bounds.x_min, bounds.y_min, bounds.z_min]  # BOTTOM LEFT CORNER
+            point_u = [bounds.x_max, bounds.y_min, bounds.z_min]  # BOTTOM RIGHT CORNER
+            point_v = [bounds.x_min, bounds.y_max, bounds.z_min]  # TOP LEFT CORNER
         alg = _vtk.vtkTextureMapToPlane()
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
@@ -4529,6 +4530,7 @@ class DataSetFilters:
         >>> plotter.show()
 
         See :ref:`2d_streamlines_example` for more examples using this filter.
+
         """
         if integrator_type not in [2, 4]:
             raise ValueError('Integrator type must be one of `2` or `4`.')
@@ -6346,6 +6348,7 @@ class DataSetFilters:
         >>> _ = mesh.merge_points(inplace=True)
         >>> mesh.n_points
         8
+
         """
         # Create a second mesh with points. This is required for the merge
         # to work correctly. Additional points are not required for PolyData inputs
@@ -7456,6 +7459,7 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(box, color='black', line_width=5)
         >>> _ = pl.add_actor(axes_assembly)
         >>> pl.show()
+
         """
         alg_input, matrix = self.align_xyz(
             axis_0_direction=axis_0_direction,
@@ -7611,6 +7615,7 @@ class DataSetFilters:
         >>> _ = pl.add_actor(axes_assembly)
         >>> _ = pl.view_yz()
         >>> pl.show()
+
         """
         if oriented:
             return self.oriented_bounding_box(

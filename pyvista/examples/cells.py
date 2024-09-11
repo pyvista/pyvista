@@ -903,6 +903,7 @@ def QuadraticEdge() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_EDGE
     array([21], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticEdge())
 
@@ -942,6 +943,7 @@ def QuadraticTriangle() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_TRIANGLE
     array([22], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticTriangle())
 
@@ -983,6 +985,7 @@ def QuadraticQuadrilateral() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_QUAD
     array([23], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticQuad())
 
@@ -1024,6 +1027,7 @@ def QuadraticPolygon() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_POLYGON
     array([36], dtype=uint8)
+
     """
     points = [
         [0.0, 0.0, 0.0],
@@ -1078,6 +1082,7 @@ def QuadraticTetrahedron() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_TETRA
     array([24], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticTetra())
 
@@ -1132,6 +1137,7 @@ def QuadraticHexahedron() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_HEXAHEDRON
     array([25], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticHexahedron())
 
@@ -1180,6 +1186,7 @@ def QuadraticWedge() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_WEDGE
     array([26], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticWedge())
 
@@ -1226,6 +1233,7 @@ def QuadraticPyramid() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_POLYGON
     array([27], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticPyramid())
 
@@ -1268,6 +1276,7 @@ def BiQuadraticQuadrilateral() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUAD
     array([28], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticQuad())
 
@@ -1329,6 +1338,7 @@ def TriQuadraticHexahedron() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.TRIQUADRATIC_HEXAHEDRON
     array([29], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkTriQuadraticHexahedron())
 
@@ -1382,6 +1392,7 @@ def TriQuadraticPyramid() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.TRIQUADRATIC_PYRAMID
     array([37], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkTriQuadraticPyramid())
 
@@ -1421,6 +1432,7 @@ def QuadraticLinearQuadrilateral() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_LINEAR_QUAD
     array([30], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticLinearQuad())
 
@@ -1466,6 +1478,7 @@ def QuadraticLinearWedge() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.QUADRATIC_LINEAR_WEDGE
     array([31], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkQuadraticLinearWedge())
 
@@ -1518,6 +1531,7 @@ def BiQuadraticQuadraticWedge() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUADRATIC_WEDGE
     array([32], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticQuadraticWedge())
 
@@ -1576,6 +1590,7 @@ def BiQuadraticQuadraticHexahedron() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON
     array([33], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticQuadraticHexahedron())
 
@@ -1616,6 +1631,7 @@ def BiQuadraticTriangle() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.BIQUADRATIC_TRIANGLE
     array([34], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkBiQuadraticTriangle())
 
@@ -1653,6 +1669,7 @@ def CubicLine() -> UnstructuredGrid:
 
     >>> grid.celltypes  # same as pyvista.CellType.CUBIC_LINE
     array([35], dtype=uint8)
+
     """
     return _make_isoparametric_unstructured_grid(_vtk.vtkCubicLine())
 

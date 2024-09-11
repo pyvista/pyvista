@@ -99,7 +99,7 @@ class QtDeprecationError(Exception):  # numpydoc ignore=PR01
 
 
 class BackgroundPlotter:  # numpydoc ignore=PR01
-    """This class has been moved to pyvistaqt."""
+    """This class has been moved to pyvistaqt."""  # noqa: D404
 
     def __init__(self, *args, **kwargs):
         """Empty init."""
@@ -107,7 +107,7 @@ class BackgroundPlotter:  # numpydoc ignore=PR01
 
 
 class QtInteractor:  # numpydoc ignore=PR01
-    """This class has been moved to pyvistaqt."""
+    """This class has been moved to pyvistaqt."""  # noqa: D404
 
     def __init__(self, *args, **kwargs):
         """Empty init."""

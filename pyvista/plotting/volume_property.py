@@ -1,4 +1,4 @@
-"""This module contains the VolumeProperty class."""
+"""Wrapper for vtkVolumeProperty."""
 
 from __future__ import annotations
 

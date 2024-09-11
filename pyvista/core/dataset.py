@@ -70,6 +70,7 @@ class ActiveArrayInfo:
 
     name : str
         The name of the array.
+
     """
 
     def __init__(self, association, name):
@@ -601,6 +602,7 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         t_coords : np.ndarray
             Active texture coordinates on the points.
+
         """
         warnings.warn(
             "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
@@ -848,6 +850,7 @@ class DataSet(DataSetFilters, DataObject):
         (842, 3)
         >>> mesh.n_points
         842
+
         """
         if self.point_data.active_normals is not None:
             return self.point_data.active_normals
@@ -1220,6 +1223,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
         >>> _ = pl.add_axes_at_origin()
         >>> pl.show()
+
         """
         t = Transform().rotate(rotation, point=point)
         return self.transform(
@@ -2956,6 +2960,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> for cell in mesh.cell:  # doctest: +SKIP
         ...     cell
         ...
+
         """
         for i in range(self.n_cells):
             yield self.get_cell(i)
@@ -3065,6 +3070,7 @@ class DataSet(DataSetFilters, DataObject):
         ...     _ = pl.add_mesh(others, show_edges=True)
         ...
         >>> pl.show()
+
         """
         if isinstance(self, _vtk.vtkExplicitStructuredGrid):
             raise TypeError("For an ExplicitStructuredGrid, use the `neighbors` method")
@@ -3237,6 +3243,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.view_xy()
         >>> pl.camera.zoom(4.0)
         >>> pl.show()
+
         """
         method = self.point_neighbors
         return self._get_levels_neihgbors(ind, n_levels, method)
@@ -3340,6 +3347,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.view_xy()
         >>> pl.camera.zoom(6.0)
         >>> pl.show()
+
         """
         method = partial(self.cell_neighbors, connections=connections)
         return self._get_levels_neihgbors(ind, n_levels, method)
@@ -3427,6 +3435,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.camera_position = "yx"
         >>> pl.camera.zoom(7.0)
         >>> pl.show()
+
         """
         # Build links as recommended:
         # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
@@ -3538,5 +3547,6 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         texture_coordinates : np.ndarray
             Active texture coordinates on the points.
+
         """
         self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]

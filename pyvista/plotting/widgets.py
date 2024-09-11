@@ -1526,6 +1526,7 @@ class WidgetHelper:
         ...     title_height=0.08,
         ... )
         >>> pl.show()
+
         """
         if self.iren is None:
             raise RuntimeError('Cannot add a widget to a closed plotter.')
@@ -2494,6 +2495,7 @@ class WidgetHelper:
                [0., 1., 0., 0.],
                [0., 0., 1., 0.],
                [0., 0., 0., 1.]])
+
         """
         return AffineWidget3D(
             self,

@@ -233,6 +233,7 @@ class ImageDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             ImageData subset.
+
         """
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)

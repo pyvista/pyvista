@@ -59,7 +59,7 @@ PLOT_DIRECTIVE_THEME = None
 FLOAT_FORMAT = "{:.3e}"
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT = 'xml'
+PICKLE_FORMAT = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
