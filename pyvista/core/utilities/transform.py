@@ -1591,7 +1591,10 @@ class Transform(_vtk.vtkTransform):
         return array if inplace else out
 
     def decompose(
-        self, *, as_matrix: bool = False
+        self,
+        *,
+        as_matrix: bool = False,
+        allow_negative_scale: bool = False,
     ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
         """Decompose the current transformation into its components.
 
@@ -1604,20 +1607,34 @@ class Transform(_vtk.vtkTransform):
 
         such that, when represented as 4x4 matrices, ``M = TRSK``.
 
+        Reflections are represented implicitly in the decomposition:
+
+        - When ``allow_negative_scale`` is ``False`` (default), reflections are included
+          with the rotation ``R``. The rotation is left-handed (negative determinant) if
+          there is a reflection in the decomposition, and right-handed (positive
+          determinant) if there is no reflection.
+
+        - When ``allow_negative_scale`` is ``True``, reflections are included with the
+          scaling ``S``. The first scaling factor is negative if there is a reflection
+          in the decomposition, and positive if there is no reflection. The y and z
+          scaling factors are always positive.
+
         By default, compact representations of the transformations are returned (e.g.
-        as vectors or). Optionally, 4x4 matrices may be returned instead.
+        as vectors or 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
 
         .. note::
 
-            - The transformation is not unique.
-            - The rotation is a right-handed orthonormal matrix with positive determinant.
-            - The first scale component may be negative if the input has reflections.
+            The transformation is not unique.
 
         Parameters
         ----------
         as_matrix : bool, default: False
             If ``True``, return translation, rotation, scaling, and shear components as
             4x4 matrices.
+
+        allow_negative_scale : bool, default: False
+            If ``True``, the first scaling term may be negative. By default, the
+            scaling factors are always positive.
 
         Returns
         -------
@@ -1681,7 +1698,9 @@ class Transform(_vtk.vtkTransform):
         array([4., 5., 6.])
 
         """
-        return decompose(self.matrix, as_matrix=as_matrix)
+        return decompose(
+            self.matrix, as_matrix=as_matrix, allow_negative_scale=allow_negative_scale
+        )
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.

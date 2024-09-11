@@ -3536,21 +3536,77 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
                 _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types(dataset):
-    # assert that transformations of these types throw the correct error
+def test_transform_inplace_rectilinear(rectilinear):
+    # assert that transformations of this type raises the correct error
     tf = pv.core.utilities.transformations.axis_angle_rotation(
         (1, 0, 0),
         90,
     )  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):
-        dataset.transform(tf, inplace=True)
+        rectilinear.transform(tf, inplace=True)
+
+
+@pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
+def test_transform_imagedata(uniform, spacing):
+    # Transformations affect origin, spacing, and direction, so test these here
+    uniform.spacing = spacing
+
+    # Test scaling
+    vector123 = np.array((1, 2, 3))
+    uniform.scale(vector123, inplace=True)
+    expected_spacing = spacing * vector123
+    assert np.allclose(uniform.spacing, expected_spacing)
+
+    # Test direction
+    rotation = pv.Transform().rotate_vector(vector123, 30).matrix[:3, :3]
+    uniform.rotate(rotation, inplace=True)
+    assert np.allclose(uniform.direction_matrix, rotation)
+
+    # Test translation by centering data
+    vector = np.array(uniform.center) * -1
+    translation = pv.Transform().translate(vector)
+    uniform.transform(translation, inplace=True)
+    assert isinstance(uniform, pv.ImageData)
+    assert np.array_equal(uniform.origin, vector)
+
+    # Test applying a second translation
+    translated = uniform.transform(translation, inplace=False)
+    assert np.allclose(translated.origin, vector * 2)
+    assert np.allclose(translated.center, uniform.origin)
+
+
+def test_transform_imagedata_with_shear(uniform):
+    shear_xy = 0.1
+    x_vector = (1, shear_xy, 0)
+    x_magnitude = np.linalg.norm(x_vector)
+    matrix = np.eye(4)
+    shear_index = (0, 1)
+    matrix[shear_index] = shear_xy
+
+    uniform.transform(matrix)
+
+    x_spacing, y_spacing, z_spacing = uniform.spacing
+    assert np.array_equal(x_spacing, x_magnitude)
+    assert np.array_equal(y_spacing, 1)
+    assert np.array_equal(z_spacing, 1)
+
+    x_dir, y_dir, z_dir = uniform.direction_matrix
+    assert np.array_equal(x_dir, x_vector / x_magnitude)
+    assert np.array_equal(y_dir, (0, 1, 0))
+    assert np.array_equal(z_dir, (0, 0, 1))
+
+    assert np.array_equal(uniform.origin, (0, 0, 0))
+
+    # Test that original matrix is *mostly* recovered
+    # With shear, we cannot re-compose the matrix perfectly
+    actual_matrix = uniform.index_to_physical_matrix
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            if (i, j) == shear_index:
+                # Expect approximate shear returned
+                assert np.isclose(actual_matrix[i, j], matrix[i, j], atol=1e-3)
+            else:
+                assert np.isclose(actual_matrix[i, j], matrix[i, j])
 
 
 def test_reflect_mesh_about_point(datasets):
