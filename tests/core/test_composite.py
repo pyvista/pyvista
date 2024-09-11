@@ -841,7 +841,7 @@ def test_clear_all_cell_data(multiblock_all):
 
 
 def test_multi_block_zip():
-    # This tests `__iter__` and `__next__` inheritance
+    # Test `__iter__` and `__next__` inheritance
     list_ = [None, None]
     multi = MultiBlock(list_)
     zipped_multi = list(zip(multi, multi))
