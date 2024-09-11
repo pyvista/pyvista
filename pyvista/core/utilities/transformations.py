@@ -9,7 +9,9 @@ import numpy as np
 from pyvista.core import _validation
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -392,3 +394,162 @@ def rotation(
         translate_from_origin[:3, 3] = valid_point
 
         return translate_from_origin @ rotate @ translate_to_origin
+
+
+def decompose(
+    transformation: TransformLike, *, as_matrix: bool = False
+) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+    """Decompose a transformation into its components.
+
+    Decompose a transformation matrix :attr:`matrix` ``M`` into
+
+    - translation ``T``
+    - rotation ``R``
+    - scaling ``S``
+    - shearing ``K``
+
+    such that, when represented as 4x4 matrices, ``M = TRSK``.
+
+    .. note::
+
+        - The rotation is a right-handed orthonormal matrix with positive determinant.
+        - The first scale component may be negative if the input has reflections.
+
+    Parameters
+    ----------
+    transformation : TransformLike
+        Array or transform to decompose.
+
+    as_matrix : bool, default: False
+        If ``True``, return translation, rotation, scaling, and shear components as
+        4x4 matrices.
+
+    Returns
+    -------
+    numpy.ndarray
+        Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
+
+    numpy.ndarray
+        3x3 rotation matrix (or 4x4 rotation matrix if ``as_matrix`` is ``True``).
+
+    numpy.ndarray
+        Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+
+    numpy.ndarray
+        Length-3 shear vector (or 4x4 shear matrix if ``as_matrix`` is ``True``).
+        If a vector, the values are the ``xy``, ``xz``, and ``yz`` shears that
+        fill the upper triangle above the diagonal of the shear matrix.
+
+    Examples
+    --------
+    Decompose a transformation matrix.
+
+    >>> import pyvista as pv
+    >>> matrix = [
+    ...     [0.0, -2.0, 0.0, 4.0],
+    ...     [1.0, 0.25, 0.0, 5.0],
+    ...     [0.0, 0.0, 3.0, 6.0],
+    ...     [0.0, 0.0, 0.0, 1.0],
+    ... ]
+
+    >>> T, R, S, K = pv.transformations.decompose(matrix)
+    >>> K  # shear
+    array([0.25, 0.  , 0.  ])
+
+    >>> S  # scale
+    array([1., 2., 3.])
+
+    >>> R  # rotation
+    array([[ 0., -1.,  0.],
+           [ 1.,  0.,  0.],
+           [ 0.,  0.,  1.]])
+
+    >>> T  # translation
+    array([4., 5., 6.])
+
+    """
+    matrix = _validation.validate_transform4x4(transformation)
+
+    T, R, S, K = _decompose(matrix)
+    if as_matrix:
+        T4 = np.eye(4, dtype=matrix.dtype)
+        T4[:3, 3] = T
+
+        R4 = np.eye(4, dtype=matrix.dtype)
+        R4[:3, :3] = R
+
+        S4 = np.diag((*S, 1)).astype(matrix.dtype)
+
+        K4 = np.eye(4, dtype=matrix.dtype)
+        K4[0, 1] = K[0]
+        K4[0, 2] = K[1]
+        K4[1, 2] = K[2]
+        return T4, R4, S4, K4
+
+    return T, R, S, K
+
+
+def _decompose(matrix):
+    """Decompose a matrix into its parts.
+
+    Copied from:
+    https://github.com/matthew-brett/transforms3d/blob/6a43a98e3659d198ff6ce2c90d52ddef50fcf770/transforms3d/affines.py#L156
+
+    License:
+
+        Copyright (c) 2009-2024, Matthew Brett and Christoph Gohlke
+        All rights reserved.
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are
+        met:
+
+        1. Redistributions of source code must retain the above copyright notice,
+        this list of conditions and the following disclaimer.
+
+        2. Redistributions in binary form must reproduce the above copyright
+        notice, this list of conditions and the following disclaimer in the
+        documentation and/or other materials provided with the distribution.
+
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+        IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+        THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+        PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+        CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+        EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+        PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+        PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+        LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+        NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+        SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    """
+    A44 = np.asarray(matrix)
+    T = A44[:-1, -1]
+    RZS = A44[:-1, :-1]
+    # compute scales and shears
+    M0, M1, M2 = np.array(RZS).T
+    # extract x scale and normalize
+    sx = np.sqrt(np.sum(M0**2))
+    M0 /= sx
+    # orthogonalize M1 with respect to M0
+    sx_sxy = np.dot(M0, M1)
+    M1 -= sx_sxy * M0
+    # extract y scale and normalize
+    sy = np.sqrt(np.sum(M1**2))
+    M1 /= sy
+    sxy = sx_sxy / sx
+    # orthogonalize M2 with respect to M0 and M1
+    sx_sxz = np.dot(M0, M2)
+    sy_syz = np.dot(M1, M2)
+    M2 -= sx_sxz * M0 + sy_syz * M1
+    # extract z scale and normalize
+    sz = np.sqrt(np.sum(M2**2))
+    M2 /= sz
+    sxz = sx_sxz / sx
+    syz = sy_syz / sy
+    # Reconstruct rotation matrix, ensure positive determinant
+    Rmat = np.array([M0, M1, M2]).T
+    if np.linalg.det(Rmat) < 0:
+        sx *= -1
+        Rmat[:, 0] *= -1
+    return T, Rmat, np.array([sx, sy, sz]), np.array([sxy, sxz, syz])

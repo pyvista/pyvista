@@ -1743,17 +1743,63 @@ def test_transform_repr(transform):
     )
 
 
-def test_transform_decompose(transform):
-    transform.scale(SCALE).rotate(ROTATION).translate(VECTOR)
-    scale, rotation, translation = transform.decompose()
-    assert isinstance(scale, np.ndarray)
-    assert isinstance(rotation, np.ndarray)
-    assert isinstance(translation, np.ndarray)
-    assert np.allclose(scale, [SCALE] * 3)
-    assert np.allclose(rotation, ROTATION)
-    assert np.allclose(translation, VECTOR)
+SHEAR = (0.1, 0.2, 0.3)
+SHEAR4x4 = np.eye(4)
+SHEAR4x4[0, 1] = SHEAR[0]
+SHEAR4x4[0, 2] = SHEAR[1]
+SHEAR4x4[1, 2] = SHEAR[2]
 
-    scale, rotation, translation = transform.decompose(as_matrix=True)
-    assert np.allclose(scale, pv.Transform().scale(SCALE).matrix)
-    assert np.allclose(rotation, pv.Transform().rotate(ROTATION).matrix)
-    assert np.allclose(translation, pv.Transform().translate(VECTOR).matrix)
+
+@pytest.mark.parametrize('do_scale', [True, False])
+@pytest.mark.parametrize('do_shear', [True, False])
+@pytest.mark.parametrize('do_rotate', [True, False])
+@pytest.mark.parametrize('do_translate', [True, False])
+def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_translate):
+    if do_shear:
+        transform.concatenate(SHEAR4x4)
+    if do_scale:
+        transform.scale(SCALE)
+    if do_rotate:
+        transform.rotate(ROTATION)
+    if do_translate:
+        transform.translate(VECTOR)
+
+    T, R, S, K = transform.decompose()
+
+    assert isinstance(T, np.ndarray)
+    assert isinstance(R, np.ndarray)
+    assert isinstance(S, np.ndarray)
+    assert isinstance(K, np.ndarray)
+    # TODO: test dtypes
+
+    expected_translation = VECTOR if do_translate else np.zeros((3,))
+    expected_rotation = ROTATION if do_rotate else np.eye(3)
+    expected_scale = [SCALE] * 3 if do_scale else np.ones((3,))
+    expected_shear = SHEAR if do_shear else np.zeros((3,))
+
+    assert np.allclose(T, expected_translation)
+    assert np.allclose(R, expected_rotation)
+    assert np.allclose(S, expected_scale)
+    assert np.allclose(K, expected_shear)
+
+    # Test composition from decomposed elements matches input
+    T, R, S, K = transform.decompose(as_matrix=True)
+    concatenated = T @ R @ S @ K
+    assert np.allclose(concatenated, transform.matrix)
+
+
+def test_transform_decompose_reflection():
+    rotation = np.array(ROTATION) * -1
+    assert np.linalg.det(rotation) < 0
+
+    _, R, S, _ = transformations.decompose(rotation)
+    assert np.linalg.det(R) > 0
+    assert np.array_equal(S, (-1, 1, 1))
+
+
+@pytest.mark.parametrize('as_matrix', [True, False])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_transform_decompose_dtype(dtype, as_matrix):
+    matrix = np.eye(4).astype(dtype)
+    T, R, S, K = transformations.decompose(matrix, as_matrix=as_matrix)
+    assert np.issubdtype(T.dtype, dtype)

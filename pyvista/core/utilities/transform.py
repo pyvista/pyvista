@@ -12,9 +12,9 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
-from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
+from pyvista.core.utilities.transformations import decompose
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -1590,37 +1590,98 @@ class Transform(_vtk.vtkTransform):
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return array if inplace else out
 
-    def decompose(self, as_matrix: bool = False):
-        """Decompose the current transformation into its scaling, rotation, and translation components.
+    def decompose(
+        self, *, as_matrix: bool = False
+    ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+        """Decompose the current transformation into its components.
+
+        Decompose :attr:`matrix` ``M`` into
+
+        - translation ``T``
+        - rotation ``R``
+        - scaling ``S``
+        - shearing ``K``
+
+        such that, when represented as 4x4 matrices, ``M = TRSK``.
+
+        By default, compact representations of the transformations are returned (e.g.
+        as vectors or). Optionally, 4x4 matrices may be returned instead.
+
+        .. note::
+
+            - The transformation is not unique.
+            - The rotation is a right-handed orthonormal matrix with positive determinant.
+            - The first scale component may be negative if the input has reflections.
 
         Parameters
         ----------
         as_matrix : bool, default: False
-            If ``True``, return the scaling, rotation, and translation components as
+            If ``True``, return translation, rotation, scaling, and shear components as
             4x4 matrices.
 
         Returns
         -------
         numpy.ndarray
-            Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+            Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
 
         numpy.ndarray
             3x3 rotation matrix (or 4x4 rotation matrix if ``as_matrix`` is ``True``).
 
         numpy.ndarray
-            Length-3 translation vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+            Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+
+        numpy.ndarray
+            Length-3 shear vector (or 4x4 shear matrix if ``as_matrix`` is ``True``).
+            If a vector, the values are the ``xy``, ``xz``, and ``yz`` shears that
+            fill the upper triangle above the diagonal of the shear matrix.
+
+        Examples
+        --------
+        Create a transform with scaling ``S``, rotation ``R``, translation ``T`` and
+        shear ``K``. Note how the transformations are applied in the order K-S-R-T.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.25  # xy shear
+        >>> scale = (1, 2, 3)
+        >>> rotation_angle = 90
+        >>> position = (4, 5, 6)
+        >>> transform = (
+        ...     pv.Transform()
+        ...     .concatenate(shear)
+        ...     .scale(scale)
+        ...     .rotate_z(rotation_angle)
+        ...     .translate(position)
+        ... )
+
+        >>> transform
+        Transform (...)
+          Num Transformations: 4
+          Matrix:  [[ 0.  , -2.  ,  0.  ,  4.  ],
+                    [ 1.  ,  0.25,  0.  ,  5.  ],
+                    [ 0.  ,  0.  ,  3.  ,  6.  ],
+                    [ 0.  ,  0.  ,  0.  ,  1.  ]]
+
+        Decompose the matrix.
+
+        >>> T, R, S, K = transform.decompose()
+        >>> K  # shear
+        array([0.25, 0.  , 0.  ])
+
+        >>> S  # scale
+        array([1., 2., 3.])
+
+        >>> R  # rotation
+        array([[ 0., -1.,  0.],
+               [ 1.,  0.,  0.],
+               [ 0.,  0.,  1.]])
+
+        >>> T  # translation
+        array([4., 5., 6.])
+
         """
-        matrix = self.matrix
-        scaling = np.abs(self.GetScale())
-        rotation = matrix[:3, :3] @ np.diag(_reciprocal(scaling))
-        translation = matrix[:3, 3]
-        if as_matrix:
-            return (
-                Transform().scale(scaling).matrix,
-                Transform().rotate(rotation).matrix,
-                Transform().translate(translation).matrix,
-            )
-        return scaling, rotation, translation
+        return decompose(self.matrix, as_matrix=as_matrix)
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
