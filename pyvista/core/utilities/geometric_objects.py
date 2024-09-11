@@ -205,6 +205,7 @@ def Cylinder(
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
+
     """
     algo = CylinderSource(
         center=center,
@@ -1056,6 +1057,7 @@ def Plane(
     >>> mesh = pv.Plane()
     >>> mesh.point_data.clear()
     >>> mesh.plot(show_edges=True)
+
     """
     planeSource = PlaneSource(i_resolution=i_resolution, j_resolution=j_resolution)
     surf = planeSource.output
@@ -1128,6 +1130,7 @@ def MultipleLines(points=None):
     >>> plotter.camera.azimuth = 45
     >>> plotter.camera.zoom(0.8)
     >>> plotter.show()
+
     """
     if points is None:
         points = [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
@@ -1345,6 +1348,7 @@ def Cone(
     >>> import pyvista as pv
     >>> mesh = pv.Cone()
     >>> mesh.plot(show_edges=True, line_width=5)
+
     """
     algo = ConeSource(
         capping=capping,
@@ -1505,6 +1509,7 @@ def Text3D(string, depth=None, width=None, height=None, center=(0, 0, 0), normal
     >>> import pyvista as pv
     >>> text_mesh = pv.Text3D('PyVista')
     >>> text_mesh.plot(cpos='xy')
+
     """
     return Text3DSource(
         string,
@@ -1663,6 +1668,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> pl.show()
+
     """
     check_valid_vector(pointa, 'pointa')
     check_valid_vector(pointb, 'pointb')
@@ -1744,6 +1750,7 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
     >>> _ = pl.view_xy()
     >>> pl.show()
+
     """
     check_valid_vector(center, 'center')
     if normal is None:
@@ -1800,6 +1807,7 @@ def Pyramid(points=None):
     >>> pointe = [0.0, 0.0, 1.608]
     >>> pyramid = pv.Pyramid([pointa, pointb, pointc, pointd, pointe])
     >>> pyramid.plot(show_edges=True, line_width=5)
+
     """
     if points is None:
         points = [
@@ -1855,6 +1863,7 @@ def Triangle(points=None):
     >>> pointc = [0.5, 0.707, 0]
     >>> triangle = pv.Triangle([pointa, pointb, pointc])
     >>> triangle.plot(show_edges=True, line_width=5)
+
     """
     if points is None:
         points = [[0, 0, 0], [1, 0, 0], [0.5, 0.5**0.5, 0]]
@@ -1893,6 +1902,7 @@ def Rectangle(points=None):
     >>> pointc = [0.0, 1.0, 0.0]
     >>> rectangle = pv.Rectangle([pointa, pointb, pointc])
     >>> rectangle.plot(show_edges=True, line_width=5)
+
     """
     if points is None:
         points = [[1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]]
@@ -2045,6 +2055,7 @@ def Ellipse(semi_major_axis=0.5, semi_minor_axis=0.2, resolution=100):
     >>> import pyvista as pv
     >>> ellipse = pv.Ellipse(semi_major_axis=8, semi_minor_axis=4)
     >>> ellipse.plot(show_edges=True, line_width=5)
+
     """
     points = np.zeros((resolution, 3))
     theta = np.linspace(0.0, 2.0 * np.pi, resolution, endpoint=False)

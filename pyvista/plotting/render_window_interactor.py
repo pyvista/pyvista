@@ -36,6 +36,7 @@ class Timer:
     callback : callable
         A callable that takes one argument. It will be passed `step`,
         which is the number of times the timer event has occurred.
+
     """
 
     def __init__(self, max_steps, callback):
@@ -80,6 +81,7 @@ class RenderWindowInteractor:
     interactor : vtk.vtkRenderWindowInteractor, default: None
         The render window interactor. If set to ``None``, a new
         vtkRenderWindowInteractor instance will be created.
+
     """
 
     def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
@@ -306,6 +308,7 @@ class RenderWindowInteractor:
         raise_on_missing : bool, default: False
             Whether to raise a :class:`ValueError` if there are no events
             registered for the given key.
+
         """
         try:
             self._key_press_event_callbacks.pop(key)
@@ -493,8 +496,7 @@ class RenderWindowInteractor:
         self._set_context_style(interactive_scene)
 
     def _set_context_style(self, scene):
-        """
-        Set the context style interactor or switch back to previous interactor style.
+        """Set the context style interactor or switch back to previous interactor style.
 
         Parameters
         ----------
@@ -1270,6 +1272,7 @@ class RenderWindowInteractor:
         -------
         vtk.vtkRenderer
             The poked renderer for given or last event position.
+
         """
         if x is None or y is None:
             x, y = self.get_event_position()
@@ -1316,6 +1319,7 @@ class RenderWindowInteractor:
         -------
         vtk.vtkInteractorStyle
             VTK interactor style.
+
         """
         return self.interactor.GetInteractorStyle()
 
@@ -1326,6 +1330,7 @@ class RenderWindowInteractor:
         -------
         float
             Desired update rate.
+
         """
         return self.interactor.GetDesiredUpdateRate()
 
@@ -1347,6 +1352,7 @@ class RenderWindowInteractor:
         -------
         int
             Timer ID.
+
         """
         if repeating:
             timer_id = self.interactor.CreateRepeatingTimer(duration)
@@ -1361,6 +1367,7 @@ class RenderWindowInteractor:
         ----------
         timer_id : int
             The ID of the timer to destroy.
+
         """
         self.interactor.DestroyTimer(timer_id)
 
@@ -1379,6 +1386,7 @@ class RenderWindowInteractor:
         ----------
         render_window : vtk.vtkRenderWindow
             Render window to set for the interactor.
+
         """
         self.interactor.SetRenderWindow(render_window)
 
@@ -1403,6 +1411,7 @@ class RenderWindowInteractor:
         -------
         vtk.vtkAbstractPicker
             VTK picker.
+
         """
         return self.interactor.GetPicker()
 
@@ -1443,6 +1452,7 @@ class RenderWindowInteractor:
         ----------
         observer : callable
             The observer function to call when a pick event ends.
+
         """
         warnings.warn(
             "`add_pick_obeserver` is deprecated, use `add_pick_observer`",
@@ -1457,6 +1467,7 @@ class RenderWindowInteractor:
         ----------
         observer : callable
             The observer function to call when a pick event ends.
+
         """
         self.picker.AddObserver(_vtk.vtkCommand.EndPickEvent, observer)
 
@@ -1477,6 +1488,7 @@ class RenderWindowInteractor:
 
         point : list or tuple
             The point to fly to.
+
         """
         self.interactor.FlyTo(renderer, *point)
 

@@ -17,11 +17,10 @@ pytestmark = pytest.mark.skip_plotting
 
 
 def r_mat_to_euler_angles(R):
-    """
-    Extract Euler angles from a 3x3 rotation matrix using the ZYX sequence.
+    """Extract Euler angles from a 3x3 rotation matrix using the ZYX sequence.
+
     Returns the angles in radians.
     """
-
     # Check for gimbal lock: singular cases
     if abs(R[2, 0]) == 1:
         # Gimbal lock exists

@@ -220,6 +220,7 @@ class CellType(IntEnum):
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``cell_class``
             is used.
+
         """
         self = int.__new__(cls, value)
         self._value_ = value

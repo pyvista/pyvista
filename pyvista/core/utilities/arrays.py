@@ -169,6 +169,7 @@ def has_duplicates(arr):
     -------
     bool
         ``True`` if the array has any duplicates, otherwise ``False``.
+
     """
     s = np.sort(arr, axis=None)
     return (s[1:] == s[:-1]).any()
@@ -186,6 +187,7 @@ def raise_has_duplicates(arr):
     ------
     ValueError
         If the array contains duplicate values.
+
     """
     if has_duplicates(arr):
         raise ValueError("Array contains duplicate values.")
@@ -381,6 +383,7 @@ def raise_not_matching(scalars, dataset):
     ------
     ValueError
         Raises a ValueError if the size of scalars does not the dataset.
+
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
@@ -854,6 +857,22 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         # This is only needed so that the Field DatasetAttributes repr
         # shows this array as `str`
         _set_string_scalar_object_name(self)
+
+    def __getstate__(self):
+        """Support pickling.
+
+        This method does nothing. It only exists to make the pickle library happy.
+        Classes that store an instance of this class must pickle this array directly.
+        E.g. DataObjects can support this by storing this array as field data
+        """
+
+    def __setstate__(self, state):
+        """Support pickling.
+
+        This method does nothing. It only exists to make the pickle library happy.
+        Classes that store an instance of this class must pickle this array directly.
+        E.g. DataObjects can support this by storing this array as field data
+        """
 
     # Override any/all `UserDict` or `MutableMapping` methods which mutate
     # the dictionary. This ensures the serialized string is also updated

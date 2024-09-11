@@ -143,6 +143,7 @@ class _PointSet(DataSet):
         >>> hex_mesh = pv.read(examples.hexbeamfile)
         >>> removed = hex_mesh.remove_cells(range(10, 20))
         >>> removed.plot(color='lightblue', show_edges=True, line_width=3)
+
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
@@ -913,6 +914,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> mesh.verts = pv.CellArray.from_regular_cells(
         ...     np.arange(mesh.n_points).reshape((-1, 1))
         ... )
+
         """
         return _vtk.vtk_to_numpy(self.GetVerts().GetData())
 
@@ -1098,6 +1100,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> faces = [[0, 1, 2], [1, 3, 2], [0, 2, 3], [0, 3, 1]]
         >>> tetra = pv.PolyData.from_regular_faces(points, faces)
         >>> tetra.plot()
+
         """
         return cls(points, faces=CellArray.from_regular_cells(faces, deep=deep))
 
@@ -1175,6 +1178,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ... ]
         >>> pyramid = pv.PolyData.from_irregular_faces(points, faces)
         >>> pyramid.plot()
+
         """
         return cls(points, faces=CellArray.from_irregular_cells(faces))
 
@@ -1194,6 +1198,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> extruded = polygon.extrude((0, 0, 1), capping=False)
         >>> extruded.strips
         array([4, 0, 1, 4, 5, 4, 1, 2, 5, 6, 4, 2, 3, 6, 7, 4, 3, 0, 7, 4])
+
         """
         return _vtk.vtk_to_numpy(self.GetStrips().GetData())
 
@@ -1405,6 +1410,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ... )
         >>> mesh.n_cells, mesh.n_faces_strict
         (2, 1)
+
         """
         return self.GetNumberOfPolys()
 
@@ -2082,6 +2088,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 [44, 26, 62, 98, 11, 10, 13, 17],
                 [89, 98, 80, 71, 16, 17, 15, 14],
                 [98, 62, 53, 80, 17, 13, 12, 15]])}
+
         """
         return get_mixed_cells(self)
 
@@ -2594,6 +2601,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid = grid.hide_cells(range(79 * 30, 79 * 50))
         >>> grid.plot(color=True, show_edges=True)
+
         """
         if not inplace:
             return self.copy().hide_cells(ind, inplace=True)
@@ -2639,6 +2647,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid.hide_points(range(80 * 30, 80 * 50))
         >>> grid.plot(color=True, show_edges=True)
+
         """
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_points:

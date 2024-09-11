@@ -1093,13 +1093,45 @@ def test_grid_points():
     )
 
 
+def test_imagedata_direction_matrix():
+    # Create image data with a single voxel cell
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    assert image.n_points == 8
+    assert image.n_cells == 1
+
+    initial_bounds = (0.0, 1.0, 0.0, 1.0, 0.0, 1.0)
+    assert image.bounds == initial_bounds
+
+    # Test set/get
+    expected_matrix = pv.Transform().rotate_vector((1, 2, 3), 30).matrix[:3, :3]
+    image.direction_matrix = expected_matrix
+    assert np.array_equal(image.direction_matrix, expected_matrix)
+
+    # Test bounds using a transformed reference box
+    box = pv.Box(bounds=initial_bounds)
+    box.transform(image.index_to_physical_matrix)
+    expected_bounds = box.bounds
+    assert np.allclose(image.bounds, expected_bounds)
+
+    # Check that filters make use of the direction matrix internally
+    image['data'] = np.ones((image.n_points,))
+    filtered = image.threshold()
+    assert filtered.bounds == expected_bounds
+
+    # Check that points make use of the direction matrix internally
+    poly_points = pv.PolyData(image.points)
+    assert np.allclose(poly_points.bounds, expected_bounds)
+
+
 def test_imagedata_index_to_physical_matrix():
     # Create image with arbitrary translation (origin) and rotation (direction)
     image = pv.ImageData()
     vector = (1, 2, 3)
+    rotation = pv.Transform().rotate_vector(vector, 30).matrix[:3, :3]
     image.origin = vector
+    image.direction_matrix = rotation
 
-    expected_transform = pv.Transform().translate(vector)
+    expected_transform = pv.Transform().rotate(rotation).translate(vector)
     ijk_to_xyz = image.index_to_physical_matrix
     assert np.allclose(ijk_to_xyz, expected_transform.matrix)
 

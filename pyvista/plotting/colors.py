@@ -1024,8 +1024,7 @@ PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
 def get_cmap_safe(cmap):
-    """
-    Fetch a colormap by name from matplotlib, colorcet, or cmocean.
+    """Fetch a colormap by name from matplotlib, colorcet, or cmocean.
 
     Parameters
     ----------
@@ -1119,8 +1118,7 @@ def get_hexcolors_cycler():
 
 
 def get_matplotlib_theme_cycler():
-    """
-    Return the color cycler of the current matplotlib theme.
+    """Return the color cycler of the current matplotlib theme.
 
     Returns
     -------
@@ -1151,6 +1149,7 @@ def color_scheme_to_cycler(scheme):
     ------
     ValueError
         If the provided `scheme` is not a valid color scheme.
+
     """
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()
