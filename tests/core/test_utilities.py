@@ -1795,3 +1795,11 @@ def test_transform_decompose_reflection():
     _, R, S, _ = transformations.decompose(rotation)
     assert np.linalg.det(R) > 0
     assert np.array_equal(S, (-1, 1, 1))
+
+
+@pytest.mark.parametrize('as_matrix', [True, False])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_transform_decompose_dtype(dtype, as_matrix):
+    matrix = np.eye(4).astype(dtype)
+    T, R, S, K = transformations.decompose(matrix, as_matrix=as_matrix)
+    assert np.issubdtype(T.dtype, dtype)

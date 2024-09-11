@@ -9,6 +9,7 @@ import numpy as np
 from pyvista.core import _validation
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
@@ -395,7 +396,9 @@ def rotation(
         return translate_from_origin @ rotate @ translate_to_origin
 
 
-def decompose(transformation: TransformLike, *, as_matrix: bool = False):
+def decompose(
+    transformation: TransformLike, *, as_matrix: bool = False
+) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
     """Decompose a transformation into its components.
 
     Decompose a transformation matrix :attr:`matrix` ``M`` into
@@ -475,7 +478,7 @@ def decompose(transformation: TransformLike, *, as_matrix: bool = False):
         R4 = np.eye(4, dtype=matrix.dtype)
         R4[:3, :3] = R
 
-        S4 = np.diag((*S, 1))
+        S4 = np.diag((*S, 1)).astype(matrix.dtype)
 
         K4 = np.eye(4, dtype=matrix.dtype)
         K4[0, 1] = K[0]

@@ -1590,7 +1590,9 @@ class Transform(_vtk.vtkTransform):
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return array if inplace else out
 
-    def decompose(self, *, as_matrix: bool = False):
+    def decompose(
+        self, *, as_matrix: bool = False
+    ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
         """Decompose the current transformation into its components.
 
         Decompose :attr:`matrix` ``M`` into
