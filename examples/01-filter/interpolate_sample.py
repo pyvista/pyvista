@@ -96,6 +96,7 @@ pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color='red')
 pl.view_xy()
 pl.show()
 
+# %%
 # While this filter is very useful for point clouds, it is possible to use
 # it to interpolate from the points on other mesh types. With
 # unstuitable choice of ``radius`` the interpolation doesn't look very good.
@@ -132,6 +133,7 @@ output = grid.sample(point_mesh)
 # value of (0, 0) shows that no data was sampled
 print(f"(min, max): {output['ysquared'].min()}, {output['ysquared'].min()}")
 
+# %%
 #  Create the non-point cloud mesh that will be sampled from and plot it.
 
 grid = pv.ImageData(dimensions=(11, 11, 1), spacing=[3 / 10, 1 / 10, 1])
@@ -169,8 +171,9 @@ rotated_subset = subset.rotate_vector(vector=(0, 0, 1), angle=45, point=(0.5, 0.
 output = rotated_subset.sample(grid)
 output
 
+# %%
 # The data in the sampled region looks identical to the original grid
-# in that due to the well-behaved nature of the data and
+# due to the well-behaved nature of the data and
 # low interpolation error.
 
 pl = pv.Plotter()
@@ -179,6 +182,7 @@ pl.add_mesh(output, clim=[0, 1])
 pl.view_xy()
 pl.show()
 
+# %%
 # Repeat the sphere interpolation example, but using
 # :func:`pyvista.DataSetFilters.sample`. This method
 # is directly able to sample from the mesh in this case without
