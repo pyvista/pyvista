@@ -1788,13 +1788,18 @@ def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_transl
     assert np.allclose(concatenated, transform.matrix)
 
 
-def test_transform_decompose_reflection():
+@pytest.mark.parametrize('allow_negative_scale', [True, False])
+def test_transform_decompose_allow_negative_scale(allow_negative_scale):
     rotation = np.array(ROTATION) * -1
     assert np.linalg.det(rotation) < 0
 
-    _, R, S, _ = transformations.decompose(rotation)
-    assert np.linalg.det(R) > 0
-    assert np.array_equal(S, (-1, 1, 1))
+    _, R, S, _ = transformations.decompose(rotation, allow_negative_scale=allow_negative_scale)
+    if allow_negative_scale:
+        assert np.linalg.det(R) > 0
+        assert np.array_equal(S, (-1, 1, 1))
+    else:
+        assert np.linalg.det(R) < 0
+        assert np.array_equal(S, (1, 1, 1))
 
 
 @pytest.mark.parametrize('as_matrix', [True, False])
