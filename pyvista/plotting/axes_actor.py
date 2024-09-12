@@ -632,7 +632,6 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     --------
     Customize the polar axes.
 
-    >>> from vtkmodules.vtkRenderingAnnotation import vtkPolarAxesActor
     >>> import pyvista as pv
 
     Load the teapot geometry using PyVista's built-in methods
@@ -658,7 +657,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
 
     Create an outline filter using VTK and add it to the plotter
 
-    >>> plotter.add_mesh(pv.outline_algorithm(normals), color="white")
+    >>> _ = plotter.add_mesh(pv.outline_algorithm(normals), color="white")
 
     Set up the camera.
 
@@ -675,7 +674,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
 
     Set up the polar axes using VTK and add it to the plotter
 
-    >>> polaxes = vtkPolarAxesActor()
+    >>> polaxes = pv.PolarAxesActor()
     >>> polaxes.SetBounds(normals.bounds)
     >>> polaxes.SetPole(0.5, 1.0, 3.0)
     >>> polaxes.SetMaximumRadius(3.0)
@@ -699,7 +698,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
 
     Add the polar axes to the plotter
 
-    >>> plotter.add_actor(polaxes)
+    >>> _ = plotter.add_actor(polaxes)
 
     Set background color
 
@@ -708,7 +707,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     Set the camera and light
 
     >>> plotter.camera = camera
-    >>> plotter.add_light(light)
+    >>> _ = plotter.add_light(light)
 
     Show the result
 
