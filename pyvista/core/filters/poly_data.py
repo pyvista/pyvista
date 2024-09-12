@@ -3893,9 +3893,34 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, "Generating Protein Ribbons")
         return _get_output(alg)
 
-    def generate_labelmap(self, label_value=1, reference_volume=None):  # numpydoc ignore: PR01,RT01
-        """Generate a 3D volume labelmap from polydata surface contours."""
-        if self.n_points < 2 | self.n_cells < 2:
+    def generate_labelmap(
+        self,
+        *,
+        label_value: int = 1,
+        reference_volume: pyvista.ImageData | None = None,
+        progress_bar: bool = False,
+    ):
+        """Generate a 3D volume labelmap from polydata surface contours.
+
+        Parameters
+        ----------
+        label_value : int
+            Foreground label value for the generated labelmap.
+
+        reference_volume : pyvista.ImageData
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Generated labelmap.
+
+        """
+        if self.n_points < 2 | self.n_cells < 2:  # type: ignore[attr-defined]
             raise ValueError("Invalid polydata.")
 
         if reference_volume is None:
@@ -3904,38 +3929,41 @@ class PolyDataFilters(DataSetFilters):
         if reference_volume.n_points == 0:
             raise ValueError("Empty input volume file ")
 
-        # Init output
+        # Init output structure and scalars
+        # The image stencil filters do not support orientation, so we do not
+        # set the direction matrix
         binary_labelmap = pyvista.ImageData()
-        binary_labelmap.copy_structure(reference_volume)
-        binary_labelmap['labelmap'] = np.zeros(
+        binary_labelmap.dimensions = reference_volume.dimensions
+        binary_labelmap.spacing = reference_volume.spacing
+        binary_labelmap.origin = reference_volume.origin
+        binary_labelmap['labelmap'] = np.zeros(  # Init as background voxels
             (binary_labelmap.n_points,)
-        )  # // background voxels are 0
-
-        # We need to apply inverse of geometry matrix to the input poly data so that we can perform
-        # the conversion in IJK space, because the filters do not support oriented image data.
-        transform = pyvista.Transform(reference_volume.GetDirectionMatrix())
-        poly_ijk = transform.apply(self, inverse=True)
+        )
+        # The image stencil filters do not support orientation, so we apply the
+        # inverse direction matrix to "remove" orientation from the polydata
+        poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
 
         # Make sure that we have a clean triangle-strip polydata
         poly_ijk = poly_ijk.compute_normals().triangulate().strip()
 
-        # // Convert polydata to stencil
+        # Convert polydata to stencil
         poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
         poly_to_stencil.SetInputData(poly_ijk)
         poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
         poly_to_stencil.SetOutputOrigin(*reference_volume.origin)
         poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
-        poly_to_stencil.Update()
+        _update_alg(poly_to_stencil, progress_bar=progress_bar)
 
-        # // Convert stencil to image
+        # Convert stencil to image
         stencil = _vtk.vtkImageStencil()
         stencil.SetInputData(binary_labelmap)
         stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
         stencil.ReverseStencilOn()
         stencil.SetBackgroundValue(label_value)
-        stencil.Update()
+        _update_alg(stencil, progress_bar=progress_bar)
+        output_volume = _get_output(stencil)
 
-        output_volume = stencil.GetOutput()
-        output_volume.SetDirectionMatrix(reference_volume.GetDirectionMatrix())
+        # Set the orientation of the output
+        output_volume.direction_matrix = reference_volume.direction_matrix
 
         return pyvista.wrap(output_volume)
