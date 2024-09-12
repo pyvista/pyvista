@@ -140,16 +140,12 @@ def _save_failed_test_image(source_path):
 
 
 def test_docs(test_case: _TestCaseTuple):
-    try:
-        fail_msg, fail_source = _test_both_images_exist(*test_case)
-        if fail_msg:
-            _save_failed_test_image(fail_source)
-            pytest.fail(fail_msg)
+    fail_msg, fail_source = _test_both_images_exist(*test_case)
+    if fail_msg:
+        _save_failed_test_image(fail_source)
+        pytest.fail(fail_msg)
 
-        warn_msg, fail_msg = _test_compare_images(*test_case)
-    except RuntimeError as e:
-        fail_msg = repr(e)
-
+    warn_msg, fail_msg = _test_compare_images(*test_case)
     if fail_msg:
         _save_failed_test_image(test_case.docs_image_path)
         _save_failed_test_image(test_case.cached_image_path)
@@ -193,9 +189,15 @@ def _test_compare_images(test_name, docs_image_path, cached_image_path):
     cached_image = pv.read(cached_image_path)
 
     # Check if test should fail or warn
-    error = pv.compare_images(docs_image, cached_image)
-    fail_msg = _check_compare_fail(test_name, error)
-    warn_msg = _check_compare_warn(test_name, error)
+    try:
+        error = pv.compare_images(docs_image, cached_image)
+    except RuntimeError as e:
+        fail_msg = repr(e)
+        warn_msg = None
+    else:
+        fail_msg = _check_compare_fail(test_name, error)
+        warn_msg = _check_compare_warn(test_name, error)
+
     if fail_msg:
         # Check if test case is flaky test
         if test_name in FLAKY_TEST_CASES:
