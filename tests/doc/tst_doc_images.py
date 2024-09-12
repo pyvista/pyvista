@@ -140,12 +140,12 @@ def _save_failed_test_image(source_path):
 
 
 def test_docs(test_case: _TestCaseTuple):
-    fail_msg, fail_source = _test_both_images_exist(*test_case)
-    if fail_msg:
-        _save_failed_test_image(fail_source)
-        pytest.fail(fail_msg)
-
     try:
+        fail_msg, fail_source = _test_both_images_exist(*test_case)
+        if fail_msg:
+            _save_failed_test_image(fail_source)
+            pytest.fail(fail_msg)
+
         warn_msg, fail_msg = _test_compare_images(*test_case)
     except RuntimeError as e:
         fail_msg = repr(e)
