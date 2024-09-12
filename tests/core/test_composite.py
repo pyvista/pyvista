@@ -3,6 +3,7 @@ from __future__ import annotations
 import pathlib
 import platform
 import weakref
+import itertools
 
 import numpy as np
 import pytest
@@ -848,6 +849,5 @@ def test_multi_block_zip():
 
     assert len(zipped_multi) == len(zipped_list)
     assert len(zipped_multi[0]) == len(zipped_list[0])
-    for i in range(2):
-        for j in range(2):
-            assert zipped_multi[i][j] is zipped_list[i][j] is None
+    for i, j in itertools.product(range(2), repeat=2):
+        assert zipped_multi[i][j] is zipped_list[i][j] is None
