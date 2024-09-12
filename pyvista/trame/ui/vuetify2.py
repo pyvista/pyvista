@@ -102,6 +102,7 @@ class Viewer(BaseViewer):
         -------
         VAppLayout (vue2)
             A layout this viewer can be embedded in.
+
         """
         return VAppLayout(*args, **kwargs)
 

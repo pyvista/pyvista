@@ -136,8 +136,8 @@ class LookupTable(_vtk.vtkLookupTable):
     scalar_range : tuple, optional
         The range of scalars which will be mapped to colors. Values outside of
         this range will be colored according to
-        :attr`LookupTable.below_range_color` and
-        :attr`LookupTable.above_range_color`.
+        :attr:`LookupTable.below_range_color` and
+        :attr:`LookupTable.above_range_color`.
 
     log_scale : bool, optional
         Use a log scale when mapping scalar values.
@@ -404,8 +404,8 @@ class LookupTable(_vtk.vtkLookupTable):
 
         This is the range of scalars which will be mapped to colors. Values
         outside of this range will be colored according to
-        :attr`LookupTable.below_range_color` and
-        :attr`LookupTable.above_range_color`.
+        :attr:`LookupTable.below_range_color` and
+        :attr:`LookupTable.above_range_color`.
 
         Examples
         --------

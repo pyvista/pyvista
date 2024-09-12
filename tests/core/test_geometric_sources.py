@@ -113,8 +113,7 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
 
 
 def test_translate_precision():
-    """
-    Test that specifying a 64bit float as an arg, will not
+    """Test that specifying a 64bit float as an arg, will not
     introduce precision error for 32bit meshes.
     """
     val = np.float64(29380 / 18)

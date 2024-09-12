@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import pathlib
 import platform
 import weakref
@@ -440,9 +441,8 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     keys_after = output.keys()
 
     assert (output is multi) == inplace
-    # https://github.com/pyvista/pyvista/pull/6599/files#r1739931261
-    for i, _ in enumerate(multi):
-        assert (multi[i] is output[i]) == inplace or (multi[i] is None)
+    for block_in, block_out in zip(multi, output):
+        assert (block_in is block_out) == inplace or (block_in is None)
     assert np.allclose(bounds_before + NUMBER, bounds_after)
     assert n_blocks_before == n_blocks_after
     assert keys_before == keys_after
@@ -838,3 +838,16 @@ def test_clear_all_cell_data(multiblock_all):
         else:
             assert block.point_data.keys() != []
             assert block.cell_data.keys() == []
+
+
+def test_multi_block_zip():
+    # Test `__iter__` and `__next__` inheritance
+    list_ = [None, None]
+    multi = MultiBlock(list_)
+    zipped_multi = list(zip(multi, multi))
+    zipped_list = list(zip(list_, list_))
+
+    assert len(zipped_multi) == len(zipped_list)
+    assert len(zipped_multi[0]) == len(zipped_list[0])
+    for i, j in itertools.product(range(2), repeat=2):
+        assert zipped_multi[i][j] is zipped_list[i][j] is None

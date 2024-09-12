@@ -46,7 +46,8 @@ def to_vtk_scientific(val):
 
 class PlotterChanged:
     """Helper class to check whether the plotter's rendered content has changed
-    since the last call."""
+    since the last call.
+    """
 
     def __init__(self, plotter):
         self._plotter = plotter

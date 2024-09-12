@@ -389,12 +389,11 @@ class MultiBlock(
     def __getitem__(
         self,
         index: int | str,
-    ) -> _TypeMultiBlockLeaf | None:  # noqa: D105  # numpydoc ignore=GL08
+    ) -> _TypeMultiBlockLeaf | None:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> MultiBlock:  # noqa: D105
-        ...  # pragma: no cover
+    def __getitem__(self, index: slice) -> MultiBlock: ...  # pragma: no cover
 
     def __getitem__(self, index):
         """Get a block by its index or name.
@@ -661,7 +660,7 @@ class MultiBlock(
         self,
         index: int | str,
         data: _TypeMultiBlockLeaf | None,
-    ):  # noqa: D105  # numpydoc ignore=GL08
+    ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
@@ -669,7 +668,7 @@ class MultiBlock(
         self,
         index: slice,
         data: Iterable[_TypeMultiBlockLeaf | None],
-    ):  # noqa: D105  # numpydoc ignore=GL08
+    ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     def __setitem__(
@@ -761,11 +760,6 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
-    def __iter__(self) -> MultiBlock:
-        """Return the iterator across all blocks."""
-        self._iter_n = 0
-        return self
-
     def __eq__(self, other):
         """Equality comparison."""
         if not isinstance(other, MultiBlock):
@@ -781,14 +775,6 @@ class MultiBlock(
             return False
 
         return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
-
-    def __next__(self) -> _TypeMultiBlockLeaf | None:
-        """Get the next block from the iterator."""
-        if self._iter_n < self.n_blocks:
-            result = self[self._iter_n]
-            self._iter_n += 1
-            return result
-        raise StopIteration
 
     def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: str | None = None) -> None:
         """Insert data before index.
@@ -1079,7 +1065,8 @@ class MultiBlock(
         # Deep copy will not copy the block name for None blocks (name is set to None instead)
         # Iterate through the blocks to fix this recursively
         def _set_name_for_none_blocks(this_object_, new_object_):
-            for i, dataset in enumerate(pyvista.wrap(new_object_)):
+            new_object_ = pyvista.wrap(new_object_)
+            for i, dataset in enumerate(new_object_):
                 if dataset is None:
                     this_object_.set_block_name(i, new_object_.get_block_name(i))
                 elif isinstance(dataset, MultiBlock):

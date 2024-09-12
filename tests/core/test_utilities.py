@@ -334,6 +334,19 @@ def test_voxelize_enclosed_bounds(function, ant):
     assert vox.bounds.z_max >= ant.bounds.z_max
 
 
+@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
+def test_voxelize_fit_bounds(function, uniform):
+    vox = function(uniform, density=0.9, fit_bounds=True)
+
+    assert np.isclose(vox.bounds.x_min, uniform.bounds.x_min)
+    assert np.isclose(vox.bounds.y_min, uniform.bounds.y_min)
+    assert np.isclose(vox.bounds.z_min, uniform.bounds.z_min)
+
+    assert np.isclose(vox.bounds.x_max, uniform.bounds.x_max)
+    assert np.isclose(vox.bounds.y_max, uniform.bounds.y_max)
+    assert np.isclose(vox.bounds.z_max, uniform.bounds.z_max)
+
+
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
@@ -779,17 +792,6 @@ def test_spherical_to_cartesian():
     r, phi, theta = points.T
     x, y, z = pv.spherical_to_cartesian(r, phi, theta)
     assert np.allclose(pv.cartesian_to_spherical(x, y, z), points.T)
-
-
-def test_set_pickle_format():
-    pv.set_pickle_format('legacy')
-    assert pv.PICKLE_FORMAT == 'legacy'
-
-    pv.set_pickle_format('xml')
-    assert pv.PICKLE_FORMAT == 'xml'
-
-    with pytest.raises(ValueError):  # noqa: PT011
-        pv.set_pickle_format('invalid_format')
 
 
 def test_linkcode_resolve():

@@ -1,5 +1,4 @@
-"""
-This test module tests any functionality that requires plotting.
+"""This test module tests any functionality that requires plotting.
 
 See the image regression notes in doc/extras/developer_notes.rst
 
@@ -1555,7 +1554,6 @@ def test_vector_array(multicomp_poly):
 
 def test_vector_plotting_doesnt_modify_data(multicomp_poly):
     """Test that the operations in plotting do not modify the data in the mesh."""
-
     copy_vector_values_points = multicomp_poly["vector_values_points"].copy()
     copy_vector_values_cells = multicomp_poly["vector_values_cells"].copy()
 
@@ -3389,7 +3387,6 @@ def test_tight_wide():
 @pytest.mark.parametrize('negative', [False, True])
 def test_tight_direction(view, negative, colorful_tetrahedron):
     """Test camera.tight() with various views like xy."""
-
     pl = pv.Plotter()
     pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
     pl.camera.tight(view=view, negative=negative)
@@ -3583,7 +3580,6 @@ def test_wireframe_color(sphere):
 @pytest.mark.parametrize('negative', [False, True])
 def test_view_xyz(direction, negative, colorful_tetrahedron):
     """Test various methods like view_xy."""
-
     pl = pv.Plotter()
     pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
     getattr(pl, f"view_{direction}")(negative=negative)

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import multiprocessing
-import pickle
 import re
 from typing import TYPE_CHECKING
 
@@ -520,8 +518,7 @@ def test_bitarray_field(grid):
 
 
 def test_html_repr(grid):
-    """
-    This just tests to make sure no errors are thrown on the HTML
+    """This just tests to make sure no errors are thrown on the HTML
     representation method for DataSet.
     """
     assert grid._repr_html_() is not None
@@ -537,8 +534,7 @@ def test_html_repr_string_scalar(grid):
 @pytest.mark.parametrize('html', [True, False])
 @pytest.mark.parametrize('display', [True, False])
 def test_print_repr(grid, display, html):
-    """
-    This just tests to make sure no errors are thrown on the text friendly
+    """This just tests to make sure no errors are thrown on the text friendly
     representation method for DataSet.
     """
     result = grid.head(display=display, html=html)
@@ -589,9 +585,7 @@ def test_arrows():
 
 
 def active_component_consistency_check(grid, component_type, field_association="point"):
-    """
-    Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset
-    """
+    """Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset"""
     component_type = component_type.lower()
     vtk_component_type = component_type.capitalize()
 
@@ -1137,6 +1131,17 @@ def test_copy_structure(grid):
     assert len(copy.point_data) == 0
 
 
+def test_copy_structure_self(datasets):
+    for dataset in datasets:
+        copied = dataset.copy()
+        assert copied is not dataset
+
+        # Copy structure from itself
+        copied.copy_structure(copied)
+        assert copied.n_points == dataset.n_points
+        assert copied.n_cells == dataset.n_cells
+
+
 def test_copy_attributes(grid):
     classname = grid.__class__.__name__
     copy = eval(f'pv.{classname}')()
@@ -1174,58 +1179,6 @@ def test_point_is_inside_cell():
     # multi-dimensional
     in_cell = grid.point_is_inside_cell(0, [[0.5, 0.5, 0.5], [-0.5, -0.5, -0.5]])
     assert np.array_equal(in_cell, np.array([True, False]))
-
-
-@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
-def test_serialize_deserialize(datasets, pickle_format):
-    pv.set_pickle_format(pickle_format)
-    for dataset in datasets:
-        dataset_2 = pickle.loads(pickle.dumps(dataset))
-
-        # check python attributes are the same
-        for attr in dataset.__dict__:
-            assert getattr(dataset_2, attr) == getattr(dataset, attr)
-
-        # check data is the same
-        for attr in ('n_cells', 'n_points', 'n_arrays'):
-            if hasattr(dataset, attr):
-                assert getattr(dataset_2, attr) == getattr(dataset, attr)
-
-        for attr in ('cells', 'points'):
-            if hasattr(dataset, attr):
-                arr_have = getattr(dataset_2, attr)
-                arr_expected = getattr(dataset, attr)
-                assert arr_have == pytest.approx(arr_expected)
-
-        for name in dataset.point_data:
-            arr_have = dataset_2.point_data[name]
-            arr_expected = dataset.point_data[name]
-            assert arr_have == pytest.approx(arr_expected)
-
-        for name in dataset.cell_data:
-            arr_have = dataset_2.cell_data[name]
-            arr_expected = dataset.cell_data[name]
-            assert arr_have == pytest.approx(arr_expected)
-
-        for name in dataset.field_data:
-            arr_have = dataset_2.field_data[name]
-            arr_expected = dataset.field_data[name]
-            assert arr_have == pytest.approx(arr_expected)
-
-
-def n_points(dataset):
-    # used in multiprocessing test
-    return dataset.n_points
-
-
-@pytest.mark.parametrize('pickle_format', ['xml', 'legacy'])
-def test_multiprocessing(datasets, pickle_format):
-    # exercise pickling via multiprocessing
-    pv.set_pickle_format(pickle_format)
-    with multiprocessing.Pool(2) as p:
-        res = p.map(n_points, datasets)
-    for r, dataset in zip(res, datasets):
-        assert r == dataset.n_points
 
 
 def test_rotations_should_match_by_a_360_degree_difference():

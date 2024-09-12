@@ -375,6 +375,7 @@ def rotation(
 
     >>> np.allclose(trans_inv @ trans, np.eye(4))
     True
+
     """
     valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
     rotate = np.eye(4)

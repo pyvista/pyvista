@@ -96,8 +96,7 @@ def map_loc_to_pos(loc, size, border=0.05):
 
 
 def make_legend_face(face):
-    """
-    Create the legend face based on the given face.
+    """Create the legend face based on the given face.
 
     Parameters
     ----------
@@ -115,6 +114,7 @@ def make_legend_face(face):
     ------
     ValueError
         If the provided face value is invalid.
+
     """
     if face is None or face == "none":
         legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
@@ -486,6 +486,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         -------
         float
             Length of the diagonal of the bounding box.
+
         """
         return pyvista.Box(self.bounds).length
 
@@ -836,6 +837,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         actor_properties : vtk.Properties
             Actor properties.
+
         """
         # Remove actor by that name if present
         rv = None
@@ -2553,6 +2555,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.parallel_projection = False
         >>> pl.parallel_projection
         False
+
         """
         return self.camera.parallel_projection
 
@@ -2570,6 +2573,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> pl.parallel_scale = 2
+
         """
         return self.camera.parallel_scale
 

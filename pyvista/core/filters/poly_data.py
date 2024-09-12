@@ -403,6 +403,7 @@ class PolyDataFilters(DataSetFilters):
         >>> sp2 = sp0.translate((-1, 0, 0))
         >>> appended = sp0.append_polydata(sp1, sp2)
         >>> appended.plot()
+
         """
         if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
             raise TypeError("All meshes need to be of PolyData type")

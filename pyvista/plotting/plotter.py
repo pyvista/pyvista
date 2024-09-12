@@ -383,6 +383,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Notes
         -----
         Subclass must set ``ren_win`` on initialization.
+
         """
         if not hasattr(self, 'ren_win'):
             return None
@@ -581,6 +582,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> pl.import_obj(filename)
         >>> pl.show(cpos="xy")
+
         """
         from vtkmodules.vtkIOImport import vtkOBJImporter
 
@@ -2593,7 +2595,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Show lines as thick tubes rather than flat lines.  Control
             the width with ``line_width``.
 
-        smooth_shading : bool, default: :attr`pyvista.plotting.themes.Theme.smooth_shading`
+        smooth_shading : bool, default: :attr:`pyvista.plotting.themes.Theme.smooth_shading`
             Enable smooth shading when ``True`` using the Phong shading
             algorithm.  When ``False``, uses flat shading.  Automatically
             enabled when ``pbr=True``.  See :ref:`shading_example`.
@@ -4804,6 +4806,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when True.
+
         """
         # Deprecated on 0.43.0, estimated removal on v0.46.0
         warnings.warn(
@@ -4880,6 +4883,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         render : bool, default: True
             Force a render when True.
+
         """
         # Deprecated on 0.43.0, estimated removal on v0.46.0
         warnings.warn(
@@ -7180,6 +7184,7 @@ class Plotter(BasePlotter):
         -------
         list[pyvista.DataSet | pyvista.MultiBlock]
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
+
         """
         return [actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')]
 

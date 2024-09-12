@@ -309,6 +309,7 @@ class Prop3D(_vtk.vtkProp3D):
         >>> actor = pl.add_mesh(pv.Sphere(center=(0.5, 0.5, 1)))
         >>> actor.center  # doctest:+SKIP
         (0.5, 0.5, 1)
+
         """
         return self.GetCenter()
 
@@ -380,6 +381,7 @@ class Prop3D(_vtk.vtkProp3D):
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> actor.length
         1.7272069317100354
+
         """
         return self.GetLength()
 

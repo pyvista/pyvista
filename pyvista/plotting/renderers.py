@@ -45,6 +45,7 @@ class Renderers:
 
     border_width : float, optional
         The width of the border around each subplot.
+
     """
 
     def __init__(
@@ -238,6 +239,7 @@ class Renderers:
         -------
         int
             Index of the render window.
+
         """
         group_idxs = np.arange(self.groups.shape[0])
         index = (
@@ -299,6 +301,7 @@ class Renderers:
         -------
         int
             Active index.
+
         """
         return self._active_index
 
@@ -314,6 +317,7 @@ class Renderers:
         -------
         numpy.ndarray or numpy.int64
             2D location on the plotting grid.
+
         """
         if not isinstance(index, (int, np.integer)):
             raise TypeError('"index" must be a scalar integer.')
@@ -332,6 +336,7 @@ class Renderers:
         -------
         Renderer
             Active renderer.
+
         """
         return self._renderers[self._active_index]
 
@@ -343,6 +348,7 @@ class Renderers:
         -------
         tuple[int] | tuple[int, int]
             Shape of the renderers.
+
         """
         return self._shape
 
@@ -369,8 +375,7 @@ class Renderers:
         self._active_index = self.loc_to_index((index_row, index_column))
 
     def set_chart_interaction(self, interactive, toggle=False):
-        """
-        Set or toggle interaction with charts for the active renderer.
+        """Set or toggle interaction with charts for the active renderer.
 
         Interaction with other charts in other renderers is disabled.
         Interaction with other charts in the active renderer is only disabled
@@ -520,6 +525,7 @@ class Renderers:
         -------
         pyvista.plotting.renderer.Renderer
             Shadow renderer.
+
         """
         return self._shadow_renderer
 
