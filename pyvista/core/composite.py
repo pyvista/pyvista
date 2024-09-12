@@ -1078,7 +1078,8 @@ class MultiBlock(
         # Deep copy will not copy the block name for None blocks (name is set to None instead)
         # Iterate through the blocks to fix this recursively
         def _set_name_for_none_blocks(this_object_, new_object_):
-            for i, dataset in enumerate(pyvista.wrap(new_object_)):
+            new_object_ = pyvista.wrap(new_object_)
+            for i, dataset in enumerate(new_object_):
                 if dataset is None:
                     this_object_.set_block_name(i, new_object_.get_block_name(i))
                 elif isinstance(dataset, MultiBlock):
