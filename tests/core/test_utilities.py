@@ -1783,8 +1783,8 @@ def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_transl
 
     # Test composition from decomposed elements matches input
     T, R, S, K = transform.decompose(as_matrix=True)
-    concatenated = T @ R @ S @ K
-    assert np.allclose(concatenated, transform.matrix)
+    recomposed = pv.Transform([K, S, R, T])
+    assert np.allclose(recomposed.matrix, transform.matrix)
 
 
 @pytest.mark.parametrize('allow_negative_scale', [True, False])

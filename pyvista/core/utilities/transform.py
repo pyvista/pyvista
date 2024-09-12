@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Sequence
 from typing import overload
 
 import numpy as np
@@ -65,6 +66,10 @@ class Transform(_vtk.vtkTransform):
 
         By default, this value is ``None``, which means that the scale, rotation, etc.
         transformations are performed about the origin ``(0, 0, 0)``.
+
+    multiply_mode : 'pre' | 'post', optional
+        Multiplication mode to use when concatenating. Set this to ``'pre'`` for
+        pre-multiplication or ``'post'`` for post-multiplication.
 
     See Also
     --------
@@ -248,14 +253,21 @@ class Transform(_vtk.vtkTransform):
     """
 
     def __init__(
-        self, trans: TransformLike | None = None, *, point: VectorLike[float] | None = None
+        self,
+        trans: TransformLike | Sequence[TransformLike] | None = None,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] = 'post',
     ):
         super().__init__()
-        self.multiply_mode = 'post'
+        self.multiply_mode = multiply_mode
         self.point = point  # type: ignore[assignment]
         self.check_finite = True
         if trans is not None:
-            self.matrix = trans  # type: ignore[assignment]
+            if isinstance(trans, Sequence):
+                [self.concatenate(t) for t in trans]
+            else:
+                self.matrix = trans  # type: ignore[assignment]
 
     def __add__(self, other: VectorLike[float] | TransformLike) -> Transform:
         """:meth:`concatenate` this transform using post-multiply semantics.
@@ -1655,7 +1667,7 @@ class Transform(_vtk.vtkTransform):
         Examples
         --------
         Create a transform with scaling ``S``, rotation ``R``, translation ``T`` and
-        shear ``K``. Note how the transformations are applied in the order K-S-R-T.
+        shear ``K``. Note how the transformations are applied in the order ``K-S-R-T``.
 
         >>> import numpy as np
         >>> import pyvista as pv
@@ -1696,6 +1708,23 @@ class Transform(_vtk.vtkTransform):
 
         >>> T  # translation
         array([4., 5., 6.])
+
+        Decompose as 4x4 matrices then recompose the original transformation. Use
+        pre-multiplication since the returned order is ``T-R-S-K`` but we want to
+        compose them in the order ``K-S-R-T``.
+
+        >>> decomposed = transform.decompose(as_matrix=True)
+        >>> recomposed = pv.Transform(decomposed, multiply_mode='pre')
+
+        Show the recomposed transformation.
+
+        >>> recomposed
+        Transform (0x146f87880)
+          Num Transformations: 4
+          Matrix:  [[ 0.  , -2.  ,  0.  ,  4.  ],
+                    [ 1.  ,  0.25,  0.  ,  5.  ],
+                    [ 0.  ,  0.  ,  3.  ,  6.  ],
+                    [ 0.  ,  0.  ,  0.  ,  1.  ]]
 
         """
         return decompose(
