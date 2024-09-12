@@ -1719,7 +1719,7 @@ class Transform(_vtk.vtkTransform):
         Show the recomposed transformation.
 
         >>> recomposed
-        Transform (0x146f87880)
+        Transform (...)
           Num Transformations: 4
           Matrix:  [[ 0.  , -2.  ,  0.  ,  4.  ],
                     [ 1.  ,  0.25,  0.  ,  5.  ],
