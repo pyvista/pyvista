@@ -1770,7 +1770,6 @@ def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_transl
     assert isinstance(R, np.ndarray)
     assert isinstance(S, np.ndarray)
     assert isinstance(K, np.ndarray)
-    # TODO: test dtypes
 
     expected_translation = VECTOR if do_translate else np.zeros((3,))
     expected_rotation = ROTATION if do_rotate else np.eye(3)
