@@ -145,7 +145,11 @@ def test_docs(test_case: _TestCaseTuple):
         _save_failed_test_image(fail_source)
         pytest.fail(fail_msg)
 
-    warn_msg, fail_msg = _test_compare_images(*test_case)
+    try:
+        warn_msg, fail_msg = _test_compare_images(*test_case)
+    except RuntimeError as e:
+        fail_msg = repr(e)
+
     if fail_msg:
         _save_failed_test_image(test_case.docs_image_path)
         _save_failed_test_image(test_case.cached_image_path)
