@@ -403,31 +403,31 @@ def decompose(
 
     Decompose a transformation matrix ``M`` into
 
-        - translation ``T``
-        - rotation ``R``
-        - scaling ``S``
-        - shearing ``K``
+    - translation ``T``
+    - rotation ``R``
+    - scaling ``S``
+    - shearing ``K``
 
-        such that, when represented as 4x4 matrices, ``M = TRSK``.
+    such that, when represented as 4x4 matrices, ``M = TRSK``.
 
-        Reflections are represented implicitly in the decomposition:
+    Reflections are represented implicitly in the decomposition:
 
-        - When ``allow_negative_scale`` is ``False`` (default), reflections are included
-          with the rotation ``R``. The rotation is left-handed (negative determinant) if
-          there is a reflection in the decomposition, and right-handed (positive
-          determinant) if there is no reflection.
+    - When ``allow_negative_scale`` is ``False`` (default), reflections are included
+      with the rotation ``R``. The rotation is left-handed (negative determinant) if
+      there is a reflection in the decomposition, and right-handed (positive
+      determinant) if there is no reflection.
 
-        - When ``allow_negative_scale`` is ``True``, reflections are included with the
-          scaling ``S``. The first scaling factor is negative if there is a reflection
-          in the decomposition, and positive if there is no reflection. The y and z
-          scaling factors are always positive.
+    - When ``allow_negative_scale`` is ``True``, reflections are included with the
+      scaling ``S``. The first scaling factor is negative if there is a reflection
+      in the decomposition, and positive if there is no reflection. The y and z
+      scaling factors are always positive.
 
-        By default, compact representations of the transformations are returned (e.g.
-        as vectors or 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
+    By default, compact representations of the transformations are returned (e.g.
+    as vectors or 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
 
-        .. note::
+    .. note::
 
-            The transformation is not unique.
+        The transformation is not unique.
 
     Parameters
     ----------
