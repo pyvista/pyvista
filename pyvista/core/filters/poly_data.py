@@ -4171,7 +4171,7 @@ class PolyDataFilters(DataSetFilters):
                             mesh_length_fraction, must_have_dtype=float, must_be_in_range=[0.0, 1.0]
                         )
                     )
-                    spacing = self.length * mesh_length_fraction  # type: ignore[attr-defined]
+                    spacing = self.length * mesh_length_fraction
                 else:
                     # Estimate spacing from cell length percentile
                     cell_length_percentile = (
