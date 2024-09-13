@@ -29,7 +29,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
 
 
