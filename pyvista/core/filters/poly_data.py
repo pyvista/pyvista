@@ -4020,8 +4020,8 @@ class PolyDataFilters(DataSetFilters):
                     )
                     rounding_func = np.ceil if spacing_bound == 'upper' else np.floor
                 else:
-                    rounding_func = np.round
-                dimensions = rounding_func(sizes / reference_volume.spacing).astype(int)  # type: ignore[operator]
+                    rounding_func = np.round  # type: ignore[assignment]
+                dimensions = rounding_func(sizes / reference_volume.spacing).astype(int)
 
             reference_volume.dimensions = dimensions  # type: ignore[assignment]
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
