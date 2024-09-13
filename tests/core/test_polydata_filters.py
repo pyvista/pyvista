@@ -158,14 +158,27 @@ def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
         assert mask.spacing[2] > spacing[2]
 
 
-@pytest.mark.parametrize('foreground', [1, 2])
+@pytest.mark.parametrize('foreground', [1, 2.1])
 @pytest.mark.parametrize('background', [-1, 0])
-def test_voxelize_binary_mask_foreground(sphere, foreground, background):
+def test_voxelize_binary_mask_foreground_background(sphere, foreground, background):
     mask = sphere.voxelize_binary_mask(foreground_value=foreground, background_value=background)
     unique, counts = np.unique(mask['mask'], return_counts=True)
     assert np.array_equal(unique, [background, foreground])
     # Test we have more foreground than background (not always true, but is true for a sphere mesh)
     assert counts[1] > counts[0]
+
+    # Test dtype
+    if (
+        isinstance(foreground, int)
+        and isinstance(background, int)
+        and foreground >= 0
+        and background >= 0
+    ):
+        assert mask['mask'].dtype == np.uint8
+    elif isinstance(foreground, int) and isinstance(background, int):
+        assert mask['mask'].dtype == int
+    else:
+        assert mask['mask'].dtype == float
 
 
 def test_voxelize_binary_mask_raises(sphere):

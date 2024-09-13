@@ -3915,7 +3915,7 @@ class PolyDataFilters(DataSetFilters):
         """Voxelize :class:`pyvista.PolyData` as a binary :class:`pyvista.ImageData` mask.
 
         Generate a voxelized representation of a surface. The voxelization can be
-        controlled in multiple ways:
+        controlled in several ways:
 
         #. Specify a ``reference_volume``. The generated mask will have the same
            structure as the reference. This is useful when converting back-and-forth
@@ -3930,17 +3930,15 @@ class PolyDataFilters(DataSetFilters):
            implicitly from the dimensions such that they are compatible with the bounds
            of the input surface.
 
-        #. Do not specify the output geometry. If no value for ``reference_volume``
-           ``spacing`` or ``dimensions`` is provided, the spacing is automatically
-           computed from the input surface. By default, the spacing is estimated from
-           the surface's cells using the 10th ``cell_length_percentile``. Optionally,
-           spacing may be computed from the surface mesh's length instead with
-           ``mesh_length_fraction``.
+        #. Specify ``cell_length_percentile``. The spacing is estimated from the
+           surface's cells using the specified percentile ``cell_length_percentile``.
 
-           .. note::
-                ``cell_length_percentile`` is only available for VTK 9.2 or greater. For
-                earlier versions, the default spacing is set using mesh length with
-                ``mesh_length_fraction=1/100`.
+        #. Specify ``mesh_length_fraction``. The spacing is computed as a fraction of
+           the mesh's diagonal length.
+
+        If no inputs are provided, the 10th ``cell_length_percentile`` is used by
+        default on systems with VTK >= 9.2. For older versions of VTK, the default
+        spacing is ``mesh_length_fraction=1/100``.
 
         .. note::
             For best results, ensure the input surface is a closed surface.
@@ -3980,10 +3978,6 @@ class PolyDataFilters(DataSetFilters):
 
             Has no effect if ``reference_volume`` is specified.
 
-            .. note::
-                This option is only available for VTK 9.2 or greater. A ``spacing``
-                value of ``1/100`` of the mesh length is used otherwise.
-
         rounding_func : Callable[VectorLike[float], VectorLike[int]], default: np.round
             Control how the dimensions are rounded to integers based on the provided or
             calculated ``spacing``. Should accept a ``VectorLike[float]`` containing the
@@ -4009,8 +4003,7 @@ class PolyDataFilters(DataSetFilters):
             Has no effect if ``dimension`` or ``reference_volume`` are specified.
 
             .. note::
-                This option is only available for VTK 9.2 or greater. A ``spacing``
-                value of ``1/100`` of the mesh length is used otherwise.
+                This option is only available for VTK 9.2 or greater.
 
         mesh_length_fraction : float, optional
             Fraction of the surface mesh's length to use for computing the default
@@ -4023,7 +4016,9 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.ImageData
-            Generated binary mask with point scalars representing voxel.
+            Generated binary mask with a ``'mask'``  point data array. The data array
+            has dtype :class:`numpy.uint8` if the foreground and background values are
+            unsigned and less than 256.
 
         See Also
         --------
@@ -4054,7 +4049,7 @@ class PolyDataFilters(DataSetFilters):
           N Arrays:     1
 
         >>> np.unique(mask.point_data['mask'])
-        pyvista_ndarray([0., 1.])
+        pyvista_ndarray([0, 1], dtype=uint8)
 
         To visualize it as voxel cells, use :meth:`pyvista.ImageDataFilters.points_to_cells`,
         then use :meth:`pyvista.DataSetFilters.threshold` to extract the foreground.
@@ -4119,11 +4114,6 @@ class PolyDataFilters(DataSetFilters):
         Now create the mask from the polydata using the volume as a reference.
 
         >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
-        >>> plot_mask_and_polydata(mask, poly)
-
-        Compare this to generating the mask without the reference.
-
-        >>> mask = poly.voxelize_binary_mask()
         >>> plot_mask_and_polydata(mask, poly)
 
         """
@@ -4206,18 +4196,31 @@ class PolyDataFilters(DataSetFilters):
             reference_volume.spacing = final_spacing
             reference_volume.origin = np.array(self.bounds[::2]) + final_spacing / 2  # type: ignore[attr-defined]
 
-        # Init output structure and scalars
-        # The image stencil filters do not support orientation, so we do not
-        # set the direction matrix
+        # Init output structure. The image stencil filters do not support
+        # orientation, so we do not set the direction matrix
         binary_mask = pyvista.ImageData()
         binary_mask.dimensions = reference_volume.dimensions
         binary_mask.spacing = reference_volume.spacing
         binary_mask.origin = reference_volume.origin
+
+        # Init output scalars. Use uint8 dtype if possible.
         scalars_shape = (binary_mask.n_points,)
+        if all(
+            isinstance(val, int) and val < 256 and val >= 0
+            for val in (background_value, foreground_value)
+        ):
+            scalars_dtype = np.uint8
+        elif all(
+            isinstance(val, (float, int)) and round(val) == val
+            for val in (background_value, foreground_value)
+        ):
+            scalars_dtype = int
+        else:
+            scalars_dtype = float
         scalars = (  # Init with background value
-            np.zeros(scalars_shape, dtype=int)
+            np.zeros(scalars_shape, dtype=scalars_dtype)
             if background_value == 0
-            else np.ones(scalars_shape, dtype=int) * background_value
+            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
         )
         binary_mask['mask'] = scalars  # type: ignore[assignment]
 
