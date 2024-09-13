@@ -3970,7 +3970,7 @@ class PolyDataFilters(DataSetFilters):
             Approximate spacing to use for the generated mask image.
 
             If unset, spacing is computed from the input's mesh length or approximate
-            cell lengths. The 10th `cell_length_percentile`` is used by default. Set
+            cell lengths. The 10th ``cell_length_percentile`` is used by default. Set
             ``mesh_length_fraction`` instead to use mesh length.
 
             If set, this value is used to determine the image's dimensions. The spacing
@@ -4027,7 +4027,15 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
-        pyvista.ImageData: See to build custom ``reference_volume``.
+        pyvista.voxelize
+            Similar function that returns a :class:`pyvista.UnstructuredGrid` of
+            :attr:`pyvista.CellTypes.VOXEL` cells.
+
+        pyvista.voxelize_volume
+            Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
+
+        pyvista.ImageData
+            Class used to build custom ``reference_volume``.
 
         Examples
         --------

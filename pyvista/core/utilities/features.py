@@ -83,6 +83,18 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     Prior to version 0.39.0, this method improperly handled the order of
     structured coordinates.
 
+    See Also
+    --------
+    pyvista.voxelize
+        Similar function that returns a :class:`pyvista.UnstructuredGrid` of
+        :attr:`pyvista.CellTypes.VOXEL` cells.
+
+    pyvista.voxelize_volume
+        Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
+
+    pyvista.PolyDataFilters.voxelize_binary_mask
+        Similar function that returns a :class:`pyvista.ImageData` with point data.
+
     Examples
     --------
     Create an equal density voxelized mesh.
@@ -246,6 +258,12 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
     See Also
     --------
     pyvista.voxelize
+        Similar function that returns a :class:`pyvista.UnstructuredGrid` of
+        :attr:`pyvista.CellTypes.VOXEL` cells.
+
+    pyvista.PolyDataFilters.voxelize_binary_mask
+        Similar function that returns a :class:`pyvista.ImageData` with point data.
+
     pyvista.DataSetFilters.select_enclosed_points
 
     Examples
