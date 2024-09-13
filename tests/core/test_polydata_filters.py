@@ -89,7 +89,9 @@ def frog_tissues_contour(frog_tissues_image):
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
-    mask = frog_tissues_contour.voxelize_binary_mask(reference_volume=frog_tissues_image, progress_bar=True)
+    mask = frog_tissues_contour.voxelize_binary_mask(
+        reference_volume=frog_tissues_image, progress_bar=True
+    )
 
     expected_voxels = frog_tissues_image.points_to_cells().threshold(0.5)
     actual_voxels = mask.points_to_cells().threshold(0.5)
@@ -137,6 +139,7 @@ def test_voxelize_binary_mask_auto_spacing(ant):
     # Check spacing matches mesh length. Use atol since spacing is approximate.
     assert np.allclose(mask_fraction_500.spacing, ant.length / 500, atol=1e-3)
 
+
 def test_voxelize_binary_mask_cell_length_sample_size(ant):
     mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=10)
     mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=10)
@@ -145,6 +148,7 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant):
     mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
     mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
     assert mask_samples_1.spacing == mask_samples_2.spacing
+
 
 @pytest.mark.parametrize(
     'rounding_func',

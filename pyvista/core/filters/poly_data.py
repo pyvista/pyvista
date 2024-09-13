@@ -3909,7 +3909,7 @@ class PolyDataFilters(DataSetFilters):
         spacing: float | VectorLike[float] | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] = np.round,
         cell_length_percentile: float | None = None,
-        cell_length_sample_size: int =100_000,
+        cell_length_sample_size: int = 100_000,
         mesh_length_fraction: float | None = None,
         progress_bar: bool = False,
     ):
@@ -4166,7 +4166,12 @@ class PolyDataFilters(DataSetFilters):
                     cell_length_percentile = (
                         0.1 if cell_length_percentile is None else cell_length_percentile
                     )
-                    spacing = _length_distribution_percentile(poly_ijk, cell_length_percentile, cell_length_sample_size, progress_bar=progress_bar)
+                    spacing = _length_distribution_percentile(
+                        poly_ijk,
+                        cell_length_percentile,
+                        cell_length_sample_size,
+                        progress_bar=progress_bar,
+                    )
             else:
                 # Spacing is specified directly. Make sure other params are not set.
                 if cell_length_percentile is not None:
@@ -4210,6 +4215,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Init output scalars. Use uint8 dtype if possible.
         scalars_shape = (binary_mask.n_points,)
+        scalars_dtype: type[np.uint8 | float | int]
         if all(
             isinstance(val, int) and val < 256 and val >= 0
             for val in (background_value, foreground_value)
@@ -4225,9 +4231,9 @@ class PolyDataFilters(DataSetFilters):
         scalars = (  # Init with background value
             np.zeros(scalars_shape, dtype=scalars_dtype)
             if background_value == 0
-            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
+            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value  # type: ignore[operator]
         )
-        binary_mask['mask'] = scalars  # type: ignore[assignment]
+        binary_mask['mask'] = scalars
 
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
@@ -4256,7 +4262,7 @@ class PolyDataFilters(DataSetFilters):
         return pyvista.wrap(output_volume)
 
 
-def _length_distribution_percentile(poly, percentile,cell_length_sample_size, progress_bar):
+def _length_distribution_percentile(poly, percentile, cell_length_sample_size, progress_bar):
     percentile = _validation.validate_number(
         percentile, must_be_in_range=[0.0, 1.0], name='percentile'
     )
