@@ -77,18 +77,26 @@ def test_protein_ribbon():
     assert ribbon.n_cells
 
 
-@pytest.mark.parametrize('use_reference', [True, False])
-def test_generate_labelmap(use_reference):
-    frog_tissue = examples.load_frog_tissues()
-    reference_volume = frog_tissue if use_reference else None
-    poly = frog_tissue.contour_labeled()
-    labelmap = poly.generate_labelmap(reference_volume=reference_volume)
+@pytest.fixture
+def frog_tissues_image():
+    return examples.load_frog_tissues()
 
-    if use_reference:
-        expected_voxels = frog_tissue.points_to_cells().threshold(0.5)
-        actual_voxels = labelmap.points_to_cells().threshold(0.5)
 
-        assert expected_voxels.bounds == actual_voxels.bounds
-        assert expected_voxels.n_cells == actual_voxels.n_cells
-    else:
-        assert np.allclose(labelmap.points_to_cells().bounds, poly.bounds)
+@pytest.fixture
+def frog_tissues_contour(frog_tissues_image):
+    return frog_tissues_image.contour_labeled()
+
+
+def test_generate_labelmap(frog_tissues_image, frog_tissues_contour):
+    labelmap = frog_tissues_contour.generate_labelmap(reference_volume=frog_tissues_image)
+
+    expected_voxels = frog_tissues_image.points_to_cells().threshold(0.5)
+    actual_voxels = labelmap.points_to_cells().threshold(0.5)
+
+    assert expected_voxels.bounds == actual_voxels.bounds
+    assert expected_voxels.n_cells == actual_voxels.n_cells
+
+
+def test_generate_labelmap_no_reference(frog_tissues_image, frog_tissues_contour):
+    labelmap = frog_tissues_contour.generate_labelmap()
+    assert np.allclose(labelmap.points_to_cells().bounds, frog_tissues_contour.bounds)
