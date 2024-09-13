@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Literal
+from typing import Callable
 from typing import Sequence
 import warnings
 
@@ -3906,7 +3906,7 @@ class PolyDataFilters(DataSetFilters):
         reference_volume: pyvista.ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
-        spacing_bound: Literal['upper', 'lower'] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] = np.round,
         cell_length_percentile: float | None = None,
         progress_bar: bool = False,
     ):
@@ -3943,13 +3943,14 @@ class PolyDataFilters(DataSetFilters):
 
             Has no effect if ``reference_volume`` is specified.
 
-        spacing_bound : 'upper' | 'lower' | None, default: None
-            Control whether to set an ``'upper'``, ``'lower'``, or no bound (``None``)
-            on the ``spacing``. If ``'upper'``, the actual spacing will be rounded
-            down such that it is less than the input spacing. If ``'lower'``, the
-            actual spacing will be rounded up such that it greater than the input
-            spacing. If ``None``, the actual spacing is rounded to be as close to the
-            input spacing as possible. Has no effect if ``reference_volume`` is specified.
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], default: np.round
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a ``VectorLike[float]`` containing the dimension
+            values along the three directions ant return an ``VectorLike[int]`` version of it.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Has no effect if ``reference_volume`` or ``dimensions`` are specified.
 
         cell_length_percentile : float, optional
             Cell length percentile to use for computing the default ``spacing``. It
@@ -4118,14 +4119,7 @@ class PolyDataFilters(DataSetFilters):
             sizes = np.array((x_size, y_size, z_size))
 
             if dimensions is None:
-                if spacing_bound is not None:
-                    _validation.check_contains(
-                        item=spacing_bound, container=['upper', 'lower'], name='spacing bound'
-                    )
-                    rounding_func = np.ceil if spacing_bound == 'upper' else np.floor
-                else:
-                    rounding_func = np.round  # type: ignore[assignment]
-                dimensions = rounding_func(sizes / reference_volume.spacing).astype(int)
+                dimensions = np.array(rounding_func(sizes / reference_volume.spacing), dtype=int)
 
             reference_volume.dimensions = dimensions  # type: ignore[assignment]
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
