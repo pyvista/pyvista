@@ -3964,6 +3964,10 @@ class PolyDataFilters(DataSetFilters):
 
             Has no effect if ``dimension`` or ``reference_volume`` are specified.
 
+            .. note::
+                This option is only available for VTK 9.2 or greater. A ``spacing``
+                value of ``1/100`` of the mesh length is used otherwise.
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -3991,11 +3995,15 @@ class PolyDataFilters(DataSetFilters):
             poly_ijk = _preprocess_polydata(self)
 
             if spacing is None:
-                # Estimate spacing from average cell area
-                cell_length_percentile = (
-                    0.1 if cell_length_percentile is None else cell_length_percentile
-                )
-                spacing = _length_distribution_percentile(poly_ijk, cell_length_percentile)
+                if pyvista.vtk_version_info < (9, 2):
+                    # Compute spacing from mesh length
+                    spacing = self.length / 100  # type: ignore[attr-defined]
+                else:
+                    # Estimate spacing from average cell area
+                    cell_length_percentile = (
+                        0.1 if cell_length_percentile is None else cell_length_percentile
+                    )
+                    spacing = _length_distribution_percentile(poly_ijk, cell_length_percentile)
             elif cell_length_percentile is not None:
                 raise TypeError(
                     "Spacing and cell length percentile cannot both be set. Set one or the other."
