@@ -3977,6 +3977,10 @@ class PolyDataFilters(DataSetFilters):
         pyvista.ImageData
             Generated labelmap.
 
+        See Also
+        --------
+        pyvista.ImageData: See to build custom ``reference_volume``.
+
         Examples
         --------
         Generate a labelmap for a coarse mesh.
