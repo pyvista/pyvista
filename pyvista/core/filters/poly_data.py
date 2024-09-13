@@ -3909,14 +3909,41 @@ class PolyDataFilters(DataSetFilters):
         spacing: float | VectorLike[float] | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] = np.round,
         cell_length_percentile: float | None = None,
+        mesh_length_fraction: float | None = None,
         progress_bar: bool = False,
     ):
         """Voxelize :class:`pyvista.PolyData` as a binary :class:`pyvista.ImageData` mask.
 
-        Use a reference volume to generate a binary mask with the same structure as the
-        reference. If no reference is given, the mask is generated using an
-        estimated spacing based on the input's cell lengths. Optionally, the output's
-        dimensions or approximate spacing may be specified.
+        Generate a voxelized representation of a surface. The voxelization can be
+        controlled in multiple ways:
+
+        #. Specify a ``reference_volume``. The generated mask will have the same
+           structure as the reference. This is useful when converting back-and-forth
+           between a volume and surface representation (e.g. for processing medical
+           images).
+
+        #. Specify the ``spacing``. The ``dimensions`` and ``origin`` are then set
+           implicitly from the spacing such that they are compatible with the bounds
+           of the input surface.
+
+        #. Specify the ``dimensions``. The ``spacing`` and ``origin`` are then set
+           implicitly from the dimensions such that they are compatible with the bounds
+           of the input surface.
+
+        #. Do not specify the output geometry. If no value for ``reference_volume``
+           ``spacing`` or ``dimensions`` is provided, the spacing is automatically
+           computed from the input surface. By default, the spacing is estimated from
+           the surface's cells using the 10th ``cell_length_percentile``. Optionally,
+           spacing may be computed from the surface mesh's length instead with
+           ``mesh_length_fraction``.
+
+           .. note::
+                ``cell_length_percentile`` is only available for VTK 9.2 or greater. For
+                earlier versions, the default spacing is set using mesh length with
+                ``mesh_length_fraction=1/100`.
+
+        .. note::
+            For best results, ensure the input surface is a closed surface.
 
         .. note::
             This filter returns voxels represented as point data, not voxel cells.
@@ -3933,7 +3960,8 @@ class PolyDataFilters(DataSetFilters):
 
         reference_volume : pyvista.ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
+            ``origin``, ``spacing``, and ``direction_matrix`` as the reference. If
+            specified, all other spacing- or dimensions-related parameters are ignored.
 
         dimensions : VectorLike[int], optional
             Dimensions of the generated mask image. Has no effect if ``reference_volume``
@@ -3942,9 +3970,9 @@ class PolyDataFilters(DataSetFilters):
         spacing : VectorLike[float], optional
             Approximate spacing to use for the generated mask image.
 
-            If unset, this value is dynamically computed from the input's approximate
-            cell lengths. Use ``cell_length_percentile`` to dynamically control the
-            spacing.
+            If unset, spacing is computed from the input's mesh length or approximate
+            cell lengths. The 10th `cell_length_percentile`` is used by default. Set
+            ``mesh_length_fraction`` instead to use mesh length.
 
             If set, this value is used to determine the image's dimensions. The spacing
             is approximate because it must then be adjusted to ensure the mask's bounds
@@ -3952,20 +3980,26 @@ class PolyDataFilters(DataSetFilters):
 
             Has no effect if ``reference_volume`` is specified.
 
+            .. note::
+                This option is only available for VTK 9.2 or greater. A ``spacing``
+                value of ``1/100`` of the mesh length is used otherwise.
+
         rounding_func : Callable[VectorLike[float], VectorLike[int]], default: np.round
             Control how the dimensions are rounded to integers based on the provided or
-            calculated ``spacing``. Should accept a ``VectorLike[float]`` containing the dimension
-            values along the three directions and return an ``VectorLike[int]`` version of it.
+            calculated ``spacing``. Should accept a ``VectorLike[float]`` containing the
+            dimension values along the three directions and return an ``VectorLike[int]``
+            version of it.
 
             Rounding the dimensions implies rounding the actual spacing.
 
             Has no effect if ``reference_volume`` or ``dimensions`` are specified.
 
         cell_length_percentile : float, optional
-            Cell length percentile to use for computing the default ``spacing``. It
-            is computed from a cumulative distribution function (CDF) of lengths which
-            are representative of the cell length scales present in the input. The CDF
-            is computed by:
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
 
             #. Triangulating the input cells.
             #  Sampling a subset of up to ``100 000`` cells.
@@ -3977,6 +4011,11 @@ class PolyDataFilters(DataSetFilters):
             .. note::
                 This option is only available for VTK 9.2 or greater. A ``spacing``
                 value of ``1/100`` of the mesh length is used otherwise.
+
+        mesh_length_fraction : float, optional
+            Fraction of the surface mesh's length to use for computing the default
+            ``spacing``. Set this to any fractional value (e.g. ``1/100``) to enable
+            this option. This is used as an alternative to using ``cell_length_percentile``.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3992,7 +4031,7 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Generate a binary mask for a coarse mesh.
+        Generate a binary mask from a coarse mesh.
 
         >>> import numpy as np
         >>> import pyvista as pv
@@ -4020,7 +4059,8 @@ class PolyDataFilters(DataSetFilters):
         To visualize it as voxel cells, use :meth:`pyvista.ImageDataFilters.points_to_cells`,
         then use :meth:`pyvista.DataSetFilters.threshold` to extract the foreground.
 
-        We also plot the voxel cells in blue and the input poly data in green.
+        We also plot the voxel cells in blue and the input poly data in green for
+        comparison.
 
         >>> def plot_mask_and_polydata(mask, poly):
         ...     voxel_cells = mask.points_to_cells().threshold(0.5)
@@ -4070,13 +4110,13 @@ class PolyDataFilters(DataSetFilters):
         >>> mask.dimensions
         (10, 20, 30)
 
-        Generate a mask using a reference volume. First generate polydata from
+        Create a mask using a reference volume. First generate polydata from
         an existing mask.
 
         >>> volume = examples.load_frog_tissues()
         >>> poly = volume.contour_labeled(smoothing=True)
 
-        Now generate the mask from the polydata using the volume as a reference.
+        Now create the mask from the polydata using the volume as a reference.
 
         >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
         >>> plot_mask_and_polydata(mask, poly)
@@ -4100,29 +4140,51 @@ class PolyDataFilters(DataSetFilters):
             poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
             poly_ijk = _preprocess_polydata(poly_ijk)
         else:
+            # Compute reference volume geometry
             if spacing is not None and dimensions is not None:
                 raise TypeError("Spacing and dimensions cannot both be set. Set one or the other.")
+
+            # Need to preprocess so that we have a triangle mesh for computing
+            # cell length percentile
             poly_ijk = _preprocess_polydata(self)
 
             if spacing is None:
-                if pyvista.vtk_version_info < (9, 2):
+                if cell_length_percentile is not None and mesh_length_fraction is not None:
+                    raise TypeError(
+                        "Cell length percentile and mesh length fraction cannot both be set. Set one or the other."
+                    )
+
+                if cell_length_percentile is not None or pyvista.vtk_version_info < (9, 2):
                     # Compute spacing from mesh length
-                    spacing = self.length / 100  # type: ignore[attr-defined]
+                    mesh_length_fraction = (
+                        _validation.validate_number(
+                            mesh_length_fraction, must_have_dtype=float, must_be_in_range=[0.0, 1.0]
+                        )
+                        if mesh_length_fraction is None
+                        else mesh_length_fraction
+                    )
+                    spacing = self.length * mesh_length_fraction  # type: ignore[attr-defined]
                 else:
-                    # Estimate spacing from average cell area
+                    # Estimate spacing from cell length percentile
                     cell_length_percentile = (
                         0.1 if cell_length_percentile is None else cell_length_percentile
                     )
                     spacing = _length_distribution_percentile(poly_ijk, cell_length_percentile)
-            elif cell_length_percentile is not None:
-                raise TypeError(
-                    "Spacing and cell length percentile cannot both be set. Set one or the other."
-                )
+            else:
+                # Spacing is specified directly. Make sure other params are not set.
+                if cell_length_percentile is not None:
+                    raise TypeError(
+                        "Spacing and cell length percentile cannot both be set. Set one or the other."
+                    )
+                if mesh_length_fraction is not None:
+                    raise TypeError(
+                        "Spacing and mesh length fraction cannot both be set. Set one or the other."
+                    )
 
             reference_volume = pyvista.ImageData()
 
             # Set initial spacing (will be adjusted later)
-            reference_volume.spacing = _validation.validate_array3(spacing, broadcast=True)
+            initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
             bnds = self.bounds  # type: ignore[attr-defined]
@@ -4132,7 +4194,7 @@ class PolyDataFilters(DataSetFilters):
             sizes = np.array((x_size, y_size, z_size))
 
             if dimensions is None:
-                dimensions = np.array(rounding_func(sizes / reference_volume.spacing), dtype=int)
+                dimensions = np.array(rounding_func(sizes / initial_spacing), dtype=int)
 
             reference_volume.dimensions = dimensions  # type: ignore[assignment]
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
@@ -4158,6 +4220,7 @@ class PolyDataFilters(DataSetFilters):
         binary_mask['mask'] = scalars  # type: ignore[assignment]
 
         # Make sure that we have a clean triangle-strip polydata
+        # Note: Poly was partially pre-processed earlier
         poly_ijk = poly_ijk.strip()
 
         # Convert polydata to stencil
