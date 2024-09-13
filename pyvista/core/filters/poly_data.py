@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Sequence
 import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
@@ -26,6 +28,9 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
+
+if TYPE_CHECKING:
+    from pyvista.core._typing_core import VectorLike
 
 
 @abstract_class
@@ -3898,18 +3903,26 @@ class PolyDataFilters(DataSetFilters):
         *,
         label_value: int = 1,
         reference_volume: pyvista.ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
         progress_bar: bool = False,
     ):
         """Generate a 3D volume labelmap from polydata surface contours.
 
         Parameters
         ----------
-        label_value : int
+        label_value : int, default: 1
             Foreground label value for the generated labelmap.
 
-        reference_volume : pyvista.ImageData
+        reference_volume : pyvista.ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
+
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated labelmap.
+
+        spacing : VectorLike[float], optional
+            Approximate spacing to use for the labelmap.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3924,10 +3937,38 @@ class PolyDataFilters(DataSetFilters):
             raise ValueError("Invalid polydata.")
 
         if reference_volume is None:
-            raise TypeError("Invalid input volume.")
+            poly_ijk = self
+            reference_volume = pyvista.ImageData()
 
-        if reference_volume.n_points == 0:
-            raise ValueError("Empty input volume file ")
+            # Spacing (will be adjusted later)
+            spacing = spacing if spacing is not None else self.length / 200  # type: ignore[attr-defined]
+            reference_volume.spacing = _validation.validate_array3(spacing, broadcast=True)
+
+            # Dimensions
+            bnds = self.bounds  # type: ignore[attr-defined]
+            x_size = bnds.x_max - bnds.x_min
+            y_size = bnds.y_max - bnds.y_min
+            z_size = bnds.z_max - bnds.z_min
+            sizes = np.array((x_size, y_size, z_size))
+
+            reference_volume.dimensions = (
+                dimensions  # type: ignore[assignment]
+                if dimensions is not None
+                else (sizes // reference_volume.spacing).astype(int)
+            )
+
+            # Dimensions are now fixed, now adjust spacing to match poly data bounds
+            # Since we are dealing with voxels as points, we want the bounds of the
+            # points to be 1/2 spacing width smaller than the polydata bounds
+            final_spacing = sizes / np.array(reference_volume.dimensions)
+            reference_volume.spacing = final_spacing
+            reference_volume.origin = np.array(self.bounds[::2]) + final_spacing / 2  # type: ignore[attr-defined]
+
+        else:
+            _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
+            # The image stencil filters do not support orientation, so we apply the
+            # inverse direction matrix to "remove" orientation from the polydata
+            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
 
         # Init output structure and scalars
         # The image stencil filters do not support orientation, so we do not
@@ -3939,9 +3980,6 @@ class PolyDataFilters(DataSetFilters):
         binary_labelmap['labelmap'] = np.zeros(  # Init as background voxels
             (binary_labelmap.n_points,)
         )
-        # The image stencil filters do not support orientation, so we apply the
-        # inverse direction matrix to "remove" orientation from the polydata
-        poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
 
         # Make sure that we have a clean triangle-strip polydata
         poly_ijk = poly_ijk.compute_normals().triangulate().strip()

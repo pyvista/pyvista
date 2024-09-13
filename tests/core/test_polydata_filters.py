@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 import pyvista as pv
@@ -76,13 +77,18 @@ def test_protein_ribbon():
     assert ribbon.n_cells
 
 
-def test_generate_labelmap():
-    reference_volume = examples.load_frog_tissues()
-    poly = reference_volume.contour_labeled()
-    im = poly.generate_labelmap(reference_volume=reference_volume)
+@pytest.mark.parametrize('use_reference', [True, False])
+def test_generate_labelmap(use_reference):
+    frog_tissue = examples.load_frog_tissues()
+    reference_volume = frog_tissue if use_reference else None
+    poly = frog_tissue.contour_labeled()
+    labelmap = poly.generate_labelmap(reference_volume=reference_volume)
 
-    expected_voxels = reference_volume.points_to_cells().threshold(0.5)
-    actual_voxels = im.points_to_cells().threshold(0.5)
+    if use_reference:
+        expected_voxels = frog_tissue.points_to_cells().threshold(0.5)
+        actual_voxels = labelmap.points_to_cells().threshold(0.5)
 
-    assert expected_voxels.bounds == actual_voxels.bounds
-    assert expected_voxels.n_cells == actual_voxels.n_cells
+        assert expected_voxels.bounds == actual_voxels.bounds
+        assert expected_voxels.n_cells == actual_voxels.n_cells
+    else:
+        assert np.allclose(labelmap.points_to_cells().bounds, poly.bounds)
