@@ -3948,7 +3948,12 @@ class PolyDataFilters(DataSetFilters):
         _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
         _validation.check_greater_than(self.n_cells, 1, name='n_cells')  # type: ignore[attr-defined]
 
-        if reference_volume is None:
+        if reference_volume is not None:
+            _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
+            # The image stencil filters do not support orientation, so we apply the
+            # inverse direction matrix to "remove" orientation from the polydata
+            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
+        else:
             if spacing is not None and dimensions is not None:
                 raise TypeError("Spacing and dimensions cannot both be set. Set one or the other.")
             poly_ijk = self
@@ -3982,12 +3987,6 @@ class PolyDataFilters(DataSetFilters):
             final_spacing = sizes / np.array(reference_volume.dimensions)
             reference_volume.spacing = final_spacing
             reference_volume.origin = np.array(self.bounds[::2]) + final_spacing / 2  # type: ignore[attr-defined]
-
-        else:
-            _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
-            # The image stencil filters do not support orientation, so we apply the
-            # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
 
         # Init output structure and scalars
         # The image stencil filters do not support orientation, so we do not
