@@ -124,7 +124,7 @@ def test_voxelize_binary_mask_auto_spacing(ant):
 
     # Test cell length
     if pv.vtk_version_info < (9, 2):
-        match = "Cell length percentile requires VTK 9.2 or greater."
+        match = "Cell length percentile and sample size requires VTK 9.2 or greater."
         with pytest.raises(TypeError, match=match):
             ant.voxelize_binary_mask(cell_length_percentile=0.2)
     else:
@@ -141,13 +141,18 @@ def test_voxelize_binary_mask_auto_spacing(ant):
 
 
 def test_voxelize_binary_mask_cell_length_sample_size(ant):
-    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=1)
-    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=20)
-    assert mask_samples_1.spacing != mask_samples_2.spacing
+    if pv.vtk_version_info < (9, 2):
+        match = "Cell length percentile and sample size requires VTK 9.2 or greater."
+        with pytest.raises(TypeError, match=match):
+            ant.voxelize_binary_mask(cell_length_percentile=0.2)
+    else:
+        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=1)
+        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=20)
+        assert mask_samples_1.spacing != mask_samples_2.spacing
 
-    mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
-    assert mask_samples_1.spacing == mask_samples_2.spacing
+        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+        assert mask_samples_1.spacing == mask_samples_2.spacing
 
 
 @pytest.mark.parametrize(

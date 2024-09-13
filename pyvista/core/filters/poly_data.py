@@ -3942,7 +3942,8 @@ class PolyDataFilters(DataSetFilters):
         spacing is ``mesh_length_fraction=1/100``.
 
         .. note::
-            For best results, ensure the input surface is a closed surface.
+            For best results, ensure the input surface is a closed surface. The
+            surface is considered closed if it has zero :attr:`pyvista._PointSet.n_open_edges`.
 
         .. note::
             This filter returns voxels represented as point data, not voxel cells.
@@ -4158,8 +4159,10 @@ class PolyDataFilters(DataSetFilters):
                     )
 
                 if mesh_length_fraction is not None or pyvista.vtk_version_info < (9, 2):
-                    if cell_length_percentile is not None:
-                        raise TypeError("Cell length percentile requires VTK 9.2 or greater.")
+                    if cell_length_percentile is not None or cell_length_sample_size is not None:
+                        raise TypeError(
+                            "Cell length percentile and sample size requires VTK 9.2 or greater."
+                        )
                     # Compute spacing from mesh length
                     mesh_length_fraction = (
                         1 / 100
