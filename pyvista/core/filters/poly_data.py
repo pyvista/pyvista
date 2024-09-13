@@ -3902,7 +3902,8 @@ class PolyDataFilters(DataSetFilters):
     def voxelize_binary_mask(
         self,
         *,
-        label_value: int = 1,
+        background_value: int = 0,
+        foreground_value: int = 1,
         reference_volume: pyvista.ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
@@ -3924,8 +3925,11 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        label_value : int, default: 1
-            Foreground label value for the generated mask.
+        background_value : int, default: 0
+            Background value of the generated mask.
+
+        foreground_value : int, default: 1
+            Foreground value of the generated mask.
 
         reference_volume : pyvista.ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
@@ -4010,7 +4014,7 @@ class PolyDataFilters(DataSetFilters):
           Spacing:      1.417e-02, 1.401e-02, 1.421e-02
           N Arrays:     1
 
-        >>> np.unique(mask.point_data['foreground'])
+        >>> np.unique(mask.point_data['mask'])
         pyvista_ndarray([0., 1.])
 
         To visualize it as voxel cells, use :meth:`pyvista.ImageDataFilters.points_to_cells`,
@@ -4145,9 +4149,13 @@ class PolyDataFilters(DataSetFilters):
         binary_mask.dimensions = reference_volume.dimensions
         binary_mask.spacing = reference_volume.spacing
         binary_mask.origin = reference_volume.origin
-        binary_mask['foreground'] = np.zeros(  # Init as background voxels
-            (binary_mask.n_points,)
+        scalars_shape = (binary_mask.n_points,)
+        scalars = (  # Init with background value
+            np.zeros(scalars_shape, dtype=int)
+            if background_value == 0
+            else np.ones(scalars_shape, dtype=int) * background_value
         )
+        binary_mask['mask'] = scalars  # type: ignore[assignment]
 
         # Make sure that we have a clean triangle-strip polydata
         poly_ijk = poly_ijk.strip()
@@ -4165,7 +4173,7 @@ class PolyDataFilters(DataSetFilters):
         stencil.SetInputData(binary_mask)
         stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
         stencil.ReverseStencilOn()
-        stencil.SetBackgroundValue(label_value)
+        stencil.SetBackgroundValue(foreground_value)
         _update_alg(stencil, progress_bar, "Generating binary mask")
         output_volume = _get_output(stencil)
 

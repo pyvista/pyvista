@@ -115,7 +115,7 @@ def test_voxelize_binary_mask_dimensions(sphere):
     'rounding_func',
     [np.round, np.ceil, np.floor, lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]],
 )
-def test_voxelize_binary_mask_spacing_bound(sphere, rounding_func):
+def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
     spacing = np.array((1.1, 1.2, 1.3))
     labelmap = sphere.voxelize_binary_mask(spacing=spacing, rounding_func=rounding_func)
     assert np.allclose(labelmap.points_to_cells().bounds, sphere.bounds)
@@ -129,6 +129,15 @@ def test_voxelize_binary_mask_spacing_bound(sphere, rounding_func):
     else:  # rounding_func == lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]]
         assert labelmap.spacing[1] < spacing[1]
         assert labelmap.spacing[2] > spacing[2]
+
+
+@pytest.mark.parametrize('foreground', [1, 2])
+@pytest.mark.parametrize('background', [-1, 0])
+def test_voxelize_binary_mask_foreground(sphere, foreground, background):
+    mask = sphere.voxelize_binary_mask(foreground_value=foreground, background_value=background)
+    unique, counts = np.unique(mask['mask'], return_counts=True)
+    assert np.array_equal(unique, [background, foreground])
+    assert counts[1] > counts[0]
 
 
 def test_voxelize_binary_mask_raises(sphere):
