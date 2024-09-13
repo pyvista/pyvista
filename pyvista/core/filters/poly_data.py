@@ -3899,7 +3899,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, "Generating Protein Ribbons")
         return _get_output(alg)
 
-    def generate_labelmap(
+    def voxelize_binary_mask(
         self,
         *,
         label_value: int = 1,
@@ -3910,43 +3910,48 @@ class PolyDataFilters(DataSetFilters):
         cell_length_percentile: float | None = None,
         progress_bar: bool = False,
     ):
-        """Generate a 3D volume labelmap from polydata surface contours.
+        """Voxelize :class:`pyvista.PolyData` as a binary :class:`pyvista.ImageData` mask.
 
-        Use a reference volume to generate a labelmap with the same structure as the
-        reference. If no reference is given, the labelmap is generated using an
+        Use a reference volume to generate a binary mask with the same structure as the
+        reference. If no reference is given, the mask is generated using an
         estimated spacing based on the input's cell lengths. Optionally, the output's
         dimensions or approximate spacing may be specified.
+
+        .. note::
+            This filter returns voxels represented as point data, not voxel cells.
+            See :ref:`image_representations_example` for examples demonstrating the
+            difference.
 
         Parameters
         ----------
         label_value : int, default: 1
-            Foreground label value for the generated labelmap.
+            Foreground label value for the generated mask.
 
         reference_volume : pyvista.ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
-            Dimensions of the generated labelmap. Has no effect if ``reference_volume``
+            Dimensions of the generated mask image. Has no effect if ``reference_volume``
             is specified.
 
         spacing : VectorLike[float], optional
-            Approximate spacing to use for the labelmap.
+            Approximate spacing to use for the generated mask image.
 
             If unset, this value is dynamically computed from the input's approximate
             cell lengths. Use ``cell_length_percentile`` to dynamically control the
             spacing.
 
             If set, this value is used to determine the image's dimensions. The spacing
-            is approximate because it must then be adjusted to ensure the labelmap's bounds
-            match the input's bounds. Use ``spacing_bound`` to control the approximation.
+            is approximate because it must then be adjusted to ensure the mask's bounds
+            match the input's bounds. Use ``rounding_func`` to control the approximation.
 
             Has no effect if ``reference_volume`` is specified.
 
         rounding_func : Callable[VectorLike[float], VectorLike[int]], default: np.round
             Control how the dimensions are rounded to integers based on the provided or
             calculated ``spacing``. Should accept a ``VectorLike[float]`` containing the dimension
-            values along the three directions ant return an ``VectorLike[int]`` version of it.
+            values along the three directions and return an ``VectorLike[int]`` version of it.
 
             Rounding the dimensions implies rounding the actual spacing.
 
@@ -3975,7 +3980,7 @@ class PolyDataFilters(DataSetFilters):
         Returns
         -------
         pyvista.ImageData
-            Generated labelmap.
+            Generated binary mask with point scalars representing voxel.
 
         See Also
         --------
@@ -3983,18 +3988,18 @@ class PolyDataFilters(DataSetFilters):
 
         Examples
         --------
-        Generate a labelmap for a coarse mesh.
+        Generate a binary mask for a coarse mesh.
 
         >>> import numpy as np
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> poly = examples.download_bunny_coarse()
-        >>> labelmap = poly.generate_labelmap()
+        >>> mask = poly.voxelize_binary_mask()
 
-        The labelmap is stored as :class:`pyvista.ImageData` with point data scalars
-        (zeros for background, ones for foreground)
+        The mask is stored as :class:`pyvista.ImageData` with point data scalars
+        (zeros for background, ones for foreground).
 
-        >>> labelmap
+        >>> mask
         ImageData (...)
           N Cells:      7056
           N Points:     8228
@@ -4005,7 +4010,7 @@ class PolyDataFilters(DataSetFilters):
           Spacing:      1.417e-02, 1.401e-02, 1.421e-02
           N Arrays:     1
 
-        >>> np.unique(labelmap.point_data['labelmap'])
+        >>> np.unique(mask.point_data['foreground'])
         pyvista_ndarray([0., 1.])
 
         To visualize it as voxel cells, use :meth:`pyvista.ImageDataFilters.points_to_cells`,
@@ -4013,8 +4018,8 @@ class PolyDataFilters(DataSetFilters):
 
         We also plot the voxel cells in blue and the input poly data in green.
 
-        >>> def plot_labelmap_and_polydata(labelmap, poly):
-        ...     voxel_cells = labelmap.points_to_cells().threshold(0.5)
+        >>> def plot_mask_and_polydata(mask, poly):
+        ...     voxel_cells = mask.points_to_cells().threshold(0.5)
         ...
         ...     pl = pv.Plotter()
         ...     _ = pl.add_mesh(voxel_cells, color='blue')
@@ -4023,59 +4028,59 @@ class PolyDataFilters(DataSetFilters):
         ...     pl.show()
         ...
 
-        >>> plot_labelmap_and_polydata(labelmap, poly)
+        >>> plot_mask_and_polydata(mask, poly)
 
-        The spacing of the labelmap image is automatically adjusted to match the
+        The spacing of the mask image is automatically adjusted to match the
         density of the input.
 
         Repeat the previous example with a finer mesh.
 
         >>> poly = examples.download_bunny()
-        >>> labelmap = poly.generate_labelmap()
-        >>> plot_labelmap_and_polydata(labelmap, poly)
+        >>> mask = poly.voxelize_binary_mask()
+        >>> plot_mask_and_polydata(mask, poly)
 
         Control the spacing manually instead. Here, a very coarse spacing is used.
 
-        >>> labelmap = poly.generate_labelmap(spacing=(0.01, 0.04, 0.02))
-        >>> plot_labelmap_and_polydata(labelmap, poly)
+        >>> mask = poly.voxelize_binary_mask(spacing=(0.01, 0.04, 0.02))
+        >>> plot_mask_and_polydata(mask, poly)
 
-        Note that the spacing is only approximate. Check the labelmap's actual spacing.
+        Note that the spacing is only approximate. Check the mask's actual spacing.
 
-        >>> labelmap.spacing
+        >>> mask.spacing
         (0.009731187485158443, 0.03858340159058571, 0.020112216472625732)
 
         The actual values may be greater or less than the specified values. Use
         ``rounding_func=np.floor`` to force all values to be greater.
 
-        >>> labelmap = poly.generate_labelmap(
+        >>> mask = poly.voxelize_binary_mask(
         ...     spacing=(0.01, 0.04, 0.02), rounding_func=np.floor
         ... )
-        >>> labelmap.spacing
+        >>> mask.spacing
         (0.01037993331750234, 0.05144453545411428, 0.020112216472625732)
 
         Set the dimensions instead of the spacing.
 
-        >>> labelmap = poly.generate_labelmap(dimensions=(10, 20, 30))
-        >>> plot_labelmap_and_polydata(labelmap, poly)
+        >>> mask = poly.voxelize_binary_mask(dimensions=(10, 20, 30))
+        >>> plot_mask_and_polydata(mask, poly)
 
-        >>> labelmap.dimensions
+        >>> mask.dimensions
         (10, 20, 30)
 
-        Generate a labelmap using a reference volume. First generate polydata from
-        an existing labelmap.
+        Generate a mask using a reference volume. First generate polydata from
+        an existing mask.
 
         >>> volume = examples.load_frog_tissues()
         >>> poly = volume.contour_labeled(smoothing=True)
 
-        Now generate the labelmap from the polydata using the volume as a reference.
+        Now generate the mask from the polydata using the volume as a reference.
 
-        >>> labelmap = poly.generate_labelmap(reference_volume=volume)
-        >>> plot_labelmap_and_polydata(labelmap, poly)
+        >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
+        >>> plot_mask_and_polydata(mask, poly)
 
-        Compare this to generating the labelmap without the reference.
+        Compare this to generating the mask without the reference.
 
-        >>> labelmap = poly.generate_labelmap()
-        >>> plot_labelmap_and_polydata(labelmap, poly)
+        >>> mask = poly.voxelize_binary_mask()
+        >>> plot_mask_and_polydata(mask, poly)
 
         """
         _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
@@ -4136,12 +4141,12 @@ class PolyDataFilters(DataSetFilters):
         # Init output structure and scalars
         # The image stencil filters do not support orientation, so we do not
         # set the direction matrix
-        binary_labelmap = pyvista.ImageData()
-        binary_labelmap.dimensions = reference_volume.dimensions
-        binary_labelmap.spacing = reference_volume.spacing
-        binary_labelmap.origin = reference_volume.origin
-        binary_labelmap['labelmap'] = np.zeros(  # Init as background voxels
-            (binary_labelmap.n_points,)
+        binary_mask = pyvista.ImageData()
+        binary_mask.dimensions = reference_volume.dimensions
+        binary_mask.spacing = reference_volume.spacing
+        binary_mask.origin = reference_volume.origin
+        binary_mask['foreground'] = np.zeros(  # Init as background voxels
+            (binary_mask.n_points,)
         )
 
         # Make sure that we have a clean triangle-strip polydata
@@ -4157,11 +4162,11 @@ class PolyDataFilters(DataSetFilters):
 
         # Convert stencil to image
         stencil = _vtk.vtkImageStencil()
-        stencil.SetInputData(binary_labelmap)
+        stencil.SetInputData(binary_mask)
         stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
         stencil.ReverseStencilOn()
         stencil.SetBackgroundValue(label_value)
-        _update_alg(stencil, progress_bar, "Generating labelmap")
+        _update_alg(stencil, progress_bar, "Generating binary mask")
         output_volume = _get_output(stencil)
 
         # Set the orientation of the output

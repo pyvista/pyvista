@@ -84,12 +84,12 @@ def frog_tissues_image():
 
 @pytest.fixture
 def frog_tissues_contour(frog_tissues_image):
-    return frog_tissues_image.contour_labeled()
+    return frog_tissues_image.contour_labeled(smoothing=False)
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_generate_labelmap(frog_tissues_image, frog_tissues_contour):
-    labelmap = frog_tissues_contour.generate_labelmap(reference_volume=frog_tissues_image)
+def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
+    labelmap = frog_tissues_contour.voxelize_binary_mask(reference_volume=frog_tissues_image)
 
     expected_voxels = frog_tissues_image.points_to_cells().threshold(0.5)
     actual_voxels = labelmap.points_to_cells().threshold(0.5)
@@ -99,14 +99,14 @@ def test_generate_labelmap(frog_tissues_image, frog_tissues_contour):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_generate_labelmap_no_reference(frog_tissues_image, frog_tissues_contour):
-    labelmap = frog_tissues_contour.generate_labelmap()
+def test_voxelize_binary_mask_no_reference(frog_tissues_image, frog_tissues_contour):
+    labelmap = frog_tissues_contour.voxelize_binary_mask()
     assert np.allclose(labelmap.points_to_cells().bounds, frog_tissues_contour.bounds)
 
 
-def test_generate_labelmap_dimensions(sphere):
+def test_voxelize_binary_mask_dimensions(sphere):
     dims = (10, 11, 12)
-    labelmap = sphere.generate_labelmap(dimensions=dims)
+    labelmap = sphere.voxelize_binary_mask(dimensions=dims)
     assert np.allclose(labelmap.points_to_cells().bounds, sphere.bounds)
     assert labelmap.dimensions == dims
 
@@ -115,9 +115,9 @@ def test_generate_labelmap_dimensions(sphere):
     'rounding_func',
     [np.round, np.ceil, np.floor, lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]],
 )
-def test_generate_labelmap_spacing_bound(sphere, rounding_func):
+def test_voxelize_binary_mask_spacing_bound(sphere, rounding_func):
     spacing = np.array((1.1, 1.2, 1.3))
-    labelmap = sphere.generate_labelmap(spacing=spacing, rounding_func=rounding_func)
+    labelmap = sphere.voxelize_binary_mask(spacing=spacing, rounding_func=rounding_func)
     assert np.allclose(labelmap.points_to_cells().bounds, sphere.bounds)
     if rounding_func == np.round:
         assert np.any(labelmap.spacing > spacing)
@@ -131,11 +131,11 @@ def test_generate_labelmap_spacing_bound(sphere, rounding_func):
         assert labelmap.spacing[2] > spacing[2]
 
 
-def test_generate_labelmap_raises(sphere):
+def test_voxelize_binary_mask_raises(sphere):
     match = 'Spacing and dimensions cannot both be set. Set one or the other.'
     with pytest.raises(TypeError, match=match):
-        sphere.generate_labelmap(dimensions=(1, 2, 3), spacing=(4, 5, 6))
+        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), spacing=(4, 5, 6))
 
     match = 'Spacing and cell length percentile cannot both be set. Set one or the other.'
     with pytest.raises(TypeError, match=match):
-        sphere.generate_labelmap(spacing=(4, 5, 6), cell_length_percentile=0.2)
+        sphere.voxelize_binary_mask(spacing=(4, 5, 6), cell_length_percentile=0.2)
