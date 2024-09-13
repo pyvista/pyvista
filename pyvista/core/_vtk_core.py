@@ -363,6 +363,7 @@ from vtkmodules.vtkFiltersSources import vtkSphereSource
 from vtkmodules.vtkFiltersSources import vtkSuperquadricSource
 from vtkmodules.vtkFiltersSources import vtkTessellatedBoxSource
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
+from vtkmodules.vtkFiltersStatistics import vtkLengthDistribution
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality

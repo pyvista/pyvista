@@ -129,3 +129,7 @@ def test_generate_labelmap_raises(sphere):
     match = 'Spacing and dimensions cannot both be set. Set one or the other.'
     with pytest.raises(TypeError, match=match):
         sphere.generate_labelmap(dimensions=(1, 2, 3), spacing=(4, 5, 6))
+
+    match = 'Spacing and cell length percentile cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.generate_labelmap(spacing=(4, 5, 6), cell_length_percentile=0.2)

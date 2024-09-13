@@ -3907,9 +3907,15 @@ class PolyDataFilters(DataSetFilters):
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
         spacing_bound: Literal['upper', 'lower'] | None = None,
+        cell_length_percentile: float | None = None,
         progress_bar: bool = False,
     ):
         """Generate a 3D volume labelmap from polydata surface contours.
+
+        Use a reference volume to generate a labelmap with the same structure as the
+        reference. If no reference is given, the labelmap is generated using an
+        estimated spacing based on the input's cell lengths. Optionally, the output's
+        dimensions or approximate spacing may be specified.
 
         Parameters
         ----------
@@ -3925,16 +3931,38 @@ class PolyDataFilters(DataSetFilters):
             is specified.
 
         spacing : VectorLike[float], optional
-            Approximate spacing to use for the labelmap. Set ``spacing_bound`` to
-            control the approximation. Has no effect if ``reference_volume`` is specified.
+            Approximate spacing to use for the labelmap.
 
-        spacing_bound : 'upper' | 'lower' | None
+            If unset, this value is dynamically computed from the input's approximate
+            cell lengths. Use ``cell_length_percentile`` to dynamically control the
+            spacing.
+
+            If set, this value is used to determine the image's dimensions. The spacing
+            is approximate because it must then be adjusted to ensure the labelmap's bounds
+            match the input's bounds. Use ``spacing_bound`` to control the approximation.
+
+            Has no effect if ``reference_volume`` is specified.
+
+        spacing_bound : 'upper' | 'lower' | None, default: None
             Control whether to set an ``'upper'``, ``'lower'``, or no bound (``None``)
             on the ``spacing``. If ``'upper'``, the actual spacing will be rounded
             down such that it is less than the input spacing. If ``'lower'``, the
             actual spacing will be rounded up such that it greater than the input
             spacing. If ``None``, the actual spacing is rounded to be as close to the
             input spacing as possible. Has no effect if ``reference_volume`` is specified.
+
+        cell_length_percentile : float, optional
+            Cell length percentile to use for computing the default ``spacing``. It
+            is computed from a cumulative distribution function (CDF) of lengths which
+            are representative of the cell length scales present in the input. The CDF
+            is computed by:
+
+            #. Triangulating the input cells.
+            #  Sampling a subset of up to ``100 000`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered to create the CDF.
+
+            Has no effect if ``dimension`` or ``reference_volume`` are specified.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3948,19 +3976,34 @@ class PolyDataFilters(DataSetFilters):
         _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
         _validation.check_greater_than(self.n_cells, 1, name='n_cells')  # type: ignore[attr-defined]
 
+        def _preprocess_polydata(poly_in):
+            return poly_in.compute_normals().triangulate()
+
         if reference_volume is not None:
             _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
             poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = _preprocess_polydata(poly_ijk)
         else:
             if spacing is not None and dimensions is not None:
                 raise TypeError("Spacing and dimensions cannot both be set. Set one or the other.")
-            poly_ijk = self
+            poly_ijk = _preprocess_polydata(self)
+
+            if spacing is None:
+                # Estimate spacing from average cell area
+                cell_length_percentile = (
+                    0.1 if cell_length_percentile is None else cell_length_percentile
+                )
+                spacing = _length_distribution_percentile(poly_ijk, cell_length_percentile)
+            elif cell_length_percentile is not None:
+                raise TypeError(
+                    "Spacing and cell length percentile cannot both be set. Set one or the other."
+                )
+
             reference_volume = pyvista.ImageData()
 
             # Set initial spacing (will be adjusted later)
-            spacing = spacing if spacing is not None else self.length / 200  # type: ignore[attr-defined]
             reference_volume.spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
@@ -4000,7 +4043,7 @@ class PolyDataFilters(DataSetFilters):
         )
 
         # Make sure that we have a clean triangle-strip polydata
-        poly_ijk = poly_ijk.compute_normals().triangulate().strip()
+        poly_ijk = poly_ijk.strip()
 
         # Convert polydata to stencil
         poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
@@ -4023,3 +4066,11 @@ class PolyDataFilters(DataSetFilters):
         output_volume.direction_matrix = reference_volume.direction_matrix
 
         return pyvista.wrap(output_volume)
+
+
+def _length_distribution_percentile(poly, percentile):
+    percentile = _validation.validate_number(percentile, must_be_in_range=[0.0, 1.0])
+    distribution = _vtk.vtkLengthDistribution()
+    distribution.SetInputData(poly)
+    distribution.Update()
+    return distribution.GetLengthQuantile(percentile)
