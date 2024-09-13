@@ -4155,6 +4155,8 @@ class PolyDataFilters(DataSetFilters):
                     )
 
                 if mesh_length_fraction is not None or pyvista.vtk_version_info < (9, 2):
+                    if cell_length_percentile is not None:
+                        raise TypeError("Cell length percentile requires VTK 9.2 or greater.")
                     # Compute spacing from mesh length
                     mesh_length_fraction = (
                         1 / 100
