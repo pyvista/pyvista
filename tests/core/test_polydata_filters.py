@@ -87,6 +87,7 @@ def frog_tissues_contour(frog_tissues_image):
     return frog_tissues_image.contour_labeled()
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_generate_labelmap(frog_tissues_image, frog_tissues_contour):
     labelmap = frog_tissues_contour.generate_labelmap(reference_volume=frog_tissues_image)
 
@@ -97,6 +98,7 @@ def test_generate_labelmap(frog_tissues_image, frog_tissues_contour):
     assert expected_voxels.n_cells == actual_voxels.n_cells
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_generate_labelmap_no_reference(frog_tissues_image, frog_tissues_contour):
     labelmap = frog_tissues_contour.generate_labelmap()
     assert np.allclose(labelmap.points_to_cells().bounds, frog_tissues_contour.bounds)
