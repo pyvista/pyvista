@@ -4158,8 +4158,13 @@ class PolyDataFilters(DataSetFilters):
                         "Cell length percentile and mesh length fraction cannot both be set. Set one or the other."
                     )
 
-                if mesh_length_fraction is not None or pyvista.vtk_version_info < (9, 2):
-                    if cell_length_percentile is not None or cell_length_sample_size is not None:
+                less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
+                if mesh_length_fraction is not None or less_than_vtk92:
+                    if (
+                        cell_length_percentile is not None
+                        or cell_length_sample_size is not None
+                        and less_than_vtk92
+                    ):
                         raise TypeError(
                             "Cell length percentile and sample size requires VTK 9.2 or greater."
                         )
