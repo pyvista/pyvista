@@ -3919,10 +3919,12 @@ class PolyDataFilters(DataSetFilters):
             ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
-            Dimensions of the generated labelmap.
+            Dimensions of the generated labelmap. Has no effect if ``reference_volume``
+            is specified.
 
         spacing : VectorLike[float], optional
-            Approximate spacing to use for the labelmap.
+            Approximate spacing to use for the labelmap. Has no effect if
+            ``reference_volume`` is specified.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3933,8 +3935,8 @@ class PolyDataFilters(DataSetFilters):
             Generated labelmap.
 
         """
-        if self.n_points < 2 | self.n_cells < 2:  # type: ignore[attr-defined]
-            raise ValueError("Invalid polydata.")
+        _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
+        _validation.check_greater_than(self.n_cells, 1, name='n_points')  # type: ignore[attr-defined]
 
         if reference_volume is None:
             poly_ijk = self
