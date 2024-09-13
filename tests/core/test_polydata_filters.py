@@ -89,10 +89,10 @@ def frog_tissues_contour(frog_tissues_image):
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
-    labelmap = frog_tissues_contour.voxelize_binary_mask(reference_volume=frog_tissues_image)
+    mask = frog_tissues_contour.voxelize_binary_mask(reference_volume=frog_tissues_image)
 
     expected_voxels = frog_tissues_image.points_to_cells().threshold(0.5)
-    actual_voxels = labelmap.points_to_cells().threshold(0.5)
+    actual_voxels = mask.points_to_cells().threshold(0.5)
 
     assert expected_voxels.bounds == actual_voxels.bounds
     assert expected_voxels.n_cells == actual_voxels.n_cells
@@ -100,15 +100,15 @@ def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_no_reference(frog_tissues_image, frog_tissues_contour):
-    labelmap = frog_tissues_contour.voxelize_binary_mask()
-    assert np.allclose(labelmap.points_to_cells().bounds, frog_tissues_contour.bounds)
+    mask = frog_tissues_contour.voxelize_binary_mask()
+    assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
 
 
 def test_voxelize_binary_mask_dimensions(sphere):
     dims = (10, 11, 12)
-    labelmap = sphere.voxelize_binary_mask(dimensions=dims)
-    assert np.allclose(labelmap.points_to_cells().bounds, sphere.bounds)
-    assert labelmap.dimensions == dims
+    mask = sphere.voxelize_binary_mask(dimensions=dims)
+    assert np.allclose(mask.points_to_cells().bounds, sphere.bounds)
+    assert mask.dimensions == dims
 
 
 @pytest.mark.parametrize(
@@ -117,18 +117,18 @@ def test_voxelize_binary_mask_dimensions(sphere):
 )
 def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
     spacing = np.array((1.1, 1.2, 1.3))
-    labelmap = sphere.voxelize_binary_mask(spacing=spacing, rounding_func=rounding_func)
-    assert np.allclose(labelmap.points_to_cells().bounds, sphere.bounds)
+    mask = sphere.voxelize_binary_mask(spacing=spacing, rounding_func=rounding_func)
+    assert np.allclose(mask.points_to_cells().bounds, sphere.bounds)
     if rounding_func == np.round:
-        assert np.any(labelmap.spacing > spacing)
-        assert np.any(labelmap.spacing < spacing)
+        assert np.any(mask.spacing > spacing)
+        assert np.any(mask.spacing < spacing)
     elif rounding_func == np.ceil:
-        assert np.all(labelmap.spacing < spacing)
+        assert np.all(mask.spacing < spacing)
     elif rounding_func == np.floor:
-        assert np.all(labelmap.spacing > spacing)
+        assert np.all(mask.spacing > spacing)
     else:  # rounding_func == lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]]
-        assert labelmap.spacing[1] < spacing[1]
-        assert labelmap.spacing[2] > spacing[2]
+        assert mask.spacing[1] < spacing[1]
+        assert mask.spacing[2] > spacing[2]
 
 
 @pytest.mark.parametrize('foreground', [1, 2])
