@@ -123,3 +123,9 @@ def test_generate_labelmap_spacing_bound(sphere, spacing_bound):
         assert np.all(labelmap.spacing < spacing)
     else:  # spacing_bound == 'lower':
         assert np.all(labelmap.spacing > spacing)
+
+
+def test_generate_labelmap_raises(sphere):
+    match = 'Spacing and dimensions cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.generate_labelmap(dimensions=(1, 2, 3), spacing=(4, 5, 6))

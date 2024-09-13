@@ -3934,7 +3934,7 @@ class PolyDataFilters(DataSetFilters):
             down such that it is less than the input spacing. If ``'lower'``, the
             actual spacing will be rounded up such that it greater than the input
             spacing. If ``None``, the actual spacing is rounded to be as close to the
-            input spacing as possible.
+            input spacing as possible. Has no effect if ``reference_volume`` is specified.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3949,14 +3949,16 @@ class PolyDataFilters(DataSetFilters):
         _validation.check_greater_than(self.n_cells, 1, name='n_cells')  # type: ignore[attr-defined]
 
         if reference_volume is None:
+            if spacing is not None and dimensions is not None:
+                raise TypeError("Spacing and dimensions cannot both be set. Set one or the other.")
             poly_ijk = self
             reference_volume = pyvista.ImageData()
 
-            # Spacing (will be adjusted later)
+            # Set initial spacing (will be adjusted later)
             spacing = spacing if spacing is not None else self.length / 200  # type: ignore[attr-defined]
             reference_volume.spacing = _validation.validate_array3(spacing, broadcast=True)
 
-            # Dimensions
+            # Get size of poly data for computing dimensions
             bnds = self.bounds  # type: ignore[attr-defined]
             x_size = bnds.x_max - bnds.x_min
             y_size = bnds.y_max - bnds.y_min
