@@ -3973,9 +3973,9 @@ class PolyDataFilters(DataSetFilters):
             else:
                 rounding_func = np.round
             reference_volume.dimensions = (
-                dimensions  # type: ignore[assignment]
+                dimensions
                 if dimensions is not None
-                else rounding_func(sizes / reference_volume.spacing).astype(int)
+                else rounding_func(sizes / reference_volume.spacing).astype(int)  # type: ignore[operator]
             )
 
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
