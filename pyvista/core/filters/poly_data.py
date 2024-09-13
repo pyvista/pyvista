@@ -3960,7 +3960,7 @@ class PolyDataFilters(DataSetFilters):
             #. Triangulating the input cells.
             #  Sampling a subset of up to ``100 000`` cells.
             #. Computing the distance between two random points in each cell.
-            #. Inserting the distance into an ordered to create the CDF.
+            #. Inserting the distance into an ordered set to create the CDF.
 
             Has no effect if ``dimension`` or ``reference_volume`` are specified.
 
@@ -3975,6 +3975,102 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             Generated labelmap.
+
+        Examples
+        --------
+        Generate a labelmap for a coarse mesh.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> poly = examples.download_bunny_coarse()
+        >>> labelmap = poly.generate_labelmap()
+
+        The labelmap is stored as :class:`pyvista.ImageData` with point data scalars
+        (zeros for background, ones for foreground)
+
+        >>> labelmap
+        ImageData (...)
+          N Cells:      7056
+          N Points:     8228
+          X Bounds:     -1.245e-01, 1.731e-01
+          Y Bounds:     -1.135e-01, 1.807e-01
+          Z Bounds:     -1.359e-01, 9.140e-02
+          Dimensions:   22, 22, 17
+          Spacing:      1.417e-02, 1.401e-02, 1.421e-02
+          N Arrays:     1
+
+        >>> np.unique(labelmap.point_data['labelmap'])
+        pyvista_ndarray([0., 1.])
+
+        To visualize it as voxel cells, use :meth:`pyvista.ImageDataFilters.points_to_cells`,
+        then use :meth:`pyvista.DataSetFilters.threshold` to extract the foreground.
+
+        We also plot the voxel cells in blue and the input poly data in green.
+
+        >>> def plot_labelmap_and_polydata(labelmap, poly):
+        ...     voxel_cells = labelmap.points_to_cells().threshold(0.5)
+        ...
+        ...     pl = pv.Plotter()
+        ...     _ = pl.add_mesh(voxel_cells, color='blue')
+        ...     _ = pl.add_mesh(poly, color='lime')
+        ...     pl.camera_position = 'xy'
+        ...     pl.show()
+        ...
+
+        >>> plot_labelmap_and_polydata(labelmap, poly)
+
+        The spacing of the labelmap image is automatically adjusted to match the
+        density of the input.
+
+        Repeat the previous example with a finer mesh.
+
+        >>> poly = examples.download_bunny()
+        >>> labelmap = poly.generate_labelmap()
+        >>> plot_labelmap_and_polydata(labelmap, poly)
+
+        Control the spacing manually instead. Here, a very coarse spacing is used.
+
+        >>> labelmap = poly.generate_labelmap(spacing=(0.01, 0.04, 0.02))
+        >>> plot_labelmap_and_polydata(labelmap, poly)
+
+        Note that the spacing is only approximate. Check the labelmap's actual spacing.
+
+        >>> labelmap.spacing
+        (0.009731187485158443, 0.03858340159058571, 0.020112216472625732)
+
+        The actual values may be greater or less than the specified values. Use
+        ``spacing_bound='lower'`` to force all values to be greater.
+
+        >>> labelmap = poly.generate_labelmap(
+        ...     spacing=(0.01, 0.04, 0.02), spacing_bound='lower'
+        ... )
+        >>> labelmap.spacing
+        (0.01037993331750234, 0.05144453545411428, 0.020112216472625732)
+
+        Set the dimensions instead of the spacing.
+
+        >>> labelmap = poly.generate_labelmap(dimensions=(10, 20, 30))
+        >>> plot_labelmap_and_polydata(labelmap, poly)
+
+        >>> labelmap.dimensions
+        (10, 20, 30)
+
+        Generate a labelmap using a reference volume. First generate polydata from
+        an existing labelmap.
+
+        >>> volume = examples.load_frog_tissues()
+        >>> poly = volume.contour_labeled(smoothing=True)
+
+        Now generate the labelmap from the polydata using the volume as a reference.
+
+        >>> labelmap = poly.generate_labelmap(reference_volume=volume)
+        >>> plot_labelmap_and_polydata(labelmap, poly)
+
+        Compare this to generating the labelmap without the reference.
+
+        >>> labelmap = poly.generate_labelmap()
+        >>> plot_labelmap_and_polydata(labelmap, poly)
 
         """
         _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
@@ -4059,7 +4155,7 @@ class PolyDataFilters(DataSetFilters):
         poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
         poly_to_stencil.SetOutputOrigin(*reference_volume.origin)
         poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
-        _update_alg(poly_to_stencil, progress_bar=progress_bar)
+        _update_alg(poly_to_stencil, progress_bar, "Converting polydata")
 
         # Convert stencil to image
         stencil = _vtk.vtkImageStencil()
@@ -4067,7 +4163,7 @@ class PolyDataFilters(DataSetFilters):
         stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
         stencil.ReverseStencilOn()
         stencil.SetBackgroundValue(label_value)
-        _update_alg(stencil, progress_bar=progress_bar)
+        _update_alg(stencil, progress_bar, "Generating labelmap")
         output_volume = _get_output(stencil)
 
         # Set the orientation of the output
@@ -4077,7 +4173,9 @@ class PolyDataFilters(DataSetFilters):
 
 
 def _length_distribution_percentile(poly, percentile):
-    percentile = _validation.validate_number(percentile, must_be_in_range=[0.0, 1.0])
+    percentile = _validation.validate_number(
+        percentile, must_be_in_range=[0.0, 1.0], name='percentile'
+    )
     distribution = _vtk.vtkLengthDistribution()
     distribution.SetInputData(poly)
     distribution.Update()
