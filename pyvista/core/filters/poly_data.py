@@ -4154,14 +4154,14 @@ class PolyDataFilters(DataSetFilters):
                         "Cell length percentile and mesh length fraction cannot both be set. Set one or the other."
                     )
 
-                if cell_length_percentile is not None or pyvista.vtk_version_info < (9, 2):
+                if mesh_length_fraction is not None or pyvista.vtk_version_info < (9, 2):
                     # Compute spacing from mesh length
                     mesh_length_fraction = (
-                        _validation.validate_number(
+                        1 / 100
+                        if mesh_length_fraction is None
+                        else _validation.validate_number(
                             mesh_length_fraction, must_have_dtype=float, must_be_in_range=[0.0, 1.0]
                         )
-                        if mesh_length_fraction is None
-                        else mesh_length_fraction
                     )
                     spacing = self.length * mesh_length_fraction  # type: ignore[attr-defined]
                 else:

@@ -111,6 +111,28 @@ def test_voxelize_binary_mask_dimensions(sphere):
     assert mask.dimensions == dims
 
 
+def test_voxelize_binary_mask_auto_spacing(ant):
+    # Test default
+    mask_no_input = ant.voxelize_binary_mask()
+    if pv.vtk_version_info < (9, 2):
+        expected_mask = ant.voxelize_binary_mask(mesh_length_fraction=1 / 100)
+    else:
+        expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
+    assert mask_no_input.spacing == expected_mask.spacing
+
+    # Test cell length
+    mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
+    mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
+    assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
+
+    # Test cell length
+    mask_fraction_200 = ant.voxelize_binary_mask(mesh_length_fraction=1 / 200)
+    mask_fraction_500 = ant.voxelize_binary_mask(mesh_length_fraction=1 / 500)
+    assert np.all(np.array(mask_fraction_200.spacing) > mask_fraction_500.spacing)
+    # Check spacing matches mesh length. Use atol since spacing is approximate.
+    assert np.allclose(mask_fraction_500.spacing, ant.length / 500, atol=1e-3)
+
+
 @pytest.mark.parametrize(
     'rounding_func',
     [np.round, np.ceil, np.floor, lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]],
@@ -137,6 +159,7 @@ def test_voxelize_binary_mask_foreground(sphere, foreground, background):
     mask = sphere.voxelize_binary_mask(foreground_value=foreground, background_value=background)
     unique, counts = np.unique(mask['mask'], return_counts=True)
     assert np.array_equal(unique, [background, foreground])
+    # Test we have more foreground than background (not always true, but is true for a sphere mesh)
     assert counts[1] > counts[0]
 
 
