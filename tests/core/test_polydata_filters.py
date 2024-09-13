@@ -102,3 +102,24 @@ def test_generate_labelmap(frog_tissues_image, frog_tissues_contour):
 def test_generate_labelmap_no_reference(frog_tissues_image, frog_tissues_contour):
     labelmap = frog_tissues_contour.generate_labelmap()
     assert np.allclose(labelmap.points_to_cells().bounds, frog_tissues_contour.bounds)
+
+
+def test_generate_labelmap_dimensions(sphere):
+    dims = (10, 11, 12)
+    labelmap = sphere.generate_labelmap(dimensions=dims)
+    assert np.allclose(labelmap.points_to_cells().bounds, sphere.bounds)
+    assert labelmap.dimensions == dims
+
+
+@pytest.mark.parametrize('spacing_bound', ['upper', 'lower', None])
+def test_generate_labelmap_spacing_bound(sphere, spacing_bound):
+    spacing = np.array((1.1, 1.2, 1.3))
+    labelmap = sphere.generate_labelmap(spacing=spacing, spacing_bound=spacing_bound)
+    assert np.allclose(labelmap.points_to_cells().bounds, sphere.bounds)
+    if spacing_bound is None:
+        assert np.any(labelmap.spacing > spacing)
+        assert np.any(labelmap.spacing < spacing)
+    elif spacing_bound == 'upper':
+        assert np.all(labelmap.spacing < spacing)
+    else:  # spacing_bound == 'lower':
+        assert np.all(labelmap.spacing > spacing)

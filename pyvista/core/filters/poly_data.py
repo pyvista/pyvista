@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import Sequence
 import warnings
 
@@ -3905,6 +3906,7 @@ class PolyDataFilters(DataSetFilters):
         reference_volume: pyvista.ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
+        spacing_bound: Literal['upper', 'lower'] | None = None,
         progress_bar: bool = False,
     ):
         """Generate a 3D volume labelmap from polydata surface contours.
@@ -3923,8 +3925,16 @@ class PolyDataFilters(DataSetFilters):
             is specified.
 
         spacing : VectorLike[float], optional
-            Approximate spacing to use for the labelmap. Has no effect if
-            ``reference_volume`` is specified.
+            Approximate spacing to use for the labelmap. Set ``spacing_bound`` to
+            control the approximation. Has no effect if ``reference_volume`` is specified.
+
+        spacing_bound : 'upper' | 'lower' | None
+            Control whether to set an ``'upper'``, ``'lower'``, or no bound (``None``)
+            on the ``spacing``. If ``'upper'``, the actual spacing will be rounded
+            down such that it is less than the input spacing. If ``'lower'``, the
+            actual spacing will be rounded up such that it greater than the input
+            spacing. If ``None``, the actual spacing is rounded to be as close to the
+            input spacing as possible.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3936,7 +3946,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
-        _validation.check_greater_than(self.n_cells, 1, name='n_points')  # type: ignore[attr-defined]
+        _validation.check_greater_than(self.n_cells, 1, name='n_cells')  # type: ignore[attr-defined]
 
         if reference_volume is None:
             poly_ijk = self
@@ -3953,10 +3963,17 @@ class PolyDataFilters(DataSetFilters):
             z_size = bnds.z_max - bnds.z_min
             sizes = np.array((x_size, y_size, z_size))
 
+            if spacing_bound is not None:
+                _validation.check_contains(
+                    item=spacing_bound, container=['upper', 'lower'], name='spacing bound'
+                )
+                rounding_func = np.ceil if spacing_bound == 'upper' else np.floor
+            else:
+                rounding_func = np.round
             reference_volume.dimensions = (
                 dimensions  # type: ignore[assignment]
                 if dimensions is not None
-                else (sizes // reference_volume.spacing).astype(int)
+                else rounding_func(sizes / reference_volume.spacing).astype(int)
             )
 
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
