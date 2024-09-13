@@ -3909,6 +3909,7 @@ class PolyDataFilters(DataSetFilters):
         spacing: float | VectorLike[float] | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] = np.round,
         cell_length_percentile: float | None = None,
+        cell_length_sample_size: int =100_000,
         mesh_length_fraction: float | None = None,
         progress_bar: bool = False,
     ):
@@ -3996,7 +3997,7 @@ class PolyDataFilters(DataSetFilters):
             in the input. The CDF is computed by:
 
             #. Triangulating the input cells.
-            #  Sampling a subset of up to ``100 000`` cells.
+            #  Sampling a subset of up to ``cell_length_sample_size`` cells.
             #. Computing the distance between two random points in each cell.
             #. Inserting the distance into an ordered set to create the CDF.
 
@@ -4004,6 +4005,10 @@ class PolyDataFilters(DataSetFilters):
 
             .. note::
                 This option is only available for VTK 9.2 or greater.
+
+        cell_length_sample_size : int, default: 100 000
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option.
 
         mesh_length_fraction : float, optional
             Fraction of the surface mesh's length to use for computing the default
@@ -4161,7 +4166,7 @@ class PolyDataFilters(DataSetFilters):
                     cell_length_percentile = (
                         0.1 if cell_length_percentile is None else cell_length_percentile
                     )
-                    spacing = _length_distribution_percentile(poly_ijk, cell_length_percentile)
+                    spacing = _length_distribution_percentile(poly_ijk, cell_length_percentile, cell_length_sample_size, progress_bar=progress_bar)
             else:
                 # Spacing is specified directly. Make sure other params are not set.
                 if cell_length_percentile is not None:
@@ -4251,11 +4256,12 @@ class PolyDataFilters(DataSetFilters):
         return pyvista.wrap(output_volume)
 
 
-def _length_distribution_percentile(poly, percentile):
+def _length_distribution_percentile(poly, percentile,cell_length_sample_size, progress_bar):
     percentile = _validation.validate_number(
         percentile, must_be_in_range=[0.0, 1.0], name='percentile'
     )
     distribution = _vtk.vtkLengthDistribution()
     distribution.SetInputData(poly)
-    distribution.Update()
+    distribution.SetSampleSize(cell_length_sample_size)
+    _update_alg(distribution, progress_bar, "Computing cell length distribution")
     return distribution.GetLengthQuantile(percentile)
