@@ -111,18 +111,24 @@ def test_generate_labelmap_dimensions(sphere):
     assert labelmap.dimensions == dims
 
 
-@pytest.mark.parametrize('spacing_bound', ['upper', 'lower', None])
-def test_generate_labelmap_spacing_bound(sphere, spacing_bound):
+@pytest.mark.parametrize(
+    'rounding_func',
+    [np.round, np.ceil, np.floor, lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]],
+)
+def test_generate_labelmap_spacing_bound(sphere, rounding_func):
     spacing = np.array((1.1, 1.2, 1.3))
-    labelmap = sphere.generate_labelmap(spacing=spacing, spacing_bound=spacing_bound)
+    labelmap = sphere.generate_labelmap(spacing=spacing, rounding_func=rounding_func)
     assert np.allclose(labelmap.points_to_cells().bounds, sphere.bounds)
-    if spacing_bound is None:
+    if rounding_func == np.round:
         assert np.any(labelmap.spacing > spacing)
         assert np.any(labelmap.spacing < spacing)
-    elif spacing_bound == 'upper':
+    elif rounding_func == np.ceil:
         assert np.all(labelmap.spacing < spacing)
-    else:  # spacing_bound == 'lower':
+    elif rounding_func == np.floor:
         assert np.all(labelmap.spacing > spacing)
+    else:  # rounding_func == lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]]
+        assert labelmap.spacing[1] < spacing[1]
+        assert labelmap.spacing[2] > spacing[2]
 
 
 def test_generate_labelmap_raises(sphere):
