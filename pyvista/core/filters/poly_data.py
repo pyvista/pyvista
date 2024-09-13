@@ -3965,19 +3965,17 @@ class PolyDataFilters(DataSetFilters):
             z_size = bnds.z_max - bnds.z_min
             sizes = np.array((x_size, y_size, z_size))
 
-            if spacing_bound is not None:
-                _validation.check_contains(
-                    item=spacing_bound, container=['upper', 'lower'], name='spacing bound'
-                )
-                rounding_func = np.ceil if spacing_bound == 'upper' else np.floor
-            else:
-                rounding_func = np.round
-            reference_volume.dimensions = (
-                dimensions
-                if dimensions is not None
-                else rounding_func(sizes / reference_volume.spacing).astype(int)  # type: ignore[operator]
-            )
+            if dimensions is None:
+                if spacing_bound is not None:
+                    _validation.check_contains(
+                        item=spacing_bound, container=['upper', 'lower'], name='spacing bound'
+                    )
+                    rounding_func = np.ceil if spacing_bound == 'upper' else np.floor
+                else:
+                    rounding_func = np.round
+                dimensions = rounding_func(sizes / reference_volume.spacing).astype(int)  # type: ignore[operator]
 
+            reference_volume.dimensions = dimensions  # type: ignore[assignment]
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
             # Since we are dealing with voxels as points, we want the bounds of the
             # points to be 1/2 spacing width smaller than the polydata bounds
