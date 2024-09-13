@@ -4041,10 +4041,10 @@ class PolyDataFilters(DataSetFilters):
         (0.009731187485158443, 0.03858340159058571, 0.020112216472625732)
 
         The actual values may be greater or less than the specified values. Use
-        ``spacing_bound='lower'`` to force all values to be greater.
+        ``rounding_func=np.floor`` to force all values to be greater.
 
         >>> labelmap = poly.generate_labelmap(
-        ...     spacing=(0.01, 0.04, 0.02), spacing_bound='lower'
+        ...     spacing=(0.01, 0.04, 0.02), rounding_func=np.floor
         ... )
         >>> labelmap.spacing
         (0.01037993331750234, 0.05144453545411428, 0.020112216472625732)
