@@ -3913,41 +3913,38 @@ class PolyDataFilters(DataSetFilters):
         mesh_length_fraction: float | None = None,
         progress_bar: bool = False,
     ):
-        """Voxelize :class:`pyvista.PolyData` as a binary :class:`pyvista.ImageData` mask.
+        """Voxelize :class:`~pyvista.PolyData` as a binary :class:`~pyvista.ImageData` mask.
 
         Generate a voxelized representation of a surface. The voxelization can be
-        controlled in several ways:
+        controlled in several ways.
 
-        #. Specify a ``reference_volume``. The generated mask will have the same
-           structure as the reference. This is useful when converting back-and-forth
-           between a volume and surface representation (e.g. for processing medical
-           images).
+        #. Specify the output geometry using a ``reference_volume``.
 
-        #. Specify the ``spacing``. The dimensions and origin of the output mask will be
-           set implicitly from the spacing such that they are compatible with the
-           bounds of the input surface.
+        #. Specify the ``spacing`` explicitly.
 
-        #. Specify the ``dimensions``. The spacing and origin of the output mask will be
-           set implicitly from the dimensions such that they are compatible with the
-           bounds of the input surface.
+        #. Specify the ``dimensions`` explicitly.
 
-        #. Specify ``cell_length_percentile``. The spacing is estimated from the
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
 
         #. Specify ``mesh_length_fraction``. The spacing is computed as a fraction of
            the mesh's diagonal length.
 
-        If no inputs are provided, the 10th ``cell_length_percentile`` is used by
-        default on systems with VTK >= 9.2. For older versions of VTK, the default
-        spacing is ``mesh_length_fraction=1/100``.
+        Use ``reference_volume`` for full control of the output mask's geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        mask fits the bounds of the input surface.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        used by default to estimate the spacing. On systems with VTK < 9.2, the default
+        spacing is set to ``mesh_length_fraction=1/100``.
 
         .. note::
             For best results, ensure the input surface is a closed surface. The
-            surface is considered closed if it has zero :attr:`pyvista._PointSet.n_open_edges`.
+            surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
 
         .. note::
-            This filter returns voxels represented as point data, not :attr:`pyvista.CellTypes.VOXEL` cells.
-            This differs from :func:`pyvista.voxelize` and :func:`pyvista.voxelize_volume`
+            This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
+            This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
             which return meshes with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
 
@@ -3961,31 +3958,22 @@ class PolyDataFilters(DataSetFilters):
 
         reference_volume : pyvista.ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
-            ``origin``, ``spacing``, and ``direction_matrix`` as the reference. If
-            specified, all other spacing- or dimensions-related parameters are ignored.
+            ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
-            Dimensions of the generated mask image. Has no effect if ``reference_volume``
-            is specified.
+            Dimensions of the generated mask image. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameter. See summary and examples for details.
 
         spacing : VectorLike[float], optional
-            Approximate spacing to use for the generated mask image.
+            Approximate spacing to use for the generated mask image. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
 
-            If unset, spacing is computed from the input's mesh length or approximate
-            cell lengths. The 10th ``cell_length_percentile`` is used by default. Set
-            ``mesh_length_fraction`` instead to use mesh length.
-
-            If set, this value is used to determine the image's dimensions. The spacing
-            is approximate because it must then be adjusted to ensure the mask's bounds
-            match the input's bounds. Use ``rounding_func`` to control the approximation.
-
-            Has no effect if ``reference_volume`` is specified.
-
-        rounding_func : Callable[VectorLike[float], VectorLike[int]], default: np.round
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], default: numpy.round
             Control how the dimensions are rounded to integers based on the provided or
-            calculated ``spacing``. Should accept a ``VectorLike[float]`` containing the
-            dimension values along the three directions and return an ``VectorLike[int]``
-            version of it.
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
 
             Rounding the dimensions implies rounding the actual spacing.
 
@@ -3999,7 +3987,7 @@ class PolyDataFilters(DataSetFilters):
             in the input. The CDF is computed by:
 
             #. Triangulating the input cells.
-            #  Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
             #. Computing the distance between two random points in each cell.
             #. Inserting the distance into an ordered set to create the CDF.
 
@@ -4008,9 +3996,10 @@ class PolyDataFilters(DataSetFilters):
             .. note::
                 This option is only available for VTK 9.2 or greater.
 
-        cell_length_sample_size : int, default: 100 000
+        cell_length_sample_size : int, optional
             Number of samples to use for the cumulative distribution function (CDF)
-            when using the ``cell_length_percentile`` option.
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
 
         mesh_length_fraction : float, optional
             Fraction of the surface mesh's length to use for computing the default
@@ -4030,15 +4019,15 @@ class PolyDataFilters(DataSetFilters):
         See Also
         --------
         pyvista.voxelize
-            Similar function that returns a :class:`pyvista.UnstructuredGrid` of
+            Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
             :attr:`~pyvista.CellType.VOXEL` cells.
 
         pyvista.voxelize_volume
-            Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
+            Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
         pyvista.ImageDataFilters.contour_labeled
             Filter that generates surface contours from labeled image data. Can be
-            loosely considered as the inverse of this filter.
+            loosely considered as an inverse of this filter.
 
         pyvista.ImageDataFilters.points_to_cells
             Convert voxels represented as points to :attr:`~pyvista.CellType.VOXEL`
@@ -4057,7 +4046,7 @@ class PolyDataFilters(DataSetFilters):
         >>> poly = examples.download_bunny_coarse()
         >>> mask = poly.voxelize_binary_mask()
 
-        The mask is stored as :class:`pyvista.ImageData` with point data scalars
+        The mask is stored as :class:`~pyvista.ImageData` with point data scalars
         (zeros for background, ones for foreground).
 
         >>> mask
@@ -4074,23 +4063,24 @@ class PolyDataFilters(DataSetFilters):
         >>> np.unique(mask.point_data['mask'])
         pyvista_ndarray([0, 1], dtype=uint8)
 
-        To visualize it as voxel cells, use :meth:`pyvista.ImageDataFilters.points_to_cells`,
-        then use :meth:`pyvista.DataSetFilters.threshold` to extract the foreground.
+        To visualize it as voxel cells, use :meth:`~pyvista.ImageDataFilters.points_to_cells`,
+        then use :meth:`~pyvista.DataSetFilters.threshold` to extract the foreground.
 
         We also plot the voxel cells in blue and the input poly data in green for
         comparison.
 
-        >>> def plot_mask_and_polydata(mask, poly):
+        >>> def mask_and_polydata_plotter(mask, poly):
         ...     voxel_cells = mask.points_to_cells().threshold(0.5)
         ...
-        ...     pl = pv.Plotter()
+        ...     plot = pv.Plotter()
         ...     _ = pl.add_mesh(voxel_cells, color='blue')
         ...     _ = pl.add_mesh(poly, color='lime')
-        ...     pl.camera_position = 'xy'
-        ...     pl.show()
+        ...     plot.camera_position = 'xy'
+        ...     return plot
         ...
 
-        >>> plot_mask_and_polydata(mask, poly)
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
 
         The spacing of the mask image is automatically adjusted to match the
         density of the input.
@@ -4099,12 +4089,14 @@ class PolyDataFilters(DataSetFilters):
 
         >>> poly = examples.download_bunny()
         >>> mask = poly.voxelize_binary_mask()
-        >>> plot_mask_and_polydata(mask, poly)
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
 
         Control the spacing manually instead. Here, a very coarse spacing is used.
 
         >>> mask = poly.voxelize_binary_mask(spacing=(0.01, 0.04, 0.02))
-        >>> plot_mask_and_polydata(mask, poly)
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
 
         Note that the spacing is only approximate. Check the mask's actual spacing.
 
@@ -4123,7 +4115,8 @@ class PolyDataFilters(DataSetFilters):
         Set the dimensions instead of the spacing.
 
         >>> mask = poly.voxelize_binary_mask(dimensions=(10, 20, 30))
-        >>> plot_mask_and_polydata(mask, poly)
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
 
         >>> mask.dimensions
         (10, 20, 30)
@@ -4137,7 +4130,8 @@ class PolyDataFilters(DataSetFilters):
         Now create the mask from the polydata using the volume as a reference.
 
         >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
-        >>> plot_mask_and_polydata(mask, poly)
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
 
         """
         _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
