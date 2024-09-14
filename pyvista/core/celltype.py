@@ -222,6 +222,7 @@ class CellType(IntEnum):
             useful for composite cells (e.g. POLY_LINE or POLY_VERTEX) where a value
             of ``0`` may otherwise be shown. By default, the value from ``cell_class``
             is used.
+
         """
         self = int.__new__(cls, value)
         self._value_ = value
@@ -632,6 +633,7 @@ class CellType(IntEnum):
     QUADRATIC_POLYGON = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_POLYGON,
         cell_class=_vtk.vtkQuadraticPolygon,
+        example='QuadraticPolygon',
         points_override='variable',
         edges_override='variable',
         short_doc="""
@@ -717,6 +719,7 @@ class CellType(IntEnum):
     QUADRATIC_PYRAMID = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_PYRAMID,
         cell_class=_vtk.vtkQuadraticPyramid,
+        example='QuadraticPyramid',
         short_doc="""
         Represents a 3D, 13-node iso-parametric parabolic pyramid.
 
@@ -737,6 +740,7 @@ class CellType(IntEnum):
     BIQUADRATIC_QUAD = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUAD,
         cell_class=_vtk.vtkBiQuadraticQuad,
+        example='BiQuadraticQuadrilateral',
         short_doc="""
         Represents a 2D, 9-node iso-parametric parabolic quadrilateral element with a center-point.
 
@@ -756,6 +760,7 @@ class CellType(IntEnum):
     TRIQUADRATIC_HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_TRIQUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkTriQuadraticHexahedron,
+        example='TriQuadraticHexahedron',
         short_doc="""
         Represents a 3D, 27-node iso-parametric triquadratic hexahedron.
 
@@ -792,6 +797,7 @@ class CellType(IntEnum):
         TRIQUADRATIC_PYRAMID = _CellTypeTuple(
             value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
             cell_class=_vtk.vtkTriQuadraticPyramid,
+            example='TriQuadraticPyramid',
             short_doc="""
             Represents a second order 3D iso-parametric 19-node pyramid.
 
@@ -827,6 +833,7 @@ class CellType(IntEnum):
     QUADRATIC_LINEAR_QUAD = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
         cell_class=_vtk.vtkQuadraticLinearQuad,
+        example='QuadraticLinearQuadrilateral',
         short_doc="""
         Represents a 2D, 6-node iso-parametric quadratic-linear quadrilateral element.
 
@@ -844,6 +851,7 @@ class CellType(IntEnum):
     QUADRATIC_LINEAR_WEDGE = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_WEDGE,
         cell_class=_vtk.vtkQuadraticLinearWedge,
+        example='QuadraticLinearWedge',
         short_doc="""
         Represents a 3D, 12-node iso-parametric linear quadratic wedge.
 
@@ -864,6 +872,7 @@ class CellType(IntEnum):
     BIQUADRATIC_QUADRATIC_WEDGE = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkBiQuadraticQuadraticWedge,
+        example='BiQuadraticQuadraticWedge',
         short_doc="""
         Represents a 3D, 18-node iso-parametric bi-quadratic wedge.
 
@@ -887,6 +896,7 @@ class CellType(IntEnum):
     BIQUADRATIC_QUADRATIC_HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkBiQuadraticQuadraticHexahedron,
+        example='BiQuadraticQuadraticHexahedron',
         short_doc="""
         Represents a 3D, 24-node iso-parametric biquadratic hexahedron.
 
@@ -911,6 +921,7 @@ class CellType(IntEnum):
     BIQUADRATIC_TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkBiQuadraticTriangle,
+        example='BiQuadraticTriangle',
         short_doc="""
         Represents a 2D, 7-node, iso-parametric parabolic triangle.
 
@@ -931,7 +942,22 @@ class CellType(IntEnum):
 
     ####################################################################################
     # Cubic, iso-parametric cell
-    CUBIC_LINE = _CellTypeTuple(value=_vtk.VTK_CUBIC_LINE, cell_class=_vtk.vtkCubicLine)
+    CUBIC_LINE = _CellTypeTuple(
+        value=_vtk.VTK_CUBIC_LINE,
+        cell_class=_vtk.vtkCubicLine,
+        example='CubicLine',
+        short_doc="""
+        Represents a 1D iso-parametric cubic line.
+
+        The cell includes two mid-edge nodes.
+        """,
+        long_doc="""
+        The ordering of the four points defining the cell is point ids ``(0,1,2,3)``
+        where id #2 and #3 are the mid-edge nodes.
+
+        The parametric coordinates lie between -1 and 1.
+        """,
+    )
 
     ####################################################################################
     # Special class of cells formed by convex group of points

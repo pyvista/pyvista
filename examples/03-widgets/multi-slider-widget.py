@@ -21,7 +21,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 import pyvista as pv
 
 
-class MyCustomRoutine:
+class MyCustomRoutine:  # noqa: D101
     def __init__(self, mesh):
         self.output = mesh  # Expected PyVista mesh type
         # default parameters

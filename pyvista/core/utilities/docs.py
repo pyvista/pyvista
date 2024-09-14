@@ -35,6 +35,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     This has been adapted to deal with our "verbose" decorator.
 
     Adapted from mne (mne/utils/docs.py), which was adapted from SciPy (doc/source/conf.py).
+
     """
     import pyvista
 
