@@ -215,6 +215,7 @@ def oriented_polydata(oriented_image):
     return oriented_poly
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
     mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
     assert mask.bounds == oriented_image.bounds
