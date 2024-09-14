@@ -3907,7 +3907,7 @@ class PolyDataFilters(DataSetFilters):
         reference_volume: pyvista.ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
-        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] = np.round,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
         mesh_length_fraction: float | None = None,
@@ -3970,10 +3970,11 @@ class PolyDataFilters(DataSetFilters):
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
 
-        rounding_func : Callable[VectorLike[float], VectorLike[int]], default: numpy.round
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
             Control how the dimensions are rounded to integers based on the provided or
             calculated ``spacing``. Should accept a length-3 vector containing the
             dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
 
             Rounding the dimensions implies rounding the actual spacing.
 
@@ -4141,6 +4142,17 @@ class PolyDataFilters(DataSetFilters):
             return poly_in.compute_normals().triangulate()
 
         if reference_volume is not None:
+            if (
+                dimensions is not None
+                or spacing is not None
+                or rounding_func is not None
+                or cell_length_percentile is not None
+                or cell_length_sample_size is not None
+                or mesh_length_fraction is not None
+            ):
+                raise TypeError(
+                    'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+                )
             _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
@@ -4215,7 +4227,12 @@ class PolyDataFilters(DataSetFilters):
             sizes = np.array((x_size, y_size, z_size))
 
             if dimensions is None:
+                rounding_func = np.round if rounding_func is None else rounding_func
                 dimensions = np.array(rounding_func(sizes / initial_spacing), dtype=int)
+            elif rounding_func is not None:
+                raise TypeError(
+                    "Rounding func cannot be set when dimensions is specified. Set one or the other."
+                )
 
             reference_volume = pyvista.ImageData()
             reference_volume.dimensions = dimensions  # type: ignore[assignment]

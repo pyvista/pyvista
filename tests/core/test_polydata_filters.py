@@ -241,3 +241,20 @@ def test_voxelize_binary_mask_raises(sphere):
     )
     with pytest.raises(TypeError, match=match):
         sphere.voxelize_binary_mask(mesh_length_fraction=1 / 100, cell_length_percentile=0.2)
+
+    match = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), rounding_func=np.round)
+
+    for parameter in [
+        'dimensions',
+        'spacing',
+        'rounding_func',
+        'cell_length_percentile',
+        'cell_length_sample_size',
+        'mesh_length_fraction',
+    ]:
+        kwargs = {parameter: 0}  # Give parameter any value for test
+        match = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+        with pytest.raises(TypeError, match=match):
+            sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
