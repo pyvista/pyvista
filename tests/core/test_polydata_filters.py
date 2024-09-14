@@ -231,6 +231,10 @@ def test_voxelize_binary_mask_raises(sphere):
     with pytest.raises(TypeError, match=match):
         sphere.voxelize_binary_mask(spacing=(4, 5, 6), cell_length_percentile=0.2)
 
+    match = 'Spacing and mesh length fraction cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.voxelize_binary_mask(spacing=(4, 5, 6), mesh_length_fraction=0.2)
+
     match = (
         'Cell length percentile and mesh length fraction cannot both be set. Set one or the other.'
     )
