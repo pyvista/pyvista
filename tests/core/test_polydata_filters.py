@@ -198,6 +198,30 @@ def test_voxelize_binary_mask_foreground_background(sphere, foreground, backgrou
         assert mask['mask'].dtype == float
 
 
+@pytest.fixture
+def oriented_image():
+    image = pv.ImageData()
+    image.spacing = (1.1, 1.2, 1.3)
+    image.dimensions = (10, 11, 12)
+    image.direction_matrix = pv.Transform().rotate_vector((4, 5, 6), 30).matrix[:3, :3]
+    image['scalars'] = np.ones((image.n_points,))
+    return image
+
+
+@pytest.fixture
+def oriented_polydata(oriented_image):
+    oriented_poly = oriented_image.pad_image().contour_labeled(smoothing=False)
+    assert np.allclose(oriented_poly.bounds, oriented_image.points_to_cells().bounds, atol=0.1)
+    return oriented_poly
+
+
+def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
+    mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
+    assert mask.bounds == oriented_image.bounds
+    mask_as_surface = mask.pad_image().contour_labeled(smoothing=False)
+    assert mask_as_surface.bounds == oriented_polydata.bounds
+
+
 def test_voxelize_binary_mask_raises(sphere):
     match = 'Spacing and dimensions cannot both be set. Set one or the other.'
     with pytest.raises(TypeError, match=match):
