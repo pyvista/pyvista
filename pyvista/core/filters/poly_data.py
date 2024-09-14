@@ -3923,16 +3923,16 @@ class PolyDataFilters(DataSetFilters):
            between a volume and surface representation (e.g. for processing medical
            images).
 
-        #. Specify the ``spacing``. The ``dimensions`` and ``origin`` are then set
-           implicitly from the spacing such that they are compatible with the bounds
-           of the input surface.
+        #. Specify the ``spacing``. The dimensions and origin of the output mask will be
+           set implicitly from the spacing such that they are compatible with the
+           bounds of the input surface.
 
-        #. Specify the ``dimensions``. The ``spacing`` and ``origin`` are then set
-           implicitly from the dimensions such that they are compatible with the bounds
-           of the input surface.
+        #. Specify the ``dimensions``. The spacing and origin of the output mask will be
+           set implicitly from the dimensions such that they are compatible with the
+           bounds of the input surface.
 
         #. Specify ``cell_length_percentile``. The spacing is estimated from the
-           surface's cells using the specified percentile ``cell_length_percentile``.
+           surface's cells using the specified percentile.
 
         #. Specify ``mesh_length_fraction``. The spacing is computed as a fraction of
            the mesh's diagonal length.
@@ -3946,9 +3946,10 @@ class PolyDataFilters(DataSetFilters):
             surface is considered closed if it has zero :attr:`pyvista._PointSet.n_open_edges`.
 
         .. note::
-            This filter returns voxels represented as point data, not voxel cells.
-            See :ref:`image_representations_example` for examples demonstrating the
-            difference.
+            This filter returns voxels represented as point data, not :attr:`pyvista.CellTypes.VOXEL` cells..
+            This differs from :func:`pyvista.voxelize` and :func:`pyvista.voxelize_volume`
+            which return meshes with voxel cells. See :ref:`image_representations_example`
+            for examples demonstrating the difference.
 
         Parameters
         ----------
