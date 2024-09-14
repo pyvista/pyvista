@@ -3946,7 +3946,7 @@ class PolyDataFilters(DataSetFilters):
             surface is considered closed if it has zero :attr:`pyvista._PointSet.n_open_edges`.
 
         .. note::
-            This filter returns voxels represented as point data, not :attr:`pyvista.CellTypes.VOXEL` cells..
+            This filter returns voxels represented as point data, not :attr:`pyvista.CellTypes.VOXEL` cells.
             This differs from :func:`pyvista.voxelize` and :func:`pyvista.voxelize_volume`
             which return meshes with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
@@ -4031,7 +4031,7 @@ class PolyDataFilters(DataSetFilters):
         --------
         pyvista.voxelize
             Similar function that returns a :class:`pyvista.UnstructuredGrid` of
-            :attr:`pyvista.CellType.VOXEL` cells.
+            :attr:`~pyvista.CellType.VOXEL` cells.
 
         pyvista.voxelize_volume
             Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
@@ -4041,7 +4041,7 @@ class PolyDataFilters(DataSetFilters):
             loosely considered as the inverse of this filter.
 
         pyvista.ImageDataFilters.points_to_cells
-            Convert voxels represented as points to :attr:`pyvista.CellType.VOXEL`
+            Convert voxels represented as points to :attr:`~pyvista.CellType.VOXEL`
             cells.
 
         pyvista.ImageData
@@ -4210,9 +4210,7 @@ class PolyDataFilters(DataSetFilters):
                         "Spacing and mesh length fraction cannot both be set. Set one or the other."
                     )
 
-            reference_volume = pyvista.ImageData()
-
-            # Set initial spacing (will be adjusted later)
+            # Get initial spacing (will be adjusted later)
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
@@ -4225,6 +4223,7 @@ class PolyDataFilters(DataSetFilters):
             if dimensions is None:
                 dimensions = np.array(rounding_func(sizes / initial_spacing), dtype=int)
 
+            reference_volume = pyvista.ImageData()
             reference_volume.dimensions = dimensions  # type: ignore[assignment]
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
             # Since we are dealing with voxels as points, we want the bounds of the
