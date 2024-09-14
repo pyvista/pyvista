@@ -4074,8 +4074,8 @@ class PolyDataFilters(DataSetFilters):
         ...     voxel_cells = mask.points_to_cells().threshold(0.5)
         ...
         ...     plot = pv.Plotter()
-        ...     _ = pl.add_mesh(voxel_cells, color='blue')
-        ...     _ = pl.add_mesh(poly, color='lime')
+        ...     _ = plot.add_mesh(voxel_cells, color='blue')
+        ...     _ = plot.add_mesh(poly, color='lime')
         ...     plot.camera_position = 'xy'
         ...     return plot
         ...
