@@ -4031,10 +4031,18 @@ class PolyDataFilters(DataSetFilters):
         --------
         pyvista.voxelize
             Similar function that returns a :class:`pyvista.UnstructuredGrid` of
-            :attr:`pyvista.CellTypes.VOXEL` cells.
+            :attr:`pyvista.CellType.VOXEL` cells.
 
         pyvista.voxelize_volume
             Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
+
+        pyvista.ImageDataFilters.contour_labeled
+            Filter that generates surface contours from labeled image data. Can be
+            loosely considered as the inverse of this filter.
+
+        pyvista.ImageDataFilters.points_to_cells
+            Convert voxels represented as points to :attr:`pyvista.CellType.VOXEL`
+            cells.
 
         pyvista.ImageData
             Class used to build custom ``reference_volume``.

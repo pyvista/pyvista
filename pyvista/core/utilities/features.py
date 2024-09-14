@@ -87,7 +87,7 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     --------
     pyvista.voxelize
         Similar function that returns a :class:`pyvista.UnstructuredGrid` of
-        :attr:`pyvista.CellTypes.VOXEL` cells.
+        :attr:`pyvista.CellType.VOXEL` cells.
 
     pyvista.voxelize_volume
         Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
@@ -259,7 +259,7 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
     --------
     pyvista.voxelize
         Similar function that returns a :class:`pyvista.UnstructuredGrid` of
-        :attr:`pyvista.CellTypes.VOXEL` cells.
+        :attr:`pyvista.CellType.VOXEL` cells.
 
     pyvista.PolyDataFilters.voxelize_binary_mask
         Similar function that returns a :class:`pyvista.ImageData` with point data.
