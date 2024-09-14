@@ -146,8 +146,8 @@ def test_voxelize_binary_mask_cell_length_sample_size(ant):
         with pytest.raises(TypeError, match=match):
             ant.voxelize_binary_mask(cell_length_percentile=0.2)
     else:
-        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=1)
-        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=20)
+        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
+        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
         assert mask_samples_1.spacing != mask_samples_2.spacing
 
         mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
