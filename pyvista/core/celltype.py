@@ -35,7 +35,8 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 
         .. card::
             :class-body: sd-px-0 sd-py-0 sd-rounded-3
-            :link: https://docs.pyvista.org/api/utilities/_autosummary/pyvista.celltype#pyvista.CellType.{}
+            :link: pyvista.examples.cells.{}
+            :link-type: func
 
             .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
 
