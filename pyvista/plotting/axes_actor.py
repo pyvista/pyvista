@@ -636,6 +636,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
 
     Load the teapot geometry using PyVista's built-in methods
 
+    >>> pv.set_jupyter_backend('static')
     >>> filename = pv.examples.download_teapot(
     ...     load=False
     ... )  # Download only, do not load
@@ -676,7 +677,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
 
     >>> polaxes = pv.PolarAxesActor()
     >>> polaxes.SetBounds(normals.bounds)
-    >>> polaxes.SetPole(0.5, 1.0, 3.0)
+    >>> polaxes.pole = (0.5, 1.0, 3.0)
     >>> polaxes.SetMaximumRadius(3.0)
     >>> polaxes.SetMinimumAngle(-60.0)
     >>> polaxes.SetMaximumAngle(210.0)
@@ -711,6 +712,27 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
 
     Show the result
 
-    >>> plotter.show(window_size=[600, 600])
+    >>> plotter.show()
 
     """
+
+    @property
+    def pole(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the pole position.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.pole
+        (0.0, 0.0, 0.0)
+        >>> polaxes.pole = (0.5, 1.0, 3.0)
+        >>> polaxes.pole
+        (0.5, 1.0, 3.0)
+
+        """
+        return self.GetPole()
+
+    @pole.setter
+    def pole(self, pole: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self.SetPole(pole[0], pole[1], pole[2])
