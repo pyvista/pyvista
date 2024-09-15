@@ -736,3 +736,22 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     @pole.setter
     def pole(self, pole: tuple[float, float, float]):  # numpydoc ignore=GL08
         self.SetPole(pole[0], pole[1], pole[2])
+
+    @property
+    def camera(self) -> pyvista.Camera:  # numpydoc ignore=RT01
+        """Return or set the camera.
+
+        the camera to perform scaling and translation of the polar axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.camera = pv.Camera()
+
+        """
+        return pyvista.Camera(self.GetCamera())
+
+    @camera.setter
+    def camera(self, camera: pyvista.Camera):  # numpydoc ignore=GL08
+        self.SetCamera(camera)
