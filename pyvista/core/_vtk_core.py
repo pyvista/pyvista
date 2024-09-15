@@ -1,5 +1,4 @@
-"""
-Limited imports from VTK (excludes any GL-dependent).
+"""Limited imports from VTK (excludes any GL-dependent).
 
 These are the modules within VTK that must be loaded across pyvista's
 core API. Here, we attempt to import modules using the ``vtkmodules``
@@ -46,6 +45,10 @@ from vtkmodules.util.numpy_support import get_vtk_array_type
 from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.util.numpy_support import numpy_to_vtkIdTypeArray
 from vtkmodules.util.numpy_support import vtk_to_numpy
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.util.pickle_support import serialize_VTK_data_object
+
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonComputationalGeometry import vtkKochanekSpline
 from vtkmodules.vtkCommonComputationalGeometry import vtkParametricBohemianDome
@@ -165,36 +168,56 @@ from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_HEXAHEDRON
 from vtkmodules.vtkCommonDataModel import VTK_VERTEX
 from vtkmodules.vtkCommonDataModel import VTK_VOXEL
 from vtkmodules.vtkCommonDataModel import VTK_WEDGE
+from vtkmodules.vtkCommonDataModel import vtkBiQuadraticQuad
+from vtkmodules.vtkCommonDataModel import vtkBiQuadraticQuadraticHexahedron
+from vtkmodules.vtkCommonDataModel import vtkBiQuadraticQuadraticWedge
+from vtkmodules.vtkCommonDataModel import vtkBiQuadraticTriangle
 from vtkmodules.vtkCommonDataModel import vtkCell
 from vtkmodules.vtkCommonDataModel import vtkCellArray
 from vtkmodules.vtkCommonDataModel import vtkCellLocator
 from vtkmodules.vtkCommonDataModel import vtkColor3ub
 from vtkmodules.vtkCommonDataModel import vtkCompositeDataSet
+from vtkmodules.vtkCommonDataModel import vtkConvexPointSet
+from vtkmodules.vtkCommonDataModel import vtkCubicLine
 from vtkmodules.vtkCommonDataModel import vtkDataObject
 from vtkmodules.vtkCommonDataModel import vtkDataSet
 from vtkmodules.vtkCommonDataModel import vtkDataSetAttributes
+from vtkmodules.vtkCommonDataModel import vtkEmptyCell
 from vtkmodules.vtkCommonDataModel import vtkExplicitStructuredGrid
 from vtkmodules.vtkCommonDataModel import vtkFieldData
 from vtkmodules.vtkCommonDataModel import vtkGenericCell
+from vtkmodules.vtkCommonDataModel import vtkHexagonalPrism
+from vtkmodules.vtkCommonDataModel import vtkHexahedron
 from vtkmodules.vtkCommonDataModel import vtkImageData
 from vtkmodules.vtkCommonDataModel import vtkImplicitFunction
 from vtkmodules.vtkCommonDataModel import vtkIterativeClosestPointTransform
+from vtkmodules.vtkCommonDataModel import vtkLine
 from vtkmodules.vtkCommonDataModel import vtkMultiBlockDataSet
 from vtkmodules.vtkCommonDataModel import vtkNonMergingPointLocator
 from vtkmodules.vtkCommonDataModel import vtkPartitionedDataSet
+from vtkmodules.vtkCommonDataModel import vtkPentagonalPrism
 from vtkmodules.vtkCommonDataModel import vtkPerlinNoise
 from vtkmodules.vtkCommonDataModel import vtkPiecewiseFunction
+from vtkmodules.vtkCommonDataModel import vtkPixel
 from vtkmodules.vtkCommonDataModel import vtkPlane
 from vtkmodules.vtkCommonDataModel import vtkPlaneCollection
 from vtkmodules.vtkCommonDataModel import vtkPlanes
 from vtkmodules.vtkCommonDataModel import vtkPointLocator
 from vtkmodules.vtkCommonDataModel import vtkPointSet
 from vtkmodules.vtkCommonDataModel import vtkPolyData
+from vtkmodules.vtkCommonDataModel import vtkPolygon
+from vtkmodules.vtkCommonDataModel import vtkPolyhedron
 from vtkmodules.vtkCommonDataModel import vtkPolyLine
 from vtkmodules.vtkCommonDataModel import vtkPolyPlane
+from vtkmodules.vtkCommonDataModel import vtkPolyVertex
 from vtkmodules.vtkCommonDataModel import vtkPyramid
+from vtkmodules.vtkCommonDataModel import vtkQuad
 from vtkmodules.vtkCommonDataModel import vtkQuadraticEdge
 from vtkmodules.vtkCommonDataModel import vtkQuadraticHexahedron
+from vtkmodules.vtkCommonDataModel import vtkQuadraticLinearQuad
+from vtkmodules.vtkCommonDataModel import vtkQuadraticLinearWedge
+from vtkmodules.vtkCommonDataModel import vtkQuadraticPolygon
+from vtkmodules.vtkCommonDataModel import vtkQuadraticPyramid
 from vtkmodules.vtkCommonDataModel import vtkQuadraticQuad
 from vtkmodules.vtkCommonDataModel import vtkQuadraticTetra
 from vtkmodules.vtkCommonDataModel import vtkQuadraticTriangle
@@ -207,10 +230,18 @@ from vtkmodules.vtkCommonDataModel import vtkStaticCellLocator
 from vtkmodules.vtkCommonDataModel import vtkStaticPointLocator
 from vtkmodules.vtkCommonDataModel import vtkStructuredGrid
 from vtkmodules.vtkCommonDataModel import vtkTable
+from vtkmodules.vtkCommonDataModel import vtkTetra
+from vtkmodules.vtkCommonDataModel import vtkTriangle
+from vtkmodules.vtkCommonDataModel import vtkTriangleStrip
+from vtkmodules.vtkCommonDataModel import vtkTriQuadraticHexahedron
 from vtkmodules.vtkCommonDataModel import vtkUnstructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkVertex
+from vtkmodules.vtkCommonDataModel import vtkVoxel
+from vtkmodules.vtkCommonDataModel import vtkWedge
 
 with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.2
     from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID
+    from vtkmodules.vtkCommonDataModel import vtkTriQuadraticPyramid
 
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithm
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithmOutput

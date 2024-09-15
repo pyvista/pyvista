@@ -6,7 +6,7 @@ import pyvista as pv
 from pyvista.plotting.volume_property import VolumeProperty
 
 
-@pytest.fixture()
+@pytest.fixture
 def vol_prop():
     return VolumeProperty()
 

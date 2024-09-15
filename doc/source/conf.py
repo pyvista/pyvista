@@ -1,3 +1,5 @@
+"""Documentation configuration."""
+
 from __future__ import annotations
 
 import datetime
@@ -339,7 +341,7 @@ class ResetPyVista:
     """Reset pyvista module to default settings."""
 
     def __call__(self, gallery_conf, fname):
-        """Reset pyvista module to default settings
+        """Reset pyvista module to default settings.
 
         If default documentation settings are modified in any example, reset here.
         """
@@ -616,7 +618,7 @@ ogp_image = "https://docs.pyvista.org/_static/pyvista_banner_small.png"
 html_baseurl = 'https://docs.pyvista.org/'
 
 
-def setup(app):
+def setup(app):  # noqa: D103
     app.connect("html-page-context", pv_html_page_context)
     app.add_css_file("copybutton.css")
     app.add_css_file("no_search_highlight.css")

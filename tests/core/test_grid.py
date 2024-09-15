@@ -500,7 +500,7 @@ def test_init_structured(struct_grid):
     assert np.array_equal(grid_a.points, grid.points)
 
 
-@pytest.fixture()
+@pytest.fixture
 def structured_points():
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
@@ -1093,6 +1093,52 @@ def test_grid_points():
     )
 
 
+def test_imagedata_direction_matrix():
+    # Create image data with a single voxel cell
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    assert image.n_points == 8
+    assert image.n_cells == 1
+
+    initial_bounds = (0.0, 1.0, 0.0, 1.0, 0.0, 1.0)
+    assert image.bounds == initial_bounds
+
+    # Test set/get
+    expected_matrix = pv.Transform().rotate_vector((1, 2, 3), 30).matrix[:3, :3]
+    image.direction_matrix = expected_matrix
+    assert np.array_equal(image.direction_matrix, expected_matrix)
+
+    # Test bounds using a transformed reference box
+    box = pv.Box(bounds=initial_bounds)
+    box.transform(image.index_to_physical_matrix)
+    expected_bounds = box.bounds
+    assert np.allclose(image.bounds, expected_bounds)
+
+    # Check that filters make use of the direction matrix internally
+    image['data'] = np.ones((image.n_points,))
+    filtered = image.threshold()
+    assert filtered.bounds == expected_bounds
+
+    # Check that points make use of the direction matrix internally
+    poly_points = pv.PolyData(image.points)
+    assert np.allclose(poly_points.bounds, expected_bounds)
+
+
+def test_imagedata_index_to_physical_matrix():
+    # Create image with arbitrary translation (origin) and rotation (direction)
+    image = pv.ImageData()
+    vector = (1, 2, 3)
+    rotation = pv.Transform().rotate_vector(vector, 30).matrix[:3, :3]
+    image.origin = vector
+    image.direction_matrix = rotation
+
+    expected_transform = pv.Transform().rotate(rotation).translate(vector)
+    ijk_to_xyz = image.index_to_physical_matrix
+    assert np.allclose(ijk_to_xyz, expected_transform.matrix)
+
+    xyz_to_ijk = image.physical_to_index_matrix
+    assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
+
+
 def test_grid_extract_selection_points(struct_grid):
     grid = pv.UnstructuredGrid(struct_grid)
     sub_grid = grid.extract_points([0])
@@ -1206,6 +1252,30 @@ def test_ExplicitStructuredGrid_init():
     assert 'N Cells' in str(grid)
     assert 'N Points' in str(grid)
     assert 'N Arrays' in str(grid)
+
+    dims = (2, 2, 3)
+    cells = {pv.CellType.HEXAHEDRON: np.arange(16).reshape(2, 8)}
+    points = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [1.0, 1.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [1.0, 0.0, 1.0],
+        [1.0, 1.0, 1.0],
+        [0.0, 1.0, 1.0],
+        [0.0, 0.0, 2.0],
+        [1.0, 0.0, 2.0],
+        [1.0, 1.0, 2.0],
+        [0.0, 1.0, 2.0],
+    ]
+    grid = pv.ExplicitStructuredGrid(dims, cells, points)
+    assert grid.n_cells == 2
+    assert grid.n_points == 16
 
 
 def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
@@ -1426,7 +1496,72 @@ def test_ExplicitStructuredGrid_compute_connections():
 
 def test_ExplicitStructuredGrid_raise_init():
     with pytest.raises(ValueError, match="Too many args"):
-        pv.ExplicitStructuredGrid(1, 2, True)
+        pv.ExplicitStructuredGrid(1, 2, 3, True)
+
+    with pytest.raises(ValueError, match="Expected dimensions to be length 3"):
+        pv.ExplicitStructuredGrid((1, 2), np.random.default_rng().random((4, 3)))
+
+    with pytest.raises(ValueError, match="Expected dimensions to be length 3"):
+        pv.ExplicitStructuredGrid(
+            (1, 2),
+            np.random.default_rng().integers(10, size=9),
+            np.random.default_rng().random((8, 3)),
+        )
+
+    with pytest.raises(ValueError, match="Expected cells to be length 54"):
+        pv.ExplicitStructuredGrid(
+            (2, 3, 4),
+            np.random.default_rng().integers(10, size=9 * 6 - 1),
+            np.random.default_rng().random((8, 3)),
+        )
+
+    with pytest.raises(ValueError, match="Expected cells to be a single cell of type 12"):
+        pv.ExplicitStructuredGrid(
+            (2, 3, 4),
+            {CellType.QUAD: np.random.default_rng().integers(10, size=(10, 8))},
+            np.random.default_rng().random((8, 3)),
+        )
+
+    with pytest.raises(ValueError, match="Expected cells to be of shape"):
+        pv.ExplicitStructuredGrid(
+            (2, 3, 4),
+            {CellType.HEXAHEDRON: np.random.default_rng().integers(10, size=(10, 8))},
+            np.random.default_rng().random((8, 3)),
+        )
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 2, 2),
+    reason="Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean",
+)
+def test_ExplicitStructuredGrid_clean():
+    grid = examples.load_explicit_structured()
+
+    # Duplicate points
+    ugrid = grid.cast_to_unstructured_grid().copy()
+    cells = ugrid.cells.reshape((ugrid.n_cells, 9))[:, 1:]
+    ugrid.cells = np.column_stack(
+        (
+            np.full(ugrid.n_cells, 8),
+            np.arange(8 * ugrid.n_cells).reshape((ugrid.n_cells, 8)),
+        )
+    ).ravel()
+    ugrid.points = np.concatenate(ugrid.points[cells])
+    assert ugrid.n_points == 960
+
+    egrid = ugrid.cast_to_explicit_structured_grid().clean()
+    assert egrid.n_points == grid.n_points
+
+
+@pointsetmark
+def test_StructuredGrid_cast_to_explicit_structured_grid():
+    grid = examples.download_office()
+    grid = grid.hide_cells(np.arange(80, 120))
+    grid = pv.ExplicitStructuredGrid(grid)
+    assert grid.n_cells == 7220
+    assert grid.n_points == 8400
+    assert 'vtkGhostType' in grid.cell_data
+    assert (grid.cell_data['vtkGhostType'] > 0).sum() == 40
 
 
 def test_copy_no_copy_wrap_object(datasets):

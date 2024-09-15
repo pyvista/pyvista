@@ -330,6 +330,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
     >>> normal
     pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
                     dtype=float32)
+
     """
     valid_resolution = _validation.validate_array(
         resolution,
@@ -817,6 +818,7 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     Since the points are normally distributed, the relative proportion of
     the standard deviation matches the scaling of the axes almost perfectly.
+
     """
     points = _validation.validate_arrayNx3(points)
 

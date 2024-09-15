@@ -1,5 +1,4 @@
-"""
-This test module tests any functionality that requires plotting.
+"""This test module tests any functionality that requires plotting.
 
 See the image regression notes in doc/extras/developer_notes.rst
 
@@ -118,7 +117,7 @@ def verify_image_cache_wrapper(verify_image_cache):
     return verify_image_cache
 
 
-@pytest.fixture()
+@pytest.fixture
 def multicomp_poly():
     """Create a dataset with vector values on points and cells."""
     data = pv.Plane(direction=(0, 0, -1))
@@ -1555,7 +1554,6 @@ def test_vector_array(multicomp_poly):
 
 def test_vector_plotting_doesnt_modify_data(multicomp_poly):
     """Test that the operations in plotting do not modify the data in the mesh."""
-
     copy_vector_values_points = multicomp_poly["vector_values_points"].copy()
     copy_vector_values_cells = multicomp_poly["vector_values_cells"].copy()
 
@@ -3389,7 +3387,6 @@ def test_tight_wide():
 @pytest.mark.parametrize('negative', [False, True])
 def test_tight_direction(view, negative, colorful_tetrahedron):
     """Test camera.tight() with various views like xy."""
-
     pl = pv.Plotter()
     pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
     pl.camera.tight(view=view, negative=negative)
@@ -3583,7 +3580,6 @@ def test_wireframe_color(sphere):
 @pytest.mark.parametrize('negative', [False, True])
 def test_view_xyz(direction, negative, colorful_tetrahedron):
     """Test various methods like view_xy."""
-
     pl = pv.Plotter()
     pl.add_mesh(colorful_tetrahedron, scalars="colors", rgb=True, preference="cell")
     getattr(pl, f"view_{direction}")(negative=negative)
@@ -4680,7 +4676,7 @@ def test_planes_assembly_label_size(bounds, label_size):
     plot.show()
 
 
-@pytest.fixture()
+@pytest.fixture
 def oblique_cone():
     return pv.examples.download_oblique_cone()
 
@@ -4694,4 +4690,27 @@ def test_bounding_box(oblique_cone, box_style):
     pl.add_mesh(oblique_cone)
     pl.add_mesh(box, color='red', opacity=0.5, line_width=5)
     pl.add_mesh(oriented_box, color='blue', opacity=0.5, line_width=5)
+    pl.show()
+
+
+@pytest.mark.parametrize('operator', ['or', 'and', 'ior', 'iand'])
+def test_bitwise_and_or_of_polydata(operator):
+    radius = 0.5
+    sphere = pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
+    sphere_shifted = pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
+    if operator == 'or':
+        result = sphere | sphere_shifted
+    elif operator == 'and':
+        result = sphere & sphere_shifted
+    elif operator == 'ior':
+        result = sphere.copy()
+        result |= sphere_shifted
+    elif operator == 'iand':
+        result = sphere.copy()
+        result &= sphere_shifted
+    pl = pv.Plotter()
+    pl.add_mesh(sphere, color='r', style='wireframe', line_width=3)
+    pl.add_mesh(sphere_shifted, color='b', style='wireframe', line_width=3)
+    pl.add_mesh(result, color='lightblue')
+    pl.camera_position = 'xz'
     pl.show()

@@ -145,6 +145,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     >>> cell_types, cell_arr = create_mixed_cells(
     ...     {vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])}
     ... )
+
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 
@@ -220,6 +221,7 @@ def get_mixed_cells(vtkobj):
         If vtkobj is not a pyvista.UnstructuredGrid, any of the
         present cells are unsupported, or have dynamic cell sizes,
         like VTK_POLYGON.
+
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 

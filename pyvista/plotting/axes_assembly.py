@@ -415,6 +415,7 @@ class AxesAssembly(_XYZAssembly):
     ...     viewport=(0, 0, 0.5, 0.5),
     ... )
     >>> pl.show()
+
     """
 
     def _init_actors_from_source(self, geometry_source: AxesGeometrySource):
@@ -540,6 +541,7 @@ class AxesAssembly(_XYZAssembly):
         >>> axes_assembly.labels = ['X Axis', 'Y Axis', 'Z Axis']
         >>> axes_assembly.labels
         ('X Axis', 'Y Axis', 'Z Axis')
+
         """
         return self.x_label, self.y_label, self.z_label
 
@@ -781,6 +783,7 @@ class AxesAssembly(_XYZAssembly):
         ... )
         >>> axes_assembly.get_actor_prop('style')
         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
+
         """
         actors = self._filter_part_actors(axis=axis, part=part)
         values: Sequence[float | str | ColorLike]
@@ -1056,6 +1059,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     ...     viewport=(0, 0, 0.5, 0.5),
     ... )
     >>> pl.show()
+
     """
 
     def __init__(
@@ -1141,6 +1145,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         ... ]
         >>> axes_assembly.labels
         ('east', 'west', 'north', 'south', 'up', 'down')
+
         """
         return *self.x_label, *self.y_label, *self.z_label
 
@@ -1195,6 +1200,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         >>> axes_assembly.x_label = 'anterior', 'posterior'
         >>> axes_assembly.x_label
         ('anterior', 'posterior')
+
         """
         return self._get_axis_label(_AxisEnum.x)
 
@@ -1226,6 +1232,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         >>> axes_assembly.y_label = 'left', 'right'
         >>> axes_assembly.y_label
         ('left', 'right')
+
         """
         return self._get_axis_label(_AxisEnum.y)
 
@@ -1257,6 +1264,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         >>> axes_assembly.z_label = 'superior', 'inferior'
         >>> axes_assembly.z_label
         ('superior', 'inferior')
+
         """
         return self._get_axis_label(_AxisEnum.z)
 
@@ -1454,6 +1462,7 @@ class PlanesAssembly(_XYZAssembly):
     >>> _ = pl.add_actor(planes)
     >>> planes.camera = pl.camera
     >>> pl.show()
+
     """
 
     DEFAULT_LABELS = _XYZTuple('YZ', 'ZX', 'XY')
@@ -1590,6 +1599,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> planes.labels = ['Sagittal', 'Coronal', 'Transverse']
         >>> planes.labels
         ('Sagittal', 'Coronal', 'Transverse')
+
         """
         return self.x_label, self.y_label, self.z_label
 
@@ -1611,6 +1621,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> planes.x_label = 'This plane'
         >>> planes.x_label
         'This plane'
+
         """
         return self._axis_actors[0].GetTitle()
 
@@ -1630,6 +1641,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> planes.y_label = 'This plane'
         >>> planes.y_label
         'This plane'
+
         """
         return self._axis_actors[1].GetTitle()
 
@@ -1649,6 +1661,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> planes.z_label = 'This plane'
         >>> planes.z_label
         'This plane'
+
         """
         return self._axis_actors[2].GetTitle()
 
@@ -1727,6 +1740,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> _ = pl.add_actor(planes)
         >>> planes.camera = pl.camera
         >>> pl.show()
+
         """
         return self._label_position
 
@@ -1779,6 +1793,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> _ = pl.add_actor(planes)
         >>> planes.camera = pl.camera
         >>> pl.show()
+
         """
         return self._label_edge
 
@@ -1899,6 +1914,7 @@ class PlanesAssembly(_XYZAssembly):
         -------
         pyvista.MultiBlock
             Composite mesh with three planes.
+
         """
         return self._planes
 

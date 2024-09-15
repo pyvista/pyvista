@@ -21,15 +21,14 @@ configuration = [
 ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def camera():
     return pv.Camera()
 
 
-@pytest.fixture()
+@pytest.fixture
 def paraview_pvcc():
     """Fixture returning a paraview camera file with values of the position"""
-
     tmp = """
     <PVCameraConfiguration description="ParaView camera configuration" version="1.0">
       <Proxy group="views" type="RenderView" id="6395" servers="21">

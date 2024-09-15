@@ -106,6 +106,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
     -------
     list[str]
         A list of the names of the images that were created.
+
     """
     image_names = []
     figures = pyvista.plotting.plotter._ALL_PLOTTERS
@@ -137,8 +138,7 @@ def generate_images(image_path_iterator: Iterator[str], dynamic: bool = False) -
 
 
 class Scraper:
-    """
-    Save ``pyvista.Plotter`` objects.
+    """Save ``pyvista.Plotter`` objects.
 
     Used by sphinx-gallery to generate the plots from the code in the examples.
 
@@ -170,8 +170,7 @@ class Scraper:
 
 
 class DynamicScraper:  # pragma: no cover
-    """
-    Save ``pyvista.Plotter`` objects dynamically.
+    """Save ``pyvista.Plotter`` objects dynamically.
 
     Used by sphinx-gallery to generate the plots from the code in the examples.
 

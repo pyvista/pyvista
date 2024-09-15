@@ -11,12 +11,12 @@ from pyvista import examples
 from pyvista.core.utilities.geometric_objects import translate
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes_geometry_source():
     return pv.AxesGeometrySource()
 
 
-@pytest.fixture()
+@pytest.fixture
 def cube_faces_source():
     return pv.CubeFacesSource()
 
@@ -85,7 +85,7 @@ def test_multiple_lines_source():
         algo.points = points[0, :]
 
 
-@pytest.fixture()
+@pytest.fixture
 def bunny():
     return examples.download_bunny_coarse()
 
@@ -113,8 +113,7 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
 
 
 def test_translate_precision():
-    """
-    Test that specifying a 64bit float as an arg, will not
+    """Test that specifying a 64bit float as an arg, will not
     introduce precision error for 32bit meshes.
     """
     val = np.float64(29380 / 18)
@@ -233,7 +232,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         assert np.allclose(points_center, center, atol=1e-4)
 
 
-@pytest.fixture()
+@pytest.fixture
 def text3d_source_with_text():
     return pv.Text3DSource("TEXT")
 

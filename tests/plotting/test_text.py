@@ -1,6 +1,4 @@
-"""
-Tests for text objects
-"""
+"""Tests for text objects"""
 
 from __future__ import annotations
 
@@ -12,7 +10,7 @@ import pytest
 import pyvista as pv
 
 
-@pytest.fixture()
+@pytest.fixture
 def corner_annotation():
     return pv.CornerAnnotation(0, 'text')
 
@@ -27,7 +25,7 @@ def test_corner_annotation_prop(corner_annotation):
     assert isinstance(prop, pv.TextProperty)
 
 
-@pytest.fixture()
+@pytest.fixture
 def text():
     return pv.Text()
 
@@ -105,7 +103,7 @@ def test_label_relative_position():
     assert label._label_position == tuple((position + relative_position).tolist())
 
 
-@pytest.fixture()
+@pytest.fixture
 def prop():
     return pv.TextProperty()
 
