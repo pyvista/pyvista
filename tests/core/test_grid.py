@@ -938,6 +938,7 @@ def test_cast_uniform_to_rectilinear():
 
 
 def test_cast_image_data_with_float_spacing_to_rectilinear():
+    # https://github.com/pyvista/pyvista/pull/6656
     grid = pv.ImageData(
         dimensions=(10, 10, 10),
         spacing=(27.88888888888889, 28.11111111111111, 28.22222222222222),
