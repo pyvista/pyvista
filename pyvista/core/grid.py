@@ -142,8 +142,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             type[_vtk.vtkRectilinearGridWriter | _vtk.vtkXMLRectilinearGridWriter],
         ]
     ] = {
-        '.vtk': _vtk.vtkRectilinearGridWriter,
-        '.vtr': _vtk.vtkXMLRectilinearGridWriter,
+        ".vtk": _vtk.vtkRectilinearGridWriter,
+        ".vtr": _vtk.vtkXMLRectilinearGridWriter,
     }
 
     def __init__(
@@ -167,7 +167,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (np.ndarray, Sequence)):
                 self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
             else:
-                raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
+                raise TypeError(f"Type ({type(args[0])}) not understood by `RectilinearGrid`")
 
         elif len(args) == 3 or len(args) == 2:
             arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
@@ -256,7 +256,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         self._update_dimensions()
 
     @property
-    def meshgrid(self) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+    def meshgrid(
+        self,
+    ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
         """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a :func:`numpy.meshgrid` of the
@@ -272,7 +274,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         # Converting to tuple needed to be consistent type across numpy version
         # Remove when support is dropped for numpy 1.x
         # We also know this is 3-length so make it so in typing
-        out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
+        out = tuple(np.meshgrid(self.x, self.y, self.z, indexing="ij"))
         # Python 3.8 does not allow subscripting tuple, but only used for type checking
         if TYPE_CHECKING:  # pragma: no cover
             out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
@@ -313,7 +315,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         """
         xx, yy, zz = self.meshgrid
-        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        return np.c_[xx.ravel(order="F"), yy.ravel(order="F"), zz.ravel(order="F")]
 
     @points.setter
     def points(self, points):  # numpydoc ignore=PR01
@@ -551,8 +553,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     """
 
     _WRITERS: ClassVar[dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {
-        '.vtk': _vtk.vtkDataSetWriter,
-        '.vti': _vtk.vtkXMLImageDataWriter,
+        ".vtk": _vtk.vtkDataSetWriter,
+        ".vti": _vtk.vtkXMLImageDataWriter,
     }
 
     def __init__(
@@ -672,8 +674,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
-        xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-        points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+        xx, yy, zz = np.meshgrid(x, y, z, indexing="ij")
+        points = np.c_[xx.ravel(order="F"), yy.ravel(order="F"), zz.ravel(order="F")]
 
         direction = self.direction_matrix
         if not np.array_equal(direction, np.eye(3)):
@@ -841,22 +843,31 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             This uniform grid as a rectilinear grid.
 
         """
-
-        def gen_coords(i):  # numpydoc ignore=GL08
-            return (
-                np.cumsum(np.insert(np.full(self.dimensions[i] - 1, self.spacing[i]), 0, 0))
-                + self.origin[i]
-            )
-
-        xcoords = gen_coords(0)
-        ycoords = gen_coords(1)
-        zcoords = gen_coords(2)
-        grid = pyvista.RectilinearGrid(xcoords, ycoords, zcoords)
+        rectilinear_coords = self._generate_rectilinear_coords()
+        grid = pyvista.RectilinearGrid(*rectilinear_coords)
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
         grid.copy_meta_from(self, deep=True)
         return grid
+
+    def _generate_rectilinear_coords(self) -> list[NumpyArray[float]]:  # numpydoc ignore=GL08
+        """Generate rectilinear coordinates (internal helper).
+
+        Returns
+        -------
+        list[NumpyArray[float]]
+            Rectilinear coordinates over the three dimensions.
+
+        """
+        # Use linspace to avoid rounding error accumulation
+        return [
+            (
+                np.linspace(0, (self.dimensions[i] - 1) * self.spacing[i], self.dimensions[i])
+                + self.origin[i]
+            )
+            for i in range(3)
+        ]
 
     @property
     def extent(self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
@@ -891,7 +902,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     @extent.setter
     def extent(self, new_extent: Sequence[int]):  # numpydoc ignore=GL08
         if len(new_extent) != 6:
-            raise ValueError('Extent must be a vector of 6 values.')
+            raise ValueError("Extent must be a vector of 6 values.")
         self.SetExtent(new_extent)
 
     @wraps(RectilinearGridFilters.to_tetrahedra)
