@@ -840,14 +840,15 @@ def test_clear_all_cell_data(multiblock_all):
             assert block.cell_data.keys() == []
 
 
-def test_multi_block_zip():
+@pytest.mark.parametrize('container', [pv.MultiBlock, pv.PartitionedDataSet])
+def test_multiblock_partitioned_zip(container):
     # Test `__iter__` and `__next__` inheritance
     list_ = [None, None]
-    multi = MultiBlock(list_)
-    zipped_multi = list(zip(multi, multi))
+    composite = container(list_)
+    zipped_container = list(zip(composite, composite))
     zipped_list = list(zip(list_, list_))
 
-    assert len(zipped_multi) == len(zipped_list)
-    assert len(zipped_multi[0]) == len(zipped_list[0])
+    assert len(zipped_container) == len(zipped_list)
+    assert len(zipped_container[0]) == len(zipped_list[0])
     for i, j in itertools.product(range(2), repeat=2):
-        assert zipped_multi[i][j] is zipped_list[i][j] is None
+        assert zipped_container[i][j] is zipped_list[i][j] is None
