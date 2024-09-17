@@ -17,7 +17,7 @@ def collect_example_files():
             continue
         for filename in filenames:
             full_path = Path(dirpath) / filename
-            if not filename.endswith('.py'):
+            if not filename.endswith(".py"):
                 continue
             # Use relative path and cast to str for better repr in pytest output
             rel_path = full_path.relative_to(EXAMPLES_DIR)

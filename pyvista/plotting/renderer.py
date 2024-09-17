@@ -39,15 +39,15 @@ from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 ACTOR_LOC_MAP = [
-    'upper right',
-    'upper left',
-    'lower left',
-    'lower right',
-    'center left',
-    'center right',
-    'lower center',
-    'upper center',
-    'center',
+    "upper right",
+    "upper left",
+    "lower left",
+    "lower right",
+    "center left",
+    "center right",
+    "lower center",
+    "upper center",
+    "center",
 ]
 
 
@@ -76,18 +76,18 @@ def map_loc_to_pos(loc, size, border=0.05):
 
     """
     if not isinstance(size, Sequence) or len(size) != 2:
-        raise ValueError(f'`size` must be a list of length 2. Passed value is {size}')
+        raise ValueError(f"`size` must be a list of length 2. Passed value is {size}")
 
-    if 'right' in loc:
+    if "right" in loc:
         x = 1 - size[1] - border
-    elif 'left' in loc:
+    elif "left" in loc:
         x = border
     else:
         x = 0.5 - size[1] / 2
 
-    if 'upper' in loc:
+    if "upper" in loc:
         y = 1 - size[1] - border
-    elif 'lower' in loc:
+    elif "lower" in loc:
         y = border
     else:
         y = 0.5 - size[1] / 2
@@ -135,7 +135,7 @@ def make_legend_face(face):
             '\t"circle"\n'
             '\t"rectangle"\n'
             '\t"none"\n'
-            '\tpyvista.PolyData',
+            "\tpyvista.PolyData",
         )
     return legendface
 
@@ -260,20 +260,20 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     # map camera_position string to an attribute
     CAMERA_STR_ATTR_MAP: ClassVar[dict[str, str]] = {
-        'xy': 'view_xy',
-        'xz': 'view_xz',
-        'yz': 'view_yz',
-        'yx': 'view_yx',
-        'zx': 'view_zx',
-        'zy': 'view_zy',
-        'iso': 'view_isometric',
+        "xy": "view_xy",
+        "xz": "view_xz",
+        "yz": "view_yz",
+        "yx": "view_yx",
+        "zx": "view_zx",
+        "zy": "view_zy",
+        "iso": "view_isometric",
     }
 
     def __init__(
         self,
         parent,
         border=True,
-        border_color='w',
+        border_color="w",
         border_width=2.0,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
@@ -369,7 +369,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Return next color from this renderer's color cycler."""
         if self._color_cycle is None:
             return self._theme.color
-        return next(self._color_cycle)['color']
+        return next(self._color_cycle)["color"]
 
     @property
     def camera_position(self):  # numpydoc ignore=RT01
@@ -466,7 +466,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
             if (
-                hasattr(actor, 'GetBounds')
+                hasattr(actor, "GetBounds")
                 and actor.GetBounds() is not None
                 and id(actor) != id(self.bounding_box_actor)
             ):
@@ -563,7 +563,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseDepthPeeling(False)
         self.Modified()
 
-    def enable_anti_aliasing(self, aa_type='ssaa'):
+    def enable_anti_aliasing(self, aa_type="ssaa"):
         """Enable anti-aliasing.
 
         Parameters
@@ -573,10 +573,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if not isinstance(aa_type, str):
-            raise TypeError(f'`aa_type` must be a string, not {type(aa_type)}')
+            raise TypeError(f"`aa_type` must be a string, not {type(aa_type)}")
         aa_type = aa_type.lower()
 
-        if aa_type == 'fxaa':
+        if aa_type == "fxaa":
             if uses_egl():  # pragma: no cover
                 # only display the warning when not building documentation
                 if not pyvista.BUILDING_GALLERY:
@@ -588,7 +588,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 return
             self._enable_fxaa()
 
-        elif aa_type == 'ssaa':
+        elif aa_type == "ssaa":
             self._render_passes.enable_ssaa_pass()
 
         else:
@@ -610,7 +610,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetUseFXAA(False)
         self.Modified()
 
-    def add_border(self, color='white', width=2.0):
+    def add_border(self, color="white", width=2.0):
         """Add borders around the frame.
 
         Parameters
@@ -858,7 +858,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
-        if hasattr(actor, 'SetScale'):
+        if hasattr(actor, "SetScale"):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
@@ -874,19 +874,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             culling = culling.lower()
 
         if culling:
-            if culling in [True, 'back', 'backface', 'b']:
+            if culling in [True, "back", "backface", "b"]:
                 with contextlib.suppress(AttributeError):
                     actor.GetProperty().BackfaceCullingOn()
-            elif culling in ['front', 'frontface', 'f']:
+            elif culling in ["front", "frontface", "f"]:
                 with contextlib.suppress(AttributeError):
                     actor.GetProperty().FrontfaceCullingOn()
             else:
-                raise ValueError(f'Culling option ({culling}) not understood.')
+                raise ValueError(f"Culling option ({culling}) not understood.")
 
         self.Modified()
 
         prop = None
-        if hasattr(actor, 'GetProperty'):
+        if hasattr(actor, "GetProperty"):
             prop = actor.GetProperty()
 
         return actor, prop
@@ -896,9 +896,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         x_color=None,
         y_color=None,
         z_color=None,
-        xlabel='X',
-        ylabel='Y',
-        zlabel='Z',
+        xlabel="X",
+        ylabel="Y",
+        zlabel="Z",
         line_width=2,
         labels_off=False,
     ):
@@ -1025,7 +1025,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if color is not None:
                 actor.prop.color = color
             actor.prop.opacity = opacity
-        if hasattr(self, 'axes_widget'):
+        if hasattr(self, "axes_widget"):
             # Delete the old one
             self.axes_widget.EnabledOff()
             self.Modified()
@@ -1034,7 +1034,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(actor)
-        if hasattr(self.parent, 'iren'):
+        if hasattr(self.parent, "iren"):
             self.axes_widget.SetInteractor(self.parent.iren.interactor)
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
@@ -1052,9 +1052,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         x_color=None,
         y_color=None,
         z_color=None,
-        xlabel='X',
-        ylabel='Y',
-        zlabel='Z',
+        xlabel="X",
+        ylabel="Y",
+        zlabel="Z",
         labels_off=False,
         box=None,
         box_args=None,
@@ -1156,7 +1156,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        if hasattr(self, 'axes_widget'):
+        if hasattr(self, "axes_widget"):
             self.axes_widget.EnabledOff()
             self.Modified()
             del self.axes_widget
@@ -1283,16 +1283,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         interactive=None,
         line_width=2,
         text_scale=0.366667,
-        edge_color='black',
+        edge_color="black",
         x_color=None,
         y_color=None,
         z_color=None,
-        xlabel='X',
-        ylabel='Y',
-        zlabel='Z',
-        x_face_color='white',
-        y_face_color='white',
-        z_face_color='white',
+        xlabel="X",
+        ylabel="Y",
+        zlabel="Z",
+        x_face_color="white",
+        y_face_color="white",
+        z_face_color="white",
         label_color=None,
         labels_off=False,
         opacity=0.5,
@@ -1378,7 +1378,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if interactive is None:
             interactive = self._theme.interactive
-        if hasattr(self, 'axes_widget'):
+        if hasattr(self, "axes_widget"):
             self.axes_widget.EnabledOff()
             self.Modified()
             del self.axes_widget
@@ -1427,7 +1427,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.hide_axes()
 
         """
-        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
+        if hasattr(self, "axes_widget") and self.axes_widget.GetEnabled():
             self.axes_widget.EnabledOff()
             self.Modified()
 
@@ -1455,7 +1455,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show_axes()
 
         """
-        if hasattr(self, 'axes_widget'):
+        if hasattr(self, "axes_widget"):
             self.axes_widget.EnabledOn()
             self.axes_widget.SetCurrentRenderer(self)
         else:
@@ -1488,7 +1488,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Return ``True`` when the axes widget is enabled.
 
         """
-        if hasattr(self, 'axes_widget'):
+        if hasattr(self, "axes_widget"):
             return bool(self.axes_widget.GetEnabled())
         return False
 
@@ -1507,15 +1507,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         font_size=None,
         font_family=None,
         color=None,
-        xtitle='X Axis',
-        ytitle='Y Axis',
-        ztitle='Z Axis',
+        xtitle="X Axis",
+        ytitle="Y Axis",
+        ztitle="Z Axis",
         n_xlabels=5,
         n_ylabels=5,
         n_zlabels=5,
         use_2d=False,
         grid=None,
-        location='closest',
+        location="closest",
         ticks=None,
         all_edges=False,
         corner_factor=0.5,
@@ -1730,22 +1730,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if fmt is None:
             fmt = self._theme.font.fmt
         if fmt is None:
-            fmt = '%.1f'  # fallback
+            fmt = "%.1f"  # fallback
 
-        if 'xlabel' in kwargs:  # pragma: no cover
-            xtitle = kwargs.pop('xlabel')
+        if "xlabel" in kwargs:  # pragma: no cover
+            xtitle = kwargs.pop("xlabel")
             warnings.warn(
                 "`xlabel` is deprecated. Use `xtitle` instead.",
                 PyVistaDeprecationWarning,
             )
-        if 'ylabel' in kwargs:  # pragma: no cover
-            ytitle = kwargs.pop('ylabel')
+        if "ylabel" in kwargs:  # pragma: no cover
+            ytitle = kwargs.pop("ylabel")
             warnings.warn(
                 "`ylabel` is deprecated. Use `ytitle` instead.",
                 PyVistaDeprecationWarning,
             )
-        if 'zlabel' in kwargs:  # pragma: no cover
-            ztitle = kwargs.pop('zlabel')
+        if "zlabel" in kwargs:  # pragma: no cover
+            ztitle = kwargs.pop("zlabel")
             warnings.warn(
                 "`zlabel` is deprecated. Use `ztitle` instead.",
                 PyVistaDeprecationWarning,
@@ -1788,15 +1788,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         cube_axes_actor.use_2d_mode = use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0])
 
         if grid:
-            grid = 'back' if grid is True else grid
+            grid = "back" if grid is True else grid
             if not isinstance(grid, str):
-                raise TypeError(f'`grid` must be a str, not {type(grid)}')
+                raise TypeError(f"`grid` must be a str, not {type(grid)}")
             grid = grid.lower()
-            if grid in ('front', 'frontface'):
+            if grid in ("front", "frontface"):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
-            elif grid in ('both', 'all'):
+            elif grid in ("both", "all"):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
-            elif grid in ('back', True):
+            elif grid in ("back", True):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
             else:
                 raise ValueError(f'`grid` must be either "front", "back, or, "all", not {grid}')
@@ -1811,15 +1811,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         if isinstance(location, str):
             location = location.lower()
-            if location in ('all'):
+            if location in ("all"):
                 cube_axes_actor.SetFlyModeToStaticEdges()
-            elif location in ('origin'):
+            elif location in ("origin"):
                 cube_axes_actor.SetFlyModeToStaticTriad()
-            elif location in ('outer'):
+            elif location in ("outer"):
                 cube_axes_actor.SetFlyModeToOuterEdges()
-            elif location in ('default', 'closest', 'front'):
+            elif location in ("default", "closest", "front"):
                 cube_axes_actor.SetFlyModeToClosestTriad()
-            elif location in ('furthest', 'back'):
+            elif location in ("furthest", "back"):
                 cube_axes_actor.SetFlyModeToFurthestTriad()
             else:
                 raise ValueError(
@@ -1827,7 +1827,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     ' "outer", "default", "closest", "front", "furthest", or "back".',
                 )
         elif location is not None:
-            raise TypeError('location must be a string')
+            raise TypeError("location must be a string")
 
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
@@ -1844,7 +1844,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 bounds[::2] -= cushion
                 bounds[1::2] += cushion
         else:
-            raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
+            raise ValueError(f"padding ({padding}) not understood. Must be float between 0 and 1")
         cube_axes_actor.bounds = bounds
 
         # set axes ranges if input
@@ -1852,15 +1852,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             if isinstance(axes_ranges, (Sequence, np.ndarray)):
                 axes_ranges = np.asanyarray(axes_ranges)
             else:
-                raise TypeError('Input axes_ranges must be a numeric sequence.')
+                raise TypeError("Input axes_ranges must be a numeric sequence.")
 
             if not np.issubdtype(axes_ranges.dtype, np.number):
-                raise TypeError('All of the elements of axes_ranges must be numbers.')
+                raise TypeError("All of the elements of axes_ranges must be numbers.")
 
             # set the axes ranges
             if axes_ranges.shape != (6,):
                 raise ValueError(
-                    '`axes_ranges` must be passed as a (x_min, x_max, y_min, y_max, z_min, z_max) sequence.',
+                    "`axes_ranges` must be passed as a (x_min, x_max, y_min, y_max, z_min, z_max) sequence.",
                 )
 
             cube_axes_actor.x_axis_range = axes_ranges[0], axes_ranges[1]
@@ -1944,9 +1944,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        kwargs.setdefault('grid', 'back')
-        kwargs.setdefault('location', 'outer')
-        kwargs.setdefault('ticks', 'both')
+        kwargs.setdefault("grid", "back")
+        kwargs.setdefault("location", "outer")
+        kwargs.setdefault("ticks", "both")
         return self.show_bounds(**kwargs)
 
     def remove_bounding_box(self, render=True):
@@ -1965,7 +1965,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.remove_bounding_box()
 
         """
-        if hasattr(self, '_box_object'):
+        if hasattr(self, "_box_object"):
             actor = self.bounding_box_actor
             self.bounding_box_actor = None
             del self._box_object
@@ -1982,7 +1982,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         lighting=None,
         reset_camera=None,
         outline=True,
-        culling='front',
+        culling="front",
     ):
         """Add an unlabeled and unticked box at the boundaries of plot.
 
@@ -2060,7 +2060,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._bounding_box.SetBounds(self.bounds)
         self._bounding_box.Update()
         self._box_object = wrap(self._bounding_box.GetOutput())
-        name = f'BoundingBox({hex(id(self._box_object))})'
+        name = f"BoundingBox({hex(id(self._box_object))})"
 
         mapper = _vtk.vtkDataSetMapper()
         mapper.SetInputData(self._box_object)
@@ -2091,7 +2091,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def add_floor(
         self,
-        face='-z',
+        face="-z",
         i_resolution=10,
         j_resolution=10,
         color=None,
@@ -2186,43 +2186,43 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         if store_floor_kwargs:
             kwargs = locals()
-            kwargs.pop('self')
+            kwargs.pop("self")
             self._floor_kwargs.append(kwargs)
         ranges = np.ptp(np.array(self.bounds).reshape(-1, 2), axis=1)
         ranges += ranges * pad
         center = np.array(self.center)
-        if face.lower() in '-z':
+        if face.lower() in "-z":
             center[2] = self.bounds.z_min - (ranges[2] * offset)
             normal = (0, 0, 1)
             i_size = ranges[0]
             j_size = ranges[1]
-        elif face.lower() in '-y':
+        elif face.lower() in "-y":
             center[1] = self.bounds.y_min - (ranges[1] * offset)
             normal = (0, 1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
-        elif face.lower() in '-x':
+        elif face.lower() in "-x":
             center[0] = self.bounds.x_min - (ranges[0] * offset)
             normal = (1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
-        elif face.lower() in '+z':
+        elif face.lower() in "+z":
             center[2] = self.bounds.z_max + (ranges[2] * offset)
             normal = (0, 0, -1)
             i_size = ranges[0]
             j_size = ranges[1]
-        elif face.lower() in '+y':
+        elif face.lower() in "+y":
             center[1] = self.bounds.y_max + (ranges[1] * offset)
             normal = (0, -1, 0)
             i_size = ranges[2]
             j_size = ranges[0]
-        elif face.lower() in '+x':
+        elif face.lower() in "+x":
             center[0] = self.bounds.x_max + (ranges[0] * offset)
             normal = (-1, 0, 0)
             i_size = ranges[2]
             j_size = ranges[1]
         else:
-            raise NotImplementedError(f'Face ({face}) not implemented')
+            raise NotImplementedError(f"Face ({face}) not implemented")
         self._floor = pyvista.Plane(
             center=center,
             direction=normal,
@@ -2242,7 +2242,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         actor, prop = self.add_actor(
             mapper,
             reset_camera=reset_camera,
-            name=f'Floor({face})',
+            name=f"Floor({face})",
             pickable=pickable,
         )
 
@@ -2289,7 +2289,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if getattr(self, '_floor', None) is not None:
+        if getattr(self, "_floor", None) is not None:
             self._floor.ReleaseData()
             self._floor = None
         for actor in self._floors:
@@ -2334,7 +2334,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             light = pyvista.Light.from_vtk(light)
 
         if not isinstance(light, pyvista.Light):
-            raise TypeError(f'Expected Light instance, got {type(light).__name__} instead.')
+            raise TypeError(f"Expected Light instance, got {type(light).__name__} instead.")
         self._lights.append(light)
         self.AddLight(light)
         self.Modified()
@@ -2624,7 +2624,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(actor, str):
             name = actor
             keys = list(self._actors.keys())
-            names = [k for k in keys if k.startswith(f'{name}-')]
+            names = [k for k in keys if k.startswith(f"{name}-")]
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera, render=render)
             try:
@@ -2719,7 +2719,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         # Reset all actors to match this scale
         for actor in self.actors.values():
-            if hasattr(actor, 'SetScale'):
+            if hasattr(actor, "SetScale"):
                 actor.SetScale(self.scale)
 
         self.parent.render()
@@ -2760,7 +2760,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def update_bounds_axes(self):
         """Update the bounds axes of the render window."""
         if (
-            hasattr(self, '_box_object')
+            hasattr(self, "_box_object")
             and self._box_object is not None
             and self.bounding_box_actor is not None
         ):
@@ -2770,7 +2770,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.add_bounding_box(color=color)
                 self.remove_floors(clear_kwargs=False)
                 for floor_kwargs in self._floor_kwargs:
-                    floor_kwargs['store_floor_kwargs'] = False
+                    floor_kwargs["store_floor_kwargs"] = False
                     self.add_floor(**floor_kwargs)
         if self.cube_axes_actor is not None:
             self.cube_axes_actor.update_bounds(self.bounds)
@@ -2923,7 +2923,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xy', negative=negative), render=render, bounds=bounds)
+        self.view_vector(*view_vectors("xy", negative=negative), render=render, bounds=bounds)
 
     def view_yx(self, negative=False, render=True, bounds=None):
         """View the YX plane.
@@ -2954,7 +2954,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yx', negative=negative), render=render, bounds=bounds)
+        self.view_vector(*view_vectors("yx", negative=negative), render=render, bounds=bounds)
 
     def view_xz(self, negative=False, render=True, bounds=None):
         """View the XZ plane.
@@ -2985,7 +2985,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('xz', negative=negative), render=render, bounds=bounds)
+        self.view_vector(*view_vectors("xz", negative=negative), render=render, bounds=bounds)
 
     def view_zx(self, negative=False, render=True, bounds=None):
         """View the ZX plane.
@@ -3016,7 +3016,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zx', negative=negative), render=render, bounds=bounds)
+        self.view_vector(*view_vectors("zx", negative=negative), render=render, bounds=bounds)
 
     def view_yz(self, negative=False, render=True, bounds=None):
         """View the YZ plane.
@@ -3047,7 +3047,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('yz', negative=negative), render=render, bounds=bounds)
+        self.view_vector(*view_vectors("yz", negative=negative), render=render, bounds=bounds)
 
     def view_zy(self, negative=False, render=True, bounds=None):
         """View the ZY plane.
@@ -3078,7 +3078,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        self.view_vector(*view_vectors('zy', negative=negative), render=render, bounds=bounds)
+        self.view_vector(*view_vectors("zy", negative=negative), render=render, bounds=bounds)
 
     def disable(self):
         """Disable this renderer's camera from being interactive."""
@@ -3448,7 +3448,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if texture.cube_map:
             self.AutomaticLightCreationOff()
             # disable spherical harmonics was added in 9.1.0
-            if hasattr(self, 'UseSphericalHarmonicsOff'):
+            if hasattr(self, "UseSphericalHarmonicsOff"):
                 self.UseSphericalHarmonicsOff()
 
         self.UseImageBasedLightingOn()
@@ -3480,7 +3480,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        if hasattr(self, 'axes_widget'):
+        if hasattr(self, "axes_widget"):
             self.hide_axes()  # Necessary to avoid segfault
             self.axes_actor = None
             del self.axes_widget
@@ -3509,11 +3509,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if self.cube_axes_actor is not None:
             self.cube_axes_actor = None
 
-        if hasattr(self, 'edl_pass'):
+        if hasattr(self, "edl_pass"):
             del self.edl_pass
-        if hasattr(self, '_box_object'):
+        if hasattr(self, "_box_object"):
             self.remove_bounding_box(render=render)
-        if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
+        if hasattr(self, "_shadow_pass") and self._shadow_pass is not None:
             self.disable_shadows()
         try:
             if self._charts is not None:
@@ -3614,7 +3614,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         border=False,
         size=(0.2, 0.2),
         name=None,
-        loc='upper right',
+        loc="upper right",
         face=None,
         font_family=None,
         background_opacity=1.0,
@@ -3749,8 +3749,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # use existing labels
             if not self._labels:
                 raise ValueError(
-                    'No labels input.\n\n'
-                    'Add labels to individual items when adding them to'
+                    "No labels input.\n\n"
+                    "Add labels to individual items when adding them to"
                     'the plotting object with the "label=" parameter.  '
                     'or enter them as the "labels" parameter.',
                 )
@@ -3776,9 +3776,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                         text, color, face_ = args[:3]
                 elif isinstance(args, dict):
                     # it is using a dict
-                    text = args.pop('label')
-                    color = args.pop('color', None)
-                    face_ = args.pop('face', None)
+                    text = args.pop("label")
+                    color = args.pop("color", None)
+                    face_ = args.pop("face", None)
 
                     if args:
                         warnings.warn(
@@ -3805,7 +3805,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
-                allowed = '\n'.join([f'\t * "{item}"' for item in ACTOR_LOC_MAP])
+                allowed = "\n".join([f'\t * "{item}"' for item in ACTOR_LOC_MAP])
                 raise ValueError(f'Invalid loc "{loc}".  Expected one of the following:\n{allowed}')
             x, y, size = map_loc_to_pos(loc, size, border=0.05)
             self._legend.SetPosition(x, y)
@@ -4015,7 +4015,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if label_format:
             ruler.SetLabelFormat(label_format)
         ruler.GetProperty().SetColor(*tick_color.int_rgb)
-        if label_color != Color('white'):
+        if label_color != Color("white"):
             # This property turns black if set
             ruler.GetLabelTextProperty().SetColor(*label_color.int_rgb)
             ruler.GetTitleTextProperty().SetColor(*label_color.int_rgb)
@@ -4174,19 +4174,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         legend_scale.SetTopAxisVisibility(top_axis_visibility)
         legend_scale.SetTopBorderOffset(top_border_offset)
 
-        for text in ['Label', 'Title']:
-            prop = getattr(legend_scale, f'GetLegend{text}Property')()
-            if color != Color('white'):
+        for text in ["Label", "Title"]:
+            prop = getattr(legend_scale, f"GetLegend{text}Property")()
+            if color != Color("white"):
                 # This property turns black if set
                 prop.SetColor(*color.int_rgb)
             prop.SetFontSize(
                 int(font_size_factor * 20),
             )  # hack to avoid multiple font size arguments
 
-        for ax in ['Bottom', 'Left', 'Right', 'Top']:
-            axis = getattr(legend_scale, f'Get{ax}Axis')()
+        for ax in ["Bottom", "Left", "Right", "Top"]:
+            axis = getattr(legend_scale, f"Get{ax}Axis")()
             axis.GetProperty().SetColor(*color.int_rgb)
-            if color != Color('white'):
+            if color != Color("white"):
                 # This label property turns black if set
                 axis.GetLabelTextProperty().SetColor(*color.int_rgb)
             axis.SetFontFactor(font_size_factor)
@@ -4202,7 +4202,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.add_actor(
             legend_scale,
             reset_camera=False,
-            name='_vtkLegendScaleActor',
+            name="_vtkLegendScaleActor",
             culling=False,
             pickable=False,
             render=render,

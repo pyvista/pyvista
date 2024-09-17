@@ -16,4 +16,4 @@ def test_mpl_backend():
     except ImportError:
         return
 
-    assert mpl.get_backend() == 'agg'
+    assert mpl.get_backend() == "agg"

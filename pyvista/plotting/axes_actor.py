@@ -426,7 +426,7 @@ class AxesActor(_vtk.vtkAxesActor):
     def labels(self, labels: list[str] | tuple[str]):  # numpydoc ignore=GL08
         if not (isinstance(labels, (list, tuple)) and len(labels) == 3):
             raise ValueError(
-                f'Labels must be a list or tuple with three items. Got {labels} instead.',
+                f"Labels must be a list or tuple with three items. Got {labels} instead.",
             )
         self.x_label = labels[0]
         self.y_label = labels[1]
@@ -447,7 +447,7 @@ class AxesActor(_vtk.vtkAxesActor):
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            raise RuntimeError('Remove this deprecated property')
+            raise RuntimeError("Remove this deprecated property")
         return self.GetXAxisLabelText()  # pragma: no cover
 
     @x_axis_label.setter
@@ -458,7 +458,7 @@ class AxesActor(_vtk.vtkAxesActor):
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            raise RuntimeError('Remove this deprecated property')
+            raise RuntimeError("Remove this deprecated property")
         self.SetXAxisLabelText(label)  # pragma: no cover
 
     @property
@@ -495,7 +495,7 @@ class AxesActor(_vtk.vtkAxesActor):
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            raise RuntimeError('Remove this deprecated property')
+            raise RuntimeError("Remove this deprecated property")
         return self.GetYAxisLabelText()  # pragma: no cover
 
     @y_axis_label.setter
@@ -506,7 +506,7 @@ class AxesActor(_vtk.vtkAxesActor):
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            raise RuntimeError('Remove this deprecated property')
+            raise RuntimeError("Remove this deprecated property")
         self.SetYAxisLabelText(label)  # pragma: no cover
 
     @property
@@ -543,7 +543,7 @@ class AxesActor(_vtk.vtkAxesActor):
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            raise RuntimeError('Remove this deprecated property')
+            raise RuntimeError("Remove this deprecated property")
         return self.GetZAxisLabelText()  # pragma: no cover
 
     @z_axis_label.setter
@@ -554,7 +554,7 @@ class AxesActor(_vtk.vtkAxesActor):
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
-            raise RuntimeError('Remove this deprecated property')
+            raise RuntimeError("Remove this deprecated property")
         self.SetZAxisLabelText(label)  # pragma: no cover
 
     @property

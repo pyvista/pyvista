@@ -33,22 +33,22 @@ pl.show()
 pl = pv.Plotter(shape=(2, 2))
 
 pl.subplot(0, 0)
-pl.add_text('Earth Visible as Map')
+pl.add_text("Earth Visible as Map")
 pl.add_background_image(examples.mapfile, as_global=False)
 
 pl.subplot(0, 1)
-pl.add_text('Earth Altitude')
-actor = pl.add_mesh(earth_alt, cmap='gist_earth')
+pl.add_text("Earth Altitude")
+actor = pl.add_mesh(earth_alt, cmap="gist_earth")
 
 pl.subplot(1, 0)
 topo = examples.download_topo_land()
-actor = pl.add_mesh(topo, cmap='gist_earth')
-pl.add_text('Earth Land Altitude')
+actor = pl.add_mesh(topo, cmap="gist_earth")
+pl.add_text("Earth Land Altitude")
 
 pl.subplot(1, 1)
 globe = examples.load_globe()
 texture = examples.load_globe_texture()
-pl.add_text('Earth Visible as Globe')
+pl.add_text("Earth Visible as Globe")
 pl.add_mesh(globe, texture=texture, smooth_shading=True)
 
 pl.show()

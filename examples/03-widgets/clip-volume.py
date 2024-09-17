@@ -31,7 +31,7 @@ import numpy as np
 import pyvista as pv
 
 grid = pv.ImageData(dimensions=(200, 200, 200))
-grid['scalars'] = np.linalg.norm(grid.center - grid.points, axis=1)
+grid["scalars"] = np.linalg.norm(grid.center - grid.points, axis=1)
 grid
 
 
@@ -55,7 +55,7 @@ opacity[::10] = np.geomspace(0.01, 0.75, 10)
 # opaque.
 
 pl = pv.Plotter()
-pl.add_volume_clip_plane(grid, normal='-x', opacity=opacity[::-1], cmap='magma')
+pl.add_volume_clip_plane(grid, normal="-x", opacity=opacity[::-1], cmap="magma")
 pl.show()
 
 
@@ -70,17 +70,17 @@ pl.show()
 
 pl = pv.Plotter()
 vol = pl.add_volume(grid, opacity=opacity)
-vol.prop.interpolation_type = 'linear'
+vol.prop.interpolation_type = "linear"
 pl.add_volume_clip_plane(
     vol,
-    normal='-x',
-    interaction_event='always',
+    normal="-x",
+    interaction_event="always",
     normal_rotation=False,
 )
 pl.add_volume_clip_plane(
     vol,
-    normal='-y',
-    interaction_event='always',
+    normal="-y",
+    interaction_event="always",
     normal_rotation=False,
 )
 pl.show()

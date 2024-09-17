@@ -57,7 +57,7 @@ class Renderers:
         col_weights=None,
         groups=None,
         border=None,
-        border_color='k',
+        border_color="k",
         border_width=2.0,
     ):
         """Initialize renderers."""
@@ -73,14 +73,14 @@ class Renderers:
         self.groups = np.empty((0, 4), dtype=int)
 
         if isinstance(shape, str):
-            if '|' in shape:
-                n = int(shape.split('|')[0])
-                m = int(shape.split('|')[1])
+            if "|" in shape:
+                n = int(shape.split("|")[0])
+                m = int(shape.split("|")[1])
                 rangen = reversed(range(n))
                 rangem = reversed(range(m))
             else:
-                m = int(shape.split('/')[0])
-                n = int(shape.split('/')[1])
+                m = int(shape.split("/")[0])
+                n = int(shape.split("/")[1])
                 rangen = range(n)
                 rangem = range(m)
 
@@ -94,14 +94,14 @@ class Renderers:
 
             for i in rangen:
                 arenderer = Renderer(self._plotter, border, border_color, border_width)
-                if '|' in shape:
+                if "|" in shape:
                     arenderer.viewport = (0, i / n, xsplit, (i + 1) / n)
                 else:
                     arenderer.viewport = (i / n, 0, (i + 1) / n, xsplit)
                 self._renderers.append(arenderer)
             for i in rangem:
                 arenderer = Renderer(self._plotter, border, border_color, border_width)
-                if '|' in shape:
+                if "|" in shape:
                     arenderer.viewport = (xsplit, i / m, 1, (i + 1) / m)
                 else:
                     arenderer.viewport = (i / m, xsplit, (i + 1) / m, 1)
@@ -136,14 +136,14 @@ class Renderers:
             if row_weights.size != shape[0]:
                 raise ValueError(
                     f'"row_weights" must have {shape[0]} items '
-                    f'for {shape[0]} rows of subplots, not '
-                    f'{row_weights.size}.',
+                    f"for {shape[0]} rows of subplots, not "
+                    f"{row_weights.size}.",
                 )
             if col_weights.size != shape[1]:
                 raise ValueError(
                     f'"col_weights" must have {shape[1]} items '
-                    f'for {shape[1]} columns of subplots, not '
-                    f'{col_weights.size}.',
+                    f"for {shape[1]} columns of subplots, not "
+                    f"{col_weights.size}.",
                 )
             row_off = np.cumsum(row_weights) / np.sum(row_weights)
             row_off = 1 - np.concatenate(([0], row_off))
@@ -162,11 +162,11 @@ class Renderers:
                 for group in groups:
                     if not isinstance(group, Sequence):
                         raise TypeError(
-                            'Each group entry should be a list or '
-                            f'tuple, not {type(group).__name__}.',
+                            "Each group entry should be a list or "
+                            f"tuple, not {type(group).__name__}.",
                         )
                     if len(group) != 2:
-                        raise ValueError('Each group entry must have length 2.')
+                        raise ValueError("Each group entry must have length 2.")
 
                     rows = group[0]
                     if isinstance(rows, slice):
@@ -184,7 +184,7 @@ class Renderers:
                     ):
                         if self.loc_to_group((i, j)) is not None:
                             raise ValueError(
-                                f'Groups cannot overlap. Overlap found at position {(i, j)}.',
+                                f"Groups cannot overlap. Overlap found at position {(i, j)}.",
                             )
                     self.groups = np.concatenate(
                         (self.groups, np.array([norm_group], dtype=int)),
@@ -274,9 +274,9 @@ class Renderers:
             index_row = loc[0]
             index_column = loc[1]
             if index_row < 0 or index_row >= self.shape[0]:
-                raise IndexError(f'Row index is out of range ({self.shape[0]})')
+                raise IndexError(f"Row index is out of range ({self.shape[0]})")
             if index_column < 0 or index_column >= self.shape[1]:
-                raise IndexError(f'Column index is out of range ({self.shape[1]})')
+                raise IndexError(f"Column index is out of range ({self.shape[1]})")
             return self._render_idxs[index_row, index_column]
         else:
             raise TypeError('"loc" must be an integer or a sequence.')
@@ -325,7 +325,7 @@ class Renderers:
             return np.intp(index)
         args = np.argwhere(self._render_idxs == index)
         if len(args) < 1:
-            raise IndexError(f'Index ({index}) is out of range.')
+            raise IndexError(f"Index ({index}) is out of range.")
         return args[0]
 
     @property
@@ -369,9 +369,9 @@ class Renderers:
             return
 
         if index_row < 0 or index_row >= self.shape[0]:
-            raise IndexError(f'Row index is out of range ({self.shape[0]})')
+            raise IndexError(f"Row index is out of range ({self.shape[0]})")
         if index_column < 0 or index_column >= self.shape[1]:
-            raise IndexError(f'Column index is out of range ({self.shape[1]})')
+            raise IndexError(f"Column index is out of range ({self.shape[1]})")
         self._active_index = self.loc_to_index((index_row, index_column))
 
     def set_chart_interaction(self, interactive, toggle=False):
@@ -427,7 +427,7 @@ class Renderers:
             renderer.deep_clean()
         if self._shadow_renderer is not None:
             self._shadow_renderer.deep_clean()
-        if hasattr(self, '_background_renderers'):
+        if hasattr(self, "_background_renderers"):
             for renderer in self._background_renderers:
                 if renderer is not None:
                     renderer.deep_clean()
@@ -675,7 +675,7 @@ class Renderers:
         """
         renderer = self._background_renderers[self.active_index]
         if renderer is None:
-            raise RuntimeError('No background image to remove at this subplot')
+            raise RuntimeError("No background image to remove at this subplot")
         renderer.deep_clean()
         self._background_renderers[self.active_index] = None
 

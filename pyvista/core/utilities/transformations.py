@@ -104,14 +104,14 @@ def axis_angle_rotation(axis, angle, point=None, deg=True):
     if angle % (2 * np.pi) == 0:
         return np.eye(4)
 
-    axis = _validation.validate_array3(axis, dtype_out=float, name='axis')
+    axis = _validation.validate_array3(axis, dtype_out=float, name="axis")
     if point is not None:
-        point = _validation.validate_array3(point, dtype_out=float, name='point')
+        point = _validation.validate_array3(point, dtype_out=float, name="point")
 
     # check and normalize
     axis_norm = np.linalg.norm(axis)
     if np.isclose(axis_norm, 0):
-        raise ValueError('Cannot rotate around zero vector axis.')
+        raise ValueError("Cannot rotate around zero vector axis.")
     if not np.isclose(axis_norm, 1):
         axis = axis / axis_norm
 
@@ -218,18 +218,18 @@ def reflection(normal, point=None):
     True
 
     """
-    normal = np.asarray(normal, dtype='float64')
+    normal = np.asarray(normal, dtype="float64")
     if normal.shape != (3,):
-        raise ValueError('Normal must be a 3-length array-like.')
+        raise ValueError("Normal must be a 3-length array-like.")
     if point is not None:
         point = np.asarray(point)
         if point.shape != (3,):
-            raise ValueError('Plane reference point must be a 3-length array-like.')
+            raise ValueError("Plane reference point must be a 3-length array-like.")
 
     # check and normalize
     normal_norm = np.linalg.norm(normal)
     if np.isclose(normal_norm, 0):
-        raise ValueError('Plane normal cannot be zero.')
+        raise ValueError("Plane normal cannot be zero.")
     if not np.isclose(normal_norm, 1):
         normal = normal / normal_norm
 
@@ -286,10 +286,10 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     """
     transformation_shape = transformation.shape
     if transformation_shape not in ((3, 3), (4, 4)):
-        raise ValueError('`transformation` must be of shape (3, 3) or (4, 4).')
+        raise ValueError("`transformation` must be of shape (3, 3) or (4, 4).")
 
     if points.shape[1] != 3:
-        raise ValueError('`points` must be of shape (N, 3).')
+        raise ValueError("`points` must be of shape (N, 3).")
 
     if transformation_shape[0] == 4:
         # Divide by scale factor when homogeneous
@@ -377,13 +377,13 @@ def rotation(
     True
 
     """
-    valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
+    valid_rotation = _validation.validate_transform3x3(rotation, name="rotation")
     rotate = np.eye(4)
     rotate[:3, :3] = valid_rotation
     if point is None:
         return rotate
     else:
-        valid_point = _validation.validate_array3(point, name='point')
+        valid_point = _validation.validate_array3(point, name="point")
 
         translate_to_origin = np.eye(4)
         translate_to_origin[:3, 3] = valid_point * -1

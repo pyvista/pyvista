@@ -33,7 +33,7 @@ def test_copies_are_not_associated():
     # check that copies of pyvista_ndarray are dissociated from the original dataset
     assert points_2.VTKObject is None
     assert points_2.dataset is None
-    assert points_2.association.name == 'NONE'
+    assert points_2.association.name == "NONE"
     assert not np.shares_memory(points, points_2)
 
 

@@ -27,7 +27,7 @@ from .misc import abstract_class
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
-HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
+HDF_HELP = "https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats"
 
 
 def _lazy_vtk_instantiation(module_name, class_name):
@@ -204,7 +204,7 @@ def get_reader(filename, force_ext=None):
     except KeyError:
         if Path(filename).is_dir():
             if len(files := os.listdir(filename)) > 0 and all(
-                Path(f).suffix == '.dcm' for f in files
+                Path(f).suffix == ".dcm" for f in files
             ):
                 Reader = DICOMReader
             else:
@@ -281,8 +281,8 @@ class BaseReader:
     """
 
     _class_reader: Any = None
-    _vtk_module_name: str = ''
-    _vtk_class_name: str = ''
+    _vtk_module_name: str = ""
+    _vtk_class_name: str = ""
 
     def __init__(self, path):
         """Initialize Reader by setting path."""
@@ -1207,8 +1207,8 @@ class POpenFOAMReader(OpenFOAMReader):
     """
 
     _class_reader = staticmethod(lazy_vtkPOpenFOAMReader)
-    _vtk_module_name = ''
-    _vtk_class_name = ''
+    _vtk_module_name = ""
+    _vtk_class_name = ""
 
     @property
     def case_type(self):
@@ -1236,13 +1236,13 @@ class POpenFOAMReader(OpenFOAMReader):
         'reconstructed'
 
         """
-        return 'reconstructed' if self.reader.GetCaseType() else 'decomposed'
+        return "reconstructed" if self.reader.GetCaseType() else "decomposed"
 
     @case_type.setter
     def case_type(self, value):  # numpydoc ignore=GL08
-        if value == 'reconstructed':
+        if value == "reconstructed":
             self.reader.SetCaseType(1)
-        elif value == 'decomposed':
+        elif value == "decomposed":
             self.reader.SetCaseType(0)
         else:
             raise ValueError(f"Unknown case type '{value}'.")
@@ -1969,10 +1969,10 @@ class _PVDReader(BaseVTKReader):
             element_attrib = element.attrib
             datasets.append(
                 PVDDataSet(
-                    float(element_attrib.get('timestep', 0)),
-                    int(element_attrib.get('part', 0)),
-                    element_attrib['file'],
-                    element_attrib.get('group'),
+                    float(element_attrib.get("timestep", 0)),
+                    int(element_attrib.get("part", 0)),
+                    element_attrib["file"],
+                    element_attrib.get("group"),
                 ),
             )
         self._datasets = sorted(datasets)
@@ -2377,9 +2377,9 @@ class HDFReader(BaseReader):
         except RuntimeError as err:  # pragma: no cover
             if "Can't find the `Type` attribute." in str(err):
                 raise RuntimeError(
-                    f'{self.path} is missing the Type attribute. '
-                    'The VTKHDF format has changed as of 9.2.0, '
-                    f'see {HDF_HELP} for more details.',
+                    f"{self.path} is missing the Type attribute. "
+                    "The VTKHDF format has changed as of 9.2.0, "
+                    f"see {HDF_HELP} for more details.",
                 )
             else:
                 raise
@@ -2439,12 +2439,12 @@ class _GIFReader(BaseVTKReader):
         self._n_frames = img.n_frames
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
-            data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')
+            data = np.array(frame.convert("RGB").getdata(), dtype=np.uint8)
+            self._data_object.point_data.set_array(data, f"frame{i}")
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:
-            self._data_object.point_data.active_scalars_name = 'frame0'
+        if "frame0" in self._data_object.point_data:
+            self._data_object.point_data.active_scalars_name = "frame0"
 
 
 class GIFReader(BaseReader):
@@ -2796,9 +2796,9 @@ class ParticleReader(BaseReader):
             The byte order of the data. 'BigEndian' or 'LittleEndian'.
 
         """
-        if endian == 'BigEndian':
+        if endian == "BigEndian":
             self.reader.SetDataByteOrderToBigEndian()
-        elif endian == 'LittleEndian':
+        elif endian == "LittleEndian":
             self.reader.SetDataByteOrderToLittleEndian()
         else:
             raise ValueError(f"Invalid endian: {endian}.")
@@ -2829,66 +2829,66 @@ class ProStarReader(BaseReader):
 
 CLASS_READERS = {
     # Standard dataset readers:
-    '.bmp': BMPReader,
-    '.cas': FluentReader,
-    '.case': EnSightReader,
-    '.cgns': CGNSReader,
-    '.cube': GaussianCubeReader,
-    '.dat': TecplotReader,
-    '.dcm': DICOMReader,
-    '.dem': DEMReader,
-    '.facet': FacetReader,
-    '.foam': POpenFOAMReader,
-    '.g': BYUReader,
-    '.gif': GIFReader,
-    '.glb': GLTFReader,
-    '.gltf': GLTFReader,
-    '.h5': FLUENTCFFReader,
-    '.hdf': HDFReader,
-    '.hdr': HDRReader,
-    '.img': DICOMReader,
-    '.inp': AVSucdReader,
-    '.jpeg': JPEGReader,
-    '.jpg': JPEGReader,
-    '.mha': MetaImageReader,
-    '.mhd': MetaImageReader,
-    '.mnc': MINCImageReader,
-    '.mr': GESignaReader,
-    '.neu': GambitReader,
-    '.nhdr': NRRDReader,
-    '.nii': NIFTIReader,
-    '.nii.gz': NIFTIReader,
-    '.nrrd': NRRDReader,
-    '.obj': OBJReader,
-    '.p3d': Plot3DMetaReader,
-    '.pdb': PDBReader,
-    '.ply': PLYReader,
-    '.png': PNGReader,
-    '.pnm': PNMReader,
-    '.pts': PTSReader,
-    '.pvd': PVDReader,
-    '.pvti': XMLPImageDataReader,
-    '.pvtk': VTKPDataSetReader,
-    '.pvtr': XMLPRectilinearGridReader,
-    '.pvtu': XMLPUnstructuredGridReader,
-    '.raw': ParticleReader,
-    '.res': MFIXReader,
-    '.segy': SegYReader,
-    '.sgy': SegYReader,
-    '.slc': SLCReader,
-    '.stl': STLReader,
-    '.tif': TIFFReader,
-    '.tiff': TIFFReader,
-    '.tri': BinaryMarchingCubesReader,
-    '.vrt': ProStarReader,
-    '.vti': XMLImageDataReader,
-    '.vtk': VTKDataSetReader,
-    '.vtm': XMLMultiBlockDataReader,
-    '.vtmb': XMLMultiBlockDataReader,
-    '.vtp': XMLPolyDataReader,
-    '.vtpd': XMLPartitionedDataSetReader,
-    '.vtr': XMLRectilinearGridReader,
-    '.vts': XMLStructuredGridReader,
-    '.vtu': XMLUnstructuredGridReader,
-    '.xdmf': XdmfReader,
+    ".bmp": BMPReader,
+    ".cas": FluentReader,
+    ".case": EnSightReader,
+    ".cgns": CGNSReader,
+    ".cube": GaussianCubeReader,
+    ".dat": TecplotReader,
+    ".dcm": DICOMReader,
+    ".dem": DEMReader,
+    ".facet": FacetReader,
+    ".foam": POpenFOAMReader,
+    ".g": BYUReader,
+    ".gif": GIFReader,
+    ".glb": GLTFReader,
+    ".gltf": GLTFReader,
+    ".h5": FLUENTCFFReader,
+    ".hdf": HDFReader,
+    ".hdr": HDRReader,
+    ".img": DICOMReader,
+    ".inp": AVSucdReader,
+    ".jpeg": JPEGReader,
+    ".jpg": JPEGReader,
+    ".mha": MetaImageReader,
+    ".mhd": MetaImageReader,
+    ".mnc": MINCImageReader,
+    ".mr": GESignaReader,
+    ".neu": GambitReader,
+    ".nhdr": NRRDReader,
+    ".nii": NIFTIReader,
+    ".nii.gz": NIFTIReader,
+    ".nrrd": NRRDReader,
+    ".obj": OBJReader,
+    ".p3d": Plot3DMetaReader,
+    ".pdb": PDBReader,
+    ".ply": PLYReader,
+    ".png": PNGReader,
+    ".pnm": PNMReader,
+    ".pts": PTSReader,
+    ".pvd": PVDReader,
+    ".pvti": XMLPImageDataReader,
+    ".pvtk": VTKPDataSetReader,
+    ".pvtr": XMLPRectilinearGridReader,
+    ".pvtu": XMLPUnstructuredGridReader,
+    ".raw": ParticleReader,
+    ".res": MFIXReader,
+    ".segy": SegYReader,
+    ".sgy": SegYReader,
+    ".slc": SLCReader,
+    ".stl": STLReader,
+    ".tif": TIFFReader,
+    ".tiff": TIFFReader,
+    ".tri": BinaryMarchingCubesReader,
+    ".vrt": ProStarReader,
+    ".vti": XMLImageDataReader,
+    ".vtk": VTKDataSetReader,
+    ".vtm": XMLMultiBlockDataReader,
+    ".vtmb": XMLMultiBlockDataReader,
+    ".vtp": XMLPolyDataReader,
+    ".vtpd": XMLPartitionedDataSetReader,
+    ".vtr": XMLRectilinearGridReader,
+    ".vts": XMLStructuredGridReader,
+    ".vtu": XMLUnstructuredGridReader,
+    ".xdmf": XdmfReader,
 }

@@ -144,7 +144,7 @@ def doc_subs(member):  # numpydoc ignore=PR01,RT01
     """
     # Ensure we are operating on a method
     if not callable(member):  # pragma: no cover
-        raise ValueError('`member` must be a callable.')
+        raise ValueError("`member` must be a callable.")
     member.__doc__ = DocSubs._DOC_TAG + member.__doc__
     return member
 
@@ -275,8 +275,8 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
             self.SetLineType(self.LINE_STYLES[val]["id"])
             self._line_style = val
         except KeyError:
-            formatted_styles = "\", \"".join(self.LINE_STYLES.keys())
-            raise ValueError(f"Invalid line style. Allowed line styles: \"{formatted_styles}\"")
+            formatted_styles = '", "'.join(self.LINE_STYLES.keys())
+            raise ValueError(f'Invalid line style. Allowed line styles: "{formatted_styles}"')
 
 
 class Brush(_vtkWrapper, _vtk.vtkBrush):
@@ -636,8 +636,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
             self.SetBehavior(self.BEHAVIORS[val])
             self._behavior = val
         except KeyError:
-            formatted_behaviors = "\", \"".join(self.BEHAVIORS.keys())
-            raise ValueError(f"Invalid behavior. Allowed behaviors: \"{formatted_behaviors}\"")
+            formatted_behaviors = '", "'.join(self.BEHAVIORS.keys())
+            raise ValueError(f'Invalid behavior. Allowed behaviors: "{formatted_behaviors}"')
 
     @property
     def margin(self):  # numpydoc ignore=RT01
@@ -1222,7 +1222,7 @@ class _Chart(DocSubs):
     @size.setter
     def size(self, val):  # numpydoc ignore=GL08
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
-            raise ValueError(f'Invalid size {val}.')
+            raise ValueError(f"Invalid size {val}.")
         self._size = val
 
     @property
@@ -1252,7 +1252,7 @@ class _Chart(DocSubs):
     @loc.setter
     def loc(self, val):  # numpydoc ignore=GL08
         if not (len(val) == 2 and 0 <= val[0] <= 1 and 0 <= val[1] <= 1):
-            raise ValueError(f'Invalid loc {val}.')
+            raise ValueError(f"Invalid loc {val}.")
         self._loc = val
 
     @property
@@ -1558,7 +1558,7 @@ class _Chart(DocSubs):
         screenshot=None,
         window_size=None,
         notebook=None,
-        background='w',
+        background="w",
         dev_kwargs=None,
     ):
         """Show this chart in a self contained plotter.
@@ -2467,8 +2467,8 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
             self.SetMarkerStyle(self.MARKER_STYLES[val]["id"])
             self._marker_style = val
         except KeyError:
-            formatted_styles = "\", \"".join(self.MARKER_STYLES.keys())
-            raise ValueError(f"Invalid marker style. Allowed marker styles: \"{formatted_styles}\"")
+            formatted_styles = '", "'.join(self.MARKER_STYLES.keys())
+            raise ValueError(f'Invalid marker style. Allowed marker styles: "{formatted_styles}"')
 
 
 class AreaPlot(_Plot, _vtk.vtkPlotArea):
@@ -2863,9 +2863,9 @@ class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
             self.SetOrientation(self.ORIENTATIONS[val])
             self._orientation = val
         except KeyError:
-            formatted_orientations = "\", \"".join(self.ORIENTATIONS.keys())
+            formatted_orientations = '", "'.join(self.ORIENTATIONS.keys())
             raise ValueError(
-                f"Invalid orientation. Allowed orientations: \"{formatted_orientations}\"",
+                f'Invalid orientation. Allowed orientations: "{formatted_orientations}"',
             )
 
 
@@ -3240,7 +3240,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
                 break
         return marker_style, line_style, color
 
-    def plot(self, x, y=None, fmt='-'):
+    def plot(self, x, y=None, fmt="-"):
         """Matplotlib like plot method.
 
         Parameters
@@ -4071,7 +4071,7 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
     @_geometry.setter
     def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
+            raise AttributeError(f"Cannot set the geometry of {type(self).__class__}")
         else:
             _Chart._geometry.fset(self, value)
 
@@ -4385,7 +4385,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
     @_geometry.setter
     def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
-            raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
+            raise AttributeError(f"Cannot set the geometry of {type(self).__class__}")
         else:
             _Chart._geometry.fset(self, value)
 
@@ -4586,7 +4586,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         self._fig.patch.set_alpha(0)
         for ax in self._fig.axes:
             ax.patch.set_alpha(0)
-        self._canvas.mpl_connect('draw_event', self._redraw)  # Attach 'draw_event' callback
+        self._canvas.mpl_connect("draw_event", self._redraw)  # Attach 'draw_event' callback
         self._redraw_on_render = redraw_on_render
 
         self._redraw()
@@ -4691,7 +4691,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
 
     @_geometry.setter
     def _geometry(self, _):
-        raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
+        raise AttributeError(f"Cannot set the geometry of {type(self).__class__}")
 
     # Below code can be used to customize the chart's background without a _ChartBackground instance
     # @property
@@ -4716,7 +4716,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
     @position.setter
     def position(self, val):  # numpydoc ignore=GL08
         if len(val) != 2:
-            raise ValueError(f'Invalid position {val}, must be length 2.')
+            raise ValueError(f"Invalid position {val}, must be length 2.")
         self.SetPosition(*val)
 
     @property
@@ -4924,7 +4924,7 @@ class Charts:
         """
         chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
         if chart not in self._charts:  # pragma: no cover
-            raise ValueError('chart_index not present in charts collection.')
+            raise ValueError("chart_index not present in charts collection.")
         self._charts.remove(chart)
         self._scene.RemoveItem(chart)
         if chart._background is not None:

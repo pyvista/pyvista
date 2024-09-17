@@ -45,7 +45,7 @@ def check_subdtype(
     /,
     base_dtype: Union[npt.DTypeLike, tuple[npt.DTypeLike, ...], list[npt.DTypeLike]],
     *,
-    name: str = 'Input',
+    name: str = "Input",
 ):
     """Check if an input's data-type is a subtype of another data-type(s).
 
@@ -234,7 +234,7 @@ def check_sorted(
 
     if axis is None and ndim >= 1:
         # Emulate np.sort(), which flattens array when axis is None
-        array = array.ravel(order='A')
+        array = array.ravel(order="A")
         ndim = 1
         axis = 0
 
@@ -383,7 +383,7 @@ def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = "
     check_greater_than(array, 0, strict=False, name=name)
 
 
-def _validate_real_value(scalar, name='Value'):
+def _validate_real_value(scalar, name="Value"):
     valid_scalar = _cast_to_numpy(scalar)
     check_shape(valid_scalar, (), name=name)
     check_real(valid_scalar, name=name)
@@ -633,7 +633,7 @@ def check_shape(
     raise ValueError(msg)
 
 
-def check_number(num, /, *, name='Object'):
+def check_number(num, /, *, name="Object"):
     """Check if an object is an instance of ``Number``.
 
     A number is any instance of ``numbers.Number``, e.g.  ``int``,
@@ -671,7 +671,7 @@ def check_number(num, /, *, name='Object'):
     check_instance(num, Number, allow_subclass=True, name=name)
 
 
-def check_string(obj, /, *, allow_subclass=True, name='Object'):
+def check_string(obj, /, *, allow_subclass=True, name="Object"):
     """Check if an object is an instance of ``str``.
 
     Parameters
@@ -709,7 +709,7 @@ def check_string(obj, /, *, allow_subclass=True, name='Object'):
     check_instance(obj, str, allow_subclass=allow_subclass, name=name)
 
 
-def check_sequence(obj, /, *, name='Object'):
+def check_sequence(obj, /, *, name="Object"):
     """Check if an object is an instance of ``Sequence``.
 
     Parameters
@@ -743,7 +743,7 @@ def check_sequence(obj, /, *, name='Object'):
     check_instance(obj, Sequence, allow_subclass=True, name=name)
 
 
-def check_iterable(obj, /, *, name='Object'):
+def check_iterable(obj, /, *, name="Object"):
     """Check if an object is an instance of ``Iterable``.
 
     Parameters
@@ -778,7 +778,7 @@ def check_iterable(obj, /, *, name='Object'):
     check_instance(obj, Iterable, allow_subclass=True, name=name)
 
 
-def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
+def check_instance(obj, /, classinfo, *, allow_subclass=True, name="Object"):
     """Check if an object is an instance of the given type or types.
 
     Parameters
@@ -859,7 +859,7 @@ def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
         raise TypeError(msg)
 
 
-def check_type(obj, /, classinfo, *, name='Object'):
+def check_type(obj, /, classinfo, *, name="Object"):
     """Check if an object is one of the given type or types.
 
     Notes
@@ -905,7 +905,7 @@ def check_iterable_items(
     item_type,
     *,
     allow_subclass=True,
-    name='Iterable',
+    name="Iterable",
 ):
     """Check if an iterable's items all have a specified type.
 
@@ -962,7 +962,7 @@ def check_iterable_items(
     )
 
 
-def check_contains(*, item, container, name='Input'):
+def check_contains(*, item, container, name="Input"):
     """Check if an item is in a container.
 
     Parameters
@@ -995,7 +995,7 @@ def check_contains(*, item, container, name='Input'):
 
     """
     if item not in container:
-        qualifier = 'one of' if isinstance(container, (list, tuple)) else 'in'
+        qualifier = "one of" if isinstance(container, (list, tuple)) else "in"
         msg = f"{name} '{item}' is not valid. {name} must be {qualifier}: \n\t{container}"
         raise ValueError(msg)
 
@@ -1134,10 +1134,10 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
 
     # Input is not valid at this point. Use checks to raise an
     # appropriate error
-    check_instance(shape, (int, tuple), name='Shape')
+    check_instance(shape, (int, tuple), name="Shape")
     if isinstance(shape, int):
         shape = (shape,)
     else:
-        check_iterable_items(shape, int, name='Shape')
+        check_iterable_items(shape, int, name="Shape")
     check_greater_than(shape, -1, name="Shape", strict=False)
     raise RuntimeError("This line should not be reachable.")  # pragma: no cover

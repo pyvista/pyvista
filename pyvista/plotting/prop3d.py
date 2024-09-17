@@ -441,7 +441,7 @@ def _rotation_matrix_as_orientation(
         Tuple with x-y-z axis rotation angles in degrees.
 
     """
-    array_3x3 = _validation.validate_transform3x3(array, name='rotation')
+    array_3x3 = _validation.validate_transform3x3(array, name="rotation")
     array_4x4 = np.eye(4)
     array_4x4[:3, :3] = array_3x3
     transform = _vtk.vtkTransform()
@@ -470,7 +470,7 @@ def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArra
         3x3 rotation matrix.
 
     """
-    valid_orientation = _validation.validate_array3(orientation, name='orientation')
+    valid_orientation = _validation.validate_array3(orientation, name="orientation")
     prop = _vtk.vtkActor()
     prop.SetOrientation(valid_orientation)
     matrix = _vtk.vtkMatrix4x4()

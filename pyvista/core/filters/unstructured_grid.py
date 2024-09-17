@@ -153,5 +153,5 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetRemoveUnusedPoints(remove_unused_points)
         alg.SetProduceMergeMap(produce_merge_map)
         alg.SetAveragePointData(average_point_data)
-        _update_alg(alg, progress_bar, 'Cleaning Unstructured Grid')
+        _update_alg(alg, progress_bar, "Cleaning Unstructured Grid")
         return _get_output(alg)

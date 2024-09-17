@@ -142,7 +142,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         """
         if not isinstance(lookup_table, pyvista.LookupTable):
-            raise TypeError('`lookup_table` must be a `pyvista.LookupTable`')
+            raise TypeError("`lookup_table` must be a `pyvista.LookupTable`")
 
         self.SetColor(lookup_table.to_color_tf())
         self.SetScalarOpacity(lookup_table.to_opacity_tf())
@@ -195,9 +195,9 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
     @interpolation_type.setter
     def interpolation_type(self, value: str):  # numpydoc ignore=GL08
-        if value == 'linear':
+        if value == "linear":
             self.SetInterpolationTypeToLinear()
-        elif value == 'nearest':
+        elif value == "nearest":
             self.SetInterpolationTypeToNearest()
         else:
             raise ValueError('`interpolation_type` must be either "linear" or "nearest"')
@@ -349,12 +349,12 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
     def __repr__(self):
         """Representation of this property."""
         props = [
-            f'{type(self).__name__} ({hex(id(self))})',
+            f"{type(self).__name__} ({hex(id(self))})",
         ]
 
         for attr in dir(self):
-            if not attr.startswith('_') and attr[0].islower():
-                name = ' '.join(attr.split('_')).capitalize() + ':'
+            if not attr.startswith("_") and attr[0].islower():
+                name = " ".join(attr.split("_")).capitalize() + ":"
                 try:
                     value = getattr(self, attr)
                 except AttributeError:  # pragma:no cover
@@ -363,6 +363,6 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
                     continue
                 if isinstance(value, str):
                     value = f'"{value}"'
-                props.append(f'  {name:28s} {value}')
+                props.append(f"  {name:28s} {value}")
 
-        return '\n'.join(props)
+        return "\n".join(props)

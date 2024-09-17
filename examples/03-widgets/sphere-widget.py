@@ -123,9 +123,9 @@ def get_colors(n):
 
     import matplotlib as mpl
 
-    cycler = mpl.rcParams['axes.prop_cycle']
+    cycler = mpl.rcParams["axes.prop_cycle"]
     colors = cycle(cycler)
-    return [next(colors)['color'] for i in range(n)]
+    return [next(colors)["color"] for i in range(n)]
 
 
 # Create a grid to interpolate to
@@ -149,8 +149,8 @@ points = np.array([[33, 25, 45], [70, 80, 13], [51, 57, 10], [25, 69, 20]])
 def update_surface(point, i):
     points[i] = point
     tp = np.vstack((points, boundaries))
-    zz = griddata(tp[:, 0:2], tp[:, 2], (xx[:, :, 0], yy[:, :, 0]), method='cubic')
-    surf.points[:, -1] = zz.ravel(order='F')
+    zz = griddata(tp[:, 0:2], tp[:, 2], (xx[:, :, 0], yy[:, :, 0]), method="cubic")
+    surf.points[:, -1] = zz.ravel(order="F")
 
 
 # Get a list of unique colors for each widget

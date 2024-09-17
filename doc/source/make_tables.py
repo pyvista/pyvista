@@ -414,7 +414,7 @@ class ColorTable(DocTable):
         colors_dict: dict[str | None, dict[str, Any]] = {
             c.name: {"name": c.name, "hex": c.hex_rgb, "synonyms": []} for c in colors_obj
         }
-        assert all(name is not None for name in colors_dict.keys()), 'Colors must be named.'
+        assert all(name is not None for name in colors_dict.keys()), "Colors must be named."
         # Add synonyms defined in ``color_synonyms`` dictionary.
         for s, name in pv.colors.color_synonyms.items():
             colors_dict[name]["synonyms"].append(s)
@@ -1176,7 +1176,7 @@ class DatasetPropsGenerator:
                 # Limit number of extensions displayed
                 first = _format_ext(file_ext[:3])
                 last = _format_ext(file_ext[-3:])
-                return first + sep + '...' + sep + last
+                return first + sep + "..." + sep + last
             return _format_ext(file_ext)
         return None
 
@@ -1415,7 +1415,7 @@ class DatasetCardFetcher:
             except ValueError:
                 pass
             else:
-                index_character = '#'
+                index_character = "#"
 
             alphabet_dict.setdefault(index_character, dataset_name)
 
@@ -1440,7 +1440,7 @@ class DatasetCardFetcher:
         for card in cls.DATASET_CARDS_OBJ.values():
             for cell_type in card.loader.unique_cell_types:
                 name = cell_type.name
-                card.add_badge(CellTypeBadge(name, 'pyvista.CellType.' + name))
+                card.add_badge(CellTypeBadge(name, "pyvista.CellType." + name))
 
     @classmethod
     def fetch_dataset_names_by_datatype(cls, datatype) -> Iterator[str]:

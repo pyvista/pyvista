@@ -163,7 +163,7 @@ class Property(_vtk.vtkProperty):
         theme=None,
         interpolation=None,
         color=None,
-        style='surface',
+        style="surface",
         metallic=None,
         roughness=None,
         point_size=None,
@@ -248,7 +248,7 @@ class Property(_vtk.vtkProperty):
             import warnings
 
             warnings.warn(
-                '`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.',
+                "`edge_opacity` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.",
                 UserWarning,
             )
         if edge_opacity is None:
@@ -294,13 +294,13 @@ class Property(_vtk.vtkProperty):
     def style(self, new_style: str):  # numpydoc ignore=GL08
         new_style = new_style.lower()
 
-        if new_style == 'wireframe':
+        if new_style == "wireframe":
             self.SetRepresentationToWireframe()
             if not self._color_set:
                 self.color = self._theme.outline_color  # type: ignore[attr-defined]
-        elif new_style == 'points':
+        elif new_style == "points":
             self.SetRepresentationToPoints()
-        elif new_style == 'surface':
+        elif new_style == "surface":
             self.SetRepresentationToSurface()
         else:
             raise ValueError(
@@ -417,7 +417,7 @@ class Property(_vtk.vtkProperty):
 
     @opacity.setter
     def opacity(self, value: float):  # numpydoc ignore=GL08
-        _check_range(value, (0, 1), 'opacity')
+        _check_range(value, (0, 1), "opacity")
         self.SetOpacity(value)
 
     @property
@@ -461,7 +461,7 @@ class Property(_vtk.vtkProperty):
 
     @edge_opacity.setter
     def edge_opacity(self, value: float):  # numpydoc ignore=GL08
-        _check_range(value, (0, 1), 'edge_opacity')
+        _check_range(value, (0, 1), "edge_opacity")
         if vtk_version_info >= (9, 3):
             self.SetEdgeOpacity(value)
 
@@ -560,7 +560,7 @@ class Property(_vtk.vtkProperty):
 
     @ambient.setter
     def ambient(self, value: float):  # numpydoc ignore=GL08
-        _check_range(value, (0, 1), 'ambient')
+        _check_range(value, (0, 1), "ambient")
         self.SetAmbient(value)
 
     @property
@@ -601,7 +601,7 @@ class Property(_vtk.vtkProperty):
 
     @diffuse.setter
     def diffuse(self, value: float):  # numpydoc ignore=GL08
-        _check_range(value, (0, 1), 'diffuse')
+        _check_range(value, (0, 1), "diffuse")
         self.SetDiffuse(value)
 
     @property
@@ -641,7 +641,7 @@ class Property(_vtk.vtkProperty):
 
     @specular.setter
     def specular(self, value: float):  # numpydoc ignore=GL08
-        _check_range(value, (0, 1), 'specular')
+        _check_range(value, (0, 1), "specular")
         self.SetSpecular(value)
 
     @property
@@ -680,7 +680,7 @@ class Property(_vtk.vtkProperty):
 
     @specular_power.setter
     def specular_power(self, value: float):  # numpydoc ignore=GL08
-        _check_range(value, (0, 128), 'specular_power')
+        _check_range(value, (0, 128), "specular_power")
         self.SetSpecularPower(value)
 
     @property
@@ -720,7 +720,7 @@ class Property(_vtk.vtkProperty):
 
     @metallic.setter
     def metallic(self, value: float):  # numpydoc ignore=GL08
-        _check_range(value, (0, 1), 'metallic')
+        _check_range(value, (0, 1), "metallic")
         self.SetMetallic(value)
 
     @property
@@ -766,7 +766,7 @@ class Property(_vtk.vtkProperty):
 
     @roughness.setter
     def roughness(self, value: bool):  # numpydoc ignore=GL08
-        _check_range(value, (0, 1), 'roughness')
+        _check_range(value, (0, 1), "roughness")
         self.SetRoughness(value)
 
     @property
@@ -922,7 +922,7 @@ class Property(_vtk.vtkProperty):
 
     @line_width.setter
     def line_width(self, value: float):  # numpydoc ignore=GL08
-        _check_range(value, [0, float('inf')], parm_name='line_width')
+        _check_range(value, [0, float("inf")], parm_name="line_width")
         self.SetLineWidth(value)
 
     @property
@@ -961,7 +961,7 @@ class Property(_vtk.vtkProperty):
 
     @point_size.setter
     def point_size(self, new_size):  # numpydoc ignore=GL08
-        _check_range(new_size, [0, float('inf')], parm_name='point_size')
+        _check_range(new_size, [0, float("inf")], parm_name="point_size")
         self.SetPointSize(new_size)
 
     @property
@@ -1004,29 +1004,29 @@ class Property(_vtk.vtkProperty):
 
         """
         if self.GetBackfaceCulling():
-            return 'back'
+            return "back"
         elif self.GetFrontfaceCulling():
-            return 'front'
-        return 'none'
+            return "front"
+        return "none"
 
     @culling.setter
     def culling(self, value):  # numpydoc ignore=GL08
         if isinstance(value, str):
             value = value.lower()
 
-        if value == 'back':
+        if value == "back":
             try:
                 self.BackfaceCullingOn()
                 self.FrontfaceCullingOff()
             except AttributeError:  # pragma: no cover
                 pass
-        elif value == 'front':
+        elif value == "front":
             try:
                 self.FrontfaceCullingOn()
                 self.BackfaceCullingOff()
             except AttributeError:  # pragma: no cover
                 pass
-        elif value == 'none':
+        elif value == "none":
             self.FrontfaceCullingOff()
             self.BackfaceCullingOff()
         else:
@@ -1173,19 +1173,19 @@ class Property(_vtk.vtkProperty):
         >>> prop.plot()
 
         """
-        if not hasattr(self, 'GetAnisotropy'):  # pragma: no cover
+        if not hasattr(self, "GetAnisotropy"):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
+            raise VTKVersionError("Anisotropy requires VTK v9.1.0 or newer.")
         return self.GetAnisotropy()
 
     @anisotropy.setter
     def anisotropy(self, value: float):  # numpydoc ignore=GL08
-        if not hasattr(self, 'SetAnisotropy'):  # pragma: no cover
+        if not hasattr(self, "SetAnisotropy"):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError('Anisotropy requires VTK v9.1.0 or newer.')
-        _check_range(value, (0, 1), 'anisotropy')
+            raise VTKVersionError("Anisotropy requires VTK v9.1.0 or newer.")
+        _check_range(value, (0, 1), "anisotropy")
         self.SetAnisotropy(value)
 
     def plot(self, **kwargs) -> None:
@@ -1214,17 +1214,17 @@ class Property(_vtk.vtkProperty):
         """
         from pyvista import examples  # avoid circular import
 
-        before_close_callback = kwargs.pop('before_close_callback', None)
+        before_close_callback = kwargs.pop("before_close_callback", None)
 
         pl = pyvista.Plotter(**kwargs)
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 
-        if self.interpolation == 'Physically based rendering':
+        if self.interpolation == "Physically based rendering":
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 
-        pl.camera_position = 'xy'
+        pl.camera_position = "xy"
         pl.show(before_close_callback=before_close_callback)
 
     def copy(self) -> Property:
@@ -1251,12 +1251,12 @@ class Property(_vtk.vtkProperty):
         from pyvista.core.errors import VTKVersionError
 
         props = [
-            f'{type(self).__name__} ({hex(id(self))})',
+            f"{type(self).__name__} ({hex(id(self))})",
         ]
 
         for attr in dir(self):
-            if not attr.startswith('_') and attr[0].islower():
-                name = ' '.join(attr.split('_')).capitalize() + ':'
+            if not attr.startswith("_") and attr[0].islower():
+                name = " ".join(attr.split("_")).capitalize() + ":"
                 try:
                     value = getattr(self, attr)
                 except (VTKVersionError, AttributeError):  # pragma:no cover
@@ -1265,6 +1265,6 @@ class Property(_vtk.vtkProperty):
                     continue
                 if isinstance(value, str):
                     value = f'"{value}"'
-                props.append(f'  {name:28s} {value}')
+                props.append(f"  {name:28s} {value}")
 
-        return '\n'.join(props)
+        return "\n".join(props)

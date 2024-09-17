@@ -42,8 +42,8 @@ def plot_cell(grid, cpos=None, **kwargs):
         CellType.QUADRATIC_EDGE,
         CellType.CUBIC_LINE,
     ]:
-        pl.add_mesh(grid, style='wireframe', line_width=10, color='k', render_lines_as_tubes=True)
-    pl.add_points(grid, render_points_as_spheres=True, point_size=80, color='r')
+        pl.add_mesh(grid, style="wireframe", line_width=10, color="k", render_lines_as_tubes=True)
+    pl.add_points(grid, render_points_as_spheres=True, point_size=80, color="r")
     pl.add_point_labels(
         grid.points,
         range(grid.n_points),

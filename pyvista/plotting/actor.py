@@ -83,7 +83,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_name']
+    _new_attr_exceptions: ClassVar[list[str]] = ["_name"]
 
     def __init__(self, mapper=None, prop=None, name=None):
         """Initialize actor."""
@@ -100,13 +100,13 @@ class Actor(Prop3D, _vtk.vtkActor):
     def name(self) -> str:  # numpydoc ignore=RT01
         """Get or set the unique name identifier used by PyVista."""
         if self._name is None:
-            self._name = f'{type(self).__name__}({self.memory_address})'
+            self._name = f"{type(self).__name__}({self.memory_address})"
         return self._name
 
     @name.setter
     def name(self, value: str):  # numpydoc ignore=GL08
         if not value:
-            raise ValueError('Name must be truthy.')
+            raise ValueError("Name must be truthy.")
         self._name = value
 
     @property
@@ -327,29 +327,29 @@ class Actor(Prop3D, _vtk.vtkActor):
     def __repr__(self):
         """Representation of the actor."""
         if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
+            mat_info = "Identity"
         else:
-            mat_info = 'Set'
+            mat_info = "Set"
         bnd = self.bounds
         attr = [
-            f'{type(self).__name__} ({hex(id(self))})',
-            f'  Center:                     {self.center}',
-            f'  Pickable:                   {self.pickable}',
-            f'  Position:                   {self.position}',
-            f'  Scale:                      {self.scale}',
-            f'  Visible:                    {self.visibility}',
-            f'  X Bounds                    {bnd[0]:.3E}, {bnd[1]:.3E}',
-            f'  Y Bounds                    {bnd[2]:.3E}, {bnd[3]:.3E}',
-            f'  Z Bounds                    {bnd[4]:.3E}, {bnd[5]:.3E}',
-            f'  User matrix:                {mat_info}',
-            f'  Has mapper:                 {self.mapper is not None}',
-            '',
+            f"{type(self).__name__} ({hex(id(self))})",
+            f"  Center:                     {self.center}",
+            f"  Pickable:                   {self.pickable}",
+            f"  Position:                   {self.position}",
+            f"  Scale:                      {self.scale}",
+            f"  Visible:                    {self.visibility}",
+            f"  X Bounds                    {bnd[0]:.3E}, {bnd[1]:.3E}",
+            f"  Y Bounds                    {bnd[2]:.3E}, {bnd[3]:.3E}",
+            f"  Z Bounds                    {bnd[4]:.3E}, {bnd[5]:.3E}",
+            f"  User matrix:                {mat_info}",
+            f"  Has mapper:                 {self.mapper is not None}",
+            "",
             repr(self.prop),
         ]
         if self.mapper is not None:
-            attr.append('')
+            attr.append("")
             attr.append(repr(self.mapper))
-        return '\n'.join(attr)
+        return "\n".join(attr)
 
     @property
     def backface_prop(self) -> pyvista.Property | None:  # numpydoc ignore=RT01

@@ -48,21 +48,21 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 
 
 def _indent_paragraph(string, level):
-    indentation = "".join(['    '] * level)
+    indentation = "".join(["    "] * level)
     return textwrap.indent(textwrap.dedent(string).strip(), indentation)
 
 
 # See link for color names: https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
-_BADGE_COLORS = dict(linear='primary', primary='success', dimension='secondary', geometry='muted')
+_BADGE_COLORS = dict(linear="primary", primary="success", dimension="secondary", geometry="muted")
 
 
 def _generate_linear_badge(is_linear: bool):
-    text = 'Linear' if is_linear else 'Non-linear'
+    text = "Linear" if is_linear else "Non-linear"
     return f":bdg-{_BADGE_COLORS['linear']}:`{text}`"
 
 
 def _generate_primary_badge(is_primary: bool):
-    text = 'Primary' if is_primary else 'Composite'
+    text = "Primary" if is_primary else "Composite"
     return f":bdg-{_BADGE_COLORS['primary']}:`{text}`"
 
 
@@ -88,9 +88,9 @@ class _CellTypeTuple(NamedTuple):
     short_doc: str | None = None
     long_doc: str | None = None
     example: str | None = None
-    points_override: Literal['variable', 'n/a'] | None = None
-    edges_override: Literal['variable', 'n/a'] | None = None
-    faces_override: Literal['variable', 'n/a'] | None = None
+    points_override: Literal["variable", "n/a"] | None = None
+    edges_override: Literal["variable", "n/a"] | None = None
+    faces_override: Literal["variable", "n/a"] | None = None
 
 
 class CellType(IntEnum):
@@ -169,9 +169,9 @@ class CellType(IntEnum):
         _short_doc: str | None = None,
         _long_doc: str | None = None,
         _example: str | None = None,
-        _points_override: Literal['variable', 'n/a'] | None = None,
-        _edges_override: Literal['variable', 'n/a'] | None = None,
-        _faces_override: Literal['variable', 'n/a'] | None = None,
+        _points_override: Literal["variable", "n/a"] | None = None,
+        _edges_override: Literal["variable", "n/a"] | None = None,
+        _faces_override: Literal["variable", "n/a"] | None = None,
     ):
         """Create new enum.
 
@@ -226,7 +226,7 @@ class CellType(IntEnum):
         """
         self = int.__new__(cls, value)
         self._value_ = value
-        self.__doc__ = ''
+        self.__doc__ = ""
 
         # Generate cell type documentation if specified
         if _cell_class or _short_doc or _long_doc or _example:
@@ -247,26 +247,26 @@ class CellType(IntEnum):
 
                 badges = (
                     _indent_paragraph(
-                        f'{linear_badge} {primary_badge} {dimension_badge}\n'
-                        f'{points_badge} {edges_badge} {faces_badge}',
+                        f"{linear_badge} {primary_badge} {dimension_badge}\n"
+                        f"{points_badge} {edges_badge} {faces_badge}",
                         level=2,
                     )
-                    + '\n\n'
+                    + "\n\n"
                 )
             else:
-                badges = ''
+                badges = ""
 
-            _short_doc = '' if _short_doc is None else _indent_paragraph(_short_doc, level=2)
+            _short_doc = "" if _short_doc is None else _indent_paragraph(_short_doc, level=2)
 
             _long_doc = (
-                ''
+                ""
                 if _long_doc is None
                 else _indent_paragraph(
                     _DROPDOWN_TEMPLATE.format(_indent_paragraph(_long_doc, level=1)), level=2
                 )
             )
             if _short_doc and _long_doc:
-                _short_doc += '\n\n'
+                _short_doc += "\n\n"
 
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
@@ -299,7 +299,7 @@ class CellType(IntEnum):
         value=_vtk.VTK_POLY_VERTEX,
         cell_class=_vtk.vtkPolyVertex,
         example="PolyVertex",
-        points_override='variable',
+        points_override="variable",
         short_doc="""
         Represents a set of points in 3D space.
 
@@ -322,7 +322,7 @@ class CellType(IntEnum):
         value=_vtk.VTK_POLY_LINE,
         cell_class=_vtk.vtkPolyLine,
         example="PolyLine",
-        points_override='variable',
+        points_override="variable",
         short_doc="""
         Represents a set of 1D lines.
 
@@ -353,8 +353,8 @@ class CellType(IntEnum):
         value=_vtk.VTK_TRIANGLE_STRIP,
         cell_class=_vtk.vtkTriangleStrip,
         example="TriangleStrip",
-        points_override='variable',
-        edges_override='variable',
+        points_override="variable",
+        edges_override="variable",
         short_doc="""
         Represents a 2D triangle strip.
 
@@ -377,8 +377,8 @@ class CellType(IntEnum):
         value=_vtk.VTK_POLYGON,
         cell_class=_vtk.vtkPolygon,
         example="Polygon",
-        points_override='variable',
-        edges_override='variable',
+        points_override="variable",
+        edges_override="variable",
         short_doc="""
         Represents a 2D n-sided polygon.
 
@@ -400,7 +400,7 @@ class CellType(IntEnum):
     PIXEL = _CellTypeTuple(
         value=_vtk.VTK_PIXEL,
         cell_class=_vtk.vtkPixel,
-        example='Pixel',
+        example="Pixel",
         short_doc="""
         Represents a 2D orthogonal quadrilateral.
 
@@ -582,7 +582,7 @@ class CellType(IntEnum):
     QUADRATIC_EDGE = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_EDGE,
         cell_class=_vtk.vtkQuadraticEdge,
-        example='QuadraticEdge',
+        example="QuadraticEdge",
         short_doc="""
         Represents a 1D, 3-node, iso-parametric parabolic line.
 
@@ -596,7 +596,7 @@ class CellType(IntEnum):
     QUADRATIC_TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkQuadraticTriangle,
-        example='QuadraticTriangle',
+        example="QuadraticTriangle",
         short_doc="""
         Represents a 2D, 6-node, iso-parametric parabolic triangle.
 
@@ -615,7 +615,7 @@ class CellType(IntEnum):
     QUADRATIC_QUAD = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_QUAD,
         cell_class=_vtk.vtkQuadraticQuad,
-        example='QuadraticQuadrilateral',
+        example="QuadraticQuadrilateral",
         short_doc="""
         Represents a 2D, 8-node iso-parametric parabolic quadrilateral element.
 
@@ -633,9 +633,9 @@ class CellType(IntEnum):
     QUADRATIC_POLYGON = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_POLYGON,
         cell_class=_vtk.vtkQuadraticPolygon,
-        example='QuadraticPolygon',
-        points_override='variable',
-        edges_override='variable',
+        example="QuadraticPolygon",
+        points_override="variable",
+        edges_override="variable",
         short_doc="""
         Represents a 2D n-sided (2*n nodes) parabolic polygon.
 
@@ -656,7 +656,7 @@ class CellType(IntEnum):
     QUADRATIC_TETRA = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_TETRA,
         cell_class=_vtk.vtkQuadraticTetra,
-        example='QuadraticTetrahedron',
+        example="QuadraticTetrahedron",
         short_doc="""
         Represents a 3D, 10-node, iso-parametric parabolic tetrahedron.
 
@@ -675,7 +675,7 @@ class CellType(IntEnum):
     QUADRATIC_HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkQuadraticHexahedron,
-        example='QuadraticHexahedron',
+        example="QuadraticHexahedron",
         short_doc="""
         Represents a 3D, 20-node iso-parametric parabolic hexahedron.
 
@@ -696,7 +696,7 @@ class CellType(IntEnum):
     QUADRATIC_WEDGE = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkQuadraticWedge,
-        example='QuadraticWedge',
+        example="QuadraticWedge",
         short_doc="""
         Represents a 3D, 15-node iso-parametric parabolic wedge.
 
@@ -719,7 +719,7 @@ class CellType(IntEnum):
     QUADRATIC_PYRAMID = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_PYRAMID,
         cell_class=_vtk.vtkQuadraticPyramid,
-        example='QuadraticPyramid',
+        example="QuadraticPyramid",
         short_doc="""
         Represents a 3D, 13-node iso-parametric parabolic pyramid.
 
@@ -740,7 +740,7 @@ class CellType(IntEnum):
     BIQUADRATIC_QUAD = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUAD,
         cell_class=_vtk.vtkBiQuadraticQuad,
-        example='BiQuadraticQuadrilateral',
+        example="BiQuadraticQuadrilateral",
         short_doc="""
         Represents a 2D, 9-node iso-parametric parabolic quadrilateral element with a center-point.
 
@@ -760,7 +760,7 @@ class CellType(IntEnum):
     TRIQUADRATIC_HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_TRIQUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkTriQuadraticHexahedron,
-        example='TriQuadraticHexahedron',
+        example="TriQuadraticHexahedron",
         short_doc="""
         Represents a 3D, 27-node iso-parametric triquadratic hexahedron.
 
@@ -797,7 +797,7 @@ class CellType(IntEnum):
         TRIQUADRATIC_PYRAMID = _CellTypeTuple(
             value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
             cell_class=_vtk.vtkTriQuadraticPyramid,
-            example='TriQuadraticPyramid',
+            example="TriQuadraticPyramid",
             short_doc="""
             Represents a second order 3D iso-parametric 19-node pyramid.
 
@@ -833,7 +833,7 @@ class CellType(IntEnum):
     QUADRATIC_LINEAR_QUAD = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_QUAD,
         cell_class=_vtk.vtkQuadraticLinearQuad,
-        example='QuadraticLinearQuadrilateral',
+        example="QuadraticLinearQuadrilateral",
         short_doc="""
         Represents a 2D, 6-node iso-parametric quadratic-linear quadrilateral element.
 
@@ -851,7 +851,7 @@ class CellType(IntEnum):
     QUADRATIC_LINEAR_WEDGE = _CellTypeTuple(
         value=_vtk.VTK_QUADRATIC_LINEAR_WEDGE,
         cell_class=_vtk.vtkQuadraticLinearWedge,
-        example='QuadraticLinearWedge',
+        example="QuadraticLinearWedge",
         short_doc="""
         Represents a 3D, 12-node iso-parametric linear quadratic wedge.
 
@@ -872,7 +872,7 @@ class CellType(IntEnum):
     BIQUADRATIC_QUADRATIC_WEDGE = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_WEDGE,
         cell_class=_vtk.vtkBiQuadraticQuadraticWedge,
-        example='BiQuadraticQuadraticWedge',
+        example="BiQuadraticQuadraticWedge",
         short_doc="""
         Represents a 3D, 18-node iso-parametric bi-quadratic wedge.
 
@@ -896,7 +896,7 @@ class CellType(IntEnum):
     BIQUADRATIC_QUADRATIC_HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_QUADRATIC_HEXAHEDRON,
         cell_class=_vtk.vtkBiQuadraticQuadraticHexahedron,
-        example='BiQuadraticQuadraticHexahedron',
+        example="BiQuadraticQuadraticHexahedron",
         short_doc="""
         Represents a 3D, 24-node iso-parametric biquadratic hexahedron.
 
@@ -921,7 +921,7 @@ class CellType(IntEnum):
     BIQUADRATIC_TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_BIQUADRATIC_TRIANGLE,
         cell_class=_vtk.vtkBiQuadraticTriangle,
-        example='BiQuadraticTriangle',
+        example="BiQuadraticTriangle",
         short_doc="""
         Represents a 2D, 7-node, iso-parametric parabolic triangle.
 
@@ -945,7 +945,7 @@ class CellType(IntEnum):
     CUBIC_LINE = _CellTypeTuple(
         value=_vtk.VTK_CUBIC_LINE,
         cell_class=_vtk.vtkCubicLine,
-        example='CubicLine',
+        example="CubicLine",
         short_doc="""
         Represents a 1D iso-parametric cubic line.
 
@@ -964,7 +964,7 @@ class CellType(IntEnum):
     CONVEX_POINT_SET = _CellTypeTuple(
         value=_vtk.VTK_CONVEX_POINT_SET,
         cell_class=_vtk.vtkConvexPointSet,
-        points_override='variable',
+        points_override="variable",
     )
 
     ####################################################################################
@@ -972,9 +972,9 @@ class CellType(IntEnum):
     POLYHEDRON = _CellTypeTuple(
         value=_vtk.VTK_POLYHEDRON,
         cell_class=_vtk.vtkPolyhedron,
-        points_override='variable',
-        edges_override='variable',
-        faces_override='variable',
+        points_override="variable",
+        edges_override="variable",
+        faces_override="variable",
     )
 
     ####################################################################################

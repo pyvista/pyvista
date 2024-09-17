@@ -13,7 +13,7 @@ class NotAllTrianglesError(ValueError):
 
     """
 
-    def __init__(self, message='Mesh must consist of only triangles'):
+    def __init__(self, message="Mesh must consist of only triangles"):
         """Empty init."""
         ValueError.__init__(self, message)
 
@@ -28,7 +28,7 @@ class DeprecationError(RuntimeError):
 
     """
 
-    def __init__(self, message='This feature has been deprecated'):
+    def __init__(self, message="This feature has been deprecated"):
         """Empty init."""
         RuntimeError.__init__(self, message)
 
@@ -45,7 +45,7 @@ class VTKVersionError(RuntimeError):
 
     def __init__(
         self,
-        message='The requested feature is not supported by the installed VTK version.',
+        message="The requested feature is not supported by the installed VTK version.",
     ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         RuntimeError.__init__(self, message)
@@ -63,7 +63,7 @@ class PointSetNotSupported(TypeError):
 
     def __init__(
         self,
-        message='The requested operation is not supported for PointSets.',
+        message="The requested operation is not supported for PointSets.",
     ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         TypeError.__init__(self, message)
@@ -81,7 +81,7 @@ class PointSetCellOperationError(PointSetNotSupported):
 
     def __init__(
         self,
-        message='Cell operations are not supported. PointSets contain no cells.',
+        message="Cell operations are not supported. PointSets contain no cells.",
     ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
@@ -99,7 +99,7 @@ class PointSetDimensionReductionError(PointSetNotSupported):
 
     def __init__(
         self,
-        message='Slice and other dimension reducing filters are not supported on PointSets.',
+        message="Slice and other dimension reducing filters are not supported on PointSets.",
     ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         PointSetNotSupported.__init__(self, message)
@@ -117,7 +117,7 @@ class PartitionedDataSetsNotSupported(TypeError):
 
     def __init__(
         self,
-        message='The requested operation is not supported for PartitionedDataSetss.',
+        message="The requested operation is not supported for PartitionedDataSetss.",
     ):  # numpydoc ignore=PR01,RT01
         """Empty init."""
         TypeError.__init__(self, message)
@@ -133,7 +133,7 @@ class MissingDataError(ValueError):
 
     """
 
-    def __init__(self, message='No data available.'):
+    def __init__(self, message="No data available."):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 

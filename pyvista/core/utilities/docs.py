@@ -39,11 +39,11 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     """
     import pyvista
 
-    if domain != 'py':
+    if domain != "py":
         return None
 
-    modname = info['module']
-    fullname = info['fullname']
+    modname = info["module"]
+    fullname = info["fullname"]
 
     # Little clean up to avoid pyvista.pyvista
     if fullname.startswith(modname):
@@ -54,14 +54,14 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         return None
 
     obj = submod
-    for part in fullname.split('.'):
+    for part in fullname.split("."):
         try:
             obj = getattr(obj, part)
         except Exception:
             return None
 
     # deal with our decorators properly
-    while hasattr(obj, 'fget'):
+    while hasattr(obj, "fget"):
         obj = obj.fget
 
     try:
@@ -77,21 +77,21 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
         return None
 
     fn = op.relpath(fn, start=op.dirname(pyvista.__file__))  # noqa: PTH120
-    fn = '/'.join(op.normpath(fn).split(os.sep))  # in case on Windows # noqa: PTH206
+    fn = "/".join(op.normpath(fn).split(os.sep))  # in case on Windows # noqa: PTH206
 
     try:
         source, lineno = inspect.getsourcelines(obj)
     except Exception:  # pragma: no cover
         lineno = None
 
-    linespec = f'#L{lineno}-L{lineno + len(source) - 1}' if lineno and not edit else ''
+    linespec = f"#L{lineno}-L{lineno + len(source) - 1}" if lineno and not edit else ""
 
-    if 'dev' in pyvista.__version__:
-        kind = 'main'
+    if "dev" in pyvista.__version__:
+        kind = "main"
     else:  # pragma: no cover
-        kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))  # noqa: UP031
+        kind = "release/%s" % (".".join(pyvista.__version__.split(".")[:2]))  # noqa: UP031
 
-    blob_or_edit = 'edit' if edit else 'blob'
+    blob_or_edit = "edit" if edit else "blob"
 
     return f"http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}"
 
@@ -133,7 +133,7 @@ def pv_html_page_context(
             The link to the tip of the main branch for the same file.
 
         """
-        if pagename.startswith('examples') and 'index' not in pagename:
+        if pagename.startswith("examples") and "index" not in pagename:
             # This is a gallery example.
 
             # We can get away with directly using the pagename since "examples"
@@ -142,8 +142,8 @@ def pv_html_page_context(
             return f"http://github.com/pyvista/pyvista/edit/main/{pagename}.py"
         elif "_autosummary" in pagename:
             # This is an API example
-            fullname = pagename.split('_autosummary')[1][1:]
-            return linkcode_resolve('py', {'module': 'pyvista', 'fullname': fullname}, edit=True)
+            fullname = pagename.split("_autosummary")[1][1:]
+            return linkcode_resolve("py", {"module": "pyvista", "fullname": fullname}, edit=True)
         else:
             return link
 

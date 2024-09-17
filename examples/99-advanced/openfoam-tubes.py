@@ -34,11 +34,11 @@ block
 air = block[0]
 
 # generate a slice in the XZ plane
-y_slice = air.slice('y')
+y_slice = air.slice("y")
 
 pl = pv.Plotter()
-pl.add_mesh(y_slice, scalars='U', lighting=False, scalar_bar_args={'title': 'Flow Velocity'})
-pl.add_mesh(air, color='w', opacity=0.25)
+pl.add_mesh(y_slice, scalars="U", lighting=False, scalar_bar_args={"title": "Flow Velocity"})
+pl.add_mesh(air, color="w", opacity=0.25)
 pl.enable_anti_aliasing()
 pl.show()
 
@@ -52,8 +52,8 @@ pl.show()
 # Let's use the inlet as a source. First plot it.
 inlet = block[1][2]
 pl = pv.Plotter()
-pl.add_mesh(inlet, color='b', label='inlet')
-pl.add_mesh(air, opacity=0.2, color='w', label='air')
+pl.add_mesh(inlet, color="b", label="inlet")
+pl.add_mesh(air, opacity=0.2, color="w", label="air")
 pl.enable_anti_aliasing()
 pl.add_legend(face=None)
 pl.show()
@@ -70,7 +70,7 @@ pl.show()
 pset = pv.PointSet(inlet.points[::5])
 lines = air.streamlines_from_source(
     pset,
-    vectors='U',
+    vectors="U",
     max_time=1.0,
 )
 
@@ -80,13 +80,13 @@ pl.add_mesh(
     render_lines_as_tubes=True,
     line_width=3,
     lighting=False,
-    scalar_bar_args={'title': 'Flow Velocity'},
-    scalars='U',
+    scalar_bar_args={"title": "Flow Velocity"},
+    scalars="U",
     rng=(0, 212),
 )
-pl.add_mesh(air, color='w', opacity=0.25)
+pl.add_mesh(air, color="w", opacity=0.25)
 pl.enable_anti_aliasing()
-pl.camera_position = 'xz'
+pl.camera_position = "xz"
 pl.show()
 
 
@@ -121,11 +121,11 @@ grid = grid.sample(air)
 pl = pv.Plotter()
 vol = pl.add_volume(
     grid,
-    scalars='nut',
-    opacity='linear',
-    scalar_bar_args={'title': 'Turbulent Kinematic Viscosity'},
+    scalars="nut",
+    opacity="linear",
+    scalar_bar_args={"title": "Turbulent Kinematic Viscosity"},
 )
-vol.prop.interpolation_type = 'linear'
-pl.add_mesh(air, color='w', opacity=0.1)
-pl.camera_position = 'xz'
+vol.prop.interpolation_type = "linear"
+pl.add_mesh(air, color="w", opacity=0.1)
+pl.camera_position = "xz"
 pl.show()

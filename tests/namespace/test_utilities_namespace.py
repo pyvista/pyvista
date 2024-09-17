@@ -7,14 +7,14 @@ import pytest
 
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-namespace_data = Path(__file__).parent / 'namespace-utilities.txt'
+namespace_data = Path(__file__).parent / "namespace-utilities.txt"
 with namespace_data.open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
-    namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]
+    namespace = [n.split(", ")[0] for n in namespace if not n.startswith("#")]
 
 
-@pytest.mark.parametrize('name', namespace)
+@pytest.mark.parametrize("name", namespace)
 def test_utilities_namespace(name):
     with pytest.warns(PyVistaDeprecationWarning):
         import pyvista.utilities as utilities  # noqa: PLR0402
@@ -23,32 +23,32 @@ def test_utilities_namespace(name):
 
 
 @pytest.mark.parametrize(
-    'name',
+    "name",
     [
-        'algorithms',
-        'arrays',
-        'cell_type_helper',
-        'cells',
-        'common',
-        'docs',
-        'errors',
-        'features',
-        'fileio',
-        'geometric_objects',
-        'helpers',
-        'misc',
-        'parametric_objects',
-        'reader',
-        'regression',
-        'sphinx_gallery',
-        'transformations',
-        'wrappers',
-        'xvfb',
+        "algorithms",
+        "arrays",
+        "cell_type_helper",
+        "cells",
+        "common",
+        "docs",
+        "errors",
+        "features",
+        "fileio",
+        "geometric_objects",
+        "helpers",
+        "misc",
+        "parametric_objects",
+        "reader",
+        "regression",
+        "sphinx_gallery",
+        "transformations",
+        "wrappers",
+        "xvfb",
     ],
 )
 def test_utilities_modules(name):
     # Smoke test to make sure same modules still exist
-    importlib.import_module(f'pyvista.utilities.{name}')
+    importlib.import_module(f"pyvista.utilities.{name}")
 
 
 def test_common_utilities_import_paths():
@@ -83,9 +83,9 @@ def test_common_utilities_import_paths():
 
 
 def test_failure_to_find():
-    module = importlib.import_module('pyvista.utilities')
+    module = importlib.import_module("pyvista.utilities")
     with pytest.raises(
         AttributeError,
-        match=r'Module `pyvista\.utilities` has been deprecated and we could not automatically find',
+        match=r"Module `pyvista\.utilities` has been deprecated and we could not automatically find",
     ):
         _ = module.this_does_not_exist

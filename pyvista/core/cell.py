@@ -109,7 +109,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         super().__init__()
         if vtk_cell is not None:
             if not isinstance(vtk_cell, _vtk.vtkCell):
-                raise TypeError(f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}')
+                raise TypeError(f"`vtk_cell` must be a vtkCell, not {type(vtk_cell)}")
             # cell type must be set first before deep or shallow copy
             if cell_type is None:
                 self.SetCellType(vtk_cell.GetCellType())
@@ -404,7 +404,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
         """
         if index + 1 > self.n_edges:
-            raise IndexError(f'Invalid index {index} for a cell with {self.n_edges} edges.')
+            raise IndexError(f"Invalid index {index} for a cell with {self.n_edges} edges.")
 
         # must deep copy here as multiple sequental calls to GetEdge overwrite
         # the underlying pointer
@@ -479,7 +479,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """
         # must deep copy here as sequental calls overwrite the underlying pointer
         if index + 1 > self.n_faces:
-            raise IndexError(f'Invalid index {index} for a cell with {self.n_faces} faces.')
+            raise IndexError(f"Invalid index {index} for a cell with {self.n_faces} faces.")
 
         # must deep copy here as multiple sequental calls to GetFace overwrite
         # the underlying pointer
@@ -650,7 +650,7 @@ class CellArray(_vtk.vtkCellArray):
             self.cells = cells  # type: ignore[assignment]
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
-        for k, v in (('n_cells', n_cells), ('deep', deep)):
+        for k, v in (("n_cells", n_cells), ("deep", deep)):
             if v is not None:
                 warnings.warn(
                     f"`CellArray parameter `{k}` is deprecated and no longer used.",

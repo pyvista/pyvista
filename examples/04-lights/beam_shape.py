@@ -21,10 +21,10 @@ plotter = pv.Plotter()
 
 hemi = pv.Sphere().clip()
 hemi.translate((-1, 0, 0), inplace=True)
-plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
+plotter.add_mesh(hemi, color="cyan", smooth_shading=True)
 
 hemi = hemi.rotate_z(180, inplace=False)
-plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
+plotter.add_mesh(hemi, color="cyan", smooth_shading=True)
 
 plotter.show()
 
@@ -36,14 +36,14 @@ plotter.show()
 # Let's shine a directional light on them, positioned between the hemispheres and
 # oriented along their centers:
 
-plotter = pv.Plotter(lighting='none')
+plotter = pv.Plotter(lighting="none")
 
 hemi = pv.Sphere().clip()
 hemi.translate((-1, 0, 0), inplace=True)
-plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
+plotter.add_mesh(hemi, color="cyan", smooth_shading=True)
 
 hemi = hemi.rotate_z(180, inplace=False)
-plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
+plotter.add_mesh(hemi, color="cyan", smooth_shading=True)
 
 light = pv.Light(position=(0, 0, 0), focal_point=(-1, 0, 0))
 plotter.add_light(light)
@@ -58,14 +58,14 @@ plotter.show()
 #
 # Now let's change the light to a positional light (but not a spotlight):
 
-plotter = pv.Plotter(lighting='none')
+plotter = pv.Plotter(lighting="none")
 
 hemi = pv.Sphere().clip()
 hemi.translate((-1, 0, 0), inplace=True)
-plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
+plotter.add_mesh(hemi, color="cyan", smooth_shading=True)
 
 hemi = hemi.rotate_z(180, inplace=False)
-plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
+plotter.add_mesh(hemi, color="cyan", smooth_shading=True)
 
 light = pv.Light(position=(0, 0, 0), focal_point=(-1, 0, 0))
 light.positional = True
@@ -86,14 +86,14 @@ plotter.show()
 # property. Let's put our hemispheres side by side for this, and put a light in
 # the center of each: one spotlight, one merely positional.
 
-plotter = pv.Plotter(lighting='none')
+plotter = pv.Plotter(lighting="none")
 
 hemi = pv.Sphere().clip()
-plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
+plotter.add_mesh(hemi, color="cyan", smooth_shading=True)
 
 offset = 1.5
 hemi = hemi.translate((0, offset, 0), inplace=False)
-plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
+plotter.add_mesh(hemi, color="cyan", smooth_shading=True)
 
 # non-spot positional light in the center of the first hemisphere
 light = pv.Light(position=(0, 0, 0), focal_point=(-1, 0, 0))
@@ -123,7 +123,7 @@ plotter.show()
 # to make the beam shape sharper or broader. Three spotlights with varying
 # sharpness:
 
-plotter = pv.Plotter(lighting='none')
+plotter = pv.Plotter(lighting="none")
 hemi_template = pv.Sphere().clip()
 
 centers = [(0, 0, 0), (0, 1.5, 0), (0, 1.5 * 0.5, 1.5 * 3**0.5 / 2)]
@@ -132,7 +132,7 @@ exponents = [1, 0.3, 5]
 for center, exponent in zip(centers, exponents):
     hemi = hemi_template.copy()
     hemi.translate(center, inplace=True)
-    plotter.add_mesh(hemi, color='cyan', smooth_shading=True)
+    plotter.add_mesh(hemi, color="cyan", smooth_shading=True)
 
     # spotlight in the center of the hemisphere, shining into it
     focal_point = center[0] - 1, center[1], center[2]

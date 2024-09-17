@@ -44,13 +44,13 @@ def set_pickle_format(format: str):  # noqa: A002
         If the provided format is not supported.
 
     """
-    supported = {'vtk', 'xml', 'legacy'}
+    supported = {"vtk", "xml", "legacy"}
     format_ = format.lower()
     if format_ not in supported:
         raise ValueError(
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.',
         )
-    if format_ == 'vtk' and pyvista.vtk_version_info < (9, 3):
+    if format_ == "vtk" and pyvista.vtk_version_info < (9, 3):
         raise ValueError("'vtk' pickle format requires VTK >= 9.3")
 
     pyvista.PICKLE_FORMAT = format_
@@ -182,7 +182,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
 
     """
     if file_format is not None and force_ext is not None:
-        raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
+        raise ValueError("Only one of `file_format` and `force_ext` may be specified.")
 
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
@@ -192,18 +192,18 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
         return multi
     filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():
-        raise FileNotFoundError(f'File ({filename}) not found')
+        raise FileNotFoundError(f"File ({filename}) not found")
 
     # Read file using meshio.read if file_format is present
     if file_format:
         return read_meshio(filename, file_format)
 
     ext = _get_ext_force(filename, force_ext)
-    if ext in ['.e', '.exo']:
+    if ext in [".e", ".exo"]:
         return read_exodus(filename)
-    if ext.lower() in ['.grdecl']:
+    if ext.lower() in [".grdecl"]:
         return read_grdecl(filename)
-    if ext in ['.wrl', '.vrml']:
+    if ext in [".wrl", ".vrml"]:
         raise ValueError(
             "VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details."
         )
@@ -394,7 +394,7 @@ def read_exodus(
         elif isinstance(sideset, str):
             name = sideset
         else:
-            raise ValueError(f'Could not parse sideset ID/name: {sideset}')
+            raise ValueError(f"Could not parse sideset ID/name: {sideset}")
 
         reader.SetSideSetArrayStatus(name, 1)
 
@@ -990,9 +990,9 @@ def _try_imageio_imread(filename):
         from imageio import imread
     except ModuleNotFoundError:  # pragma: no cover
         raise ModuleNotFoundError(
-            'Problem reading the image with VTK. Install imageio to try to read the '
-            'file using imageio with:\n\n'
-            '   pip install imageio',
+            "Problem reading the image with VTK. Install imageio to try to read the "
+            "file using imageio with:\n\n"
+            "   pip install imageio",
         ) from None
 
     return imread(filename)
