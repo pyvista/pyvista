@@ -61,7 +61,7 @@ jobs:
         with:
           files: '["doc", "pyvista", "examples"]'
           vale_flags: "--config=doc/.vale.ini"
-          reporter: github-pr-check
+          reporter: github-pr-review
           level: error
           filter_mode: nofilter
           fail_on_error: true
