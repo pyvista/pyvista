@@ -6,6 +6,7 @@ from collections.abc import Iterable
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Sequence
 from typing import cast
 
 import numpy as np
@@ -23,6 +24,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -1604,3 +1606,126 @@ class ImageDataFilters(DataSetFilters):
         # Restore active scalars
         self.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
         return output
+
+
+def connectivity(
+    self,
+    *,
+    extraction_mode: Literal[
+        "all",
+        "largest",
+        "point_seeds",
+    ] = "all",
+    point_seeds: MatrixLike[float] | _vtk.vtkDataSet | None = None,
+    scalar_range: VectorLike[float] | None = None,
+    scalars: str = None,
+    label_mode: Literal["size", "constant", "seeds"] = "size",
+    constant_value: int = None,
+    inplace: bool = False,
+    progress_bar: bool = False,
+) -> pyvista.ImageData:
+    """Find and label connected regions."""
+    # Store active scalars info to restore later if needed
+    active_field, active_name = self.active_scalars_info  # type: ignore[attr-defined]
+
+    # Set scalars
+    if scalar_range is None:
+        scalar_range = [0.5, 1.5]
+    else:
+        if isinstance(scalar_range, np.ndarray):
+            num_elements = scalar_range.size
+        elif isinstance(scalar_range, Sequence):
+            num_elements = len(scalar_range)
+        else:
+            raise TypeError("Scalar range must be a numpy array or a sequence.")
+        if num_elements != 2:
+            raise ValueError("Scalar range must have two elements defining the min and max.")
+        if scalar_range[0] > scalar_range[1]:
+            raise ValueError(
+                f"Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}",
+            )
+
+    # Input will be modified, so copy first
+    input_mesh = self.copy()  # type: ignore[attr-defined]
+
+    if scalars is None:
+        set_default_active_scalars(input_mesh)
+    else:
+        input_mesh.set_active_scalars(scalars)
+    # Make sure we have point data (required by the filter)
+    field, name = input_mesh.active_scalars_info
+
+    if field == FieldAssociation.CELL:
+        # Convert to point data
+        input_mesh = input_mesh.cells_to_points(scalars=name)
+
+    # Set vtk algorithm
+    alg = _vtk.vtkImageConnectivityFilter()
+    alg.SetInputDataObject(input_mesh)
+    alg.SetInputArrayToProcess(
+        0,
+        0,
+        0,
+        field.value,
+        scalars,
+    )  # args: (idx, port, connection, field, name)
+
+    # Set the scalar range considered for connectivity
+    alg.SetScalarRange(*scalar_range)
+
+    if extraction_mode == "all":
+        alg.SetExtractionModeToAllRegions()
+    elif extraction_mode == "largest":
+        alg.SetExtractionModeToLargestRegion()
+    elif extraction_mode == "point_seeds":
+        if point_seeds is None:
+            raise ValueError(
+                "`point_seeds` must be specified when `extraction_mode='point_seeds'`.",
+            )
+        elif isinstance(point_seeds, (Sequence, np.ndarray)):
+            # Ensure points are floats, see pyvista.core.utilities.points
+            point_seeds = np.array(point_seeds, dtype=float)
+            # PointSet requires vtk >= 9.1.0
+            # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
+            if pyvista.vtk_version_info >= (9, 1, 0):
+                point_seeds = pyvista.PointSet(point_seeds)
+            else:
+                point_seeds = pyvista.PolyData(point_seeds)
+        elif not isinstance(point_seeds, _vtk.vtkDataSet):
+            raise ValueError(
+                "`point_seeds` must either be a sequence of point coordinates, a numpy array of point coordinates or a `vtk.vtkDataSet`.'`.",
+            )
+        alg.SetExtractionModeToSeededRegions()
+        alg.SetSeedData(point_seeds)
+    else:
+        raise ValueError(
+            f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "point_seeds".',
+        )
+
+    if label_mode == "size":
+        alg.SetLabelModeToSizeRank()
+    elif label_mode == "constant":
+        alg.SetLabelModeToConstantValue()
+        if constant_value is None:
+            raise ValueError(
+                f'`constant_value` must be provided when `extraction_mode`is "{extraction_mode}".'
+            )
+        alg.SetLabelConstantValue(int(constant_value))
+    elif label_mode == "seeds":
+        alg.SetLabelModeToSeedScalar()
+    else:
+        raise ValueError(
+            f'Invalid `label_mode` "{label_mode}", use "size", "constant", or "seeds".',
+        )
+    _update_alg(alg, progress_bar, "Identifying and Labelling Connected Regions")
+
+    output = _get_output(alg)
+
+    if field == FieldAssociation.CELL:
+        # Convert back cell data
+        output = output.points_to_cells()
+
+    if inplace:
+        self["RegionId"] = output["RegionId"]
+        return self
+    return output
