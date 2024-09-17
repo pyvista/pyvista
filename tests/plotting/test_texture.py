@@ -11,7 +11,7 @@ from pyvista.plotting.texture import numpy_to_texture
 
 
 def test_texture():
-    with pytest.raises(TypeError, match="Cannot create a pyvista.Texture from"):
+    with pytest.raises(TypeError, match='Cannot create a pyvista.Texture from'):
         texture = pv.Texture(range(10))
 
     texture = pv.Texture(examples.mapfile)
@@ -45,10 +45,10 @@ def test_texture_grayscale_init():
 
 def test_from_array():
     texture = pv.Texture()
-    with pytest.raises(ValueError, match="Third dimension"):
+    with pytest.raises(ValueError, match='Third dimension'):
         texture._from_array(np.zeros((10, 10, 2)))
 
-    with pytest.raises(ValueError, match="must be nn by nm"):
+    with pytest.raises(ValueError, match='must be nn by nm'):
         texture._from_array(np.zeros(10))
 
 
@@ -73,8 +73,8 @@ def test_texture_rotate_ccw(texture):
 def test_texture_from_images(image):
     texture = pv.Texture([image] * 6)
     assert texture.cube_map
-    with pytest.raises(TypeError, match="pyvista.ImageData"):
-        pv.Texture(["foo"] * 6)
+    with pytest.raises(TypeError, match='pyvista.ImageData'):
+        pv.Texture(['foo'] * 6)
 
 
 def test_skybox_example():
@@ -103,9 +103,9 @@ def test_flip_y(texture):
 
 def test_texture_repr(texture):
     tex_repr = repr(texture)
-    assert "Components:   3" in tex_repr
-    assert "Cube Map:     False" in tex_repr
-    assert "Dimensions:   300, 200" in tex_repr
+    assert 'Components:   3' in tex_repr
+    assert 'Cube Map:     False' in tex_repr
+    assert 'Dimensions:   300, 200' in tex_repr
 
 
 def test_interpolate(texture):
@@ -156,41 +156,41 @@ def test_grayscale(texture):
 
 def test_numpy_to_texture():
     tex_im = np.ones((1024, 1024, 3), dtype=np.float64) * 255
-    with pytest.warns(UserWarning, match="np.uint8"):
+    with pytest.warns(UserWarning, match='np.uint8'):
         tex = numpy_to_texture(tex_im)
     assert isinstance(tex, pv.Texture)
     assert tex.to_array().dtype == np.uint8
 
 
-@pytest.mark.parametrize("as_str", [True, False])
-@pytest.mark.parametrize("ndim", [3, 4])
+@pytest.mark.parametrize('as_str', [True, False])
+@pytest.mark.parametrize('ndim', [3, 4])
 def test_save_ply_texture_array(sphere, ndim, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join("tmp.ply"))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
 
     texture = np.ones((sphere.n_points, ndim), np.uint8)
     texture[:, 2] = np.arange(sphere.n_points)[::-1]
     if as_str:
-        sphere.point_data["texture"] = texture
-        sphere.save(filename, texture="texture")
+        sphere.point_data['texture'] = texture
+        sphere.save(filename, texture='texture')
     else:
         sphere.save(filename, texture=texture)
 
     mesh = pv.PolyData(filename)
-    color_array_name = "RGB" if ndim == 3 else "RGBA"
+    color_array_name = 'RGB' if ndim == 3 else 'RGBA'
     assert np.allclose(mesh[color_array_name], texture)
 
 
-@pytest.mark.parametrize("as_str", [True, False])
+@pytest.mark.parametrize('as_str', [True, False])
 def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join("tmp.ply"))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
 
     texture = np.ones((sphere.n_points, 3), np.float32)
     if as_str:
-        sphere.point_data["texture"] = texture
-        with pytest.raises(ValueError, match="Invalid datatype"):
-            sphere.save(filename, texture="texture")
+        sphere.point_data['texture'] = texture
+        with pytest.raises(ValueError, match='Invalid datatype'):
+            sphere.save(filename, texture='texture')
     else:
-        with pytest.raises(ValueError, match="Invalid datatype"):
+        with pytest.raises(ValueError, match='Invalid datatype'):
             sphere.save(filename, texture=texture)
 
     with pytest.raises(TypeError):

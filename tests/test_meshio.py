@@ -121,7 +121,7 @@ def test_meshio(mesh_in, tmpdir):
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join("tmp.vtk")))
+    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
     pv.save_meshio(path, sphere)
     assert path.is_file()
 

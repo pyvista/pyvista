@@ -9,15 +9,15 @@ import pyvista as pv
 
 # pyvista attr -- value -- vtk name triples:
 configuration = [
-    ("position", (1, 1, 1), "SetPosition"),
-    ("focal_point", (2, 2, 2), "SetFocalPoint"),
-    ("model_transform_matrix", np.arange(4 * 4).reshape(4, 4), "SetModelTransformMatrix"),
-    ("thickness", 1, "SetThickness"),
-    ("parallel_scale", 2, "SetParallelScale"),
-    ("up", (0, 0, 1), "SetViewUp"),
-    ("clipping_range", (4, 5), "SetClippingRange"),
-    ("view_angle", 90.0, "SetViewAngle"),
-    ("roll", 180.0, "SetRoll"),
+    ('position', (1, 1, 1), 'SetPosition'),
+    ('focal_point', (2, 2, 2), 'SetFocalPoint'),
+    ('model_transform_matrix', np.arange(4 * 4).reshape(4, 4), 'SetModelTransformMatrix'),
+    ('thickness', 1, 'SetThickness'),
+    ('parallel_scale', 2, 'SetParallelScale'),
+    ('up', (0, 0, 1), 'SetViewUp'),
+    ('clipping_range', (4, 5), 'SetClippingRange'),
+    ('view_angle', 90.0, 'SetViewAngle'),
+    ('roll', 180.0, 'SetRoll'),
 ]
 
 

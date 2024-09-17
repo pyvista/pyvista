@@ -8,10 +8,10 @@ import pytest
 import pyvista as pv
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-skip_windows = pytest.mark.skipif(os.name == "nt", reason="Test fails on Windows")
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 skip_mac = pytest.mark.skipif(
-    platform.system() == "Darwin",
-    reason="MacOS CI fails when downloading examples",
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 
 

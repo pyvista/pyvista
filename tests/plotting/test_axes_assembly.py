@@ -68,54 +68,54 @@ def test_axes_assembly_repr(axes_assembly):
 
 
 def test_axes_assembly_x_color(axes_assembly):
-    axes_assembly.x_color = "black"
-    assert axes_assembly.x_color[0].name == "black"
-    assert axes_assembly._shaft_actors[0].prop.color.name == "black"
+    axes_assembly.x_color = 'black'
+    assert axes_assembly.x_color[0].name == 'black'
+    assert axes_assembly._shaft_actors[0].prop.color.name == 'black'
 
-    assert axes_assembly.x_color[1].name == "black"
-    assert axes_assembly._tip_actors[0].prop.color.name == "black"
+    assert axes_assembly.x_color[1].name == 'black'
+    assert axes_assembly._tip_actors[0].prop.color.name == 'black'
 
 
 def test_axes_assembly_y_color(axes_assembly):
-    axes_assembly.y_color = "black"
-    assert axes_assembly.y_color[0].name == "black"
-    assert axes_assembly._shaft_actors[1].prop.color.name == "black"
+    axes_assembly.y_color = 'black'
+    assert axes_assembly.y_color[0].name == 'black'
+    assert axes_assembly._shaft_actors[1].prop.color.name == 'black'
 
-    assert axes_assembly.y_color[1].name == "black"
-    assert axes_assembly._tip_actors[1].prop.color.name == "black"
+    assert axes_assembly.y_color[1].name == 'black'
+    assert axes_assembly._tip_actors[1].prop.color.name == 'black'
 
 
 def test_axes_assembly_z_color(axes_assembly):
-    axes_assembly.z_color = "black"
-    assert axes_assembly.z_color[0].name == "black"
-    assert axes_assembly._shaft_actors[2].prop.color.name == "black"
+    axes_assembly.z_color = 'black'
+    assert axes_assembly.z_color[0].name == 'black'
+    assert axes_assembly._shaft_actors[2].prop.color.name == 'black'
 
-    assert axes_assembly.z_color[1].name == "black"
-    assert axes_assembly._tip_actors[2].prop.color.name == "black"
+    assert axes_assembly.z_color[1].name == 'black'
+    assert axes_assembly._tip_actors[2].prop.color.name == 'black'
 
 
 def test_axes_assembly_color_inputs(axes_assembly):
     axes_assembly.x_color = [[255, 255, 255, 255]]
-    assert axes_assembly.x_color[0].name == "white"
-    assert axes_assembly.x_color[1].name == "white"
+    assert axes_assembly.x_color[0].name == 'white'
+    assert axes_assembly.x_color[1].name == 'white'
 
     axes_assembly.x_color = [[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
-    assert axes_assembly.x_color[0].name == "red"
-    assert axes_assembly.x_color[1].name == "black"
+    assert axes_assembly.x_color[0].name == 'red'
+    assert axes_assembly.x_color[1].name == 'black'
 
-    err_msg = "\nInput must be a single ColorLike color or a sequence of 2 ColorLike colors."
+    err_msg = '\nInput must be a single ColorLike color or a sequence of 2 ColorLike colors.'
 
-    match = "Invalid color(s):\n\tham"
+    match = 'Invalid color(s):\n\tham'
     with pytest.raises(ValueError, match=re.escape(match + err_msg)):
-        axes_assembly.y_color = "ham"
+        axes_assembly.y_color = 'ham'
 
     match = "Invalid color(s):\n\t['eggs']"
     with pytest.raises(ValueError, match=re.escape(match + err_msg)):
-        axes_assembly.y_color = ["eggs"]
+        axes_assembly.y_color = ['eggs']
 
     match = "Invalid color(s):\n\t['red', 'green', 'blue']"
     with pytest.raises(ValueError, match=re.escape(match + err_msg)):
-        axes_assembly.z_color = ["red", "green", "blue"]
+        axes_assembly.z_color = ['red', 'green', 'blue']
 
 
 @pytest.fixture
@@ -131,26 +131,26 @@ def _config_axes_theme():
     pv.global_theme.axes.z_color = z_color
 
 
-@pytest.mark.usefixtures("_config_axes_theme")
+@pytest.mark.usefixtures('_config_axes_theme')
 def test_axes_assembly_theme(axes_assembly):
-    assert axes_assembly.x_color[0].name == "tomato"
-    assert axes_assembly.x_color[1].name == "tomato"
-    assert axes_assembly.y_color[0].name == "seagreen"
-    assert axes_assembly.y_color[1].name == "seagreen"
-    assert axes_assembly.z_color[0].name == "mediumblue"
-    assert axes_assembly.z_color[1].name == "mediumblue"
+    assert axes_assembly.x_color[0].name == 'tomato'
+    assert axes_assembly.x_color[1].name == 'tomato'
+    assert axes_assembly.y_color[0].name == 'seagreen'
+    assert axes_assembly.y_color[1].name == 'seagreen'
+    assert axes_assembly.z_color[0].name == 'mediumblue'
+    assert axes_assembly.z_color[1].name == 'mediumblue'
 
-    pv.global_theme.axes.x_color = "black"
-    pv.global_theme.axes.y_color = "white"
-    pv.global_theme.axes.z_color = "gray"
+    pv.global_theme.axes.x_color = 'black'
+    pv.global_theme.axes.y_color = 'white'
+    pv.global_theme.axes.z_color = 'gray'
 
     axes_geometry_source = pv.AxesAssembly()
-    assert axes_geometry_source.x_color[0].name == "black"
-    assert axes_geometry_source.x_color[1].name == "black"
-    assert axes_geometry_source.y_color[0].name == "white"
-    assert axes_geometry_source.y_color[1].name == "white"
-    assert axes_geometry_source.z_color[0].name == "gray"
-    assert axes_geometry_source.z_color[1].name == "gray"
+    assert axes_geometry_source.x_color[0].name == 'black'
+    assert axes_geometry_source.x_color[1].name == 'black'
+    assert axes_geometry_source.y_color[0].name == 'white'
+    assert axes_geometry_source.y_color[1].name == 'white'
+    assert axes_geometry_source.z_color[0].name == 'gray'
+    assert axes_geometry_source.z_color[1].name == 'gray'
 
 
 def test_axes_assembly_label_position(axes_assembly):
@@ -167,65 +167,65 @@ def test_axes_assembly_label_position_init():
 
 
 def test_axes_assembly_labels(axes_assembly):
-    assert axes_assembly.labels == ("X", "Y", "Z")
-    labels = ("i", "j", "k")
+    assert axes_assembly.labels == ('X', 'Y', 'Z')
+    labels = ('i', 'j', 'k')
     axes_assembly.labels = labels
     assert axes_assembly.labels == labels
 
 
 def test_axes_assembly_labels_init():
-    labels = ("i", "j", "k")
+    labels = ('i', 'j', 'k')
     axes_assembly = pv.AxesAssembly(labels=labels)
     assert axes_assembly.labels == labels
 
 
 def test_axes_assembly_x_label(axes_assembly):
-    assert axes_assembly.x_label == "X"
-    x_label = "label"
+    assert axes_assembly.x_label == 'X'
+    x_label = 'label'
     axes_assembly.x_label = x_label
     assert axes_assembly.x_label == x_label
 
 
 def test_axes_assembly_x_label_init(axes_assembly):
-    x_label = "label"
+    x_label = 'label'
     axes_assembly = pv.AxesAssembly(x_label=x_label)
     assert axes_assembly.x_label == x_label
 
 
 def test_axes_assembly_y_label(axes_assembly):
-    assert axes_assembly.y_label == "Y"
-    y_label = "label"
+    assert axes_assembly.y_label == 'Y'
+    y_label = 'label'
     axes_assembly.y_label = y_label
     assert axes_assembly.y_label == y_label
 
 
 def test_axes_assembly_y_label_init(axes_assembly):
-    y_label = "label"
+    y_label = 'label'
     axes_assembly = pv.AxesAssembly(y_label=y_label)
     assert axes_assembly.y_label == y_label
 
 
 def test_axes_assembly_z_label(axes_assembly):
-    assert axes_assembly.z_label == "Z"
-    z_label = "label"
+    assert axes_assembly.z_label == 'Z'
+    z_label = 'label'
     axes_assembly.z_label = z_label
     assert axes_assembly.z_label == z_label
 
 
 def test_axes_assembly_z_label_init(axes_assembly):
-    z_label = "label"
+    z_label = 'label'
     axes_assembly = pv.AxesAssembly(z_label=z_label)
     assert axes_assembly.z_label == z_label
 
 
 def test_axes_assembly_labels_raises():
     match = "Cannot initialize '{}' and 'labels' properties together. Specify one or the other, not both."
-    with pytest.raises(ValueError, match=match.format("x_label")):
-        pv.AxesAssembly(x_label="A", y_label="B", z_label="C", labels="UVW")
-    with pytest.raises(ValueError, match=match.format("y_label")):
-        pv.AxesAssembly(y_label="B", z_label="C", labels="UVW")
-    with pytest.raises(ValueError, match=match.format("z_label")):
-        pv.AxesAssembly(z_label="C", labels="UVW")
+    with pytest.raises(ValueError, match=match.format('x_label')):
+        pv.AxesAssembly(x_label='A', y_label='B', z_label='C', labels='UVW')
+    with pytest.raises(ValueError, match=match.format('y_label')):
+        pv.AxesAssembly(y_label='B', z_label='C', labels='UVW')
+    with pytest.raises(ValueError, match=match.format('z_label')):
+        pv.AxesAssembly(z_label='C', labels='UVW')
 
 
 def test_axes_assembly_show_labels(axes_assembly):
@@ -340,53 +340,53 @@ def test_axes_assembly_symmetric(axes_assembly_symmetric):
 
 
 def test_axes_assembly_symmetric_set_get_labels(axes_assembly_symmetric):
-    labels = "A", "B", "C"
+    labels = 'A', 'B', 'C'
     axes_assembly_symmetric.labels = labels
-    assert axes_assembly_symmetric.labels == ("+A", "-A", "+B", "-B", "+C", "-C")
+    assert axes_assembly_symmetric.labels == ('+A', '-A', '+B', '-B', '+C', '-C')
 
-    labels = ("1", "2", "3", "4", "5", "6")
+    labels = ('1', '2', '3', '4', '5', '6')
     axes_assembly_symmetric.labels = labels
     assert axes_assembly_symmetric.labels == labels
 
 
-@pytest.mark.parametrize("test_property", ["x_label", "y_label", "z_label"])
+@pytest.mark.parametrize('test_property', ['x_label', 'y_label', 'z_label'])
 def test_axes_assembly_symmetric_set_get_label(axes_assembly_symmetric, test_property):
-    label = "U"
+    label = 'U'
     setattr(axes_assembly_symmetric, test_property, label)
-    assert getattr(axes_assembly_symmetric, test_property) == ("+" + label, "-" + label)
+    assert getattr(axes_assembly_symmetric, test_property) == ('+' + label, '-' + label)
 
-    label = ("plus", "minus")
+    label = ('plus', 'minus')
     setattr(axes_assembly_symmetric, test_property, label)
     assert getattr(axes_assembly_symmetric, test_property) == label
 
 
-@pytest.mark.parametrize("test_property", ["x_label", "y_label", "z_label"])
+@pytest.mark.parametrize('test_property', ['x_label', 'y_label', 'z_label'])
 def test_axes_assembly_symmetric_init_label(test_property):
-    label = "U"
+    label = 'U'
     kwargs = {test_property: label}
     axes_assembly = pv.AxesAssemblySymmetric(**kwargs)
-    assert getattr(axes_assembly, test_property) == ("+" + label, "-" + label)
+    assert getattr(axes_assembly, test_property) == ('+' + label, '-' + label)
 
-    label = ("plus", "minus")
+    label = ('plus', 'minus')
     kwargs = {test_property: label}
     axes_assembly = pv.AxesAssemblySymmetric(**kwargs)
     assert getattr(axes_assembly, test_property) == label
 
 
 def test_axes_assembly_set_get_part_prop_all(axes_assembly):
-    axes_assembly.set_actor_prop("ambient", 1.0)
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', 1.0)
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
 
-    axes_assembly.set_actor_prop("ambient", [0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
 
 
 def test_axes_assembly_set_get_actor_prop_all_color(axes_assembly):
     float_rgb = (1.0, 1.0, 1.0)
-    axes_assembly.set_actor_prop("color", float_rgb)
-    val = axes_assembly.get_actor_prop("color")
+    axes_assembly.set_actor_prop('color', float_rgb)
+    val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
     expected_rgb = [
         float_rgb,
@@ -406,19 +406,19 @@ def test_axes_assembly_set_get_actor_prop_all_color(axes_assembly):
         tuple(np.array(float_rgb) * 50 / 255),
         tuple(np.array(float_rgb) * 60 / 255),
     ]
-    axes_assembly.set_actor_prop("color", expected_rgb)
-    val = axes_assembly.get_actor_prop("color")
+    axes_assembly.set_actor_prop('color', expected_rgb)
+    val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
     assert actual_rgb == expected_rgb
 
 
 def test_axes_assembly_set_get_actor_prop_axis(axes_assembly):
-    axes_assembly.set_actor_prop("ambient", 0.5, axis=0)
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', 0.5, axis=0)
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.5, 0.0, 0.0, 0.5, 0.0, 0.0)
 
-    axes_assembly.set_actor_prop("ambient", [0.1, 0.2], axis="x")
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', [0.1, 0.2], axis='x')
+    val = axes_assembly.get_actor_prop('ambient')
     assert val.x_shaft == 0.1
     assert val.x_tip == 0.2
     assert val == (0.1, 0.0, 0.0, 0.2, 0.0, 0.0)
@@ -426,132 +426,132 @@ def test_axes_assembly_set_get_actor_prop_axis(axes_assembly):
 
 def test_axes_assembly_set_get_actor_prop_axis_color(axes_assembly):
     float_rgb = (1.0, 1.0, 1.0)
-    axes_assembly.set_actor_prop("color", float_rgb, axis=0)
-    val = axes_assembly.get_actor_prop("color")
+    axes_assembly.set_actor_prop('color', float_rgb, axis=0)
+    val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
     expected_rgb = [
         float_rgb,
-        pv.Color("seagreen").float_rgb,
-        pv.Color("mediumblue").float_rgb,
+        pv.Color('seagreen').float_rgb,
+        pv.Color('mediumblue').float_rgb,
         float_rgb,
-        pv.Color("seagreen").float_rgb,
-        pv.Color("mediumblue").float_rgb,
+        pv.Color('seagreen').float_rgb,
+        pv.Color('mediumblue').float_rgb,
     ]
     assert actual_rgb == expected_rgb
 
     color1, color2 = tuple(np.array(float_rgb) * 10 / 255), tuple(np.array(float_rgb) * 40 / 255)
-    axes_assembly.set_actor_prop("color", [color1, color2], axis=0)
-    val = axes_assembly.get_actor_prop("color")
+    axes_assembly.set_actor_prop('color', [color1, color2], axis=0)
+    val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
     expected_rgb = [
         color1,
-        pv.Color("seagreen").float_rgb,
-        pv.Color("mediumblue").float_rgb,
+        pv.Color('seagreen').float_rgb,
+        pv.Color('mediumblue').float_rgb,
         color2,
-        pv.Color("seagreen").float_rgb,
-        pv.Color("mediumblue").float_rgb,
+        pv.Color('seagreen').float_rgb,
+        pv.Color('mediumblue').float_rgb,
     ]
     assert actual_rgb == expected_rgb
 
 
 def test_axes_assembly_set_get_actor_prop_axis_and_tip(axes_assembly):
-    axes_assembly.set_actor_prop("ambient", 0.7, axis=1, part=1)
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', 0.7, axis=1, part=1)
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.0, 0.0, 0.0, 0.0, 0.7, 0.0)
 
-    axes_assembly.set_actor_prop("ambient", [0.7], axis="y", part="tip")
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', [0.7], axis='y', part='tip')
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.0, 0.0, 0.0, 0.0, 0.7, 0.0)
 
 
 def test_axes_assembly_set_get_actor_prop_axis_and_tip_color(axes_assembly):
     float_rgb = (1.0, 1.0, 1.0)
-    axes_assembly.set_actor_prop("color", float_rgb, axis=1, part=1)
-    val = axes_assembly.get_actor_prop("color")
+    axes_assembly.set_actor_prop('color', float_rgb, axis=1, part=1)
+    val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
     expected_rgb = [
-        pv.Color("tomato").float_rgb,
-        pv.Color("seagreen").float_rgb,
-        pv.Color("mediumblue").float_rgb,
-        pv.Color("tomato").float_rgb,
+        pv.Color('tomato').float_rgb,
+        pv.Color('seagreen').float_rgb,
+        pv.Color('mediumblue').float_rgb,
+        pv.Color('tomato').float_rgb,
         float_rgb,
-        pv.Color("mediumblue").float_rgb,
+        pv.Color('mediumblue').float_rgb,
     ]
     assert actual_rgb == expected_rgb
 
-    axes_assembly.set_actor_prop("color", [float_rgb], axis=1, part=1)
-    val = axes_assembly.get_actor_prop("color")
+    axes_assembly.set_actor_prop('color', [float_rgb], axis=1, part=1)
+    val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
     assert actual_rgb == expected_rgb
 
 
 def test_axes_assembly_set_get_actor_prop_axis_and_shaft(axes_assembly):
-    axes_assembly.set_actor_prop("ambient", 0.1, axis=2, part=0)
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', 0.1, axis=2, part=0)
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.0, 0.0, 0.1, 0.0, 0.0, 0.0)
 
-    axes_assembly.set_actor_prop("ambient", [0.1], axis="z", part="shaft")
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', [0.1], axis='z', part='shaft')
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.0, 0.0, 0.1, 0.0, 0.0, 0.0)
 
 
 def test_axes_assembly_set_get_actor_prop_shaft(axes_assembly):
-    axes_assembly.set_actor_prop("ambient", 0.3, part="shaft")
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', 0.3, part='shaft')
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.3, 0.3, 0.3, 0.0, 0.0, 0.0)
 
-    axes_assembly.set_actor_prop("ambient", [0.1, 0.2, 0.4], part=0)
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', [0.1, 0.2, 0.4], part=0)
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.1, 0.2, 0.4, 0.0, 0.0, 0.0)
 
 
 def test_axes_assembly_set_get_actor_prop_shaft_color(axes_assembly):
     float_rgb = (1.0, 1.0, 1.0)
-    axes_assembly.set_actor_prop("color", float_rgb, part=0)
-    val = axes_assembly.get_actor_prop("color")
+    axes_assembly.set_actor_prop('color', float_rgb, part=0)
+    val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
     expected_rgb = [
         float_rgb,
         float_rgb,
         float_rgb,
-        pv.Color("tomato").float_rgb,
-        pv.Color("seagreen").float_rgb,
-        pv.Color("mediumblue").float_rgb,
+        pv.Color('tomato').float_rgb,
+        pv.Color('seagreen').float_rgb,
+        pv.Color('mediumblue').float_rgb,
     ]
     assert actual_rgb == expected_rgb
 
-    axes_assembly.set_actor_prop("color", [float_rgb], part=0)
-    val = axes_assembly.get_actor_prop("color")
+    axes_assembly.set_actor_prop('color', [float_rgb], part=0)
+    val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
     assert actual_rgb == expected_rgb
 
 
 def test_axes_assembly_set_get_actor_prop_tip(axes_assembly):
-    axes_assembly.set_actor_prop("ambient", 0.3, part="tip")
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', 0.3, part='tip')
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.0, 0.0, 0.0, 0.3, 0.3, 0.3)
 
-    axes_assembly.set_actor_prop("ambient", [0.1, 0.2, 0.4], part=1)
-    val = axes_assembly.get_actor_prop("ambient")
+    axes_assembly.set_actor_prop('ambient', [0.1, 0.2, 0.4], part=1)
+    val = axes_assembly.get_actor_prop('ambient')
     assert val == (0.0, 0.0, 0.0, 0.1, 0.2, 0.4)
 
 
 def test_axes_assembly_set_get_actor_prop_raises(axes_assembly):
     match = "Part must be one of ['shaft', 'tip', 'all']."
     with pytest.raises(ValueError, match=re.escape(match)):
-        axes_assembly.set_actor_prop("ambient", 0.0, part=2)
+        axes_assembly.set_actor_prop('ambient', 0.0, part=2)
 
     match = "Axis must be one of ['x', 'y', 'z', 'all']."
     with pytest.raises(ValueError, match=re.escape(match)):
-        axes_assembly.set_actor_prop("ambient", 0.0, axis="a")
+        axes_assembly.set_actor_prop('ambient', 0.0, axis='a')
 
     match = "Number of values (3) in [1, 2, 3] must match the number of actors (2) for axis '0' and part 'all'"
     with pytest.raises(ValueError, match=re.escape(match)):
-        axes_assembly.set_actor_prop("ambient", [1, 2, 3], axis=0)
+        axes_assembly.set_actor_prop('ambient', [1, 2, 3], axis=0)
 
     match = "Number of values (2) in [0, 1] must match the number of actors (3) for axis 'all' and part 'shaft'"
     with pytest.raises(ValueError, match=re.escape(match)):
-        axes_assembly.set_actor_prop("ambient", [0, 1], part="shaft")
+        axes_assembly.set_actor_prop('ambient', [0, 1], part='shaft')
 
 
 def test_planes_assembly_repr(planes_assembly):
@@ -590,84 +590,84 @@ def test_planes_assembly_repr(planes_assembly):
 
 
 def test_planes_assembly_x_color(planes_assembly):
-    planes_assembly.x_color = "black"
-    assert planes_assembly.x_color.name == "black"
+    planes_assembly.x_color = 'black'
+    assert planes_assembly.x_color.name == 'black'
 
 
 def test_planes_assembly_y_color(planes_assembly):
-    planes_assembly.y_color = "black"
-    assert planes_assembly.y_color.name == "black"
+    planes_assembly.y_color = 'black'
+    assert planes_assembly.y_color.name == 'black'
 
 
 def test_planes_assembly_z_color(planes_assembly):
-    planes_assembly.z_color = "black"
-    assert planes_assembly.z_color.name == "black"
+    planes_assembly.z_color = 'black'
+    assert planes_assembly.z_color.name == 'black'
 
 
 def test_planes_assembly_labels(planes_assembly):
-    assert planes_assembly.labels == ("YZ", "ZX", "XY")
-    labels = ("i", "j", "k")
+    assert planes_assembly.labels == ('YZ', 'ZX', 'XY')
+    labels = ('i', 'j', 'k')
     planes_assembly.labels = labels
     assert planes_assembly.labels == labels
 
 
 def test_planes_assembly_labels_init():
-    labels = ("i", "j", "k")
+    labels = ('i', 'j', 'k')
     planes_assembly = pv.PlanesAssembly(labels=labels)
     assert planes_assembly.labels == labels
 
 
 def test_planes_assembly_x_label(planes_assembly):
-    assert planes_assembly.x_label == "YZ"
-    x_label = "label"
+    assert planes_assembly.x_label == 'YZ'
+    x_label = 'label'
     planes_assembly.x_label = x_label
     assert planes_assembly.x_label == x_label
     assert planes_assembly._planes.get_block_name(0) == x_label
 
 
 def test_planes_assembly_x_label_init():
-    x_label = "label"
+    x_label = 'label'
     planes_assembly = pv.PlanesAssembly(x_label=x_label)
     assert planes_assembly.x_label == x_label
 
 
 def test_planes_assembly_y_label(planes_assembly):
-    assert planes_assembly.y_label == "ZX"
-    y_label = "label"
+    assert planes_assembly.y_label == 'ZX'
+    y_label = 'label'
     planes_assembly.y_label = y_label
     assert planes_assembly.y_label == y_label
     assert planes_assembly._planes.get_block_name(1) == y_label
 
 
 def test_planes_assembly_y_label_init():
-    y_label = "label"
+    y_label = 'label'
     planes_assembly = pv.PlanesAssembly(y_label=y_label)
     assert planes_assembly.y_label == y_label
 
 
 def test_planes_assembly_z_label(planes_assembly):
-    assert planes_assembly.z_label == "XY"
-    z_label = "label"
+    assert planes_assembly.z_label == 'XY'
+    z_label = 'label'
     planes_assembly.z_label = z_label
     assert planes_assembly.z_label == z_label
     assert planes_assembly._planes.get_block_name(2) == z_label
 
 
 def test_planes_assembly_z_label_init():
-    z_label = "label"
+    z_label = 'label'
     planes_assembly = pv.PlanesAssembly(z_label=z_label)
     assert planes_assembly.z_label == z_label
 
 
 def test_planes_assembly_label_mode(planes_assembly):
-    assert planes_assembly.label_mode == "3D"
-    label_mode = "2D"
+    assert planes_assembly.label_mode == '3D'
+    label_mode = '2D'
     planes_assembly.label_mode = label_mode
     assert planes_assembly.label_mode == label_mode
 
 
 def test_planes_assembly_label_mode_init():
-    label_mode = "2D"
+    label_mode = '2D'
     planes_assembly = pv.PlanesAssembly(label_mode=label_mode)
     assert planes_assembly.label_mode == label_mode
 
@@ -699,7 +699,7 @@ def test_planes_assembly_label_size_init():
 
 
 def test_planes_assembly_camera(planes_assembly):
-    with pytest.raises(ValueError, match="Camera has not been set."):
+    with pytest.raises(ValueError, match='Camera has not been set.'):
         _ = planes_assembly.camera
 
     camera = pv.Camera()

@@ -21,8 +21,8 @@ def default_theme():
 
 
 @pytest.mark.parametrize(
-    "parm",
-    [("enabled", True), ("occlusion_ratio", 0.5), ("number_of_peels", 2)],
+    'parm',
+    [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)],
 )
 def test_depth_peeling_config(default_theme, parm):
     attr, value = parm
@@ -39,13 +39,13 @@ def test_depth_peeling_eq(default_theme):
 
 
 @pytest.mark.parametrize(
-    "parm",
+    'parm',
     [
-        ("color", (0.1, 0.1, 0.1)),
-        ("line_width", 1),
-        ("opacity", 1.0),
-        ("feature_angle", 20),
-        ("decimate", 0.5),
+        ('color', (0.1, 0.1, 0.1)),
+        ('line_width', 1),
+        ('opacity', 1.0),
+        ('feature_angle', 20),
+        ('decimate', 0.5),
     ],
 )
 def test_silhouette_config(default_theme, parm):
@@ -71,19 +71,19 @@ def test_depth_silhouette_opacity_outside_clamp(default_theme):
 
 
 @pytest.mark.parametrize(
-    "parm",
+    'parm',
     [
-        ("slider_length", 0.03),
-        ("slider_width", 0.02),
-        ("slider_color", (0.5, 0.5, 0.3)),
-        ("tube_width", 0.02),
-        ("tube_color", (0.5, 0.5, 0.5)),
-        ("cap_opacity", 0.5),
-        ("cap_length", 0.02),
-        ("cap_width", 0.04),
+        ('slider_length', 0.03),
+        ('slider_width', 0.02),
+        ('slider_color', (0.5, 0.5, 0.3)),
+        ('tube_width', 0.02),
+        ('tube_color', (0.5, 0.5, 0.5)),
+        ('cap_opacity', 0.5),
+        ('cap_length', 0.02),
+        ('cap_width', 0.04),
     ],
 )
-@pytest.mark.parametrize("style", [("modern"), ("classic")])
+@pytest.mark.parametrize('style', [('modern'), ('classic')])
 def test_slider_style_config(default_theme, parm, style):
     attr, value = parm
 
@@ -106,7 +106,7 @@ def test_slider_style_eq(default_theme):
 
 def test_invalid_color_str_single_char():
     with pytest.raises(ValueError):  # noqa: PT011
-        colors.Color("x")
+        colors.Color('x')
 
 
 def test_color_str():
@@ -117,14 +117,14 @@ def test_color_str():
     clr = colors.Color("white")
     assert clr == (1.0, 1.0, 1.0)
     with pytest.raises(ValueError):  # noqa: PT011
-        colors.Color("not a color")
+        colors.Color('not a color')
 
 
 def test_font():
-    font = pv.parse_font_family("times")
+    font = pv.parse_font_family('times')
     assert font == vtk.VTK_TIMES
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.parse_font_family("not a font")
+        pv.parse_font_family('not a font')
 
 
 def test_font_eq(default_theme):
@@ -137,12 +137,12 @@ def test_font_eq(default_theme):
 
 
 def test_font_family(default_theme):
-    font = "courier"
+    font = 'courier'
     default_theme.font.family = font
     assert default_theme.font.family == font
 
     with pytest.raises(ValueError):  # noqa: PT011
-        default_theme.font.family = "bla"
+        default_theme.font.family = 'bla'
 
 
 def test_font_title_size(default_theme):
@@ -156,7 +156,7 @@ def test_font_label_size(default_theme):
 
 
 def test_font_fmt(default_theme):
-    fmt = "%.6e"
+    fmt = '%.6e'
     default_theme.font.fmt = fmt
     assert default_theme.font.fmt == fmt
 
@@ -198,7 +198,7 @@ def test_axes_box(default_theme):
 
 
 def test_axes_color(default_theme):
-    new_value = pyvista.plotting.Color("black")
+    new_value = pyvista.plotting.Color('black')
     assert default_theme.axes.x_color != new_value
     default_theme.axes.x_color = new_value
     assert default_theme.axes.x_color == new_value
@@ -207,7 +207,7 @@ def test_axes_color(default_theme):
     default_theme.axes.y_color = new_value
     assert default_theme.axes.y_color == new_value
 
-    new_value = pyvista.plotting.Color("black")
+    new_value = pyvista.plotting.Color('black')
     assert default_theme.axes.z_color != new_value
     default_theme.axes.z_color = new_value
     assert default_theme.axes.z_color == new_value
@@ -251,19 +251,19 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
-@pytest.mark.parametrize("theme", pv.plotting.themes._NATIVE_THEMES)
+@pytest.mark.parametrize('theme', pv.plotting.themes._NATIVE_THEMES)
 def test_themes(theme):
     try:
         pv.set_plot_theme(theme.name)
         assert pv.global_theme == theme.value()
     finally:
         # always return to testing theme
-        pv.set_plot_theme("testing")
+        pv.set_plot_theme('testing')
 
 
 def test_invalid_theme():
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.set_plot_theme("this is not a valid theme")
+        pv.set_plot_theme('this is not a valid theme')
 
 
 def test_invalid_theme_type_error():
@@ -278,7 +278,7 @@ def test_set_theme():
         assert pv.global_theme == theme
     finally:
         # always return to testing theme
-        pv.set_plot_theme("testing")
+        pv.set_plot_theme('testing')
 
 
 def test_invalid_load_theme(default_theme):
@@ -290,7 +290,7 @@ def test_window_size(default_theme):
     with pytest.raises(ValueError):  # noqa: PT011
         default_theme.window_size = [1, 2, 3]
 
-    with pytest.raises(ValueError, match="Window size must be a positive value"):
+    with pytest.raises(ValueError, match='Window size must be a positive value'):
         default_theme.window_size = [-1, -2]
 
     window_size = [1, 1]
@@ -303,15 +303,15 @@ def test_camera(default_theme):
         default_theme.camera = [1, 0, 0]
 
     # test _CameraConfig usage
-    default_theme.camera = {"position": [1, 0, 0]}
-    default_theme.camera = {"viewup": [1, 0, 0]}
+    default_theme.camera = {'position': [1, 0, 0]}
+    default_theme.camera = {'viewup': [1, 0, 0]}
 
     # test dict style usage
-    camera = {"position": [1, 0, 1], "viewup": [1, 0, 1]}
+    camera = {'position': [1, 0, 1], 'viewup': [1, 0, 1]}
     default_theme.camera = camera
 
-    assert default_theme.camera.position == camera["position"]
-    assert default_theme.camera.viewup == camera["viewup"]
+    assert default_theme.camera.position == camera['position']
+    assert default_theme.camera.viewup == camera['viewup']
 
 
 def test_camera_parallel_projection(default_theme):
@@ -337,25 +337,25 @@ def test_camera_parallel_scale(default_theme):
 
 
 def test_cmap(default_theme):
-    cmap = "jet"
+    cmap = 'jet'
     default_theme.cmap = cmap
     assert default_theme.cmap == cmap
 
-    with pytest.raises(ValueError, match="not a color map"):
-        default_theme.cmap = "not a color map"
+    with pytest.raises(ValueError, match='not a color map'):
+        default_theme.cmap = 'not a color map'
 
-    with pytest.raises(ValueError, match="Invalid color map"):
+    with pytest.raises(ValueError, match='Invalid color map'):
         default_theme.cmap = None
 
 
 def test_volume_mapper(default_theme):
-    assert hasattr(default_theme, "volume_mapper")
-    volume_mapper = "gpu"
+    assert hasattr(default_theme, 'volume_mapper')
+    volume_mapper = 'gpu'
     default_theme.volume_mapper = volume_mapper
     assert default_theme.volume_mapper == volume_mapper
 
-    with pytest.raises(ValueError, match="unknown"):
-        default_theme.volume_mapper = "invalid"
+    with pytest.raises(ValueError, match='unknown'):
+        default_theme.volume_mapper = 'invalid'
 
 
 def test_set_hidden_line_removal(default_theme):
@@ -366,28 +366,28 @@ def test_set_hidden_line_removal(default_theme):
 
 
 @pytest.mark.parametrize(
-    "parm",
+    'parm',
     [
-        ("background", (0.1, 0.2, 0.3)),
-        ("auto_close", False),
-        ("notebook", False),
-        ("full_screen", True),
-        ("nan_color", (0.5, 0.5, 0.5)),
-        ("edge_color", (1.0, 0.0, 0.0)),
-        ("outline_color", (1.0, 0.0, 0.0)),
-        ("floor_color", (1.0, 0.0, 0.0)),
-        ("show_scalar_bar", False),
-        ("lighting", False),
-        ("interactive", False),
-        ("render_points_as_spheres", True),
-        ("transparent_background", True),
-        ("title", "test_title"),
-        ("multi_samples", 10),
-        ("multi_rendering_splitting_position", 0.1),
-        ("smooth_shading", True),
-        ("name", "test_theme"),
-        ("split_sharp_edges", True),
-        ("sharp_edges_feature_angle", 45.0),
+        ('background', (0.1, 0.2, 0.3)),
+        ('auto_close', False),
+        ('notebook', False),
+        ('full_screen', True),
+        ('nan_color', (0.5, 0.5, 0.5)),
+        ('edge_color', (1.0, 0.0, 0.0)),
+        ('outline_color', (1.0, 0.0, 0.0)),
+        ('floor_color', (1.0, 0.0, 0.0)),
+        ('show_scalar_bar', False),
+        ('lighting', False),
+        ('interactive', False),
+        ('render_points_as_spheres', True),
+        ('transparent_background', True),
+        ('title', 'test_title'),
+        ('multi_samples', 10),
+        ('multi_rendering_splitting_position', 0.1),
+        ('smooth_shading', True),
+        ('name', 'test_theme'),
+        ('split_sharp_edges', True),
+        ('sharp_edges_feature_angle', 45.0),
     ],
 )
 def test_theme_parm(default_theme, parm):
@@ -398,12 +398,12 @@ def test_theme_parm(default_theme, parm):
 
 
 def test_theme_colorbar_orientation(default_theme):
-    orient = "vertical"
+    orient = 'vertical'
     default_theme.colorbar_orientation = orient
     assert default_theme.colorbar_orientation == orient
 
     with pytest.raises(ValueError):  # noqa: PT011
-        default_theme.colorbar_orientation = "invalid"
+        default_theme.colorbar_orientation = 'invalid'
 
 
 def test_restore_defaults(default_theme):
@@ -415,7 +415,7 @@ def test_restore_defaults(default_theme):
 
 def test_repr(default_theme):
     rep = str(default_theme)
-    assert "Background" in rep
+    assert 'Background' in rep
     assert default_theme.cmap in rep
     assert str(default_theme.colorbar_orientation) in rep
     assert default_theme._name.capitalize() in rep
@@ -424,28 +424,28 @@ def test_repr(default_theme):
     # key size. This makes sure that any new keys are either less than the size
     # of the key in the repr or the key length is increased
     for line in rep.splitlines():
-        if ":" in line:
-            pref, *rest = line.split(":", 1)
-            assert pref.endswith(" "), f"Key str too long or need to raise key length:\n{pref!r}"
+        if ':' in line:
+            pref, *rest = line.split(':', 1)
+            assert pref.endswith(' '), f"Key str too long or need to raise key length:\n{pref!r}"
 
 
 def test_theme_slots(default_theme):
     # verify we can't create an arbitrary attribute
-    with pytest.raises(AttributeError, match="has no attribute"):
+    with pytest.raises(AttributeError, match='has no attribute'):
         default_theme.new_attr = 1
 
     # verify we can't create an arbitrary attribute on an attribute
     assert default_theme.lighting_params
-    with pytest.raises(AttributeError, match="has no attribute"):
+    with pytest.raises(AttributeError, match='has no attribute'):
         default_theme.lighting_params.new_attr = 1
 
     # subclasses should also prevent arbitrary attributes
     theme = DarkTheme()
-    with pytest.raises(AttributeError, match="has no attribute"):
+    with pytest.raises(AttributeError, match='has no attribute'):
         theme.new_attr = 1
 
     assert theme.lighting_params
-    with pytest.raises(AttributeError, match="has no attribute"):
+    with pytest.raises(AttributeError, match='has no attribute'):
         theme.lighting_params.new_attr = 1
 
 
@@ -457,7 +457,7 @@ def test_theme_eq():
     assert defa_theme0 != dark_theme
 
     # for coverage
-    assert defa_theme0 != "apple"
+    assert defa_theme0 != 'apple'
 
 
 def test_plotter_set_theme():
@@ -476,7 +476,7 @@ def test_plotter_set_theme():
 
 
 def test_load_theme(tmpdir, default_theme):
-    filename = str(tmpdir.mkdir("tmpdir").join("tmp.json"))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
     pv.plotting.themes.DarkTheme().save(filename)
     loaded_theme = pv.load_theme(filename)
     assert loaded_theme == pv.plotting.themes.DarkTheme()
@@ -486,7 +486,7 @@ def test_load_theme(tmpdir, default_theme):
 
 
 def test_save_before_close_callback(tmpdir, default_theme):
-    filename = str(tmpdir.mkdir("tmpdir").join("tmp.json"))
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
     dark_theme = pv.plotting.themes.DarkTheme()
 
     def fun(plotter):
@@ -505,63 +505,63 @@ def test_save_before_close_callback(tmpdir, default_theme):
 
 
 def test_anti_aliasing(default_theme):
-    with pytest.raises(ValueError, match="anti_aliasing must be either"):
-        default_theme.anti_aliasing = "invalid value"
+    with pytest.raises(ValueError, match='anti_aliasing must be either'):
+        default_theme.anti_aliasing = 'invalid value'
 
-    with pytest.raises(TypeError, match="must be either"):
+    with pytest.raises(TypeError, match='must be either'):
         default_theme.anti_aliasing = 42
 
 
 @pytest.mark.skipif(uses_egl(), reason="Requires non-OSMesa/EGL VTK build.")
 def test_anti_aliasing_fxaa(default_theme):
-    default_theme.anti_aliasing = "fxaa"
-    assert default_theme.anti_aliasing == "fxaa"
+    default_theme.anti_aliasing = 'fxaa'
+    assert default_theme.anti_aliasing == 'fxaa'
     pl = pv.Plotter(theme=default_theme)
     assert pl.renderer.GetUseFXAA()
 
 
 def test_anti_aliasing_ssaa(default_theme):
     # default should is not enabled
-    if default_theme.anti_aliasing != "ssaa":
+    if default_theme.anti_aliasing != 'ssaa':
         pl = pv.Plotter(theme=default_theme)
-        assert "vtkSSAAPass" not in pl.renderer._render_passes._passes
+        assert 'vtkSSAAPass' not in pl.renderer._render_passes._passes
 
-    default_theme.anti_aliasing = "ssaa"
-    assert default_theme.anti_aliasing == "ssaa"
+    default_theme.anti_aliasing = 'ssaa'
+    assert default_theme.anti_aliasing == 'ssaa'
     pl = pv.Plotter(theme=default_theme)
-    assert "vtkSSAAPass" in pl.renderer._render_passes._passes
+    assert 'vtkSSAAPass' in pl.renderer._render_passes._passes
 
 
 def test_anti_aliasing_msaa(default_theme):
-    if default_theme.anti_aliasing != "msaa":
+    if default_theme.anti_aliasing != 'msaa':
         pl = pv.Plotter(theme=default_theme)
         assert pl.render_window.GetMultiSamples() == 0
 
-    default_theme.anti_aliasing = "msaa"
+    default_theme.anti_aliasing = 'msaa'
     default_theme.multi_samples = 4
-    assert default_theme.anti_aliasing == "msaa"
+    assert default_theme.anti_aliasing == 'msaa'
     pl = pv.Plotter(theme=default_theme)
     assert pl.render_window.GetMultiSamples() == default_theme.multi_samples
 
 
 def test_above_range_color(default_theme):
-    default_theme.above_range_color = "r"
+    default_theme.above_range_color = 'r'
     assert isinstance(default_theme.above_range_color, pv.Color)
 
 
 def test_below_range_color(default_theme):
-    default_theme.below_range_color = "b"
+    default_theme.below_range_color = 'b'
     assert isinstance(default_theme.below_range_color, pv.Color)
 
 
 def test_user_logo(default_theme, verify_image_cache):
-    default_theme.logo_file = download_file("vtk.png")
+    default_theme.logo_file = download_file('vtk.png')
     pl = pv.Plotter()
     pl.add_logo_widget()
     pl.show()
 
     with pytest.raises(FileNotFoundError):
-        default_theme.logo_file = "not a file"
+        default_theme.logo_file = 'not a file'
 
 
 def test_allow_empty_mesh(default_theme):
@@ -575,10 +575,10 @@ def test_user_theme():
         def __init__(self):
             """Initialize the theme."""
             super().__init__()
-            self.background = "lightgrey"
-            self.color = "#1f77b4"
+            self.background = 'lightgrey'
+            self.color = '#1f77b4'
 
-            self.lighting_params.interpolation = "Phong"
+            self.lighting_params.interpolation = 'Phong'
             self.lighting_params.ambient = 0.15
             self.lighting_params.diffuse = 0.45
             self.lighting_params.specular = 0.85
@@ -620,16 +620,16 @@ def test_user_theme():
 
     finally:
         # always return to testing theme
-        pv.set_plot_theme("testing")
+        pv.set_plot_theme('testing')
 
 
 def test_set_plot_theme_from_env():
-    os.environ["PYVISTA_PLOT_THEME"] = "not a valid theme"
+    os.environ['PYVISTA_PLOT_THEME'] = 'not a valid theme'
     try:
-        with pytest.warns(UserWarning, match="Invalid"):
+        with pytest.warns(UserWarning, match='Invalid'):
             _set_plot_theme_from_env()
     finally:
-        os.environ.pop("PYVISTA_PLOT_THEME", None)
+        os.environ.pop('PYVISTA_PLOT_THEME', None)
 
 
 def test_trame_config():

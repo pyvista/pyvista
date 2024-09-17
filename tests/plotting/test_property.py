@@ -13,10 +13,10 @@ def prop():
 
 def test_check_range():
     with pytest.raises(ValueError, match="outside the acceptable"):
-        _check_range(-1, (0, 1), "parm")
+        _check_range(-1, (0, 1), 'parm')
     with pytest.raises(ValueError, match="outside the acceptable"):
-        _check_range(2, (0, 1), "parm")
-    assert _check_range(0, (0, 1), "parm") is None
+        _check_range(2, (0, 1), 'parm')
+    assert _check_range(0, (0, 1), 'parm') is None
 
 
 def test_property_init():
@@ -28,13 +28,13 @@ def test_property_init():
 
 
 def test_property_style(prop):
-    style = "Surface"
+    style = 'Surface'
     prop.style = style
     assert prop.style == style
 
 
 def test_property_edge_color(prop):
-    prop.edge_color = "b"
+    prop.edge_color = 'b'
     assert prop.edge_color.float_rgb == (0, 0, 1)
 
 
@@ -114,12 +114,12 @@ def test_property_roughness(prop):
 
 
 def test_property_interpolation(prop):
-    value = "Gouraud"
+    value = 'Gouraud'
     prop.interpolation = value
     assert prop.interpolation == pv.opts.InterpolationType.from_any(value)
 
-    with pytest.raises(ValueError, match="InterpolationType has no value matching"):
-        prop.interpolation = "foo"
+    with pytest.raises(ValueError, match='InterpolationType has no value matching'):
+        prop.interpolation = 'foo'
 
 
 def test_property_render_points_as_spheres(prop):
@@ -147,27 +147,27 @@ def test_property_line_width(prop):
     assert prop.line_width == value
 
 
-@pytest.mark.parametrize("value", ["back", "front", "none"])
+@pytest.mark.parametrize("value", ['back', 'front', 'none'])
 def test_property_culling(prop, value):
     prop.culling = value
     assert prop.culling == value
 
-    with pytest.raises(ValueError, match="Invalid culling"):
-        prop.culling = "foo"
+    with pytest.raises(ValueError, match='Invalid culling'):
+        prop.culling = 'foo'
 
 
 def test_property_diffuse_color(prop):
-    prop.diffuse_color = "b"
+    prop.diffuse_color = 'b'
     assert prop.diffuse_color.float_rgb == (0, 0, 1)
 
 
 def test_property_ambient_color(prop):
-    prop.ambient_color = "b"
+    prop.ambient_color = 'b'
     assert prop.ambient_color.float_rgb == (0, 0, 1)
 
 
 def test_property_specular_color(prop):
-    prop.specular_color = "b"
+    prop.specular_color = 'b'
     assert prop.specular_color.float_rgb == (0, 0, 1)
 
 
