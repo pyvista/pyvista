@@ -682,7 +682,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     >>> polaxes.SetMinimumAngle(-60.0)
     >>> polaxes.SetMaximumAngle(210.0)
     >>> polaxes.SetRequestedNumberOfRadialAxes(10)
-    >>> polaxes.SetCamera(camera)
+    >>> polaxes.camera = camera
     >>> polaxes.SetPolarLabelFormat("%6.1f")
     >>> polaxes.GetLastRadialAxisProperty().SetColor(0.0, 1.0, 0.0)
     >>> polaxes.GetSecondaryRadialAxesProperty().SetColor(0.0, 0.0, 1.0)
