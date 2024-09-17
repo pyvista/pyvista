@@ -43,7 +43,7 @@ cubemap = examples.download_sky_box_cube_map()
 p = pv.Plotter()
 p.add_actor(cubemap.to_skybox())
 p.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
-p.add_mesh(mesh, color="linen", pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
+p.add_mesh(mesh, color='linen', pbr=True, metallic=0.8, roughness=0.1, diffuse=1)
 
 # Define a nice camera perspective
 cpos = [(-313.40, 66.09, 1000.61), (0.0, 0.0, 0.0), (0.018, 0.99, -0.06)]
@@ -57,7 +57,7 @@ p.show(cpos=cpos)
 # Plot with metallic increasing from left to right and roughness
 # increasing from bottom to top.
 
-colors = ["red", "teal", "black", "orange", "silver"]
+colors = ['red', 'teal', 'black', 'orange', 'silver']
 
 p = pv.Plotter()
 p.set_environment_texture(cubemap)
@@ -79,18 +79,18 @@ mesh.rotate_z(140, inplace=True)
 
 
 plotter = pv.Plotter(lighting=None)
-plotter.set_background("black")
-plotter.add_mesh(mesh, color="linen", pbr=True, metallic=0.5, roughness=0.5, diffuse=1)
+plotter.set_background('black')
+plotter.add_mesh(mesh, color='linen', pbr=True, metallic=0.5, roughness=0.5, diffuse=1)
 
 
 # set up lighting
-light = pv.Light((-2, 2, 0), (0, 0, 0), "white")
+light = pv.Light((-2, 2, 0), (0, 0, 0), 'white')
 plotter.add_light(light)
 
 light = pv.Light((2, 0, 0), (0, 0, 0), (0.7, 0.0862, 0.0549))
 plotter.add_light(light)
 
-light = pv.Light((0, 0, 10), (0, 0, 0), "white")
+light = pv.Light((0, 0, 10), (0, 0, 0), 'white')
 plotter.add_light(light)
 
 

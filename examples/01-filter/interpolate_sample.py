@@ -74,7 +74,7 @@ output
 
 pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
-pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color="red")
+pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color='red')
 pl.view_xy()
 pl.show()
 
@@ -92,7 +92,7 @@ output = grid.interpolate(point_mesh, radius=0.25, null_value=-1)
 
 pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
-pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color="red")
+pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color='red')
 pl.view_xy()
 pl.show()
 
@@ -111,7 +111,7 @@ output = grid.interpolate(sphere, radius=0.1)
 
 pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
-pl.add_mesh(sphere, style="wireframe", color="white")
+pl.add_mesh(sphere, style='wireframe', color='white')
 pl.view_xy()
 pl.show()
 
@@ -177,7 +177,7 @@ output
 # low interpolation error.
 
 pl = pv.Plotter()
-pl.add_mesh(grid, style="wireframe", clim=[0, 1])
+pl.add_mesh(grid, style='wireframe', clim=[0, 1])
 pl.add_mesh(output, clim=[0, 1])
 pl.view_xy()
 pl.show()
@@ -194,7 +194,7 @@ output = grid.sample(sphere)
 
 pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
-pl.add_mesh(sphere, style="wireframe", color="white")
+pl.add_mesh(sphere, style='wireframe', color='white')
 pl.view_xy()
 pl.show()
 

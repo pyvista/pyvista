@@ -84,8 +84,8 @@ for i, lst in enumerate(colors):
             size=size,
             border_size=1,
             color_on=color,
-            color_off="grey",
-            background_color="grey",
+            color_off='grey',
+            background_color='grey',
         )
         Startpos = Startpos + size + (size // 10)
 
