@@ -164,7 +164,7 @@ def test_cell_point_ids(grid):
 
 def test_cell_get_cell():
     hexbeam = grids[0]
-    with pytest.raises(IndexError, match="Invalid index"):
+    with pytest.raises(IndexError, match='Invalid index'):
         hexbeam.get_cell(hexbeam.n_cells)
     assert isinstance(hexbeam.get_cell(0), pv.Cell)
 
@@ -208,7 +208,7 @@ def test_cell_n_edges(cell, ne):
 def test_cell_get_edges(cell):
     assert all(cell.get_edge(i).type == CellType.LINE for i in range(cell.n_edges))
 
-    with pytest.raises(IndexError, match="Invalid index"):
+    with pytest.raises(IndexError, match='Invalid index'):
         cell.get_edge(cell.n_edges)
 
 
@@ -218,10 +218,10 @@ def test_cell_edges(cell):
 
 
 def test_cell_no_field_data():
-    with pytest.raises(NotImplementedError, match="does not support field data"):
-        cells[0].add_field_data([1, 2, 3], "field_data")
+    with pytest.raises(NotImplementedError, match='does not support field data'):
+        cells[0].add_field_data([1, 2, 3], 'field_data')
 
-    with pytest.raises(NotImplementedError, match="does not support field data"):
+    with pytest.raises(NotImplementedError, match='does not support field data'):
         cells[0].clear_field_data()
 
 
@@ -271,7 +271,7 @@ def test_cell_faces(cell):
         assert cell.get_face(0) == cell.faces[0]
         assert cell.get_face(1) != cell.faces[0]
     else:
-        with pytest.raises(IndexError, match="Invalid index"):
+        with pytest.raises(IndexError, match='Invalid index'):
             cell.get_face(0)
 
 
@@ -344,11 +344,11 @@ def test_cell_cast_to_polydata(cell):
 
 CELL_LIST = [3, 0, 1, 2, 3, 3, 4, 5]
 NCELLS = 2
-FCONTIG_ARR = np.array(np.vstack(([3, 0, 1, 2], [3, 3, 4, 5])), order="F")
+FCONTIG_ARR = np.array(np.vstack(([3, 0, 1, 2], [3, 3, 4, 5])), order='F')
 
 
 @pytest.mark.parametrize(
-    "cells",
+    'cells',
     [
         CELL_LIST,
         np.array(CELL_LIST, np.int16),
@@ -368,7 +368,7 @@ OFFSETS_LIST = [0, 3, 6]
 
 
 @pytest.mark.parametrize(
-    "offsets",
+    'offsets',
     [
         OFFSETS_LIST,
         np.array(OFFSETS_LIST, np.int16),
@@ -377,7 +377,7 @@ OFFSETS_LIST = [0, 3, 6]
     ],
 )
 @pytest.mark.parametrize(
-    "connectivity",
+    'connectivity',
     [
         CONNECTIVITY_LIST,
         np.array(CONNECTIVITY_LIST, np.int16),
@@ -385,7 +385,7 @@ OFFSETS_LIST = [0, 3, 6]
         np.array(CONNECTIVITY_LIST, np.int64),
     ],
 )
-@pytest.mark.parametrize("deep", [False, True])
+@pytest.mark.parametrize('deep', [False, True])
 def test_init_cell_array_from_arrays(offsets, connectivity, deep):
     cell_array = pv.core.cell.CellArray.from_arrays(offsets, connectivity, deep=deep)
     assert np.array_equal(np.array(connectivity), cell_array.connectivity_array)
@@ -397,16 +397,16 @@ REGULAR_CELL_LIST = [[0, 1, 2], [3, 4, 5]]
 
 
 @pytest.mark.parametrize(
-    "cells",
+    'cells',
     [
         REGULAR_CELL_LIST,
         np.array(REGULAR_CELL_LIST, np.int16),
         np.array(REGULAR_CELL_LIST, np.int32),
         np.array(REGULAR_CELL_LIST, np.int64),
-        np.array(np.vstack(REGULAR_CELL_LIST), order="F"),
+        np.array(np.vstack(REGULAR_CELL_LIST), order='F'),
     ],
 )
-@pytest.mark.parametrize("deep", [False, True])
+@pytest.mark.parametrize('deep', [False, True])
 def test_init_cell_array_from_regular_cells(cells, deep):
     cell_array = pv.core.cell.CellArray.from_regular_cells(cells, deep=deep)
     assert np.array_equal(np.array(cells), cell_array.regular_cells)
@@ -497,7 +497,7 @@ def test_cell_types():
     ]
     for cell_type in cell_types:
         if hasattr(vtk, "VTK_" + cell_type):
-            assert getattr(pv.CellType, cell_type) == getattr(vtk, "VTK_" + cell_type)
+            assert getattr(pv.CellType, cell_type) == getattr(vtk, 'VTK_' + cell_type)
 
 
 def test_n_cells_deprecated():
@@ -509,7 +509,7 @@ def test_n_cells_deprecated():
             raise RuntimeError("Remove `n_cells` constructor kwarg")
 
 
-@pytest.mark.parametrize("deep", [True, False])
+@pytest.mark.parametrize('deep', [True, False])
 def test_deep_deprecated(deep: bool):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)

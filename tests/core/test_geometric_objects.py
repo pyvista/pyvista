@@ -21,7 +21,7 @@ def test_cylinder_structured():
     assert np.any(cyl.n_cells)
 
 
-@pytest.mark.parametrize("scale", [None, 2.0, 4, "auto"])
+@pytest.mark.parametrize('scale', [None, 2.0, 4, 'auto'])
 def test_arrow(scale):
     surf = pv.Arrow([0, 0, 0], [1, 1, 1], scale=scale)
     assert np.any(surf.points)
@@ -30,7 +30,7 @@ def test_arrow(scale):
 
 def test_arrow_raises_error():
     with pytest.raises(TypeError):
-        pv.Arrow([0, 0, 0], [1, 1, 1], scale="badarg")
+        pv.Arrow([0, 0, 0], [1, 1, 1], scale='badarg')
 
 
 def test_sphere():
@@ -40,7 +40,7 @@ def test_sphere():
 
 
 @pytest.mark.parametrize(
-    "expected",
+    'expected',
     [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]],
 )
 def test_sphere_direction_points(expected):
@@ -349,7 +349,7 @@ def test_plane():
 
 
 @pytest.mark.parametrize(
-    "expected",
+    'expected',
     [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0], [0, 0, -1]],
 )
 def test_plane_direction(expected):
@@ -436,8 +436,8 @@ def test_capsule():
 
 
 # https://github.com/pyvista/pyvista/pull/6119
-@pytest.mark.parametrize("center", [(4, 5, 6), (1, 1, 1)])
-@pytest.mark.parametrize("direction", [(0, 1, -1), (1, 1, 0)])
+@pytest.mark.parametrize('center', [(4, 5, 6), (1, 1, 1)])
+@pytest.mark.parametrize('direction', [(0, 1, -1), (1, 1, 0)])
 def test_capsule_center(center, direction):
     capsule = pv.Capsule(center, direction)
     cylinder = pv.Cylinder(center, direction)
@@ -455,9 +455,9 @@ def test_cube():
     assert np.allclose(cube.bounds, bounds)
 
 
-@pytest.mark.parametrize(("point_dtype"), (["float32", "float64", "invalid"]))
+@pytest.mark.parametrize(('point_dtype'), (['float32', 'float64', 'invalid']))
 def test_cube_point_dtype(point_dtype):
-    if point_dtype in ["float32", "float64"]:
+    if point_dtype in ['float32', 'float64']:
         cube = pv.Cube(point_dtype=point_dtype)
         assert cube.points.dtype == point_dtype
     else:
@@ -505,7 +505,7 @@ def test_disc():
     unit_normal = normal / np.linalg.norm(normal)
     geom = pv.Disc(normal=unit_normal)
 
-    normals = geom.compute_normals()["Normals"]
+    normals = geom.compute_normals()['Normals']
     assert np.allclose(np.dot(normals, unit_normal), 1)
 
     center = (1.2, 3.4, 5.6)
@@ -567,7 +567,7 @@ def test_circular_arc():
     assert mesh.n_points == resolution + 1
     assert mesh.n_cells == 1
     distance = np.arange(0.0, 1.0 + 0.01, 0.01) * np.pi / 2.0
-    assert np.allclose(mesh["Distance"], distance)
+    assert np.allclose(mesh['Distance'], distance)
 
     # pointa and pointb are not equidistant from center
     with pytest.raises(ValueError):  # noqa: PT011
@@ -585,7 +585,7 @@ def test_circular_arc_from_normal():
     assert mesh.n_points == resolution + 1
     assert mesh.n_cells == 1
     distance = np.arange(0.0, 1.0 + 0.01, 0.01) * np.pi
-    assert np.allclose(mesh["Distance"], distance)
+    assert np.allclose(mesh['Distance'], distance)
 
 
 def test_pyramid():
@@ -700,7 +700,7 @@ def test_rectangle_not_enough_points():
     pointa = [3.0, 1.0, 1.0]
     pointb = [4.0, 3.0, 1.0]
 
-    with pytest.raises(TypeError, match="Points must be given as length 3 np.ndarray or list"):
+    with pytest.raises(TypeError, match='Points must be given as length 3 np.ndarray or list'):
         pv.Rectangle([pointa, pointb])
 
 
@@ -733,9 +733,9 @@ def test_ellipse():
 
 
 @pytest.mark.parametrize(
-    ("kind_str", "kind_int", "n_vertices", "n_faces"),
+    ('kind_str', 'kind_int', 'n_vertices', 'n_faces'),
     zip(
-        ["tetrahedron", "cube", "octahedron", "icosahedron", "dodecahedron"],
+        ['tetrahedron', 'cube', 'octahedron', 'icosahedron', 'dodecahedron'],
         range(5),
         [4, 8, 6, 12, 20],
         [4, 6, 8, 20, 12],
@@ -754,7 +754,7 @@ def test_platonic_solids(kind_str, kind_int, n_vertices, n_faces):
 
 def test_platonic_invalids():
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.PlatonicSolid(kind="invalid")
+        pv.PlatonicSolid(kind='invalid')
     with pytest.raises(ValueError):  # noqa: PT011
         pv.PlatonicSolid(kind=42)
     with pytest.raises(ValueError):  # noqa: PT011
