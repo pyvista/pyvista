@@ -152,13 +152,13 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f"Invalid density {density!r}, expected number or array-like.")
+        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError("Input mesh must have faces for voxelization.")
+        raise ValueError('Input mesh must have faces for voxelization.')
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
@@ -184,7 +184,7 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
             y = np.arange(y_min, y_max, density_y)
             z = np.arange(z_min, z_max, density_z)
 
-    x, y, z = np.meshgrid(x, y, z, indexing="ij")
+    x, y, z = np.meshgrid(x, y, z, indexing='ij')
     # indexing='ij' is used here in order to make grid and ugrid with x-y-z ordering, not y-x-z ordering
     # see https://github.com/pyvista/pyvista/pull/4365
 
@@ -200,14 +200,14 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
         surface_norm.points /= np.array(density)
         # Select cells if they're within one unit of the surface
         ugrid_norm = ugrid_norm.compute_implicit_distance(surface_norm)
-        mask = ugrid_norm["implicit_distance"] < 1
+        mask = ugrid_norm['implicit_distance'] < 1
         del ugrid_norm, surface_norm
     else:
         # get part of the mesh within the mesh's bounding surface.
         selection = ugrid.select_enclosed_points(
             surface, tolerance=0.0, check_surface=check_surface
         )
-        mask = selection.point_data["SelectedPoints"].view(np.bool_)
+        mask = selection.point_data['SelectedPoints'].view(np.bool_)
         del selection
 
     # extract cells from point indices
@@ -333,13 +333,13 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
     elif isinstance(density, (Sequence, np.ndarray)):
         density_x, density_y, density_z = density
     else:
-        raise TypeError(f"Invalid density {density!r}, expected number or array-like.")
+        raise TypeError(f'Invalid density {density!r}, expected number or array-like.')
 
     # check and pre-process input mesh
     surface = mesh.extract_geometry()  # filter preserves topology
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
-        raise ValueError("Input mesh must have faces for voxelization.")
+        raise ValueError('Input mesh must have faces for voxelization.')
     if not surface.is_all_triangles:
         # reduce chance for artifacts, see gh-1743
         surface.triangulate(inplace=True)
@@ -370,15 +370,15 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
 
     # get part of the mesh within the mesh's bounding surface.
     selection = voi.select_enclosed_points(surface, tolerance=0.0, check_surface=check_surface)
-    mask_vol = selection.point_data["SelectedPoints"].view(np.bool_)
+    mask_vol = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # Get voxels that fall within input mesh boundaries
-    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))["vtkOriginalCellIds"])
+    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))['vtkOriginalCellIds'])
 
     # Create new element of grid where all cells _within_ mesh boundary are
     # given new name 'MeshCells' and a discrete value of 1
-    voi["InsideMesh"] = np.zeros(voi.n_cells)
-    voi["InsideMesh"][cell_ids] = 1
+    voi['InsideMesh'] = np.zeros(voi.n_cells)
+    voi['InsideMesh'][cell_ids] = 1
 
     return voi
 
@@ -417,7 +417,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # "optimal" grid size by looking at the sparsity of the points in the
         # input dataset - I actually think VTK might have this implemented
         # somewhere
-        raise NotImplementedError("Please specify dimensions.")
+        raise NotImplementedError('Please specify dimensions.')
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.ImageData()
     image.dimensions = dimensions
@@ -481,7 +481,7 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT
         Arrays of transformed x-, y-, z-components, respectively.
 
     """
-    xx, yy, _ = np.meshgrid(np.radians(theta), np.radians(phi), r, indexing="ij")
+    xx, yy, _ = np.meshgrid(np.radians(theta), np.radians(phi), r, indexing='ij')
     th, ph = xx.squeeze(), yy.squeeze()
 
     # Transform wind components from spherical to cartesian coordinates
@@ -608,14 +608,14 @@ def merge(
 
     """
     if not isinstance(datasets, Sequence):
-        raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
+        raise TypeError(f'Expected a sequence, got {type(datasets).__name__}')
 
     if len(datasets) < 1:
-        raise ValueError("Expected at least one dataset.")
+        raise ValueError('Expected at least one dataset.')
 
     first = datasets[0]
     if not isinstance(first, pyvista.DataSet):
-        raise TypeError(f"Expected pyvista.DataSet, not {type(first).__name__}")
+        raise TypeError(f'Expected pyvista.DataSet, not {type(first).__name__}')
 
     return datasets[0].merge(
         datasets[1:],
@@ -698,8 +698,8 @@ def sample_function(
     output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
     capping: bool = False,
     cap_value: float = sys.float_info.max,
-    scalar_arr_name: str = "scalars",
-    normal_arr_name: str = "normals",
+    scalar_arr_name: str = 'scalars',
+    normal_arr_name: str = 'normals',
     progress_bar: bool = False,
 ):
     """Sample an implicit function over a structured point set.
@@ -808,12 +808,12 @@ def sample_function(
     elif output_type == np.float32:
         samp.SetOutputScalarTypeToFloat()
     elif output_type == np.int64:
-        if os.name == "nt":
-            raise ValueError("This function on Windows only supports int32 or smaller")
+        if os.name == 'nt':
+            raise ValueError('This function on Windows only supports int32 or smaller')
         samp.SetOutputScalarTypeToLong()
     elif output_type == np.uint64:
-        if os.name == "nt":
-            raise ValueError("This function on Windows only supports int32 or smaller")
+        if os.name == 'nt':
+            raise ValueError('This function on Windows only supports int32 or smaller')
         samp.SetOutputScalarTypeToUnsignedLong()
     elif output_type == np.int32:
         samp.SetOutputScalarTypeToInt()
@@ -828,7 +828,7 @@ def sample_function(
     elif output_type == np.uint8:
         samp.SetOutputScalarTypeToUnsignedChar()
     else:
-        raise ValueError(f"Invalid output_type {output_type}")
+        raise ValueError(f'Invalid output_type {output_type}')
 
-    _update_alg(samp, progress_bar=progress_bar, message="Sampling")
+    _update_alg(samp, progress_bar=progress_bar, message='Sampling')
     return wrap(samp.GetOutput())

@@ -44,17 +44,17 @@ class BaseViewer:
         self.plotter.suppress_rendering = suppress_rendering
 
         # State variable names
-        self.SHOW_UI = f"{plotter._id_name}_show_ui"
-        self.GRID = f"{plotter._id_name}_grid_visibility"
-        self.OUTLINE = f"{plotter._id_name}_outline_visibility"
-        self.EDGES = f"{plotter._id_name}_edge_visibility"
-        self.AXIS = f"{plotter._id_name}_axis_visibility"
-        self.PARALLEL = f"{plotter._id_name}_parallel_projection"
-        self.SERVER_RENDERING = f"{plotter._id_name}_use_server_rendering"
+        self.SHOW_UI = f'{plotter._id_name}_show_ui'
+        self.GRID = f'{plotter._id_name}_grid_visibility'
+        self.OUTLINE = f'{plotter._id_name}_outline_visibility'
+        self.EDGES = f'{plotter._id_name}_edge_visibility'
+        self.AXIS = f'{plotter._id_name}_axis_visibility'
+        self.PARALLEL = f'{plotter._id_name}_parallel_projection'
+        self.SERVER_RENDERING = f'{plotter._id_name}_use_server_rendering'
         self.VALID_UI_MODES = [
-            "trame",
-            "client",
-            "server",
+            'trame',
+            'client',
+            'server',
         ]
         server.state[self.SHOW_UI] = True
         server.state[self.GRID] = False
@@ -237,7 +237,7 @@ class BaseViewer:
                     [
                         ren.axes_widget
                         for ren in self.plotter.renderers
-                        if hasattr(ren, "axes_widget")
+                        if hasattr(ren, 'axes_widget')
                     ],
                 )
         self.update()
@@ -279,7 +279,7 @@ class BaseViewer:
         """Export the scene as a zip file."""
         for view in self._html_views:
             return memoryview(view.export_html())
-        raise TypeError("This viewer cannot be exported.")
+        raise TypeError('This viewer cannot be exported.')
 
     def ui(self):
         """Implement in derived classes."""

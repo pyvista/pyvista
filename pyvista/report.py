@@ -22,8 +22,8 @@ plotter.close()\
 def get_gpu_info():  # numpydoc ignore=RT01
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
-    proc = subprocess.run([sys.executable, "-c", _cmd], check=False, capture_output=True)
-    return "" if proc.returncode else proc.stdout.decode()
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    return '' if proc.returncode else proc.stdout.decode()
 
 
 class GPUInfo:
@@ -36,31 +36,31 @@ class GPUInfo:
     @property
     def renderer(self):  # numpydoc ignore=RT01
         """GPU renderer name."""
-        regex = re.compile("OpenGL renderer string:(.+)\n")
+        regex = re.compile('OpenGL renderer string:(.+)\n')
         try:
             renderer = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the renderer.") from None
+            raise RuntimeError('Unable to parse GPU information for the renderer.') from None
         return renderer.strip()
 
     @property
     def version(self):  # numpydoc ignore=RT01
         """GPU renderer version."""
-        regex = re.compile("OpenGL version string:(.+)\n")
+        regex = re.compile('OpenGL version string:(.+)\n')
         try:
             version = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the version.") from None
+            raise RuntimeError('Unable to parse GPU information for the version.') from None
         return version.strip()
 
     @property
     def vendor(self):  # numpydoc ignore=RT01
         """GPU renderer vendor."""
-        regex = re.compile("OpenGL vendor string:(.+)\n")
+        regex = re.compile('OpenGL vendor string:(.+)\n')
         try:
             vendor = regex.findall(self._gpu_info)[0]
         except IndexError:
-            raise RuntimeError("Unable to parse GPU information for the vendor.") from None
+            raise RuntimeError('Unable to parse GPU information for the vendor.') from None
         return vendor.strip()
 
     def get_info(self):
@@ -73,26 +73,26 @@ class GPUInfo:
 
         """
         return [
-            ("GPU Vendor", self.vendor),
-            ("GPU Renderer", self.renderer),
-            ("GPU Version", self.version),
+            ('GPU Vendor', self.vendor),
+            ('GPU Renderer', self.renderer),
+            ('GPU Version', self.version),
         ]
 
     def _repr_html_(self):
         """HTML table representation."""
-        fmt = "<table>"
-        row = "<tr><th>{}</th><td>{}</td></tr>\n"
+        fmt = '<table>'
+        row = '<tr><th>{}</th><td>{}</td></tr>\n'
         for meta in self.get_info():
             fmt += row.format(*meta)
-        fmt += "</table>"
+        fmt += '</table>'
         return fmt
 
     def __repr__(self):
         """Representation method."""
-        content = "\n"
+        content = '\n'
         for k, v in self.get_info():
-            content += f"{k:>18} : {v}\n"
-        content += "\n"
+            content += f'{k:>18} : {v}\n'
+        content += '\n'
         return content
 
 
@@ -160,29 +160,29 @@ class Report(scooby.Report):
         from pyvista.plotting.tools import check_math_text_support
 
         # Mandatory packages
-        core = ["pyvista", "vtk", "numpy", "matplotlib", "scooby", "pooch", "pillow"]
+        core = ['pyvista', 'vtk', 'numpy', 'matplotlib', 'scooby', 'pooch', 'pillow']
 
         # Optional packages.
         optional = [
-            "imageio",
-            "pyvistaqt",
-            "PyQt5",
-            "IPython",
-            "colorcet",
-            "cmocean",
-            "ipywidgets",
-            "scipy",
-            "tqdm",
-            "meshio",
-            "jupyterlab",
-            "pytest_pyvista",
-            "trame",
-            "trame_client",
-            "trame_server",
-            "trame_vtk",
-            "trame_vuetify",
-            "jupyter_server_proxy",
-            "nest_asyncio",
+            'imageio',
+            'pyvistaqt',
+            'PyQt5',
+            'IPython',
+            'colorcet',
+            'cmocean',
+            'ipywidgets',
+            'scipy',
+            'tqdm',
+            'meshio',
+            'jupyterlab',
+            'pytest_pyvista',
+            'trame',
+            'trame_client',
+            'trame_server',
+            'trame_vtk',
+            'trame_vuetify',
+            'jupyter_server_proxy',
+            'nest_asyncio',
         ]
 
         # Information about the GPU - bare except in case there is a rendering
@@ -192,14 +192,14 @@ class Report(scooby.Report):
                 extra_meta = GPUInfo().get_info()
             except:
                 extra_meta = [
-                    ("GPU Details", "error"),
+                    ('GPU Details', 'error'),
                 ]
         else:
             extra_meta = [
-                ("GPU Details", "None"),
+                ('GPU Details', 'None'),
             ]
 
-        extra_meta.append(("MathText Support", check_math_text_support()))
+        extra_meta.append(('MathText Support', check_math_text_support()))
 
         scooby.Report.__init__(
             self,

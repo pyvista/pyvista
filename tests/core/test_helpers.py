@@ -27,7 +27,7 @@ def test_wrap_pyvista_ndarray(sphere):
 # NOTE: It's not necessary to test all data types here, several of the
 # most used ones.  We're just checking that we can wrap VTK data types.
 @pytest.mark.parametrize(
-    "dtypes",
+    'dtypes',
     [
         (np.float64, _vtk_core.vtkDoubleArray),
         (np.float32, _vtk_core.vtkFloatArray),
@@ -97,7 +97,7 @@ def test_wrappers():
     default_wrappers = pv._wrappers.copy()
     # Use try...finally to set and reset _wrappers
     try:
-        pv._wrappers["vtkPolyData"] = Foo
+        pv._wrappers['vtkPolyData'] = Foo
 
         pv_data = pv.wrap(vtk_data)
         assert isinstance(pv_data, Foo)
@@ -160,42 +160,42 @@ def test_array_association():
     FieldAssociation = pv.FieldAssociation
 
     # single match cases
-    mesh.point_data["p"] = []
-    mesh.cell_data["c"] = []
-    mesh.field_data["f"] = ["foo"]
-    for preference in "point", "cell", "field":
-        assoc = mesh.get_array_association("p", preference=preference)
+    mesh.point_data['p'] = []
+    mesh.cell_data['c'] = []
+    mesh.field_data['f'] = ['foo']
+    for preference in 'point', 'cell', 'field':
+        assoc = mesh.get_array_association('p', preference=preference)
         assert assoc == FieldAssociation.POINT
-        assoc = mesh.get_array_association("c", preference=preference)
+        assoc = mesh.get_array_association('c', preference=preference)
         assert assoc == FieldAssociation.CELL
-        assoc = mesh.get_array_association("f", preference=preference)
+        assoc = mesh.get_array_association('f', preference=preference)
         assert assoc == FieldAssociation.NONE
 
     # multiple match case
-    mesh.point_data["common"] = []
-    mesh.cell_data["common"] = []
-    mesh.field_data["common"] = ["foo"]
-    assoc = mesh.get_array_association("common", preference="point")
+    mesh.point_data['common'] = []
+    mesh.cell_data['common'] = []
+    mesh.field_data['common'] = ['foo']
+    assoc = mesh.get_array_association('common', preference='point')
     assert assoc == FieldAssociation.POINT
-    assoc = mesh.get_array_association("common", preference="cell")
+    assoc = mesh.get_array_association('common', preference='cell')
     assert assoc == FieldAssociation.CELL
-    assoc = mesh.get_array_association("common", preference="field")
+    assoc = mesh.get_array_association('common', preference='field')
     assert assoc == FieldAssociation.NONE
 
     # regression test against overly suggestive preference
     mesh.clear_cell_data()  # point and field left
-    assoc = mesh.get_array_association("common", "cell")
+    assoc = mesh.get_array_association('common', 'cell')
     assert assoc != FieldAssociation.CELL
 
     # missing cases
     mesh.clear_data()
-    with pytest.raises(KeyError, match="not present in this dataset."):
-        assoc = mesh.get_array_association("missing")
-    assoc = pv.get_array_association(mesh, "missing", err=False)
+    with pytest.raises(KeyError, match='not present in this dataset.'):
+        assoc = mesh.get_array_association('missing')
+    assoc = pv.get_array_association(mesh, 'missing', err=False)
     assert assoc == FieldAssociation.NONE
 
-    with pytest.raises(ValueError, match="not supported."):
-        mesh.get_array_association("name", preference="row")
+    with pytest.raises(ValueError, match='not supported.'):
+        mesh.get_array_association('name', preference='row')
 
 
 def test_set_default_active_vectors():
@@ -205,15 +205,15 @@ def test_set_default_active_vectors():
     assert mesh.active_vectors_name is None
 
     # Point data vectors
-    mesh["vec_point"] = np.ones((mesh.n_points, 3))
+    mesh['vec_point'] = np.ones((mesh.n_points, 3))
     pv.set_default_active_vectors(mesh)
-    assert mesh.active_vectors_name == "vec_point"
+    assert mesh.active_vectors_name == 'vec_point'
     mesh.clear_data()
 
     # Cell data vectors
-    mesh["vec_cell"] = np.ones((mesh.n_cells, 3))
+    mesh['vec_cell'] = np.ones((mesh.n_cells, 3))
     pv.set_default_active_vectors(mesh)
-    assert mesh.active_vectors_name == "vec_cell"
+    assert mesh.active_vectors_name == 'vec_cell'
     mesh.clear_data()
 
     # Raises if no data is present
@@ -222,30 +222,30 @@ def test_set_default_active_vectors():
     assert mesh.active_vectors_name is None
 
     # Raises if no vector-like data is present
-    mesh["scalar_data"] = np.ones((mesh.n_points, 1))
+    mesh['scalar_data'] = np.ones((mesh.n_points, 1))
     with pytest.raises(MissingDataError):
         pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
     mesh.clear_data()
 
     # Raises if multiple vector-like data is present
-    mesh["vec_data1"] = np.ones((mesh.n_points, 3))
-    mesh["vec_data2"] = np.ones((mesh.n_points, 3))
+    mesh['vec_data1'] = np.ones((mesh.n_points, 3))
+    mesh['vec_data2'] = np.ones((mesh.n_points, 3))
     with pytest.raises(AmbiguousDataError):
         pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
     mesh.clear_data()
 
     # Raises if multiple vector-like data in cell and point
-    mesh["vec_data1"] = np.ones((mesh.n_points, 3))
-    mesh["vec_data2"] = np.ones((mesh.n_cells, 3))
+    mesh['vec_data1'] = np.ones((mesh.n_points, 3))
+    mesh['vec_data2'] = np.ones((mesh.n_cells, 3))
     with pytest.raises(AmbiguousDataError):
         pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
 
     # Raises if multiple vector-like data with same name
-    mesh["vec_data"] = np.ones((mesh.n_points, 3))
-    mesh["vec_data"] = np.ones((mesh.n_cells, 3))
+    mesh['vec_data'] = np.ones((mesh.n_points, 3))
+    mesh['vec_data'] = np.ones((mesh.n_cells, 3))
     with pytest.raises(AmbiguousDataError):
         pv.set_default_active_vectors(mesh)
     assert mesh.active_vectors_name is None
@@ -258,31 +258,31 @@ def test_set_default_active_scalarrs():
     assert mesh.active_scalars_name is None
 
     # Point data scalars
-    mesh["scalar_point"] = np.ones(mesh.n_points)
+    mesh['scalar_point'] = np.ones(mesh.n_points)
     mesh.set_active_scalars(None)
     set_default_active_scalars(mesh)
-    assert mesh.active_scalars_name == "scalar_point"
+    assert mesh.active_scalars_name == 'scalar_point'
     mesh.clear_data()
 
     # Cell data scalars
-    mesh["scalar_cell"] = np.ones(mesh.n_cells)
+    mesh['scalar_cell'] = np.ones(mesh.n_cells)
     mesh.set_active_scalars(None)
     set_default_active_scalars(mesh)
-    assert mesh.active_scalars_name == "scalar_cell"
+    assert mesh.active_scalars_name == 'scalar_cell'
     mesh.clear_data()
 
     # Point data scalars multidimensional
-    mesh["scalar_point"] = np.ones((mesh.n_points, 3))
+    mesh['scalar_point'] = np.ones((mesh.n_points, 3))
     mesh.set_active_scalars(None)
     set_default_active_scalars(mesh)
-    assert mesh.active_scalars_name == "scalar_point"
+    assert mesh.active_scalars_name == 'scalar_point'
     mesh.clear_data()
 
     # Cell data scalars multidimensional
-    mesh["scalar_cell"] = np.ones((mesh.n_cells, 3))
+    mesh['scalar_cell'] = np.ones((mesh.n_cells, 3))
     mesh.set_active_scalars(None)
     set_default_active_scalars(mesh)
-    assert mesh.active_scalars_name == "scalar_cell"
+    assert mesh.active_scalars_name == 'scalar_cell'
     mesh.clear_data()
 
     # Raises if no data is present
@@ -291,8 +291,8 @@ def test_set_default_active_scalarrs():
     assert mesh.active_scalars_name is None
 
     # Raises if multiple scalar-like data is present
-    mesh["scalar_data1"] = np.ones(mesh.n_points)
-    mesh["scalar_data2"] = np.ones(mesh.n_points)
+    mesh['scalar_data1'] = np.ones(mesh.n_points)
+    mesh['scalar_data2'] = np.ones(mesh.n_points)
     mesh.set_active_scalars(None)
     with pytest.raises(AmbiguousDataError):
         set_default_active_scalars(mesh)
@@ -300,16 +300,16 @@ def test_set_default_active_scalarrs():
     mesh.clear_data()
 
     # Raises if multiple scalar-like data in cell and point
-    mesh["scalar_data1"] = np.ones(mesh.n_points)
-    mesh["scalar_data2"] = np.ones(mesh.n_cells)
+    mesh['scalar_data1'] = np.ones(mesh.n_points)
+    mesh['scalar_data2'] = np.ones(mesh.n_cells)
     mesh.set_active_scalars(None)
     with pytest.raises(AmbiguousDataError):
         set_default_active_scalars(mesh)
     assert mesh.active_scalars_name is None
 
     # Raises if multiple scalar-like data with same name
-    mesh["scalar_data"] = np.ones(mesh.n_points)
-    mesh["scalar_data"] = np.ones(mesh.n_cells)
+    mesh['scalar_data'] = np.ones(mesh.n_points)
+    mesh['scalar_data'] = np.ones(mesh.n_cells)
     mesh.set_active_scalars(None)
     with pytest.raises(AmbiguousDataError):
         set_default_active_scalars(mesh)
@@ -341,13 +341,13 @@ def test_vtk_points_deep_shallow():
 
 
 @pytest.mark.parametrize(
-    ("force_float", "expected_data_type"),
+    ('force_float', 'expected_data_type'),
     [(False, np.int64), (True, np.float32)],
 )
 def test_vtk_points_force_float(force_float, expected_data_type):
     np_points = np.array([[1, 2, 3]], dtype=np.int64)
     if force_float:
-        with pytest.warns(UserWarning, match="Points is not a float type"):
+        with pytest.warns(UserWarning, match='Points is not a float type'):
             vtk_points = pv.vtk_points(np_points, force_float=force_float)
     else:
         vtk_points = pv.vtk_points(np_points, force_float=force_float)

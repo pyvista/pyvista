@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-logging.getLogger("trame.app").disabled = True
+logging.getLogger('trame.app').disabled = True
 
 from pyvista.trame.jupyter import elegantly_launch
 from pyvista.trame.jupyter import launch_server
@@ -17,12 +17,12 @@ from pyvista.trame.views import PyVistaRemoteView
 
 # __all__ only left for mypy --strict to work when pyvista is a dependency
 __all__ = [
-    "elegantly_launch",
-    "get_viewer",
-    "launch_server",
-    "plotter_ui",
-    "show_trame",
-    "PyVistaLocalView",
-    "PyVistaRemoteLocalView",
-    "PyVistaRemoteView",
+    'elegantly_launch',
+    'get_viewer',
+    'launch_server',
+    'plotter_ui',
+    'show_trame',
+    'PyVistaLocalView',
+    'PyVistaRemoteLocalView',
+    'PyVistaRemoteView',
 ]

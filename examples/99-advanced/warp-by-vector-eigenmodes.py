@@ -168,7 +168,7 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
 N = 8  # maximum order of x^p y^q z^r polynomials
 rho = 8.0  # g/cm^3
 l1, l2, l3 = 0.2, 0.2, 0.2  # all in cm
-geometry_parameters = {"a": l1 / 2.0, "b": l2 / 2.0, "c": l3 / 2.0}
+geometry_parameters = {'a': l1 / 2.0, 'b': l2 / 2.0, 'c': l3 / 2.0}
 cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
 E, G, quadruplets = assemble_mass_and_stiffness(
     N,
@@ -185,10 +185,10 @@ freqs = omegas / (2 * np.pi)
 # error depends on polynomial order ``N``
 expected_freqs_kHz = np.array([704.8, 949.0, 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])
 computed_freqs_kHz, mode_indices = get_first_N_above_thresh(8, freqs / 1e3, thresh=1, decimals=1)
-print("found the following first unique eigenfrequencies:")
+print('found the following first unique eigenfrequencies:')
 for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)):
     error = np.abs(freq2 - freq1) / freq1 * 100.0
-    print(f"freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %")
+    print(f'freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %')
 
 # %%
 # Now, let's display a mode on a mesh of the cube.
@@ -222,13 +222,13 @@ for i, mode_index in enumerate(mode_indices):
         )
     if displacement_points.max() > 0.0:
         displacement_points /= displacement_points.max()
-    vol[f"eigenmode_{i:02}"] = displacement_points
+    vol[f'eigenmode_{i:02}'] = displacement_points
 
-warpby = "eigenmode_00"
+warpby = 'eigenmode_00'
 warped = vol.warp_by_vector(warpby, factor=0.04)
 warped.translate([-1.5 * l1, 0.0, 0.0], inplace=True)
 pl = pv.Plotter()
-pl.add_mesh(vol, style="wireframe", scalars=warpby, show_scalar_bar=False)
+pl.add_mesh(vol, style='wireframe', scalars=warpby, show_scalar_bar=False)
 pl.add_mesh(warped, scalars=warpby)
 pl.show()
 
@@ -240,9 +240,9 @@ pl = pv.Plotter(shape=(2, 4))
 for i, j in product(range(2), range(4)):
     pl.subplot(i, j)
     current_index = 4 * i + j
-    vector = f"eigenmode_{current_index:02}"
+    vector = f'eigenmode_{current_index:02}'
     pl.add_text(
-        f"mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz",
+        f'mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz',
         font_size=10,
     )
     pl.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector, show_scalar_bar=False)

@@ -446,7 +446,7 @@ except ImportError:  # pragma: no cover
             """Raise version error on init."""
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError("Chart backgrounds require the vtkPythonContext2D module")
+            raise VTKVersionError('Chart backgrounds require the vtkPythonContext2D module')
 
 
 from vtkmodules.vtkImagingFourier import vtkImageButterworthHighPass
@@ -494,7 +494,7 @@ def VTKVersionInfo():
         minor = ver.GetVTKMinorVersion()
         micro = ver.GetVTKBuildVersion()
     except AttributeError:  # pragma: no cover
-        warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
+        warnings.warn('Unable to detect VTK version. Defaulting to v4.0.0')
         major, minor, micro = (4, 0, 0)
 
     return VersionInfo(major, minor, micro)

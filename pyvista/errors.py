@@ -8,8 +8,8 @@ import warnings
 
 # Places to look for the utility
 _MODULES = [
-    "pyvista.core.errors",
-    "pyvista.plotting.errors",
+    'pyvista.core.errors',
+    'pyvista.plotting.errors',
 ]
 
 
@@ -18,7 +18,7 @@ def _try_import(module, name):
     _module = importlib.import_module(module)
     try:
         feature = inspect.getattr_static(_module, name)
-        import_path = f"from {module} import {name}"
+        import_path = f'from {module} import {name}'
     except AttributeError:
         return None, None
     return feature, import_path
@@ -54,10 +54,10 @@ def __getattr__(name):
             break
     else:
         raise AttributeError(
-            f"Module `pyvista.errors` has been deprecated and we could not automatically find `{name}`. This feature has moved.",
+            f'Module `pyvista.errors` has been deprecated and we could not automatically find `{name}`. This feature has moved.',
         ) from None  # pragma: no cover
 
-    message = f"The `pyvista.errors` module has been deprecated. `{name}` is now imported as: `{import_path}`."
+    message = f'The `pyvista.errors` module has been deprecated. `{name}` is now imported as: `{import_path}`.'
 
     warnings.warn(
         message,

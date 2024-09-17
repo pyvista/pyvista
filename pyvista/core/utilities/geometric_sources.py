@@ -121,7 +121,7 @@ if _vtk.vtk_version_info < (9, 3):
 
         """
 
-        _new_attr_exceptions: ClassVar[list[str]] = ["_direction"]
+        _new_attr_exceptions: ClassVar[list[str]] = ['_direction']
 
         def __init__(
             self,
@@ -362,7 +362,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.capping = capping
         if angle is not None and radius is not None:
             raise ValueError(
-                "Both radius and angle cannot be specified. They are mutually exclusive.",
+                'Both radius and angle cannot be specified. They are mutually exclusive.',
             )
         elif angle is not None and radius is None:
             self.angle = angle
@@ -619,7 +619,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ["_center", "center", "_direction"]
+    _new_attr_exceptions: ClassVar[list[str]] = ['_center', 'center', '_direction']
 
     def __init__(
         self,
@@ -839,7 +839,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ["points"]
+    _new_attr_exceptions: ClassVar[list[str]] = ['points']
 
     def __init__(self, points=None):
         """Initialize the multiple lines source class."""
@@ -872,7 +872,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         """
         points, _ = _coerce_pointslike_arg(points)
         if not (len(points) >= 2):
-            raise ValueError(">=2 points need to define multiple lines.")
+            raise ValueError('>=2 points need to define multiple lines.')
         self.SetPoints(pyvista.vtk_points(points))
 
     @property
@@ -931,15 +931,15 @@ class Text3DSource(vtkVectorText):
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
-        "center",
-        "_center",
-        "_height",
-        "_width",
-        "_depth",
-        "_normal",
-        "_process_empty_string",
-        "_output",
-        "_modified",
+        'center',
+        '_center',
+        '_height',
+        '_width',
+        '_depth',
+        '_normal',
+        '_process_empty_string',
+        '_output',
+        '_modified',
     ]
 
     def __init__(
@@ -958,7 +958,7 @@ class Text3DSource(vtkVectorText):
         self._output = pyvista.PolyData()
 
         # Set params
-        self.string = "" if string is None else string
+        self.string = '' if string is None else string
         self._process_empty_string = process_empty_string
         self.center = center
         self._normal = normal
@@ -969,12 +969,12 @@ class Text3DSource(vtkVectorText):
 
     def __setattr__(self, name, value):  # numpydoc ignore=GL08
         """Override to set modified flag and disable setting new attributes."""
-        if hasattr(self, name) and name != "_modified":
+        if hasattr(self, name) and name != '_modified':
             # Set modified flag
             old_value = getattr(self, name)
             if not np.array_equal(old_value, value):
                 object.__setattr__(self, name, value)
-                object.__setattr__(self, "_modified", True)
+                object.__setattr__(self, '_modified', True)
         else:
             # Do not allow setting attributes.
             # This is similar to using @no_new_attr decorator but without
@@ -985,7 +985,7 @@ class Text3DSource(vtkVectorText):
             else:
                 raise AttributeError(
                     f'Attribute "{name}" does not exist and cannot be added to type '
-                    f"{self.__class__.__name__}",
+                    f'{self.__class__.__name__}',
                 )
 
     @property
@@ -995,7 +995,7 @@ class Text3DSource(vtkVectorText):
 
     @string.setter
     def string(self, string: str):  # numpydoc ignore=GL08
-        self.SetText("" if string is None else string)
+        self.SetText('' if string is None else string)
 
     @property
     def process_empty_string(self) -> bool:  # numpydoc ignore=RT01
@@ -1048,7 +1048,7 @@ class Text3DSource(vtkVectorText):
 
     @width.setter
     def width(self, width: float):  # numpydoc ignore=GL08
-        _check_range(width, rng=(0, float("inf")), parm_name="width") if width is not None else None
+        _check_range(width, rng=(0, float('inf')), parm_name='width') if width is not None else None
         self._width = width
 
     @property
@@ -1059,7 +1059,7 @@ class Text3DSource(vtkVectorText):
     @height.setter
     def height(self, height: float):  # numpydoc ignore=GL08
         (
-            _check_range(height, rng=(0, float("inf")), parm_name="height")
+            _check_range(height, rng=(0, float('inf')), parm_name='height')
             if height is not None
             else None
         )
@@ -1072,13 +1072,13 @@ class Text3DSource(vtkVectorText):
 
     @depth.setter
     def depth(self, depth: float):  # numpydoc ignore=GL08
-        _check_range(depth, rng=(0, float("inf")), parm_name="depth") if depth is not None else None
+        _check_range(depth, rng=(0, float('inf')), parm_name='depth') if depth is not None else None
         self._depth = depth
 
     def update(self):
         """Update the output of the source."""
         if self._modified:
-            is_empty_string = self.string == "" or self.string.isspace()
+            is_empty_string = self.string == '' or self.string.isspace()
             is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
             if is_empty_string or is_2d:
                 # Do not apply filters
@@ -1221,8 +1221,8 @@ class CubeSource(_vtk.vtkCubeSource):
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
-        "bounds",
-        "_bounds",
+        'bounds',
+        '_bounds',
     ]
 
     def __init__(
@@ -1232,7 +1232,7 @@ class CubeSource(_vtk.vtkCubeSource):
         y_length=1.0,
         z_length=1.0,
         bounds=None,
-        point_dtype="float32",
+        point_dtype='float32',
     ):
         """Initialize the cube source class."""
         super().__init__()
@@ -1256,7 +1256,7 @@ class CubeSource(_vtk.vtkCubeSource):
     def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                "Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)",
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
         self.SetBounds(bounds)
 
@@ -1382,8 +1382,8 @@ class CubeSource(_vtk.vtkCubeSource):
         """
         precision = self.GetOutputPointsPrecision()
         return {
-            SINGLE_PRECISION: "float32",
-            DOUBLE_PRECISION: "float64",
+            SINGLE_PRECISION: 'float32',
+            DOUBLE_PRECISION: 'float64',
         }[precision]
 
     @point_dtype.setter
@@ -1402,11 +1402,11 @@ class CubeSource(_vtk.vtkCubeSource):
             Desired output point types.
 
         """
-        if point_dtype not in ["float32", "float64"]:
+        if point_dtype not in ['float32', 'float64']:
             raise ValueError("Point dtype must be either 'float32' or 'float64'")
         precision = {
-            "float32": SINGLE_PRECISION,
-            "float64": DOUBLE_PRECISION,
+            'float32': SINGLE_PRECISION,
+            'float64': DOUBLE_PRECISION,
         }[point_dtype]
         self.SetOutputPointsPrecision(precision)
 
@@ -1444,7 +1444,7 @@ class DiscSource(_vtk.vtkDiskSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ["center"]
+    _new_attr_exceptions: ClassVar[list[str]] = ['center']
 
     def __init__(self, center=None, inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
@@ -1487,7 +1487,7 @@ class DiscSource(_vtk.vtkDiskSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "To change vtkDiskSource with `center` requires VTK 9.2 or later.",
+                'To change vtkDiskSource with `center` requires VTK 9.2 or later.',
             )
 
     @property
@@ -1654,7 +1654,7 @@ class LineSource(_vtk.vtkLineSource):
 
         """
         if np.array(pointa).size != 3:
-            raise TypeError("Point A must be a length three tuple of floats.")
+            raise TypeError('Point A must be a length three tuple of floats.')
         self.SetPoint1(*pointa)
 
     @property
@@ -1680,7 +1680,7 @@ class LineSource(_vtk.vtkLineSource):
 
         """
         if np.array(pointb).size != 3:
-            raise TypeError("Point B must be a length three tuple of floats.")
+            raise TypeError('Point B must be a length three tuple of floats.')
         self.SetPoint2(*pointb)
 
     @property
@@ -1706,7 +1706,7 @@ class LineSource(_vtk.vtkLineSource):
 
         """
         if resolution <= 0:
-            raise ValueError("Resolution must be positive")
+            raise ValueError('Resolution must be positive')
         self.SetResolution(resolution)
 
     @property
@@ -1836,7 +1836,7 @@ class SphereSource(_vtk.vtkSphereSource):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "To change vtkSphereSource with `center` requires VTK 9.2 or later.",
+                'To change vtkSphereSource with `center` requires VTK 9.2 or later.',
             )
 
     @property
@@ -2235,17 +2235,17 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ["_kinds"]
+    _new_attr_exceptions: ClassVar[list[str]] = ['_kinds']
 
-    def __init__(self: PlatonicSolidSource, kind="tetrahedron"):
+    def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
         """Initialize the platonic solid source class."""
         super().__init__()
         self._kinds: dict[str, int] = {
-            "tetrahedron": 0,
-            "cube": 1,
-            "octahedron": 2,
-            "icosahedron": 3,
-            "dodecahedron": 4,
+            'tetrahedron': 0,
+            'cube': 1,
+            'octahedron': 2,
+            'icosahedron': 3,
+            'dodecahedron': 4,
         }
         self.kind = kind
 
@@ -2736,8 +2736,8 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
-        "bounds",
-        "_bounds",
+        'bounds',
+        '_bounds',
     ]
 
     def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
@@ -2756,7 +2756,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                "Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)",
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
         self.SetBounds(bounds)
 
@@ -3204,23 +3204,23 @@ class AxesGeometrySource:
     """
 
     GeometryTypes = Literal[
-        "cylinder",
-        "sphere",
-        "hemisphere",
-        "cone",
-        "pyramid",
-        "cube",
-        "octahedron",
+        'cylinder',
+        'sphere',
+        'hemisphere',
+        'cone',
+        'pyramid',
+        'cube',
+        'octahedron',
     ]
     GEOMETRY_TYPES: ClassVar[tuple[str]] = get_args(GeometryTypes)
 
     def __init__(
         self,
         *,
-        shaft_type: GeometryTypes | pyvista.DataSet = "cylinder",
+        shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
         shaft_radius: float = 0.025,
         shaft_length: float | VectorLike[float] = 0.8,
-        tip_type: GeometryTypes | pyvista.DataSet = "cone",
+        tip_type: GeometryTypes | pyvista.DataSet = 'cone',
         tip_radius: float = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
         symmetric: bool = False,
@@ -3228,7 +3228,7 @@ class AxesGeometrySource:
     ):
         super().__init__()
         # Init datasets
-        names = ["x_shaft", "y_shaft", "z_shaft", "x_tip", "y_tip", "z_tip"]
+        names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
         polys = [pyvista.PolyData() for _ in range(len(names))]
         self._output = pyvista.MultiBlock(dict(zip(names, polys)))
 
@@ -3255,17 +3255,17 @@ class AxesGeometrySource:
     def __repr__(self):
         """Representation of the axes."""
         attr = [
-            f"{type(self).__name__} ({hex(id(self))})",
+            f'{type(self).__name__} ({hex(id(self))})',
             f"  Shaft type:                 '{self.shaft_type}'",
-            f"  Shaft radius:               {self.shaft_radius}",
-            f"  Shaft length:               {self.shaft_length}",
+            f'  Shaft radius:               {self.shaft_radius}',
+            f'  Shaft length:               {self.shaft_length}',
             f"  Tip type:                   '{self.tip_type}'",
-            f"  Tip radius:                 {self.tip_radius}",
-            f"  Tip length:                 {self.tip_length}",
-            f"  Symmetric:                  {self.symmetric}",
-            f"  Symmetric bounds:           {self.symmetric_bounds}",
+            f'  Tip radius:                 {self.tip_radius}',
+            f'  Tip length:                 {self.tip_length}',
+            f'  Symmetric:                  {self.symmetric}',
+            f'  Symmetric bounds:           {self.symmetric_bounds}',
         ]
-        return "\n".join(attr)
+        return '\n'.join(attr)
 
     @property
     def symmetric(self) -> bool:  # numpydoc ignore=RT01
@@ -3377,7 +3377,7 @@ class AxesGeometrySource:
             length,
             broadcast=True,
             must_be_in_range=[0.0, np.inf],
-            name="Shaft length",
+            name='Shaft length',
         )
 
     @property
@@ -3408,7 +3408,7 @@ class AxesGeometrySource:
             length,
             broadcast=True,
             must_be_in_range=[0.0, np.inf],
-            name="Tip length",
+            name='Tip length',
         )
 
     @property
@@ -3432,7 +3432,7 @@ class AxesGeometrySource:
 
     @tip_radius.setter
     def tip_radius(self, radius: float):  # numpydoc ignore=GL08
-        _validation.check_range(radius, (0, float("inf")), name="tip radius")
+        _validation.check_range(radius, (0, float('inf')), name='tip radius')
         self._tip_radius = radius
 
     @property
@@ -3456,7 +3456,7 @@ class AxesGeometrySource:
 
     @shaft_radius.setter
     def shaft_radius(self, radius):  # numpydoc ignore=GL08
-        _validation.check_range(radius, (0, float("inf")), name="shaft radius")
+        _validation.check_range(radius, (0, float('inf')), name='shaft radius')
         self._shaft_radius = radius
 
     @property
@@ -3639,27 +3639,27 @@ class AxesGeometrySource:
     def _make_default_part(geometry: str) -> pyvista.PolyData:
         """Create part geometry with its length axis pointing in the +z direction."""
         resolution = 50
-        if geometry == "cylinder":
+        if geometry == 'cylinder':
             return pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
-        elif geometry == "sphere":
+        elif geometry == 'sphere':
             return pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
-        elif geometry == "hemisphere":
+        elif geometry == 'hemisphere':
             return pyvista.SolidSphere(end_phi=90).extract_geometry()
-        elif geometry == "cone":
+        elif geometry == 'cone':
             return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
-        elif geometry == "pyramid":
+        elif geometry == 'pyramid':
             return pyvista.Pyramid().extract_geometry()
-        elif geometry == "cube":
+        elif geometry == 'cube':
             return pyvista.Cube()
-        elif geometry == "octahedron":
+        elif geometry == 'octahedron':
             mesh = pyvista.Octahedron()
-            mesh.cell_data.remove("FaceIndex")
+            mesh.cell_data.remove('FaceIndex')
             return mesh
         else:
             _validation.check_contains(
                 item=geometry,
                 container=AxesGeometrySource.GEOMETRY_TYPES,
-                name="Geometry",
+                name='Geometry',
             )
             raise NotImplementedError(
                 f"Geometry '{geometry}' is not implemented"
@@ -3675,11 +3675,11 @@ class AxesGeometrySource:
                 geometry,
             )
         elif isinstance(geometry, pyvista.DataSet):
-            name = "custom"
+            name = 'custom'
             part = geometry.copy()
         else:
             raise TypeError(
-                f"Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.",
+                f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.',
             )
         part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
         part_poly = AxesGeometrySource._normalize_part(part_poly)
@@ -3698,7 +3698,7 @@ class AxesGeometrySource:
             (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
         )
         if np.any(axis_length < 1e-8):
-            raise ValueError(f"Custom axes part must be 3D. Got bounds: {bnds}.")
+            raise ValueError(f'Custom axes part must be 3D. Got bounds: {bnds}.')
         part.scale(np.reciprocal(axis_length), inplace=True)
         return part
 
@@ -3784,8 +3784,8 @@ class OrthogonalPlanesSource:
         bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
         *,
         resolution: int | VectorLike[int] = 2,
-        normal_sign: Literal["+", "-"] | Sequence[str] = "+",
-        names: Sequence[str] = ("yz", "zx", "xy"),
+        normal_sign: Literal['+', '-'] | Sequence[str] = '+',
+        names: Sequence[str] = ('yz', 'zx', 'xy'),
     ):
         # Init sources and the output dataset
         self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(3)])
@@ -3803,13 +3803,13 @@ class OrthogonalPlanesSource:
         return cast(Tuple[str, str, str], self._normal_sign)
 
     @normal_sign.setter
-    def normal_sign(self, sign: Literal["+", "-"] | Sequence[str] = "+"):  # numpydoc ignore=GL08
+    def normal_sign(self, sign: Literal['+', '-'] | Sequence[str] = '+'):  # numpydoc ignore=GL08
         def _check_sign(sign_):
-            allowed = ["+", "-"]
-            _validation.check_contains(item=sign_, container=allowed, name="normal sign")
+            allowed = ['+', '-']
+            _validation.check_contains(item=sign_, container=allowed, name='normal sign')
 
         valid_sign: Sequence[str]
-        _validation.check_instance(sign, (tuple, list, str), name="normal sign")
+        _validation.check_instance(sign, (tuple, list, str), name='normal sign')
         if isinstance(sign, str):
             _check_sign(sign)
             valid_sign = [sign] * 3
@@ -3822,7 +3822,7 @@ class OrthogonalPlanesSource:
         # Modify sources
         for source, axis_vector, sign in zip(self.sources, np.eye(3), valid_sign):
             has_positive_normal = np.dot(source.normal, axis_vector) > 0
-            if has_positive_normal and sign == "-":
+            if has_positive_normal and sign == '-':
                 source.flip_normal()
 
     @property
@@ -3833,7 +3833,7 @@ class OrthogonalPlanesSource:
     @resolution.setter
     def resolution(self, resolution: int | VectorLike[int]):  # numpydoc ignore=GL08
         valid_resolution = _validation.validate_array3(
-            resolution, broadcast=True, to_tuple=True, name="resolution"
+            resolution, broadcast=True, to_tuple=True, name='resolution'
         )
         self._resolution = valid_resolution
 
@@ -3856,7 +3856,7 @@ class OrthogonalPlanesSource:
     @bounds.setter
     def bounds(self, bounds: BoundsTuple):  # numpydoc ignore=GL08
         bounds_tuple = _validation.validate_array(
-            bounds, dtype_out=float, must_have_length=6, to_tuple=True, name="bounds"
+            bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
         )
         self._bounds = BoundsTuple(*bounds_tuple)
 
@@ -3889,9 +3889,9 @@ class OrthogonalPlanesSource:
 
     @names.setter
     def names(self, names: Sequence[str]):  # numpydoc ignore=GL08
-        _validation.check_instance(names, (tuple, list), name="names")
-        _validation.check_iterable_items(names, str, name="names")
-        _validation.check_length(names, exact_length=3, name="names")
+        _validation.check_instance(names, (tuple, list), name='names')
+        _validation.check_iterable_items(names, str, name='names')
+        _validation.check_length(names, exact_length=3, name='names')
         valid_names = cast(Tuple[str, str, str], tuple(names))
         self._names = valid_names
 
@@ -4087,17 +4087,17 @@ class CubeFacesSource(CubeSource):
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
-        "_output",
-        "_names",
-        "names",
-        "_frame_width",
-        "frame_width",
-        "_shrink_factor",
-        "shrink_factor",
-        "_explode_factor",
-        "explode_factor",
-        "_bounds",
-        "bounds",
+        '_output',
+        '_names',
+        'names',
+        '_frame_width',
+        'frame_width',
+        '_shrink_factor',
+        'shrink_factor',
+        '_explode_factor',
+        'explode_factor',
+        '_bounds',
+        'bounds',
     ]
 
     class _FaceIndex(IntEnum):
@@ -4119,8 +4119,8 @@ class CubeFacesSource(CubeSource):
         frame_width: float | None = None,
         shrink_factor: float | None = None,
         explode_factor: float | None = None,
-        names: Sequence[str] = ("+X", "-X", "+Y", "-Y", "+Z", "-Z"),
-        point_dtype="float32",
+        names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
+        point_dtype='float32',
     ):
         # Init CubeSource
         super().__init__(
@@ -4169,7 +4169,7 @@ class CubeFacesSource(CubeSource):
         self._frame_width = (
             width
             if width is None
-            else _validation.validate_number(width, must_be_in_range=[0.0, 1.0], name="frame width")
+            else _validation.validate_number(width, must_be_in_range=[0.0, 1.0], name='frame width')
         )
 
     @property
@@ -4212,7 +4212,7 @@ class CubeFacesSource(CubeSource):
             factor
             if factor is None
             else _validation.validate_number(
-                factor, must_be_in_range=[0.0, np.inf], name="shrink factor"
+                factor, must_be_in_range=[0.0, np.inf], name='shrink factor'
             )
         )
 
@@ -4253,7 +4253,7 @@ class CubeFacesSource(CubeSource):
     @explode_factor.setter
     def explode_factor(self, factor: float | None):  # numpydoc ignore=GL08
         self._explode_factor = (
-            factor if factor is None else _validation.validate_number(factor, name="explode factor")
+            factor if factor is None else _validation.validate_number(factor, name='explode factor')
         )
 
     @property
@@ -4298,7 +4298,7 @@ class CubeFacesSource(CubeSource):
     def names(
         self, names: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str]
     ):  # numpydoc ignore=GL08
-        name = "face names"
+        name = 'face names'
         _validation.check_instance(names, (list, tuple), name=name)
         _validation.check_iterable_items(names, str, name=name)
         _validation.check_length(names, exact_length=[3, 6], name=name)
@@ -4306,12 +4306,12 @@ class CubeFacesSource(CubeSource):
             tuple(names)
             if len(names) == 6
             else (
-                "+" + names[0],
-                "-" + names[0],
-                "+" + names[1],
-                "-" + names[1],
-                "+" + names[2],
-                "-" + names[2],
+                '+' + names[0],
+                '-' + names[0],
+                '+' + names[1],
+                '-' + names[1],
+                '+' + names[2],
+                '-' + names[2],
             )
         )
         self._names = cast(Tuple[str, str, str, str, str, str], valid_names)

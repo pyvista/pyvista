@@ -53,7 +53,7 @@ line = lines_from_points(points)
 line
 
 # %%
-line["scalars"] = np.arange(line.n_points)
+line['scalars'] = np.arange(line.n_points)
 tube = line.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
@@ -73,7 +73,7 @@ def polyline_from_points(points):
 
 
 polyline = polyline_from_points(points)
-polyline["scalars"] = np.arange(polyline.n_points)
+polyline['scalars'] = np.arange(polyline.n_points)
 tube = polyline.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
@@ -88,7 +88,7 @@ spline = pv.Spline(points, 1000)
 # Plot spline as a tube
 
 # add scalars to spline and plot it
-spline["scalars"] = np.arange(spline.n_points)
+spline['scalars'] = np.arange(spline.n_points)
 tube = spline.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
@@ -99,16 +99,16 @@ tube.plot(smooth_shading=True)
 spline = pv.Spline(points, 400)
 
 # plot without scalars
-spline.plot(line_width=4, color="k")
+spline.plot(line_width=4, color='k')
 
 
 # %%
 # The radius of the tube can be modulated with scalars
 
-spline["theta"] = 0.4 * np.arange(len(spline.points))
-spline["radius"] = np.abs(np.sin(spline["theta"]))
-tube = spline.tube(scalars="radius", absolute=True)
-tube.plot(scalars="theta", smooth_shading=True)
+spline['theta'] = 0.4 * np.arange(len(spline.points))
+spline['radius'] = np.abs(np.sin(spline['theta']))
+tube = spline.tube(scalars='radius', absolute=True)
+tube.plot(scalars='theta', smooth_shading=True)
 
 
 # %%
@@ -118,7 +118,7 @@ tube.plot(scalars="theta", smooth_shading=True)
 # Ayy of the lines from the examples above can be used to create ribbons.
 # Take a look at the :func:`pyvista.PolyDataFilters.ribbon` filter.
 
-ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars="arc_length")
+ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars='arc_length')
 ribbon.plot(color=True)
 # %%
 # .. tags:: load

@@ -131,23 +131,23 @@ def wrap(
             if isinstance(dataset, pyvista.pyvista_ndarray):
                 # this gets rid of pesky VTK reference since we're raveling this
                 dataset = np.asarray(dataset)
-            mesh["values"] = dataset.ravel(order="F")
-            mesh.active_scalars_name = "values"
+            mesh['values'] = dataset.ravel(order='F')
+            mesh.active_scalars_name = 'values'
             return mesh
         else:
-            raise NotImplementedError("NumPy array could not be wrapped pyvista.")
+            raise NotImplementedError('NumPy array could not be wrapped pyvista.')
 
     # wrap VTK arrays as pyvista_ndarray
     if isinstance(dataset, _vtk.vtkDataArray):
         return pyvista.pyvista_ndarray(dataset)
 
     # Check if a dataset is a VTK type
-    if hasattr(dataset, "GetClassName"):
+    if hasattr(dataset, 'GetClassName'):
         key = dataset.GetClassName()
         try:
             return pyvista._wrappers[key](dataset)
         except KeyError:
-            raise TypeError(f"VTK data type ({key}) is not currently supported by pyvista.")
+            raise TypeError(f'VTK data type ({key}) is not currently supported by pyvista.')
         return None  # pragma: no cover
 
     # wrap meshio
@@ -155,20 +155,20 @@ def wrap(
         return from_meshio(dataset)
 
     # wrap trimesh
-    if dataset.__class__.__name__ == "Trimesh":
+    if dataset.__class__.__name__ == 'Trimesh':
         # trimesh doesn't pad faces
-        dataset = cast("Trimesh", dataset)
+        dataset = cast('Trimesh', dataset)
         polydata = pyvista.PolyData.from_regular_faces(
             np.asarray(dataset.vertices),
             faces=dataset.faces,
         )
         # If the Trimesh object has uv, pass them to the PolyData
-        if hasattr(dataset.visual, "uv"):
+        if hasattr(dataset.visual, 'uv'):
             polydata.active_texture_coordinates = np.asarray(dataset.visual.uv)
         return polydata
 
     # otherwise, flag tell the user we can't wrap this object
-    raise NotImplementedError(f"Unable to wrap ({type(dataset)}) into a pyvista type.")
+    raise NotImplementedError(f'Unable to wrap ({type(dataset)}) into a pyvista type.')
 
 
 def is_pyvista_dataset(obj):
@@ -213,7 +213,7 @@ def generate_plane(normal, origin):
     return plane
 
 
-def axis_rotation(points, angle, inplace=False, deg=True, axis="z"):
+def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     """Rotate points by angle about an axis.
 
     Parameters
@@ -256,7 +256,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis="z"):
 
     """
     axis = axis.lower()
-    axis_to_vec = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}
+    axis_to_vec = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
 
     if axis not in axis_to_vec:
         raise ValueError('Invalid axis. Must be either "x", "y", or "z"')
@@ -291,12 +291,12 @@ def is_inside_bounds(point, bounds):
         deque,
     ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            raise ValueError("Bounds mismatch point dimensionality")
+            raise ValueError('Bounds mismatch point dimensionality')
         point = deque(point)
         bounds = deque(bounds)
         return is_inside_bounds(point, bounds)
     if not isinstance(point, deque):
-        raise TypeError(f"Unknown input data type ({type(point)}).")
+        raise TypeError(f'Unknown input data type ({type(point)}).')
     if len(point) < 1:
         return True
     p = point.popleft()

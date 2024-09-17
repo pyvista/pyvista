@@ -8,7 +8,7 @@ import pyvista
 from pyvista.plotting import _vtk
 
 
-def cubemap(path="", prefix="", ext=".jpg"):
+def cubemap(path='', prefix='', ext='.jpg'):
     """Construct a cubemap from 6 images from a directory.
 
     Each of the 6 images must be in the following format:
@@ -62,8 +62,8 @@ def cubemap(path="", prefix="", ext=".jpg"):
     ... )  # doctest:+SKIP
 
     """
-    sets = ["posx", "negx", "posy", "negy", "posz", "negz"]
-    image_paths = [str(Path(path) / f"{prefix}{suffix}{ext}") for suffix in sets]
+    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    image_paths = [str(Path(path) / f'{prefix}{suffix}{ext}') for suffix in sets]
     return _cubemap_from_paths(image_paths)
 
 
@@ -105,7 +105,7 @@ def cubemap_from_filenames(image_paths):
 
     """
     if len(image_paths) != 6:
-        raise ValueError("image_paths must contain 6 paths")
+        raise ValueError('image_paths must contain 6 paths')
 
     return _cubemap_from_paths(image_paths)
 
@@ -114,11 +114,11 @@ def _cubemap_from_paths(image_paths):
     """Construct a cubemap from image paths."""
     for image_path in image_paths:
         if not Path(image_path).is_file():
-            file_str = "\n".join(image_paths)
+            file_str = '\n'.join(image_paths)
             raise FileNotFoundError(
-                f"Unable to locate {image_path}\n"
-                "Expected to find the following files:\n"
-                f"{file_str}",
+                f'Unable to locate {image_path}\n'
+                'Expected to find the following files:\n'
+                f'{file_str}',
             )
 
     texture = pyvista.Texture()

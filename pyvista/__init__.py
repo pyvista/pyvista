@@ -29,24 +29,24 @@ ID_TYPE = _get_vtk_id_type()
 if vtk_version_info.major < 9:  # pragma: no cover
     from pyvista.core.errors import VTKVersionError
 
-    raise VTKVersionError("VTK version must be 9.0.0 or greater.")
+    raise VTKVersionError('VTK version must be 9.0.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
-warnings.simplefilter(action="ignore", category=FutureWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
-OFF_SCREEN = os.environ.get("PYVISTA_OFF_SCREEN", "false").lower() == "true"
+OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
 
 # flag for when building the sphinx_gallery
-BUILDING_GALLERY = os.environ.get("PYVISTA_BUILDING_GALLERY", "false").lower() == "true"
+BUILDING_GALLERY = os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true'
 
 # A threshold for the max cells to compute a volume for when repr-ing
 REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
-FIGURE_PATH = os.environ.get("PYVISTA_FIGURE_PATH", None)
+FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)
 
-ON_SCREENSHOT = os.environ.get("PYVISTA_ON_SCREENSHOT", "false").lower() == "true"
+ON_SCREENSHOT = os.environ.get('PYVISTA_ON_SCREENSHOT', 'false').lower() == 'true'
 
 # Send VTK messages to the logging module:
 send_errors_to_logging()
@@ -56,13 +56,13 @@ PLOT_DIRECTIVE_THEME = None
 
 # Set a parameter to control default print format for floats outside
 # of the plotter
-FLOAT_FORMAT = "{:.3e}"
+FLOAT_FORMAT = '{:.3e}'
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT = "vtk" if vtk_version_info >= (9, 3) else "xml"
+PICKLE_FORMAT = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
 
 # Name used for unnamed scalars
-DEFAULT_SCALARS_NAME = "Data"
+DEFAULT_SCALARS_NAME = 'Data'
 
 MAX_N_COLOR_BARS = 10
 
@@ -94,21 +94,21 @@ def __getattr__(name):
     import inspect
 
     allow = {
-        "demos",
-        "examples",
-        "ext",
-        "trame",
-        "utilities",
+        'demos',
+        'examples',
+        'ext',
+        'trame',
+        'utilities',
     }
     if name in allow:
-        return importlib.import_module(f"pyvista.{name}")
+        return importlib.import_module(f'pyvista.{name}')
 
     # avoid recursive import
-    if "pyvista.plotting" not in sys.modules:
+    if 'pyvista.plotting' not in sys.modules:
         import pyvista.plotting
 
     try:
-        feature = inspect.getattr_static(sys.modules["pyvista.plotting"], name)
+        feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
     except AttributeError:
         raise AttributeError(f"module 'pyvista' has no attribute '{name}'") from None
 

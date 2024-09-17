@@ -142,7 +142,7 @@ class UnstructuredGridFilters(DataSetFilters):
         try:
             from vtkmodules.vtkFiltersCore import vtkStaticCleanUnstructuredGrid
         except ImportError:  # pragma no cover
-            raise VTKVersionError("UnstructuredGrid.clean requires VTK >= 9.2.2") from None
+            raise VTKVersionError('UnstructuredGrid.clean requires VTK >= 9.2.2') from None
 
         alg = vtkStaticCleanUnstructuredGrid()
         # https://github.com/pyvista/pyvista/pull/6337
@@ -153,5 +153,5 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetRemoveUnusedPoints(remove_unused_points)
         alg.SetProduceMergeMap(produce_merge_map)
         alg.SetAveragePointData(average_point_data)
-        _update_alg(alg, progress_bar, "Cleaning Unstructured Grid")
+        _update_alg(alg, progress_bar, 'Cleaning Unstructured Grid')
         return _get_output(alg)

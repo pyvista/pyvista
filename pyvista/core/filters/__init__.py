@@ -31,7 +31,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
 
-def _update_alg(alg, progress_bar=False, message=""):
+def _update_alg(alg, progress_bar=False, message=''):
     """Update an algorithm with or without a progress bar."""
     if progress_bar:
         with ProgressMonitor(alg, message=message):
@@ -46,7 +46,7 @@ def _get_output(
     iconnection=0,
     oport=0,
     active_scalars=None,
-    active_scalars_field="point",
+    active_scalars_field='point',
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
     ido = wrap(algorithm.GetInputDataObject(iport, iconnection))
@@ -74,13 +74,13 @@ from .structured_grid import StructuredGridFilters
 from .unstructured_grid import UnstructuredGridFilters
 
 __all__ = [
-    "_update_alg",
-    "_get_output",
-    "CompositeFilters",
-    "DataSetFilters",
-    "PolyDataFilters",
-    "RectilinearGridFilters",
-    "StructuredGridFilters",
-    "ImageDataFilters",
-    "UnstructuredGridFilters",
+    '_update_alg',
+    '_get_output',
+    'CompositeFilters',
+    'DataSetFilters',
+    'PolyDataFilters',
+    'RectilinearGridFilters',
+    'StructuredGridFilters',
+    'ImageDataFilters',
+    'UnstructuredGridFilters',
 ]

@@ -47,7 +47,7 @@ points = rng.uniform(low=[0, 0], high=[3, 1], size=(250, 2))
 # Make points be z=0
 points = np.hstack((points, np.zeros((250, 1))))
 point_mesh = pv.PolyData(points)
-point_mesh["ysquared"] = points[:, 1] ** 2
+point_mesh['ysquared'] = points[:, 1] ** 2
 
 # %%
 # The point cloud data looks like this.
@@ -74,7 +74,7 @@ output
 
 pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
-pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color="red")
+pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color='red')
 pl.view_xy()
 pl.show()
 
@@ -92,7 +92,7 @@ output = grid.interpolate(point_mesh, radius=0.25, null_value=-1)
 
 pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
-pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color="red")
+pl.add_mesh(points, render_points_as_spheres=True, point_size=10, color='red')
 pl.view_xy()
 pl.show()
 
@@ -106,12 +106,12 @@ pl.show()
 # still preferred.
 
 sphere = pv.SolidSphere(center=(0.5, 0.5, 0), outer_radius=1.0)
-sphere["ysquared"] = sphere.points[:, 1] ** 2
+sphere['ysquared'] = sphere.points[:, 1] ** 2
 output = grid.interpolate(sphere, radius=0.1)
 
 pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
-pl.add_mesh(sphere, style="wireframe", color="white")
+pl.add_mesh(sphere, style='wireframe', color='white')
 pl.view_xy()
 pl.show()
 
@@ -137,7 +137,7 @@ print(f"(min, max): {output['ysquared'].min()}, {output['ysquared'].min()}")
 #  Create the non-point cloud mesh that will be sampled from and plot it.
 
 grid = pv.ImageData(dimensions=(11, 11, 1), spacing=[3 / 10, 1 / 10, 1])
-grid["ysquared"] = grid.points[:, 1] ** 2
+grid['ysquared'] = grid.points[:, 1] ** 2
 
 pl = pv.Plotter()
 pl.add_mesh(grid, clim=[0, 1])
@@ -177,7 +177,7 @@ output
 # low interpolation error.
 
 pl = pv.Plotter()
-pl.add_mesh(grid, style="wireframe", clim=[0, 1])
+pl.add_mesh(grid, style='wireframe', clim=[0, 1])
 pl.add_mesh(output, clim=[0, 1])
 pl.view_xy()
 pl.show()
@@ -189,12 +189,12 @@ pl.show()
 # fiddling with distance weighting parameters.
 
 sphere = pv.SolidSphere(center=(0.5, 0.5, 0), outer_radius=1.0)
-sphere["ysquared"] = sphere.points[:, 1] ** 2
+sphere['ysquared'] = sphere.points[:, 1] ** 2
 output = grid.sample(sphere)
 
 pl = pv.Plotter()
 pl.add_mesh(output, clim=[0, 1])
-pl.add_mesh(sphere, style="wireframe", color="white")
+pl.add_mesh(sphere, style='wireframe', color='white')
 pl.view_xy()
 pl.show()
 

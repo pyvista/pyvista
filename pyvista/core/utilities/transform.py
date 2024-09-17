@@ -250,7 +250,7 @@ class Transform(_vtk.vtkTransform):
         self, trans: TransformLike | None = None, *, point: VectorLike[float] | None = None
     ):
         super().__init__()
-        self.multiply_mode = "post"
+        self.multiply_mode = 'post'
         self.point = point  # type: ignore[assignment]
         self.check_finite = True
         if trans is not None:
@@ -264,81 +264,81 @@ class Transform(_vtk.vtkTransform):
         """
         copied = self.copy()
         try:
-            transform = copied.translate(other, multiply_mode="post")
+            transform = copied.translate(other, multiply_mode='post')
         except (ValueError, TypeError):
             try:
-                transform = copied.concatenate(other, multiply_mode="post")
+                transform = copied.concatenate(other, multiply_mode='post')
             except TypeError:
                 raise TypeError(
                     f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f"The right-side argument must be transform-like."
+                    f'The right-side argument must be transform-like.'
                 )
             except ValueError:
                 raise ValueError(
                     f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f"The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape."
+                    f'The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape.'
                 )
         return transform
 
     def __radd__(self, other: VectorLike[float] | TransformLike) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
-            return self.copy().translate(other, multiply_mode="pre")
+            return self.copy().translate(other, multiply_mode='pre')
         except TypeError:
             raise TypeError(
                 f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
-                f"The left-side argument must be a length-3 vector."
+                f'The left-side argument must be a length-3 vector.'
             )
         except ValueError:
             raise ValueError(
                 f"Unsupported operand value(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
-                f"The left-side argument must be a length-3 vector."
+                f'The left-side argument must be a length-3 vector.'
             )
 
     def __mul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
         """:meth:`scale` this transform using post-multiply semantics."""
         try:
-            return self.copy().scale(other, multiply_mode="post")
+            return self.copy().scale(other, multiply_mode='post')
 
         except TypeError:
             raise TypeError(
                 f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f"The right-side argument must be a single number or a length-3 vector."
+                f'The right-side argument must be a single number or a length-3 vector.'
             )
         except ValueError:
             raise ValueError(
                 f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f"The right-side argument must be a single number or a length-3 vector."
+                f'The right-side argument must be a single number or a length-3 vector.'
             )
 
     def __rmul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics."""
         try:
-            return self.copy().scale(other, multiply_mode="pre")
+            return self.copy().scale(other, multiply_mode='pre')
         except TypeError:
             raise TypeError(
                 f"Unsupported operand type(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
-                f"The left-side argument must be a single number or a length-3 vector."
+                f'The left-side argument must be a single number or a length-3 vector.'
             )
         except ValueError:
             raise ValueError(
                 f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
-                f"The left-side argument must be a single number or a length-3 vector."
+                f'The left-side argument must be a single number or a length-3 vector.'
             )
 
     def __matmul__(self, other: TransformLike) -> Transform:
         """:meth:`concatenate` this transform using pre-multiply semantics."""
         try:
-            return self.copy().concatenate(other, multiply_mode="pre")
+            return self.copy().concatenate(other, multiply_mode='pre')
         except TypeError:
             raise TypeError(
                 f"Unsupported operand type(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f"The right-side argument must be transform-like."
+                f'The right-side argument must be transform-like.'
             )
         except ValueError:
             raise ValueError(
                 f"Unsupported operand value(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f"The right-side argument must be transform-like."
+                f'The right-side argument must be transform-like.'
             )
 
     def copy(self) -> Transform:
@@ -387,18 +387,18 @@ class Transform(_vtk.vtkTransform):
 
         def _matrix_repr():
             repr_ = np.array_repr(self.matrix)
-            return repr_.replace("array(", "      ").replace(")", "").replace("      [", "[")
+            return repr_.replace('array(', '      ').replace(')', '').replace('      [', '[')
 
-        matrix_repr_lines = _matrix_repr().split("\n")
+        matrix_repr_lines = _matrix_repr().split('\n')
         lines = [
-            f"{type(self).__name__} ({hex(id(self))})",
-            f"  Num Transformations: {self.n_transformations}",
-            f"  Matrix:  {matrix_repr_lines[0]}",
-            f"           {matrix_repr_lines[1]}",
-            f"           {matrix_repr_lines[2]}",
-            f"           {matrix_repr_lines[3]}",
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Num Transformations: {self.n_transformations}',
+            f'  Matrix:  {matrix_repr_lines[0]}',
+            f'           {matrix_repr_lines[1]}',
+            f'           {matrix_repr_lines[2]}',
+            f'           {matrix_repr_lines[3]}',
         ]
-        return "\n".join(lines)
+        return '\n'.join(lines)
 
     @property
     def point(self) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
@@ -420,11 +420,11 @@ class Transform(_vtk.vtkTransform):
         self._point = (
             None
             if point is None
-            else _validation.validate_array3(point, dtype_out=float, to_tuple=True, name="point")
+            else _validation.validate_array3(point, dtype_out=float, to_tuple=True, name='point')
         )
 
     @property
-    def multiply_mode(self) -> Literal["pre", "post"]:  # numpydoc ignore=RT01
+    def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
         """Set or get the multiplication mode.
 
         Set this to ``'pre'`` to set the multiplication mode to :meth:`pre_multiply`.
@@ -439,11 +439,11 @@ class Transform(_vtk.vtkTransform):
         return self._multiply_mode
 
     @multiply_mode.setter
-    def multiply_mode(self, multiply_mode: Literal["pre", "post"]) -> None:  # numpydoc ignore=GL08
+    def multiply_mode(self, multiply_mode: Literal['pre', 'post']) -> None:  # numpydoc ignore=GL08
         _validation.check_contains(
-            item=multiply_mode, container=["pre", "post"], name="multiply mode"
+            item=multiply_mode, container=['pre', 'post'], name='multiply mode'
         )
-        self.pre_multiply() if multiply_mode == "pre" else self.post_multiply()
+        self.pre_multiply() if multiply_mode == 'pre' else self.post_multiply()
 
     def pre_multiply(self) -> Transform:  # numpydoc ignore=RT01
         """Set the multiplication mode to pre-multiply.
@@ -460,7 +460,7 @@ class Transform(_vtk.vtkTransform):
         'pre'
 
         """
-        self._multiply_mode: Literal["pre", "post"] = "pre"
+        self._multiply_mode: Literal['pre', 'post'] = 'pre'
         self.PreMultiply()
         return self
 
@@ -479,7 +479,7 @@ class Transform(_vtk.vtkTransform):
         'post'
 
         """
-        self._multiply_mode = "post"
+        self._multiply_mode = 'post'
         self.PostMultiply()
         return self
 
@@ -487,7 +487,7 @@ class Transform(_vtk.vtkTransform):
         self,
         *factor,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a scale matrix.
 
@@ -570,7 +570,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_factor = _validation.validate_array3(
-            factor, broadcast=True, dtype_out=float, name="scale factor"
+            factor, broadcast=True, dtype_out=float, name='scale factor'
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
@@ -582,7 +582,7 @@ class Transform(_vtk.vtkTransform):
         self,
         *normal,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a reflection matrix.
 
@@ -640,7 +640,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_normal = _validation.validate_array3(
-            normal, dtype_out=float, name="reflection normal"
+            normal, dtype_out=float, name='reflection normal'
         )
         transform = reflection(valid_normal)
         return self._concatenate_with_translations(
@@ -651,7 +651,7 @@ class Transform(_vtk.vtkTransform):
         self,
         *,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a reflection about the x-axis.
 
@@ -711,7 +711,7 @@ class Transform(_vtk.vtkTransform):
         self,
         *,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a reflection about the y-axis.
 
@@ -771,7 +771,7 @@ class Transform(_vtk.vtkTransform):
         self,
         *,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a reflection about the z-axis.
 
@@ -828,7 +828,7 @@ class Transform(_vtk.vtkTransform):
         return self.reflect((0, 0, 1), point=point, multiply_mode=multiply_mode)
 
     def translate(
-        self, *vector, multiply_mode: Literal["pre", "post"] | None = None
+        self, *vector, multiply_mode: Literal['pre', 'post'] | None = None
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a translation matrix.
 
@@ -876,7 +876,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_vector = _validation.validate_array3(
-            vector, dtype_out=float, name="translation vector"
+            vector, dtype_out=float, name='translation vector'
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)
@@ -887,7 +887,7 @@ class Transform(_vtk.vtkTransform):
         rotation: RotationLike,
         *,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation matrix.
 
@@ -977,7 +977,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_rotation = _validation.validate_transform3x3(
-            rotation, must_be_finite=self.check_finite, name="rotation"
+            rotation, must_be_finite=self.check_finite, name='rotation'
         )
         return self._concatenate_with_translations(
             valid_rotation, point=point, multiply_mode=multiply_mode
@@ -988,7 +988,7 @@ class Transform(_vtk.vtkTransform):
         angle: float,
         *,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about the x-axis.
 
@@ -1057,7 +1057,7 @@ class Transform(_vtk.vtkTransform):
         angle: float,
         *,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about the y-axis.
 
@@ -1126,7 +1126,7 @@ class Transform(_vtk.vtkTransform):
         angle: float,
         *,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about the z-axis.
 
@@ -1196,7 +1196,7 @@ class Transform(_vtk.vtkTransform):
         angle: float,
         *,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a rotation about a vector.
 
@@ -1261,7 +1261,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def concatenate(
-        self, transform: TransformLike, *, multiply_mode: Literal["pre", "post"] | None = None
+        self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a transformation matrix.
 
@@ -1315,7 +1315,7 @@ class Transform(_vtk.vtkTransform):
             vtk_transform = transform
         else:
             array = _validation.validate_transform4x4(
-                transform, must_be_finite=self.check_finite, name="matrix"
+                transform, must_be_finite=self.check_finite, name='matrix'
             )
             vtk_transform = _vtk.vtkTransform()
             vtk_transform.SetMatrix(vtkmatrix_from_array(array))
@@ -1355,7 +1355,7 @@ class Transform(_vtk.vtkTransform):
         """
         array = array_from_vtkmatrix(self.GetMatrix())
         if self.check_finite:
-            _validation.check_finite(array, name="matrix")
+            _validation.check_finite(array, name='matrix')
         return array
 
     @matrix.setter
@@ -1386,7 +1386,7 @@ class Transform(_vtk.vtkTransform):
         """
         array = array_from_vtkmatrix(self.GetInverse().GetMatrix())
         if self.check_finite:
-            _validation.check_finite(array, name="matrix")
+            _validation.check_finite(array, name='matrix')
         return array
 
     @property
@@ -1685,7 +1685,7 @@ class Transform(_vtk.vtkTransform):
         self,
         transform: TransformLike,
         point: VectorLike[float] | None = None,
-        multiply_mode: Literal["pre", "post"] | None = None,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ):
         translate_before, translate_after = self._get_point_translations(
             point=point, multiply_mode=multiply_mode
@@ -1701,14 +1701,14 @@ class Transform(_vtk.vtkTransform):
         return self
 
     def _get_point_translations(
-        self, point: VectorLike[float] | None, multiply_mode: Literal["pre", "post"] | None
+        self, point: VectorLike[float] | None, multiply_mode: Literal['pre', 'post'] | None
     ):
         point = point if point is not None else self.point
         if point is not None:
-            point_array = _validation.validate_array3(point, dtype_out=float, name="point")
+            point_array = _validation.validate_array3(point, dtype_out=float, name='point')
             translate_away = Transform().translate(-point_array)
             translate_toward = Transform().translate(point_array)
-            if multiply_mode == "post" or self._multiply_mode == "post":
+            if multiply_mode == 'post' or self._multiply_mode == 'post':
                 return translate_away, translate_toward
             else:
                 return translate_toward, translate_away

@@ -20,7 +20,7 @@ from pyvista import examples
 # method.
 
 mesh = examples.download_topo_global()
-mesh.plot(cmap="gist_earth", show_scalar_bar=False)
+mesh.plot(cmap='gist_earth', show_scalar_bar=False)
 
 # %%
 # Now we have a surface dataset of the globe loaded - unfortunately, the
@@ -37,7 +37,7 @@ mesh.compute_normals(inplace=True)  # this activates the normals as well
 warp = mesh.warp_by_scalar(factor=0.5e-5)
 
 # And let's see it
-warp.plot(cmap="gist_earth", show_scalar_bar=False)
+warp.plot(cmap='gist_earth', show_scalar_bar=False)
 
 
 # %%
@@ -50,7 +50,7 @@ mesh = examples.download_nefertiti()
 mesh.compute_normals(cell_normals=True, point_normals=False, inplace=True)
 
 # Get list of cell IDs that meet condition
-ids = np.arange(mesh.n_cells)[mesh["Normals"][:, 2] > 0.0]
+ids = np.arange(mesh.n_cells)[mesh['Normals'][:, 2] > 0.0]
 
 # Extract those cells
 top = mesh.extract_cells(ids)

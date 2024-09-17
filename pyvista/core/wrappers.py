@@ -37,16 +37,16 @@ from .pointset import StructuredGrid
 from .pointset import UnstructuredGrid
 
 _wrappers = {
-    "vtkExplicitStructuredGrid": ExplicitStructuredGrid,
-    "vtkUnstructuredGrid": UnstructuredGrid,
-    "vtkRectilinearGrid": RectilinearGrid,
-    "vtkStructuredGrid": StructuredGrid,
-    "vtkPolyData": PolyData,
-    "vtkImageData": ImageData,
-    "vtkStructuredPoints": ImageData,
-    "vtkMultiBlockDataSet": MultiBlock,
-    "vtkTable": Table,
-    "vtkPointSet": PointSet,
-    "vtkPartitionedDataSet": PartitionedDataSet,
+    'vtkExplicitStructuredGrid': ExplicitStructuredGrid,
+    'vtkUnstructuredGrid': UnstructuredGrid,
+    'vtkRectilinearGrid': RectilinearGrid,
+    'vtkStructuredGrid': StructuredGrid,
+    'vtkPolyData': PolyData,
+    'vtkImageData': ImageData,
+    'vtkStructuredPoints': ImageData,
+    'vtkMultiBlockDataSet': MultiBlock,
+    'vtkTable': Table,
+    'vtkPointSet': PointSet,
+    'vtkPartitionedDataSet': PartitionedDataSet,
     # 'vtkParametricSpline': pyvista.Spline,
 }

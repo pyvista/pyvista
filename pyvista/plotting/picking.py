@@ -21,14 +21,14 @@ from .opts import ElementType
 from .opts import PickerType
 
 PICKED_REPRESENTATION_NAMES = {
-    "point": "_picked_point",
-    "mesh": "_picked_mesh",
-    "through": "_picked_through_selection",
-    "visible": "_picked_visible_selection",
-    "element": "_picked_element",
-    "path": "_picked_path",
-    "horizon": "_picked_horizon",
-    "frustum": "_rectangle_selection_frustum",
+    'point': '_picked_point',
+    'mesh': '_picked_mesh',
+    'through': '_picked_through_selection',
+    'visible': '_picked_visible_selection',
+    'element': '_picked_element',
+    'path': '_picked_path',
+    'horizon': '_picked_horizon',
+    'frustum': '_rectangle_selection_frustum',
 }
 
 
@@ -149,7 +149,7 @@ class PointPickingElementHandler:
         if cell_id < 0:
             return None  # TODO: this happens but shouldn't  # pragma: no cover
         cell = mesh.extract_cells(cell_id)
-        cell.cell_data["vtkOriginalCellIds"] = np.array([cell_id])
+        cell.cell_data['vtkOriginalCellIds'] = np.array([cell_id])
         return cell
 
     def get_face(self, picked_point):
@@ -174,12 +174,12 @@ class PointPickingElementHandler:
                     break
             if contains < 0:
                 # this shouldn't happen
-                raise RuntimeError("Trouble aligning point with face.")
+                raise RuntimeError('Trouble aligning point with face.')
             face = face.cast_to_unstructured_grid()
-            face.field_data["vtkOriginalFaceIds"] = np.array([len(cell.faces) - 1])
+            face.field_data['vtkOriginalFaceIds'] = np.array([len(cell.faces) - 1])
         else:
             face = cell.cast_to_unstructured_grid()
-            face.field_data["vtkOriginalFaceIds"] = np.array([0])
+            face.field_data['vtkOriginalFaceIds'] = np.array([0])
 
         return face
 
@@ -203,7 +203,7 @@ class PointPickingElementHandler:
                 cell.cast_to_unstructured_grid().extract_all_edges().find_closest_cell(picked_point)
             )
             edge = cell.edges[ei].cast_to_unstructured_grid()
-            edge.field_data["vtkOriginalEdgeIds"] = np.array([ei])
+            edge.field_data['vtkOriginalEdgeIds'] = np.array([ei])
         else:
             edge = cell.cast_to_unstructured_grid()
 
@@ -226,7 +226,7 @@ class PointPickingElementHandler:
         mesh = self.get_mesh()
         pid = mesh.find_closest_point(picked_point)
         picked = pyvista.PolyData(mesh.points[pid])
-        picked.point_data["vtkOriginalPointIds"] = np.array([pid])
+        picked.point_data['vtkOriginalPointIds'] = np.array([pid])
         return picked
 
     def __call__(self, picked_point, picker):
@@ -328,12 +328,12 @@ class PickingInterface:  # numpydoc ignore=PR01
     def _init_click_picking_callback(self, left_clicking=False):
         if left_clicking:
             self._picking_left_clicking_observer = self.iren.add_observer(
-                "LeftButtonPressEvent",
+                'LeftButtonPressEvent',
                 partial(try_callback, _launch_pick_event),
             )
         else:
             self._picking_right_clicking_observer = self.iren.add_observer(
-                "RightButtonPressEvent",
+                'RightButtonPressEvent',
                 partial(try_callback, _launch_pick_event),
             )
 
@@ -355,7 +355,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         """
         # remove left and right clicking observer if available
-        if getattr(self, "iren", None):
+        if getattr(self, 'iren', None):
             self.iren.remove_observer(self._picking_left_clicking_observer)
             self.iren.remove_observer(self._picking_right_clicking_observer)
             # Reset to default picker
@@ -368,7 +368,7 @@ class PickingInterface:  # numpydoc ignore=PR01
     def _validate_picker_not_in_use(self):
         if self._picker_in_use:
             raise PyVistaPickingError(
-                "Picking is already enabled, please disable previous picking with `disable_picking()`.",
+                'Picking is already enabled, please disable previous picking with `disable_picking()`.',
             )
 
     def enable_point_picking(
@@ -379,7 +379,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         picker=PickerType.POINT,
         show_message=True,
         font_size=18,
-        color="pink",
+        color='pink',
         point_size=10,
         show_point=True,
         use_picker=False,
@@ -470,12 +470,12 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         """
         self._validate_picker_not_in_use()
-        if "use_mesh" in kwargs:
+        if 'use_mesh' in kwargs:
             warnings.warn(
-                "`use_mesh` is deprecated. See `use_picker` instead.",
+                '`use_mesh` is deprecated. See `use_picker` instead.',
                 PyVistaDeprecationWarning,
             )
-            use_mesh = kwargs.pop("use_mesh")
+            use_mesh = kwargs.pop('use_mesh')
         else:
             use_mesh = False
 
@@ -484,7 +484,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         def _end_pick_event(picker, _event):
             if (
                 not pickable_window
-                and hasattr(picker, "GetDataSet")
+                and hasattr(picker, 'GetDataSet')
                 and picker.GetDataSet() is None
             ):
                 # Clear the selection
@@ -503,9 +503,9 @@ class PickingInterface:  # numpydoc ignore=PR01
                         self_().picked_point,
                         color=color,
                         point_size=point_size,
-                        name=_kwargs.pop("name", PICKED_REPRESENTATION_NAMES["point"]),
-                        pickable=_kwargs.pop("pickable", False),
-                        reset_camera=_kwargs.pop("reset_camera", False),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['point']),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
                     )
                 if callable(callback):
@@ -523,7 +523,7 @@ class PickingInterface:  # numpydoc ignore=PR01
 
         if picker is not None:  # If None, that means use already set picker
             self.iren.picker = picker
-        if hasattr(self.iren.picker, "SetTolerance"):
+        if hasattr(self.iren.picker, 'SetTolerance'):
             self.iren.picker.SetTolerance(tolerance)
         self.iren.add_pick_observer(_end_pick_event)
         self._init_click_picking_callback(left_clicking=left_clicking)
@@ -532,12 +532,12 @@ class PickingInterface:  # numpydoc ignore=PR01
         # Now add text about cell-selection
         if show_message:
             if show_message is True:
-                show_message = "Left-click" if left_clicking else "Right-click"
-                show_message += " or press P to pick under the mouse"
+                show_message = 'Left-click' if left_clicking else 'Right-click'
+                show_message += ' or press P to pick under the mouse'
             self._picking_text = self.add_text(
                 str(show_message),
                 font_size=font_size,
-                name="_point_picking_message",
+                name='_point_picking_message',
             )
 
     def enable_rectangle_picking(
@@ -547,8 +547,8 @@ class PickingInterface:  # numpydoc ignore=PR01
         font_size=18,
         start=False,
         show_frustum=False,
-        style="wireframe",
-        color="pink",
+        style='wireframe',
+        color='pink',
         **kwargs,
     ):
         """Enable rectangle based picking at cells.
@@ -628,11 +628,11 @@ class PickingInterface:  # numpydoc ignore=PR01
                     _kwargs = kwargs.copy()
                     self_().add_mesh(
                         selection.frustum_mesh,
-                        name=_kwargs.pop("name", PICKED_REPRESENTATION_NAMES["frustum"]),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['frustum']),
                         style=style,
                         color=color,
-                        pickable=_kwargs.pop("pickable", False),
-                        reset_camera=_kwargs.pop("reset_camera", False),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
                     )
 
@@ -640,18 +640,18 @@ class PickingInterface:  # numpydoc ignore=PR01
                 _poked_context_callback(self_(), callback, selection)
 
         self.enable_rubber_band_style()  # TODO: better handle?
-        self.iren.picker = "rendered"
+        self.iren.picker = 'rendered'
         self.iren.add_pick_observer(_end_pick_helper)
         self._picker_in_use = True
 
         # Now add text about cell-selection
         if show_message:
             if show_message is True:
-                show_message = "Press R to toggle selection tool"
+                show_message = 'Press R to toggle selection tool'
             self._picking_text = self.add_text(
                 str(show_message),
                 font_size=font_size,
-                name="_rectangle_picking_message",
+                name='_rectangle_picking_message',
             )
 
         if start:
@@ -751,7 +751,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """Disable picking."""
         super().disable_picking()
         # remove any picking text
-        if hasattr(self, "renderers"):
+        if hasattr(self, 'renderers'):
             for renderer in self.renderers:
                 renderer.remove_actor(self._picking_text, render=False)
         self._picking_text = None
@@ -761,7 +761,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         callback=None,
         show_message=True,
         font_size=18,
-        color="pink",
+        color='pink',
         show_point=True,
         point_size=10,
         tolerance=0.025,
@@ -859,7 +859,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         valid_pickers = [PickerType.POINT, PickerType.CELL, PickerType.HARDWARE, PickerType.VOLUME]
         if picker not in valid_pickers:
             raise ValueError(
-                f"Invalid picker choice for surface picking. Use one of: {valid_pickers}",
+                f'Invalid picker choice for surface picking. Use one of: {valid_pickers}',
             )
 
         self_ = weakref.ref(self)
@@ -883,9 +883,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                         picked_point,
                         color=color,
                         point_size=point_size,
-                        name=_kwargs.pop("name", PICKED_REPRESENTATION_NAMES["point"]),
-                        pickable=_kwargs.pop("pickable", False),
-                        reset_camera=_kwargs.pop("reset_camera", False),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['point']),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
                     )
             if callable(callback):
@@ -912,9 +912,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         callback=None,
         show=True,
         show_message=True,
-        style="wireframe",
+        style='wireframe',
         line_width=5,
-        color="pink",
+        color='pink',
         font_size=18,
         left_clicking=False,
         use_actor=False,
@@ -1024,16 +1024,16 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                         _kwargs = kwargs.copy()
                         self_().add_mesh(
                             self_()._picked_mesh,
-                            name=_kwargs.pop("name", PICKED_REPRESENTATION_NAMES["mesh"]),
+                            name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['mesh']),
                             style=style,
                             color=color,
                             line_width=line_width,
-                            pickable=_kwargs.pop("pickable", False),
-                            reset_camera=_kwargs.pop("reset_camera", False),
+                            pickable=_kwargs.pop('pickable', False),
+                            reset_camera=_kwargs.pop('reset_camera', False),
                             **_kwargs,
                         )
                 except Exception as e:  # pragma: no cover
-                    warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
+                    warnings.warn('Unable to show mesh when picking:\n\n%s', str(e))
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)
@@ -1044,8 +1044,8 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         # add on-screen message about point-selection
         if show_message and show_message is True:
-            show_message = "Left-click" if left_clicking else "Right-click"
-            show_message += " or press P to pick single dataset under the mouse pointer"
+            show_message = 'Left-click' if left_clicking else 'Right-click'
+            show_message += ' or press P to pick single dataset under the mouse pointer'
 
         self.enable_surface_point_picking(
             callback=end_pick_call_back,
@@ -1062,9 +1062,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         self,
         callback=None,
         show=True,
-        style="wireframe",
+        style='wireframe',
         line_width=5,
-        color="pink",
+        color='pink',
         show_message=True,
         font_size=18,
         start=False,
@@ -1128,12 +1128,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     _kwargs = kwargs.copy()
                     self_().add_mesh(
                         picked,
-                        name=_kwargs.pop("name", PICKED_REPRESENTATION_NAMES["through"]),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['through']),
                         style=style,
                         color=color,
                         line_width=line_width,
-                        pickable=_kwargs.pop("pickable", False),
-                        reset_camera=_kwargs.pop("reset_camera", False),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
                     )
 
@@ -1146,7 +1146,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             for actor in renderer.actors.values():
                 if actor.GetMapper() and actor.GetPickable():
                     input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
-                    input_mesh.cell_data["orig_extract_id"] = np.arange(input_mesh.n_cells)
+                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
@@ -1176,9 +1176,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         self,
         callback=None,
         show=True,
-        style="wireframe",
+        style='wireframe',
         line_width=5,
-        color="pink",
+        color='pink',
         show_message=True,
         font_size=18,
         start=False,
@@ -1240,12 +1240,12 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     _kwargs = kwargs.copy()
                     self_().add_mesh(
                         picked,
-                        name=_kwargs.pop("name", PICKED_REPRESENTATION_NAMES["visible"]),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['visible']),
                         style=style,
                         color=color,
                         line_width=line_width,
-                        pickable=_kwargs.pop("pickable", False),
-                        reset_camera=_kwargs.pop("reset_camera", False),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
                     )
 
@@ -1275,20 +1275,20 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     # TODO: this is too hacky - find better way to avoid non-dataset actors
                     if not actor.GetMapper() or not hasattr(
                         actor.GetProperty(),
-                        "GetRepresentation",
+                        'GetRepresentation',
                     ):
                         continue
 
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            "Display representations other than `surface` will result in incorrect results.",
+                            'Display representations other than `surface` will result in incorrect results.',
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()
-                    smesh["original_cell_ids"] = np.arange(smesh.n_cells)
+                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()
-                    cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
+                    cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))
 
                 # memory leak issues on vtk==9.0.20210612.dev0
@@ -1320,9 +1320,9 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         through=True,
         show=True,
         show_message=True,
-        style="wireframe",
+        style='wireframe',
         line_width=5,
-        color="pink",
+        color='pink',
         font_size=18,
         start=False,
         show_frustum=False,
@@ -1426,11 +1426,11 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
     def enable_element_picking(
         self,
         callback=None,
-        mode="cell",
+        mode='cell',
         show=True,
         show_message=True,
         font_size=18,
-        color="pink",
+        color='pink',
         tolerance=0.025,
         pickable_window=False,
         left_clicking=False,
@@ -1508,11 +1508,11 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
             if show:
                 if mode == ElementType.CELL:
-                    kwargs.setdefault("color", "pink")
+                    kwargs.setdefault('color', 'pink')
                 elif mode == ElementType.EDGE:
-                    kwargs.setdefault("color", "magenta")
+                    kwargs.setdefault('color', 'magenta')
                 else:
-                    kwargs.setdefault("color", "pink")
+                    kwargs.setdefault('color', 'pink')
 
                 if mode in [ElementType.CELL, ElementType.FACE]:
                     picked = picked.extract_all_edges()
@@ -1521,11 +1521,11 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     _kwargs = kwargs.copy()
                     self.add_mesh(
                         picked,
-                        name=_kwargs.pop("name", PICKED_REPRESENTATION_NAMES["element"]),
-                        pickable=_kwargs.pop("pickable", False),
-                        reset_camera=_kwargs.pop("reset_camera", False),
-                        point_size=_kwargs.pop("point_size", 5),
-                        line_width=_kwargs.pop("line_width", 5),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['element']),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
+                        point_size=_kwargs.pop('point_size', 5),
+                        line_width=_kwargs.pop('line_width', 5),
                         **_kwargs,
                     )
 
@@ -1545,7 +1545,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             **kwargs,
         )
 
-    def enable_block_picking(self, callback=None, side="left"):
+    def enable_block_picking(self, callback=None, side='left'):
         """Enable composite block picking.
 
         Use this picker to return the index of a DataSet when using composite
@@ -1667,14 +1667,14 @@ class PickingHelper(PickingMethods):
             if callable(callback):
                 _poked_context_callback(self_(), callback, click_point)
 
-        self.track_click_position(callback=_the_callback, side="right")
+        self.track_click_position(callback=_the_callback, side='right')
 
     def enable_path_picking(
         self,
         callback=None,
         show_message=True,
         font_size=18,
-        color="pink",
+        color='pink',
         point_size=10,
         line_width=5,
         show_path=True,
@@ -1728,7 +1728,7 @@ class PickingHelper(PickingMethods):
 
         """
         self_ = weakref.ref(self)
-        kwargs.setdefault("pickable", False)
+        kwargs.setdefault('pickable', False)
 
         def make_line_cells(n_points):  # numpydoc ignore=GL08
             cells = np.arange(0, n_points, dtype=np.int_)
@@ -1748,11 +1748,11 @@ class PickingHelper(PickingMethods):
                     self.add_mesh(
                         self.picked_path,
                         color=color,
-                        name=_kwargs.pop("name", PICKED_REPRESENTATION_NAMES["path"]),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['path']),
                         line_width=line_width,
                         point_size=point_size,
-                        pickable=_kwargs.pop("pickable", False),
-                        reset_camera=_kwargs.pop("reset_camera", False),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
                     )
             if callable(callback):
@@ -1763,9 +1763,9 @@ class PickingHelper(PickingMethods):
             with self.iren.poked_subplot():
                 self._clear_picking_representations()
 
-        self.add_key_event("c", _clear_path_event_watcher)
+        self.add_key_event('c', _clear_path_event_watcher)
         if show_message is True:
-            show_message = "Press P to pick under the mouse\nPress C to clear"
+            show_message = 'Press P to pick under the mouse\nPress C to clear'
 
         self.enable_surface_point_picking(
             callback=_the_callback,
@@ -1782,7 +1782,7 @@ class PickingHelper(PickingMethods):
         callback=None,
         show_message=True,
         font_size=18,
-        color="pink",
+        color='pink',
         point_size=10,
         line_width=5,
         tolerance=0.025,
@@ -1851,7 +1851,7 @@ class PickingHelper(PickingMethods):
         """
         self_ = weakref.ref(self)
 
-        kwargs.setdefault("pickable", False)
+        kwargs.setdefault('pickable', False)
 
         self.picked_geodesic = pyvista.PolyData()
         self._last_picked_idx = None
@@ -1864,7 +1864,7 @@ class PickingHelper(PickingMethods):
             point = mesh.points[idx]
             if self._last_picked_idx is None:
                 self.picked_geodesic = pyvista.PolyData(point)
-                self.picked_geodesic["vtkOriginalPointIds"] = [idx]
+                self.picked_geodesic['vtkOriginalPointIds'] = [idx]
             else:
                 surface = mesh.extract_surface().triangulate()
                 locator = _vtk.vtkPointLocator()
@@ -1889,11 +1889,11 @@ class PickingHelper(PickingMethods):
                     self.add_mesh(
                         self.picked_geodesic,
                         color=color,
-                        name=_kwargs.pop("name", PICKED_REPRESENTATION_NAMES["path"]),
+                        name=_kwargs.pop('name', PICKED_REPRESENTATION_NAMES['path']),
                         line_width=line_width,
                         point_size=point_size,
-                        pickable=_kwargs.pop("pickable", False),
-                        reset_camera=_kwargs.pop("reset_camera", False),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
                     )
             if callable(callback):
@@ -1905,9 +1905,9 @@ class PickingHelper(PickingMethods):
                 self._clear_picking_representations()
             self._last_picked_idx = None
 
-        self.add_key_event("c", _clear_g_path_event_watcher)
+        self.add_key_event('c', _clear_g_path_event_watcher)
         if show_message is True:
-            show_message = "Press P to pick under the mouse\nPress C to clear"
+            show_message = 'Press P to pick under the mouse\nPress C to clear'
 
         self.enable_surface_point_picking(
             callback=_the_callback,
@@ -1926,7 +1926,7 @@ class PickingHelper(PickingMethods):
         width=None,
         show_message=True,
         font_size=18,
-        color="pink",
+        color='pink',
         point_size=10,
         line_width=5,
         show_path=True,
@@ -1994,7 +1994,7 @@ class PickingHelper(PickingMethods):
             with self.iren.poked_subplot():
                 self._clear_picking_representations()
 
-        self.add_key_event("c", _clear_horizon_event_watcher)
+        self.add_key_event('c', _clear_horizon_event_watcher)
 
         def _the_callback(path):
             if path.n_points < 2:
@@ -2007,11 +2007,11 @@ class PickingHelper(PickingMethods):
                     _kwargs = kwargs.copy()
                     self.add_mesh(
                         self.picked_horizon,
-                        name=_kwargs.get("name", PICKED_REPRESENTATION_NAMES["horizon"]),
+                        name=_kwargs.get('name', PICKED_REPRESENTATION_NAMES['horizon']),
                         color=color,
                         opacity=opacity,
-                        pickable=_kwargs.pop("pickable", False),
-                        reset_camera=_kwargs.pop("reset_camera", False),
+                        pickable=_kwargs.pop('pickable', False),
+                        reset_camera=_kwargs.pop('reset_camera', False),
                         **_kwargs,
                     )
 

@@ -36,19 +36,19 @@ def _validate_axes(axes):
     """
     axes = np.array(axes)
     if axes.shape != (3, 3):
-        raise ValueError("`axes` must be a (3, 3) array.")
+        raise ValueError('`axes` must be a (3, 3) array.')
 
     axes = axes / np.linalg.norm(axes, axis=1, keepdims=True)
     if not np.allclose(np.cross(axes[0], axes[1]), axes[2]):
-        raise ValueError("`axes` do not follow the right hand rule.")
+        raise ValueError('`axes` do not follow the right hand rule.')
 
     return axes
 
 
-def _check_callable(func, name="callback"):
+def _check_callable(func, name='callback'):
     """Check if a variable is callable."""
     if func and not callable(func):
-        raise TypeError(f"`{name}` must be a callable, not {type(func)}.")
+        raise TypeError(f'`{name}` must be a callable, not {type(func)}.')
     return func
 
 
@@ -187,7 +187,7 @@ class AffineWidget3D:
         """Initialize the widget."""
         # needs VTK v9.2.0 due to the hardware picker
         if pyvista.vtk_version_info < (9, 2):
-            raise VTKVersionError("AfflineWidget3D requires VTK v9.2.0 or newer.")
+            raise VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
 
         self._axes = np.eye(4)
         self._axes_inv = np.eye(4)
@@ -489,18 +489,18 @@ class AffineWidget3D:
     def enable(self):
         """Enable the widget."""
         if not self._pl._picker_in_use:
-            self._pl.enable_mesh_picking(show_message=False, show=False, picker="hardware")
+            self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
         self._mouse_move_observer = self._pl.iren.add_observer(
-            "MouseMoveEvent",
+            'MouseMoveEvent',
             self._move_callback,
         )
         self._left_press_observer = self._pl.iren.add_observer(
-            "LeftButtonPressEvent",
+            'LeftButtonPressEvent',
             self._press_callback,
             interactor_style_fallback=False,
         )
         self._left_release_observer = self._pl.iren.add_observer(
-            "LeftButtonReleaseEvent",
+            'LeftButtonReleaseEvent',
             self._release_callback,
             interactor_style_fallback=False,
         )

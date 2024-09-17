@@ -54,14 +54,14 @@ def vtk_points(points, deep=True, force_float=False):
 
     # verify is numeric
     if not np.issubdtype(points.dtype, np.number):
-        raise TypeError("Points must be a numeric type")
+        raise TypeError('Points must be a numeric type')
 
     if force_float and not np.issubdtype(points.dtype, np.floating):
         warnings.warn(
-            "Points is not a float type. This can cause issues when "
-            "transforming or applying filters. Casting to "
-            "``np.float32``. Disable this by passing "
-            "``force_float=False``.",
+            'Points is not a float type. This can cause issues when '
+            'transforming or applying filters. Casting to '
+            '``np.float32``. Disable this by passing '
+            '``force_float=False``.',
         )
         points = points.astype(np.float32)
 
@@ -69,13 +69,13 @@ def vtk_points(points, deep=True, force_float=False):
     if points.ndim == 1:
         points = points.reshape(-1, 3)
     elif points.ndim > 2:
-        raise ValueError(f"Dimension of ``points`` should be 1 or 2, not {points.ndim}")
+        raise ValueError(f'Dimension of ``points`` should be 1 or 2, not {points.ndim}')
 
     # verify shape
     if points.shape[1] != 3:
         raise ValueError(
-            "Points array must contain three values per point. "
-            f"Shape is {points.shape} and should be (X, 3)",
+            'Points array must contain three values per point. '
+            f'Shape is {points.shape} and should be (X, 3)',
         )
 
     # use the underlying vtk data if present to avoid memory leaks
@@ -92,7 +92,7 @@ def vtk_points(points, deep=True, force_float=False):
             deep = True
 
     # points must be contiguous
-    points = np.require(points, requirements=["C"])
+    points = np.require(points, requirements=['C'])
     vtkpts = _vtk.vtkPoints()
     vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
     vtkpts.SetData(vtk_arr)
@@ -131,7 +131,7 @@ def line_segments_from_points(points):
 
     """
     if len(points) % 2 != 0:
-        raise ValueError("An even number of points must be given to define each segment.")
+        raise ValueError('An even number of points must be given to define each segment.')
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -566,9 +566,9 @@ def make_tri_mesh(points, faces):
 
     """
     if points.shape[1] != 3:
-        raise ValueError("Points array should have shape (N, 3).")
+        raise ValueError('Points array should have shape (N, 3).')
     if faces.ndim != 2 or faces.shape[1] != 3:
-        raise ValueError("Face array should have shape (M, 3).")
+        raise ValueError('Face array should have shape (M, 3).')
     cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
     cells[:, 0] = 3
     cells[:, 1:] = faces
@@ -626,12 +626,12 @@ def vector_poly_data(orig, vec):
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise ValueError("orig array must be 3D")
+        raise ValueError('orig array must be 3D')
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise ValueError("vec array must be 3D")
+        raise ValueError('vec array must be 3D')
 
     # Create vtk points and cells objects
     vpts = _vtk.vtkPoints()
@@ -648,14 +648,14 @@ def vector_poly_data(orig, vec):
     pdata.SetVerts(vcells)
 
     # Add vectors to polydata
-    name = "vectors"
+    name = 'vectors'
     vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveVectors(name)
 
     # Add magnitude of vectors to polydata
-    name = "mag"
+    name = 'mag'
     scalars = (vec * vec).sum(1) ** 0.5
     vtkfloat = _vtk.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
     vtkfloat.SetName(name)

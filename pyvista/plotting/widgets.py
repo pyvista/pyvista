@@ -48,11 +48,11 @@ def _parse_interaction_event(interaction_event):
         VTK Event type.
 
     """
-    if interaction_event == "start":
+    if interaction_event == 'start':
         interaction_event = _vtk.vtkCommand.StartInteractionEvent
-    elif interaction_event == "end":
+    elif interaction_event == 'end':
         interaction_event = _vtk.vtkCommand.EndInteractionEvent
-    elif interaction_event == "always":
+    elif interaction_event == 'always':
         interaction_event = _vtk.vtkCommand.InteractionEvent
     elif isinstance(interaction_event, str):
         raise ValueError(
@@ -61,9 +61,9 @@ def _parse_interaction_event(interaction_event):
         )
     elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
         raise TypeError(
-            "Expected type for `interaction_event` is either a str "
-            "or an instance of `vtk.vtkCommand.EventIds`."
-            f" ({type(interaction_event)}) was given.",
+            'Expected type for `interaction_event` is either a str '
+            'or an instance of `vtk.vtkCommand.EventIds`.'
+            f' ({type(interaction_event)}) was given.',
         )
     return interaction_event
 
@@ -106,7 +106,7 @@ class WidgetHelper:
         use_planes=False,
         outline_translation=True,
         pass_widget=False,
-        interaction_event="end",
+        interaction_event='end',
     ):
         """Add a box widget to the scene.
 
@@ -244,7 +244,7 @@ class WidgetHelper:
         outline_translation=True,
         merge_points=True,
         crinkle=False,
-        interaction_event="end",
+        interaction_event='end',
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -326,12 +326,12 @@ class WidgetHelper:
             add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
-        name = kwargs.get("name", mesh.memory_address)
-        rng = mesh.get_data_range(kwargs.get("scalars", None))
-        kwargs.setdefault("clim", kwargs.pop("rng", rng))
-        mesh.set_active_scalars(kwargs.get("scalars", mesh.active_scalars_name))
+        name = kwargs.get('name', mesh.memory_address)
+        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(outline_algorithm(algo), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo), name=f'{name}-outline', opacity=0.0)
 
         port = 1 if invert else 0
 
@@ -383,7 +383,7 @@ class WidgetHelper:
     def add_plane_widget(
         self,
         callback,
-        normal="x",
+        normal='x',
         origin=None,
         bounds=None,
         factor=1.25,
@@ -396,7 +396,7 @@ class WidgetHelper:
         pass_widget=False,
         test_callback=True,
         normal_rotation=True,
-        interaction_event="end",
+        interaction_event='end',
         outline_opacity=None,
     ):
         """Add a plane widget to the scene.
@@ -600,17 +600,17 @@ class WidgetHelper:
 
         if assign_to_axis:
             # Note that normal_rotation was forced to False
-            if assign_to_axis in [0, "x", "X"]:
+            if assign_to_axis in [0, 'x', 'X']:
                 plane_widget.NormalToXAxisOn()
-                plane_widget.SetNormal(NORMALS["x"])
-            elif assign_to_axis in [1, "y", "Y"]:
+                plane_widget.SetNormal(NORMALS['x'])
+            elif assign_to_axis in [1, 'y', 'Y']:
                 plane_widget.NormalToYAxisOn()
-                plane_widget.SetNormal(NORMALS["y"])
-            elif assign_to_axis in [2, "z", "Z"]:
+                plane_widget.SetNormal(NORMALS['y'])
+            elif assign_to_axis in [2, 'z', 'Z']:
                 plane_widget.NormalToZAxisOn()
-                plane_widget.SetNormal(NORMALS["z"])
+                plane_widget.SetNormal(NORMALS['z'])
             else:
-                raise RuntimeError("assign_to_axis not understood")
+                raise RuntimeError('assign_to_axis not understood')
         else:
             plane_widget.SetNormal(normal)
 
@@ -637,7 +637,7 @@ class WidgetHelper:
     def add_mesh_clip_plane(
         self,
         mesh,
-        normal="x",
+        normal='x',
         invert=False,
         widget_color=None,
         value=0.0,
@@ -648,7 +648,7 @@ class WidgetHelper:
         implicit=True,
         normal_rotation=True,
         crinkle=False,
-        interaction_event="end",
+        interaction_event='end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -759,14 +759,14 @@ class WidgetHelper:
             add_ids_algorithm(mesh, point_ids=False, cell_ids=True),
         )
 
-        name = kwargs.get("name", mesh.memory_address)
-        rng = mesh.get_data_range(kwargs.get("scalars", None))
-        kwargs.setdefault("clim", kwargs.pop("rng", rng))
-        mesh.set_active_scalars(kwargs.get("scalars", mesh.active_scalars_name))
+        name = kwargs.get('name', mesh.memory_address)
+        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(outline_algorithm(algo), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo), name=f'{name}-outline', opacity=0.0)
 
         if isinstance(mesh, _vtk.vtkPolyData):
             clipper = _vtk.vtkClipPolyData()
@@ -820,7 +820,7 @@ class WidgetHelper:
     def add_volume_clip_plane(
         self,
         volume,
-        normal="x",
+        normal='x',
         invert=False,
         widget_color=None,
         value=0.0,
@@ -830,7 +830,7 @@ class WidgetHelper:
         outline_translation=False,
         implicit=True,
         normal_rotation=True,
-        interaction_event="end",
+        interaction_event='end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -913,9 +913,9 @@ class WidgetHelper:
             volume = self.add_volume(volume, **kwargs)
         elif not isinstance(volume, pyvista.plotting.volume.Volume):
             raise TypeError(
-                "The `volume` parameter type must be either pyvista.ImageData, "
-                "pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume "
-                "from `Plotter.add_volume`.",
+                'The `volume` parameter type must be either pyvista.ImageData, '
+                'pyvista.RectilinearGrid, or a pyvista.plotting.volume.Volume '
+                'from `Plotter.add_volume`.',
             )
         else:
             assert_empty_kwargs(**kwargs)
@@ -952,7 +952,7 @@ class WidgetHelper:
     def add_mesh_slice(
         self,
         mesh,
-        normal="x",
+        normal='x',
         generate_triangles=False,
         widget_color=None,
         assign_to_axis=None,
@@ -1056,14 +1056,14 @@ class WidgetHelper:
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
-        name = kwargs.get("name", mesh.memory_address)
-        rng = mesh.get_data_range(kwargs.get("scalars", None))
-        kwargs.setdefault("clim", kwargs.pop("rng", rng))
-        mesh.set_active_scalars(kwargs.get("scalars", mesh.active_scalars_name))
+        name = kwargs.get('name', mesh.memory_address)
+        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         set_algorithm_input(alg, algo or mesh)
@@ -1162,11 +1162,11 @@ class WidgetHelper:
 
         """
         actors = []
-        name = kwargs.pop("name", None)
-        for ax in ["x", "y", "z"]:
+        name = kwargs.pop('name', None)
+        for ax in ['x', 'y', 'z']:
             axkwargs = kwargs.copy()
             if name:
-                axkwargs["name"] = f"{name}-{ax}"
+                axkwargs['name'] = f'{name}-{ax}'
             a = self.add_mesh_slice(
                 mesh,
                 assign_to_axis=ax,
@@ -1305,7 +1305,7 @@ class WidgetHelper:
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         color=None,
-        interaction_event="end",
+        interaction_event='end',
         style=None,
     ):
         """Add a text slider bar widget.
@@ -1362,11 +1362,11 @@ class WidgetHelper:
         """
         if not isinstance(data, list):
             raise TypeError(
-                f"The `data` parameter must be a list but {type(data).__name__} was passed instead",
+                f'The `data` parameter must be a list but {type(data).__name__} was passed instead',
             )
         n_states = len(data)
         if n_states == 0:
-            raise ValueError("The input list of values is empty")
+            raise ValueError('The input list of values is empty')
         delta = (n_states - 1) / float(n_states)
         # avoid division by zero in case there is only one element
         delta = 1 if delta == 0 else delta
@@ -1415,7 +1415,7 @@ class WidgetHelper:
         pointb=(0.9, 0.9),
         color=None,
         pass_widget=False,
-        interaction_event="end",
+        interaction_event='end',
         style=None,
         title_height=0.03,
         title_opacity=1.0,
@@ -1529,7 +1529,7 @@ class WidgetHelper:
 
         """
         if self.iren is None:
-            raise RuntimeError("Cannot add a widget to a closed plotter.")
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         if value is None:
             value = ((rng[1] - rng[0]) / 2) + rng[0]
@@ -1568,7 +1568,7 @@ class WidgetHelper:
         if style is not None:
             if not isinstance(style, str):
                 raise TypeError(
-                    f"Expected type for ``style`` is str but {type(style).__name__} was given.",
+                    f'Expected type for ``style`` is str but {type(style).__name__} was given.',
                 )
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
@@ -1621,13 +1621,13 @@ class WidgetHelper:
         scalars=None,
         invert=False,
         widget_color=None,
-        preference="cell",
+        preference='cell',
         title=None,
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         continuous=False,
         all_scalars=False,
-        method="upper",
+        method='upper',
         **kwargs,
     ):
         """Apply a threshold on a mesh with a slider.
@@ -1721,22 +1721,22 @@ class WidgetHelper:
             mesh, algo = algorithm_to_mesh_handler(algo)
 
         if isinstance(mesh, pyvista.MultiBlock):
-            raise TypeError("MultiBlock datasets are not supported for threshold widget.")
-        name = kwargs.get("name", mesh.memory_address)
+            raise TypeError('MultiBlock datasets are not supported for threshold widget.')
+        name = kwargs.get('name', mesh.memory_address)
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         arr = get_array(mesh, scalars, preference=preference)
         if arr is None:
-            raise ValueError("No arrays present to threshold.")
+            raise ValueError('No arrays present to threshold.')
         field = get_array_association(mesh, scalars, preference=preference)
 
         rng = mesh.get_data_range(scalars)
-        kwargs.setdefault("clim", kwargs.pop("rng", rng))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
         if title is None:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
 
         alg = _vtk.vtkThreshold()
         set_algorithm_input(alg, algo or mesh)
@@ -1767,7 +1767,7 @@ class WidgetHelper:
             pointb=pointb,
         )
 
-        kwargs.setdefault("reset_camera", False)
+        kwargs.setdefault('reset_camera', False)
         return self.add_mesh(alg, scalars=scalars, **kwargs)
 
     def add_mesh_isovalue(
@@ -1777,7 +1777,7 @@ class WidgetHelper:
         compute_normals=False,
         compute_gradients=False,
         compute_scalars=True,
-        preference="point",
+        preference='point',
         title=None,
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
@@ -1876,13 +1876,13 @@ class WidgetHelper:
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
         if isinstance(mesh, pyvista.PointSet):
-            raise TypeError("PointSets are 0-dimensional and thus cannot produce contours.")
+            raise TypeError('PointSets are 0-dimensional and thus cannot produce contours.')
         if isinstance(mesh, pyvista.MultiBlock):
-            raise TypeError("MultiBlock datasets are not supported for this widget.")
-        name = kwargs.get("name", mesh.memory_address)
+            raise TypeError('MultiBlock datasets are not supported for this widget.')
+        name = kwargs.get('name', mesh.memory_address)
         # set the array to contour on
         if mesh.n_arrays < 1:
-            raise ValueError("Input dataset for the contour filter must have data arrays.")
+            raise ValueError('Input dataset for the contour filter must have data arrays.')
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         else:
@@ -1890,11 +1890,11 @@ class WidgetHelper:
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
             raise TypeError(
-                f"Contour filter only works on Point data. Array ({scalars}) is in the Cell data.",
+                f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.',
             )
 
         rng = mesh.get_data_range(scalars)
-        kwargs.setdefault("clim", kwargs.pop("rng", rng))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
         if title is None:
             title = scalars
         mesh.set_active_scalars(scalars)
@@ -1907,7 +1907,7 @@ class WidgetHelper:
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetNumberOfContours(1)  # Only one contour level
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
 
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
@@ -1926,7 +1926,7 @@ class WidgetHelper:
             pointb=pointb,
         )
 
-        kwargs.setdefault("reset_camera", False)
+        kwargs.setdefault('reset_camera', False)
         return self.add_mesh(alg, scalars=scalars, **kwargs)
 
     def add_spline_widget(
@@ -1936,9 +1936,9 @@ class WidgetHelper:
         factor=1.25,
         n_handles=5,
         resolution=25,
-        color="yellow",
+        color='yellow',
         show_ribbon=False,
-        ribbon_color="pink",
+        ribbon_color='pink',
         ribbon_opacity=0.5,
         pass_widget=False,
         closed=False,
@@ -2013,7 +2013,7 @@ class WidgetHelper:
 
         """
         if initial_points is not None and len(initial_points) != n_handles:
-            raise ValueError("`initial_points` must be length `n_handles`.")
+            raise ValueError('`initial_points` must be length `n_handles`.')
 
         color = Color(color, default_color=pyvista.global_theme.color)
 
@@ -2071,7 +2071,7 @@ class WidgetHelper:
         resolution=25,
         widget_color=None,
         show_ribbon=False,
-        ribbon_color="pink",
+        ribbon_color='pink',
         ribbon_opacity=0.5,
         initial_points=None,
         closed=False,
@@ -2146,14 +2146,14 @@ class WidgetHelper:
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
-        name = kwargs.get("name", None)
+        name = kwargs.get('name', None)
         if name is None:
             name = mesh.memory_address
-        rng = mesh.get_data_range(kwargs.get("scalars", None))
-        kwargs.setdefault("clim", kwargs.pop("rng", rng))
-        mesh.set_active_scalars(kwargs.get("scalars", mesh.active_scalars_name))
+        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         # Use the grid as the data we desire to cut
@@ -2222,7 +2222,7 @@ class WidgetHelper:
 
         """
         if self.iren is None:
-            raise RuntimeError("Cannot add a widget to a closed plotter.")
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         if color is None:
             color = pyvista.global_theme.font.color.float_rgb
@@ -2281,8 +2281,8 @@ class WidgetHelper:
         theta_resolution=30,
         phi_resolution=30,
         color=None,
-        style="surface",
-        selected_color="pink",
+        style='surface',
+        selected_color='pink',
         indices=None,
         pass_widget=False,
         test_callback=True,
@@ -2387,7 +2387,7 @@ class WidgetHelper:
             loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i]  # Monkey patch the index
-            if style in "wireframe":
+            if style in 'wireframe':
                 sphere_widget.SetRepresentationToWireframe()
             else:
                 sphere_widget.SetRepresentationToSurface()
@@ -2518,9 +2518,9 @@ class WidgetHelper:
         position=(10.0, 10.0),
         size=50,
         border_size=5,
-        color_on="blue",
-        color_off="grey",
-        background_color="white",
+        color_on='blue',
+        color_off='grey',
+        background_color='white',
     ):
         """Add a checkbox button widget to the scene.
 
@@ -2578,7 +2578,7 @@ class WidgetHelper:
 
         """
         if self.iren is None:  # pragma: no cover
-            raise RuntimeError("Cannot add a widget to a closed plotter.")
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):  # numpydoc ignore=GL08
             color1 = np.array(Color(color1).int_rgb)
@@ -2592,7 +2592,7 @@ class WidgetHelper:
             arr[border_size : dims[0] - border_size, border_size : dims[1] - border_size] = (
                 color3  # apply color3
             )
-            button.point_data["texture"] = arr.reshape(n_points, 3).astype(np.uint8)
+            button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button
 
         button_on = create_button(color_on, background_color, color_on)
@@ -2661,7 +2661,7 @@ class WidgetHelper:
         except ImportError:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError("vtkCameraOrientationWidget requires vtk>=9.1.0")
+            raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
 
         widget = vtkCameraOrientationWidget()
         widget.SetParentRenderer(self.renderer)
@@ -2739,7 +2739,7 @@ class WidgetHelper:
         if isinstance(logo, (str, pathlib.Path)):
             logo = pyvista.read(logo)
         if not isinstance(logo, pyvista.ImageData):
-            raise TypeError("Logo must be a pyvista.ImageData or a file path to an image.")
+            raise TypeError('Logo must be a pyvista.ImageData or a file path to an image.')
         representation = _vtk.vtkLogoRepresentation()
         representation.SetImage(logo)
         representation.SetPosition(position)
@@ -2789,7 +2789,7 @@ class WidgetHelper:
         except ImportError:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError("vtkCamera3DWidget requires vtk>=9.3.0")
+            raise VTKVersionError('vtkCamera3DWidget requires vtk>=9.3.0')
         representation = vtkCamera3DRepresentation()
         representation.SetCamera(self.renderer.GetActiveCamera())
         widget = vtkCamera3DWidget()

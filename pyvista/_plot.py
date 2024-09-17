@@ -29,7 +29,7 @@ def plot(
     show_axes=None,
     notebook=None,
     background=None,
-    text="",
+    text='',
     return_img=False,
     eye_dome_lighting=False,
     volume=False,
@@ -42,7 +42,7 @@ def plot(
     anti_aliasing=None,
     zoom=None,
     border=False,
-    border_color="k",
+    border_color='k',
     border_width=2.0,
     ssao=False,
     **kwargs,
@@ -212,12 +212,12 @@ def plot(
         jupyter_kwargs = {}
 
     # undocumented kwarg used within pytest to run a function before closing
-    before_close_callback = kwargs.pop("before_close_callback", None)
+    before_close_callback = kwargs.pop('before_close_callback', None)
 
     # pop from kwargs here to avoid including them in add_mesh or add_volume
-    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
-    show_grid = kwargs.pop("show_grid", False)
-    auto_close = kwargs.get("auto_close")
+    eye_dome_lighting = kwargs.pop('edl', eye_dome_lighting)
+    show_grid = kwargs.pop('show_grid', False)
+    auto_close = kwargs.get('auto_close')
 
     pl = pyvista.Plotter(
         window_size=window_size,
@@ -239,7 +239,7 @@ def plot(
 
     if anti_aliasing:
         if anti_aliasing is True:
-            pl.enable_anti_aliasing("msaa", multi_samples=pyvista.global_theme.multi_samples)
+            pl.enable_anti_aliasing('msaa', multi_samples=pyvista.global_theme.multi_samples)
         else:
             pl.enable_anti_aliasing(anti_aliasing)
     elif anti_aliasing is False:
@@ -254,7 +254,7 @@ def plot(
                 pl.add_background_image(path)
         else:
             raise ValueError(
-                f"Background must be color-like or a file path. Got {background} instead."
+                f'Background must be color-like or a file path. Got {background} instead.'
             )
 
     if isinstance(var_item, list):

@@ -49,7 +49,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import VectorLike
 
 # vector array names
-DEFAULT_VECTOR_KEY = "_vectors"
+DEFAULT_VECTOR_KEY = '_vectors'
 
 
 class ActiveArrayInfoTuple(NamedTuple):
@@ -92,13 +92,13 @@ class ActiveArrayInfo:
     def __getstate__(self):
         """Support pickling."""
         state = self.__dict__.copy()
-        state["association"] = int(self.association.value)
+        state['association'] = int(self.association.value)
         return state
 
     def __setstate__(self, state):
         """Support unpickling."""
         self.__dict__ = state.copy()
-        self.association = FieldAssociation(state["association"])
+        self.association = FieldAssociation(state['association'])
 
     @property
     def _namedtuple(self):
@@ -192,7 +192,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         field, name = self._active_scalars_info
-        exclude = {"__custom_rgba", "Normals", "vtkOriginalPointIds", "TCoords"}
+        exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
         if name in exclude:
             name = self._last_active_scalars_name
 
@@ -571,9 +571,9 @@ class DataSet(DataSetFilters, DataObject):
             return None
 
         if vectors.ndim != 2:
-            raise ValueError("Active vectors are not vectors.")
+            raise ValueError('Active vectors are not vectors.')
 
-        scale_name = f"{vectors_name} Magnitude"
+        scale_name = f'{vectors_name} Magnitude'
         scale = np.linalg.norm(vectors, axis=1)
         self.point_data.set_array(scale, scale_name)
         return self.glyph(orient=vectors_name, scale=scale_name)
@@ -589,7 +589,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            'Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         return self.active_texture_coordinates
@@ -605,7 +605,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            'Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
@@ -613,7 +613,7 @@ class DataSet(DataSetFilters, DataObject):
     def set_active_scalars(
         self,
         name: str | None,
-        preference="cell",
+        preference='cell',
     ) -> tuple[FieldAssociation, NumpyArray[float] | None]:
         """Find the scalars by name and appropriately sets it as active.
 
@@ -640,7 +640,7 @@ class DataSet(DataSetFilters, DataObject):
             An array from the dataset matching ``name``.
 
         """
-        if preference not in ["point", "cell", FieldAssociation.CELL, FieldAssociation.POINT]:
+        if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
             raise ValueError('``preference`` must be either "point" or "cell"')
         if name is None:
             self.GetCellData().SetActiveScalars(None)
@@ -658,7 +658,7 @@ class DataSet(DataSetFilters, DataObject):
         elif field == FieldAssociation.CELL:
             ret = self.GetCellData().SetActiveScalars(name)
         else:
-            raise ValueError(f"Data field ({name}) with type ({field}) not usable")
+            raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
         if ret < 0:
             raise ValueError(
@@ -672,7 +672,7 @@ class DataSet(DataSetFilters, DataObject):
         else:  # must be cell
             return field, self.cell_data.active_scalars
 
-    def set_active_vectors(self, name: str | None, preference: str = "point") -> None:
+    def set_active_vectors(self, name: str | None, preference: str = 'point') -> None:
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
@@ -700,16 +700,16 @@ class DataSet(DataSetFilters, DataObject):
             elif field == FieldAssociation.CELL:
                 ret = self.GetCellData().SetActiveVectors(name)
             else:
-                raise ValueError(f"Data field ({name}) with type ({field}) not usable")
+                raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
             if ret < 0:
                 raise ValueError(
-                    f"Data field ({name}) with type ({field}) could not be set as the active vectors",
+                    f'Data field ({name}) with type ({field}) could not be set as the active vectors',
                 )
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
-    def set_active_tensors(self, name: str | None, preference: str = "point") -> None:
+    def set_active_tensors(self, name: str | None, preference: str = 'point') -> None:
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
@@ -737,16 +737,16 @@ class DataSet(DataSetFilters, DataObject):
             elif field == FieldAssociation.CELL:
                 ret = self.GetCellData().SetActiveTensors(name)
             else:
-                raise ValueError(f"Data field ({name}) with type ({field}) not usable")
+                raise ValueError(f'Data field ({name}) with type ({field}) not usable')
 
             if ret < 0:
                 raise ValueError(
-                    f"Data field ({name}) with type ({field}) could not be set as the active tensors",
+                    f'Data field ({name}) with type ({field}) could not be set as the active tensors',
                 )
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
 
-    def rename_array(self, old_name: str, new_name: str, preference="cell") -> None:
+    def rename_array(self, old_name: str, new_name: str, preference='cell') -> None:
         """Change array name by searching for the array then renaming it.
 
         Parameters
@@ -789,7 +789,7 @@ class DataSet(DataSetFilters, DataObject):
         elif field == FieldAssociation.NONE:
             data = self.field_data
         else:
-            raise KeyError(f"Array with name {old_name} not found.")
+            raise KeyError(f'Array with name {old_name} not found.')
 
         arr = data.pop(old_name)
         # Update the array's name before reassigning. This prevents taking a copy of the array
@@ -859,7 +859,7 @@ class DataSet(DataSetFilters, DataObject):
     def get_data_range(
         self,
         arr_var: str | NumpyArray[float] | None = None,
-        preference="cell",
+        preference='cell',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
@@ -1949,7 +1949,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
-        return sizes.cell_data["Volume"].sum().item()
+        return sizes.cell_data['Volume'].sum().item()
 
     @property
     def area(self) -> float:
@@ -1989,12 +1989,12 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
-        return sizes.cell_data["Area"].sum().item()
+        return sizes.cell_data['Area'].sum().item()
 
     def get_array(
         self,
         name: str,
-        preference: Literal["cell", "point", "field"] = "cell",
+        preference: Literal['cell', 'point', 'field'] = 'cell',
     ) -> pyvista.pyvista_ndarray:
         """Search both point, cell and field data for an array.
 
@@ -2050,7 +2050,7 @@ class DataSet(DataSetFilters, DataObject):
     def get_array_association(
         self,
         name: str,
-        preference: Literal["cell", "point", "field"] = "cell",
+        preference: Literal['cell', 'point', 'field'] = 'cell',
     ) -> FieldAssociation:
         """Get the association of an array.
 
@@ -2106,11 +2106,11 @@ class DataSet(DataSetFilters, DataObject):
             name, preference = tuple(index)
         elif isinstance(index, str):
             name = index
-            preference = "cell"
+            preference = 'cell'
         else:
             raise KeyError(
-                f"Index ({index}) not understood."
-                " Index must be a string name or a tuple of string name and string preference.",
+                f'Index ({index}) not understood.'
+                ' Index must be a string name or a tuple of string name and string preference.',
             )
         return self.get_array(name, preference=preference)
 
@@ -2132,7 +2132,7 @@ class DataSet(DataSetFilters, DataObject):
         #   there would be the same number of cells as points but we'd want
         #   the data to be on the nodes.
         if scalars is None:
-            raise TypeError("Empty array unable to be added.")
+            raise TypeError('Empty array unable to be added.')
         else:
             scalars = np.asanyarray(scalars)
 
@@ -2206,15 +2206,15 @@ class DataSet(DataSetFilters, DataObject):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
-        attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
+        attrs.append(('N Cells', self.GetNumberOfCells(), '{}'))
+        attrs.append(('N Points', self.GetNumberOfPoints(), '{}'))
         if isinstance(self, pyvista.PolyData):
-            attrs.append(("N Strips", self.n_strips, "{}"))
+            attrs.append(('N Strips', self.n_strips, '{}'))
         bds = self.bounds
-        fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
-        attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
-        attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
-        attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
+        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        attrs.append(('X Bounds', (bds[0], bds[1]), fmt))
+        attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))
+        attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))
         # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
         #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
@@ -2225,22 +2225,22 @@ class DataSet(DataSetFilters, DataObject):
         It includes header details and information about all arrays.
 
         """
-        fmt = ""
+        fmt = ''
         if self.n_arrays > 0:
             fmt += "<table style='width: 100%;'>"
-            fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
-            fmt += "<tr><td>"
+            fmt += '<tr><th>Header</th><th>Data Arrays</th></tr>'
+            fmt += '<tr><td>'
         # Get the header info
         fmt += self.head(display=False, html=True)
         # Fill out arrays
         if self.n_arrays > 0:
-            fmt += "</td><td>"
-            fmt += "\n"
+            fmt += '</td><td>'
+            fmt += '\n'
             fmt += "<table style='width: 100%;'>\n"
-            titles = ["Name", "Field", "Type", "N Comp", "Min", "Max"]
-            fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
-            row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
-            row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
+            titles = ['Name', 'Field', 'Type', 'N Comp', 'Min', 'Max']
+            fmt += '<tr>' + ''.join([f'<th>{t}</th>' for t in titles]) + '</tr>\n'
+            row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
+            row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
 
             def format_array(name, arr, field):
                 """Format array information for printing (internal helper)."""
@@ -2252,20 +2252,20 @@ class DataSet(DataSetFilters, DataObject):
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
                 if name == self.active_scalars_info.name:
-                    name = f"<b>{name}</b>"
+                    name = f'<b>{name}</b>'
                 ncomp = arr.shape[1] if arr.ndim > 1 else 1
                 return row.format(name, field, arr.dtype, ncomp, dl, dh)
 
             for key, arr in self.point_data.items():
-                fmt += format_array(key, arr, "Points")
+                fmt += format_array(key, arr, 'Points')
             for key, arr in self.cell_data.items():
-                fmt += format_array(key, arr, "Cells")
+                fmt += format_array(key, arr, 'Cells')
             for key, arr in self.field_data.items():
-                fmt += format_array(key, arr, "Fields")
+                fmt += format_array(key, arr, 'Fields')
 
-            fmt += "</table>\n"
-            fmt += "\n"
-            fmt += "</td></tr> </table>"
+            fmt += '</table>\n'
+            fmt += '\n'
+            fmt += '</td></tr> </table>'
         return fmt
 
     def __repr__(self) -> str:
@@ -2303,8 +2303,8 @@ class DataSet(DataSetFilters, DataObject):
         # Allow child classes to overwrite parent classes
         if not isinstance(self, type(mesh)):
             raise TypeError(
-                f"The Input DataSet type {type(mesh)} must be "
-                f"compatible with the one being overwritten {type(self)}",
+                f'The Input DataSet type {type(mesh)} must be '
+                f'compatible with the one being overwritten {type(self)}',
             )
         if deep:
             self.deep_copy(mesh)
@@ -2482,11 +2482,11 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if not isinstance(point, (np.ndarray, Sequence)) or len(point) != 3:
-            raise TypeError("Given point must be a length three sequence.")
+            raise TypeError('Given point must be a length three sequence.')
         if not isinstance(n, int):
-            raise TypeError("`n` must be a positive integer.")
+            raise TypeError('`n` must be a positive integer.')
         if n < 1:
-            raise ValueError("`n` must be a positive integer.")
+            raise ValueError('`n` must be a positive integer.')
 
         locator = _vtk.vtkPointLocator()
         locator.SetDataSet(self)
@@ -2745,9 +2745,9 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if np.array(pointa).size != 3:
-            raise TypeError("Point A must be a length three tuple of floats.")
+            raise TypeError('Point A must be a length three tuple of floats.')
         if np.array(pointb).size != 3:
-            raise TypeError("Point B must be a length three tuple of floats.")
+            raise TypeError('Point B must be a length three tuple of floats.')
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
@@ -2805,12 +2805,12 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if pyvista.vtk_version_info < (9, 2, 0):
-            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.2.0")
+            raise VTKVersionError('pyvista.PointSet requires VTK >= 9.2.0')
 
         if np.array(pointa).size != 3:
-            raise TypeError("Point A must be a length three tuple of floats.")
+            raise TypeError('Point A must be a length three tuple of floats.')
         if np.array(pointb).size != 3:
-            raise TypeError("Point B must be a length three tuple of floats.")
+            raise TypeError('Point B must be a length three tuple of floats.')
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(cast(_vtk.vtkDataSet, self))
         locator.BuildLocator()
@@ -2858,7 +2858,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if np.array(bounds).size != 6:
-            raise TypeError("Bounds must be a length six tuple of floats.")
+            raise TypeError('Bounds must be a length six tuple of floats.')
         locator = _vtk.vtkCellTreeLocator()
         locator.SetDataSet(cast(_vtk.vtkDataSet, self))
         locator.BuildLocator()
@@ -2922,7 +2922,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         # must check upper bounds, otherwise segfaults (on Linux, 9.2)
         if index + 1 > self.n_cells:
-            raise IndexError(f"Invalid index {index} for a dataset with {self.n_cells} cells.")
+            raise IndexError(f'Invalid index {index} for a dataset with {self.n_cells} cells.')
 
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
@@ -2965,7 +2965,7 @@ class DataSet(DataSetFilters, DataObject):
         for i in range(self.n_cells):
             yield self.get_cell(i)
 
-    def cell_neighbors(self, ind: int, connections: str = "points") -> list[int]:
+    def cell_neighbors(self, ind: int, connections: str = 'points') -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
         Concrete implementation of vtkDataSet's `GetCellNeighbors
@@ -3073,33 +3073,33 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if isinstance(self, _vtk.vtkExplicitStructuredGrid):
-            raise TypeError("For an ExplicitStructuredGrid, use the `neighbors` method")
+            raise TypeError('For an ExplicitStructuredGrid, use the `neighbors` method')
 
         # Build links as recommended:
         # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
-        if hasattr(self, "BuildLinks"):
+        if hasattr(self, 'BuildLinks'):
             self.BuildLinks()
 
-        needed = ["points", "edges", "faces"]
+        needed = ['points', 'edges', 'faces']
         if connections not in needed:
             raise ValueError(f'`connections` must be one of: {needed} (got "{connections}")')
 
         cell = self.get_cell(ind)
 
         iterators = {
-            "points": cell.point_ids,
-            "edges": range(cell.n_edges),
-            "faces": range(cell.n_faces),
+            'points': cell.point_ids,
+            'edges': range(cell.n_edges),
+            'faces': range(cell.n_faces),
         }
 
         def generate_ids(i: int, connections: str):  # numpydoc ignore=GL08
-            if connections == "points":
+            if connections == 'points':
                 ids = _vtk.vtkIdList()
                 ids.InsertNextId(i)
                 return ids
-            elif connections == "edges":
+            elif connections == 'edges':
                 return cell.get_edge(i).GetPointIds()
-            elif connections == "faces":
+            elif connections == 'faces':
                 return cell.get_face(i).GetPointIds()
             return None  # pragma: no cover
 
@@ -3163,7 +3163,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if ind + 1 > self.n_points:
-            raise IndexError(f"Invalid index {ind} for a dataset with {self.n_points} points.")
+            raise IndexError(f'Invalid index {ind} for a dataset with {self.n_points} points.')
 
         out = []
         for cell in self.point_cell_ids(ind):
@@ -3251,7 +3251,7 @@ class DataSet(DataSetFilters, DataObject):
     def cell_neighbors_levels(
         self,
         ind: int,
-        connections: str = "points",
+        connections: str = 'points',
         n_levels: int = 1,
     ) -> Generator[list[int], None, None]:
         """Get consecutive levels of cell neighbors.
@@ -3439,7 +3439,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         # Build links as recommended:
         # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
-        if hasattr(self, "BuildLinks"):
+        if hasattr(self, 'BuildLinks'):
             self.BuildLinks()
 
         ids = _vtk.vtkIdList()
@@ -3480,10 +3480,10 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if not isinstance(ind, (int, np.integer)):
-            raise TypeError(f"ind must be an int, got {type(ind)}")
+            raise TypeError(f'ind must be an int, got {type(ind)}')
 
         if not 0 <= ind < self.n_cells:
-            raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
+            raise ValueError(f'ind must be >= 0 and < {self.n_cells}, got {ind}')
 
         co_point, singular = _coerce_pointslike_arg(point, copy=False)
 
@@ -3501,7 +3501,7 @@ class DataSet(DataSetFilters, DataObject):
             is_inside = cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights)
             if not 0 <= is_inside <= 1:
                 raise RuntimeError(
-                    f"Computational difficulty encountered for point {node} in cell {ind}",
+                    f'Computational difficulty encountered for point {node} in cell {ind}',
                 )
             in_cell[i] = bool(is_inside)
 

@@ -35,7 +35,7 @@ surface = surfaces[0].copy()
 
 # %%
 
-filename = "isovalue.gif"
+filename = 'isovalue.gif'
 
 plotter = pv.Plotter(off_screen=True)
 # Open a movie file
@@ -49,7 +49,7 @@ plotter.add_mesh(
     show_scalar_bar=False,
 )
 # Add outline for reference
-plotter.add_mesh(vol.outline_corners(), color="k")
+plotter.add_mesh(vol.outline_corners(), color='k')
 
 print('Orient the view, then press "q" to close window and produce movie')
 plotter.camera_position = [

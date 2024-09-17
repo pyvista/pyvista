@@ -34,7 +34,7 @@ import numpy.typing as npt
 
 # Define numeric types
 NumberType = TypeVar(
-    "NumberType",
+    'NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
 NumberType.__doc__ = """Type variable for numeric data types."""
@@ -42,7 +42,7 @@ NumberType.__doc__ = """Type variable for numeric data types."""
 # Create a copy of the typevar which can be used for annotating a second variable.
 # Its definition should be identical to `NumberType`
 _NumberType = TypeVar(  # noqa: PYI018
-    "_NumberType",
+    '_NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
 

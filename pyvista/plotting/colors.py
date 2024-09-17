@@ -37,447 +37,447 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing import ColorLike
 
 IPYGANY_MAP = {
-    "reds": "Reds",
-    "spectral": "Spectral",
+    'reds': 'Reds',
+    'spectral': 'Spectral',
 }
 
 # Following colors are copied from matplotlib.colors, synonyms (colors with a
 # different name but same hex value) are removed and put in the `color_synonyms`
 # dictionary. An extra `paraview_background` color is added.
 hexcolors = {
-    "aliceblue": "#F0F8FF",
-    "antiquewhite": "#FAEBD7",
-    "aquamarine": "#7FFFD4",
-    "azure": "#F0FFFF",
-    "beige": "#F5F5DC",
-    "bisque": "#FFE4C4",
-    "black": "#000000",
-    "blanchedalmond": "#FFEBCD",
-    "blue": "#0000FF",
-    "blueviolet": "#8A2BE2",
-    "brown": "#A52A2A",
-    "burlywood": "#DEB887",
-    "cadetblue": "#5F9EA0",
-    "chartreuse": "#7FFF00",
-    "chocolate": "#D2691E",
-    "coral": "#FF7F50",
-    "cornflowerblue": "#6495ED",
-    "cornsilk": "#FFF8DC",
-    "crimson": "#DC143C",
-    "cyan": "#00FFFF",
-    "darkblue": "#00008B",
-    "darkcyan": "#008B8B",
-    "darkgoldenrod": "#B8860B",
-    "darkgray": "#A9A9A9",
-    "darkgreen": "#006400",
-    "darkkhaki": "#BDB76B",
-    "darkmagenta": "#8B008B",
-    "darkolivegreen": "#556B2F",
-    "darkorange": "#FF8C00",
-    "darkorchid": "#9932CC",
-    "darkred": "#8B0000",
-    "darksalmon": "#E9967A",
-    "darkseagreen": "#8FBC8F",
-    "darkslateblue": "#483D8B",
-    "darkslategray": "#2F4F4F",
-    "darkturquoise": "#00CED1",
-    "darkviolet": "#9400D3",
-    "deeppink": "#FF1493",
-    "deepskyblue": "#00BFFF",
-    "dimgray": "#696969",
-    "dodgerblue": "#1E90FF",
-    "firebrick": "#B22222",
-    "floralwhite": "#FFFAF0",
-    "forestgreen": "#228B22",
-    "gainsboro": "#DCDCDC",
-    "ghostwhite": "#F8F8FF",
-    "gold": "#FFD700",
-    "goldenrod": "#DAA520",
-    "gray": "#808080",
-    "green": "#008000",
-    "greenyellow": "#ADFF2F",
-    "honeydew": "#F0FFF0",
-    "hotpink": "#FF69B4",
-    "indianred": "#CD5C5C",
-    "indigo": "#4B0082",
-    "ivory": "#FFFFF0",
-    "khaki": "#F0E68C",
-    "lavender": "#E6E6FA",
-    "lavenderblush": "#FFF0F5",
-    "lawngreen": "#7CFC00",
-    "lemonchiffon": "#FFFACD",
-    "lightblue": "#ADD8E6",
-    "lightcoral": "#F08080",
-    "lightcyan": "#E0FFFF",
-    "lightgoldenrodyellow": "#FAFAD2",
-    "lightgray": "#D3D3D3",
-    "lightgreen": "#90EE90",
-    "lightpink": "#FFB6C1",
-    "lightsalmon": "#FFA07A",
-    "lightseagreen": "#20B2AA",
-    "lightskyblue": "#87CEFA",
-    "lightslategray": "#778899",
-    "lightsteelblue": "#B0C4DE",
-    "lightyellow": "#FFFFE0",
-    "lime": "#00FF00",
-    "limegreen": "#32CD32",
-    "linen": "#FAF0E6",
-    "magenta": "#FF00FF",
-    "maroon": "#800000",
-    "mediumaquamarine": "#66CDAA",
-    "mediumblue": "#0000CD",
-    "mediumorchid": "#BA55D3",
-    "mediumpurple": "#9370DB",
-    "mediumseagreen": "#3CB371",
-    "mediumslateblue": "#7B68EE",
-    "mediumspringgreen": "#00FA9A",
-    "mediumturquoise": "#48D1CC",
-    "mediumvioletred": "#C71585",
-    "midnightblue": "#191970",
-    "mintcream": "#F5FFFA",
-    "mistyrose": "#FFE4E1",
-    "moccasin": "#FFE4B5",
-    "navajowhite": "#FFDEAD",
-    "navy": "#000080",
-    "oldlace": "#FDF5E6",
-    "olive": "#808000",
-    "olivedrab": "#6B8E23",
-    "orange": "#FFA500",
-    "orangered": "#FF4500",
-    "orchid": "#DA70D6",
-    "palegoldenrod": "#EEE8AA",
-    "palegreen": "#98FB98",
-    "paleturquoise": "#AFEEEE",
-    "palevioletred": "#DB7093",
-    "papayawhip": "#FFEFD5",
-    "paraview_background": "#52576e",
-    "peachpuff": "#FFDAB9",
-    "peru": "#CD853F",
-    "pink": "#FFC0CB",
-    "plum": "#DDA0DD",
-    "powderblue": "#B0E0E6",
-    "purple": "#800080",
-    "raw_sienna": "#965434",
-    "rebeccapurple": "#663399",
-    "red": "#FF0000",
-    "rosybrown": "#BC8F8F",
-    "royalblue": "#4169E1",
-    "saddlebrown": "#8B4513",
-    "salmon": "#FA8072",
-    "sandybrown": "#F4A460",
-    "seagreen": "#2E8B57",
-    "seashell": "#FFF5EE",
-    "sienna": "#A0522D",
-    "silver": "#C0C0C0",
-    "skyblue": "#87CEEB",
-    "slateblue": "#6A5ACD",
-    "slategray": "#708090",
-    "snow": "#FFFAFA",
-    "springgreen": "#00FF7F",
-    "steelblue": "#4682B4",
-    "tan": "#D2B48C",
-    "teal": "#008080",
-    "thistle": "#D8BFD8",
-    "tomato": "#FF6347",
-    "turquoise": "#40E0D0",
-    "violet": "#EE82EE",
-    "wheat": "#F5DEB3",
-    "white": "#FFFFFF",
-    "whitesmoke": "#F5F5F5",
-    "yellow": "#FFFF00",
-    "yellowgreen": "#9ACD32",
-    "tab:blue": "#1f77b4",
-    "tab:orange": "#ff7f0e",
-    "tab:green": "#2ca02c",
-    "tab:red": "#d62728",
-    "tab:purple": "#9467bd",
-    "tab:brown": "#8c564b",
-    "tab:pink": "#e377c2",
-    "tab:gray": "#7f7f7f",
-    "tab:olive": "#bcbd22",
-    "tab:cyan": "#17becf",
+    'aliceblue': '#F0F8FF',
+    'antiquewhite': '#FAEBD7',
+    'aquamarine': '#7FFFD4',
+    'azure': '#F0FFFF',
+    'beige': '#F5F5DC',
+    'bisque': '#FFE4C4',
+    'black': '#000000',
+    'blanchedalmond': '#FFEBCD',
+    'blue': '#0000FF',
+    'blueviolet': '#8A2BE2',
+    'brown': '#A52A2A',
+    'burlywood': '#DEB887',
+    'cadetblue': '#5F9EA0',
+    'chartreuse': '#7FFF00',
+    'chocolate': '#D2691E',
+    'coral': '#FF7F50',
+    'cornflowerblue': '#6495ED',
+    'cornsilk': '#FFF8DC',
+    'crimson': '#DC143C',
+    'cyan': '#00FFFF',
+    'darkblue': '#00008B',
+    'darkcyan': '#008B8B',
+    'darkgoldenrod': '#B8860B',
+    'darkgray': '#A9A9A9',
+    'darkgreen': '#006400',
+    'darkkhaki': '#BDB76B',
+    'darkmagenta': '#8B008B',
+    'darkolivegreen': '#556B2F',
+    'darkorange': '#FF8C00',
+    'darkorchid': '#9932CC',
+    'darkred': '#8B0000',
+    'darksalmon': '#E9967A',
+    'darkseagreen': '#8FBC8F',
+    'darkslateblue': '#483D8B',
+    'darkslategray': '#2F4F4F',
+    'darkturquoise': '#00CED1',
+    'darkviolet': '#9400D3',
+    'deeppink': '#FF1493',
+    'deepskyblue': '#00BFFF',
+    'dimgray': '#696969',
+    'dodgerblue': '#1E90FF',
+    'firebrick': '#B22222',
+    'floralwhite': '#FFFAF0',
+    'forestgreen': '#228B22',
+    'gainsboro': '#DCDCDC',
+    'ghostwhite': '#F8F8FF',
+    'gold': '#FFD700',
+    'goldenrod': '#DAA520',
+    'gray': '#808080',
+    'green': '#008000',
+    'greenyellow': '#ADFF2F',
+    'honeydew': '#F0FFF0',
+    'hotpink': '#FF69B4',
+    'indianred': '#CD5C5C',
+    'indigo': '#4B0082',
+    'ivory': '#FFFFF0',
+    'khaki': '#F0E68C',
+    'lavender': '#E6E6FA',
+    'lavenderblush': '#FFF0F5',
+    'lawngreen': '#7CFC00',
+    'lemonchiffon': '#FFFACD',
+    'lightblue': '#ADD8E6',
+    'lightcoral': '#F08080',
+    'lightcyan': '#E0FFFF',
+    'lightgoldenrodyellow': '#FAFAD2',
+    'lightgray': '#D3D3D3',
+    'lightgreen': '#90EE90',
+    'lightpink': '#FFB6C1',
+    'lightsalmon': '#FFA07A',
+    'lightseagreen': '#20B2AA',
+    'lightskyblue': '#87CEFA',
+    'lightslategray': '#778899',
+    'lightsteelblue': '#B0C4DE',
+    'lightyellow': '#FFFFE0',
+    'lime': '#00FF00',
+    'limegreen': '#32CD32',
+    'linen': '#FAF0E6',
+    'magenta': '#FF00FF',
+    'maroon': '#800000',
+    'mediumaquamarine': '#66CDAA',
+    'mediumblue': '#0000CD',
+    'mediumorchid': '#BA55D3',
+    'mediumpurple': '#9370DB',
+    'mediumseagreen': '#3CB371',
+    'mediumslateblue': '#7B68EE',
+    'mediumspringgreen': '#00FA9A',
+    'mediumturquoise': '#48D1CC',
+    'mediumvioletred': '#C71585',
+    'midnightblue': '#191970',
+    'mintcream': '#F5FFFA',
+    'mistyrose': '#FFE4E1',
+    'moccasin': '#FFE4B5',
+    'navajowhite': '#FFDEAD',
+    'navy': '#000080',
+    'oldlace': '#FDF5E6',
+    'olive': '#808000',
+    'olivedrab': '#6B8E23',
+    'orange': '#FFA500',
+    'orangered': '#FF4500',
+    'orchid': '#DA70D6',
+    'palegoldenrod': '#EEE8AA',
+    'palegreen': '#98FB98',
+    'paleturquoise': '#AFEEEE',
+    'palevioletred': '#DB7093',
+    'papayawhip': '#FFEFD5',
+    'paraview_background': '#52576e',
+    'peachpuff': '#FFDAB9',
+    'peru': '#CD853F',
+    'pink': '#FFC0CB',
+    'plum': '#DDA0DD',
+    'powderblue': '#B0E0E6',
+    'purple': '#800080',
+    'raw_sienna': '#965434',
+    'rebeccapurple': '#663399',
+    'red': '#FF0000',
+    'rosybrown': '#BC8F8F',
+    'royalblue': '#4169E1',
+    'saddlebrown': '#8B4513',
+    'salmon': '#FA8072',
+    'sandybrown': '#F4A460',
+    'seagreen': '#2E8B57',
+    'seashell': '#FFF5EE',
+    'sienna': '#A0522D',
+    'silver': '#C0C0C0',
+    'skyblue': '#87CEEB',
+    'slateblue': '#6A5ACD',
+    'slategray': '#708090',
+    'snow': '#FFFAFA',
+    'springgreen': '#00FF7F',
+    'steelblue': '#4682B4',
+    'tan': '#D2B48C',
+    'teal': '#008080',
+    'thistle': '#D8BFD8',
+    'tomato': '#FF6347',
+    'turquoise': '#40E0D0',
+    'violet': '#EE82EE',
+    'wheat': '#F5DEB3',
+    'white': '#FFFFFF',
+    'whitesmoke': '#F5F5F5',
+    'yellow': '#FFFF00',
+    'yellowgreen': '#9ACD32',
+    'tab:blue': '#1f77b4',
+    'tab:orange': '#ff7f0e',
+    'tab:green': '#2ca02c',
+    'tab:red': '#d62728',
+    'tab:purple': '#9467bd',
+    'tab:brown': '#8c564b',
+    'tab:pink': '#e377c2',
+    'tab:gray': '#7f7f7f',
+    'tab:olive': '#bcbd22',
+    'tab:cyan': '#17becf',
 }
 
 color_names = {h.lower(): n for n, h in hexcolors.items()}
 
 color_char_to_word = {
-    "b": "blue",
-    "g": "green",
-    "r": "red",
-    "c": "cyan",
-    "m": "magenta",
-    "y": "yellow",
-    "k": "black",
-    "w": "white",
+    'b': 'blue',
+    'g': 'green',
+    'r': 'red',
+    'c': 'cyan',
+    'm': 'magenta',
+    'y': 'yellow',
+    'k': 'black',
+    'w': 'white',
 }
 
 color_synonyms = {
     **color_char_to_word,
-    "aqua": "cyan",
-    "darkgrey": "darkgray",
-    "darkslategrey": "darkslategray",
-    "dimgrey": "dimgray",
-    "fuchsia": "magenta",
-    "grey": "gray",
-    "lightgrey": "lightgray",
-    "lightslategrey": "lightslategray",
-    "pv": "paraview_background",
-    "paraview": "paraview_background",
-    "slategrey": "slategray",
+    'aqua': 'cyan',
+    'darkgrey': 'darkgray',
+    'darkslategrey': 'darkslategray',
+    'dimgrey': 'dimgray',
+    'fuchsia': 'magenta',
+    'grey': 'gray',
+    'lightgrey': 'lightgray',
+    'lightslategrey': 'lightslategray',
+    'pv': 'paraview_background',
+    'paraview': 'paraview_background',
+    'slategrey': 'slategray',
 }
 
 matplotlib_default_colors = [
-    "#1f77b4",
-    "#ff7f0e",
-    "#2ca02c",
-    "#d62728",
-    "#9467bd",
-    "#8c564b",
-    "#e377c2",
-    "#7f7f7f",
-    "#bcbd22",
-    "#17becf",
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
 ]
 
 COLOR_SCHEMES = {
-    "spectrum": {
-        "id": _vtk.vtkColorSeries.SPECTRUM,
-        "descr": "black, red, blue, green, purple, orange, brown",
+    'spectrum': {
+        'id': _vtk.vtkColorSeries.SPECTRUM,
+        'descr': 'black, red, blue, green, purple, orange, brown',
     },
-    "warm": {"id": _vtk.vtkColorSeries.WARM, "descr": "dark red → yellow"},
-    "cool": {"id": _vtk.vtkColorSeries.COOL, "descr": "green → blue → purple"},
-    "blues": {"id": _vtk.vtkColorSeries.BLUES, "descr": "Different shades of blue"},
-    "wild_flower": {"id": _vtk.vtkColorSeries.WILD_FLOWER, "descr": "blue → purple → pink"},
-    "citrus": {"id": _vtk.vtkColorSeries.CITRUS, "descr": "green → yellow → orange"},
-    "div_purple_orange11": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
-        "descr": "dark brown → white → dark purple",
+    'warm': {'id': _vtk.vtkColorSeries.WARM, 'descr': 'dark red → yellow'},
+    'cool': {'id': _vtk.vtkColorSeries.COOL, 'descr': 'green → blue → purple'},
+    'blues': {'id': _vtk.vtkColorSeries.BLUES, 'descr': 'Different shades of blue'},
+    'wild_flower': {'id': _vtk.vtkColorSeries.WILD_FLOWER, 'descr': 'blue → purple → pink'},
+    'citrus': {'id': _vtk.vtkColorSeries.CITRUS, 'descr': 'green → yellow → orange'},
+    'div_purple_orange11': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_11,
+        'descr': 'dark brown → white → dark purple',
     },
-    "div_purple_orange10": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10,
-        "descr": "dark brown → white → dark purple",
+    'div_purple_orange10': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_10,
+        'descr': 'dark brown → white → dark purple',
     },
-    "div_purple_orange9": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9,
-        "descr": "brown → white → purple",
+    'div_purple_orange9': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_9,
+        'descr': 'brown → white → purple',
     },
-    "div_purple_orange8": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8,
-        "descr": "brown → white → purple",
+    'div_purple_orange8': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_8,
+        'descr': 'brown → white → purple',
     },
-    "div_purple_orange7": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7,
-        "descr": "brown → white → purple",
+    'div_purple_orange7': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_7,
+        'descr': 'brown → white → purple',
     },
-    "div_purple_orange6": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6,
-        "descr": "brown → white → purple",
+    'div_purple_orange6': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_6,
+        'descr': 'brown → white → purple',
     },
-    "div_purple_orange5": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5,
-        "descr": "orange → white → purple",
+    'div_purple_orange5': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_5,
+        'descr': 'orange → white → purple',
     },
-    "div_purple_orange4": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4,
-        "descr": "orange → white → purple",
+    'div_purple_orange4': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_4,
+        'descr': 'orange → white → purple',
     },
-    "div_purple_orange3": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3,
-        "descr": "orange → white → purple",
+    'div_purple_orange3': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_PURPLE_ORANGE_3,
+        'descr': 'orange → white → purple',
     },
-    "div_spectral11": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11,
-        "descr": "dark red → light yellow → dark blue",
+    'div_spectral11': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_11,
+        'descr': 'dark red → light yellow → dark blue',
     },
-    "div_spectral10": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10,
-        "descr": "dark red → light yellow → dark blue",
+    'div_spectral10': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_10,
+        'descr': 'dark red → light yellow → dark blue',
     },
-    "div_spectral9": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9,
-        "descr": "red → light yellow → blue",
+    'div_spectral9': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_9,
+        'descr': 'red → light yellow → blue',
     },
-    "div_spectral8": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8,
-        "descr": "red → light yellow → blue",
+    'div_spectral8': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_8,
+        'descr': 'red → light yellow → blue',
     },
-    "div_spectral7": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7,
-        "descr": "red → light yellow → blue",
+    'div_spectral7': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_7,
+        'descr': 'red → light yellow → blue',
     },
-    "div_spectral6": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6,
-        "descr": "red → light yellow → blue",
+    'div_spectral6': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_6,
+        'descr': 'red → light yellow → blue',
     },
-    "div_spectral5": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5,
-        "descr": "red → light yellow → blue",
+    'div_spectral5': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_5,
+        'descr': 'red → light yellow → blue',
     },
-    "div_spectral4": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4,
-        "descr": "red → light yellow → blue",
+    'div_spectral4': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_4,
+        'descr': 'red → light yellow → blue',
     },
-    "div_spectral3": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3,
-        "descr": "orange → light yellow → green",
+    'div_spectral3': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_SPECTRAL_3,
+        'descr': 'orange → light yellow → green',
     },
-    "div_brown_blue_green11": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11,
-        "descr": "dark brown → white → dark blue-green",
+    'div_brown_blue_green11': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_11,
+        'descr': 'dark brown → white → dark blue-green',
     },
-    "div_brown_blue_green10": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10,
-        "descr": "dark brown → white → dark blue-green",
+    'div_brown_blue_green10': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_10,
+        'descr': 'dark brown → white → dark blue-green',
     },
-    "div_brown_blue_green9": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9,
-        "descr": "brown → white → blue-green",
+    'div_brown_blue_green9': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_9,
+        'descr': 'brown → white → blue-green',
     },
-    "div_brown_blue_green8": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8,
-        "descr": "brown → white → blue-green",
+    'div_brown_blue_green8': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_8,
+        'descr': 'brown → white → blue-green',
     },
-    "div_brown_blue_green7": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7,
-        "descr": "brown → white → blue-green",
+    'div_brown_blue_green7': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_7,
+        'descr': 'brown → white → blue-green',
     },
-    "div_brown_blue_green6": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6,
-        "descr": "brown → white → blue-green",
+    'div_brown_blue_green6': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_6,
+        'descr': 'brown → white → blue-green',
     },
-    "div_brown_blue_green5": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5,
-        "descr": "brown → white → blue-green",
+    'div_brown_blue_green5': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_5,
+        'descr': 'brown → white → blue-green',
     },
-    "div_brown_blue_green4": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4,
-        "descr": "brown → white → blue-green",
+    'div_brown_blue_green4': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_4,
+        'descr': 'brown → white → blue-green',
     },
-    "div_brown_blue_green3": {
-        "id": _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3,
-        "descr": "brown → white → blue-green",
+    'div_brown_blue_green3': {
+        'id': _vtk.vtkColorSeries.BREWER_DIVERGING_BROWN_BLUE_GREEN_3,
+        'descr': 'brown → white → blue-green',
     },
-    "seq_blue_green9": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9,
-        "descr": "light blue → dark green",
+    'seq_blue_green9': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_9,
+        'descr': 'light blue → dark green',
     },
-    "seq_blue_green8": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8,
-        "descr": "light blue → dark green",
+    'seq_blue_green8': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_8,
+        'descr': 'light blue → dark green',
     },
-    "seq_blue_green7": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7,
-        "descr": "light blue → dark green",
+    'seq_blue_green7': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_7,
+        'descr': 'light blue → dark green',
     },
-    "seq_blue_green6": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6,
-        "descr": "light blue → green",
+    'seq_blue_green6': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_6,
+        'descr': 'light blue → green',
     },
-    "seq_blue_green5": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5,
-        "descr": "light blue → green",
+    'seq_blue_green5': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_5,
+        'descr': 'light blue → green',
     },
-    "seq_blue_green4": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4,
-        "descr": "light blue → green",
+    'seq_blue_green4': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_4,
+        'descr': 'light blue → green',
     },
-    "seq_blue_green3": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3,
-        "descr": "light blue → green",
+    'seq_blue_green3': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_GREEN_3,
+        'descr': 'light blue → green',
     },
-    "seq_yellow_orange_brown9": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9,
-        "descr": "light yellow → orange → dark brown",
+    'seq_yellow_orange_brown9': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_9,
+        'descr': 'light yellow → orange → dark brown',
     },
-    "seq_yellow_orange_brown8": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8,
-        "descr": "light yellow → orange → brown",
+    'seq_yellow_orange_brown8': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_8,
+        'descr': 'light yellow → orange → brown',
     },
-    "seq_yellow_orange_brown7": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7,
-        "descr": "light yellow → orange → brown",
+    'seq_yellow_orange_brown7': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_7,
+        'descr': 'light yellow → orange → brown',
     },
-    "seq_yellow_orange_brown6": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6,
-        "descr": "light yellow → orange → brown",
+    'seq_yellow_orange_brown6': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_6,
+        'descr': 'light yellow → orange → brown',
     },
-    "seq_yellow_orange_brown5": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5,
-        "descr": "light yellow → orange → brown",
+    'seq_yellow_orange_brown5': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_5,
+        'descr': 'light yellow → orange → brown',
     },
-    "seq_yellow_orange_brown4": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4,
-        "descr": "light yellow → orange",
+    'seq_yellow_orange_brown4': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_4,
+        'descr': 'light yellow → orange',
     },
-    "seq_yellow_orange_brown3": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3,
-        "descr": "light yellow → orange",
+    'seq_yellow_orange_brown3': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_YELLOW_ORANGE_BROWN_3,
+        'descr': 'light yellow → orange',
     },
-    "seq_blue_purple9": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9,
-        "descr": "light blue → dark purple",
+    'seq_blue_purple9': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_9,
+        'descr': 'light blue → dark purple',
     },
-    "seq_blue_purple8": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8,
-        "descr": "light blue → purple",
+    'seq_blue_purple8': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_8,
+        'descr': 'light blue → purple',
     },
-    "seq_blue_purple7": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7,
-        "descr": "light blue → purple",
+    'seq_blue_purple7': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_7,
+        'descr': 'light blue → purple',
     },
-    "seq_blue_purple6": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6,
-        "descr": "light blue → purple",
+    'seq_blue_purple6': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_6,
+        'descr': 'light blue → purple',
     },
-    "seq_blue_purple5": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5,
-        "descr": "light blue → purple",
+    'seq_blue_purple5': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_5,
+        'descr': 'light blue → purple',
     },
-    "seq_blue_purple4": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4,
-        "descr": "light blue → purple",
+    'seq_blue_purple4': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_4,
+        'descr': 'light blue → purple',
     },
-    "seq_blue_purple3": {
-        "id": _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3,
-        "descr": "light blue → purple",
+    'seq_blue_purple3': {
+        'id': _vtk.vtkColorSeries.BREWER_SEQUENTIAL_BLUE_PURPLE_3,
+        'descr': 'light blue → purple',
     },
-    "qual_accent": {
-        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
-        "descr": "pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray",
+    'qual_accent': {
+        'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_ACCENT,
+        'descr': 'pastel green, pastel purple, pastel orange, pastel yellow, blue, pink, brown, gray',
     },
-    "qual_dark2": {
-        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
-        "descr": "darker shade of qual_set2",
+    'qual_dark2': {
+        'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_DARK2,
+        'descr': 'darker shade of qual_set2',
     },
-    "qual_set3": {
-        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
-        "descr": "pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow",
+    'qual_set3': {
+        'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET3,
+        'descr': 'pastel colors: blue green, light yellow, dark purple, red, blue, orange, green, pink, gray, purple, light green, yellow',
     },
-    "qual_set2": {
-        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
-        "descr": "blue green, orange, purple, pink, green, yellow, brown, gray",
+    'qual_set2': {
+        'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET2,
+        'descr': 'blue green, orange, purple, pink, green, yellow, brown, gray',
     },
-    "qual_set1": {
-        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1,
-        "descr": "red, blue, green, purple, orange, yellow, brown, pink, gray",
+    'qual_set1': {
+        'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_SET1,
+        'descr': 'red, blue, green, purple, orange, yellow, brown, pink, gray',
     },
-    "qual_pastel2": {
-        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2,
-        "descr": "pastel shade of qual_set2",
+    'qual_pastel2': {
+        'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL2,
+        'descr': 'pastel shade of qual_set2',
     },
-    "qual_pastel1": {
-        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1,
-        "descr": "pastel shade of qual_set1",
+    'qual_pastel1': {
+        'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_PASTEL1,
+        'descr': 'pastel shade of qual_set1',
     },
-    "qual_paired": {
-        "id": _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
-        "descr": "light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow",
+    'qual_paired': {
+        'id': _vtk.vtkColorSeries.BREWER_QUALITATIVE_PAIRED,
+        'descr': 'light blue, blue, light green, green, light red, red, light orange, orange, light purple, purple, light yellow',
     },
-    "custom": {"id": _vtk.vtkColorSeries.CUSTOM, "descr": None},
+    'custom': {'id': _vtk.vtkColorSeries.CUSTOM, 'descr': None},
 }
 
 SCHEME_NAMES = {
-    scheme_info["id"]: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()
+    scheme_info['id']: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()
 }
 
 
@@ -555,10 +555,10 @@ class Color:
 
     # Supported names for each color channel.
     CHANNEL_NAMES = (
-        {"red", "r"},  # 0
-        {"green", "g"},  # 1
-        {"blue", "b"},  # 2
-        {"alpha", "a", "opacity"},  # 3
+        {'red', 'r'},  # 0
+        {'green', 'g'},  # 1
+        {'blue', 'b'},  # 2
+        {'alpha', 'a', 'opacity'},  # 3
     )
 
     def __init__(
@@ -594,17 +594,17 @@ class Color:
                 # From vtkColor3ub instance (can be unpacked as rgb tuple)
                 self._from_rgba(color)
             else:
-                raise ValueError(f"Unsupported color type: {type(color)}")
+                raise ValueError(f'Unsupported color type: {type(color)}')
             self._name = color_names.get(self.hex_rgb, None)
         except ValueError as e:
             raise ValueError(
-                "\n"
-                f"\tInvalid color input: ({color})\n"
-                "\tMust be a string, rgb(a) sequence, or hex color string.  For example:\n"
+                '\n'
+                f'\tInvalid color input: ({color})\n'
+                '\tMust be a string, rgb(a) sequence, or hex color string.  For example:\n'
                 "\t\tcolor='white'\n"
                 "\t\tcolor='w'\n"
-                "\t\tcolor=[1.0, 1.0, 1.0]\n"
-                "\t\tcolor=[255, 255, 255]\n"
+                '\t\tcolor=[1.0, 1.0, 1.0]\n'
+                '\t\tcolor=[255, 255, 255]\n'
                 "\t\tcolor='#FFFFFF'",
             ) from e
 
@@ -614,9 +614,9 @@ class Color:
                 self._opacity = self.convert_color_channel(opacity)
         except ValueError as e:
             raise ValueError(
-                "\n"
-                f"\tInvalid opacity input: ({opacity})"
-                "\tMust be an integer, float or string.  For example:\n"
+                '\n'
+                f'\tInvalid opacity input: ({opacity})'
+                '\tMust be an integer, float or string.  For example:\n'
                 "\t\topacity='1.0'\n"
                 "\t\topacity='255'\n"
                 "\t\topacity='#FF'",
@@ -637,8 +637,8 @@ class Color:
             Stripped hexadecimal string.
 
         """
-        h = h.lstrip("#")
-        if h.startswith("0x"):
+        h = h.lstrip('#')
+        if h.startswith('0x'):
             h = h[2:]
         return h
 
@@ -677,7 +677,7 @@ class Color:
             # From integer
             return int(val)
         else:
-            raise ValueError(f"Unsupported color channel value provided: {val}")
+            raise ValueError(f'Unsupported color channel value provided: {val}')
 
     def _from_rgba(self, rgba):
         """Construct color from an RGB(A) sequence."""
@@ -687,12 +687,12 @@ class Color:
             rgba = [*rgba, self._opacity]
         try:
             if len(rgba) != 4:
-                raise ValueError("Invalid length for RGBA sequence.")
+                raise ValueError('Invalid length for RGBA sequence.')
             self._red, self._green, self._blue, self._opacity = (
                 self.convert_color_channel(c) for c in rgba
             )
         except ValueError:
-            raise ValueError(f"Invalid RGB(A) sequence: {arg}") from None
+            raise ValueError(f'Invalid RGB(A) sequence: {arg}') from None
 
     def _from_dict(self, dct):
         """Construct color from an RGB(A) dictionary."""
@@ -709,7 +709,7 @@ class Color:
         try:
             self._from_rgba([self.convert_color_channel(h[i : i + 2]) for i in range(0, len(h), 2)])
         except ValueError:
-            raise ValueError(f"Invalid hex string: {arg}") from None
+            raise ValueError(f'Invalid hex string: {arg}') from None
 
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
@@ -728,7 +728,7 @@ class Color:
             try:
                 self._from_hex(n)
             except ValueError:
-                raise ValueError(f"Invalid color name or hex string: {arg}") from None
+                raise ValueError(f'Invalid color name or hex string: {arg}') from None
 
     @property
     def int_rgba(self) -> tuple[int, int, int, int]:  # numpydoc ignore=RT01
@@ -858,8 +858,8 @@ class Color:
         '#ff000040'
 
         """
-        return "#" + "".join(
-            f"{c:0>2x}" for c in (self._red, self._green, self._blue, self._opacity)
+        return '#' + ''.join(
+            f'{c:0>2x}' for c in (self._red, self._green, self._blue, self._opacity)
         )
 
     @property
@@ -966,7 +966,7 @@ class Color:
 
     def to_dict(self):
         """Convert to dictionary for JSON serialization."""
-        return {"r": self._red, "g": self._green, "b": self._blue, "a": self._opacity}
+        return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
     @property
     def opacity(self):  # numpydoc ignore=RT01
@@ -998,14 +998,14 @@ class Color:
     def __getitem__(self, item):
         """Support indexing the float RGBA representation for backward compatibility."""
         if not isinstance(item, (str, slice, int, np.integer)):
-            raise TypeError("Invalid index specified, only strings and integers are supported.")
+            raise TypeError('Invalid index specified, only strings and integers are supported.')
         if isinstance(item, str):
             for i, cnames in enumerate(self.CHANNEL_NAMES):
                 if item in cnames:
                     item = i
                     break
             else:
-                raise ValueError(f"Invalid string index {item!r}.")
+                raise ValueError(f'Invalid string index {item!r}.')
         return self.float_rgba[item]
 
     def __iter__(self):
@@ -1014,13 +1014,13 @@ class Color:
 
     def __repr__(self):  # pragma: no cover
         """Human readable representation."""
-        kwargs = f"hex={self.hex_rgba!r}, opacity={self.opacity}"
+        kwargs = f'hex={self.hex_rgba!r}, opacity={self.opacity}'
         if self._name is not None:
-            kwargs = f"name={self._name!r}, " + kwargs
-        return f"Color({kwargs})"
+            kwargs = f'name={self._name!r}, ' + kwargs
+        return f'Color({kwargs})'
 
 
-PARAVIEW_BACKGROUND = Color("paraview").float_rgb  # [82, 87, 110] / 255
+PARAVIEW_BACKGROUND = Color('paraview').float_rgb  # [82, 87, 110] / 255
 
 
 def get_cmap_safe(cmap):
@@ -1051,7 +1051,7 @@ def get_cmap_safe(cmap):
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        if has_module("colorcet"):
+        if has_module('colorcet'):
             import colorcet
 
             try:
@@ -1060,7 +1060,7 @@ def get_cmap_safe(cmap):
                 pass
 
         # Try cmocean second
-        if has_module("cmocean"):
+        if has_module('cmocean'):
             import cmocean
 
             try:
@@ -1083,7 +1083,7 @@ def get_cmap_safe(cmap):
     elif isinstance(cmap, list):
         for item in cmap:
             if not isinstance(item, str):
-                raise TypeError("When inputting a list as a cmap, each item should be a string.")
+                raise TypeError('When inputting a list as a cmap, each item should be a string.')
 
         cmap = ListedColormap(cmap)
 
@@ -1099,7 +1099,7 @@ def get_default_cycler():
         A cycler object for color that matches matplotlib's default colors.
 
     """
-    return cycler("color", matplotlib_default_colors)
+    return cycler('color', matplotlib_default_colors)
 
 
 def get_hexcolors_cycler():
@@ -1114,7 +1114,7 @@ def get_hexcolors_cycler():
         ``pyvista.plotting.colors.hexcolors``.
 
     """
-    return cycler("color", hexcolors.keys())
+    return cycler('color', hexcolors.keys())
 
 
 def get_matplotlib_theme_cycler():
@@ -1126,7 +1126,7 @@ def get_matplotlib_theme_cycler():
         Color cycler of the current matplotlib theme.
 
     """
-    return plt.rcParams["axes.prop_cycle"]
+    return plt.rcParams['axes.prop_cycle']
 
 
 def color_scheme_to_cycler(scheme):
@@ -1154,15 +1154,15 @@ def color_scheme_to_cycler(scheme):
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()
         if isinstance(scheme, str):
-            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())["id"])
+            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())['id'])
         elif isinstance(scheme, int):
             series.SetColorScheme(scheme)
         else:
-            raise ValueError(f"Color scheme not understood: {scheme}")
+            raise ValueError(f'Color scheme not understood: {scheme}')
     else:
         series = scheme
     colors = (series.GetColor(i) for i in range(series.GetNumberOfColors()))
-    return cycler("color", colors)
+    return cycler('color', colors)
 
 
 def get_cycler(color_cycler):
@@ -1196,19 +1196,19 @@ def get_cycler(color_cycler):
     if color_cycler is None:
         return None
     elif isinstance(color_cycler, str):
-        if color_cycler == "default":
+        if color_cycler == 'default':
             return get_default_cycler()
-        elif color_cycler == "matplotlib":
+        elif color_cycler == 'matplotlib':
             return get_matplotlib_theme_cycler()
-        elif color_cycler == "all":
+        elif color_cycler == 'all':
             return get_hexcolors_cycler()
         elif color_cycler in COLOR_SCHEMES:
             return color_scheme_to_cycler(color_cycler)
         else:
-            raise ValueError(f"color cycler of name `{color_cycler}` not found.")
+            raise ValueError(f'color cycler of name `{color_cycler}` not found.')
     elif isinstance(color_cycler, (tuple, list)):
-        return cycler("color", color_cycler)
+        return cycler('color', color_cycler)
     elif isinstance(color_cycler, Cycler):
         return color_cycler
     else:
-        raise TypeError(f"color cycler of type {type(color_cycler)} not supported.")
+        raise TypeError(f'color cycler of type {type(color_cycler)} not supported.')

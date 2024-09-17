@@ -46,10 +46,10 @@ class Table(DataObject, _vtk.vtkTable):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
                 self._from_dict(args[0])
-            elif "pandas.core.frame.DataFrame" in str(type(args[0])):
+            elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
                 self._from_pandas(args[0])
             else:
-                raise TypeError(f"Table unable to be made from ({type(args[0])})")
+                raise TypeError(f'Table unable to be made from ({type(args[0])})')
 
     @staticmethod
     def _prepare_arrays(arrays):
@@ -59,17 +59,17 @@ class Table(DataObject, _vtk.vtkTable):
         elif arrays.ndim == 2:
             return arrays.T
         else:
-            raise ValueError("Only 1D or 2D arrays are supported by Tables.")
+            raise ValueError('Only 1D or 2D arrays are supported by Tables.')
 
     def _from_arrays(self, arrays):
         np_table = self._prepare_arrays(arrays)
         for i, array in enumerate(np_table):
-            self.row_arrays[f"Array {i}"] = array
+            self.row_arrays[f'Array {i}'] = array
 
     def _from_dict(self, array_dict):
         for array in array_dict.values():
             if not isinstance(array, np.ndarray) and array.ndim < 3:
-                raise ValueError("Dictionary must contain only NumPy arrays with maximum of 2D.")
+                raise ValueError('Dictionary must contain only NumPy arrays with maximum of 2D.')
         for name, array in array_dict.items():
             self.row_arrays[name] = array
 
@@ -204,7 +204,7 @@ class Table(DataObject, _vtk.vtkTable):
         if isinstance(data, (np.ndarray, list)):
             # Allow table updates using array data
             data = self._prepare_arrays(data)
-            data = {f"Array {i}": array for i, array in enumerate(data)}
+            data = {f'Array {i}': array for i, array in enumerate(data)}
         self.row_arrays.update(data)
         self.Modified()
 
@@ -267,7 +267,7 @@ class Table(DataObject, _vtk.vtkTable):
     def _get_attrs(self):
         """Return the representation methods."""
         attrs = []
-        attrs.append(("N Rows", self.n_rows, "{}"))
+        attrs.append(('N Rows', self.n_rows, '{}'))
         return attrs
 
     def _repr_html_(self):
@@ -276,22 +276,22 @@ class Table(DataObject, _vtk.vtkTable):
         It includes header details and information about all arrays.
 
         """
-        fmt = ""
+        fmt = ''
         if self.n_arrays > 0:
             fmt += "<table style='width: 100%;'>"
-            fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
-            fmt += "<tr><td>"
+            fmt += '<tr><th>Header</th><th>Data Arrays</th></tr>'
+            fmt += '<tr><td>'
         # Get the header info
         fmt += self.head(display=False, html=True)
         # Fill out scalars arrays
         if self.n_arrays > 0:
-            fmt += "</td><td>"
-            fmt += "\n"
+            fmt += '</td><td>'
+            fmt += '\n'
             fmt += "<table style='width: 100%;'>\n"
-            titles = ["Name", "Type", "N Comp", "Min", "Max"]
-            fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
-            row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
-            row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
+            titles = ['Name', 'Type', 'N Comp', 'Min', 'Max']
+            fmt += '<tr>' + ''.join([f'<th>{t}</th>' for t in titles]) + '</tr>\n'
+            row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
+            row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
 
             def format_array(key):
                 """Format array information for printing (internal helper)."""
@@ -306,9 +306,9 @@ class Table(DataObject, _vtk.vtkTable):
                 key = self.GetRowData().GetArrayName(i)
                 fmt += format_array(key)
 
-            fmt += "</table>\n"
-            fmt += "\n"
-            fmt += "</td></tr> </table>"
+            fmt += '</table>\n'
+            fmt += '\n'
+            fmt += '</td></tr> </table>'
         return fmt
 
     def __repr__(self):
@@ -331,7 +331,7 @@ class Table(DataObject, _vtk.vtkTable):
         try:
             import pandas as pd
         except ImportError:  # pragma: no cover
-            raise ImportError("Install ``pandas`` to use this feature.")
+            raise ImportError('Install ``pandas`` to use this feature.')
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array
@@ -346,7 +346,7 @@ class Table(DataObject, _vtk.vtkTable):
     def get_data_range(
         self,
         arr: str | None = None,
-        preference: str = "row",
+        preference: str = 'row',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 

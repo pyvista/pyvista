@@ -49,9 +49,9 @@ x, y, z = grid.points.T
 
 # sample and plot
 values = spider_cage(x, y, z)
-mesh = grid.contour([1], values, method="marching_cubes")
+mesh = grid.contour([1], values, method='marching_cubes')
 dist = np.linalg.norm(mesh.points, axis=1)
-mesh.plot(scalars=dist, smooth_shading=True, cmap="plasma", show_scalar_bar=False)
+mesh.plot(scalars=dist, smooth_shading=True, cmap='plasma', show_scalar_bar=False)
 
 
 # %%
@@ -91,9 +91,9 @@ x, y, z = grid.points.T
 
 # sample and plot
 values = barth_sextic(x, y, z)
-mesh = grid.contour([0], values, method="flying_edges")
+mesh = grid.contour([0], values, method='flying_edges')
 dist = np.linalg.norm(mesh.points, axis=1)
-mesh.plot(scalars=dist, smooth_shading=True, cmap="plasma", show_scalar_bar=False)
+mesh.plot(scalars=dist, smooth_shading=True, cmap='plasma', show_scalar_bar=False)
 
 
 # %%
@@ -109,20 +109,20 @@ def angle_to_range(angle):
 
 pl = pv.Plotter(window_size=[800, 800], off_screen=True)
 
-pl.open_gif("barth_sextic.gif")
+pl.open_gif('barth_sextic.gif')
 
 for angle in np.linspace(0, np.pi, 20, endpoint=False):
     # clear the plotter before adding each frame's mesh
     pl.clear()
     pl.enable_lightkit()
-    mesh = grid.contour([angle_to_range(angle)], values, method="flying_edges")
+    mesh = grid.contour([angle_to_range(angle)], values, method='flying_edges')
     dist = np.linalg.norm(mesh.points, axis=1)
     pl.add_mesh(
         mesh,
         scalars=dist,
         smooth_shading=True,
         rng=[0.5, 1.5],
-        cmap="plasma",
+        cmap='plasma',
         show_scalar_bar=False,
     )
     pl.write_frame()

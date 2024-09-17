@@ -56,7 +56,7 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 
 @pytest.mark.parametrize(
-    "transform_like",
+    'transform_like',
     [
         np.eye(3),
         np.eye(4),
@@ -74,21 +74,21 @@ def test_validate_transform4x4(transform_like):
 
 
 def test_validate_transform4x4_raises():
-    with pytest.raises(ValueError, match=escape("Shape must be one of [(3, 3), (4, 4)].")):
+    with pytest.raises(ValueError, match=escape('Shape must be one of [(3, 3), (4, 4)].')):
         validate_transform4x4(np.array([1, 2, 3]))
-    with pytest.raises(TypeError, match="Input transform must be one of"):
-        validate_transform4x4("abc")
+    with pytest.raises(TypeError, match='Input transform must be one of'):
+        validate_transform4x4('abc')
 
 
 @pytest.mark.parametrize(
-    "transform_like",
+    'transform_like',
     [
         np.eye(3),
         np.eye(3).tolist(),
         vtkmatrix_from_array(np.eye(3)),
         scipy.spatial.transform.Rotation.from_matrix(np.eye(3)),
     ],
-    ids=["numpy", "list", "vtk", "scipy"],
+    ids=['numpy', 'list', 'vtk', 'scipy'],
 )
 def test_validate_transform3x3(transform_like):
     result = validate_transform3x3(transform_like)
@@ -102,7 +102,7 @@ def test_validate_transform3x3_raises():
         validate_transform3x3(np.array([1, 2, 3]))
     match = "Input transform must be one of:\n\tvtkMatrix3x3\n\t3x3 np.ndarray\n\tscipy.spatial.transform.Rotation\nGot 'abc' with type <class 'str'> instead."
     with pytest.raises(TypeError, match=match):
-        validate_transform3x3("abc")
+        validate_transform3x3('abc')
 
 
 def test_check_subdtype():
@@ -110,11 +110,11 @@ def test_check_subdtype():
     check_subdtype(np.dtype(int), np.integer)
     check_subdtype(np.array([1, 2, 3]), np.integer)
     check_subdtype(np.array([1.0, 2, 3]), float)
-    check_subdtype(np.array([1.0, 2, 3], dtype="uint8"), "uint8")
-    check_subdtype(np.array([1.0, 2, 3]), ("uint8", float))
+    check_subdtype(np.array([1.0, 2, 3], dtype='uint8'), 'uint8')
+    check_subdtype(np.array([1.0, 2, 3]), ('uint8', float))
     match = "Input has incorrect dtype of 'int32'. The dtype must be a subtype of <class 'float'>."
     with pytest.raises(TypeError, match=match):
-        check_subdtype(np.array([1, 2, 3]).astype("int32"), float)
+        check_subdtype(np.array([1, 2, 3]).astype('int32'), float)
     match = "Input has incorrect dtype of 'complex128'. The dtype must be a subtype of at least one of \n(<class 'numpy.integer'>, <class 'numpy.floating'>)."
     with pytest.raises(TypeError, match=escape(match)):
         check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
@@ -147,7 +147,7 @@ def test_validate_number():
 
     match = (
         "Parameter 'must_have_shape' cannot be set for function `validate_number`.\n"
-        "Its value is automatically set to `()`."
+        'Its value is automatically set to `()`.'
     )
     with pytest.raises(ValueError, match=escape(match)):
         validate_number(1, must_have_shape=2, reshape=False)
@@ -163,13 +163,13 @@ def test_validate_data_range():
     rng = validate_data_range((-10, -10), to_tuple=False, must_have_shape=2)
     assert type(rng) is np.ndarray
 
-    match = "Data Range with 2 elements must be sorted in ascending order. Got:\n    array([1, 0])"
+    match = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    array([1, 0])'
     with pytest.raises(ValueError, match=escape(match)):
         validate_data_range((1, 0))
 
     match = (
         "Parameter 'must_have_shape' cannot be set for function `validate_data_range`.\n"
-        "Its value is automatically set to `2`."
+        'Its value is automatically set to `2`.'
     )
     with pytest.raises(ValueError, match=match):
         validate_data_range((0, 1), must_have_shape=3)
@@ -177,7 +177,7 @@ def test_validate_data_range():
 
 def test_set_default_kwarg_mandatory():
     default_value = 1
-    default_key = "k"
+    default_key = 'k'
 
     # Test parameter unset
     kwargs = {}
@@ -195,7 +195,7 @@ def test_set_default_kwarg_mandatory():
     kwargs[default_key] = default_value * 2
     match = (
         "Parameter 'k' cannot be set for function `test_set_default_kwarg_mandatory`.\n"
-        "Its value is automatically set to `1`."
+        'Its value is automatically set to `1`.'
     )
     with pytest.raises(ValueError, match=match):
         _set_default_kwarg_mandatory(kwargs, default_key, default_value)
@@ -208,17 +208,17 @@ def test_check_shape():
     check_shape((1, 2, 3), [-1])
     check_shape((1, 2, 3), -1)
 
-    match = "Input has shape (3,) which is not allowed. Shape must be 0."
+    match = 'Input has shape (3,) which is not allowed. Shape must be 0.'
     with pytest.raises(ValueError, match=escape(match)):
-        check_shape((1, 2, 3), 0, name="Input")
+        check_shape((1, 2, 3), 0, name='Input')
 
-    match = "Array has shape (3,) which is not allowed. Shape must be one of [(), (4, 5)]."
+    match = 'Array has shape (3,) which is not allowed. Shape must be one of [(), (4, 5)].'
     with pytest.raises(ValueError, match=escape(match)):
         check_shape((1, 2, 3), [(), (4, 5)])
 
 
 def test_validate_shape_value():
-    match = "`None` is not a valid shape. Use `()` instead."
+    match = '`None` is not a valid shape. Use `()` instead.'
     with pytest.raises(TypeError, match=escape(match)):
         _validate_shape_value(None)
     shape = _validate_shape_value(())
@@ -243,7 +243,7 @@ def test_validate_shape_value():
     with pytest.raises(TypeError, match=escape(match)):
         _validate_shape_value(1.0)
 
-    match = "Shape values must all be greater than or equal to -1."
+    match = 'Shape values must all be greater than or equal to -1.'
     with pytest.raises(ValueError, match=match):
         _validate_shape_value(-2)
 
@@ -252,14 +252,14 @@ def test_validate_shape_value():
         _validate_shape_value(((1, 2), (3, 4)))
 
 
-@pytest.mark.parametrize("reshape", [True, False])
+@pytest.mark.parametrize('reshape', [True, False])
 def test_validate_arrayNx3(reshape):
     arr = validate_arrayNx3((1, 2, 3))
     assert arr.shape == (1, 3)
     assert np.array_equal(arr, [[1, 2, 3]])
 
     if not reshape:
-        match = "Array has shape (3,) which is not allowed. Shape must be (-1, 3)."
+        match = 'Array has shape (3,) which is not allowed. Shape must be (-1, 3).'
         with pytest.raises(ValueError, match=escape(match)):
             validate_arrayNx3((1, 2, 3), reshape=False)
 
@@ -268,18 +268,18 @@ def test_validate_arrayNx3(reshape):
 
     match = (
         "Parameter 'must_have_shape' cannot be set for function `validate_arrayNx3`.\n"
-        "Its value is automatically set to `[3, (-1, 3)]`."
+        'Its value is automatically set to `[3, (-1, 3)]`.'
     )
     with pytest.raises(ValueError, match=escape(match)):
         validate_arrayNx3((1, 2, 3), must_have_shape=1)
-    match = "Array has shape () which is not allowed. Shape must be one of [3, (-1, 3)]."
+    match = 'Array has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
     with pytest.raises(ValueError, match=escape(match)):
         validate_arrayNx3(0)
-    with pytest.raises(ValueError, match="_input"):
-        validate_arrayNx3([1, 2, 3, 4], name="_input")
+    with pytest.raises(ValueError, match='_input'):
+        validate_arrayNx3([1, 2, 3, 4], name='_input')
 
 
-@pytest.mark.parametrize("reshape", [True, False])
+@pytest.mark.parametrize('reshape', [True, False])
 def test_validate_arrayN(reshape):
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN(0)
@@ -292,11 +292,11 @@ def test_validate_arrayN(reshape):
     assert np.array_equal(arr, [1, 2, 3])
 
     if not reshape:
-        match = "Array has shape () which is not allowed. Shape must be -1."
+        match = 'Array has shape () which is not allowed. Shape must be -1.'
         with pytest.raises(ValueError, match=escape(match)):
             validate_arrayN(0, reshape=False)
 
-        match = "Array has shape (1, 3) which is not allowed. Shape must be -1."
+        match = 'Array has shape (1, 3) which is not allowed. Shape must be -1.'
         with pytest.raises(ValueError, match=escape(match)):
             validate_arrayN([[1, 2, 3]], reshape=False)
 
@@ -305,19 +305,19 @@ def test_validate_arrayN(reshape):
 
     match = (
         "Parameter 'must_have_shape' cannot be set for function `validate_arrayN`.\n"
-        "Its value is automatically set to `[(), -1, (1, -1)]`."
+        'Its value is automatically set to `[(), -1, (1, -1)]`.'
     )
     with pytest.raises(ValueError, match=escape(match)):
         validate_arrayN((1, 2, 3), must_have_shape=1)
 
-    match = "Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1, (1, -1)]."
+    match = 'Array has shape (2, 2) which is not allowed. Shape must be one of [(), -1, (1, -1)].'
     with pytest.raises(ValueError, match=escape(match)):
         validate_arrayN(((1, 2), (3, 4)))
-    with pytest.raises(ValueError, match="_input"):
-        validate_arrayN(((1, 2), (3, 4)), name="_input")
+    with pytest.raises(ValueError, match='_input'):
+        validate_arrayN(((1, 2), (3, 4)), name='_input')
 
 
-@pytest.mark.parametrize("reshape", [True, False])
+@pytest.mark.parametrize('reshape', [True, False])
 def test_validate_arrayN_unsigned(reshape):
     # test 0D input is reshaped to 1D by default
     arr = validate_arrayN_unsigned(0.0)
@@ -325,18 +325,18 @@ def test_validate_arrayN_unsigned(reshape):
     assert np.array_equal(arr, [0])
     assert arr.dtype.type is np.int32 or arr.dtype.type is np.int64
 
-    arr = validate_arrayN_unsigned(0.0, dtype_out="uint8")
+    arr = validate_arrayN_unsigned(0.0, dtype_out='uint8')
     assert arr.dtype.type is np.uint8
 
-    with pytest.raises(ValueError, match="Shape must be -1."):
+    with pytest.raises(ValueError, match='Shape must be -1.'):
         validate_arrayN_unsigned(0.0, reshape=False)
 
-    match = "_input values must all be greater than or equal to 0."
+    match = '_input values must all be greater than or equal to 0.'
     with pytest.raises(ValueError, match=match):
-        validate_arrayN_unsigned([-1, 1], name="_input")
+        validate_arrayN_unsigned([-1, 1], name='_input')
 
 
-@pytest.mark.parametrize("reshape", [True, False])
+@pytest.mark.parametrize('reshape', [True, False])
 def test_validate_array3(reshape):
     # test 0D input is reshaped to len-3 1D vector with broadcasting enabled
     arr = validate_array3(0, broadcast=True)
@@ -354,24 +354,24 @@ def test_validate_array3(reshape):
 
     if not reshape:
         # test check fails with 2D input and no reshape
-        match = "Array has shape (1, 3) which is not allowed. Shape must be (3,)."
+        match = 'Array has shape (1, 3) which is not allowed. Shape must be (3,).'
         with pytest.raises(ValueError, match=escape(match)):
             validate_array3([[1, 2, 3]], reshape=reshape)
 
         # test correct shape with broadcast and no reshape
-        match = "Shape must be one of [(3,), (), (1,)]."
+        match = 'Shape must be one of [(3,), (), (1,)].'
         with pytest.raises(ValueError, match=escape(match)):
             validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
     else:
         # test error match shows correct shape with broadcast and with reshape
-        match = "Shape must be one of [(3,), (1, 3), (3, 1), (), (1,)]"
+        match = 'Shape must be one of [(3,), (1, 3), (3, 1), (), (1,)]'
         with pytest.raises(ValueError, match=escape(match)):
             validate_array3((1, 2, 3, 4, 5, 6), reshape=reshape, broadcast=True)
 
     # test shape cannot be overridden
     match = (
         "Parameter 'must_have_shape' cannot be set for function `validate_array3`.\n"
-        "Its value is automatically set to `[(3,), (1, 3), (3, 1)]`."
+        'Its value is automatically set to `[(3,), (1, 3), (3, 1)]`.'
     )
     with pytest.raises(ValueError, match=escape(match)):
         validate_array3((1, 2, 3), must_have_shape=3)
@@ -380,20 +380,20 @@ def test_validate_array3(reshape):
 def test_check_range():
     check_range((1, 2, 3), [1, 3])
 
-    match = "Array values must all be less than or equal to 2."
+    match = 'Array values must all be less than or equal to 2.'
     with pytest.raises(ValueError, match=match):
         check_range((1, 2, 3), [1, 2])
 
-    match = "Input values must all be greater than or equal to 2."
+    match = 'Input values must all be greater than or equal to 2.'
     with pytest.raises(ValueError, match=match):
-        check_range((1, 2, 3), [2, 3], name="Input")
+        check_range((1, 2, 3), [2, 3], name='Input')
 
     # Test strict bounds
-    match = "Array values must all be less than 3."
+    match = 'Array values must all be less than 3.'
     with pytest.raises(ValueError, match=match):
         check_range((1, 2, 3), [1, 3], strict_upper=True)
 
-    match = "Array values must all be greater than 1."
+    match = 'Array values must all be greater than 1.'
     with pytest.raises(ValueError, match=match):
         check_range((1, 2, 3), [1, 3], strict_lower=True)
 
@@ -416,30 +416,30 @@ def numeric_array_test_cases():
             0,
             np.inf,
             ValueError,
-            "must have finite values",
+            'must have finite values',
         ),
-        Case(dict(must_be_real=True), 0, 1 + 1j, TypeError, "must have real numbers"),
-        Case(dict(must_be_integer=True), 0.0, 0.1, ValueError, "must have integer-like values"),
-        Case(dict(must_be_sorted=True), [0, 1], [1, 0], ValueError, "must be sorted"),
+        Case(dict(must_be_real=True), 0, 1 + 1j, TypeError, 'must have real numbers'),
+        Case(dict(must_be_integer=True), 0.0, 0.1, ValueError, 'must have integer-like values'),
+        Case(dict(must_be_sorted=True), [0, 1], [1, 0], ValueError, 'must be sorted'),
         Case(
             dict(must_be_sorted=dict(ascending=True, strict=False, axis=-1)),
             [0, 1],
             [1, 0],
             ValueError,
-            "must be sorted",
+            'must be sorted',
         ),
     )
 
 
-@pytest.mark.parametrize("name", ["_array", "_input"])
-@pytest.mark.parametrize("copy", [True, False])
-@pytest.mark.parametrize("as_any", [True, False])
-@pytest.mark.parametrize("to_list", [True, False])
-@pytest.mark.parametrize("to_tuple", [True, False])
-@pytest.mark.parametrize("dtype_out", [np.float32, np.float64])
-@pytest.mark.parametrize("case", numeric_array_test_cases())
-@pytest.mark.parametrize("stack_input", [True, False])
-@pytest.mark.parametrize("input_type", [tuple, list, np.ndarray, pyvista_ndarray])
+@pytest.mark.parametrize('name', ['_array', '_input'])
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize('as_any', [True, False])
+@pytest.mark.parametrize('to_list', [True, False])
+@pytest.mark.parametrize('to_tuple', [True, False])
+@pytest.mark.parametrize('dtype_out', [np.float32, np.float64])
+@pytest.mark.parametrize('case', numeric_array_test_cases())
+@pytest.mark.parametrize('stack_input', [True, False])
+@pytest.mark.parametrize('input_type', [tuple, list, np.ndarray, pyvista_ndarray])
 def test_validate_array(
     name,
     copy,
@@ -539,10 +539,10 @@ def test_validate_array(
         assert array_out is not array_in
 
 
-@pytest.mark.parametrize("obj", [0, 0.0, "0"])
-@pytest.mark.parametrize("classinfo", [int, (int, float), [int, float]])
-@pytest.mark.parametrize("allow_subclass", [True, False])
-@pytest.mark.parametrize("name", ["_input", "_object"])
+@pytest.mark.parametrize('obj', [0, 0.0, '0'])
+@pytest.mark.parametrize('classinfo', [int, (int, float), [int, float]])
+@pytest.mark.parametrize('allow_subclass', [True, False])
+@pytest.mark.parametrize('name', ['_input', '_object'])
 def test_check_instance(obj, classinfo, allow_subclass, name):
     if isinstance(classinfo, list):
         with pytest.raises(TypeError):
@@ -553,9 +553,9 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
         if isinstance(obj, classinfo):
             check_instance(obj, classinfo)
         else:
-            with pytest.raises(TypeError, match="Object must be an instance of"):
+            with pytest.raises(TypeError, match='Object must be an instance of'):
                 check_instance(obj, classinfo)
-            with pytest.raises(TypeError, match=f"{name} must be an instance of"):
+            with pytest.raises(TypeError, match=f'{name} must be an instance of'):
                 check_instance(obj, classinfo, name=name)
 
     else:
@@ -563,25 +563,25 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
             if type(obj) in classinfo:
                 check_type(obj, classinfo)
             else:
-                with pytest.raises(TypeError, match=f"{name} must have one of the following types"):
+                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
                     check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match="Object must have one of the following types"):
+                with pytest.raises(TypeError, match='Object must have one of the following types'):
                     check_type(obj, classinfo)
         elif get_origin(classinfo) is Union:
             if type(obj) in get_args(classinfo):
                 check_type(obj, classinfo)
             else:
-                with pytest.raises(TypeError, match=f"{name} must have one of the following types"):
+                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
                     check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match="Object must have one of the following types"):
+                with pytest.raises(TypeError, match='Object must have one of the following types'):
                     check_type(obj, classinfo)
         else:
             if type(obj) is classinfo:
                 check_type(obj, classinfo)
             else:
-                with pytest.raises(TypeError, match=f"{name} must have type"):
+                with pytest.raises(TypeError, match=f'{name} must have type'):
                     check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match="Object must have type"):
+                with pytest.raises(TypeError, match='Object must have type'):
                     check_type(obj, classinfo)
 
     match = "Name must be a string, got <class 'int'> instead."
@@ -590,10 +590,10 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
 
 
 def test_check_type():
-    check_type(0, int, name="abc")
+    check_type(0, int, name='abc')
     check_type(0, Union[int])
     with pytest.raises(TypeError):
-        check_type("str", int)
+        check_type('str', int)
     with pytest.raises(TypeError):
         check_type(0, int, name=1)
     check_type(0, Union[int, float])
@@ -601,24 +601,24 @@ def test_check_type():
 
 @pytest.mark.skipif(
     sys.version_info < (3, 10),
-    reason="Union type input requires python3.10 or higher",
+    reason='Union type input requires python3.10 or higher',
 )
 def test_check_type_union():
     check_type(0, Union[int, float])
 
 
 def test_check_string():
-    check_string("abc")
-    check_string("abc", name="123")
+    check_string('abc')
+    check_string('abc', name='123')
     match = "Value must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=match):
-        check_string(0, name="Value")
+        check_string(0, name='Value')
     match = "Object must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=match):
         check_string(0)
     match = "Name must be a string, got <class 'float'> instead."
     with pytest.raises(TypeError, match=match):
-        check_string("abc", name=0.0)
+        check_string('abc', name=0.0)
 
     class str_subclass(str):
         pass
@@ -631,44 +631,44 @@ def test_check_string():
 def test_check_less_than():
     check_less_than([0], 1)
     check_less_than(np.eye(3), 1, strict=False)
-    match = "Array values must all be less than 0."
+    match = 'Array values must all be less than 0.'
     with pytest.raises(ValueError, match=match):
         check_less_than(0, 0, strict=True)
-    match = "_input values must all be less than or equal to 0."
+    match = '_input values must all be less than or equal to 0.'
     with pytest.raises(ValueError, match=match):
-        check_less_than(1, 0, strict=False, name="_input")
+        check_less_than(1, 0, strict=False, name='_input')
 
 
 def test_check_greater_than():
     check_greater_than([1], 0)
     check_greater_than(np.eye(3), 0, strict=False)
-    match = "Array values must all be greater than 0."
+    match = 'Array values must all be greater than 0.'
     with pytest.raises(ValueError, match=match):
         check_greater_than(0, 0, strict=True)
-    match = "_input values must all be greater than or equal to 0."
+    match = '_input values must all be greater than or equal to 0.'
     with pytest.raises(ValueError, match=match):
-        check_greater_than(-1, 0, strict=False, name="_input")
+        check_greater_than(-1, 0, strict=False, name='_input')
 
 
 def test_check_real():
     check_real(1)
     check_real(-2.0)
-    check_real(np.array(2.0, dtype="uint8"))
-    match = "Array must have real numbers."
+    check_real(np.array(2.0, dtype='uint8'))
+    match = 'Array must have real numbers.'
     with pytest.raises(TypeError, match=match):
         check_real(1 + 1j)
     with pytest.raises(TypeError, match=match):
         check_real(True)
-    match = "_input must have real numbers."
+    match = '_input must have real numbers.'
     with pytest.raises(TypeError, match=match):
-        check_real(1 + 1j, name="_input")
+        check_real(1 + 1j, name='_input')
 
 
 def test_check_finite():
     check_finite(0)
-    match = "_input must have finite values."
+    match = '_input must have finite values.'
     with pytest.raises(ValueError, match=match):
-        check_finite(np.nan, name="_input")
+        check_finite(np.nan, name='_input')
 
 
 def test_check_integer():
@@ -676,27 +676,27 @@ def test_check_integer():
     check_integer([2, 3.0])
     match = "Input has incorrect dtype of 'float64'. The dtype must be a subtype of <class 'numpy.integer'>."
     with pytest.raises(TypeError, match=match):
-        check_integer([2, 3.0], strict=True, name="_input")
-    match = "_input must have integer-like values."
+        check_integer([2, 3.0], strict=True, name='_input')
+    match = '_input must have integer-like values.'
     with pytest.raises(ValueError, match=match):
-        check_integer([2, 3.4], strict=False, name="_input")
+        check_integer([2, 3.4], strict=False, name='_input')
 
 
 def test_check_sequence():
-    check_sequence((1,), name="abc")
+    check_sequence((1,), name='abc')
     check_sequence(range(3))
-    check_sequence("abc")
-    with pytest.raises(TypeError, match="_input"):
-        check_sequence(np.array(1), name="_input")
+    check_sequence('abc')
+    with pytest.raises(TypeError, match='_input'):
+        check_sequence(np.array(1), name='_input')
 
 
 def test_check_iterable():
-    check_iterable((1,), name="abc")
+    check_iterable((1,), name='abc')
     check_iterable(range(3))
-    check_iterable("abc")
+    check_iterable('abc')
     check_iterable(np.array(1))
-    with pytest.raises(TypeError, match="_input"):
-        check_iterable(1, name="_input")
+    with pytest.raises(TypeError, match='_input'):
+        check_iterable(1, name='_input')
 
 
 def test_check_length():
@@ -711,24 +711,24 @@ def test_check_length():
     check_length((1,), exact_length=[1, 2.0])
 
     with pytest.raises(ValueError, match="'exact_length' must have integer-like values."):
-        check_length((1,), exact_length=(1, 2.4), name="_input")
+        check_length((1,), exact_length=(1, 2.4), name='_input')
 
-    match = "_input must have a length equal to any of: 1. Got length 2 instead."
+    match = '_input must have a length equal to any of: 1. Got length 2 instead.'
     with pytest.raises(ValueError, match=match):
-        check_length((1, 2), exact_length=1, name="_input")
-    match = "_input must have a length equal to any of: [3, 4]. Got length 2 instead."
+        check_length((1, 2), exact_length=1, name='_input')
+    match = '_input must have a length equal to any of: [3, 4]. Got length 2 instead.'
     with pytest.raises(ValueError, match=escape(match)):
-        check_length((1, 2), exact_length=[3, 4], name="_input")
+        check_length((1, 2), exact_length=[3, 4], name='_input')
 
-    match = "_input must have a maximum length of 1. Got length 2 instead."
+    match = '_input must have a maximum length of 1. Got length 2 instead.'
     with pytest.raises(ValueError, match=match):
-        check_length((1, 2), max_length=1, name="_input")
+        check_length((1, 2), max_length=1, name='_input')
 
-    match = "_input must have a minimum length of 2. Got length 1 instead."
+    match = '_input must have a minimum length of 2. Got length 1 instead.'
     with pytest.raises(ValueError, match=match):
-        check_length((1,), min_length=2, name="_input")
+        check_length((1,), min_length=2, name='_input')
 
-    match = "Range with 2 elements must be sorted in ascending order. Got:\n    array([4, 2])"
+    match = 'Range with 2 elements must be sorted in ascending order. Got:\n    array([4, 2])'
     with pytest.raises(ValueError, match=escape(match)):
         check_length(
             (
@@ -740,7 +740,7 @@ def test_check_length():
             max_length=2,
         )
 
-    match = "Shape must be -1."
+    match = 'Shape must be -1.'
     with pytest.raises(ValueError, match=escape(match)):
         check_length(((1, 2), (3, 4)), must_be_1d=True)
 
@@ -748,15 +748,15 @@ def test_check_length():
 def test_check_nonnegative():
     check_nonnegative(0)
     check_nonnegative(np.eye(3))
-    match = "Array values must all be greater than or equal to 0."
+    match = 'Array values must all be greater than or equal to 0.'
     with pytest.raises(ValueError, match=match):
         check_nonnegative(-1)
 
 
-@pytest.mark.parametrize("shape", [(), (8,), (4, 6), (2, 3, 4)])
-@pytest.mark.parametrize("axis", [None, -1, -2, -3, 0, 1, 2, 3])
-@pytest.mark.parametrize("ascending", [True, False])
-@pytest.mark.parametrize("strict", [True, False])
+@pytest.mark.parametrize('shape', [(), (8,), (4, 6), (2, 3, 4)])
+@pytest.mark.parametrize('axis', [None, -1, -2, -3, 0, 1, 2, 3])
+@pytest.mark.parametrize('ascending', [True, False])
+@pytest.mark.parametrize('strict', [True, False])
 def test_check_sorted(shape, axis, ascending, strict):
     def _check_sorted_params(arr):
         check_sorted(arr, axis=axis, strict=strict, ascending=ascending)
@@ -788,7 +788,7 @@ def test_check_sorted(shape, axis, ascending, strict):
         # test ValueError is raised whenever an AxisError would otherwise be raised
         with pytest.raises(
             ValueError,
-            match=f"Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}",
+            match=f'Axis {axis} is out of bounds for ndim {arr_strict_ascending.ndim}',
         ):
             _check_sorted_params(arr_strict_ascending)
         return
@@ -802,40 +802,40 @@ def test_check_sorted(shape, axis, ascending, strict):
     if strict and ascending:
         _check_sorted_params(arr_strict_ascending)
         for a in [arr_ascending, arr_descending, arr_strict_descending]:
-            with pytest.raises(ValueError, match="must be sorted in strict ascending order. Got:"):
+            with pytest.raises(ValueError, match='must be sorted in strict ascending order. Got:'):
                 _check_sorted_params(a)
 
     elif not strict and ascending:
         _check_sorted_params(arr_ascending)
         _check_sorted_params(arr_strict_ascending)
         for a in [arr_descending, arr_strict_descending]:
-            with pytest.raises(ValueError, match="must be sorted in ascending order. Got:"):
+            with pytest.raises(ValueError, match='must be sorted in ascending order. Got:'):
                 _check_sorted_params(a)
 
     elif strict and not ascending:
         _check_sorted_params(arr_strict_descending)
         for a in [arr_ascending, arr_strict_ascending, arr_descending]:
-            with pytest.raises(ValueError, match="must be sorted in strict descending order. Got:"):
+            with pytest.raises(ValueError, match='must be sorted in strict descending order. Got:'):
                 _check_sorted_params(a)
 
     elif not strict and not ascending:
         _check_sorted_params(arr_descending)
         _check_sorted_params(arr_strict_descending)
         for a in [arr_ascending, arr_strict_ascending]:
-            with pytest.raises(ValueError, match="must be sorted in descending order"):
+            with pytest.raises(ValueError, match='must be sorted in descending order'):
                 _check_sorted_params(a)
 
 
 def test_check_iterable_items():
     check_iterable_items([1, 2, 3], int)
-    check_iterable_items(("a", "b", "c"), str)
-    check_iterable_items("abc", str)
+    check_iterable_items(('a', 'b', 'c'), str)
+    check_iterable_items('abc', str)
     check_iterable_items(range(10), int)
     match = "All items of Iterable must be an instance of <class 'str'>. Got <class 'int'> instead."
     with pytest.raises(TypeError, match=escape(match)):
-        check_iterable_items(["abc", 1], str)
-    with pytest.raises(TypeError, match="All items of _input"):
-        check_iterable_items(["abc", 1], str, name="_input")
+        check_iterable_items(['abc', 1], str)
+    with pytest.raises(TypeError, match='All items of _input'):
+        check_iterable_items(['abc', 1], str, name='_input')
 
 
 def test_check_number():
@@ -843,23 +843,23 @@ def test_check_number():
     check_number(1 + 1j)
     match = "_input must be an instance of <class 'numbers.Number'>. Got <class 'numpy.ndarray'> instead."
     with pytest.raises(TypeError, match=match):
-        check_number(np.array(0), name="_input")
-    match = "Object must be"
+        check_number(np.array(0), name='_input')
+    match = 'Object must be'
     with pytest.raises(TypeError, match=match):
         check_number(np.array(0))
 
 
 def test_check_contains():
-    check_contains(item="foo", container=["foo", "bar"])
+    check_contains(item='foo', container=['foo', 'bar'])
     match = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item="foo", container=["cat", "bar"])
+        check_contains(item='foo', container=['cat', 'bar'])
     match = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item=5, container=range(4), name="_input")
+        check_contains(item=5, container=range(4), name='_input')
 
 
-@pytest.mark.parametrize("name", ["_input", "Axes"])
+@pytest.mark.parametrize('name', ['_input', 'Axes'])
 def test_validate_axes(name):
     axes_right = np.eye(3)
     axes_left = np.array([[1, 0.0, 0], [0, 1, 0], [0, 0, -1]])
@@ -870,7 +870,7 @@ def test_validate_axes(name):
     axes = validate_axes(
         [[1], [0], [0]],
         [[0, 1, 0]],
-        must_have_orientation="right",
+        must_have_orientation='right',
         must_be_orthogonal=True,
     )
     assert np.array_equal(axes, axes_right)
@@ -878,15 +878,15 @@ def test_validate_axes(name):
     assert np.array_equal(axes, axes_right)
 
     # test bad input
-    with pytest.raises(ValueError, match=f"{name} cannot be parallel."):
+    with pytest.raises(ValueError, match=f'{name} cannot be parallel.'):
         validate_axes([[1, 0, 0], [1, 0, 0], [0, 1, 0]], name=name)
-    with pytest.raises(ValueError, match="Axes cannot be parallel."):
+    with pytest.raises(ValueError, match='Axes cannot be parallel.'):
         validate_axes([[0, 1, 0], [1, 0, 0], [0, 1, 0]])
-    with pytest.raises(ValueError, match=f"{name} cannot be zeros."):
+    with pytest.raises(ValueError, match=f'{name} cannot be zeros.'):
         validate_axes([[1, 0, 0], [0, 1, 0], [0, 0, 0]], name=name)
-    with pytest.raises(ValueError, match="Axes cannot be zeros."):
+    with pytest.raises(ValueError, match='Axes cannot be zeros.'):
         validate_axes([[1, 0, 0], [0, 0, 0], [0, 0, 1]])
-    with pytest.raises(ValueError, match="Axes cannot be zeros."):
+    with pytest.raises(ValueError, match='Axes cannot be zeros.'):
         validate_axes([[0, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     # test normalize
@@ -897,38 +897,38 @@ def test_validate_axes(name):
     assert np.array_equal(axes, axes_right)
 
     # test orientation
-    validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation="left")
+    validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation='left')
     validate_axes(axes_left, must_have_orientation=None)
-    validate_axes(axes_left, must_have_orientation="left")
-    with pytest.raises(ValueError, match=f"{name} do not have a right-handed orientation."):
-        validate_axes(axes_left, must_have_orientation="right", name=name)
+    validate_axes(axes_left, must_have_orientation='left')
+    with pytest.raises(ValueError, match=f'{name} do not have a right-handed orientation.'):
+        validate_axes(axes_left, must_have_orientation='right', name=name)
 
     validate_axes(axes_right, must_have_orientation=None)
-    validate_axes(axes_right, must_have_orientation="right")
-    with pytest.raises(ValueError, match=f"{name} do not have a left-handed orientation."):
-        validate_axes(axes_right, must_have_orientation="left", name=name)
+    validate_axes(axes_right, must_have_orientation='right')
+    with pytest.raises(ValueError, match=f'{name} do not have a left-handed orientation.'):
+        validate_axes(axes_right, must_have_orientation='left', name=name)
 
     # test specifying two vectors without orientation raises error (3rd cannot be computed)
     with pytest.raises(
         ValueError,
-        match=f"{name} orientation must be specified when only two vectors are given.",
+        match=f'{name} orientation must be specified when only two vectors are given.',
     ):
         validate_axes([1, 0, 0], [0, 1, 0], must_have_orientation=None, name=name)
 
 
-@pytest.mark.parametrize("bias_index", [(0, 1), (1, 0), (2, 0)])
+@pytest.mark.parametrize('bias_index', [(0, 1), (1, 0), (2, 0)])
 def test_validate_axes_orthogonal(bias_index):
     axes_right = np.eye(3)
     axes_right[bias_index[0], bias_index[1]] = 0.1
     axes_left = np.array([[1, 0.0, 0], [0, 1, 0], [0, 0, -1]])
     axes_left[bias_index[0], bias_index[1]] = 0.1
 
-    match = "Axes are not orthogonal."
+    match = 'Axes are not orthogonal.'
     axes = validate_axes(
         axes_right,
         must_be_orthogonal=False,
         normalize=False,
-        must_have_orientation="right",
+        must_have_orientation='right',
     )
     assert np.array_equal(axes, axes_right)
     with pytest.raises(ValueError, match=match):
@@ -938,16 +938,16 @@ def test_validate_axes_orthogonal(bias_index):
         axes_left,
         must_be_orthogonal=False,
         normalize=False,
-        must_have_orientation="left",
+        must_have_orientation='left',
     )
     assert np.array_equal(axes, axes_left)
     with pytest.raises(ValueError, match=match):
         validate_axes(axes_left, must_be_orthogonal=True)
 
 
-@pytest.mark.parametrize("as_any", [True, False])
-@pytest.mark.parametrize("copy", [True, False])
-@pytest.mark.parametrize("dtype", [None, float])
+@pytest.mark.parametrize('as_any', [True, False])
+@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize('dtype', [None, float])
 def test_cast_to_numpy(as_any, copy, dtype):
     array_in = pyvista_ndarray([1, 2])
     array_out = _cast_to_numpy(array_in, copy=copy, as_any=as_any, dtype=dtype)
@@ -967,30 +967,30 @@ def test_cast_to_numpy(as_any, copy, dtype):
 
 
 def test_cast_to_numpy_raises():
-    if sys.version_info < (3, 9) and sys.platform == "linux":
+    if sys.version_info < (3, 9) and sys.platform == 'linux':
         err = TypeError
-        match = "Object arrays are not supported."
+        match = 'Object arrays are not supported.'
     else:
         err = ValueError
         match = "Input cannot be cast as <class 'numpy.ndarray'>."
     with pytest.raises(err, match=match):
         _cast_to_numpy([[1], [2, 3]])
 
-    match = "Object arrays are not supported."
+    match = 'Object arrays are not supported.'
     with pytest.raises(TypeError, match=match):
         _cast_to_numpy(list)
 
 
 def test_cast_to_numpy_must_be_real():
     _ = _cast_to_numpy([0, 1], must_be_real=True)
-    _ = _cast_to_numpy("abc", must_be_real=False)
+    _ = _cast_to_numpy('abc', must_be_real=False)
 
     match = "Array must have real numbers. Got dtype <class 'numpy.complex128'>"
     with pytest.raises(TypeError, match=match):
         _ = _cast_to_numpy([0, 1 + 1j], must_be_real=True)
     match = "Array must have real numbers. Got dtype <class 'numpy.str_'>"
     with pytest.raises(TypeError, match=match):
-        _ = _cast_to_numpy("abc", must_be_real=True)
+        _ = _cast_to_numpy('abc', must_be_real=True)
 
 
 def test_cast_to_tuple():
@@ -1008,7 +1008,7 @@ def test_cast_to_list():
 
 
 @pytest.mark.parametrize(
-    ("cls", "shape"),
+    ('cls', 'shape'),
     [
         (vtkMatrix3x3, (3, 3)),
         (vtkMatrix4x4, (4, 4)),

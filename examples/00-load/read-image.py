@@ -29,11 +29,11 @@ image = examples.download_puppy()
 # image's true colors are used and not mapped.
 
 # True image colors
-image.plot(rgb=True, cpos="xy")
+image.plot(rgb=True, cpos='xy')
 
 # %%
 
 # Mapped image colors
-image.plot(cpos="xy")
+image.plot(cpos='xy')
 # %%
 # .. tags:: load

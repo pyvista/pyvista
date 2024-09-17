@@ -12,7 +12,7 @@ from pyvista.plotting import system_supports_plotting
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(),
-    reason="Test requires system to support plotting",
+    reason='Test requires system to support plotting',
 )
 
 
@@ -37,11 +37,11 @@ def test_logo_voxel():
 
 
 @pytest.mark.skipif(
-    platform.system() == "Darwin",
-    reason="MacOS testing on Azure fails when downloading",
+    platform.system() == 'Darwin',
+    reason='MacOS testing on Azure fails when downloading',
 )
 @skip_no_plotting
-@pytest.mark.skipif(os.name == "nt", reason="Test fails on Windows")
+@pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 def test_plot_logo():
     # simply should not fail
     demos.plot_logo()
@@ -54,8 +54,8 @@ def test_plot_datasets():
 
 
 def test_plot_datasets_dataset_type():
-    with pytest.raises(ValueError, match="Invalid dataset_type"):
-        demos.plot_datasets(dataset_type="foo")
+    with pytest.raises(ValueError, match='Invalid dataset_type'):
+        demos.plot_datasets(dataset_type='foo')
 
 
 @skip_no_plotting

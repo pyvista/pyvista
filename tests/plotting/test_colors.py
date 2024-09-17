@@ -10,12 +10,12 @@ import pytest
 import pyvista as pv
 from pyvista.plotting.colors import get_cmap_safe
 
-COLORMAPS = ["Greys"]
+COLORMAPS = ['Greys']
 
 try:
     import cmocean  # noqa: F401
 
-    COLORMAPS.append("algae")
+    COLORMAPS.append('algae')
 except ImportError:
     pass
 
@@ -23,35 +23,35 @@ except ImportError:
 try:
     import colorcet  # noqa: F401
 
-    COLORMAPS.append("fire")
+    COLORMAPS.append('fire')
 except:
     pass
 
 
-@pytest.mark.parametrize("cmap", COLORMAPS)
+@pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
 
 
 def test_color():
-    name, name2 = "blue", "b"
+    name, name2 = 'blue', 'b'
     i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
-    h = "0000ffff"
-    i_opacity, f_opacity, h_opacity = 153, 0.6, "99"
+    h = '0000ffff'
+    i_opacity, f_opacity, h_opacity = 153, 0.6, '99'
     invalid_colors = (
         (300, 0, 0),
         (0, -10, 0),
         (0, 0, 1.5),
         (-0.5, 0, 0),
         (0, 0),
-        "#hh0000",
-        "invalid_name",
-        {"invalid_name": 100},
+        '#hh0000',
+        'invalid_name',
+        {'invalid_name': 100},
     )
-    invalid_opacities = (275, -50, 2.4, -1.2, "#zz")
+    invalid_opacities = (275, -50, 2.4, -1.2, '#zz')
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
     f_types = (float, np.float16, np.float32, np.float64)
-    h_prefixes = ("", "0x", "#")
+    h_prefixes = ('', '0x', '#')
     assert pv.Color(name) == i_rgba
     assert pv.Color(name2) == i_rgba
     # Check integer types
@@ -95,14 +95,14 @@ def test_color():
             pv.Color(invalid_color)
     for invalid_opacity in invalid_opacities:
         with pytest.raises(ValueError):  # noqa: PT011
-            pv.Color("b", invalid_opacity)
+            pv.Color('b', invalid_opacity)
     # Check hex and name getters
-    assert pv.Color(name).hex_rgba == f"#{h}"
-    assert pv.Color(name).hex_rgb == f"#{h[:-2]}"
-    assert pv.Color("b").name == "blue"
+    assert pv.Color(name).hex_rgba == f'#{h}'
+    assert pv.Color(name).hex_rgb == f'#{h[:-2]}'
+    assert pv.Color('b').name == 'blue'
     # Check sRGB conversion
-    assert pv.Color("gray", 0.5).linear_to_srgb() == "#bcbcbcbc"
-    assert pv.Color("#bcbcbcbc").srgb_to_linear() == "#80808080"
+    assert pv.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'
+    assert pv.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
     # Check iteration and indexing
     c = pv.Color(i_rgba)
     assert all(ci == fi for ci, fi in zip(c, f_rgba))
@@ -114,7 +114,7 @@ def test_color():
     with pytest.raises(TypeError):
         c[None]  # Invalid index type
     with pytest.raises(ValueError):  # noqa: PT011
-        c["invalid_name"]  # Invalid string index
+        c['invalid_name']  # Invalid string index
     with pytest.raises(IndexError):
         c[4]  # Invalid integer index
 
@@ -126,16 +126,16 @@ def test_color_opacity():
 
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
-    if "css4_color" in metafunc.fixturenames:
+    if 'css4_color' in metafunc.fixturenames:
         color_names = list(CSS4_COLORS.keys())
         color_values = list(CSS4_COLORS.values())
 
         test_cases = zip(color_names, color_values)
-        metafunc.parametrize("css4_color", test_cases, ids=color_names)
+        metafunc.parametrize('css4_color', test_cases, ids=color_names)
 
-    if "color_synonym" in metafunc.fixturenames:
+    if 'color_synonym' in metafunc.fixturenames:
         synonyms = list(pv.colors.color_synonyms.keys())
-        metafunc.parametrize("color_synonym", synonyms, ids=synonyms)
+        metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
 
 
 def test_css4_colors(css4_color):
@@ -151,4 +151,4 @@ def test_color_synonyms(color_synonym):
 def test_unique_colors():
     duplicates = np.rec.find_duplicate(pv.hexcolors.values())
     if len(duplicates) > 0:
-        pytest.fail(f"The following colors have duplicate definitions: {duplicates}.")
+        pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')

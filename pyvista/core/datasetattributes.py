@@ -28,18 +28,18 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # from https://vtk.org/doc/nightly/html/vtkDataSetAttributes_8h_source.html
 attr_type = [
-    "SCALARS",  # 0
-    "VECTORS",  # 1
-    "NORMALS",  # 2
-    "TCOORDS",  # 3
-    "TENSORS",  # 4
-    "GLOBALIDS",  # 5
-    "PEDIGREEIDS",  # 6
-    "EDGEFLAG",  # 7
-    "TANGENTS",  # 8
-    "RATIONALWEIGHTS",  # 9
-    "HIGHERORDERDEGREES",  # 10
-    "",  # 11  (not an attribute)
+    'SCALARS',  # 0
+    'VECTORS',  # 1
+    'NORMALS',  # 2
+    'TCOORDS',  # 3
+    'TENSORS',  # 4
+    'GLOBALIDS',  # 5
+    'PEDIGREEIDS',  # 6
+    'EDGEFLAG',  # 7
+    'TANGENTS',  # 8
+    'RATIONALWEIGHTS',  # 9
+    'HIGHERORDERDEGREES',  # 10
+    '',  # 11  (not an attribute)
 ]
 
 # used to check if default args have changed in pop
@@ -153,44 +153,44 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def __repr__(self) -> str:
         """Printable representation of DataSetAttributes."""
-        info = ["pyvista DataSetAttributes"]
-        array_info = " None"
+        info = ['pyvista DataSetAttributes']
+        array_info = ' None'
         if self:
             lines = []
             for i, (name, array) in enumerate(self.items()):
                 if len(name) > 23:
-                    name = f"{name[:20]}..."
+                    name = f'{name[:20]}...'
                 try:
                     arr_type = attr_type[self.IsArrayAnAttribute(i)]
                 except (IndexError, TypeError, AttributeError):  # pragma: no cover
-                    arr_type = ""
+                    arr_type = ''
 
                 # special treatment for vector data
                 if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
                     if name == self.active_vectors_name:
-                        arr_type = "VECTORS"
+                        arr_type = 'VECTORS'
                 # special treatment for string field data
                 if self.association == FieldAssociation.NONE and isinstance(array, str):
-                    dtype = "str"
+                    dtype = 'str'
                     # Show the string value itself with a max of 20 characters, 18 for string and 2 for quotes
-                    val = f"{array[:15]}..." if len(array) > 18 else array
+                    val = f'{array[:15]}...' if len(array) > 18 else array
                     line = f'{name[:23]:<24}{dtype!s:<11}"{val}"'
                 else:
                     line = (
-                        f"{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}".strip()
+                        f'{name[:23]:<24}{array.dtype!s:<11}{array.shape!s:<20} {arr_type}'.strip()
                     )
                 lines.append(line)
-            array_info = "\n    " + "\n    ".join(lines)
+            array_info = '\n    ' + '\n    '.join(lines)
 
-        info.append(f"Association     : {self.association.name}")
+        info.append(f'Association     : {self.association.name}')
         if self.association in [FieldAssociation.POINT, FieldAssociation.CELL]:
-            info.append(f"Active Scalars  : {self.active_scalars_name}")
-            info.append(f"Active Vectors  : {self.active_vectors_name}")
-            info.append(f"Active Texture  : {self.active_texture_coordinates_name}")
-            info.append(f"Active Normals  : {self.active_normals_name}")
+            info.append(f'Active Scalars  : {self.active_scalars_name}')
+            info.append(f'Active Vectors  : {self.active_vectors_name}')
+            info.append(f'Active Texture  : {self.active_texture_coordinates_name}')
+            info.append(f'Active Normals  : {self.active_normals_name}')
 
-        info.append(f"Contains arrays :{array_info}")
-        return "\n".join(info)
+        info.append(f'Contains arrays :{array_info}')
+        return '\n'.join(info)
 
     def get(self, key: str, value: Any | None = None) -> pyvista_ndarray | None:
         """Return the value of the item with the specified key.
@@ -235,13 +235,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Accepts an array name.
         """
         if not isinstance(key, str):
-            raise TypeError("Only strings are valid keys for DataSetAttributes.")
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
         return self.get_array(key)
 
     def __setitem__(self, key: str, value: ArrayLike[Any]):  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
-            raise TypeError("Only strings are valid keys for DataSetAttributes.")
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
 
         has_arr = key in self
         self.set_array(value, name=key)
@@ -265,7 +265,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def __delitem__(self, key: str):
         """Implement del with array name or index."""
         if not isinstance(key, str):
-            raise TypeError("Only strings are valid keys for DataSetAttributes.")
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
 
         self.remove(key)
 
@@ -406,7 +406,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
+            'Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         return self.active_texture_coordinates
@@ -425,7 +425,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
+            'Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
@@ -444,7 +444,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
+            'Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.',
             PyVistaDeprecationWarning,
         )
         return self.active_texture_coordinates_name
@@ -463,7 +463,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
+            'Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.',
             PyVistaDeprecationWarning,
         )
         self.active_texture_coordinates_name = name
@@ -520,7 +520,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if vtk_arr is None:
             vtk_arr = self.GetAbstractArray(key)
             if vtk_arr is None:
-                raise KeyError(f"{key}")
+                raise KeyError(f'{key}')
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         return self._patch_type(narray)
 
@@ -604,13 +604,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if not isinstance(name, str):
-            raise TypeError("`name` must be a string")
+            raise TypeError('`name` must be a string')
 
         vtk_arr = self._prepare_array(data, name, deep_copy)
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: ArrayLike[float], name="scalars", deep_copy=False):
+    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy=False):
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -719,7 +719,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         n_comp = vtk_arr.GetNumberOfComponents()
         if n_comp != 3:
-            raise ValueError(f"Vector array should contain 3 components, got {n_comp}")
+            raise ValueError(f'Vector array should contain 3 components, got {n_comp}')
 
         # check if there are current vectors, if so, we need to keep
         # this array around since setting active vectors will remove
@@ -749,7 +749,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if data is None:
-            raise TypeError("``data`` cannot be None.")
+            raise TypeError('``data`` cannot be None.')
 
         # convert to numpy type if necessary
         data = np.asanyarray(data)
@@ -771,7 +771,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 data = tmparray
             if data.shape[0] != array_len:
                 raise ValueError(
-                    f"data length of ({data.shape[0]}) != required length ({array_len})",
+                    f'data length of ({data.shape[0]}) != required length ({array_len})',
                 )
 
         # attempt to reuse the existing pointer to underlying VTK data
@@ -805,13 +805,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         elif np.issubdtype(data.dtype, np.complexfloating):
             if data.dtype not in (np.complex64, np.complex128):
                 raise ValueError(
-                    "Only numpy.complex64 or numpy.complex128 is supported when "
-                    "setting dataset attributes",
+                    'Only numpy.complex64 or numpy.complex128 is supported when '
+                    'setting dataset attributes',
                 )
 
             if data.ndim != 1:
                 if data.shape[1] != 1:
-                    raise ValueError("Complex data must be single dimensional.")
+                    raise ValueError('Complex data must be single dimensional.')
             self.dataset._association_complex_names[self.association.name].add(name)
 
             # complex data is stored internally as a contiguous 2 component
@@ -846,7 +846,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             data = data.reshape(shape[0], shape[1] * shape[2])
 
         # Swap bytes from big to little endian.
-        if data.dtype.byteorder == ">":
+        if data.dtype.byteorder == '>':
             data = data.byteswap(inplace=True)
 
         # this handles the case when an input array is directly added to the
@@ -884,10 +884,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if not isinstance(key, str):
-            raise TypeError("Only strings are valid keys for DataSetAttributes.")
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
 
         if key not in self:
-            raise KeyError(f"{key} not present.")
+            raise KeyError(f'{key} not present.')
 
         with contextlib.suppress(KeyError):
             self.dataset._association_bitarray_names[self.association.name].remove(key)
@@ -928,11 +928,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if not isinstance(key, str):
-            raise TypeError("Only strings are valid keys for DataSetAttributes.")
+            raise TypeError('Only strings are valid keys for DataSetAttributes.')
 
         if key not in self:
             if default is _SENTINEL:
-                raise KeyError(f"{key} not present.")
+                raise KeyError(f'{key} not present.')
             return default
 
         narray = self.get_array(key)
@@ -988,7 +988,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 keys.append(name)
             else:  # pragma: no cover
                 # Assign this array a name
-                name = f"Unnamed_{i}"
+                name = f'Unnamed_{i}'
                 array.SetName(name)
                 keys.append(name)
         return keys
@@ -1081,7 +1081,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         for name, array in array_dict.items():
             if copy:
-                self[name] = array.copy() if hasattr(array, "copy") else copylib.copy(array)
+                self[name] = array.copy() if hasattr(array, 'copy') else copylib.copy(array)
             else:
                 self[name] = array
 
@@ -1090,12 +1090,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         if isinstance(index, int):
             max_index = self.VTKObject.GetNumberOfArrays()
             if not 0 <= index < max_index:
-                raise KeyError(f"Array index ({index}) out of range [0, {max_index - 1}]")
+                raise KeyError(f'Array index ({index}) out of range [0, {max_index - 1}]')
 
     def _raise_field_data_no_scalars_vectors_normals(self):
         """Raise a ``TypeError`` if FieldData."""
         if self.association == FieldAssociation.NONE:
-            raise TypeError("FieldData does not have active scalars or vectors or normals.")
+            raise TypeError('FieldData does not have active scalars or vectors or normals.')
 
     @property
     def active_scalars_name(self) -> str | None:
@@ -1204,7 +1204,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         # verify that the array has the correct number of components
         n_comp = self.GetArray(name).GetNumberOfComponents()
         if n_comp != 3:
-            raise ValueError(f"{name} needs 3 components, has ({n_comp})")
+            raise ValueError(f'{name} needs 3 components, has ({n_comp})')
         self.SetActiveNormals(name)
 
     @property
@@ -1253,7 +1253,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         # verify that the array has the correct number of components
         n_comp = self.GetArray(name).GetNumberOfComponents()
         if n_comp != 3:
-            raise ValueError(f"{name} needs 3 components, has ({n_comp})")
+            raise ValueError(f'{name} needs 3 components, has ({n_comp})')
         self.SetActiveVectors(name)
 
     def __eq__(self, other: object) -> bool:
@@ -1272,8 +1272,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         # check the name of the active attributes
         if self.association != FieldAssociation.NONE:
-            for name in ["scalars", "vectors", "texture_coordinates", "normals"]:
-                attr = f"active_{name}_name"
+            for name in ['scalars', 'vectors', 'texture_coordinates', 'normals']:
+                attr = f'active_{name}_name'
                 if getattr(other, attr) != getattr(self, attr):
                     return False
 
@@ -1350,16 +1350,16 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self._raise_no_normals()
         normals = np.asarray(normals)
         if normals.ndim != 2:
-            raise ValueError("Normals must be a 2-dimensional array")
+            raise ValueError('Normals must be a 2-dimensional array')
         valid_length = self.valid_array_len
         if normals.shape[0] != valid_length:
             raise ValueError(
-                f"Number of normals ({normals.shape[0]}) must match number of points ({valid_length})",
+                f'Number of normals ({normals.shape[0]}) must match number of points ({valid_length})',
             )
         if normals.shape[1] != 3:
-            raise ValueError(f"Normals must have exactly 3 components, not ({normals.shape[1]})")
+            raise ValueError(f'Normals must have exactly 3 components, not ({normals.shape[1]})')
 
-        vtkarr = _vtk.numpyTovtkDataArray(normals, name="Normals")
+        vtkarr = _vtk.numpyTovtkDataArray(normals, name='Normals')
         self.SetNormals(vtkarr)
         self.Modified()
 
@@ -1408,12 +1408,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def _raise_no_normals(self):
         """Raise AttributeError when attempting access normals for field data."""
         if self.association == FieldAssociation.NONE:
-            raise AttributeError("FieldData does not have active normals.")
+            raise AttributeError('FieldData does not have active normals.')
 
     def _raise_no_texture_coordinates(self):
         """Raise AttributeError when attempting access texture_coordinates for field data."""
         if self.association == FieldAssociation.NONE:
-            raise AttributeError("FieldData does not have active texture coordinates.")
+            raise AttributeError('FieldData does not have active texture coordinates.')
 
     @property
     def active_texture_coordinates(self) -> pyvista_ndarray | None:
@@ -1464,19 +1464,19 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         self._raise_no_texture_coordinates()
         if not isinstance(texture_coordinates, np.ndarray):
-            raise TypeError("Texture coordinates must be a numpy array")
+            raise TypeError('Texture coordinates must be a numpy array')
         if texture_coordinates.ndim != 2:
-            raise ValueError("Texture coordinates must be a 2-dimensional array")
+            raise ValueError('Texture coordinates must be a 2-dimensional array')
         valid_length = self.valid_array_len
         if texture_coordinates.shape[0] != valid_length:
             raise ValueError(
-                f"Number of texture coordinates ({texture_coordinates.shape[0]}) must match number of points ({valid_length})",
+                f'Number of texture coordinates ({texture_coordinates.shape[0]}) must match number of points ({valid_length})',
             )
         if texture_coordinates.shape[1] != 2:
             raise ValueError(
-                f"Texture coordinates must only have 2 components, not ({texture_coordinates.shape[1]})",
+                f'Texture coordinates must only have 2 components, not ({texture_coordinates.shape[1]})',
             )
-        vtkarr = _vtk.numpyTovtkDataArray(texture_coordinates, name="Texture Coordinates")
+        vtkarr = _vtk.numpyTovtkDataArray(texture_coordinates, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
         self.Modified()
 

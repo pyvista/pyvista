@@ -46,25 +46,25 @@ def start_xvfb(wait=3, window_size=None):
     """
     # Deprecated on 0.45.0, estimated removal on 0.48.0
     warnings.warn(
-        "This function is deprecated and will be removed in future version of "
-        "PyVista. Use vtk-osmesa instead.",
+        'This function is deprecated and will be removed in future version of '
+        'PyVista. Use vtk-osmesa instead.',
         PyVistaDeprecationWarning,
     )
 
     from pyvista import global_theme
 
-    if os.name != "posix":
-        raise OSError("`start_xvfb` is only supported on Linux")
+    if os.name != 'posix':
+        raise OSError('`start_xvfb` is only supported on Linux')
 
-    if os.system("which Xvfb > /dev/null"):
+    if os.system('which Xvfb > /dev/null'):
         raise OSError(XVFB_INSTALL_NOTES)
 
     # use current default window size
     if window_size is None:
         window_size = global_theme.window_size
-    window_size_parm = f"{window_size[0]:d}x{window_size[1]:d}x24"
-    display_num = ":99"
-    os.system(f"Xvfb {display_num} -screen 0 {window_size_parm} > /dev/null 2>&1 &")
-    os.environ["DISPLAY"] = display_num
+    window_size_parm = f'{window_size[0]:d}x{window_size[1]:d}x24'
+    display_num = ':99'
+    os.system(f'Xvfb {display_num} -screen 0 {window_size_parm} > /dev/null 2>&1 &')
+    os.environ['DISPLAY'] = display_num
     if wait:
         time.sleep(wait)

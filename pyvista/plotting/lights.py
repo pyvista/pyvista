@@ -35,7 +35,7 @@ class LightType(IntEnum):
 
     def __str__(self):
         """Pretty name for a light type."""
-        return self.name.replace("_", " ").title()
+        return self.name.replace('_', ' ').title()
 
 
 class Light(vtkLight):
@@ -145,7 +145,7 @@ class Light(vtkLight):
         position=None,
         focal_point=None,
         color=None,
-        light_type="scene light",
+        light_type='scene light',
         intensity=None,
         positional=None,
         cone_angle=None,
@@ -172,24 +172,24 @@ class Light(vtkLight):
         if isinstance(light_type, str):
             # be forgiving: ignore spaces and case
             light_type_orig = light_type
-            type_normalized = light_type.replace(" ", "").lower()
+            type_normalized = light_type.replace(' ', '').lower()
             mapping = {
-                "headlight": LightType.HEADLIGHT,
-                "cameralight": LightType.CAMERA_LIGHT,
-                "scenelight": LightType.SCENE_LIGHT,
+                'headlight': LightType.HEADLIGHT,
+                'cameralight': LightType.CAMERA_LIGHT,
+                'scenelight': LightType.SCENE_LIGHT,
             }
             try:
                 light_type = mapping[type_normalized]
             except KeyError:
-                light_keys = ", ".join(mapping)
+                light_keys = ', '.join(mapping)
                 msg = (
                     f'Invalid light_type "{light_type_orig}"\n'
-                    f"Choose from one of the following: {light_keys}"
+                    f'Choose from one of the following: {light_keys}'
                 )
                 raise ValueError(msg) from None
         elif not isinstance(light_type, int):
             raise TypeError(
-                f"Parameter light_type must be int or str, not {type(light_type).__name__}.",
+                f'Parameter light_type must be int or str, not {type(light_type).__name__}.',
             )
         # LightType is an int subclass
 
@@ -220,25 +220,25 @@ class Light(vtkLight):
 
     def __repr__(self):
         """Print a repr specifying the id of the light and its light type."""
-        return f"<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>"
+        return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
     def __eq__(self, other):
         """Compare whether the relevant attributes of two lights are equal."""
         # attributes which are native python types and thus implement __eq__
         native_attrs = [
-            "light_type",
-            "position",
-            "focal_point",
-            "ambient_color",
-            "diffuse_color",
-            "specular_color",
-            "intensity",
-            "on",
-            "positional",
-            "exponent",
-            "cone_angle",
-            "attenuation_values",
-            "shadow_attenuation",
+            'light_type',
+            'position',
+            'focal_point',
+            'ambient_color',
+            'diffuse_color',
+            'specular_color',
+            'intensity',
+            'on',
+            'positional',
+            'exponent',
+            'cone_angle',
+            'attenuation_values',
+            'shadow_attenuation',
         ]
         for attr in native_attrs:
             if getattr(self, attr) != getattr(other, attr):
@@ -598,7 +598,7 @@ class Light(vtkLight):
             return
 
         actor_state = self.cone_angle < 90 and self.positional
-        actor_name = self.actor.GetAddressAsString("")
+        actor_name = self.actor.GetAddressAsString('')
 
         # add or remove the actor from the renderer
         for renderer in self._renderers:
@@ -812,7 +812,7 @@ class Light(vtkLight):
                 trans = vtkmatrix_from_array(matrix)
             except ValueError:
                 raise ValueError(
-                    "Transformation matrix must be a 4-by-4 matrix or array-like.",
+                    'Transformation matrix must be a 4-by-4 matrix or array-like.',
                 ) from None
         self.SetTransformMatrix(trans)
 
@@ -874,7 +874,7 @@ class Light(vtkLight):
         if not isinstance(ltype, int):
             # note that LightType is an int subclass
             raise TypeError(
-                f"Light type must be an integer subclass instance, got {ltype} instead.",
+                f'Light type must be an integer subclass instance, got {ltype} instead.',
             )
         self.SetLightType(ltype)
 
@@ -1042,19 +1042,19 @@ class Light(vtkLight):
 
         """
         immutable_attrs = [
-            "light_type",
-            "position",
-            "focal_point",
-            "ambient_color",
-            "diffuse_color",
-            "specular_color",
-            "intensity",
-            "on",
-            "positional",
-            "exponent",
-            "cone_angle",
-            "attenuation_values",
-            "shadow_attenuation",
+            'light_type',
+            'position',
+            'focal_point',
+            'ambient_color',
+            'diffuse_color',
+            'specular_color',
+            'intensity',
+            'on',
+            'positional',
+            'exponent',
+            'cone_angle',
+            'attenuation_values',
+            'shadow_attenuation',
         ]
         new_light = Light()
 
@@ -1148,7 +1148,7 @@ class Light(vtkLight):
         """
         if not isinstance(vtk_light, vtkLight):
             raise TypeError(
-                f"Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.",
+                f'Expected vtk.vtkLight object, got {type(vtk_light).__name__} instead.',
             )
 
         light = cls()

@@ -11,7 +11,7 @@ from trame.widgets.vtk import VtkRemoteLocalView
 from trame.widgets.vtk import VtkRemoteView
 from trame_vtk.tools.vtksz2html import write_html
 
-CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
+CLOSED_PLOTTER_ERROR = 'The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame.'
 
 
 def get_server(*args, **kwargs):  # numpydoc ignore=RT01
@@ -32,8 +32,8 @@ def get_server(*args, **kwargs):  # numpydoc ignore=RT01
 
     """
     server = trame_get_server(*args, **kwargs)
-    if "client_type" in kwargs:
-        server.client_type = kwargs["client_type"]
+    if 'client_type' in kwargs:
+        server.client_type = kwargs['client_type']
     return server
 
 
@@ -70,20 +70,20 @@ class _BasePyVistaView:
         """Export scene to HTML as StringIO buffer."""
         content = io.StringIO()
         if isinstance(self, PyVistaLocalView):
-            data = self.export(format="zip")
+            data = self.export(format='zip')
             if data is None:
-                raise ValueError("No data to write.")
+                raise ValueError('No data to write.')
             write_html(data, content)
             content.seek(0)
         elif isinstance(self, PyVistaRemoteLocalView):
-            data = self.export_geometry(format="zip")
+            data = self.export_geometry(format='zip')
             if data is None:
-                raise ValueError("No data to write.")
+                raise ValueError('No data to write.')
             write_html(data, content)
             content.seek(0)
         else:
             content = self._plotter().export_html(filename=None)
-        return io.BytesIO(content.read().encode("utf8")).read()
+        return io.BytesIO(content.read().encode('utf8')).read()
 
 
 class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
@@ -136,7 +136,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
         """Create a trame remote view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
-            namespace = f"{plotter._id_name}"
+            namespace = f'{plotter._id_name}'
         if interactive_ratio is None:
             interactive_ratio = plotter._theme.trame.interactive_ratio
         if still_ratio is None:
@@ -146,8 +146,8 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
             self._plotter().render_window,
             interactive_ratio=interactive_ratio,
             still_ratio=still_ratio,
-            __properties=[("still_ratio", "stillRatio")],
-            ref=f"view_{plotter._id_name}",
+            __properties=[('still_ratio', 'stillRatio')],
+            ref=f'view_{plotter._id_name}',
             namespace=namespace,
             **kwargs,
         )
@@ -186,11 +186,11 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
         """Create a trame local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
-            namespace = f"{plotter._id_name}"
+            namespace = f'{plotter._id_name}'
         VtkLocalView.__init__(
             self,
             self._plotter().render_window,
-            ref=f"view_{plotter._id_name}",
+            ref=f'view_{plotter._id_name}',
             namespace=namespace,
             **kwargs,
         )
@@ -199,7 +199,7 @@ class PyVistaLocalView(VtkLocalView, _BasePyVistaView):
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, "axes_widget")],
+            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],
         )
 
     def update_image(self, *args, **kwargs):  # pragma: no cover
@@ -250,7 +250,7 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
         """Create a trame remote/local view from a PyVista Plotter."""
         _BasePyVistaView.__init__(self, plotter)
         if namespace is None:
-            namespace = f"{plotter._id_name}"
+            namespace = f'{plotter._id_name}'
         if interactive_ratio is None:
             interactive_ratio = plotter._theme.trame.interactive_ratio
         if still_ratio is None:
@@ -260,8 +260,8 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
             self._plotter().render_window,
             interactive_ratio=interactive_ratio,
             still_ratio=still_ratio,
-            __properties=[("still_ratio", "stillRatio")],
-            ref=f"view_{plotter._id_name}",
+            __properties=[('still_ratio', 'stillRatio')],
+            ref=f'view_{plotter._id_name}',
             namespace=namespace,
             **kwargs,
         )
@@ -273,5 +273,5 @@ class PyVistaRemoteLocalView(VtkRemoteLocalView, _BasePyVistaView):
     def _post_initialize(self):
         super()._post_initialize()
         self.set_widgets(
-            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, "axes_widget")],
+            [ren.axes_widget for ren in self._plotter().renderers if hasattr(ren, 'axes_widget')],
         )

@@ -35,8 +35,8 @@ dataset = pv.RectilinearGrid(xx, yy, zz)
 
 # Preview the problem
 p = pv.Plotter()
-p.add_mesh(surface, color="w", label="Surface")
-p.add_mesh(dataset, color="gold", show_edges=True, opacity=0.75, label="To Clip")
+p.add_mesh(surface, color='w', label='Surface')
+p.add_mesh(dataset, color='gold', show_edges=True, opacity=0.75, label='To Clip')
 p.add_legend()
 p.show()
 
@@ -49,34 +49,34 @@ p.show()
 # preserve.
 dataset.compute_implicit_distance(surface, inplace=True)
 
-inner = dataset.threshold(0.0, scalars="implicit_distance", invert=True)
-outer = dataset.threshold(0.0, scalars="implicit_distance", invert=False)
+inner = dataset.threshold(0.0, scalars='implicit_distance', invert=True)
+outer = dataset.threshold(0.0, scalars='implicit_distance', invert=False)
 
 p = pv.Plotter()
-p.add_mesh(surface, color="w", label="Surface", opacity=0.75)
+p.add_mesh(surface, color='w', label='Surface', opacity=0.75)
 p.add_mesh(
     inner,
-    scalars="implicit_distance",
+    scalars='implicit_distance',
     show_edges=True,
     opacity=0.75,
-    label="Inner region",
+    label='Inner region',
     clim=[-1, 1],
-    cmap="bwr",
+    cmap='bwr',
 )
 p.add_legend()
 p.show()
 
 # %%
 p = pv.Plotter()
-p.add_mesh(surface, color="w", label="Surface", opacity=0.75)
+p.add_mesh(surface, color='w', label='Surface', opacity=0.75)
 p.add_mesh(
     outer,
-    scalars="implicit_distance",
+    scalars='implicit_distance',
     show_edges=True,
     opacity=0.75,
-    label="Outer region",
+    label='Outer region',
     clim=[-1, 1],
-    cmap="bwr",
+    cmap='bwr',
 )
 p.add_legend()
 p.show()
@@ -90,8 +90,8 @@ clipped = dataset.clip_surface(surface, invert=False)
 
 # Visualize the results
 p = pv.Plotter()
-p.add_mesh(surface, color="w", opacity=0.75, label="Surface")
-p.add_mesh(clipped, color="gold", show_edges=True, label="clipped", opacity=0.75)
+p.add_mesh(surface, color='w', opacity=0.75, label='Surface')
+p.add_mesh(clipped, color='gold', show_edges=True, label='clipped', opacity=0.75)
 p.add_legend()
 p.show()
 

@@ -37,7 +37,7 @@ def plot_example():
 # Here's an example of our default plotting theme - this is what you
 # would see by default after running any of our examples locally.
 
-pv.set_plot_theme("default")
+pv.set_plot_theme('default')
 plot_example()
 
 # %%
@@ -50,7 +50,7 @@ plot_example()
 # %%
 # Demo the ``'ParaView'`` theme.
 
-pv.set_plot_theme("paraview")
+pv.set_plot_theme('paraview')
 
 plot_example()
 
@@ -58,14 +58,14 @@ plot_example()
 # %%
 # Demo the ``'dark'`` theme.
 
-pv.set_plot_theme("dark")
+pv.set_plot_theme('dark')
 
 plot_example()
 
 # %%
 # Demo the ``'document'`` theme.  This theme is used on our online examples.
 
-pv.set_plot_theme("document")
+pv.set_plot_theme('document')
 
 plot_example()
 
@@ -76,7 +76,7 @@ plotter = pv.Plotter()
 plotter.add_mesh(mesh)
 plotter.show_grid()
 # Here we set the gradient
-plotter.set_background("royalblue", top="aliceblue")
+plotter.set_background('royalblue', top='aliceblue')
 cpos = plotter.show()
 
 
@@ -128,7 +128,7 @@ cpos = pv.Sphere().plot()
 from pyvista import themes
 
 my_theme = themes.DarkTheme()
-my_theme.color = "red"
+my_theme.color = 'red'
 my_theme.lighting = False
 my_theme.show_edges = True
 my_theme.axes.box = True
@@ -151,11 +151,11 @@ cpos = pv.Sphere().plot()
 from pyvista import themes
 
 my_theme = themes.DocumentTheme()
-my_theme.color = "black"
+my_theme.color = 'black'
 my_theme.lighting = True
 my_theme.show_edges = True
-my_theme.edge_color = "white"
-my_theme.background = "white"
+my_theme.edge_color = 'white'
+my_theme.background = 'white'
 
 cpos = pv.Sphere().plot(theme=my_theme)
 
@@ -171,6 +171,6 @@ cpos = pl.show()
 
 # %%
 # Reset to use the document theme
-pv.set_plot_theme("document")
+pv.set_plot_theme('document')
 # %%
 # .. tags:: plot

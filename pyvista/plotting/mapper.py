@@ -30,7 +30,7 @@ from .utilities.algorithms import set_algorithm_input
 class _BaseMapper(_vtk.vtkAbstractMapper):
     """Base Mapper with methods common to other mappers."""
 
-    _new_attr_exceptions = ("_theme",)
+    _new_attr_exceptions = ('_theme',)
 
     def __init__(self, theme=None, **kwargs):
         self._theme = pyvista.themes.Theme()
@@ -43,7 +43,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         self.lookup_table = LookupTable()
 
         self.interpolate_before_map = kwargs.get(
-            "interpolate_before_map",
+            'interpolate_before_map',
             self._theme.interpolate_before_map,
         )
 
@@ -80,7 +80,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         # even though this uses ShallowCopy, the new mapper no longer retains
         # any connection with the original
         new_mapper.ShallowCopy(self)
-        if hasattr(self, "dataset"):
+        if hasattr(self, 'dataset'):
             new_mapper.dataset = self.dataset
         return new_mapper
 
@@ -175,15 +175,15 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
         """
         mode = self.GetColorModeAsString().lower()
-        if mode == "mapscalars":
-            return "map"
-        return "direct"
+        if mode == 'mapscalars':
+            return 'map'
+        return 'direct'
 
     @color_mode.setter
     def color_mode(self, value: str):  # numpydoc ignore=GL08
-        if value == "direct":
+        if value == 'direct':
             self.SetColorModeToDirectScalars()
-        elif value == "map":
+        elif value == 'map':
             self.SetColorModeToMapScalars()
         else:
             raise ValueError('Color mode must be either "default", "direct" or "map"')
@@ -289,12 +289,12 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         """
         # map vtk strings to more sensible strings
         vtk_to_pv = {
-            "Default": "default",
-            "UsePointData": "point",
-            "UseCellData": "cell",
-            "UsePointFieldData": "point_field",
-            "UseCellFieldData": "cell_field",
-            "UseFieldData": "field",
+            'Default': 'default',
+            'UsePointData': 'point',
+            'UseCellData': 'cell',
+            'UsePointFieldData': 'point_field',
+            'UseCellFieldData': 'cell_field',
+            'UseFieldData': 'field',
         }
         return vtk_to_pv[self.GetScalarModeAsString()]
 
@@ -303,17 +303,17 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         if isinstance(scalar_mode, FieldAssociation):
             scalar_mode = scalar_mode.name
         scalar_mode = scalar_mode.lower()
-        if scalar_mode == "default":
+        if scalar_mode == 'default':
             self.SetScalarModeToDefault()
-        elif scalar_mode == "point":
+        elif scalar_mode == 'point':
             self.SetScalarModeToUsePointData()
-        elif scalar_mode == "cell":
+        elif scalar_mode == 'cell':
             self.SetScalarModeToUseCellData()
-        elif scalar_mode == "point_field":
+        elif scalar_mode == 'point_field':
             self.SetScalarModeToUsePointFieldData()
-        elif scalar_mode == "cell_field":
+        elif scalar_mode == 'cell_field':
             self.SetScalarModeToUseCellFieldData()
-        elif scalar_mode == "field":
+        elif scalar_mode == 'field':
             self.SetScalarModeToUseFieldData()
         else:
             raise ValueError(
@@ -409,13 +409,13 @@ class _DataSetMapper(_BaseMapper):
         mode.
 
         """
-        if self.color_mode == "direct":
+        if self.color_mode == 'direct':
             return
 
-        self.dataset.point_data.pop("__rgba__", None)
+        self.dataset.point_data.pop('__rgba__', None)
         self._configure_scalars_mode(
             self.lookup_table(self.dataset.active_scalars),
-            "__rgba__",
+            '__rgba__',
             self.scalar_map_mode,
             True,
         )
@@ -448,7 +448,7 @@ class _DataSetMapper(_BaseMapper):
 
         """
         if scalars.shape[0] == self.dataset.n_points and scalars.shape[0] == self.dataset.n_cells:
-            use_points = preference == "point"
+            use_points = preference == 'point'
             use_cells = not use_points
         else:
             use_points = scalars.shape[0] == self.dataset.n_points
@@ -462,7 +462,7 @@ class _DataSetMapper(_BaseMapper):
             ):
                 self.dataset.point_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
-            self.scalar_map_mode = "point"
+            self.scalar_map_mode = 'point'
         elif use_cells:
             if (
                 scalars_name not in self.dataset.cell_data
@@ -470,11 +470,11 @@ class _DataSetMapper(_BaseMapper):
             ):
                 self.dataset.cell_data.set_array(scalars, scalars_name, False)
             self.dataset.active_scalars_name = scalars_name
-            self.scalar_map_mode = "cell"
+            self.scalar_map_mode = 'cell'
         else:
             raise_not_matching(scalars, self.dataset)
 
-        self.color_mode = "direct" if direct_scalars_color_mode else "map"
+        self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 
     def set_scalars(
         self,
@@ -484,7 +484,7 @@ class _DataSetMapper(_BaseMapper):
         scalar_bar_args=None,
         rgb=None,
         component=None,
-        preference="point",
+        preference='point',
         custom_opac=False,
         annotations=None,
         log_scale=False,
@@ -600,14 +600,14 @@ class _DataSetMapper(_BaseMapper):
 
         """
         if scalar_bar_args is None:
-            scalar_bar_args = {"n_colors": n_colors}
+            scalar_bar_args = {'n_colors': n_colors}
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
 
         # Set the array title for when it is added back to the mesh
         if custom_opac:
-            scalars_name = "__custom_rgba"
+            scalars_name = '__custom_rgba'
 
         if not np.issubdtype(scalars.dtype, np.number) and not isinstance(
             cmap,
@@ -615,25 +615,25 @@ class _DataSetMapper(_BaseMapper):
         ):
             # we can rapidly handle bools
             if scalars.dtype == np.bool_:
-                cats = np.array([b"False", b"True"], dtype="|S5")
+                cats = np.array([b'False', b'True'], dtype='|S5')
                 values = np.array([0, 1])
                 clim = [-0.5, 1.5]
             else:
                 # If str array, digitize and annotate
-                cats, scalars = np.unique(scalars.astype("|S"), return_inverse=True)
+                cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
                 values = np.unique(scalars)
                 clim = [np.min(values) - 0.5, np.max(values) + 0.5]
-                scalars_name = f"{scalars_name}-digitized"
+                scalars_name = f'{scalars_name}-digitized'
 
             n_colors = len(cats)
-            scalar_bar_args.setdefault("n_labels", 0)
+            scalar_bar_args.setdefault('n_labels', 0)
 
             self.lookup_table.SetAnnotations(convert_array(values), convert_string_array(cats))
 
         # Use only the real component if an array is complex
         if np.issubdtype(scalars.dtype, np.complexfloating):
             scalars = scalars.astype(float)
-            scalars_name = f"{scalars_name}-real"
+            scalars_name = f'{scalars_name}-real'
 
         if scalars.ndim != 1:
             if rgb:
@@ -643,17 +643,17 @@ class _DataSetMapper(_BaseMapper):
                 or scalars.shape[0] == self.dataset.n_cells
             ):
                 if not isinstance(component, (int, type(None))):
-                    raise TypeError("component must be either None or an integer")
+                    raise TypeError('component must be either None or an integer')
                 if component is None:
                     scalars = np.linalg.norm(scalars.copy(), axis=1)
-                    scalars_name = f"{scalars_name}-normed"
+                    scalars_name = f'{scalars_name}-normed'
                 elif component < scalars.shape[1] and component >= 0:
                     scalars = np.array(scalars[:, component]).copy()
-                    scalars_name = f"{scalars_name}-{component}"
+                    scalars_name = f'{scalars_name}-{component}'
                 else:
                     raise ValueError(
-                        "Component must be nonnegative and less than the "
-                        f"dimensionality of the scalars array: {scalars.shape[1]}",
+                        'Component must be nonnegative and less than the '
+                        f'dimensionality of the scalars array: {scalars.shape[1]}',
                     )
             else:
                 scalars = scalars.ravel()
@@ -714,10 +714,10 @@ class _DataSetMapper(_BaseMapper):
                 self.lookup_table.nan_color = nan_color
             if above_color:
                 self.lookup_table.above_range_color = above_color
-                scalar_bar_args.setdefault("above_label", "above")
+                scalar_bar_args.setdefault('above_label', 'above')
             if below_color:
                 self.lookup_table.below_range_color = below_color
-                scalar_bar_args.setdefault("below_label", "below")
+                scalar_bar_args.setdefault('below_label', 'below')
             if isinstance(annotations, dict):
                 self.lookup_table.annotations = annotations
             self.lookup_table.log_scale = log_scale
@@ -781,24 +781,24 @@ class _DataSetMapper(_BaseMapper):
 
         """
         vtk_to_pv = {
-            _vtk.VTK_RESOLVE_OFF: "off",
-            _vtk.VTK_RESOLVE_POLYGON_OFFSET: "polygon_offset",
-            _vtk.VTK_RESOLVE_SHIFT_ZBUFFER: "shift_zbuffer",
+            _vtk.VTK_RESOLVE_OFF: 'off',
+            _vtk.VTK_RESOLVE_POLYGON_OFFSET: 'polygon_offset',
+            _vtk.VTK_RESOLVE_SHIFT_ZBUFFER: 'shift_zbuffer',
         }
         return vtk_to_pv[self.GetResolveCoincidentTopology()]
 
     @resolve.setter
     def resolve(self, resolve):  # numpydoc ignore=GL08
-        if resolve == "off":
+        if resolve == 'off':
             self.SetResolveCoincidentTopologyToOff()
-        elif resolve == "polygon_offset":
+        elif resolve == 'polygon_offset':
             self.SetResolveCoincidentTopologyToPolygonOffset()
-        elif resolve == "shift_zbuffer":
+        elif resolve == 'shift_zbuffer':
             self.SetResolveCoincidentTopologyToShiftZBuffer()
         else:
             raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_zbuffer"')
 
-    def set_custom_opacity(self, opacity, color, n_colors, preference="point"):
+    def set_custom_opacity(self, opacity, color, n_colors, preference='point'):
         """Set custom opacity.
 
         Parameters
@@ -825,9 +825,9 @@ class _DataSetMapper(_BaseMapper):
             rgba = np.empty((self.dataset.n_cells, 4), np.uint8)
         else:  # pragma: no cover
             raise ValueError(
-                f"Opacity array size ({opacity.size}) does not equal "
-                f"the number of points ({self.dataset.n_points}) or the "
-                f"number of cells ({self.dataset.n_cells}).",
+                f'Opacity array size ({opacity.size}) does not equal '
+                f'the number of points ({self.dataset.n_points}) or the '
+                f'number of cells ({self.dataset.n_cells}).',
             )
 
         default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
@@ -835,26 +835,26 @@ class _DataSetMapper(_BaseMapper):
         rgba[:, :-1] = Color(color, default_color=default_color).int_rgb
         rgba[:, -1] = np.around(opacity * 255)
 
-        self.color_mode = "direct"
+        self.color_mode = 'direct'
         self.lookup_table.n_values = n_colors
-        self._configure_scalars_mode(rgba, "", preference, True)
+        self._configure_scalars_mode(rgba, '', preference, True)
 
     def __repr__(self):
         """Representation of the mapper."""
         mapper_attr = [
-            f"{type(self).__name__} ({hex(id(self))})",
-            f"  Scalar visibility:           {self.scalar_visibility}",
-            f"  Scalar range:                {self.scalar_range}",
-            f"  Interpolate before mapping:  {self.interpolate_before_map}",
-            f"  Scalar map mode:             {self.scalar_map_mode}",
-            f"  Color mode:                  {self.color_mode}",
-            "",
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Scalar visibility:           {self.scalar_visibility}',
+            f'  Scalar range:                {self.scalar_range}',
+            f'  Interpolate before mapping:  {self.interpolate_before_map}',
+            f'  Scalar map mode:             {self.scalar_map_mode}',
+            f'  Color mode:                  {self.color_mode}',
+            '',
         ]
 
-        mapper_attr.append("Attached dataset:")
+        mapper_attr.append('Attached dataset:')
         mapper_attr.append(str(self.dataset))
 
-        return "\n".join(mapper_attr)
+        return '\n'.join(mapper_attr)
 
 
 class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
@@ -979,12 +979,12 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
     @scale_array.setter
     def scale_array(self, name: str):  # numpydoc ignore=GL08
         if not self.dataset:  # pragma: no cover
-            raise RuntimeError("Missing dataset.")
+            raise RuntimeError('Missing dataset.')
         if name not in self.dataset.point_data:
-            available_arrays = ", ".join(self.dataset.point_data.keys())
+            available_arrays = ', '.join(self.dataset.point_data.keys())
             raise KeyError(
                 f'Point array "{name}" does not exist. '
-                f"Available point arrays are: {available_arrays}",
+                f'Available point arrays are: {available_arrays}',
             )
 
         self.scale_factor = 1.0
@@ -1005,15 +1005,15 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
 
         """
         self.SetSplatShaderCode(
-            "//VTK::Color::Impl\n"
-            "float dist = dot(offsetVCVSOutput.xy,offsetVCVSOutput.xy);\n"
-            "if (dist > 1.0) {\n"
-            "  discard;\n"
-            "} else {\n"
-            f"  float scale = ({opacity} - dist);\n"
-            "  ambientColor *= scale;\n"
-            "  diffuseColor *= scale;\n"
-            "}\n",
+            '//VTK::Color::Impl\n'
+            'float dist = dot(offsetVCVSOutput.xy,offsetVCVSOutput.xy);\n'
+            'if (dist > 1.0) {\n'
+            '  discard;\n'
+            '} else {\n'
+            f'  float scale = ({opacity} - dist);\n'
+            '  ambientColor *= scale;\n'
+            '  diffuseColor *= scale;\n'
+            '}\n',
         )
         # maintain consistency with the default style
         self.scale_factor *= 1.5
@@ -1026,19 +1026,19 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
     def __repr__(self):
         """Representation of the Gaussian mapper."""
         mapper_attr = [
-            f"{type(self).__name__} ({hex(id(self))})",
-            f"  Scalar visibility:           {self.scalar_visibility}",
-            f"  Scalar range:                {self.scalar_range}",
-            f"  Emissive:                    {self.emissive}",
-            f"  Scale Factor:                {self.scale_factor}",
-            f"  Using custom splat:          {self.GetSplatShaderCode() is None}",
-            "",
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Scalar visibility:           {self.scalar_visibility}',
+            f'  Scalar range:                {self.scalar_range}',
+            f'  Emissive:                    {self.emissive}',
+            f'  Scale Factor:                {self.scale_factor}',
+            f'  Using custom splat:          {self.GetSplatShaderCode() is None}',
+            '',
         ]
 
-        mapper_attr.append("Attached dataset:")
+        mapper_attr.append('Attached dataset:')
         mapper_attr.append(str(self.dataset))
 
-        return "\n".join(mapper_attr)
+        return '\n'.join(mapper_attr)
 
 
 @abstract_class
@@ -1110,9 +1110,9 @@ class _BaseVolumeMapper(_BaseMapper):
 
         """
         value = self.GetBlendMode()
-        mode = {0: "composite", 1: "maximum", 2: "minimum", 3: "average", 4: "additive"}.get(value)
+        mode = {0: 'composite', 1: 'maximum', 2: 'minimum', 3: 'average', 4: 'additive'}.get(value)
         if mode is None:  # pragma: no cover
-            raise NotImplementedError(f"Unsupported blend mode return value {value}")
+            raise NotImplementedError(f'Unsupported blend mode return value {value}')
         return mode
 
     @blend_mode.setter
@@ -1121,24 +1121,24 @@ class _BaseVolumeMapper(_BaseMapper):
             self.SetBlendMode(value)
         elif isinstance(value, str):
             value = value.lower()
-            if value in ["additive", "add", "sum"]:
+            if value in ['additive', 'add', 'sum']:
                 self.SetBlendModeToAdditive()
-            elif value in ["average", "avg", "average_intensity"]:
+            elif value in ['average', 'avg', 'average_intensity']:
                 self.SetBlendModeToAverageIntensity()
-            elif value in ["composite", "comp"]:
+            elif value in ['composite', 'comp']:
                 self.SetBlendModeToComposite()
-            elif value in ["maximum", "max", "maximum_intensity"]:
+            elif value in ['maximum', 'max', 'maximum_intensity']:
                 self.SetBlendModeToMaximumIntensity()
-            elif value in ["minimum", "min", "minimum_intensity"]:
+            elif value in ['minimum', 'min', 'minimum_intensity']:
                 self.SetBlendModeToMinimumIntensity()
             else:
                 raise ValueError(
-                    f"Blending mode {value!r} invalid. "
+                    f'Blending mode {value!r} invalid. '
                     'Please choose either "additive", '
                     '"composite", "minimum" or "maximum".',
                 )
         else:
-            raise TypeError(f"`blend_mode` should be either an int or str, not `{type(value)}`")
+            raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
 
     def __del__(self):
         self._lut = None

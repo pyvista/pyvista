@@ -44,7 +44,7 @@ ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
 
 Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
 """
-if "Rotation" in locals():
+if 'Rotation' in locals():
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
 else:
     RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]

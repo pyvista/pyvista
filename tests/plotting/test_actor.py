@@ -15,8 +15,8 @@ from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.prop3d import _rotation_matrix_as_orientation
 
 skip_mac = pytest.mark.skipif(
-    platform.system() == "Darwin",
-    reason="MacOS CI fails when downloading examples",
+    platform.system() == 'Darwin',
+    reason='MacOS CI fails when downloading examples',
 )
 
 
@@ -56,37 +56,37 @@ def dummy_actor(actor):
 @pytest.fixture
 def vol_actor():
     vol = pv.ImageData(dimensions=(10, 10, 10))
-    vol["scalars"] = 255 - vol.z * 25
+    vol['scalars'] = 255 - vol.z * 25
     pl = pv.Plotter()
     return pl.add_volume(vol)
 
 
 def test_actor_init_empty():
     actor = pv.Actor()
-    assert "Position" in repr(actor)
-    assert "Has mapper" in repr(actor)
-    assert "Mapper" not in repr(actor)
+    assert 'Position' in repr(actor)
+    assert 'Has mapper' in repr(actor)
+    assert 'Mapper' not in repr(actor)
     assert isinstance(actor.prop, pv.Property)
     assert actor.mapper is None
 
     with pytest.raises(AttributeError):
         actor.not_an_attribute = None
 
-    assert actor.memory_address == actor.GetAddressAsString("")
+    assert actor.memory_address == actor.GetAddressAsString('')
 
     actor.user_matrix = None
     repr_ = repr(actor)
-    assert "User matrix:                Identity" in repr_
+    assert 'User matrix:                Identity' in repr_
 
     actor.user_matrix = np.eye(4) * 2
     repr_ = repr(actor)
-    assert "User matrix:                Set" in repr_
+    assert 'User matrix:                Set' in repr_
 
 
 def test_actor_from_argument():
     mapper = pv.DataSetMapper()
     prop = pv.Property()
-    name = "Actor"
+    name = 'Actor'
     actor = pv.Actor(mapper=mapper, prop=prop, name=name)
     assert actor.mapper is mapper
     assert actor.prop is prop
@@ -98,7 +98,7 @@ def test_actor_from_plotter():
     actor = pv.Plotter().add_mesh(mesh, lighting=False)
     assert actor.mapper.dataset is mesh
     assert actor.prop.lighting is False
-    assert "Mapper" in repr(actor)
+    assert 'Mapper' in repr(actor)
 
 
 def test_actor_copy_deep(actor):
@@ -147,9 +147,9 @@ def test_actor_visible(actor):
     assert actor.visibility is True
 
 
-@pytest.mark.parametrize("klass", ["Prop3D, Prop3DMixin"])
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
 def test_actor_scale(klass, actor, dummy_actor):
-    actor = actor if klass == "Prop3D" else dummy_actor
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.scale == (1, 1, 1)
     scale = (2, 2, 2)
     actor.scale = scale
@@ -158,9 +158,9 @@ def test_actor_scale(klass, actor, dummy_actor):
     assert actor.scale == (3, 3, 3)
 
 
-@pytest.mark.parametrize("klass", ["Prop3D, Prop3DMixin"])
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
 def test_actor_position(klass, actor, dummy_actor):
-    actor = actor if klass == "Prop3D" else dummy_actor
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.position == (0, 0, 0)
     position = (2, 2, 2)
     actor.position = position
@@ -182,9 +182,9 @@ def test_actor_rotate_z(actor):
     assert np.allclose(actor.orientation, (0, 0, 90))
 
 
-@pytest.mark.parametrize("klass", ["Prop3D, Prop3DMixin"])
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
 def test_actor_orientation(klass, actor, dummy_actor):
-    actor = actor if klass == "Prop3D" else dummy_actor
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.orientation == (0, 0, 0)
     orientation = (10, 20, 30)
     actor.orientation = orientation
@@ -203,18 +203,18 @@ def test_actor_rotation_order(actor):
     assert np.allclose(dataset.bounds, actor.bounds)
 
 
-@pytest.mark.parametrize("klass", ["Prop3D, Prop3DMixin"])
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
 def test_actor_origin(klass, actor, dummy_actor):
-    actor = actor if klass == "Prop3D" else dummy_actor
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.origin == (0, 0, 0)
     origin = (1, 2, 3)
     actor.origin = origin
     assert np.allclose(actor.origin, origin)
 
 
-@pytest.mark.parametrize("klass", ["Prop3D, Prop3DMixin"])
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
 def test_actor_length(klass, actor, dummy_actor):
-    actor = actor if klass == "Prop3D" else dummy_actor
+    actor = actor if klass == 'Prop3D' else dummy_actor
     initial_length = 2**0.5  # sqrt(2)
     scale_factor = 2
 
@@ -223,9 +223,9 @@ def test_actor_length(klass, actor, dummy_actor):
     assert actor.length == initial_length * scale_factor
 
 
-@pytest.mark.parametrize("klass", ["Prop3D, Prop3DMixin"])
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
 def test_actor_user_matrix(klass, actor, dummy_actor):
-    actor = actor if klass == "Prop3D" else dummy_actor
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert np.allclose(actor.user_matrix, np.eye(4))
 
     arr = np.array([[0.707, -0.707, 0, 0], [0.707, 0.707, 0, 0], [0, 0, 1, 1.500001], [0, 0, 0, 2]])
@@ -235,16 +235,16 @@ def test_actor_user_matrix(klass, actor, dummy_actor):
     assert np.allclose(actor.user_matrix, arr)
 
 
-@pytest.mark.parametrize("klass", ["Prop3D, Prop3DMixin"])
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
 def test_actor_bounds(klass, actor, dummy_actor):
-    actor = actor if klass == "Prop3D" else dummy_actor
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert isinstance(actor.bounds, tuple)
     assert np.allclose(actor.bounds, (-0.5, 0.5, -0.5, 0.5, 0, 0))
 
 
-@pytest.mark.parametrize("klass", ["Prop3D, Prop3DMixin"])
+@pytest.mark.parametrize('klass', ['Prop3D, Prop3DMixin'])
 def test_actor_center(klass, actor, dummy_actor):
-    actor = actor if klass == "Prop3D" else dummy_actor
+    actor = actor if klass == 'Prop3D' else dummy_actor
     assert actor.center == (0.0, 0.0, 0.0)
 
 
@@ -252,7 +252,7 @@ def test_actor_name(actor):
     actor.name = 1
     assert actor._name == 1
 
-    with pytest.raises(ValueError, match="Name must be truthy"):
+    with pytest.raises(ValueError, match='Name must be truthy'):
         actor.name = None
 
 
@@ -276,7 +276,7 @@ def test_vol_actor_prop(vol_actor):
 
 
 @pytest.mark.parametrize(
-    "func", [np.array, scipy.spatial.transform.Rotation.from_matrix], ids=["numpy", "scipy"]
+    'func', [np.array, scipy.spatial.transform.Rotation.from_matrix], ids=['numpy', 'scipy']
 )
 def test_rotation_from(actor, func):
     array = [
@@ -293,7 +293,7 @@ def test_rotation_from(actor, func):
     assert np.allclose(actual, expected)
 
 
-@pytest.mark.parametrize("origin", [None, [1, 2, 3]])
+@pytest.mark.parametrize('origin', [None, [1, 2, 3]])
 def test_rotation_from_matches_dataset_rotate(origin):
     array = [
         [0.78410209, -0.49240388, 0.37778609],
@@ -310,7 +310,7 @@ def test_rotation_from_matches_dataset_rotate(origin):
     assert np.allclose(dataset.bounds, actor.bounds)
 
 
-@pytest.mark.parametrize("order", ["F", "C"])
+@pytest.mark.parametrize('order', ['F', 'C'])
 def test_convert_orientation_to_rotation_matrix(order):
     orientation = (10, 20, 30)
     rotation = np.array(

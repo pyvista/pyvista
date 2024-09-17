@@ -59,19 +59,19 @@ coil_block.plot(render_lines_as_tubes=True, line_width=10)
 seed = pv.Disc(inner=1, outer=5.4, r_res=2, c_res=12)
 strl = grid.streamlines_from_source(
     seed,
-    vectors="B",
+    vectors='B',
     max_time=180,
     initial_step_length=0.1,
-    integration_direction="both",
+    integration_direction='both',
 )
 
 pl = pv.Plotter()
 pl.add_mesh(
     strl.tube(radius=0.1),
-    cmap="bwr",
+    cmap='bwr',
     ambient=0.2,
 )
-pl.add_mesh(coil_block, render_lines_as_tubes=True, line_width=5, color="w")
+pl.add_mesh(coil_block, render_lines_as_tubes=True, line_width=5, color='w')
 pl.camera.zoom(3)
 pl.show()
 
@@ -83,7 +83,7 @@ pl.show()
 # strength while also plotting the streamlines and the coil.
 
 # Take the norm of the magnetic field
-scalars = np.linalg.norm(grid["B"], axis=1)
+scalars = np.linalg.norm(grid['B'], axis=1)
 
 # Customize the opacity to make it easier to visualize the strength of the
 # field nearby the coil
@@ -99,16 +99,16 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 pl = pv.Plotter()
 pl.add_mesh(
     strl.tube(radius=0.1),
-    color="black",
+    color='black',
 )
-pl.add_mesh(coil_block, render_lines_as_tubes=True, line_width=5, color="w")
+pl.add_mesh(coil_block, render_lines_as_tubes=True, line_width=5, color='w')
 vol = pl.add_volume(
     grid,
     scalars=scalars,
     opacity=opacity,
-    cmap="hot",
+    cmap='hot',
     show_scalar_bar=False,
 )
-vol.prop.interpolation_type = "linear"
+vol.prop.interpolation_type = 'linear'
 pl.camera.zoom(5)
 pl.show()

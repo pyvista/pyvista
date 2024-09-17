@@ -29,7 +29,7 @@ os.listdir(path)
 
 
 # %%
-os.listdir(str(Path(path) / "T0000000500"))
+os.listdir(str(Path(path) / 'T0000000500'))
 
 
 # %%
@@ -43,10 +43,10 @@ mesh
 
 # %%
 # Plot the pieced together mesh
-mesh.plot(scalars="node_value", categories=True)
+mesh.plot(scalars='node_value', categories=True)
 
 
 # %%
-mesh.plot(scalars="density")
+mesh.plot(scalars='density')
 # %%
 # .. tags:: load
