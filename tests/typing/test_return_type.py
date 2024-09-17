@@ -42,15 +42,15 @@ def get_classes_with_attribute(attr: str) -> tuple[tuple[str], tuple[type]]:
 
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
-    if 'class_with_bounds' in metafunc.fixturenames:
+    if "class_with_bounds" in metafunc.fixturenames:
         # Generate a separate test for any class that has bounds
-        class_names, class_types = get_classes_with_attribute('bounds')
-        metafunc.parametrize('class_with_bounds', class_types, ids=class_names)
+        class_names, class_types = get_classes_with_attribute("bounds")
+        metafunc.parametrize("class_with_bounds", class_types, ids=class_names)
 
-    if 'class_with_center' in metafunc.fixturenames:
+    if "class_with_center" in metafunc.fixturenames:
         # Generate a separate test for any class that has a center
-        class_names, class_types = get_classes_with_attribute('center')
-        metafunc.parametrize('class_with_center', class_types, ids=class_names)
+        class_names, class_types = get_classes_with_attribute("center")
+        metafunc.parametrize("class_with_center", class_types, ids=class_names)
 
 
 def is_all_floats(iterable: Iterable):
@@ -63,10 +63,10 @@ def try_init_object(class_, kwargs):
     try:
         instance = class_(**kwargs)
     except VTKVersionError:
-        pytest.skip('VTK Version not supported.')
+        pytest.skip("VTK Version not supported.")
     except TypeError as e:
-        if 'abstract' in repr(e):
-            pytest.skip('Class is abstract.')
+        if "abstract" in repr(e):
+            pytest.skip("Class is abstract.")
         raise
     return instance
 
@@ -75,8 +75,8 @@ def get_property_return_type(prop: property):
     members = inspect.getmembers(prop)
     for member in members:
         name, func = member
-        if name == 'fget':
-            return func.__annotations__['return']
+        if name == "fget":
+            return func.__annotations__["return"]
     return None
 
 
@@ -84,9 +84,9 @@ def test_bounds_tuple(class_with_bounds):
     # Define kwargs as required for some cases.
     kwargs = {}
     if class_with_bounds is pv.CubeAxesActor:
-        kwargs['camera'] = pv.Camera()
+        kwargs["camera"] = pv.Camera()
     elif class_with_bounds is pv.Renderer:
-        kwargs['parent'] = pv.Plotter()
+        kwargs["parent"] = pv.Plotter()
 
     instance = try_init_object(class_with_bounds, kwargs)
 
@@ -98,14 +98,14 @@ def test_bounds_tuple(class_with_bounds):
 
     # Test type annotations
     return_type = get_property_return_type(class_with_bounds.bounds)
-    assert return_type == 'BoundsTuple'
+    assert return_type == "BoundsTuple"
 
 
 def test_center_tuple(class_with_center):
     # Define kwargs as required for some cases.
     kwargs = {}
     if class_with_center is pv.Renderer:
-        kwargs['parent'] = pv.Plotter()
+        kwargs["parent"] = pv.Plotter()
 
     instance = try_init_object(class_with_center, kwargs)
 
@@ -117,4 +117,4 @@ def test_center_tuple(class_with_center):
 
     # Test type annotations
     return_type = get_property_return_type(class_with_center.center)
-    assert return_type == 'tuple[float, float, float]'
+    assert return_type == "tuple[float, float, float]"

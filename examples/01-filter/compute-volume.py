@@ -83,7 +83,7 @@ print(f"Original volume: {dataset.volume}")
 
 # Grab the largest connected volume within a scalar range
 scalar_range = [0, 77]  # Range corresponding to bottom 15% of values
-largest = threshed.connectivity('largest', scalar_range=scalar_range)
+largest = threshed.connectivity("largest", scalar_range=scalar_range)
 
 # Get volume as numeric value
 large_volume = largest.volume

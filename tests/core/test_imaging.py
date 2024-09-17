@@ -21,7 +21,7 @@ def test_perlin_noise():
 
 
 @pytest.mark.parametrize(
-    'dtype',
+    "dtype",
     [
         np.float64,
         np.float32,
@@ -39,9 +39,9 @@ def test_sample_function(dtype):
     perlin = pv.perlin_noise(0.1, (1, 1, 1), (0, 0, 0))
     bounds = (0, 2, 0, 1, -4, 4)
     dim = (5, 10, 20)
-    scalar_arr_name = 'my_scalars'
+    scalar_arr_name = "my_scalars"
 
-    if os.name == 'nt' and dtype in [np.int64, np.uint64]:
+    if os.name == "nt" and dtype in [np.int64, np.uint64]:
         with pytest.raises(ValueError):  # noqa: PT011
             pv.sample_function(perlin, output_type=dtype)
     else:

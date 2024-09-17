@@ -94,7 +94,7 @@ def test_partitioned_dataset_negative_index(ant, sphere, uniform, airplane, tetb
     partitions[-5] = tetbeam
     assert partitions[0] == tetbeam
     index = -6
-    match = re.escape(f'index ({index}) out of range for this dataset.')
+    match = re.escape(f"index ({index}) out of range for this dataset.")
     with pytest.raises(IndexError, match=match):
         partitions[index] = uniform
 

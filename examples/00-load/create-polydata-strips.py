@@ -59,7 +59,7 @@ mesh
 pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
 pl.add_point_labels(mesh.points, range(mesh.n_points))
-pl.camera_position = 'yx'
+pl.camera_position = "yx"
 pl.camera.zoom(1.2)
 pl.show()
 

@@ -52,13 +52,13 @@ def test_scalar_visibility(composite_mapper):
 
 def test_scalar_map_mode(composite_mapper):
     isinstance(composite_mapper.scalar_map_mode, str)
-    with pytest.raises(ValueError, match='Invalid `scalar_map_mode`'):
-        composite_mapper.scalar_map_mode = 'foo'
+    with pytest.raises(ValueError, match="Invalid `scalar_map_mode`"):
+        composite_mapper.scalar_map_mode = "foo"
 
 
 @pytest.mark.parametrize(
-    'value',
-    ['default', 'point', 'cell', 'point_field', 'cell_field', 'field'],
+    "value",
+    ["default", "point", "cell", "point_field", "cell_field", "field"],
 )
 def test_scalar_map_mode_values(value, composite_mapper):
     composite_mapper.scalar_map_mode = value
@@ -74,9 +74,9 @@ def test_composite_mapper_non_poly(multiblock_all):
 def test_block_attr(block_attributes):
     block = block_attributes[0]
     assert isinstance(block, BlockAttributes)
-    with pytest.raises(KeyError, match='Invalid block key'):
+    with pytest.raises(KeyError, match="Invalid block key"):
         block_attributes[-1]
-    with pytest.raises(KeyError, match='out of bounds'):
+    with pytest.raises(KeyError, match="out of bounds"):
         block_attributes[100000]
     with pytest.raises(TypeError):
         block_attributes[0.5]
@@ -121,7 +121,7 @@ def test_color(block_attr):
     # when unset this must be None
     assert block_attr.color is None
 
-    color = 'red'
+    color = "red"
     block_attr.color = color
     assert block_attr.color == pv.Color(color).float_rgb
 
@@ -136,14 +136,14 @@ def test_color(block_attr):
 def test_attr_repr(block_attr):
     block_attr.visible = True
     block_attr.opacity = 0.9
-    block_attr.color = 'blue'
+    block_attr.color = "blue"
     block_attr.pickable = False
 
     repr_ = repr(block_attr)
-    assert 'True' in repr_
-    assert 'False' in repr_
-    assert 'blue' in repr_
-    assert '0.9' in repr_
+    assert "True" in repr_
+    assert "False" in repr_
+    assert "blue" in repr_
+    assert "0.9" in repr_
 
 
 def test_block_attributes(block_attributes):

@@ -10,12 +10,12 @@ import pytest
 import pyvista as pv
 from pyvista.plotting.colors import get_cmap_safe
 
-COLORMAPS = ['Greys']
+COLORMAPS = ["Greys"]
 
 try:
     import cmocean  # noqa: F401
 
-    COLORMAPS.append('algae')
+    COLORMAPS.append("algae")
 except ImportError:
     pass
 
@@ -23,7 +23,7 @@ except ImportError:
 try:
     import colorcet  # noqa: F401
 
-    COLORMAPS.append('fire')
+    COLORMAPS.append("fire")
 except:
     pass
 
@@ -95,14 +95,14 @@ def test_color():
             pv.Color(invalid_color)
     for invalid_opacity in invalid_opacities:
         with pytest.raises(ValueError):  # noqa: PT011
-            pv.Color('b', invalid_opacity)
+            pv.Color("b", invalid_opacity)
     # Check hex and name getters
-    assert pv.Color(name).hex_rgba == f'#{h}'
-    assert pv.Color(name).hex_rgb == f'#{h[:-2]}'
-    assert pv.Color('b').name == 'blue'
+    assert pv.Color(name).hex_rgba == f"#{h}"
+    assert pv.Color(name).hex_rgb == f"#{h[:-2]}"
+    assert pv.Color("b").name == "blue"
     # Check sRGB conversion
-    assert pv.Color('gray', 0.5).linear_to_srgb() == '#bcbcbcbc'
-    assert pv.Color('#bcbcbcbc').srgb_to_linear() == '#80808080'
+    assert pv.Color("gray", 0.5).linear_to_srgb() == "#bcbcbcbc"
+    assert pv.Color("#bcbcbcbc").srgb_to_linear() == "#80808080"
     # Check iteration and indexing
     c = pv.Color(i_rgba)
     assert all(ci == fi for ci, fi in zip(c, f_rgba))
@@ -126,16 +126,16 @@ def test_color_opacity():
 
 def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
-    if 'css4_color' in metafunc.fixturenames:
+    if "css4_color" in metafunc.fixturenames:
         color_names = list(CSS4_COLORS.keys())
         color_values = list(CSS4_COLORS.values())
 
         test_cases = zip(color_names, color_values)
-        metafunc.parametrize('css4_color', test_cases, ids=color_names)
+        metafunc.parametrize("css4_color", test_cases, ids=color_names)
 
-    if 'color_synonym' in metafunc.fixturenames:
+    if "color_synonym" in metafunc.fixturenames:
         synonyms = list(pv.colors.color_synonyms.keys())
-        metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
+        metafunc.parametrize("color_synonym", synonyms, ids=synonyms)
 
 
 def test_css4_colors(css4_color):

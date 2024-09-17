@@ -98,7 +98,7 @@ cpos = [
 
 p = pv.Plotter()
 p.add_mesh(grid, cmap="seismic", clim=[-1, 1])
-p.add_mesh(pv.PolyData(path), color='orange')
+p.add_mesh(pv.PolyData(path), color="orange")
 p.show(cpos=cpos)
 # %%
 # .. tags:: load

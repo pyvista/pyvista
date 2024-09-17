@@ -79,9 +79,9 @@ def test_multiple_lines_source():
     points = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [0.0, 0.0, 1.0]])
     algo = pv.MultipleLinesSource(points=points)
     assert np.array_equal(algo.points, points)
-    with pytest.raises(ValueError, match='Array of points must have three values per point'):
+    with pytest.raises(ValueError, match="Array of points must have three values per point"):
         algo.points = points[:, :1]
-    with pytest.raises(ValueError, match='>=2 points need to define multiple lines.'):
+    with pytest.raises(ValueError, match=">=2 points need to define multiple lines."):
         algo.points = points[0, :]
 
 
@@ -153,18 +153,18 @@ def test_text3d_source_empty_string():
 
 
 def test_text3d_source():
-    src = pv.Text3DSource(string='Text')
-    assert src.string == 'Text'
+    src = pv.Text3DSource(string="Text")
+    assert src.string == "Text"
     out = src.output
     assert len(out.split_bodies()) == 4
 
 
-@pytest.mark.parametrize('string', [" ", 'TEXT'])
-@pytest.mark.parametrize('center', [(0, 0, 0), (1, -2, 3)])
-@pytest.mark.parametrize('height', [None, 0, 1, 2])
-@pytest.mark.parametrize('width', [None, 0, 1, 2])
-@pytest.mark.parametrize('depth', [None, 0, 1, 2])
-@pytest.mark.parametrize('normal', [(0, 0, 1)])
+@pytest.mark.parametrize("string", [" ", "TEXT"])
+@pytest.mark.parametrize("center", [(0, 0, 0), (1, -2, 3)])
+@pytest.mark.parametrize("height", [None, 0, 1, 2])
+@pytest.mark.parametrize("width", [None, 0, 1, 2])
+@pytest.mark.parametrize("depth", [None, 0, 1, 2])
+@pytest.mark.parametrize("normal", [(0, 0, 1)])
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
     src = pv.Text3DSource(
         string=string,
@@ -222,7 +222,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         # bounding box center and/or the mean of its points will otherwise
         # vary and is challenging to test
         new_normal = np.array((1, -2, 3))
-        src = pv.Text3DSource(string='I', center=center, normal=new_normal, depth=0)
+        src = pv.Text3DSource(string="I", center=center, normal=new_normal, depth=0)
         out = src.output
         actual_normal = np.mean(out.cell_normals, axis=0)
         expected_normal = new_normal / np.linalg.norm(new_normal)
@@ -254,12 +254,12 @@ def test_text3d_source_update(text3d_source_with_text):
 
 def text3d_source_test_params():
     return (
-        ('string', 'TEXT'),
-        ('center', (1, 2, 3)),
-        ('normal', (4, 5, 6)),
-        ('height', 2),
-        ('width', 3),
-        ('depth', 4),
+        ("string", "TEXT"),
+        ("center", (1, 2, 3)),
+        ("normal", (4, 5, 6)),
+        ("height", 2),
+        ("width", 3),
+        ("depth", 4),
     )
 
 
@@ -286,7 +286,7 @@ def test_text3d_source_output(text3d_source_with_text):
 
 
 @pytest.mark.parametrize(
-    'kwarg_tuple',
+    "kwarg_tuple",
     text3d_source_test_params(),
 )
 def test_text3d_source_modified_init(kwarg_tuple):
@@ -300,7 +300,7 @@ def test_text3d_source_modified_init(kwarg_tuple):
 
 
 @pytest.mark.parametrize(
-    'kwarg_tuple',
+    "kwarg_tuple",
     text3d_source_test_params(),
 )
 def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
@@ -322,7 +322,7 @@ def test_text3d_source_modified(text3d_source_with_text, kwarg_tuple):
     assert points_before is points_after
 
     # Test setting a new value sets modified flag but does not change output
-    new_value = value + value if name == 'string' else np.array(value) * 2
+    new_value = value + value if name == "string" else np.array(value) * 2
     points_before = text3d_source_with_text._output.GetPoints()
     setattr(text3d_source_with_text, name, new_value)
     points_after = text3d_source_with_text._output.GetPoints()
@@ -391,7 +391,7 @@ def test_polygon_source():
 
 def test_platonic_solid_source():
     algo = pv.PlatonicSolidSource()
-    assert algo.kind == 'tetrahedron'
+    assert algo.kind == "tetrahedron"
 
 
 def test_plane_source():
@@ -490,7 +490,7 @@ def test_axes_geometry_source_shaft_length_init():
     assert axes_geometry_source.shaft_length == (0.9, 0.9, 0.9)
 
 
-@pytest.mark.parametrize('part', ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip'])
+@pytest.mark.parametrize("part", ["x_shaft", "y_shaft", "z_shaft", "x_tip", "y_tip", "z_tip"])
 def test_axes_geometry_source_bounds(axes_geometry_source, part):
     x_shaft_len, y_shaft_len, z_shaft_len = 0.5, 0.6, 0.7
     shaft_radius = 0.05
@@ -504,7 +504,7 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
 
     x_shaft, y_shaft, z_shaft, x_tip, y_tip, z_tip = axes_geometry_source.output
 
-    if part == 'x_shaft':
+    if part == "x_shaft":
         actual_bounds = x_shaft.bounds
         expected_bounds = (
             0,
@@ -516,7 +516,7 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
         )
         assert np.allclose(actual_bounds, expected_bounds)
 
-    elif part == 'y_shaft':
+    elif part == "y_shaft":
         actual_bounds = y_shaft.bounds
         expected_bounds = (
             -shaft_radius,
@@ -528,7 +528,7 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
         )
         assert np.allclose(actual_bounds, expected_bounds)
 
-    elif part == 'z_shaft':
+    elif part == "z_shaft":
         actual_bounds = z_shaft.bounds
         expected_bounds = (
             -shaft_radius,
@@ -540,7 +540,7 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
         )
         assert np.allclose(actual_bounds, expected_bounds)
 
-    elif part == 'x_tip':
+    elif part == "x_tip":
         actual_bounds = x_tip.bounds
         expected_bounds = (
             x_shaft_len,
@@ -552,7 +552,7 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
         )
         assert np.allclose(actual_bounds, expected_bounds)
 
-    elif part == 'y_tip':
+    elif part == "y_tip":
         actual_bounds = y_tip.bounds
         expected_bounds = (
             -tip_radius,
@@ -564,7 +564,7 @@ def test_axes_geometry_source_bounds(axes_geometry_source, part):
         )
         assert np.allclose(actual_bounds, expected_bounds)
 
-    elif part == 'z_tip':
+    elif part == "z_tip":
         actual_bounds = z_tip.bounds
         expected_bounds = (
             -tip_radius,
@@ -603,7 +603,7 @@ def test_axes_geometry_source_tip_radius_init():
 
 
 @pytest.mark.parametrize(
-    'shaft_type',
+    "shaft_type",
     pv.AxesGeometrySource.GEOMETRY_TYPES,
 )
 def test_axes_geometry_source_shaft_type_set_get(shaft_type, axes_geometry_source):
@@ -613,18 +613,18 @@ def test_axes_geometry_source_shaft_type_set_get(shaft_type, axes_geometry_sourc
 
 def test_axes_geometry_source_custom_part(axes_geometry_source):
     axes_geometry_source.shaft_type = pv.ParametricKlein()
-    assert axes_geometry_source.shaft_type == 'custom'
+    assert axes_geometry_source.shaft_type == "custom"
 
     axes_geometry_source.tip_type = pv.ParametricKlein()
-    assert axes_geometry_source.tip_type == 'custom'
+    assert axes_geometry_source.tip_type == "custom"
 
-    match = 'Custom axes part must be 3D. Got bounds: BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=0.0, z_max=0.0).'
+    match = "Custom axes part must be 3D. Got bounds: BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=0.0, z_max=0.0)."
     with pytest.raises(ValueError, match=re.escape(match)):
         axes_geometry_source.shaft_type = pv.Plane()
 
     match = "Geometry 'foo' is not valid. Geometry must be one of: \n\t('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')"
     with pytest.raises(ValueError, match=re.escape(match)):
-        axes_geometry_source.shaft_type = 'foo'
+        axes_geometry_source.shaft_type = "foo"
 
     match = "Geometry must be a string or pyvista.DataSet. Got <class 'int'>."
     with pytest.raises(TypeError, match=match):
@@ -632,7 +632,7 @@ def test_axes_geometry_source_custom_part(axes_geometry_source):
 
 
 @pytest.mark.parametrize(
-    'shaft_type',
+    "shaft_type",
     pv.AxesGeometrySource.GEOMETRY_TYPES,
 )
 def test_axes_geometry_source_shaft_type_init(shaft_type):
@@ -641,7 +641,7 @@ def test_axes_geometry_source_shaft_type_init(shaft_type):
 
 
 @pytest.mark.parametrize(
-    'tip_type',
+    "tip_type",
     pv.AxesGeometrySource.GEOMETRY_TYPES,
 )
 def test_axes_geometry_source_tip_type_set_get(tip_type, axes_geometry_source):
@@ -650,7 +650,7 @@ def test_axes_geometry_source_tip_type_set_get(tip_type, axes_geometry_source):
 
 
 @pytest.mark.parametrize(
-    'tip_type',
+    "tip_type",
     pv.AxesGeometrySource.GEOMETRY_TYPES,
 )
 def test_axes_geometry_source_tip_type_init(tip_type):
@@ -672,7 +672,7 @@ def test_axes_geometry_source_shaft_radius_init():
 def test_axes_geometry_source_update_output(axes_geometry_source):
     out1 = axes_geometry_source.output
     assert isinstance(out1, pv.MultiBlock)
-    assert out1.keys() == ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+    assert out1.keys() == ["x_shaft", "y_shaft", "z_shaft", "x_tip", "y_tip", "z_tip"]
 
     # Test output object references are unchanged when updating
     out2 = axes_geometry_source.output
@@ -685,12 +685,12 @@ def test_axes_geometry_source_update_output(axes_geometry_source):
     assert out1[4] is out2[4]
     assert out1[5] is out2[5]
 
-    assert out1['x_shaft'] is out2['x_shaft']
-    assert out1['y_shaft'] is out2['y_shaft']
-    assert out1['z_shaft'] is out2['z_shaft']
-    assert out1['x_tip'] is out2['x_tip']
-    assert out1['y_tip'] is out2['y_tip']
-    assert out1['z_tip'] is out2['z_tip']
+    assert out1["x_shaft"] is out2["x_shaft"]
+    assert out1["y_shaft"] is out2["y_shaft"]
+    assert out1["z_shaft"] is out2["z_shaft"]
+    assert out1["x_tip"] is out2["x_tip"]
+    assert out1["y_tip"] is out2["y_tip"]
+    assert out1["z_tip"] is out2["z_tip"]
 
 
 def test_axes_geometry_source_repr(axes_geometry_source):
@@ -698,13 +698,13 @@ def test_axes_geometry_source_repr(axes_geometry_source):
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
         "  Shaft type:                 'cylinder'",
-        '  Shaft radius:               0.025',
-        '  Shaft length:               (0.8, 0.8, 0.8)',
+        "  Shaft radius:               0.025",
+        "  Shaft length:               (0.8, 0.8, 0.8)",
         "  Tip type:                   'cone'",
-        '  Tip radius:                 0.1',
-        '  Tip length:                 (0.2, 0.2, 0.2)',
-        '  Symmetric:                  False',
-        '  Symmetric bounds:           False',
+        "  Tip radius:                 0.1",
+        "  Tip length:                 (0.2, 0.2, 0.2)",
+        "  Symmetric:                  False",
+        "  Symmetric bounds:           False",
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
@@ -718,7 +718,7 @@ def test_orthogonal_planes_source():
     planes_source = pv.OrthogonalPlanesSource()
     output = planes_source.output
     assert isinstance(output, pv.MultiBlock)
-    assert output.keys() == ['yz', 'zx', 'xy']
+    assert output.keys() == ["yz", "zx", "xy"]
     assert all(isinstance(poly, pv.PolyData) for poly in output)
 
 
@@ -733,51 +733,51 @@ def test_orthogonal_planes_source_bounds():
     assert output.bounds == bounds
     # Test plane bounds
     xmid, ymid, zmid = output.center
-    assert output['xy'].bounds == (xmin, xmax, ymin, ymax, zmid, zmid)
-    assert output['yz'].bounds == (xmid, xmid, ymin, ymax, zmin, zmax)
-    assert output['zx'].bounds == (xmin, xmax, ymid, ymid, zmin, zmax)
+    assert output["xy"].bounds == (xmin, xmax, ymin, ymax, zmid, zmid)
+    assert output["yz"].bounds == (xmid, xmid, ymin, ymax, zmin, zmax)
+    assert output["zx"].bounds == (xmin, xmax, ymid, ymid, zmin, zmax)
 
 
 def test_orthogonal_planes_source_names():
-    planes_source = pv.OrthogonalPlanesSource(names=['a', 'b', 'c'])
-    assert planes_source.names == ('a', 'b', 'c')
+    planes_source = pv.OrthogonalPlanesSource(names=["a", "b", "c"])
+    assert planes_source.names == ("a", "b", "c")
 
     match = "names must be an instance of any type (<class 'tuple'>, <class 'list'>). Got <class 'str'> instead."
     with pytest.raises(TypeError, match=re.escape(match)):
-        planes_source.names = 'abc'
+        planes_source.names = "abc"
 
 
-@pytest.mark.parametrize('distance', [(10, 20, 30), [(10, 20, 30)]])
+@pytest.mark.parametrize("distance", [(10, 20, 30), [(10, 20, 30)]])
 def test_orthogonal_planes_source_push(distance):
     planes_source = pv.OrthogonalPlanesSource()
     planes_source.push(*distance)
     output = planes_source.output
-    assert np.array_equal(output['yz'].bounds, (10.0, 10.0, -1.0, 1.0, -1.0, 1.0))
-    assert np.array_equal(output['zx'].bounds, (-1.0, 1.0, 20.0, 20.0, -1.0, 1.0))
-    assert np.array_equal(output['xy'].bounds, (-1.0, 1.0, -1.0, 1.0, 30.0, 30.0))
+    assert np.array_equal(output["yz"].bounds, (10.0, 10.0, -1.0, 1.0, -1.0, 1.0))
+    assert np.array_equal(output["zx"].bounds, (-1.0, 1.0, 20.0, 20.0, -1.0, 1.0))
+    assert np.array_equal(output["xy"].bounds, (-1.0, 1.0, -1.0, 1.0, 30.0, 30.0))
 
 
 def test_orthogonal_planes_source_normal_sign():
     planes_source = pv.OrthogonalPlanesSource()
     output = planes_source.output
-    assert planes_source.normal_sign == ('+', '+', '+')
-    assert np.all(pv.merge(output)['Normals'] >= 0)
+    assert planes_source.normal_sign == ("+", "+", "+")
+    assert np.all(pv.merge(output)["Normals"] >= 0)
 
-    planes_source.normal_sign = '-'
+    planes_source.normal_sign = "-"
     planes_source.update()
-    assert planes_source.normal_sign == ('-', '-', '-')
-    assert np.all(pv.merge(output)['Normals'] <= 0)
+    assert planes_source.normal_sign == ("-", "-", "-")
+    assert np.all(pv.merge(output)["Normals"] <= 0)
 
-    planes_source.normal_sign = ['+', '+', '+']
-    assert planes_source.normal_sign == ('+', '+', '+')
-
-    match = "must be one of: \n\t['+', '-']"
-    with pytest.raises(ValueError, match=re.escape(match)):
-        planes_source.normal_sign = 'a'
+    planes_source.normal_sign = ["+", "+", "+"]
+    assert planes_source.normal_sign == ("+", "+", "+")
 
     match = "must be one of: \n\t['+', '-']"
     with pytest.raises(ValueError, match=re.escape(match)):
-        planes_source.normal_sign = ['a', 'b', 'c']
+        planes_source.normal_sign = "a"
+
+    match = "must be one of: \n\t['+', '-']"
+    with pytest.raises(ValueError, match=re.escape(match)):
+        planes_source.normal_sign = ["a", "b", "c"]
 
     match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
     with pytest.raises(TypeError, match=re.escape(match)):
@@ -787,7 +787,7 @@ def test_orthogonal_planes_source_normal_sign():
 def test_cube_faces_source(cube_faces_source):
     output = cube_faces_source.output
     assert isinstance(output, pv.MultiBlock)
-    assert output.keys() == ['+X', '-X', '+Y', '-Y', '+Z', '-Z']
+    assert output.keys() == ["+X", "-X", "+Y", "-Y", "+Z", "-Z"]
     assert all(isinstance(poly, pv.PolyData) for poly in output)
     assert output.bounds == pv.CubeSource().output.bounds
 
@@ -801,7 +801,7 @@ def test_cube_faces_source_update(cube_faces_source):
     assert all(output_after[i] is output_after[i] for i in range(6))
 
 
-@pytest.mark.parametrize('attr', ['shrink_factor', 'explode_factor', 'frame_width'])
+@pytest.mark.parametrize("attr", ["shrink_factor", "explode_factor", "frame_width"])
 def test_cube_faces_source_set_get_factor(attr):
     source = pv.CubeFacesSource(**{attr: 0.5})
     assert getattr(source, attr) == 0.5
@@ -810,17 +810,17 @@ def test_cube_faces_source_set_get_factor(attr):
 
 
 @pytest.mark.parametrize(
-    ('face_name', 'bounds'),
+    ("face_name", "bounds"),
     [
-        ('+X', (0.5, 0.5, -0.5, 0.5, -0.5, 0.5)),
-        ('-X', (-0.5, -0.5, -0.5, 0.5, -0.5, 0.5)),
-        ('+Y', (-0.5, 0.5, 0.5, 0.5, -0.5, 0.5)),
-        ('-Y', (-0.5, 0.5, -0.5, -0.5, -0.5, 0.5)),
-        ('+Z', (-0.5, 0.5, -0.5, 0.5, 0.5, 0.5)),
-        ('-Z', (-0.5, 0.5, -0.5, 0.5, -0.5, -0.5)),
+        ("+X", (0.5, 0.5, -0.5, 0.5, -0.5, 0.5)),
+        ("-X", (-0.5, -0.5, -0.5, 0.5, -0.5, 0.5)),
+        ("+Y", (-0.5, 0.5, 0.5, 0.5, -0.5, 0.5)),
+        ("-Y", (-0.5, 0.5, -0.5, -0.5, -0.5, 0.5)),
+        ("+Z", (-0.5, 0.5, -0.5, 0.5, 0.5, 0.5)),
+        ("-Z", (-0.5, 0.5, -0.5, 0.5, -0.5, -0.5)),
     ],
 )
-@pytest.mark.parametrize(('attr', 'value'), [('shrink_factor', 1.0), ('explode_factor', 0.0)])
+@pytest.mark.parametrize(("attr", "value"), [("shrink_factor", 1.0), ("explode_factor", 0.0)])
 def test_cube_faces_source_output_bounds(cube_faces_source, attr, value, face_name, bounds):
     # Make sure bounds of each face are correct
     # Parametrize with shrink and explode to ensure they do not modify order of points and faces
@@ -848,13 +848,13 @@ def test_cube_faces_source_frame(cube_faces_source):
 
 
 @pytest.mark.parametrize(
-    ('name', 'value'),
+    ("name", "value"),
     [
-        ('center', (1, 2, 3)),
-        ('x_length', 42),
-        ('y_length', 42),
-        ('z_length', 42),
-        ('bounds', (0, 1, 2, 3, 4, 5)),
+        ("center", (1, 2, 3)),
+        ("x_length", 42),
+        ("y_length", 42),
+        ("z_length", 42),
+        ("bounds", (0, 1, 2, 3, 4, 5)),
     ],
 )
 def test_cube_faces_source_parent_attr(name, value):

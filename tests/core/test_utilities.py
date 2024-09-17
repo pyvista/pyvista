@@ -76,7 +76,7 @@ def test_createvectorpolydata_1D():
     vec = np.random.default_rng().random(3)
     vdata = vector_poly_data(orig, vec)
     assert np.any(vdata.points)
-    assert np.any(vdata.point_data['vectors'])
+    assert np.any(vdata.point_data["vectors"])
 
 
 def test_createvectorpolydata():
@@ -84,14 +84,14 @@ def test_createvectorpolydata():
     vec = np.random.default_rng().random((100, 3))
     vdata = vector_poly_data(orig, vec)
     assert np.any(vdata.points)
-    assert np.any(vdata.point_data['vectors'])
+    assert np.any(vdata.point_data["vectors"])
 
 
 @pytest.mark.parametrize(
-    ('path', 'target_ext'),
+    ("path", "target_ext"),
     [
         ("/data/mesh.stl", ".stl"),
-        ("/data/image.nii.gz", '.nii.gz'),
+        ("/data/image.nii.gz", ".nii.gz"),
         ("/data/other.gz", ".gz"),
     ],
 )
@@ -100,7 +100,7 @@ def test_get_ext(path, target_ext):
     assert ext == target_ext
 
 
-@pytest.mark.parametrize('use_pathlib', [True, False])
+@pytest.mark.parametrize("use_pathlib", [True, False])
 def test_read(tmpdir, use_pathlib):
     fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile, ex.uniformfile, ex.rectfile)
     if use_pathlib:
@@ -117,14 +117,14 @@ def test_read(tmpdir, use_pathlib):
         obj = fileio.read(filename)
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.npy"))
     arr = np.random.default_rng().random((10, 10))
     np.save(filename, arr)
     with pytest.raises(IOError):  # noqa: PT011
         _ = pv.read(filename)
     # read non existing file
     with pytest.raises(IOError):  # noqa: PT011
-        _ = pv.read('this_file_totally_does_not_exist.vtk')
+        _ = pv.read("this_file_totally_does_not_exist.vtk")
     # Now test reading lists of files as multi blocks
     multi = pv.read(fnames)
     assert isinstance(multi, pv.MultiBlock)
@@ -149,21 +149,21 @@ def test_read_force_ext(tmpdir):
         pv.RectilinearGrid,
     )
 
-    dummy_extension = '.dummy'
+    dummy_extension = ".dummy"
     for fname, type_ in zip(fnames, types):
         path = Path(fname)
         root = str(path.parent / path.stem)
         original_ext = path.suffix
         _, name = os.path.split(root)
-        new_fname = tmpdir / name + '.' + dummy_extension
+        new_fname = tmpdir / name + "." + dummy_extension
         shutil.copy(fname, new_fname)
         data = fileio.read(new_fname, force_ext=original_ext)
         assert isinstance(data, type_)
 
 
-@mock.patch('pyvista.BaseReader.read')
-@mock.patch('pyvista.BaseReader.reader')
-@mock.patch('pyvista.BaseReader.show_progress')
+@mock.patch("pyvista.BaseReader.read")
+@mock.patch("pyvista.BaseReader.reader")
+@mock.patch("pyvista.BaseReader.show_progress")
 def test_read_progress_bar(mock_show_progress, mock_reader, mock_read):
     """Test passing attrs in read."""
     pv.read(ex.antfile, progress_bar=True)
@@ -174,11 +174,11 @@ def test_read_force_ext_wrong_extension(tmpdir):
     # try to read a .vtu file as .vts
     # vtkXMLStructuredGridReader throws a VTK error about the validity of the XML file
     # the returned dataset is empty
-    fname = tmpdir / 'airplane.vtu'
+    fname = tmpdir / "airplane.vtu"
     ex.load_airplane().cast_to_unstructured_grid().save(fname)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        data = fileio.read(fname, force_ext='.vts')
+        data = fileio.read(fname, force_ext=".vts")
     assert data.n_points == 0
 
     # try to read a .ply file as .vtm
@@ -187,19 +187,19 @@ def test_read_force_ext_wrong_extension(tmpdir):
     fname = ex.planefile
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        data = fileio.read(fname, force_ext='.vtm')
+        data = fileio.read(fname, force_ext=".vtm")
     assert len(data) == 0
 
     fname = ex.planefile
     with pytest.raises(IOError):  # noqa: PT011
-        fileio.read(fname, force_ext='.not_supported')
+        fileio.read(fname, force_ext=".not_supported")
 
 
-@mock.patch('pyvista.core.utilities.fileio.read_exodus')
+@mock.patch("pyvista.core.utilities.fileio.read_exodus")
 def test_pyvista_read_exodus(read_exodus_mock):
     # check that reading a file with extension .e calls `read_exodus`
     # use the globefile as a dummy because pv.read() checks for the existence of the file
-    pv.read(ex.globefile, force_ext='.e')
+    pv.read(ex.globefile, force_ext=".e")
     args, kwargs = read_exodus_mock.call_args
     filename = args[0]
     assert filename == Path(ex.globefile)
@@ -207,23 +207,23 @@ def test_pyvista_read_exodus(read_exodus_mock):
 
 def test_get_array_cell(hexbeam):
     carr = np.random.default_rng().random(hexbeam.n_cells)
-    hexbeam.cell_data.set_array(carr, 'test_data')
+    hexbeam.cell_data.set_array(carr, "test_data")
 
-    data = get_array(hexbeam, 'test_data', preference='cell')
+    data = get_array(hexbeam, "test_data", preference="cell")
     assert np.allclose(carr, data)
 
 
 def test_get_array_point(hexbeam):
     parr = np.random.default_rng().random(hexbeam.n_points)
-    hexbeam.point_data.set_array(parr, 'test_data')
+    hexbeam.point_data.set_array(parr, "test_data")
 
-    data = get_array(hexbeam, 'test_data', preference='point')
+    data = get_array(hexbeam, "test_data", preference="point")
     assert np.allclose(parr, data)
 
     oarr = np.random.default_rng().random(hexbeam.n_points)
-    hexbeam.point_data.set_array(oarr, 'other')
+    hexbeam.point_data.set_array(oarr, "other")
 
-    data = get_array(hexbeam, 'other')
+    data = get_array(hexbeam, "other")
     assert np.allclose(oarr, data)
 
 
@@ -231,32 +231,32 @@ def test_get_array_field(hexbeam):
     hexbeam.clear_data()
     # no preference
     farr = np.random.default_rng().random(hexbeam.n_points * hexbeam.n_cells)
-    hexbeam.field_data.set_array(farr, 'data')
-    data = get_array(hexbeam, 'data')
+    hexbeam.field_data.set_array(farr, "data")
+    data = get_array(hexbeam, "data")
     assert np.allclose(farr, data)
 
     # preference and multiple data
-    hexbeam.point_data.set_array(np.random.default_rng().random(hexbeam.n_points), 'data')
+    hexbeam.point_data.set_array(np.random.default_rng().random(hexbeam.n_points), "data")
 
-    data = get_array(hexbeam, 'data', preference='field')
+    data = get_array(hexbeam, "data", preference="field")
     assert np.allclose(farr, data)
 
 
 def test_get_array_error(hexbeam):
     parr = np.random.default_rng().random(hexbeam.n_points)
-    hexbeam.point_data.set_array(parr, 'test_data')
+    hexbeam.point_data.set_array(parr, "test_data")
 
     # invalid inputs
     with pytest.raises(TypeError):
-        get_array(hexbeam, 'test_data', preference={'invalid'})
+        get_array(hexbeam, "test_data", preference={"invalid"})
     with pytest.raises(ValueError):  # noqa: PT011
-        get_array(hexbeam, 'test_data', preference='invalid')
-    with pytest.raises(ValueError, match='`preference` must be'):
-        get_array(hexbeam, 'test_data', preference='row')
+        get_array(hexbeam, "test_data", preference="invalid")
+    with pytest.raises(ValueError, match="`preference` must be"):
+        get_array(hexbeam, "test_data", preference="row")
 
 
 def test_get_array_none(hexbeam):
-    arr = get_array(hexbeam, 'foo')
+    arr = get_array(hexbeam, "foo")
     assert arr is None
 
 
@@ -264,8 +264,8 @@ def get_array_vtk(hexbeam):
     # test raw VTK input
     grid_vtk = vtk.vtkUnstructuredGrid()
     grid_vtk.DeepCopy(hexbeam)
-    get_array(grid_vtk, 'test_data')
-    get_array(grid_vtk, 'foo')
+    get_array(grid_vtk, "test_data")
+    get_array(grid_vtk, "foo")
 
 
 def test_is_inside_bounds():
@@ -292,16 +292,16 @@ def test_voxelize_non_uniform_density(uniform):
 
 def test_voxelize_invalid_density(rectilinear):
     # test error when density is not length-3
-    with pytest.raises(ValueError, match='not enough values to unpack'):
+    with pytest.raises(ValueError, match="not enough values to unpack"):
         pv.voxelize(rectilinear, [0.5, 0.3])
     # test error when density is not an array-like
-    with pytest.raises(TypeError, match='expected number or array-like'):
+    with pytest.raises(TypeError, match="expected number or array-like"):
         pv.voxelize(rectilinear, {0.5, 0.3})
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
     mesh = pv.PolyData(hexbeam.points)
-    with pytest.raises(ValueError, match='must have faces'):
+    with pytest.raises(ValueError, match="must have faces"):
         pv.voxelize(mesh)
 
 
@@ -312,16 +312,16 @@ def test_voxelize_volume_default_density(uniform):
 
 
 def test_voxelize_volume_invalid_density(rectilinear):
-    with pytest.raises(TypeError, match='expected number or array-like'):
+    with pytest.raises(TypeError, match="expected number or array-like"):
         pv.voxelize_volume(rectilinear, {0.5, 0.3})
 
 
 def test_voxelize_volume_no_face_mesh(rectilinear):
-    with pytest.raises(ValueError, match='must have faces'):
+    with pytest.raises(ValueError, match="must have faces"):
         pv.voxelize_volume(pv.PolyData())
 
 
-@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
+@pytest.mark.parametrize("function", [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_enclosed_bounds(function, ant):
     vox = function(ant, density=0.9, enclosed=True)
 
@@ -334,7 +334,7 @@ def test_voxelize_enclosed_bounds(function, ant):
     assert vox.bounds.z_max >= ant.bounds.z_max
 
 
-@pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
+@pytest.mark.parametrize("function", [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_fit_bounds(function, uniform):
     vox = function(uniform, density=0.9, fit_bounds=True)
 
@@ -702,33 +702,33 @@ def test_merge(sphere, cube, datasets):
     # check main has priority
     sphere_a = sphere.copy()
     sphere_b = sphere.copy()
-    sphere_a['data'] = np.zeros(sphere_a.n_points)
-    sphere_b['data'] = np.ones(sphere_a.n_points)
+    sphere_a["data"] = np.zeros(sphere_a.n_points)
+    sphere_b["data"] = np.ones(sphere_a.n_points)
 
     merged = pv.merge(
         [sphere_a, sphere_b],
         merge_points=True,
         main_has_priority=False,
     )
-    assert np.allclose(merged['data'], 1)
+    assert np.allclose(merged["data"], 1)
 
     merged = pv.merge(
         [sphere_a, sphere_b],
         merge_points=True,
         main_has_priority=True,
     )
-    assert np.allclose(merged['data'], 0)
+    assert np.allclose(merged["data"], 0)
 
 
 def test_convert_array():
-    arr = np.arange(4).astype('O')
-    arr2 = pv.core.utilities.arrays.convert_array(arr, array_type=np.dtype('O'))
+    arr = np.arange(4).astype("O")
+    arr2 = pv.core.utilities.arrays.convert_array(arr, array_type=np.dtype("O"))
     assert arr2.GetNumberOfValues() == 4
 
     # https://github.com/pyvista/pyvista/issues/2370
     arr3 = pv.core.utilities.arrays.convert_array(
-        pickle.loads(pickle.dumps(np.arange(4).astype('O'))),
-        array_type=np.dtype('O'),
+        pickle.loads(pickle.dumps(np.arange(4).astype("O"))),
+        array_type=np.dtype("O"),
     )
     assert arr3.GetNumberOfValues() == 4
 
@@ -738,7 +738,7 @@ def test_convert_array():
     assert arr4.GetNumberOfValues() == len(my_list)
 
     # test string scalar is converted to string array with length on
-    my_str = 'abc'
+    my_str = "abc"
     arr5 = pv.core.utilities.arrays.convert_array(my_str)
     assert arr5.GetNumberOfValues() == 1
     arr6 = pv.core.utilities.arrays.convert_array(np.array(my_str))
@@ -755,7 +755,7 @@ def test_has_duplicates():
 
 
 def test_copy_vtk_array():
-    with pytest.raises(TypeError, match='Invalid type'):
+    with pytest.raises(TypeError, match="Invalid type"):
         copy_vtk_array([1, 2, 3])
 
     value_0 = 10
@@ -795,24 +795,24 @@ def test_spherical_to_cartesian():
 
 
 def test_linkcode_resolve():
-    assert linkcode_resolve('not-py', {}) is None
-    link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataObject'})
-    assert 'dataobject.py' in link
-    assert '#L' in link
+    assert linkcode_resolve("not-py", {}) is None
+    link = linkcode_resolve("py", {"module": "pyvista", "fullname": "pyvista.core.DataObject"})
+    assert "dataobject.py" in link
+    assert "#L" in link
 
     # badmodule name
-    assert linkcode_resolve('py', {'module': 'doesnotexist', 'fullname': 'foo.bar'}) is None
+    assert linkcode_resolve("py", {"module": "doesnotexist", "fullname": "foo.bar"}) is None
 
     assert (
-        linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.not.an.object'}) is None
+        linkcode_resolve("py", {"module": "pyvista", "fullname": "pyvista.not.an.object"}) is None
     )
 
     # test property
-    link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core.DataSet.points'})
-    assert 'dataset.py' in link
+    link = linkcode_resolve("py", {"module": "pyvista", "fullname": "pyvista.core.DataSet.points"})
+    assert "dataset.py" in link
 
-    link = linkcode_resolve('py', {'module': 'pyvista', 'fullname': 'pyvista.core'})
-    assert link.endswith('__init__.py')
+    link = linkcode_resolve("py", {"module": "pyvista", "fullname": "pyvista.core"})
+    assert link.endswith("__init__.py")
 
 
 def test_coerce_point_like_arg():
@@ -914,8 +914,8 @@ def test_coerce_points_like_args_does_not_copy():
 
 
 def test_has_module():
-    assert has_module('pytest')
-    assert not has_module('not_a_module')
+    assert has_module("pytest")
+    assert not has_module("not_a_module")
 
 
 def test_fit_plane_to_points_resolution(airplane):
@@ -1008,11 +1008,11 @@ CASE_3 = (  # non-coplanar points
 )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason='Different results for some tests.')
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="Different results for some tests.")
 @pytest.mark.parametrize(
-    ('points', 'expected_axes'),
+    ("points", "expected_axes"),
     [CASE_0, CASE_1, CASE_2, CASE_3],
-    ids=['case0', 'case1', 'case2', 'case3'],
+    ids=["case0", "case1", "case2", "case3"],
 )
 def test_principal_axes(points, expected_axes):
     axes = principal_axes(points)
@@ -1084,10 +1084,10 @@ def no_new_attr_subclass():
     class A: ...
 
     class B(A):
-        _new_attr_exceptions = 'eggs'
+        _new_attr_exceptions = "eggs"
 
         def __init__(self):
-            self.eggs = 'ham'
+            self.eggs = "ham"
 
     return B
 
@@ -1097,7 +1097,7 @@ def test_no_new_attr_subclass(no_new_attr_subclass):
     assert obj
     msg = 'Attribute "_eggs" does not exist and cannot be added to type B'
     with pytest.raises(AttributeError, match=msg):
-        obj._eggs = 'ham'
+        obj._eggs = "ham"
 
 
 @pytest.fixture
@@ -1108,7 +1108,7 @@ def serial_dict_empty():
 @pytest.fixture
 def serial_dict_with_foobar():
     serial_dict = _SerializedDictArray()
-    serial_dict.data = dict(foo='bar')
+    serial_dict.data = dict(foo="bar")
     return serial_dict
 
 
@@ -1116,23 +1116,23 @@ def test_serial_dict_init():
     # empty init
     serial_dict = _SerializedDictArray()
     assert serial_dict == {}
-    assert repr(serial_dict) == '{}'
+    assert repr(serial_dict) == "{}"
 
     # init from dict
-    new_dict = dict(ham='eggs')
+    new_dict = dict(ham="eggs")
     serial_dict = _SerializedDictArray(new_dict)
-    assert serial_dict['ham'] == 'eggs'
+    assert serial_dict["ham"] == "eggs"
     assert repr(serial_dict) == '{"ham": "eggs"}'
 
     # init from UserDict
     serial_dict = _SerializedDictArray(serial_dict)
-    assert serial_dict['ham'] == 'eggs'
+    assert serial_dict["ham"] == "eggs"
     assert repr(serial_dict) == '{"ham": "eggs"}'
 
     # init from JSON string
     json_dict = json.dumps(new_dict)
     serial_dict = _SerializedDictArray(json_dict)
-    assert serial_dict['ham'] == 'eggs'
+    assert serial_dict["ham"] == "eggs"
     assert repr(serial_dict) == '{"ham": "eggs"}'
 
 
@@ -1144,47 +1144,47 @@ def test_serial_dict_as_dict(serial_dict_with_foobar):
 
 
 def test_serial_dict_overrides__setitem__(serial_dict_empty):
-    serial_dict_empty['foo'] = 'bar'
+    serial_dict_empty["foo"] = "bar"
     assert repr(serial_dict_empty) == '{"foo": "bar"}'
 
 
 def test_serial_dict_overrides__delitem__(serial_dict_with_foobar):
-    del serial_dict_with_foobar['foo']
-    assert repr(serial_dict_with_foobar) == '{}'
+    del serial_dict_with_foobar["foo"]
+    assert repr(serial_dict_with_foobar) == "{}"
 
 
 def test_serial_dict_overrides__setattr__(serial_dict_empty):
-    serial_dict_empty.data = dict(foo='bar')
+    serial_dict_empty.data = dict(foo="bar")
     assert repr(serial_dict_empty) == '{"foo": "bar"}'
 
 
 def test_serial_dict_overrides_popitem(serial_dict_with_foobar):
-    serial_dict_with_foobar['ham'] = 'eggs'
+    serial_dict_with_foobar["ham"] = "eggs"
     item = serial_dict_with_foobar.popitem()
-    assert item == ('foo', 'bar')
+    assert item == ("foo", "bar")
     assert repr(serial_dict_with_foobar) == '{"ham": "eggs"}'
 
 
 def test_serial_dict_overrides_pop(serial_dict_with_foobar):
-    item = serial_dict_with_foobar.pop('foo')
-    assert item == 'bar'
-    assert repr(serial_dict_with_foobar) == '{}'
+    item = serial_dict_with_foobar.pop("foo")
+    assert item == "bar"
+    assert repr(serial_dict_with_foobar) == "{}"
 
 
 def test_serial_dict_overrides_update(serial_dict_empty):
-    serial_dict_empty.update(dict(foo='bar'))
+    serial_dict_empty.update(dict(foo="bar"))
     assert repr(serial_dict_empty) == '{"foo": "bar"}'
 
 
 def test_serial_dict_overrides_clear(serial_dict_with_foobar):
     serial_dict_with_foobar.clear()
-    assert repr(serial_dict_with_foobar) == '{}'
+    assert repr(serial_dict_with_foobar) == "{}"
 
 
 def test_serial_dict_overrides_setdefault(serial_dict_empty, serial_dict_with_foobar):
-    serial_dict_empty.setdefault('foo', 42)
+    serial_dict_empty.setdefault("foo", 42)
     assert repr(serial_dict_empty) == '{"foo": 42}'
-    serial_dict_with_foobar.setdefault('foo', 42)
+    serial_dict_with_foobar.setdefault("foo", 42)
     assert repr(serial_dict_with_foobar) == '{"foo": "bar"}'
 
 
@@ -1194,7 +1194,7 @@ VECTOR = (1, 2, 3)
 ANGLE = 30
 
 
-@pytest.mark.parametrize('scale_args', [(SCALE,), (SCALE, SCALE, SCALE), [(SCALE, SCALE, SCALE)]])
+@pytest.mark.parametrize("scale_args", [(SCALE,), (SCALE, SCALE, SCALE), [(SCALE, SCALE, SCALE)]])
 def test_transform_scale(transform, scale_args):
     transform.scale(*scale_args)
     actual = transform.matrix
@@ -1206,7 +1206,7 @@ def test_transform_scale(transform, scale_args):
     assert np.array_equal(identity, np.eye(4))
 
 
-@pytest.mark.parametrize('translate_args', [np.array(VECTOR), np.array([VECTOR])])
+@pytest.mark.parametrize("translate_args", [np.array(VECTOR), np.array([VECTOR])])
 def test_transform_translate(transform, translate_args):
     transform.translate(*translate_args)
     actual = transform.matrix
@@ -1218,7 +1218,7 @@ def test_transform_translate(transform, translate_args):
     assert np.array_equal(identity, np.eye(4))
 
 
-@pytest.mark.parametrize('reflect_args', [VECTOR, [VECTOR]])
+@pytest.mark.parametrize("reflect_args", [VECTOR, [VECTOR]])
 def test_transform_reflect(transform, reflect_args):
     transform.reflect(*reflect_args)
     actual = transform.matrix
@@ -1230,7 +1230,7 @@ def test_transform_reflect(transform, reflect_args):
 
 
 @pytest.mark.parametrize(
-    ('method', 'vector'), [('flip_x', (1, 0, 0)), ('flip_y', (0, 1, 0)), ('flip_z', (0, 0, 1))]
+    ("method", "vector"), [("flip_x", (1, 0, 0)), ("flip_y", (0, 1, 0)), ("flip_z", (0, 0, 1))]
 )
 def test_transform_flip_xyz(transform, method, vector):
     getattr(transform, method)()
@@ -1253,20 +1253,20 @@ def test_transform_rotate(transform):
     assert np.array_equal(identity, np.eye(4))
 
 
-@pytest.mark.parametrize('multiply_mode', ['post', 'pre'])
+@pytest.mark.parametrize("multiply_mode", ["post", "pre"])
 @pytest.mark.parametrize(
-    ('method', 'args'),
+    ("method", "args"),
     [
-        ('scale', (SCALE,)),
-        ('reflect', (VECTOR,)),
-        ('flip_x', ()),
-        ('flip_y', ()),
-        ('flip_z', ()),
-        ('rotate', (ROTATION,)),
-        ('rotate_x', (ANGLE,)),
-        ('rotate_y', (ANGLE,)),
-        ('rotate_z', (ANGLE,)),
-        ('rotate_vector', (VECTOR, ANGLE)),
+        ("scale", (SCALE,)),
+        ("reflect", (VECTOR,)),
+        ("flip_x", ()),
+        ("flip_y", ()),
+        ("flip_z", ()),
+        ("rotate", (ROTATION,)),
+        ("rotate_x", (ANGLE,)),
+        ("rotate_y", (ANGLE,)),
+        ("rotate_z", (ANGLE,)),
+        ("rotate_vector", (VECTOR, ANGLE)),
     ],
 )
 def test_transform_with_point(transform, multiply_mode, method, args):
@@ -1363,9 +1363,9 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
-@pytest.mark.parametrize('copy', [True, False])
+@pytest.mark.parametrize("copy", [True, False])
 @pytest.mark.parametrize(
-    ('obj', 'return_self', 'return_type', 'return_dtype'),
+    ("obj", "return_self", "return_type", "return_dtype"),
     [
         (list(VECTOR), False, np.ndarray, float),
         (VECTOR, False, np.ndarray, float),
@@ -1384,16 +1384,16 @@ def test_transform_invert(transform):
         ),
     ],
     ids=[
-        'list-int',
-        'tuple-int',
-        'array1d-int',
-        'array2d-int',
-        'array1d-float',
-        'array2d-float',
-        'polydata-float32',
-        'polydata-int',
-        'polydata-float',
-        'multiblock-float',
+        "list-int",
+        "tuple-int",
+        "array1d-int",
+        "array2d-int",
+        "array1d-float",
+        "array2d-float",
+        "polydata-float32",
+        "polydata-int",
+        "polydata-float",
+        "multiblock-float",
     ],
 )
 def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
@@ -1426,7 +1426,7 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
     assert not transform.is_inverted
 
 
-@pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
+@pytest.mark.parametrize("attr", ["matrix_list", "inverse_matrix_list"])
 def test_transform_matrix_list(transform, attr):
     matrix_list = getattr(transform, attr)
     assert isinstance(matrix_list, list)
@@ -1459,8 +1459,8 @@ def transformed_actor():
     return actor
 
 
-@pytest.mark.parametrize('override_mode', ['pre', 'post'])
-@pytest.mark.parametrize('object_mode', ['pre', 'post'])
+@pytest.mark.parametrize("override_mode", ["pre", "post"])
+@pytest.mark.parametrize("object_mode", ["pre", "post"])
 def test_transform_multiply_mode_override(transform, transformed_actor, object_mode, override_mode):
     # This test validates multiply mode by performing the same transformations
     # applied by `Prop3D` objects and comparing the results
@@ -1484,7 +1484,7 @@ def test_transform_multiply_mode_override(transform, transformed_actor, object_m
     # Check result
     transform_matrix = transform.matrix
     actor_matrix = pv.array_from_vtkmatrix(transformed_actor.GetMatrix())
-    if override_mode == 'post':
+    if override_mode == "post":
         assert np.allclose(transform_matrix, actor_matrix)
     else:
         # Pre-multiplication produces a totally different result
@@ -1492,14 +1492,14 @@ def test_transform_multiply_mode_override(transform, transformed_actor, object_m
 
 
 def test_transform_multiply_mode(transform):
-    assert transform.multiply_mode == 'post'
-    transform.multiply_mode = 'pre'
-    assert transform.multiply_mode == 'pre'
+    assert transform.multiply_mode == "post"
+    transform.multiply_mode = "pre"
+    assert transform.multiply_mode == "pre"
 
     transform.post_multiply()
-    assert transform.multiply_mode == 'post'
+    assert transform.multiply_mode == "post"
     transform.pre_multiply()
-    assert transform.multiply_mode == 'pre'
+    assert transform.multiply_mode == "pre"
 
 
 def test_transform_identity(transform):
@@ -1557,7 +1557,7 @@ def test_transform_add():
 
 
 @pytest.mark.parametrize(
-    'other', [VECTOR, Transform().translate(VECTOR), Transform().translate(VECTOR).matrix]
+    "other", [VECTOR, Transform().translate(VECTOR), Transform().translate(VECTOR).matrix]
 )
 def test_transform_add_other(other):
     transform_base = pv.Transform().post_multiply().scale(SCALE)
@@ -1583,7 +1583,7 @@ def test_transform_radd():
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
 
-@pytest.mark.parametrize('scale_factor', [SCALE, (SCALE, SCALE, SCALE)])
+@pytest.mark.parametrize("scale_factor", [SCALE, (SCALE, SCALE, SCALE)])
 def test_transform_mul(scale_factor):
     transform_base = pv.Transform().post_multiply().translate(VECTOR)
     # Scale with `scale` and `*`
@@ -1596,7 +1596,7 @@ def test_transform_mul(scale_factor):
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
 
-@pytest.mark.parametrize('scale_factor', [SCALE, (SCALE, SCALE, SCALE)])
+@pytest.mark.parametrize("scale_factor", [SCALE, (SCALE, SCALE, SCALE)])
 def test_transform_rmul(scale_factor):
     transform_base = pv.Transform().pre_multiply().translate(VECTOR)
     # Scale with `scale` and `*`
@@ -1707,7 +1707,7 @@ def test_transform_matmul_raises():
         pv.Transform() @ {}
 
 
-@pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
+@pytest.mark.parametrize("multiply_mode", ["pre", "post"])
 def test_transform_copy(multiply_mode):
     t1 = Transform().scale(SCALE)
     t1.multiply_mode = multiply_mode
@@ -1719,25 +1719,25 @@ def test_transform_copy(multiply_mode):
 
 def test_transform_repr(transform):
     def _repr_no_first_line(trans):
-        return "\n".join(repr(trans).split('\n')[1:])
+        return "\n".join(repr(trans).split("\n")[1:])
 
     # Test compact format with no unnecessary spacing
     repr_ = _repr_no_first_line(transform)
     assert repr_ == (
-        '  Num Transformations: 0\n'
-        '  Matrix:  [[1., 0., 0., 0.],\n'
-        '            [0., 1., 0., 0.],\n'
-        '            [0., 0., 1., 0.],\n'
-        '            [0., 0., 0., 1.]]'
+        "  Num Transformations: 0\n"
+        "  Matrix:  [[1., 0., 0., 0.],\n"
+        "            [0., 1., 0., 0.],\n"
+        "            [0., 0., 1., 0.],\n"
+        "            [0., 0., 0., 1.]]"
     )
 
     # Test with floats which have many decimals
     transform.concatenate(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
     repr_ = _repr_no_first_line(transform)
     assert repr_ == (
-        '  Num Transformations: 1\n'
-        '  Matrix:  [[ 0.70710678, -0.70710678,  0.        ,  0.        ],\n'
-        '            [ 0.70710678,  0.70710678,  0.        ,  0.        ],\n'
-        '            [ 0.        ,  0.        ,  1.        ,  0.        ],\n'
-        '            [ 0.        ,  0.        ,  0.        ,  1.        ]]'
+        "  Num Transformations: 1\n"
+        "  Matrix:  [[ 0.70710678, -0.70710678,  0.        ,  0.        ],\n"
+        "            [ 0.70710678,  0.70710678,  0.        ,  0.        ],\n"
+        "            [ 0.        ,  0.        ,  1.        ,  0.        ],\n"
+        "            [ 0.        ,  0.        ,  0.        ,  1.        ]]"
     )

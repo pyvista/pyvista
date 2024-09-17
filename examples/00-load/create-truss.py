@@ -65,11 +65,11 @@ colors = range(edges.shape[0])
 mesh.plot(
     scalars=colors,
     render_lines_as_tubes=True,
-    style='wireframe',
+    style="wireframe",
     line_width=10,
-    cmap='jet',
+    cmap="jet",
     show_scalar_bar=False,
-    background='w',
+    background="w",
 )
 # %%
 # .. tags:: load
