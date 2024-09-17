@@ -66,5 +66,6 @@ jobs:
           filter_mode: nofilter
           fail_on_error: true
           version: 2.29.5
+          reviewdog_url: https://github.com/reviewdog/reviewdog/releases/download/v0.17.5/reviewdog_0.17.5_Linux_x86_64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
