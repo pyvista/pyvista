@@ -32,7 +32,7 @@ HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file
 
 def _lazy_vtk_instantiation(module_name, class_name):
     """Lazy import and instantiation of a class from vtkmodules."""
-    module = importlib.import_module(f"vtkmodules.{module_name}")
+    module = importlib.import_module(f'vtkmodules.{module_name}')
     return getattr(module, class_name)()
 
 
@@ -209,11 +209,11 @@ def get_reader(filename, force_ext=None):
                 Reader = DICOMReader
             else:
                 raise ValueError(
-                    f"`pyvista.get_reader` does not support reading from directory:\n\t{filename}",
+                    f'`pyvista.get_reader` does not support reading from directory:\n\t{filename}',
                 )
         else:
             raise ValueError(
-                f"`pyvista.get_reader` does not support a file with the {ext} extension",
+                f'`pyvista.get_reader` does not support a file with the {ext} extension',
             )
 
     return Reader(filename)
@@ -322,7 +322,7 @@ class BaseReader:
         """
         self._progress_bar = True
         if msg is None:
-            msg = f"Reading {Path(self.path).name}"
+            msg = f'Reading {Path(self.path).name}'
         self._progress_msg = msg
 
     def hide_progress(self):
@@ -410,7 +410,7 @@ class BaseReader:
         _update_alg(self.reader, progress_bar=self._progress_bar, message=self._progress_msg)
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
-            raise RuntimeError("File reader failed to read and/or produced no output.")
+            raise RuntimeError('File reader failed to read and/or produced no output.')
         data._post_file_load_processing()
 
         # check for any pyvista metadata
@@ -700,15 +700,15 @@ class TimeReader(ABC):
 class XMLImageDataReader(BaseReader, PointCellDataSelection):
     """XML Image Data Reader for .vti files."""
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLImageDataReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLImageDataReader'
 
 
 class XMLPImageDataReader(BaseReader, PointCellDataSelection):
     """Parallel XML Image Data Reader for .pvti files."""
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLPImageDataReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLPImageDataReader'
 
 
 class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
@@ -732,15 +732,15 @@ class XMLRectilinearGridReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLRectilinearGridReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLRectilinearGridReader'
 
 
 class XMLPRectilinearGridReader(BaseReader, PointCellDataSelection):
     """Parallel XML RectilinearGrid Reader for .pvtr files."""
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLPRectilinearGridReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLPRectilinearGridReader'
 
 
 class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
@@ -764,15 +764,15 @@ class XMLUnstructuredGridReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLUnstructuredGridReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLUnstructuredGridReader'
 
 
 class XMLPUnstructuredGridReader(BaseReader, PointCellDataSelection):
     """Parallel XML UnstructuredGrid Reader for .pvtu files."""
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLPUnstructuredGridReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLPUnstructuredGridReader'
 
 
 class XMLPolyDataReader(BaseReader, PointCellDataSelection):
@@ -795,8 +795,8 @@ class XMLPolyDataReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLPolyDataReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLPolyDataReader'
 
 
 class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
@@ -815,15 +815,15 @@ class XMLStructuredGridReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLStructuredGridReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLStructuredGridReader'
 
 
 class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
     """XML MultiBlock Data Reader for .vtm or .vtmb files."""
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLMultiBlockDataReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLMultiBlockDataReader'
 
 
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
@@ -849,8 +849,8 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
 
     """
 
-    _vtk_module_name = "vtkIOEnSight"
-    _vtk_class_name = "vtkGenericEnSightReader"
+    _vtk_module_name = 'vtkIOEnSight'
+    _vtk_class_name = 'vtkGenericEnSightReader'
 
     def _set_filename(self, filename):
         """Set filename and update reader."""
@@ -875,7 +875,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}",
+                f'Not a valid time {time_value} from available time values: {self.time_values}',
             )
         self.reader.SetTimeValue(time_value)
 
@@ -912,7 +912,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
         if time_set in range(number_time_sets):
             self._active_time_set = time_set
         else:
-            raise IndexError(f"Time set index {time_set} not in {range(number_time_sets)}")
+            raise IndexError(f'Time set index {time_set} not in {range(number_time_sets)}')
 
 
 class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
@@ -923,8 +923,8 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkOpenFOAMReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkOpenFOAMReader'
 
     def _set_defaults_post(self):
         self.enable_all_patch_arrays()
@@ -942,14 +942,14 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             value = self.reader.GetTimeValue()
         except AttributeError as err:  # pragma: no cover
             raise AttributeError(
-                "Inspecting active time value only supported for vtk versions >9.1.0",
+                'Inspecting active time value only supported for vtk versions >9.1.0',
             ) from err
         return value
 
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}",
+                f'Not a valid time {time_value} from available time values: {self.time_values}',
             )
         self.reader.UpdateTimeStep(time_value)
 
@@ -1266,8 +1266,8 @@ class PLYReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOPLY"
-    _vtk_class_name = "vtkPLYReader"
+    _vtk_module_name = 'vtkIOPLY'
+    _vtk_class_name = 'vtkPLYReader'
 
 
 class OBJReader(BaseReader):
@@ -1286,8 +1286,8 @@ class OBJReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkOBJReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkOBJReader'
 
 
 class STLReader(BaseReader):
@@ -1306,8 +1306,8 @@ class STLReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkSTLReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkSTLReader'
 
 
 class TecplotReader(BaseReader):
@@ -1324,8 +1324,8 @@ class TecplotReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkTecplotReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkTecplotReader'
 
 
 class VTKDataSetReader(BaseReader):
@@ -1351,8 +1351,8 @@ class VTKDataSetReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOLegacy"
-    _vtk_class_name = "vtkDataSetReader"
+    _vtk_module_name = 'vtkIOLegacy'
+    _vtk_class_name = 'vtkDataSetReader'
 
     def _set_defaults_post(self):
         self.reader.ReadAllScalarsOn()
@@ -1367,8 +1367,8 @@ class VTKDataSetReader(BaseReader):
 class VTKPDataSetReader(BaseReader):
     """Parallel VTK Data Set Reader for .pvtk files."""
 
-    _vtk_module_name = "vtkIOParallel"
-    _vtk_class_name = "vtkPDataSetReader"
+    _vtk_module_name = 'vtkIOParallel'
+    _vtk_class_name = 'vtkPDataSetReader'
 
 
 class BYUReader(BaseReader):
@@ -1387,8 +1387,8 @@ class BYUReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkBYUReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkBYUReader'
 
 
 class FacetReader(BaseReader):
@@ -1407,15 +1407,15 @@ class FacetReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkFiltersHybrid"
-    _vtk_class_name = "vtkFacetReader"
+    _vtk_module_name = 'vtkFiltersHybrid'
+    _vtk_class_name = 'vtkFacetReader'
 
 
 class Plot3DMetaReader(BaseReader):
     """Plot3DMeta Reader for .p3d files."""
 
-    _vtk_module_name = "vtkIOParallel"
-    _vtk_class_name = "vtkPlot3DMetaReader"
+    _vtk_module_name = 'vtkIOParallel'
+    _vtk_class_name = 'vtkPlot3DMetaReader'
 
 
 class Plot3DFunctionEnum(enum.IntEnum):
@@ -1470,8 +1470,8 @@ class MultiBlockPlot3DReader(BaseReader):
         - ``MultiBlockPlot3DReader.VORTICITY_MAGNITUDE = Plot3DFunctionEnum.VORTICITY_MAGNITUDE``
     """
 
-    _vtk_module_name = "vtkIOParallel"
-    _vtk_class_name = "vtkMultiBlockPLOT3DReader"
+    _vtk_module_name = 'vtkIOParallel'
+    _vtk_class_name = 'vtkMultiBlockPLOT3DReader'
 
     # pull in function name enum values as class constants
     DENSITY = Plot3DFunctionEnum.DENSITY
@@ -1648,8 +1648,8 @@ class CGNSReader(BaseReader, PointCellDataSelection):
 
     """
 
-    _vtk_module_name = "vtkIOCGNSReader"
-    _vtk_class_name = "vtkCGNSReader"
+    _vtk_module_name = 'vtkIOCGNSReader'
+    _vtk_class_name = 'vtkCGNSReader'
 
     def _set_defaults_post(self):
         self.enable_all_point_arrays()
@@ -1928,8 +1928,8 @@ class BinaryMarchingCubesReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkMCubesReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkMCubesReader'
 
 
 @dataclass(order=True)
@@ -1960,10 +1960,10 @@ class _PVDReader(BaseVTKReader):
     def UpdateInformation(self):
         """Parse PVD file."""
         if self._filename is None:
-            raise ValueError("Filename must be set")
+            raise ValueError('Filename must be set')
         tree = ET.parse(self._filename)
         root = tree.getroot()
-        dataset_elements = root[0].findall("DataSet")
+        dataset_elements = root[0].findall('DataSet')
         datasets = []
         for element in dataset_elements:
             element_attrib = element.attrib
@@ -2098,8 +2098,8 @@ class DICOMReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkDICOMImageReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkDICOMImageReader'
 
 
 class BMPReader(BaseReader):
@@ -2118,8 +2118,8 @@ class BMPReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkBMPReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkBMPReader'
 
 
 class DEMReader(BaseReader):
@@ -2138,8 +2138,8 @@ class DEMReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkDEMReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkDEMReader'
 
 
 class JPEGReader(BaseReader):
@@ -2158,8 +2158,8 @@ class JPEGReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkJPEGReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkJPEGReader'
 
 
 class MetaImageReader(BaseReader):
@@ -2178,8 +2178,8 @@ class MetaImageReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkMetaImageReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkMetaImageReader'
 
 
 class NIFTIReader(BaseReader):
@@ -2198,8 +2198,8 @@ class NIFTIReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkNIFTIImageReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkNIFTIImageReader'
 
 
 class NRRDReader(BaseReader):
@@ -2218,8 +2218,8 @@ class NRRDReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkNrrdReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkNrrdReader'
 
 
 class PNGReader(BaseReader):
@@ -2238,8 +2238,8 @@ class PNGReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkPNGReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkPNGReader'
 
 
 class PNMReader(BaseReader):
@@ -2258,8 +2258,8 @@ class PNMReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkPNMReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkPNMReader'
 
 
 class SLCReader(BaseReader):
@@ -2278,8 +2278,8 @@ class SLCReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkSLCReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkSLCReader'
 
 
 class TIFFReader(BaseReader):
@@ -2298,8 +2298,8 @@ class TIFFReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkTIFFReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkTIFFReader'
 
 
 class HDRReader(BaseReader):
@@ -2318,15 +2318,15 @@ class HDRReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkHDRReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkHDRReader'
 
 
 class PTSReader(BaseReader):
     """PTSReader for .pts files."""
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkPTSReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkPTSReader'
 
 
 class AVSucdReader(BaseReader):
@@ -2345,8 +2345,8 @@ class AVSucdReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkAVSucdReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkAVSucdReader'
 
 
 class HDFReader(BaseReader):
@@ -2365,8 +2365,8 @@ class HDFReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOHDF"
-    _vtk_class_name = "vtkHDFReader"
+    _vtk_module_name = 'vtkIOHDF'
+    _vtk_class_name = 'vtkHDFReader'
 
     @wraps(BaseReader.read)
     def read(self):
@@ -2388,29 +2388,29 @@ class HDFReader(BaseReader):
 class GLTFReader(BaseReader):
     """GLTFeader for .gltf and .glb files."""
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkGLTFReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkGLTFReader'
 
 
 class FluentReader(BaseReader):
     """FluentReader for .cas files."""
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkFLUENTReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkFLUENTReader'
 
 
 class MFIXReader(BaseReader):
     """MFIXReader for .res files."""
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkMFIXReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkMFIXReader'
 
 
 class SegYReader(BaseReader):
     """SegYReader for .sgy and .segy files."""
 
-    _vtk_module_name = "vtkIOSegY"
-    _vtk_class_name = "vtkSegYReader"
+    _vtk_module_name = 'vtkIOSegY'
+    _vtk_class_name = 'vtkSegYReader'
 
 
 class _GIFReader(BaseVTKReader):
@@ -2492,8 +2492,8 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
 
     """
 
-    _vtk_module_name = "vtkIOXdmf2"
-    _vtk_class_name = "vtkXdmfReader"
+    _vtk_module_name = 'vtkIOXdmf2'
+    _vtk_class_name = 'vtkXdmfReader'
 
     @property
     def number_grids(self):
@@ -2510,7 +2510,7 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     def set_active_time_value(self, time_value):  # noqa: D102
         if time_value not in self.time_values:
             raise ValueError(
-                f"Not a valid time {time_value} from available time values: {self.time_values}",
+                f'Not a valid time {time_value} from available time values: {self.time_values}',
             )
         self._active_time_value = time_value
         self.reader.UpdateTimeStep(time_value)
@@ -2556,8 +2556,8 @@ class XMLPartitionedDataSetReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOXML"
-    _vtk_class_name = "vtkXMLPartitionedDataSetReader"
+    _vtk_module_name = 'vtkIOXML'
+    _vtk_class_name = 'vtkXMLPartitionedDataSetReader'
 
 
 class FLUENTCFFReader(BaseReader):
@@ -2575,8 +2575,8 @@ class FLUENTCFFReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOFLUENTCFF"
-    _vtk_class_name = "vtkFLUENTCFFReader"
+    _vtk_module_name = 'vtkIOFLUENTCFF'
+    _vtk_class_name = 'vtkFLUENTCFFReader'
 
 
 class GambitReader(BaseReader):
@@ -2595,8 +2595,8 @@ class GambitReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkGAMBITReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkGAMBITReader'
 
 
 class GaussianCubeReader(BaseReader):
@@ -2613,8 +2613,8 @@ class GaussianCubeReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOChemistry"
-    _vtk_class_name = "vtkGaussianCubeReader"
+    _vtk_module_name = 'vtkIOChemistry'
+    _vtk_class_name = 'vtkGaussianCubeReader'
 
     def read(self, grid: bool = True):
         """Read the file and return the output.
@@ -2632,7 +2632,7 @@ class GaussianCubeReader(BaseReader):
             wrap(self.reader.GetGridOutput()) if grid else wrap(self.reader.GetOutputDataObject(0))
         )
         if data is None:  # pragma: no cover
-            raise RuntimeError("File reader failed to read and/or produced no output.")
+            raise RuntimeError('File reader failed to read and/or produced no output.')
         data._post_file_load_processing()  # type: ignore[union-attr]
 
         # check for any pyvista metadata
@@ -2704,8 +2704,8 @@ class MINCImageReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOMINC"
-    _vtk_class_name = "vtkMINCImageReader"
+    _vtk_module_name = 'vtkIOMINC'
+    _vtk_class_name = 'vtkMINCImageReader'
 
 
 class PDBReader(BaseReader):
@@ -2723,8 +2723,8 @@ class PDBReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOChemistry"
-    _vtk_class_name = "vtkPDBReader"
+    _vtk_module_name = 'vtkIOChemistry'
+    _vtk_class_name = 'vtkPDBReader'
 
 
 class GESignaReader(BaseReader):
@@ -2743,8 +2743,8 @@ class GESignaReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOImage"
-    _vtk_class_name = "vtkGESignaReader"
+    _vtk_module_name = 'vtkIOImage'
+    _vtk_class_name = 'vtkGESignaReader'
 
 
 class ParticleReader(BaseReader):
@@ -2771,8 +2771,8 @@ class ParticleReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkParticleReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkParticleReader'
 
     @property
     def endian(self) -> str:
@@ -2801,7 +2801,7 @@ class ParticleReader(BaseReader):
         elif endian == 'LittleEndian':
             self.reader.SetDataByteOrderToLittleEndian()
         else:
-            raise ValueError(f"Invalid endian: {endian}.")
+            raise ValueError(f'Invalid endian: {endian}.')
         self.reader.Update()
 
 
@@ -2823,8 +2823,8 @@ class ProStarReader(BaseReader):
 
     """
 
-    _vtk_module_name = "vtkIOGeometry"
-    _vtk_class_name = "vtkProStarReader"
+    _vtk_module_name = 'vtkIOGeometry'
+    _vtk_class_name = 'vtkProStarReader'
 
 
 CLASS_READERS = {

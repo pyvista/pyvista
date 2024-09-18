@@ -48,7 +48,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 
 
 def _indent_paragraph(string, level):
-    indentation = "".join(['    '] * level)
+    indentation = ''.join(['    '] * level)
     return textwrap.indent(textwrap.dedent(string).strip(), indentation)
 
 
@@ -288,7 +288,7 @@ class CellType(IntEnum):
     VERTEX = _CellTypeTuple(
         value=_vtk.VTK_VERTEX,
         cell_class=_vtk.vtkVertex,
-        example="Vertex",
+        example='Vertex',
         short_doc="""
         Represents a point in 3D space.
 
@@ -298,7 +298,7 @@ class CellType(IntEnum):
     POLY_VERTEX = _CellTypeTuple(
         value=_vtk.VTK_POLY_VERTEX,
         cell_class=_vtk.vtkPolyVertex,
-        example="PolyVertex",
+        example='PolyVertex',
         points_override='variable',
         short_doc="""
         Represents a set of points in 3D space.
@@ -310,7 +310,7 @@ class CellType(IntEnum):
     LINE = _CellTypeTuple(
         value=_vtk.VTK_LINE,
         cell_class=_vtk.vtkLine,
-        example="Line",
+        example='Line',
         short_doc="""
         Represents a 1D line.
 
@@ -321,7 +321,7 @@ class CellType(IntEnum):
     POLY_LINE = _CellTypeTuple(
         value=_vtk.VTK_POLY_LINE,
         cell_class=_vtk.vtkPolyLine,
-        example="PolyLine",
+        example='PolyLine',
         points_override='variable',
         short_doc="""
         Represents a set of 1D lines.
@@ -337,7 +337,7 @@ class CellType(IntEnum):
     TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE,
         cell_class=_vtk.vtkTriangle,
-        example="Triangle",
+        example='Triangle',
         short_doc="""
         Represents a 2D triangle.
 
@@ -352,7 +352,7 @@ class CellType(IntEnum):
     TRIANGLE_STRIP = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE_STRIP,
         cell_class=_vtk.vtkTriangleStrip,
-        example="TriangleStrip",
+        example='TriangleStrip',
         points_override='variable',
         edges_override='variable',
         short_doc="""
@@ -376,7 +376,7 @@ class CellType(IntEnum):
     POLYGON = _CellTypeTuple(
         value=_vtk.VTK_POLYGON,
         cell_class=_vtk.vtkPolygon,
-        example="Polygon",
+        example='Polygon',
         points_override='variable',
         edges_override='variable',
         short_doc="""
@@ -425,7 +425,7 @@ class CellType(IntEnum):
     QUAD = _CellTypeTuple(
         value=_vtk.VTK_QUAD,
         cell_class=_vtk.vtkQuad,
-        example="Quadrilateral",
+        example='Quadrilateral',
         short_doc="""
         Represents a 2D quadrilateral.
 
@@ -442,7 +442,7 @@ class CellType(IntEnum):
     TETRA = _CellTypeTuple(
         value=_vtk.VTK_TETRA,
         cell_class=_vtk.vtkTetra,
-        example="Tetrahedron",
+        example='Tetrahedron',
         short_doc="""
         Represents a 3D tetrahedron.
 
@@ -458,7 +458,7 @@ class CellType(IntEnum):
     VOXEL = _CellTypeTuple(
         value=_vtk.VTK_VOXEL,
         cell_class=_vtk.vtkVoxel,
-        example="Voxel",
+        example='Voxel',
         short_doc="""
         Represents a 3D orthogonal parallelepiped.
 
@@ -482,7 +482,7 @@ class CellType(IntEnum):
     HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_HEXAHEDRON,
         cell_class=_vtk.vtkHexahedron,
-        example="Hexahedron",
+        example='Hexahedron',
         short_doc="""
         Represents a 3D rectangular hexahedron.
 
@@ -502,7 +502,7 @@ class CellType(IntEnum):
     WEDGE = _CellTypeTuple(
         value=_vtk.VTK_WEDGE,
         cell_class=_vtk.vtkWedge,
-        example="Wedge",
+        example='Wedge',
         short_doc="""
         Represents a linear 3D wedge.
 
@@ -521,7 +521,7 @@ class CellType(IntEnum):
     PYRAMID = _CellTypeTuple(
         value=_vtk.VTK_PYRAMID,
         cell_class=_vtk.vtkPyramid,
-        example="Pyramid",
+        example='Pyramid',
         short_doc="""
         Represents a 3D pyramid.
 
@@ -542,7 +542,7 @@ class CellType(IntEnum):
     PENTAGONAL_PRISM = _CellTypeTuple(
         value=_vtk.VTK_PENTAGONAL_PRISM,
         cell_class=_vtk.vtkPentagonalPrism,
-        example="PentagonalPrism",
+        example='PentagonalPrism',
         short_doc="""
         Represents a convex 3D prism with a pentagonal base and five quadrilateral faces.
 
@@ -561,7 +561,7 @@ class CellType(IntEnum):
     HEXAGONAL_PRISM = _CellTypeTuple(
         value=_vtk.VTK_HEXAGONAL_PRISM,
         cell_class=_vtk.vtkHexagonalPrism,
-        example="HexagonalPrism",
+        example='HexagonalPrism',
         short_doc="""
         Represents a 3D prism with hexagonal base and six quadrilateral faces.
 
@@ -793,7 +793,7 @@ class CellType(IntEnum):
         The last point lies in the center of the cell ``(0,1,2,3,4,5,6,7)``.
         """,
     )
-    if hasattr(_vtk, "VTK_TRIQUADRATIC_PYRAMID"):
+    if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
         TRIQUADRATIC_PYRAMID = _CellTypeTuple(
             value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
             cell_class=_vtk.vtkTriQuadraticPyramid,

@@ -206,7 +206,7 @@ class Actor(Prop3D, _vtk.vtkActor):
     @property
     def memory_address(self):  # numpydoc ignore=RT01
         """Return the memory address of this actor."""
-        return self.GetAddressAsString("")
+        return self.GetAddressAsString('')
 
     @property
     def pickable(self) -> bool:  # numpydoc ignore=RT01

@@ -17,7 +17,7 @@ from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
 
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
+skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
 
 
 def test_multi_block_init_vtk():
@@ -99,7 +99,7 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     multi[4] = vtk.vtkUnstructuredGrid()
     assert isinstance(multi[4], pv.UnstructuredGrid)
 
-    with pytest.raises(ValueError, match="Cannot nest a composite dataset in itself."):
+    with pytest.raises(ValueError, match='Cannot nest a composite dataset in itself.'):
         multi.append(multi)
 
 
@@ -148,11 +148,11 @@ def test_multi_block_set_get_ers():
     assert multi.n_blocks == 3
     assert all(k is None for k in multi.keys())
 
-    multi["new key"] = pv.Sphere()
+    multi['new key'] = pv.Sphere()
     assert multi.n_blocks == 4
     assert multi[3] == pv.Sphere()
 
-    multi["new key"] = pv.Cube()
+    multi['new key'] = pv.Cube()
     assert multi.n_blocks == 4
     assert multi[3] == pv.Cube()
 
@@ -163,7 +163,7 @@ def test_multi_block_set_get_ers():
         multi[4] = ImageData()
 
     with pytest.raises(KeyError):
-        multi["not a key"]
+        multi['not a key']
     with pytest.raises(TypeError):
         data = multi[[0, 1]]
 
@@ -172,38 +172,38 @@ def test_multi_block_set_get_ers():
 
 
 def test_replace():
-    spheres = {f"{i}": pv.Sphere(phi_resolution=i + 3) for i in range(10)}
+    spheres = {f'{i}': pv.Sphere(phi_resolution=i + 3) for i in range(10)}
     multi = MultiBlock(spheres)
     cube = pv.Cube()
     multi.replace(3, cube)
-    assert multi.get_block_name(3) == "3"
+    assert multi.get_block_name(3) == '3'
     assert multi[3] is cube
 
 
 def test_pop():
-    spheres = {f"{i}": pv.Sphere(phi_resolution=i + 3) for i in range(10)}
+    spheres = {f'{i}': pv.Sphere(phi_resolution=i + 3) for i in range(10)}
     multi = MultiBlock(spheres)
-    assert multi.pop() == spheres["9"]
-    assert spheres["9"] not in multi
-    assert multi.pop(0) == spheres["0"]
-    assert spheres["0"] not in multi
+    assert multi.pop() == spheres['9']
+    assert spheres['9'] not in multi
+    assert multi.pop(0) == spheres['0']
+    assert spheres['0'] not in multi
 
 
 def test_del_slice(sphere):
-    multi = MultiBlock({f"{i}": sphere for i in range(10)})
+    multi = MultiBlock({f'{i}': sphere for i in range(10)})
     del multi[0:10:2]
     assert len(multi) == 5
-    assert all(f"{i}" in multi.keys() for i in range(1, 10, 2))
+    assert all(f'{i}' in multi.keys() for i in range(1, 10, 2))
 
-    multi = MultiBlock({f"{i}": sphere for i in range(10)})
+    multi = MultiBlock({f'{i}': sphere for i in range(10)})
     del multi[5:2:-1]
     assert len(multi) == 7
-    assert all(f"{i}" in multi.keys() for i in [0, 1, 2, 6, 7, 8, 9])
+    assert all(f'{i}' in multi.keys() for i in [0, 1, 2, 6, 7, 8, 9])
 
 
 def test_slicing_multiple_in_setitem(sphere):
     # equal length
-    multi = MultiBlock({f"{i}": sphere for i in range(10)})
+    multi = MultiBlock({f'{i}': sphere for i in range(10)})
     multi[1:3] = [pv.Cube(), pv.Cube()]
     assert multi[1] == pv.Cube()
     assert multi[2] == pv.Cube()
@@ -211,7 +211,7 @@ def test_slicing_multiple_in_setitem(sphere):
     assert len(multi) == 10
 
     # len(slice) < len(data)
-    multi = MultiBlock({f"{i}": sphere for i in range(10)})
+    multi = MultiBlock({f'{i}': sphere for i in range(10)})
     multi[1:3] = [pv.Cube(), pv.Cube(), pv.Cube()]
     assert multi[1] == pv.Cube()
     assert multi[2] == pv.Cube()
@@ -220,7 +220,7 @@ def test_slicing_multiple_in_setitem(sphere):
     assert len(multi) == 11
 
     # len(slice) > len(data)
-    multi = MultiBlock({f"{i}": sphere for i in range(10)})
+    multi = MultiBlock({f'{i}': sphere for i in range(10)})
     multi[1:3] = [pv.Cube()]
     assert multi[1] == pv.Cube()
     assert multi.count(pv.Cube()) == 1
@@ -228,26 +228,26 @@ def test_slicing_multiple_in_setitem(sphere):
 
 
 def test_reverse(sphere):
-    multi = MultiBlock({f"{i}": sphere for i in range(3)})
-    multi.append(pv.Cube(), "cube")
+    multi = MultiBlock({f'{i}': sphere for i in range(3)})
+    multi.append(pv.Cube(), 'cube')
     multi.reverse()
     assert multi[0] == pv.Cube()
-    assert np.array_equal(multi.keys(), ["cube", "2", "1", "0"])
+    assert np.array_equal(multi.keys(), ['cube', '2', '1', '0'])
 
 
 def test_insert(sphere):
-    multi = MultiBlock({f"{i}": sphere for i in range(3)})
+    multi = MultiBlock({f'{i}': sphere for i in range(3)})
     cube = pv.Cube()
     multi.insert(0, cube)
     assert len(multi) == 4
     assert multi[0] is cube
 
     # test with negative index and name
-    multi.insert(-1, pv.ImageData(), name="uni")
+    multi.insert(-1, pv.ImageData(), name='uni')
     assert len(multi) == 5
     # inserted before last element
     assert isinstance(multi[-2], pv.ImageData)  # inserted before last element
-    assert multi.get_block_name(-2) == "uni"
+    assert multi.get_block_name(-2) == 'uni'
 
 
 def test_extend(sphere, uniform, ant):
@@ -260,12 +260,12 @@ def test_extend(sphere, uniform, ant):
 
     # test with a MultiBlock
     multi = MultiBlock([sphere, ant])
-    new_multi = MultiBlock({"uniform1": uniform, "uniform2": uniform})
+    new_multi = MultiBlock({'uniform1': uniform, 'uniform2': uniform})
     multi.extend(new_multi)
     assert len(multi) == 4
     assert multi.count(uniform) == 2
-    assert multi.keys()[-2] == "uniform1"
-    assert multi.keys()[-1] == "uniform2"
+    assert multi.keys()[-2] == 'uniform1'
+    assert multi.keys()[-1] == 'uniform2'
 
 
 def test_multi_block_clean(rectilinear, uniform, ant):
@@ -331,7 +331,7 @@ def test_multi_block_eq(multiblock_all_with_nested_and_none):
     assert multi != other
 
     other = multi.copy()
-    other.set_block_name(0, "not matching")
+    other.set_block_name(0, 'not matching')
     assert multi != other
 
     other = multi.copy()
@@ -345,7 +345,7 @@ def test_multi_block_eq(multiblock_all_with_nested_and_none):
 def test_multi_block_io(
     extension, binary, tmpdir, use_pathlib, multiblock_all_with_nested_and_none
 ):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     if use_pathlib:
         pathlib.Path(filename)
     multi = multiblock_all_with_nested_and_none
@@ -361,7 +361,7 @@ def test_multi_block_io(
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
 def test_ensight_multi_block_io(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))  # noqa: UP031
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.%s' % extension))  # noqa: UP031
     # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file
     # Now check everything
@@ -389,7 +389,7 @@ def test_invalid_arg():
 
 
 def test_multi_io_erros(tmpdir):
-    fdir = tmpdir.mkdir("tmpdir")
+    fdir = tmpdir.mkdir('tmpdir')
     multi = MultiBlock()
     # Check saving with bad extension
     bad_ext_name = str(fdir.join('tmp.npy'))
@@ -550,7 +550,7 @@ def test_multi_block_save_lines(tmpdir):
     for _ in range(2):
         blocks.append(poly)
 
-    path = tmpdir.mkdir("tmpdir")
+    path = tmpdir.mkdir('tmpdir')
     line_filename = str(path.join('lines.vtk'))
     block_filename = str(path.join('blocks.vtmb'))
     poly.save(line_filename)
@@ -588,8 +588,8 @@ def test_multiblock_ref():
     cube = pv.Cube()
 
     block = MultiBlock([sphere, cube])
-    block[0]["a_new_var"] = np.zeros(block[0].n_points)
-    assert "a_new_var" in block[0].array_names
+    block[0]['a_new_var'] = np.zeros(block[0].n_points)
+    assert 'a_new_var' in block[0].array_names
 
     assert sphere is block[0]
     assert cube is block[1]

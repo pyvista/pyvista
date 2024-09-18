@@ -105,7 +105,7 @@ def cubemap_from_filenames(image_paths):
 
     """
     if len(image_paths) != 6:
-        raise ValueError("image_paths must contain 6 paths")
+        raise ValueError('image_paths must contain 6 paths')
 
     return _cubemap_from_paths(image_paths)
 

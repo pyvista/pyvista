@@ -328,12 +328,12 @@ class PickingInterface:  # numpydoc ignore=PR01
     def _init_click_picking_callback(self, left_clicking=False):
         if left_clicking:
             self._picking_left_clicking_observer = self.iren.add_observer(
-                "LeftButtonPressEvent",
+                'LeftButtonPressEvent',
                 partial(try_callback, _launch_pick_event),
             )
         else:
             self._picking_right_clicking_observer = self.iren.add_observer(
-                "RightButtonPressEvent",
+                'RightButtonPressEvent',
                 partial(try_callback, _launch_pick_event),
             )
 
@@ -647,7 +647,7 @@ class PickingInterface:  # numpydoc ignore=PR01
         # Now add text about cell-selection
         if show_message:
             if show_message is True:
-                show_message = "Press R to toggle selection tool"
+                show_message = 'Press R to toggle selection tool'
             self._picking_text = self.add_text(
                 str(show_message),
                 font_size=font_size,
@@ -1033,7 +1033,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             **_kwargs,
                         )
                 except Exception as e:  # pragma: no cover
-                    warnings.warn("Unable to show mesh when picking:\n\n%s", str(e))
+                    warnings.warn('Unable to show mesh when picking:\n\n%s', str(e))
 
                 # Reset to the active renderer.
                 loc = self_().renderers.index_to_loc(active_renderer_index)
@@ -1282,13 +1282,13 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     # if not a surface
                     if actor.GetProperty().GetRepresentation() != 2:  # pragma: no cover
                         warnings.warn(
-                            "Display representations other than `surface` will result in incorrect results.",
+                            'Display representations other than `surface` will result in incorrect results.',
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()
-                    smesh["original_cell_ids"] = np.arange(smesh.n_cells)
+                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)
                     tri_smesh = smesh.extract_surface().triangulate()
-                    cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
+                    cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))
 
                 # memory leak issues on vtk==9.0.20210612.dev0
@@ -1667,7 +1667,7 @@ class PickingHelper(PickingMethods):
             if callable(callback):
                 _poked_context_callback(self_(), callback, click_point)
 
-        self.track_click_position(callback=_the_callback, side="right")
+        self.track_click_position(callback=_the_callback, side='right')
 
     def enable_path_picking(
         self,
@@ -1765,7 +1765,7 @@ class PickingHelper(PickingMethods):
 
         self.add_key_event('c', _clear_path_event_watcher)
         if show_message is True:
-            show_message = "Press P to pick under the mouse\nPress C to clear"
+            show_message = 'Press P to pick under the mouse\nPress C to clear'
 
         self.enable_surface_point_picking(
             callback=_the_callback,
@@ -1907,7 +1907,7 @@ class PickingHelper(PickingMethods):
 
         self.add_key_event('c', _clear_g_path_event_watcher)
         if show_message is True:
-            show_message = "Press P to pick under the mouse\nPress C to clear"
+            show_message = 'Press P to pick under the mouse\nPress C to clear'
 
         self.enable_surface_point_picking(
             callback=_the_callback,

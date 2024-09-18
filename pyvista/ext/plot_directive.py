@@ -147,7 +147,7 @@ def _option_boolean(arg):
 
 def _option_context(arg):
     if arg is not None:  # pragma: no cover
-        raise ValueError("No arguments allowed for ``:context:``")
+        raise ValueError('No arguments allowed for ``:context:``')
 
 
 def _option_format(arg):
@@ -247,26 +247,26 @@ def _split_code_at_show(text):
     part = []
 
     within_plot = False
-    for line in text.split("\n"):
+    for line in text.split('\n'):
         part.append(line)
 
         # check if show(...) or plot(...) is within the line
         line = _strip_comments(line)
         if within_plot:  # allow for multi-line plot(...
             if _strip_comments(line).endswith(')'):
-                parts.append("\n".join(part))
+                parts.append('\n'.join(part))
                 part = []
                 within_plot = False
 
         elif '.show(' in line or '.plot(' in line:
             if _strip_comments(line).endswith(')'):
-                parts.append("\n".join(part))
+                parts.append('\n'.join(part))
                 part = []
             else:  # allow for multi-line plot(...
                 within_plot = True
 
-    if "\n".join(part).strip():
-        parts.append("\n".join(part))
+    if '\n'.join(part).strip():
+        parts.append('\n'.join(part))
     return is_doctest, parts
 
 
@@ -430,10 +430,10 @@ def render_figures(
 
             for j, (_, plotter) in enumerate(figures.items()):
                 if hasattr(plotter, '_gif_filename'):
-                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.gif")
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.gif')
                     shutil.move(plotter._gif_filename, image_file.filename)
                 else:
-                    image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.png")
+                    image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.png')
                     try:
                         plotter.screenshot(image_file.filename)
                     except RuntimeError:  # pragma no cover
@@ -443,8 +443,8 @@ def render_figures(
                         images.append(image_file)
                         continue
                     else:
-                        image_file = ImageFile(output_dir, f"{output_base}_{i:02d}_{j:02d}.vtksz")
-                        with Path(image_file.filename).open("wb") as f:
+                        image_file = ImageFile(output_dir, f'{output_base}_{i:02d}_{j:02d}.vtksz')
+                        with Path(image_file.filename).open('wb') as f:
                             f.write(plotter.last_vtksz)
                 images.append(image_file)
 
@@ -486,13 +486,13 @@ def run(arguments, content, options, state_machine, state, lineno):
         caption = '\n'.join(content)
 
         # Enforce unambiguous use of captions.
-        if "caption" in options:
+        if 'caption' in options:
             if caption:  # pragma: no cover
                 raise ValueError(
                     'Caption specified in both content and options. Please remove ambiguity.',
                 )
             # Use caption option
-            caption = options["caption"]
+            caption = options['caption']
 
         # If the optional function name is provided, use it
         function_name = arguments[1] if len(arguments) == 2 else None
@@ -501,7 +501,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         output_base = Path(source_file_name).name
     else:
         source_file_name = rst_file
-        code = textwrap.dedent("\n".join(map(str, content)))
+        code = textwrap.dedent('\n'.join(map(str, content)))
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
         base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
@@ -569,7 +569,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         reporter = state.memo.reporter
         sm = reporter.system_message(
             2,
-            f"Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}",
+            f'Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}',
             line=lineno,
         )
         results = [(code, [])]
@@ -590,7 +590,7 @@ def run(arguments, content, options, state_machine, state, lineno):
                     '',
                     *textwrap.indent(code_piece, '    ').splitlines(),
                 ]
-            source_code = "\n".join(lines)
+            source_code = '\n'.join(lines)
         else:
             source_code = ''
 
@@ -616,8 +616,8 @@ def run(arguments, content, options, state_machine, state, lineno):
             caption=caption,
         )
 
-        total_lines.extend(result.split("\n"))
-        total_lines.extend("\n")
+        total_lines.extend(result.split('\n'))
+        total_lines.extend('\n')
 
     if total_lines:
         state_machine.insert_input(total_lines, source=source_file_name)

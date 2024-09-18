@@ -192,7 +192,7 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
     return failures
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = ArgumentParser(description='Look for name errors in doctests.')
     parser.add_argument(
         '-v',

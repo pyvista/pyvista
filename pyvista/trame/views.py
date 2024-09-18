@@ -11,7 +11,7 @@ from trame.widgets.vtk import VtkRemoteLocalView
 from trame.widgets.vtk import VtkRemoteView
 from trame_vtk.tools.vtksz2html import write_html
 
-CLOSED_PLOTTER_ERROR = "The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame."
+CLOSED_PLOTTER_ERROR = 'The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame.'
 
 
 def get_server(*args, **kwargs):  # numpydoc ignore=RT01
@@ -70,13 +70,13 @@ class _BasePyVistaView:
         """Export scene to HTML as StringIO buffer."""
         content = io.StringIO()
         if isinstance(self, PyVistaLocalView):
-            data = self.export(format="zip")
+            data = self.export(format='zip')
             if data is None:
                 raise ValueError('No data to write.')
             write_html(data, content)
             content.seek(0)
         elif isinstance(self, PyVistaRemoteLocalView):
-            data = self.export_geometry(format="zip")
+            data = self.export_geometry(format='zip')
             if data is None:
                 raise ValueError('No data to write.')
             write_html(data, content)

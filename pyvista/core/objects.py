@@ -267,7 +267,7 @@ class Table(DataObject, _vtk.vtkTable):
     def _get_attrs(self):
         """Return the representation methods."""
         attrs = []
-        attrs.append(("N Rows", self.n_rows, "{}"))
+        attrs.append(('N Rows', self.n_rows, '{}'))
         return attrs
 
     def _repr_html_(self):
@@ -276,22 +276,22 @@ class Table(DataObject, _vtk.vtkTable):
         It includes header details and information about all arrays.
 
         """
-        fmt = ""
+        fmt = ''
         if self.n_arrays > 0:
             fmt += "<table style='width: 100%;'>"
-            fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
-            fmt += "<tr><td>"
+            fmt += '<tr><th>Header</th><th>Data Arrays</th></tr>'
+            fmt += '<tr><td>'
         # Get the header info
         fmt += self.head(display=False, html=True)
         # Fill out scalars arrays
         if self.n_arrays > 0:
-            fmt += "</td><td>"
-            fmt += "\n"
+            fmt += '</td><td>'
+            fmt += '\n'
             fmt += "<table style='width: 100%;'>\n"
-            titles = ["Name", "Type", "N Comp", "Min", "Max"]
-            fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
-            row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
-            row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
+            titles = ['Name', 'Type', 'N Comp', 'Min', 'Max']
+            fmt += '<tr>' + ''.join([f'<th>{t}</th>' for t in titles]) + '</tr>\n'
+            row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
+            row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
 
             def format_array(key):
                 """Format array information for printing (internal helper)."""
@@ -306,9 +306,9 @@ class Table(DataObject, _vtk.vtkTable):
                 key = self.GetRowData().GetArrayName(i)
                 fmt += format_array(key)
 
-            fmt += "</table>\n"
-            fmt += "\n"
-            fmt += "</td></tr> </table>"
+            fmt += '</table>\n'
+            fmt += '\n'
+            fmt += '</td></tr> </table>'
         return fmt
 
     def __repr__(self):

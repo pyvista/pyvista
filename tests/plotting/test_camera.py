@@ -93,7 +93,7 @@ def test_camera_from_paraview_pvcc(paraview_pvcc):
 
 
 def test_camera_to_paraview_pvcc(camera, tmp_path):
-    fname = tmp_path / "test.pvcc"
+    fname = tmp_path / 'test.pvcc'
     camera.to_paraview_pvcc(fname)
     assert fname.exists()
     ocamera = pv.Camera.from_paraview_pvcc(fname)

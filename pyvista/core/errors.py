@@ -148,7 +148,7 @@ class AmbiguousDataError(ValueError):
 
     """
 
-    def __init__(self, message="Multiple data available."):
+    def __init__(self, message='Multiple data available.'):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -163,7 +163,7 @@ class CellSizeError(ValueError):
 
     """
 
-    def __init__(self, message="Cell array size is invalid."):
+    def __init__(self, message='Cell array size is invalid.'):
         """Call the base class constructor with the custom message."""
         super().__init__(message)
 
@@ -180,7 +180,7 @@ class PyVistaPipelineError(RuntimeError):
 
     def __init__(
         self,
-        message="VTK pipeline issue detected by PyVista.",
+        message='VTK pipeline issue detected by PyVista.',
     ):  # numpydoc ignore=PR01,RT01
         """Call the base class constructor with the custom message."""
         super().__init__(message)

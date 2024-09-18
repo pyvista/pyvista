@@ -90,12 +90,12 @@ class PolyDataFilters(DataSetFilters):
         """Perform boolean operation."""
         if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):
             raise ValueError(
-                "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.",
+                'The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.',
             )
         if not isinstance(other_mesh, pyvista.PolyData):
-            raise TypeError("Input mesh must be PolyData.")
+            raise TypeError('Input mesh must be PolyData.')
         if not self.is_all_triangles or not other_mesh.is_all_triangles:
-            raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
+            raise NotAllTrianglesError('Make sure both the input and output are triangulated.')
 
         bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
         if btype == 'union':
@@ -412,7 +412,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
-            raise TypeError("All meshes need to be of PolyData type")
+            raise TypeError('All meshes need to be of PolyData type')
 
         append_filter = _vtk.vtkAppendPolyData()
         append_filter.AddInputData(self)
@@ -516,7 +516,7 @@ class PolyDataFilters(DataSetFilters):
             is_polydata = isinstance(dataset, pyvista.PolyData)
 
         if inplace and not is_polydata:
-            raise TypeError("In-place merge requires both input datasets to be PolyData.")
+            raise TypeError('In-place merge requires both input datasets to be PolyData.')
 
         merged = DataSetFilters.merge(
             self,
@@ -1109,7 +1109,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for decimation must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for decimation must be all triangles.')
 
         alg = _vtk.vtkDecimatePro()
         alg.SetInputData(self)
@@ -1309,7 +1309,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for subdivision must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for subdivision must be all triangles.')
 
         subfilter = subfilter.lower()
         if subfilter == 'linear':
@@ -1320,7 +1320,7 @@ class PolyDataFilters(DataSetFilters):
             sfilter = _vtk.vtkLoopSubdivisionFilter()
         else:
             raise ValueError(
-                "Subdivision filter must be one of the following: "
+                'Subdivision filter must be one of the following: '
                 "'butterfly', 'loop', or 'linear'",
             )
 
@@ -1419,7 +1419,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for subdivision must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for subdivision must be all triangles.')
 
         sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
         if max_edge_len:
@@ -1550,7 +1550,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for decimation must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for decimation must be all triangles.')
 
         # create decimation filter
         alg = _vtk.vtkQuadricDecimation()
@@ -1729,8 +1729,8 @@ class PolyDataFilters(DataSetFilters):
         except KeyError:
             if (self.n_verts + self.n_lines) == self.n_cells:
                 raise TypeError(
-                    "Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n"
-                    "and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).",
+                    'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
+                    'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).',
                 )
             else:  # pragma: no cover
                 raise RuntimeError(
@@ -1822,7 +1822,7 @@ class PolyDataFilters(DataSetFilters):
         """
         # verify it is manifold
         if self.n_open_edges > 0:
-            raise ValueError("This surface appears to be non-manifold.")
+            raise ValueError('This surface appears to be non-manifold.')
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
         # find center of data if origin not specified
@@ -2074,7 +2074,7 @@ class PolyDataFilters(DataSetFilters):
         if not (0 <= start_vertex < self.n_points and 0 <= end_vertex < self.n_points):
             raise IndexError('Invalid point indices.')
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for geodesic path must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for geodesic path must be all triangles.')
 
         dijkstra = _vtk.vtkDijkstraGraphGeodesicPath()
         dijkstra.SetInputData(self)
@@ -2087,16 +2087,16 @@ class PolyDataFilters(DataSetFilters):
         output = _get_output(dijkstra)
         if output.n_points == 0:
             raise ValueError(
-                f"There is no path between vertices {start_vertex} and {end_vertex}. ",
-                "It is likely the vertices belong to disconnected regions.",
+                f'There is no path between vertices {start_vertex} and {end_vertex}. ',
+                'It is likely the vertices belong to disconnected regions.',
             )
 
-        output["vtkOriginalPointIds"] = original_ids
+        output['vtkOriginalPointIds'] = original_ids
 
         # ensure proper order if requested
         if keep_order and original_ids[0] == end_vertex:
             output.points[...] = output.points[::-1, :]
-            output["vtkOriginalPointIds"] = output["vtkOriginalPointIds"][::-1]
+            output['vtkOriginalPointIds'] = output['vtkOriginalPointIds'][::-1]
 
         if inplace:
             self.copy_from(output, deep=False)
@@ -2310,7 +2310,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for multi_ray_trace must be all triangles.')
 
         try:
             import trimesh
@@ -2319,9 +2319,9 @@ class PolyDataFilters(DataSetFilters):
                 raise ImportError
         except ImportError:
             raise ImportError(
-                "To use multi_ray_trace please install trimesh, embree (v2.17.7) and pyembree/embreex with:\n"
-                "\tconda install embree=2 trimesh pyembree\nOR\n"
-                "\tpip install trimesh embreex",
+                'To use multi_ray_trace please install trimesh, embree (v2.17.7) and pyembree/embreex with:\n'
+                '\tconda install embree=2 trimesh pyembree\nOR\n'
+                '\tpip install trimesh embreex',
             )
 
         origins = np.asarray(origins)
@@ -2379,7 +2379,7 @@ class PolyDataFilters(DataSetFilters):
 
         return locations, index_ray, index_tri
 
-    def plot_boundaries(self, edge_color="red", line_width=None, progress_bar=False, **kwargs):
+    def plot_boundaries(self, edge_color='red', line_width=None, progress_bar=False, **kwargs):
         """Plot boundaries of a mesh.
 
         Parameters
@@ -3196,8 +3196,8 @@ class PolyDataFilters(DataSetFilters):
         self,
         direction,
         trim_surface,
-        extrusion="boundary_edges",
-        capping="intersection",
+        extrusion='boundary_edges',
+        capping='intersection',
         inplace=False,
         progress_bar=False,
     ):
@@ -3262,7 +3262,7 @@ class PolyDataFilters(DataSetFilters):
         if not isinstance(direction, (np.ndarray, Sequence)) or len(direction) != 3:
             raise TypeError('Vector must be a length three vector')
 
-        extrusions = {"boundary_edges": 0, "all_edges": 1}
+        extrusions = {'boundary_edges': 0, 'all_edges': 1}
         if isinstance(extrusion, str):
             if extrusion not in extrusions:
                 raise ValueError(f'Invalid strategy of extrusion "{extrusion}".')
@@ -3271,10 +3271,10 @@ class PolyDataFilters(DataSetFilters):
             raise TypeError('Invalid type given to `extrusion`. Must be a string.')
 
         cappings = {
-            "intersection": 0,
-            "minimum_distance": 1,
-            "maximum_distance": 2,
-            "average_distance": 3,
+            'intersection': 0,
+            'minimum_distance': 1,
+            'maximum_distance': 2,
+            'average_distance': 3,
         }
         if isinstance(capping, str):
             if capping not in cappings:
@@ -3560,7 +3560,7 @@ class PolyDataFilters(DataSetFilters):
         component=0,
         clip_tolerance=1e-6,
         generate_contour_edges=True,
-        scalar_mode="value",
+        scalar_mode='value',
         clipping=True,
         progress_bar=False,
     ):
@@ -3896,7 +3896,7 @@ class PolyDataFilters(DataSetFilters):
         """
         alg = _vtk.vtkRibbonFilter()
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, "Generating Protein Ribbons")
+        _update_alg(alg, progress_bar, 'Generating Protein Ribbons')
         return _get_output(alg)
 
     def voxelize_binary_mask(
@@ -4161,7 +4161,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             # Compute reference volume geometry
             if spacing is not None and dimensions is not None:
-                raise TypeError("Spacing and dimensions cannot both be set. Set one or the other.")
+                raise TypeError('Spacing and dimensions cannot both be set. Set one or the other.')
 
             # Need to preprocess so that we have a triangle mesh for computing
             # cell length percentile
@@ -4170,7 +4170,7 @@ class PolyDataFilters(DataSetFilters):
             if spacing is None:
                 if cell_length_percentile is not None and mesh_length_fraction is not None:
                     raise TypeError(
-                        "Cell length percentile and mesh length fraction cannot both be set. Set one or the other."
+                        'Cell length percentile and mesh length fraction cannot both be set. Set one or the other.'
                     )
 
                 less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
@@ -4178,7 +4178,7 @@ class PolyDataFilters(DataSetFilters):
                     cell_length_percentile is not None or cell_length_sample_size is not None
                 ) and less_than_vtk92:
                     raise TypeError(
-                        "Cell length percentile and sample size requires VTK 9.2 or greater."
+                        'Cell length percentile and sample size requires VTK 9.2 or greater.'
                     )
 
                 if mesh_length_fraction is not None or less_than_vtk92:
@@ -4209,11 +4209,11 @@ class PolyDataFilters(DataSetFilters):
                 # Spacing is specified directly. Make sure other params are not set.
                 if cell_length_percentile is not None:
                     raise TypeError(
-                        "Spacing and cell length percentile cannot both be set. Set one or the other."
+                        'Spacing and cell length percentile cannot both be set. Set one or the other.'
                     )
                 if mesh_length_fraction is not None:
                     raise TypeError(
-                        "Spacing and mesh length fraction cannot both be set. Set one or the other."
+                        'Spacing and mesh length fraction cannot both be set. Set one or the other.'
                     )
 
             # Get initial spacing (will be adjusted later)
@@ -4231,7 +4231,7 @@ class PolyDataFilters(DataSetFilters):
                 dimensions = np.array(rounding_func(sizes / initial_spacing), dtype=int)
             elif rounding_func is not None:
                 raise TypeError(
-                    "Rounding func cannot be set when dimensions is specified. Set one or the other."
+                    'Rounding func cannot be set when dimensions is specified. Set one or the other.'
                 )
 
             reference_volume = pyvista.ImageData()
@@ -4282,7 +4282,7 @@ class PolyDataFilters(DataSetFilters):
         poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
         poly_to_stencil.SetOutputOrigin(*reference_volume.origin)
         poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
-        _update_alg(poly_to_stencil, progress_bar, "Converting polydata")
+        _update_alg(poly_to_stencil, progress_bar, 'Converting polydata')
 
         # Convert stencil to image
         stencil = _vtk.vtkImageStencil()
@@ -4290,7 +4290,7 @@ class PolyDataFilters(DataSetFilters):
         stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
         stencil.ReverseStencilOn()
         stencil.SetBackgroundValue(foreground_value)
-        _update_alg(stencil, progress_bar, "Generating binary mask")
+        _update_alg(stencil, progress_bar, 'Generating binary mask')
         output_volume = _get_output(stencil)
 
         # Set the orientation of the output
@@ -4306,5 +4306,5 @@ def _length_distribution_percentile(poly, percentile, cell_length_sample_size, p
     distribution = _vtk.vtkLengthDistribution()
     distribution.SetInputData(poly)
     distribution.SetSampleSize(cell_length_sample_size)
-    _update_alg(distribution, progress_bar, "Computing cell length distribution")
+    _update_alg(distribution, progress_bar, 'Computing cell length distribution')
     return distribution.GetLengthQuantile(percentile)

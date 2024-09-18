@@ -14,7 +14,7 @@ from pyvista.core.errors import PointSetNotSupported
 # skip all tests if concrete pointset unavailable
 pytestmark = pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
+    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
 )
 
 
@@ -88,7 +88,7 @@ def test_pointset(pointset):
 
 
 def test_save(tmpdir, pointset):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'{"tmp.xyz"}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'{"tmp.xyz"}'))
     pointset.save(filename)
     points = np.loadtxt(filename)
     assert np.allclose(points, pointset.points)
@@ -131,7 +131,7 @@ def test_filters_return_pointset(sphere):
 
 
 @pytest.mark.parametrize(
-    ("force_float", "expected_data_type"),
+    ('force_float', 'expected_data_type'),
     [(False, np.int64), (True, np.float32)],
 )
 def test_pointset_force_float(force_float, expected_data_type):
