@@ -681,7 +681,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     >>> polaxes.maximum_radius = 3.0
     >>> polaxes.minimum_angle = -60.0
     >>> polaxes.maximum_angle = 210.0
-    >>> polaxes.SetRequestedNumberOfRadialAxes(10)
+    >>> polaxes.number_of_radial_axes = 10
     >>> polaxes.camera = camera
     >>> polaxes.SetPolarLabelFormat("%6.1f")
     >>> polaxes.GetLastRadialAxisProperty().SetColor(0.0, 1.0, 0.0)
@@ -862,3 +862,24 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     @maximum_angle.setter
     def maximum_angle(self, maximum_angle: float):  # numpydoc ignore=GL08
         self.SetMaximumAngle(maximum_angle)
+
+    @property
+    def number_of_radial_axes(self) -> int:  # numpydoc ignore=RT01
+        """Return or set the number of radial axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.number_of_radial_axes
+        5
+        >>> polaxes.number_of_radial_axes = 10
+        >>> polaxes.number_of_radial_axes
+        10
+
+        """
+        return self.GetNumberOfRadialAxes()
+
+    @number_of_radial_axes.setter
+    def number_of_radial_axes(self, number_of_radial_axes: int):  # numpydoc ignore=GL08
+        self.SetRequestedNumberOfRadialAxes(number_of_radial_axes)
