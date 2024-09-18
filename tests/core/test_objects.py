@@ -17,7 +17,7 @@ except ImportError:
 
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.csv'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.csv'))
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))
 
@@ -97,7 +97,7 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:, i], table[i])
 
     with pytest.raises(TypeError):
-        pv.Table("foo")
+        pv.Table('foo')
 
 
 def test_table_row_arrays():
@@ -183,7 +183,7 @@ def test_table_repr():
     assert isinstance(text, str)
 
 
-@pytest.mark.skipif(pd is None, reason="Requires Pandas")
+@pytest.mark.skipif(pd is None, reason='Requires Pandas')
 def test_table_pandas():
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))

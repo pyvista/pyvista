@@ -825,9 +825,9 @@ class _DataSetMapper(_BaseMapper):
             rgba = np.empty((self.dataset.n_cells, 4), np.uint8)
         else:  # pragma: no cover
             raise ValueError(
-                f"Opacity array size ({opacity.size}) does not equal "
-                f"the number of points ({self.dataset.n_points}) or the "
-                f"number of cells ({self.dataset.n_cells}).",
+                f'Opacity array size ({opacity.size}) does not equal '
+                f'the number of points ({self.dataset.n_points}) or the '
+                f'number of cells ({self.dataset.n_cells}).',
             )
 
         default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
@@ -981,7 +981,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
         if not self.dataset:  # pragma: no cover
             raise RuntimeError('Missing dataset.')
         if name not in self.dataset.point_data:
-            available_arrays = ", ".join(self.dataset.point_data.keys())
+            available_arrays = ', '.join(self.dataset.point_data.keys())
             raise KeyError(
                 f'Point array "{name}" does not exist. '
                 f'Available point arrays are: {available_arrays}',
@@ -1005,15 +1005,15 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
 
         """
         self.SetSplatShaderCode(
-            "//VTK::Color::Impl\n"
-            "float dist = dot(offsetVCVSOutput.xy,offsetVCVSOutput.xy);\n"
-            "if (dist > 1.0) {\n"
-            "  discard;\n"
-            "} else {\n"
-            f"  float scale = ({opacity} - dist);\n"
-            "  ambientColor *= scale;\n"
-            "  diffuseColor *= scale;\n"
-            "}\n",
+            '//VTK::Color::Impl\n'
+            'float dist = dot(offsetVCVSOutput.xy,offsetVCVSOutput.xy);\n'
+            'if (dist > 1.0) {\n'
+            '  discard;\n'
+            '} else {\n'
+            f'  float scale = ({opacity} - dist);\n'
+            '  ambientColor *= scale;\n'
+            '  diffuseColor *= scale;\n'
+            '}\n',
         )
         # maintain consistency with the default style
         self.scale_factor *= 1.5

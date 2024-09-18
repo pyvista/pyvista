@@ -28,8 +28,8 @@ skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows
 
 def test_get_reader_fail(tmp_path):
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.get_reader("not_a_supported_file.no_data")
-    match = "`pyvista.get_reader` does not support reading from directory:\n\t"
+        pv.get_reader('not_a_supported_file.no_data')
+    match = '`pyvista.get_reader` does not support reading from directory:\n\t'
     with pytest.raises(ValueError, match=match):
         pv.get_reader(str(tmp_path))
 
@@ -41,7 +41,7 @@ def test_reader_invalid_file():
 
 
 def test_xmlimagedatareader(tmpdir):
-    tmpfile = tmpdir.join("temp.vti")
+    tmpfile = tmpdir.join('temp.vti')
     mesh = pv.ImageData()
     mesh.save(tmpfile.strpath)
 
@@ -54,7 +54,7 @@ def test_xmlimagedatareader(tmpdir):
 
 
 def test_xmlrectilineargridreader(tmpdir):
-    tmpfile = tmpdir.join("temp.vtr")
+    tmpfile = tmpdir.join('temp.vtr')
     mesh = pv.RectilinearGrid()
     mesh.save(tmpfile.strpath)
 
@@ -67,7 +67,7 @@ def test_xmlrectilineargridreader(tmpdir):
 
 
 def test_xmlunstructuredgridreader(tmpdir):
-    tmpfile = tmpdir.join("temp.vtu")
+    tmpfile = tmpdir.join('temp.vtu')
     mesh = pv.UnstructuredGrid()
     mesh.save(tmpfile.strpath)
 
@@ -80,7 +80,7 @@ def test_xmlunstructuredgridreader(tmpdir):
 
 
 def test_xmlpolydatareader(tmpdir):
-    tmpfile = tmpdir.join("temp.vtp")
+    tmpfile = tmpdir.join('temp.vtp')
     mesh = pv.Sphere()
     mesh.save(tmpfile.strpath)
 
@@ -93,7 +93,7 @@ def test_xmlpolydatareader(tmpdir):
 
 
 def test_xmlstructuredgridreader(tmpdir):
-    tmpfile = tmpdir.join("temp.vts")
+    tmpfile = tmpdir.join('temp.vts')
     mesh = pv.StructuredGrid()
     mesh.save(tmpfile.strpath)
 
@@ -106,7 +106,7 @@ def test_xmlstructuredgridreader(tmpdir):
 
 
 def test_xmlmultiblockreader(tmpdir):
-    tmpfile = tmpdir.join("temp.vtm")
+    tmpfile = tmpdir.join('temp.vtm')
     mesh = pv.MultiBlock([pv.Sphere() for i in range(5)])
     mesh.save(tmpfile.strpath)
 
@@ -121,7 +121,7 @@ def test_xmlmultiblockreader(tmpdir):
 
 
 def test_reader_cell_point_data(tmpdir):
-    tmpfile = tmpdir.join("temp.vtp")
+    tmpfile = tmpdir.join('temp.vtp')
     mesh = pv.Sphere()
     mesh['height'] = mesh.points[:, 1]
     mesh['id'] = np.arange(mesh.n_cells)
@@ -255,7 +255,7 @@ def test_ensightreader_timepoints():
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
 
-    with pytest.raises(ValueError, match="Not a valid time"):
+    with pytest.raises(ValueError, match='Not a valid time'):
         reader.set_active_time_value(1000.0)
 
 
@@ -268,18 +268,18 @@ def test_ensightreader_time_sets():
     reader.set_active_time_set(1)
     assert reader.number_time_points == 11
 
-    mesh = reader.read()["all"]
+    mesh = reader.read()['all']
     assert reader.number_time_points == 11
-    assert np.isclose(mesh["displacement"][1, 1], 0.0, 1e-10)
+    assert np.isclose(mesh['displacement'][1, 1], 0.0, 1e-10)
 
     reader.set_active_time_value(reader.time_values[-1])
-    mesh = reader.read()["all"]
-    assert np.isclose(mesh["displacement"][1, 1], 0.0028727285, 1e-10)
+    mesh = reader.read()['all']
+    assert np.isclose(mesh['displacement'][1, 1], 0.0028727285, 1e-10)
 
     reader.set_active_time_set(0)
     assert reader.number_time_points == 1
 
-    with pytest.raises(IndexError, match="Time set index"):
+    with pytest.raises(IndexError, match='Time set index'):
         reader.set_active_time_set(2)
 
 
@@ -296,7 +296,7 @@ def test_dcmreader(tmpdir):
     assert all([mesh.n_points, mesh.n_cells])
 
     # Test reading single file (*.dcm)
-    filename = str(Path(directory) / "1-1.dcm")
+    filename = str(Path(directory) / '1-1.dcm')
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.DICOMReader)
     assert reader.path == filename
@@ -493,8 +493,8 @@ def test_pvdreader():
     assert len(active_datasets) == 1
     active_dataset0 = active_datasets[0]
     assert active_dataset0.time == 0.0
-    assert active_dataset0.path == "wavy/wavy00.vts"
-    assert active_dataset0.group == ""
+    assert active_dataset0.path == 'wavy/wavy00.vts'
+    assert active_dataset0.group == ''
     assert active_dataset0.part == 0
 
     assert len(reader.datasets) == len(reader.time_values)
@@ -546,7 +546,7 @@ def test_pvdreader_no_part_group():
     assert len(reader.active_datasets) == 2
     for dataset in reader.active_datasets:
         assert dataset.time == 1.0
-        assert dataset.group == ""
+        assert dataset.group == ''
         assert dataset.part == 0
 
 
@@ -569,7 +569,7 @@ def test_openfoamreader_arrays_time():
 def test_openfoamreader_active_time():
     # vtk < 9.1.0 does not support
     if pv.vtk_version_info < (9, 1, 0):
-        pytest.xfail("OpenFOAMReader GetTimeValue missing on vtk<9.1.0")
+        pytest.xfail('OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
 
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
@@ -589,61 +589,61 @@ def test_openfoamreader_read_data_time_value():
     reader = get_cavity_reader()
 
     reader.set_active_time_value(0.0)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 0.0, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 0.0, 0.0, 1e-10)
 
     reader.set_active_time_value(0.5)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(1.0)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(1.5)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(2.0)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(2.5)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
 def test_openfoamreader_read_data_time_point():
     reader = get_cavity_reader()
 
     reader.set_active_time_point(0)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 0.0, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 0.0, 0.0, 1e-10)
 
     reader.set_active_time_point(1)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(2)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(3)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(4)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(5)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
 @pytest.mark.skipif(
     pv.vtk_version_info > (9, 3),
-    reason="polyhedra decomposition was removed after 9.3",
+    reason='polyhedra decomposition was removed after 9.3',
 )
 def test_openfoam_decompose_polyhedra():
     reader = get_cavity_reader()
@@ -762,7 +762,7 @@ def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.CGNSReader)
-    assert "CGNS" in str(reader)
+    assert 'CGNS' in str(reader)
     reader.show_progress()
     assert reader._progress_bar is True
 
@@ -986,11 +986,11 @@ def test_xdmf_reader():
     reader.set_active_time_point(0)
     assert reader.active_time_value == 0.0
 
-    with pytest.raises(ValueError, match="Not a valid time"):
+    with pytest.raises(ValueError, match='Not a valid time'):
         reader.set_active_time_value(1000.0)
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
+@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_try_imageio_imread():
     img = _try_imageio_imread(examples.mapfile)
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
@@ -998,10 +998,10 @@ def test_try_imageio_imread():
 
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.",
+    reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.',
 )
 def test_xmlpartitioneddatasetreader(tmpdir):
-    tmpfile = tmpdir.join("temp.vtpd")
+    tmpfile = tmpdir.join('temp.vtpd')
     partitions = pv.PartitionedDataSet(
         [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))],
     )
@@ -1016,7 +1016,7 @@ def test_xmlpartitioneddatasetreader(tmpdir):
 
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 3, 0),
-    reason="Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.",
+    reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.',
 )
 def test_fluentcffreader():
     filename = examples.download_room_cff(load=False)
@@ -1042,7 +1042,7 @@ def test_gambitreader():
 
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.",
+    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
 )
 def test_gaussian_cubes_reader():
     filename = examples.download_m4_total_density(load=False)
@@ -1078,7 +1078,7 @@ def test_gesignareader():
 
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.",
+    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
 )
 def test_pdbreader():
     filename = examples.download_caffeine(load=False)
@@ -1096,14 +1096,14 @@ def test_particle_reader():
     assert isinstance(reader, pv.ParticleReader)
     assert reader.path == filename
 
-    reader.endian = "BigEndian"
+    reader.endian = 'BigEndian'
     mesh = reader.read()
     assert all([mesh.n_points, mesh.n_cells])
 
-    reader.endian = "LittleEndian"
+    reader.endian = 'LittleEndian'
 
-    with pytest.raises(ValueError, match="Invalid endian:"):
-        reader.endian = "InvalidEndian"
+    with pytest.raises(ValueError, match='Invalid endian:'):
+        reader.endian = 'InvalidEndian'
 
 
 def test_prostar_reader():
@@ -1120,68 +1120,68 @@ def test_grdecl_reader(tmp_path):
     def read(content, include_content, **kwargs):
         path = tmp_path
 
-        with Path.open(path / "3x3x3.grdecl", "w") as f:
-            f.write("".join(content))
+        with Path.open(path / '3x3x3.grdecl', 'w') as f:
+            f.write(''.join(content))
 
-        with Path.open(path / "3x3x3_include.grdecl", "w") as f:
-            f.write("".join(include_content))
+        with Path.open(path / '3x3x3_include.grdecl', 'w') as f:
+            f.write(''.join(include_content))
 
-        return pv.core.utilities.fileio.read_grdecl(path / "3x3x3.grdecl", **kwargs)
+        return pv.core.utilities.fileio.read_grdecl(path / '3x3x3.grdecl', **kwargs)
 
-    path = Path(__file__).parent.parent / "example_files"
+    path = Path(__file__).parent.parent / 'example_files'
 
-    with Path.open(path / "3x3x3.grdecl") as f:
+    with Path.open(path / '3x3x3.grdecl') as f:
         content = list(f)
 
-    with Path.open(path / "3x3x3_include.grdecl") as f:
+    with Path.open(path / '3x3x3_include.grdecl') as f:
         include_content = list(f)
 
     # Test base sample file
-    grid = read(content, include_content, other_keywords=["KEYWORD"])
+    grid = read(content, include_content, other_keywords=['KEYWORD'])
 
     assert grid.n_cells == 27
     assert grid.n_points == 216
-    assert np.allclose(grid.cell_data["PORO"].sum(), 0.1 * 27)
-    assert grid.user_dict["MAPAXES"] == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
-    assert grid.user_dict["MAPUNITS"] == "METRES"
-    assert grid.user_dict["GRIDUNIT"] == "METRES MAP"
-    assert "".join(grid.user_dict["KEYWORD"]) == "1234"
-    assert np.count_nonzero(grid.cell_data["vtkGhostType"]) == 5
+    assert np.allclose(grid.cell_data['PORO'].sum(), 0.1 * 27)
+    assert grid.user_dict['MAPAXES'] == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+    assert grid.user_dict['MAPUNITS'] == 'METRES'
+    assert grid.user_dict['GRIDUNIT'] == 'METRES MAP'
+    assert ''.join(grid.user_dict['KEYWORD']) == '1234'
+    assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 5
     assert np.allclose(grid.points[:, 1].sum(), 108.0)
 
     # Test fails
-    match = "Cylindric grids are not supported"
+    match = 'Cylindric grids are not supported'
     content_copy = list(content)
-    content_copy[1] = content_copy[1].replace("F", "T")
+    content_copy[1] = content_copy[1].replace('F', 'T')
     with pytest.raises(TypeError, match=match):
         _ = read(content_copy, include_content)
 
     match = "Unable to generate grid without keyword 'SPECGRID'"
     content_copy = list(content)
-    content_copy[0] = content_copy[0].replace("SPECGRID", "PLACEHOLDER")
+    content_copy[0] = content_copy[0].replace('SPECGRID', 'PLACEHOLDER')
     with pytest.raises(ValueError, match=match):
         _ = read(content_copy, include_content)
 
     # Test relative coordinates
-    include_content[5] = include_content[5].replace("METRES MAP", "METRES")
+    include_content[5] = include_content[5].replace('METRES MAP', 'METRES')
     grid = read(content, include_content)
     assert np.allclose(grid.points[:, 1].sum(), 324.0)
 
     # Test relative warnings
-    match = "Unable to convert relative coordinates with different grid and map units"
+    match = 'Unable to convert relative coordinates with different grid and map units'
     include_content_copy = list(include_content)
-    include_content_copy[3] = include_content_copy[3].replace("METRES", "FEET")
+    include_content_copy[3] = include_content_copy[3].replace('METRES', 'FEET')
     with pytest.warns(UserWarning, match=match):
         _ = read(content, include_content_copy)
 
     match = "Unable to convert relative coordinates without keyword 'MAPUNITS'"
     include_content_copy = list(include_content)
-    include_content_copy[2] = include_content_copy[2].replace("MAPUNITS", "PLACEHOLDER")
+    include_content_copy[2] = include_content_copy[2].replace('MAPUNITS', 'PLACEHOLDER')
     with pytest.warns(UserWarning, match=match):
         _ = read(content, include_content_copy)
 
     match = "Unable to convert relative coordinates without keyword 'MAPAXES'"
     include_content_copy = list(include_content)
-    include_content_copy[0] = include_content_copy[0].replace("MAPAXES", "PLACEHOLDER")
+    include_content_copy[0] = include_content_copy[0].replace('MAPAXES', 'PLACEHOLDER')
     with pytest.warns(UserWarning, match=match):
         _ = read(content, include_content_copy)

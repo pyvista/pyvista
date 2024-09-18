@@ -37,7 +37,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
     """
 
     if _vtk.vtk_version_info >= (9, 1):
-        _WRITERS = {".vtpd": _vtk.vtkXMLPartitionedDataSetWriter}
+        _WRITERS = {'.vtpd': _vtk.vtkXMLPartitionedDataSetWriter}
 
     def __init__(self, *args, **kwargs):
         """Initialize the PartitionedDataSet."""
@@ -123,44 +123,44 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("N Partitions", self.n_partitions, "{}"))
+        attrs.append(('N Partitions', self.n_partitions, '{}'))
         return attrs
 
     def _repr_html_(self) -> str:
         """Define a pretty representation for Jupyter notebooks."""
-        fmt = ""
+        fmt = ''
         fmt += "<table style='width: 100%;'>"
-        fmt += "<tr><th>Information</th><th>Partitions</th></tr>"
-        fmt += "<tr><td>"
-        fmt += "\n"
-        fmt += "<table>\n"
-        fmt += f"<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n"
-        row = "<tr><td>{}</td><td>{}</td></tr>\n"
+        fmt += '<tr><th>Information</th><th>Partitions</th></tr>'
+        fmt += '<tr><td>'
+        fmt += '\n'
+        fmt += '<table>\n'
+        fmt += f'<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n'
+        row = '<tr><td>{}</td><td>{}</td></tr>\n'
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
-        fmt += "</table>\n"
-        fmt += "\n"
-        fmt += "</td><td>"
-        fmt += "\n"
-        fmt += "<table>\n"
-        row = "<tr><th>{}</th><th>{}</th></tr>\n"
-        fmt += row.format("Index", "Type")
+        fmt += '</table>\n'
+        fmt += '\n'
+        fmt += '</td><td>'
+        fmt += '\n'
+        fmt += '<table>\n'
+        row = '<tr><th>{}</th><th>{}</th></tr>\n'
+        fmt += row.format('Index', 'Type')
         for i in range(self.n_partitions):
             data = self[i]
             fmt += row.format(i, type(data).__name__)
-        fmt += "</table>\n"
-        fmt += "\n"
-        fmt += "</td></tr> </table>"
+        fmt += '</table>\n'
+        fmt += '\n'
+        fmt += '</td></tr> </table>'
         return fmt
 
     def __repr__(self) -> str:
         """Define an adequate representation."""
-        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
+        fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
-        row = "  {:%ds}{}\n" % max_len
+        row = '  {:%ds}{}\n' % max_len
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))

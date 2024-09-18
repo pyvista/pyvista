@@ -66,7 +66,7 @@ class _PointSet(DataSet):
     """
 
     _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {
-        ".xyz": _vtk.vtkSimplePointsWriter,
+        '.xyz': _vtk.vtkSimplePointsWriter,
     }
 
     def center_of_mass(self, scalars_weight: bool = False) -> NumpyArray[float]:
@@ -299,7 +299,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
         """
         if pyvista.vtk_version_info < (9, 1, 0):
-            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.1.0")
+            raise VTKVersionError('pyvista.PointSet requires VTK >= 9.1.0')
         return super().__new__(cls, *args, **kwargs)
 
     def __init__(self, var_inp=None, deep=False, force_float=True):
@@ -830,7 +830,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     v = CellArray(v)
                 except CellSizeError as err:
                     # Raise an additional error so user knows which property triggered the error
-                    raise CellSizeError(f"`{k}` cell array size is invalid.") from err
+                    raise CellSizeError(f'`{k}` cell array size is invalid.') from err
 
             setattr(self, k, v)
 
@@ -843,7 +843,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ):
             if v is not None:
                 warnings.warn(
-                    f"`PolyData` constructor parameter `{k}` is deprecated and no longer used.",
+                    f'`PolyData` constructor parameter `{k}` is deprecated and no longer used.',
                     PyVistaDeprecationWarning,
                 )
 
@@ -1870,7 +1870,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     def _from_cells_dict(self, cells_dict, points, deep=True):
         if points.ndim != 2 or points.shape[-1] != 3:
-            raise ValueError("Points array must be a [M, 3] array")
+            raise ValueError('Points array must be a [M, 3] array')
 
         nr_points = points.shape[0]
         cell_types, cells = create_mixed_cells(cells_dict, nr_points)
@@ -2390,7 +2390,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         super().__init__()
 
         if args:
-            raise ValueError("Too many args to create StructuredGrid.")
+            raise ValueError('Too many args to create StructuredGrid.')
 
         if isinstance(uinput, _vtk.vtkStructuredGrid):
             if deep:
@@ -2412,12 +2412,12 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             pass
         else:
             raise TypeError(
-                "Invalid parameters. Expecting one of the following:\n"
-                " - No arguments\n"
-                " - Filename as the only argument\n"
-                " - StructuredGrid as the only argument\n"
-                " - Single `numpy.ndarray` as the only argument"
-                " - Three `numpy.ndarray` as the first three arguments",
+                'Invalid parameters. Expecting one of the following:\n'
+                ' - No arguments\n'
+                ' - Filename as the only argument\n'
+                ' - StructuredGrid as the only argument\n'
+                ' - Single `numpy.ndarray` as the only argument'
+                ' - Three `numpy.ndarray` as the first three arguments',
             )
 
     def __repr__(self):
@@ -2539,7 +2539,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = PointGrid._get_attrs(self)
-        attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
+        attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
     def __getitem__(self, key):
@@ -2675,21 +2675,21 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         """
         if any(n == 1 for n in self.dimensions):
-            raise TypeError("Only 3D structured grid can be casted to an explicit structured grid.")
+            raise TypeError('Only 3D structured grid can be casted to an explicit structured grid.')
 
         ni, nj, nk = self.dimensions
         grid = self.cast_to_unstructured_grid()
 
-        s1 = {"BLOCK_I", "BLOCK_J", "BLOCK_K"}
+        s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
         if not s1.issubset(self.cell_data):
             i, j, k = np.unravel_index(
                 np.arange(self.n_cells),
                 shape=(ni - 1, nj - 1, nk - 1),
-                order="F",
+                order='F',
             )
-            grid.cell_data["BLOCK_I"] = i
-            grid.cell_data["BLOCK_J"] = j
-            grid.cell_data["BLOCK_K"] = k
+            grid.cell_data['BLOCK_I'] = i
+            grid.cell_data['BLOCK_J'] = j
+            grid.cell_data['BLOCK_K'] = k
 
         grid = grid.cast_to_explicit_structured_grid()
 
@@ -2774,7 +2774,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         super().__init__()
         n = len(args)
         if n > 3:
-            raise ValueError("Too many args to create ExplicitStructuredGrid.")
+            raise ValueError('Too many args to create ExplicitStructuredGrid.')
         if n == 1:
             arg0 = args[0]
             if isinstance(arg0, _vtk.vtkExplicitStructuredGrid):
@@ -2829,22 +2829,22 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         """
         if len(dims) != 3:
-            raise ValueError("Expected dimensions to be length 3.")
+            raise ValueError('Expected dimensions to be length 3.')
 
         ni, nj, nk = np.asanyarray(dims) - 1
-        corners = np.reshape(corners, (2 * ni, 2 * nj, 2 * nk, 3), order="F")
+        corners = np.reshape(corners, (2 * ni, 2 * nj, 2 * nk, 3), order='F')
         points = np.column_stack(
             [
                 np.column_stack(
                     (
-                        corners_[::2, ::2, ::2].ravel(order="F"),
-                        corners_[1::2, ::2, ::2].ravel(order="F"),
-                        corners_[1::2, 1::2, ::2].ravel(order="F"),
-                        corners_[::2, 1::2, ::2].ravel(order="F"),
-                        corners_[::2, ::2, 1::2].ravel(order="F"),
-                        corners_[1::2, ::2, 1::2].ravel(order="F"),
-                        corners_[1::2, 1::2, 1::2].ravel(order="F"),
-                        corners_[::2, 1::2, 1::2].ravel(order="F"),
+                        corners_[::2, ::2, ::2].ravel(order='F'),
+                        corners_[1::2, ::2, ::2].ravel(order='F'),
+                        corners_[1::2, 1::2, ::2].ravel(order='F'),
+                        corners_[::2, 1::2, ::2].ravel(order='F'),
+                        corners_[::2, ::2, 1::2].ravel(order='F'),
+                        corners_[1::2, ::2, 1::2].ravel(order='F'),
+                        corners_[1::2, 1::2, 1::2].ravel(order='F'),
+                        corners_[::2, 1::2, 1::2].ravel(order='F'),
                     )
                 ).ravel()
                 for corners_ in corners.transpose((3, 0, 1, 2))
@@ -2876,7 +2876,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         """
         if len(dims) != 3:
-            raise ValueError("Expected dimensions to be length 3.")
+            raise ValueError('Expected dimensions to be length 3.')
 
         else:
             n_cells = np.prod([n - 1 for n in dims])
@@ -2886,17 +2886,17 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
             if not (len(celltypes) == 1 and celltypes[0] == CellType.HEXAHEDRON):
                 raise ValueError(
-                    f"Expected cells to be a single cell of type {CellType.HEXAHEDRON}."
+                    f'Expected cells to be a single cell of type {CellType.HEXAHEDRON}.'
                 )
 
             cells = np.asarray(cells[celltypes[0]])
             if cells.shape != (n_cells, 8):
-                raise ValueError(f"Expected cells to be of shape ({n_cells}, 8)")
+                raise ValueError(f'Expected cells to be of shape ({n_cells}, 8)')
 
             cells = np.column_stack((np.full(n_cells, 8), cells)).flatten()
 
         elif len(cells) != 9 * n_cells:
-            raise ValueError(f"Expected cells to be length {9 * n_cells}")
+            raise ValueError(f'Expected cells to be length {9 * n_cells}')
 
         self.SetDimensions(dims[0], dims[1], dims[2])
         self.SetCells(CellArray(cells))
@@ -3025,7 +3025,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             .cast_to_explicit_structured_grid()
         )
 
-        s1 = {"BLOCK_I", "BLOCK_J", "BLOCK_K"}
+        s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
         if not s1.issubset(self.cell_data):
             for key in s1:
                 grid.cell_data.pop(key, None)

@@ -287,7 +287,7 @@ indent-width = 4
 
 [tool.ruff.format]
 docstring-code-format = false
-quote-style = "preserve"
+quote-style = "single"
 
 [tool.ruff.lint]
 external = ["E131"]

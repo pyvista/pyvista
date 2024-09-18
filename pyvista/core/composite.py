@@ -447,7 +447,7 @@ class MultiBlock(
         """
         # do not allow to add self
         if dataset is self:
-            raise ValueError("Cannot nest a composite dataset in itself.")
+            raise ValueError('Cannot nest a composite dataset in itself.')
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
@@ -918,23 +918,23 @@ class MultiBlock(
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("N Blocks", self.n_blocks, "{}"))
+        attrs.append(('N Blocks', self.n_blocks, '{}'))
         bds = self.bounds
-        attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3f}, {:.3f}"))
-        attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3f}, {:.3f}"))
-        attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3f}, {:.3f}"))
+        attrs.append(('X Bounds', (bds[0], bds[1]), '{:.3f}, {:.3f}'))
+        attrs.append(('Y Bounds', (bds[2], bds[3]), '{:.3f}, {:.3f}'))
+        attrs.append(('Z Bounds', (bds[4], bds[5]), '{:.3f}, {:.3f}'))
         return attrs
 
     def _repr_html_(self) -> str:
         """Define a pretty representation for Jupyter notebooks."""
-        fmt = ""
+        fmt = ''
         fmt += "<table style='width: 100%;'>"
-        fmt += "<tr><th>Information</th><th>Blocks</th></tr>"
-        fmt += "<tr><td>"
-        fmt += "\n"
-        fmt += "<table>\n"
-        fmt += f"<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n"
-        row = "<tr><td>{}</td><td>{}</td></tr>\n"
+        fmt += '<tr><th>Information</th><th>Blocks</th></tr>'
+        fmt += '<tr><td>'
+        fmt += '\n'
+        fmt += '<table>\n'
+        fmt += f'<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n'
+        row = '<tr><td>{}</td><td>{}</td></tr>\n'
 
         # now make a call on the object to get its attributes as a list of len 2 tuples
         for attr in self._get_attrs():
@@ -943,30 +943,30 @@ class MultiBlock(
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
 
-        fmt += "</table>\n"
-        fmt += "\n"
-        fmt += "</td><td>"
-        fmt += "\n"
-        fmt += "<table>\n"
-        row = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>\n"
-        fmt += row.format("Index", "Name", "Type")
+        fmt += '</table>\n'
+        fmt += '\n'
+        fmt += '</td><td>'
+        fmt += '\n'
+        fmt += '<table>\n'
+        row = '<tr><th>{}</th><th>{}</th><th>{}</th></tr>\n'
+        fmt += row.format('Index', 'Name', 'Type')
 
         for i in range(self.n_blocks):
             data = self[i]
             fmt += row.format(i, self.get_block_name(i), type(data).__name__)
 
-        fmt += "</table>\n"
-        fmt += "\n"
-        fmt += "</td></tr> </table>"
+        fmt += '</table>\n'
+        fmt += '\n'
+        fmt += '</td></tr> </table>'
         return fmt
 
     def __repr__(self) -> str:
         """Define an adequate representation."""
         # return a string that is Python console friendly
-        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
+        fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
-        row = "  {:%ds}{}\n" % max_len
+        row = '  {:%ds}{}\n' % max_len
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))

@@ -40,7 +40,7 @@ p.show()
 result = mesh.sample(data_to_probe)
 
 # Plot result
-name = "Spatial Point Data"
+name = 'Spatial Point Data'
 result.plot(scalars=name, clim=data_to_probe.get_data_range(name))
 
 # %%

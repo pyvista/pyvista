@@ -263,11 +263,11 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
     sgrid = pyvista.StructuredGrid(X, Y, Z)
 
     mesh = sgrid.extract_surface()
-    mesh["Height"] = Z.ravel()
+    mesh['Height'] = Z.ravel()
 
     # Start a plotter object and set the scalars to the Z height
     plotter = pyvista.Plotter(notebook=notebook)
-    plotter.add_mesh(mesh, scalars="Height", show_scalar_bar=False, smooth_shading=True)
+    plotter.add_mesh(mesh, scalars='Height', show_scalar_bar=False, smooth_shading=True)
     plotter.camera_position = cpos
     plotter.show(
         title='Wave Example',
@@ -286,7 +286,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
         phase = telap * 2 * np.pi * frequency
         Z = np.sin(R + phase)
         mesh.points[:, -1] = Z.ravel()
-        mesh["Height"] = Z.ravel()
+        mesh['Height'] = Z.ravel()
 
         mesh.compute_normals(inplace=True)
 

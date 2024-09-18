@@ -90,8 +90,8 @@ def bunny():
     return examples.download_bunny_coarse()
 
 
-@pytest.mark.parametrize("is_negative", [True, False])
-@pytest.mark.parametrize("delta", [([0, 0, 0]), ([1e-8, 0, 0]), ([0, 0, 1e-8])])
+@pytest.mark.parametrize('is_negative', [True, False])
+@pytest.mark.parametrize('delta', [([0, 0, 0]), ([1e-8, 0, 0]), ([0, 0, 1e-8])])
 def test_translate_direction_collinear(is_negative, delta, bunny):
     mesh_in = bunny
     direction = np.array([0.0, 1.0, 0.0]) + delta
@@ -159,7 +159,7 @@ def test_text3d_source():
     assert len(out.split_bodies()) == 4
 
 
-@pytest.mark.parametrize('string', [" ", 'TEXT'])
+@pytest.mark.parametrize('string', [' ', 'TEXT'])
 @pytest.mark.parametrize('center', [(0, 0, 0), (1, -2, 3)])
 @pytest.mark.parametrize('height', [None, 0, 1, 2])
 @pytest.mark.parametrize('width', [None, 0, 1, 2])
@@ -234,7 +234,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
 
 @pytest.fixture
 def text3d_source_with_text():
-    return pv.Text3DSource("TEXT")
+    return pv.Text3DSource('TEXT')
 
 
 def test_text3d_source_update(text3d_source_with_text):

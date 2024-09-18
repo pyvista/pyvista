@@ -495,7 +495,7 @@ def VTKVersionInfo():
         minor = ver.GetVTKMinorVersion()
         micro = ver.GetVTKBuildVersion()
     except AttributeError:  # pragma: no cover
-        warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
+        warnings.warn('Unable to detect VTK version. Defaulting to v4.0.0')
         major, minor, micro = (4, 0, 0)
 
     return VersionInfo(major, minor, micro)

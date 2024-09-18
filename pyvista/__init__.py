@@ -35,18 +35,18 @@ if vtk_version_info.major < 9:  # pragma: no cover
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
-OFF_SCREEN = os.environ.get("PYVISTA_OFF_SCREEN", "false").lower() == "true"
+OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
 
 # flag for when building the sphinx_gallery
-BUILDING_GALLERY = os.environ.get("PYVISTA_BUILDING_GALLERY", "false").lower() == "true"
+BUILDING_GALLERY = os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true'
 
 # A threshold for the max cells to compute a volume for when repr-ing
 REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
-FIGURE_PATH = os.environ.get("PYVISTA_FIGURE_PATH", None)
+FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)
 
-ON_SCREENSHOT = os.environ.get("PYVISTA_ON_SCREENSHOT", "false").lower() == "true"
+ON_SCREENSHOT = os.environ.get('PYVISTA_ON_SCREENSHOT', 'false').lower() == 'true'
 
 # Send VTK messages to the logging module:
 send_errors_to_logging()
@@ -56,7 +56,7 @@ PLOT_DIRECTIVE_THEME = None
 
 # Set a parameter to control default print format for floats outside
 # of the plotter
-FLOAT_FORMAT = "{:.3e}"
+FLOAT_FORMAT = '{:.3e}'
 
 # Serialization format to be used when pickling `DataObject`
 PICKLE_FORMAT = 'vtk' if vtk_version_info >= (9, 3) else 'xml'

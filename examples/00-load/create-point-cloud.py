@@ -79,7 +79,7 @@ point_cloud.plot(eye_dome_lighting=True)
 data = points[:, -1]
 
 # Add that data to the mesh with the name "uniform dist"
-point_cloud["elevation"] = data
+point_cloud['elevation'] = data
 
 # %%
 # And now we can plot the point cloud with that random data. PyVista is smart

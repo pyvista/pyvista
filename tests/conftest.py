@@ -48,7 +48,7 @@ def flaky_test(
                 func_name = test_function.__name__
                 module_name = test_function.__module__
                 error_name = e.__class__.__name__
-                msg = f"FLAKY TEST FAILED (Attempt {i + 1} of {times}) - {module_name}::{func_name} - {error_name}"
+                msg = f'FLAKY TEST FAILED (Attempt {i + 1} of {times}) - {module_name}::{func_name} - {error_name}'
                 if i == times - 1:
                     print(msg)
                     raise  # Re-raise the last failure if all retries fail
@@ -245,7 +245,7 @@ def image(texture):
 
 
 def pytest_addoption(parser):
-    parser.addoption("--test_downloads", action='store_true', default=False)
+    parser.addoption('--test_downloads', action='store_true', default=False)
 
 
 def marker_names(item):
@@ -253,11 +253,11 @@ def marker_names(item):
 
 
 def pytest_collection_modifyitems(config, items):
-    test_downloads = config.getoption("--test_downloads")
+    test_downloads = config.getoption('--test_downloads')
 
     # skip all tests that need downloads
     if not test_downloads:
-        skip_downloads = pytest.mark.skip("Downloads not enabled with --test_downloads")
+        skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
         for item in items:
             if 'needs_download' in marker_names(item):
                 item.add_marker(skip_downloads)
@@ -283,11 +283,11 @@ def pytest_report_header(config):
     """Header for pytest to show versions of required and optional packages."""
     required = []
     extra = {}
-    for item in metadata.requires("pyvista"):
-        pkg_name = re.findall(r"[a-z0-9_\-]+", item, re.IGNORECASE)[0]
-        if pkg_name == "pyvista":
+    for item in metadata.requires('pyvista'):
+        pkg_name = re.findall(r'[a-z0-9_\-]+', item, re.IGNORECASE)[0]
+        if pkg_name == 'pyvista':
             continue
-        elif res := re.findall("extra == ['\"](.+)['\"]", item):
+        elif res := re.findall('extra == [\'"](.+)[\'"]', item):
             assert len(res) == 1, item
             pkg_extra = res[0]
             if pkg_extra not in extra:
@@ -301,10 +301,10 @@ def pytest_report_header(config):
     for name in required:
         try:
             version = metadata.version(name)
-            items.append(f"{name}-{version}")
+            items.append(f'{name}-{version}')
         except metadata.PackageNotFoundError:
-            items.append(f"{name} (not found)")
-    lines.append("required packages: " + ", ".join(items))
+            items.append(f'{name} (not found)')
+    lines.append('required packages: ' + ', '.join(items))
 
     not_found = []
     for pkg_extra in extra.keys():
@@ -312,15 +312,15 @@ def pytest_report_header(config):
         for name in extra[pkg_extra]:
             try:
                 version = metadata.version(name)
-                installed.append(f"{name}-{version}")
+                installed.append(f'{name}-{version}')
             except metadata.PackageNotFoundError:
                 not_found.append(name)
         if installed:
-            plrl = "s" if len(installed) != 1 else ""
-            comma_lst = ", ".join(installed)
-            lines.append(f"optional {pkg_extra!r} package{plrl}: {comma_lst}")
+            plrl = 's' if len(installed) != 1 else ''
+            comma_lst = ', '.join(installed)
+            lines.append(f'optional {pkg_extra!r} package{plrl}: {comma_lst}')
     if not_found:
-        plrl = "s" if len(not_found) != 1 else ""
-        comma_lst = ", ".join(not_found)
-        lines.append(f"optional package{plrl} not found: {comma_lst}")
-    return "\n".join(lines)
+        plrl = 's' if len(not_found) != 1 else ''
+        comma_lst = ', '.join(not_found)
+        lines.append(f'optional package{plrl} not found: {comma_lst}')
+    return '\n'.join(lines)

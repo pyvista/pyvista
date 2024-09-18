@@ -215,7 +215,7 @@ def plot(
     before_close_callback = kwargs.pop('before_close_callback', None)
 
     # pop from kwargs here to avoid including them in add_mesh or add_volume
-    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
+    eye_dome_lighting = kwargs.pop('edl', eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
     auto_close = kwargs.get('auto_close')
 
