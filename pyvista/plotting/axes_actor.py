@@ -678,7 +678,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     >>> polaxes = pv.PolarAxesActor()
     >>> polaxes.SetBounds(normals.bounds)
     >>> polaxes.pole = (0.5, 1.0, 3.0)
-    >>> polaxes.SetMaximumRadius(3.0)
+    >>> polaxes.maximum_radius = 3.0
     >>> polaxes.SetMinimumAngle(-60.0)
     >>> polaxes.SetMaximumAngle(210.0)
     >>> polaxes.SetRequestedNumberOfRadialAxes(10)
@@ -778,3 +778,24 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     @screen_size.setter
     def screen_size(self, screen_size: float):  # numpydoc ignore=GL08
         self.SetScreenSize(screen_size)
+
+    @property
+    def maximum_radius(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the maximum radius.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.maximum_radius
+        1.0
+        >>> polaxes.maximum_radius = 2.0
+        >>> polaxes.maximum_radius
+        2.0
+
+        """
+        return self.GetMaximumRadius()
+
+    @maximum_radius.setter
+    def maximum_radius(self, maximum_radius: float):  # numpydoc ignore=GL08
+        self.SetMaximumRadius(maximum_radius)
