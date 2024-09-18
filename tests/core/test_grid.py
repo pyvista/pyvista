@@ -937,6 +937,19 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
+def test_cast_image_data_with_float_spacing_to_rectilinear():
+    # https://github.com/pyvista/pyvista/pull/6656
+    grid = pv.ImageData(
+        dimensions=(10, 10, 10),
+        spacing=(27.88888888888889, 28.11111111111111, 28.22222222222222),
+        origin=(-126.0, -127.0, -127.0),
+    )
+    rectilinear = grid.cast_to_rectilinear_grid()
+    assert rectilinear.n_points == grid.n_points
+    assert rectilinear.n_arrays == grid.n_arrays
+    assert rectilinear.bounds == grid.bounds
+
+
 def test_image_data_to_tetrahedra():
     grid = pv.ImageData(dimensions=(2, 2, 2))
     ugrid = grid.to_tetrahedra()
