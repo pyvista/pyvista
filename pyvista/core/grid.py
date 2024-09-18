@@ -841,22 +841,33 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             This uniform grid as a rectilinear grid.
 
         """
-
-        def gen_coords(i):  # numpydoc ignore=GL08
-            return (
-                np.cumsum(np.insert(np.full(self.dimensions[i] - 1, self.spacing[i]), 0, 0))
-                + self.origin[i]
-            )
-
-        xcoords = gen_coords(0)
-        ycoords = gen_coords(1)
-        zcoords = gen_coords(2)
-        grid = pyvista.RectilinearGrid(xcoords, ycoords, zcoords)
+        rectilinear_coords = self._generate_rectilinear_coords()
+        grid = pyvista.RectilinearGrid(*rectilinear_coords)
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
         grid.copy_meta_from(self, deep=True)
         return grid
+
+    def _generate_rectilinear_coords(
+        self,
+    ) -> list[NumpyArray[float]]:  # numpydoc ignore=GL08
+        """Generate rectilinear coordinates (internal helper).
+
+        Returns
+        -------
+        list[NumpyArray[float]]
+            Rectilinear coordinates over the three dimensions.
+
+        """
+        # Use linspace to avoid rounding error accumulation
+        return [
+            (
+                np.linspace(0, (self.dimensions[i] - 1) * self.spacing[i], self.dimensions[i])
+                + self.origin[i]
+            )
+            for i in range(3)
+        ]
 
     @property
     def extent(self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01
