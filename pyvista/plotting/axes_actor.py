@@ -695,7 +695,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     >>> polaxes.GetSecondaryRadialAxesTextProperty().SetColor(
     ...     0.0, 1.0, 1.0
     ... )
-    >>> polaxes.SetScreenSize(9.0)
+    >>> polaxes.screen_size = 9.0
 
     Add the polar axes to the plotter
 
@@ -755,3 +755,26 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     @camera.setter
     def camera(self, camera: pyvista.Camera):  # numpydoc ignore=GL08
         self.SetCamera(camera)
+
+    @property
+    def screen_size(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the screen size.
+
+        explicitly specify the screen size of title and label text.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.screen_size
+        1.0
+        >>> polaxes.screen_size = 2.0
+        >>> polaxes.screen_size
+        2.0
+
+        """
+        return self.GetScreenSize()
+
+    @screen_size.setter
+    def screen_size(self, screen_size: float):  # numpydoc ignore=GL08
+        self.SetScreenSize(screen_size)
