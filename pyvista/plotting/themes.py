@@ -1457,13 +1457,13 @@ class _TrameConfig(_ThemeConfig):
             self._jupyter_extension_available and not self._server_proxy_enabled
         )
         # if set, jupyter_mode overwrites defaults
-        jupyter_mode = os.environ.get("PYVISTA_TRAME_JUPYTER_MODE")
-        if jupyter_mode == "extension" and self._jupyter_extension_available:  # pragma: no cover
+        jupyter_mode = os.environ.get('PYVISTA_TRAME_JUPYTER_MODE')
+        if jupyter_mode == 'extension' and self._jupyter_extension_available:  # pragma: no cover
             self._server_proxy_enabled = False
             self._jupyter_extension_enabled = True
-        elif jupyter_mode == "proxy" and self._server_proxy_enabled:  # pragma: no cover
+        elif jupyter_mode == 'proxy' and self._server_proxy_enabled:  # pragma: no cover
             self._jupyter_extension_enabled = False
-        elif jupyter_mode == "native":  # pragma: no cover
+        elif jupyter_mode == 'native':  # pragma: no cover
             self._jupyter_extension_enabled = False
             self._server_proxy_enabled = False
         self._default_mode = 'trame'
@@ -1535,7 +1535,7 @@ class _TrameConfig(_ThemeConfig):
     @server_proxy_enabled.setter
     def server_proxy_enabled(self, enabled: bool):  # numpydoc ignore=GL08
         if enabled and self.jupyter_extension_enabled:
-            warnings.warn("Enabling server_proxy will disable jupyter_extension")
+            warnings.warn('Enabling server_proxy will disable jupyter_extension')
             self._jupyter_extension_enabled = False
 
         self._server_proxy_enabled = bool(enabled)
@@ -1557,7 +1557,7 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_extension_available.setter
     def jupyter_extension_available(self, _available: bool):  # numpydoc ignore=GL08
         warnings.warn(
-            "The jupyter_extension_available flag is read only and is automatically detected.",
+            'The jupyter_extension_available flag is read only and is automatically detected.',
         )
 
     @property
@@ -1568,10 +1568,10 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_extension_enabled.setter
     def jupyter_extension_enabled(self, enabled: bool):  # numpydoc ignore=GL08
         if enabled and not self.jupyter_extension_available:
-            raise ValueError("The trame_jupyter_extension is not available")
+            raise ValueError('The trame_jupyter_extension is not available')
 
         if enabled and self.server_proxy_enabled:
-            warnings.warn("Enabling jupyter_extension will disable server_proxy")
+            warnings.warn('Enabling jupyter_extension will disable server_proxy')
             self._server_proxy_enabled = False
 
         self._jupyter_extension_enabled = bool(enabled)
@@ -2203,7 +2203,7 @@ class Theme(_ThemeConfig):
             self._camera = camera
         else:
             raise TypeError(
-                f"camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}",
+                f'camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}',
             )
 
     @property
@@ -3125,7 +3125,7 @@ class Theme(_ThemeConfig):
         """
         data = self.to_dict()
         # functions are not serializable
-        del data["before_close_callback"]
+        del data['before_close_callback']
         with Path(filename).open('w') as f:
             json.dump(data, f)
 

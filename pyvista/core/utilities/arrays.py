@@ -93,19 +93,19 @@ def _coerce_pointslike_arg(
         points = np.asarray(points)
 
     if not isinstance(points, np.ndarray):
-        raise TypeError("Given points must be convertible to a numerical array.")
+        raise TypeError('Given points must be convertible to a numerical array.')
 
     if points.ndim > 2:
-        raise ValueError("Array of points must be 1D or 2D")
+        raise ValueError('Array of points must be 1D or 2D')
 
     if points.ndim == 2:
         if points.shape[1] != 3:
-            raise ValueError("Array of points must have three values per point (shape (n, 3))")
+            raise ValueError('Array of points must have three values per point (shape (n, 3))')
         singular = False
 
     else:
         if points.size != 3:
-            raise ValueError("Given point must have three values")
+            raise ValueError('Given point must have three values')
         singular = True
         points = np.reshape(points, [1, 3])
 
@@ -146,7 +146,7 @@ def copy_vtk_array(array, deep=True):
 
     """
     if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
-        raise TypeError(f"Invalid type {type(array)}.")
+        raise TypeError(f'Invalid type {type(array)}.')
 
     new_array = type(array)()
     if deep:
@@ -190,7 +190,7 @@ def raise_has_duplicates(arr):
 
     """
     if has_duplicates(arr):
-        raise ValueError("Array contains duplicate values.")
+        raise ValueError('Array contains duplicate values.')
 
 
 def convert_array(arr, name=None, deep=False, array_type=None):
@@ -623,7 +623,7 @@ def convert_string_array(arr, name=None):
     arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
     try:
         if arr.GetObjectName() == 'scalar':
-            return np.array("".join(arr_out))
+            return np.array(''.join(arr_out))
     except AttributeError:
         pass
     return arr_out
@@ -732,13 +732,13 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> None:
         preference = 'point' if len(possible_vectors_point) == 1 else 'cell'
         mesh.set_active_vectors(possible_vectors[0], preference=preference)
     elif n_possible_vectors < 1:
-        raise MissingDataError("No vector-like data available.")
+        raise MissingDataError('No vector-like data available.')
     elif n_possible_vectors > 1:
         raise AmbiguousDataError(
-            "Multiple vector-like data available\n"
-            f"cell data: {possible_vectors_cell}.\n"
-            f"point data: {possible_vectors_point}.\n"
-            "Set one as active using DataSet.set_active_vectors(name, preference=type)",
+            'Multiple vector-like data available\n'
+            f'cell data: {possible_vectors_cell}.\n'
+            f'point data: {possible_vectors_point}.\n'
+            'Set one as active using DataSet.set_active_vectors(name, preference=type)',
         )
 
 
@@ -781,13 +781,13 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
         preference = 'point' if len(possible_scalars_point) == 1 else 'cell'
         mesh.set_active_scalars(possible_scalars[0], preference=preference)
     elif n_possible_scalars < 1:
-        raise MissingDataError("No data available.")
+        raise MissingDataError('No data available.')
     elif n_possible_scalars > 1:
         raise AmbiguousDataError(
-            "Multiple data available\n"
-            f"cell data: {possible_scalars_cell}.\n"
-            f"point data: {possible_scalars_point}.\n"
-            "Set one as active using DataSet.set_active_scalars(name, preference=type)",
+            'Multiple data available\n'
+            f'cell data: {possible_scalars_cell}.\n'
+            f'point data: {possible_scalars_point}.\n'
+            'Set one as active using DataSet.set_active_scalars(name, preference=type)',
         )
 
 

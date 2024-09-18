@@ -69,7 +69,7 @@ def validate_array(
     copy=False,
     to_list=False,
     to_tuple=False,
-    name="Array",
+    name='Array',
 ):
     """Check and validate a numeric array meets specific requirements.
 
@@ -280,7 +280,7 @@ def validate_array(
         try:
             check_subdtype(arr_out, np.number, name=name)
         except TypeError as e:
-            raise TypeError(f"{name} must be numeric.") from e
+            raise TypeError(f'{name} must be numeric.') from e
 
     if must_have_dtype is not None:
         check_subdtype(arr_out, must_have_dtype, name=name)
@@ -348,7 +348,7 @@ def validate_axes(
     normalize=True,
     must_be_orthogonal=True,
     must_have_orientation='right',
-    name="Axes",
+    name='Axes',
 ):
     """Validate 3D axes vectors.
 
@@ -416,25 +416,25 @@ def validate_axes(
 
     """
     # Validate number of args
-    check_length(axes, exact_length=[1, 2, 3], name=f"{name} arguments")
+    check_length(axes, exact_length=[1, 2, 3], name=f'{name} arguments')
     if must_have_orientation is not None:
         check_contains(
             item=must_have_orientation,
             container=['right', 'left'],
-            name=f"{name} orientation",
+            name=f'{name} orientation',
         )
     elif must_have_orientation is None and len(axes) == 2:
-        raise ValueError(f"{name} orientation must be specified when only two vectors are given.")
+        raise ValueError(f'{name} orientation must be specified when only two vectors are given.')
 
     # Validate axes array
     if len(axes) == 1:
         axes_array = validate_array(axes[0], must_have_shape=(3, 3), name=name)
     else:
         axes_array = np.zeros((3, 3))
-        axes_array[0] = validate_array3(axes[0], name=f"{name} Vector[0]")
-        axes_array[1] = validate_array3(axes[1], name=f"{name} Vector[1]")
+        axes_array[0] = validate_array3(axes[0], name=f'{name} Vector[0]')
+        axes_array[1] = validate_array3(axes[1], name=f'{name} Vector[1]')
         if len(axes) == 3:
-            axes_array[2] = validate_array3(axes[2], name=f"{name} Vector[2]")
+            axes_array[2] = validate_array3(axes[2], name=f'{name} Vector[2]')
         else:  # len(axes) == 2
             if must_have_orientation == 'right':
                 axes_array[2] = np.cross(axes_array[0], axes_array[1])
@@ -446,9 +446,9 @@ def validate_axes(
         np.dot(axes_array[0], axes_array[2]),
         1,
     ):
-        raise ValueError(f"{name} cannot be parallel.")
+        raise ValueError(f'{name} cannot be parallel.')
     if np.any(np.all(np.isclose(axes_array, np.zeros(3)), axis=1)):
-        raise ValueError(f"{name} cannot be zeros.")
+        raise ValueError(f'{name} cannot be zeros.')
 
     # Check orthogonality and orientation using cross products
     # Normalize axes first since norm values are needed for cross product calc
@@ -460,21 +460,21 @@ def validate_axes(
         (np.allclose(cross_0_1, axes_norm[2]) or np.allclose(cross_0_1, -axes_norm[2]))
         and (np.allclose(cross_1_2, axes_norm[0]) or np.allclose(cross_1_2, -axes_norm[0]))
     ):
-        raise ValueError(f"{name} are not orthogonal.")
+        raise ValueError(f'{name} are not orthogonal.')
 
     if must_have_orientation:
         dot = np.dot(cross_0_1, axes_norm[2])
         if must_have_orientation == 'right' and dot < 0:
-            raise ValueError(f"{name} do not have a right-handed orientation.")
+            raise ValueError(f'{name} do not have a right-handed orientation.')
         if must_have_orientation == 'left' and dot > 0:
-            raise ValueError(f"{name} do not have a left-handed orientation.")
+            raise ValueError(f'{name} do not have a left-handed orientation.')
 
     if normalize:
         return axes_norm
     return axes_array
 
 
-def validate_transform4x4(transform, /, *, must_be_finite=True, name="Transform"):
+def validate_transform4x4(transform, /, *, must_be_finite=True, name='Transform'):
     """Validate transform-like input as a 4x4 ndarray.
 
     This function supports inputs with a 3x3 or 4x4 shape. If the input is 3x3,
@@ -512,7 +512,7 @@ def validate_transform4x4(transform, /, *, must_be_finite=True, name="Transform"
         Generic array validation function.
 
     """
-    check_string(name, name="Name")
+    check_string(name, name='Name')
     try:
         arr = np.eye(4)  # initialize
         arr[:3, :3] = validate_transform3x3(transform, must_be_finite=must_be_finite, name=name)
@@ -544,7 +544,7 @@ def validate_transform4x4(transform, /, *, must_be_finite=True, name="Transform"
     return arr
 
 
-def validate_transform3x3(transform, /, *, must_be_finite=True, name="Transform"):
+def validate_transform3x3(transform, /, *, must_be_finite=True, name='Transform'):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
@@ -582,7 +582,7 @@ def validate_transform3x3(transform, /, *, must_be_finite=True, name="Transform"
         Generic array validation function.
 
     """
-    check_string(name, name="Name")
+    check_string(name, name='Name')
     if isinstance(transform, vtkMatrix3x3):
         return _array_from_vtkmatrix(transform, shape=(3, 3))
     else:
@@ -1061,7 +1061,7 @@ def _set_default_kwarg_mandatory(kwargs: dict[str, Any], key: str, default: Any)
         calling_fname = inspect.stack()[1].function
         msg = (
             f"Parameter '{key}' cannot be set for function `{calling_fname}`.\n"
-            f"Its value is automatically set to `{default}`."
+            f'Its value is automatically set to `{default}`.'
         )
         raise ValueError(msg)
     kwargs[key] = default

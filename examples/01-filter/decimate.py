@@ -28,7 +28,7 @@ mesh.plot(cpos=cpos, **dargs)
 # :func:`pyvista.PolyDataFilters.decimate` and
 # :func:`pyvista.PolyDataFilters.decimate_pro` filters.
 target_reduction = 0.7
-print(f"Reducing {target_reduction * 100.0} percent out of the original mesh")
+print(f'Reducing {target_reduction * 100.0} percent out of the original mesh')
 
 # %%
 decimated = mesh.decimate(target_reduction)
@@ -52,17 +52,17 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 
 pl = pv.Plotter(shape=(1, 3))
 pl.add_mesh(mesh, **dargs)
-pl.add_text("Input mesh", font_size=24)
+pl.add_text('Input mesh', font_size=24)
 pl.camera_position = cpos
 pl.reset_camera()
 pl.subplot(0, 1)
 pl.add_mesh(decimated, **dargs)
-pl.add_text("Decimated mesh", font_size=24)
+pl.add_text('Decimated mesh', font_size=24)
 pl.camera_position = cpos
 pl.reset_camera()
 pl.subplot(0, 2)
 pl.add_mesh(pro_decimated, **dargs)
-pl.add_text("Pro Decimated mesh", font_size=24)
+pl.add_text('Pro Decimated mesh', font_size=24)
 pl.camera_position = cpos
 pl.reset_camera()
 pl.link_views()

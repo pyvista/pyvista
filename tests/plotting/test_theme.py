@@ -110,11 +110,11 @@ def test_invalid_color_str_single_char():
 
 
 def test_color_str():
-    clr = colors.Color("k")
+    clr = colors.Color('k')
     assert clr == (0.0, 0.0, 0.0)
-    clr = colors.Color("black")
+    clr = colors.Color('black')
     assert clr == (0.0, 0.0, 0.0)
-    clr = colors.Color("white")
+    clr = colors.Color('white')
     assert clr == (1.0, 1.0, 1.0)
     with pytest.raises(ValueError):  # noqa: PT011
         colors.Color('not a color')
@@ -299,7 +299,7 @@ def test_window_size(default_theme):
 
 
 def test_camera(default_theme):
-    with pytest.raises(TypeError, match="camera value must either be a"):
+    with pytest.raises(TypeError, match='camera value must either be a'):
         default_theme.camera = [1, 0, 0]
 
     # test _CameraConfig usage
@@ -426,7 +426,7 @@ def test_repr(default_theme):
     for line in rep.splitlines():
         if ':' in line:
             pref, *rest = line.split(':', 1)
-            assert pref.endswith(' '), f"Key str too long or need to raise key length:\n{pref!r}"
+            assert pref.endswith(' '), f'Key str too long or need to raise key length:\n{pref!r}'
 
 
 def test_theme_slots(default_theme):
@@ -476,7 +476,7 @@ def test_plotter_set_theme():
 
 
 def test_load_theme(tmpdir, default_theme):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     pv.plotting.themes.DarkTheme().save(filename)
     loaded_theme = pv.load_theme(filename)
     assert loaded_theme == pv.plotting.themes.DarkTheme()
@@ -486,7 +486,7 @@ def test_load_theme(tmpdir, default_theme):
 
 
 def test_save_before_close_callback(tmpdir, default_theme):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     dark_theme = pv.plotting.themes.DarkTheme()
 
     def fun(plotter):
@@ -512,7 +512,7 @@ def test_anti_aliasing(default_theme):
         default_theme.anti_aliasing = 42
 
 
-@pytest.mark.skipif(uses_egl(), reason="Requires non-OSMesa/EGL VTK build.")
+@pytest.mark.skipif(uses_egl(), reason='Requires non-OSMesa/EGL VTK build.')
 def test_anti_aliasing_fxaa(default_theme):
     default_theme.anti_aliasing = 'fxaa'
     assert default_theme.anti_aliasing == 'fxaa'

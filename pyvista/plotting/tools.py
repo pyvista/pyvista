@@ -71,7 +71,7 @@ def _system_supports_plotting():
     # mac case
     if platform.system() == 'Darwin':
         # check if finder available
-        proc = Popen(["pgrep", "-qx", "Finder"], stdout=PIPE, stderr=PIPE, encoding="utf8")
+        proc = Popen(['pgrep', '-qx', 'Finder'], stdout=PIPE, stderr=PIPE, encoding='utf8')
         try:
             proc.communicate(timeout=10)
         except TimeoutExpired:
@@ -84,7 +84,7 @@ def _system_supports_plotting():
 
     # Linux case
     try:
-        proc = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE, encoding="utf8")
+        proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
         proc.communicate(timeout=10)
     except (OSError, TimeoutExpired):
         return False
@@ -380,14 +380,14 @@ def create_axes_orientation_box(
     axes_actor = _vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
-        axes_actor.SetXPlusFaceText(f"+{xlabel}")
-        axes_actor.SetXMinusFaceText(f"-{xlabel}")
+        axes_actor.SetXPlusFaceText(f'+{xlabel}')
+        axes_actor.SetXMinusFaceText(f'-{xlabel}')
     if ylabel is not None:
-        axes_actor.SetYPlusFaceText(f"+{ylabel}")
-        axes_actor.SetYMinusFaceText(f"-{ylabel}")
+        axes_actor.SetYPlusFaceText(f'+{ylabel}')
+        axes_actor.SetYMinusFaceText(f'-{ylabel}')
     if zlabel is not None:
-        axes_actor.SetZPlusFaceText(f"+{zlabel}")
-        axes_actor.SetZMinusFaceText(f"-{zlabel}")
+        axes_actor.SetZPlusFaceText(f'+{zlabel}')
+        axes_actor.SetZMinusFaceText(f'-{zlabel}')
     axes_actor.SetFaceTextVisibility(not labels_off)
     axes_actor.SetTextEdgesVisibility(show_text_edges)
     # https://github.com/pyvista/pyvista/pull/5382
@@ -758,7 +758,7 @@ def check_math_text_support():
     # This is a hack to get around that by executing the code in a subprocess
     # and capturing the output:
     # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
-    _cmd = "import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());"
+    _cmd = 'import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());'
     proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
     math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
     return math_text_support and check_matplotlib_vtk_compatibility()

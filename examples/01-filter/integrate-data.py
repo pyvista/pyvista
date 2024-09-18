@@ -24,16 +24,16 @@ from pyvista import examples
 dataset = examples.download_blood_vessels()
 boundary = dataset.decimate_boundary().extract_all_edges()
 inlet_surface = dataset.slice('z', origin=(0, 0, 182))
-inlet_surface["normal_velocity"] = -1 * inlet_surface["velocity"][:, 2]
+inlet_surface['normal_velocity'] = -1 * inlet_surface['velocity'][:, 2]
 
 # %%
 # The velocity in the inlet is shown.
 
 plotter = pyvista.Plotter()
-plotter.add_mesh(boundary, color="grey", opacity=0.25)
+plotter.add_mesh(boundary, color='grey', opacity=0.25)
 plotter.add_mesh(
     inlet_surface,
-    scalars="normal_velocity",
+    scalars='normal_velocity',
     component=2,
     scalar_bar_args=dict(vertical=True, title_font_size=16),
     lighting=False,
@@ -51,22 +51,22 @@ integrated_data
 
 # %%
 # Each array in ``integrated_data`` stores the integrated data.
-integrated_data["normal_velocity"]
+integrated_data['normal_velocity']
 
 # %%
 # An additional ``Area`` or ``Volume`` array is added.
-print(f"Original arrays: {inlet_surface.array_names}")
+print(f'Original arrays: {inlet_surface.array_names}')
 new_arrays = [name for name in integrated_data.array_names if name not in inlet_surface.array_names]
-print(f"New arrays      : {new_arrays}")
+print(f'New arrays      : {new_arrays}')
 
 # %%
 # Display the total flow rate, area of inlet surface, and average velocity.
-total_flow_rate = integrated_data["normal_velocity"][0]
-area = integrated_data["Area"][0]
+total_flow_rate = integrated_data['normal_velocity'][0]
+area = integrated_data['Area'][0]
 average_velocity = total_flow_rate / area
-print(f"Total flow rate : {total_flow_rate:.1f}")
-print(f"Area            : {area:.0f}")
-print(f"Average velocity: {average_velocity:.3f}")
+print(f'Total flow rate : {total_flow_rate:.1f}')
+print(f'Area            : {area:.0f}')
+print(f'Average velocity: {average_velocity:.3f}')
 
 
 # %%
@@ -87,9 +87,9 @@ volume = integrated_volume['Volume'][0]
 mean_density = integrated_volume['density'][0] / volume
 mean_velocity = integrated_volume['velocity'][0] / volume
 
-print(f"Center          : {center}")
-print(f"Volume          : {volume:.0f}")
-print(f"Mean density    : {mean_density:.4f}")
-print(f"Mean velocity   : {mean_velocity}")
+print(f'Center          : {center}')
+print(f'Volume          : {volume:.0f}')
+print(f'Mean density    : {mean_density:.4f}')
+print(f'Mean velocity   : {mean_velocity}')
 # %%
 # .. tags:: filter

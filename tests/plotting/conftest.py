@@ -98,7 +98,7 @@ def check_gc():
 @pytest.fixture
 def colorful_tetrahedron():
     mesh = pv.Tetrahedron()
-    mesh.cell_data["colors"] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
+    mesh.cell_data['colors'] = [[255, 255, 255], [255, 0, 0], [0, 255, 0], [0, 0, 255]]
     return mesh
 
 

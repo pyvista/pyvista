@@ -793,21 +793,21 @@ def SolidSphereGeneric(
     nphi = len(phi)
 
     if nr < 2:
-        raise ValueError("radius resolution must be 2 or more")
+        raise ValueError('radius resolution must be 2 or more')
     if ntheta < 2:
-        raise ValueError("theta resolution must be 2 or more")
+        raise ValueError('theta resolution must be 2 or more')
     if nphi < 2:
-        raise ValueError("phi resolution must be 2 or more")
+        raise ValueError('phi resolution must be 2 or more')
 
     def _is_sorted(a):
         return np.all(a[:-1] < a[1:])
 
     if not _is_sorted(radius):
-        raise ValueError("radius is not monotonically increasing")
+        raise ValueError('radius is not monotonically increasing')
     if not _is_sorted(theta):
-        raise ValueError("theta is not monotonically increasing")
+        raise ValueError('theta is not monotonically increasing')
     if not _is_sorted(phi):
-        raise ValueError("phi is not monotonically increasing")
+        raise ValueError('phi is not monotonically increasing')
 
     def _greater_than_equal_or_close(value1, value2, atol):
         return value1 >= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
@@ -816,18 +816,18 @@ def SolidSphereGeneric(
         return value1 <= value2 or np.isclose(value1, value2, rtol=0.0, atol=atol)
 
     if not _greater_than_equal_or_close(radius[0], 0.0, tol_radius):
-        raise ValueError("minimum radius cannot be negative")
+        raise ValueError('minimum radius cannot be negative')
 
     # range of theta cannot be greater than 360 degrees
     if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle):
-        max_angle = "2 * np.pi" if radians else "360 degrees"
-        raise ValueError(f"max theta and min theta must be within {max_angle}")
+        max_angle = '2 * np.pi' if radians else '360 degrees'
+        raise ValueError(f'max theta and min theta must be within {max_angle}')
 
     if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle):
-        raise ValueError("minimum phi cannot be negative")
+        raise ValueError('minimum phi cannot be negative')
     if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle):
-        max_angle = "np.pi" if radians else "180 degrees"
-        raise ValueError(f"maximum phi cannot be > {max_angle}")
+        max_angle = 'np.pi' if radians else '180 degrees'
+        raise ValueError(f'maximum phi cannot be > {max_angle}')
 
     def _spherical_to_cartesian(r, phi, theta):
         """Convert spherical coordinate sequences to a ``(n,3)`` Cartesian coordinate array.
@@ -1677,7 +1677,7 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
         np.linalg.norm(np.array(pointa) - np.array(center)),
         np.linalg.norm(np.array(pointb) - np.array(center)),
     ):
-        raise ValueError("pointa and pointb are not equidistant from center")
+        raise ValueError('pointa and pointb are not equidistant from center')
 
     # fix half-arc bug: if a half arc travels directly through the
     # center point, it becomes a line
@@ -1924,7 +1924,7 @@ def Rectangle(points=None):
     mag_12 = np.linalg.norm(vec_12)
 
     if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
-        raise ValueError("Unable to build a rectangle with less than three different points")
+        raise ValueError('Unable to build a rectangle with less than three different points')
 
     scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
     scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
@@ -1936,7 +1936,7 @@ def Rectangle(points=None):
         if np.isclose(val, 0)
     ]
     if len(null_scalar_products) == 0:
-        raise ValueError("The three points should defined orthogonal vectors")
+        raise ValueError('The three points should defined orthogonal vectors')
 
     points = np.array([point_0, point_1, point_2, point_0])
     if np.isclose(scalar_pdct_01_02, 0):
