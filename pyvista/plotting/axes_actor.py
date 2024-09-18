@@ -767,10 +767,10 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
         >>> import pyvista as pv
         >>> polaxes = pv.PolarAxesActor()
         >>> polaxes.screen_size
-        1.0
-        >>> polaxes.screen_size = 2.0
+        10.0
+        >>> polaxes.screen_size = 20.0
         >>> polaxes.screen_size
-        2.0
+        20.0
 
         """
         return self.GetScreenSize()
