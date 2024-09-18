@@ -679,7 +679,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     >>> polaxes.SetBounds(normals.bounds)
     >>> polaxes.pole = (0.5, 1.0, 3.0)
     >>> polaxes.maximum_radius = 3.0
-    >>> polaxes.SetMinimumAngle(-60.0)
+    >>> polaxes.minimum_angle = -60.0
     >>> polaxes.SetMaximumAngle(210.0)
     >>> polaxes.SetRequestedNumberOfRadialAxes(10)
     >>> polaxes.camera = camera
@@ -820,3 +820,24 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     @minimum_radius.setter
     def minimum_radius(self, minimum_radius: float):  # numpydoc ignore=GL08
         self.SetMinimumRadius(minimum_radius)
+
+    @property
+    def minimum_angle(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the minimum angle.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.minimum_angle
+        0.0
+        >>> polaxes.minimum_angle = -60.0
+        >>> polaxes.minimum_angle
+        -60.0
+
+        """
+        return self.GetMinimumAngle()
+
+    @minimum_angle.setter
+    def minimum_angle(self, minimum_angle: float):  # numpydoc ignore=GL08
+        self.SetMinimumAngle(minimum_angle)
