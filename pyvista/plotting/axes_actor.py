@@ -799,3 +799,24 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     @maximum_radius.setter
     def maximum_radius(self, maximum_radius: float):  # numpydoc ignore=GL08
         self.SetMaximumRadius(maximum_radius)
+
+    @property
+    def minimum_radius(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the minimum radius.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.minimum_radius
+        0.0
+        >>> polaxes.minimum_radius = 0.5
+        >>> polaxes.minimum_radius
+        0.5
+
+        """
+        return self.GetMinimumRadius()
+
+    @minimum_radius.setter
+    def minimum_radius(self, minimum_radius: float):  # numpydoc ignore=GL08
+        self.SetMinimumRadius(minimum_radius)
