@@ -176,7 +176,7 @@ def warp_low_pass_noise(cfreq, scalar_ptp=None):
 
 # Initialize the plotter and plot off-screen to save the animation as a GIF.
 plotter = pv.Plotter(notebook=False, off_screen=True)
-plotter.open_gif("low_pass.gif", fps=8)
+plotter.open_gif('low_pass.gif', fps=8)
 
 # add the initial mesh
 init_mesh = warp_low_pass_noise(1e-2)
@@ -187,7 +187,7 @@ for freq in np.geomspace(1e-2, 10, 25):
     plotter.clear()
     mesh = warp_low_pass_noise(freq)
     plotter.add_mesh(mesh, show_scalar_bar=False, lighting=False, n_colors=128)
-    plotter.add_text(f"Cutoff Frequency: {freq:.2f}", color="black")
+    plotter.add_text(f'Cutoff Frequency: {freq:.2f}', color='black')
     plotter.write_frame()
 
 # write the last frame a few times to "pause" the gif

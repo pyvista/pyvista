@@ -362,7 +362,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.capping = capping
         if angle is not None and radius is not None:
             raise ValueError(
-                "Both radius and angle cannot be specified. They are mutually exclusive.",
+                'Both radius and angle cannot be specified. They are mutually exclusive.',
             )
         elif angle is not None and radius is None:
             self.angle = angle
@@ -958,7 +958,7 @@ class Text3DSource(vtkVectorText):
         self._output = pyvista.PolyData()
 
         # Set params
-        self.string = "" if string is None else string
+        self.string = '' if string is None else string
         self._process_empty_string = process_empty_string
         self.center = center
         self._normal = normal
@@ -995,7 +995,7 @@ class Text3DSource(vtkVectorText):
 
     @string.setter
     def string(self, string: str):  # numpydoc ignore=GL08
-        self.SetText("" if string is None else string)
+        self.SetText('' if string is None else string)
 
     @property
     def process_empty_string(self) -> bool:  # numpydoc ignore=RT01
@@ -1078,7 +1078,7 @@ class Text3DSource(vtkVectorText):
     def update(self):
         """Update the output of the source."""
         if self._modified:
-            is_empty_string = self.string == "" or self.string.isspace()
+            is_empty_string = self.string == '' or self.string.isspace()
             is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
             if is_empty_string or is_2d:
                 # Do not apply filters
@@ -1221,8 +1221,8 @@ class CubeSource(_vtk.vtkCubeSource):
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
-        "bounds",
-        "_bounds",
+        'bounds',
+        '_bounds',
     ]
 
     def __init__(
@@ -1444,7 +1444,7 @@ class DiscSource(_vtk.vtkDiskSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ["center"]
+    _new_attr_exceptions: ClassVar[list[str]] = ['center']
 
     def __init__(self, center=None, inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
@@ -2736,8 +2736,8 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     """
 
     _new_attr_exceptions: ClassVar[list[str]] = [
-        "bounds",
-        "_bounds",
+        'bounds',
+        '_bounds',
     ]
 
     def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
@@ -3255,15 +3255,15 @@ class AxesGeometrySource:
     def __repr__(self):
         """Representation of the axes."""
         attr = [
-            f"{type(self).__name__} ({hex(id(self))})",
+            f'{type(self).__name__} ({hex(id(self))})',
             f"  Shaft type:                 '{self.shaft_type}'",
-            f"  Shaft radius:               {self.shaft_radius}",
-            f"  Shaft length:               {self.shaft_length}",
+            f'  Shaft radius:               {self.shaft_radius}',
+            f'  Shaft length:               {self.shaft_length}',
             f"  Tip type:                   '{self.tip_type}'",
-            f"  Tip radius:                 {self.tip_radius}",
-            f"  Tip length:                 {self.tip_length}",
-            f"  Symmetric:                  {self.symmetric}",
-            f"  Symmetric bounds:           {self.symmetric_bounds}",
+            f'  Tip radius:                 {self.tip_radius}',
+            f'  Tip length:                 {self.tip_length}',
+            f'  Symmetric:                  {self.symmetric}',
+            f'  Symmetric bounds:           {self.symmetric_bounds}',
         ]
         return '\n'.join(attr)
 
@@ -3377,7 +3377,7 @@ class AxesGeometrySource:
             length,
             broadcast=True,
             must_be_in_range=[0.0, np.inf],
-            name="Shaft length",
+            name='Shaft length',
         )
 
     @property
@@ -3408,7 +3408,7 @@ class AxesGeometrySource:
             length,
             broadcast=True,
             must_be_in_range=[0.0, np.inf],
-            name="Tip length",
+            name='Tip length',
         )
 
     @property
@@ -3679,7 +3679,7 @@ class AxesGeometrySource:
             part = geometry.copy()
         else:
             raise TypeError(
-                f"Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.",
+                f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.',
             )
         part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
         part_poly = AxesGeometrySource._normalize_part(part_poly)
@@ -3698,7 +3698,7 @@ class AxesGeometrySource:
             (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
         )
         if np.any(axis_length < 1e-8):
-            raise ValueError(f"Custom axes part must be 3D. Got bounds: {bnds}.")
+            raise ValueError(f'Custom axes part must be 3D. Got bounds: {bnds}.')
         part.scale(np.reciprocal(axis_length), inplace=True)
         return part
 

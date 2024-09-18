@@ -300,7 +300,7 @@ def plot_logo(
     plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False)
 
     if show_note:
-        text = text_3d("You can move me!", depth=0.1)
+        text = text_3d('You can move me!', depth=0.1)
         text.points *= 0.1
         text.translate([4.0, -0.3, 0], inplace=True)
         plotter.add_mesh(text, color='black')

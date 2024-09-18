@@ -91,14 +91,14 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
-SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
+SUPPORTED_FORMATS = ['.png', '.jpeg', '.jpg', '.bmp', '.tif', '.tiff']
 
 # EXPERIMENTAL: permit pyvista to kill the render window
 KILL_DISPLAY = platform.system() == 'Linux' and os.environ.get('PYVISTA_KILL_DISPLAY')
 if KILL_DISPLAY:  # pragma: no cover
     # this won't work under wayland
     try:
-        X11 = ctypes.CDLL("libX11.so")
+        X11 = ctypes.CDLL('libX11.so')
         X11.XCloseDisplay.argtypes = [ctypes.c_void_p]
     except OSError:
         warnings.warn('PYVISTA_KILL_DISPLAY: Unable to load X11.\nProbably using wayland')
@@ -330,7 +330,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Track all active plotters. This has the side effect of ensuring that plotters are not
         # collected until `close()`. See https://github.com//pull/3216
         # This variable should be safe as a variable name
-        self._id_name = f"P_{hex(id(self))}_{len(_ALL_PLOTTERS)}"
+        self._id_name = f'P_{hex(id(self))}_{len(_ALL_PLOTTERS)}'
         _ALL_PLOTTERS[self._id_name] = self
 
         # Key bindings
@@ -472,7 +472,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # register last actor in actors
         actor = self.renderer.GetActors().GetLastItem()
-        name = actor.GetAddressAsString("")
+        name = actor.GetAddressAsString('')
         self.renderer._actors[name] = actor
 
         # set camera position to a three.js viewing perspective
@@ -647,7 +647,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return buffer
 
         filename = Path(filename)
-        if filename.suffix != ".html":
+        if filename.suffix != '.html':
             filename += '.html'
 
         # Move to final destination
@@ -854,7 +854,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         from vtkmodules.vtkIOExport import vtkVRMLExporter
 
         if self.render_window is None:
-            raise RuntimeError("This plotter has been closed and cannot be shown.")
+            raise RuntimeError('This plotter has been closed and cannot be shown.')
 
         exporter = vtkVRMLExporter()
         exporter.SetFileName(filename)
@@ -2052,14 +2052,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def store_mouse_position(self, *args):
         """Store mouse position."""
-        if not hasattr(self, "iren"):
-            raise AttributeError("This plotting window is not interactive.")
+        if not hasattr(self, 'iren'):
+            raise AttributeError('This plotting window is not interactive.')
         self.mouse_position = self.iren.get_event_position()
 
     def store_click_position(self, *args):
         """Store click position in viewport coordinates."""
-        if not hasattr(self, "iren"):
-            raise AttributeError("This plotting window is not interactive.")
+        if not hasattr(self, 'iren'):
+            raise AttributeError('This plotting window is not interactive.')
         self.click_position = self.iren.get_event_position()
         self.mouse_position = self.click_position
 
@@ -2174,11 +2174,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         for renderer in self.renderers:
             for actor in renderer._actors.values():
-                if hasattr(actor, "GetProperty"):
+                if hasattr(actor, 'GetProperty'):
                     prop = actor.GetProperty()
-                    if hasattr(prop, "SetPointSize"):
+                    if hasattr(prop, 'SetPointSize'):
                         prop.SetPointSize(prop.GetPointSize() + increment)
-                    if hasattr(prop, "SetLineWidth"):
+                    if hasattr(prop, 'SetLineWidth'):
                         prop.SetLineWidth(prop.GetLineWidth() + increment)
         self.render()
 
@@ -2454,7 +2454,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         above_color=None,
         annotations=None,
         pickable=True,
-        preference="point",
+        preference='point',
         log_scale=False,
         pbr=None,
         metallic=None,
@@ -2878,7 +2878,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars is None:
                 point_name, cell_name = dataset._get_consistent_active_scalars()
                 if point_name and cell_name:
-                    scalars = point_name if preference == "point" else cell_name
+                    scalars = point_name if preference == 'point' else cell_name
                 else:
                     scalars = point_name if point_name is not None else cell_name
 
@@ -2990,7 +2990,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         above_color=None,
         annotations=None,
         pickable=True,
-        preference="point",
+        preference='point',
         log_scale=False,
         pbr=None,
         metallic=None,
@@ -3870,7 +3870,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         geom.points -= geom.center
 
-        addr = actor.GetAddressAsString("")
+        addr = actor.GetAddressAsString('')
         self.renderer._labels[addr] = [geom, label, color]
 
     def add_volume(
@@ -3895,7 +3895,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         show_scalar_bar=None,
         annotations=None,
         pickable=True,
-        preference="point",
+        preference='point',
         opacity_unit_distance=None,
         shade=False,
         diffuse=0.7,  # TODO: different default for volumes
@@ -4201,9 +4201,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap = kwargs.pop('colormap', cmap)
         culling = kwargs.pop('backface_culling', culling)
 
-        if "scalar" in kwargs:
+        if 'scalar' in kwargs:
             raise TypeError(
-                "`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?",
+                '`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?',
             )
         assert_empty_kwargs(**kwargs)
 
@@ -4552,15 +4552,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         silhouette_params = self._theme.silhouette.to_dict()
 
         if color is None:
-            color = silhouette_params["color"]
+            color = silhouette_params['color']
         if line_width is None:
-            line_width = silhouette_params["line_width"]
+            line_width = silhouette_params['line_width']
         if opacity is None:
-            opacity = silhouette_params["opacity"]
+            opacity = silhouette_params['opacity']
         if feature_angle is None:
-            feature_angle = silhouette_params["feature_angle"]
+            feature_angle = silhouette_params['feature_angle']
         if decimate is None:
-            decimate = silhouette_params["decimate"]
+            decimate = silhouette_params['decimate']
 
         # At this point we are dealing with a pipeline, so no `algo or mesh`
         if decimate:
@@ -4764,7 +4764,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             kwargs['mapper'] = self.mapper
 
         # title can be the first and only arg
-        title = args[0] if len(args) else kwargs.get("title", "")
+        title = args[0] if len(args) else kwargs.get('title', '')
         if title is None:
             title = ''
         kwargs['title'] = title
@@ -4810,8 +4810,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # Deprecated on 0.43.0, estimated removal on v0.46.0
         warnings.warn(
-            "This method is deprecated and will be removed in a future version of "
-            "PyVista. Directly modify the scalars of a mesh in-place instead.",
+            'This method is deprecated and will be removed in a future version of '
+            'PyVista. Directly modify the scalars of a mesh in-place instead.',
             PyVistaDeprecationWarning,
         )
 
@@ -4887,8 +4887,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # Deprecated on 0.43.0, estimated removal on v0.46.0
         warnings.warn(
-            "This method is deprecated and will be removed in a future version of "
-            "PyVista. Directly modify the points of a mesh in-place instead.",
+            'This method is deprecated and will be removed in a future version of '
+            'PyVista. Directly modify the points of a mesh in-place instead.',
             PyVistaDeprecationWarning,
         )
         if mesh is None:
@@ -5427,7 +5427,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if label:
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
-            addr = actor.GetAddressAsString("")
+            addr = actor.GetAddressAsString('')
             self.renderer._labels[addr] = [lines, label, Color(color)]
 
         # Add to renderer
@@ -5929,7 +5929,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 filename = filename.expanduser().resolve()
                 Image.fromarray(image).save(filename)
             else:
-                Image.fromarray(image).save(filename, format="PNG")
+                Image.fromarray(image).save(filename, format='PNG')
         # return image array if requested
         return image if return_img else None
 
@@ -6084,10 +6084,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise RuntimeError('This plotter is closed and unable to save a screenshot.')
 
             if self._first_time and (
-                hasattr(self, "off_screen") and not self.off_screen
+                hasattr(self, 'off_screen') and not self.off_screen
             ):  # 'off_screen' attribute is specific to Plotter objects.
                 raise RuntimeError(
-                    "Nothing to screenshot - call .show first or use the off_screen argument",
+                    'Nothing to screenshot - call .show first or use the off_screen argument',
                 )
 
             # if off screen, show has not been called and we must render
@@ -6260,7 +6260,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             try:
                 from tqdm import tqdm
             except ImportError:  # pragma: no cover
-                raise ImportError("Please install `tqdm` to use ``progress_bar=True``")
+                raise ImportError('Please install `tqdm` to use ``progress_bar=True``')
 
         def orbit() -> None:
             """Define the internal thread for running the orbit."""
@@ -6278,7 +6278,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self.render()
                 sleep_time = step - (time.time() - tstart)
                 if sleep_time > 0 and (
-                    hasattr(self, "off_screen") and not self.off_screen
+                    hasattr(self, 'off_screen') and not self.off_screen
                 ):  # 'off_screen' attribute is specific to Plotter objects.
                     time.sleep(sleep_time)
             if write_frames:
@@ -6311,7 +6311,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         from vtkmodules.vtkIOExport import vtkOBJExporter
 
         if self.render_window is None:
-            raise RuntimeError("This plotter must still have a render window open.")
+            raise RuntimeError('This plotter must still have a render window open.')
         if (
             isinstance(pyvista.FIGURE_PATH, str) and not Path(filename).is_absolute()
         ):  # pragma: no cover
@@ -6707,7 +6707,7 @@ class Plotter(BasePlotter):
         self.iren.set_render_window(self.render_window)
         self.reset_key_events()
         self.enable_trackball_style()  # internally calls update_style()
-        self.iren.add_observer("KeyPressEvent", self.key_press_event)
+        self.iren.add_observer('KeyPressEvent', self.key_press_event)
 
         # Set camera widget based on theme. This requires that an
         # interactor be present.
@@ -6925,7 +6925,7 @@ class Plotter(BasePlotter):
             auto_close = self._theme.auto_close
 
         if self.render_window is None:
-            raise RuntimeError("This plotter has been closed and cannot be shown.")
+            raise RuntimeError('This plotter has been closed and cannot be shown.')
 
         if full_screen is None:
             full_screen = self._theme.full_screen
@@ -7012,14 +7012,14 @@ class Plotter(BasePlotter):
             # proper screenshots cannot be saved if this happens
             if not auto_close:
                 warnings.warn(
-                    "`auto_close` ignored: by clicking the exit button, "
-                    "you have destroyed the render window and we have to "
-                    "close it out.",
+                    '`auto_close` ignored: by clicking the exit button, '
+                    'you have destroyed the render window and we have to '
+                    'close it out.',
                 )
             self.close()
             if screenshot:
                 warnings.warn(
-                    "A screenshot is unable to be taken as the render window is not current or rendering is suppressed.",
+                    'A screenshot is unable to be taken as the render window is not current or rendering is suppressed.',
                 )
         if _is_current:
             if pyvista.ON_SCREENSHOT:

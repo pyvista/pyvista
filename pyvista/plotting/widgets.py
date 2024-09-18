@@ -61,9 +61,9 @@ def _parse_interaction_event(interaction_event):
         )
     elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
         raise TypeError(
-            "Expected type for `interaction_event` is either a str "
-            "or an instance of `vtk.vtkCommand.EventIds`."
-            f" ({type(interaction_event)}) was given.",
+            'Expected type for `interaction_event` is either a str '
+            'or an instance of `vtk.vtkCommand.EventIds`.'
+            f' ({type(interaction_event)}) was given.',
         )
     return interaction_event
 
@@ -331,7 +331,7 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(outline_algorithm(algo), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo), name=f'{name}-outline', opacity=0.0)
 
         port = 1 if invert else 0
 
@@ -600,17 +600,17 @@ class WidgetHelper:
 
         if assign_to_axis:
             # Note that normal_rotation was forced to False
-            if assign_to_axis in [0, "x", "X"]:
+            if assign_to_axis in [0, 'x', 'X']:
                 plane_widget.NormalToXAxisOn()
-                plane_widget.SetNormal(NORMALS["x"])
-            elif assign_to_axis in [1, "y", "Y"]:
+                plane_widget.SetNormal(NORMALS['x'])
+            elif assign_to_axis in [1, 'y', 'Y']:
                 plane_widget.NormalToYAxisOn()
-                plane_widget.SetNormal(NORMALS["y"])
-            elif assign_to_axis in [2, "z", "Z"]:
+                plane_widget.SetNormal(NORMALS['y'])
+            elif assign_to_axis in [2, 'z', 'Z']:
                 plane_widget.NormalToZAxisOn()
-                plane_widget.SetNormal(NORMALS["z"])
+                plane_widget.SetNormal(NORMALS['z'])
             else:
-                raise RuntimeError("assign_to_axis not understood")
+                raise RuntimeError('assign_to_axis not understood')
         else:
             plane_widget.SetNormal(normal)
 
@@ -766,7 +766,7 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(outline_algorithm(algo), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo), name=f'{name}-outline', opacity=0.0)
 
         if isinstance(mesh, _vtk.vtkPolyData):
             clipper = _vtk.vtkClipPolyData()
@@ -1063,7 +1063,7 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         set_algorithm_input(alg, algo or mesh)
@@ -1162,11 +1162,11 @@ class WidgetHelper:
 
         """
         actors = []
-        name = kwargs.pop("name", None)
-        for ax in ["x", "y", "z"]:
+        name = kwargs.pop('name', None)
+        for ax in ['x', 'y', 'z']:
             axkwargs = kwargs.copy()
             if name:
-                axkwargs["name"] = f"{name}-{ax}"
+                axkwargs['name'] = f'{name}-{ax}'
             a = self.add_mesh_slice(
                 mesh,
                 assign_to_axis=ax,
@@ -1362,11 +1362,11 @@ class WidgetHelper:
         """
         if not isinstance(data, list):
             raise TypeError(
-                f"The `data` parameter must be a list but {type(data).__name__} was passed instead",
+                f'The `data` parameter must be a list but {type(data).__name__} was passed instead',
             )
         n_states = len(data)
         if n_states == 0:
-            raise ValueError("The input list of values is empty")
+            raise ValueError('The input list of values is empty')
         delta = (n_states - 1) / float(n_states)
         # avoid division by zero in case there is only one element
         delta = 1 if delta == 0 else delta
@@ -1568,7 +1568,7 @@ class WidgetHelper:
         if style is not None:
             if not isinstance(style, str):
                 raise TypeError(
-                    f"Expected type for ``style`` is str but {type(style).__name__} was given.",
+                    f'Expected type for ``style`` is str but {type(style).__name__} was given.',
                 )
             slider_style = getattr(pyvista.global_theme.slider_styles, style)
             slider_rep.SetSliderLength(slider_style.slider_length)
@@ -1736,7 +1736,7 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
 
         alg = _vtk.vtkThreshold()
         set_algorithm_input(alg, algo or mesh)
@@ -1767,7 +1767,7 @@ class WidgetHelper:
             pointb=pointb,
         )
 
-        kwargs.setdefault("reset_camera", False)
+        kwargs.setdefault('reset_camera', False)
         return self.add_mesh(alg, scalars=scalars, **kwargs)
 
     def add_mesh_isovalue(
@@ -1907,7 +1907,7 @@ class WidgetHelper:
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetNumberOfContours(1)  # Only one contour level
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
 
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
@@ -1926,7 +1926,7 @@ class WidgetHelper:
             pointb=pointb,
         )
 
-        kwargs.setdefault("reset_camera", False)
+        kwargs.setdefault('reset_camera', False)
         return self.add_mesh(alg, scalars=scalars, **kwargs)
 
     def add_spline_widget(
@@ -1936,9 +1936,9 @@ class WidgetHelper:
         factor=1.25,
         n_handles=5,
         resolution=25,
-        color="yellow",
+        color='yellow',
         show_ribbon=False,
-        ribbon_color="pink",
+        ribbon_color='pink',
         ribbon_opacity=0.5,
         pass_widget=False,
         closed=False,
@@ -2013,7 +2013,7 @@ class WidgetHelper:
 
         """
         if initial_points is not None and len(initial_points) != n_handles:
-            raise ValueError("`initial_points` must be length `n_handles`.")
+            raise ValueError('`initial_points` must be length `n_handles`.')
 
         color = Color(color, default_color=pyvista.global_theme.color)
 
@@ -2071,7 +2071,7 @@ class WidgetHelper:
         resolution=25,
         widget_color=None,
         show_ribbon=False,
-        ribbon_color="pink",
+        ribbon_color='pink',
         ribbon_opacity=0.5,
         initial_points=None,
         closed=False,
@@ -2153,7 +2153,7 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f"{name}-outline", opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         # Use the grid as the data we desire to cut
@@ -2281,8 +2281,8 @@ class WidgetHelper:
         theta_resolution=30,
         phi_resolution=30,
         color=None,
-        style="surface",
-        selected_color="pink",
+        style='surface',
+        selected_color='pink',
         indices=None,
         pass_widget=False,
         test_callback=True,
@@ -2387,7 +2387,7 @@ class WidgetHelper:
             loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
             sphere_widget.WIDGET_INDEX = indices[i]  # Monkey patch the index
-            if style in "wireframe":
+            if style in 'wireframe':
                 sphere_widget.SetRepresentationToWireframe()
             else:
                 sphere_widget.SetRepresentationToSurface()

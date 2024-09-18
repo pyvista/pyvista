@@ -426,7 +426,7 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     with pytest.raises(ValueError, match=match):
         single_point_image.pad_image(pad_size=-1)
 
-    match = "Pad size must have 1, 2, 3, 4, or 6 values, got 5 instead."
+    match = 'Pad size must have 1, 2, 3, 4, or 6 values, got 5 instead.'
     with pytest.raises(ValueError, match=match):
         single_point_image.pad_image(pad_size=(1, 2, 3, 4, 5))
 
@@ -434,7 +434,7 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     with pytest.raises(ValueError, match=match):
         single_point_image.pad_image(pad_size=[[1]])
 
-    match = "Pad size must be integers. Got dtype float64."
+    match = 'Pad size must be integers. Got dtype float64.'
     with pytest.raises(TypeError, match=match):
         single_point_image.pad_image(pad_size=1.0)
 
@@ -463,7 +463,7 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     logo['single'] = range(logo.n_points)  # Create data with varying num array components
     match = (
         "Cannot pad array 'single' with value (0, 0, 0, 0). Number of components (1) in 'single' must match the number of components (4) in value."
-        "\nTry setting `pad_all_scalars=False` or update the array."
+        '\nTry setting `pad_all_scalars=False` or update the array.'
     )
     logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):

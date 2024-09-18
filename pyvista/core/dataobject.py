@@ -237,12 +237,12 @@ class DataObject:
         """
         # Generate the output
         if html:
-            fmt = ""
+            fmt = ''
             # HTML version
-            fmt += "\n"
+            fmt += '\n'
             fmt += "<table style='width: 100%;'>\n"
-            fmt += f"<tr><th>{type(self).__name__}</th><th>Information</th></tr>\n"
-            row = "<tr><td>{}</td><td>{}</td></tr>\n"
+            fmt += f'<tr><th>{type(self).__name__}</th><th>Information</th></tr>\n'
+            row = '<tr><td>{}</td><td>{}</td></tr>\n'
             # now make a call on the object to get its attributes as a list of len 2 tuples
             for attr in self._get_attrs():
                 try:
@@ -251,8 +251,8 @@ class DataObject:
                     fmt += row.format(attr[0], attr[2].format(attr[1]))
             if hasattr(self, 'n_arrays'):
                 fmt += row.format('N Arrays', self.n_arrays)
-            fmt += "</table>\n"
-            fmt += "\n"
+            fmt += '</table>\n'
+            fmt += '\n'
             if display:
                 from IPython.display import HTML
                 from IPython.display import display as _display
@@ -261,14 +261,14 @@ class DataObject:
                 return None
             return fmt
         # Otherwise return a string that is Python console friendly
-        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
+        fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
         # get longest row header
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
 
         # now make a call on the object to get its attributes as a list of len
         # 2 tuples
-        row = "  {:%ds}{}\n" % max_len
+        row = '  {:%ds}{}\n' % max_len
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
@@ -637,7 +637,7 @@ class DataObject:
         'Addr=...'
 
         """
-        return self.GetInformation().GetAddressAsString("")
+        return self.GetInformation().GetAddressAsString('')
 
     @property
     def actual_memory_size(self) -> int:

@@ -29,7 +29,7 @@ from pyvista import examples
 
 mesh = examples.load_channels()
 # define a categorical colormap
-cmap = plt.get_cmap("viridis", 4)
+cmap = plt.get_cmap('viridis', 4)
 
 mesh.plot(cmap=cmap)
 
@@ -57,14 +57,14 @@ slices.plot(cmap=cmap)
 single_slice = mesh.slice(normal=[1, 1, 0])
 
 p = pv.Plotter()
-p.add_mesh(mesh.outline(), color="k")
+p.add_mesh(mesh.outline(), color='k')
 p.add_mesh(single_slice, cmap=cmap)
 p.show()
 # %%
 # Adding slicing planes uniformly across an axial direction can also be
 # automated with the :func:`pyvista.DataSetFilters.slice_along_axis` filter:
 
-slices = mesh.slice_along_axis(n=7, axis="y")
+slices = mesh.slice_along_axis(n=7, axis='y')
 
 slices.plot(cmap=cmap)
 
@@ -140,9 +140,9 @@ for point in line.points:
 # %%
 
 p = pv.Plotter()
-p.add_mesh(mesh.outline(), color="k")
+p.add_mesh(mesh.outline(), color='k')
 p.add_mesh(slices, opacity=0.75)
-p.add_mesh(line, color="red", line_width=5)
+p.add_mesh(line, color='red', line_width=5)
 p.show()
 
 

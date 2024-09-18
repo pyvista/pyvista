@@ -271,12 +271,12 @@ class Transform(_vtk.vtkTransform):
             except TypeError:
                 raise TypeError(
                     f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f"The right-side argument must be transform-like."
+                    f'The right-side argument must be transform-like.'
                 )
             except ValueError:
                 raise ValueError(
                     f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f"The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape."
+                    f'The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape.'
                 )
         return transform
 
@@ -287,12 +287,12 @@ class Transform(_vtk.vtkTransform):
         except TypeError:
             raise TypeError(
                 f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
-                f"The left-side argument must be a length-3 vector."
+                f'The left-side argument must be a length-3 vector.'
             )
         except ValueError:
             raise ValueError(
                 f"Unsupported operand value(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
-                f"The left-side argument must be a length-3 vector."
+                f'The left-side argument must be a length-3 vector.'
             )
 
     def __mul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
@@ -303,12 +303,12 @@ class Transform(_vtk.vtkTransform):
         except TypeError:
             raise TypeError(
                 f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f"The right-side argument must be a single number or a length-3 vector."
+                f'The right-side argument must be a single number or a length-3 vector.'
             )
         except ValueError:
             raise ValueError(
                 f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f"The right-side argument must be a single number or a length-3 vector."
+                f'The right-side argument must be a single number or a length-3 vector.'
             )
 
     def __rmul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
@@ -318,12 +318,12 @@ class Transform(_vtk.vtkTransform):
         except TypeError:
             raise TypeError(
                 f"Unsupported operand type(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
-                f"The left-side argument must be a single number or a length-3 vector."
+                f'The left-side argument must be a single number or a length-3 vector.'
             )
         except ValueError:
             raise ValueError(
                 f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
-                f"The left-side argument must be a single number or a length-3 vector."
+                f'The left-side argument must be a single number or a length-3 vector.'
             )
 
     def __matmul__(self, other: TransformLike) -> Transform:
@@ -333,12 +333,12 @@ class Transform(_vtk.vtkTransform):
         except TypeError:
             raise TypeError(
                 f"Unsupported operand type(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f"The right-side argument must be transform-like."
+                f'The right-side argument must be transform-like.'
             )
         except ValueError:
             raise ValueError(
                 f"Unsupported operand value(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f"The right-side argument must be transform-like."
+                f'The right-side argument must be transform-like.'
             )
 
     def copy(self) -> Transform:
@@ -398,7 +398,7 @@ class Transform(_vtk.vtkTransform):
             f'           {matrix_repr_lines[2]}',
             f'           {matrix_repr_lines[3]}',
         ]
-        return "\n".join(lines)
+        return '\n'.join(lines)
 
     @property
     def point(self) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01

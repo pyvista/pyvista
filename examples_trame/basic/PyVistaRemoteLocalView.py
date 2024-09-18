@@ -17,21 +17,21 @@ from pyvista.trame import PyVistaRemoteLocalView
 
 pv.OFF_SCREEN = True
 
-server = get_server(client_type="vue3")
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "PyVistaRemoteView"
+state.trame__title = 'PyVistaRemoteView'
 
 # -----------------------------------------------------------------------------
 
 mesh = examples.load_random_hills()
 
 plotter = pv.Plotter()
-actor = plotter.add_mesh(mesh, cmap="viridis")
+actor = plotter.add_mesh(mesh, cmap='viridis')
 
 
-@state.change("cmap")
-def update_cmap(cmap="viridis", **kwargs):
+@state.change('cmap')
+def update_cmap(cmap='viridis', **kwargs):
     actor.mapper.lookup_table.cmap = cmap
     ctrl.view_update()
 
@@ -43,38 +43,38 @@ def update_cmap(cmap="viridis", **kwargs):
 
 with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
-    layout.title.set_text("PyVistaRemoteLocalView")
+    layout.title.set_text('PyVistaRemoteLocalView')
 
     with layout.toolbar:
         vuetify3.VSpacer()
         vuetify3.VCheckbox(
-            v_model=("use_server_rendering", False),
-            density="compact",
+            v_model=('use_server_rendering', False),
+            density='compact',
             hide_details=True,
-            true_icon="mdi-dns",
-            false_icon="mdi-open-in-app",
-            classes="ma-2",
+            true_icon='mdi-dns',
+            false_icon='mdi-open-in-app',
+            classes='ma-2',
         )
         vuetify3.VSpacer()
         vuetify3.VSelect(
-            label="Color map",
-            v_model=("cmap", "viridis"),
-            items=("array_list", plt.colormaps()),
+            label='Color map',
+            v_model=('cmap', 'viridis'),
+            items=('array_list', plt.colormaps()),
             hide_details=True,
-            density="compact",
+            density='compact',
             outlined=True,
-            classes="pt-1 ml-2",
-            style="max-width: 250px",
+            classes='pt-1 ml-2',
+            style='max-width: 250px',
         )
 
     with layout.content:
         with vuetify3.VContainer(
             fluid=True,
-            classes="pa-0 fill-height",
+            classes='pa-0 fill-height',
         ):
             view = PyVistaRemoteLocalView(
                 plotter,
-                mode=("use_server_rendering ? 'remote' : 'local'", "local"),
+                mode=("use_server_rendering ? 'remote' : 'local'", 'local'),
             )
             ctrl.view_update = view.update
             ctrl.view_reset_camera = view.reset_camera
@@ -86,5 +86,5 @@ with SinglePageLayout(server) as layout:
 # Main
 # -----------------------------------------------------------------------------
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     server.start()

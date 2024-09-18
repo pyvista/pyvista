@@ -1478,7 +1478,7 @@ class ImageDataFilters(DataSetFilters):
         elif length == 6:
             all_pad_sizes = pad_sz
         else:
-            raise ValueError(f"Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.")
+            raise ValueError(f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.')
 
         if not pad_singleton_dims:
             # Set pad size to zero for singleton dimensions (e.g. 2D cases)
@@ -1504,7 +1504,7 @@ class ImageDataFilters(DataSetFilters):
         pad_multi_component = None  # Flag for multi-component constants
         error_msg = (
             f"Invalid pad value {pad_value}. Must be 'mirror' or 'wrap', or a "
-            f"number/component vector for constant padding."
+            f'number/component vector for constant padding.'
         )
         if isinstance(pad_value, str):
             if pad_value == 'mirror':
@@ -1523,7 +1523,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(error_msg)
             if (num_value_components := len(val)) not in [1, num_input_components]:
                 raise ValueError(
-                    f"Number of components ({num_value_components}) in pad value {pad_value} must "
+                    f'Number of components ({num_value_components}) in pad value {pad_value} must '
                     f"match the number components ({num_input_components}) in array '{scalars}'.",
                 )
             if num_input_components > 1:
@@ -1543,8 +1543,8 @@ class ImageDataFilters(DataSetFilters):
                         raise ValueError(
                             f"Cannot pad array '{array_name}' with value {pad_value}. "
                             f"Number of components ({n_comp}) in '{array_name}' must match "
-                            f"the number of components ({num_value_components}) in value."
-                            f"\nTry setting `pad_all_scalars=False` or update the array.",
+                            f'the number of components ({num_value_components}) in value.'
+                            f'\nTry setting `pad_all_scalars=False` or update the array.',
                         )
             else:
                 pad_multi_component = False

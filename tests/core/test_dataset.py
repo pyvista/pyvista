@@ -140,11 +140,11 @@ def test_cell_data_bad_value(grid):
 def test_point_cell_data_single_scalar_no_exception_raised():
     try:
         m = pv.PolyData([0, 0, 0.0])
-        m.point_data["foo"] = 1
-        m.cell_data["bar"] = 1
-        m["baz"] = 1
+        m.point_data['foo'] = 1
+        m.cell_data['bar'] = 1
+        m['baz'] = 1
     except Exception as e:
-        pytest.fail(f"Unexpected exception raised: {e}")
+        pytest.fail(f'Unexpected exception raised: {e}')
 
 
 def test_field_data(grid):
@@ -525,8 +525,8 @@ def test_html_repr(grid):
 
 
 def test_html_repr_string_scalar(grid):
-    array_data = "data"
-    array_name = "name"
+    array_data = 'data'
+    array_name = 'name'
     grid.add_field_data(array_data, array_name)
     assert grid._repr_html_() is not None
 
@@ -546,13 +546,13 @@ def test_print_repr(grid, display, html):
 
 def test_invalid_vector(grid):
     with pytest.raises(ValueError):  # noqa: PT011
-        grid["vectors"] = np.empty(10)
+        grid['vectors'] = np.empty(10)
 
     with pytest.raises(ValueError):  # noqa: PT011
-        grid["vectors"] = np.empty((3, 2))
+        grid['vectors'] = np.empty((3, 2))
 
     with pytest.raises(ValueError):  # noqa: PT011
-        grid["vectors"] = np.empty((3, 3))
+        grid['vectors'] = np.empty((3, 3))
 
 
 def test_no_texture_coordinates(grid):
@@ -572,10 +572,10 @@ def test_arrows():
     ).T
 
     # add and scales
-    sphere["vectors"] = vectors * 0.3
-    sphere.set_active_vectors("vectors")
+    sphere['vectors'] = vectors * 0.3
+    sphere.set_active_vectors('vectors')
     assert np.allclose(sphere.active_vectors, vectors * 0.3)
-    assert np.allclose(sphere["vectors"], vectors * 0.3)
+    assert np.allclose(sphere['vectors'], vectors * 0.3)
 
     assert sphere.active_vectors_info[1] == 'vectors'
     arrows = sphere.arrows
@@ -584,7 +584,7 @@ def test_arrows():
     assert arrows.active_vectors_name == 'GlyphVector'
 
 
-def active_component_consistency_check(grid, component_type, field_association="point"):
+def active_component_consistency_check(grid, component_type, field_association='point'):
     """Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset"""
     component_type = component_type.lower()
     vtk_component_type = component_type.capitalize()
@@ -592,10 +592,10 @@ def active_component_consistency_check(grid, component_type, field_association="
     field_association = field_association.lower()
     vtk_field_association = field_association.capitalize()
 
-    pv_arr = getattr(grid, "active_" + component_type)
+    pv_arr = getattr(grid, 'active_' + component_type)
     vtk_arr = getattr(
-        getattr(grid, f"Get{vtk_field_association}Data")(),
-        f"Get{vtk_component_type}",
+        getattr(grid, f'Get{vtk_field_association}Data')(),
+        f'Get{vtk_component_type}',
     )()
 
     assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
@@ -605,26 +605,26 @@ def test_set_active_vectors(grid):
     vector_arr = np.arange(grid.n_points * 3).reshape([grid.n_points, 3])
     grid.point_data['vector_arr'] = vector_arr
     grid.active_vectors_name = 'vector_arr'
-    active_component_consistency_check(grid, "vectors", "point")
+    active_component_consistency_check(grid, 'vectors', 'point')
     assert grid.active_vectors_name == 'vector_arr'
     assert np.allclose(grid.active_vectors, vector_arr)
 
     grid.active_vectors_name = None
     assert grid.active_vectors_name is None
-    active_component_consistency_check(grid, "vectors", "point")
+    active_component_consistency_check(grid, 'vectors', 'point')
 
 
 def test_set_active_tensors(grid):
     tensor_arr = np.arange(grid.n_points * 9).reshape([grid.n_points, 9])
     grid.point_data['tensor_arr'] = tensor_arr
     grid.active_tensors_name = 'tensor_arr'
-    active_component_consistency_check(grid, "tensors", "point")
+    active_component_consistency_check(grid, 'tensors', 'point')
     assert grid.active_tensors_name == 'tensor_arr'
     assert np.allclose(grid.active_tensors, tensor_arr)
 
     grid.active_tensors_name = None
     assert grid.active_tensors_name is None
-    active_component_consistency_check(grid, "tensors", "point")
+    active_component_consistency_check(grid, 'tensors', 'point')
 
 
 def test_set_texture_coordinates(grid):
@@ -645,11 +645,11 @@ def test_set_active_vectors_fail(grid):
     with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_vectors('not a vector')
 
-    active_component_consistency_check(grid, "vectors", "point")
+    active_component_consistency_check(grid, 'vectors', 'point')
     vector_arr = np.arange(grid.n_points * 3).reshape([grid.n_points, 3])
     grid.point_data['vector_arr'] = vector_arr
     grid.active_vectors_name = 'vector_arr'
-    active_component_consistency_check(grid, "vectors", "point")
+    active_component_consistency_check(grid, 'vectors', 'point')
 
     grid.point_data['scalar_arr'] = np.zeros([grid.n_points])
 
@@ -657,18 +657,18 @@ def test_set_active_vectors_fail(grid):
         grid.set_active_vectors('scalar_arr')
 
     assert grid.active_vectors_name == 'vector_arr'
-    active_component_consistency_check(grid, "vectors", "point")
+    active_component_consistency_check(grid, 'vectors', 'point')
 
 
 def test_set_active_tensors_fail(grid):
     with pytest.raises(ValueError):  # noqa: PT011
         grid.set_active_tensors('not a tensor')
 
-    active_component_consistency_check(grid, "tensors", "point")
+    active_component_consistency_check(grid, 'tensors', 'point')
     tensor_arr = np.arange(grid.n_points * 9).reshape([grid.n_points, 9])
     grid.point_data['tensor_arr'] = tensor_arr
     grid.active_tensors_name = 'tensor_arr'
-    active_component_consistency_check(grid, "tensors", "point")
+    active_component_consistency_check(grid, 'tensors', 'point')
 
     grid.point_data['scalar_arr'] = np.zeros([grid.n_points])
     grid.point_data['vector_arr'] = np.zeros([grid.n_points, 3])
@@ -680,7 +680,7 @@ def test_set_active_tensors_fail(grid):
         grid.set_active_tensors('vector_arr')
 
     assert grid.active_tensors_name == 'tensor_arr'
-    active_component_consistency_check(grid, "tensors", "point")
+    active_component_consistency_check(grid, 'tensors', 'point')
 
 
 def test_set_active_scalars(grid):
@@ -1440,7 +1440,7 @@ def test_active_normals(sphere):
 
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
+    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
 )
 def test_cast_to_pointset(sphere):
     sphere = sphere.elevation()
@@ -1461,7 +1461,7 @@ def test_cast_to_pointset(sphere):
 
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
+    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
 )
 def test_cast_to_pointset_implicit(uniform):
     pointset = uniform.cast_to_pointset(pass_cell_data=True)
@@ -1599,11 +1599,11 @@ def test_raises_point_neighbors_ind_overflow(grid):
 
 def test_raises_cell_neighbors_connections(grid):
     with pytest.raises(ValueError, match='got "topological"'):
-        _ = grid.cell_neighbors(0, "topological")
+        _ = grid.cell_neighbors(0, 'topological')
 
 
-@pytest.mark.parametrize("grid", grids, ids=ids)
-@pytest.mark.parametrize("i0", i0s)
+@pytest.mark.parametrize('grid', grids, ids=ids)
+@pytest.mark.parametrize('i0', i0s)
 def test_point_cell_ids(grid: DataSet, i0):
     cell_ids = grid.point_cell_ids(i0)
 
@@ -1622,10 +1622,10 @@ def test_point_cell_ids(grid: DataSet, i0):
         assert i0 not in grid.get_cell(c).point_ids
 
 
-@pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
-@pytest.mark.parametrize("i0", i0s)
+@pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
+@pytest.mark.parametrize('i0', i0s)
 def test_cell_point_neighbors_ids(grid: DataSet, i0):
-    cell_ids = grid.cell_neighbors(i0, "points")
+    cell_ids = grid.cell_neighbors(i0, 'points')
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
@@ -1647,10 +1647,10 @@ def test_cell_point_neighbors_ids(grid: DataSet, i0):
         assert neighbor_points.isdisjoint(current_points)
 
 
-@pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
-@pytest.mark.parametrize("i0", i0s)
+@pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
+@pytest.mark.parametrize('i0', i0s)
 def test_cell_edge_neighbors_ids(grid: DataSet, i0):
-    cell_ids = grid.cell_neighbors(i0, "edges")
+    cell_ids = grid.cell_neighbors(i0, 'edges')
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
@@ -1688,10 +1688,10 @@ def test_cell_edge_neighbors_ids(grid: DataSet, i0):
 
 
 # Slice grids since some do not contain faces
-@pytest.mark.parametrize("grid", grids_cells[2:], ids=ids_cells[2:])
-@pytest.mark.parametrize("i0", i0s)
+@pytest.mark.parametrize('grid', grids_cells[2:], ids=ids_cells[2:])
+@pytest.mark.parametrize('i0', i0s)
 def test_cell_face_neighbors_ids(grid: DataSet, i0):
-    cell_ids = grid.cell_neighbors(i0, "faces")
+    cell_ids = grid.cell_neighbors(i0, 'faces')
     cell = grid.get_cell(i0)
 
     assert isinstance(cell_ids, list)
@@ -1728,18 +1728,18 @@ def test_cell_face_neighbors_ids(grid: DataSet, i0):
         assert neighbor_points.isdisjoint(current_points)
 
 
-@pytest.mark.parametrize("grid", grids_cells, ids=ids_cells)
-@pytest.mark.parametrize("i0", i0s, ids=lambda x: f"i0={x}")
-@pytest.mark.parametrize("n_levels", [1, 3], ids=lambda x: f"n_levels={x}")
+@pytest.mark.parametrize('grid', grids_cells, ids=ids_cells)
+@pytest.mark.parametrize('i0', i0s, ids=lambda x: f'i0={x}')
+@pytest.mark.parametrize('n_levels', [1, 3], ids=lambda x: f'n_levels={x}')
 @pytest.mark.parametrize(
-    "connections",
-    ["points", "edges", "faces"],
-    ids=lambda x: f"connections={x}",
+    'connections',
+    ['points', 'edges', 'faces'],
+    ids=lambda x: f'connections={x}',
 )
 def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
     cell_ids = grid.cell_neighbors_levels(i0, connections=connections, n_levels=n_levels)
 
-    if connections == "faces" and grid.get_cell(i0).dimension != 3:
+    if connections == 'faces' and grid.get_cell(i0).dimension != 3:
         pytest.skip("Grid's cells does not contain faces")
 
     if n_levels == 1:
@@ -1760,9 +1760,9 @@ def test_cell_neighbors_levels(grid: DataSet, i0, n_levels, connections):
             assert len(ids) > 0
 
 
-@pytest.mark.parametrize("grid", grids, ids=ids)
-@pytest.mark.parametrize("i0", i0s)
-@pytest.mark.parametrize("n_levels", [1, 3])
+@pytest.mark.parametrize('grid', grids, ids=ids)
+@pytest.mark.parametrize('i0', i0s)
+@pytest.mark.parametrize('n_levels', [1, 3])
 def test_point_neighbors_levels(grid: DataSet, i0, n_levels):
     point_ids = grid.point_neighbors_levels(i0, n_levels=n_levels)
 

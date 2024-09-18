@@ -70,7 +70,7 @@ def test_triangulate_contours():
 
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader",
+    reason='Requires VTK>=9.1.0 for a vtkIOChemistry.vtkCMLMoleculeReader',
 )
 def test_protein_ribbon():
     tgqp = examples.download_3gqp()
@@ -125,7 +125,7 @@ def test_voxelize_binary_mask_auto_spacing(ant):
 
     # Test cell length
     if pv.vtk_version_info < (9, 2):
-        match = "Cell length percentile and sample size requires VTK 9.2 or greater."
+        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
         with pytest.raises(TypeError, match=match):
             ant.voxelize_binary_mask(cell_length_percentile=0.2)
     else:
@@ -146,7 +146,7 @@ def test_voxelize_binary_mask_auto_spacing(ant):
 @flaky_test
 def test_voxelize_binary_mask_cell_length_sample_size(ant):
     if pv.vtk_version_info < (9, 2):
-        match = "Cell length percentile and sample size requires VTK 9.2 or greater."
+        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
         with pytest.raises(TypeError, match=match):
             ant.voxelize_binary_mask(cell_length_percentile=0.2)
     else:
