@@ -1,7 +1,15 @@
 # enforce unified code style with black
+# https://github.com/pyvista/pyvista/pull/2180
 28914fc2236cd5850f536b151d0ef383855d8519
+# https://github.com/pyvista/pyvista/pull/2212
 db0691cfb6b033e55664ffba25deb456a386a48c
 
 # enforce unified code style in our documentation with blackdoc
+# https://github.com/pyvista/pyvista/pull/4119
 a26a52d037a265774be0ca06bb141e3346e73ad0
+# https://github.com/pyvista/pyvista/pull/4129
 635052d1bce8615fcc4879f5f200921a4f78aa1a
+
+# ruff formatting
+# https://github.com/pyvista/pyvista/pull/6657
+c0396f73936e1772bc86bde7438e10b9ad19547b
