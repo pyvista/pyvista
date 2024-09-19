@@ -842,10 +842,5 @@ class TextProperty(_vtk.vtkTextProperty):
         to_copy : pyvista.TextProperty
             Text's property to copy from.
 
-        Returns
-        -------
-        pyvista.TextProperty
-            Text's property to perform the shallow copy from.
-
         """
         self.ShallowCopy(to_copy)
