@@ -387,6 +387,7 @@ from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction
 from vtkmodules.vtkImagingHybrid import vtkSurfaceReconstructionFilter
+from vtkmodules.vtkImagingMorphological import vtkImageConnectivityFilter
 from vtkmodules.vtkImagingStencil import vtkImageStencil
 from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil
 from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter
@@ -430,8 +431,6 @@ from vtkmodules.vtkIOXML import vtkXMLTableWriter
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
 from vtkmodules.vtkIOXML import vtkXMLWriter
-
-from vtkmodules.vtkImagingMorphological import vtkImageConnectivityFilter
 
 with contextlib.suppress(ImportError):
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
