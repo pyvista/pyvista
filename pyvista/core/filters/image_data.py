@@ -1697,7 +1697,20 @@ class ImageDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> segmented_grid = pv.ImageData(dimensions=(4, 3, 3))
-        >>> segmented_grid.cell_data["Data"] = [0, 0, 0, 1, 0, 1, 1, 2, 0, 0, 0, 0]
+        >>> segmented_grid.cell_data["Data"] = [
+        ...     0,
+        ...     0,
+        ...     0,
+        ...     1,
+        ...     0,
+        ...     1,
+        ...     1,
+        ...     2,
+        ...     0,
+        ...     0,
+        ...     0,
+        ...     0,
+        ... ]
         >>> segmented_grid.plot(show_edges=True)
 
         Label the connected regions. The cells with a `0` value are excluded from the
@@ -1707,32 +1720,54 @@ class ImageDataFilters(DataSetFilters):
         >>> connected = segmented_grid.label_connectivity()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
-        >>> _ = pl.add_mesh(connected.threshold(0.5, invert=True), show_edges=True, opacity=0.5)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
         >>> pl.show()
 
         Exclude the cell with a `2` value.
 
-        >>> connected = segmented_grid.label_connectivity(scalar_range=[1,1])
+        >>> connected = segmented_grid.label_connectivity(
+        ...     scalar_range=[1, 1]
+        ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
-        >>> _ = pl.add_mesh(connected.threshold(0.5, invert=True), show_edges=True, opacity=0.5)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
         >>> pl.show()
 
         Label all connected regions with a constant value.
 
-        >>> connected = segmented_grid.label_connectivity(label_mode='constant', constant_value=10)
+        >>> connected = segmented_grid.label_connectivity(
+        ...     label_mode='constant', constant_value=10
+        ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
-        >>> _ = pl.add_mesh(connected.threshold(0.5, invert=True), show_edges=True, opacity=0.5)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
         >>> pl.show()
 
         Label only the regions that include seed points, by seed order.
 
         >>> points = [(2, 1, 0), (0, 0, 1)]
-        >>> connected = segmented_grid.label_connectivity(extraction_mode='point_seeds', point_seeds=points)
+        >>> connected = segmented_grid.label_connectivity(
+        ...     extraction_mode='point_seeds', point_seeds=points
+        ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
-        >>> _ = pl.add_mesh(connected.threshold(0.5, invert=True), show_edges=True, opacity=0.5)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
         >>> pl.show()
 
         """
@@ -1821,8 +1856,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetLabelModeToConstantValue()
             if constant_value is None:
                 raise ValueError(
-                    '`constant_value` must be provided when'
-                    f' `extraction_mode`is "{label_mode}".'
+                    '`constant_value` must be provided when' f' `extraction_mode`is "{label_mode}".'
                 )
             alg.SetLabelConstantValue(int(constant_value))
         elif label_mode == 'seeds':
