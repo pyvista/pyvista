@@ -716,6 +716,12 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
 
     """
 
+    def __init__(self):
+        """Initialize actor."""
+        super().__init__()
+        camera = pyvista.Camera()
+        self.camera = camera
+
     @property
     def pole(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the pole position.
@@ -750,7 +756,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
         >>> polaxes.camera = pv.Camera()
 
         """
-        return pyvista.Camera(self.GetCamera())
+        return self.GetCamera()
 
     @camera.setter
     def camera(self, camera: pyvista.Camera):  # numpydoc ignore=GL08
@@ -872,7 +878,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
         >>> import pyvista as pv
         >>> polaxes = pv.PolarAxesActor()
         >>> polaxes.number_of_radial_axes
-        5
+        0
         >>> polaxes.number_of_radial_axes = 10
         >>> polaxes.number_of_radial_axes
         10
