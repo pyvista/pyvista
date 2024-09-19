@@ -878,7 +878,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
         10
 
         """
-        return self.GetNumberOfRadialAxes()
+        return self.GetRequestedNumberOfRadialAxes()
 
     @number_of_radial_axes.setter
     def number_of_radial_axes(self, number_of_radial_axes: int):  # numpydoc ignore=GL08
