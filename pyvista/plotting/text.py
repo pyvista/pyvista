@@ -834,7 +834,7 @@ class TextProperty(_vtk.vtkTextProperty):
     def bold(self, bold: bool):  # numpydoc ignore=GL08
         self.SetBold(bold)
 
-    def shallow_copy(self, to_copy: TextProperty) -> TextProperty:
+    def shallow_copy(self, to_copy: TextProperty) -> None:
         """Create a shallow copy of the text's property.
 
         Parameters
