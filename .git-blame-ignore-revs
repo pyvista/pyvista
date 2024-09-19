@@ -11,5 +11,9 @@ a26a52d037a265774be0ca06bb141e3346e73ad0
 635052d1bce8615fcc4879f5f200921a4f78aa1a
 
 # ruff formatting
+# https://github.com/pyvista/pyvista/pull/6607
+7c4166477b875d40e4650b102f67a29a40c2d8f2
+# https://github.com/pyvista/pyvista/pull/6632
+7f8ba86bbe07f85380937bc8d7561775e6a1d4d8
 # https://github.com/pyvista/pyvista/pull/6657
 c0396f73936e1772bc86bde7438e10b9ad19547b
