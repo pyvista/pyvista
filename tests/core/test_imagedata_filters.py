@@ -468,3 +468,80 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):
         logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=True)
+
+
+@pytest.fixture
+def segmented_grid():
+    segmented_grid = pv.ImageData(dimensions=(4, 3, 3))
+    segmented_grid.cell_data['Data'] = [0, 0, 0, 1, 0, 1, 1, 2, 0, 0, 0, 0]
+    return segmented_grid
+
+
+def test_label_connectivity(segmented_grid):
+    # Test default parameters
+    connected = segmented_grid.label_connectivity()
+    assert isinstance(connected, pv.ImageData)
+    assert connected.bounds == segmented_grid.bounds
+    assert 'RegionId' in connected.cell_data
+    assert connected.cell_data['RegionId'].dtype == 'uint8'
+    # Test that three distinct connected regions were labelled
+    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2, 3])
+    # Test that the first region id corresponds to the largest region (2 cells)
+    assert connected.threshold(0.5).threshold(1.5, invert=True).n_cells == 2
+
+
+def test_label_connectivity_point_data(segmented_grid):
+    # Test default parameters
+    segmented_points = segmented_grid.cells_to_points()
+    connected = segmented_points.label_connectivity()
+    assert isinstance(connected, pv.ImageData)
+    assert connected.bounds == segmented_points.bounds
+    assert 'RegionId' in connected.point_data
+    assert connected.point_data['RegionId'].dtype == 'uint8'
+    # Test that three distinct connected regions were labelled
+    assert all(np.unique(connected.point_data['RegionId']) == [0, 1, 2, 3])
+
+
+def test_label_connectivity_largest_region(segmented_grid):
+    connected = segmented_grid.label_connectivity(extraction_mode='largest')
+    # Test that only one region was labelled
+    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1])
+    # Test that the first region id corresponds to the largest region (2 cells)
+    assert connected.threshold(0.5).n_cells == 2
+
+
+def test_label_connectivity_seed_points(segmented_grid):
+    points = [(2, 1, 0), (0, 0, 1)]
+    connected = segmented_grid.label_connectivity(
+        extraction_mode='point_seeds', point_seeds=points, label_mode='seeds'
+    )
+    # Test that two regions were labelled
+    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2])
+    # Test that the second region id corresponds to the largest region (2 cells) which
+    # corresponds to the second seed coordinates
+    assert connected.threshold(1.5).n_cells == 2
+
+
+def test_label_connectivity_constant_label(segmented_grid):
+    connected = segmented_grid.label_connectivity(label_mode='constant', constant_value=10)
+    assert all(np.unique(connected.cell_data['RegionId']) == [0, 10])
+
+
+def test_label_connectivity_inplace(segmented_grid):
+    connected = segmented_grid.label_connectivity(inplace=True)
+    assert connected == segmented_grid
+    assert 'RegionId' in connected.cell_data
+    assert 'Data' in connected.cell_data
+
+
+def test_label_connectivity_invalid_parameters(segmented_grid):
+    with pytest.raises(ValueError):  # noqa: PT011
+        _ = segmented_grid.label_connectivity(extraction_mode='invalid')
+    with pytest.raises(ValueError):  # noqa: PT011
+        _ = segmented_grid.label_connectivity(extraction_mode='point_seeds')
+    with pytest.raises(ValueError):  # noqa: PT011
+        _ = segmented_grid.label_connectivity(extraction_mode='point_seeds', point_seeds=2)
+    with pytest.raises(ValueError):  # noqa: PT011
+        _ = segmented_grid.label_connectivity(label_mode='invalid')
+    with pytest.raises(ValueError):  # noqa: PT011
+        _ = segmented_grid.label_connectivity(label_mode='constant')
