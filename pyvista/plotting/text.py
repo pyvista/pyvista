@@ -833,3 +833,19 @@ class TextProperty(_vtk.vtkTextProperty):
     @bold.setter
     def bold(self, bold: bool):  # numpydoc ignore=GL08
         self.SetBold(bold)
+
+    def shallow_copy(self, to_copy: TextProperty) -> TextProperty:
+        """Create a shallow copy of the text's property.
+
+        Parameters
+        ----------
+        to_copy : pyvista.TextProperty
+            Text's property to copy from.
+
+        Returns
+        -------
+        pyvista.TextProperty
+            Text's property to perform the shallow copy from.
+
+        """
+        self.ShallowCopy(to_copy)
