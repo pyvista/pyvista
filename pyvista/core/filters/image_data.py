@@ -1611,7 +1611,7 @@ class ImageDataFilters(DataSetFilters):
         self,
         *,
         scalars: str | None = None,
-        scalar_range: str | VectorLike[int] | VectorLike[float] | None = 'auto',
+        scalar_range: Literal['auto'] | VectorLike[float] | None = 'auto',
         extraction_mode: Literal['all', 'largest', 'point_seeds'] = 'all',
         point_seeds: MatrixLike[float] | Sequence[float] | _vtk.vtkDataSet | None = None,
         label_mode: Literal['size', 'constant', 'seeds'] = 'size',
@@ -1783,7 +1783,7 @@ class ImageDataFilters(DataSetFilters):
 
         if field == FieldAssociation.CELL:
             # Convert to point data
-            input_mesh = input_mesh.cells_to_points(scalars=scalars)
+            input_mesh = input_mesh.cells_to_points(scalars=scalars, copy=False)
 
         # Set vtk algorithm
         alg = _vtk.vtkImageConnectivityFilter()
@@ -1829,7 +1829,7 @@ class ImageDataFilters(DataSetFilters):
                 )
             elif isinstance(point_seeds, (Sequence, np.ndarray)):
                 # Ensure points are floats, see pyvista.core.utilities.points
-                point_seeds = np.array(point_seeds, dtype=float)
+                point_seeds = np.asanyarray(point_seeds, dtype=float)
                 # PointSet requires vtk >= 9.1.0
                 # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
                 if pyvista.vtk_version_info >= (9, 1, 0):
@@ -1837,7 +1837,7 @@ class ImageDataFilters(DataSetFilters):
                 else:
                     point_seeds = pyvista.PolyData(point_seeds)
             elif not isinstance(point_seeds, _vtk.vtkDataSet):
-                raise ValueError(
+                raise TypeError(
                     '`point_seeds` must either be a sequence of point coordinates, a numpy'
                     ' array of point coordinates or a `vtk.vtkDataSet`.',
                 )
@@ -1876,7 +1876,7 @@ class ImageDataFilters(DataSetFilters):
 
         if field == FieldAssociation.CELL:
             # Convert back to cell data
-            output = output.points_to_cells()
+            output = output.points_to_cells(copy=False)
             # Add label `RegionId` to original dataset as cell data if required
             if inplace:
                 self.cell_data['RegionId'] = output.cell_data['RegionId']  # type: ignore[attr-defined]

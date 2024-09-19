@@ -431,8 +431,9 @@ from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridReader
 from vtkmodules.vtkIOXML import vtkXMLUnstructuredGridWriter
 from vtkmodules.vtkIOXML import vtkXMLWriter
 
+from vtkmodules.vtkImagingMorphological import vtkImageConnectivityFilter
+
 with contextlib.suppress(ImportError):
-    from vtkmodules.vtkImagingMorphological import vtkImageConnectivityFilter
     from vtkmodules.vtkImagingMorphological import vtkImageDilateErode3D
 
 try:
