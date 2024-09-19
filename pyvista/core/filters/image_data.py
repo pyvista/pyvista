@@ -12,6 +12,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -1612,8 +1613,8 @@ class ImageDataFilters(DataSetFilters):
         *,
         scalars: str | None = None,
         scalar_range: Literal['auto'] | VectorLike[float] | None = 'auto',
-        extraction_mode: Literal['all', 'largest', 'point_seeds'] = 'all',
-        point_seeds: MatrixLike[float] | Sequence[float] | _vtk.vtkDataSet | None = None,
+        extraction_mode: Literal['all', 'largest', 'seeded'] = 'all',
+        point_seeds: MatrixLike[float] | VectorLike[float] | _vtk.vtkDataSet | None = None,
         label_mode: Literal['size', 'constant', 'seeds'] = 'size',
         constant_value: int | None = None,
         inplace: bool = False,
@@ -1647,22 +1648,22 @@ class ImageDataFilters(DataSetFilters):
             Scalars to use to filter points. If `None` is provided, the scalars is
             automatically set, if possible.
 
-        scalar_range : str, VectorLike[int], VectorLike[float], None, default: 'auto'
+        scalar_range : str, Literal['all'], VectorLike[float], None, default: 'auto'
             Points whose scalars value is within `'scalar_range'` are considered for
             connectivity. The bounds are inclusive. If `'auto'`, the range is automatically
             set to include all scalars values except the smallest. If `None`, default to
             [`0.5`, :const:`~vtk.VTK_DOUBLE_MAX`].
 
-        extraction_mode : Literal['all', 'largest', 'point_seeds'], default: 'all'
+        extraction_mode : Literal['all', 'largest', 'seeded'], default: 'all'
             Determine how the connected regions are extracted. If `'all'`, all connected
             regions are extracted. If `'largest'`, only the largest region is extracted.
-            If `'point_seeds'`, only the regions that include the points defined with
+            If `'seeded'`, only the regions that include the points defined with
             `point_seeds` are extracted.
 
-        point_seeds : MatrixLike[float], Sequence[float], _vtk.vtkDataSet, optional
+        point_seeds : MatrixLike[float], VectorLike[float], _vtk.vtkDataSet, optional
             The point coordinates to use as seeds, specified as a (N, 3) array like or
             as a :class:`~vtk.vtkDataSet`. Has no effect if `extraction_mode` is not
-            `'point_seeds'`.
+            `'seeded'`.
 
         label_mode : Literal['size', 'constant', 'seeds'], default: 'size'
             Determine how the extracted regions are labelled. If `'size'`, label regions
@@ -1759,7 +1760,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> points = [(2, 1, 0), (0, 0, 1)]
         >>> connected = segmented_grid.label_connectivity(
-        ...     extraction_mode='point_seeds', point_seeds=points
+        ...     extraction_mode='seeded', point_seeds=points
         ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
@@ -1802,27 +1803,18 @@ class ImageDataFilters(DataSetFilters):
             # See https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html
             pass
         else:
-            if scalar_range == 'auto':
+            if isinstance(scalar_range, str) and scalar_range == 'auto':
                 unique_scalars = np.unique(input_mesh.point_data[scalars])
                 scalar_range = [unique_scalars[1], unique_scalars[-1]]
-
-            elif not isinstance(scalar_range, (np.ndarray, Sequence)):
-                raise TypeError('Scalar range must be a numpy array, a sequence, "auto" or None.')
-
-            if len(scalar_range) != 2:
-                raise ValueError('Scalar range must have two elements defining the min and max.')
-            if scalar_range[0] > scalar_range[1]:  # type: ignore[operator]
-                raise ValueError(
-                    f'Lower value of scalar range {scalar_range[0]}'
-                    f' cannot be greater than the upper value {scalar_range[0]}'
-                )
+            else:
+                scalar_range = _validation.validate_data_range(scalar_range)
             alg.SetScalarRange(*scalar_range)
 
         if extraction_mode == 'all':
             alg.SetExtractionModeToAllRegions()
         elif extraction_mode == 'largest':
             alg.SetExtractionModeToLargestRegion()
-        elif extraction_mode == 'point_seeds':
+        elif extraction_mode == 'seeded':
             if point_seeds is None:
                 raise ValueError(
                     '`point_seeds` must be specified when `extraction_mode="point_seeds"`.',
@@ -1842,12 +1834,15 @@ class ImageDataFilters(DataSetFilters):
                     ' array of point coordinates or a `vtk.vtkDataSet`.',
                 )
 
+            else:
+                point_seeds = pyvista.PolyData(point_seeds)
+
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
         else:
             raise ValueError(
                 f'Invalid `extraction_mode` "{extraction_mode}",'
-                ' use "all", "largest", or "point_seeds".'
+                ' use "all", "largest", or "seeded".'
             )
 
         if label_mode == 'size':

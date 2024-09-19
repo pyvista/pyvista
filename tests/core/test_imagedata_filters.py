@@ -513,7 +513,7 @@ def test_label_connectivity_largest_region(segmented_grid):
 def test_label_connectivity_seed_points(segmented_grid):
     points = [(2, 1, 0), (0, 0, 1)]
     connected = segmented_grid.label_connectivity(
-        extraction_mode='point_seeds', point_seeds=points, label_mode='seeds'
+        extraction_mode='seeded', point_seeds=points, label_mode='seeds'
     )
     # Test that two regions were labelled
     assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2])
@@ -535,13 +535,15 @@ def test_label_connectivity_inplace(segmented_grid):
 
 
 def test_label_connectivity_invalid_parameters(segmented_grid):
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='Invalid `extraction_mode`'):
         _ = segmented_grid.label_connectivity(extraction_mode='invalid')
-    with pytest.raises(ValueError):  # noqa: PT011
-        _ = segmented_grid.label_connectivity(extraction_mode='point_seeds')
-    with pytest.raises(ValueError):  # noqa: PT011
-        _ = segmented_grid.label_connectivity(extraction_mode='point_seeds', point_seeds=2)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='`point_seeds` must be specified when'):
+        _ = segmented_grid.label_connectivity(extraction_mode='seeded')
+    with pytest.raises(
+        TypeError, match='`point_seeds` must either be a sequence of point coordinates'
+    ):
+        _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2)
+    with pytest.raises(ValueError, match='Invalid `label_mode`'):
         _ = segmented_grid.label_connectivity(label_mode='invalid')
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError, match='`constant_value` must be provided'):
         _ = segmented_grid.label_connectivity(label_mode='constant')
