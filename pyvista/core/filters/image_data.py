@@ -1632,7 +1632,7 @@ class ImageDataFilters(DataSetFilters):
         extracted and labelled according to the strategy defined by `extraction_mode`
         and `label_mode`, respectively. Unconnected regions are labelled with `0` value.
 
-        .. versionadded:: 0.44.2
+        .. versionadded:: 0.45.0
 
         Notes
         -----
