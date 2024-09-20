@@ -719,8 +719,7 @@ class PolarAxesActor(_vtk.vtkPolarAxesActor):
     def __init__(self):
         """Initialize actor."""
         super().__init__()
-        camera = pyvista.Camera()
-        self.camera = camera
+        self.camera = pyvista.Camera()
 
     @property
     def pole(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
