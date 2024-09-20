@@ -502,6 +502,13 @@ def test_label_connectivity_point_data(segmented_grid):
     assert all(np.unique(connected.point_data['RegionId']) == [0, 1, 2, 3])
 
 
+def test_label_connectivity_scalar(segmented_grid):
+    segmented_grid.cell_data['AdditionalData'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    segmented_grid.set_active_scalars(name='AdditionalData')
+    connected = segmented_grid.label_connectivity(scalars='Data')
+    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2, 3])
+
+
 def test_label_connectivity_largest_region(segmented_grid):
     connected = segmented_grid.label_connectivity(extraction_mode='largest')
     # Test that only one region was labelled
