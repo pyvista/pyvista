@@ -1652,7 +1652,8 @@ class ImageDataFilters(DataSetFilters):
             Points whose scalars value is within `'scalar_range'` are considered for
             connectivity. The bounds are inclusive. If `'auto'`, the range is automatically
             set to include all scalars values except the smallest. If `None`, default to
-            [`0.5`, :const:`~vtk.VTK_DOUBLE_MAX`].
+            [`0.5`, :const:`~vtk.VTK_DOUBLE_MAX`]. While the filter silently accept
+            dissimilar types, using the same type as `scalars` values is recommended.
 
         extraction_mode : Literal['all', 'largest', 'seeded'], default: 'all'
             Determine how the connected regions are extracted. If `'all'`, all connected

@@ -522,16 +522,51 @@ def test_label_connectivity_seed_points(segmented_grid):
     assert connected.threshold(1.5).n_cells == 2
 
 
+def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):
+    points = pv.PolyData()
+    points.points = [(2, 1, 0), (0, 0, 1)]
+    connected = segmented_grid.label_connectivity(
+        extraction_mode='seeded', point_seeds=points, label_mode='seeds'
+    )
+    # Test that two regions were labelled
+    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2])
+    # Test that the second region id corresponds to the largest region (2 cells) which
+    # corresponds to the second seed coordinates
+    assert connected.threshold(1.5).n_cells == 2
+
+
+def test_label_connectivity_scalar_range(segmented_grid):
+    # Exclude the cell with a 2 value
+    connected = segmented_grid.label_connectivity(scalar_range=[1, 1])
+    # Test that three distinct connected regions were labelled
+    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2, 3])
+    # Test that the first region id has 1 cell
+    assert connected.threshold(0.5).threshold(1.5, invert=True).n_cells == 1
+
+
+def test_label_connectivity_scalar_range_default_vtk(segmented_grid):
+    segmented_grid.cell_data['Data'] = segmented_grid.cell_data['Data'].astype(float)
+    connected = segmented_grid.label_connectivity(scalar_range=None)
+    # Test that three distinct connected regions were labelled
+    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2, 3])
+
+
 def test_label_connectivity_constant_label(segmented_grid):
     connected = segmented_grid.label_connectivity(label_mode='constant', constant_value=10)
     assert all(np.unique(connected.cell_data['RegionId']) == [0, 10])
 
 
 def test_label_connectivity_inplace(segmented_grid):
+    segmented_points = segmented_grid.cells_to_points()
     connected = segmented_grid.label_connectivity(inplace=True)
     assert connected == segmented_grid
     assert 'RegionId' in connected.cell_data
     assert 'Data' in connected.cell_data
+
+    connected = segmented_points.label_connectivity(inplace=True)
+    assert connected == segmented_points
+    assert 'RegionId' in connected.point_data
+    assert 'Data' in connected.point_data
 
 
 def test_label_connectivity_invalid_parameters(segmented_grid):
@@ -545,5 +580,11 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2)
     with pytest.raises(ValueError, match='Invalid `label_mode`'):
         _ = segmented_grid.label_connectivity(label_mode='invalid')
+    with pytest.raises(
+        ValueError, match='Data Range with 2 elements must be sorted in ascending order'
+    ):
+        _ = segmented_grid.label_connectivity(scalar_range=[2, 1])
+    with pytest.raises(ValueError, match='Shape must be 2'):
+        _ = segmented_grid.label_connectivity(scalar_range=[1, 2, 3])
     with pytest.raises(ValueError, match='`constant_value` must be provided'):
         _ = segmented_grid.label_connectivity(label_mode='constant')
