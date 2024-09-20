@@ -1799,11 +1799,9 @@ class ImageDataFilters(DataSetFilters):
         )  # args: (idx, port, connection, field, name)
 
         # Set the scalar range considered for connectivity
-        if scalar_range is None:
-            # Default to vtk default 0.5 to VTK_DOUBLE_MAX, nothing to do
-            # See https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html
-            pass
-        else:
+        # Default to vtk default 0.5 to VTK_DOUBLE_MAX, nothing to do
+        # See https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html
+        if scalar_range is not None:
             if isinstance(scalar_range, str) and scalar_range == 'auto':
                 unique_scalars = np.unique(input_mesh.point_data[scalars])
                 scalar_range = [unique_scalars[1], unique_scalars[-1]]
