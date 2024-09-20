@@ -234,3 +234,13 @@ def test_property_bold(prop, bold):
     prop.bold = bold
     assert prop.GetBold() == bold
     assert prop.bold == bold
+
+
+@pytest.mark.parametrize('italic', [True, False])
+@pytest.mark.parametrize('bold', [True, False])
+def test_property_shallow_copy(prop, italic, bold):
+    prop.italic = italic
+    prop.bold = bold
+    text_prop = pv.TextProperty()
+    text_prop.shallow_copy(prop)
+    assert text_prop.bold == prop.bold
