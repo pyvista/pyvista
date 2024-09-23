@@ -1613,8 +1613,7 @@ class ImageDataFilters(DataSetFilters):
         self,
         *,
         scalars: str | None = None,
-        force_float: bool = True,
-        scalar_range: Literal['auto'] | VectorLike[float] | None = 'auto',
+        scalar_range: Literal['auto', 'foreground', 'vtk_default'] | VectorLike[float] = 'auto',
         extraction_mode: Literal['all', 'largest', 'seeded'] = 'all',
         point_seeds: MatrixLike[float] | VectorLike[float] | _vtk.vtkDataSet | None = None,
         label_mode: Literal['size', 'constant', 'seeds'] = 'size',
@@ -1626,7 +1625,7 @@ class ImageDataFilters(DataSetFilters):
 
         Only points whose `scalar` value is within the `scalar_range` are considered for
         connectivity. A 4-connectivity is used for 2D images or a 6-connectivity for 3D
-        images. This filter operates on point-based data. If cell=based data are provided,
+        images. This filter operates on point-based data. If cell-based data are provided,
         they are re-meshed to a point-based representation using
         :func:`~pyvista.ImageDataFilters.cells_to_points` and the output is meshed back
         to a cell-based representation with :func:`~pyvista.ImageDataFilters.points_to_cells`,
@@ -1647,18 +1646,18 @@ class ImageDataFilters(DataSetFilters):
             Scalars to use to filter points. If `None` is provided, the scalars is
             automatically set, if possible.
 
-        force_float : bool, default: True
-            Determine if the point data should be casted as float. Setting it to `False`
-            will optimize resources consumption in case the data are integers but may
-            lead to a unexpected behavior when the `scalar_range` is not defined by whole
-            numbers.
-
-        scalar_range : str, Literal['all'], VectorLike[float], None, default: 'auto'
+        scalar_range : str, Literal['auto', 'foreground', 'vtk_default'], VectorLike[float], default: 'auto'
             Points whose scalars value is within `'scalar_range'` are considered for
-            connectivity. The bounds are inclusive. If `'auto'`, the range is automatically
-            set to include all scalars values except the smallest. If `None`, default to
-            [`0.5`, :const:`~vtk.VTK_DOUBLE_MAX`]. While the filter silently accept
-            dissimilar types, using the same type as `scalars` values is recommended.
+            connectivity. The bounds are inclusive.
+                - `'auto'`: includes the full data range, similarly to :meth:`~pyvista.DataFilters.connectivity`.
+                - `'foreground'`: includes the full data range except the smallest value.
+                - `'vtk_default'`: default to [`0.5`, :const:`~vtk.VTK_DOUBLE_MAX`].
+                - `VectorLike[float]`: explicitly set the range.
+            The bounds are always cast to floats since `vtk` expects doubles. The scalars
+            data are also cast to floats to avoid unexpected behavior arising from implicit
+            type conversion. The only exceptions is if both bounds are whole numbers, in
+            which case the implicit conversion is safe. It will optimize resources consumption
+            if the data are integers.
 
         extraction_mode : Literal['all', 'largest', 'seeded'], default: 'all'
             Determine how the connected regions are extracted. If `'all'`, all connected
@@ -1730,7 +1729,9 @@ class ImageDataFilters(DataSetFilters):
         connected regions and labelled with `0`. The remaining cells define 3 different
         regions that are labelled by decreasing size.
 
-        >>> connected, labels, sizes = segmented_grid.label_connectivity()
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
+        ...     scalar_range='foreground'
+        ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
         >>> _ = pl.add_mesh(
@@ -1757,7 +1758,9 @@ class ImageDataFilters(DataSetFilters):
         Label all connected regions with a constant value.
 
         >>> connected, labels, sizes = segmented_grid.label_connectivity(
-        ...     label_mode='constant', constant_value=10
+        ...     scalar_range='foreground',
+        ...     label_mode='constant',
+        ...     constant_value=10,
         ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
@@ -1772,7 +1775,9 @@ class ImageDataFilters(DataSetFilters):
 
         >>> points = [(2, 1, 0), (0, 0, 1)]
         >>> connected, labels, sizes = segmented_grid.label_connectivity(
-        ...     extraction_mode='seeded', point_seeds=points
+        ...     scalar_range='foreground',
+        ...     extraction_mode='seeded',
+        ...     point_seeds=points,
         ... )
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
@@ -1798,15 +1803,33 @@ class ImageDataFilters(DataSetFilters):
             # Convert to point data
             input_mesh = input_mesh.cells_to_points(scalars=scalars, copy=False)
 
+        # Set vtk algorithm
+        alg = _vtk.vtkImageConnectivityFilter()
+        alg.SetInputDataObject(input_mesh)
+
+        # Set the scalar range considered for connectivity
+        # vtk default is 0.5 to VTK_DOUBLE_MAX
+        # See https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html
+        if scalar_range != 'vtk_default':
+            if scalar_range == 'auto':
+                scalar_range = input_mesh.get_data_range(scalars, preference='point')
+            elif scalar_range == 'foreground':
+                unique_scalars = np.unique(input_mesh.point_data[scalars])
+                scalar_range = (unique_scalars[1], unique_scalars[-1])
+            else:
+                scalar_range = _validation.validate_data_range(scalar_range)
+            alg.SetScalarRange(*scalar_range)
+
         scalars_casted_to_float = False
-        if force_float and np.issubdtype(input_mesh.point_data[scalars].dtype, np.integer):
+        if (
+            scalar_range == 'vtk_default'
+            or not scalar_range[0].is_integer()  # type: ignore[union-attr]
+            or not scalar_range[1].is_integer()  # type: ignore[union-attr]
+        ) and np.issubdtype(input_mesh.point_data[scalars].dtype, np.integer):
             input_mesh.point_data[scalars] = input_mesh.point_data[scalars].astype(float)
             # Keep track of the operation to cast back to int when the operation is inplace
             scalars_casted_to_float = True
 
-        # Set vtk algorithm
-        alg = _vtk.vtkImageConnectivityFilter()
-        alg.SetInputDataObject(input_mesh)
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -1814,17 +1837,6 @@ class ImageDataFilters(DataSetFilters):
             field.value,
             scalars,
         )  # args: (idx, port, connection, field, name)
-
-        # Set the scalar range considered for connectivity
-        # Default to vtk default 0.5 to VTK_DOUBLE_MAX, nothing to do
-        # See https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html
-        if scalar_range is not None:
-            if isinstance(scalar_range, str) and scalar_range == 'auto':
-                unique_scalars = np.unique(input_mesh.point_data[scalars])
-                scalar_range = [unique_scalars[1], unique_scalars[-1]]
-            else:
-                scalar_range = _validation.validate_data_range(scalar_range)
-            alg.SetScalarRange(*scalar_range)
 
         if extraction_mode == 'all':
             alg.SetExtractionModeToAllRegions()
@@ -1835,14 +1847,17 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(
                     '`point_seeds` must be specified when `extraction_mode="seeded"`.',
                 )
-                # PointSet requires vtk >= 9.1.0
-                # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
 
+            # PointSet requires vtk >= 9.1.0
+            # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
             elif not isinstance(point_seeds, _vtk.vtkDataSet):
                 if pyvista.vtk_version_info >= (9, 1, 0):
                     point_seeds = pyvista.PointSet(point_seeds)
                 else:
-                    point_seeds = pyvista.PolyData(point_seeds)
+                    # Assign points outside the constructor to not create useless cells
+                    tmp = point_seeds
+                    point_seeds = pyvista.PolyData()
+                    point_seeds.points = tmp  # type: ignore[assignment]
 
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
