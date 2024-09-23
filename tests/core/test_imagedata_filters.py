@@ -479,98 +479,107 @@ def segmented_grid():
 
 def test_label_connectivity(segmented_grid):
     # Test default parameters
-    connected = segmented_grid.label_connectivity()
+    connected, labels, sizes = segmented_grid.label_connectivity(force_float=False)
     assert isinstance(connected, pv.ImageData)
     assert connected.bounds == segmented_grid.bounds
     assert 'RegionId' in connected.cell_data
     assert connected.cell_data['RegionId'].dtype == 'uint8'
     # Test that three distinct connected regions were labelled
-    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2, 3])
+    assert all(labels == [1, 2, 3])
     # Test that the first region id corresponds to the largest region (2 cells)
-    assert connected.threshold(0.5).threshold(1.5, invert=True).n_cells == 2
+    assert sizes[0] == 2
 
 
 def test_label_connectivity_point_data(segmented_grid):
     # Test default parameters
     segmented_points = segmented_grid.cells_to_points()
-    connected = segmented_points.label_connectivity()
+    connected, labels, sizes = segmented_points.label_connectivity(force_float=False)
     assert isinstance(connected, pv.ImageData)
     assert connected.bounds == segmented_points.bounds
     assert 'RegionId' in connected.point_data
     assert connected.point_data['RegionId'].dtype == 'uint8'
     # Test that three distinct connected regions were labelled
-    assert all(np.unique(connected.point_data['RegionId']) == [0, 1, 2, 3])
+    assert all(labels == [1, 2, 3])
 
 
 def test_label_connectivity_scalar(segmented_grid):
     segmented_grid.cell_data['AdditionalData'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     segmented_grid.set_active_scalars(name='AdditionalData')
-    connected = segmented_grid.label_connectivity(scalars='Data')
-    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2, 3])
+    connected, labels, sizes = segmented_grid.label_connectivity(scalars='Data', force_float=False)
+    assert all(labels == [1, 2, 3])
 
 
 def test_label_connectivity_largest_region(segmented_grid):
-    connected = segmented_grid.label_connectivity(extraction_mode='largest')
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        force_float=False, extraction_mode='largest'
+    )
     # Test that only one region was labelled
-    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1])
+    assert all(labels == [1])
     # Test that the first region id corresponds to the largest region (2 cells)
-    assert connected.threshold(0.5).n_cells == 2
+    assert sizes[0] == 2
 
 
 def test_label_connectivity_seed_points(segmented_grid):
     points = [(2, 1, 0), (0, 0, 1)]
-    connected = segmented_grid.label_connectivity(
-        extraction_mode='seeded', point_seeds=points, label_mode='seeds'
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        force_float=False, extraction_mode='seeded', point_seeds=points, label_mode='seeds'
     )
     # Test that two regions were labelled
-    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2])
+    assert all(labels == [1, 2])
     # Test that the second region id corresponds to the largest region (2 cells) which
     # corresponds to the second seed coordinates
-    assert connected.threshold(1.5).n_cells == 2
+    assert sizes[1] == 2
 
 
 def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):
     points = pv.PolyData()
     points.points = [(2, 1, 0), (0, 0, 1)]
-    connected = segmented_grid.label_connectivity(
-        extraction_mode='seeded', point_seeds=points, label_mode='seeds'
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        force_float=False, extraction_mode='seeded', point_seeds=points, label_mode='seeds'
     )
     # Test that two regions were labelled
-    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2])
+    assert all(labels == [1, 2])
     # Test that the second region id corresponds to the largest region (2 cells) which
     # corresponds to the second seed coordinates
-    assert connected.threshold(1.5).n_cells == 2
+    assert sizes[1] == 2
 
 
 def test_label_connectivity_scalar_range(segmented_grid):
     # Exclude the cell with a 2 value
-    connected = segmented_grid.label_connectivity(scalar_range=[1, 1])
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        force_float=False, scalar_range=[1, 1]
+    )
     # Test that three distinct connected regions were labelled
-    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2, 3])
+    assert all(labels == [1, 2, 3])
     # Test that the first region id has 1 cell
-    assert connected.threshold(0.5).threshold(1.5, invert=True).n_cells == 1
+    assert sizes[0] == 1
 
 
-def test_label_connectivity_scalar_range_default_vtk(segmented_grid):
-    segmented_grid.cell_data['Data'] = segmented_grid.cell_data['Data'].astype(float)
-    connected = segmented_grid.label_connectivity(scalar_range=None)
+def test_label_connectivity_scalar_range_default_vtk_with_force_float(segmented_grid):
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        force_float=True, scalar_range=None, inplace=True
+    )
     # Test that three distinct connected regions were labelled
-    assert all(np.unique(connected.cell_data['RegionId']) == [0, 1, 2, 3])
+    assert all(labels == [1, 2, 3])
+    # Test that float are re-casted to int for inplace operation
+    assert np.issubdtype(connected.cell_data['Data'].dtype, np.integer)
 
 
 def test_label_connectivity_constant_label(segmented_grid):
-    connected = segmented_grid.label_connectivity(label_mode='constant', constant_value=10)
-    assert all(np.unique(connected.cell_data['RegionId']) == [0, 10])
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        force_float=False, label_mode='constant', constant_value=10
+    )
+    assert all([l in (0, 10) for l in labels])
 
 
 def test_label_connectivity_inplace(segmented_grid):
     segmented_points = segmented_grid.cells_to_points()
-    connected = segmented_grid.label_connectivity(inplace=True)
+    connected, labels, sizes = segmented_grid.label_connectivity(inplace=True)
     assert connected == segmented_grid
     assert 'RegionId' in connected.cell_data
     assert 'Data' in connected.cell_data
 
-    connected = segmented_points.label_connectivity(inplace=True)
+    connected, labels, sizes = segmented_points.label_connectivity(inplace=True)
     assert connected == segmented_points
     assert 'RegionId' in connected.point_data
     assert 'Data' in connected.point_data

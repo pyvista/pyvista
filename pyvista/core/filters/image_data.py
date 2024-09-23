@@ -25,6 +25,8 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
+    from numpy.typing import NDArray
+
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
@@ -1612,6 +1614,7 @@ class ImageDataFilters(DataSetFilters):
         self,
         *,
         scalars: str | None = None,
+        force_float: bool = True,
         scalar_range: Literal['auto'] | VectorLike[float] | None = 'auto',
         extraction_mode: Literal['all', 'largest', 'seeded'] = 'all',
         point_seeds: MatrixLike[float] | VectorLike[float] | _vtk.vtkDataSet | None = None,
@@ -1619,7 +1622,7 @@ class ImageDataFilters(DataSetFilters):
         constant_value: int | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
-    ) -> pyvista.ImageData:
+    ) -> tuple[pyvista.ImageData, NDArray[int], NDArray[int]]:
         """Find and label connected regions in a :class:`~pyvista.ImageData`.
 
         Only points whose `scalar` value is within the `scalar_range` are considered for
@@ -1639,14 +1642,17 @@ class ImageDataFilters(DataSetFilters):
         This filter implements `vtkImageConnectivityFilter
         <https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html>`_.
 
-        Using a dissimilar type for `scalars` values and `scalar_range` might produce
-        unexpected results.
-
         Parameters
         ----------
         scalars : str, optional
             Scalars to use to filter points. If `None` is provided, the scalars is
             automatically set, if possible.
+
+        force_float : bool, default: True
+            Determine if the point data should be casted as float. Setting it to `False`
+            will optimize resources consumption in case the data are integers but may
+            lead to a unexpected behavior when the `scalar_range` is not defined by whole
+            numbers.
 
         scalar_range : str, Literal['all'], VectorLike[float], None, default: 'auto'
             Points whose scalars value is within `'scalar_range'` are considered for
@@ -1688,6 +1694,12 @@ class ImageDataFilters(DataSetFilters):
             Either the input ImageData or a generated one where connected regions are
             labelled with a `'RegionId'` point-based or cell-based data.
 
+        NDArray[int]
+            The labels of each extracted regions.
+
+        NDArray[int]
+            The size (i.e., number of cells) of each extracted regions.
+
         See Also
         --------
         pyvista.DataSetFilters.connectivity
@@ -1719,7 +1731,7 @@ class ImageDataFilters(DataSetFilters):
         connected regions and labelled with `0`. The remaining cells define 3 different
         regions that are labelled by decreasing size.
 
-        >>> connected = segmented_grid.label_connectivity()
+        >>> connected, labels, sizes = segmented_grid.label_connectivity()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
         >>> _ = pl.add_mesh(
@@ -1731,7 +1743,7 @@ class ImageDataFilters(DataSetFilters):
 
         Exclude the cell with a `2` value.
 
-        >>> connected = segmented_grid.label_connectivity(
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
         ...     scalar_range=[1, 1]
         ... )
         >>> pl = pv.Plotter()
@@ -1745,7 +1757,7 @@ class ImageDataFilters(DataSetFilters):
 
         Label all connected regions with a constant value.
 
-        >>> connected = segmented_grid.label_connectivity(
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
         ...     label_mode='constant', constant_value=10
         ... )
         >>> pl = pv.Plotter()
@@ -1760,7 +1772,7 @@ class ImageDataFilters(DataSetFilters):
         Label only the regions that include seed points, by seed order.
 
         >>> points = [(2, 1, 0), (0, 0, 1)]
-        >>> connected = segmented_grid.label_connectivity(
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
         ...     extraction_mode='seeded', point_seeds=points
         ... )
         >>> pl = pv.Plotter()
@@ -1780,12 +1792,18 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(input_mesh)
         else:
             input_mesh.set_active_scalars(scalars)
+
         # Make sure we have point data (required by the filter)
         field, scalars = input_mesh.active_scalars_info
-
         if field == FieldAssociation.CELL:
             # Convert to point data
             input_mesh = input_mesh.cells_to_points(scalars=scalars, copy=False)
+
+        scalars_casted_to_float = False
+        if force_float and np.issubdtype(input_mesh.point_data[scalars].dtype, np.integer):
+            input_mesh.point_data[scalars] = input_mesh.point_data[scalars].astype(float)
+            # Keep track of the operation to cast back to int when the operation is inplace
+            scalars_casted_to_float = True
 
         # Set vtk algorithm
         alg = _vtk.vtkImageConnectivityFilter()
@@ -1868,6 +1886,10 @@ class ImageDataFilters(DataSetFilters):
 
         output = _get_output(alg)
 
+        labels: NDArray[int] = _vtk.vtk_to_numpy(alg.GetExtractedRegionLabels())
+
+        sizes: NDArray[int] = _vtk.vtk_to_numpy(alg.GetExtractedRegionSizes())
+
         if field == FieldAssociation.CELL:
             # Convert back to cell data
             output = output.points_to_cells(copy=False)
@@ -1880,7 +1902,9 @@ class ImageDataFilters(DataSetFilters):
             # Add label `RegionId` to original dataset as point data if required
             self.point_data['RegionId'] = output.point_data['RegionId']  # type: ignore[attr-defined]
             self.set_active_scalars(name='RegionId', preference='point')  # type: ignore[attr-defined]
+            if scalars_casted_to_float:
+                input_mesh.point_data[scalars] = input_mesh.point_data[scalars].astype(int)
 
         if inplace:
-            return self  # type: ignore[return-value]
-        return output
+            return self, labels, sizes  # type: ignore[return-value]
+        return output, labels, sizes
