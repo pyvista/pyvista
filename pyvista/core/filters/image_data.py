@@ -1834,7 +1834,7 @@ class ImageDataFilters(DataSetFilters):
         elif extraction_mode == 'seeded':
             if point_seeds is None:
                 raise ValueError(
-                    '`point_seeds` must be specified when `extraction_mode="point_seeds"`.',
+                    '`point_seeds` must be specified when `extraction_mode="seeded"`.',
                 )
             elif isinstance(point_seeds, (Sequence, np.ndarray)):
                 # Ensure points are floats, see pyvista.core.utilities.points
