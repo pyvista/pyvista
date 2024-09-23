@@ -418,6 +418,7 @@ class AxesActor(_vtk.vtkAxesActor):
         >>> axes_actor.labels = ['X Axis', 'Y Axis', 'Z Axis']
         >>> axes_actor.labels
         ('X Axis', 'Y Axis', 'Z Axis')
+
         """
         return self.x_label, self.y_label, self.z_label
 
@@ -442,7 +443,7 @@ class AxesActor(_vtk.vtkAxesActor):
         """
         # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
+            'Use of `x_axis_label` is deprecated. Use `x_label` instead.',
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
@@ -453,7 +454,7 @@ class AxesActor(_vtk.vtkAxesActor):
     def x_axis_label(self, label: str):  # numpydoc ignore=GL08
         # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `x_axis_label` is deprecated. Use `x_label` instead.",
+            'Use of `x_axis_label` is deprecated. Use `x_label` instead.',
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
@@ -490,7 +491,7 @@ class AxesActor(_vtk.vtkAxesActor):
         """
         # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
+            'Use of `y_axis_label` is deprecated. Use `y_label` instead.',
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
@@ -501,7 +502,7 @@ class AxesActor(_vtk.vtkAxesActor):
     def y_axis_label(self, label: str):  # numpydoc ignore=GL08
         # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `y_axis_label` is deprecated. Use `y_label` instead.",
+            'Use of `y_axis_label` is deprecated. Use `y_label` instead.',
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
@@ -538,7 +539,7 @@ class AxesActor(_vtk.vtkAxesActor):
         """
         # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
+            'Use of `z_axis_label` is deprecated. Use `z_label` instead.',
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
@@ -549,7 +550,7 @@ class AxesActor(_vtk.vtkAxesActor):
     def z_axis_label(self, label: str):  # numpydoc ignore=GL08
         # deprecated 0.44.0, convert to error in 0.46.0, remove 0.47.0
         warnings.warn(
-            "Use of `z_axis_label` is deprecated. Use `z_label` instead.",
+            'Use of `z_axis_label` is deprecated. Use `z_label` instead.',
             PyVistaDeprecationWarning,
         )
         if pyvista._version.version_info >= (0, 47):  # pragma: no cover
@@ -567,6 +568,7 @@ class AxesActor(_vtk.vtkAxesActor):
         >>> axes.axes_actor.z_label = 'This axis'
         >>> axes.axes_actor.z_label
         'This axis'
+
         """
         return self.GetZAxisLabelText()
 

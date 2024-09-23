@@ -28,7 +28,7 @@ contours = mesh.contour()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, opacity=0.85)
-pl.add_mesh(contours, color="white", line_width=5)
+pl.add_mesh(contours, color='white', line_width=5)
 pl.show()
 
 
@@ -42,7 +42,7 @@ mesh = examples.download_embryo()
 contours = mesh.contour(np.linspace(50, 200, 5))
 
 pl = pv.Plotter()
-pl.add_mesh(mesh.outline(), color="k")
+pl.add_mesh(mesh.outline(), color='k')
 pl.add_mesh(contours, opacity=0.25, clim=[0, 200])
 pl.camera_position = [
     (-130.99381142132086, 644.4868354828589, 163.80447435848686),
@@ -65,7 +65,7 @@ contours, edges = mesh.contour_banded(n_contours)
 
 # %%
 # Also make normal vectors
-arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
 
 # %%
 
@@ -88,6 +88,6 @@ pl.show()
 if pv.vtk_version_info >= (9, 3):
     label_map = pv.examples.load_frog_tissues()
     mesh = label_map.contour_labeled(smoothing=True)
-    mesh.plot(cmap="glasbey", cpos="yx", show_scalar_bar=False, clim=mesh.get_data_range())
+    mesh.plot(cmap='glasbey', cpos='yx', show_scalar_bar=False, clim=mesh.get_data_range())
 # %%
 # .. tags:: filter

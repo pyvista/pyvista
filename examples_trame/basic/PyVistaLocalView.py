@@ -14,10 +14,10 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.trame import PyVistaLocalView
 
-server = get_server(client_type="vue3")
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "PyVistaLocalView"
+state.trame__title = 'PyVistaLocalView'
 
 # -----------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ plotter.set_background('lightgrey')
 
 with SinglePageLayout(server) as layout:
     layout.icon.click = ctrl.view_reset_camera
-    layout.title.set_text("PyVistaLocalView")
+    layout.title.set_text('PyVistaLocalView')
 
     with layout.toolbar:
         vuetify3.VSpacer()
@@ -42,7 +42,7 @@ with SinglePageLayout(server) as layout:
     with layout.content:
         with vuetify3.VContainer(
             fluid=True,
-            classes="pa-0 fill-height",
+            classes='pa-0 fill-height',
         ):
             view = PyVistaLocalView(plotter)
             ctrl.view_update = view.update
@@ -55,5 +55,5 @@ with SinglePageLayout(server) as layout:
 # Main
 # -----------------------------------------------------------------------------
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     server.start()

@@ -76,8 +76,8 @@ sargs = dict(
     shadow=True,
     n_labels=3,
     italic=True,
-    fmt="%.1f",
-    font_family="arial",
+    fmt='%.1f',
+    font_family='arial',
 )
 
 p = pv.Plotter()
@@ -98,8 +98,8 @@ p.show()
 
 # Make a dictionary for the annotations
 annotations = {
-    2300: "High",
-    805.3: "Cutoff value",
+    2300: 'High',
+    805.3: 'Cutoff value',
 }
 
 p = pv.Plotter()

@@ -8,12 +8,15 @@ import functools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import Sequence
+from typing import cast
 import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
+from pyvista.core._typing_core import NumpyArray
 import pyvista.core._vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -21,22 +24,21 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
-from pyvista.core.utilities import transformations
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
-from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
+from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -133,6 +135,11 @@ class DataSetFilters:
         matrix : numpy.ndarray
             Transform matrix to transform the input dataset to the target dataset.
 
+        See Also
+        --------
+        align_xyz
+            Align a dataset to the x-y-z axes.
+
         Examples
         --------
         Create a cylinder, translate it, and use iterative closest point to
@@ -192,6 +199,249 @@ class DataSetFilters:
         if return_matrix:
             return self.transform(matrix, inplace=False), matrix
         return self.transform(matrix, inplace=False)
+
+    def align_xyz(
+        self,
+        *,
+        centered: bool = True,
+        axis_0_direction: VectorLike[float] | str | None = None,
+        axis_1_direction: VectorLike[float] | str | None = None,
+        axis_2_direction: VectorLike[float] | str | None = None,
+        return_matrix: bool = False,
+    ):
+        """Align a dataset to the x-y-z axes.
+
+        This filter aligns a mesh's :func:`~pyvista.principal_axes` to the world x-y-z
+        axes. The principal axes are effectively used as a rotation matrix to rotate
+        the dataset for the alignment. The transformation matrix used for the alignment
+        can optionally be returned.
+
+        Note that the transformation is not unique, since the signs of the principal
+        axes are arbitrary. Consequently, applying this filter to similar meshes
+        may result in dissimilar alignment (e.g. one axis may point up instead of down).
+        To address this, the sign of one or two axes may optionally be "seeded" with a
+        vector which approximates the axis or axes of the input. This can be useful
+        for cases where the orientation of the input has a clear physical meaning.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        centered : bool, default: True
+            Center the mesh at the origin. If ``False``, the aligned dataset has the
+            same center as the input.
+
+        axis_0_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's primary axis prior to
+            alignment. If set, this axis is flipped such that it best aligns with
+            the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        axis_1_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's secondary axis prior to
+            alignment. If set, this axis is flipped such that it best aligns with
+            the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        axis_2_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's third axis prior to
+            alignment. If set, this axis is flipped such that it best aligns with
+            the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        return_matrix : bool, default: False
+            Return the transform matrix as well as the aligned mesh.
+
+        Returns
+        -------
+        pyvista.DataSet
+            The dataset aligned to the x-y-z axes.
+
+        numpy.ndarray
+            Transform matrix to transform the input dataset to the x-y-z axes if
+            ``return_matrix`` is ``True``.
+
+        See Also
+        --------
+        pyvista.principal_axes
+            Best-fit axes used by this filter for the alignment.
+
+        align
+            Align a source mesh to a target mesh using iterative closest point (ICP).
+
+        Examples
+        --------
+        Create a dataset and align it to the x-y-z axes.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_oblique_cone()
+        >>> aligned = mesh.align_xyz()
+
+        Plot the aligned mesh along with the original. Show axes at the origin for
+        context.
+
+        >>> axes = pv.AxesAssembly(scale=aligned.length)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_mesh(
+        ...     mesh, style='wireframe', color='black', line_width=3
+        ... )
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        Align the mesh but don't center it.
+
+        >>> aligned = mesh.align_xyz(centered=False)
+
+        Plot the result again. The aligned mesh has the same position as the input.
+
+        >>> axes = pv.AxesAssembly(
+        ...     position=mesh.center, scale=aligned.length
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_mesh(
+        ...     mesh, style='wireframe', color='black', line_width=3
+        ... )
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        Note how the tip of the cone is pointing along the z-axis. This indicates that
+        the cone's axis is the third principal axis. It is also pointing in the negative
+        z-direction. To control the alignment so that the cone points upward, we can
+        seed an approximate direction specifying what "up" means for the original mesh
+        in world coordinates prior to the alignment.
+
+        We can see that the cone is originally pointing downward, somewhat in the
+        negative z-direction. Therefore, we can specify the ``'-z'`` vector
+        as the "up" direction of the mesh's third axis prior to alignment.
+
+        >>> aligned = mesh.align_xyz(axis_2_direction='-z')
+
+        Plot the mesh. The cone is now pointing upward in the desired direction.
+
+        >>> axes = pv.AxesAssembly(scale=aligned.length)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        The specified direction only needs to be approximate. For example, we get the
+        same result by specifying the ``'y'`` direction as the mesh's original "up"
+        direction.
+
+        >>> aligned, matrix = mesh.align_xyz(
+        ...     axis_2_direction='y', return_matrix=True
+        ... )
+        >>> axes = pv.AxesAssembly(scale=aligned.length)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_actor(axes)
+        >>> pl.show()
+
+        We can optionally return the transformation matrix.
+
+        >>> aligned, matrix = mesh.align_xyz(
+        ...     axis_2_direction='y', return_matrix=True
+        ... )
+
+        The matrix can be inverted, for example, to transform objects from the world
+        axes back to the original mesh's local coordinate system.
+
+        >>> inverse = pv.Transform(matrix).inverse_matrix
+
+        Use the inverse to label the object's axes prior to alignment. For actors,
+        we set the :attr:`~pyvista.Prop3D.user_matrix` as the inverse.
+
+        >>> axes_local = pv.AxesAssembly(
+        ...     scale=aligned.length,
+        ...     user_matrix=inverse,
+        ...     labels=["X'", "Y'", "Z'"],
+        ... )
+
+        Plot the original mesh with its local axes, along with the algned mesh and its
+        axes.
+
+        >>> axes_aligned = pv.AxesAssembly(scale=aligned.length)
+        >>> pl = pv.Plotter()
+        >>> # Add aligned mesh with axes
+        >>> _ = pl.add_mesh(aligned)
+        >>> _ = pl.add_actor(axes_aligned)
+        >>> # Add original mesh with axes
+        >>> _ = pl.add_mesh(
+        ...     mesh, style='wireframe', color='black', line_width=3
+        ... )
+        >>> _ = pl.add_actor(axes_local)
+        >>> pl.show()
+
+        """
+
+        def _validate_vector(vector, name):
+            if vector is not None:
+                if isinstance(vector, str):
+                    vector = vector.lower()
+                    valid_strings = list(NORMALS.keys())
+                    _validation.check_contains(item=vector, container=valid_strings, name=name)
+                    vector = NORMALS[vector]
+                vector = _validation.validate_array3(vector, dtype_out=float, name=name)
+            return vector
+
+        axes, std = pyvista.principal_axes(self.points, return_std=True)
+
+        if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
+            # Set directions of first two axes to +X,+Y by default
+            # Keep third axis as None (direction cannot be set if first two are set)
+            axis_0_direction = (1.0, 0.0, 0.0)
+            axis_1_direction = (0.0, 1.0, 0.0)
+        else:
+            axis_0_direction = _validate_vector(axis_0_direction, name='axis 0 direction')
+            axis_1_direction = _validate_vector(axis_1_direction, name='axis 1 direction')
+            axis_2_direction = _validate_vector(axis_2_direction, name='axis 2 direction')
+
+        # Swap any axes which have equal std (e.g. so that we XYZ order instead of YXZ order)
+        # Note: Swapping may create a left-handed coordinate frame. This is fixed later.
+        axes = _swap_axes(axes, std)
+
+        # Maybe flip directions of first two axes
+        if axis_0_direction is not None and np.dot(axes[0], axis_0_direction) < 0:
+            axes[0] *= -1
+        if axis_1_direction is not None and np.dot(axes[1], axis_1_direction) < 0:
+            axes[1] *= -1
+
+        # Ensure axes form a right-handed coordinate frame
+        if np.linalg.det(axes) < 0:
+            axes[2] *= -1
+
+        # Maybe flip direction of third axis
+        if axis_2_direction is not None:
+            if np.dot(axes[2], axis_2_direction) >= 0:
+                pass  # nothing to do, sign is correct
+            else:
+                if axis_0_direction is not None and axis_1_direction is not None:
+                    raise ValueError(
+                        f'Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation.'
+                    )
+                else:
+                    axes[2] *= -1
+                    # Need to also flip a second vector to keep system as right-handed
+                    if axis_1_direction is not None:
+                        # Second axis has been set, so modify first axis
+                        axes[0] *= -1
+                    else:
+                        # First axis has been set, so modify second axis
+                        axes[1] *= -1
+
+        rotation = Transform().rotate(axes)
+        aligned = self.transform(rotation, inplace=False)
+        translation = Transform().translate(-np.array(aligned.center))
+        if not centered:
+            translation.translate(self.center)  # type: ignore[attr-defined]
+        aligned.transform(translation, inplace=True)
+
+        if return_matrix:
+            return aligned, rotation.concatenate(translation).matrix
+        return aligned
 
     def clip(
         self,
@@ -375,12 +625,12 @@ class DataSetFilters:
         elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
             if poly.n_cells != 6:
-                raise ValueError("The bounds mesh must have only 6 faces.")
+                raise ValueError('The bounds mesh must have only 6 faces.')
             bounds = []
             poly.compute_normals(inplace=True)
             for cid in range(6):
                 cell = poly.extract_cells(cid)
-                normal = cell["Normals"][0]
+                normal = cell['Normals'][0]
                 bounds.append(normal)
                 bounds.append(cell.center)
         if not isinstance(bounds, (np.ndarray, Sequence)):
@@ -617,7 +867,7 @@ class DataSetFilters:
         ----------
         surface : pyvista.PolyData
             The ``PolyData`` surface mesh to use as a clipping
-            function.  If this input mesh is not a :class`pyvista.PolyData`,
+            function.  If this input mesh is not a :class:`pyvista.PolyData`,
             the external surface will be extracted.
 
         invert : bool, default: True
@@ -1293,19 +1543,19 @@ class DataSetFilters:
 
         _set_threshold_limit(alg, value, method, invert)
 
-        if component_mode == "component":
+        if component_mode == 'component':
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
             if not isinstance(component, (int, np.integer)):
-                raise TypeError("component must be int")
+                raise TypeError('component must be int')
             if component > (dim - 1) or component < 0:
                 raise ValueError(
-                    f"scalars has {dim} components: supplied component {component} not in range",
+                    f'scalars has {dim} components: supplied component {component} not in range',
                 )
             alg.SetSelectedComponent(component)
-        elif component_mode == "all":
+        elif component_mode == 'all':
             alg.SetComponentModeToUseAll()
-        elif component_mode == "any":
+        elif component_mode == 'any':
             alg.SetComponentModeToUseAny()
         else:
             raise ValueError(
@@ -1465,6 +1715,11 @@ class DataSetFilters:
         -------
         pyvista.PolyData
             Mesh containing an outline of the original dataset.
+
+        See Also
+        --------
+        bounding_box
+            Similar filter with additional options.
 
         Examples
         --------
@@ -1993,11 +2248,11 @@ class DataSetFilters:
 
         """
         if use_bounds:
-            if isinstance(use_bounds, (int, bool)):
-                b = self.GetBounds()
-            origin = [b[0], b[2], b[4]]  # BOTTOM LEFT CORNER
-            point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
-            point_v = [b[0], b[3], b[4]]  # TOP LEFT CORNER
+            _validation.check_type(use_bounds, (int, bool))
+            bounds = self.bounds
+            origin = [bounds.x_min, bounds.y_min, bounds.z_min]  # BOTTOM LEFT CORNER
+            point_u = [bounds.x_max, bounds.y_min, bounds.z_min]  # BOTTOM RIGHT CORNER
+            point_v = [bounds.x_min, bounds.y_max, bounds.z_min]  # TOP LEFT CORNER
         alg = _vtk.vtkTextureMapToPlane()
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
@@ -2192,8 +2447,9 @@ class DataSetFilters:
         See :ref:`cell_centers_example` for more examples using this filter.
 
         """
+        input_mesh = self.cast_to_poly_points() if isinstance(self, pyvista.PointSet) else self
         alg = _vtk.vtkCellCenters()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(input_mesh)
         alg.SetVertexCells(vertex)
         _update_alg(alg, progress_bar, 'Generating Points at the Center of the Cells')
         return _get_output(alg)
@@ -2355,10 +2611,10 @@ class DataSetFilters:
             try:
                 set_default_active_scalars(self)
             except MissingDataError:
-                warnings.warn("No data to use for scale. scale will be set to False.")
+                warnings.warn('No data to use for scale. scale will be set to False.')
                 scale = False
             except AmbiguousDataError as err:
-                warnings.warn(f"{err}\nIt is unclear which one to use. scale will be set to False.")
+                warnings.warn(f'{err}\nIt is unclear which one to use. scale will be set to False.')
                 scale = False
 
         if scale:
@@ -2382,11 +2638,11 @@ class DataSetFilters:
             try:
                 pyvista.set_default_active_vectors(dataset)
             except MissingDataError:
-                warnings.warn("No vector-like data to use for orient. orient will be set to False.")
+                warnings.warn('No vector-like data to use for orient. orient will be set to False.')
                 orient = False
             except AmbiguousDataError as err:
                 warnings.warn(
-                    f"{err}\nIt is unclear which one to use. orient will be set to False.",
+                    f'{err}\nIt is unclear which one to use. orient will be set to False.',
                 )
                 orient = False
 
@@ -2395,7 +2651,7 @@ class DataSetFilters:
             and orient
             and dataset.active_vectors_info.association != dataset.active_scalars_info.association
         ):
-            raise ValueError("Both ``scale`` and ``orient`` must use point data or cell data.")
+            raise ValueError('Both ``scale`` and ``orient`` must use point data or cell data.')
 
         source_data = dataset
         set_actives_on_source_data = False
@@ -2682,7 +2938,7 @@ class DataSetFilters:
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(before_extraction)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
-                    _update_alg(remove, progress_bar, "Removing Cells.")
+                    _update_alg(remove, progress_bar, 'Removing Cells.')
                     extracted = _get_output(remove)
                     extracted.clean(
                         point_merging=False,
@@ -2711,7 +2967,7 @@ class DataSetFilters:
                 raise ValueError('Scalar range must have two elements defining the min and max.')
             if scalar_range[0] > scalar_range[1]:
                 raise ValueError(
-                    f"Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}",
+                    f'Lower value of scalar range {scalar_range[0]} cannot be greater than the upper value {scalar_range[0]}',
                 )
 
             # Input will be modified, so copy first
@@ -3075,7 +3331,7 @@ class DataSetFilters:
         output = _get_output(alg)
         if inplace:
             if isinstance(self, (_vtk.vtkImageData, _vtk.vtkRectilinearGrid)):
-                raise TypeError("This filter cannot be applied inplace for this mesh type.")
+                raise TypeError('This filter cannot be applied inplace for this mesh type.')
             self.copy_from(output, deep=False)
             return self
         return output
@@ -3539,12 +3795,12 @@ class DataSetFilters:
 
         """
         if not isinstance(surface, pyvista.PolyData):
-            raise TypeError("`surface` must be `pyvista.PolyData`")
+            raise TypeError('`surface` must be `pyvista.PolyData`')
         if check_surface and surface.n_open_edges > 0:
             raise RuntimeError(
-                "Surface is not closed. Please read the warning in the "
-                "documentation for this function and either pass "
-                "`check_surface=False` or repair the surface.",
+                'Surface is not closed. Please read the warning in the '
+                'documentation for this function and either pass '
+                '`check_surface=False` or repair the surface.',
             )
         alg = _vtk.vtkSelectEnclosedPoints()
         alg.SetInputData(self)
@@ -3578,7 +3834,7 @@ class DataSetFilters:
         For `mesh1.sample(mesh2)`, the arrays from `mesh2` are sampled onto
         the points of `mesh1`.  This function interpolates within an
         enclosing cell.  This contrasts with
-        :function`pyvista.DataSetFilters.interpolate` that uses a distance
+        :func:`pyvista.DataSetFilters.interpolate` that uses a distance
         weighting for nearby points.  If there is cell topology, `sample` is
         usually preferred.
 
@@ -3688,16 +3944,16 @@ class DataSetFilters:
         if locator:
             if isinstance(locator, str):
                 locator_map = {
-                    "cell": _vtk.vtkCellLocator(),
-                    "cell_tree": _vtk.vtkCellTreeLocator(),
-                    "obb_tree": _vtk.vtkOBBTree(),
-                    "static_cell": _vtk.vtkStaticCellLocator(),
+                    'cell': _vtk.vtkCellLocator(),
+                    'cell_tree': _vtk.vtkCellTreeLocator(),
+                    'obb_tree': _vtk.vtkOBBTree(),
+                    'static_cell': _vtk.vtkStaticCellLocator(),
                 }
                 try:
                     locator = locator_map[locator]
                 except KeyError as err:
                     raise ValueError(
-                        f"locator must be a string from {locator_map.keys()}, got {locator}",
+                        f'locator must be a string from {locator_map.keys()}, got {locator}',
                     ) from err
             alg.SetCellLocatorPrototype(locator)
 
@@ -3705,7 +3961,7 @@ class DataSetFilters:
             try:
                 alg.SnapToCellWithClosestPointOn()
             except AttributeError:  # pragma: no cover
-                raise VTKVersionError("`snap_to_closest_point=True` requires vtk 9.3.0 or newer")
+                raise VTKVersionError('`snap_to_closest_point=True` requires vtk 9.3.0 or newer')
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
 
@@ -3946,7 +4202,7 @@ class DataSetFilters:
             n_points = 1
 
         if (pointa is not None and pointb is None) or (pointa is None and pointb is not None):
-            raise ValueError("Both pointa and pointb must be provided")
+            raise ValueError('Both pointa and pointb must be provided')
         elif pointa is not None and pointb is not None:
             source = _vtk.vtkLineSource()
             source.SetPoint1(pointa)
@@ -4109,7 +4365,7 @@ class DataSetFilters:
             max_velocity = self.get_data_range()[-1]
             max_time = 4.0 * self.GetLength() / max_velocity
         if not isinstance(source, pyvista.DataSet):
-            raise TypeError("source must be a pyvista.DataSet")
+            raise TypeError('source must be a pyvista.DataSet')
 
         # vtk throws error with two Structured Grids
         # See: https://github.com/pyvista/pyvista/issues/1373
@@ -4274,6 +4530,7 @@ class DataSetFilters:
         >>> plotter.show()
 
         See :ref:`2d_streamlines_example` for more examples using this filter.
+
         """
         if integrator_type not in [2, 4]:
             raise ValueError('Integrator type must be one of `2` or `4`.')
@@ -5287,6 +5544,7 @@ class DataSetFilters:
         the MultiBlock directly.
 
         Clear scalar data so we can color each mesh using a single color
+
         >>> _ = [block.clear_data() for block in multiblock]
         >>>
         >>> plot = pv.Plotter()
@@ -5611,7 +5869,7 @@ class DataSetFilters:
                 )
             except KeyError:
                 raise ValueError(
-                    f'Array name \'{scalars_}\' is not valid and does not exist with this dataset.',
+                    f"Array name '{scalars_}' is not valid and does not exist with this dataset.",
                 )
             association_ = get_array_association(self, scalars_, preference=preference_)
             return array_, association_
@@ -6056,6 +6314,55 @@ class DataSetFilters:
             output.clear_data()
         return output
 
+    def merge_points(self, tolerance=0.0, inplace=False, progress_bar=False):
+        """Merge duplicate points in this mesh.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        tolerance : float, optional
+            Specify a tolerance to use when comparing points. Points within
+            this tolerance will be merged.
+
+        inplace : bool, default: False
+            Overwrite the original mesh with the result. Only possible if the input
+            is :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData or pyvista.UnstructuredGrid
+            Mesh with merged points. PolyData is returned only if the input is PolyData.
+
+        Examples
+        --------
+        Merge duplicate points in a mesh.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cylinder(resolution=4)
+        >>> mesh.n_points
+        16
+        >>> _ = mesh.merge_points(inplace=True)
+        >>> mesh.n_points
+        8
+
+        """
+        # Create a second mesh with points. This is required for the merge
+        # to work correctly. Additional points are not required for PolyData inputs
+        other_points = None if isinstance(self, pyvista.PolyData) else self.points
+        other_mesh = pyvista.PolyData(other_points)
+        return self.merge(
+            other_mesh,
+            merge_points=True,
+            tolerance=tolerance,
+            inplace=inplace,
+            main_has_priority=True,
+            progress_bar=progress_bar,
+        )
+
     def merge(
         self,
         grid=None,
@@ -6150,7 +6457,7 @@ class DataSetFilters:
                 self.deep_copy(merged)
                 return self
             else:
-                raise TypeError(f"Mesh type {type(self)} cannot be overridden by output.")
+                raise TypeError(f'Mesh type {type(self)} cannot be overridden by output.')
         return merged
 
     def __add__(self, dataset):
@@ -6600,7 +6907,7 @@ class DataSetFilters:
 
     def transform(
         self: _vtk.vtkDataSet,
-        trans: _vtk.vtkMatrix4x4 | _vtk.vtkTransform | NumpyArray[float],
+        trans: TransformLike,
         transform_all_input_vectors=False,
         inplace=True,
         progress_bar=False,
@@ -6628,7 +6935,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or numpy.ndarray
+        trans : TransformLike
             Accepts a vtk transformation object or a 4x4
             transformation matrix.
 
@@ -6663,9 +6970,8 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> mesh = examples.load_airplane()
 
-        Here a 4x4 :class:`numpy.ndarray` is used, but
-        ``vtk.vtkMatrix4x4`` and ``vtk.vtkTransform`` are also
-        accepted.
+        Here a 4x4 :class:`numpy.ndarray` is used, but any :class:`~pyvista.TransformLike`
+        is accepted.
 
         >>> transform_matrix = np.array(
         ...     [
@@ -6682,29 +6988,10 @@ class DataSetFilters:
         if inplace and isinstance(self, pyvista.Grid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
-        if isinstance(trans, _vtk.vtkMatrix4x4):
-            m = trans
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        elif isinstance(trans, _vtk.vtkTransform):
-            t = trans
-            m = trans.GetMatrix()
-        elif isinstance(trans, np.ndarray):
-            if trans.shape != (4, 4):
-                raise ValueError('Transformation array must be 4x4')
-            m = vtkmatrix_from_array(trans)
-            t = _vtk.vtkTransform()
-            t.SetMatrix(m)
-        else:
-            raise TypeError(
-                'Input transform must be either:\n'
-                '\tvtk.vtkMatrix4x4\n'
-                '\tvtk.vtkTransform\n'
-                '\t4x4 np.ndarray\n',
-            )
+        t = trans if isinstance(trans, Transform) else Transform(trans)
 
-        if m.GetElement(3, 3) == 0:
-            raise ValueError("Transform element (3,3), the inverse scale term, is zero")
+        if t.matrix[3, 3] == 0:
+            raise ValueError('Transform element (3,3), the inverse scale term, is zero')
 
         # vtkTransformFilter truncates the result if the input is an integer type
         # so convert input points and relevant vectors to float
@@ -6773,18 +7060,15 @@ class DataSetFilters:
             self.cell_data.active_scalars_name = active_cell_scalars_name
             res.cell_data.active_scalars_name = active_cell_scalars_name
 
-        if inplace:
-            self.copy_from(res, deep=False)
-            return self
-
+        self_output = self if inplace else self.__class__()
+        output = pyvista.StructuredGrid() if isinstance(self, pyvista.Grid) else self_output
         # The output from the transform filter contains a shallow copy
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
-        if isinstance(self, pyvista.Grid):
-            output: _vtk.vtkDataSet = pyvista.StructuredGrid()
+        if inplace:
+            output.copy_from(res, deep=False)
         else:
-            output = self.__class__()
-        output.copy_from(res, deep=True)
+            output.copy_from(res, deep=True)
         return output
 
     def reflect(
@@ -6821,6 +7105,11 @@ class DataSetFilters:
         pyvista.DataSet
             Reflected dataset.  Return type matches input.
 
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
         Examples
         --------
         >>> from pyvista import examples
@@ -6831,7 +7120,7 @@ class DataSetFilters:
         See the :ref:`reflect_example` for more examples using this filter.
 
         """
-        t = transformations.reflection(normal, point=point)
+        t = Transform().reflect(normal, point=point)
         return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
@@ -6917,7 +7206,7 @@ class DataSetFilters:
             This is stored as ``"vtkGlobalCellIds"`` within the ``cell_data``
             of the output dataset(s).
 
-        as_composite : bool, default: False
+        as_composite : bool, default: True
             Return the partitioned dataset as a :class:`pyvista.MultiBlock`.
 
         See Also
@@ -6975,6 +7264,433 @@ class DataSetFilters:
             # https://gitlab.kitware.com/vtk/vtk/-/issues/18632
             return pyvista.merge(list(output), merge_points=False)
         return output
+
+    def oriented_bounding_box(
+        self,
+        box_style: Literal['frame', 'outline', 'face'] = 'face',
+        *,
+        axis_0_direction: VectorLike[float] | str | None = None,
+        axis_1_direction: VectorLike[float] | str | None = None,
+        axis_2_direction: VectorLike[float] | str | None = None,
+        frame_width: float = 0.1,
+        return_meta: bool = False,
+        as_composite: bool = True,
+    ):
+        """Return an oriented bounding box (OBB) for this dataset.
+
+        By default, the bounding box is a :class:`~pyvista.MultiBlock` with six
+        :class:`PolyData` comprising the faces of a cube. The blocks are named and
+        ordered as ``('+X','-X','+Y','-Y','+Z','-Z')``.
+
+        The box can optionally be styled as an outline or frame.
+
+        .. note::
+
+            The names of the blocks of the returned :class:`~pyvista.MultiBlock`
+            correspond to the oriented box's local axes, not the global x-y-z axes.
+            E.g. the normal of the ``'+X'`` face of the returned box has the same
+            direction as the box's primary axis, and is not necessarily pointing in
+            the +x direction ``(1, 0, 0)``.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        box_style : 'frame' | 'outline' | 'face', default: 'face'
+            Choose the style of the box. If ``'face'`` (default), each face of the box
+            is a single quad cell. If ``'outline'``, the edges of each face are returned
+            as line cells. If ``'frame'``, the center portion of each face is removed to
+            create a picture-frame style border with each face having four quads (one
+            for each side of the frame). Use ``frame_width`` to control the size of the
+            frame.
+
+        axis_0_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's primary axis. If set, the first
+            axis in the returned ``axes`` metadata is flipped such that it best aligns
+            with the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        axis_1_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's secondary axis. If set, the second
+            axis in the returned ``axes`` metadata is flipped such that it best aligns
+            with the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        axis_2_direction : VectorLike[float] | str, optional
+            Approximate direction vector of this mesh's third axis. If set, the third
+            axis in the returned ``axes`` metadata is flipped such that it best aligns
+            with the specified vector. Can be a vector or string specifying the axis by
+            name (e.g. ``'x'`` or ``'-x'``, etc.).
+
+        frame_width : float, optional
+            Set the width of the frame. Only has an effect if ``box_style`` is
+            ``'frame'``. Values must be between ``0.0`` (minimal frame) and ``1.0``
+            (large frame). The frame is scaled to ensure it has a constant width.
+
+        return_meta : bool, default: False
+            If ``True``, also returns the corner point and the three axes vectors
+            defining the orientation of the box. The sign of the axes vectors can be
+            controlled using the ``axis_#_direction`` arguments.
+
+        as_composite : bool, default: True
+            Return the box as a :class:`pyvista.MultiBlock` with six blocks: one for
+            each face. Set this ``False`` to merge the output and return
+            :class:`~pyvista.PolyData`.
+
+        See Also
+        --------
+        bounding_box
+            Similar filter for an axis-aligned bounding box (AABB).
+
+        align_xyz
+            Align a mesh to the world x-y-z axes. Used internally by this filter.
+
+        pyvista.Plotter.add_bounding_box
+            Add a bounding box to a scene.
+
+        pyvista.CubeFacesSource
+            Generate the faces of a cube. Used internally by this filter.
+
+        Returns
+        -------
+        pyvista.MultiBlock or pyvista.PolyData
+            MultiBlock with six named cube faces when ``as_composite=True`` and
+            PolyData otherwise.
+
+        numpy.ndarray
+            The box's corner point corresponding to the origin of its axes if
+            ``return_meta=True``.
+
+        numpy.ndarray
+            The box's orthonormal axes vectors if ``return_meta=True``.
+
+        Examples
+        --------
+        Create a bounding box for a dataset.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_oblique_cone()
+        >>> box = mesh.oriented_bounding_box()
+
+        Plot the mesh and its bounding box.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(box, opacity=0.5)
+        >>> pl.show()
+
+        Return the metadata for the box.
+
+        >>> box, point, axes = mesh.oriented_bounding_box(
+        ...     'outline', return_meta=True
+        ... )
+
+        Use the metadata to plot the box's axes using :class:`~pyvista.AxesAssembly`.
+        The assembly is aligned with the x-y-z axes and positioned at the origin by
+        default. Create a transformation to scale, then rotate, then translate the
+        assembly to the corner point of the box. The transpose of the axes is used
+        as an inverted rotation matrix.
+
+        >>> scale = box.length / 4
+        >>> transform = (
+        ...     pv.Transform().scale(scale).rotate(axes.T).translate(point)
+        ... )
+        >>> axes_assembly = pv.AxesAssembly(user_matrix=transform.matrix)
+
+        Plot the box and the axes.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(box, color='black', line_width=5)
+        >>> _ = pl.add_actor(axes_assembly)
+        >>> pl.show()
+
+        Note how the box's z-axis is pointing from the cone's tip to its base. If we
+        want to flip this axis, we can "seed" its direction as the ``'-z'`` direction.
+
+        >>> box, _, axes = mesh.oriented_bounding_box(
+        ...     'outline', axis_2_direction='-z', return_meta=True
+        ... )
+        >>>
+
+        Plot the box and axes again. This time, use :class:`~pyvista.AxesAssemblySymmetric`
+        and position the axes in the center of the box.
+
+        >>> center = pv.merge(box).points.mean(axis=0)
+        >>> scale = box.length / 2
+        >>> transform = (
+        ...     pv.Transform()
+        ...     .scale(scale)
+        ...     .rotate(axes.T)
+        ...     .translate(center)
+        ... )
+        >>> axes_assembly = pv.AxesAssemblySymmetric(
+        ...     user_matrix=transform.matrix
+        ... )
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(box, color='black', line_width=5)
+        >>> _ = pl.add_actor(axes_assembly)
+        >>> pl.show()
+
+        """
+        alg_input, matrix = self.align_xyz(
+            axis_0_direction=axis_0_direction,
+            axis_1_direction=axis_1_direction,
+            axis_2_direction=axis_2_direction,
+            return_matrix=True,
+        )
+        oriented = True
+        inverse_matrix = Transform(matrix).inverse_matrix
+
+        return alg_input._bounding_box(
+            matrix=matrix,
+            inverse_matrix=inverse_matrix,
+            box_style=box_style,
+            oriented=oriented,
+            frame_width=frame_width,
+            return_meta=return_meta,
+            as_composite=as_composite,
+        )
+
+    def bounding_box(
+        self,
+        box_style: Literal['frame', 'outline', 'face'] = 'face',
+        *,
+        oriented: bool = False,
+        frame_width: float = 0.1,
+        return_meta: bool = False,
+        as_composite: bool = True,
+    ):
+        """Return a bounding box for this dataset.
+
+        By default, the box is an axis-aligned bounding box (AABB) returned as a
+        :class:`~pyvista.MultiBlock` with six :class:`PolyData` comprising the faces of
+        the box. The blocks are named and ordered as ``('+X','-X','+Y','-Y','+Z','-Z')``.
+
+        The box can optionally be styled as an outline or frame. It may also be
+        oriented to generate an oriented bounding box (OBB).
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        box_style : 'frame' | 'outline' | 'face', default: 'face'
+            Choose the style of the box. If ``'face'`` (default), each face of the box
+            is a single quad cell. If ``'outline'``, the edges of each face are returned
+            as line cells. If ``'frame'``, the center portion of each face is removed to
+            create a picture-frame style border with each face having four quads (one
+            for each side of the frame). Use ``frame_width`` to control the size of the
+            frame.
+
+        oriented : bool, default: False
+            Orient the box using this dataset's :func:`~pyvista.principal_axes`. This
+            will generate a box that best fits this dataset's points. See
+            :meth:`oriented_bounding_box` for more details.
+
+        frame_width : float, optional
+            Set the width of the frame. Only has an effect if ``box_style`` is
+            ``'frame'``. Values must be between ``0.0`` (minimal frame) and ``1.0``
+            (large frame). The frame is scaled to ensure it has a constant width.
+
+        return_meta : bool, default: False
+            If ``True``, also returns the corner point and the three axes vectors
+            defining the orientation of the box.
+
+        as_composite : bool, default: True
+            Return the box as a :class:`pyvista.MultiBlock` with six blocks: one for
+            each face. Set this ``False`` to merge the output and return
+            :class:`~pyvista.PolyData` with six cells instead. The faces in both
+            outputs are separate, i.e. there are duplicate points at the corners.
+
+        See Also
+        --------
+        outline
+            Lightweight version of this filter with fewer options.
+
+        oriented_bounding_box
+            Similar filter with ``oriented=True`` by default and more options.
+
+        pyvista.Plotter.add_bounding_box
+            Add a bounding box to a scene.
+
+        pyvista.CubeFacesSource
+            Generate the faces of a cube. Used internally by this filter.
+
+        Returns
+        -------
+        pyvista.MultiBlock or pyvista.PolyData
+            MultiBlock with six named cube faces when ``as_composite=True`` and
+            PolyData otherwise.
+
+        numpy.ndarray
+            The box's corner point corresponding to the origin of its axes if
+            ``return_meta=True``.
+
+        numpy.ndarray
+            The box's orthonormal axes vectors if ``return_meta=True``.
+
+        Examples
+        --------
+        Create a bounding box for a dataset.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_oblique_cone()
+        >>> box = mesh.bounding_box()
+
+        Plot the mesh and its bounding box.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(box, opacity=0.5)
+        >>> pl.show()
+
+        Create a frame instead.
+
+        >>> frame = mesh.bounding_box('frame')
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh, color='red')
+        >>> _ = pl.add_mesh(frame, show_edges=True)
+        >>> pl.show()
+
+        Create an oriented bounding box (OBB) and compare it to the non-oriented one.
+        Use the outline style for both.
+
+        >>> box = mesh.bounding_box('outline')
+        >>> obb = mesh.bounding_box('outline', oriented=True)
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(box, color='red', line_width=5)
+        >>> _ = pl.add_mesh(obb, color='blue', line_width=5)
+        >>> pl.show()
+
+        Return the metadata for the box.
+
+        >>> box, point, axes = mesh.bounding_box(
+        ...     'outline', return_meta=True
+        ... )
+
+        Use the metadata to plot the box's axes using :class:`~pyvista.AxesAssembly`.
+        Create the assembly and position it at the box's corner. Scale it to a fraction
+        of the box's length.
+
+        >>> scale = box.length / 4
+        >>> axes_assembly = pv.AxesAssembly(position=point, scale=scale)
+
+        Plot the box and the axes.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh)
+        >>> _ = pl.add_mesh(box, color='black', line_width=5)
+        >>> _ = pl.add_actor(axes_assembly)
+        >>> _ = pl.view_yz()
+        >>> pl.show()
+
+        """
+        if oriented:
+            return self.oriented_bounding_box(
+                box_style=box_style,
+                frame_width=frame_width,
+                return_meta=return_meta,
+                as_composite=as_composite,
+            )
+        else:
+            alg_input = self
+            matrix = None
+            inverse_matrix = None
+
+            return alg_input._bounding_box(
+                matrix=matrix,
+                inverse_matrix=inverse_matrix,
+                box_style=box_style,
+                oriented=oriented,
+                frame_width=frame_width,
+                return_meta=return_meta,
+                as_composite=as_composite,
+            )
+
+    def _bounding_box(
+        self,
+        *,
+        matrix: NumpyArray[float] | None,
+        inverse_matrix: NumpyArray[float] | None,
+        box_style: Literal['frame', 'outline', 'face'],
+        oriented: bool,
+        frame_width: float,
+        return_meta: bool,
+        as_composite: bool,
+    ):
+        def _multiblock_to_polydata(multiblock):
+            return multiblock.combine(merge_points=False).extract_geometry()
+
+        # Validate style
+        _validation.check_contains(item=box_style, container=['frame', 'outline', 'face'])
+
+        # Create box
+        source = pyvista.CubeFacesSource(bounds=self.bounds)  # type: ignore[attr-defined]
+        if box_style == 'frame':
+            source.frame_width = frame_width
+        box = source.output
+
+        # Modify box
+        for face in box:
+            face = cast(pyvista.PolyData, face)
+            if box_style == 'outline':
+                face.copy_from(pyvista.lines_from_points(face.points))
+            if oriented:
+                face.transform(inverse_matrix)
+
+        # Get output
+        alg_output = box if as_composite else _multiblock_to_polydata(box)
+        if return_meta:
+            if not oriented:
+                axes = np.eye(3)
+                point = np.reshape(alg_output.bounds, (3, 2))[:, 0]  # point at min bounds
+            else:
+                matrix = cast(NumpyArray[float], matrix)
+                inverse_matrix = cast(NumpyArray[float], inverse_matrix)
+                axes = matrix[:3, :3]  # principal axes
+                # We need to figure out which corner of the box to position the axes
+                # To do this we compare output axes to expected axes for all 8 corners
+                # of the box
+                diagonals = [
+                    [1, 1, 1],
+                    [-1, 1, 1],
+                    [1, -1, 1],
+                    [1, 1, -1],
+                    [1, -1, -1],
+                    [-1, -1, 1],
+                    [-1, 1, -1],
+                    [-1, -1, -1],
+                ]
+                # Choose the best-aligned axes (whichever has the largest combined dot product)
+                dots = [np.dot(axes, diag) for diag in diagonals]
+                match = diagonals[np.argmax(np.sum(dots, axis=1))]
+                # Choose min bound for positive direction, max bound for negative
+                bnds = self.bounds  # type: ignore[attr-defined]
+                point = np.ones(3)
+                point[0] = bnds.x_min if match[0] == 1 else bnds.x_max
+                point[1] = bnds.y_min if match[1] == 1 else bnds.y_max
+                point[2] = bnds.z_min if match[2] == 1 else bnds.z_max
+
+                # Transform point
+                point = (inverse_matrix @ [*point, 1])[:3]
+                # Make sure the point we return is one of the box's points
+                box_poly = (
+                    _multiblock_to_polydata(alg_output)
+                    if isinstance(alg_output, pyvista.MultiBlock)
+                    else alg_output
+                )
+                point_id = box_poly.find_closest_point(point)
+                point = box_poly.points[point_id]
+
+            return alg_output, point, axes
+        return alg_output
 
     def explode(self, factor=0.1):
         """Push each individual cell away from the center of the dataset.
@@ -7059,7 +7775,7 @@ class DataSetFilters:
 
         The type of output dataset is always the same as the input type. Since
         structured types of data (i.e., :class:`pyvista.ImageData`,
-        :class:`pyvista.StructuredGrid`, :class`pyvista.RectilnearGrid`)
+        :class:`pyvista.StructuredGrid`, :class:`pyvista.RectilnearGrid`)
         are all composed of a cell of the same
         type, the output is either empty, or a shallow copy of the input.
         Unstructured data (:class:`pyvista.UnstructuredGrid`,
@@ -7314,11 +8030,11 @@ class DataSetFilters:
         field = get_array_association(self, scalars, preference=preference)
 
         # Determine output scalars
-        default_output_scalars = "packed_labels"
+        default_output_scalars = 'packed_labels'
         if output_scalars is None:
             output_scalars = default_output_scalars
         if not isinstance(output_scalars, str):
-            raise TypeError(f"Output scalars must be a string, got {type(output_scalars)} instead.")
+            raise TypeError(f'Output scalars must be a string, got {type(output_scalars)} instead.')
 
         # Do packing
         if hasattr(_vtk, 'vtkPackLabels'):  # pragma: no cover
@@ -7340,7 +8056,7 @@ class DataSetFilters:
                     result.point_data[scalars] = self.point_data[scalars]
                 else:
                     result.cell_data[scalars] = self.cell_data[scalars]
-            result.rename_array("PackedLabels", output_scalars)
+            result.rename_array('PackedLabels', output_scalars)
 
             if inplace:
                 self.copy_from(result, deep=False)
@@ -7427,3 +8143,33 @@ def _set_threshold_limit(alg, value, method, invert):
                 alg.ThresholdByUpper(value)
             else:
                 raise ValueError('Invalid method choice. Either `lower` or `upper`')
+
+
+def _swap_axes(vectors, values):
+    """Swap axes vectors based on their respective values.
+
+    The vector with the larger component along its projected axis is selected to precede
+    the vector with the smaller component. E.g. a symmetric point cloud with equal
+    std in any direction could have its principal axes computed such that the first
+    axis is +Y, second is +X, and third is +Z. This function will swap the first two
+    axes so that the order is XYZ instead of YXZ.
+
+    This function is intended to be used by `align_xyz` and is only exposed as a
+    module-level function for testing purposes.
+    """
+
+    def _swap(axis_a, axis_b):
+        axis_order = np.argmax(np.abs(vectors), axis=1)
+        if axis_order[axis_a] > axis_order[axis_b]:
+            vectors[[axis_a, axis_b]] = vectors[[axis_b, axis_a]]
+
+    if np.isclose(values[0], values[1]) and np.isclose(values[1], values[2]):
+        # Sort all axes by largest 'x' component
+        vectors = vectors[np.argsort(np.abs(vectors)[:, 0])[::-1]]
+        _swap(1, 2)
+    else:
+        if np.isclose(values[0], values[1]):
+            _swap(0, 1)
+        elif np.isclose(values[1], values[2]):
+            _swap(1, 2)
+    return vectors

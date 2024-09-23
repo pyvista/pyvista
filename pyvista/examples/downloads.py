@@ -72,7 +72,7 @@ if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _FILE_CACHE = True
 
 else:
-    SOURCE = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+    SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
     _FILE_CACHE = False
 
 # allow user to override the local path
@@ -3980,7 +3980,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
 
 
 def _damavand_volcano_load_func(volume):  # pragma: no cover
-    volume.rename_array("None", "data")
+    volume.rename_array('None', 'data')
     return volume
 
 
@@ -8030,6 +8030,7 @@ def download_e07733s002i009(load=True):  # paragma: no cover
 
         :ref:`E07733s002i009 Dataset <e07733s002i009_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_e07733s002i009, load=load)
 

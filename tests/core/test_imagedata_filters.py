@@ -11,7 +11,7 @@ from pyvista import examples
 VTK93 = pv.vtk_version_info >= (9, 3)
 
 
-@pytest.fixture()
+@pytest.fixture
 def logo():
     return examples.load_logo()
 
@@ -136,7 +136,7 @@ def test_contour_labeled_with_invalid_scalars():
         label_map.contour_labeled()
 
 
-@pytest.fixture()
+@pytest.fixture
 def uniform_many_scalars(uniform):
     uniform['Spatial Point Data2'] = uniform['Spatial Point Data'] * 2
     uniform['Spatial Cell Data2'] = uniform['Spatial Cell Data'] * 2
@@ -235,7 +235,7 @@ def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
     assert logo.cells_to_points().dimensions == (1919, 717, 1)
 
 
-@pytest.fixture()
+@pytest.fixture
 def single_point_image():
     image = pv.ImageData(dimensions=(1, 1, 1))
     image.point_data['image'] = 99
@@ -426,7 +426,7 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     with pytest.raises(ValueError, match=match):
         single_point_image.pad_image(pad_size=-1)
 
-    match = "Pad size must have 1, 2, 3, 4, or 6 values, got 5 instead."
+    match = 'Pad size must have 1, 2, 3, 4, or 6 values, got 5 instead.'
     with pytest.raises(ValueError, match=match):
         single_point_image.pad_image(pad_size=(1, 2, 3, 4, 5))
 
@@ -434,7 +434,7 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     with pytest.raises(ValueError, match=match):
         single_point_image.pad_image(pad_size=[[1]])
 
-    match = "Pad size must be integers. Got dtype float64."
+    match = 'Pad size must be integers. Got dtype float64.'
     with pytest.raises(TypeError, match=match):
         single_point_image.pad_image(pad_size=1.0)
 
@@ -463,7 +463,7 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     logo['single'] = range(logo.n_points)  # Create data with varying num array components
     match = (
         "Cannot pad array 'single' with value (0, 0, 0, 0). Number of components (1) in 'single' must match the number of components (4) in value."
-        "\nTry setting `pad_all_scalars=False` or update the array."
+        '\nTry setting `pad_all_scalars=False` or update the array.'
     )
     logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):

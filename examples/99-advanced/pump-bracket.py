@@ -1,4 +1,5 @@
-""".. _pump_bracket_example:
+"""
+.. _pump_bracket_example:
 
 Visualize Modal Analysis of a Pump Bracket
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,7 +77,7 @@ dataset.plot(
 pl = pv.Plotter()
 
 # Add the undeformed pump bracket
-pl.add_mesh(dataset, color="white", opacity=0.5)
+pl.add_mesh(dataset, color='white', opacity=0.5)
 
 # Add the deformed pump bracket with the mode shape
 warp = dataset.warp_by_vector('disp_2', factor=0.1)
@@ -106,7 +107,7 @@ pl.camera_position = cpos
 pl.enable_anti_aliasing('fxaa')
 
 n_frames = 16
-pl.open_gif("pump_bracket_mode_shape.gif")
+pl.open_gif('pump_bracket_mode_shape.gif')
 for phase in np.linspace(0, 2 * np.pi, n_frames, endpoint=False):
     # use the original unmodified points, modify copy inplace
     ds.points = dataset.points + ds[mode_shape] * np.cos(phase) * 0.05

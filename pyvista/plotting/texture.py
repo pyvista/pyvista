@@ -1,4 +1,4 @@
-"""This module provides a wrapper for vtk.vtkTexture."""
+"""Wrapper for vtk.vtkTexture."""
 
 from __future__ import annotations
 
@@ -149,7 +149,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         try:
             image = pyvista.read(filename, **kwargs)
             if image.n_points < 2:
-                raise RuntimeError("Problem reading the image with VTK.")  # pragma: no cover
+                raise RuntimeError('Problem reading the image with VTK.')  # pragma: no cover
             self._from_image_data(image)
         except (KeyError, ValueError, OSError):
             self._from_array(_try_imageio_imread(filename))  # pragma: no cover
@@ -395,6 +395,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         -------
         pyvista.Texture
             Copied texture.
+
         """
         return Texture(self.to_image().copy())
 
@@ -420,9 +421,9 @@ class Texture(DataObject, _vtk.vtkTexture):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("Components", self.n_components, "{:d}"))
-        attrs.append(("Cube Map", self.cube_map, "{:}"))
-        attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}"))
+        attrs.append(('Components', self.n_components, '{:d}'))
+        attrs.append(('Cube Map', self.cube_map, '{:}'))
+        attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}'))
         return attrs
 
     @property

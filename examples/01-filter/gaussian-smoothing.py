@@ -33,22 +33,22 @@ cp = [(319.5, 239.5, 1053.7372980874645), (319.5, 239.5, 0.0), (0.0, 1.0, 0.0)]
 p = pv.Plotter(shape=(2, 2))
 
 p.subplot(0, 0)
-p.add_text("Original Image", font_size=14)
+p.add_text('Original Image', font_size=14)
 p.add_mesh(data, rgb=True)
 p.camera_position = cp
 
 p.subplot(0, 1)
-p.add_text("Gaussian smoothing, std=2", font_size=14)
+p.add_text('Gaussian smoothing, std=2', font_size=14)
 p.add_mesh(data.gaussian_smooth(std_dev=2.0), rgb=True)
 p.camera_position = cp
 
 p.subplot(1, 0)
-p.add_text("Gaussian smoothing, std=4", font_size=14)
+p.add_text('Gaussian smoothing, std=4', font_size=14)
 p.add_mesh(data.gaussian_smooth(std_dev=4.0), rgb=True)
 p.camera_position = cp
 
 p.subplot(1, 1)
-p.add_text("Gaussian smoothing, std=8", font_size=14)
+p.add_text('Gaussian smoothing, std=8', font_size=14)
 p.add_mesh(data.gaussian_smooth(std_dev=8.0), rgb=True)
 p.camera_position = cp
 
@@ -77,11 +77,11 @@ n = [100, 150, 200, 245, 255]
 
 p = pv.Plotter(shape=(1, 2))
 p.subplot(0, 0)
-p.add_text("Original Image", font_size=24)
+p.add_text('Original Image', font_size=24)
 # p.add_mesh(data.contour(n), **dargs)
 p.add_volume(data, **dargs)
 p.subplot(0, 1)
-p.add_text("Gaussian smoothing", font_size=24)
+p.add_text('Gaussian smoothing', font_size=24)
 # p.add_mesh(smoothed_data.contour(n), **dargs)
 p.add_volume(smoothed_data, **dargs)
 p.link_views()

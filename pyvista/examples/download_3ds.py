@@ -25,4 +25,4 @@ def download_iflamigm():  # pragma: no cover
     >>> pl.show()
 
     """
-    return download_file("iflamigm.3ds")
+    return download_file('iflamigm.3ds')

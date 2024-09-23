@@ -12,7 +12,7 @@ from pyvista.plotting import system_supports_plotting
 
 skip_no_plotting = pytest.mark.skipif(
     not system_supports_plotting(),
-    reason="Test requires system to support plotting",
+    reason='Test requires system to support plotting',
 )
 
 
@@ -54,7 +54,7 @@ def test_plot_datasets():
 
 
 def test_plot_datasets_dataset_type():
-    with pytest.raises(ValueError, match="Invalid dataset_type"):
+    with pytest.raises(ValueError, match='Invalid dataset_type'):
         demos.plot_datasets(dataset_type='foo')
 
 
