@@ -55,10 +55,6 @@ class Camera(_vtk.vtkCamera):
         else:
             self._renderer = None
 
-    def __repr__(self):
-        """Print a repr specifying the id of the camera and its camera type."""
-        return f'<{self.__class__.__name__} at {hex(id(self))}>'
-
     def __eq__(self, other):
         """Compare whether the relevant attributes of two cameras are equal."""
         # attributes which are native python types and thus implement __eq__
@@ -85,6 +81,24 @@ class Camera(_vtk.vtkCamera):
             # either but not both are None
             return False
         return not (trans_count == 2 and not np.array_equal(this_trans, that_trans))
+
+    def __repr__(self):
+        """Print a repr specifying the id of the camera and its camera type."""
+        repr_str = f'{self.__class__.__name__} ({hex(id(self))})'
+        repr_str += f'\n  Position:            {self.position}'
+        repr_str += f'\n  Focal Point:         {self.focal_point}'
+        repr_str += f'\n  Parallel Projection: {self.parallel_projection}'
+        repr_str += f'\n  Distance:            {self.distance}'
+        repr_str += f'\n  Thickness:           {self.thickness}'
+        repr_str += f'\n  Parallel Scale:      {self.parallel_scale}'
+        repr_str += f'\n  Clipping Range:      {self.clipping_range}'
+        repr_str += f'\n  View Angle:          {self.view_angle}'
+        repr_str += f'\n  Roll:                {self.roll}'
+        return repr_str
+
+    def __str__(self):
+        """Return the object string representation."""
+        return self.__repr__()
 
     def __del__(self):
         """Delete the camera."""
