@@ -1858,7 +1858,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetLabelModeToConstantValue()
             if constant_value is None:
                 raise ValueError(
-                    '`constant_value` must be provided when `extraction_mode`is "{label_mode}".'
+                    f'`constant_value` must be provided when `extraction_mode`is "{label_mode}".'
                 )
             alg.SetLabelConstantValue(int(constant_value))
         elif label_mode == 'seeds':
