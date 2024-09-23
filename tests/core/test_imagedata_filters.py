@@ -521,9 +521,15 @@ def test_label_connectivity_largest_region(segmented_grid):
 
 def test_label_connectivity_seed_points(segmented_grid):
     points = [(2, 1, 0), (0, 0, 1)]
-    connected, labels, sizes = segmented_grid.label_connectivity(
-        force_float=False, extraction_mode='seeded', point_seeds=points, label_mode='seeds'
-    )
+    with pytest.warns(
+        UserWarning,
+        match='Points is not a float type. This can cause'
+        ' issues when transforming or applying filters. Casting to ``np.float32``.'
+        ' Disable this by passing ``force_float=False``.',
+    ):
+        connected, labels, sizes = segmented_grid.label_connectivity(
+            force_float=False, extraction_mode='seeded', point_seeds=points, label_mode='seeds'
+        )
     # Test that two regions were labelled
     assert all(labels == [1, 2])
     # Test that the second region id corresponds to the largest region (2 cells) which
@@ -569,7 +575,7 @@ def test_label_connectivity_constant_label(segmented_grid):
     connected, labels, sizes = segmented_grid.label_connectivity(
         force_float=False, label_mode='constant', constant_value=10
     )
-    assert all([l in (0, 10) for l in labels])
+    assert all(l in (0, 10) for l in labels)
 
 
 def test_label_connectivity_inplace(segmented_grid):
@@ -586,21 +592,29 @@ def test_label_connectivity_inplace(segmented_grid):
 
 
 def test_label_connectivity_invalid_parameters(segmented_grid):
-    with pytest.raises(ValueError, match='Invalid `extraction_mode`'):
-        _ = segmented_grid.label_connectivity(extraction_mode='invalid')
-    with pytest.raises(ValueError, match='`point_seeds` must be specified when'):
-        _ = segmented_grid.label_connectivity(extraction_mode='seeded')
     with pytest.raises(
-        TypeError, match='`point_seeds` must either be a sequence of point coordinates'
+        ValueError,
+        match='Invalid `extraction_mode` "invalid",' ' use "all", "largest", or "seeded".',
     ):
-        _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2)
-    with pytest.raises(ValueError, match='Invalid `label_mode`'):
+        _ = segmented_grid.label_connectivity(extraction_mode='invalid')
+    with pytest.raises(
+        ValueError, match='`point_seeds` must be specified when' ' `extraction_mode="seeded"`.'
+    ):
+        _ = segmented_grid.label_connectivity(extraction_mode='seeded')
+    with pytest.raises(IndexError, match='tuple index out of range'):
+        _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
+    with pytest.raises(
+        ValueError, match='Invalid `label_mode` "invalid", use "size",' ' "constant", or "seeds".'
+    ):
         _ = segmented_grid.label_connectivity(label_mode='invalid')
     with pytest.raises(
         ValueError, match='Data Range with 2 elements must be sorted in ascending order'
     ):
-        _ = segmented_grid.label_connectivity(scalar_range=[2, 1])
+        _ = segmented_grid.label_connectivity(scalar_range=[2.0, 1.0])
     with pytest.raises(ValueError, match='Shape must be 2'):
-        _ = segmented_grid.label_connectivity(scalar_range=[1, 2, 3])
-    with pytest.raises(ValueError, match='`constant_value` must be provided'):
+        _ = segmented_grid.label_connectivity(scalar_range=[1.0, 2.0, 3.0])
+    with pytest.raises(
+        ValueError,
+        match='`constant_value` must be provided when' ' `extraction_mode`is "constant".',
+    ):
         _ = segmented_grid.label_connectivity(label_mode='constant')

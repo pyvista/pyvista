@@ -6,7 +6,6 @@ from collections.abc import Iterable
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
-from typing import Sequence
 from typing import cast
 
 import numpy as np
@@ -1836,23 +1835,14 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(
                     '`point_seeds` must be specified when `extraction_mode="seeded"`.',
                 )
-            elif isinstance(point_seeds, (Sequence, np.ndarray)):
-                # Ensure points are floats, see pyvista.core.utilities.points
-                point_seeds = np.asanyarray(point_seeds, dtype=float)
                 # PointSet requires vtk >= 9.1.0
                 # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
+
+            elif not isinstance(point_seeds, _vtk.vtkDataSet):
                 if pyvista.vtk_version_info >= (9, 1, 0):
                     point_seeds = pyvista.PointSet(point_seeds)
                 else:
                     point_seeds = pyvista.PolyData(point_seeds)
-            elif not isinstance(point_seeds, _vtk.vtkDataSet):
-                raise TypeError(
-                    '`point_seeds` must either be a sequence of point coordinates, a numpy'
-                    ' array of point coordinates or a `vtk.vtkDataSet`.',
-                )
-
-            else:
-                point_seeds = pyvista.PolyData(point_seeds)
 
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
@@ -1868,7 +1858,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetLabelModeToConstantValue()
             if constant_value is None:
                 raise ValueError(
-                    '`constant_value` must be provided when' f' `extraction_mode`is "{label_mode}".'
+                    '`constant_value` must be provided when `extraction_mode`is "{label_mode}".'
                 )
             alg.SetLabelConstantValue(int(constant_value))
         elif label_mode == 'seeds':
