@@ -1823,8 +1823,8 @@ class ImageDataFilters(DataSetFilters):
         scalars_casted_to_float = False
         if (
             scalar_range == 'vtk_default'
-            or not scalar_range[0].is_integer()  # type: ignore[union-attr]
-            or not scalar_range[1].is_integer()  # type: ignore[union-attr]
+            or not float(scalar_range[0]).is_integer()
+            or not float(scalar_range[1]).is_integer()
         ) and np.issubdtype(input_mesh.point_data[scalars].dtype, np.integer):
             input_mesh.point_data[scalars] = input_mesh.point_data[scalars].astype(float)
             # Keep track of the operation to cast back to int when the operation is inplace
