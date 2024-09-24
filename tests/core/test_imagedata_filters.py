@@ -231,7 +231,7 @@ def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
     assert uniform.cells_to_points().dimensions == (9, 9, 9)
 
     assert logo.dimensions == (1920, 718, 1)
-    assert logo.points_to_cells().dimensions == (1921, 719, 1)
+    assert logo.points_to_cells().dimensions == (1921, 719, 2)
     assert logo.cells_to_points().dimensions == (1919, 717, 1)
 
 

@@ -1244,6 +1244,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Get data to use and operations to perform for the conversion
         new_image = pyvista.ImageData()
+        dims = np.array(self.dimensions)  # type: ignore[attr-defined]
         if points_to_cells:
             output_scalars = scalars if scalars else _get_output_scalars('point')
             # Enlarge image so points become cell centers
@@ -1251,6 +1252,7 @@ class ImageDataFilters(DataSetFilters):
             dims_operator = operator.add  # Increase dimensions
             old_data = point_data
             new_data = new_image.cell_data
+            dims_mask = np.full(3, True)  # Dimensions can always be increased
         else:  # cells_to_points
             output_scalars = scalars if scalars else _get_output_scalars('cell')
             # Shrink image so cell centers become points
@@ -1258,9 +1260,8 @@ class ImageDataFilters(DataSetFilters):
             dims_operator = operator.sub  # Decrease dimensions
             old_data = cell_data
             new_data = new_image.point_data
+            dims_mask = dims > 1  # Only operate on non-singleton dimensions
 
-        dims = np.array(self.dimensions)  # type: ignore[attr-defined]
-        dims_mask = dims > 1  # Only operate on non-singleton dimensions
         new_image.origin = origin_operator(
             self.origin,  # type: ignore[attr-defined]
             (np.array(self.spacing) / 2) * dims_mask,  # type: ignore[attr-defined]
