@@ -625,7 +625,10 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         ValueError, match='`point_seeds` must be specified when' ' `extraction_mode="seeded"`.'
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
-    with pytest.raises(IndexError, match='tuple index out of range'):
+    with pytest.raises(
+        IndexError,
+        match=r'tuple index out of range|Given points must be convertible to a numerical array',
+    ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
         ValueError, match='Invalid `label_mode` "invalid", use "size",' ' "constant", or "seeds".'
