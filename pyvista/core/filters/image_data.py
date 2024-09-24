@@ -1855,9 +1855,9 @@ class ImageDataFilters(DataSetFilters):
                     point_seeds = pyvista.PointSet(point_seeds)
                 else:
                     # Assign points outside the constructor to not create useless cells
-                    point_seeds = pyvista.PolyData().SetPoints(
-                        pyvista.vtk_points(point_seeds, force_float=True)
-                    )
+                    tmp = point_seeds
+                    point_seeds = pyvista.PolyData()
+                    point_seeds.SetPoints(pyvista.vtk_points(tmp, force_float=True))
 
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
