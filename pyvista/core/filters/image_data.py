@@ -1649,10 +1649,12 @@ class ImageDataFilters(DataSetFilters):
         scalar_range : str, Literal['auto', 'foreground', 'vtk_default'], VectorLike[float], default: 'auto'
             Points whose scalars value is within `'scalar_range'` are considered for
             connectivity. The bounds are inclusive.
-                - `'auto'`: includes the full data range, similarly to :meth:`~pyvista.DataFilters.connectivity`.
-                - `'foreground'`: includes the full data range except the smallest value.
-                - `'vtk_default'`: default to [`0.5`, :const:`~vtk.VTK_DOUBLE_MAX`].
-                - `VectorLike[float]`: explicitly set the range.
+
+            - `'auto'`: includes the full data range, similarly to :meth:`~pyvista.DataFilters.connectivity`.
+            - `'foreground'`: includes the full data range except the smallest value.
+            - `'vtk_default'`: default to [`0.5`, :const:`~vtk.VTK_DOUBLE_MAX`].
+            - `VectorLike[float]`: explicitly set the range.
+
             The bounds are always cast to floats since `vtk` expects doubles. The scalars
             data are also cast to floats to avoid unexpected behavior arising from implicit
             type conversion. The only exceptions is if both bounds are whole numbers, in
