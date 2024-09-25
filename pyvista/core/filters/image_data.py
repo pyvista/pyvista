@@ -978,7 +978,9 @@ class ImageDataFilters(DataSetFilters):
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
 
-    def points_to_cells(self, scalars: str | None = None, *, copy: bool = True):
+    def points_to_cells(
+        self, scalars: str | None = None, *, remesh_singleton_dims: bool = False, copy: bool = True
+    ):
         """Re-mesh image data from a point-based to a cell-based representation.
 
         This filter changes how image data is represented. Data represented as points
@@ -1021,6 +1023,12 @@ class ImageDataFilters(DataSetFilters):
             this parameter to restrict the output to only include the specified array.
             By default, all point data arrays at the input are passed through as cell
             data at the output.
+
+        remesh_singleton_dims : bool, default: False
+            Control if singleton dimensions are re-meshed. By default, singleton
+            dimensions are not re-meshed, which means that 1D or 2D inputs will remain
+            1D or 2D at the output. Set this to ``True`` to allow singleton dimensions
+            to increase.
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
@@ -1080,7 +1088,36 @@ class ImageDataFilters(DataSetFilters):
         - The output has one less array (the input cell data is ignored)
         - The dimensions have increased by one
         - The bounds have increased by half the spacing
-        - The output N Cells equals the input N Points
+        - The output ``N Cells`` equals the input ``N Points``
+
+        Since the input points are 3D (i.e. there are no singleton dimensions), the
+        output cells are 3D :attr:`~pyvista.CellType.VOXEL` cells.
+
+        >>> cells_image.get_cell(0).type
+        <CellType.VOXEL: 11>
+
+        If the input points are 2D (i.e. one dimension is singleton), the
+        output cells are 2D :attr:`~pyvista.CellType.PIXEL` cells.
+
+        >>> image2D = examples.load_logo()
+        >>> image2D.dimensions
+        (1920, 718, 1)
+
+        >>> pixel_cells_image = image2D.points_to_cells()
+        >>> pixel_cells_image.dimensions
+        (1921, 719, 1)
+        >>> pixel_cells_image.get_cell(0).type
+        <CellType.PIXEL: 8>
+
+        Use ``remesh_singleton_dims`` to remesh 2D points as 3D cells.
+
+        >>> voxel_cells_image = image2D.points_to_cells(
+        ...     remesh_singleton_dims=True
+        ... )
+        >>> voxel_cells_image.dimensions
+        (1921, 719, 2)
+        >>> voxel_cells_image.get_cell(0).type
+        <CellType.VOXEL: 11>
 
         See :ref:`image_representations_example` for more examples using this filter.
 
@@ -1091,7 +1128,12 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
                 )
-        return self._remesh_points_cells(points_to_cells=True, scalars=scalars, copy=copy)
+        return self._remesh_points_cells(
+            points_to_cells=True,
+            scalars=scalars,
+            remesh_singleton_dims=remesh_singleton_dims,
+            copy=copy,
+        )
 
     def cells_to_points(self, scalars: str | None = None, *, copy: bool = True):
         """Re-mesh image data from a cell-based to a point-based representation.
@@ -1195,7 +1237,7 @@ class ImageDataFilters(DataSetFilters):
         - The output has one less array (the input point data is ignored)
         - The dimensions have decreased by one
         - The bounds have decreased by half the spacing
-        - The output N Points equals the input N Cells
+        - The output ``N Points`` equals the input ``N Cells``
 
         See :ref:`image_representations_example` for more examples using this filter.
 
@@ -1208,7 +1250,13 @@ class ImageDataFilters(DataSetFilters):
                 )
         return self._remesh_points_cells(points_to_cells=False, scalars=scalars, copy=copy)
 
-    def _remesh_points_cells(self, points_to_cells: bool, scalars: str | None, copy: bool):
+    def _remesh_points_cells(
+        self,
+        points_to_cells: bool,
+        scalars: str | None,
+        copy: bool,
+        remesh_singleton_dims: bool = False,
+    ):
         """Re-mesh points to cells or vice-versa.
 
         The active cell or point scalars at the input will be set as active point or
@@ -1222,6 +1270,9 @@ class ImageDataFilters(DataSetFilters):
 
         scalars : str
             If set, only these scalars are passed through.
+
+        remesh_singleton_dims : bool, default: False
+            If set, allow singleton dimensions to increase.
 
         copy : bool
             Copy the input data before associating it with the output data.
@@ -1248,6 +1299,8 @@ class ImageDataFilters(DataSetFilters):
 
         # Get data to use and operations to perform for the conversion
         new_image = pyvista.ImageData()
+        dims = np.array(self.dimensions)  # type: ignore[attr-defined]
+        dims_mask = dims > 1  # Only operate on non-singleton dimensions
         if points_to_cells:
             output_scalars = scalars if scalars else _get_output_scalars('point')
             # Enlarge image so points become cell centers
@@ -1255,6 +1308,8 @@ class ImageDataFilters(DataSetFilters):
             dims_operator = operator.add  # Increase dimensions
             old_data = point_data
             new_data = new_image.cell_data
+            if remesh_singleton_dims:
+                dims_mask = np.full(3, True)  # Increase all dimensions
         else:  # cells_to_points
             output_scalars = scalars if scalars else _get_output_scalars('cell')
             # Shrink image so cell centers become points
@@ -1263,8 +1318,6 @@ class ImageDataFilters(DataSetFilters):
             old_data = cell_data
             new_data = new_image.point_data
 
-        dims = np.array(self.dimensions)  # type: ignore[attr-defined]
-        dims_mask = dims > 1  # Only operate on non-singleton dimensions
         new_image.origin = origin_operator(
             self.origin,  # type: ignore[attr-defined]
             (np.array(self.spacing) / 2) * dims_mask,  # type: ignore[attr-defined]
