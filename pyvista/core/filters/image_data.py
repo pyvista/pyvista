@@ -996,7 +996,9 @@ class ImageDataFilters(DataSetFilters):
         input image dimensions by one along each axis (i.e. half the cell width on each
         side). For example, an image with 100 points and 99 cells along an axis at the
         input will have 101 points and 100 cells at the output. If the input has 1mm
-        spacing, the axis size will also increase from 99mm to 100mm.
+        spacing, the axis size will also increase from 99mm to 100mm. By default,
+        only non-singleton dimensions are increased such that 1D or 2D inputs remain
+        1D or 2D at the output.
 
         Since filters may be inherently cell-based (e.g. some :class:`~pyvista.DataSetFilters`)
         or may operate on point data exclusively (e.g. most :class:`~pyvista.ImageDataFilters`),
@@ -1004,6 +1006,12 @@ class ImageDataFilters(DataSetFilters):
         ensuring the input data to those filters has the appropriate representation.
         This filter is also useful when plotting image data to achieve a desired visual
         effect, such as plotting images as voxel cells instead of as points.
+
+        .. note::
+            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
+            properties such as :attr:`~pyvista.ImageData.spacing` and
+            :attr:`~pyvista.ImageData.direction_matrix` are not affected.
 
         .. versionadded:: 0.44.0
 
@@ -1160,6 +1168,12 @@ class ImageDataFilters(DataSetFilters):
         This filter is also useful when plotting image data to achieve a desired visual
         effect, such as plotting images as points instead of as voxel cells.
 
+        .. note::
+            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
+            properties such as :attr:`~pyvista.ImageData.spacing` and
+            :attr:`~pyvista.ImageData.direction_matrix` are not affected.
+
         .. versionadded:: 0.44.0
 
         See Also
@@ -1309,7 +1323,7 @@ class ImageDataFilters(DataSetFilters):
             old_data = point_data
             new_data = new_image.cell_data
             if remesh_singleton_dims:
-                dims_mask = np.full(3, True)  # Increase all dimensions
+                dims_mask = np.full(dims.shape, True)  # Increase all dimensions
         else:  # cells_to_points
             output_scalars = scalars if scalars else _get_output_scalars('cell')
             # Shrink image so cell centers become points
