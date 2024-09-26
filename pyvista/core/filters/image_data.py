@@ -979,7 +979,11 @@ class ImageDataFilters(DataSetFilters):
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
 
     def points_to_cells(
-        self, scalars: str | None = None, *, remesh_singleton_dims: bool = False, copy: bool = True
+        self,
+        scalars: str | None = None,
+        *,
+        resize_dims: bool | VectorLike[bool] | Literal['1D', '2D', '3D'] = True,
+        copy: bool = True,
     ):
         """Re-mesh image data from a point-based to a cell-based representation.
 
@@ -1032,7 +1036,7 @@ class ImageDataFilters(DataSetFilters):
             By default, all point data arrays at the input are passed through as cell
             data at the output.
 
-        remesh_singleton_dims : bool, default: False
+        resize_dims: VectorLike[bool], Literal['1D', '2D', '3D'], default: '1D'
             Control if singleton dimensions are re-meshed. By default, singleton
             dimensions are not re-meshed, which means that 1D or 2D inputs will remain
             1D or 2D at the output. Set this to ``True`` to allow singleton dimensions
@@ -1139,11 +1143,17 @@ class ImageDataFilters(DataSetFilters):
         return self._remesh_points_cells(
             points_to_cells=True,
             scalars=scalars,
-            remesh_singleton_dims=remesh_singleton_dims,
+            resize_dims=resize_dims,
             copy=copy,
         )
 
-    def cells_to_points(self, scalars: str | None = None, *, copy: bool = True):
+    def cells_to_points(
+        self,
+        scalars: str | None = None,
+        *,
+        resize_dims: bool | VectorLike[bool] | Literal['1D', '2D', '3D'] = True,
+        copy: bool = True,
+    ):
         """Re-mesh image data from a cell-based to a point-based representation.
 
         This filter changes how image data is represented. Data represented as cells
@@ -1262,14 +1272,16 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
                 )
-        return self._remesh_points_cells(points_to_cells=False, scalars=scalars, copy=copy)
+        return self._remesh_points_cells(
+            points_to_cells=False, scalars=scalars, resize_dims=resize_dims, copy=copy
+        )
 
     def _remesh_points_cells(
         self,
         points_to_cells: bool,
         scalars: str | None,
+        resize_dims: VectorLike[bool] | Literal['1D', '2D', '3D'],
         copy: bool,
-        remesh_singleton_dims: bool = False,
     ):
         """Re-mesh points to cells or vice-versa.
 
@@ -1285,7 +1297,7 @@ class ImageDataFilters(DataSetFilters):
         scalars : str
             If set, only these scalars are passed through.
 
-        remesh_singleton_dims : bool, default: False
+        resize_dims: VectorLike[bool],  Literal['1D', '2D', '3D']
             If set, allow singleton dimensions to increase.
 
         copy : bool
@@ -1313,8 +1325,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Get data to use and operations to perform for the conversion
         new_image = pyvista.ImageData()
-        dims = np.array(self.dimensions)  # type: ignore[attr-defined]
-        dims_mask = dims > 1  # Only operate on non-singleton dimensions
+
         if points_to_cells:
             output_scalars = scalars if scalars else _get_output_scalars('point')
             # Enlarge image so points become cell centers
@@ -1322,8 +1333,6 @@ class ImageDataFilters(DataSetFilters):
             dims_operator = operator.add  # Increase dimensions
             old_data = point_data
             new_data = new_image.cell_data
-            if remesh_singleton_dims:
-                dims_mask = np.full(dims.shape, True)  # Increase all dimensions
         else:  # cells_to_points
             output_scalars = scalars if scalars else _get_output_scalars('cell')
             # Shrink image so cell centers become points
@@ -1331,6 +1340,9 @@ class ImageDataFilters(DataSetFilters):
             dims_operator = operator.sub  # Decrease dimensions
             old_data = cell_data
             new_data = new_image.point_data
+
+        dims = np.array(self.dimensions)  # type: ignore[attr-defined]
+        dims_mask = self._get_dims_mask(resize_dims=resize_dims, dims_operator=dims_operator)
 
         new_image.origin = origin_operator(
             self.origin,  # type: ignore[attr-defined]
@@ -1359,7 +1371,7 @@ class ImageDataFilters(DataSetFilters):
         pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
         *,
         pad_size: int | VectorLike[int] = 1,
-        pad_singleton_dims: bool = False,
+        resize_dims=True,
         scalars: str | None = None,
         pad_all_scalars: bool = False,
         progress_bar=False,
@@ -1551,12 +1563,8 @@ class ImageDataFilters(DataSetFilters):
         else:
             raise ValueError(f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.')
 
-        if not pad_singleton_dims:
-            # Set pad size to zero for singleton dimensions (e.g. 2D cases)
-            dims = self.dimensions  # type: ignore[attr-defined]
-            dim_pairs = (dims[0], dims[0], dims[1], dims[1], dims[2], dims[2])
-            is_singleton = np.asarray(dim_pairs) == 1
-            all_pad_sizes[is_singleton] = 0
+        dims_mask = self._get_dims_mask(resize_dims=resize_dims, dims_operator=operator.add)
+        all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
 
         # Define new extents after padding
         pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = all_pad_sizes
@@ -1982,3 +1990,70 @@ class ImageDataFilters(DataSetFilters):
         if inplace:
             return self, labels, sizes  # type: ignore[return-value]
         return output, labels, sizes
+
+    def _get_dims_mask(
+        self, resize_dims: bool | VectorLike[bool] | Literal['1D', '2D', '3D'], dims_operator
+    ):
+        if not isinstance(resize_dims, str):
+            resize_dims = np.asarray(resize_dims).astype(int)
+            dims_mask = _validation.validate_array3(
+                resize_dims, reshape=True, broadcast=True, dtype_out=bool
+            )
+
+        else:
+            dims_mask = np.full(3, False)
+            dims = np.asarray(self.dimensions)
+            # Negate dims so argsort returns the first index when all dims are the same
+            indices = np.argsort(-dims)
+
+            if dims_operator == operator.add:
+                if resize_dims == '1D':
+                    if self.is_2d() or self.is_3d():
+                        raise ValueError(
+                            'The mesh is not 0D or 1D and cannot be'
+                            ' re-meshed as 1D when increasing dimensions.'
+                        )
+                    dims_mask[indices[0]] = True
+
+                elif resize_dims == '2D':
+                    if self.is_3d():
+                        raise ValueError(
+                            'The mesh is not 0D, 1D or 2D and cannot be'
+                            ' re-meshed as 2D when increasing dimensions.'
+                        )
+                    dims_mask[indices[:2]] = True
+
+                elif resize_dims == '3D':
+                    dims_mask = ~dims_mask
+
+            elif dims_operator == operator.sub:
+                if resize_dims == '1D':
+                    if self.is_1d():
+                        dims_mask[indices[0]] = True
+                    elif (dims > 2).sum() > 1:
+                        raise ValueError
+                    elif self.is_2d():
+                        dims_mask[indices[:2]] = True
+                    elif self.is_3d():
+                        dims_mask = ~dims_mask
+
+                elif resize_dims == '2D':
+                    if self.is_2d():
+                        if (dims == 2).any():
+                            raise ValueError
+                        dims_mask[indices[:2]] = True
+                    elif self.is_3d():
+                        if (dims == 2).sum() != 1:
+                            raise ValueError
+                        dims_mask = ~dims_mask
+                    else:
+                        raise ValueError
+
+                elif resize_dims == '3D':
+                    if not self.is_3d():
+                        raise ValueError
+                    if (dims == 2).any():
+                        raise ValueError
+                    dims_mask = ~dims_mask
+
+        return dims_mask

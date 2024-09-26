@@ -75,6 +75,22 @@ class Grid(DataSet):
         attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
+    def is_0d(self):
+        dims = np.asarray(self.dimensions)
+        return (dims == 1).all()
+
+    def is_1d(self):
+        dims = np.asarray(self.dimensions)
+        return (dims > 1).sum() == 1
+
+    def is_2d(self):
+        dims = np.asarray(self.dimensions)
+        return (dims > 1).sum() == 2
+
+    def is_3d(self):
+        dims = np.asarray(self.dimensions)
+        return (dims > 1).all()
+
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
