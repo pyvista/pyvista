@@ -12,11 +12,11 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
 
-from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 from .dataset import DataSet
@@ -928,6 +928,20 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     @direction_matrix.setter
     def direction_matrix(self, matrix):  # numpydoc ignore: GL08
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
+
+    def _apply_index_to_physical_matrix(self, matrix):
+        """Set origin, spacing, and direction from a transformation matrix."""
+        transform = pyvista.Transform(matrix)
+        T, R, S, K = transform.decompose()
+        if not np.allclose(K, 0):
+            # Input has shear, which is not directly supported
+            # Approximate rotation and scale by normalizing direction vectors instead
+            matrix3x3 = transform.matrix[:3, :3]
+            S = np.linalg.norm(matrix3x3, axis=1)
+            R = matrix3x3 / S[:, np.newaxis]
+        self.origin = T
+        self.direction_matrix = R
+        self.spacing = S
 
     @property
     def index_to_physical_matrix(self) -> NumpyArray[float]:
