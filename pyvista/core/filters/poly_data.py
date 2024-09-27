@@ -3938,6 +3938,8 @@ class PolyDataFilters(DataSetFilters):
         used by default to estimate the spacing. On systems with VTK < 9.2, the default
         spacing is set to ``mesh_length_fraction=1/100``.
 
+        .. versionadded:: 0.45.0
+
         .. note::
             For best results, ensure the input surface is a closed surface. The
             surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
