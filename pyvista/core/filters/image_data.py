@@ -6,6 +6,7 @@ from collections.abc import Iterable
 import operator
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Callable
 from typing import cast
 
 import numpy as np
@@ -1036,11 +1037,19 @@ class ImageDataFilters(DataSetFilters):
             By default, all point data arrays at the input are passed through as cell
             data at the output.
 
-        resize_dims: VectorLike[bool], Literal['1D', '2D', '3D'], default: '1D'
-            Control if singleton dimensions are re-meshed. By default, singleton
-            dimensions are not re-meshed, which means that 1D or 2D inputs will remain
-            1D or 2D at the output. Set this to ``True`` to allow singleton dimensions
-            to increase.
+        resize_dims : bool, VectorLike[bool],  Literal['1D', '2D', '3D'], default: True
+            Control whether to resize dimensions.
+
+            - ``True``: all dimensions are modified.
+            - ``False``: no dimensions are modified.
+            - Can be specified as a sequence of 3 boolean allow modification on a per
+            dimension basis.
+            - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
+            dims will be similar to (>1, 1, 1).
+            - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, 1).
+            - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, >1).
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
@@ -1203,6 +1212,20 @@ class ImageDataFilters(DataSetFilters):
             By default, all cell data arrays at the input are passed through as point
             data at the output.
 
+        resize_dims : bool, VectorLike[bool],  Literal['1D', '2D', '3D'], default: True
+            Control whether to resize dimensions.
+
+            - ``True``: all dimensions are modified.
+            - ``False``: no dimensions are modified.
+            - Can be specified as a sequence of 3 boolean allow modification on a per
+            dimension basis.
+            - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
+            dims will be similar to (>1, 1, 1).
+            - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, 1).
+            - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, >1).
+
         copy : bool, default: True
             Copy the input cell data before associating it with the output point data.
             If ``False``, the input and output will both refer to the same data array(s).
@@ -1280,7 +1303,7 @@ class ImageDataFilters(DataSetFilters):
         self,
         points_to_cells: bool,
         scalars: str | None,
-        resize_dims: VectorLike[bool] | Literal['1D', '2D', '3D'],
+        resize_dims: bool|VectorLike[bool] | Literal['1D', '2D', '3D'],
         copy: bool,
     ):
         """Re-mesh points to cells or vice-versa.
@@ -1297,8 +1320,19 @@ class ImageDataFilters(DataSetFilters):
         scalars : str
             If set, only these scalars are passed through.
 
-        resize_dims: VectorLike[bool],  Literal['1D', '2D', '3D']
-            If set, allow singleton dimensions to increase.
+        resize_dims : bool, VectorLike[bool],  Literal['1D', '2D', '3D']
+            Control whether to resize dimensions.
+
+            - ``True``: all dimensions are modified.
+            - ``False``: no dimensions are modified.
+            - Can be specified as a sequence of 3 boolean allow modification on a per
+            dimension basis.
+            - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
+            dims will be similar to (>1, 1, 1).
+            - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, 1).
+            - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, >1).
 
         copy : bool
             Copy the input data before associating it with the output data.
@@ -1342,7 +1376,7 @@ class ImageDataFilters(DataSetFilters):
             new_data = new_image.point_data
 
         dims = np.array(self.dimensions)  # type: ignore[attr-defined]
-        dims_mask = self._get_dims_mask(resize_dims=resize_dims, dims_operator=dims_operator)
+        dims_mask = self._get_dims_mask(mask=resize_dims, operator=dims_operator, size=1)
 
         new_image.origin = origin_operator(
             self.origin,  # type: ignore[attr-defined]
@@ -1416,11 +1450,19 @@ class ImageDataFilters(DataSetFilters):
                 Set ``pad_singleton_dims`` to ``True`` to override this behavior and
                 enable padding any or all dimensions.
 
-        pad_singleton_dims : bool, default : False
-            Control whether to pad singleton dimensions. By default, only non-singleton
-            dimensions are padded, which means that 1D or 2D inputs will remain 1D or
-            2D after padding. Set this to ``True`` to enable padding any or all
-            dimensions.
+        resize_dims : bool, default : True
+            Control whether to resize dimensions.
+
+            - ``True``: all dimensions are modified.
+            - ``False``: no dimensions are modified.
+            - Can be specified as a sequence of 3 boolean allow modification on a per
+            dimension basis.
+            - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
+            dims will be similar to (>1, 1, 1).
+            - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, 1).
+            - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, >1).
 
         scalars : str, optional
             Name of scalars to pad. Defaults to currently active scalars. Unless
@@ -1563,7 +1605,10 @@ class ImageDataFilters(DataSetFilters):
         else:
             raise ValueError(f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.')
 
-        dims_mask = self._get_dims_mask(resize_dims=resize_dims, dims_operator=operator.add)
+        # Combine size 2 by 2 to get a (3, ) shaped array
+        dims_mask = self._get_dims_mask(
+            mask=resize_dims, operator=operator.add, size=all_pad_sizes[::2] + all_pad_sizes[1::2]
+        )
         all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
 
         # Define new extents after padding
@@ -1992,68 +2037,108 @@ class ImageDataFilters(DataSetFilters):
         return output, labels, sizes
 
     def _get_dims_mask(
-        self, resize_dims: bool | VectorLike[bool] | Literal['1D', '2D', '3D'], dims_operator
-    ):
-        if not isinstance(resize_dims, str):
-            resize_dims = np.asarray(resize_dims).astype(int)
+        self,
+        mask: bool | VectorLike[bool] | Literal['1D', '2D', '3D'],
+        operator: Callable,
+        size: int | VectorLike[int],
+    )-> NDArray[bool]:
+        """Internal helper to build a mask for dimensional operations on ImageData.
+        
+        Provide convenience aliases ``'1D'``, ``'2D'``, and ``'3D'`` to automatically
+        provide a result with the proper dimensions. Raise errors if the desired output
+        cannot be obtained.
+
+        .. versionadded:: 0.45.0
+
+        Parameters
+        ----------
+        mask : bool, VectorLike[bool], Literal['1D', '2D', '3D']
+            The desired mask to control whether to resize dimensions.
+
+            - ``True``: all dimensions are modified.
+            - ``False``: no dimensions are modified.
+            - Can be specified as a sequence of 3 boolean allow modification on a per
+            dimension basis.
+            - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
+            dims will be similar to (>1, 1, 1).
+            - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, 1).
+            - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
+            dims will be similar to (>1, >1, >1).
+
+        operator: Callable
+            The operation that will be perform on the dimensions. Must be a :module:`~operator`.
+
+        size : int, VectorLike[int]
+            The size of the operation, applied to all dimensions if specified as a ``int``
+            or applied on a per dimension basis.
+
+        Returns
+        -------
+        NDArray[bool]
+            A (3, ) shaped mask array that indicates which dimensions will be modified.
+
+        Examples
+        --------
+        Get the dimensions on which to operate to obtain a 2D output while adding ``2``.
+
+        >>> import pyvista as pv
+        >>> import operator
+        >>> image = pv.ImageData(dimensions=(4, 1, 4))
+        >>> image._get_dims_mask(mask='2D', operator=operator.add, size=2)
+        array([ True, False,  True])
+        
+        """
+        if not isinstance(mask, str):
+            # Build a bool array of the mask, cast to int first to be a valid input for validate_array3
+            mask = np.asarray(mask).astype(int)
             dims_mask = _validation.validate_array3(
-                resize_dims, reshape=True, broadcast=True, dtype_out=bool
+                mask, reshape=True, broadcast=True, dtype_out=bool
             )
 
         else:
-            dims_mask = np.full(3, False)
             dims = np.asarray(self.dimensions)
-            # Negate dims so argsort returns the first index when all dims are the same
-            indices = np.argsort(-dims)
+            # Brute force all possible combinations: only 8 combinations to test
+            # dims_mask is ordered such as the behavior is predictable
+            dims_masks = np.array(
+                [
+                    [True, True, True],
+                    [True, True, False],
+                    [False, True, True],
+                    [True, False, True],
+                    [True, False, False],
+                    [False, True, False],
+                    [False, False, True],
+                ]
+            )
 
-            if dims_operator == operator.add:
-                if resize_dims == '1D':
-                    if self.is_2d() or self.is_3d():
-                        raise ValueError(
-                            'The mesh is not 0D or 1D and cannot be'
-                            ' re-meshed as 1D when increasing dimensions.'
-                        )
-                    dims_mask[indices[0]] = True
+            # Build an array of the operation size
+            size = _validation.validate_array3(size, reshape=True, broadcast=True)
 
-                elif resize_dims == '2D':
-                    if self.is_3d():
-                        raise ValueError(
-                            'The mesh is not 0D, 1D or 2D and cannot be'
-                            ' re-meshed as 2D when increasing dimensions.'
-                        )
-                    dims_mask[indices[:2]] = True
+            # Predict the resulting dims for all possible masks
+            result_dims = operator(dims, size * dims_masks)
 
-                elif resize_dims == '3D':
-                    dims_mask = ~dims_mask
+            try:
+                # Required singleton dims to satisfy the desired shape
+                nof_singleton = {'1D': 2, '2D': 1, '3D': 0}[mask]
+                nof_non_singleton = 3 - nof_singleton
+            except KeyError:
+                raise ValueError(
+                    f'The target mask "{mask}" is not valid, it should be "1D", "2D", or "3D".'
+                )
 
-            elif dims_operator == operator.sub:
-                if resize_dims == '1D':
-                    if self.is_1d():
-                        dims_mask[indices[0]] = True
-                    elif (dims > 2).sum() > 1:
-                        raise ValueError
-                    elif self.is_2d():
-                        dims_mask[indices[:2]] = True
-                    elif self.is_3d():
-                        dims_mask = ~dims_mask
+            # Select the first admissible mask that produces the desired shape
+            try:
+                dims_mask = dims_masks[
+                    ((result_dims == 1).sum(axis=1) == nof_singleton)
+                    & ((result_dims > 1).sum(axis=1) == nof_non_singleton)
+                ][0]
 
-                elif resize_dims == '2D':
-                    if self.is_2d():
-                        if (dims == 2).any():
-                            raise ValueError
-                        dims_mask[indices[:2]] = True
-                    elif self.is_3d():
-                        if (dims == 2).sum() != 1:
-                            raise ValueError
-                        dims_mask = ~dims_mask
-                    else:
-                        raise ValueError
-
-                elif resize_dims == '3D':
-                    if not self.is_3d():
-                        raise ValueError
-                    if (dims == 2).any():
-                        raise ValueError
-                    dims_mask = ~dims_mask
+            except IndexError:
+                desired_dims = {'1D': '(>1, 1, 1)', '2D': '(>1, >1, 1)', '3D': '(>1, >1, >1)'}[mask]
+                raise ValueError(
+                    f'The operation requires to {operator.__name__} at least {size} dimension(s) to {tuple(dims)}.'
+                    f' A {mask} ImageData with dims {desired_dims} cannot be obtained.'
+                )
 
         return dims_mask

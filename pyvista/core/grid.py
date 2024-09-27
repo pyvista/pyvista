@@ -75,19 +75,23 @@ class Grid(DataSet):
         attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
-    def is_0d(self):
+    def is_0d(self) -> bool:
+        """Return ``True`` if the dimensions are 0D, i.e., ``(1, 1, 1)``."""
         dims = np.asarray(self.dimensions)
         return (dims == 1).all()
 
-    def is_1d(self):
+    def is_1d(self)-> bool:
+        """Return ``True`` if the dimensions are 1D, i.e., ``(>1, 1, 1)``."""
         dims = np.asarray(self.dimensions)
         return (dims > 1).sum() == 1
 
-    def is_2d(self):
+    def is_2d(self)-> bool:
+        """Return ``True`` if the dimensions are 2D, i.e., ``(>1, >1, 1)``."""
         dims = np.asarray(self.dimensions)
         return (dims > 1).sum() == 2
 
-    def is_3d(self):
+    def is_3d(self)-> bool:
+        """Return ``True`` if the dimensions are 3D, i.e., ``(>1, >1, >1)``."""
         dims = np.asarray(self.dimensions)
         return (dims > 1).all()
 
