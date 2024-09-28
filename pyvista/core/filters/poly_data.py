@@ -4171,7 +4171,7 @@ class PolyDataFilters(DataSetFilters):
         To include the voxels delimited by internal surfaces in the foreground, the internal
         surfaces should be removed, for instance by applying a boolean union. Note that
         this operation in unreliable in VTK but may be performed with external tools such
-        as `vtkbool<https://github.com/zippy84/vtkbool>`_.
+        as `vtkbool <https://github.com/zippy84/vtkbool>`_.
 
         Alternatively, the intersecting parts of the mesh can be processed sequentially.
 
