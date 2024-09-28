@@ -75,6 +75,13 @@ class Grid(DataSet):
         attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
+    @property
+    def _dimensionality(self)->int:
+        """Return the dimensionality of the grid."""
+        dims = np.asarray(self.dimensions)
+        return int(3 - (dims == 1).sum())
+        
+
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
