@@ -983,9 +983,9 @@ class ImageDataFilters(DataSetFilters):
         self,
         scalars: str | None = None,
         *,
-        dimensions: bool
+        dimensionality: bool
         | VectorLike[bool]
-        | Literal['0D', '1D', '2D', '3D', 'no_singleton'] = 'no_singleton',
+        | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         copy: bool = True,
     ):
         """Re-mesh image data from a point-based to a cell-based representation.
@@ -1039,7 +1039,7 @@ class ImageDataFilters(DataSetFilters):
             By default, all point data arrays at the input are passed through as cell
             data at the output.
 
-        dimensions : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'no_singleton'], default: 'no_singleton'
+        dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
             Control which dimensions will be modified by the filter.
 
             - ``True``: all dimensions are modified.
@@ -1054,11 +1054,11 @@ class ImageDataFilters(DataSetFilters):
             dims will be similar to (>1, >1, 1).
             - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
             dims will be similar to (>1, >1, >1).
-            - ``'no_singleton'``: convenience alias to not modify singleton dimensions.
+            - ``'preserve'``: convenience alias to not modify singleton dimensions.
 
             .. note::
                 This filter does not modify singleton dimensions by default. Set a value
-                different than ``'no_singleton'`` to override this behavior.
+                different than ``'preserve'`` to override this behavior.
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
@@ -1128,14 +1128,14 @@ class ImageDataFilters(DataSetFilters):
 
         If the input points are 2D (i.e. one dimension is singleton), the
         output cells are 2D :attr:`~pyvista.CellType.PIXEL` cells when ``dimensions`` is
-        set to ``'no_singleton'``.
+        set to ``'preserve'``.
 
         >>> image2D = examples.load_logo()
         >>> image2D.dimensions
         (1920, 718, 1)
 
         >>> pixel_cells_image = image2D.points_to_cells(
-        ...     dimensions='no_singleton'
+        ...     dimensionality='preserve'
         ... )
         >>> pixel_cells_image.dimensions
         (1921, 719, 1)
@@ -1144,7 +1144,7 @@ class ImageDataFilters(DataSetFilters):
 
         This is equivalent as requesting a 2D output.
 
-        >>> pixel_cells_image = image2D.points_to_cells(dimensions='2D')
+        >>> pixel_cells_image = image2D.points_to_cells(dimensionality='2D')
         >>> pixel_cells_image.dimensions
         (1921, 719, 1)
         >>> pixel_cells_image.get_cell(0).type
@@ -1152,7 +1152,7 @@ class ImageDataFilters(DataSetFilters):
 
         Use ``True`` to re-mesh 2D points as 3D cells.
 
-        >>> voxel_cells_image = image2D.points_to_cells(dimensions=True)
+        >>> voxel_cells_image = image2D.points_to_cells(dimensionality=True)
         >>> voxel_cells_image.dimensions
         (1921, 719, 2)
         >>> voxel_cells_image.get_cell(0).type
@@ -1160,7 +1160,7 @@ class ImageDataFilters(DataSetFilters):
 
         Or request a 3D output.
 
-        >>> voxel_cells_image = image2D.points_to_cells(dimensions='3D')
+        >>> voxel_cells_image = image2D.points_to_cells(dimensionality='3D')
         >>> voxel_cells_image.dimensions
         (1921, 719, 2)
         >>> voxel_cells_image.get_cell(0).type
@@ -1178,7 +1178,7 @@ class ImageDataFilters(DataSetFilters):
         return self._remesh_points_cells(
             points_to_cells=True,
             scalars=scalars,
-            dimensions=dimensions,
+            dimensionality=dimensionality,
             copy=copy,
         )
 
@@ -1186,9 +1186,9 @@ class ImageDataFilters(DataSetFilters):
         self,
         scalars: str | None = None,
         *,
-        dimensions: bool
+        dimensionality: bool
         | VectorLike[bool]
-        | Literal['0D', '1D', '2D', '3D', 'no_singleton'] = 'no_singleton',
+        | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         copy: bool = True,
     ):
         """Re-mesh image data from a cell-based to a point-based representation.
@@ -1240,7 +1240,7 @@ class ImageDataFilters(DataSetFilters):
             By default, all cell data arrays at the input are passed through as point
             data at the output.
 
-        dimensions : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'no_singleton'], default: 'no_singleton'
+        dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
             Control which dimensions will be modified by the filter.
 
             - ``True``: all dimensions are modified.
@@ -1255,11 +1255,11 @@ class ImageDataFilters(DataSetFilters):
             dims will be similar to (>1, >1, 1).
             - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
             dims will be similar to (>1, >1, >1).
-            - ``'no_singleton'``: convenience alias to not modify singleton dimensions.
+            - ``'preserve'``: convenience alias to not modify singleton dimensions.
 
             .. note::
                 This filter does not modify singleton dimensions by default. Set a value
-                different than ``'no_singleton'`` to override this behavior.
+                different than ``'preserve'`` to override this behavior.
 
         copy : bool, default: True
             Copy the input cell data before associating it with the output point data.
@@ -1331,14 +1331,14 @@ class ImageDataFilters(DataSetFilters):
                     f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
                 )
         return self._remesh_points_cells(
-            points_to_cells=False, scalars=scalars, dimensions=dimensions, copy=copy
+            points_to_cells=False, scalars=scalars, dimensionality=dimensionality, copy=copy
         )
 
     def _remesh_points_cells(
         self,
         points_to_cells: bool,
         scalars: str | None,
-        dimensions: bool | VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'no_singleton'],
+        dimensionality: bool | VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'],
         copy: bool,
     ):
         """Re-mesh points to cells or vice-versa.
@@ -1355,7 +1355,7 @@ class ImageDataFilters(DataSetFilters):
         scalars : str
             If set, only these scalars are passed through.
 
-        dimensions : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'no_singleton']
+        dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve']
             Control which dimensions will be modified by the filter.
 
             - ``True``: all dimensions are modified.
@@ -1370,7 +1370,7 @@ class ImageDataFilters(DataSetFilters):
             dims will be similar to (>1, >1, 1).
             - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
             dims will be similar to (>1, >1, >1).
-            - ``'no_singleton'``: convenience alias to not modify singleton dimensions.
+            - ``'preserve'``: convenience alias to not modify singleton dimensions.
 
         copy : bool
             Copy the input data before associating it with the output data.
@@ -1415,7 +1415,7 @@ class ImageDataFilters(DataSetFilters):
             new_data = new_image.point_data
 
         dims_mask, dims_result = self._validate_dim_operation(
-            operation_mask=dimensions, operator=dims_operator, operation_size=1
+            operation_mask=dimensionality, operator=dims_operator, operation_size=1
         )
 
         # Prepare the new image
@@ -1457,9 +1457,9 @@ class ImageDataFilters(DataSetFilters):
         pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
         *,
         pad_size: int | VectorLike[int] = 1,
-        dimensions: bool
+        dimensionality: bool
         | VectorLike[bool]
-        | Literal['0D', '1D', '2D', '3D', 'no_singleton'] = 'no_singleton',
+        | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         scalars: str | None = None,
         pad_all_scalars: bool = False,
         progress_bar=False,
@@ -1501,10 +1501,10 @@ class ImageDataFilters(DataSetFilters):
             .. note::
                 The pad size for singleton dimensions is set to ``0`` by default, even
                 if non-zero pad sizes are specified for these axes with this parameter.
-                Set ``dimensions`` to a value different than ``'no_singleton'`` to
+                Set ``dimensions`` to a value different than ``'preserve'`` to
                 override this behavior and enable padding any or all dimensions.
 
-        dimensions : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'no_singleton'], default: 'no_singleton'
+        dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
             Control which dimensions will be modified by the filter.
 
             - ``True``: all dimensions are modified.
@@ -1519,7 +1519,7 @@ class ImageDataFilters(DataSetFilters):
             dims will be similar to (>1, >1, 1).
             - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
             dims will be similar to (>1, >1, >1).
-            - ``'no_singleton'``: convenience alias to not modify singleton dimensions.
+            - ``'preserve'``: convenience alias to not modify singleton dimensions.
 
         scalars : str, optional
             Name of scalars to pad. Defaults to currently active scalars. Unless
@@ -1664,7 +1664,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Combine size 2 by 2 to get a (3, ) shaped array
         dims_mask, _ = self._validate_dim_operation(
-            operation_mask=dimensions,
+            operation_mask=dimensionality,
             operator=operator.add,
             operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
         )
@@ -1982,7 +1982,7 @@ class ImageDataFilters(DataSetFilters):
         field, scalars = input_mesh.active_scalars_info
         if field == FieldAssociation.CELL:
             # Convert to point data
-            input_mesh = input_mesh.cells_to_points(scalars=scalars, dimensions=True, copy=False)
+            input_mesh = input_mesh.cells_to_points(scalars=scalars, dimensionality=True, copy=False)
 
         # Set vtk algorithm
         alg = _vtk.vtkImageConnectivityFilter()
@@ -2078,7 +2078,7 @@ class ImageDataFilters(DataSetFilters):
 
         if field == FieldAssociation.CELL:
             # Convert back to cell data
-            output = output.points_to_cells(dimensions=True, copy=False)
+            output = output.points_to_cells(dimensionality=True, copy=False)
             # Add label `RegionId` to original dataset as cell data if required
             if inplace:
                 self.cell_data['RegionId'] = output.cell_data['RegionId']  # type: ignore[attr-defined]
@@ -2097,7 +2097,7 @@ class ImageDataFilters(DataSetFilters):
 
     def _validate_dim_operation(
         self,
-        operation_mask: bool | VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'no_singleton'],
+        operation_mask: bool | VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'],
         operator: Callable,  # type: ignore[type-arg]
         operation_size: int | VectorLike[int],
     ) -> tuple[NDArray[bool], NDArray[int]]:
@@ -2106,7 +2106,7 @@ class ImageDataFilters(DataSetFilters):
         Return a dimensional mask to apply the operation on the source ImageData as well
         as the resulting dimensions.
 
-        Provide convenience aliases ``'0D'``, ``'1D'``, ``'2D'``, ``'3D'``, and ``'no_singleton'``
+        Provide convenience aliases ``'0D'``, ``'1D'``, ``'2D'``, ``'3D'``, and ``'preserve'``
         to automatically provide a result with the proper dimensions. Raise errors if the
         desired output cannot be obtained.
 
@@ -2114,7 +2114,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        operation_mask : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'no_singleton']
+        operation_mask : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve']
             The desired mask to control whether to resize dimensions.
 
             - ``True``: all dimensions are modified.
@@ -2129,7 +2129,7 @@ class ImageDataFilters(DataSetFilters):
             dims will be similar to (>1, >1, 1).
             - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
             dims will be similar to (>1, >1, >1).
-            - ``'no_singleton'``: convenience alias to not modify singleton dimensions.
+            - ``'preserve'``: convenience alias to not modify singleton dimensions.
 
         operator: Callable
             The operation that will be perform on the dimensions. Must be a :module:`~operator`.
@@ -2173,7 +2173,7 @@ class ImageDataFilters(DataSetFilters):
                 dims_mask, reshape=True, broadcast=True, dtype_out=bool
             )
 
-        elif operation_mask == 'no_singleton':
+        elif operation_mask == 'preserve':
             # Ensure that singleton dims remain unmodified
             dims_mask = dims > 1  # type: ignore[assignment]
 
@@ -2202,7 +2202,7 @@ class ImageDataFilters(DataSetFilters):
                 nof_non_singleton = 3 - nof_singleton
             except KeyError:
                 raise ValueError(
-                    f'The target mask "{operation_mask}" is not valid, it should be "0D", "1D", "2D", "3D", or "no_singleton".'
+                    f'The target mask "{operation_mask}" is not valid, it should be "0D", "1D", "2D", "3D", or "preserve".'
                 )
 
             # Select the first admissible mask that produces the desired shape
@@ -2220,7 +2220,7 @@ class ImageDataFilters(DataSetFilters):
                     '3D': '(>1, >1, >1)',
                 }[operation_mask]
                 raise ValueError(
-                    f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {tuple(dims)}.'
+                    f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {self.dimensions}.' # type: ignore[attr-defined]
                     f' A {operation_mask} ImageData with dims {desired_dims} cannot be obtained.'
                 )
 

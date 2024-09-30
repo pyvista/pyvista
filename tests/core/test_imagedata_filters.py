@@ -233,11 +233,11 @@ def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
 
     assert logo.dimensions == (1920, 718, 1)
     assert logo.points_to_cells().dimensions == (1921, 719, 1)
-    assert logo.points_to_cells(dimensions='2D').dimensions == (1921, 719, 1)
-    assert logo.points_to_cells(dimensions=(True, True, False)).dimensions == (1921, 719, 1)
+    assert logo.points_to_cells(dimensionality='2D').dimensions == (1921, 719, 1)
+    assert logo.points_to_cells(dimensionality=(True, True, False)).dimensions == (1921, 719, 1)
     assert logo.cells_to_points().dimensions == (1919, 717, 1)
-    assert logo.points_to_cells(dimensions=True).dimensions == (1921, 719, 2)
-    assert logo.points_to_cells(dimensions='3D').dimensions == (1921, 719, 2)
+    assert logo.points_to_cells(dimensionality=True).dimensions == (1921, 719, 2)
+    assert logo.points_to_cells(dimensionality='3D').dimensions == (1921, 719, 2)
 
 
 @pytest.fixture
@@ -269,7 +269,7 @@ def test_pad_image(single_point_image, pad_size, pad_value, dimensions):
     padded = single_point_image.pad_image(
         pad_size=pad_size,
         pad_value=pad_value,
-        dimensions=dimensions,
+        dimensionality=dimensions,
     )
     assert padded.dimensions == expected_dimensions
 
@@ -300,7 +300,7 @@ def test_pad_image_pad_size_axis(
 
     padded = single_point_image.pad_image(
         pad_size=pad_size,
-        dimensions=True,
+        dimensionality=True,
         pad_value=pad_value,
     )
     assert padded.dimensions == expected_dimensions
@@ -337,7 +337,7 @@ def test_pad_image_pad_size_bounds(
 
     padded = single_point_image.pad_image(
         pad_size=pad_size,
-        dimensions=True,
+        dimensionality=True,
         pad_value=pad_value,
         pad_all_scalars=True,
     )
@@ -406,7 +406,7 @@ def test_pad_image_multi_component(single_point_image):
     padded = single_point_image.pad_image(
         new_value,
         pad_size=pad_size,
-        dimensions=True,
+        dimensionality=True,
         pad_all_scalars=True,
         progress_bar=True,
     )
@@ -418,7 +418,7 @@ def test_pad_image_multi_component(single_point_image):
     padded = single_point_image.pad_image(
         'wrap',
         pad_size=pad_size,
-        dimensions=True,
+        dimensionality=True,
         pad_all_scalars=True,
     )
     assert np.array_equal(len(padded.active_scalars), np.prod(dims + pad_size * 2))
@@ -667,7 +667,7 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         ((1, 1, 1), False, operator.add, False, (1, 1, 1)),
         ((1, 1, 1), (True, False, True), operator.add, (True, False, True), (2, 1, 6)),
         ((1, 1, 1), (1, 0, 1), operator.add, (True, False, True), (2, 1, 6)),
-        ((1, 1, 1), 'no_singleton', operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), 'preserve', operator.add, False, (1, 1, 1)),
         ((1, 1, 1), '0D', operator.add, False, (1, 1, 1)),
         ((1, 1, 1), '1D', operator.add, (True, False, False), (2, 1, 1)),
         ((1, 1, 2), '1D', operator.add, (False, False, True), (1, 1, 7)),
@@ -697,7 +697,7 @@ def test_validate_dim_operation(
             'invalid',
             operator.add,
             ValueError,
-            'The target mask "invalid" is not valid, it should be "0D", "1D", "2D", "3D", or "no_singleton".',
+            'The target mask "invalid" is not valid, it should be "0D", "1D", "2D", "3D", or "preserve".',
         ),
         (
             (1, 1, 1),
