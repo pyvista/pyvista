@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import operator
 import re
 
 import numpy as np
@@ -231,9 +232,12 @@ def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
     assert uniform.cells_to_points().dimensions == (9, 9, 9)
 
     assert logo.dimensions == (1920, 718, 1)
-    assert logo.points_to_cells().dimensions == (1921, 719, 2)
+    assert logo.points_to_cells().dimensions == (1921, 719, 1)
+    assert logo.points_to_cells(dimensions='2D').dimensions == (1921, 719, 1)
+    assert logo.points_to_cells(dimensions=(True, True, False)).dimensions == (1921, 719, 1)
     assert logo.cells_to_points().dimensions == (1919, 717, 1)
-    assert logo.points_to_cells(remesh_singleton_dims=True).dimensions == (1921, 719, 2)
+    assert logo.points_to_cells(dimensions=True).dimensions == (1921, 719, 2)
+    assert logo.points_to_cells(dimensions='3D').dimensions == (1921, 719, 2)
 
 
 @pytest.fixture
@@ -246,10 +250,10 @@ def single_point_image():
 
 @pytest.mark.parametrize('pad_size', [1, 2])
 @pytest.mark.parametrize('pad_value', [-1, 0, 1, 2])
-@pytest.mark.parametrize('pad_singleton_dims', [True, False])
-def test_pad_image(single_point_image, pad_size, pad_value, pad_singleton_dims):
+@pytest.mark.parametrize('dimensions', [True, False])
+def test_pad_image(single_point_image, pad_size, pad_value, dimensions):
     image_point_value = single_point_image['image'][0]
-    if pad_singleton_dims:
+    if dimensions:
         # Input is expected to be padded
         dim = pad_size * 2 + 1
         expected_dimensions = (dim, dim, dim)
@@ -265,7 +269,7 @@ def test_pad_image(single_point_image, pad_size, pad_value, pad_singleton_dims):
     padded = single_point_image.pad_image(
         pad_size=pad_size,
         pad_value=pad_value,
-        pad_singleton_dims=pad_singleton_dims,
+        dimensions=dimensions,
     )
     assert padded.dimensions == expected_dimensions
 
@@ -296,7 +300,7 @@ def test_pad_image_pad_size_axis(
 
     padded = single_point_image.pad_image(
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensions=True,
         pad_value=pad_value,
     )
     assert padded.dimensions == expected_dimensions
@@ -333,7 +337,7 @@ def test_pad_image_pad_size_bounds(
 
     padded = single_point_image.pad_image(
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensions=True,
         pad_value=pad_value,
         pad_all_scalars=True,
     )
@@ -402,7 +406,7 @@ def test_pad_image_multi_component(single_point_image):
     padded = single_point_image.pad_image(
         new_value,
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensions=True,
         pad_all_scalars=True,
         progress_bar=True,
     )
@@ -414,7 +418,7 @@ def test_pad_image_multi_component(single_point_image):
     padded = single_point_image.pad_image(
         'wrap',
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensions=True,
         pad_all_scalars=True,
     )
     assert np.array_equal(len(padded.active_scalars), np.prod(dims + pad_size * 2))
@@ -654,3 +658,75 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         match='`constant_value` must be provided when `extraction_mode`is "constant".',
     ):
         _ = segmented_grid.label_connectivity(label_mode='constant')
+
+
+@pytest.mark.parametrize(
+    ('image_dims', 'operation_mask', 'operator', 'expected_dims_mask', 'expected_dims_result'),
+    [
+        ((1, 1, 1), True, operator.add, True, (2, 4, 6)),
+        ((1, 1, 1), False, operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), (True, False, True), operator.add, (True, False, True), (2, 1, 6)),
+        ((1, 1, 1), (1, 0, 1), operator.add, (True, False, True), (2, 1, 6)),
+        ((1, 1, 1), 'no_singleton', operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), '0D', operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), '1D', operator.add, (True, False, False), (2, 1, 1)),
+        ((1, 1, 2), '1D', operator.add, (False, False, True), (1, 1, 7)),
+        ((1, 1, 1), '2D', operator.add, (True, True, False), (2, 4, 1)),
+        ((1, 1, 2), '2D', operator.add, (True, False, True), (2, 1, 7)),
+        ((1, 2, 2), '2D', operator.add, (False, True, True), (1, 5, 7)),
+        ((1, 1, 1), '3D', operator.add, (True, True, True), (2, 4, 6)),
+        ((10, 10, 10), '3D', operator.sub, (True, True, True), (9, 7, 5)),
+    ],
+)
+def test_validate_dim_operation(
+    image_dims, operation_mask, operator, expected_dims_mask, expected_dims_result
+):
+    image = pv.ImageData(dimensions=image_dims)
+    dims_mask, dims_result = image._validate_dim_operation(
+        operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
+    )
+    assert (dims_mask == expected_dims_mask).all()
+    assert (dims_result == expected_dims_result).all()
+
+
+@pytest.mark.parametrize(
+    ('image_dims', 'operation_mask', 'operator', 'error', 'error_message'),
+    [
+        (
+            (1, 1, 1),
+            'invalid',
+            operator.add,
+            ValueError,
+            'The target mask "invalid" is not valid, it should be "0D", "1D", "2D", "3D", or "no_singleton".',
+        ),
+        (
+            (1, 1, 1),
+            (True, True, True, True),
+            operator.add,
+            ValueError,
+            r'Array has shape \(4,\) which is not allowed.',
+        ),
+        (
+            (2, 2, 2),
+            '1D',
+            operator.add,
+            ValueError,
+            r'The operation requires to add at least \[1 3 5\] dimension\(s\) to \(2, 2, 2\). A 1D ImageData with dims \(>1, 1, 1\) cannot be obtained.',
+        ),
+        (
+            (2, 1, 2),
+            '3D',
+            operator.sub,
+            ValueError,
+            r'The operation requires to sub at least \[1 3 5\] dimension\(s\) to \(2, 1, 2\). A 3D ImageData with dims \(>1, >1, >1\) cannot be obtained.',
+        ),
+    ],
+)
+def test_validate_dim_operation_invalid_parameters(
+    image_dims, operation_mask, operator, error, error_message
+):
+    image = pv.ImageData(dimensions=image_dims)
+    with pytest.raises(error, match=error_message):
+        image._validate_dim_operation(
+            operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
+        )

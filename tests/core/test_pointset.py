@@ -352,3 +352,30 @@ def test_rotate():
     pset = pv.PointSet(np_points)
     pset.rotate([[-1, 0, 0], [0, -1, 0], [0, 0, -1]], inplace=True)
     assert np.allclose(pset.points, [-1, -1, -1])
+
+
+@pytest.mark.parametrize(
+    ('grid_class', 'dim'),
+    [
+        (pv.ExplicitStructuredGrid, 3),
+        (pv.StructuredGrid, 0),
+        (pv.StructuredGrid, 1),
+        (pv.StructuredGrid, 2),
+        (pv.StructuredGrid, 3),
+    ],
+)
+def test_pointgrid_dimensionality(grid_class, dim):
+    dims = {0: (1, 1, 1), 1: (1, 42, 1), 2: (42, 1, 142), 3: (2, 42, 142)}[dim]
+    if grid_class == pv.ExplicitStructuredGrid:
+        # ExplicitStructuredGrid only supports 3D
+        grid = pv.examples.load_explicit_structured(dimensions=dims)
+    elif grid_class == pv.StructuredGrid:
+        x, y, z = np.meshgrid(
+            np.arange(dims[0], dtype=np.float32),
+            np.arange(dims[1], dtype=np.float32),
+            np.arange(dims[2], dtype=np.float32),
+            indexing='ij',
+        )
+        grid = grid_class(x, y, z)
+
+    assert grid.dimensionality == dim

@@ -76,11 +76,26 @@ class Grid(DataSet):
         return attrs
 
     @property
-    def _dimensionality(self)->int:
-        """Return the dimensionality of the grid."""
+    def dimensionality(self) -> int:
+        """Return the dimensionality of the grid.
+
+        Returns
+        -------
+        int
+            The grid dimensionality.
+
+        Examples
+        --------
+        Get the dimensionality of a uniform grid with dimensions ``(1, 2, 3)``.
+
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(2, 3, 4))
+        >>> grid.dimensionality
+        3
+
+        """
         dims = np.asarray(self.dimensions)
         return int(3 - (dims == 1).sum())
-        
 
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
