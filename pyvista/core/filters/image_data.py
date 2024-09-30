@@ -1144,7 +1144,9 @@ class ImageDataFilters(DataSetFilters):
 
         This is equivalent as requesting a 2D output.
 
-        >>> pixel_cells_image = image2D.points_to_cells(dimensionality='2D')
+        >>> pixel_cells_image = image2D.points_to_cells(
+        ...     dimensionality='2D'
+        ... )
         >>> pixel_cells_image.dimensions
         (1921, 719, 1)
         >>> pixel_cells_image.get_cell(0).type
@@ -1152,7 +1154,9 @@ class ImageDataFilters(DataSetFilters):
 
         Use ``True`` to re-mesh 2D points as 3D cells.
 
-        >>> voxel_cells_image = image2D.points_to_cells(dimensionality=True)
+        >>> voxel_cells_image = image2D.points_to_cells(
+        ...     dimensionality=True
+        ... )
         >>> voxel_cells_image.dimensions
         (1921, 719, 2)
         >>> voxel_cells_image.get_cell(0).type
@@ -1160,7 +1164,9 @@ class ImageDataFilters(DataSetFilters):
 
         Or request a 3D output.
 
-        >>> voxel_cells_image = image2D.points_to_cells(dimensionality='3D')
+        >>> voxel_cells_image = image2D.points_to_cells(
+        ...     dimensionality='3D'
+        ... )
         >>> voxel_cells_image.dimensions
         (1921, 719, 2)
         >>> voxel_cells_image.get_cell(0).type
@@ -1437,7 +1443,7 @@ class ImageDataFilters(DataSetFilters):
         else:  # cells_to_points
             if new_image.n_points != self.n_cells:  # type: ignore[attr-defined]
                 raise ValueError(
-                    f'The required `points_to_cells` operation would require to map {self.n_cells}'  # type: ignore[attr-defined]
+                    f'The required `cells_to_points` operation would require to map {self.n_cells}'  # type: ignore[attr-defined]
                     f' cells on {new_image.n_points} points and cannot be lossless.'
                 )
 
@@ -1982,7 +1988,9 @@ class ImageDataFilters(DataSetFilters):
         field, scalars = input_mesh.active_scalars_info
         if field == FieldAssociation.CELL:
             # Convert to point data
-            input_mesh = input_mesh.cells_to_points(scalars=scalars, dimensionality=True, copy=False)
+            input_mesh = input_mesh.cells_to_points(
+                scalars=scalars, dimensionality=True, copy=False
+            )
 
         # Set vtk algorithm
         alg = _vtk.vtkImageConnectivityFilter()
@@ -2220,7 +2228,7 @@ class ImageDataFilters(DataSetFilters):
                     '3D': '(>1, >1, >1)',
                 }[operation_mask]
                 raise ValueError(
-                    f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {self.dimensions}.' # type: ignore[attr-defined]
+                    f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {self.dimensions}.'  # type: ignore[attr-defined]
                     f' A {operation_mask} ImageData with dims {desired_dims} cannot be obtained.'
                 )
 

@@ -240,6 +240,20 @@ def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
     assert logo.points_to_cells(dimensionality='3D').dimensions == (1921, 719, 2)
 
 
+def test_points_to_cells_and_cells_to_points_dimensions_incorrect_number_data():
+    image = pv.ImageData(dimensions=(1, 2, 2))
+    with pytest.raises(
+        ValueError,
+        match='The required `points_to_cells` operation would require to map 4 points on 1 cells and cannot be lossless.',
+    ):
+        image.points_to_cells(dimensionality=[True, False, False])
+    with pytest.raises(
+        ValueError,
+        match='The required `cells_to_points` operation would require to map 1 cells on 4 points and cannot be lossless.',
+    ):
+        image.cells_to_points(dimensionality='2D')
+
+
 @pytest.fixture
 def single_point_image():
     image = pv.ImageData(dimensions=(1, 1, 1))
