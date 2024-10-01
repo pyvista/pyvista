@@ -1056,6 +1056,7 @@ class ImageDataFilters(DataSetFilters):
             dims will be similar to (>1, >1, >1).
             - ``'preserve'``: convenience alias to not modify singleton dimensions.
 
+
             .. note::
                 This filter does not modify singleton dimensions by default. Set a value
                 different than ``'preserve'`` to override this behavior.
@@ -1262,6 +1263,7 @@ class ImageDataFilters(DataSetFilters):
             - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
             dims will be similar to (>1, >1, >1).
             - ``'preserve'``: convenience alias to not modify singleton dimensions.
+
 
             .. note::
                 This filter does not modify singleton dimensions by default. Set a value
@@ -1503,6 +1505,7 @@ class ImageDataFilters(DataSetFilters):
               padding to each boundary independently.
             - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
               padding to each boundary independently.
+
 
             .. note::
                 The pad size for singleton dimensions is set to ``0`` by default, even
