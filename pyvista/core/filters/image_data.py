@@ -1020,10 +1020,6 @@ class ImageDataFilters(DataSetFilters):
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
 
-        .. note::
-            This filter does not modify singleton dimensions with ``dimensionality`` set
-            as ``'preserve'`` by default.
-
         .. versionadded:: 0.44.0
 
         See Also
@@ -1048,17 +1044,21 @@ class ImageDataFilters(DataSetFilters):
 
             - ``True``: all dimensions are modified.
             - ``False``: no dimensions are modified.
-            - Can be specified as a sequence of 3 booleans to allow modification on a per
-            dimension basis.
+            - Can be specified as a sequence of 3 boolean to allow modification on a per
+                dimension basis.
             - ``'0D'``: convenience alias to output a 0D ImageData, if possible, i.e.,
-            dims will be similar to (1, 1, 1).
+                dims will be similar to (1, 1, 1).
             - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
-            dims will be similar to (>1, 1, 1).
+                dims will be similar to (>1, 1, 1).
             - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
-            dims will be similar to (>1, >1, 1).
+                dims will be similar to (>1, >1, 1).
             - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
-            dims will be similar to (>1, >1, >1).
+                dims will be similar to (>1, >1, >1).
             - ``'preserve'``: convenience alias to not modify singleton dimensions.
+
+            .. note::
+                This filter does not modify singleton dimensions with ``dimensionality``
+                set as ``'preserve'`` by default.
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
@@ -1226,10 +1226,6 @@ class ImageDataFilters(DataSetFilters):
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
-            
-        .. note::
-            This filter does not modify singleton dimensions with ``dimensionality`` set
-            as ``'preserve'`` by default.
 
         .. versionadded:: 0.44.0
 
@@ -1255,17 +1251,21 @@ class ImageDataFilters(DataSetFilters):
 
             - ``True``: all dimensions are modified.
             - ``False``: no dimensions are modified.
-            - Can be specified as a sequence of 3 boolean to allow modification on a per 
-            dimension basis.
+            - Can be specified as a sequence of 3 boolean to allow modification on a per
+                dimension basis.
             - ``'0D'``: convenience alias to output a 0D ImageData, if possible, i.e.,
-            dims will be similar to (1, 1, 1).
+                dims will be similar to (1, 1, 1).
             - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
-            dims will be similar to (>1, 1, 1).
+                dims will be similar to (>1, 1, 1).
             - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
-            dims will be similar to (>1, >1, 1).
+                dims will be similar to (>1, >1, 1).
             - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
-            dims will be similar to (>1, >1, >1).
+                dims will be similar to (>1, >1, >1).
             - ``'preserve'``: convenience alias to not modify singleton dimensions.
+
+            .. note::
+                This filter does not modify singleton dimensions with ``dimensionality``
+                set as ``'preserve'`` by default.
 
         copy : bool, default: True
             Copy the input cell data before associating it with the output point data.
@@ -1480,12 +1480,6 @@ class ImageDataFilters(DataSetFilters):
         This filter is designed to work with 1D, 2D, or 3D image data and will only pad
         non-singleton dimensions unless otherwise specified.
 
-        .. note::
-            The ``pad_size`` for singleton dimensions is set to ``0`` by default, even
-            if non-zero pad sizes are specified for these axes with this parameter.
-            Set ``dimensionality`` to a value different than ``'preserve'`` to
-            override this behavior and enable padding any or all dimensions.
-
         Parameters
         ----------
         pad_value : float | sequence[float] | 'mirror' | 'wrap', default : 0.0
@@ -1516,16 +1510,22 @@ class ImageDataFilters(DataSetFilters):
             - ``True``: all dimensions are modified.
             - ``False``: no dimensions are modified.
             - Can be specified as a sequence of 3 boolean allow modification on a per
-            dimension basis.
+                dimension basis.
             - ``'0D'``: convenience alias to output a 0D ImageData, if possible, i.e.,
-            dims will be similar to (1, 1, 1).
+                dims will be similar to (1, 1, 1).
             - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
-            dims will be similar to (>1, 1, 1).
+                dims will be similar to (>1, 1, 1).
             - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
-            dims will be similar to (>1, >1, 1).
+                dims will be similar to (>1, >1, 1).
             - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
-            dims will be similar to (>1, >1, >1).
+                dims will be similar to (>1, >1, >1).
             - ``'preserve'``: convenience alias to not modify singleton dimensions.
+
+            .. note::
+                The ``pad_size`` for singleton dimensions is set to ``0`` by default, even
+                if non-zero pad sizes are specified for these axes with this parameter.
+                Set ``dimensionality`` to a value different than ``'preserve'`` to
+                override this behavior and enable padding any or all dimensions.
 
         scalars : str, optional
             Name of scalars to pad. Defaults to currently active scalars. Unless
