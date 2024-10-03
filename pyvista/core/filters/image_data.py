@@ -983,9 +983,7 @@ class ImageDataFilters(DataSetFilters):
         self,
         scalars: str | None = None,
         *,
-        dimensionality: bool
-        | VectorLike[bool]
-        | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
+        dimensionality: VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         copy: bool = True,
     ):
         """Re-mesh image data from a point-based to a cell-based representation.
@@ -1042,8 +1040,6 @@ class ImageDataFilters(DataSetFilters):
         dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
             Control which dimensions will be modified by the filter.
 
-            - ``True``: all dimensions are modified.
-            - ``False``: no dimensions are modified.
             - Can be specified as a sequence of 3 boolean to allow modification on a per
                 dimension basis.
             - ``'0D'``: convenience alias to output a 0D ImageData with dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
@@ -1184,9 +1180,7 @@ class ImageDataFilters(DataSetFilters):
         self,
         scalars: str | None = None,
         *,
-        dimensionality: bool
-        | VectorLike[bool]
-        | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
+        dimensionality: VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         copy: bool = True,
     ):
         """Re-mesh image data from a cell-based to a point-based representation.
@@ -1241,8 +1235,6 @@ class ImageDataFilters(DataSetFilters):
         dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
             Control which dimensions will be modified by the filter.
 
-            - ``True``: all dimensions are modified.
-            - ``False``: no dimensions are modified.
             - ``'0D'``: convenience alias to output a 0D ImageData with dimensions ``(1, 1, 1)``. Only valid for 0D inputs or 1D inputs where exactly one dimension is ``2``, e.g. ``(2, 1, 1)``.
             - ``'1D'``: convenience alias to output a 1D ImageData where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 1D inputs, or 2D inputs where one dimension is ``2``, e.g. ``(>1, 2, 1)``.
             - ``'2D'``: convenience alias to output a 2D ImageData where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for 2D inputs, or 3D  inputs where one dimension is ``2``, e.g. ``(>1, >1, 2)``.
@@ -1330,7 +1322,7 @@ class ImageDataFilters(DataSetFilters):
         self,
         points_to_cells: bool,
         scalars: str | None,
-        dimensionality: bool | VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'],
+        dimensionality: VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'],
         copy: bool,
     ):
         """Re-mesh points to cells or vice-versa.
@@ -1422,14 +1414,18 @@ class ImageDataFilters(DataSetFilters):
         if points_to_cells:
             if new_image.n_cells != self.n_points:  # type: ignore[attr-defined]
                 raise ValueError(
-                    f'The required `points_to_cells` operation would require to map {self.n_points}'  # type: ignore[attr-defined]
-                    f' points on {new_image.n_cells} cells and cannot be lossless.'
+                    'Cannot re-mesh points to cells. The dimensions of the input'
+                    f' ({self.dimensions}) is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' output ({new_image.dimensions}) and would require to map'
+                    f' {self.n_points} points on {new_image.n_cells} cells.'  # type: ignore[attr-defined]
                 )
         else:  # cells_to_points
             if new_image.n_points != self.n_cells:  # type: ignore[attr-defined]
                 raise ValueError(
-                    f'The required `cells_to_points` operation would require to map {self.n_cells}'  # type: ignore[attr-defined]
-                    f' cells on {new_image.n_points} points and cannot be lossless.'
+                    'Cannot re-mesh cells to points. The dimensions of the input'
+                    f' ({self.dimensions}) is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' output ({new_image.dimensions}) and would require to map'
+                    f' {self.n_cells} cells on {new_image.n_points} points.'  # type: ignore[attr-defined]
                 )
 
         # Copy field data
@@ -1448,9 +1444,7 @@ class ImageDataFilters(DataSetFilters):
         pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
         *,
         pad_size: int | VectorLike[int] = 1,
-        dimensionality: bool
-        | VectorLike[bool]
-        | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
+        dimensionality: VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         scalars: str | None = None,
         pad_all_scalars: bool = False,
         progress_bar=False,
@@ -1489,14 +1483,20 @@ class ImageDataFilters(DataSetFilters):
             - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
               padding to each boundary independently.
 
-        dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
+        dimensionality : bool, VectorLike[bool], Literal['1D', '2D', '3D', 'preserve'], default: 'preserve'
             Control which dimensions will be padded by the filter.
 
-            - Can be specified as a sequence of 3 boolean apply padding on a per
+            - Can be specified as a sequence of 3 boolean to apply padding on a per
                 dimension basis.
-            - ``'1D'``: apply padding such that the output is a 1D ImageData where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 0D or 1D inputs.
-            - ``'2D'``: apply padding such that the output is a 2D ImageData where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for 0D, 1D, or 2D inputs.
-            - ``'3D'``: apply padding such that the output is a 3D ImageData, where all three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for any 0D, 1D, 2D, or 3D inputs.
+            - ``'1D'``: apply padding such that the output is a 1D ImageData where exactly
+              one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 0D
+              or 1D inputs.
+            - ``'2D'``: apply padding such that the output is a 2D ImageData where exactly
+              two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for
+              0D, 1D, or 2D inputs.
+            - ``'3D'``: apply padding such that the output is a 3D ImageData, where all
+              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              any 0D, 1D, 2D, or 3D inputs.
 
             .. note::
                 The ``pad_size`` for singleton dimensions is set to ``0`` by default, even
@@ -2085,7 +2085,7 @@ class ImageDataFilters(DataSetFilters):
         operation_mask: bool | VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'],
         operator: Callable,  # type: ignore[type-arg]
         operation_size: int | VectorLike[int],
-    ) -> tuple[NDArray[bool], NDArray[int]]:
+    ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
         """Validate dimensional operations (internal helper).
 
         Return a dimensional mask to apply the operation on the source ImageData as well
