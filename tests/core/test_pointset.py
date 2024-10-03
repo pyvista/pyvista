@@ -379,3 +379,4 @@ def test_pointgrid_dimensionality(grid_class, dim):
         grid = grid_class(x, y, z)
 
     assert grid.dimensionality == dim
+    assert grid.dimensionality == grid.get_cell(0).GetCellDimension()

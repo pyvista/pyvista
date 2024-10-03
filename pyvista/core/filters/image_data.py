@@ -1046,19 +1046,11 @@ class ImageDataFilters(DataSetFilters):
             - ``False``: no dimensions are modified.
             - Can be specified as a sequence of 3 boolean to allow modification on a per
                 dimension basis.
-            - ``'0D'``: convenience alias to output a 0D ImageData, if possible, i.e.,
-                dims will be similar to (1, 1, 1).
-            - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
-                dims will be similar to (>1, 1, 1).
-            - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
-                dims will be similar to (>1, >1, 1).
-            - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
-                dims will be similar to (>1, >1, >1).
-            - ``'preserve'``: convenience alias to not modify singleton dimensions.
-
-            .. note::
-                This filter does not modify singleton dimensions with ``dimensionality``
-                set as ``'preserve'`` by default.
+            - ``'0D'``: convenience alias to output a 0D ImageData with dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
+            - ``'1D'``: convenience alias to output a 1D ImageData where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 0D or 1D inputs.
+            - ``'2D'``: convenience alias to output a 2D ImageData where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for 0D, 1D, or 2D inputs.
+            - ``'3D'``: convenience alias to output a 3D ImageData, where all three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for any 0D, 1D, 2D, or 3D inputs.
+            - ``'preserve'`` (default): convenience alias to not modify singleton dimensions.
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
@@ -1251,16 +1243,10 @@ class ImageDataFilters(DataSetFilters):
 
             - ``True``: all dimensions are modified.
             - ``False``: no dimensions are modified.
-            - Can be specified as a sequence of 3 boolean to allow modification on a per
-                dimension basis.
-            - ``'0D'``: convenience alias to output a 0D ImageData, if possible, i.e.,
-                dims will be similar to (1, 1, 1).
-            - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
-                dims will be similar to (>1, 1, 1).
-            - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
-                dims will be similar to (>1, >1, 1).
-            - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
-                dims will be similar to (>1, >1, >1).
+            - ``'0D'``: convenience alias to output a 0D ImageData with dimensions ``(1, 1, 1)``. Only valid for 0D inputs or 1D inputs where exactly one dimension is ``2``, e.g. ``(2, 1, 1)``.
+            - ``'1D'``: convenience alias to output a 1D ImageData where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 1D inputs, or 2D inputs where one dimension is ``2``, e.g. ``(>1, 2, 1)``.
+            - ``'2D'``: convenience alias to output a 2D ImageData where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for 2D inputs, or 3D  inputs where one dimension is ``2``, e.g. ``(>1, >1, 2)``.
+            - ``'3D'``: convenience alias to output a 3D ImageData, where all three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Only valid for 3D inputs.
             - ``'preserve'``: convenience alias to not modify singleton dimensions.
 
             .. note::
@@ -1411,7 +1397,6 @@ class ImageDataFilters(DataSetFilters):
             dims_operator = operator.add  # Increase dimensions
             old_data = point_data
             new_data = new_image.cell_data
-            dims_mask = np.full(3, True)  # Dimensions can always be increased
         else:  # cells_to_points
             output_scalars = scalars if scalars else _get_output_scalars('cell')
             # Shrink image so cell centers become points
@@ -1505,21 +1490,13 @@ class ImageDataFilters(DataSetFilters):
               padding to each boundary independently.
 
         dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
-            Control which dimensions will be modified by the filter.
+            Control which dimensions will be padded by the filter.
 
-            - ``True``: all dimensions are modified.
-            - ``False``: no dimensions are modified.
-            - Can be specified as a sequence of 3 boolean allow modification on a per
+            - Can be specified as a sequence of 3 boolean apply padding on a per
                 dimension basis.
-            - ``'0D'``: convenience alias to output a 0D ImageData, if possible, i.e.,
-                dims will be similar to (1, 1, 1).
-            - ``'1D'``: convenience alias to output a 1D ImageData, if possible, i.e.,
-                dims will be similar to (>1, 1, 1).
-            - ``'2D'``: convenience alias to output a 2D ImageData, if possible, i.e.,
-                dims will be similar to (>1, >1, 1).
-            - ``'3D'``: convenience alias to output a 3D ImageData, if possible, i.e.,
-                dims will be similar to (>1, >1, >1).
-            - ``'preserve'``: convenience alias to not modify singleton dimensions.
+            - ``'1D'``: apply padding such that the output is a 1D ImageData where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 0D or 1D inputs.
+            - ``'2D'``: apply padding such that the output is a 2D ImageData where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for 0D, 1D, or 2D inputs.
+            - ``'3D'``: apply padding such that the output is a 3D ImageData, where all three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for any 0D, 1D, 2D, or 3D inputs.
 
             .. note::
                 The ``pad_size`` for singleton dimensions is set to ``0`` by default, even
@@ -2178,7 +2155,7 @@ class ImageDataFilters(DataSetFilters):
             # Build a bool array of the mask, cast to int first to be a valid input for validate_array3
             dims_mask = np.asarray(operation_mask).astype(int)
             dims_mask = _validation.validate_array3(
-                dims_mask, reshape=True, broadcast=True, dtype_out=bool
+                dims_mask, reshape=True, broadcast=True, must_have_dtype=bool
             )
 
         elif operation_mask == 'preserve':
