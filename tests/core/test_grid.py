@@ -1614,7 +1614,10 @@ def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
 
 
 @pytest.mark.parametrize('grid_class', [pv.RectilinearGrid, pv.ImageData])
-@pytest.mark.parametrize(('dimensionality','dimensions'), [(0, (1, 1, 1)), (1, (1, 42, 1)), (2, (42, 1, 142)), (3,(2, 42, 142))])
+@pytest.mark.parametrize(
+    ('dimensionality', 'dimensions'),
+    [(0, (1, 1, 1)), (1, (1, 42, 1)), (2, (42, 1, 142)), (3, (2, 42, 142))],
+)
 def test_grid_dimensionality(grid_class, dimensionality, dimensions):
     if grid_class == pv.ImageData:
         grid = grid_class(dimensions=dimensions)
