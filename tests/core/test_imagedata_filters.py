@@ -338,10 +338,10 @@ def test_points_to_cells_and_cells_to_points_dimensions_incorrect_number_data():
 
 @pytest.mark.parametrize('pad_size', [1, 2])
 @pytest.mark.parametrize('pad_value', [-1, 0, 1, 2])
-@pytest.mark.parametrize('dimensions', [True, False])
-def test_pad_image(zero_dimensionality_image, pad_size, pad_value, dimensions):
+@pytest.mark.parametrize('dimensionality', [(True, True, True), (False, False, False)])
+def test_pad_image(zero_dimensionality_image, pad_size, pad_value, dimensionality):
     image_point_value = zero_dimensionality_image['image'][0]
-    if dimensions:
+    if all(dimensionality):
         # Input is expected to be padded
         dim = pad_size * 2 + 1
         expected_dimensions = (dim, dim, dim)
@@ -357,7 +357,7 @@ def test_pad_image(zero_dimensionality_image, pad_size, pad_value, dimensions):
     padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
         pad_value=pad_value,
-        dimensionality=dimensions,
+        dimensionality=dimensionality,
     )
     assert padded.dimensions == expected_dimensions
 
@@ -388,7 +388,7 @@ def test_pad_image_pad_size_axis(
 
     padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
-        dimensionality=True,
+        dimensionality=(True, True, True),
         pad_value=pad_value,
     )
     assert padded.dimensions == expected_dimensions
@@ -425,7 +425,7 @@ def test_pad_image_pad_size_bounds(
 
     padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
-        dimensionality=True,
+        dimensionality=(True, True, True),
         pad_value=pad_value,
         pad_all_scalars=True,
     )
@@ -494,7 +494,7 @@ def test_pad_image_multi_component(zero_dimensionality_image):
     padded = zero_dimensionality_image.pad_image(
         new_value,
         pad_size=pad_size,
-        dimensionality=True,
+        dimensionality=(True, True, True),
         pad_all_scalars=True,
         progress_bar=True,
     )
@@ -506,7 +506,7 @@ def test_pad_image_multi_component(zero_dimensionality_image):
     padded = zero_dimensionality_image.pad_image(
         'wrap',
         pad_size=pad_size,
-        dimensionality=True,
+        dimensionality=(True, True, True),
         pad_all_scalars=True,
     )
     assert np.array_equal(len(padded.active_scalars), np.prod(dims + pad_size * 2))
@@ -771,8 +771,8 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
 @pytest.mark.parametrize(
     ('image_dims', 'operation_mask', 'operator', 'expected_dims_mask', 'expected_dims_result'),
     [
-        ((1, 1, 1), True, operator.add, True, (2, 4, 6)),
-        ((1, 1, 1), False, operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), (True, True, True), operator.add, True, (2, 4, 6)),
+        ((1, 1, 1), (False, False, False), operator.add, False, (1, 1, 1)),
         ((1, 1, 1), (True, False, True), operator.add, (True, False, True), (2, 1, 6)),
         ((1, 1, 1), 'preserve', operator.add, False, (1, 1, 1)),
         ((1, 1, 1), '0D', operator.add, False, (1, 1, 1)),
@@ -804,35 +804,42 @@ def test_validate_dim_operation(
             'invalid',
             operator.add,
             ValueError,
-            'The target mask "invalid" is not valid, it should be "0D", "1D", "2D", "3D", or "preserve".',
+            '`invalid` is not a valid `operation_mask`. Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].',
         ),
         (
             (1, 1, 1),
             (True, True, True, True),
             operator.add,
             ValueError,
-            r'Array has shape \(4,\) which is not allowed.',
+            'Array has shape (4,) which is not allowed.',
+        ),
+        (
+            (1, 1, 1),
+            True,
+            operator.add,
+            ValueError,
+            'Array has shape () which is not allowed. Shape must be one of [(3,), (1, 3), (3, 1)]',
         ),
         (
             (2, 2, 2),
             '1D',
             operator.add,
             ValueError,
-            r'The operation requires to add at least \[1 3 5\] dimension\(s\) to \(2, 2, 2\). A 1D ImageData with dims \(>1, 1, 1\) cannot be obtained.',
+            'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). A 1D ImageData with dims (>1, 1, 1) cannot be obtained.',
         ),
         (
             (2, 1, 2),
             '3D',
             operator.sub,
             ValueError,
-            r'The operation requires to sub at least \[1 3 5\] dimension\(s\) to \(2, 1, 2\). A 3D ImageData with dims \(>1, >1, >1\) cannot be obtained.',
+            'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). A 3D ImageData with dims (>1, >1, >1) cannot be obtained.',
         ),
         (
             (1, 2, 20),
             (True, False, True),
             operator.sub,
             ValueError,
-            r'The mask \(True, False, True\), size \[1 3 5\], and operation sub would result in \(0, 2, 15\) which contains <= 0 dimensions.',
+            'The mask (True, False, True), size [1 3 5], and operation sub would result in (0, 2, 15) which contains <= 0 dimensions.',
         ),
     ],
 )
@@ -840,7 +847,7 @@ def test_validate_dim_operation_invalid_parameters(
     image_dims, operation_mask, operator, error, error_message
 ):
     image = pv.ImageData(dimensions=image_dims)
-    with pytest.raises(error, match=error_message):
+    with pytest.raises(error, match=re.escape(error_message)):
         image._validate_dimensional_operation(
             operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
         )

@@ -40,6 +40,7 @@ from pyvista.core._validation import validate_arrayN_unsigned
 from pyvista.core._validation import validate_arrayNx3
 from pyvista.core._validation import validate_axes
 from pyvista.core._validation import validate_data_range
+from pyvista.core._validation import validate_dimensionality
 from pyvista.core._validation import validate_number
 from pyvista.core._validation import validate_transform3x3
 from pyvista.core._validation import validate_transform4x4
@@ -1025,3 +1026,40 @@ def test_array_from_vtkmatrix(cls, shape):
     # Test this matches public function
     expected = array_from_vtkmatrix(mat)
     assert np.array_equal(actual, expected)
+
+
+@pytest.mark.parametrize(
+    ('dimensionality', 'expected_dimensionality'),
+    [
+        (0, 0),
+        (1, 1),
+        (2, 2),
+        (3, 3),
+        ('0D', 0),
+        ('1D', 1),
+        ('2D', 2),
+        ('3D', 3),
+    ],
+)
+def test_validate_dimensionality(dimensionality, expected_dimensionality):
+    assert validate_dimensionality(dimensionality) == expected_dimensionality
+
+
+@pytest.mark.parametrize(
+    ('dimensionality', 'message'),
+    [
+        (-1, 'Dimensionality values must all be greater than or equal to 0.'),
+        ('5D', 'Dimensionality values must all be less than or equal to 3.'),
+        (
+            [1, 1],
+            'Dimensionality has shape (2,) which is not allowed. Shape must be one of [(), (1,)].',
+        ),
+        (
+            'invalid',
+            '`invalid` is not a valid dimensionality. Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D"].',
+        ),
+    ],
+)
+def test_validate_dimensionality_errors(dimensionality, message):
+    with pytest.raises(ValueError, match=escape(message)):
+        validate_dimensionality(dimensionality)
