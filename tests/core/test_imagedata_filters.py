@@ -8,6 +8,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 VTK93 = pv.vtk_version_info >= (9, 3)
 
@@ -560,6 +561,26 @@ def test_pad_image_raises(zero_dimensionality_image, uniform, logo):
     logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):
         logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=True)
+
+
+def test_pad_image_deprecation(zero_dimensionality_image):
+    match = 'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead'
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+        if pv._version.version_info >= (0, 48):
+            raise RuntimeError('Remove `pad_singleton_dims`.')
+
+    match = (
+        'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+        if pv._version.version_info >= (0, 48):
+            raise RuntimeError('Remove `pad_singleton_dims`.')
 
 
 @pytest.fixture

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from typing import Callable
 from typing import Literal
 from typing import cast
+import warnings
 
 import numpy as np
 
@@ -16,6 +17,7 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -1469,6 +1471,7 @@ class ImageDataFilters(DataSetFilters):
         scalars: str | None = None,
         pad_all_scalars: bool = False,
         progress_bar=False,
+        pad_singleton_dims: bool | None = None,
     ) -> pyvista.ImageData:
         """Enlarge an image by padding its boundaries with new points.
 
@@ -1525,6 +1528,8 @@ class ImageDataFilters(DataSetFilters):
                 Set ``dimensionality`` to a value different than ``'preserve'`` to
                 override this behavior and enable padding any or all dimensions.
 
+            .. versionadded:: 0.45.0
+
         scalars : str, optional
             Name of scalars to pad. Defaults to currently active scalars. Unless
             ``pad_all_scalars`` is ``True``, only the specified ``scalars`` are included
@@ -1537,6 +1542,16 @@ class ImageDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        pad_singleton_dims : bool, optional
+            Control whether to pad singleton dimensions.
+
+            .. deprecated:: 0.45.0
+                Deprecated, use ``dimensionality='preserve'`` instead of
+                ``pad_singleton_dims=True`` and ``dimensionality='3D'`` instead of
+                ``pad_singleton_dims=False``.
+
+                Estimated removal on v0.48.0.
 
         Returns
         -------
@@ -1622,6 +1637,20 @@ class ImageDataFilters(DataSetFilters):
         >>> padded.plot(**plot_kwargs)
 
         """
+        # Deprecated on v0.45.0, estimated removal on v0.48.0
+        if pad_singleton_dims is not None:
+            if pad_singleton_dims:
+                warnings.warn(
+                    'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead',
+                    PyVistaDeprecationWarning,
+                )
+                dimensionality = '3D'
+            else:
+                warnings.warn(
+                    'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead',
+                    PyVistaDeprecationWarning,
+                )
+                dimensionality = 'preserve'
 
         def _get_num_components(array_):
             return 1 if array_.ndim == 1 else array_.shape[1]
