@@ -2204,9 +2204,11 @@ class ImageDataFilters(DataSetFilters):
         (array([ True, False,  True]), array([6, 1, 6]))
 
         """
-        dimensions = np.asarray(self.dimensions)  # type: ignore[attr-defined]
+        dimensions = np.asarray(self.dimensions, dtype=int)  # type: ignore[attr-defined]
         # Build an array of the operation size
-        operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
+        operation_size = _validation.validate_array3(
+            operation_size, reshape=True, broadcast=True, dtype_out=int
+        )
 
         if not isinstance(operation_mask, str):
             # Build a bool array of the mask
@@ -2269,7 +2271,7 @@ class ImageDataFilters(DataSetFilters):
                     3: '(>1, >1, >1)',
                 }[target_dimensionality]
                 raise ValueError(
-                    f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {self.dimensions}.'  # type: ignore[attr-defined]
+                    f'The operation requires to {operator.__name__} at least {tuple(operation_size)} dimension(s) to {self.dimensions}.'  # type: ignore[attr-defined, arg-type]
                     f' A {operation_mask} ImageData with dims {desired_dimensions} cannot be obtained.'
                 )
 
@@ -2278,7 +2280,7 @@ class ImageDataFilters(DataSetFilters):
 
         if not (dimensions_result >= 1).all():
             raise ValueError(
-                f'The mask {operation_mask}, size {operation_size}, and operation {operator.__name__}'
+                f'The mask {operation_mask}, size {tuple(operation_size)}, and operation {operator.__name__}'  # type: ignore[arg-type]
                 f' would result in {tuple(dimensions_result)} which contains <= 0 dimensions.'
             )
 
