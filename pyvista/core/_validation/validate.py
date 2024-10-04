@@ -279,11 +279,6 @@ def validate_array(
     # Check type
     if must_be_real:
         check_real(arr_out, name=name)
-    else:
-        try:
-            check_subdtype(arr_out, np.number, name=name)
-        except TypeError as e:
-            raise TypeError(f'{name} must be numeric.') from e
 
     if must_have_dtype is not None:
         check_subdtype(arr_out, must_have_dtype, name=name)
