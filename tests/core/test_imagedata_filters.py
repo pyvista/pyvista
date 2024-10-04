@@ -17,6 +17,34 @@ def logo():
     return examples.load_logo()
 
 
+def variable_dimensionality_image(dimensions):
+    image = pv.ImageData(dimensions=dimensions)
+    image.point_data['image'] = 99
+    image.point_data['other'] = 42
+    image.cell_data['data'] = 142
+    return image
+
+
+@pytest.fixture
+def zero_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(1, 1, 1))
+
+
+@pytest.fixture
+def one_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(1, 2, 1))
+
+
+@pytest.fixture
+def two_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(2, 1, 2))
+
+
+@pytest.fixture
+def three_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(2, 2, 2))
+
+
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
 def test_contour_labeled():
     # Load a 3D label map (segmentation of a frog's tissue)
@@ -226,47 +254,92 @@ def test_cells_to_points_scalars(uniform):
         uniform.cells_to_points('Spatial Point Data')
 
 
-def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
+def test_points_to_cells_and_cells_to_points_dimensions(
+    uniform,
+    logo,
+    zero_dimensionality_image,
+    one_dimensionality_image,
+    two_dimensionality_image,
+    three_dimensionality_image,
+):
     assert uniform.dimensions == (10, 10, 10)
     assert uniform.points_to_cells().dimensions == (11, 11, 11)
     assert uniform.cells_to_points().dimensions == (9, 9, 9)
+    assert uniform.points_to_cells(dimensionality='preserve').dimensions == (11, 11, 11)
+    assert uniform.cells_to_points(dimensionality='preserve').dimensions == (9, 9, 9)
 
     assert logo.dimensions == (1920, 718, 1)
     assert logo.points_to_cells().dimensions == (1921, 719, 1)
-    assert logo.points_to_cells(dimensionality='2D').dimensions == (1921, 719, 1)
-    assert logo.points_to_cells(dimensionality=(True, True, False)).dimensions == (1921, 719, 1)
     assert logo.cells_to_points().dimensions == (1919, 717, 1)
-    assert logo.points_to_cells(dimensionality=True).dimensions == (1921, 719, 2)
-    assert logo.points_to_cells(dimensionality='3D').dimensions == (1921, 719, 2)
+    assert logo.points_to_cells(dimensionality='preserve').dimensions == (1921, 719, 1)
+    assert logo.cells_to_points(dimensionality='preserve').dimensions == (1919, 717, 1)
+
+    assert zero_dimensionality_image.dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(
+        dimensionality=(True, True, True)
+    ).dimensions == (2, 2, 2)
+    assert zero_dimensionality_image.points_to_cells(
+        dimensionality=(True, True, False)
+    ).dimensions == (2, 2, 1)
+    assert zero_dimensionality_image.points_to_cells(
+        dimensionality=(False, False, False)
+    ).dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality='0D').dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (2, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (2, 2, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (2, 2, 2)
+    assert zero_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+
+    assert one_dimensionality_image.dimensions == (1, 2, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (1, 3, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (2, 3, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (2, 3, 2)
+    assert one_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='1D').cells_to_points(
+        dimensionality='1D'
+    ).dimensions == (1, 2, 1)
+
+    assert two_dimensionality_image.dimensions == (2, 1, 2)
+    assert two_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (3, 1, 3)
+    assert two_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (3, 2, 3)
+    assert two_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert two_dimensionality_image.points_to_cells(dimensionality='2D').cells_to_points(
+        dimensionality='2D'
+    ).dimensions == (2, 1, 2)
+
+    assert three_dimensionality_image.dimensions == (2, 2, 2)
+    assert three_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (3, 3, 3)
+    assert three_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert three_dimensionality_image.points_to_cells(dimensionality='3D').cells_to_points(
+        dimensionality='3D'
+    ).dimensions == (2, 2, 2)
 
 
 def test_points_to_cells_and_cells_to_points_dimensions_incorrect_number_data():
     image = pv.ImageData(dimensions=(1, 2, 2))
     with pytest.raises(
         ValueError,
-        match='The required `points_to_cells` operation would require to map 4 points on 1 cells and cannot be lossless.',
+        match=(
+            r'Cannot re-mesh points to cells. The dimensions of the input \(1, 2, 2\) is not compatible'
+            r' with the dimensions of the output \(2, 2, 2\) and would require to map 4 points on 1 cells.'
+        ),
     ):
         image.points_to_cells(dimensionality=[True, False, False])
     with pytest.raises(
         ValueError,
-        match='The required `cells_to_points` operation would require to map 1 cells on 4 points and cannot be lossless.',
+        match=(
+            r'Cannot re-mesh cells to points. The dimensions of the input \(1, 2, 2\) is not compatible'
+            r' with the dimensions of the output \(1, 2, 2\) and would require to map 1 cells on 4 points.'
+        ),
     ):
         image.cells_to_points(dimensionality='2D')
-
-
-@pytest.fixture
-def single_point_image():
-    image = pv.ImageData(dimensions=(1, 1, 1))
-    image.point_data['image'] = 99
-    image.point_data['other'] = 42
-    return image
 
 
 @pytest.mark.parametrize('pad_size', [1, 2])
 @pytest.mark.parametrize('pad_value', [-1, 0, 1, 2])
 @pytest.mark.parametrize('dimensions', [True, False])
-def test_pad_image(single_point_image, pad_size, pad_value, dimensions):
-    image_point_value = single_point_image['image'][0]
+def test_pad_image(zero_dimensionality_image, pad_size, pad_value, dimensions):
+    image_point_value = zero_dimensionality_image['image'][0]
     if dimensions:
         # Input is expected to be padded
         dim = pad_size * 2 + 1
@@ -280,7 +353,7 @@ def test_pad_image(single_point_image, pad_size, pad_value, dimensions):
         expected_dimensions = (1, 1, 1)
         expected_array = image_point_value
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
         pad_value=pad_value,
         dimensionality=dimensions,
@@ -304,15 +377,15 @@ def test_pad_image(single_point_image, pad_size, pad_value, dimensions):
     ],
 )
 def test_pad_image_pad_size_axis(
-    single_point_image,
+    zero_dimensionality_image,
     pad_size,
     expected_dimensions,
     expected_bounds,
 ):
-    image_point_value = single_point_image['image'][0]
+    image_point_value = zero_dimensionality_image['image'][0]
     pad_value = 7
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
         dimensionality=True,
         pad_value=pad_value,
@@ -340,22 +413,22 @@ def test_pad_image_pad_size_axis(
     ],
 )
 def test_pad_image_pad_size_bounds(
-    single_point_image,
+    zero_dimensionality_image,
     pad_size,
     expected_dimensions,
     expected_bounds,
 ):
-    image_point_value = single_point_image['image'][0]
-    other_point_value = single_point_image['other'][0]
+    image_point_value = zero_dimensionality_image['image'][0]
+    other_point_value = zero_dimensionality_image['other'][0]
     pad_value = 7
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
         dimensionality=True,
         pad_value=pad_value,
         pad_all_scalars=True,
     )
-    assert single_point_image.active_scalars_name == 'image'
+    assert zero_dimensionality_image.active_scalars_name == 'image'
     assert padded.active_scalars_name == 'image'
     assert padded.dimensions == expected_dimensions
     assert padded.bounds == expected_bounds
@@ -374,8 +447,8 @@ def test_pad_image_pad_size_bounds(
 
 @pytest.mark.parametrize('all_scalars', [True, False])
 @pytest.mark.parametrize(('scalars', 'expected_scalars'), [(None, 'image'), ('other', 'other')])
-def test_pad_image_scalars(single_point_image, all_scalars, scalars, expected_scalars):
-    padded = single_point_image.pad_image(0, scalars=scalars, pad_all_scalars=all_scalars)
+def test_pad_image_scalars(zero_dimensionality_image, all_scalars, scalars, expected_scalars):
+    padded = zero_dimensionality_image.pad_image(0, scalars=scalars, pad_all_scalars=all_scalars)
     assert padded.active_scalars_name == expected_scalars
     actual_array_names = padded.array_names
     if all_scalars:
@@ -409,15 +482,15 @@ def test_pad_image_wrap_mirror(uniform, pad_value):
         assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, 0, 0])
 
 
-def test_pad_image_multi_component(single_point_image):
-    single_point_image.clear_data()
+def test_pad_image_multi_component(zero_dimensionality_image):
+    zero_dimensionality_image.clear_data()
     new_value = np.array([10, 20, 30, 40])
-    single_point_image['scalars'] = [new_value]
+    zero_dimensionality_image['scalars'] = [new_value]
 
-    dims = np.array(single_point_image.dimensions)
+    dims = np.array(zero_dimensionality_image.dimensions)
     pad_size = 10
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         new_value,
         pad_size=pad_size,
         dimensionality=True,
@@ -427,9 +500,9 @@ def test_pad_image_multi_component(single_point_image):
     assert np.array_equal(len(padded.active_scalars), np.prod(dims + pad_size * 2))
     assert np.all(padded.active_scalars == new_value)
 
-    single_point_image['scalars2'] = [new_value * 2]
+    zero_dimensionality_image['scalars2'] = [new_value * 2]
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         'wrap',
         pad_size=pad_size,
         dimensionality=True,
@@ -440,22 +513,22 @@ def test_pad_image_multi_component(single_point_image):
     assert np.all(padded['scalars2'] == new_value * 2)
 
 
-def test_pad_image_raises(single_point_image, uniform, logo):
+def test_pad_image_raises(zero_dimensionality_image, uniform, logo):
     match = 'Pad size cannot be negative. Got -1.'
     with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(pad_size=-1)
+        zero_dimensionality_image.pad_image(pad_size=-1)
 
     match = 'Pad size must have 1, 2, 3, 4, or 6 values, got 5 instead.'
     with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(pad_size=(1, 2, 3, 4, 5))
+        zero_dimensionality_image.pad_image(pad_size=(1, 2, 3, 4, 5))
 
     match = 'Pad size must be one dimensional. Got 2 dimensions.'
     with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(pad_size=[[1]])
+        zero_dimensionality_image.pad_image(pad_size=[[1]])
 
     match = 'Pad size must be integers. Got dtype float64.'
     with pytest.raises(TypeError, match=match):
-        single_point_image.pad_image(pad_size=1.0)
+        zero_dimensionality_image.pad_image(pad_size=1.0)
 
     match = "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
     with pytest.raises(ValueError, match=match):
@@ -680,7 +753,6 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
         ((1, 1, 1), True, operator.add, True, (2, 4, 6)),
         ((1, 1, 1), False, operator.add, False, (1, 1, 1)),
         ((1, 1, 1), (True, False, True), operator.add, (True, False, True), (2, 1, 6)),
-        ((1, 1, 1), (1, 0, 1), operator.add, (True, False, True), (2, 1, 6)),
         ((1, 1, 1), 'preserve', operator.add, False, (1, 1, 1)),
         ((1, 1, 1), '0D', operator.add, False, (1, 1, 1)),
         ((1, 1, 1), '1D', operator.add, (True, False, False), (2, 1, 1)),
@@ -696,7 +768,7 @@ def test_validate_dim_operation(
     image_dims, operation_mask, operator, expected_dims_mask, expected_dims_result
 ):
     image = pv.ImageData(dimensions=image_dims)
-    dims_mask, dims_result = image._validate_dim_operation(
+    dims_mask, dims_result = image._validate_dimensional_operation(
         operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
     )
     assert (dims_mask == expected_dims_mask).all()
@@ -734,6 +806,13 @@ def test_validate_dim_operation(
             ValueError,
             r'The operation requires to sub at least \[1 3 5\] dimension\(s\) to \(2, 1, 2\). A 3D ImageData with dims \(>1, >1, >1\) cannot be obtained.',
         ),
+        (
+            (1, 2, 20),
+            (True, False, True),
+            operator.sub,
+            ValueError,
+            r'The mask \(True, False, True\), size \[1 3 5\], and operation sub would result in \(0, 2, 15\) which contains <= 0 dimensions.',
+        ),
     ],
 )
 def test_validate_dim_operation_invalid_parameters(
@@ -741,6 +820,6 @@ def test_validate_dim_operation_invalid_parameters(
 ):
     image = pv.ImageData(dimensions=image_dims)
     with pytest.raises(error, match=error_message):
-        image._validate_dim_operation(
+        image._validate_dimensional_operation(
             operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
         )

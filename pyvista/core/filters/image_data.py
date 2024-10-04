@@ -1037,16 +1037,24 @@ class ImageDataFilters(DataSetFilters):
             By default, all point data arrays at the input are passed through as cell
             data at the output.
 
-        dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
+        dimensionality : VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
             Control which dimensions will be modified by the filter.
 
             - Can be specified as a sequence of 3 boolean to allow modification on a per
                 dimension basis.
-            - ``'0D'``: convenience alias to output a 0D ImageData with dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
-            - ``'1D'``: convenience alias to output a 1D ImageData where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 0D or 1D inputs.
-            - ``'2D'``: convenience alias to output a 2D ImageData where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for 0D, 1D, or 2D inputs.
-            - ``'3D'``: convenience alias to output a 3D ImageData, where all three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for any 0D, 1D, 2D, or 3D inputs.
-            - ``'preserve'`` (default): convenience alias to not modify singleton dimensions.
+            - ``'0D'``: convenience alias to output a 0D ImageData with dimensions
+              ``(1, 1, 1)``. Only valid for 0D inputs.
+            - ``'1D'``: convenience alias to output a 1D ImageData where exactly one
+              dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 0D or
+              1D inputs.
+            - ``'2D'``: convenience alias to output a 2D ImageData where exactly two
+              dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for 0D,
+              1D, or 2D inputs.
+            - ``'3D'``: convenience alias to output a 3D ImageData, where all three
+              dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for any 0D,
+              1D, 2D, or 3D inputs.
+            - ``'preserve'`` (default): convenience alias to not modify singleton
+              dimensions.
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
@@ -1232,14 +1240,24 @@ class ImageDataFilters(DataSetFilters):
             By default, all cell data arrays at the input are passed through as point
             data at the output.
 
-        dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
+        dimensionality : VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve'], default: 'preserve'
             Control which dimensions will be modified by the filter.
 
-            - ``'0D'``: convenience alias to output a 0D ImageData with dimensions ``(1, 1, 1)``. Only valid for 0D inputs or 1D inputs where exactly one dimension is ``2``, e.g. ``(2, 1, 1)``.
-            - ``'1D'``: convenience alias to output a 1D ImageData where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 1D inputs, or 2D inputs where one dimension is ``2``, e.g. ``(>1, 2, 1)``.
-            - ``'2D'``: convenience alias to output a 2D ImageData where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for 2D inputs, or 3D  inputs where one dimension is ``2``, e.g. ``(>1, >1, 2)``.
-            - ``'3D'``: convenience alias to output a 3D ImageData, where all three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Only valid for 3D inputs.
-            - ``'preserve'``: convenience alias to not modify singleton dimensions.
+            - Can be specified as a sequence of 3 boolean to allow modification on a per
+                dimension basis.
+            - ``'0D'``: convenience alias to output a 0D ImageData with dimensions
+              ``(1, 1, 1)``. Only valid for 0D inputs.
+            - ``'1D'``: convenience alias to output a 1D ImageData where exactly one
+              dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid for 0D or
+              1D inputs.
+            - ``'2D'``: convenience alias to output a 2D ImageData where exactly two
+              dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only valid for 0D,
+              1D, or 2D inputs.
+            - ``'3D'``: convenience alias to output a 3D ImageData, where all three
+              dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for any 0D,
+              1D, 2D, or 3D inputs.
+            - ``'preserve'`` (default): convenience alias to not modify singleton
+              dimensions.
 
             .. note::
                 This filter does not modify singleton dimensions with ``dimensionality``
@@ -1315,7 +1333,10 @@ class ImageDataFilters(DataSetFilters):
                     f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
                 )
         return self._remesh_points_cells(
-            points_to_cells=False, scalars=scalars, dimensionality=dimensionality, copy=copy
+            points_to_cells=False,
+            scalars=scalars,
+            dimensionality=dimensionality,
+            copy=copy,
         )
 
     def _remesh_points_cells(
@@ -1342,8 +1363,6 @@ class ImageDataFilters(DataSetFilters):
         dimensionality : bool, VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve']
             Control which dimensions will be modified by the filter.
 
-            - ``True``: all dimensions are modified.
-            - ``False``: no dimensions are modified.
             - Can be specified as a sequence of 3 boolean allow modification on a per
             dimension basis.
             - ``'0D'``: convenience alias to output a 0D ImageData, if possible, i.e.,
@@ -1397,7 +1416,7 @@ class ImageDataFilters(DataSetFilters):
             old_data = cell_data
             new_data = new_image.point_data
 
-        dims_mask, dims_result = self._validate_dim_operation(
+        dims_mask, dims_result = self._validate_dimensional_operation(
             operation_mask=dimensionality, operator=dims_operator, operation_size=1
         )
 
@@ -1415,16 +1434,16 @@ class ImageDataFilters(DataSetFilters):
             if new_image.n_cells != self.n_points:  # type: ignore[attr-defined]
                 raise ValueError(
                     'Cannot re-mesh points to cells. The dimensions of the input'
-                    f' ({self.dimensions}) is not compatible with the dimensions of the'  # type: ignore[attr-defined]
-                    f' output ({new_image.dimensions}) and would require to map'
+                    f' {self.dimensions} is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' output {new_image.dimensions} and would require to map'
                     f' {self.n_points} points on {new_image.n_cells} cells.'  # type: ignore[attr-defined]
                 )
         else:  # cells_to_points
             if new_image.n_points != self.n_cells:  # type: ignore[attr-defined]
                 raise ValueError(
                     'Cannot re-mesh cells to points. The dimensions of the input'
-                    f' ({self.dimensions}) is not compatible with the dimensions of the'  # type: ignore[attr-defined]
-                    f' output ({new_image.dimensions}) and would require to map'
+                    f' {self.dimensions} is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' output {new_image.dimensions} and would require to map'
                     f' {self.n_cells} cells on {new_image.n_points} points.'  # type: ignore[attr-defined]
                 )
 
@@ -1444,7 +1463,9 @@ class ImageDataFilters(DataSetFilters):
         pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
         *,
         pad_size: int | VectorLike[int] = 1,
-        dimensionality: VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
+        dimensionality: (
+            VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve']
+        ) = 'preserve',
         scalars: str | None = None,
         pad_all_scalars: bool = False,
         progress_bar=False,
@@ -1646,7 +1667,7 @@ class ImageDataFilters(DataSetFilters):
             raise ValueError(f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.')
 
         # Combine size 2 by 2 to get a (3, ) shaped array
-        dims_mask, _ = self._validate_dim_operation(
+        dims_mask, _ = self._validate_dimensional_operation(
             operation_mask=dimensionality,
             operator=operator.add,
             operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
@@ -1775,9 +1796,9 @@ class ImageDataFilters(DataSetFilters):
         self,
         *,
         scalars: str | None = None,
-        scalar_range: Literal['auto', 'foreground', 'vtk_default'] | VectorLike[float] = 'auto',
+        scalar_range: (Literal['auto', 'foreground', 'vtk_default'] | VectorLike[float]) = 'auto',
         extraction_mode: Literal['all', 'largest', 'seeded'] = 'all',
-        point_seeds: MatrixLike[float] | VectorLike[float] | _vtk.vtkDataSet | None = None,
+        point_seeds: (MatrixLike[float] | VectorLike[float] | _vtk.vtkDataSet | None) = None,
         label_mode: Literal['size', 'constant', 'seeds'] = 'size',
         constant_value: int | None = None,
         inplace: bool = False,
@@ -2080,9 +2101,9 @@ class ImageDataFilters(DataSetFilters):
             return self, labels, sizes  # type: ignore[return-value]
         return output, labels, sizes
 
-    def _validate_dim_operation(
+    def _validate_dimensional_operation(
         self,
-        operation_mask: bool | VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve'],
+        operation_mask: (bool | VectorLike[bool] | Literal['0D', '1D', '2D', '3D', 'preserve']),
         operator: Callable,  # type: ignore[type-arg]
         operation_size: int | VectorLike[int],
     ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
@@ -2147,25 +2168,29 @@ class ImageDataFilters(DataSetFilters):
         (array([ True, False,  True]), array([6, 1, 6]))
 
         """
-        dims = np.asarray(self.dimensions)  # type: ignore[attr-defined]
+        dimensions = np.asarray(self.dimensions)  # type: ignore[attr-defined]
         # Build an array of the operation size
         operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
 
         if not isinstance(operation_mask, str):
             # Build a bool array of the mask, cast to int first to be a valid input for validate_array3
-            dims_mask = np.asarray(operation_mask).astype(int)
-            dims_mask = _validation.validate_array3(
-                dims_mask, reshape=True, broadcast=True, must_have_dtype=bool
+            # dims_mask = np.asarray(operation_mask).astype(int)
+            dimensions_mask = _validation.validate_array3(
+                operation_mask,
+                reshape=True,
+                broadcast=True,
+                must_have_dtype=bool,
+                must_be_real=False,
             )
 
         elif operation_mask == 'preserve':
             # Ensure that singleton dims remain unmodified
-            dims_mask = dims > 1  # type: ignore[assignment]
+            dimensions_mask = dimensions > 1
 
         else:
             # Brute force all possible combinations: only 8 combinations to test
             # dims_mask is ordered such as the behavior is predictable
-            dims_masks = np.array(
+            dimensions_masks = np.array(
                 [
                     [True, True, True],
                     [True, True, False],
@@ -2179,7 +2204,7 @@ class ImageDataFilters(DataSetFilters):
             )
 
             # Predict the resulting dims for all possible masks
-            result_dims = operator(dims, operation_size * dims_masks)
+            result_dims = operator(dimensions, operation_size * dimensions_masks)
 
             try:
                 # Required singleton dims to satisfy the desired shape
@@ -2192,13 +2217,13 @@ class ImageDataFilters(DataSetFilters):
 
             # Select the first admissible mask that produces the desired shape
             try:
-                dims_mask = dims_masks[
+                dimensions_mask = dimensions_masks[
                     ((result_dims == 1).sum(axis=1) == nof_singleton)
                     & ((result_dims > 1).sum(axis=1) == nof_non_singleton)
                 ][0]
 
             except IndexError:
-                desired_dims = {
+                desired_dimensions = {
                     '0D': '(1, 1, 1)',
                     '1D': '(>1, 1, 1)',
                     '2D': '(>1, >1, 1)',
@@ -2206,16 +2231,16 @@ class ImageDataFilters(DataSetFilters):
                 }[operation_mask]
                 raise ValueError(
                     f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {self.dimensions}.'  # type: ignore[attr-defined]
-                    f' A {operation_mask} ImageData with dims {desired_dims} cannot be obtained.'
+                    f' A {operation_mask} ImageData with dims {desired_dimensions} cannot be obtained.'
                 )
 
         # Check that the result dim is feasible
-        dims_result = operator(dims, operation_size * dims_mask)
+        dimensions_result = operator(dimensions, operation_size * dimensions_mask)
 
-        if not (dims_result >= 1).all():
+        if not (dimensions_result >= 1).all():
             raise ValueError(
-                f'The mask `{operation_mask}`, size `{operation_size}`, and operation {operator.__name__}'
-                f' would result in `{tuple(dims_result)}` which contains <= 0 dimensions.'
+                f'The mask {operation_mask}, size {operation_size}, and operation {operator.__name__}'
+                f' would result in {tuple(dimensions_result)} which contains <= 0 dimensions.'
             )
 
-        return dims_mask, dims_result  # type: ignore[return-value]
+        return dimensions_mask, dimensions_result
