@@ -1037,20 +1037,22 @@ def test_array_from_vtkmatrix(cls, shape):
 
 
 @pytest.mark.parametrize(
-    ('dimensionality', 'expected_dimensionality'),
+    ('dimensionality', 'reshape', 'expected_dimensionality'),
     [
-        (0, 0),
-        (1, 1),
-        (2, 2),
-        (3, 3),
-        ('0D', 0),
-        ('1D', 1),
-        ('2D', 2),
-        ('3D', 3),
+        (0, True, 0),
+        (0, False, 0),
+        (1, True, 1),
+        (2, True, 2),
+        (3, True, 3),
+        ('0D', True, 0),
+        ('1D', True, 1),
+        ('2D', True, 2),
+        ('3D', True, 3),
+        (('1D',), True, 1),
     ],
 )
-def test_validate_dimensionality(dimensionality, expected_dimensionality):
-    assert validate_dimensionality(dimensionality) == expected_dimensionality
+def test_validate_dimensionality(dimensionality, reshape, expected_dimensionality):
+    assert validate_dimensionality(dimensionality, reshape=reshape) == expected_dimensionality
 
 
 @pytest.mark.parametrize(
