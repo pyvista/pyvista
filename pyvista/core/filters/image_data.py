@@ -2196,7 +2196,7 @@ class ImageDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> import operator
         >>> image = pv.ImageData(dimensions=(4, 1, 4))
-        >>> image._validate_dim_operation(
+        >>> image._validate_dimensional_operation(
         ...     operation_mask='2D',
         ...     operator=operator.add,
         ...     operation_size=2,
@@ -2206,9 +2206,7 @@ class ImageDataFilters(DataSetFilters):
         """
         dimensions = np.asarray(self.dimensions)  # type: ignore[attr-defined]
         # Build an array of the operation size
-        operation_size = _validation.validate_array3(
-            operation_size, reshape=True, broadcast=True
-        )
+        operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
 
         if not isinstance(operation_mask, str):
             # Build a bool array of the mask
@@ -2271,7 +2269,7 @@ class ImageDataFilters(DataSetFilters):
                     3: '(>1, >1, >1)',
                 }[target_dimensionality]
                 raise ValueError(
-                    f'The operation requires to {operator.__name__} at least {tuple((o for o in operation_size))} dimension(s) to {self.dimensions}.'  # type: ignore[attr-defined, arg-type]
+                    f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {self.dimensions}.'  # type: ignore[attr-defined]
                     f' A {operation_mask} ImageData with dims {desired_dimensions} cannot be obtained.'
                 )
 
@@ -2280,8 +2278,7 @@ class ImageDataFilters(DataSetFilters):
 
         if not (dimensions_result >= 1).all():
             raise ValueError(
-                f'The mask {operation_mask}, size {tuple((o for o in operation_size))}, and operation {operator.__name__}'  # type: ignore[arg-type]
-                f' would result in {tuple((d for d in dimensions_result))} which contains <= 0 dimensions.'
+                f'The mask {operation_mask}, size {operation_size}, and operation {operator.__name__}'
             )
 
         return dimensions_mask, dimensions_result
