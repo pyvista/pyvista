@@ -2279,6 +2279,7 @@ class ImageDataFilters(DataSetFilters):
         if not (dimensions_result >= 1).all():
             raise ValueError(
                 f'The mask {operation_mask}, size {operation_size}, and operation {operator.__name__}'
+                f' would result in {dimensions_result} which contains <= 0 dimensions.'
             )
 
         return dimensions_mask, dimensions_result
