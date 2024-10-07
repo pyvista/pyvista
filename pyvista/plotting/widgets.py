@@ -327,7 +327,7 @@ class WidgetHelper:
         )
 
         name = kwargs.get('name', mesh.memory_address)
-        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        rng = mesh.get_data_range(kwargs.get('scalars'))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
@@ -760,7 +760,7 @@ class WidgetHelper:
         )
 
         name = kwargs.get('name', mesh.memory_address)
-        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        rng = mesh.get_data_range(kwargs.get('scalars'))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
         if origin is None:
@@ -1057,7 +1057,7 @@ class WidgetHelper:
         mesh, algo = algorithm_to_mesh_handler(mesh)
 
         name = kwargs.get('name', mesh.memory_address)
-        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        rng = mesh.get_data_range(kwargs.get('scalars'))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
         if origin is None:
@@ -2146,10 +2146,10 @@ class WidgetHelper:
 
         """
         mesh, algo = algorithm_to_mesh_handler(mesh)
-        name = kwargs.get('name', None)
+        name = kwargs.get('name')
         if name is None:
             name = mesh.memory_address
-        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        rng = mesh.get_data_range(kwargs.get('scalars'))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
