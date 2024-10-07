@@ -4752,12 +4752,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
     ) -> _vtk.vtkScalarBarActor:  # numpydoc ignore=PR01,RT01
         """Wrap for ``ScalarBars.add_scalar_bar``."""
         # only render when the plotter has already been shown
-        render = kwargs.get('render')
+        render = kwargs.get('render', None)
         if render is None:
             kwargs['render'] = not self._first_time
 
         # check if maper exists
-        mapper = kwargs.get('mapper')
+        mapper = kwargs.get('mapper', None)
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
                 raise AttributeError('Mapper does not exist.  Add a mesh with scalars first.')
@@ -4769,7 +4769,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             title = ''
         kwargs['title'] = title
 
-        interactive = kwargs.get('interactive')
+        interactive = kwargs.get('interactive', None)
         if interactive is None:
             interactive = self._theme.interactive
             if self.shape != (1, 1):
