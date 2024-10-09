@@ -636,7 +636,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         try:
             from trame_vtk.tools.vtksz2html import write_html
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install trame-vtk to export')
+            raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
 
         data = self.export_vtksz(filename=None)
         buffer = io.StringIO()
@@ -681,7 +681,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             from pyvista.trame.jupyter import elegantly_launch
             from pyvista.trame.views import get_server
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install trame to export')
+            raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
 
         # Ensure trame server is launched
         server = get_server(pyvista.global_theme.trame.jupyter_server_name)
