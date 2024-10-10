@@ -122,3 +122,10 @@ from vtkmodules.vtkViewsContext2D import vtkContextInteractorStyle
 from pyvista.core._vtk_core import *
 
 from ._vtk_gl import *
+
+try:
+    from vtkmodules.vtkInteractionWidgets import vtkOrientationRepresentation
+    from vtkmodules.vtkInteractionWidgets import vtkOrientationWidget
+except ImportError:  # pragma: no cover
+    # VTK < 9.3 is missing this class
+    pass
