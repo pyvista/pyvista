@@ -1,6 +1,6 @@
 """Plot directive module.
 
-A directive for including a PyVista plot in a Sphinx document
+A directive for including a PyVista plot in a Sphinx document.
 
 The ``.. pyvista-plot::`` sphinx directive will include an inline
 ``.png`` image.
@@ -43,7 +43,7 @@ The ``pyvista-plot`` directive supports the following options:
 
     include-source : bool
         Whether to display the source code. The default can be changed
-        using the `plot_include_source` variable in :file:`conf.py`.
+        using the ``plot_include_source`` variable in :file:`conf.py`.
 
     encoding : str
         If this source file is in a non-UTF8 or non-ASCII encoding, the
@@ -55,7 +55,7 @@ The ``pyvista-plot`` directive supports the following options:
         directives for which the ``:context:`` option was specified.  This only
         applies to inline code plot directives, not those run from files.
 
-    nofigs : bool
+    nofigs : None
         If specified, the code block will be run, but no figures will be
         inserted.  This is usually useful with the ``:context:`` option.
 
@@ -64,10 +64,22 @@ The ``pyvista-plot`` directive supports the following options:
         figure. This overwrites the caption given in the content, when the plot
         is generated from a file.
 
-    force_static : bool
+    force_static : None
         If specified, static images will be used instead of an interactive scene.
 
-Additionally, this directive supports all of the options of the `image`
+    skip : bool
+        Whether to skip execution of this directive. If no argument is provided
+        i.e., ``:skip:``, then it defaults to ``:skip: true``.  Default
+        behaviour is controlled by the ``plot_skip`` boolean variable in
+        :file:`conf.py`.  Note that, if specified, this option overrides the
+        ``plot_skip`` configuration.
+
+    optional : None
+        This flag marks the directive for *conditional* execution. Whether the
+        directive is executed is controlled by the ``plot_skip_optional``
+        boolean variable in :file:`conf.py`.
+
+Additionally, this directive supports all the options of the `image`
 directive, except for *target* (since plot will add its own target).  These
 include *alt*, *height*, *width*, *scale*, *align*.
 
@@ -76,7 +88,8 @@ include *alt*, *height*, *width*, *scale*, *align*.
 The plot directive has the following configuration options:
 
     plot_include_source : bool
-        Default value for the include-source option. Default is ``True``.
+        Default value for the ``include-source`` directive option.
+        Default is ``True``.
 
     plot_basedir : str
         Base directory, to which ``plot::`` file names are relative
@@ -94,6 +107,14 @@ The plot directive has the following configuration options:
 
     plot_cleanup : str
         Python code to be run after every plot directive block.
+
+    plot_skip : bool
+        Default value for the ``skip`` directive option.  Default is
+        ``False``.
+
+    plot_skip_optional : bool
+        Whether to skip execution of ``optional`` directives.  Default is
+        ``False``.
 
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
@@ -174,6 +195,8 @@ class PlotDirective(Directive):
         'encoding': directives.encoding,
         'caption': directives.unchanged,
         'force_static': directives.flag,
+        'skip': _option_boolean,
+        'optional': directives.flag,
     }
 
     def run(self):
@@ -203,6 +226,8 @@ def setup(app):
     app.add_config_value('plot_template', None, True)
     app.add_config_value('plot_setup', None, True)
     app.add_config_value('plot_cleanup', None, True)
+    app.add_config_value(name='plot_skip', default=False, rebuild='html')
+    app.add_config_value(name='plot_skip_optional', default=False, rebuild='html')
     return {'parallel_read_safe': True, 'parallel_write_safe': True, 'version': pyvista.__version__}
 
 
@@ -353,7 +378,7 @@ class PlotError(RuntimeError):
 def _run_code(code, code_path, ns=None, function_name=None):
     """Run a docstring example.
 
-     Run the example if it does not contain ``'doctest:+SKIP'``, or a
+    Run the example if it does not contain ``'doctest:+SKIP'``, or a
     ```pyvista-plot::`` directive.  In the later case, the doctest parser will
     present the code-block again with the ```pyvista-plot::`` directive
     and its options removed.
@@ -463,11 +488,16 @@ def run(arguments, content, options, state_machine, state, lineno):
     document = state_machine.document
     config = document.settings.env.config
     nofigs = 'nofigs' in options
+    optional = 'optional' in options
     force_static = 'force_static' in options
 
     default_fmt = 'png'
 
     options.setdefault('include-source', config.plot_include_source)
+    options.setdefault('skip', config.plot_skip)
+
+    skip = options["skip"] or (optional and config.plot_skip_optional)
+
     keep_context = 'context' in options
     _ = None if not keep_context else options['context']
 
@@ -553,30 +583,33 @@ def run(arguments, content, options, state_machine, state, lineno):
     _ = dest_dir_link + '/' + output_base + source_ext
 
     # make figures
-    try:
-        results = render_figures(
-            code,
-            source_file_name,
-            build_dir,
-            output_base,
-            keep_context,
-            function_name,
-            config,
-            force_static,
-        )
-        errors = []
-    except PlotError as err:  # pragma: no cover
-        reporter = state.memo.reporter
-        sm = reporter.system_message(
-            2,
-            f'Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}',
-            line=lineno,
-        )
+    errors = []
+    if skip:
         results = [(code, [])]
-        errors = [sm]
+    else:
+        try:
+            results = render_figures(
+                code,
+                source_file_name,
+                build_dir,
+                output_base,
+                keep_context,
+                function_name,
+                config,
+                force_static,
+            )
+        except PlotError as err:  # pragma: no cover
+            reporter = state.memo.reporter
+            sm = reporter.system_message(
+                2,
+                f'Exception occurred in plotting {output_base}\n from {source_file_name}:\n{err}',
+                line=lineno,
+            )
+            results = [(code, [])]
+            errors.append([sm])
 
     # Properly indent the caption
-    caption = '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
+    caption = '' if skip else '\n' + '\n'.join('   ' + line.strip() for line in caption.split('\n'))
 
     # generate output restructuredtext
     total_lines = []
