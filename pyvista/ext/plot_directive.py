@@ -496,7 +496,7 @@ def run(arguments, content, options, state_machine, state, lineno):
     options.setdefault('include-source', config.plot_include_source)
     options.setdefault('skip', config.plot_skip)
 
-    skip = options["skip"] or (optional and config.plot_skip_optional)
+    skip = options['skip'] or (optional and config.plot_skip_optional)
 
     keep_context = 'context' in options
     _ = None if not keep_context else options['context']
