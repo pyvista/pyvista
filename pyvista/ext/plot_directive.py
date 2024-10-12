@@ -64,7 +64,7 @@ The ``pyvista-plot`` directive supports the following options:
         figure. This overwrites the caption given in the content, when the plot
         is generated from a file.
 
-    force_static : None
+    force_static : bool, default None
         If specified, static images will be used instead of an interactive scene.
 
     skip : bool
