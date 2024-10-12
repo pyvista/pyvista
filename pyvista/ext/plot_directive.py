@@ -111,10 +111,8 @@ The plot directive has the following configuration options:
     plot_skip : bool, default False
         Default value for the ``skip`` directive option.
 
-    plot_skip_optional : bool
-        Whether to skip execution of ``optional`` directives.  Default is
-        ``False``.
-
+    plot_skip_optional : bool, default False
+        Whether to skip execution of ``optional`` directives.
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
