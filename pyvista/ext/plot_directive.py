@@ -55,8 +55,8 @@ The ``pyvista-plot`` directive supports the following options:
         directives for which the ``:context:`` option was specified.  This only
         applies to inline code plot directives, not those run from files.
 
-    nofigs : bool, default None
-        If specified, the code block will be run, but no figures will be
+    nofigs : None
+        When setting this flag, the code block will be run but no figures will be
         inserted.  This is usually useful with the ``:context:`` option.
 
     caption : str
@@ -64,10 +64,11 @@ The ``pyvista-plot`` directive supports the following options:
         figure. This overwrites the caption given in the content, when the plot
         is generated from a file.
 
-    force_static : bool, default None
-        If specified, static images will be used instead of an interactive scene.
+    force_static : None
+        When setting this flag, static images will be used instead of an
+        interactive scene.
 
-    skip : bool
+    skip : bool, default: True
         Whether to skip execution of this directive. If no argument is provided
         i.e., ``:skip:``, then it defaults to ``:skip: true``.  Default
         behaviour is controlled by the ``plot_skip`` boolean variable in
@@ -87,7 +88,7 @@ include *alt*, *height*, *width*, *scale*, *align*.
 **Configuration options**
 The plot directive has the following configuration options:
 
-    plot_include_source : bool
+    plot_include_source : bool, default: True
         Default value for the ``include-source`` directive option.
         Default is ``True``.
 
@@ -96,7 +97,7 @@ The plot directive has the following configuration options:
         to.  If ``None`` or unset, file names are relative to the
         directory where the file containing the directive is.
 
-    plot_html_show_formats : bool
+    plot_html_show_formats : bool, default: True
         Whether to show links to the files in HTML. Default ``True``.
 
     plot_template : str
@@ -108,11 +109,12 @@ The plot directive has the following configuration options:
     plot_cleanup : str
         Python code to be run after every plot directive block.
 
-    plot_skip : bool, default False
+    plot_skip : bool, default: False
         Default value for the ``skip`` directive option.
 
-    plot_skip_optional : bool, default False
+    plot_skip_optional : bool, default: False
         Whether to skip execution of ``optional`` directives.
+
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
 
