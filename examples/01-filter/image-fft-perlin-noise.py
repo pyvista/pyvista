@@ -164,12 +164,14 @@ def warp_low_pass_noise(cfreq, scalar_ptp=None):
     warped_raw = output.warp_by_scalar()
 
     # on the right: scale to fixed warped height
-    output_scaled = output.translate((-11, 11, 0), inplace=False)
+    output_scaled = output.copy()
     output_scaled['scalars_warp'] = output['scalars'] / np.ptp(output['scalars']) * scalar_ptp
     warped_scaled = output_scaled.warp_by_scalar('scalars_warp')
     warped_scaled.active_scalars_name = 'scalars'
     # push center back to xy plane due to peaks near 0 frequency
     warped_scaled.translate((0, 0, -warped_scaled.center[-1]), inplace=True)
+    # position it next to the left image
+    warped_scaled = warped_scaled.translate((-11, 11, 0), inplace=True)
 
     return warped_raw + warped_scaled
 
