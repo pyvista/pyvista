@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Sequence
 from typing import overload
 
 import numpy as np
@@ -14,6 +15,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
+from pyvista.core.utilities.transformations import decompose
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -64,6 +66,10 @@ class Transform(_vtk.vtkTransform):
 
         By default, this value is ``None``, which means that the scale, rotation, etc.
         transformations are performed about the origin ``(0, 0, 0)``.
+
+    multiply_mode : 'pre' | 'post', optional
+        Multiplication mode to use when concatenating. Set this to ``'pre'`` for
+        pre-multiplication or ``'post'`` for post-multiplication.
 
     See Also
     --------
@@ -247,14 +253,21 @@ class Transform(_vtk.vtkTransform):
     """
 
     def __init__(
-        self, trans: TransformLike | None = None, *, point: VectorLike[float] | None = None
+        self,
+        trans: TransformLike | Sequence[TransformLike] | None = None,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] = 'post',
     ):
         super().__init__()
-        self.multiply_mode = 'post'
+        self.multiply_mode = multiply_mode
         self.point = point  # type: ignore[assignment]
         self.check_finite = True
         if trans is not None:
-            self.matrix = trans  # type: ignore[assignment]
+            if isinstance(trans, Sequence):
+                [self.concatenate(t) for t in trans]
+            else:
+                self.matrix = trans
 
     def __add__(self, other: VectorLike[float] | TransformLike) -> Transform:
         """:meth:`concatenate` this transform using post-multiply semantics.
@@ -1588,6 +1601,135 @@ class Transform(_vtk.vtkTransform):
         # Transform many points
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return array if inplace else out
+
+    def decompose(
+        self,
+        *,
+        as_matrix: bool = False,
+        allow_negative_scale: bool = False,
+    ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+        """Decompose the current transformation into its components.
+
+        Decompose :attr:`matrix` ``M`` into
+
+        - translation ``T``
+        - rotation ``R``
+        - scaling ``S``
+        - shearing ``K``
+
+        such that, when represented as 4x4 matrices, ``M = TRSK``.
+
+        Reflections are represented implicitly in the decomposition:
+
+        - When ``allow_negative_scale`` is ``False`` (default), reflections are included
+          with the rotation ``R``. The rotation is left-handed (negative determinant) if
+          there is a reflection in the decomposition, and right-handed (positive
+          determinant) if there is no reflection.
+
+        - When ``allow_negative_scale`` is ``True``, reflections are included with the
+          scaling ``S``. The first scaling factor is negative if there is a reflection
+          in the decomposition, and positive if there is no reflection. The y and z
+          scaling factors are always positive.
+
+        By default, compact representations of the transformations are returned (e.g.
+        as vectors or 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
+
+        .. note::
+
+            The transformation is not unique.
+
+        Parameters
+        ----------
+        as_matrix : bool, default: False
+            If ``True``, return translation, rotation, scaling, and shear components as
+            4x4 matrices.
+
+        allow_negative_scale : bool, default: False
+            If ``True``, the first scaling term may be negative. By default, the
+            scaling factors are always positive.
+
+        Returns
+        -------
+        numpy.ndarray
+            Length-3 translation vector (or 4x4 translation matrix if ``as_matrix`` is ``True``).
+
+        numpy.ndarray
+            3x3 rotation matrix (or 4x4 rotation matrix if ``as_matrix`` is ``True``).
+
+        numpy.ndarray
+            Length-3 scaling vector (or 4x4 scaling matrix if ``as_matrix`` is ``True``).
+
+        numpy.ndarray
+            Length-3 shear vector (or 4x4 shear matrix if ``as_matrix`` is ``True``).
+            If a vector, the values are the ``xy``, ``xz``, and ``yz`` shears that
+            fill the upper triangle above the diagonal of the shear matrix.
+
+        Examples
+        --------
+        Create a transform with scaling ``S``, rotation ``R``, translation ``T`` and
+        shear ``K``. Note how the transformations are applied in the order ``K-S-R-T``.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.25  # xy shear
+        >>> scale = (1, 2, 3)
+        >>> rotation_angle = 90
+        >>> position = (4, 5, 6)
+        >>> transform = (
+        ...     pv.Transform()
+        ...     .concatenate(shear)
+        ...     .scale(scale)
+        ...     .rotate_z(rotation_angle)
+        ...     .translate(position)
+        ... )
+
+        >>> transform
+        Transform (...)
+          Num Transformations: 4
+          Matrix:  [[ 0.  , -2.  ,  0.  ,  4.  ],
+                    [ 1.  ,  0.25,  0.  ,  5.  ],
+                    [ 0.  ,  0.  ,  3.  ,  6.  ],
+                    [ 0.  ,  0.  ,  0.  ,  1.  ]]
+
+        Decompose the matrix.
+
+        >>> T, R, S, K = transform.decompose()
+        >>> K  # shear
+        array([0.25, 0.  , 0.  ])
+
+        >>> S  # scale
+        array([1., 2., 3.])
+
+        >>> R  # rotation
+        array([[ 0., -1.,  0.],
+               [ 1.,  0.,  0.],
+               [ 0.,  0.,  1.]])
+
+        >>> T  # translation
+        array([4., 5., 6.])
+
+        Decompose as 4x4 matrices then recompose the original transformation. Use
+        pre-multiplication since the returned order is ``T-R-S-K`` but we want to
+        compose them in the order ``K-S-R-T``.
+
+        >>> decomposed = transform.decompose(as_matrix=True)
+        >>> recomposed = pv.Transform(decomposed, multiply_mode='pre')
+
+        Show the recomposed transformation.
+
+        >>> recomposed
+        Transform (...)
+          Num Transformations: 4
+          Matrix:  [[ 0.  , -2.  ,  0.  ,  4.  ],
+                    [ 1.  ,  0.25,  0.  ,  5.  ],
+                    [ 0.  ,  0.  ,  3.  ,  6.  ],
+                    [ 0.  ,  0.  ,  0.  ,  1.  ]]
+
+        """
+        return decompose(
+            self.matrix, as_matrix=as_matrix, allow_negative_scale=allow_negative_scale
+        )
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
