@@ -233,6 +233,7 @@ def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
     assert logo.dimensions == (1920, 718, 1)
     assert logo.points_to_cells().dimensions == (1921, 719, 1)
     assert logo.cells_to_points().dimensions == (1919, 717, 1)
+    assert logo.points_to_cells(remesh_singleton_dims=True).dimensions == (1921, 719, 2)
 
 
 @pytest.fixture
