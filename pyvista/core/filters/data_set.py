@@ -2567,9 +2567,9 @@ class DataSetFilters:
 
         # Make glyphing geometry if necessary
         if geom is None:
-            arrow = _vtk.vtkArrowSource()
-            _update_alg(arrow, progress_bar, 'Making Arrow')
-            geom = arrow.GetOutput()
+            arrow = pyvista.ArrowSource()
+            geom = arrow.output
+            del arrow
         # Check if a table of geometries was passed
         if isinstance(geom, (np.ndarray, Sequence)):
             if indices is None:
