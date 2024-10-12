@@ -108,9 +108,8 @@ The plot directive has the following configuration options:
     plot_cleanup : str
         Python code to be run after every plot directive block.
 
-    plot_skip : bool
-        Default value for the ``skip`` directive option.  Default is
-        ``False``.
+    plot_skip : bool, default False
+        Default value for the ``skip`` directive option.
 
     plot_skip_optional : bool
         Whether to skip execution of ``optional`` directives.  Default is
