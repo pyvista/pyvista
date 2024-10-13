@@ -152,7 +152,7 @@ jobs:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
           - python-version: "3.9"
             vtk-version: "9.0.3" # Requires numpy~=1.23
-            numpy-version: "1.26" # Test numpy 1.26
+            numpy-version: "1.23"
           - python-version: "3.9"
             vtk-version: "9.1"
             numpy-version: "1.26" # Test numpy 1.26
