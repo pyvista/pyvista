@@ -7265,7 +7265,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     >>> strl = grid.streamlines_from_source(
     ...     seed,
     ...     vectors='B',
-    ...     max_time=180,
+    ...     max_length=180,
     ...     initial_step_length=0.1,
     ...     integration_direction='both',
     ... )
