@@ -11,6 +11,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -23,6 +24,9 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
+    from numpy.typing import NDArray
+
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -1604,3 +1608,310 @@ class ImageDataFilters(DataSetFilters):
         # Restore active scalars
         self.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
         return output
+
+    def label_connectivity(
+        self,
+        *,
+        scalars: str | None = None,
+        scalar_range: Literal['auto', 'foreground', 'vtk_default'] | VectorLike[float] = 'auto',
+        extraction_mode: Literal['all', 'largest', 'seeded'] = 'all',
+        point_seeds: MatrixLike[float] | VectorLike[float] | _vtk.vtkDataSet | None = None,
+        label_mode: Literal['size', 'constant', 'seeds'] = 'size',
+        constant_value: int | None = None,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ) -> tuple[pyvista.ImageData, NDArray[int], NDArray[int]]:
+        """Find and label connected regions in a :class:`~pyvista.ImageData`.
+
+        Only points whose `scalar` value is within the `scalar_range` are considered for
+        connectivity. A 4-connectivity is used for 2D images or a 6-connectivity for 3D
+        images. This filter operates on point-based data. If cell-based data are provided,
+        they are re-meshed to a point-based representation using
+        :func:`~pyvista.ImageDataFilters.cells_to_points` and the output is meshed back
+        to a cell-based representation with :func:`~pyvista.ImageDataFilters.points_to_cells`,
+        effectively filtering based on face connectivity. The connected regions are
+        extracted and labelled according to the strategy defined by `extraction_mode`
+        and `label_mode`, respectively. Unconnected regions are labelled with `0` value.
+
+        .. versionadded:: 0.45.0
+
+        Notes
+        -----
+        This filter implements `vtkImageConnectivityFilter
+        <https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html>`_.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Scalars to use to filter points. If `None` is provided, the scalars is
+            automatically set, if possible.
+
+        scalar_range : str, Literal['auto', 'foreground', 'vtk_default'], VectorLike[float], default: 'auto'
+            Points whose scalars value is within `'scalar_range'` are considered for
+            connectivity. The bounds are inclusive.
+
+            - `'auto'`: includes the full data range, similarly to :meth:`~pyvista.DataFilters.connectivity`.
+            - `'foreground'`: includes the full data range except the smallest value.
+            - `'vtk_default'`: default to [`0.5`, :const:`~vtk.VTK_DOUBLE_MAX`].
+            - `VectorLike[float]`: explicitly set the range.
+
+            The bounds are always cast to floats since `vtk` expects doubles. The scalars
+            data are also cast to floats to avoid unexpected behavior arising from implicit
+            type conversion. The only exceptions is if both bounds are whole numbers, in
+            which case the implicit conversion is safe. It will optimize resources consumption
+            if the data are integers.
+
+        extraction_mode : Literal['all', 'largest', 'seeded'], default: 'all'
+            Determine how the connected regions are extracted. If `'all'`, all connected
+            regions are extracted. If `'largest'`, only the largest region is extracted.
+            If `'seeded'`, only the regions that include the points defined with
+            `point_seeds` are extracted.
+
+        point_seeds : MatrixLike[float], VectorLike[float], _vtk.vtkDataSet, optional
+            The point coordinates to use as seeds, specified as a (N, 3) array like or
+            as a :class:`~vtk.vtkDataSet`. Has no effect if `extraction_mode` is not
+            `'seeded'`.
+
+        label_mode : Literal['size', 'constant', 'seeds'], default: 'size'
+            Determine how the extracted regions are labelled. If `'size'`, label regions
+            by decreasing size (i.e., count of cells), starting at `1`. If `'constant'`,
+            label with the provided `constant_value`. If `'seeds'`, label according to
+            the seed order, starting at `1`.
+
+        constant_value : int, optional
+            The constant label value to use. Has no effect if `label_mode` is not `'seeds'`.
+
+        inplace : default: False
+            If `True`, perform an inplace labelling of the ImageData. Else, returns a
+            new ImageData.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Either the input ImageData or a generated one where connected regions are
+            labelled with a `'RegionId'` point-based or cell-based data.
+
+        NDArray[int]
+            The labels of each extracted regions.
+
+        NDArray[int]
+            The size (i.e., number of cells) of each extracted regions.
+
+        See Also
+        --------
+        pyvista.DataSetFilters.connectivity
+            Similar general-purpose filter that performs 1-connectivity.
+
+        Examples
+        --------
+        Prepare a segmented grid.
+
+        >>> import pyvista as pv
+        >>> segmented_grid = pv.ImageData(dimensions=(4, 3, 3))
+        >>> segmented_grid.cell_data["Data"] = [
+        ...     0,
+        ...     0,
+        ...     0,
+        ...     1,
+        ...     0,
+        ...     1,
+        ...     1,
+        ...     2,
+        ...     0,
+        ...     0,
+        ...     0,
+        ...     0,
+        ... ]
+        >>> segmented_grid.plot(show_edges=True)
+
+        Label the connected regions. The cells with a `0` value are excluded from the
+        connected regions and labelled with `0`. The remaining cells define 3 different
+        regions that are labelled by decreasing size.
+
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
+        ...     scalar_range='foreground'
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
+        >>> pl.show()
+
+        Exclude the cell with a `2` value.
+
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
+        ...     scalar_range=[1, 1]
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
+        >>> pl.show()
+
+        Label all connected regions with a constant value.
+
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
+        ...     scalar_range='foreground',
+        ...     label_mode='constant',
+        ...     constant_value=10,
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
+        >>> pl.show()
+
+        Label only the regions that include seed points, by seed order.
+
+        >>> points = [(2, 1, 0), (0, 0, 1)]
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
+        ...     scalar_range='foreground',
+        ...     extraction_mode='seeded',
+        ...     point_seeds=points,
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
+        >>> pl.show()
+
+        """
+        # Get a copy of input to not overwrite data
+        input_mesh = self.copy()  # type: ignore[attr-defined]
+
+        if scalars is None:
+            set_default_active_scalars(input_mesh)
+        else:
+            input_mesh.set_active_scalars(scalars)
+
+        # Make sure we have point data (required by the filter)
+        field, scalars = input_mesh.active_scalars_info
+        if field == FieldAssociation.CELL:
+            # Convert to point data
+            input_mesh = input_mesh.cells_to_points(scalars=scalars, copy=False)
+
+        # Set vtk algorithm
+        alg = _vtk.vtkImageConnectivityFilter()
+        alg.SetInputDataObject(input_mesh)
+
+        # Set the scalar range considered for connectivity
+        # vtk default is 0.5 to VTK_DOUBLE_MAX
+        # See https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html
+        if scalar_range != 'vtk_default':
+            if scalar_range == 'auto':
+                scalar_range = input_mesh.get_data_range(scalars, preference='point')
+            elif scalar_range == 'foreground':
+                unique_scalars = np.unique(input_mesh.point_data[scalars])
+                scalar_range = (unique_scalars[1], unique_scalars[-1])
+            else:
+                scalar_range = _validation.validate_data_range(scalar_range)
+            alg.SetScalarRange(*scalar_range)
+
+        scalars_casted_to_float = False
+        if (
+            scalar_range == 'vtk_default'
+            or not float(scalar_range[0]).is_integer()
+            or not float(scalar_range[1]).is_integer()
+        ) and np.issubdtype(input_mesh.point_data[scalars].dtype, np.integer):
+            input_mesh.point_data[scalars] = input_mesh.point_data[scalars].astype(float)
+            # Keep track of the operation to cast back to int when the operation is inplace
+            scalars_casted_to_float = True
+
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            field.value,
+            scalars,
+        )  # args: (idx, port, connection, field, name)
+
+        if extraction_mode == 'all':
+            alg.SetExtractionModeToAllRegions()
+        elif extraction_mode == 'largest':
+            alg.SetExtractionModeToLargestRegion()
+        elif extraction_mode == 'seeded':
+            if point_seeds is None:
+                raise ValueError(
+                    '`point_seeds` must be specified when `extraction_mode="seeded"`.',
+                )
+
+            # PointSet requires vtk >= 9.1.0
+            # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
+            elif not isinstance(point_seeds, _vtk.vtkDataSet):
+                if pyvista.vtk_version_info >= (9, 1, 0):
+                    point_seeds = pyvista.PointSet(point_seeds)
+                else:
+                    # Assign points outside the constructor to not create useless cells
+                    tmp = point_seeds
+                    point_seeds = pyvista.PolyData()
+                    point_seeds.SetPoints(pyvista.vtk_points(tmp, force_float=True))
+
+            alg.SetExtractionModeToSeededRegions()
+            alg.SetSeedData(point_seeds)
+        else:
+            raise ValueError(
+                f'Invalid `extraction_mode` "{extraction_mode}",'
+                ' use "all", "largest", or "seeded".'
+            )
+
+        if label_mode == 'size':
+            alg.SetLabelModeToSizeRank()
+        elif label_mode == 'constant':
+            alg.SetLabelModeToConstantValue()
+            if constant_value is None:
+                raise ValueError(
+                    f'`constant_value` must be provided when `extraction_mode`is "{label_mode}".'
+                )
+            alg.SetLabelConstantValue(int(constant_value))
+        elif label_mode == 'seeds':
+            if point_seeds is None:
+                raise ValueError(
+                    '`point_seeds` must be specified when `label_mode="seeds"`.',
+                )
+            alg.SetLabelModeToSeedScalar()
+        else:
+            raise ValueError(
+                f'Invalid `label_mode` "{label_mode}", use "size", "constant", or "seeds".'
+            )
+
+        _update_alg(alg, progress_bar, 'Identifying and Labelling Connected Regions')
+
+        output = _get_output(alg)
+
+        labels: NDArray[int] = _vtk.vtk_to_numpy(alg.GetExtractedRegionLabels())
+
+        sizes: NDArray[int] = _vtk.vtk_to_numpy(alg.GetExtractedRegionSizes())
+
+        if field == FieldAssociation.CELL:
+            # Convert back to cell data
+            output = output.points_to_cells(copy=False)
+            # Add label `RegionId` to original dataset as cell data if required
+            if inplace:
+                self.cell_data['RegionId'] = output.cell_data['RegionId']  # type: ignore[attr-defined]
+                self.set_active_scalars(name='RegionId', preference='cell')  # type: ignore[attr-defined]
+
+        elif inplace:
+            # Add label `RegionId` to original dataset as point data if required
+            self.point_data['RegionId'] = output.point_data['RegionId']  # type: ignore[attr-defined]
+            self.set_active_scalars(name='RegionId', preference='point')  # type: ignore[attr-defined]
+            if scalars_casted_to_float:
+                input_mesh.point_data[scalars] = input_mesh.point_data[scalars].astype(int)
+
+        if inplace:
+            return self, labels, sizes  # type: ignore[return-value]
+        return output, labels, sizes

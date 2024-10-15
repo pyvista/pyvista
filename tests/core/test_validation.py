@@ -539,6 +539,14 @@ def test_validate_array(
         assert array_out is not array_in
 
 
+@pytest.mark.parametrize('array', [(True,), 'abc'])
+def test_validate_array_non_numeric(array):
+    match = 'Array must have real numbers.'
+    with pytest.raises(TypeError, match=match):
+        assert validate_array(array)
+    assert validate_array(array, must_be_real=False)
+
+
 @pytest.mark.parametrize('obj', [0, 0.0, '0'])
 @pytest.mark.parametrize('classinfo', [int, (int, float), [int, float]])
 @pytest.mark.parametrize('allow_subclass', [True, False])

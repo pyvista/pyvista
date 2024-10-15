@@ -636,7 +636,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         try:
             from trame_vtk.tools.vtksz2html import write_html
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install trame-vtk to export')
+            raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
 
         data = self.export_vtksz(filename=None)
         buffer = io.StringIO()
@@ -681,7 +681,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             from pyvista.trame.jupyter import elegantly_launch
             from pyvista.trame.views import get_server
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install trame to export')
+            raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
 
         # Ensure trame server is launched
         server = get_server(pyvista.global_theme.trame.jupyter_server_name)
@@ -4752,12 +4752,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
     ) -> _vtk.vtkScalarBarActor:  # numpydoc ignore=PR01,RT01
         """Wrap for ``ScalarBars.add_scalar_bar``."""
         # only render when the plotter has already been shown
-        render = kwargs.get('render', None)
+        render = kwargs.get('render')
         if render is None:
             kwargs['render'] = not self._first_time
 
         # check if maper exists
-        mapper = kwargs.get('mapper', None)
+        mapper = kwargs.get('mapper')
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
                 raise AttributeError('Mapper does not exist.  Add a mesh with scalars first.')
@@ -4769,7 +4769,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             title = ''
         kwargs['title'] = title
 
-        interactive = kwargs.get('interactive', None)
+        interactive = kwargs.get('interactive')
         if interactive is None:
             interactive = self._theme.interactive
             if self.shape != (1, 1):
