@@ -3536,7 +3536,8 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
     >>> point_a = (0.08, 2.50, 0.71)
     >>> point_b = (0.08, 4.50, 0.71)
     >>> line = pv.Line(point_a, point_b, resolution=39)
-    >>> dataset.streamlines_from_source(line).plot(show_grid=True)
+    >>> streamlines = dataset.streamlines_from_source(line, max_length=200)
+    >>> streamlines.plot(show_grid=True)
 
     .. seealso::
 
