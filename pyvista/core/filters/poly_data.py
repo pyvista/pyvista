@@ -4268,9 +4268,9 @@ class PolyDataFilters(DataSetFilters):
         scalars = (  # Init with background value
             np.zeros(scalars_shape, dtype=scalars_dtype)
             if background_value == 0
-            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
+            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value  # type: ignore[operator]
         )
-        binary_mask['mask'] = scalars  # type: ignore[assignment]
+        binary_mask['mask'] = scalars
 
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier

@@ -53,6 +53,7 @@ from vtkmodules.vtkRenderingAnnotation import vtkCornerAnnotation
 from vtkmodules.vtkRenderingAnnotation import vtkCubeAxesActor
 from vtkmodules.vtkRenderingAnnotation import vtkLegendBoxActor
 from vtkmodules.vtkRenderingAnnotation import vtkLegendScaleActor
+from vtkmodules.vtkRenderingAnnotation import vtkPolarAxesActor
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
 from vtkmodules.vtkRenderingContext2D import vtkBlockItem
 from vtkmodules.vtkRenderingContext2D import vtkBrush

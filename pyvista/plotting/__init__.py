@@ -14,6 +14,7 @@ from .actor import Actor
 from .actor_properties import ActorProperties
 from .axes import Axes
 from .axes_actor import AxesActor
+from .axes_actor import PolarAxesActor
 from .axes_assembly import AxesAssembly
 from .axes_assembly import AxesAssemblySymmetric
 from .axes_assembly import PlanesAssembly

@@ -617,3 +617,274 @@ class AxesActor(_vtk.vtkAxesActor):
     @z_axis_tip_properties.setter
     def z_axis_tip_properties(self, properties: ActorProperties):  # numpydoc ignore=GL08
         self.z_axis_tip_properties = properties
+
+
+class PolarAxesActor(_vtk.vtkPolarAxesActor):
+    """PolarAxesActor wrapper for vtkPolarAxesActor.
+
+    This actor is used to represent polar axes in a scene. The user can
+    define the geometry to use for the shaft or the tip, and the user
+    can set the text for the radial and azimuthal axes. To see full
+    customization options, refer to `vtkPolarAxesActor Details
+    <https://vtk.org/doc/nightly/html/classvtkPolarAxesActor.html#details>`_.
+
+    Examples
+    --------
+    Customize the polar axes.
+
+    >>> import pyvista as pv
+
+    Load the teapot geometry using PyVista's built-in methods
+
+    >>> pv.set_jupyter_backend('static')
+    >>> filename = pv.examples.download_teapot(
+    ...     load=False
+    ... )  # Download only, do not load
+    >>> mesh = pv.read(filename)
+
+    Apply normals to the geometry
+
+    >>> normals = mesh.compute_normals()
+
+    Create a PyVista plotter
+
+    >>> plotter = pv.Plotter()
+
+    Add the geometry actor (teapot) to the plotter
+
+    >>> actor = plotter.add_mesh(
+    ...     normals, color=(0.5, 0.8, 0.3), show_edges=True
+    ... )
+
+    Create an outline filter using VTK and add it to the plotter
+
+    >>> _ = plotter.add_mesh(pv.outline_algorithm(normals), color="white")
+
+    Set up the camera.
+
+    >>> camera = pv.Camera()
+    >>> camera.clipping_range = (1.0, 100.0)
+    >>> camera.focal_point = (0.0, 0.5, 0.0)
+    >>> camera.position = (5.0, 6.0, 14.0)
+
+    Set up the light.
+
+    >>> light = pv.Light()
+    >>> light.focal_point = (0.21406, 1.5, 0.0)
+    >>> light.position = (7.0, 7.0, 4.0)
+
+    Set up the polar axes using VTK and add it to the plotter
+
+    >>> polaxes = pv.PolarAxesActor()
+    >>> polaxes.SetBounds(normals.bounds)
+    >>> polaxes.pole = (0.5, 1.0, 3.0)
+    >>> polaxes.maximum_radius = 3.0
+    >>> polaxes.minimum_angle = -60.0
+    >>> polaxes.maximum_angle = 210.0
+    >>> polaxes.number_of_radial_axes = 10
+    >>> polaxes.camera = camera
+    >>> polaxes.SetPolarLabelFormat("%6.1f")
+    >>> polaxes.GetLastRadialAxisProperty().SetColor(0.0, 1.0, 0.0)
+    >>> polaxes.GetSecondaryRadialAxesProperty().SetColor(0.0, 0.0, 1.0)
+    >>> polaxes.GetPolarArcsProperty().SetColor(1.0, 0.0, 0.0)
+    >>> polaxes.GetSecondaryPolarArcsProperty().SetColor(1.0, 0.0, 1.0)
+    >>> polaxes.GetPolarAxisProperty().SetColor(1.0, 0.5, 0.0)
+    >>> polaxes.GetPolarAxisTitleTextProperty().SetColor(0.0, 0.0, 0.0)
+    >>> polaxes.GetPolarAxisLabelTextProperty().SetColor(1.0, 1.0, 0.0)
+    >>> polaxes.GetLastRadialAxisTextProperty().SetColor(0.0, 0.5, 0.0)
+    >>> polaxes.GetSecondaryRadialAxesTextProperty().SetColor(
+    ...     0.0, 1.0, 1.0
+    ... )
+    >>> polaxes.screen_size = 9.0
+
+    Add the polar axes to the plotter
+
+    >>> _ = plotter.add_actor(polaxes)
+
+    Set background color
+
+    >>> plotter.set_background((0.8, 0.8, 0.8))
+
+    Set the camera and light
+
+    >>> plotter.camera = camera
+    >>> _ = plotter.add_light(light)
+
+    Show the result
+
+    >>> plotter.show()
+
+    """
+
+    def __init__(self):
+        """Initialize actor."""
+        super().__init__()
+        self.camera = pyvista.Camera()
+
+    @property
+    def pole(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Return or set the pole position.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.pole
+        (0.0, 0.0, 0.0)
+        >>> polaxes.pole = (0.5, 1.0, 3.0)
+        >>> polaxes.pole
+        (0.5, 1.0, 3.0)
+
+        """
+        return self.GetPole()
+
+    @pole.setter
+    def pole(self, pole: tuple[float, float, float]):  # numpydoc ignore=GL08
+        self.SetPole(pole[0], pole[1], pole[2])
+
+    @property
+    def camera(self) -> pyvista.Camera:  # numpydoc ignore=RT01
+        """Return or set the camera.
+
+        the camera to perform scaling and translation of the polar axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.camera = pv.Camera()
+
+        """
+        return self.GetCamera()
+
+    @camera.setter
+    def camera(self, camera: pyvista.Camera):  # numpydoc ignore=GL08
+        self.SetCamera(camera)
+
+    @property
+    def screen_size(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the screen size.
+
+        explicitly specify the screen size of title and label text.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.screen_size
+        10.0
+        >>> polaxes.screen_size = 20.0
+        >>> polaxes.screen_size
+        20.0
+
+        """
+        return self.GetScreenSize()
+
+    @screen_size.setter
+    def screen_size(self, screen_size: float):  # numpydoc ignore=GL08
+        self.SetScreenSize(screen_size)
+
+    @property
+    def maximum_radius(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the maximum radius.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.maximum_radius
+        1.0
+        >>> polaxes.maximum_radius = 2.0
+        >>> polaxes.maximum_radius
+        2.0
+
+        """
+        return self.GetMaximumRadius()
+
+    @maximum_radius.setter
+    def maximum_radius(self, maximum_radius: float):  # numpydoc ignore=GL08
+        self.SetMaximumRadius(maximum_radius)
+
+    @property
+    def minimum_radius(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the minimum radius.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.minimum_radius
+        0.0
+        >>> polaxes.minimum_radius = 0.5
+        >>> polaxes.minimum_radius
+        0.5
+
+        """
+        return self.GetMinimumRadius()
+
+    @minimum_radius.setter
+    def minimum_radius(self, minimum_radius: float):  # numpydoc ignore=GL08
+        self.SetMinimumRadius(minimum_radius)
+
+    @property
+    def minimum_angle(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the minimum angle.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.minimum_angle
+        0.0
+        >>> polaxes.minimum_angle = -60.0
+        >>> polaxes.minimum_angle
+        -60.0
+
+        """
+        return self.GetMinimumAngle()
+
+    @minimum_angle.setter
+    def minimum_angle(self, minimum_angle: float):  # numpydoc ignore=GL08
+        self.SetMinimumAngle(minimum_angle)
+
+    @property
+    def maximum_angle(self) -> float:  # numpydoc ignore=RT01
+        """Return or set the maximum angle.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.maximum_angle
+        90.0
+        >>> polaxes.maximum_angle = 45.0
+        >>> polaxes.maximum_angle
+        45.0
+
+        """
+        return self.GetMaximumAngle()
+
+    @maximum_angle.setter
+    def maximum_angle(self, maximum_angle: float):  # numpydoc ignore=GL08
+        self.SetMaximumAngle(maximum_angle)
+
+    @property
+    def number_of_radial_axes(self) -> int:  # numpydoc ignore=RT01
+        """Return or set the number of radial axes.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> polaxes = pv.PolarAxesActor()
+        >>> polaxes.number_of_radial_axes
+        0
+        >>> polaxes.number_of_radial_axes = 10
+        >>> polaxes.number_of_radial_axes
+        10
+
+        """
+        return self.GetRequestedNumberOfRadialAxes()
+
+    @number_of_radial_axes.setter
+    def number_of_radial_axes(self, number_of_radial_axes: int):  # numpydoc ignore=GL08
+        self.SetRequestedNumberOfRadialAxes(number_of_radial_axes)
