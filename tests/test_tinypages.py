@@ -18,13 +18,12 @@ pytest.importorskip('sphinx')
 if not system_supports_plotting():
     pytestmark = pytest.mark.skip(reason='Requires system to support plotting')
 
-ENVIRONMENT_HOOKS = ["PLOT_SKIP", "PLOT_SKIP_OPTIONAL"]
-
+ENVIRONMENT_HOOKS = ['PLOT_SKIP', 'PLOT_SKIP_OPTIONAL']
 
 
 @pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
-@pytest.mark.parametrize("ename", ENVIRONMENT_HOOKS)
-@pytest.mark.parametrize("evalue", [False, True])
+@pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
+@pytest.mark.parametrize('evalue', [False, True])
 def test_tinypages(tmp_path, ename, evalue):
     # sanitise the environment namespace
     for hook in ENVIRONMENT_HOOKS:
@@ -33,12 +32,12 @@ def test_tinypages(tmp_path, ename, evalue):
     # configure the plot-directive environment variable hook for conf.py
     os.environ[ename] = str(evalue)
 
-    skip = False if ename != "PLOT_SKIP" else evalue
-    skip_optional = False if ename != "PLOT_SKIP_OPTIONAL" else evalue
+    skip = False if ename != 'PLOT_SKIP' else evalue
+    skip_optional = False if ename != 'PLOT_SKIP_OPTIONAL' else evalue
     expected = not skip
     expected_optional = False if skip else not skip_optional
 
-    tmp_dir = tmp_path / f"{ename}_{evalue}"
+    tmp_dir = tmp_path / f'{ename}_{evalue}'
     tmp_dir.mkdir()
     html_dir = tmp_dir / 'html'
     doctree_dir = tmp_dir / 'doctrees'
@@ -91,7 +90,7 @@ def test_tinypages(tmp_path, ename, evalue):
     assert cone_file.exists() == expected
 
     html_contents = (html_dir / 'some_plots.html').read_bytes()
-    assert (b'# Only a comment' in html_contents)
+    assert b'# Only a comment' in html_contents
 
     # check if figure caption made it into html file
     assert (b'This is the caption for plot 8.' in html_contents) == expected
@@ -103,10 +102,12 @@ def test_tinypages(tmp_path, ename, evalue):
     assert (html_contents.count(b'This caption applies to both plots.') == 2) == expected
 
     assert b'you should not be reading this right now' not in html_contents
-    assert (b'should be printed: include-source with no args' in html_contents)
+    assert b'should be printed: include-source with no args' in html_contents
 
     # check that caption with tabs works
-    assert (html_contents.count(b'Plot 15 uses the caption option with tabbed UI.') == 1) == expected
+    assert (
+        html_contents.count(b'Plot 15 uses the caption option with tabbed UI.') == 1
+    ) == expected
 
     # check that no skip always exists
     assert b'Plot 16 will never be skipped' in html_contents
