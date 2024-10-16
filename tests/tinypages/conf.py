@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 from pathlib import Path
 import re
 import sys
@@ -54,6 +55,12 @@ __s_p_t('document')
 del __s_p_t
 """
 plot_cleanup = plot_setup
+
+if value := os.environ.get("PLOT_SKIP"):
+    plot_skip = value.lower() == "true"
+
+if value := os.environ.get("PLOT_SKIP_OPTIONAL"):
+    plot_skip_optional = value.lower() == "true"
 
 
 def _str_examples(self):
