@@ -35,7 +35,7 @@ print(fluid_mesh)
 
 one_streamline = fluid_mesh.streamlines(
     start_position=(0.0, 0.4, 0.0),
-    max_time=100.0,
+    max_length=100.0,
     compute_vorticity=False,  # vorticity already exists in dataset
 )
 
@@ -57,7 +57,7 @@ line_streamlines = fluid_mesh.streamlines(
     pointa=(0, -5, 0),
     pointb=(0, 5, 0),
     n_points=25,
-    max_time=100.0,
+    max_length=100.0,
     compute_vorticity=False,  # vorticity already exists in dataset
 )
 

@@ -19,6 +19,7 @@ from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_set import _swap_axes
 
@@ -1681,6 +1682,72 @@ def test_streamlines_start_position(uniform_vec):
     stream = uniform_vec.streamlines('vectors', start_position=(0.5, 0.0, 0.0), progress_bar=True)
 
     assert all([stream.n_points, stream.n_cells])
+
+
+def test_streamlines_max_length():
+    # mesh that is 50x50x50 length units in size
+    mesh = pv.ImageData(dimensions=(6, 6, 6), spacing=(10, 10, 10))
+
+    vel = np.zeros((mesh.n_points, 3))
+    vel[:, 0] = 1
+    mesh['vel'] = vel
+
+    for step_unit in ('cl', 'l'):
+        # First show that the default integrates to near the end of the domain.
+        # Use max_step_length to limit error near end of domain.
+        stream = mesh.streamlines(
+            vectors='vel',
+            start_position=(0, 0, 0),
+            integration_direction='forward',
+            step_unit=step_unit,
+            max_step_length=0.1,
+        )
+        # It doesn't identify edge of domain, and just stops at last point inside domain.
+        # Check that is ended reasonably close to edge of domain.
+        assert stream.length > 45
+
+        # Next show that the max_length is satisfied
+        stream = mesh.streamlines(
+            vectors='vel',
+            start_position=(0, 0, 0),
+            integration_direction='forward',
+            max_length=1,
+            step_unit=step_unit,
+        )
+        assert np.isclose(stream.length, 1)
+
+    def check_deprecation():
+        if pv._version.version_info >= (0, 48):
+            raise RuntimeError(
+                'Convert error ``max_time`` parameter in ``streamlines_from_source``'
+            )
+        if pv._version.version_info >= (0, 49):
+            raise RuntimeError('Remove ``max_time`` parameter in ``streamlines_from_source``')
+
+    with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):
+        stream = mesh.streamlines(
+            vectors='vel',
+            start_position=(0, 0, 0),
+            integration_direction='forward',
+            max_time=1,
+            max_step_length=0.1,
+        )
+        check_deprecation()
+    assert np.isclose(stream.length, 1)
+
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
+    ):
+        stream = mesh.streamlines(
+            vectors='vel',
+            start_position=(0, 0, 0),
+            integration_direction='forward',
+            max_time=5,
+            max_length=1,
+        )
+        check_deprecation()
+    assert np.isclose(stream.length, 1)
 
 
 def test_streamlines_errors(uniform_vec):
