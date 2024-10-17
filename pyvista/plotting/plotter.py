@@ -5448,6 +5448,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size=None,
         text_color=None,
         font_family=None,
+        font_file=None,
         shadow=False,
         show_points=True,
         point_color=None,
@@ -5501,7 +5502,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         font_family : str, optional
             Font family.  Must be either ``'courier'``, ``'times'``,
-            or ``'arial``.
+            or ``'arial``. This is ignored if the `font_file` is set.
+
+        font_file : str, default: None
+            The absolute file path to a local file containing a freetype
+            readable font.
 
         shadow : bool, default: False
             Adds a black shadow to the text.
@@ -5706,6 +5711,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             bold=bold,
             font_size=font_size,
             font_family=font_family,
+            font_file=font_file,
             color=text_color,
             shadow=shadow,
             justification_horizontal=justification_horizontal,
