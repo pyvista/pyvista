@@ -54,6 +54,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -61,6 +62,7 @@ jobs:
           cache: "pip"
           cache-dependency-path: |
             requirements_docs.txt
+
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
       - name: "Run Vale"
