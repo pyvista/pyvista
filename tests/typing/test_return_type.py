@@ -10,8 +10,8 @@ import pyvista as pv
 from pyvista.core.errors import VTKVersionError
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from types import ModuleType
-    from typing import Iterable
 
 
 def get_classes_with_attribute(attr: str) -> tuple[tuple[str], tuple[type]]:

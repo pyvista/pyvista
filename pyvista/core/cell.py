@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Tuple
 from typing import cast
 import warnings
 
@@ -20,7 +19,7 @@ from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Sequence
+    from collections.abc import Sequence
 
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike
@@ -532,7 +531,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
         self.EvaluateLocation(sub_id, para_center, center, weights)
-        return cast(Tuple[float, float, float], tuple(center))
+        return cast(tuple[float, float, float], tuple(center))
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""

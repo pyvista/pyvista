@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Iterator
 import contextlib
 from contextlib import contextmanager
 from contextlib import suppress
@@ -19,7 +20,6 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
-from typing import Iterator
 import uuid
 import warnings
 import weakref

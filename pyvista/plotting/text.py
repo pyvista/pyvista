@@ -19,8 +19,8 @@ from .themes import Theme
 from .tools import FONTS
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
     from typing import ClassVar
-    from typing import Sequence
 
     from pyvista.core._typing_core import VectorLike
 
