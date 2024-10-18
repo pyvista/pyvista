@@ -60,7 +60,7 @@ seed = pv.Disc(inner=1, outer=5.4, r_res=2, c_res=12)
 strl = grid.streamlines_from_source(
     seed,
     vectors='B',
-    max_time=180,
+    max_length=180,
     initial_step_length=0.1,
     integration_direction='both',
 )
