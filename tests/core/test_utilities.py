@@ -8,7 +8,6 @@ from pathlib import Path
 import pickle
 import re
 import shutil
-import sys
 from unittest import mock
 import warnings
 
@@ -42,6 +41,7 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
+from tests.conftest import NumpyVersionInfo
 
 
 @pytest.fixture
@@ -1008,7 +1008,7 @@ CASE_3 = (  # non-coplanar points
 )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason='Different results for some tests.')
+@pytest.mark.skipif(NumpyVersionInfo < (1, 26), reason='Different results for some tests.')
 @pytest.mark.parametrize(
     ('points', 'expected_axes'),
     [CASE_0, CASE_1, CASE_2, CASE_3],
