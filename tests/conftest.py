@@ -14,7 +14,7 @@ from pyvista.core._vtk_core import VersionInfo
 
 pyvista.OFF_SCREEN = True
 
-NumpyVersionInfo = VersionInfo(
+NUMPY_VERSION_INFO = VersionInfo(
     major=int(np.__version__.split('.')[0]),
     minor=int(np.__version__.split('.')[1]),
     micro=int(np.__version__.split('.')[2]),
