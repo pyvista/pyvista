@@ -14,6 +14,7 @@ import scipy
 from vtk import vtkTransform
 
 from pyvista.core import pyvista_ndarray
+from pyvista.core import vtk_version_info
 from pyvista.core._validation import check_contains
 from pyvista.core._validation import check_finite
 from pyvista.core._validation import check_greater_than
@@ -975,7 +976,7 @@ def test_cast_to_numpy(as_any, copy, dtype):
 
 
 def test_cast_to_numpy_raises():
-    if sys.version_info < (3, 9) and sys.platform == 'linux':
+    if vtk_version_info < (9.1) and sys.platform == 'linux':
         err = TypeError
         match = 'Object arrays are not supported.'
     else:
