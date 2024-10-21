@@ -1008,7 +1008,7 @@ CASE_3 = (  # non-coplanar points
 )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason='Different results for some tests.')
+@pytest.mark.skipif(pv.vtk_version_info < (9, 1), reason='Different results for some tests.')
 @pytest.mark.parametrize(
     ('points', 'expected_axes'),
     [CASE_0, CASE_1, CASE_2, CASE_3],
