@@ -50,7 +50,6 @@ from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core._validation.check import _validate_shape_value
 from pyvista.core._validation.validate import _array_from_vtkmatrix
 from pyvista.core._validation.validate import _set_default_kwarg_mandatory
-from pyvista.core._vtk_core import vtk_version_info
 from pyvista.core._vtk_core import vtkMatrix3x3
 from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
