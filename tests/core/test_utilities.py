@@ -8,7 +8,6 @@ from pathlib import Path
 import pickle
 import re
 import shutil
-import sys
 from unittest import mock
 import warnings
 
