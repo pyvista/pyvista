@@ -54,6 +54,7 @@ from pyvista.core._vtk_core import vtkMatrix3x3
 from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from tests.conftest import NUMPY_VERSION_INFO
 
 
 @pytest.mark.parametrize(
@@ -976,7 +977,7 @@ def test_cast_to_numpy(as_any, copy, dtype):
 
 
 def test_cast_to_numpy_raises():
-    if sys.version_info < (3, 9) and sys.platform == 'linux':
+    if NUMPY_VERSION_INFO < (1, 26) and sys.platform == 'linux':
         err = TypeError
         match = 'Object arrays are not supported.'
     else:
