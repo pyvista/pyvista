@@ -33,7 +33,7 @@ mesh = examples.download_carotid()
 
 streamlines, src = mesh.streamlines(
     return_source=True,
-    max_time=100.0,
+    max_length=100.0,
     initial_step_length=2.0,
     terminal_speed=0.1,
     n_points=25,
@@ -46,10 +46,10 @@ streamlines, src = mesh.streamlines(
 # was measured with low resolution, many streamlines travel outside the artery.
 
 p = pv.Plotter()
-p.add_mesh(mesh.outline(), color="k")
+p.add_mesh(mesh.outline(), color='k')
 p.add_mesh(streamlines.tube(radius=0.15))
 p.add_mesh(src)
-p.add_mesh(mesh.contour([160]).extract_all_edges(), color="grey", opacity=0.25)
+p.add_mesh(mesh.contour([160]).extract_all_edges(), color='grey', opacity=0.25)
 p.camera_position = [(182.0, 177.0, 50), (139, 105, 19), (-0.2, -0.2, 1)]
 p.show()
 
@@ -60,7 +60,7 @@ p.show()
 # Here is another example of blood flow:
 
 mesh = examples.download_blood_vessels().cell_data_to_point_data()
-mesh.set_active_scalars("velocity")
+mesh.set_active_scalars('velocity')
 streamlines, src = mesh.streamlines(
     return_source=True,
     source_radius=10,
@@ -75,7 +75,7 @@ sargs = dict(vertical=True, title_font_size=16)
 p = pv.Plotter()
 p.add_mesh(streamlines.tube(radius=0.2), lighting=False, scalar_bar_args=sargs)
 p.add_mesh(src)
-p.add_mesh(boundary, color="grey", opacity=0.25)
+p.add_mesh(boundary, color='grey', opacity=0.25)
 p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
 p.show()
 
@@ -90,9 +90,9 @@ p.show()
 source_mesh = mesh.slice('z', origin=(0, 0, 182))  # inlet surface
 # thin out ~40% points to get a nice density of streamlines
 seed_mesh = source_mesh.decimate_boundary(0.4)
-streamlines = mesh.streamlines_from_source(seed_mesh, integration_direction="forward")
+streamlines = mesh.streamlines_from_source(seed_mesh, integration_direction='forward')
 # print *only* added arrays from streamlines filter
-print("Added arrays from streamlines filter:")
+print('Added arrays from streamlines filter:')
 print([array_name for array_name in streamlines.array_names if array_name not in mesh.array_names])
 
 # %%
@@ -102,13 +102,13 @@ sargs = dict(vertical=True, title_font_size=16)
 p = pv.Plotter()
 p.add_mesh(
     streamlines.tube(radius=0.2),
-    scalars="IntegrationTime",
+    scalars='IntegrationTime',
     clim=[0, 1000],
     lighting=False,
     scalar_bar_args=sargs,
 )
-p.add_mesh(boundary, color="grey", opacity=0.25)
-p.add_mesh(source_mesh, color="red")
+p.add_mesh(boundary, color='grey', opacity=0.25)
+p.add_mesh(source_mesh, color='red')
 p.camera_position = [(10, 9.5, -43), (87.0, 73.5, 123.0), (-0.5, -0.7, 0.5)]
 p.show()
 
@@ -123,13 +123,13 @@ mesh = examples.download_kitchen()
 kitchen = examples.download_kitchen(split=True)
 
 # %%
-streamlines = mesh.streamlines(n_points=40, source_center=(0.08, 3, 0.71))
+streamlines = mesh.streamlines(n_points=40, source_center=(0.08, 3, 0.71), max_length=200)
 
 # %%
 p = pv.Plotter()
-p.add_mesh(mesh.outline(), color="k")
+p.add_mesh(mesh.outline(), color='k')
 p.add_mesh(kitchen, color=True)
-p.add_mesh(streamlines.tube(radius=0.01), scalars="velocity", lighting=False)
+p.add_mesh(streamlines.tube(radius=0.01), scalars='velocity', lighting=False)
 p.camera_position = kpos
 p.show()
 

@@ -15,7 +15,7 @@ airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
 mesh2d = meshio.Mesh(
     points=[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
-    cells=[("triangle", [[0, 1, 2], [1, 3, 2]])],
+    cells=[('triangle', [[0, 1, 2], [1, 3, 2]])],
 )
 polyhedron = meshio.Mesh(
     points=[
@@ -52,7 +52,7 @@ polyhedron = meshio.Mesh(
     ],
     cells=[
         (
-            "polyhedron20",
+            'polyhedron20',
             [
                 [
                     [0, 16, 5, 12, 1],
@@ -71,7 +71,7 @@ polyhedron = meshio.Mesh(
             ],
         ),
         (
-            "polyhedron10",
+            'polyhedron10',
             [
                 [
                     [2, 19, 6, 14, 3],
@@ -97,13 +97,13 @@ polyhedron = meshio.Mesh(
 )
 
 
-@pytest.mark.parametrize("mesh_in", [beam, airplane, uniform, mesh2d, polyhedron, cow])
+@pytest.mark.parametrize('mesh_in', [beam, airplane, uniform, mesh2d, polyhedron, cow])
 def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
         mesh_in = pv.from_meshio(mesh_in)
 
     # Save and read reference mesh using meshio
-    filename = tmpdir.mkdir("tmpdir").join("test_mesh.vtu")
+    filename = tmpdir.mkdir('tmpdir').join('test_mesh.vtu')
     pv.save_meshio(filename, mesh_in)
     mesh = pv.read_meshio(filename)
 
@@ -115,13 +115,13 @@ def test_meshio(mesh_in, tmpdir):
     else:
         assert np.allclose(mesh_in.cells, mesh.cells)
     for k, v in mesh_in.point_data.items():
-        assert np.allclose(v, mesh.point_data[k.replace(" ", "_")])
+        assert np.allclose(v, mesh.point_data[k.replace(' ', '_')])
     for k, v in mesh_in.cell_data.items():
-        assert np.allclose(v, mesh.cell_data[k.replace(" ", "_")])
+        assert np.allclose(v, mesh.cell_data[k.replace(' ', '_')])
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     pv.save_meshio(path, sphere)
     assert path.is_file()
 
@@ -135,10 +135,10 @@ def test_file_format():
     from meshio._exceptions import WriteError
 
     with pytest.raises(ReadError):
-        _ = pv.read_meshio(examples.hexbeamfile, file_format="bar")
+        _ = pv.read_meshio(examples.hexbeamfile, file_format='bar')
 
     with pytest.raises((KeyError, WriteError)):
-        pv.save_meshio("foo.bar", beam, file_format="bar")
+        pv.save_meshio('foo.bar', beam, file_format='bar')
 
     with pytest.raises((KeyError, WriteError)):
-        pv.save_meshio("foo.npy", beam, file_format="npy")
+        pv.save_meshio('foo.npy', beam, file_format='npy')

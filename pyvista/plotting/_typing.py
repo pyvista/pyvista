@@ -31,10 +31,10 @@ ColorLike = Union[
     NumpyArray[float],
     Dict[str, Union[int, float, str]],
     str,
-    "Color",
+    'Color',
     _vtk.vtkColor3ub,
 ]
 # Overwrite default docstring, as sphinx is not able to capture the docstring
 # when it is put beneath the definition somehow?
-ColorLike.__doc__ = "Any object convertible to a :class:`Color`."
-Chart = Union["Chart2D", "ChartBox", "ChartPie", "ChartMPL"]
+ColorLike.__doc__ = 'Any object convertible to a :class:`Color`.'
+Chart = Union['Chart2D', 'ChartBox', 'ChartPie', 'ChartMPL']

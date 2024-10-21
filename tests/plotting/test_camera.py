@@ -93,7 +93,7 @@ def test_camera_from_paraview_pvcc(paraview_pvcc):
 
 
 def test_camera_to_paraview_pvcc(camera, tmp_path):
-    fname = tmp_path / "test.pvcc"
+    fname = tmp_path / 'test.pvcc'
     camera.to_paraview_pvcc(fname)
     assert fname.exists()
     ocamera = pv.Camera.from_paraview_pvcc(fname)
@@ -294,3 +294,29 @@ def test_copy():
 
     deep = camera.copy()
     assert deep == camera
+
+
+def test_repr(camera):
+    assert 'Camera' in repr(camera)
+    assert 'Position' in repr(camera)
+    assert 'Focal Point' in repr(camera)
+    assert 'Parallel Projection' in repr(camera)
+    assert 'Distance' in repr(camera)
+    assert 'Thickness' in repr(camera)
+    assert 'Parallel Scale' in repr(camera)
+    assert 'Clipping Range' in repr(camera)
+    assert 'View Angle' in repr(camera)
+    assert 'Roll' in repr(camera)
+
+
+def test_str(camera):
+    assert 'Camera' in str(camera)
+    assert 'Position' in str(camera)
+    assert 'Focal Point' in str(camera)
+    assert 'Parallel Projection' in str(camera)
+    assert 'Distance' in str(camera)
+    assert 'Thickness' in str(camera)
+    assert 'Parallel Scale' in str(camera)
+    assert 'Clipping Range' in str(camera)
+    assert 'View Angle' in str(camera)
+    assert 'Roll' in str(camera)

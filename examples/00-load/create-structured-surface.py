@@ -102,9 +102,9 @@ import matplotlib.pyplot as plt
 
 plt.figure(figsize=(10, 10))
 plt.scatter(points[:, 0], points[:, 1], c=points[:, 2])
-plt.axis("image")
-plt.xlabel("X Coordinate")
-plt.ylabel("Y Coordinate")
+plt.axis('image')
+plt.xlabel('X Coordinate')
+plt.ylabel('Y Coordinate')
 plt.show()
 
 # %%
@@ -128,7 +128,7 @@ mesh.points = points
 mesh.dimensions = [29, 32, 1]
 
 # and then inspect it
-mesh.plot(show_edges=True, show_grid=True, cpos="xy")
+mesh.plot(show_edges=True, show_grid=True, cpos='xy')
 
 
 # %%

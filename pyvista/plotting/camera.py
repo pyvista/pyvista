@@ -55,10 +55,6 @@ class Camera(_vtk.vtkCamera):
         else:
             self._renderer = None
 
-    def __repr__(self):
-        """Print a repr specifying the id of the camera and its camera type."""
-        return f'<{self.__class__.__name__} at {hex(id(self))}>'
-
     def __eq__(self, other):
         """Compare whether the relevant attributes of two cameras are equal."""
         # attributes which are native python types and thus implement __eq__
@@ -85,6 +81,24 @@ class Camera(_vtk.vtkCamera):
             # either but not both are None
             return False
         return not (trans_count == 2 and not np.array_equal(this_trans, that_trans))
+
+    def __repr__(self):
+        """Print a repr specifying the id of the camera and its camera type."""
+        repr_str = f'{self.__class__.__name__} ({hex(id(self))})'
+        repr_str += f'\n  Position:            {self.position}'
+        repr_str += f'\n  Focal Point:         {self.focal_point}'
+        repr_str += f'\n  Parallel Projection: {self.parallel_projection}'
+        repr_str += f'\n  Distance:            {self.distance}'
+        repr_str += f'\n  Thickness:           {self.thickness}'
+        repr_str += f'\n  Parallel Scale:      {self.parallel_scale}'
+        repr_str += f'\n  Clipping Range:      {self.clipping_range}'
+        repr_str += f'\n  View Angle:          {self.view_angle}'
+        repr_str += f'\n  Roll:                {self.roll}'
+        return repr_str
+
+    def __str__(self):
+        """Return the object string representation."""
+        return self.__repr__()
 
     def __del__(self):
         """Delete the camera."""
@@ -129,12 +143,12 @@ class Camera(_vtk.vtkCamera):
 
         """
         to_find = {
-            "CameraPosition": ("position", float),
-            "CameraFocalPoint": ("focal_point", float),
-            "CameraViewAngle": ("view_angle", float),
-            "CameraViewUp": ("up", float),
-            "CameraParallelProjection": ("parallel_projection", int),
-            "CameraParallelScale": ("parallel_scale", float),
+            'CameraPosition': ('position', float),
+            'CameraFocalPoint': ('focal_point', float),
+            'CameraViewAngle': ('view_angle', float),
+            'CameraViewUp': ('up', float),
+            'CameraParallelProjection': ('parallel_projection', int),
+            'CameraParallelScale': ('parallel_scale', float),
         }
         camera = cls()
 
@@ -142,23 +156,23 @@ class Camera(_vtk.vtkCamera):
         root = tree.getroot()[0]
         for element in root:
             attrib = element.attrib
-            attrib_name = attrib["name"]
+            attrib_name = attrib['name']
 
             if attrib_name in to_find:
                 name, typ = to_find[attrib_name]
-                nelems = int(attrib["number_of_elements"])
+                nelems = int(attrib['number_of_elements'])
 
                 # Set the camera attributes
                 if nelems == 3:
-                    values = [typ(e.attrib["value"]) for e in element]
+                    values = [typ(e.attrib['value']) for e in element]
                     setattr(camera, name, values)
                 elif nelems == 1:
                     # Special case for bool since bool("0") returns True.
                     # So first convert to int from `to_find` and then apply bool
-                    if "name" in element[-1].attrib and element[-1].attrib["name"] == "bool":
-                        val = bool(typ(element[0].attrib["value"]))
+                    if 'name' in element[-1].attrib and element[-1].attrib['name'] == 'bool':
+                        val = bool(typ(element[0].attrib['value']))
                     else:
-                        val = typ(element[0].attrib["value"])
+                        val = typ(element[0].attrib['value'])
                     setattr(camera, name, val)
 
         camera.is_set = True
@@ -179,56 +193,56 @@ class Camera(_vtk.vtkCamera):
         >>> pl.camera.to_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
 
         """
-        root = ET.Element("PVCameraConfiguration")
-        root.attrib["description"] = "ParaView camera configuration"
-        root.attrib["version"] = "1.0"
+        root = ET.Element('PVCameraConfiguration')
+        root.attrib['description'] = 'ParaView camera configuration'
+        root.attrib['version'] = '1.0'
 
-        dico = dict(group="views", type="RenderView", id="0", servers="21")
-        proxy = ET.SubElement(root, "Proxy", dico)
+        dico = dict(group='views', type='RenderView', id='0', servers='21')
+        proxy = ET.SubElement(root, 'Proxy', dico)
 
         # Add tuples
         to_find = {
-            "CameraPosition": "position",
-            "CameraFocalPoint": "focal_point",
-            "CameraViewUp": "up",
+            'CameraPosition': 'position',
+            'CameraFocalPoint': 'focal_point',
+            'CameraViewUp': 'up',
         }
         for name, attr in to_find.items():
             e = ET.SubElement(
                 proxy,
-                "Property",
-                dict(name=name, id=f"0.{name}", number_of_elements="3"),
+                'Property',
+                dict(name=name, id=f'0.{name}', number_of_elements='3'),
             )
 
             for i in range(3):
-                tmp = ET.Element("Element")
-                tmp.attrib["index"] = str(i)
-                tmp.attrib["value"] = str(getattr(self, attr)[i])
+                tmp = ET.Element('Element')
+                tmp.attrib['index'] = str(i)
+                tmp.attrib['value'] = str(getattr(self, attr)[i])
                 e.append(tmp)
 
         # Add single values
         to_find = {
-            "CameraViewAngle": "view_angle",
-            "CameraParallelScale": "parallel_scale",
-            "CameraParallelProjection": "parallel_projection",
+            'CameraViewAngle': 'view_angle',
+            'CameraParallelScale': 'parallel_scale',
+            'CameraParallelProjection': 'parallel_projection',
         }
 
         for name, attr in to_find.items():
             e = ET.SubElement(
                 proxy,
-                "Property",
-                dict(name=name, id=f"0.{name}", number_of_elements="1"),
+                'Property',
+                dict(name=name, id=f'0.{name}', number_of_elements='1'),
             )
-            tmp = ET.Element("Element")
-            tmp.attrib["index"] = "0"
+            tmp = ET.Element('Element')
+            tmp.attrib['index'] = '0'
 
             val = getattr(self, attr)
             if not isinstance(val, bool):
-                tmp.attrib["value"] = str(val)
+                tmp.attrib['value'] = str(val)
                 e.append(tmp)
             else:
-                tmp.attrib["value"] = "1" if val else "0"
+                tmp.attrib['value'] = '1' if val else '0'
                 e.append(tmp)
-                e.append(ET.Element("Domain", dict(name="bool", id=f"0.{name}.bool")))
+                e.append(ET.Element('Domain', dict(name='bool', id=f'0.{name}.bool')))
 
         xmlstr = ET.tostring(root).decode()
         newxml = md.parseString(xmlstr)

@@ -166,7 +166,7 @@ class CoverageBuilder(Builder):
                                 red('undocumented  ')
                                 + 'c   '
                                 + 'api       '
-                                + '%-30s' % (name + " [%9s]" % typ)
+                                + '%-30s' % (name + ' [%9s]' % typ)
                                 + red(' - in file ')
                                 + filename,
                             )

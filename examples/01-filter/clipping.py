@@ -65,7 +65,7 @@ roi = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500,
 roi.rotate_z(33, inplace=True)
 
 p = pv.Plotter()
-p.add_mesh(roi, opacity=0.75, color="red")
+p.add_mesh(roi, opacity=0.75, color='red')
 p.add_mesh(mesh, opacity=0.5)
 p.show()
 
@@ -74,11 +74,11 @@ p.show()
 extracted = mesh.clip_box(roi, invert=False)
 
 p = pv.Plotter(shape=(1, 2))
-p.add_mesh(roi, opacity=0.75, color="red")
+p.add_mesh(roi, opacity=0.75, color='red')
 p.add_mesh(mesh)
 p.subplot(0, 1)
 p.add_mesh(extracted)
-p.add_mesh(roi, opacity=0.75, color="red")
+p.add_mesh(roi, opacity=0.75, color='red')
 p.link_views()
 p.view_isometric()
 p.show()

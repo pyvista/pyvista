@@ -52,7 +52,7 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
         if suppress_rendering != plotter.suppress_rendering:
             plotter.suppress_rendering = suppress_rendering
             warnings.warn(
-                "Suppress rendering on the plotter is changed to " + str(suppress_rendering),
+                'Suppress rendering on the plotter is changed to ' + str(suppress_rendering),
                 UserWarning,
             )
         return viewer

@@ -499,31 +499,31 @@ class AxesAssembly(_XYZAssembly):
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
 
         attr = [
-            f"{type(self).__name__} ({hex(id(self))})",
+            f'{type(self).__name__} ({hex(id(self))})',
             *geometry_repr,
             f"  X label:                    '{self.x_label}'",
             f"  Y label:                    '{self.y_label}'",
             f"  Z label:                    '{self.z_label}'",
-            f"  Label color:                {self.label_color}",
-            f"  Show labels:                {self.show_labels}",
-            f"  Label position:             {self.label_position}",
-            "  X Color:                                     ",
-            f"      Shaft                   {self.x_color[0]}",
-            f"      Tip                     {self.x_color[1]}",
-            "  Y Color:                                     ",
-            f"      Shaft                   {self.y_color[0]}",
-            f"      Tip                     {self.y_color[1]}",
-            "  Z Color:                                     ",
-            f"      Shaft                   {self.z_color[0]}",
-            f"      Tip                     {self.z_color[1]}",
-            f"  Position:                   {self.position}",
-            f"  Orientation:                {self.orientation}",
-            f"  Origin:                     {self.origin}",
-            f"  Scale:                      {self.scale}",
-            f"  User matrix:                {mat_info}",
-            f"  X Bounds                    {bnds.x_min:.3E}, {bnds.x_max:.3E}",
-            f"  Y Bounds                    {bnds.y_min:.3E}, {bnds.y_max:.3E}",
-            f"  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}",
+            f'  Label color:                {self.label_color}',
+            f'  Show labels:                {self.show_labels}',
+            f'  Label position:             {self.label_position}',
+            '  X Color:                                     ',
+            f'      Shaft                   {self.x_color[0]}',
+            f'      Tip                     {self.x_color[1]}',
+            '  Y Color:                                     ',
+            f'      Shaft                   {self.y_color[0]}',
+            f'      Tip                     {self.y_color[1]}',
+            '  Z Color:                                     ',
+            f'      Shaft                   {self.z_color[0]}',
+            f'      Tip                     {self.z_color[1]}',
+            f'  Position:                   {self.position}',
+            f'  Orientation:                {self.orientation}',
+            f'  Origin:                     {self.origin}',
+            f'  Scale:                      {self.scale}',
+            f'  User matrix:                {mat_info}',
+            f'  X Bounds                    {bnds.x_min:.3E}, {bnds.x_max:.3E}',
+            f'  Y Bounds                    {bnds.y_min:.3E}, {bnds.y_max:.3E}',
+            f'  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}',
         ]
         return '\n'.join(attr)
 
@@ -854,11 +854,11 @@ class AxesAssembly(_XYZAssembly):
         valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
         valid_axis_official = valid_axis[3:]
         if axis not in valid_axis:
-            raise ValueError(f"Axis must be one of {valid_axis_official}.")
+            raise ValueError(f'Axis must be one of {valid_axis_official}.')
         valid_part = [0, 1, 'shaft', 'tip', 'all']
         valid_part_official = valid_part[2:]
         if part not in valid_part:
-            raise ValueError(f"Part must be one of {valid_part_official}.")
+            raise ValueError(f'Part must be one of {valid_part_official}.')
 
         # Create ordered list of filtered actors
         # Iterate over parts in <shaft-xyz> then <tip-xyz> order
@@ -936,10 +936,10 @@ def _validate_color_sequence(
             except ValueError:
                 pass
     raise ValueError(
-        f"Invalid color(s):\n"
-        f"\t{color}\n"
-        f"Input must be a single ColorLike color "
-        f"or a sequence of {n_colors} ColorLike colors.",
+        f'Invalid color(s):\n'
+        f'\t{color}\n'
+        f'Input must be a single ColorLike color '
+        f'or a sequence of {n_colors} ColorLike colors.',
     )
 
 
@@ -1559,29 +1559,29 @@ class PlanesAssembly(_XYZAssembly):
         bnds = self.bounds
 
         attr = [
-            f"{type(self).__name__} ({hex(id(self))})",
-            f"  Resolution:                 {self._geometry_source.resolution}",
-            f"  Normal sign:                {self._geometry_source.normal_sign}",
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Resolution:                 {self._geometry_source.resolution}',
+            f'  Normal sign:                {self._geometry_source.normal_sign}',
             f"  X label:                    '{self.x_label}'",
             f"  Y label:                    '{self.y_label}'",
             f"  Z label:                    '{self.z_label}'",
-            f"  Label color:                {self.label_color}",
-            f"  Show labels:                {self.show_labels}",
-            f"  Label position:             {self.label_position}",
-            f"  Label edge:                 {self.label_edge}",
-            f"  Label offset:               {self.label_offset}",
+            f'  Label color:                {self.label_color}',
+            f'  Show labels:                {self.show_labels}',
+            f'  Label position:             {self.label_position}',
+            f'  Label edge:                 {self.label_edge}',
+            f'  Label offset:               {self.label_offset}',
             f"  Label mode:                 '{self.label_mode}'",
-            f"  X Color:                    {self.x_color}",
-            f"  Y Color:                    {self.y_color}",
-            f"  Z Color:                    {self.z_color}",
-            f"  Position:                   {self.position}",
-            f"  Orientation:                {self.orientation}",
-            f"  Origin:                     {self.origin}",
-            f"  Scale:                      {self.scale}",
-            f"  User matrix:                {mat_info}",
-            f"  X Bounds                    {bnds.x_min:.3E}, {bnds.x_max:.3E}",
-            f"  Y Bounds                    {bnds.y_min:.3E}, {bnds.y_max:.3E}",
-            f"  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}",
+            f'  X Color:                    {self.x_color}',
+            f'  Y Color:                    {self.y_color}',
+            f'  Z Color:                    {self.z_color}',
+            f'  Position:                   {self.position}',
+            f'  Orientation:                {self.orientation}',
+            f'  Origin:                     {self.origin}',
+            f'  Scale:                      {self.scale}',
+            f'  User matrix:                {mat_info}',
+            f'  X Bounds                    {bnds.x_min:.3E}, {bnds.x_max:.3E}',
+            f'  Y Bounds                    {bnds.y_min:.3E}, {bnds.y_max:.3E}',
+            f'  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}',
         ]
         return '\n'.join(attr)
 
