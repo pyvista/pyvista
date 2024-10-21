@@ -33,7 +33,7 @@ mesh = examples.download_carotid()
 
 streamlines, src = mesh.streamlines(
     return_source=True,
-    max_time=100.0,
+    max_length=100.0,
     initial_step_length=2.0,
     terminal_speed=0.1,
     n_points=25,
@@ -123,7 +123,7 @@ mesh = examples.download_kitchen()
 kitchen = examples.download_kitchen(split=True)
 
 # %%
-streamlines = mesh.streamlines(n_points=40, source_center=(0.08, 3, 0.71))
+streamlines = mesh.streamlines(n_points=40, source_center=(0.08, 3, 0.71), max_length=200)
 
 # %%
 p = pv.Plotter()

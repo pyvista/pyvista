@@ -4244,6 +4244,7 @@ class DataSetFilters:
         rotation_scale=1.0,
         interpolator_type='point',
         progress_bar=False,
+        max_length=None,
     ):
         """Generate streamlines of vectors from the points of a source mesh.
 
@@ -4305,7 +4306,11 @@ class DataSetFilters:
             Maximum error tolerated throughout streamline integration.
 
         max_time : float, optional
-            Specify the maximum length of a streamline expressed in LENGTH_UNIT.
+            Specify the maximum length of a streamline expressed in physical length.
+
+            .. deprecated:: 0.45.0
+               ``max_time`` parameter is deprecated. Use ``max_length`` instead.
+                It will be removed in v0.48. Default for ``max_time`` changed in v0.45.0.
 
         compute_vorticity : bool, default: True
             Vorticity computation at streamline points. Necessary for generating
@@ -4324,6 +4329,11 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        max_length : float, optional
+            Specify the maximum length of a streamline expressed in physical length.
+            Default is 4 times the diagonal length of the bounding box of the ``source``
+            dataset.
 
         Returns
         -------
@@ -4361,9 +4371,22 @@ class DataSetFilters:
         elif vectors is None:
             pyvista.set_default_active_vectors(self)
 
-        if max_time is None:
-            max_velocity = self.get_data_range()[-1]
-            max_time = 4.0 * self.GetLength() / max_velocity
+        if max_time is not None:
+            if max_length is not None:
+                warnings.warn(
+                    '``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
+                    PyVistaDeprecationWarning,
+                )
+            else:
+                warnings.warn(
+                    '``max_time`` parameter is deprecated.  It will be removed in v0.48',
+                    PyVistaDeprecationWarning,
+                )
+                max_length = max_time
+
+        if max_length is None:
+            max_length = 4.0 * self.GetLength()
+
         if not isinstance(source, pyvista.DataSet):
             raise TypeError('source must be a pyvista.DataSet')
 
@@ -4385,7 +4408,7 @@ class DataSetFilters:
         alg.SetMaximumError(max_error)
         alg.SetMaximumIntegrationStep(max_step_length)
         alg.SetMaximumNumberOfSteps(max_steps)
-        alg.SetMaximumPropagation(max_time)
+        alg.SetMaximumPropagation(max_length)
         alg.SetMinimumIntegrationStep(min_step_length)
         alg.SetRotationScale(rotation_scale)
         alg.SetSurfaceStreamlines(surface_streamlines)

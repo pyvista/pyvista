@@ -1430,7 +1430,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         show=True,
         show_message=True,
         font_size=18,
-        color='pink',
         tolerance=0.025,
         pickable_window=False,
         left_clicking=False,
@@ -1458,9 +1457,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
 
         font_size : int, default: 18
             Sets the font size of the message.
-
-        color : ColorLike, default: "pink"
-            The color of the selected mesh when shown.
 
         tolerance : float, default: 0.025
             Specify tolerance for performing pick operation. Tolerance
@@ -1535,7 +1531,6 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             callback=handler,
             show_message=show_message,
             font_size=font_size,
-            color=color,
             show_point=False,
             tolerance=tolerance,
             pickable_window=pickable_window,
