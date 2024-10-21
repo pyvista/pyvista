@@ -83,6 +83,14 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     Prior to version 0.39.0, this method improperly handled the order of
     structured coordinates.
 
+    See Also
+    --------
+    pyvista.voxelize_volume
+        Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
+
+    pyvista.PolyDataFilters.voxelize_binary_mask
+        Similar function that returns a :class:`pyvista.ImageData` with point data.
+
     Examples
     --------
     Create an equal density voxelized mesh.
@@ -246,6 +254,12 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
     See Also
     --------
     pyvista.voxelize
+        Similar function that returns a :class:`pyvista.UnstructuredGrid` of
+        :attr:`~pyvista.CellType.VOXEL` cells.
+
+    pyvista.PolyDataFilters.voxelize_binary_mask
+        Similar function that returns a :class:`pyvista.ImageData` with point data.
+
     pyvista.DataSetFilters.select_enclosed_points
 
     Examples
@@ -359,7 +373,7 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
     mask_vol = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # Get voxels that fall within input mesh boundaries
-    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))["vtkOriginalCellIds"])
+    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))['vtkOriginalCellIds'])
 
     # Create new element of grid where all cells _within_ mesh boundary are
     # given new name 'MeshCells' and a discrete value of 1
@@ -467,7 +481,7 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT
         Arrays of transformed x-, y-, z-components, respectively.
 
     """
-    xx, yy, _ = np.meshgrid(np.radians(theta), np.radians(phi), r, indexing="ij")
+    xx, yy, _ = np.meshgrid(np.radians(theta), np.radians(phi), r, indexing='ij')
     th, ph = xx.squeeze(), yy.squeeze()
 
     # Transform wind components from spherical to cartesian coordinates
@@ -594,14 +608,14 @@ def merge(
 
     """
     if not isinstance(datasets, Sequence):
-        raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
+        raise TypeError(f'Expected a sequence, got {type(datasets).__name__}')
 
     if len(datasets) < 1:
-        raise ValueError("Expected at least one dataset.")
+        raise ValueError('Expected at least one dataset.')
 
     first = datasets[0]
     if not isinstance(first, pyvista.DataSet):
-        raise TypeError(f"Expected pyvista.DataSet, not {type(first).__name__}")
+        raise TypeError(f'Expected pyvista.DataSet, not {type(first).__name__}')
 
     return datasets[0].merge(
         datasets[1:],
@@ -684,8 +698,8 @@ def sample_function(
     output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
     capping: bool = False,
     cap_value: float = sys.float_info.max,
-    scalar_arr_name: str = "scalars",
-    normal_arr_name: str = "normals",
+    scalar_arr_name: str = 'scalars',
+    normal_arr_name: str = 'normals',
     progress_bar: bool = False,
 ):
     """Sample an implicit function over a structured point set.

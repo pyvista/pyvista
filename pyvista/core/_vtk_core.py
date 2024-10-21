@@ -363,6 +363,9 @@ from vtkmodules.vtkFiltersSources import vtkSphereSource
 from vtkmodules.vtkFiltersSources import vtkSuperquadricSource
 from vtkmodules.vtkFiltersSources import vtkTessellatedBoxSource
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkFiltersStatistics import vtkLengthDistribution
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality
@@ -384,6 +387,9 @@ from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction
 from vtkmodules.vtkImagingHybrid import vtkSurfaceReconstructionFilter
+from vtkmodules.vtkImagingMorphological import vtkImageConnectivityFilter
+from vtkmodules.vtkImagingStencil import vtkImageStencil
+from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil
 from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter
 from vtkmodules.vtkIOGeometry import vtkIVWriter
 from vtkmodules.vtkIOGeometry import vtkOBJWriter
@@ -489,7 +495,7 @@ def VTKVersionInfo():
         minor = ver.GetVTKMinorVersion()
         micro = ver.GetVTKBuildVersion()
     except AttributeError:  # pragma: no cover
-        warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
+        warnings.warn('Unable to detect VTK version. Defaulting to v4.0.0')
         major, minor, micro = (4, 0, 0)
 
     return VersionInfo(major, minor, micro)

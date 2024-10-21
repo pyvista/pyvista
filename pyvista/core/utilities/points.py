@@ -131,7 +131,7 @@ def line_segments_from_points(points):
 
     """
     if len(points) % 2 != 0:
-        raise ValueError("An even number of points must be given to define each segment.")
+        raise ValueError('An even number of points must be given to define each segment.')
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -566,9 +566,9 @@ def make_tri_mesh(points, faces):
 
     """
     if points.shape[1] != 3:
-        raise ValueError("Points array should have shape (N, 3).")
+        raise ValueError('Points array should have shape (N, 3).')
     if faces.ndim != 2 or faces.shape[1] != 3:
-        raise ValueError("Face array should have shape (M, 3).")
+        raise ValueError('Face array should have shape (M, 3).')
     cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
     cells[:, 0] = 3
     cells[:, 1:] = faces

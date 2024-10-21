@@ -24,7 +24,7 @@ STRUCTGRID_POINTS_BOOL = np.ones(1000, dtype=bool)  # struct_grid.n_points == 10
 
 pointsetmark = pytest.mark.skipif(
     pv.vtk_version_info < (9, 1, 0),
-    reason="Requires VTK>=9.1.0 for a concrete PointSet class",
+    reason='Requires VTK>=9.1.0 for a concrete PointSet class',
 )
 
 
@@ -95,20 +95,20 @@ def test_init_from_numpy_arrays():
 
 
 def test_init_bad_input():
-    with pytest.raises(TypeError, match="Cannot work with input type"):
+    with pytest.raises(TypeError, match='Cannot work with input type'):
         pv.UnstructuredGrid(np.array(1))
 
-    with pytest.raises(TypeError, match="must be a numeric type"):
+    with pytest.raises(TypeError, match='must be a numeric type'):
         pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
 
     rnd_generator = np.random.default_rng()
     points = rnd_generator.random((4, 3))
     celltypes = [pv.CellType.TETRA]
     cells = np.array([5, 0, 1, 2, 3])
-    with pytest.raises(CellSizeError, match="Cell array size is invalid"):
+    with pytest.raises(CellSizeError, match='Cell array size is invalid'):
         pv.UnstructuredGrid(cells, celltypes, points)
 
-    with pytest.raises(TypeError, match="requires the following arrays"):
+    with pytest.raises(TypeError, match='requires the following arrays'):
         pv.UnstructuredGrid(*range(5))
 
 
@@ -333,7 +333,7 @@ def test_triangulate_inplace(hexbeam):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     hexbeam.save(filename, binary)
 
     grid = pv.UnstructuredGrid(filename)
@@ -347,7 +347,7 @@ def test_save(extension, binary, tmpdir, hexbeam):
 
 
 def test_pathlib_read_write(tmpdir, hexbeam):
-    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     assert not path.is_file()
     hexbeam.save(path)
     assert path.is_file()
@@ -417,7 +417,7 @@ def test_linear_copy_surf_elem():
     assert np.allclose(qual, [1, 1.4], atol=0.01)
 
 
-@pytest.mark.parametrize("invert", [True, False])
+@pytest.mark.parametrize('invert', [True, False])
 def test_extract_cells(hexbeam, invert):
     ind = [1, 2, 3]
     n_ind = [i for i in range(hexbeam.n_cells) if i not in ind] if invert else ind
@@ -475,9 +475,9 @@ def test_merge_invalid(hexbeam, sphere):
 
 
 def test_init_structured_raise():
-    with pytest.raises(TypeError, match="Invalid parameters"):
+    with pytest.raises(TypeError, match='Invalid parameters'):
         pv.StructuredGrid(['a', 'b', 'c'])
-    with pytest.raises(ValueError, match="Too many args"):
+    with pytest.raises(ValueError, match='Too many args'):
         pv.StructuredGrid([0, 1], [0, 1], [0, 1], [0, 1])
 
 
@@ -665,7 +665,7 @@ def test_invalid_init_structured():
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     struct_grid.save(filename, binary)
 
     grid = pv.StructuredGrid(filename)
@@ -803,11 +803,11 @@ def test_read_rectilinear_grid_from_pathlib():
 def test_raise_rectilinear_grid_non_unique():
     rng_uniq = np.arange(4.0)
     rng_dupe = np.array([0, 1, 2, 2], dtype=float)
-    with pytest.raises(ValueError, match="Array contains duplicate values"):
+    with pytest.raises(ValueError, match='Array contains duplicate values'):
         pv.RectilinearGrid(rng_dupe, check_duplicates=True)
-    with pytest.raises(ValueError, match="Array contains duplicate values"):
+    with pytest.raises(ValueError, match='Array contains duplicate values'):
         pv.RectilinearGrid(rng_uniq, rng_dupe, check_duplicates=True)
-    with pytest.raises(ValueError, match="Array contains duplicate values"):
+    with pytest.raises(ValueError, match='Array contains duplicate values'):
         pv.RectilinearGrid(rng_uniq, rng_uniq, rng_dupe, check_duplicates=True)
 
 
@@ -851,7 +851,7 @@ def test_create_image_data_from_specs():
     assert grid.spacing == spacing
 
     # ensure negative spacing is not allowed
-    with pytest.raises(ValueError, match="Spacing must be non-negative"):
+    with pytest.raises(ValueError, match='Spacing must be non-negative'):
         grid = pv.ImageData(dimensions=dims, spacing=(-1, 1, 1))
 
     # uniform grid from a uniform grid
@@ -937,6 +937,19 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
+def test_cast_image_data_with_float_spacing_to_rectilinear():
+    # https://github.com/pyvista/pyvista/pull/6656
+    grid = pv.ImageData(
+        dimensions=(10, 10, 10),
+        spacing=(27.88888888888889, 28.11111111111111, 28.22222222222222),
+        origin=(-126.0, -127.0, -127.0),
+    )
+    rectilinear = grid.cast_to_rectilinear_grid()
+    assert rectilinear.n_points == grid.n_points
+    assert rectilinear.n_arrays == grid.n_arrays
+    assert rectilinear.bounds == grid.bounds
+
+
 def test_image_data_to_tetrahedra():
     grid = pv.ImageData(dimensions=(2, 2, 2))
     ugrid = grid.to_tetrahedra()
@@ -1011,7 +1024,7 @@ def test_fft_high_pass(noise_2d):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.vtk', '.vtr'])
 def test_save_rectilinear(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     ogrid = examples.load_rectilinear()
     ogrid.save(filename, binary)
     grid = pv.RectilinearGrid(filename)
@@ -1032,7 +1045,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['.vtk', '.vti'])
 def test_save_uniform(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
     ogrid = examples.load_uniform()
     ogrid.save(filename, binary)
     grid = pv.ImageData(filename)
@@ -1280,34 +1293,34 @@ def test_ExplicitStructuredGrid_init():
 
 def test_ExplicitStructuredGrid_cast_to_unstructured_grid():
     block_i = np.fromstring(
-        '''
+        """
         0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0
         1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1
         2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2 3 0 1 2
         3 0 1 2 3 0 1 2 3
-        ''',
+        """,
         sep=' ',
         dtype=int,
     )
 
     block_j = np.fromstring(
-        '''
+        """
         0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4
         4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3
         3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 0 0 0 0 1 1 1 1 2 2 2
         2 3 3 3 3 4 4 4 4
-        ''',
+        """,
         sep=' ',
         dtype=int,
     )
 
     block_k = np.fromstring(
-        '''
+        """
         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
         1 1 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3
         3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 5 5 5 5 5 5 5 5 5 5 5
         5 5 5 5 5 5 5 5 5
-        ''',
+        """,
         sep=' ',
         dtype=int,
     )
@@ -1337,13 +1350,13 @@ def test_ExplicitStructuredGrid_save():
 
 def test_ExplicitStructuredGrid_hide_cells():
     ghost = np.asarray(
-        '''
+        """
      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
      0  0  0  0  0  0  0  0 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32
     32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32 32
-    '''.split(),
+    """.split(),
         dtype=np.uint8,
     )
 
@@ -1423,7 +1436,7 @@ def test_ExplicitStructuredGrid_cell_coords():
 def test_ExplicitStructuredGrid_neighbors():
     grid = examples.load_explicit_structured()
 
-    with pytest.raises(ValueError, match="Invalid value for `rel`"):
+    with pytest.raises(ValueError, match='Invalid value for `rel`'):
         indices = grid.neighbors(0, rel='foo')
 
     indices = grid.neighbors(0, rel='topological')
@@ -1444,13 +1457,13 @@ def test_ExplicitStructuredGrid_neighbors():
 
 def test_ExplicitStructuredGrid_compute_connectivity():
     connectivity = np.asarray(
-        '''
+        """
     42 43 43 41 46 47 47 45 46 47 47 45 46 47 47 45 38 39 39 37 58 59 59 57
     62 63 63 61 62 63 63 61 62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61
     62 63 63 61 62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61 62 63 63 61
     62 63 63 61 54 55 55 53 58 59 59 57 62 63 63 61 62 63 63 61 62 63 63 61
     54 55 55 53 26 27 27 25 30 31 31 29 30 31 31 29 30 31 31 29 22 23 23 21
-    '''.split(),
+    """.split(),
         dtype=int,
     )
 
@@ -1471,12 +1484,12 @@ def test_ExplicitStructuredGrid_compute_connectivity():
 
 def test_ExplicitStructuredGrid_compute_connections():
     connections = np.asarray(
-        '''
+        """
     3 4 4 3 4 5 5 4 4 5 5 4 4 5 5 4 3 4 4 3 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4
     5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4 5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6
     6 5 4 5 5 4 4 5 5 4 5 6 6 5 5 6 6 5 5 6 6 5 4 5 5 4 3 4 4 3 4 5 5 4 4 5 5
     4 4 5 5 4 3 4 4 3
-    '''.split(),
+    """.split(),
         dtype=int,
     )
 
@@ -1495,34 +1508,34 @@ def test_ExplicitStructuredGrid_compute_connections():
 
 
 def test_ExplicitStructuredGrid_raise_init():
-    with pytest.raises(ValueError, match="Too many args"):
+    with pytest.raises(ValueError, match='Too many args'):
         pv.ExplicitStructuredGrid(1, 2, 3, True)
 
-    with pytest.raises(ValueError, match="Expected dimensions to be length 3"):
+    with pytest.raises(ValueError, match='Expected dimensions to be length 3'):
         pv.ExplicitStructuredGrid((1, 2), np.random.default_rng().random((4, 3)))
 
-    with pytest.raises(ValueError, match="Expected dimensions to be length 3"):
+    with pytest.raises(ValueError, match='Expected dimensions to be length 3'):
         pv.ExplicitStructuredGrid(
             (1, 2),
             np.random.default_rng().integers(10, size=9),
             np.random.default_rng().random((8, 3)),
         )
 
-    with pytest.raises(ValueError, match="Expected cells to be length 54"):
+    with pytest.raises(ValueError, match='Expected cells to be length 54'):
         pv.ExplicitStructuredGrid(
             (2, 3, 4),
             np.random.default_rng().integers(10, size=9 * 6 - 1),
             np.random.default_rng().random((8, 3)),
         )
 
-    with pytest.raises(ValueError, match="Expected cells to be a single cell of type 12"):
+    with pytest.raises(ValueError, match='Expected cells to be a single cell of type 12'):
         pv.ExplicitStructuredGrid(
             (2, 3, 4),
             {CellType.QUAD: np.random.default_rng().integers(10, size=(10, 8))},
             np.random.default_rng().random((8, 3)),
         )
 
-    with pytest.raises(ValueError, match="Expected cells to be of shape"):
+    with pytest.raises(ValueError, match='Expected cells to be of shape'):
         pv.ExplicitStructuredGrid(
             (2, 3, 4),
             {CellType.HEXAHEDRON: np.random.default_rng().integers(10, size=(10, 8))},
@@ -1532,7 +1545,7 @@ def test_ExplicitStructuredGrid_raise_init():
 
 @pytest.mark.skipif(
     pv.vtk_version_info < (9, 2, 2),
-    reason="Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean",
+    reason='Requires VTK>=9.2.2 for ExplicitStructuredGrid.clean',
 )
 def test_ExplicitStructuredGrid_clean():
     grid = examples.load_explicit_structured()
@@ -1568,33 +1581,33 @@ def test_copy_no_copy_wrap_object(datasets):
     for dataset in datasets:
         # different dataset types have different copy behavior for points
         # use point data which is common
-        dataset["data"] = np.ones(dataset.n_points)
+        dataset['data'] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset)
-        new_dataset["data"] += 1
-        assert np.array_equal(new_dataset["data"], dataset["data"])
+        new_dataset['data'] += 1
+        assert np.array_equal(new_dataset['data'], dataset['data'])
 
     for dataset in datasets:
         # different dataset types have different copy behavior for points
         # use point data which is common
-        dataset["data"] = np.ones(dataset.n_points)
+        dataset['data'] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset, deep=True)
-        new_dataset["data"] += 1
-        assert not np.any(new_dataset["data"] == dataset["data"])
+        new_dataset['data'] += 1
+        assert not np.any(new_dataset['data'] == dataset['data'])
 
 
 def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
     for dataset in datasets_vtk9:
         # different dataset types have different copy behavior for points
         # use point data which is common
-        dataset["data"] = np.ones(dataset.n_points)
+        dataset['data'] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset)
-        new_dataset["data"] += 1
-        assert np.array_equal(new_dataset["data"], dataset["data"])
+        new_dataset['data'] += 1
+        assert np.array_equal(new_dataset['data'], dataset['data'])
 
     for dataset in datasets_vtk9:
         # different dataset types have different copy behavior for points
         # use point data which is common
-        dataset["data"] = np.ones(dataset.n_points)
+        dataset['data'] = np.ones(dataset.n_points)
         new_dataset = type(dataset)(dataset, deep=True)
-        new_dataset["data"] += 1
-        assert not np.any(new_dataset["data"] == dataset["data"])
+        new_dataset['data'] += 1
+        assert not np.any(new_dataset['data'] == dataset['data'])

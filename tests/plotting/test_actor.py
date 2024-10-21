@@ -72,15 +72,15 @@ def test_actor_init_empty():
     with pytest.raises(AttributeError):
         actor.not_an_attribute = None
 
-    assert actor.memory_address == actor.GetAddressAsString("")
+    assert actor.memory_address == actor.GetAddressAsString('')
 
     actor.user_matrix = None
     repr_ = repr(actor)
-    assert "User matrix:                Identity" in repr_
+    assert 'User matrix:                Identity' in repr_
 
     actor.user_matrix = np.eye(4) * 2
     repr_ = repr(actor)
-    assert "User matrix:                Set" in repr_
+    assert 'User matrix:                Set' in repr_
 
 
 def test_actor_from_argument():

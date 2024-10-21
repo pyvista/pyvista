@@ -216,7 +216,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
             else:
                 return pyvista.PolyData(self.points.copy(), faces=cells)
         else:
-            raise ValueError(f"3D cells cannot be cast to PolyData: got cell type {self.type}")
+            raise ValueError(f'3D cells cannot be cast to PolyData: got cell type {self.type}')
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Cast this cell to an unstructured grid.
@@ -537,17 +537,17 @@ class Cell(DataObject, _vtk.vtkGenericCell):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("Type", repr(self.type), "{}" * len(repr(self.type))))
-        attrs.append(("Linear", self.is_linear, "{}"))
-        attrs.append(("Dimension", self.dimension, "{}"))
-        attrs.append(("N Points", self.n_points, "{}"))
-        attrs.append(("N Faces", self.n_faces, "{}"))
-        attrs.append(("N Edges", self.n_edges, "{}"))
+        attrs.append(('Type', repr(self.type), '{}' * len(repr(self.type))))
+        attrs.append(('Linear', self.is_linear, '{}'))
+        attrs.append(('Dimension', self.dimension, '{}'))
+        attrs.append(('N Points', self.n_points, '{}'))
+        attrs.append(('N Faces', self.n_faces, '{}'))
+        attrs.append(('N Edges', self.n_edges, '{}'))
         bds = self.bounds
-        fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
-        attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
-        attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
-        attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
+        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        attrs.append(('X Bounds', (bds[0], bds[1]), fmt))
+        attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))
+        attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))
 
         return attrs
 
@@ -653,7 +653,7 @@ class CellArray(_vtk.vtkCellArray):
         for k, v in (('n_cells', n_cells), ('deep', deep)):
             if v is not None:
                 warnings.warn(
-                    f"`CellArray parameter `{k}` is deprecated and no longer used.",
+                    f'`CellArray parameter `{k}` is deprecated and no longer used.',
                     PyVistaDeprecationWarning,
                 )
 
@@ -682,9 +682,9 @@ class CellArray(_vtk.vtkCellArray):
         if imported_size != cells.size:
             raise CellSizeError(
                 message=(
-                    f"Cell array size is invalid. Size ({cells.size}) does not"
-                    f" match expected size ({imported_size}). This is likely"
-                    " due to invalid connectivity array."
+                    f'Cell array size is invalid. Size ({cells.size}) does not'
+                    f' match expected size ({imported_size}). This is likely'
+                    ' due to invalid connectivity array.'
                 ),
             )
         self.__offsets = self.__connectivity = None

@@ -116,15 +116,15 @@ def make_legend_face(face):
         If the provided face value is invalid.
 
     """
-    if face is None or face == "none":
+    if face is None or face == 'none':
         legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
-    elif face in ["-", "line"]:
+    elif face in ['-', 'line']:
         legendface = _line_for_legend()
-    elif face in ["^", "triangle"]:
+    elif face in ['^', 'triangle']:
         legendface = pyvista.Triangle()
-    elif face in ["o", "circle"]:
+    elif face in ['o', 'circle']:
         legendface = pyvista.Circle()
-    elif face in ["r", "rectangle"]:
+    elif face in ['r', 'rectangle']:
         legendface = pyvista.Rectangle()
     elif isinstance(face, pyvista.PolyData):
         legendface = face
@@ -215,7 +215,7 @@ class CameraPosition:
 
     def __repr__(self):
         """List representation method."""
-        return "[{},\n {},\n {}]".format(*self.to_list())
+        return '[{},\n {},\n {}]'.format(*self.to_list())
 
     def __getitem__(self, index):
         """Fetch a component by index location like a list."""
@@ -581,8 +581,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 # only display the warning when not building documentation
                 if not pyvista.BUILDING_GALLERY:
                     warnings.warn(
-                        "VTK compiled with OSMesa/EGL does not properly support "
-                        "FXAA anti-aliasing and SSAA will be used instead.",
+                        'VTK compiled with OSMesa/EGL does not properly support '
+                        'FXAA anti-aliasing and SSAA will be used instead.',
                     )
                 self._render_passes.enable_ssaa_pass()
                 return
@@ -697,12 +697,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.",
+                'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.',
             )
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
-            self.AddObserver("StartEvent", partial(try_callback, self._before_render_event))
+            self.AddObserver('StartEvent', partial(try_callback, self._before_render_event))
         self._charts.add_chart(chart, *charts)
 
     @property
@@ -854,7 +854,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if name is None:
             # Fallback for non-wrapped actors
             # e.g., vtkScalarBarActor
-            name = actor.name if isinstance(actor, Actor) else actor.GetAddressAsString("")
+            name = actor.name if isinstance(actor, Actor) else actor.GetAddressAsString('')
 
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
@@ -957,7 +957,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             labels_off=labels_off,
         )
         self.AddActor(self._marker_actor)
-        memory_address = self._marker_actor.GetAddressAsString("")
+        memory_address = self._marker_actor.GetAddressAsString('')
         self._actors[memory_address] = self._marker_actor
         self.Modified()
         return self._marker_actor
@@ -1164,7 +1164,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             box = self._theme.axes.box
         if box:
             warnings.warn(
-                "`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.",
+                '`box` is deprecated. Use `add_box_axes` or `add_color_box_axes` method instead.',
                 PyVistaDeprecationWarning,
             )
             if box_args is None:
@@ -1205,7 +1205,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def add_north_arrow_widget(
         self,
         interactive=None,
-        color="#4169E1",
+        color='#4169E1',
         opacity=1.0,
         line_width=2,
         edge_color=None,
@@ -1735,19 +1735,19 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if 'xlabel' in kwargs:  # pragma: no cover
             xtitle = kwargs.pop('xlabel')
             warnings.warn(
-                "`xlabel` is deprecated. Use `xtitle` instead.",
+                '`xlabel` is deprecated. Use `xtitle` instead.',
                 PyVistaDeprecationWarning,
             )
         if 'ylabel' in kwargs:  # pragma: no cover
             ytitle = kwargs.pop('ylabel')
             warnings.warn(
-                "`ylabel` is deprecated. Use `ytitle` instead.",
+                '`ylabel` is deprecated. Use `ytitle` instead.',
                 PyVistaDeprecationWarning,
             )
         if 'zlabel' in kwargs:  # pragma: no cover
             ztitle = kwargs.pop('zlabel')
             warnings.warn(
-                "`zlabel` is deprecated. Use `ztitle` instead.",
+                '`zlabel` is deprecated. Use `ztitle` instead.',
                 PyVistaDeprecationWarning,
             )
         assert_empty_kwargs(**kwargs)
@@ -1974,7 +1974,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def add_bounding_box(
         self,
-        color="grey",
+        color='grey',
         corner_factor=0.5,
         line_width=None,
         opacity=1.0,
@@ -2643,7 +2643,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             return False
 
         # remove any labels associated with the actor
-        self._labels.pop(actor.GetAddressAsString(""), None)
+        self._labels.pop(actor.GetAddressAsString(''), None)
 
         # ensure any scalar bars associated with this actor are removed
         with contextlib.suppress(AttributeError, ReferenceError):
@@ -3373,7 +3373,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             from pyvista.core.errors import VTKVersionError
 
             raise VTKVersionError(
-                "`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.",
+                '`right` or `side` or `corner` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.',
             )
         if not (
             (top is right is side is corner is None)
@@ -3382,7 +3382,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             or (side is not None and top is right is corner is None)
             or (corner is not None and top is right is side is None)
         ):  # pragma: no cover
-            raise ValueError("You can only set one argument in top, right, side, corner.")
+            raise ValueError('You can only set one argument in top, right, side, corner.')
         if top is not None:
             self.SetGradientBackground(True)
             self.SetBackground2(Color(top).float_rgb)
@@ -3782,7 +3782,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
                     if args:
                         warnings.warn(
-                            f"Some of the arguments given to legend are not used.\n{args}",
+                            f'Some of the arguments given to legend are not used.\n{args}',
                         )
                 elif isinstance(args, str):
                     # Only passing label
@@ -3797,7 +3797,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
                 else:
                     raise ValueError(
-                        f"The object passed to the legend ({type(args)}) is not valid.",
+                        f'The object passed to the legend ({type(args)}) is not valid.',
                     )
 
                 legend_face = make_legend_face(face_ or face)
@@ -3868,7 +3868,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         font_size_factor=0.6,
         label_size_factor=1.0,
         label_format=None,
-        title="Distance",
+        title='Distance',
         number_minor_ticks=0,
         tick_length=5,
         minor_tick_length=3,

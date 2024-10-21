@@ -214,7 +214,7 @@ def test_add_legend_loc(loc):
 
 def test_add_legend_no_face(sphere):
     pl = pv.Plotter()
-    sphere.point_data["Z"] = sphere.points[:, 2]
+    sphere.point_data['Z'] = sphere.points[:, 2]
     pl.add_mesh(sphere, scalars='Z', label='sphere')
     pl.add_legend(face=None)
 
@@ -255,15 +255,15 @@ def test_legend_from_glyph(sphere, verify_image_cache):
 def test_legend_from_multiple_glyph(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
-    random_hills["Normals2"] = -1 * random_hills["Normals"].copy()
+    random_hills['Normals2'] = -1 * random_hills['Normals'].copy()
 
-    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
-    pl.add_mesh(arrows, color="black", label="label 1")
+    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    pl.add_mesh(arrows, color='black', label='label 1')
 
-    arrows2 = random_hills.glyph(scale="Normals", orient="Normals2", tolerance=0.05)
-    pl.add_mesh(arrows2, color="red", label="label 2")
+    arrows2 = random_hills.glyph(scale='Normals', orient='Normals2', tolerance=0.05)
+    pl.add_mesh(arrows2, color='red', label='label 2')
 
-    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
 
     pl.add_legend(size=(0.5, 0.5))
     pl.show()
@@ -272,10 +272,10 @@ def test_legend_from_multiple_glyph(random_hills, verify_image_cache):
 def test_legend_using_add_legend(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
-    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
-    pl.add_mesh(arrows, color="black", label="label 1")
+    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
 
     legend_entries = []
     legend_entries.append(['my label 1', 'g'])
@@ -287,17 +287,17 @@ def test_legend_using_add_legend(random_hills, verify_image_cache):
 def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
-    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
-    pl.add_mesh(arrows, color="black", label="label 1")
+    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
 
     legend_entries = []
     legend_entries.append(['my label 1', 'g'])
     legend_entries.append(['my label 2', 'blue', pv.Circle()])
-    legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": pv.Arrow()})
-    legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": "circle"})
-    legend_entries.append({'label': "my label 3", "color": (0.0, 1.0, 1.0), "face": None})
+    legend_entries.append({'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'face': pv.Arrow()})
+    legend_entries.append({'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'face': 'circle'})
+    legend_entries.append({'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'face': None})
 
     pl.add_legend(legend_entries, size=(0.5, 0.5))
     pl.show()
@@ -306,12 +306,12 @@ def test_legend_using_add_legend_with_glyph(random_hills, verify_image_cache):
 def test_legend_using_add_legend_only_labels(random_hills, verify_image_cache):
     pl = pv.Plotter()
 
-    arrows = random_hills.glyph(scale="Normals", orient="Normals", tolerance=0.05)
-    pl.add_mesh(arrows, color="black", label="label 1")
+    arrows = random_hills.glyph(scale='Normals', orient='Normals', tolerance=0.05)
+    pl.add_mesh(arrows, color='black', label='label 1')
 
-    pl.add_mesh(random_hills, scalars="Elevation", cmap="terrain", show_scalar_bar=False)
+    pl.add_mesh(random_hills, scalars='Elevation', cmap='terrain', show_scalar_bar=False)
 
-    legend_entries = ["label 1", "label 2"]
+    legend_entries = ['label 1', 'label 2']
 
     pl.add_legend(legend_entries, size=(0.5, 0.5))
     pl.show()
@@ -322,20 +322,20 @@ def test_legend_none_face(verify_image_cache):
     pl = pv.Plotter()
     pl.add_mesh(
         pv.Icosphere(center=(3, 0, 0), radius=1),
-        color="r",
-        label="Sphere",
+        color='r',
+        label='Sphere',
     )
-    pl.add_mesh(pv.Box(), color="w", label="Box")
+    pl.add_mesh(pv.Box(), color='w', label='Box')
     # add a large legend to ensure test fails if face="none" not configured right
-    pl.add_legend(face="none", bcolor="k", size=(0.6, 0.6))
+    pl.add_legend(face='none', bcolor='k', size=(0.6, 0.6))
     pl.show()
 
 
 def test_legend_add_entry_warning(verify_image_cache):
     pl = pv.Plotter()
-    legend_entries = [{'label': "my label 3", "color": (0.0, 1.0, 1.0), "non_used_arg": "asdf"}]
+    legend_entries = [{'label': 'my label 3', 'color': (0.0, 1.0, 1.0), 'non_used_arg': 'asdf'}]
 
-    with pytest.warns(UserWarning, match="Some of the arguments given to legend are not used"):
+    with pytest.warns(UserWarning, match='Some of the arguments given to legend are not used'):
         pl.add_legend(legend_entries, size=(0.5, 0.5))
         pl.show()
 
@@ -344,7 +344,7 @@ def test_legend_add_entry_exception():
     pl = pv.Plotter()
     legend_entries = np.array([1, 2])  # Not allowed type
 
-    with pytest.raises(ValueError, match="The object passed to the legend"):
+    with pytest.raises(ValueError, match='The object passed to the legend'):
         pl.add_legend(legend_entries)
     pl.show()
 

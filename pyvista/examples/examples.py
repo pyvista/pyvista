@@ -485,8 +485,8 @@ def _sphere_vectors_load_func() -> pyvista.PolyData:
     ).T
 
     # add and scale
-    sphere["vectors"] = vectors * 0.3
-    sphere.set_active_vectors("vectors")
+    sphere['vectors'] = vectors * 0.3
+    sphere.set_active_vectors('vectors')
     return sphere
 
 
@@ -531,7 +531,7 @@ def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     zi = np.arange(0.0, (nk + 1) * sk, sk)
 
     return pyvista.StructuredGrid(
-        *np.meshgrid(xi, yi, zi, indexing="ij")
+        *np.meshgrid(xi, yi, zi, indexing='ij')
     ).cast_to_explicit_structured_grid()
 
 

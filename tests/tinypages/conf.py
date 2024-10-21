@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 from pathlib import Path
 import re
 import sys
@@ -16,18 +17,18 @@ source_suffix = '.rst'
 root_doc = 'index'
 project = 'tinypages'
 year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
-copyright = f"2021-{year}, PyVista developers"  # noqa: A001
+copyright = f'2021-{year}, PyVista developers'  # noqa: A001
 version = '0.1'
 release = '0.1'
 exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 
 extensions = [
-    "numpydoc",
-    "pyvista.ext.plot_directive",
-    "pyvista.ext.viewer_directive",
-    "sphinx.ext.autosummary",
-    "sphinx_design",
+    'numpydoc',
+    'pyvista.ext.plot_directive',
+    'pyvista.ext.viewer_directive',
+    'sphinx.ext.autosummary',
+    'sphinx_design',
 ]
 
 # -- Plot directive specific configuration --------------------------------
@@ -55,9 +56,15 @@ del __s_p_t
 """
 plot_cleanup = plot_setup
 
+if value := os.environ.get('PLOT_SKIP'):
+    plot_skip = value.lower() == 'true'
+
+if value := os.environ.get('PLOT_SKIP_OPTIONAL'):
+    plot_skip_optional = value.lower() == 'true'
+
 
 def _str_examples(self):
-    examples_str = "\n".join(self['Examples'])
+    examples_str = '\n'.join(self['Examples'])
 
     if (
         self.use_plots

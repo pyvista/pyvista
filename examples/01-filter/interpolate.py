@@ -28,7 +28,7 @@ surface = examples.download_saddle_surface()
 points = examples.download_sparse_points()
 
 p = pv.Plotter()
-p.add_mesh(points, scalars="val", point_size=30.0, render_points_as_spheres=True)
+p.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
 p.add_mesh(surface)
 p.show()
 
@@ -39,8 +39,8 @@ interpolated = surface.interpolate(points, radius=12.0)
 
 
 p = pv.Plotter()
-p.add_mesh(points, scalars="val", point_size=30.0, render_points_as_spheres=True)
-p.add_mesh(interpolated, scalars="val")
+p.add_mesh(points, scalars='val', point_size=30.0, render_points_as_spheres=True)
+p.add_mesh(interpolated, scalars='val')
 p.show()
 
 
@@ -66,7 +66,7 @@ grid.spacing = (250, 250, 50)
 grid.dimensions = (60, 75, 100)
 
 # %%
-dargs = dict(cmap="coolwarm", clim=[0, 300], scalars="temperature (C)")
+dargs = dict(cmap='coolwarm', clim=[0, 300], scalars='temperature (C)')
 cpos = [
     (364280.5723737897, 4285326.164400684, 14093.431895014139),
     (337748.7217949739, 4261154.45054595, -637.1092549935128),

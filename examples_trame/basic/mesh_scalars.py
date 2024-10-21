@@ -14,10 +14,10 @@ from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
-server = get_server(client_type="vue3")
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "Modify Mapped Scalars"
+state.trame__title = 'Modify Mapped Scalars'
 ctrl.on_server_ready.add(ctrl.view_update)
 
 
@@ -37,14 +37,14 @@ pl.view_xy()
 # -----------------------------------------------------------------------------
 
 
-@state.change("scalars")
+@state.change('scalars')
 def set_scalars(scalars=mesh.active_scalars_name, **kwargs):
     actor.mapper.array_name = scalars
     actor.mapper.scalar_range = mesh.get_data_range(scalars)
     ctrl.view_update()
 
 
-@state.change("log_scale")
+@state.change('log_scale')
 def set_log_scale(log_scale=False, **kwargs):
     actor.mapper.lookup_table.log_scale = log_scale
     ctrl.view_update()
@@ -56,34 +56,34 @@ def set_log_scale(log_scale=False, **kwargs):
 
 
 with SinglePageLayout(server) as layout:
-    layout.title.set_text("Scalar Selection")
+    layout.title.set_text('Scalar Selection')
     layout.icon.click = ctrl.view_reset_camera
 
     with layout.toolbar:
         vuetify3.VSpacer()
         vuetify3.VCheckbox(
-            label="Log Scale",
-            v_model=("log_scale", False),
+            label='Log Scale',
+            v_model=('log_scale', False),
             hide_details=True,
-            density="compact",
+            density='compact',
             outlined=True,
-            classes="pt-1 ml-2",
+            classes='pt-1 ml-2',
         )
         vuetify3.VSelect(
-            label="Scalars",
-            v_model=("scalars", mesh.active_scalars_name),
-            items=("array_list", list(mesh.point_data.keys())),
+            label='Scalars',
+            v_model=('scalars', mesh.active_scalars_name),
+            items=('array_list', list(mesh.point_data.keys())),
             hide_details=True,
-            density="compact",
+            density='compact',
             outlined=True,
-            classes="pt-1 ml-2",
-            style="max-width: 250px",
+            classes='pt-1 ml-2',
+            style='max-width: 250px',
         )
 
     with layout.content:
         with vuetify3.VContainer(
             fluid=True,
-            classes="pa-0 fill-height",
+            classes='pa-0 fill-height',
         ):
             # Use PyVista UI template for Plotters
             view = plotter_ui(pl, default_server_rendering=True)

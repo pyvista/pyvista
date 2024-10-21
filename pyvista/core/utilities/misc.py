@@ -49,7 +49,7 @@ def assert_empty_kwargs(**kwargs):
     keys = list(kwargs.keys())
     bad_arguments = ', '.join([f'"{key}"' for key in keys])
     grammar = 'is an invalid keyword argument' if n == 1 else 'are invalid keyword arguments'
-    message = f"{bad_arguments} {grammar} for `{caller}`"
+    message = f'{bad_arguments} {grammar} for `{caller}`'
     raise TypeError(message)
 
 
@@ -136,7 +136,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         for value in cls:
             if value.annotation.lower() == input_str.lower():
                 return value
-        raise ValueError(f"{cls.__name__} has no value matching {input_str}")
+        raise ValueError(f'{cls.__name__} has no value matching {input_str}')
 
     @classmethod
     def from_any(cls: type[T], value: T | int | str) -> T:
@@ -165,7 +165,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            raise ValueError(f"{cls.__name__} has no value matching {value}")
+            raise ValueError(f'{cls.__name__} has no value matching {value}')
 
 
 @lru_cache(maxsize=None)

@@ -166,7 +166,7 @@ def test_widget_slider(uniform):
     p = pv.Plotter()
     func = lambda value: value  # Does nothing
     p.add_mesh(uniform)
-    p.add_slider_widget(callback=func, rng=[0, 10], style="classic")
+    p.add_slider_widget(callback=func, rng=[0, 10], style='classic')
     p.close()
 
     p = pv.Plotter()
@@ -175,7 +175,7 @@ def test_widget_slider(uniform):
     with pytest.raises(TypeError, match='type for ``style``'):
         p.add_slider_widget(callback=func, rng=[0, 10], style=0)
     with pytest.raises(AttributeError):
-        p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
+        p.add_slider_widget(callback=func, rng=[0, 10], style='foo')
     with pytest.raises(TypeError, match='Expected type for `interaction_event`'):
         p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=0)
     with pytest.raises(ValueError, match='Expected value for `interaction_event`'):
@@ -185,7 +185,7 @@ def test_widget_slider(uniform):
     p = pv.Plotter()
     func = lambda value, widget: value  # Does nothing
     p.add_mesh(uniform)
-    p.add_slider_widget(callback=func, rng=[0, 10], style="modern", pass_widget=True)
+    p.add_slider_widget(callback=func, rng=[0, 10], style='modern', pass_widget=True)
     p.close()
 
     p = pv.Plotter()
@@ -205,7 +205,7 @@ def test_widget_slider(uniform):
     func = lambda value: value  # Does nothing
     p = pv.Plotter()
     title_height = np.random.default_rng().random()
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_height=title_height)
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style='classic', title_height=title_height)
     assert s.GetRepresentation().GetTitleHeight() == title_height
     p.close()
 
@@ -214,21 +214,21 @@ def test_widget_slider(uniform):
     s = p.add_slider_widget(
         callback=func,
         rng=[0, 10],
-        style="classic",
+        style='classic',
         title_opacity=title_opacity,
     )
     assert s.GetRepresentation().GetTitleProperty().GetOpacity() == title_opacity
     p.close()
 
     p = pv.Plotter()
-    title_color = "red"
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_color=title_color)
+    title_color = 'red'
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style='classic', title_color=title_color)
     assert s.GetRepresentation().GetTitleProperty().GetColor() == pv.Color(title_color)
     p.close()
 
     p = pv.Plotter()
-    fmt = "%0.9f"
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", fmt=fmt)
+    fmt = '%0.9f'
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style='classic', fmt=fmt)
     assert s.GetRepresentation().GetLabelFormat() == fmt
     p.close()
 
@@ -643,7 +643,7 @@ def test_camera3d_widget(verify_image_cache):
     plotter.show(cpos=plotter.camera_position)
 
 
-@pytest.mark.parametrize("outline_opacity", [True, False, np.random.default_rng(0).random()])
+@pytest.mark.parametrize('outline_opacity', [True, False, np.random.default_rng(0).random()])
 def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing

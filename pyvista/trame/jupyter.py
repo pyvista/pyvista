@@ -82,16 +82,16 @@ class Widget(HTML):  # numpydoc ignore=PR01
         if iframe_attrs is None:
             iframe_attrs = {}
 
-        border = "border: 1px solid rgb(221,221,221);"
+        border = 'border: 1px solid rgb(221,221,221);'
 
         iframe_attrs = {
             **iframe_attrs,
-            "src": src,
-            "class": "pyvista",
-            "style": f"width: {width}; height: {height}; {border}",
+            'src': src,
+            'class': 'pyvista',
+            'style': f'width: {width}; height: {height}; {border}',
         }
 
-        iframe_attrs_str = " ".join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
+        iframe_attrs_str = ' '.join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
 
         value = f'<iframe {iframe_attrs_str}></iframe>'
 
@@ -121,7 +121,7 @@ class EmbeddableWidget(HTML):  # numpydoc ignore=PR01
         src = scene.getvalue().replace('"', '&quot;')
         # eventually we could maybe expose this, but for now make sure we're at least
         # consistent with matplotlib's color (light gray)
-        border = "border: 1px solid rgb(221,221,221);"
+        border = 'border: 1px solid rgb(221,221,221);'
         value = f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; height: {height}; {border}"></iframe>'
         super().__init__(value, **kwargs)
         self._src = src
@@ -174,7 +174,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
     if (
         wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled
     ):  # pragma: no cover
-        wslink_backend = "jupyter"
+        wslink_backend = 'jupyter'
 
     # Must enable all used modules
     html_widgets.initialize(server)
@@ -379,9 +379,9 @@ def show_trame(
     else:
         server = get_server(name=name)
     if name is None and not server.running:
-        wslink_backend = "aiohttp"
+        wslink_backend = 'aiohttp'
         if jupyter_extension_enabled:  # pragma: no cover
-            wslink_backend = "jupyter"
+            wslink_backend = 'jupyter'
 
         elegantly_launch(server, wslink_backend=wslink_backend)
         if not server.running:  # pragma: no cover
@@ -404,7 +404,7 @@ def show_trame(
         from trame_client.ui.core import iframe_url_builder_jupyter_extension
 
         iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
-        src = iframe_attrs["src"]
+        src = iframe_attrs['src']
     else:
         # TODO: The build_url function could possibly be replaced by
         # trame's upstream url builders in trame_client.ui.core

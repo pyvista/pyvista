@@ -32,7 +32,7 @@ from pyvista import examples
 
 # Load the sample data
 mesh = examples.download_antarctica_velocity()
-mesh["magnitude"] = np.linalg.norm(mesh["ssavelocity"], axis=1)
+mesh['magnitude'] = np.linalg.norm(mesh['ssavelocity'], axis=1)
 mesh
 
 # %%
@@ -40,25 +40,25 @@ mesh
 
 
 def extract_node(node):
-    idx = mesh["node_value"] == node
+    idx = mesh['node_value'] == node
     return mesh.extract_points(idx)
 
 
 # %%
 
 p = pv.Plotter()
-p.add_mesh(mesh, scalars="node_value")
-for node in np.unique(mesh["node_value"]):
+p.add_mesh(mesh, scalars='node_value')
+for node in np.unique(mesh['node_value']):
     loc = extract_node(node).center
-    p.add_point_labels(loc, [f"Node {node}"])
-p.show(cpos="xy")
+    p.add_point_labels(loc, [f'Node {node}'])
+p.show(cpos='xy')
 
 
 # %%
 
-vel_dargs = dict(scalars="magnitude", clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
+vel_dargs = dict(scalars='magnitude', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
 
-mesh.plot(cpos="xy", **vel_dargs)
+mesh.plot(cpos='xy', **vel_dargs)
 
 # %%
 
@@ -76,8 +76,8 @@ pl.show(cpos='xy')
 # plot vectors without mesh
 
 pl = pv.Plotter()
-pl.add_mesh(a.glyph(orient="ssavelocity", factor=20), **vel_dargs)
-pl.add_mesh(b.glyph(orient="ssavelocity", factor=20), **vel_dargs)
+pl.add_mesh(a.glyph(orient='ssavelocity', factor=20), **vel_dargs)
+pl.add_mesh(b.glyph(orient='ssavelocity', factor=20), **vel_dargs)
 pl.camera_position = [
     (-1114684.6969340036, 293863.65389149904, 752186.603224546),
     (-1114684.6969340036, 293863.65389149904, 0.0),

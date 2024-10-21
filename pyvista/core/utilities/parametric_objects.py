@@ -113,26 +113,26 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     """
     if tension is None:
         tension = np.array([0.0, 0.0, 0.0])
-    check_valid_vector(tension, "tension")
+    check_valid_vector(tension, 'tension')
     if not np.all(np.abs(tension) <= 1.0):
         raise ValueError(
-            "The absolute value of all values of the tension array elements must be <= 1.0 ",
+            'The absolute value of all values of the tension array elements must be <= 1.0 ',
         )
 
     if bias is None:
         bias = np.array([0.0, 0.0, 0.0])
-    check_valid_vector(bias, "bias")
+    check_valid_vector(bias, 'bias')
     if not np.all(np.abs(bias) <= 1.0):
         raise ValueError(
-            "The absolute value of all values of the bias array elements must be <= 1.0 ",
+            'The absolute value of all values of the bias array elements must be <= 1.0 ',
         )
 
     if continuity is None:
         continuity = np.array([0.0, 0.0, 0.0])
-    check_valid_vector(continuity, "continuity")
+    check_valid_vector(continuity, 'continuity')
     if not np.all(np.abs(continuity) <= 1.0):
         raise ValueError(
-            "The absolute value of all values continuity array elements must be <= 1.0 ",
+            'The absolute value of all values continuity array elements must be <= 1.0 ',
         )
 
     spline_function = _vtk.vtkParametricSpline()
@@ -516,15 +516,15 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
     parametric_function = _vtk.vtkParametricEllipsoid()
     parametric_keywords(
         parametric_function,
-        min_u=kwargs.pop("min_u", 0),
-        max_u=kwargs.pop("max_u", 2 * pi),
-        min_v=kwargs.pop("min_v", 0.0),
-        max_v=kwargs.pop("max_v", pi),
-        join_u=kwargs.pop("join_u", False),
-        join_v=kwargs.pop("join_v", False),
-        twist_u=kwargs.pop("twist_u", False),
-        twist_v=kwargs.pop("twist_v", False),
-        clockwise=kwargs.pop("clockwise", True),
+        min_u=kwargs.pop('min_u', 0),
+        max_u=kwargs.pop('max_u', 2 * pi),
+        min_v=kwargs.pop('min_v', 0.0),
+        max_v=kwargs.pop('max_v', pi),
+        join_u=kwargs.pop('join_u', False),
+        join_v=kwargs.pop('join_v', False),
+        twist_u=kwargs.pop('twist_u', False),
+        twist_v=kwargs.pop('twist_v', False),
+        clockwise=kwargs.pop('clockwise', True),
     )
 
     if xradius is not None:

@@ -72,7 +72,7 @@ class Grid(DataSet):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = DataSet._get_attrs(self)
-        attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
+        attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
 
@@ -189,7 +189,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
                     check_duplicates,
                 )
             else:
-                raise TypeError("Arguments not understood by `RectilinearGrid`.")
+                raise TypeError('Arguments not understood by `RectilinearGrid`.')
 
     def __repr__(self):
         """Return the default representation."""
@@ -323,9 +323,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         does not attempt to set them.
         """
         raise AttributeError(
-            "The points cannot be set. The points of "
-            "`RectilinearGrid` are defined in each axial direction. Please "
-            "use the `x`, `y`, and `z` setters individually.",
+            'The points cannot be set. The points of '
+            '`RectilinearGrid` are defined in each axial direction. Please '
+            'use the `x`, `y`, and `z` setters individually.',
         )
 
     @property
@@ -450,8 +450,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         """
         raise AttributeError(
-            "The dimensions of a `RectilinearGrid` are implicitly "
-            "defined and thus cannot be set.",
+            'The dimensions of a `RectilinearGrid` are implicitly '
+            'defined and thus cannot be set.',
         )
 
     def cast_to_structured_grid(self) -> pyvista.StructuredGrid:
@@ -577,14 +577,14 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 self._from_file(uinput)
             else:
                 raise TypeError(
-                    "First argument, ``uinput`` must be either ``vtk.vtkImageData`` "
-                    f"or a path, not {type(uinput)}.  Use keyword arguments to "
-                    "specify dimensions, spacing, and origin. For example:\n\n"
-                    "    >>> grid = pv.ImageData(\n"
-                    "    ...     dimensions=(10, 10, 10),\n"
-                    "    ...     spacing=(2, 1, 5),\n"
-                    "    ...     origin=(10, 35, 50),\n"
-                    "    ... )\n",
+                    'First argument, ``uinput`` must be either ``vtk.vtkImageData`` '
+                    f'or a path, not {type(uinput)}.  Use keyword arguments to '
+                    'specify dimensions, spacing, and origin. For example:\n\n'
+                    '    >>> grid = pv.ImageData(\n'
+                    '    ...     dimensions=(10, 10, 10),\n'
+                    '    ...     spacing=(2, 1, 5),\n'
+                    '    ...     origin=(10, 35, 50),\n'
+                    '    ... )\n',
                 )
         elif dimensions is not None:
             self._from_specs(dimensions, spacing, origin)
@@ -691,9 +691,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         """
         raise AttributeError(
-            "The points cannot be set. The points of "
-            "`ImageData`/`vtkImageData` are implicitly defined by the "
-            "`origin`, `spacing`, and `dimensions` of the grid.",
+            'The points cannot be set. The points of '
+            '`ImageData`/`vtkImageData` are implicitly defined by the '
+            '`origin`, `spacing`, and `dimensions` of the grid.',
         )
 
     @property
@@ -807,15 +807,15 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     @spacing.setter
     def spacing(self, spacing: Sequence[float | int]):  # numpydoc ignore=GL08
         if min(spacing) < 0:
-            raise ValueError(f"Spacing must be non-negative, got {spacing}")
+            raise ValueError(f'Spacing must be non-negative, got {spacing}')
         self.SetSpacing(*spacing)
         self.Modified()
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
-        fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT] * 3)
-        attrs.append(("Spacing", self.spacing, fmt))
+        fmt = '{}, {}, {}'.format(*[pyvista.FLOAT_FORMAT] * 3)
+        attrs.append(('Spacing', self.spacing, fmt))
         return attrs
 
     def cast_to_structured_grid(self) -> pyvista.StructuredGrid:
@@ -841,22 +841,33 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             This uniform grid as a rectilinear grid.
 
         """
-
-        def gen_coords(i):  # numpydoc ignore=GL08
-            return (
-                np.cumsum(np.insert(np.full(self.dimensions[i] - 1, self.spacing[i]), 0, 0))
-                + self.origin[i]
-            )
-
-        xcoords = gen_coords(0)
-        ycoords = gen_coords(1)
-        zcoords = gen_coords(2)
-        grid = pyvista.RectilinearGrid(xcoords, ycoords, zcoords)
+        rectilinear_coords = self._generate_rectilinear_coords()
+        grid = pyvista.RectilinearGrid(*rectilinear_coords)
         grid.point_data.update(self.point_data)
         grid.cell_data.update(self.cell_data)
         grid.field_data.update(self.field_data)
         grid.copy_meta_from(self, deep=True)
         return grid
+
+    def _generate_rectilinear_coords(
+        self,
+    ) -> list[NumpyArray[float]]:  # numpydoc ignore=GL08
+        """Generate rectilinear coordinates (internal helper).
+
+        Returns
+        -------
+        list[NumpyArray[float]]
+            Rectilinear coordinates over the three dimensions.
+
+        """
+        # Use linspace to avoid rounding error accumulation
+        return [
+            (
+                np.linspace(0, (self.dimensions[i] - 1) * self.spacing[i], self.dimensions[i])
+                + self.origin[i]
+            )
+            for i in range(3)
+        ]
 
     @property
     def extent(self) -> tuple[int, int, int, int, int, int]:  # numpydoc ignore=RT01

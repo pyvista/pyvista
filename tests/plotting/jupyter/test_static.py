@@ -12,7 +12,7 @@ try:
 except:
     has_ipython = False
 
-skip_no_ipython = pytest.mark.skipif(not has_ipython, reason="Requires IPython package")
+skip_no_ipython = pytest.mark.skipif(not has_ipython, reason='Requires IPython package')
 
 
 def test_set_jupyter_backend_fail():

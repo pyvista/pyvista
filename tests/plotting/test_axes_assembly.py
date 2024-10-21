@@ -28,43 +28,43 @@ def test_axes_assembly_repr(axes_assembly):
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
         "  Shaft type:                 'cylinder'",
-        "  Shaft radius:               0.025",
-        "  Shaft length:               (0.8, 0.8, 0.8)",
+        '  Shaft radius:               0.025',
+        '  Shaft length:               (0.8, 0.8, 0.8)',
         "  Tip type:                   'cone'",
-        "  Tip radius:                 0.1",
-        "  Tip length:                 (0.2, 0.2, 0.2)",
-        "  Symmetric:                  False",
-        "  Symmetric bounds:           False",
+        '  Tip radius:                 0.1',
+        '  Tip length:                 (0.2, 0.2, 0.2)',
+        '  Symmetric:                  False',
+        '  Symmetric bounds:           False',
         "  X label:                    'X'",
         "  Y label:                    'Y'",
         "  Z label:                    'Z'",
         "  Label color:                Color(name='black', hex='#000000ff', opacity=255)",
-        "  Show labels:                True",
-        "  Label position:             (0.8, 0.8, 0.8)",
-        "  X Color:                                     ",
+        '  Show labels:                True',
+        '  Label position:             (0.8, 0.8, 0.8)',
+        '  X Color:                                     ',
         "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
         "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
-        "  Y Color:                                     ",
+        '  Y Color:                                     ',
         "      Shaft                   Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
         "      Tip                     Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
-        "  Z Color:                                     ",
+        '  Z Color:                                     ',
         "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
         "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
-        "  Position:                   (0.0, 0.0, 0.0)",
-        "  Orientation:                (0.0, -0.0, 0.0)",
-        "  Origin:                     (0.0, 0.0, 0.0)",
-        "  Scale:                      (1.0, 1.0, 1.0)",
-        "  User matrix:                Identity",
-        "  X Bounds                    -1.000E-01, 1.000E+00",
-        "  Y Bounds                    -1.000E-01, 1.000E+00",
-        "  Z Bounds                    -1.000E-01, 1.000E+00",
+        '  Position:                   (0.0, 0.0, 0.0)',
+        '  Orientation:                (0.0, -0.0, 0.0)',
+        '  Origin:                     (0.0, 0.0, 0.0)',
+        '  Scale:                      (1.0, 1.0, 1.0)',
+        '  User matrix:                Identity',
+        '  X Bounds                    -1.000E-01, 1.000E+00',
+        '  Y Bounds                    -1.000E-01, 1.000E+00',
+        '  Z Bounds                    -1.000E-01, 1.000E+00',
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
 
     axes_assembly.user_matrix = np.eye(4) * 2
     repr_ = repr(axes_assembly)
-    assert "User matrix:                Set" in repr_
+    assert 'User matrix:                Set' in repr_
 
 
 def test_axes_assembly_x_color(axes_assembly):
@@ -558,35 +558,35 @@ def test_planes_assembly_repr(planes_assembly):
     repr_ = repr(planes_assembly)
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
-        "  Resolution:                 (2, 2, 2)",
+        '  Resolution:                 (2, 2, 2)',
         "  Normal sign:                ('+', '+', '+')",
         "  X label:                    'YZ'",
         "  Y label:                    'ZX'",
         "  Z label:                    'XY'",
         "  Label color:                Color(name='black', hex='#000000ff', opacity=255)",
-        "  Show labels:                True",
-        "  Label position:             (0.5, 0.5, 0.5)",
+        '  Show labels:                True',
+        '  Label position:             (0.5, 0.5, 0.5)',
         "  Label edge:                 ('right', 'right', 'right')",
-        "  Label offset:               0.05",
+        '  Label offset:               0.05',
         "  Label mode:                 '3D'",
         "  X Color:                    Color(name='tomato', hex='#ff6347ff', opacity=255)",
         "  Y Color:                    Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
         "  Z Color:                    Color(name='mediumblue', hex='#0000cdff', opacity=255)",
-        "  Position:                   (0.0, 0.0, 0.0)",
-        "  Orientation:                (0.0, -0.0, 0.0)",
-        "  Origin:                     (0.0, 0.0, 0.0)",
-        "  Scale:                      (1.0, 1.0, 1.0)",
-        "  User matrix:                Identity",
-        "  X Bounds                    -1.000E+00, 1.000E+00",
-        "  Y Bounds                    -1.000E+00, 1.000E+00",
-        "  Z Bounds                    -1.000E+00, 1.000E+00",
+        '  Position:                   (0.0, 0.0, 0.0)',
+        '  Orientation:                (0.0, -0.0, 0.0)',
+        '  Origin:                     (0.0, 0.0, 0.0)',
+        '  Scale:                      (1.0, 1.0, 1.0)',
+        '  User matrix:                Identity',
+        '  X Bounds                    -1.000E+00, 1.000E+00',
+        '  Y Bounds                    -1.000E+00, 1.000E+00',
+        '  Z Bounds                    -1.000E+00, 1.000E+00',
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
 
     planes_assembly.user_matrix = np.eye(4) * 2
     repr_ = repr(planes_assembly)
-    assert "User matrix:                Set" in repr_
+    assert 'User matrix:                Set' in repr_
 
 
 def test_planes_assembly_x_color(planes_assembly):

@@ -28,30 +28,30 @@ except:
     pass
 
 
-@pytest.mark.parametrize("cmap", COLORMAPS)
+@pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
 
 
 def test_color():
-    name, name2 = "blue", "b"
+    name, name2 = 'blue', 'b'
     i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
-    h = "0000ffff"
-    i_opacity, f_opacity, h_opacity = 153, 0.6, "99"
+    h = '0000ffff'
+    i_opacity, f_opacity, h_opacity = 153, 0.6, '99'
     invalid_colors = (
         (300, 0, 0),
         (0, -10, 0),
         (0, 0, 1.5),
         (-0.5, 0, 0),
         (0, 0),
-        "#hh0000",
-        "invalid_name",
-        {"invalid_name": 100},
+        '#hh0000',
+        'invalid_name',
+        {'invalid_name': 100},
     )
-    invalid_opacities = (275, -50, 2.4, -1.2, "#zz")
+    invalid_opacities = (275, -50, 2.4, -1.2, '#zz')
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
     f_types = (float, np.float16, np.float32, np.float64)
-    h_prefixes = ("", "0x", "#")
+    h_prefixes = ('', '0x', '#')
     assert pv.Color(name) == i_rgba
     assert pv.Color(name2) == i_rgba
     # Check integer types
@@ -114,7 +114,7 @@ def test_color():
     with pytest.raises(TypeError):
         c[None]  # Invalid index type
     with pytest.raises(ValueError):  # noqa: PT011
-        c["invalid_name"]  # Invalid string index
+        c['invalid_name']  # Invalid string index
     with pytest.raises(IndexError):
         c[4]  # Invalid integer index
 
@@ -151,4 +151,4 @@ def test_color_synonyms(color_synonym):
 def test_unique_colors():
     duplicates = np.rec.find_duplicate(pv.hexcolors.values())
     if len(duplicates) > 0:
-        pytest.fail(f"The following colors have duplicate definitions: {duplicates}.")
+        pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')
