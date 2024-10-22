@@ -1781,7 +1781,7 @@ class Transform(_vtk.vtkTransform):
         >>> T, R, S, K = transform.decompose(allow_negative_scale=True)
         >>> has_reflection = S[0] < 0
         >>> has_reflection
-        True
+        np.True_
 
         """
         return decompose(
