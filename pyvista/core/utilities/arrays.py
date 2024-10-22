@@ -792,9 +792,9 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
 
 
 _JSONValueType = Union[
-    dict,  # type: ignore[type-arg]
-    list,  # type: ignore[type-arg]
-    tuple,  # type: ignore[type-arg]
+    dict[str, '_JSONValueType'],
+    list['_JSONValueType'],
+    tuple['_JSONValueType'],
     str,
     int,
     float,
@@ -803,8 +803,6 @@ _JSONValueType = Union[
 ]
 
 
-# TODO: add generic type annotations 'UserDict[str, _JSONValueType]'
-#  once support for Python 3.8 is dropped
 class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
     """Dict-like object with a JSON-serialized string array representation.
 
