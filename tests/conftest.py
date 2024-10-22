@@ -10,8 +10,15 @@ import pytest
 
 import pyvista
 from pyvista import examples
+from pyvista.core._vtk_core import VersionInfo
 
 pyvista.OFF_SCREEN = True
+
+NUMPY_VERSION_INFO = VersionInfo(
+    major=int(np.__version__.split('.')[0]),
+    minor=int(np.__version__.split('.')[1]),
+    micro=int(np.__version__.split('.')[2]),
+)
 
 
 def flaky_test(

@@ -1618,3 +1618,18 @@ def test_copy_no_copy_wrap_object_vtk9(datasets_vtk9):
         new_dataset = type(dataset)(dataset, deep=True)
         new_dataset['data'] += 1
         assert not np.any(new_dataset['data'] == dataset['data'])
+
+
+@pytest.mark.parametrize('grid_class', [pv.RectilinearGrid, pv.ImageData])
+@pytest.mark.parametrize(
+    ('dimensionality', 'dimensions'),
+    [(0, (1, 1, 1)), (1, (1, 42, 1)), (2, (42, 1, 142)), (3, (2, 42, 142))],
+)
+def test_grid_dimensionality(grid_class, dimensionality, dimensions):
+    if grid_class == pv.ImageData:
+        grid = grid_class(dimensions=dimensions)
+    elif grid_class == pv.RectilinearGrid:
+        grid = grid_class(range(dimensions[0]), range(dimensions[1]), range(dimensions[2]))
+
+    assert grid.dimensionality == dimensionality
+    assert grid.dimensionality == grid.get_cell(0).GetCellDimension()
