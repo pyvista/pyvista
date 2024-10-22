@@ -1743,11 +1743,14 @@ def test_transform_repr(transform):
     )
 
 
-SHEAR = (0.1, 0.2, 0.3)
-SHEAR4x4 = np.eye(4)
-SHEAR4x4[0, 1] = SHEAR[0]
-SHEAR4x4[0, 2] = SHEAR[1]
-SHEAR4x4[1, 2] = SHEAR[2]
+values = (0.1, 0.2, 0.3)
+SHEAR = np.eye(3)
+SHEAR[0, 1] = values[0]
+SHEAR[1, 0] = values[0]
+SHEAR[0, 2] = values[1]
+SHEAR[2, 0] = values[1]
+SHEAR[1, 2] = values[2]
+SHEAR[2, 1] = values[2]
 
 
 @pytest.mark.parametrize('do_scale', [True, False])
@@ -1756,9 +1759,9 @@ SHEAR4x4[1, 2] = SHEAR[2]
 @pytest.mark.parametrize('do_translate', [True, False])
 def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_translate):
     if do_shear:
-        transform.concatenate(SHEAR4x4)
+        transform.concatenate(SHEAR)
     if do_scale:
-        transform.scale(SCALE)
+        transform.scale(VECTOR)
     if do_rotate:
         transform.rotate(ROTATION)
     if do_translate:
@@ -1773,17 +1776,21 @@ def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_transl
 
     expected_translation = VECTOR if do_translate else np.zeros((3,))
     expected_rotation = ROTATION if do_rotate else np.eye(3)
-    expected_scale = [SCALE] * 3 if do_scale else np.ones((3,))
-    expected_shear = SHEAR if do_shear else np.zeros((3,))
+    expected_scale = VECTOR if do_scale else np.ones((3,))
+    expected_shear = SHEAR if do_shear else np.eye(3)
 
+    # Test decomposed translation always matches input exactly
     assert np.allclose(T, expected_translation)
-    assert np.allclose(R, expected_rotation)
-    assert np.allclose(S, expected_scale)
-    assert np.allclose(K, expected_shear)
+    # Test rotation, scale, and shear always matches input exactly unless
+    # scale and shear and both specified
+    is_exact_decomposition = not (do_scale and do_shear)
+    assert np.allclose(R, expected_rotation) == is_exact_decomposition
+    assert np.allclose(S, expected_scale) == is_exact_decomposition
+    assert np.allclose(K, expected_shear) == is_exact_decomposition
 
     # Test composition from decomposed elements matches input
     T, R, S, K = transform.decompose(as_matrix=True)
-    recomposed = pv.Transform([K, S, R, T])
+    recomposed = pv.Transform([T, R, S, K], multiply_mode='pre')
     assert np.allclose(recomposed.matrix, transform.matrix)
 
 
