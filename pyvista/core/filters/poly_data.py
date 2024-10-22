@@ -3915,8 +3915,9 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Voxelize :class:`~pyvista.PolyData` as a binary :class:`~pyvista.ImageData` mask.
 
-        Generate a voxelized representation of a surface. The voxelization can be
-        controlled in several ways.
+        Generate a voxelized representation of a surface where the voxels enclosed by the
+        surface are referred to as foreground. The voxelization can be controlled in several
+        ways.
 
         #. Specify the output geometry using a ``reference_volume``.
 
@@ -3938,6 +3939,8 @@ class PolyDataFilters(DataSetFilters):
         used by default to estimate the spacing. On systems with VTK < 9.2, the default
         spacing is set to ``mesh_length_fraction=1/100``.
 
+        .. versionadded:: 0.45.0
+
         .. note::
             For best results, ensure the input surface is a closed surface. The
             surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
@@ -3947,6 +3950,12 @@ class PolyDataFilters(DataSetFilters):
             This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
             which return meshes with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
+
+        .. note::
+            This filter considers any surface present in the mesh as an interface between
+            background and foreground, including internal surfaces. Because of this behavior,
+            internal surfaces, due, for instance, to intersecting meshes, may produce
+            unexpected results. See `Examples`.
 
         Parameters
         ----------
@@ -4134,6 +4143,64 @@ class PolyDataFilters(DataSetFilters):
         >>> plot = mask_and_polydata_plotter(mask, poly)
         >>> plot.show()
 
+        Visualize the effect of internal surfaces.
+
+        >>> mesh = pv.Cylinder() + pv.Cylinder((0, 0.75, 0))
+        >>> binary_mask = mesh.voxelize_binary_mask(
+        ...     dimensions=(1, 100, 50)
+        ... ).points_to_cells()
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask)
+        >>> _ = plot.add_mesh(mesh.slice(), color='red')
+        >>> plot.show(cpos="yz")
+
+        When multiple internal surfaces are nested, they are successively treated as
+        interfaces between background and foreground.
+
+        >>> mesh = (
+        ...     pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
+        ... )
+        >>> binary_mask = mesh.voxelize_binary_mask(
+        ...     dimensions=(1, 50, 50)
+        ... ).points_to_cells()
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask)
+        >>> _ = plot.add_mesh(mesh.slice(), color='red')
+        >>> plot.show(cpos="yz")
+
+        To include the voxels delimited by internal surfaces in the foreground, the internal
+        surfaces should be removed, for instance by applying a boolean union. Note that
+        this operation in unreliable in VTK but may be performed with external tools such
+        as `vtkbool <https://github.com/zippy84/vtkbool>`_.
+
+        Alternatively, the intersecting parts of the mesh can be processed sequentially.
+
+        >>> cylinder_1 = pv.Cylinder()
+        >>> cylinder_2 = pv.Cylinder((0, 0.75, 0))
+
+        >>> reference_volume = pv.ImageData(
+        ...     dimensions=(1, 100, 50),
+        ...     spacing=(1, 0.0175, 0.02),
+        ...     origin=(0, -0.5 + 0.0175 / 2, -0.5 + 0.02 / 2),
+        ... )
+
+        >>> binary_mask_1 = cylinder_1.voxelize_binary_mask(
+        ...     reference_volume=reference_volume
+        ... ).points_to_cells()
+        >>> binary_mask_2 = cylinder_2.voxelize_binary_mask(
+        ...     reference_volume=reference_volume
+        ... ).points_to_cells()
+
+        >>> binary_mask_1["mask"] = (
+        ...     binary_mask_1["mask"] | binary_mask_2["mask"]
+        ... )
+
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask_1)
+        >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
+        >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
+        >>> plot.show(jupyter_backend="notebook", cpos="yz")
+
         """
         _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
         _validation.check_greater_than(self.n_cells, 1, name='n_cells')  # type: ignore[attr-defined]
@@ -4268,9 +4335,9 @@ class PolyDataFilters(DataSetFilters):
         scalars = (  # Init with background value
             np.zeros(scalars_shape, dtype=scalars_dtype)
             if background_value == 0
-            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
+            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value  # type: ignore[operator]
         )
-        binary_mask['mask'] = scalars  # type: ignore[assignment]
+        binary_mask['mask'] = scalars
 
         # Make sure that we have a clean triangle-strip polydata
         # Note: Poly was partially pre-processed earlier
