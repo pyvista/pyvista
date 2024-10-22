@@ -32,6 +32,7 @@ downloading, reading, and processing files with a generic mapping:
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Sequence
 import functools
 import os
 from pathlib import Path
@@ -39,9 +40,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 from typing import Protocol
-from typing import Sequence
-from typing import Tuple
-from typing import Type
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -62,22 +60,22 @@ if TYPE_CHECKING:
 _FilePropStrType_co = TypeVar(
     '_FilePropStrType_co',
     str,
-    Tuple[str, ...],
+    tuple[str, ...],
     covariant=True,
 )
 _FilePropIntType_co = TypeVar(
     '_FilePropIntType_co',
     int,
-    Tuple[int, ...],
+    tuple[int, ...],
     covariant=True,
 )
 
 DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
 DatasetType = Union[
-    Type[pv.DataSet],
-    Type[pv.Texture],
-    Type[NumpyArray[Any]],
-    Type[pv.MultiBlock],
+    type[pv.DataSet],
+    type[pv.Texture],
+    type[NumpyArray[Any]],
+    type[pv.MultiBlock],
 ]
 
 
@@ -142,7 +140,7 @@ class _SingleFilePropsProtocol(_BaseFilePropsProtocol[str, int]):
 
 
 class _MultiFilePropsProtocol(
-    _BaseFilePropsProtocol[Tuple[str, ...], Tuple[int, ...]],
+    _BaseFilePropsProtocol[tuple[str, ...], tuple[int, ...]],
 ):
     """Define file properties of multiple files."""
 
@@ -607,7 +605,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
 class _MultiFileDownloadableDatasetLoader(
     _MultiFileDatasetLoader,
-    _Downloadable[Tuple[str, ...]],
+    _Downloadable[tuple[str, ...]],
 ):
     """Wrap multiple files for downloading and loading."""
 

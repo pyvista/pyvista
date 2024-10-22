@@ -23,9 +23,7 @@ Some key differences include:
 
 from __future__ import annotations
 
-from typing import List
-from typing import Sequence
-from typing import Tuple
+from collections.abc import Sequence
 from typing import TypeVar
 from typing import Union
 
@@ -49,16 +47,16 @@ _NumberType = TypeVar(  # noqa: PYI018
 NumpyArray = npt.NDArray[NumberType]
 
 _FiniteNestedList = Union[
-    List[NumberType],
-    List[List[NumberType]],
-    List[List[List[NumberType]]],
-    List[List[List[List[NumberType]]]],
+    list[NumberType],
+    list[list[NumberType]],
+    list[list[list[NumberType]]],
+    list[list[list[list[NumberType]]]],
 ]
 _FiniteNestedTuple = Union[
-    Tuple[NumberType],
-    Tuple[Tuple[NumberType]],
-    Tuple[Tuple[Tuple[NumberType]]],
-    Tuple[Tuple[Tuple[Tuple[NumberType]]]],
+    tuple[NumberType],
+    tuple[tuple[NumberType]],
+    tuple[tuple[tuple[NumberType]]],
+    tuple[tuple[tuple[tuple[NumberType]]]],
 ]
 
 _ArrayLike1D = Union[

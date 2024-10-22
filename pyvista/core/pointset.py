@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Sequence
 import contextlib
 from functools import wraps
 import numbers
@@ -10,7 +11,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Sequence
 from typing import cast
 import warnings
 

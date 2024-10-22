@@ -11,7 +11,6 @@ import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
-from typing import Tuple
 from typing import cast
 from typing import get_args
 
@@ -29,7 +28,7 @@ from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Sequence
+    from collections.abc import Sequence
 
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -664,7 +663,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
         """
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
-        self._center = cast(Tuple[float, float, float], valid_center)
+        self._center = cast(tuple[float, float, float], valid_center)
 
     @property
     def direction(self) -> Sequence[float]:
@@ -1026,7 +1025,7 @@ class Text3DSource(vtkVectorText):
     @center.setter
     def center(self, center: Sequence[float]):  # numpydoc ignore=GL08
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
-        self._center = cast(Tuple[float, float, float], valid_center)
+        self._center = cast(tuple[float, float, float], valid_center)
 
     @property
     def normal(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -3800,7 +3799,7 @@ class OrthogonalPlanesSource:
     @property
     def normal_sign(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the sign of the plane's normal vectors."""
-        return cast(Tuple[str, str, str], self._normal_sign)
+        return cast(tuple[str, str, str], self._normal_sign)
 
     @normal_sign.setter
     def normal_sign(self, sign: Literal['+', '-'] | Sequence[str] = '+'):  # numpydoc ignore=GL08
@@ -3892,7 +3891,7 @@ class OrthogonalPlanesSource:
         _validation.check_instance(names, (tuple, list), name='names')
         _validation.check_iterable_items(names, str, name='names')
         _validation.check_length(names, exact_length=3, name='names')
-        valid_names = cast(Tuple[str, str, str], tuple(names))
+        valid_names = cast(tuple[str, str, str], tuple(names))
         self._names = valid_names
 
         output = self._output
@@ -4314,7 +4313,7 @@ class CubeFacesSource(CubeSource):
                 '-' + names[2],
             )
         )
-        self._names = cast(Tuple[str, str, str, str, str, str], valid_names)
+        self._names = cast(tuple[str, str, str, str, str, str], valid_names)
 
     def update(self):
         """Update the output of the source."""
