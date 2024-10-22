@@ -1605,7 +1605,7 @@ class Transform(_vtk.vtkTransform):
     def decompose(
         self,
         *,
-        as_matrix: bool = False,
+        homogeneous: bool = False,
         allow_negative_scale: bool = False,
     ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
         """Decompose the current transformation into its components.
@@ -1642,7 +1642,7 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        as_matrix : bool, default: False
+        homogeneous : bool, default: False
             If ``True``, return translation, rotation, scaling, and shear components as
             4x4 matrices.
 
@@ -1654,19 +1654,19 @@ class Transform(_vtk.vtkTransform):
         -------
         numpy.ndarray
             Translation component. Returned as a 3-element vector (or a 4x4 translation matrix
-            if ``as_matrix`` is ``True``).
+            if ``homogeneous`` is ``True``).
 
         numpy.ndarray
             Rotation component. Returned as a 3x3 orthonormal rotation matrix of row vectors
-            (or a 4x4 rotation matrix if ``as_matrix`` is ``True``).
+            (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
 
         numpy.ndarray
             Scaling component. Returned as a 3-element vector (or a 4x4 scaling matrix
-            if ``as_matrix`` is ``True``).
+            if ``homogeneous`` is ``True``).
 
         numpy.ndarray
             Shear component. Returned as a 3x3 matrix with ones on the diagonal and shear
-            values in the off-diagonals (or as a 4x4 shearing matrix if ``as_matrix``
+            values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
             is ``True``).
 
         Examples
@@ -1745,7 +1745,7 @@ class Transform(_vtk.vtkTransform):
         Although the values may not match the input exactly, the decomposition is
         nevertheless valid and can be used to re-compose the original transformation.
 
-        >>> T, R, S, K = transform.decompose(as_matrix=True)
+        >>> T, R, S, K = transform.decompose(homogeneous=True)
         >>> T @ R @ S @ K
         array([[-5.76153045e-17, -2.00000000e+00,  0.00000000e+00,
                  4.00000000e+00],
@@ -1766,7 +1766,7 @@ class Transform(_vtk.vtkTransform):
         """
         return decompose(
             self.matrix,
-            as_matrix=as_matrix,
+            homogeneous=homogeneous,
             allow_negative_scale=allow_negative_scale,
         )
 

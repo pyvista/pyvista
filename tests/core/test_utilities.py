@@ -1789,7 +1789,7 @@ def test_transform_decompose(transform, do_scale, do_shear, do_rotate, do_transl
     assert np.allclose(K, expected_shear) == is_exact_decomposition
 
     # Test composition from decomposed elements matches input
-    T, R, S, K = transform.decompose(as_matrix=True)
+    T, R, S, K = transform.decompose(homogeneous=True)
     recomposed = pv.Transform([T, R, S, K], multiply_mode='pre')
     assert np.allclose(recomposed.matrix, transform.matrix)
 
@@ -1808,9 +1808,9 @@ def test_transform_decompose_allow_negative_scale(allow_negative_scale):
         assert np.array_equal(S, (1, 1, 1))
 
 
-@pytest.mark.parametrize('as_matrix', [True, False])
+@pytest.mark.parametrize('homogeneous', [True, False])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_transform_decompose_dtype(dtype, as_matrix):
+def test_transform_decompose_dtype(dtype, homogeneous):
     matrix = np.eye(4).astype(dtype)
-    T, R, S, K = transformations.decompose(matrix, as_matrix=as_matrix)
+    T, R, S, K = transformations.decompose(matrix, homogeneous=homogeneous)
     assert np.issubdtype(T.dtype, dtype)

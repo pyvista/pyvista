@@ -399,7 +399,7 @@ def rotation(
 def decompose(
     transformation: TransformLike,
     *,
-    as_matrix: bool = False,
+    homogeneous: bool = False,
     allow_negative_scale: bool = False,
 ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
     """Decompose a transformation into its components.
@@ -439,7 +439,7 @@ def decompose(
     transformation : TransformLike
         Array or transform to decompose.
 
-    as_matrix : bool, default: False
+    homogeneous : bool, default: False
         If ``True``, return the components (translation, rotation, etc.) as
         4x4 matrices. By default, translation and scaling components are returned as
         length-3 vectors, and rotation and shear components are returned as 3x3 matrices.
@@ -452,19 +452,19 @@ def decompose(
     -------
     numpy.ndarray
         Translation component. Returned as a 3-element vector (or a 4x4 translation matrix
-        if ``as_matrix`` is ``True``).
+        if ``homogeneous`` is ``True``).
 
     numpy.ndarray
         Rotation component. Returned as a 3x3 orthonormal rotation matrix of row vectors
-        (or a 4x4 rotation matrix if ``as_matrix`` is ``True``).
+        (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
 
     numpy.ndarray
         Scaling component. Returned as a 3-element vector (or a 4x4 scaling matrix
-        if ``as_matrix`` is ``True``).
+        if ``homogeneous`` is ``True``).
 
     numpy.ndarray
         Shear component. Returned as a 3x3 matrix with ones on the diagonal and shear
-        values in the off-diagonals (or as a 4x4 shearing matrix if ``as_matrix``
+        values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
         is ``True``).
 
     Examples
@@ -551,7 +551,7 @@ def decompose(
         S[0] *= -1
         R[0] *= -1
 
-    if as_matrix:
+    if homogeneous:
         T4 = I4.copy()
         T4[:3, 3] = T
 
