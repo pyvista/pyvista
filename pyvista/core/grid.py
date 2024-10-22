@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Sequence
 from typing import cast
+import warnings
 
 import numpy as np
 
@@ -953,14 +954,13 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     def _apply_index_to_physical_matrix(self, matrix):
         """Set origin, spacing, and direction from a transformation matrix."""
-        transform = pyvista.Transform(matrix)
-        T, R, S, K = transform.decompose()
-        if not np.allclose(K, 0):
-            # Input has shear, which is not directly supported
-            # Approximate rotation and scale by normalizing direction vectors instead
-            matrix3x3 = transform.matrix[:3, :3]
-            S = np.linalg.norm(matrix3x3, axis=1)
-            R = matrix3x3 / S[:, np.newaxis]
+        T, R, S, K = pyvista.Transform(matrix).decompose()
+        if not np.allclose(K, np.eye(3)):
+            warnings.warn(
+                'The transformation matrix has a shear component which has been removed. \n'
+                'Shear is not supported when applying ImageData transformations.'
+            )
+
         self.origin = T
         self.direction_matrix = R
         self.spacing = S

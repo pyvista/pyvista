@@ -3642,38 +3642,16 @@ def test_transform_imagedata(uniform, spacing):
     assert np.allclose(translated.center, uniform.origin)
 
 
-def test_transform_imagedata_with_shear(uniform):
-    shear_xy = 0.1
-    x_vector = (1, shear_xy, 0)
-    x_magnitude = np.linalg.norm(x_vector)
-    matrix = np.eye(4)
-    shear_index = (0, 1)
-    matrix[shear_index] = shear_xy
+def test_transform_imagedata_warns_with_shear(uniform):
+    shear = np.eye(4)
+    shear[0, 1] = 0.1
 
-    uniform.transform(matrix)
-
-    x_spacing, y_spacing, z_spacing = uniform.spacing
-    assert np.array_equal(x_spacing, x_magnitude)
-    assert np.array_equal(y_spacing, 1)
-    assert np.array_equal(z_spacing, 1)
-
-    x_dir, y_dir, z_dir = uniform.direction_matrix
-    assert np.array_equal(x_dir, x_vector / x_magnitude)
-    assert np.array_equal(y_dir, (0, 1, 0))
-    assert np.array_equal(z_dir, (0, 0, 1))
-
-    assert np.array_equal(uniform.origin, (0, 0, 0))
-
-    # Test that original matrix is *mostly* recovered
-    # With shear, we cannot re-compose the matrix perfectly
-    actual_matrix = uniform.index_to_physical_matrix
-    for i in range(matrix.shape[0]):
-        for j in range(matrix.shape[1]):
-            if (i, j) == shear_index:
-                # Expect approximate shear returned
-                assert np.isclose(actual_matrix[i, j], matrix[i, j], atol=1e-3)
-            else:
-                assert np.isclose(actual_matrix[i, j], matrix[i, j])
+    with pytest.warns(
+        Warning,
+        match='The transformation matrix has a shear component which has been removed. \n'
+        'Shear is not supported when applying ImageData transformations.',
+    ):
+        uniform.transform(shear)
 
 
 def test_reflect_mesh_about_point(datasets):

@@ -6956,6 +6956,15 @@ class DataSetFilters:
             in-place transformations truncating the result to integers,
             this conversion always applies to the input mesh.
 
+        .. warning::
+            Shear transformations are not supported for ':class:`~pyvista.ImageData`.
+            If present, any shear component is removed by the filter.
+
+        .. note::
+            Transforming :class:`~pyvista.ImageData` modifies its :class:`~pyvista.ImageData.origin`,
+            :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
+            properties.
+
         Parameters
         ----------
         trans : TransformLike
