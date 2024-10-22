@@ -1773,7 +1773,7 @@ class Transform(_vtk.vtkTransform):
 
         >>> has_reflection = np.linalg.det(R) < 0
         >>> has_reflection
-        True
+        np.True_
 
         If negative scale factors are allowed, we can instead check the first scale
         factor for the presence of a reflection.
