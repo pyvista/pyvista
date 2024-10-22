@@ -1628,8 +1628,8 @@ class Transform(_vtk.vtkTransform):
 
         - When ``allow_negative_scale`` is ``True``, reflections are included with the
           scaling ``S``. The first scaling factor is negative if there is a reflection
-          in the decomposition, and positive if there is no reflection. The y and z
-          scaling factors are always positive.
+          in the decomposition, and positive if there is no reflection. The second and
+          third scaling factors are always positive.
 
         By default, compact representations of the transformations are returned (i.e. as a
         3-element vector or a 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
@@ -1761,6 +1761,26 @@ class Transform(_vtk.vtkTransform):
 
         >>> recomposed = pv.Transform([T, R, S, K], multiply_mode='pre')
         >>> np.allclose(recomposed.matrix, transform.matrix)
+        True
+
+        Concatenate a reflection and decompose the transform again.
+
+        >>> _ = transform.flip_x()
+        >>> T, R, S, K = transform.decompose()
+
+        By default, the reflection is included with the rotation.
+        Show that a reflection is present by checking that its determinant is negative.
+
+        >>> has_reflection = np.linalg.det(R) < 0
+        >>> has_reflection
+        True
+
+        If negative scale factors are allowed, we can instead check the first scale
+        factor for the presence of a reflection.
+
+        >>> T, R, S, K = transform.decompose(allow_negative_scale=True)
+        >>> has_reflection = S[0] < 0
+        >>> has_reflection
         True
 
         """

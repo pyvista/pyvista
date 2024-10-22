@@ -539,13 +539,6 @@ def decompose(
     S = np.diagonal(SK)
     K = (SK * (I3 == 0.0).astype(float)) / S[:, np.newaxis] + I3
 
-    #     # If the input is actually a TRS matrix, the off-diagonals should be zeros.
-    #     # Otherwise, off-diagonals may be non-zero for arbitrary inputs.
-    #     # See https://www.cs.cornell.edu/courses/cs4620/2014fa/lectures/polarnotes.pdf
-    #     if not np.allclose(K, I3):
-    #         # Divide scale to approximate rotation
-    #         R = matrix3x3 / S[:, np.newaxis]
-
     if np.linalg.det(R) < 0 and allow_negative_scale:
         S = S.copy()  # Copy since array is read-only
         S[0] *= -1
