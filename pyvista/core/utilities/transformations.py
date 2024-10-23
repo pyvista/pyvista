@@ -396,43 +396,35 @@ def rotation(
         return translate_from_origin @ rotate @ translate_to_origin
 
 
-def decompose(
+def decomposition(
     transformation: TransformLike,
     *,
     homogeneous: bool = False,
-    allow_negative_scale: bool = False,
-) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+) -> tuple[
+    NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]
+]:
     """Decompose a transformation into its components.
 
-    The transformation matrix ``M`` is decomposed into four components:
+    The transformation matrix ``M`` is decomposed into five components:
 
     - translation ``T``
     - rotation ``R``
+    - reflection ``N``
     - scaling ``S``
     - shearing ``K``
 
-    such that, when represented as 4x4 matrices, ``M = TRSK``.
+    such that, when represented as 4x4 matrices, ``M = TRNSK``. The decomposition is
+    unique and is computed with polar matrix decomposition.
 
-    Reflections are represented implicitly in the decomposition:
-
-    - When ``allow_negative_scale`` is ``False`` (default), reflections are included
-      with the rotation ``R``. The rotation is left-handed (negative determinant) if
-      there is a reflection in the decomposition, or right-handed (positive
-      determinant) if there is no reflection.
-
-    - When ``allow_negative_scale`` is ``True``, reflections are included with the
-      scaling ``S``. The first scaling factor is negative if there is a reflection
-      in the decomposition, and positive if there is no reflection. The second and third
-      scaling factors are always positive.
-
-    By default, compact representations of the transformations are returned (i.e. as a
+    By default, compact representations of the transformations are returned (e.g. as a
     3-element vector or a 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
 
     .. note::
 
-        - The decomposition is computed using polar decomposition.
-        - The decomposition is unique (up to a change in sign depending on whether
-          reflections are included in the rotation or scaling component).
+        - The rotation is orthonormal and right-handed with positive determinant.
+        - The scaling factors are positive.
+        - The reflection is either ``1`` (no reflection) or ``-1`` (has reflection)
+          and can be used like a scaling factor.
 
     Parameters
     ----------
@@ -440,31 +432,31 @@ def decompose(
         Array or transform to decompose.
 
     homogeneous : bool, default: False
-        If ``True``, return the components (translation, rotation, etc.) as
-        4x4 matrices. By default, translation and scaling components are returned as
-        length-3 vectors, and rotation and shear components are returned as 3x3 matrices.
-
-    allow_negative_scale : bool, default: False
-        If ``True``, the first scaling term may be negative. By default, the
-        scaling factors are always positive.
+        If ``True``, return the components (translation, rotation, etc.) as 4x4
+        homogeneous matrices. By default, reflection is a scalar, translation and
+        scaling are length-3 vectors, and rotation and shear are 3x3 matrices.
 
     Returns
     -------
     numpy.ndarray
-        Translation component. Returned as a 3-element vector (or a 4x4 translation matrix
+        Translation component ``T``. Returned as a 3-element vector (or a 4x4
+        translation matrix if ``homogeneous`` is ``True``).
+
+    numpy.ndarray
+        Rotation component ``R``. Returned as a 3x3 orthonormal rotation matrix of row
+        vectors (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
+
+    numpy.ndarray
+        Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 rotation matrix
+         if ``homogeneous`` is ``True``).
+
+    numpy.ndarray
+        Scaling component ``S``. Returned as a 3-element vector (or a 4x4 scaling matrix
         if ``homogeneous`` is ``True``).
 
     numpy.ndarray
-        Rotation component. Returned as a 3x3 orthonormal rotation matrix of row vectors
-        (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
-
-    numpy.ndarray
-        Scaling component. Returned as a 3-element vector (or a 4x4 scaling matrix
-        if ``homogeneous`` is ``True``).
-
-    numpy.ndarray
-        Shear component. Returned as a 3x3 matrix with ones on the diagonal and shear
-        values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
+        Shear component ``K``. Returned as a 3x3 matrix with ones on the diagonal and
+        shear values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
         is ``True``).
 
     Examples
@@ -478,7 +470,7 @@ def decompose(
     ...     [0.0, 0.0, 3.0, 6.0],
     ...     [0.0, 0.0, 0.0, 1.0],
     ... ]
-    >>> T, R, S, K = pv.transformations.decompose(matrix)
+    >>> T, R, N, S, K = pv.transformations.decomposition(matrix)
 
     Since the input has no shear, this component is the identity matrix.
 
@@ -489,6 +481,11 @@ def decompose(
 
     >>> S  # scale
     array([1., 2., 3.])
+
+    There is no reflection so this component is ``1``.
+
+    >>> N  # reflection
+    array(1.)
 
     >>> R  # rotation
     array([[ 0., -1.,  0.],
@@ -507,7 +504,7 @@ def decompose(
     ...     [0.0, 0.0, 3.0, 6.0],
     ...     [0.0, 0.0, 0.0, 1.0],
     ... ]
-    >>> T, R, S, K = pv.transformations.decompose(matrix)
+    >>> T, R, N, S, K = pv.transformations.decomposition(matrix)
 
     >>> K  # shear
     array([[1.        , 0.03333333, 0.        ],
@@ -516,6 +513,9 @@ def decompose(
 
     >>> S  # scale
     array([0.99944491, 2.0022213 , 3.        ])
+
+    >>> N  # reflection
+    array(1.)
 
     >>> R  # rotation
     array([[ 0.03331483, -0.99944491,  0.        ],
@@ -528,21 +528,23 @@ def decompose(
     """
     matrix4x4 = _validation.validate_transform4x4(transformation)
 
-    I3 = np.eye(3, dtype=matrix4x4.dtype)
-    I4 = np.eye(4, dtype=matrix4x4.dtype)
+    dtype_out = matrix4x4.dtype
+    I3 = np.eye(3, dtype=dtype_out)
+    I4 = np.eye(4, dtype=dtype_out)
     matrix3x3 = matrix4x4[:3, :3]
 
     T = matrix4x4[:3, 3]
     R, SK = _polar_decomposition(matrix3x3)
 
     # Get scale from diagonals and shear from off-diagonals
-    S = np.diagonal(SK)
-    K = (SK * (I3 == 0.0).astype(float)) / S[:, np.newaxis] + I3
+    S = np.diagonal(SK).copy()  # Copy since it's read only
+    K = (SK * (I3 == 0.0)) / S[:, np.newaxis] + I3
 
-    if np.linalg.det(R) < 0 and allow_negative_scale:
-        S = S.copy()  # Copy since array is read-only
-        S[0] *= -1
-        R[0] *= -1
+    N = np.array(1, dtype=dtype_out)
+    if np.linalg.det(R) < 0:
+        # Reflections are present
+        R *= -1  # Ensure rotation is right-handed
+        N *= -1
 
     if homogeneous:
         T4 = I4.copy()
@@ -551,13 +553,17 @@ def decompose(
         R4 = I4.copy()
         R4[:3, :3] = R
 
-        S4 = np.diag((*S, 1)).astype(matrix4x4.dtype)
+        N4 = I4.copy()
+        N4[:3, :3] = I3 * N
+
+        S4 = I4.copy()
+        S4[:3, :3] = I3 * S
 
         K4 = I4.copy()
         K4[:3, :3] = K
 
-        return T4, R4, S4, K4
-    return T, R, S, K
+        return T4, R4, N4, S4, K4
+    return T, R, N, S, K
 
 
 def _polar_decomposition(a):
