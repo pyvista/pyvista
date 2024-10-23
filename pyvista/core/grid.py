@@ -954,7 +954,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     def _apply_index_to_physical_matrix(self, matrix):
         """Set origin, spacing, and direction from a transformation matrix."""
-        T, R, S, K = pyvista.Transform(matrix).decompose()
+        T, R, N, S, K = pyvista.Transform(matrix).decompose()
         if not np.allclose(K, np.eye(3)):
             warnings.warn(
                 'The transformation matrix has a shear component which has been removed. \n'
@@ -962,7 +962,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             )
 
         self.origin = T
-        self.direction_matrix = R
+        self.direction_matrix = R * N
         self.spacing = S
 
     @property
