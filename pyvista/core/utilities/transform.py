@@ -1690,7 +1690,7 @@ class Transform(_vtk.vtkTransform):
         >>> T, R, N, S, K = transform.decompose()
 
         Since the input has no shear this component is the identity matrix.
-        Similarly, there are no reflections so its value is ``1`. All other components
+        Similarly, there are no reflections so its value is ``1``. All other components
         are recovered perfectly and match the input.
 
         >>> K  # shear
