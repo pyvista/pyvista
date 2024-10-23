@@ -6956,6 +6956,15 @@ class DataSetFilters:
             in-place transformations truncating the result to integers,
             this conversion always applies to the input mesh.
 
+        .. warning::
+            Shear transformations are not supported for ':class:`~pyvista.ImageData`.
+            If present, any shear component is removed by the filter.
+
+        .. note::
+            Transforming :class:`~pyvista.ImageData` modifies its :class:`~pyvista.ImageData.origin`,
+            :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
+            properties.
+
         Parameters
         ----------
         trans : TransformLike
@@ -6977,7 +6986,7 @@ class DataSetFilters:
         -------
         pyvista.DataSet
             Transformed dataset.  Return type matches input unless
-            input dataset is a :class:`pyvista.ImageData`, in which
+            input dataset is a :class:`pyvista.RectilinearGrid`, in which
             case the output datatype is a :class:`pyvista.StructuredGrid`.
 
         See Also
@@ -7008,7 +7017,7 @@ class DataSetFilters:
         >>> transformed.plot(show_edges=True)
 
         """
-        if inplace and isinstance(self, pyvista.Grid):
+        if inplace and isinstance(self, pyvista.RectilinearGrid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
         t = trans if isinstance(trans, Transform) else Transform(trans)
@@ -7075,16 +7084,41 @@ class DataSetFilters:
         _update_alg(f, progress_bar, 'Transforming')
         res = pyvista.core.filters._get_output(f)
 
-        # make the previously active scalars active again
-        if active_point_scalars_name is not None:
-            self.point_data.active_scalars_name = active_point_scalars_name
-            res.point_data.active_scalars_name = active_point_scalars_name
-        if active_cell_scalars_name is not None:
-            self.cell_data.active_scalars_name = active_cell_scalars_name
-            res.cell_data.active_scalars_name = active_cell_scalars_name
+        def _restore_active_scalars(input_, output_):
+            # make the previously active scalars active again
+            input_.point_data.active_scalars_name = active_point_scalars_name
+            input_.cell_data.active_scalars_name = active_cell_scalars_name
 
-        self_output = self if inplace else self.__class__()
-        output = pyvista.StructuredGrid() if isinstance(self, pyvista.Grid) else self_output
+            # Only update output if necessary
+            if input_ is not output_:
+                output_.point_data.active_scalars_name = active_point_scalars_name
+                output_.cell_data.active_scalars_name = active_cell_scalars_name
+
+        if isinstance(self, pyvista.RectilinearGrid):
+            output = pyvista.StructuredGrid()
+        elif inplace:
+            output = self
+        else:
+            output = self.__class__()
+
+        if isinstance(self, pyvista.ImageData):
+            # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
+            # but VTK 9+ supports oriented images.
+            # To keep an ImageData -> ImageData mapping, we copy the transformed data
+            # from the filter output but manually transform the structure
+            output.copy_structure(self)
+            current_matrix = output.index_to_physical_matrix
+            new_matrix = pyvista.Transform(current_matrix).concatenate(t).matrix
+            output.index_to_physical_matrix = new_matrix
+
+            output.point_data.update(res.point_data, copy=False)
+            output.cell_data.update(res.cell_data, copy=False)
+            output.field_data.update(res.field_data, copy=False)
+            _restore_active_scalars(self, output)
+            return output
+
+        _restore_active_scalars(self, res)
+
         # The output from the transform filter contains a shallow copy
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.

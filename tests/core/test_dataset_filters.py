@@ -3603,21 +3603,55 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
                 _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types(dataset):
-    # assert that transformations of these types throw the correct error
+def test_transform_inplace_rectilinear(rectilinear):
+    # assert that transformations of this type raises the correct error
     tf = pv.core.utilities.transformations.axis_angle_rotation(
         (1, 0, 0),
         90,
     )  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):
-        dataset.transform(tf, inplace=True)
+        rectilinear.transform(tf, inplace=True)
+
+
+@pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
+def test_transform_imagedata(uniform, spacing):
+    # Transformations affect origin, spacing, and direction, so test these here
+    uniform.spacing = spacing
+
+    # Test scaling
+    vector123 = np.array((1, 2, 3))
+    uniform.scale(vector123, inplace=True)
+    expected_spacing = spacing * vector123
+    assert np.allclose(uniform.spacing, expected_spacing)
+
+    # Test direction
+    rotation = pv.Transform().rotate_vector(vector123, 30).matrix[:3, :3]
+    uniform.rotate(rotation, inplace=True)
+    assert np.allclose(uniform.direction_matrix, rotation)
+
+    # Test translation by centering data
+    vector = np.array(uniform.center) * -1
+    translation = pv.Transform().translate(vector)
+    uniform.transform(translation, inplace=True)
+    assert isinstance(uniform, pv.ImageData)
+    assert np.array_equal(uniform.origin, vector)
+
+    # Test applying a second translation
+    translated = uniform.transform(translation, inplace=False)
+    assert np.allclose(translated.origin, vector * 2)
+    assert np.allclose(translated.center, uniform.origin)
+
+
+def test_transform_imagedata_warns_with_shear(uniform):
+    shear = np.eye(4)
+    shear[0, 1] = 0.1
+
+    with pytest.warns(
+        Warning,
+        match='The transformation matrix has a shear component which has been removed. \n'
+        'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+    ):
+        uniform.transform(shear)
 
 
 def test_reflect_mesh_about_point(datasets):
@@ -3701,17 +3735,10 @@ def test_reflect_inplace(dataset):
     assert np.allclose(dataset.points[:, 1:], orig.points[:, 1:])
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types_2(dataset):
+def test_transform_inplace_bad_types_2(rectilinear):
     # assert that transformations of these types throw the correct error
     with pytest.raises(TypeError):
-        dataset.reflect((1, 0, 0), inplace=True)
+        rectilinear.reflect((1, 0, 0), inplace=True)
 
 
 def test_extrude_rotate():
