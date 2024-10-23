@@ -1757,7 +1757,7 @@ class Transform(_vtk.vtkTransform):
                  1.00000000e+00]])
 
         Use pre-multiplication to re-compose the transformation as a new
-        ``:class:`~pyvista.Transform` instead.
+        :class:`~pyvista.Transform` instead.
 
         >>> recomposed = pv.Transform([T, R, S, K], multiply_mode='pre')
         >>> np.allclose(recomposed.matrix, transform.matrix)
