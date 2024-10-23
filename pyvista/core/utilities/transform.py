@@ -1631,10 +1631,10 @@ class Transform(_vtk.vtkTransform):
 
         .. note::
 
-            - The rotation is always right-handed with positive determinant.
-            - The scaling factors are always positive.
-            - The reflection is like a scaling factor, and is either ``1`` (no reflection)
-              or ``-1`` (has reflection).
+            - The rotation is orthonormal and right-handed with positive determinant.
+            - The scaling factors are positive.
+            - The reflection is either ``1`` (no reflection) or ``-1`` (has reflection)
+              and can be used like a scaling factor.
 
         Parameters
         ----------
