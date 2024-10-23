@@ -15,7 +15,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
-from pyvista.core.utilities.transformations import decompose
+from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -1784,7 +1784,7 @@ class Transform(_vtk.vtkTransform):
         np.True_
 
         """
-        return decompose(
+        return decomposition(
             self.matrix,
             homogeneous=homogeneous,
             allow_negative_scale=allow_negative_scale,

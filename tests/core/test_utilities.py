@@ -1799,7 +1799,7 @@ def test_transform_decompose_allow_negative_scale(allow_negative_scale):
     rotation = np.array(ROTATION) * -1
     assert np.linalg.det(rotation) < 0
 
-    _, R, S, _ = transformations.decompose(rotation, allow_negative_scale=allow_negative_scale)
+    _, R, S, _ = transformations.decomposition(rotation, allow_negative_scale=allow_negative_scale)
     if allow_negative_scale:
         assert np.linalg.det(R) > 0
         assert np.array_equal(S, (-1, 1, 1))
@@ -1812,7 +1812,7 @@ def test_transform_decompose_allow_negative_scale(allow_negative_scale):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_transform_decompose_dtype(dtype, homogeneous):
     matrix = np.eye(4).astype(dtype)
-    T, R, S, K = transformations.decompose(matrix, homogeneous=homogeneous)
+    T, R, S, K = transformations.decomposition(matrix, homogeneous=homogeneous)
     assert np.issubdtype(T.dtype, dtype)
     assert np.issubdtype(R.dtype, dtype)
     assert np.issubdtype(S.dtype, dtype)

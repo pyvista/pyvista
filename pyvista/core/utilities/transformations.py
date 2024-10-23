@@ -396,7 +396,7 @@ def rotation(
         return translate_from_origin @ rotate @ translate_to_origin
 
 
-def decompose(
+def decomposition(
     transformation: TransformLike,
     *,
     homogeneous: bool = False,
@@ -478,7 +478,7 @@ def decompose(
     ...     [0.0, 0.0, 3.0, 6.0],
     ...     [0.0, 0.0, 0.0, 1.0],
     ... ]
-    >>> T, R, S, K = pv.transformations.decompose(matrix)
+    >>> T, R, S, K = pv.transformations.decomposition(matrix)
 
     Since the input has no shear, this component is the identity matrix.
 
@@ -507,7 +507,7 @@ def decompose(
     ...     [0.0, 0.0, 3.0, 6.0],
     ...     [0.0, 0.0, 0.0, 1.0],
     ... ]
-    >>> T, R, S, K = pv.transformations.decompose(matrix)
+    >>> T, R, S, K = pv.transformations.decomposition(matrix)
 
     >>> K  # shear
     array([[1.        , 0.03333333, 0.        ],
