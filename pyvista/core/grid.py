@@ -17,6 +17,7 @@ from pyvista.core import _validation
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import TransformLike
 
 
 from . import _vtk_core as _vtk
@@ -952,22 +953,14 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def direction_matrix(self, matrix):  # numpydoc ignore: GL08
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
 
-    def _apply_index_to_physical_matrix(self, matrix):
-        """Set origin, spacing, and direction from a transformation matrix."""
-        T, R, N, S, K = pyvista.Transform(matrix).decompose()
-        if not np.allclose(K, np.eye(3)):
-            warnings.warn(
-                'The transformation matrix has a shear component which has been removed. \n'
-                'Shear is not supported when applying ImageData transformations.'
-            )
-
-        self.origin = T
-        self.direction_matrix = R * N
-        self.spacing = S
-
     @property
     def index_to_physical_matrix(self) -> NumpyArray[float]:
-        """Get 4x4 matrix to convert coordinates from index space (ijk) to physical space (xyz).
+        """Return or set 4x4 matrix to convert coordinates from index space (ijk) to physical space (xyz).
+
+        .. note::
+            Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
+            :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
+            properties.
 
         Returns
         -------
@@ -977,9 +970,27 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """
         return array_from_vtkmatrix(self.GetIndexToPhysicalMatrix())
 
+    @index_to_physical_matrix.setter
+    def index_to_physical_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
+        T, R, N, S, K = pyvista.Transform(matrix).decompose()
+        if not np.allclose(K, np.eye(3)):
+            warnings.warn(
+                'The transformation matrix has a shear component which has been removed. \n'
+                'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.'
+            )
+
+        self.origin = T  # type: ignore[assignment]
+        self.direction_matrix = R * N
+        self.spacing = S  # type: ignore[assignment]
+
     @property
     def physical_to_index_matrix(self) -> NumpyArray[float]:
-        """Get 4x4 matrix to convert coordinates from physical space (xyz) to index space (ijk).
+        """Return or set 4x4 matrix to convert coordinates from physical space (xyz) to index space (ijk).
+
+        .. note::
+            Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
+            :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
+            properties.
 
         Returns
         -------
@@ -988,3 +999,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         """
         return array_from_vtkmatrix(self.GetPhysicalToIndexMatrix())
+
+    @physical_to_index_matrix.setter
+    def physical_to_index_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
+        self.index_to_physical_matrix = pyvista.Transform(matrix).inverse_matrix

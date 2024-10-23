@@ -7109,7 +7109,7 @@ class DataSetFilters:
             output.copy_structure(self)
             current_matrix = output.index_to_physical_matrix
             new_matrix = pyvista.Transform(current_matrix).concatenate(t).matrix
-            output._apply_index_to_physical_matrix(new_matrix)
+            output.index_to_physical_matrix = new_matrix
 
             output.point_data.update(res.point_data, copy=False)
             output.cell_data.update(res.cell_data, copy=False)

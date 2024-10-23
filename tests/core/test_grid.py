@@ -1158,6 +1158,19 @@ def test_imagedata_index_to_physical_matrix():
     xyz_to_ijk = image.physical_to_index_matrix
     assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
 
+    # Test setters
+    I3 = np.eye(3)
+    I4 = np.eye(4)
+    image.index_to_physical_matrix = I4
+    assert np.allclose(image.index_to_physical_matrix, I4)
+    assert np.allclose(image.spacing, (1, 1, 1))
+    assert np.allclose(image.origin, (0, 0, 0))
+    assert np.allclose(image.direction_matrix, I3)
+
+    image.physical_to_index_matrix = expected_transform.inverse_matrix
+    xyz_to_ijk = image.physical_to_index_matrix
+    assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
+
 
 def test_grid_extract_selection_points(struct_grid):
     grid = pv.UnstructuredGrid(struct_grid)

@@ -3649,7 +3649,7 @@ def test_transform_imagedata_warns_with_shear(uniform):
     with pytest.warns(
         Warning,
         match='The transformation matrix has a shear component which has been removed. \n'
-        'Shear is not supported when applying ImageData transformations.',
+        'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
     ):
         uniform.transform(shear)
 
