@@ -470,7 +470,7 @@ def decomposition(
     ...     [0.0, 0.0, 3.0, 6.0],
     ...     [0.0, 0.0, 0.0, 1.0],
     ... ]
-    >>> T, R, S, K = pv.transformations.decomposition(matrix)
+    >>> T, R, N, S, K = pv.transformations.decomposition(matrix)
 
     Since the input has no shear, this component is the identity matrix.
 
@@ -481,6 +481,11 @@ def decomposition(
 
     >>> S  # scale
     array([1., 2., 3.])
+
+    There is no reflection so this component is ``1``.
+
+    >>> N  # reflection
+    array(1.)
 
     >>> R  # rotation
     array([[ 0., -1.,  0.],
@@ -499,7 +504,7 @@ def decomposition(
     ...     [0.0, 0.0, 3.0, 6.0],
     ...     [0.0, 0.0, 0.0, 1.0],
     ... ]
-    >>> T, R, S, K = pv.transformations.decomposition(matrix)
+    >>> T, R, N, S, K = pv.transformations.decomposition(matrix)
 
     >>> K  # shear
     array([[1.        , 0.03333333, 0.        ],
@@ -508,6 +513,9 @@ def decomposition(
 
     >>> S  # scale
     array([0.99944491, 2.0022213 , 3.        ])
+
+    >>> N  # reflection
+    array(1.)
 
     >>> R  # rotation
     array([[ 0.03331483, -0.99944491,  0.        ],

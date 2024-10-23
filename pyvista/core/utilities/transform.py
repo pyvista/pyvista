@@ -1687,19 +1687,22 @@ class Transform(_vtk.vtkTransform):
 
         Decompose the matrix.
 
-        >>> T, R, S, K = transform.decompose()
+        >>> T, R, N, S, K = transform.decompose()
 
-        Since the input has no shear, this component is the identity matrix.
+        Since the input has no shear or this component is the identity matrix.
+        Similarly, there are no reflections so its value is ``1`. All other components
+        are recovered perfectly and match the input.
 
         >>> K  # shear
         array([[1., 0., 0.],
                [0., 1., 0.],
                [0., 0., 1.]])
 
-        All other components are recovered perfectly and match the input.
-
         >>> S  # scale
         array([1., 2., 3.])
+
+        >>> N  # reflection
+        array(1.)
 
         >>> R  # rotation
         array([[ 0., -1.,  0.],
@@ -1719,10 +1722,10 @@ class Transform(_vtk.vtkTransform):
         Repeat the decomposition and show its components. Note how the decomposed shear
         does not perfectly match the input shear matrix values. The values of the
         scaling and rotation components are also affected and do not exactly match the
-        input. This is expected, because shear can be partially factored as a
+        input. This is expected, because the shear can be partially factored as a
         combination of rotation and scaling.
 
-        >>> T, R, S, K = transform.decompose()
+        >>> T, R, N, S, K = transform.decompose()
 
         >>> K  # shear
         array([[1.        , 0.03333333, 0.        ],
@@ -1731,6 +1734,9 @@ class Transform(_vtk.vtkTransform):
 
         >>> S  # scale
         array([0.99944491, 2.0022213 , 3.        ])
+
+        >>> N  # reflection
+        array(1.)
 
         >>> R  # rotation
         array([[ 0.03331483, -0.99944491,  0.        ],
@@ -1743,8 +1749,8 @@ class Transform(_vtk.vtkTransform):
         Although the values may not match the input exactly, the decomposition is
         nevertheless valid and can be used to re-compose the original transformation.
 
-        >>> T, R, S, K = transform.decompose(homogeneous=True)
-        >>> T @ R @ S @ K
+        >>> T, R, N, S, K = transform.decompose(homogeneous=True)
+        >>> T @ R @ N @ S @ K
         array([[-5.76153045e-17, -2.00000000e+00,  0.00000000e+00,
                  4.00000000e+00],
                [ 1.00000000e+00,  1.00000000e-01,  0.00000000e+00,
@@ -1754,32 +1760,36 @@ class Transform(_vtk.vtkTransform):
                [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
                  1.00000000e+00]])
 
-        Use pre-multiplication to re-compose the transformation as a new
-        :class:`~pyvista.Transform` instead.
+        Alternatively, re-compose the transformation as a new
+        :class:`~pyvista.Transform` with pre-multiplication.
 
-        >>> recomposed = pv.Transform([T, R, S, K], multiply_mode='pre')
+        >>> recomposed = pv.Transform([T, R, N, S, K], multiply_mode='pre')
         >>> np.allclose(recomposed.matrix, transform.matrix)
         True
 
         Concatenate a reflection and decompose the transform again.
 
         >>> _ = transform.flip_x()
-        >>> T, R, S, K = transform.decompose()
+        >>> T, R, N, S, K = transform.decompose()
 
-        By default, the reflection is included with the rotation.
-        Show that a reflection is present by checking that its determinant is negative.
+        The reflection component is now ``-1``.
+        >>> N  # reflection
+        array(-1.)
 
-        >>> has_reflection = np.linalg.det(R) < 0
-        >>> has_reflection
+        The decomposition may be simplified to a ``TRSK`` decomposition by combining
+        the reflection component with either the rotation or the scaling term.
+
+        Multiplying the reflection with the rotation will make it a left-handed rotation
+        with negative determinant:
+
+        >>> R = R * N
+        >>> np.linalg.det(R) < 0
         np.True_
 
-        If negative scale factors are allowed, we can instead check the first scale
-        factor for the presence of a reflection.
-
-        >>> T, R, S, K = transform.decompose(allow_negative_scale=True)
-        >>> has_reflection = S[0] < 0
-        >>> has_reflection
-        np.True_
+        Alternatively, keep the rotation right-handed but make the scaling factors negative:
+        >>> S = S * N
+        >>> S  # scale
+        array([-0.99944491, -2.0022213 , -3.        ])
 
         """
         return decomposition(
