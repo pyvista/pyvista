@@ -528,35 +528,40 @@ def decompose(
     """
     matrix4x4 = _validation.validate_transform4x4(transformation)
 
-    I3 = np.eye(3, dtype=matrix4x4.dtype)
-    I4 = np.eye(4, dtype=matrix4x4.dtype)
+    dtype_out = matrix4x4.dtype
+    I3 = np.eye(3, dtype=dtype_out)
+    I4 = np.eye(4, dtype=dtype_out)
     matrix3x3 = matrix4x4[:3, :3]
 
     T = matrix4x4[:3, 3]
     R, SK = _polar_decomposition(matrix3x3)
 
     # Get scale from diagonals and shear from off-diagonals
-    S = np.diagonal(SK)
-    K = (SK * (I3 == 0.0).astype(float)) / S[:, np.newaxis] + I3
+    S = np.diagonal(SK).copy()  # Copy since it's read only
+    K = (SK * (I3 == 0.0)) / S[:, np.newaxis] + I3
 
     if np.linalg.det(R) < 0 and allow_negative_scale:
-        S = S.copy()  # Copy since array is read-only
         S[0] *= -1
         R[0] *= -1
 
     if homogeneous:
         T4 = I4.copy()
         T4[:3, 3] = T
+        T = T4
 
         R4 = I4.copy()
         R4[:3, :3] = R
+        R = R4
 
-        S4 = np.diag((*S, 1)).astype(matrix4x4.dtype)
+        S4 = np.diag((*S, 1))
+        S = S4
 
         K4 = I4.copy()
         K4[:3, :3] = K
+        K = K4
 
-        return T4, R4, S4, K4
+    S = S.astype(dtype_out)
+    K = K.astype(dtype_out)
     return T, R, S, K
 
 

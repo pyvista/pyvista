@@ -1814,3 +1814,6 @@ def test_transform_decompose_dtype(dtype, homogeneous):
     matrix = np.eye(4).astype(dtype)
     T, R, S, K = transformations.decompose(matrix, homogeneous=homogeneous)
     assert np.issubdtype(T.dtype, dtype)
+    assert np.issubdtype(R.dtype, dtype)
+    assert np.issubdtype(S.dtype, dtype)
+    assert np.issubdtype(K.dtype, dtype)
