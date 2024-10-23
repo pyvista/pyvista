@@ -1606,67 +1606,64 @@ class Transform(_vtk.vtkTransform):
         self,
         *,
         homogeneous: bool = False,
-        allow_negative_scale: bool = False,
-    ) -> tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float], NumpyArray[float]]:
+    ) -> tuple[
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+    ]:
         """Decompose the current transformation into its components.
 
-        Decompose :attr:`matrix` ``M`` into
+        Decompose the :attr:`matrix` ``M`` into
 
         - translation ``T``
         - rotation ``R``
+        - reflection ``N``
         - scaling ``S``
         - shearing ``K``
 
-        such that, when represented as 4x4 matrices, ``M = TRSK``.
+        such that, when represented as 4x4 matrices, ``M = TRNSK``. The decomposition is
+        unique and is computed with polar matrix decomposition.
 
-        Reflections are represented implicitly in the decomposition:
-
-        - When ``allow_negative_scale`` is ``False`` (default), reflections are included
-          with the rotation ``R``. The rotation is left-handed (negative determinant) if
-          there is a reflection in the decomposition, and right-handed (positive
-          determinant) if there is no reflection.
-
-        - When ``allow_negative_scale`` is ``True``, reflections are included with the
-          scaling ``S``. The first scaling factor is negative if there is a reflection
-          in the decomposition, and positive if there is no reflection. The second and
-          third scaling factors are always positive.
-
-        By default, compact representations of the transformations are returned (i.e. as a
+        By default, compact representations of the transformations are returned (e.g. as a
         3-element vector or a 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
 
         .. note::
 
-            - The decomposition is computed using polar decomposition.
-            - The decomposition is unique (up to a change in sign depending on whether
-              reflections are included in the rotation or scaling component).
+            - The rotation is always right-handed with positive determinant.
+            - The scaling factors are always positive.
+            - The reflection is like a scaling factor, and is either ``1`` (no reflection)
+              or ``-1`` (has reflection).
 
         Parameters
         ----------
         homogeneous : bool, default: False
-            If ``True``, return translation, rotation, scaling, and shear components as
-            4x4 matrices.
-
-        allow_negative_scale : bool, default: False
-            If ``True``, the first scaling term may be negative. By default, the
-            scaling factors are always positive.
+            If ``True``, return the components (translation, rotation, etc.) as 4x4
+            homogeneous matrices. By default, reflection is a scalar, translation and
+            scaling are length-3 vectors, and rotation and shear are 3x3 matrices.
 
         Returns
         -------
         numpy.ndarray
-            Translation component. Returned as a 3-element vector (or a 4x4 translation matrix
+            Translation component ``T``. Returned as a 3-element vector (or a 4x4
+            translation matrix if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Rotation component ``R``. Returned as a 3x3 orthonormal rotation matrix of row
+            vectors (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 rotation matrix
+             if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Scaling component ``S``. Returned as a 3-element vector (or a 4x4 scaling matrix
             if ``homogeneous`` is ``True``).
 
         numpy.ndarray
-            Rotation component. Returned as a 3x3 orthonormal rotation matrix of row vectors
-            (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
-
-        numpy.ndarray
-            Scaling component. Returned as a 3-element vector (or a 4x4 scaling matrix
-            if ``homogeneous`` is ``True``).
-
-        numpy.ndarray
-            Shear component. Returned as a 3x3 matrix with ones on the diagonal and shear
-            values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
+            Shear component ``K``. Returned as a 3x3 matrix with ones on the diagonal and
+            shear values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
             is ``True``).
 
         Examples
@@ -1788,7 +1785,6 @@ class Transform(_vtk.vtkTransform):
         return decomposition(
             self.matrix,
             homogeneous=homogeneous,
-            allow_negative_scale=allow_negative_scale,
         )
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
