@@ -227,7 +227,7 @@ jobs:
       - uses: awalsh128/cache-apt-pkgs-action@v1.4.2
         with:
           packages: libgl1-mesa-glx xvfb
-          version: 3.0
+          version: 4.0
 
       - name: Plotting Testing (uses GL)
         run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
