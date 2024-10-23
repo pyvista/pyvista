@@ -447,8 +447,8 @@ def decomposition(
         vectors (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
 
     numpy.ndarray
-        Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 rotation matrix
-         if ``homogeneous`` is ``True``).
+        Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 reflection
+        matrix if ``homogeneous`` is ``True``).
 
     numpy.ndarray
         Scaling component ``S``. Returned as a 3-element vector (or a 4x4 scaling matrix
@@ -534,17 +534,20 @@ def decomposition(
     matrix3x3 = matrix4x4[:3, :3]
 
     T = matrix4x4[:3, 3]
-    R, SK = _polar_decomposition(matrix3x3)
+    RN, SK = _polar_decomposition(matrix3x3)
 
     # Get scale from diagonals and shear from off-diagonals
     S = np.diagonal(SK).copy()  # Copy since it's read only
     K = (SK * (I3 == 0.0)) / S[:, np.newaxis] + I3
 
-    N = np.array(1, dtype=dtype_out)
-    if np.linalg.det(R) < 0:
+    # Get reflection and ensure rotation is right-handed
+    if np.linalg.det(RN) < 0:
         # Reflections are present
-        R *= -1  # Ensure rotation is right-handed
-        N *= -1
+        R = RN * -1
+        N = np.array(-1, dtype=dtype_out)
+    else:
+        R = RN
+        N = np.array(1, dtype=dtype_out)
 
     if homogeneous:
         T4 = I4.copy()

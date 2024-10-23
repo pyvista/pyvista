@@ -1654,8 +1654,8 @@ class Transform(_vtk.vtkTransform):
             vectors (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
 
         numpy.ndarray
-            Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 rotation matrix
-             if ``homogeneous`` is ``True``).
+            Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 reflection
+            matrix if ``homogeneous`` is ``True``).
 
         numpy.ndarray
             Scaling component ``S``. Returned as a 3-element vector (or a 4x4 scaling matrix
@@ -1690,7 +1690,7 @@ class Transform(_vtk.vtkTransform):
         >>> T, R, N, S, K = transform.decompose()
 
         Since the input has no shear this component is the identity matrix.
-        Similarly, there are no reflections so its value is ``1`. All other components
+        Similarly, there are no reflections so its value is ``1``. All other components
         are recovered perfectly and match the input.
 
         >>> K  # shear
