@@ -1722,7 +1722,8 @@ class Transform(_vtk.vtkTransform):
         Repeat the decomposition and show its components. Note how the decomposed shear
         does not perfectly match the input shear matrix values. The values of the
         scaling and rotation components are also affected and do not exactly match the
-        input.
+        input. This is expected, because shear can be partially factored as a
+        combination of rotation and scaling.
 
         >>> T, R, S, K = transform.decompose()
 
