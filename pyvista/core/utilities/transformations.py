@@ -447,8 +447,8 @@ def decomposition(
         vectors (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
 
     numpy.ndarray
-        Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 rotation matrix
-         if ``homogeneous`` is ``True``).
+        Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 reflection
+        matrix if ``homogeneous`` is ``True``).
 
     numpy.ndarray
         Scaling component ``S``. Returned as a 3-element vector (or a 4x4 scaling matrix
