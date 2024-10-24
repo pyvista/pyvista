@@ -502,34 +502,27 @@ def validate_rotation(
     Returns
     -------
     np.ndarray
-        Validated 3x3 axes array of row vectors.
+        Validated 3x3 rotation matrix.
 
     Examples
     --------
-    Validate an axes array.
+    Validate a rotation matrix. The identity matrix is used as a toy example.
 
     >>> import numpy as np
     >>> from pyvista import _validation
-    >>> _validation.validate_axes(np.eye(3))
+    >>> rotation = np.eye(3)
+    >>> _validation.validate_rotation(rotation)
     array([[1., 0., 0.],
            [0., 1., 0.],
            [0., 0., 1.]])
 
-    Validate individual axes vectors as a 3x3 array.
+    By default, left-handed rotations (which include reflections) are allowed.
 
-    >>> _validation.validate_axes([1, 0, 0], [0, 1, 0], [0, 0, 1])
-    array([[1., 0., 0.],
-           [0., 1., 0.],
-           [0., 0., 1.]])
-
-    Create a validated left-handed axes array from two vectors.
-
-    >>> _validation.validate_axes(
-    ...     [1, 0, 0], [0, 1, 0], must_have_orientation='left'
-    ... )
-    array([[ 1.,  0.,  0.],
-           [ 0.,  1.,  0.],
-           [ 0.,  0., -1.]])
+    >>> rotation *= -1  # Add reflections
+    >>> _validation.validate_rotation(rotation)
+    array([[-1., -0., -0.],
+           [-0., -1., -0.],
+           [-0., -0., -1.]])
 
     """
     check_contains(item=must_have_handedness, container=['right', 'left', None], name=name)
