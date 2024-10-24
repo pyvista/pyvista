@@ -1773,6 +1773,7 @@ class Transform(_vtk.vtkTransform):
         >>> T, R, N, S, K = transform.decompose()
 
         The reflection component is now ``-1``.
+
         >>> N  # reflection
         array(-1.)
 
@@ -1787,6 +1788,7 @@ class Transform(_vtk.vtkTransform):
         np.True_
 
         Alternatively, keep the rotation right-handed but make the scaling factors negative:
+
         >>> S = S * N
         >>> S  # scale
         array([-0.99944491, -2.0022213 , -3.        ])
