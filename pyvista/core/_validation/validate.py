@@ -525,7 +525,7 @@ def validate_rotation(
            [-0., -0., -1.]])
 
     """
-    check_contains(item=must_have_handedness, container=['right', 'left', None], name=name)
+    check_contains(item=must_have_handedness, container=['right', 'left', None], name='must_have_handedness')
     rotation_matrix = validate_transform3x3(rotation, name=name)
     if not np.allclose(np.linalg.inv(rotation_matrix), rotation_matrix.T):
         raise ValueError(f'{name} is not valid. Its inverse must equal its transpose.')
