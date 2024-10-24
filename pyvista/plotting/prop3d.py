@@ -441,7 +441,7 @@ def _rotation_matrix_as_orientation(
         Tuple with x-y-z axis rotation angles in degrees.
 
     """
-    array_3x3 = _validation.validate_transform3x3(array, name='rotation')
+    array_3x3 = _validation.validate_rotation(array, name='rotation')
     array_4x4 = np.eye(4)
     array_4x4[:3, :3] = array_3x3
     transform = _vtk.vtkTransform()
