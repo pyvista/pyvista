@@ -475,8 +475,8 @@ def validate_axes(
 
 def validate_rotation(
     rotation: RotationLike,
-    must_have_handedness=None,
-    name='Rotation',
+    must_have_handedness: Literal['right', 'left'] | None = None,
+    name: str = 'Rotation',
 ):
     """Validate a rotation as a 3x3 matrix.
 
