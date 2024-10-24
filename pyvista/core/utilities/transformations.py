@@ -328,6 +328,8 @@ def rotation(
     #. Rotation specified by ``rotation``.
     #. Translation by ``point`` to restore initial positioning.
 
+    The rotation may be right-handed ("proper") or left-handed ("improper").
+
     Parameters
     ----------
     rotation : RotationLike
@@ -377,7 +379,7 @@ def rotation(
     True
 
     """
-    valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
+    valid_rotation = _validation.validate_rotation(rotation)
     rotate = np.eye(4)
     rotate[:3, :3] = valid_rotation
     if point is None:
