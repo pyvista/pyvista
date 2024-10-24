@@ -151,6 +151,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.vtk``       | :class:`pyvista.VTKDataSetReader`           |
     +----------------+---------------------------------------------+
+    | ``.vtkhdf``    | :class:`pyvista.HDFReader`                  |
+    +----------------+---------------------------------------------+
     | ``.vtm``       | :class:`pyvista.XMLMultiBlockDataReader`    |
     +----------------+---------------------------------------------+
     | ``.vtmb``      | :class:`pyvista.XMLMultiBlockDataReader`    |
@@ -2883,6 +2885,7 @@ CLASS_READERS = {
     '.vrt': ProStarReader,
     '.vti': XMLImageDataReader,
     '.vtk': VTKDataSetReader,
+    '.vtkhdf': HDFReader,
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
     '.vtp': XMLPolyDataReader,
