@@ -583,6 +583,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
+        direction_matrix=None,
         deep=False,
     ):
         """Initialize the uniform grid."""
@@ -610,6 +611,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 )
         elif dimensions is not None:
             self._from_specs(dimensions, spacing, origin)
+            self.direction_matrix = direction_matrix
 
     def __repr__(self):
         """Return the default representation."""
