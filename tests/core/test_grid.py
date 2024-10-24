@@ -865,7 +865,7 @@ def test_create_image_data_from_specs():
 
 
 def test_image_data_init_kwargs():
-    vector = (1,2,3)
+    vector = (1, 2, 3)
     image = pv.ImageData(dimensions=vector)
     assert image.dimensions == vector
 
@@ -886,6 +886,7 @@ def test_image_data_empty_init(dims):
 
     points = image.points
     assert np.array_equal(points, np.zeros((0, 3)))
+
 
 def test_image_data_invald_args():
     with pytest.raises(TypeError):
