@@ -27,7 +27,7 @@ from .misc import abstract_class
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
-HDF_HELP = 'https://kitware.github.io/vtk-examples/site/VTKFileFormats/#hdf-file-formats'
+HDF_HELP = 'https://docs.vtk.org/en/latest/design_documents/VTKFileFormats.html#vtkhdf-file-format'
 
 
 def _lazy_vtk_instantiation(module_name, class_name):
@@ -150,6 +150,8 @@ def get_reader(filename, force_ext=None):
     | ``.vti``       | :class:`pyvista.XMLImageDataReader`         |
     +----------------+---------------------------------------------+
     | ``.vtk``       | :class:`pyvista.VTKDataSetReader`           |
+    +----------------+---------------------------------------------+
+    | ``.vtkhdf``    | :class:`pyvista.HDFReader`                  |
     +----------------+---------------------------------------------+
     | ``.vtm``       | :class:`pyvista.XMLMultiBlockDataReader`    |
     +----------------+---------------------------------------------+
@@ -2883,6 +2885,7 @@ CLASS_READERS = {
     '.vrt': ProStarReader,
     '.vti': XMLImageDataReader,
     '.vtk': VTKDataSetReader,
+    '.vtkhdf': HDFReader,
     '.vtm': XMLMultiBlockDataReader,
     '.vtmb': XMLMultiBlockDataReader,
     '.vtp': XMLPolyDataReader,
