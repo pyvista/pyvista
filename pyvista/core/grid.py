@@ -611,7 +611,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 )
         elif dimensions is not None:
             self._from_specs(dimensions, spacing, origin)
-            self.direction_matrix = direction_matrix
+            if direction_matrix is not None:
+                self.direction_matrix = direction_matrix
 
     def __repr__(self):
         """Return the default representation."""
