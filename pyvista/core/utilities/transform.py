@@ -893,7 +893,7 @@ class Transform(_vtk.vtkTransform):
 
         Create a rotation matrix and :meth:`concatenate` it with the current
         transformation :attr:`matrix` according to pre-multiply or post-multiply
-        semantics.
+        semantics. The rotation may be right-handed or left-handed.
 
         Internally, the matrix is stored in the :attr:`matrix_list`.
 
@@ -976,9 +976,7 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 0., 1.]])
 
         """
-        valid_rotation = _validation.validate_transform3x3(
-            rotation, must_be_finite=self.check_finite, name='rotation'
-        )
+        valid_rotation = _validation.validate_rotation(rotation)
         return self._concatenate_with_translations(
             valid_rotation, point=point, multiply_mode=multiply_mode
         )
