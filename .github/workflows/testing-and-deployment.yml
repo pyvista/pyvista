@@ -168,6 +168,9 @@ jobs:
           - python-version: "3.12"
             vtk-version: "latest"
             numpy-version: "nightly"
+          - python-version: "3.12"
+            vtk-version: "9.4.0rc2"
+            numpy-version: "latest"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -196,8 +199,12 @@ jobs:
           pip install dist/pyvista*.whl
 
       - name: Set up vtk
-        if: ${{ matrix.vtk-version != 'latest' }}
+        if: ${{ matrix.vtk-version != 'latest' && matrix.vtk-version != '9.4.0rc2' }}
         run: pip install vtk==${{ matrix.vtk-version }}
+
+      - name: Set up vtk 9.4.0rc2
+        if: ${{ matrix.vtk-version != 'latest' && matrix.numpy-version != '9.4.0rc2' }}
+        run: pip install https://www.vtk.org/files/release/9.4/vtk-9.4.0rc2-cp312-cp312-linux_x86_64.whl
 
       # Make sure PyVista does not break from non-core dependencies
       - name: Software Report (Core Dependencies)
