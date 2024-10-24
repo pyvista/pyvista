@@ -1136,6 +1136,12 @@ def test_imagedata_direction_matrix():
     assert np.allclose(poly_points.bounds, expected_bounds)
 
 
+def test_imagedata_direction_matrix_init():
+    matrix = np.eye(3) * 2
+    image = pv.ImageData(dimensions=(2, 2, 2), direction_matrix=matrix)
+    assert np.allclose(image.direction_matrix, matrix)
+
+
 def test_imagedata_index_to_physical_matrix():
     # Create image with arbitrary translation (origin) and rotation (direction)
     image = pv.ImageData()
