@@ -143,7 +143,8 @@ def test_voxelize_binary_mask_auto_spacing(ant):
 
 # This test is flaky because of random sampling that cannot be controlled.
 # Sometimes the sampling produces the same output.
-@flaky_test
+# https://github.com/pyvista/pyvista/pull/6728
+@flaky_test(times=5)
 def test_voxelize_binary_mask_cell_length_sample_size(ant):
     if pv.vtk_version_info < (9, 2):
         match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
