@@ -223,7 +223,7 @@ def oriented_polydata(oriented_image):
 def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
     mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
     assert mask.bounds == oriented_image.bounds
-    mask_as_surface = mask.pad_image().contour_labeled(smoothing=False)
+    mask_as_surface = mask.pad_image().contour_labels(smoothing=False)
     assert mask_as_surface.bounds == oriented_polydata.bounds
 
 

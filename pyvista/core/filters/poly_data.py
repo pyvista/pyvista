@@ -4126,7 +4126,7 @@ class PolyDataFilters(DataSetFilters):
         an existing mask.
 
         >>> volume = examples.load_frog_tissues()
-        >>> poly = volume.contour_labeled(smoothing=True)
+        >>> poly = volume.contour_labels()
 
         Now create the mask from the polydata using the volume as a reference.
 
