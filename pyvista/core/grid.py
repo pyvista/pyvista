@@ -583,8 +583,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
-        direction_matrix=None,
         deep=False,
+        direction_matrix=None,
     ):
         """Initialize the uniform grid."""
         super().__init__()
