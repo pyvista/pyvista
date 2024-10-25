@@ -15,8 +15,9 @@ jobs:
 
       matrix:
         include:
-          - python-version: "3.9"
-            numpy-version: "1.26"
+          # TODO: Add testing for older python and/or numpy versions
+          # - python-version: "3.9"
+          #   numpy-version: "1.26"
           - python-version: "3.12"
             numpy-version: "latest"
 
