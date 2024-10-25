@@ -181,7 +181,7 @@ class PlotDirective(Directive):
     required_arguments = 0
     optional_arguments = 2
     final_argument_whitespace = False
-    option_spec: ClassVar[dict[str, Callable]] = {
+    option_spec: ClassVar[dict[str, Callable]] = {  # type: ignore[type-arg]
         'alt': directives.unchanged,
         'height': directives.length_or_unitless,
         'width': directives.length_or_percentage_or_unitless,
@@ -344,7 +344,7 @@ Exception occurred rendering plot.
 
 # the context of the plot for all directives specified with the
 # :context: option
-plot_context = {}
+plot_context = {}  # type: ignore[var-annotated]
 
 
 class ImageFile:
