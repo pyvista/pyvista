@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from pyvista import CellType
 from pyvista.examples import cells
 
@@ -163,3 +165,81 @@ def test_quadratic_wedge():
     assert grid.celltypes[0] == CellType.QUADRATIC_WEDGE
     assert grid.n_cells == 1
     assert grid.n_points == 15
+
+
+def test_quadratic_polygon():
+    grid = cells.QuadraticPolygon()
+    assert grid.celltypes[0] == CellType.QUADRATIC_POLYGON
+    assert grid.n_cells == 1
+    assert grid.n_points == 8
+
+
+def test_quadratic_pyramid():
+    grid = cells.QuadraticPyramid()
+    assert grid.celltypes[0] == CellType.QUADRATIC_PYRAMID
+    assert grid.n_cells == 1
+    assert grid.n_points == 13
+
+
+def test_biquadratic_quadrilateral():
+    grid = cells.BiQuadraticQuadrilateral()
+    assert grid.celltypes[0] == CellType.BIQUADRATIC_QUAD
+    assert grid.n_cells == 1
+    assert grid.n_points == 9
+
+
+def test_triquadratic_hexahedron():
+    grid = cells.TriQuadraticHexahedron()
+    assert grid.celltypes[0] == CellType.TRIQUADRATIC_HEXAHEDRON
+    assert grid.n_cells == 1
+    assert grid.n_points == 27
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_triquadratic_pyramid():
+    grid = cells.TriQuadraticPyramid()
+    assert grid.celltypes[0] == CellType.TRIQUADRATIC_PYRAMID
+    assert grid.n_cells == 1
+    assert grid.n_points == 19
+
+
+def test_quadratic_linear_quadrilateral():
+    grid = cells.QuadraticLinearQuadrilateral()
+    assert grid.celltypes[0] == CellType.QUADRATIC_LINEAR_QUAD
+    assert grid.n_cells == 1
+    assert grid.n_points == 6
+
+
+def test_quadratic_linear_wedge():
+    grid = cells.QuadraticLinearWedge()
+    assert grid.celltypes[0] == CellType.QUADRATIC_LINEAR_WEDGE
+    assert grid.n_cells == 1
+    assert grid.n_points == 12
+
+
+def test_biquadratic_quadratic_wedge():
+    grid = cells.BiQuadraticQuadraticWedge()
+    assert grid.celltypes[0] == CellType.BIQUADRATIC_QUADRATIC_WEDGE
+    assert grid.n_cells == 1
+    assert grid.n_points == 18
+
+
+def test_biquadratic_quadratic_hexahedron():
+    grid = cells.BiQuadraticQuadraticHexahedron()
+    assert grid.celltypes[0] == CellType.BIQUADRATIC_QUADRATIC_HEXAHEDRON
+    assert grid.n_cells == 1
+    assert grid.n_points == 24
+
+
+def test_biquadratic_triangle():
+    grid = cells.BiQuadraticTriangle()
+    assert grid.celltypes[0] == CellType.BIQUADRATIC_TRIANGLE
+    assert grid.n_cells == 1
+    assert grid.n_points == 7
+
+
+def test_cubic_line():
+    grid = cells.CubicLine()
+    assert grid.celltypes[0] == CellType.CUBIC_LINE
+    assert grid.n_cells == 1
+    assert grid.n_points == 4

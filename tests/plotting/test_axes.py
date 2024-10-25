@@ -17,12 +17,12 @@ def skip_check_gc(skip_check_gc):  # noqa: PT004
     """All the tests here fail gc."""
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes():
     return pv.Axes()
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes_actor(axes):
     return axes.axes_actor
 

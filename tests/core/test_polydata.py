@@ -19,23 +19,23 @@ from pyvista.core.errors import PyVistaFutureWarning
 radius = 0.5
 
 
-@pytest.fixture()
+@pytest.fixture
 def sphere():
     # this shadows the main sphere fixture from conftest!
     return pv.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture()
+@pytest.fixture
 def sphere_shifted():
     return pv.Sphere(center=[0.5, 0.5, 0.5], theta_resolution=10, phi_resolution=10)
 
 
-@pytest.fixture()
+@pytest.fixture
 def sphere_dense():
     return pv.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 
-@pytest.fixture()
+@pytest.fixture
 def cube_dense():
     return pv.Cube()
 
@@ -188,24 +188,24 @@ def test_invalid_file():
 
 
 @pytest.mark.parametrize(
-    ("arr", "value"),
+    ('arr', 'value'),
     [
-        ("faces", [3, 1, 2, 3, 3, 0, 1]),
-        ("strips", np.array([5, 4, 3, 2, 0])),
-        ("lines", [4, 0, 1, 2, 2, 3, 4]),
-        ("verts", [1, 0, 1]),
-        ("faces", [[3, 0, 1], [3, 2, 1], [4, 0, 1]]),
-        ("faces", [[2, 0, 1], [2, 2, 1], [1, 0, 1]]),
+        ('faces', [3, 1, 2, 3, 3, 0, 1]),
+        ('strips', np.array([5, 4, 3, 2, 0])),
+        ('lines', [4, 0, 1, 2, 2, 3, 4]),
+        ('verts', [1, 0, 1]),
+        ('faces', [[3, 0, 1], [3, 2, 1], [4, 0, 1]]),
+        ('faces', [[2, 0, 1], [2, 2, 1], [1, 0, 1]]),
     ],
 )
 def test_invalid_connectivity_arrays(arr, value):
     generator = np.random.default_rng(seed=None)
     points = generator.random((10, 3))
     mesh = pv.PolyData(points)
-    with pytest.raises(CellSizeError, match="Cell array size is invalid"):
+    with pytest.raises(CellSizeError, match='Cell array size is invalid'):
         setattr(mesh, arr, value)
 
-    with pytest.raises(CellSizeError, match=f"`{arr}` cell array size is invalid"):
+    with pytest.raises(CellSizeError, match=f'`{arr}` cell array size is invalid'):
         _ = pv.PolyData(points, **{arr: value})
 
 
@@ -284,15 +284,15 @@ def test_geodesic(sphere):
     start, end = 0, sphere.n_points - 1
     geodesic = sphere.geodesic(start, end)
     assert isinstance(geodesic, pv.PolyData)
-    assert "vtkOriginalPointIds" in geodesic.array_names
-    ids = geodesic.point_data["vtkOriginalPointIds"]
+    assert 'vtkOriginalPointIds' in geodesic.array_names
+    ids = geodesic.point_data['vtkOriginalPointIds']
     assert np.allclose(geodesic.points, sphere.points[ids])
 
     # check keep_order
     geodesic_legacy = sphere.geodesic(start, end, keep_order=False)
-    assert geodesic_legacy["vtkOriginalPointIds"][0] == end
+    assert geodesic_legacy['vtkOriginalPointIds'][0] == end
     geodesic_ordered = sphere.geodesic(start, end, keep_order=True)
-    assert geodesic_ordered["vtkOriginalPointIds"][0] == start
+    assert geodesic_ordered['vtkOriginalPointIds'][0] == start
 
     # finally, inplace
     geodesic_inplace = sphere.geodesic(start, end, inplace=True)
@@ -340,7 +340,7 @@ def test_ray_trace_origin():
 def test_multi_ray_trace(sphere):
     trimesh = pytest.importorskip('trimesh')
     if not trimesh.ray.has_embree:
-        pytest.skip("Requires Embree")
+        pytest.skip('Requires Embree')
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
     directions = [[0, 0, -1]] * 4
     points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions)
@@ -386,6 +386,19 @@ def test_boolean_union_intersection(sphere, sphere_shifted):
     assert np.isclose(intersection.volume, expected_volume, atol=1e-3)
 
 
+def test_bitwise_and_or(sphere, sphere_shifted):
+    union = sphere | sphere_shifted
+    intersection = sphere & sphere_shifted
+
+    # union is volume of sphere + sphere_shifted minus the part intersecting
+    expected_volume = sphere.volume + sphere_shifted.volume - intersection.volume
+    assert np.isclose(union.volume, expected_volume, atol=1e-3)
+
+    # intersection volume is the volume of both isolated meshes minus the union
+    expected_volume = sphere.volume + sphere_shifted.volume - union.volume
+    assert np.isclose(intersection.volume, expected_volume, atol=1e-3)
+
+
 def test_boolean_difference(sphere, sphere_shifted):
     difference = sphere.boolean_difference(sphere_shifted, progress_bar=True)
     intersection = sphere.boolean_intersection(sphere_shifted, progress_bar=True)
@@ -401,6 +414,12 @@ def test_boolean_difference_fail(plane, sphere):
 
 def test_subtract(sphere, sphere_shifted):
     sub_mesh = sphere - sphere_shifted
+    assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
+
+
+def test_isubtract(sphere, sphere_shifted):
+    sub_mesh = sphere.copy()
+    sub_mesh -= sphere_shifted
     assert sub_mesh.n_points == sphere.boolean_difference(sphere_shifted).n_points
 
 
@@ -434,7 +453,7 @@ def test_append(
 
 
 def test_append_raises(sphere: pv.PolyData):
-    with pytest.raises(TypeError, match="All meshes need to be of PolyData type"):
+    with pytest.raises(TypeError, match='All meshes need to be of PolyData type'):
         sphere.append_polydata(sphere.cast_to_unstructured_grid())
 
 
@@ -605,7 +624,7 @@ def test_invalid_curvature(sphere):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
 def test_save(sphere, extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
     sphere.save(filename, binary)
 
     if binary:
@@ -633,7 +652,7 @@ def test_save(sphere, extension, binary, tmpdir):
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     sphere.save(path)
     assert path.is_file()
 
@@ -786,7 +805,7 @@ def test_compute_normals_split_vertices(cube):
     assert len(set(cube_split_norm.point_data['pyvistaOriginalPointIds'])) == 8
 
 
-@pytest.fixture()
+@pytest.fixture
 def ant_with_normals(ant):
     ant['Scalars'] = range(ant.n_points)
     point_normals = [[0, 0, 1]] * ant.n_points
@@ -937,7 +956,7 @@ def test_remove_points_fail(sphere, plane):
 
 def test_vertice_cells_on_read(tmpdir):
     point_cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
-    filename = str(tmpdir.mkdir("tmpdir").join('foo.ply'))
+    filename = str(tmpdir.mkdir('tmpdir').join('foo.ply'))
     point_cloud.save(filename)
     recovered = pv.read(filename)
     assert recovered.n_cells == 100
@@ -1155,7 +1174,7 @@ def test_n_faces_strict():
     assert mesh.n_faces_strict == 1
 
 
-@pytest.fixture()
+@pytest.fixture
 def default_n_faces():  # noqa: PT004
     pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False
@@ -1166,10 +1185,10 @@ def default_n_faces():  # noqa: PT004
 
 def test_n_faces(default_n_faces):
     if pv._version.version_info >= (0, 46):
-        raise RuntimeError("Convert non-strict n_faces use to error")
+        raise RuntimeError('Convert non-strict n_faces use to error')
 
     if pv._version.version_info >= (0, 49):
-        raise RuntimeError("Convert default n_faces behavior to strict")
+        raise RuntimeError('Convert default n_faces behavior to strict')
 
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1186,7 +1205,7 @@ def test_n_faces(default_n_faces):
 
     # Shouldn't raise deprecation warning the second time
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter('error')
         nf1 = mesh.n_faces
 
     assert nf1 == nf
@@ -1207,7 +1226,7 @@ def test_geodesic_disconnected(sphere, sphere_shifted):
     combined = sphere + sphere_shifted
     start_vertex = 0
     end_vertex = combined.n_points - 1
-    match = f"There is no path between vertices {start_vertex} and {end_vertex}."
+    match = f'There is no path between vertices {start_vertex} and {end_vertex}.'
 
     with pytest.raises(ValueError, match=match):
         combined.geodesic(start_vertex, end_vertex)
@@ -1293,9 +1312,9 @@ def test_n_faces_etc_deprecated(cells: str):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
         if pv._version.version_info >= (0, 47):
-            raise RuntimeError(f"Convert `PolyData` `{n_cells}` deprecation warning to error")
+            raise RuntimeError(f'Convert `PolyData` `{n_cells}` deprecation warning to error')
         if pv._version.version_info >= (0, 48):
-            raise RuntimeError(f"Remove `PolyData` `{n_cells} constructor kwarg")
+            raise RuntimeError(f'Remove `PolyData` `{n_cells} constructor kwarg')
 
 
 @pytest.mark.parametrize('inplace', [True, False])

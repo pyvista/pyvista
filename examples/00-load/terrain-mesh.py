@@ -37,7 +37,7 @@ dem
 # Since the DEM we loaded is a :class:`pyvista.ImageData` mesh, we can use
 # the :func:`pyvista.ImageDataFilters.extract_subset` filter:
 subset = dem.extract_subset((500, 900, 400, 800, 0, 0), (5, 5, 1))
-subset.plot(cpos="xy")
+subset.plot(cpos='xy')
 
 
 # %%
@@ -66,7 +66,7 @@ yy = np.repeat(terrain.y, len(z_cells), axis=-1)
 zz = np.repeat(terrain.z, len(z_cells), axis=-1) - np.cumsum(z_cells).reshape((1, 1, -1))
 
 mesh = pv.StructuredGrid(xx, yy, zz)
-mesh["Elevation"] = zz.ravel(order="F")
+mesh['Elevation'] = zz.ravel(order='F')
 mesh
 
 # %%

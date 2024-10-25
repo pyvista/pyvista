@@ -20,17 +20,17 @@ skip_mac = pytest.mark.skipif(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def actor():
     return pv.Plotter().add_mesh(pv.Plane())
 
 
-@pytest.fixture()
+@pytest.fixture
 def actor_from_multi_block():
     return pv.Plotter().add_mesh(pv.MultiBlock([pv.Plane()]))
 
 
-@pytest.fixture()
+@pytest.fixture
 def dummy_actor(actor):
     # Define prop3d-like class
     class DummyActor(_Prop3DMixin):
@@ -53,7 +53,7 @@ def dummy_actor(actor):
     return dummy_actor
 
 
-@pytest.fixture()
+@pytest.fixture
 def vol_actor():
     vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25
@@ -72,15 +72,15 @@ def test_actor_init_empty():
     with pytest.raises(AttributeError):
         actor.not_an_attribute = None
 
-    assert actor.memory_address == actor.GetAddressAsString("")
+    assert actor.memory_address == actor.GetAddressAsString('')
 
     actor.user_matrix = None
     repr_ = repr(actor)
-    assert "User matrix:                Identity" in repr_
+    assert 'User matrix:                Identity' in repr_
 
     actor.user_matrix = np.eye(4) * 2
     repr_ = repr(actor)
-    assert "User matrix:                Set" in repr_
+    assert 'User matrix:                Set' in repr_
 
 
 def test_actor_from_argument():

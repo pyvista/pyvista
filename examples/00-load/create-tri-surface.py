@@ -59,7 +59,7 @@ surf.plot(show_edges=True)
 
 x = np.arange(10, dtype=float)
 xx, yy, zz = np.meshgrid(x, x, [0])
-points = np.column_stack((xx.ravel(order="F"), yy.ravel(order="F"), zz.ravel(order="F")))
+points = np.column_stack((xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')))
 # Perturb the points
 points[:, 0] += rng.random(len(points)) * 0.3
 points[:, 1] += rng.random(len(points)) * 0.3
@@ -70,14 +70,14 @@ cloud
 # %%
 # Run the triangulation on these points
 surf = cloud.delaunay_2d()
-surf.plot(cpos="xy", show_edges=True)
+surf.plot(cpos='xy', show_edges=True)
 
 
 # %%
 # Note that some of the outer edges are unconstrained and the triangulation
 # added unwanted triangles. We can mitigate that with the ``alpha`` parameter.
 surf = cloud.delaunay_2d(alpha=1.0)
-surf.plot(cpos="xy", show_edges=True)
+surf.plot(cpos='xy', show_edges=True)
 
 
 # %%
@@ -98,7 +98,7 @@ surf = cloud.delaunay_2d(alpha=1.0, edge_source=polygon)
 
 p = pv.Plotter()
 p.add_mesh(surf, show_edges=True)
-p.add_mesh(polygon, color="red", opacity=0.5)
-p.show(cpos="xy")
+p.add_mesh(polygon, color='red', opacity=0.5)
+p.show(cpos='xy')
 # %%
 # .. tags:: load

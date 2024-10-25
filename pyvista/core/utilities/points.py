@@ -131,7 +131,7 @@ def line_segments_from_points(points):
 
     """
     if len(points) % 2 != 0:
-        raise ValueError("An even number of points must be given to define each segment.")
+        raise ValueError('An even number of points must be given to define each segment.')
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -330,6 +330,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
     >>> normal
     pyvista_ndarray([-5.2734155e-09, -6.7008422e-08, -1.0000000e+00],
                     dtype=float32)
+
     """
     valid_resolution = _validation.validate_array(
         resolution,
@@ -442,6 +443,7 @@ def fit_line_to_points(
     ... )
 
     Show the length of the line.
+
     >>> length
     167.6145387467733
 
@@ -564,9 +566,9 @@ def make_tri_mesh(points, faces):
 
     """
     if points.shape[1] != 3:
-        raise ValueError("Points array should have shape (N, 3).")
+        raise ValueError('Points array should have shape (N, 3).')
     if faces.ndim != 2 or faces.shape[1] != 3:
-        raise ValueError("Face array should have shape (M, 3).")
+        raise ValueError('Face array should have shape (M, 3).')
     cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
     cells[:, 0] = 3
     cells[:, 1:] = faces
@@ -816,6 +818,7 @@ def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
 
     Since the points are normally distributed, the relative proportion of
     the standard deviation matches the scaling of the axes almost perfectly.
+
     """
     points = _validation.validate_arrayNx3(points)
 

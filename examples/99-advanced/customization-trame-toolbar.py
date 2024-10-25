@@ -37,32 +37,32 @@ def custom_tools():
     )
 
     slider(
-        model=("resolution", 10),
-        tooltip="Resolution slider",
+        model=('resolution', 10),
+        tooltip='Resolution slider',
         min=3,
         max=20,
         step=1,
         dense=True,
         hide_details=True,
-        style="width: 300px",
+        style='width: 300px',
         classes='my-0 py-0 ml-1 mr-1',
     )
     text_field(
-        model=("resolution", 10),
-        tooltip="Resolution value",
+        model=('resolution', 10),
+        tooltip='Resolution value',
         readonly=True,
-        type="number",
+        type='number',
         dense=True,
         hide_details=True,
-        style="min-width: 40px; width: 60px",
+        style='min-width: 40px; width: 60px',
         classes='my-0 py-0 ml-1 mr-1',
     )
 
     divider(vertical=True, classes='mx-1')
     select(
-        model=("visibility", "Show"),
-        tooltip="Toggle visibility",
-        items=['Visibility', ["Hide", "Show"]],
+        model=('visibility', 'Show'),
+        tooltip='Toggle visibility',
+        items=['Visibility', ['Hide', 'Show']],
         hide_details=True,
         dense=True,
     )
@@ -132,7 +132,7 @@ ctrl.view_update = widget.viewer.update
 
 
 # trame callbacks
-@state.change("play")
+@state.change('play')
 async def _play(play, **kwargs):
     while state.play:
         state.resolution += 1
@@ -142,15 +142,15 @@ async def _play(play, **kwargs):
         await asyncio.sleep(0.3)
 
 
-@state.change("resolution")
+@state.change('resolution')
 def update_resolution(resolution, **kwargs):
     algo.resolution = resolution
     ctrl.view_update()
 
 
-@state.change("visibility")
+@state.change('visibility')
 def set_visibility(visibility, **kwargs):
-    toggle = {"Hide": 0, "Show": 1}
+    toggle = {'Hide': 0, 'Show': 1}
     mesh_actor.visibility = toggle[visibility]
     ctrl.view_update()
 

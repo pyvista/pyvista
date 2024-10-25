@@ -598,7 +598,7 @@ class Light(vtkLight):
             return
 
         actor_state = self.cone_angle < 90 and self.positional
-        actor_name = self.actor.GetAddressAsString("")
+        actor_name = self.actor.GetAddressAsString('')
 
         # add or remove the actor from the renderer
         for renderer in self._renderers:

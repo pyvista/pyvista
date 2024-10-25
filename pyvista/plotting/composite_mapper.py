@@ -698,11 +698,12 @@ class CompositePolyDataMapper(
         Color(name='tab:orange', hex='#ff7f0eff', opacity=255)
         >>> mapper.block_attr[2].color
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
+
         """
         self.scalar_visibility = False
 
         if isinstance(color_cycler, bool):
-            colors = cycle(get_cycler("matplotlib"))
+            colors = cycle(get_cycler('matplotlib'))
         else:
             colors = cycle(get_cycler(color_cycler))
 

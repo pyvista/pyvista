@@ -72,7 +72,7 @@ if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _FILE_CACHE = True
 
 else:
-    SOURCE = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+    SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
     _FILE_CACHE = False
 
 # allow user to override the local path
@@ -3536,7 +3536,8 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
     >>> point_a = (0.08, 2.50, 0.71)
     >>> point_b = (0.08, 4.50, 0.71)
     >>> line = pv.Line(point_a, point_b, resolution=39)
-    >>> dataset.streamlines_from_source(line).plot(show_grid=True)
+    >>> streamlines = dataset.streamlines_from_source(line, max_length=200)
+    >>> streamlines.plot(show_grid=True)
 
     .. seealso::
 
@@ -3980,7 +3981,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
 
 
 def _damavand_volcano_load_func(volume):  # pragma: no cover
-    volume.rename_array("None", "data")
+    volume.rename_array('None', 'data')
     return volume
 
 
@@ -7265,7 +7266,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     >>> strl = grid.streamlines_from_source(
     ...     seed,
     ...     vectors='B',
-    ...     max_time=180,
+    ...     max_length=180,
     ...     initial_step_length=0.1,
     ...     integration_direction='both',
     ... )
@@ -8030,6 +8031,7 @@ def download_e07733s002i009(load=True):  # paragma: no cover
 
         :ref:`E07733s002i009 Dataset <e07733s002i009_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_e07733s002i009, load=load)
 

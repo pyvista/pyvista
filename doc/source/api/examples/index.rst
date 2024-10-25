@@ -123,6 +123,7 @@ directory to PyVista via ``VTK_DATA_PATH``. Note how the path ends in
    git clone https://github.com/pyvista/vtk-data.git
    export VTK_DATA_PATH=/home/alex/python/vtk-data/Data
 
+.. _examples_cells:
 
 Cells
 -----
@@ -156,6 +157,17 @@ cell types.
    QuadraticEdge
    QuadraticTriangle
    QuadraticQuadrilateral
+   QuadraticPolygon
    QuadraticTetrahedron
    QuadraticHexahedron
    QuadraticWedge
+   QuadraticPyramid
+   BiQuadraticQuadrilateral
+   TriQuadraticHexahedron
+   TriQuadraticPyramid
+   QuadraticLinearQuadrilateral
+   QuadraticLinearWedge
+   BiQuadraticQuadraticWedge
+   BiQuadraticQuadraticHexahedron
+   BiQuadraticTriangle
+   CubicLine

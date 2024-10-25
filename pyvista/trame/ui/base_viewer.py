@@ -30,6 +30,7 @@ class BaseViewer:
         Current Server for Trame Application.
     suppress_rendering : bool, default=False
         Whether to suppress rendering on the Plotter.
+
     """
 
     def __init__(self, plotter, server=None, suppress_rendering=False):
@@ -299,5 +300,6 @@ class BaseViewer:
         -------
         AbstractLayout
             A layout this viewer can be embedded in.
+
         """
         raise NotImplementedError

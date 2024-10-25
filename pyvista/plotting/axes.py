@@ -85,6 +85,7 @@ class Axes(_vtk.vtkAxes):
         >>> import pyvista as pv
         >>> axes = pv.Axes()
         >>> axes.show_actor()
+
         """
         self.actor.visibility = True
 
@@ -96,6 +97,7 @@ class Axes(_vtk.vtkAxes):
         >>> import pyvista as pv
         >>> axes = pv.Axes()
         >>> axes.hide_actor()
+
         """
         self.actor.visibility = False
 
@@ -107,6 +109,7 @@ class Axes(_vtk.vtkAxes):
         >>> import pyvista as pv
         >>> axes = pv.Axes()
         >>> axes.show_symmetric()
+
         """
         self.SymmetricOn()
 
@@ -118,6 +121,7 @@ class Axes(_vtk.vtkAxes):
         >>> import pyvista as pv
         >>> axes = pv.Axes()
         >>> axes.hide_symmetric()
+
         """
         self.SymmetricOff()
 

@@ -49,13 +49,12 @@ def assert_empty_kwargs(**kwargs):
     keys = list(kwargs.keys())
     bad_arguments = ', '.join([f'"{key}"' for key in keys])
     grammar = 'is an invalid keyword argument' if n == 1 else 'are invalid keyword arguments'
-    message = f"{bad_arguments} {grammar} for `{caller}`"
+    message = f'{bad_arguments} {grammar} for `{caller}`'
     raise TypeError(message)
 
 
 def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
-    """
-    Check if a vector contains three components.
+    """Check if a vector contains three components.
 
     Parameters
     ----------
@@ -132,11 +131,12 @@ class AnnotatedIntEnum(int, enum.Enum):
         ------
         ValueError
             If there is no enum member with the specified annotation.
+
         """
         for value in cls:
             if value.annotation.lower() == input_str.lower():
                 return value
-        raise ValueError(f"{cls.__name__} has no value matching {input_str}")
+        raise ValueError(f'{cls.__name__} has no value matching {input_str}')
 
     @classmethod
     def from_any(cls: type[T], value: T | int | str) -> T:
@@ -156,6 +156,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         ------
         ValueError
             If there is no enum member matching the specified value.
+
         """
         if isinstance(value, cls):
             return value
@@ -164,7 +165,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            raise ValueError(f"{cls.__name__} has no value matching {value}")
+            raise ValueError(f'{cls.__name__} has no value matching {value}')
 
 
 @lru_cache(maxsize=None)
@@ -180,6 +181,7 @@ def has_module(module_name):
     -------
     bool
         ``True`` if the module can be imported, otherwise ``False``.
+
     """
     module_spec = importlib.util.find_spec(module_name)
     return module_spec is not None

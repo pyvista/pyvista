@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import Callable
 from typing import Sequence
 import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
@@ -26,6 +29,9 @@ from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import VectorLike
 
 
 @abstract_class
@@ -84,12 +90,12 @@ class PolyDataFilters(DataSetFilters):
         """Perform boolean operation."""
         if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):
             raise ValueError(
-                "The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.",
+                'The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.',
             )
         if not isinstance(other_mesh, pyvista.PolyData):
-            raise TypeError("Input mesh must be PolyData.")
+            raise TypeError('Input mesh must be PolyData.')
         if not self.is_all_triangles or not other_mesh.is_all_triangles:
-            raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
+            raise NotAllTrianglesError('Make sure both the input and output are triangulated.')
 
         bfilter = _vtk.vtkBooleanOperationPolyDataFilter()
         if btype == 'union':
@@ -139,6 +145,9 @@ class PolyDataFilters(DataSetFilters):
         .. versionchanged:: 0.32.0
            Behavior changed to match default VTK behavior.
 
+        .. versionchanged:: 0.45.0
+           Define ``|`` operator to perform boolean union.
+
         Parameters
         ----------
         other_mesh : pyvista.PolyData
@@ -164,7 +173,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere_a = pv.Sphere()
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
-        >>> result = sphere_a.boolean_union(sphere_b)
+        >>> result = sphere_a | sphere_b
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
@@ -212,6 +221,9 @@ class PolyDataFilters(DataSetFilters):
 
         .. versionadded:: 0.32.0
 
+        .. versionchanged:: 0.45.0
+           Define ``&`` operator to perform boolean intersection.
+
         Parameters
         ----------
         other_mesh : pyvista.PolyData
@@ -237,7 +249,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere_a = pv.Sphere()
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
-        >>> result = sphere_a.boolean_intersection(sphere_b)
+        >>> result = sphere_a & sphere_b
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
@@ -314,7 +326,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere_a = pv.Sphere()
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
-        >>> result = sphere_a.boolean_difference(sphere_b)
+        >>> result = sphere_a - sphere_b
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(
         ...     sphere_a, color='r', style='wireframe', line_width=3
@@ -397,9 +409,10 @@ class PolyDataFilters(DataSetFilters):
         >>> sp2 = sp0.translate((-1, 0, 0))
         >>> appended = sp0.append_polydata(sp1, sp2)
         >>> appended.plot()
+
         """
         if not all(isinstance(mesh, pyvista.PolyData) for mesh in meshes):
-            raise TypeError("All meshes need to be of PolyData type")
+            raise TypeError('All meshes need to be of PolyData type')
 
         append_filter = _vtk.vtkAppendPolyData()
         append_filter.AddInputData(self)
@@ -503,7 +516,7 @@ class PolyDataFilters(DataSetFilters):
             is_polydata = isinstance(dataset, pyvista.PolyData)
 
         if inplace and not is_polydata:
-            raise TypeError("In-place merge requires both input datasets to be PolyData.")
+            raise TypeError('In-place merge requires both input datasets to be PolyData.')
 
         merged = DataSetFilters.merge(
             self,
@@ -1096,7 +1109,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for decimation must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for decimation must be all triangles.')
 
         alg = _vtk.vtkDecimatePro()
         alg.SetInputData(self)
@@ -1296,7 +1309,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for subdivision must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for subdivision must be all triangles.')
 
         subfilter = subfilter.lower()
         if subfilter == 'linear':
@@ -1307,7 +1320,7 @@ class PolyDataFilters(DataSetFilters):
             sfilter = _vtk.vtkLoopSubdivisionFilter()
         else:
             raise ValueError(
-                "Subdivision filter must be one of the following: "
+                'Subdivision filter must be one of the following: '
                 "'butterfly', 'loop', or 'linear'",
             )
 
@@ -1406,7 +1419,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for subdivision must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for subdivision must be all triangles.')
 
         sfilter = _vtk.vtkAdaptiveSubdivisionFilter()
         if max_edge_len:
@@ -1537,7 +1550,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for decimation must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for decimation must be all triangles.')
 
         # create decimation filter
         alg = _vtk.vtkQuadricDecimation()
@@ -1716,8 +1729,8 @@ class PolyDataFilters(DataSetFilters):
         except KeyError:
             if (self.n_verts + self.n_lines) == self.n_cells:
                 raise TypeError(
-                    "Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n"
-                    "and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).",
+                    'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
+                    'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).',
                 )
             else:  # pragma: no cover
                 raise RuntimeError(
@@ -1809,7 +1822,7 @@ class PolyDataFilters(DataSetFilters):
         """
         # verify it is manifold
         if self.n_open_edges > 0:
-            raise ValueError("This surface appears to be non-manifold.")
+            raise ValueError('This surface appears to be non-manifold.')
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
         # find center of data if origin not specified
@@ -2061,7 +2074,7 @@ class PolyDataFilters(DataSetFilters):
         if not (0 <= start_vertex < self.n_points and 0 <= end_vertex < self.n_points):
             raise IndexError('Invalid point indices.')
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for geodesic path must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for geodesic path must be all triangles.')
 
         dijkstra = _vtk.vtkDijkstraGraphGeodesicPath()
         dijkstra.SetInputData(self)
@@ -2074,16 +2087,16 @@ class PolyDataFilters(DataSetFilters):
         output = _get_output(dijkstra)
         if output.n_points == 0:
             raise ValueError(
-                f"There is no path between vertices {start_vertex} and {end_vertex}. ",
-                "It is likely the vertices belong to disconnected regions.",
+                f'There is no path between vertices {start_vertex} and {end_vertex}. ',
+                'It is likely the vertices belong to disconnected regions.',
             )
 
-        output["vtkOriginalPointIds"] = original_ids
+        output['vtkOriginalPointIds'] = original_ids
 
         # ensure proper order if requested
         if keep_order and original_ids[0] == end_vertex:
             output.points[...] = output.points[::-1, :]
-            output["vtkOriginalPointIds"] = output["vtkOriginalPointIds"][::-1]
+            output['vtkOriginalPointIds'] = output['vtkOriginalPointIds'][::-1]
 
         if inplace:
             self.copy_from(output, deep=False)
@@ -2297,7 +2310,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not self.is_all_triangles:
-            raise NotAllTrianglesError("Input mesh for multi_ray_trace must be all triangles.")
+            raise NotAllTrianglesError('Input mesh for multi_ray_trace must be all triangles.')
 
         try:
             import trimesh
@@ -2306,9 +2319,9 @@ class PolyDataFilters(DataSetFilters):
                 raise ImportError
         except ImportError:
             raise ImportError(
-                "To use multi_ray_trace please install trimesh, embree (v2.17.7) and pyembree/embreex with:\n"
-                "\tconda install embree=2 trimesh pyembree\nOR\n"
-                "\tpip install trimesh embreex",
+                'To use multi_ray_trace please install trimesh, embree (v2.17.7) and pyembree/embreex with:\n'
+                '\tconda install embree=2 trimesh pyembree\nOR\n'
+                '\tpip install trimesh embreex',
             )
 
         origins = np.asarray(origins)
@@ -2366,7 +2379,7 @@ class PolyDataFilters(DataSetFilters):
 
         return locations, index_ray, index_tri
 
-    def plot_boundaries(self, edge_color="red", line_width=None, progress_bar=False, **kwargs):
+    def plot_boundaries(self, edge_color='red', line_width=None, progress_bar=False, **kwargs):
         """Plot boundaries of a mesh.
 
         Parameters
@@ -3183,8 +3196,8 @@ class PolyDataFilters(DataSetFilters):
         self,
         direction,
         trim_surface,
-        extrusion="boundary_edges",
-        capping="intersection",
+        extrusion='boundary_edges',
+        capping='intersection',
         inplace=False,
         progress_bar=False,
     ):
@@ -3249,7 +3262,7 @@ class PolyDataFilters(DataSetFilters):
         if not isinstance(direction, (np.ndarray, Sequence)) or len(direction) != 3:
             raise TypeError('Vector must be a length three vector')
 
-        extrusions = {"boundary_edges": 0, "all_edges": 1}
+        extrusions = {'boundary_edges': 0, 'all_edges': 1}
         if isinstance(extrusion, str):
             if extrusion not in extrusions:
                 raise ValueError(f'Invalid strategy of extrusion "{extrusion}".')
@@ -3258,10 +3271,10 @@ class PolyDataFilters(DataSetFilters):
             raise TypeError('Invalid type given to `extrusion`. Must be a string.')
 
         cappings = {
-            "intersection": 0,
-            "minimum_distance": 1,
-            "maximum_distance": 2,
-            "average_distance": 3,
+            'intersection': 0,
+            'minimum_distance': 1,
+            'maximum_distance': 2,
+            'average_distance': 3,
         }
         if isinstance(capping, str):
             if capping not in cappings:
@@ -3547,7 +3560,7 @@ class PolyDataFilters(DataSetFilters):
         component=0,
         clip_tolerance=1e-6,
         generate_contour_edges=True,
-        scalar_mode="value",
+        scalar_mode='value',
         clipping=True,
         progress_bar=False,
     ):
@@ -3883,5 +3896,415 @@ class PolyDataFilters(DataSetFilters):
         """
         alg = _vtk.vtkRibbonFilter()
         alg.SetInputData(self)
-        _update_alg(alg, progress_bar, "Generating Protein Ribbons")
+        _update_alg(alg, progress_bar, 'Generating Protein Ribbons')
         return _get_output(alg)
+
+    def voxelize_binary_mask(
+        self,
+        *,
+        background_value: int = 0,
+        foreground_value: int = 1,
+        reference_volume: pyvista.ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        mesh_length_fraction: float | None = None,
+        progress_bar: bool = False,
+    ):
+        """Voxelize :class:`~pyvista.PolyData` as a binary :class:`~pyvista.ImageData` mask.
+
+        Generate a voxelized representation of a surface. The voxelization can be
+        controlled in several ways.
+
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           surface's cells using the specified percentile.
+
+        #. Specify ``mesh_length_fraction``. The spacing is computed as a fraction of
+           the mesh's diagonal length.
+
+        Use ``reference_volume`` for full control of the output mask's geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        mask fits the bounds of the input surface.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        used by default to estimate the spacing. On systems with VTK < 9.2, the default
+        spacing is set to ``mesh_length_fraction=1/100``.
+
+        .. note::
+            For best results, ensure the input surface is a closed surface. The
+            surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
+
+        .. note::
+            This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
+            This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
+            which return meshes with voxel cells. See :ref:`image_representations_example`
+            for examples demonstrating the difference.
+
+        Parameters
+        ----------
+        background_value : int, default: 0
+            Background value of the generated mask.
+
+        foreground_value : int, default: 1
+            Foreground value of the generated mask.
+
+        reference_volume : pyvista.ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
+
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated mask image. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameter. See summary and examples for details.
+
+        spacing : VectorLike[float], optional
+            Approximate spacing to use for the generated mask image. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Has no effect if ``reference_volume`` or ``dimensions`` are specified.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
+
+            #. Triangulating the input cells.
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered set to create the CDF.
+
+            Has no effect if ``dimension`` or ``reference_volume`` are specified.
+
+            .. note::
+                This option is only available for VTK 9.2 or greater.
+
+        cell_length_sample_size : int, optional
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
+
+        mesh_length_fraction : float, optional
+            Fraction of the surface mesh's length to use for computing the default
+            ``spacing``. Set this to any fractional value (e.g. ``1/100``) to enable
+            this option. This is used as an alternative to using ``cell_length_percentile``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Generated binary mask with a ``'mask'``  point data array. The data array
+            has dtype :class:`numpy.uint8` if the foreground and background values are
+            unsigned and less than 256.
+
+        See Also
+        --------
+        pyvista.voxelize
+            Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
+            :attr:`~pyvista.CellType.VOXEL` cells.
+
+        pyvista.voxelize_volume
+            Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
+
+        pyvista.ImageDataFilters.contour_labeled
+            Filter that generates surface contours from labeled image data. Can be
+            loosely considered as an inverse of this filter.
+
+        pyvista.ImageDataFilters.points_to_cells
+            Convert voxels represented as points to :attr:`~pyvista.CellType.VOXEL`
+            cells.
+
+        pyvista.ImageData
+            Class used to build custom ``reference_volume``.
+
+        Examples
+        --------
+        Generate a binary mask from a coarse mesh.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> poly = examples.download_bunny_coarse()
+        >>> mask = poly.voxelize_binary_mask()
+
+        The mask is stored as :class:`~pyvista.ImageData` with point data scalars
+        (zeros for background, ones for foreground).
+
+        >>> mask
+        ImageData (...)
+          N Cells:      7056
+          N Points:     8228
+          X Bounds:     -1.245e-01, 1.731e-01
+          Y Bounds:     -1.135e-01, 1.807e-01
+          Z Bounds:     -1.359e-01, 9.140e-02
+          Dimensions:   22, 22, 17
+          Spacing:      1.417e-02, 1.401e-02, 1.421e-02
+          N Arrays:     1
+
+        >>> np.unique(mask.point_data['mask'])
+        pyvista_ndarray([0, 1], dtype=uint8)
+
+        To visualize it as voxel cells, use :meth:`~pyvista.ImageDataFilters.points_to_cells`,
+        then use :meth:`~pyvista.DataSetFilters.threshold` to extract the foreground.
+
+        We also plot the voxel cells in blue and the input poly data in green for
+        comparison.
+
+        >>> def mask_and_polydata_plotter(mask, poly):
+        ...     voxel_cells = mask.points_to_cells().threshold(0.5)
+        ...
+        ...     plot = pv.Plotter()
+        ...     _ = plot.add_mesh(voxel_cells, color='blue')
+        ...     _ = plot.add_mesh(poly, color='lime')
+        ...     plot.camera_position = 'xy'
+        ...     return plot
+        ...
+
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        The spacing of the mask image is automatically adjusted to match the
+        density of the input.
+
+        Repeat the previous example with a finer mesh.
+
+        >>> poly = examples.download_bunny()
+        >>> mask = poly.voxelize_binary_mask()
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        Control the spacing manually instead. Here, a very coarse spacing is used.
+
+        >>> mask = poly.voxelize_binary_mask(spacing=(0.01, 0.04, 0.02))
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        Note that the spacing is only approximate. Check the mask's actual spacing.
+
+        >>> mask.spacing
+        (0.009731187485158443, 0.03858340159058571, 0.020112216472625732)
+
+        The actual values may be greater or less than the specified values. Use
+        ``rounding_func=np.floor`` to force all values to be greater.
+
+        >>> mask = poly.voxelize_binary_mask(
+        ...     spacing=(0.01, 0.04, 0.02), rounding_func=np.floor
+        ... )
+        >>> mask.spacing
+        (0.01037993331750234, 0.05144453545411428, 0.020112216472625732)
+
+        Set the dimensions instead of the spacing.
+
+        >>> mask = poly.voxelize_binary_mask(dimensions=(10, 20, 30))
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        >>> mask.dimensions
+        (10, 20, 30)
+
+        Create a mask using a reference volume. First generate polydata from
+        an existing mask.
+
+        >>> volume = examples.load_frog_tissues()
+        >>> poly = volume.contour_labeled(smoothing=True)
+
+        Now create the mask from the polydata using the volume as a reference.
+
+        >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        """
+        _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
+        _validation.check_greater_than(self.n_cells, 1, name='n_cells')  # type: ignore[attr-defined]
+
+        def _preprocess_polydata(poly_in):
+            return poly_in.compute_normals().triangulate()
+
+        if reference_volume is not None:
+            if (
+                dimensions is not None
+                or spacing is not None
+                or rounding_func is not None
+                or cell_length_percentile is not None
+                or cell_length_sample_size is not None
+                or mesh_length_fraction is not None
+            ):
+                raise TypeError(
+                    'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+                )
+            _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
+            # The image stencil filters do not support orientation, so we apply the
+            # inverse direction matrix to "remove" orientation from the polydata
+            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = _preprocess_polydata(poly_ijk)
+        else:
+            # Compute reference volume geometry
+            if spacing is not None and dimensions is not None:
+                raise TypeError('Spacing and dimensions cannot both be set. Set one or the other.')
+
+            # Need to preprocess so that we have a triangle mesh for computing
+            # cell length percentile
+            poly_ijk = _preprocess_polydata(self)
+
+            if spacing is None:
+                if cell_length_percentile is not None and mesh_length_fraction is not None:
+                    raise TypeError(
+                        'Cell length percentile and mesh length fraction cannot both be set. Set one or the other.'
+                    )
+
+                less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
+                if (
+                    cell_length_percentile is not None or cell_length_sample_size is not None
+                ) and less_than_vtk92:
+                    raise TypeError(
+                        'Cell length percentile and sample size requires VTK 9.2 or greater.'
+                    )
+
+                if mesh_length_fraction is not None or less_than_vtk92:
+                    # Compute spacing from mesh length
+                    mesh_length_fraction = (
+                        1 / 100
+                        if mesh_length_fraction is None
+                        else _validation.validate_number(
+                            mesh_length_fraction, must_have_dtype=float, must_be_in_range=[0.0, 1.0]
+                        )
+                    )
+                    spacing = self.length * mesh_length_fraction  # type: ignore[attr-defined]
+                else:
+                    # Estimate spacing from cell length percentile
+                    cell_length_percentile = (
+                        0.1 if cell_length_percentile is None else cell_length_percentile
+                    )
+                    cell_length_sample_size = (
+                        100_000 if cell_length_sample_size is None else cell_length_sample_size
+                    )
+                    spacing = _length_distribution_percentile(
+                        poly_ijk,
+                        cell_length_percentile,
+                        cell_length_sample_size,
+                        progress_bar=progress_bar,
+                    )
+            else:
+                # Spacing is specified directly. Make sure other params are not set.
+                if cell_length_percentile is not None:
+                    raise TypeError(
+                        'Spacing and cell length percentile cannot both be set. Set one or the other.'
+                    )
+                if mesh_length_fraction is not None:
+                    raise TypeError(
+                        'Spacing and mesh length fraction cannot both be set. Set one or the other.'
+                    )
+
+            # Get initial spacing (will be adjusted later)
+            initial_spacing = _validation.validate_array3(spacing, broadcast=True)
+
+            # Get size of poly data for computing dimensions
+            bnds = self.bounds  # type: ignore[attr-defined]
+            x_size = bnds.x_max - bnds.x_min
+            y_size = bnds.y_max - bnds.y_min
+            z_size = bnds.z_max - bnds.z_min
+            sizes = np.array((x_size, y_size, z_size))
+
+            if dimensions is None:
+                rounding_func = np.round if rounding_func is None else rounding_func
+                dimensions = np.array(rounding_func(sizes / initial_spacing), dtype=int)
+            elif rounding_func is not None:
+                raise TypeError(
+                    'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+                )
+
+            reference_volume = pyvista.ImageData()
+            reference_volume.dimensions = dimensions  # type: ignore[assignment]
+            # Dimensions are now fixed, now adjust spacing to match poly data bounds
+            # Since we are dealing with voxels as points, we want the bounds of the
+            # points to be 1/2 spacing width smaller than the polydata bounds
+            final_spacing = sizes / np.array(reference_volume.dimensions)
+            reference_volume.spacing = final_spacing
+            reference_volume.origin = np.array(self.bounds[::2]) + final_spacing / 2  # type: ignore[attr-defined]
+
+        # Init output structure. The image stencil filters do not support
+        # orientation, so we do not set the direction matrix
+        binary_mask = pyvista.ImageData()
+        binary_mask.dimensions = reference_volume.dimensions
+        binary_mask.spacing = reference_volume.spacing
+        binary_mask.origin = reference_volume.origin
+
+        # Init output scalars. Use uint8 dtype if possible.
+        scalars_shape = (binary_mask.n_points,)
+        scalars_dtype: type[np.uint8 | float | int]
+        if all(
+            isinstance(val, int) and val < 256 and val >= 0
+            for val in (background_value, foreground_value)
+        ):
+            scalars_dtype = np.uint8
+        elif all(
+            isinstance(val, (float, int)) and round(val) == val
+            for val in (background_value, foreground_value)
+        ):
+            scalars_dtype = int
+        else:
+            scalars_dtype = float
+        scalars = (  # Init with background value
+            np.zeros(scalars_shape, dtype=scalars_dtype)
+            if background_value == 0
+            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
+        )
+        binary_mask['mask'] = scalars  # type: ignore[assignment]
+
+        # Make sure that we have a clean triangle-strip polydata
+        # Note: Poly was partially pre-processed earlier
+        poly_ijk = poly_ijk.strip()
+
+        # Convert polydata to stencil
+        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
+        poly_to_stencil.SetInputData(poly_ijk)
+        poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
+        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)
+        poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
+        _update_alg(poly_to_stencil, progress_bar, 'Converting polydata')
+
+        # Convert stencil to image
+        stencil = _vtk.vtkImageStencil()
+        stencil.SetInputData(binary_mask)
+        stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
+        stencil.ReverseStencilOn()
+        stencil.SetBackgroundValue(foreground_value)
+        _update_alg(stencil, progress_bar, 'Generating binary mask')
+        output_volume = _get_output(stencil)
+
+        # Set the orientation of the output
+        output_volume.direction_matrix = reference_volume.direction_matrix
+
+        return pyvista.wrap(output_volume)
+
+
+def _length_distribution_percentile(poly, percentile, cell_length_sample_size, progress_bar):
+    percentile = _validation.validate_number(
+        percentile, must_be_in_range=[0.0, 1.0], name='percentile'
+    )
+    distribution = _vtk.vtkLengthDistribution()
+    distribution.SetInputData(poly)
+    distribution.SetSampleSize(cell_length_sample_size)
+    _update_alg(distribution, progress_bar, 'Computing cell length distribution')
+    return distribution.GetLengthQuantile(percentile)
