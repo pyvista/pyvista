@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import numpy as np
 
 from pyvista.core import _validation
@@ -316,84 +314,6 @@ def apply_transformation_to_points(transformation, points, inplace=False):
     else:
         # otherwise return the new points
         return points_2
-
-
-def rotation(
-    rotation: RotationLike,
-    point: VectorLike[float] | None = None,
-):
-    """Return a 4x4 matrix for rotation about a point.
-
-    The transformation is computed as follows:
-
-    #. Translation to make ``point`` the origin of the rotation.
-    #. Rotation specified by ``rotation``.
-    #. Translation by ``point`` to restore initial positioning.
-
-    Parameters
-    ----------
-    rotation : RotationLike
-        3x3 rotation matrix or a SciPy ``Rotation`` object.
-
-    point : Vector, default: (0.0, 0.0, 0.0)
-        Point to rotate about. Defaults to origin.
-
-    Returns
-    -------
-    numpy.ndarray
-        4x4 rotation matrix.
-
-    Examples
-    --------
-    Apply a rotation about a point with a 3x3 rotation matrix.
-
-    >>> import numpy as np
-    >>> from pyvista import transformations
-    >>> point = [1, 1, 1]
-    >>> rotation = np.array(
-    ...     [
-    ...         [1.0, 0.0, 0.0],
-    ...         [0.0, 0.70710678, -0.70710678],
-    ...         [0.0, 0.70710678, 0.70710678],
-    ...     ]
-    ... )
-    >>> trans = transformations.rotation(rotation, point=point)
-    >>> trans
-    array([[ 1.        ,  0.        ,  0.        ,  0.        ],
-           [ 0.        ,  0.70710678, -0.70710678,  1.        ],
-           [ 0.        ,  0.70710678,  0.70710678, -0.41421356],
-           [ 0.        ,  0.        ,  0.        ,  1.        ]])
-
-    Compute the inverse transformation using the rotation's transpose.
-
-    >>> trans_inv = transformations.rotation(rotation.T, point=point)
-    >>> trans_inv
-    array([[ 1.        ,  0.        ,  0.        ,  0.        ],
-           [ 0.        ,  0.70710678,  0.70710678, -0.41421356],
-           [ 0.        , -0.70710678,  0.70710678,  1.        ],
-           [ 0.        ,  0.        ,  0.        ,  1.        ]])
-
-    Verify the transform and its inverse combine to produce the identity matrix.
-
-    >>> np.allclose(trans_inv @ trans, np.eye(4))
-    True
-
-    """
-    valid_rotation = _validation.validate_transform3x3(rotation, name='rotation')
-    rotate = np.eye(4)
-    rotate[:3, :3] = valid_rotation
-    if point is None:
-        return rotate
-    else:
-        valid_point = _validation.validate_array3(point, name='point')
-
-        translate_to_origin = np.eye(4)
-        translate_to_origin[:3, 3] = valid_point * -1
-
-        translate_from_origin = np.eye(4)
-        translate_from_origin[:3, 3] = valid_point
-
-        return translate_from_origin @ rotate @ translate_to_origin
 
 
 def decomposition(
