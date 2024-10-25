@@ -839,7 +839,7 @@ class ImageDataFilters(DataSetFilters):
         alg.Update()
         return cast(pyvista.ImageData, wrap(alg.GetOutput()))
 
-    def contour_labeled(
+    def contour_labeled(  # pragma: no cover
         self,
         n_labels: int | None = None,
         smoothing: bool = False,
@@ -863,6 +863,25 @@ class ImageDataFilters(DataSetFilters):
 
         .. note::
            Requires ``vtk>=9.3.0``.
+
+        .. deprecated:: 0.44
+            This filter produces unexpected results and is deprecated.
+            Use :meth:`~pyvista.ImageDataFilters.contour_labels` instead.
+            See https://github.com/pyvista/pyvista/issues/5981 for details.
+
+            To replicate the default behavior from this filter, call `contour_labels`
+            with the following arguments:
+
+            .. code::
+
+                n_labels = range(N)
+                contour_labels(
+                    select_outputs=n_labels,  # replacement for 'n_labels' param
+                    internal_polygons=False,  # replacement for 'output_style' param
+                    smoothing=False,  # smoothing is now on by default
+                    output_mesh_type='quads',  # mesh type is no longer fixed to 'quads'
+                    output_labels='boundary',  # return 'boundary_labels' array
+                )
 
         Parameters
         ----------
@@ -923,6 +942,13 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
+        warnings.warn(
+            'This filter produces unexpected results and is deprecated. Use `contour_labels` instead.'
+            '\nRefer to the documentation for `contour_labeled` for details on how to transition to the new filter.'
+            '\nSee https://github.com/pyvista/pyvista/issues/5981 for details.',
+            PyVistaDeprecationWarning,
+        )
+
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
@@ -980,6 +1006,515 @@ class ImageDataFilters(DataSetFilters):
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
+
+    # def split_contours(self):
+    #     ...
+    # """
+    #         MultiBlock (...)
+    #   N Blocks    4
+    #   X Bounds    75.605, 109.502
+    #   Y Bounds    75.019, 109.858
+    #   Z Bounds    89.000, 100.000
+    #
+    # Show each mesh as a different subplot.
+    #
+    # >>> plot = pv.Plotter(shape=(2, 2))
+    # >>> _ = plot.subplot(0, 0)
+    # >>> _ = plot.add_mesh(split_contours[0], **plot_kwargs)
+    # >>> _ = plot.view_xy()
+    # >>> _ = plot.subplot(0, 1)
+    # >>> _ = plot.add_mesh(split_contours[1], **plot_kwargs)
+    # >>> _ = plot.view_xy()
+    # >>> _ = plot.subplot(1, 0)
+    # >>> _ = plot.add_mesh(split_contours[2], **plot_kwargs)
+    # >>> _ = plot.view_xy()
+    # >>> _ = plot.subplot(1, 1)
+    # >>> _ = plot.add_mesh(split_contours[3], **plot_kwargs)
+    # >>> _ = plot.view_xy()
+    # >>> plot.show()
+    #
+    #
+    #   Use ``select_inputs``, to generate independently-smoothed surfaces. This can
+    # result in less noisy surfaces but will also typically result in poorly defined
+    # boundaries between two separately-contoured regions. For example, observe the
+    # gap between regions two and three.
+    #
+    # >>> selected_input2 = image.contour_labels(select_inputs=2)
+    # >>> selected_input3 = image.contour_labels(select_inputs=3)
+    # >>>
+    # >>> plot = pv.Plotter()
+    # >>> _ = plot.add_mesh(selected_input2, **plot_kwargs)
+    # >>> _ = plot.add_mesh(selected_input3, **plot_kwargs)
+    # >>> plot.view_xy()
+    # >>> plot.show()
+    #
+    # Use ``select_outputs`` to generate surfaces separately while preserving boundary
+    # definitions between regions.
+    #
+    # >>> selected_output2 = image.contour_labels(select_outputs=2)
+    # >>> selected_output3 = image.contour_labels(select_outputs=3)
+    # >>>
+    # >>> plot = pv.Plotter()
+    # >>> _ = plot.add_mesh(selected_output2, **plot_kwargs)
+    # >>> _ = plot.add_mesh(selected_output3, **plot_kwargs)
+    # >>> plot.view_xy()
+    # >>> plot.show()
+    # """
+
+    def contour_labels(
+        self,
+        output_boundary_type: Literal['all', 'external', 'internal'] = 'all',
+        *,
+        select_inputs: int | VectorLike[int] | None = None,
+        select_outputs: int | VectorLike[int] | None = None,
+        closed_surface: bool = True,
+        output_mesh_type: Literal['quads', 'triangles'] | None = None,
+        scalars: str | None = None,
+        smoothing: bool = True,
+        smoothing_iterations: int = 16,
+        smoothing_relaxation: float = 0.5,
+        smoothing_distance: float | None = None,
+        smoothing_scale: float = 1.0,
+        progress_bar: bool = False,
+    ) -> pyvista.PolyData:
+        """Generate surface contours from 3D image label maps.
+
+        This filter uses `vtkSurfaceNets <https://vtk.org/doc/nightly/html/classvtkSurfaceNets3D.html#details>`__
+        to extract polygonal surface contours from non-continuous label maps, which
+        corresponds to discrete regions in an input 3D image (i.e., volume). It is
+        designed to generate surfaces from image point data, e.g. voxel point
+        samples from 3D medical images, though images with cell data are also supported.
+
+        The generated surface is smoothed using a constrained smoothing filter, which
+        may be fine-tuned to control the smoothing process. Optionally, smoothing may
+        be disabled to generate a staircase-like surface.
+
+        The output surface includes a two-component cell data array ``'boundary_labels'``.
+        The array indicates the labels/regions on either side of the polygons composing
+        the output. The array's values are structured as follows:
+
+        External boundary values
+
+            Polygons between a foreground region and the background have the
+            form ``[foreground, background]``.
+
+            E.g. ``[1, 0]`` for the boundary between region ``1`` and background ``0``.
+
+        Internal boundary values
+
+            Polygons between two connected foreground regions are sorted in ascending order.
+
+            E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
+
+        .. note::
+
+            This filter requires VTK version ``9.3.0`` or greater.
+
+        Parameters
+        ----------
+        output_boundary_type : 'all' | 'internal' | 'external', default: 'all'
+            Type of boundary polygons to generate. ``'internal'`` polygons are generated
+            between two connected foreground regions. ``'external'`` polygons are
+            generated between foreground background. By default, ``'all'`` boundary
+            polygons (internal and external) are generated.
+
+        select_inputs : int | VectorLike[int], default: None
+            Specify label ids to include as inputs to the filter. Labels that are not
+            selected are removed from the input *before* generating the surface. By
+            default, all label ids are used.
+
+            Since the smoothing operation occurs across selected input regions, using
+            this option to filter the input can result in smoother and more visually
+            pleasing surfaces since non-selected inputs are not considered during
+            smoothing. However, this also means that the generated surface will change
+            shape depending on which inputs are selected.
+
+            .. note::
+
+                Selecting inputs can affect whether a boundary polygon is considered to
+                be ``internal`` or ``external``. That is, an internal boundary becomes an
+                external boundary when only one of the two foreground regions on the
+                boundary is selected.
+
+        select_outputs : int | VectorLike[int], default: None
+            Specify label ids to include in the output of the filter. Labels that are
+            not selected are removed from the output *after* generating the surface. By
+            default, all label ids are used.
+
+            Since the smoothing operation occurs across all input regions, using this
+            option to filter the output means that the selected output regions will have
+            the same shape (i.e. smoothed in the same manner), regardless of the outputs
+            that are selected. This is useful for generating a surface for specific
+            labels while also preserving sharp boundaries with non-selected outputs.
+
+            .. note::
+
+                Selecting outputs does not affect whether a boundary polygon is
+                considered to be ``internal`` or ``external``. That is, an internal
+                boundary remains internal even if only one of the two foreground regions
+                on the boundary is selected.
+
+        closed_surface : bool, default: True
+            Generate polygons to "close" the surface at the boundaries of the image.
+            This option is only relevant when there are foreground regions on the border
+            of the image. Setting this value to ``False`` is useful if processing multiple
+            volumes separately so that the generated surfaces fit together without
+            creating surface overlap.
+
+        output_mesh_type : str, default: None
+            Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``. By
+            default, the output mesh has triangle cells when smoothing is enabled and
+            quadrilateral cells (quads) otherwise. The mesh type can be forced to be
+            triangles or quads; however, if smoothing is enabled and the type is ``'quads'``,
+            the generated quads may not be planar.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars. If cell
+            scalars are specified, the input image is re-meshed with
+            :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
+            data into point data.
+
+        smoothing : bool, default: True
+            Smooth the generated surface using a constrained smoothing filter. Each
+            point in the surface is smoothed as follows:
+
+                For a point ``pi`` connected to a list of points ``pj`` via an edge, ``pi``
+                is moved towards the average position of ``pj`` multiplied by the
+                ``smoothing_relaxation`` factor, and limited by the ``smoothing_distance``
+                constraint. This process is repeated either until convergence occurs, or
+                the maximum number of ``smoothing_iterations`` is reached.
+
+        smoothing_iterations : int, default: 16
+            Maximum number of smoothing iterations to use.
+
+        smoothing_relaxation : float, default: 0.5
+            Relaxation factor used at each smoothing iteration.
+
+        smoothing_distance : float, default: None
+            Maximum distance each point is allowed to move (in any direction) during
+            smoothing. This distance may be scaled with ``smoothing_scale``. By default,
+            the distance is computed dynamically from the image spacing as:
+
+                ``distance = norm(image_spacing) * smoothing_scale``.
+
+        smoothing_scale : float, default: 1.0
+            Relative scaling factor applied to ``smoothing_distance``. See that
+            parameter for details.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Surface mesh of labeled regions.
+
+        See Also
+        --------
+        :meth:`~pyvista.ImageDataFilters.cells_to_points`
+            Re-mesh :class:`~pyvista.ImageData` to a points-based representation.
+        :meth:`~pyvista.DataSetFilters.contour`
+            Generalized contouring method which uses MarchingCubes or FlyingEdges.
+        :meth:`~pyvista.DataSetFilters.pack_labels`
+            Function used internally by SurfaceNets to generate contiguous label data.
+        :ref:`contouring_example`
+            Additional contouring examples.
+
+        References
+        ----------
+        S. Frisken, “SurfaceNets for Multi-Label Segmentations with Preservation of
+        Sharp Boundaries”, J. Computer Graphics Techniques, 2022. Available online:
+        http://jcgt.org/published/0011/01/03/
+
+        W. Schroeder, S. Tsalikis, M. Halle, S. Frisken. A High-Performance SurfaceNets
+        Discrete Isocontouring Algorithm. arXiv:2401.14906. 2024. Available online:
+        `http://arxiv.org/abs/2401.14906 <http://arxiv.org/abs/2401.14906>`__
+
+        Examples
+        --------
+        Load labeled image data with a background region ``0`` and four foreground
+        regions.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> image = examples.load_channels()
+        >>> label_ids = np.unique(image.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([0, 1, 2, 3, 4])
+        >>> image.dimensions
+        (251, 251, 101)
+
+        Crop the image to simplify the data.
+
+        >>> image = image.extract_subset(voi=(75, 109, 75, 109, 85, 100))
+        >>> image.dimensions
+        (35, 35, 16)
+
+        Plot the cropped image for context. Configure the color map to generate
+        consistent coloring of the regions for all plots.
+
+        >>> plot_kwargs = dict(
+        ...     cmap='glasbey',
+        ...     clim=[0, 77],
+        ...     show_edges=True,
+        ...     show_scalar_bar=False,
+        ... )
+        >>> image.plot(**plot_kwargs)
+
+        Generate surface contours of the foreground regions. The background region id is
+        ``0`` by default.
+
+        >>> contours = image.contour_labels()
+
+        Show the two-component boundary label scalars generated by the filter and plot
+        the results.
+
+        >>> np.unique(contours['boundary_labels'], axis=0)
+        array([[1, 0],
+               [1, 2],
+               [1, 4],
+               [2, 0],
+               [2, 3],
+               [2, 4],
+               [3, 0],
+               [3, 4],
+               [4, 0]])
+        >>> contours.plot(zoom=1.5, **plot_kwargs)
+
+        Use :meth:`~pyvista.DataSetFilters.extract_values` to extract a single region and
+        show both internal and external boundary polygons.
+
+        >>> region_3 = contours.extract_values(3, component_mode='any')
+        >>> region_3.plot(zoom=3, **plot_kwargs)
+
+        Alternatively, generate the selected output region from the filter directly
+        with ``select_outputs``.
+
+        >>> region_3 = image.contour_labels(select_outputs=3)
+        >>> region_3.plot(zoom=3, **plot_kwargs)
+
+        Note how using ``select_outputs`` preserves the sharp features and boundary
+        labels for non-selected regions. If desired, use ``select_inputs`` instead to
+        completely "ignore" non-selected regions. The sharp features are now smoothed
+        and the internal boundaries are now labeled as external boundaries.
+
+        >>> region_3 = image.contour_labels(select_inputs=3)
+        >>> region_3.plot(zoom=3, **plot_kwargs)
+
+        Disable smoothing to generate staircase-like surface. Without smoothing, the
+        surface has quadrilateral cells by default.
+
+        Since the input image has foreground regions visible at the edges of the image
+        (e.g. the ``+Z`` bound), we also set ``closed_surface=False`` to disable the
+        generation of polygons in these areas.
+
+        >>> surf = image.contour_labels(
+        ...     smoothing=False, closed_surface=False
+        ... )
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
+        """
+
+        def _get_unique_labels_no_background(array, background):
+            unique = np.unique(array)
+            return unique[unique != background]
+
+        def _get_alg_input(image, scalars_):
+            if scalars_ is None:
+                set_default_active_scalars(image)
+                field, scalars = image.active_scalars_info
+            else:
+                field = image.get_array_association(scalars_, preference='point')
+
+            return (
+                image
+                if field == FieldAssociation.POINT
+                else image.cells_to_points(scalars=scalars_, copy=False)
+            )
+
+        def _process_select_inputs(image, select_inputs_):
+            select_inputs = np.atleast_1d(select_inputs_)
+            # Remove non-selected label ids from the input. We do this by setting
+            # non-selected ids to the background value to remove them from the input
+            temp_scalars = image.active_scalars
+            temp_scalars = temp_scalars.copy()
+            input_ids = _get_unique_labels_no_background(temp_scalars, background_value)
+            keep_labels = [*select_inputs, background_value]
+            for label in input_ids:
+                if label not in keep_labels:
+                    temp_scalars[temp_scalars == label] = background_value
+
+            image.point_data[temp_scalars_name] = temp_scalars
+            image.set_active_scalars(temp_scalars_name, preference='point')
+
+            return input_ids
+
+        def _set_output_mesh_type(alg_):
+            if output_mesh_type is None:
+                alg_.SetOutputMeshTypeToDefault()
+            elif output_mesh_type == 'quads':
+                alg_.SetOutputMeshTypeToQuads()
+            elif output_mesh_type == 'triangles':
+                alg_.SetOutputMeshTypeToTriangles()
+            else:
+                raise ValueError(
+                    f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
+                )
+
+        def _configure_boundaries(alg_, array_, select_inputs_, select_outputs_):
+            # WARNING: Setting the output style to default or boundary does not really work
+            # as expected. Specifically, `SetOutputStyleToDefault` by itself will not actually
+            # produce meshes with interior faces at the boundaries between foreground regions
+            # (even though this is what is suggested by the docs). Instead, simply calling
+            # `SetLabels` below will enable internal boundaries, regardless of the value of
+            # `OutputStyle`. Also, using `SetOutputStyleToBoundary` generates jagged/rough
+            # 'lines' between two exterior regions; enabling internal boundaries fixes this.
+            alg_.SetOutputStyleToSelected()
+            if select_outputs_ is not None:
+                # Use selected outputs
+                output_ids = _get_unique_labels_no_background(
+                    np.atleast_1d(select_outputs_),
+                    background_value,
+                )
+            elif select_inputs_ is not None:
+                # Set outputs to be same as inputs
+                output_ids = select_inputs_
+            else:
+                # Output all labels
+                output_ids = _get_unique_labels_no_background(
+                    array_,
+                    background_value,
+                )
+            output_ids = output_ids.astype(float)
+
+            # Add selected outputs
+            [alg.AddSelectedLabel(label_id) for label_id in output_ids]
+
+            # The following logic enables the generation of internal boundaries
+            if select_inputs is not None:
+                # Generate internal boundaries for selected inputs only
+                internal_ids = input_ids
+            elif select_outputs is None:
+                # No inputs or outputs selected, so generate internal
+                # boundaries for all labels in input array
+                internal_ids = output_ids
+            else:
+                internal_ids = _get_unique_labels_no_background(
+                    array_,
+                    background_value,
+                )
+
+            [alg.SetLabel(int(val), val) for val in internal_ids]
+
+            return output_ids
+
+        def _configure_smoothing(alg_, spacing_, iterations_, relaxation_, scale_, distance_):
+            def _is_small_number(num):
+                return isinstance(num, (float, int, np.floating, np.integer)) and num < 1e-8
+
+            if smoothing and not _is_small_number(scale_) and not _is_small_number(distance_):
+                # Only enable smoothing if distance is not very small, since a small
+                # distance will actually result in large smoothing (suspected division
+                # by zero error in vtk code)
+                alg_.SmoothingOn()
+                alg_.GetSmoother().SetNumberOfIterations(iterations_)
+                alg_.GetSmoother().SetRelaxationFactor(relaxation_)
+
+                # Auto-constraints are On by default which only allows you to scale
+                # relative distance (with SetConstraintScale) but not set its value
+                # directly. Here, we turn this off so that we can both set its value
+                # and/or scale it independently
+                alg_.AutomaticSmoothingConstraintsOff()
+
+                # Dynamically calculate distance is not specified.
+                # This emulates the auto-constraint calc from vtkSurfaceNets3D
+                distance_ = distance_ if distance_ else np.linalg.norm(spacing_)
+                alg_.GetSmoother().SetConstraintDistance(distance_ * scale_)
+            else:
+                alg_.SmoothingOff()
+
+        if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
+
+        if isinstance(output_boundary_type, str) and output_boundary_type not in (
+            boundary_types := ['all', 'internal', 'external']
+        ):
+            raise ValueError(
+                f'Boundary type must be one of {boundary_types}. Got {output_boundary_type} instead.',
+            )
+
+        background_value = 0
+
+        alg_input = _get_alg_input(self, scalars)
+
+        # Pad with background values to close surfaces at image boundaries
+        alg_input = alg_input.pad_image(background_value) if closed_surface else alg_input
+
+        temp_scalars_name = '_PYVISTA_TEMP'
+        input_ids = (
+            _process_select_inputs(alg_input, select_inputs) if select_inputs is not None else None
+        )
+
+        alg = _vtk.vtkSurfaceNets3D()
+        alg.SetBackgroundLabel(background_value)
+        alg.SetInputData(alg_input)
+
+        _set_output_mesh_type(alg)
+        _configure_boundaries(alg, alg_input.active_scalars, input_ids, select_outputs)
+        _configure_smoothing(
+            alg,
+            alg_input.spacing,
+            smoothing_iterations,
+            smoothing_relaxation,
+            smoothing_scale,
+            smoothing_distance,
+        )
+
+        # Get output
+        # Suppress improperly used INFO for debugging messages in vtkSurfaceNets3D
+        verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
+        _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
+        _update_alg(alg, progress_bar, 'Generating label contours')
+        # Restore the original vtkLogger verbosity level
+        _vtk.vtkLogger.SetStderrVerbosity(verbosity)
+        output: pyvista.PolyData = _get_output(alg)
+
+        (  # Clear temp scalars from input
+            alg_input.point_data.remove(temp_scalars_name)
+            if temp_scalars_name in alg_input.point_data
+            else None
+        )
+
+        if (old_name := 'BoundaryLabels') in output.cell_data.keys():
+            new_name = 'boundary_labels'
+            output.rename_array(old_name, new_name)
+            if output_boundary_type in ['external', 'internal']:
+                labels_array = output.cell_data[new_name]
+                is_external = np.any(labels_array == background_value, axis=1)
+                remove = is_external if output_boundary_type == 'internal' else ~is_external
+                output.remove_cells(remove, inplace=True)
+
+        if select_outputs:
+            # This option generates unused points
+            # Use clean to remove these points (without merging points)
+            output.clean(
+                point_merging=False,
+                lines_to_points=False,
+                polys_to_lines=False,
+                strips_to_polys=False,
+                inplace=True,
+            )
+
+        # if output_style == 'extract':
+        #     multiblock = output.split_values(output_ids, component_mode='any')
+
+        # for label_id, block in zip(output_ids,multiblock):
+        #     block.cell_data[SURFACE_LABELS] = np.ones(block.n_cells)*label_id
+
+        return output
 
     def points_to_cells(
         self,
@@ -1175,7 +1710,10 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(  # type: ignore[attr-defined]
+                scalars,
+                preference='point',
+            )
             if field != FieldAssociation.POINT:
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
@@ -1331,7 +1869,10 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = self.get_array_association(scalars, preference='cell')  # type: ignore[attr-defined]
+            field = self.get_array_association(  # type: ignore[attr-defined]
+                scalars,
+                preference='cell',
+            )
             if field != FieldAssociation.CELL:
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
@@ -1665,7 +2206,10 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
         else:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(  # type: ignore[attr-defined]
+                scalars,
+                preference='point',
+            )
         if field != FieldAssociation.POINT:
             raise ValueError(
                 f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
@@ -1736,7 +2280,9 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(error_msg)
         else:
             val = np.atleast_1d(pad_value)
-            num_input_components = _get_num_components(self.active_scalars)  # type: ignore[attr-defined]
+            num_input_components = _get_num_components(
+                self.active_scalars,  # type: ignore[attr-defined]
+            )
             if not (
                 val.ndim == 1
                 and (np.issubdtype(val.dtype, np.floating) or np.issubdtype(val.dtype, np.integer))
