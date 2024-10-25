@@ -43,7 +43,7 @@ jobs:
         run: pip install . --no-deps
 
       - name: Install test requirements
-        run: pip install -r requirements_test.txt
+        run: pip install vtk -r requirements_test.txt
 
       - name: Install NumPy
         if: ${{ matrix.numpy-version != 'latest'}}
@@ -52,14 +52,10 @@ jobs:
       - name: Run Mypy
         run: mypy pyvista
 
-      # TODO: install VTK and generate the software report _before_ running Mypy 
-      #    This requires fixing or ignoring 200+ errors.
-      #    The install is needed to run the software report
-      - name: Install VTK
-        run: pip install vtk
-        
       - name: Software Report
         run: |
           python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           pip list
+        
+
