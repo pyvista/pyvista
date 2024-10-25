@@ -1731,7 +1731,7 @@ class ImageDataFilters(DataSetFilters):
             if pad_value == 'mirror':
                 alg = _vtk.vtkImageMirrorPad()
             elif pad_value == 'wrap':
-                alg = _vtk.vtkImageWrapPad()
+                alg = _vtk.vtkImageWrapPad()  # type: ignore[assignment]
             else:
                 raise ValueError(error_msg)
         else:
@@ -1769,7 +1769,7 @@ class ImageDataFilters(DataSetFilters):
                         )
             else:
                 pad_multi_component = False
-            alg = _vtk.vtkImageConstantPad()
+            alg = _vtk.vtkImageConstantPad()  # type: ignore[assignment]
 
         alg.SetInputDataObject(self)
         alg.SetOutputWholeExtent(*padded_extents)
@@ -2056,7 +2056,7 @@ class ImageDataFilters(DataSetFilters):
             0,
             0,
             field.value,
-            scalars,
+            scalars,  # type: ignore[arg-type]
         )  # args: (idx, port, connection, field, name)
 
         if extraction_mode == 'all':

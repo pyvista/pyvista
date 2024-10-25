@@ -164,16 +164,16 @@ class DataObject:
         writer.SetInputData(self)
         if file_ext == '.ply' and texture is not None:
             if isinstance(texture, str):
-                writer.SetArrayName(texture)
+                writer.SetArrayName(texture)  # type: ignore[union-attr]
                 array_name = texture
             elif isinstance(texture, np.ndarray):
                 array_name = '_color_array'
                 self[array_name] = texture
-                writer.SetArrayName(array_name)
+                writer.SetArrayName(array_name)  # type: ignore[union-attr]
 
             # enable alpha channel if applicable
             if self[array_name].shape[-1] == 4:  # type: ignore[index]
-                writer.SetEnableAlpha(True)
+                writer.SetEnableAlpha(True)  # type: ignore[union-attr]
         writer.Write()
 
     def _store_metadata(self) -> None:
@@ -451,7 +451,7 @@ class DataObject:
         """
         return DataSetAttributes(
             self.GetFieldData(),
-            dataset=self,
+            dataset=self,  # type: ignore[arg-type]
             association=FieldAssociation.NONE,
         )
 

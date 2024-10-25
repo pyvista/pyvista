@@ -76,7 +76,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
             The extent of the whole output image.
 
         """
-        self.SetWholeExtent(whole_extent)
+        self.SetWholeExtent(whole_extent)  # type: ignore[call-overload]
 
     @property
     def center(self) -> tuple[float, float, float]:
@@ -196,7 +196,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
             The extent of the whole output image.
 
         """
-        self.SetWholeExtent(whole_extent)
+        self.SetWholeExtent(whole_extent)  # type: ignore[call-overload]
 
     @property
     def maxiter(self) -> int:
@@ -503,7 +503,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
             The direction of the sinusoid.
 
         """
-        self.SetDirection(direction)
+        self.SetDirection(direction)  # type: ignore[call-overload]
 
     @property
     def period(self) -> float:
@@ -539,7 +539,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
             The phase of the sinusoid in pixel.
 
         """
-        return self.GetPhase()
+        return self.GetPhase()  # type: ignore[return-value]
 
     @phase.setter
     def phase(self, phase: Sequence[float]) -> None:
@@ -551,7 +551,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
             The phase of the sinusoid in pixel.
 
         """
-        self.SetPhase(phase)
+        self.SetPhase(phase)  # type: ignore[arg-type]
 
     @property
     def amplitude(self) -> float:
@@ -818,7 +818,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
             The origin of the grid.
 
         """
-        self.SetGridOrigin(origin)
+        self.SetGridOrigin(origin)  # type: ignore[arg-type]
 
     @property
     def extent(self) -> Sequence[int]:

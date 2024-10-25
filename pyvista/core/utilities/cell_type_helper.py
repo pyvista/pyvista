@@ -5,7 +5,7 @@ from __future__ import annotations
 try:
     from vtkmodules import vtkCommonDataModel
 except:  # pragma: no cover
-    import vtk as vtkCommonDataModel
+    import vtk as vtkCommonDataModel  # type: ignore[no-redef]
 
 vtkcell_types = [
     ['VTK_EMPTY_CELL', 'vtkEmptyCell'],
