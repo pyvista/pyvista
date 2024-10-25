@@ -29,8 +29,8 @@ from vtkmodules.vtkImagingSources import vtkImageSinusoidSource
 try:
     from vtkmodules.vtkFiltersCore import vtkExtractEdges
 except ImportError:
-    from vtkmodules.vtkFiltersExtraction import (
-        vtkExtractEdges,  # type: ignore[attr-defined, no-redef]
+    from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
+        vtkExtractEdges,
     )
 
 # vtkCellTreeLocator moved from vtkFiltersGeneral to vtkCommonDataModel in
@@ -38,8 +38,8 @@ except ImportError:
 try:
     from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator
 except ImportError:
-    from vtkmodules.vtkFiltersGeneral import (
-        vtkCellTreeLocator,  # type: ignore[attr-defined, no-redef]
+    from vtkmodules.vtkFiltersGeneral import (  # type: ignore[attr-defined, no-redef]
+        vtkCellTreeLocator,
     )
 
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray
