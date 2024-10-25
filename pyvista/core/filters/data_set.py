@@ -7027,13 +7027,13 @@ class DataSetFilters:
             # all vector-shaped data will be transformed
             point_vectors = [
                 name
-                for name, data in self.point_data.items()
-                if data.shape == (self.n_points, 3)  # type: ignore[attr-defined]
+                for name, data in self.point_data.items()  # type: ignore[attr-defined]
+                if data.shape == (self.n_points, 3)
             ]
             cell_vectors = [
                 name
-                for name, data in self.cell_data.items()
-                if data.shape == (self.n_cells, 3)  # type: ignore[attr-defined]
+                for name, data in self.cell_data.items()  # type: ignore[attr-defined]
+                if data.shape == (self.n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals
