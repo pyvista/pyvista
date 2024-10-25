@@ -1384,7 +1384,7 @@ class Transform(_vtk.vtkTransform):
             Current inverse transformation matrix.
 
         """
-        array = array_from_vtkmatrix(self.GetInverse().GetMatrix())
+        array = array_from_vtkmatrix(self.GetInverse().GetMatrix())  # type: ignore[attr-defined]
         if self.check_finite:
             _validation.check_finite(array, name='matrix')
         return array
@@ -1436,7 +1436,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         return [
-            array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetInverse().GetMatrix())
+            array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetInverse().GetMatrix())  # type: ignore[attr-defined]
             for i in range(self.n_transformations)
         ]
 
@@ -1566,7 +1566,7 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (DataSet, MultiBlock)):
-            return obj.transform(
+            return obj.transform(  # type: ignore[misc]
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
                 transform_all_input_vectors=transform_all_input_vectors,

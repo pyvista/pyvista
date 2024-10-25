@@ -567,7 +567,7 @@ def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray):
     try:
         vtkarr.SetObjectName('scalar')
     except AttributeError:
-        vtkarr.GetObjectName = lambda: 'scalar'
+        vtkarr.GetObjectName = lambda: 'scalar'  # type: ignore[method-assign]
 
 
 def convert_string_array(arr, name=None):

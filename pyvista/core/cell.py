@@ -408,7 +408,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
         # must deep copy here as multiple sequental calls to GetEdge overwrite
         # the underlying pointer
-        return Cell(self.GetEdge(index), deep=True)
+        return Cell(self.GetEdge(index), deep=True)  # type: ignore[abstract]
 
     @property
     def edges(self) -> list[Cell]:
@@ -484,7 +484,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         # must deep copy here as multiple sequental calls to GetFace overwrite
         # the underlying pointer
         cell = self.GetFace(index)
-        return Cell(cell, deep=True, cell_type=cell.GetCellType())
+        return Cell(cell, deep=True, cell_type=cell.GetCellType())  # type: ignore[abstract]
 
     @property
     def bounds(self) -> BoundsTuple:
@@ -527,7 +527,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         para_center = [0.0, 0.0, 0.0]
         sub_id = self.GetParametricCenter(para_center)
         # EvaluateLocation requires mutable sub_id
-        sub_id = _vtk.mutable(sub_id)
+        sub_id = _vtk.mutable(sub_id)  # type: ignore[assignment]
         # center and weights are returned from EvaluateLocation
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
