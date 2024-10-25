@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from pyvista.core import _validation
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
-    from pyvista.core._typing_core import VectorLike
 
 
 def axis_angle_rotation(axis, angle, point=None, deg=True):
