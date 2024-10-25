@@ -38,12 +38,12 @@ logger = logging.getLogger(__name__)
 
 
 # utility
-def write_header(f: IO, text: str, char: str = '-') -> None:
+def write_header(f: IO, text: str, char: str = '-') -> None:  # type: ignore[type-arg]
     f.write(text + '\n')
     f.write(char * len(text) + '\n')
 
 
-def compile_regex_list(name: str, exps: str) -> list[Pattern]:
+def compile_regex_list(name: str, exps: str) -> list[Pattern]:  # type: ignore[type-arg]
     lst = []
     for exp in exps:
         try:
@@ -81,14 +81,14 @@ class CoverageBuilder(Builder):
             pattern = path.join(self.srcdir, pattern)  # noqa: PTH118
             self.c_sourcefiles.extend(glob.glob(pattern))  # noqa: PTH207
 
-        self.c_regexes: list[tuple[str, Pattern]] = []
+        self.c_regexes: list[tuple[str, Pattern]] = []  # type: ignore[type-arg]
         for name, exp in self.config.coverage_c_regexes.items():
             try:
                 self.c_regexes.append((name, re.compile(exp)))
             except Exception:
                 logger.warning(__('invalid regex %r in coverage_c_regexes'), exp)
 
-        self.c_ignorexps: dict[str, list[Pattern]] = {}
+        self.c_ignorexps: dict[str, list[Pattern]] = {}  # type: ignore[type-arg]
         for name, exps in self.config.coverage_ignore_c_items.items():
             self.c_ignorexps[name] = compile_regex_list('coverage_ignore_c_items', exps)
         self.mod_ignorexps = compile_regex_list(
@@ -377,15 +377,15 @@ class CoverageBuilder(Builder):
 
 def setup(app: Sphinx) -> dict[str, Any]:
     app.add_builder(CoverageBuilder)
-    app.add_config_value('coverage_additional_modules', [], False)
-    app.add_config_value('coverage_ignore_modules', [], False)
-    app.add_config_value('coverage_ignore_functions', [], False)
-    app.add_config_value('coverage_ignore_classes', [], False)
-    app.add_config_value('coverage_ignore_pyobjects', [], False)
-    app.add_config_value('coverage_c_path', [], False)
-    app.add_config_value('coverage_c_regexes', {}, False)
-    app.add_config_value('coverage_ignore_c_items', {}, False)
-    app.add_config_value('coverage_write_headline', True, False)
-    app.add_config_value('coverage_skip_undoc_in_source', False, False)
-    app.add_config_value('coverage_show_missing_items', False, False)
+    app.add_config_value('coverage_additional_modules', [], False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_ignore_modules', [], False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_ignore_functions', [], False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_ignore_classes', [], False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_ignore_pyobjects', [], False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_c_path', [], False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_c_regexes', {}, False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_ignore_c_items', {}, False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_write_headline', True, False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_skip_undoc_in_source', False, False)  # type: ignore[arg-type]
+    app.add_config_value('coverage_show_missing_items', False, False)  # type: ignore[arg-type]
     return {'version': sphinx.__display_version__, 'parallel_read_safe': True}
