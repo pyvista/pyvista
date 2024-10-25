@@ -55,15 +55,14 @@ jobs:
 
       - name: Set up VTK with OSMesa
         run: |
-          pip uninstall vtk -y
-          pip install vtk_osmesa --pre --no-cache --extra-index-url https://wheels.vtk.org
+          pip install vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
 
       - name: Software Report
         run: |
           python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
           which python
           pip list
-          pip show vtk_osmesa
+          pip show vtk
 
       - name: Unit Testing
         run: pytest -v tests/ --fail_extra_image_cache
