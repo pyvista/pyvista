@@ -43,7 +43,9 @@ jobs:
         run: pip install . --no-deps
 
       - name: Install test dependencies
-        run: pip install vtk -r requirements_test.txt
+        run: pip install -r requirements_test.txt
+        # TODO: Include vtk with:
+        # run: pip install vtk -r requirements_test.txt
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest'}}
