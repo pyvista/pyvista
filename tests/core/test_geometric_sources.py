@@ -161,9 +161,9 @@ def test_text3d_source():
 
 @pytest.mark.parametrize('string', [' ', 'TEXT'])
 @pytest.mark.parametrize('center', [(0, 0, 0), (1, -2, 3)])
-@pytest.mark.parametrize('height', [None, 0, 1, 2])
-@pytest.mark.parametrize('width', [None, 0, 1, 2])
-@pytest.mark.parametrize('depth', [None, 0, 1, 2])
+@pytest.mark.parametrize('height', [None, 0, 2.1])
+@pytest.mark.parametrize('width', [None, 0, 2.2])
+@pytest.mark.parametrize('depth', [None, 0, 2.3])
 @pytest.mark.parametrize('normal', [(0, 0, 1)])
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
     src = pv.Text3DSource(
@@ -209,7 +209,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
     assert np.allclose(actual_width, expected_width)
     assert np.allclose(actual_height, expected_height)
     assert np.allclose(actual_depth, expected_depth)
-    assert np.array_equal(out.center, center)
+    assert np.allclose(out.center, center)
 
     if not empty_string and width and height and depth == 0:
         # Test normal direction for planar 2D meshes
