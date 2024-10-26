@@ -47,6 +47,7 @@ repos:
             --disallow-any-generics,
             --pretty,
             --show-error-context,
+            --warn-unused-ignores,
             --warn-redundant-casts,
             --enable-error-code,
             ignore-without-code,
