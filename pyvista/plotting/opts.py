@@ -83,3 +83,20 @@ class PickerType(AnnotatedIntEnum):
     SCENE = (7, 'Scene')
     VOLUME = (8, 'Volume')
     WORLD = (9, 'World')
+
+
+class StereoType(AnnotatedIntEnum):
+    """Types of stereo rendering."""
+
+    CRYSTAL_EYES = (1, 'Crystal Eyes')
+    RED_BLUE = (2, 'Red Blue')
+    INTERLACED = (3, 'Interlaced')
+    LEFT = (4, 'Left')
+    RIGHT = (5, 'Right')
+    DRESDEN = (6, 'Dresden')
+    ANAGLYPH = (7, 'Anaglyph')
+    CHECKERBOARD = (8, 'Checkerboard')
+    SPLITVIEWPORT_HORIZONTAL = (9, 'Split Viewport Horizontal')
+    FAKE = (10, 'Fake')
+    EMULATE = (11, 'Emulate')
+    ZSPACE_INSPIRE = (12, 'ZSpace Inspire')

@@ -59,6 +59,7 @@ from .mapper import OpenGLGPUVolumeRayCastMapper
 from .mapper import PointGaussianMapper
 from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
+from .opts import StereoType
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
 from .renderer import Camera
@@ -1896,6 +1897,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self.render_window is None:
             raise RenderWindowUnavailable('Render window is not available.')
         self.render_window.MakeCurrent()  # pragma: no cover
+
+    def _enable_stereo_rendering(self, stereo_type: StereoType = StereoType.ANAGLYPH) -> None:
+        """Enable stereo rendering.
+
+        This method must be called before the window is realized.
+        """
+        if self.render_window is None:
+            raise AttributeError('The render window has been closed.')
+        # TODO: add check to make sure this is called before the window is realized
+        self.render_window.GetStereoCapableWindow()
+        self.render_window.SetStereoType(stereo_type.value)
+        self.render_window.SetStereoRender(1)
+        self.render_window.StereoUpdate()
 
     @property
     def image(self) -> pyvista.pyvista_ndarray:  # numpydoc ignore=RT01
@@ -6599,6 +6613,9 @@ class Plotter(BasePlotter):
         Scale factor when saving screenshots. Image sizes will be
         the ``window_size`` multiplied by this scale factor.
 
+    stereo : StereoType | bool, optional
+        Enable stereo rendering. If True, defaults to Anaglyph.
+
     Examples
     --------
     >>> import pyvista as pv
@@ -6635,6 +6652,7 @@ class Plotter(BasePlotter):
         lighting='light kit',
         theme=None,
         image_scale=None,
+        stereo=False,
     ):
         """Initialize a vtk plotting object."""
         super().__init__(
@@ -6744,6 +6762,11 @@ class Plotter(BasePlotter):
             self.enable_parallel_projection()
 
         self.parallel_scale = self.theme.camera.parallel_scale
+
+        if isinstance(stereo, StereoType):
+            self._enable_stereo_rendering(stereo)
+        elif stereo:
+            self._enable_stereo_rendering()
 
         # some cleanup only necessary for fully initialized plotters
         self._initialized = True
