@@ -151,7 +151,7 @@ plugins = ['numpy.typing.mypy_plugin','npt_promote']
 enable_error_code = [
     "ignore-without-code",
 ]
-exclude = "^(tests/|examples/|pyvista/ext/|examples_trame/)"
+exclude = ['pyvista/ext/']
 
 
 [tool.numpydoc_validation]
