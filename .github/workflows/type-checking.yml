@@ -8,47 +8,24 @@ concurrency:
 
 jobs:
   mypy:
-    name: Static Type Checking
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-
-      matrix:
-        include:
-          # TODO: Add testing for older python and/or numpy versions
-          # - python-version: "3.9"
-          #   numpy-version: "1.26"
-          - python-version: "3.12"
-            numpy-version: "latest"
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.12
           cache: "pip"
           cache-dependency-path: |
             requirements.txt
             requirements_test.txt
-
-      - uses: actions/cache@v4
-        with:
-          path: ~/.local/share/pyvista/examples
-          key: Examples-Data-${{ hashFiles('*') }}
-          restore-keys: |
-            Examples-Data-
 
       - name: Install PyVista
         run: pip install . --no-deps
 
       - name: Install test requirements
         run: pip install vtk -r requirements_test.txt
-
-      - name: Install NumPy
-        if: ${{ matrix.numpy-version != 'latest'}}
-        run: pip install 'numpy~=${{ matrix.numpy-version }}.0'
 
       - name: Run Mypy
         run: mypy pyvista
@@ -58,5 +35,3 @@ jobs:
           python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           pip list
-        
-
