@@ -1,0 +1,37 @@
+name: Static Type Checking
+
+on: [pull_request, workflow_dispatch]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            requirements_test.txt
+
+      - name: Install PyVista
+        run: pip install . --no-deps
+
+      - name: Install test requirements
+        run: pip install vtk -r requirements_test.txt
+
+      - name: Run Mypy
+        run: mypy pyvista
+
+      - name: Software Report
+        run: |
+          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
+          which python
+          pip list
