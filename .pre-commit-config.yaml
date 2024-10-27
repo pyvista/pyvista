@@ -39,7 +39,7 @@ repos:
         files: ^pyvista/
 
   - repo: https://github.com/pyvista/pre-commit-mypy
-    rev: v1.13.0
+    rev: v0.1dev0
     hooks:
       - id: mypy
 
