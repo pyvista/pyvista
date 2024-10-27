@@ -25,6 +25,7 @@ jobs:
     runs-on: macos-12
     name: Mac OS Unit Testing
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.11"]
 
