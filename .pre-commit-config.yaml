@@ -39,9 +39,16 @@ repos:
         files: ^pyvista/
 
   - repo: https://github.com/pyvista/pre-commit-mypy
-    rev: v0.1dev0
+    rev: v0.1dev1
     hooks:
       - id: mypy
+      - args:
+          [
+            "-r",
+            "requirements_test.txt",
+            "mypy",
+            "pyvista",
+          ]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
