@@ -819,7 +819,7 @@ class Property(_vtk.vtkProperty):
         if value == InterpolationType.PBR:
             self.SetInterpolationToPBR()
         else:
-            self.SetInterpolation(value)
+            self.SetInterpolation(value)  # type: ignore[arg-type]
 
     @property
     def render_points_as_spheres(self) -> bool:  # numpydoc ignore=RT01

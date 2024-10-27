@@ -241,7 +241,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
     @bounds.setter
     def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetBounds(bounds)
+        self.SetBounds(bounds)  # type: ignore[arg-type]
         self._update_labels()
         bnds = self.bounds
         self.x_axis_range = bnds.x_min, bnds.x_max

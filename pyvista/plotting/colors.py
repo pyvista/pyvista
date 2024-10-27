@@ -477,7 +477,8 @@ COLOR_SCHEMES = {
 }
 
 SCHEME_NAMES = {
-    scheme_info['id']: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()
+    scheme_info['id']: scheme_name  # type: ignore[index]
+    for scheme_name, scheme_info in COLOR_SCHEMES.items()
 }
 
 

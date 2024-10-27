@@ -280,7 +280,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         >>> flipped.plot()
 
         """
-        return Texture(self.to_image()._flip_uniform(0))
+        return Texture(self.to_image()._flip_uniform(0))  # type: ignore[abstract]
 
     def flip_y(self) -> Texture:
         """Flip the texture in the y direction.
@@ -298,7 +298,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         >>> flipped.plot()
 
         """
-        return Texture(self.to_image()._flip_uniform(1))
+        return Texture(self.to_image()._flip_uniform(1))  # type: ignore[abstract]
 
     def to_image(self):
         """Return the texture as an image.
@@ -359,7 +359,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         >>> rotated.plot()
 
         """
-        return Texture(np.rot90(self.to_array()))
+        return Texture(np.rot90(self.to_array()))  # type: ignore[abstract]
 
     def rotate_ccw(self) -> Texture:
         """Rotate this texture 90 degrees counter-clockwise.
@@ -377,7 +377,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         >>> rotated.plot()
 
         """
-        return Texture(np.rot90(self.to_array(), k=3))
+        return Texture(np.rot90(self.to_array(), k=3))  # type: ignore[abstract]
 
     @property
     def cube_map(self) -> bool:  # numpydoc ignore=RT01
@@ -635,7 +635,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         data = self.to_array()
         r, g, b = data[..., 0], data[..., 1], data[..., 2]
         data = (0.299 * r + 0.587 * g + 0.114 * b).round().astype(np.uint8)
-        return Texture(data)
+        return Texture(data)  # type: ignore[abstract]
 
 
 def image_to_texture(image):
