@@ -1,4 +1,4 @@
-"""Run `mypy` executable using a templated pre-commit hook
+"""Run `mypy` executable using a templated pre-commit hook.
 
 This script reads the `.pre-commit-config.yaml` file and populates the templated
 values for the `mypy_template` hook and then runs it.
@@ -6,6 +6,7 @@ values for the `mypy_template` hook and then runs it.
 `requirements_test.txt` is parsed to fill the 'additional_dependencies' field
 `args` is also populated.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -22,9 +23,10 @@ MYPY_ARGS = ['pyvista']  # List of pre-commit `args` passed when executing `mypy
 
 def main():
     """Read `mypy_template` and populate its templated fields."""
+
     def _parse_requirements_file(file_path):
         requirements = {}
-        with open(file_path) as file:
+        with open(file_path) as file:  # noqa: PTH123
             for line in file:
                 line = line.strip()
 
@@ -50,7 +52,7 @@ def main():
     # Get pre-commit config
     project_root = Path(__file__).parent.parent
     pre_commit_config_filepath = project_root / '.pre-commit-config.yaml'
-    with open(pre_commit_config_filepath) as file:
+    with open(pre_commit_config_filepath) as file:  # noqa: PTH123
         config = yaml.safe_load(file)
 
     # Extract the mypy hook config and update
@@ -68,17 +70,26 @@ def main():
             new_config = {'repos': [repo]}
             break
     if new_config is None:
-        raise RuntimeError(f'Pre-commit repo:\n\t{TARGET_REPO}\n'
-                           f'does not exist in config:\n\t{str(pre_commit_config_filepath)}\n')
-
+        raise RuntimeError(
+            f'Pre-commit repo:\n\t{TARGET_REPO}\n'
+            f'does not exist in config:\n\t{pre_commit_config_filepath!s}\n'
+        )
 
     # Writing YAML data to a file
     new_config_filepath = project_root / '.pre-commit-config-mypy.yaml'
-    with open(new_config_filepath, 'w') as file:
+    with open(new_config_filepath, 'w') as file:  # noqa: PTH123
         yaml.dump(new_config, file)
 
     subprocess.run(
-        ['pre-commit', 'run', '--hook-stage', 'manual', '--config', new_config_filepath, MYPY_TEMPLATE]
+        [
+            'pre-commit',
+            'run',
+            '--hook-stage',
+            'manual',
+            '--config',
+            new_config_filepath,
+            MYPY_TEMPLATE,
+        ]
     )
 
 

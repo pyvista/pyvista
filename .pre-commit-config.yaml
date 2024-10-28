@@ -38,8 +38,8 @@ repos:
       - id: numpydoc-validation
         files: ^pyvista/
 
-  # This config is used to call the `mypy` executable
-  # The hook is templated and is not intended to be run directly
+  # This hook is used to call the `mypy` executable
+  # It is templated and is not intended to be run directly
   # Fields with empty values `[]` are populated dynamically by the `mypy` hook
   # And saved as a separate `.pre-commit-config-mypy.yaml` file
   - repo: https://github.com/pyvista/pre-commit-mypy
@@ -54,7 +54,7 @@ repos:
         stages:
           - manual
 
-  # This hook populates the templated values in `mypy_template` and runs the hook.
+  # This hook populates the templated values in `mypy_template` and runs it.
   - repo: local
     hooks:
     -   id: mypy
