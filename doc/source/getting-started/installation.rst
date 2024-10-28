@@ -3,7 +3,7 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.8+.
+PyVista is supported on Python versions 3.9+.
 
 For the best experience, please considering using Anaconda as a virtual
 environment and package manager for Python and following the instructions to
