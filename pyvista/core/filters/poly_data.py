@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Callable
-from typing import Sequence
 import warnings
 
 import numpy as np
