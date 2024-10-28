@@ -93,20 +93,20 @@ repos:
       - id: ruff-format
         exclude: tests/core/typing
 
-#  - repo: https://github.com/rbubley/mirrors-prettier
-#    rev: v3.3.3
-#    hooks:
-#      - id: prettier
-#        types_or: [yaml, markdown, html, css, scss, javascript, json]
-#
-#  - repo: https://github.com/pre-commit/pygrep-hooks
-#    rev: v1.10.0
-#    hooks:
-#      - id: rst-backticks
-#      - id: rst-directive-colons
-#      - id: rst-inline-touching-normal
-#
-#  - repo: https://github.com/scop/pre-commit-shfmt
-#    rev: v3.9.0-1
-#    hooks:
-#      - id: shfmt
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.3.3
+    hooks:
+      - id: prettier
+        types_or: [yaml, markdown, html, css, scss, javascript, json]
+
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      - id: rst-backticks
+      - id: rst-directive-colons
+      - id: rst-inline-touching-normal
+
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.9.0-1
+    hooks:
+      - id: shfmt

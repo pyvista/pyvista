@@ -10,6 +10,7 @@ imageio-ffmpeg<0.6.0
 ipython<9.0.0
 ipywidgets<9.0.0
 meshio<5.4.0
+nest_asyncio<1.6.1
 numpydoc==1.7.0
 pyanalyze<=0.13.1
 pytest<8.4.0
