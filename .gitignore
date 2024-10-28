@@ -23,6 +23,9 @@ dist/
 # MISC
 .mypy_cache
 
+# Auto-generated from `generate_mypy_config` pre-commit hook
+.pre-commit-config-mypy.yaml
+
 
 # doc generated
 tests/tinypages/_build
