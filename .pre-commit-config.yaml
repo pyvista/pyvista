@@ -3,7 +3,7 @@
 ci:
   autofix_prs: false
   autoupdate_schedule: monthly
-  skip: [ mypy ]
+  skip: [mypy]
 
 repos:
   - repo: https://github.com/keewis/blackdoc
@@ -47,7 +47,7 @@ repos:
     rev: v0.1dev5
     hooks:
       - id: mypy
-        additional_dependencies: []  # This value is set dynamically
+        additional_dependencies: [] # This value is set dynamically
         always_run: true
         stages:
           - manual
@@ -55,7 +55,7 @@ repos:
   # This hook populates the templated values in `mypy_template` and runs it.
   - repo: local
     hooks:
-    -   id: mypy
+      - id: mypy
         name: mypy
         language: system
         verbose: true
