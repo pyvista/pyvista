@@ -23,7 +23,7 @@ dist/
 # MISC
 .mypy_cache
 
-# Auto-generated from `generate_mypy_config` pre-commit hook
+# Auto-generated config for pre-commit
 .pre-commit-config-mypy.yaml
 
 
