@@ -54,13 +54,7 @@ repos:
           ]
         exclude: ^(tests/|examples/|pyvista/ext/|examples_trame/)
         additional_dependencies:
-          [
-            "mypy-extensions==1.0.0",
-            "toml==0.10.2",
-            "numpy>=2.0",
-            "npt-promote==0.1",
-            "matplotlib<3.9.1",
-          ]
+          ["numpy>=2.0", "npt-promote==0.1", "matplotlib<3.9.1"]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
