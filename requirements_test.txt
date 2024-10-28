@@ -14,7 +14,6 @@ mypy<1.14.0
 nest_asyncio<1.6.1
 npt-promote==0.1
 numpydoc==1.7.0
-packaging<= 25.0
 pyanalyze<=0.13.1
 pytest<8.4.0
 pytest-cov<5.1.0
