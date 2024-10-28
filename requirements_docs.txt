@@ -10,7 +10,7 @@ lxml==5.3.0
 meshio==5.3.5
 mypy==1.13.0
 mypy-extensions==1.0.0
-numpydoc==1.7.0
+numpydoc==1.8.0
 osmnx==1.9.4
 pypandoc==1.14
 pytest-sphinx==0.6.3
