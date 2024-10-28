@@ -4262,9 +4262,9 @@ class PolyDataFilters(DataSetFilters):
             isinstance(val, (float, int)) and round(val) == val
             for val in (background_value, foreground_value)
         ):
-            scalars_dtype = int
+            scalars_dtype = np.int_
         else:
-            scalars_dtype = float
+            scalars_dtype = np.float64
         scalars = (  # Init with background value
             np.zeros(scalars_shape, dtype=scalars_dtype)
             if background_value == 0
