@@ -48,7 +48,6 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [] # This value is set dynamically
-        always_run: true
         stages:
           - manual
 
@@ -58,7 +57,6 @@ repos:
       - id: mypy
         name: mypy
         language: system
-        verbose: true
         entry: python -m scripts.run_pre_commit_mypy
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
