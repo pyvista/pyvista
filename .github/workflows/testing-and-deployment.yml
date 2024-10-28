@@ -151,7 +151,7 @@ jobs:
       matrix:
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
-          - python-version: "3.8"
+          - python-version: "3.9"
             vtk-version: "9.0.3" # Requires numpy~=1.23
             numpy-version: "1.23"
           - python-version: "3.9"
@@ -275,7 +275,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
 
