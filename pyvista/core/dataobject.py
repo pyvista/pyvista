@@ -572,8 +572,7 @@ class DataObject:
 
     @user_dict.setter
     def user_dict(
-        self,
-        dict_: dict[str, _JSONValueType] | UserDict,  # type: ignore[type-arg]
+        self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]
     ):  # numpydoc ignore=GL08
         # Setting None removes the field data array
         if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
