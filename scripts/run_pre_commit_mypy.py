@@ -12,12 +12,11 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 
-try:
-    from packaging.requirements import Requirement
-except ModuleNotFoundError:
-    subprocess.run(['pip', 'install', '--upgrade', 'packaging'])
-    from packaging.requirements import Requirement
 import yaml
+
+# Need `packaging` to parse project requirements
+subprocess.run(['pip', 'install', '--upgrade', 'packaging'])
+from packaging.requirements import Requirement
 
 MYPY = 'mypy'
 MYPY_TEMPLATE = MYPY + '_template'
