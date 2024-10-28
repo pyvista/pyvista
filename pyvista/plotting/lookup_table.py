@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Tuple
 from typing import Union
 from typing import cast
 
@@ -1116,7 +1115,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if opacity:
             color.append(self.GetOpacity(value))
         return cast(
-            Union[Tuple[float, float, float], Tuple[float, float, float, float]],
+            Union[tuple[float, float, float], tuple[float, float, float, float]],
             tuple(color),
         )
 

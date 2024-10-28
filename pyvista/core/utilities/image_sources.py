@@ -11,7 +11,7 @@ from pyvista.core.utilities.misc import no_new_attr
 from .helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Sequence
+    from collections.abc import Sequence
 
 
 @no_new_attr
