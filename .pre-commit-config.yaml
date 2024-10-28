@@ -3,6 +3,7 @@
 ci:
   autofix_prs: false
   autoupdate_schedule: monthly
+  skip: [ mypy ]
 
 repos:
   - repo: https://github.com/keewis/blackdoc
