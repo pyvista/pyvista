@@ -12,6 +12,7 @@ ipywidgets<9.0.0
 meshio<5.4.0
 nest_asyncio<1.6.1
 numpydoc==1.8.0
+packaging < 25.0
 pyanalyze<=0.13.1
 pytest<8.4.0
 pytest-cov<5.1.0
@@ -29,3 +30,4 @@ trame>=2.5.2,<3.7.1
 trame-vtk>=2.5.8,<2.8.12
 trame-vuetify>=2.3.1,<2.7.2
 trimesh<4.6.0
+typing-extensions<4.13.0
