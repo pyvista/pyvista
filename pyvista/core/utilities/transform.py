@@ -267,7 +267,7 @@ class Transform(_vtk.vtkTransform):
             if isinstance(trans, Sequence):
                 [self.concatenate(t) for t in trans]
             else:
-                self.matrix = trans
+                self.matrix = trans  # type: ignore[assignment]
 
     def __add__(self, other: VectorLike[float] | TransformLike) -> Transform:
         """:meth:`concatenate` this transform using post-multiply semantics.
