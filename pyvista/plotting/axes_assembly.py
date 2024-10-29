@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Sequence
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
-from typing import Sequence
 from typing import TypedDict
 
 import numpy as np
@@ -29,8 +29,8 @@ from pyvista.plotting.text import Label
 from pyvista.plotting.text import TextProperty
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Iterator
     import sys
-    from typing import Iterator
 
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
