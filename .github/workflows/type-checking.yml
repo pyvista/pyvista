@@ -35,3 +35,8 @@ jobs:
           python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           pip list
+
+      # mypy is skipped for pre-commit.ci
+      # Ensure the pre-commit hook is also working
+      - name: Run Mypy with Pre-commit
+        run: pre-commit run --verbose --all-files mypy
