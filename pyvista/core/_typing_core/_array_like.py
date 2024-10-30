@@ -31,6 +31,11 @@ import numpy as np
 import numpy.typing as npt
 
 # Define numeric types
+
+_NumberUnion = Union[
+    type[np.floating], type[np.integer], type[np.bool_], type[float], type[int], type[bool]
+]  # type: ignore[type-arg]
+
 NumberType = TypeVar(
     'NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
@@ -43,6 +48,9 @@ _NumberType = TypeVar(  # noqa: PYI018
     '_NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
+
+_PyNumberType = TypeVar('_PyNumberType', float, int, bool)  # noqa: PYI018
+_NpNumberType = TypeVar('_NpNumberType', np.float64, np.int_, np.bool_)  # noqa: PYI018
 
 NumpyArray = npt.NDArray[NumberType]
 
