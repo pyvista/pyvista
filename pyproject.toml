@@ -26,13 +26,13 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
 ]
 dependencies = [
-    'matplotlib>=3.0.1',
-    'numpy>=1.21.0',  # minimum typing support
-    'pillow',
-    'pooch',
-    'scooby>=0.5.1',
+    'matplotlib>=3.0.1,<3.9.3',
+    'numpy>=1.21.0,<2.2.0',  # minimum typing support
+    'pillow<11.1.0',
+    'pooch<1.9.0',
+    'scooby>=0.5.1<0.11.0',
     'vtk',  # keep without version constraints
-    'typing-extensions',
+    'typing-extensions<4.13.0',
 ]
 dynamic = ['version']
 
@@ -56,16 +56,7 @@ jupyter = [
     'trame-vtk>=2.5.8',
     'trame-vuetify>=2.3.1',
 ]
-test-base = [
-    'matplotlib<3.9.3',
-    'numpy<2.2.0',
-    'pillow<11.1.0',
-    'pooch<1.9.0',
-    'scooby>=0.5.1,<0.11.0',
-    'typing-extensions<4.13.0',
-]
-test-all = [
-    'pyvista[test-base]',
+test = [
     'cmocean<4.0.4',
     'colorcet<3.2.0',
     'embreex<2.17.8',
