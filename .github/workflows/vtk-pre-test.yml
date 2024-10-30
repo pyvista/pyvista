@@ -47,11 +47,8 @@ jobs:
           restore-keys: |
             Examples-1-
 
-      - name: Install pyvista
-        run: pip install . --no-deps
-
-      - name: Install Testing Requirements
-        run: pip install -r requirements_test.txt
+      - name: Install PyVista Testing Requirements
+        run: pip install .[test]
 
       - name: Set up VTK with OSMesa
         run: |
