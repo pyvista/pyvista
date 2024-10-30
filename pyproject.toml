@@ -125,6 +125,10 @@ docs = [
     'trame-vuetify==2.7.1',
     'trimesh==4.5.1',
 ]
+dev = [
+    'pyvista[test,docs]',
+    'pre-commit'
+]
 
 [project.urls]
 Documentation = 'https://docs.pyvista.org/'
