@@ -28,7 +28,7 @@ jobs:
 
       - name: Install pyvista and doctest requirements
         run: |
-          pip install .[test]
+          pip install -e .[test]
 
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v2
