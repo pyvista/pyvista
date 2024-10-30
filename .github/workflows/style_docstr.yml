@@ -31,8 +31,7 @@ jobs:
 
       - name: Install pyvista and doctest requirements
         run: |
-          pip install -e . --no-deps
-          pip install -r requirements_test.txt vtk
+          pip install -e .[test] vtk
 
       - name: Setup headless display
         uses: pyvista/setup-headless-display-action@v2
@@ -61,7 +60,7 @@ jobs:
           python-version: 3.12
 
       - name: Install test dependencies
-        run: pip install -r requirements_docs.txt
+        run: pip install .[docs]
 
       # this is equivalent to
       # vale --config doc/.vale.ini doc pyvista examples
