@@ -30,6 +30,13 @@ jobs:
       - name: Run Mypy
         run: mypy pyvista
 
+        # Ensure the pre-commit hook is also working
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run Mypy with pre-commit
+        run: pre-commit run --verbose --all-files mypy
+
       - name: Software Report
         run: |
           python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
