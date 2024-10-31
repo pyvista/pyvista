@@ -161,6 +161,16 @@ checks = [
     "GL06",  # Found unknown section
     "GL07",  # "Sections are in the wrong order. Correct order is: {correct_sections}",
     "GL09",  # Deprecation warning should precede extended summary (check broken)
+    "PR01",  # "Parameters {missing_params} not documented",
+    "PR02",  # "Unknown parameters {unknown_params}",
+    "PR03",  # "Wrong parameters order. Actual: {actual_params}. Documented: {documented_params}",
+    "PR04",  # 'Parameter "{param_name}" has no type',
+    "PR05",  # 'Parameter "{param_name}" type should not finish with "."',
+    "PR06",  # 'Parameter "{param_name}" type should use "{right_type}" instead of "{wrong_type}"',
+    "PR07",  # 'Parameter "{param_name}" has no description',
+    "PR08",  # 'Parameter "{param_name}" description should start with a capital letter",
+    "PR09",  # 'Parameter "{param_name}" description should finish with "."',
+    "PR10",  # 'Parameter "{param_name}" requires a space before the colon separating the parameter name and type",
     "SA01",  # Not all docstrings need a see also
     "SA04",  # See also section does not need descriptions
     "SS05",  # Appears to be broken.
