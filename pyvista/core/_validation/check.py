@@ -591,6 +591,7 @@ def check_shape(
     See Also
     --------
     check_length
+    check_ndim
 
     Examples
     --------
@@ -630,6 +631,77 @@ def check_shape(
     else:
         msg += f'Shape must be one of {shape}.'
     raise ValueError(msg)
+
+
+def check_ndim(
+    array: _ArrayLikeOrScalar[NumberType],
+    /,
+    ndim: Union[int, Sequence[int]],
+    *,
+    name: str = 'Array',
+):
+    """Check if an array has the specified number of dimensions.
+
+    .. note::
+        Scalar values have a dimension of ``0``.
+
+    Parameters
+    ----------
+    array : float | ArrayLike[float]
+        Number or array to check.
+
+    ndim : int | Sequence[int], optional
+        A single dimension or a sequence of allowable dimensions. If an
+        integer, the array must have this number of dimension(s). If a
+        sequence, the array must have at least one of the specified number
+        of dimensions.
+
+    name : str, default: "Array"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    ValueError
+        If the array does not have the required number of dimensions.
+
+    See Also
+    --------
+    check_length
+    check_shape
+
+    Examples
+    --------
+    Check if an array is one-dimensional
+
+    >>> import numpy as np
+    >>> from pyvista import _validation
+    >>> _validation.check_ndim([1, 2, 3], ndim=1)
+
+    Check if an array is two-dimensional or a scalar.
+
+    >>> _validation.check_ndim(1, ndim=(0, 2))
+
+    """
+    if not isinstance(ndim, Sequence):
+        ndim_: Sequence[int] = [ndim]
+    else:
+        ndim_ = ndim
+
+    array_ndim = _cast_to_numpy(array).ndim
+    if array_ndim not in ndim_:
+        check_ndim(ndim, [0, 1], name='ndim')
+
+        if len(ndim_) == 1:
+            check_integer(ndim_[0], strict=True, name='ndim')
+            expected = f'{ndim}'
+        else:
+            check_integer(ndim, strict=True, name='ndim')
+            expected = f'one of {ndim}'
+        msg = (
+            f'{name} has the incorrect number of dimensions. '
+            f'Got {array_ndim}, expected {expected}.'
+        )
+        raise ValueError(msg)
 
 
 def check_number(num, /, *, name='Object'):
@@ -1055,6 +1127,7 @@ def check_length(
     See Also
     --------
     check_shape
+    check_ndim
 
     Examples
     --------
