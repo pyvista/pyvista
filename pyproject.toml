@@ -350,6 +350,17 @@ extend-select = [
     "C4",
     "COM",
     "D",
+    # Need to select D### codes explicitly since they're implicitly
+    # removed by the NumPy pydocstyle option
+    "D107",
+    "D203",
+    "D212",
+    "D213",
+    "D402",
+    "D413",
+    "D415",
+    "D416",
+    "D417",
     "DJ",
     "DTZ",
     "E",
