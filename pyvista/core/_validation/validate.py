@@ -39,6 +39,18 @@ except ImportError:
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core._array_like import _NumberType
 from pyvista.core._typing_core._array_like import _NumberUnion
+from pyvista.core._validation import check_contains
+from pyvista.core._validation import check_finite
+from pyvista.core._validation import check_integer
+from pyvista.core._validation import check_length
+from pyvista.core._validation import check_ndim
+from pyvista.core._validation import check_nonnegative
+from pyvista.core._validation import check_range
+from pyvista.core._validation import check_real
+from pyvista.core._validation import check_shape
+from pyvista.core._validation import check_sorted
+from pyvista.core._validation import check_string
+from pyvista.core._validation import check_subdtype
 from pyvista.core._validation._cast_array import _cast_to_numpy
 from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core._validation.check import check_contains
