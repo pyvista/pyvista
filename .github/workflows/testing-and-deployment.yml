@@ -154,19 +154,19 @@ jobs:
           - python-version: "3.9"
             vtk-version: "9.0.3" # Requires numpy~=1.23
             numpy-version: "1.23"
-          - python-version: "3.9"
+          - python-version: "3.10"
             vtk-version: "9.1"
             numpy-version: "1.26" # Test numpy 1.26
-          - python-version: "3.10"
+          - python-version: "3.11"
             vtk-version: "9.2.2"
             numpy-version: "latest"
-          - python-version: "3.11"
+          - python-version: "3.12"
             vtk-version: "9.2.6"
             numpy-version: "latest"
-          - python-version: "3.12"
+          - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "latest"
-          - python-version: "3.12"
+          - python-version: "3.13"
             vtk-version: "latest"
             numpy-version: "nightly"
     steps:
@@ -275,7 +275,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
 
