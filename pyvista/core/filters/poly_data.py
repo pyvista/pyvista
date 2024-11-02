@@ -4154,20 +4154,7 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = plot.add_mesh(mesh.slice(), color='red')
         >>> plot.show(cpos="yz")
 
-        When multiple internal surfaces are nested, they are successively treated as
-        interfaces between background and foreground.
-
-        >>> mesh = (
-        ...     pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
-        ... )
-        >>> binary_mask = mesh.voxelize_binary_mask(
-        ...     dimensions=(1, 50, 50)
-        ... ).points_to_cells()
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask)
-        >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos="yz")
-
+        Note how the intersection is excluded from the mask.
         To include the voxels delimited by internal surfaces in the foreground, the internal
         surfaces should be removed, for instance by applying a boolean union. Note that
         this operation in unreliable in VTK but may be performed with external tools such
@@ -4199,7 +4186,21 @@ class PolyDataFilters(DataSetFilters):
         >>> _ = plot.add_mesh(binary_mask_1)
         >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
         >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
-        >>> plot.show(jupyter_backend="notebook", cpos="yz")
+        >>> plot.show(cpos="yz")
+
+        When multiple internal surfaces are nested, they are successively treated as
+        interfaces between background and foreground.
+
+        >>> mesh = (
+        ...     pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
+        ... )
+        >>> binary_mask = mesh.voxelize_binary_mask(
+        ...     dimensions=(1, 50, 50)
+        ... ).points_to_cells()
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask)
+        >>> _ = plot.add_mesh(mesh.slice(), color='red')
+        >>> plot.show(cpos="yz")
 
         """
         _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
