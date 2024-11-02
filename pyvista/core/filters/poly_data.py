@@ -3915,9 +3915,23 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Voxelize :class:`~pyvista.PolyData` as a binary :class:`~pyvista.ImageData` mask.
 
-        Generate a voxelized representation of a surface where the voxels enclosed by the
-        surface are referred to as foreground. The voxelization can be controlled in several
-        ways.
+        The binary mask is a point data array where points inside and outside of the
+        input surface are labelled with ``foreground_value`` and ``background_value``,
+        respectively.
+
+        This filter implements `vtkPolyDataToImageStencil
+        <https://vtk.org/doc/nightly/html/classvtkPolyDataToImageStencil.html>`_. This
+        algorithm operates as follows:
+
+        * The algorithm iterates through the z-slice of the ``reference_volume``.
+        * For each slice, it cuts the input :class:`~pyvista.PolyData` surface to create
+          2D polylines at that z position. It attempts to close any open polylines.
+        * For each x position along the polylines, the corresponding y positions are
+          determined.
+        * For each slice, the grid points are labelled as foreground or background based
+          on their xy coordinates.
+
+        The voxelization can be controlled in several ways:
 
         #. Specify the output geometry using a ``reference_volume``.
 
@@ -3952,10 +3966,9 @@ class PolyDataFilters(DataSetFilters):
             for examples demonstrating the difference.
 
         .. note::
-            This filter considers any surface present in the mesh as an interface between
-            background and foreground, including internal surfaces. Because of this behavior,
-            internal surfaces, due, for instance, to intersecting meshes, may produce
-            unexpected results. See `Examples`.
+            This filter does not discard internal surfaces, due, for instance, to
+            intersecting meshes. Instead, the intersection will be considered as
+            background which may produce unexpected results. See `Examples`.
 
         Parameters
         ----------
@@ -4255,7 +4268,9 @@ class PolyDataFilters(DataSetFilters):
                         1 / 100
                         if mesh_length_fraction is None
                         else _validation.validate_number(
-                            mesh_length_fraction, must_have_dtype=float, must_be_in_range=[0.0, 1.0]
+                            mesh_length_fraction,
+                            must_have_dtype=float,
+                            must_be_in_range=[0.0, 1.0],
                         )
                     )
                     spacing = self.length * mesh_length_fraction  # type: ignore[attr-defined]
