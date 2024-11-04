@@ -11,9 +11,10 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersModeling import vtkRuledSurfaceFilter
 from vtkmodules.vtkRenderingCore import vtkActor
 from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
-from vtkmodules.vtkRenderingCore import vtkRenderer
 from vtkmodules.vtkRenderingCore import vtkRenderWindow
 from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor
+
+import pyvista as pv
 
 # noinspection PyUnresolvedReferences
 
@@ -22,7 +23,8 @@ def main():
     colors = vtkNamedColors()
 
     # Create a rendering window and renderer
-    ren = vtkRenderer()
+    plotter = pv.Plotter()
+    ren = plotter.renderer
     renWin = vtkRenderWindow()
     renWin.AddRenderer(ren)
 
