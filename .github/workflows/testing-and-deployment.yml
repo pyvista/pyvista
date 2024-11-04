@@ -200,15 +200,11 @@ jobs:
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
-        run: |
-          pip uninstall numpy -y
-          pip install 'numpy~=${{ matrix.numpy-version }}.0'
+        run: pip install 'numpy~=${{ matrix.numpy-version }}.0'
 
       - name: Limit Matplotlib for VTK<9.2.2
         if: ${{ matrix.vtk-version == '9.1' || matrix.vtk-version == '9.0.3' }}
-        run: |
-          pip uninstall matplotlib -y
-          pip install 'matplotlib<3.6'
+        run: pip install 'matplotlib<3.6'
 
       - name: Install latest numpy 2.0 beta/rc
         if: ${{ matrix.numpy-version == 'nightly' }}
