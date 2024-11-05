@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from itertools import product
 import pathlib
 from typing import TYPE_CHECKING
 
@@ -2750,17 +2751,16 @@ class WidgetHelper:
             rad_outer = centre
             rad_inner = centre - border_size
             # Paint radio button with simple anti-aliasing
-            for i in range(size):
-                for j in range(size):
-                    distance = np.sqrt((i - size / 2) ** 2 + (j - size / 2) ** 2)
-                    if distance < rad_inner:
-                        arr[i, j] = fg_color
-                    elif rad_inner <= distance <= rad_inner + smooth:
-                        blend = (distance - rad_inner) / smooth
-                        arr[i, j] = (1 - blend) * fg_color + blend * bg_color
-                    elif rad_outer - 2 * smooth <= distance <= rad_outer:
-                        blend = abs(distance - rad_outer + smooth) / smooth
-                        arr[i, j] = (1 - blend) * fg_color + blend * bg_color
+            for i, j in product(range(size), range(size)):
+                distance = np.sqrt((i - size / 2) ** 2 + (j - size / 2) ** 2)
+                if distance < rad_inner:
+                    arr[i, j] = fg_color
+                elif rad_inner <= distance <= rad_inner + smooth:
+                    blend = (distance - rad_inner) / smooth
+                    arr[i, j] = (1 - blend) * fg_color + blend * bg_color
+                elif rad_outer - 2 * smooth <= distance <= rad_outer:
+                    blend = abs(distance - rad_outer + smooth) / smooth
+                    arr[i, j] = (1 - blend) * fg_color + blend * bg_color
 
             button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button
