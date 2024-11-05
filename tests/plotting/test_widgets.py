@@ -336,7 +336,49 @@ def test_widget_radio_button(uniform):
     p = pv.Plotter()
     func = lambda: None  # Does nothing
     p.add_mesh(uniform)
-    p.add_radio_button_widget(callback=func, radio_button_group='group')
+    b = p.add_radio_button_widget(callback=func, radio_button_group='group')
+    assert p.radio_button_widget_dict['group'][0] == b
+    p.close()
+    assert 'group' not in p.radio_button_widget_dict
+
+
+def test_widget_radio_button_with_title(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    p.add_radio_button_widget(callback=func, radio_button_group='group', title='my_button')
+    assert len(p.radio_button_title_dict['group']) == 1
+    p.close()
+    assert 'group' not in p.radio_button_title_dict
+
+
+def test_widget_radio_button_multiple_on(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    b1 = p.add_radio_button_widget(callback=func, radio_button_group='group', value=True)
+    b2 = p.add_radio_button_widget(callback=func, radio_button_group='group', value=True)
+    assert len(p.radio_button_widget_dict['group']) == 2
+    assert b1.GetRepresentation().GetState() == 0
+    assert b2.GetRepresentation().GetState() == 1
+    p.close()
+
+
+def test_widget_radio_button_multiple_switch(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    b1 = p.add_radio_button_widget(
+        callback=func, radio_button_group='group', value=True, size=50, position=(10.0, 10.0)
+    )
+    b2 = p.add_radio_button_widget(
+        callback=func, radio_button_group='group', size=50, position=(10.0, 70.0)
+    )
+    p.show(auto_close=False)
+    # Click b1 and switch active radio button
+    p.iren._mouse_left_button_click(35, 95)
+    assert b1.GetRepresentation().GetState() == 0
+    assert b2.GetRepresentation().GetState() == 1
     p.close()
 
 
