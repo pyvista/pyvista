@@ -332,6 +332,23 @@ def test_widget_closed(uniform):
         pl.add_checkbox_button_widget(callback=lambda value: value)
 
 
+def test_widget_radio_button(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    p.add_radio_button_widget(callback=func, radio_button_group='group')
+    p.close()
+
+
+def test_widget_radio_button_plotter_closed(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    p.close()
+    with pytest.raises(RuntimeError, match='closed plotter'):
+        p.add_radio_button_widget(callback=func, radio_button_group='group')
+
+
 @pytest.mark.needs_vtk_version(9, 1)
 def test_add_camera_orientation_widget(uniform):
     p = pv.Plotter()
