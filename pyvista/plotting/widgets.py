@@ -92,6 +92,8 @@ class WidgetHelper:
         self.spline_sliced_meshes = []
         self.sphere_widgets = []
         self.button_widgets = []
+        self.radio_button_widget_dict = {}
+        self.radio_button_title_dict = {}
         self.distance_widgets = []
         self.logo_widgets = []
         self.camera3d_widgets = []
@@ -2623,6 +2625,202 @@ class WidgetHelper:
         self.button_widgets.append(button_widget)
         return button_widget
 
+    def add_radio_button_widget(
+        self,
+        callback,
+        radio_button_group,
+        value=False,
+        title=None,
+        position=(10.0, 10.0),
+        size=50,
+        border_size=8,
+        color_on='blue',
+        color_off='grey',
+        background_color=None,
+    ):
+        """Add a radio button widget to the scene.
+
+        Radio buttons work in groups. Only one button in a group can be on at
+        at the same time. Typically you should add two or more buttons belonging
+        to a same radio button group. Each button should be passed a callback
+        function. This function will be called when a radio button in a group
+        is switched on, assuming it was not already on.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called when a radio button's state changes from off to
+            on.
+
+        radio_button_group: str
+            Name of the group for the radio button.
+
+        value : bool, default: False
+            The default state of the button. If multiple buttons in the same
+            group are initialized with to True state, only the last initialized
+            button will remain on.
+
+        title: str, optional
+            String title to be displayed next to the radio button.
+
+        position : sequence[float], default: (10.0, 10.0)
+            The absolute coordinates of the bottom left point of the button.
+
+        size : int, default: 50
+            The diameter of the button in number of pixels.
+
+        border_size : int, default: 8
+            The size of the borders of the button in pixels.
+
+        color_on : ColorLike, default: ``'blue'``
+            The color used when the button is checked.
+
+        color_off : ColorLike, default: ``'grey'``
+            The color used when the button is not checked.
+
+        background_color : ColorLike, optional
+            The background color of the button. If not set, default  will be set
+            as ``self.background_color``.
+
+        Returns
+        -------
+        vtk.vtkButtonWidget
+            The VTK button widget configured as a radio button.
+
+        Examples
+        --------
+        The following example creates a background color switcher.
+
+        >>> import pyvista as pv
+        >>> p = pv.Plotter()
+        >>> def set_bg(color):
+        ...     def wrapped_callback():
+        ...         p.background_color = color
+        ...
+        ...     return wrapped_callback
+        ...
+        >>> p.add_radio_button_widget(
+        ...     set_bg('white'),
+        ...     'bgcolor',
+        ...     position=(10.0, 200.0),
+        ...     title='White',
+        ...     value=True,
+        ... )
+        >>> p.add_radio_button_widget(
+        ...     set_bg('lightblue'),
+        ...     'bgcolor',
+        ...     position=(10.0, 140.0),
+        ...     title='Light Blue',
+        ... )
+        >>> p.add_radio_button_widget(
+        ...     set_bg('pink'),
+        ...     'bgcolor',
+        ...     position=(10.0, 80.0),
+        ...     title='Pink',
+        ... )
+        >>> p.show()
+
+        """
+        if self.iren is None:  # pragma: no cover
+            raise RuntimeError('Cannot add a widget to a closed plotter.')
+
+        if radio_button_group not in self.radio_button_widget_dict:
+            self.radio_button_widget_dict[radio_button_group] = []
+        if title is not None:
+            if radio_button_group not in self.radio_button_title_dict:
+                self.radio_button_title_dict[radio_button_group] = []
+            button_title = self.add_text(
+                title, position=(position[0] + size + 10.0, position[1] + 7.5), font_size=15
+            )
+            self.radio_button_title_dict[radio_button_group].append(button_title)
+
+        color_on = Color(color_on)
+        color_off = Color(color_off)
+        background_color = Color(background_color, default_color=self.background_color)
+
+        def create_radio_button(fg_color, bg_color, size=size, smooth=2):  # numpydoc ignore=GL08
+            fg_color = np.array(fg_color.int_rgb)
+            bg_color = np.array(bg_color.int_rgb)
+
+            n_points = size**2
+            button = pyvista.ImageData(dimensions=(size, size, 1))
+            arr = np.array([bg_color] * n_points).reshape(size, size, 3)  # fill background
+
+            centre = size / 2
+            rad_outer = centre
+            rad_inner = centre - border_size
+            # Paint radio button with simple anti-aliasing
+            for i in range(size):
+                for j in range(size):
+                    distance = np.sqrt((i - size / 2) ** 2 + (j - size / 2) ** 2)
+                    if distance < rad_inner:
+                        arr[i, j] = fg_color
+                    elif rad_inner <= distance <= rad_inner + smooth:
+                        blend = (distance - rad_inner) / smooth
+                        arr[i, j] = (1 - blend) * fg_color + blend * bg_color
+                    elif rad_outer - 2 * smooth <= distance <= rad_outer:
+                        blend = abs(distance - rad_outer + smooth) / smooth
+                        arr[i, j] = (1 - blend) * fg_color + blend * bg_color
+
+            button.point_data['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
+            return button
+
+        button_on = create_radio_button(color_on, background_color)
+        button_off = create_radio_button(color_off, background_color)
+
+        bounds = [position[0], position[0] + size, position[1], position[1] + size, 0.0, 0.0]
+
+        button_rep = _vtk.vtkTexturedButtonRepresentation2D()
+        button_rep.SetNumberOfStates(2)
+        button_rep.SetState(value)
+        button_rep.SetButtonTexture(0, button_off)
+        button_rep.SetButtonTexture(1, button_on)
+        button_rep.SetPlaceFactor(1)
+        button_rep.PlaceWidget(bounds)
+        button_rep.GetProperty().SetColor((1, 1, 1))
+
+        button_widget = _vtk.vtkButtonWidget()
+        button_widget.SetInteractor(self.iren.interactor)
+        button_widget.SetRepresentation(button_rep)
+        button_widget.SetCurrentRenderer(self.renderer)
+        button_widget.On()
+
+        def toggle_other_buttons_off(widget):  # numpydoc ignore=GL08
+            other_buttons = [
+                w for w in self.radio_button_widget_dict[radio_button_group] if w is not widget
+            ]
+            for w in other_buttons:
+                w.GetRepresentation().SetState(0)
+
+        def _the_callback(widget, _event):
+            widget_rep = widget.GetRepresentation()
+            state = widget_rep.GetState()
+            # Toggle back on, if button was already on, and was clicked off
+            if not state:
+                widget_rep.SetState(1)
+                state = True
+            else:
+                toggle_other_buttons_off(widget)
+            if callable(callback):
+                try_callback(callback)
+
+        button_widget.AddObserver(_vtk.vtkCommand.StateChangedEvent, _the_callback)
+        self.radio_button_widget_dict[radio_button_group].append(button_widget)
+        if value:
+            toggle_other_buttons_off(button_widget)
+        return button_widget
+
+    def clear_radio_button_widgets(self):
+        """Remove all of the radio button widgets."""
+        for widgets in self.radio_button_widget_dict.values():
+            for widget in widgets:
+                widget.Off()
+        self.radio_button_widget_dict.clear()
+        for titles in self.radio_button_title_dict.values():
+            for title in titles:
+                title.VisibilityOff()
+        self.radio_button_title_dict.clear()
+
     def add_camera_orientation_widget(self, animate=True, n_frames=20):
         """Add a camera orientation widget to the active renderer.
 
@@ -2814,6 +3012,7 @@ class WidgetHelper:
         self.clear_sphere_widgets()
         self.clear_spline_widgets()
         self.clear_button_widgets()
+        self.clear_radio_button_widgets()
         self.clear_camera_widgets()
         self.clear_measure_widgets()
         self.clear_logo_widgets()
