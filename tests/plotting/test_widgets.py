@@ -342,6 +342,23 @@ def test_widget_radio_button(uniform):
     assert 'group' not in p.radio_button_widget_dict
 
 
+def test_widget_radio_button_click(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    b = p.add_radio_button_widget(
+        callback=func, radio_button_group='group', value=False, position=(10.0, 10.0)
+    )
+    p.show(auto_close=False)
+    # Test switching logic
+    assert b.GetRepresentation().GetState() == 0
+    p.iren._mouse_left_button_click(35, 35)
+    assert b.GetRepresentation().GetState() == 1
+    p.iren._mouse_left_button_click(35, 35)
+    assert b.GetRepresentation().GetState() == 1
+    p.close()
+
+
 def test_widget_radio_button_with_title(uniform):
     p = pv.Plotter()
     func = lambda: None  # Does nothing
