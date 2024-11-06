@@ -87,5 +87,4 @@ ren.GetActiveCamera().Azimuth(60)
 ren.GetActiveCamera().Elevation(60)
 ren.ResetCamera()
 
-renWin.Render()
-iren.Start()
+plotter.show()
