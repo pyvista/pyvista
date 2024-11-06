@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 from typing import NamedTuple
 
 from packaging.requirements import Requirement
 import pytest
-import tomllib
 import yaml
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 REPO = 'https://github.com/pyvista/pre-commit-mypy'
 ROOT_PATH = Path(__file__).parent.parent.parent
