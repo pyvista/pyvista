@@ -135,7 +135,7 @@ docs = [
     'trame==3.7.0',
     'trame-vtk==2.8.11',
     'trame-vuetify==2.7.1',
-    'trimesh==4.5.1',
+    'trimesh==4.5.2',
 ]
 dev = [
     'pyvista[test,docs]',
