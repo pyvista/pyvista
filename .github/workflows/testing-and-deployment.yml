@@ -21,21 +21,22 @@ env:
 
 jobs:
   macOS:
-    # https://github.com/pyvista/pyvista/pull/5960
-    runs-on: macos-12
     name: Mac OS Unit Testing
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11"]
+        config:
+          - { os: macos-12, python-version: 3.9 }  # intel processor
+          - { os: macos-latest, python-version: 3.12 }  # arm processor
+    runs-on: ${{ matrix.config.os }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.config.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.config.python-version }}
           cache: "pip"
 
       - name: Install PyVista test dependencies
