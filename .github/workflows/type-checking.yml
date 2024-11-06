@@ -17,15 +17,9 @@ jobs:
         with:
           python-version: 3.12
           cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements_test.txt
 
-      - name: Install PyVista
-        run: pip install . --no-deps
-
-      - name: Install test requirements
-        run: pip install vtk -r requirements_test.txt
+      - name: Install PyVista test requirements
+        run: pip install .[test]
 
       - name: Run Mypy
         run: mypy pyvista
