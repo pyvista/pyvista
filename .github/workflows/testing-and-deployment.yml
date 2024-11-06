@@ -26,8 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { os: macos-12, python-version: 3.9 }  # intel processor
-          - { os: macos-latest, python-version: 3.12 }  # arm processor
+          - { os: macos-12, python-version: 3.9 } # intel processor
+          - { os: macos-latest, python-version: 3.12 } # arm processor
     runs-on: ${{ matrix.config.os }}
 
     steps:
