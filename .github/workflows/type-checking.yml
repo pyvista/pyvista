@@ -22,7 +22,7 @@ jobs:
         run: pip install .[test]
 
       - name: Run Mypy
-        run: mypy pyvista
+        run: mypy
 
       - name: Software Report
         run: |
