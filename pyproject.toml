@@ -70,7 +70,7 @@ test = [
     'pyvista[pinned]',
     'cmocean<4.0.4',
     'colorcet<3.2.0',
-    'embreex<2.17.8',
+    "embreex<2.17.8; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     'hypothesis<6.115.6',
     'imageio<2.37.0',
     'imageio-ffmpeg<0.6.0',
