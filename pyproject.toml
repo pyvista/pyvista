@@ -476,8 +476,8 @@ extend-select = [
     "T10",
     "TCH",
     "TRY201",
+    "TRY203",
     "TRY300",
-    "TRY302",
     "UP",
     "W",
     "YTT",
@@ -494,7 +494,7 @@ allow-dict-calls-with-keyword-arguments = true
     "B018",
 ]
 "doc/source/make_tables.py" = ["D101","D102"]
-"examples/*" = ["D212","D102","D103","D205","D400","D415"]
+"examples/*" = ["D212","D102","D103","D205","D400","D415", "SIM115"]
 "examples_trame/*" = ["D100","D103"]
 "examples_trame/tests*" = ["D"]
 "pyvista/ext/*" = ["D100", "D101", "D102","D103"]
