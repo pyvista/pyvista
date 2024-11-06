@@ -29,6 +29,7 @@ from pyvista.core._validation import check_contains
 from pyvista.core._validation import check_finite
 from pyvista.core._validation import check_integer
 from pyvista.core._validation import check_length
+from pyvista.core._validation import check_ndim
 from pyvista.core._validation import check_nonnegative
 from pyvista.core._validation import check_range
 from pyvista.core._validation import check_real
@@ -53,6 +54,7 @@ def validate_array(
     /,
     *,
     must_have_shape=None,
+    must_have_ndim=None,
     must_have_dtype=None,
     must_have_length=None,
     must_have_min_length=None,
@@ -115,6 +117,13 @@ def validate_array(
         dimension where its size is allowed to vary. Use ``()`` to allow
         scalar values (i.e. 0-dimensional). Set to ``None`` if the array
         can have any shape (default).
+
+    must_have_ndim : int | Sequence[int], optional
+        :func:`Check <pyvista.core._validation.check.check_ndim>` if
+        the array has the specified number of dimension(s). Specify a
+        single dimension or a sequence of allowable dimensions. If a
+        sequence, the array must have at least one of the specified
+        number of dimensions.
 
     must_have_dtype : dtype_like | list[dtype_like, ...], optional
         :func:`Check <pyvista.core.validation.check.check_subdtype>`
@@ -286,6 +295,8 @@ def validate_array(
     # Check shape
     if must_have_shape is not None:
         check_shape(arr_out, must_have_shape, name=name)
+    if must_have_ndim is not None:
+        check_ndim(arr_out, ndim=must_have_ndim, name=name)
 
     # Do reshape _after_ checking shape to prevent unexpected reshaping
     if reshape_to is not None and arr_out.shape != reshape_to:
