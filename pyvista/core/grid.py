@@ -608,8 +608,11 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                     '    ...     origin=(10, 35, 50),\n'
                     '    ... )\n',
                 )
-        elif dimensions is not None:
-            self._from_specs(dimensions, spacing, origin)
+        else:
+            if dimensions is not None:
+                self.dimensions = dimensions
+            self.origin = origin
+            self.spacing = spacing
 
     def __repr__(self):
         """Return the default representation."""
@@ -618,37 +621,6 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def __str__(self):
         """Return the default str representation."""
         return DataSet.__str__(self)
-
-    def _from_specs(
-        self,
-        dims: Sequence[int],
-        spacing=(1.0, 1.0, 1.0),
-        origin=(0.0, 0.0, 0.0),
-    ):  # numpydoc ignore=PR01,RT01
-        """Create VTK image data directly from numpy arrays.
-
-        A uniform grid is defined by the point spacings for each axis
-        (uniform along each individual axis) and the number of points on each axis.
-        These are relative to a specified origin (default is ``(0.0, 0.0, 0.0)``).
-
-        Parameters
-        ----------
-        dims : tuple(int)
-            Length 3 tuple of ints specifying how many points along each axis.
-
-        spacing : sequence[float], default: (1.0, 1.0, 1.0)
-            Length 3 tuple of floats/ints specifying the point spacings
-            for each axis. Must be positive.
-
-        origin : sequence[float], default: (0.0, 0.0, 0.0)
-            Length 3 tuple of floats/ints specifying minimum value for each axis.
-
-        """
-        xn, yn, zn = dims[0], dims[1], dims[2]
-        xo, yo, zo = origin[0], origin[1], origin[2]
-        self.SetDimensions(xn, yn, zn)
-        self.SetOrigin(xo, yo, zo)
-        self.spacing = (spacing[0], spacing[1], spacing[2])
 
     @property  # type: ignore[explicit-override, override]
     def points(self) -> NumpyArray[float]:
