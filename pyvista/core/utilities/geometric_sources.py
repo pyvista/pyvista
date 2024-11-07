@@ -4028,10 +4028,10 @@ class CubeFacesSource(CubeSource):
 
     >>> output
     MultiBlock (...)
-      N Blocks    6
-      X Bounds    -0.500, 0.500
-      Y Bounds    -0.500, 0.500
-      Z Bounds    -0.500, 0.500
+      N Blocks:   6
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -5.000e-01, 5.000e-01
+      Z Bounds:   -5.000e-01, 5.000e-01
 
     >>> cube_source = pv.CubeSource()
     >>> cube_source.output
