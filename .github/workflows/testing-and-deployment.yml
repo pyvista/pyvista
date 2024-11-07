@@ -37,15 +37,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements_test.txt
 
-      - name: Install PyVista
-        run: pip install . --no-deps
-
-      - name: Install test dependencies
-        run: pip install vtk -r requirements_test.txt
+      - name: Install PyVista test dependencies
+        run: pip install .[test]
 
       - name: Report
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
@@ -125,7 +119,7 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda activate ${{ env.conda_env }}
-          pip install -r requirements_test.txt
+          pip install .[test]
           pytest -v --ignore=tests/plotting
 
       - name: Test Core Plotting
@@ -179,9 +173,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements_test.txt
 
       - uses: actions/cache@v4
         with:
@@ -205,7 +196,7 @@ jobs:
         run: python -c "import pyvista; print(pyvista.Report());"
 
       - name: Install Testing Requirements
-        run: pip install -r requirements_test.txt
+        run: pip install .[test]
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
@@ -284,18 +275,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements_test.txt
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v2
 
-      - name: Install PyVista
-        run: pip install . --no-deps
-
-      - name: Install test dependencies
-        run: pip install vtk -r requirements_test.txt
+      - name: Install PyVista test dependencies
+        run: pip install .[test]
 
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
