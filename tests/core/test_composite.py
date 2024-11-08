@@ -333,10 +333,10 @@ def test_multi_block_repr_bounds():
     poly_y_bounds = repr(empty_poly).splitlines()[4]
     poly_z_bounds = repr(empty_poly).splitlines()[5]
 
-    empy_multiblock = pv.MultiBlock([empty_poly])
-    multi_x_bounds = repr(empy_multiblock).splitlines()[2]
-    multi_y_bounds = repr(empy_multiblock).splitlines()[3]
-    multi_z_bounds = repr(empy_multiblock).splitlines()[4]
+    empty_multiblock = pv.MultiBlock([empty_poly])
+    multi_x_bounds = repr(empty_multiblock).splitlines()[2]
+    multi_y_bounds = repr(empty_multiblock).splitlines()[3]
+    multi_z_bounds = repr(empty_multiblock).splitlines()[4]
 
     assert multi_x_bounds == poly_x_bounds
     assert multi_y_bounds == poly_y_bounds
