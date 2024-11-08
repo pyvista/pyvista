@@ -465,10 +465,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr.get_block(0)
         MultiBlock (...)
-          N Blocks    2
-          X Bounds    -0.500, 0.500
-          Y Bounds    -0.500, 0.500
-          Z Bounds    -0.500, 1.500
+          N Blocks:   2
+          X Bounds:   -5.000e-01, 5.000e-01
+          Y Bounds:   -5.000e-01, 5.000e-01
+          Z Bounds:   -5.000e-01, 1.500e+00
 
         Note this is the same as using ``__getitem__``
 
@@ -582,10 +582,10 @@ class CompositePolyDataMapper(
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.dataset
         MultiBlock (...)
-          N Blocks    2
-          X Bounds    -0.500, 0.500
-          Y Bounds    -0.500, 0.500
-          Z Bounds    -0.500, 1.500
+          N Blocks:   2
+          X Bounds:   -5.000e-01, 5.000e-01
+          Y Bounds:   -5.000e-01, 5.000e-01
+          Z Bounds:   -5.000e-01, 1.500e+00
 
         """
         return self._dataset
