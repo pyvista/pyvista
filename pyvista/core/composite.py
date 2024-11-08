@@ -917,11 +917,11 @@ class MultiBlock(
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(('N Blocks', self.n_blocks, '{}'))
+        attrs.append(('N Blocks:', self.n_blocks, '{}'))
         bds = self.bounds
-        attrs.append(('X Bounds', (bds[0], bds[1]), '{:.3f}, {:.3f}'))
-        attrs.append(('Y Bounds', (bds[2], bds[3]), '{:.3f}, {:.3f}'))
-        attrs.append(('Z Bounds', (bds[4], bds[5]), '{:.3f}, {:.3f}'))
+        attrs.append(('X Bounds:', (bds[0], bds[1]), '{:.3e}, {:.3e}'))
+        attrs.append(('Y Bounds:', (bds[2], bds[3]), '{:.3e}, {:.3e}'))
+        attrs.append(('Z Bounds:', (bds[4], bds[5]), '{:.3e}, {:.3e}'))
         return attrs
 
     def _repr_html_(self) -> str:
@@ -964,7 +964,7 @@ class MultiBlock(
         # return a string that is Python console friendly
         fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 3
         row = '  {:%ds}{}\n' % max_len
         for attr in self._get_attrs():
             try:
