@@ -1402,6 +1402,8 @@ class MultiBlock(
             block = self[block_name]
             if isinstance(block, MultiBlock):
                 block._store_nested_field_data()
+            else:
+                continue
 
             # Store nested field data in an arbitrary placeholder mesh
             nested_fdata = block.field_data
