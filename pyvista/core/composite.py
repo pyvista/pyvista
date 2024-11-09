@@ -1388,6 +1388,9 @@ class MultiBlock(
             elif block is not None:
                 block.clear_cell_data()
 
+    def _post_file_load_processing(self):
+        self._restore_nested_field_data()
+
     def _store_nested_field_data(self) -> None:
         """Store field data of nested MultiBlock datasets.
 
@@ -1422,16 +1425,18 @@ class MultiBlock(
         This is used as a workaround to read and write nested MultiBlock field data,
         since there is a VTK issue where this field data is otherwise lost.
         """
-        for block_name in self.keys():
-            if PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA in block_name:
-                # Get field data from the placeholder mesh then delete the placeholder
-                fdata_placeholder = self[block_name]
-                nested_fdata = fdata_placeholder.field_data
-                block_name_start = len(PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA) + 1
-                dataset_name = block_name[block_name_start:]
-                block = self[dataset_name]
-                block.field_data.update(nested_fdata, copy=False)
-                del self[block_name]
+        keys = self.keys()
+        if keys is not None:
+            for block_name in keys:
+                if block_name is not None and PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA in block_name:
+                    # Get field data from the placeholder mesh then delete the placeholder
+                    fdata_placeholder = self[block_name]
+                    nested_fdata = fdata_placeholder.field_data
+                    block_name_start = len(PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA) + 1
+                    dataset_name = block_name[block_name_start:]
+                    block = self[dataset_name]
+                    block.field_data.update(nested_fdata, copy=False)
+                    del self[block_name]
 
-                # Restore field data recursively
-                block._restore_nested_field_data()
+                    # Restore field data recursively
+                    block._restore_nested_field_data()
