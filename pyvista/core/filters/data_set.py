@@ -5814,10 +5814,10 @@ class DataSetFilters:
         ... )
         >>> extracted
         MultiBlock (...)
-          N Blocks    3
-          X Bounds    0.000, 1.000
-          Y Bounds    0.000, 1.000
-          Z Bounds    0.000, 5.000
+          N Blocks:   3
+          X Bounds:   0.000e+00, 1.000e+00
+          Y Bounds:   0.000e+00, 1.000e+00
+          Z Bounds:   0.000e+00, 5.000e+00
         >>> extracted.plot(multi_colors=True)
 
         Extract values from multi-component scalars.
