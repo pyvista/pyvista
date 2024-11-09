@@ -827,6 +827,13 @@ class XMLMultiBlockDataReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOXML'
     _vtk_class_name = 'vtkXMLMultiBlockDataReader'
 
+    @wraps(BaseReader.read)
+    def read(self):
+        """Wrap the base reader to assign nested MultiBlock field data."""
+        multiblock = super().read()
+        multiblock._restore_nested_field_data()
+        return multiblock
+
 
 class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     """EnSight Reader for .case files.

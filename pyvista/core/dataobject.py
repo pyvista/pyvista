@@ -139,6 +139,8 @@ class DataObject:
         file size.
 
         """
+        from .composite import MultiBlock  # avoid circular import
+
         if self._WRITERS is None:
             raise NotImplementedError(
                 f'{self.__class__.__name__} writers are not specified,'
@@ -157,6 +159,8 @@ class DataObject:
 
         # store complex and bitarray types as field data
         self._store_metadata()
+        if isinstance(self, MultiBlock):
+            self._store_nested_field_data()
 
         writer = self._WRITERS[file_ext]()
         set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
