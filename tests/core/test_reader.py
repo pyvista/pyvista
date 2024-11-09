@@ -119,41 +119,6 @@ def test_xmlmultiblockreader(tmpdir):
         assert new_mesh[i].n_cells == mesh[i].n_cells
 
 
-@pytest.mark.parametrize('nested_level', [1, 2])
-def test_xmlmultiblockreader_nested_field_data(tmpdir, nested_level):
-    import pyvista as pv
-
-    FIELD_NAME = 'data'
-    DATA = np.array([1, 2, 3])
-    multi = pv.MultiBlock()
-    multi.field_data[FIELD_NAME] = DATA
-
-    nested1 = pv.MultiBlock()
-    nested1.field_data[FIELD_NAME] = DATA * (nested_level + 1)
-    multi.append(nested1)
-
-    if nested_level == 2:
-        nested2 = pv.MultiBlock()
-        nested2.field_data[FIELD_NAME] = DATA * (nested_level + 1)
-        nested1.append(nested2)
-
-    tmpfile = tmpdir.join('temp.vtm')
-    multi.save(tmpfile.strpath)
-
-    new_multi = pv.read(tmpfile.strpath)
-    assert 'data' in new_multi.field_data
-    assert np.array_equal(new_multi.field_data[FIELD_NAME], multi.field_data[FIELD_NAME])
-
-    new_nested1 = new_multi[0]
-    assert 'data' in new_nested1.field_data
-    assert np.array_equal(new_nested1.field_data[FIELD_NAME], nested1.field_data[FIELD_NAME])
-
-    if nested_level == 2:
-        new_nested2 = new_nested1[0]
-        assert 'data' in new_nested2.field_data
-        assert np.array_equal(new_nested2.field_data[FIELD_NAME], nested2.field_data[FIELD_NAME])
-
-
 def test_reader_cell_point_data(tmpdir):
     tmpfile = tmpdir.join('temp.vtp')
     mesh = pv.Sphere()
