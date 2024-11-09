@@ -159,6 +159,8 @@ class DataObject:
 
         # store complex and bitarray types as field data
         self._store_metadata()
+
+        # also store field data of any nested multiblocks
         if isinstance(self, MultiBlock):
             self._store_nested_field_data()
 
