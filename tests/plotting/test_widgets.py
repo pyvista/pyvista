@@ -346,15 +346,18 @@ def test_widget_radio_button_click(uniform):
     p = pv.Plotter()
     func = lambda: None  # Does nothing
     p.add_mesh(uniform)
+    size = 50
+    position = (10.0, 10.0)
     b = p.add_radio_button_widget(
-        callback=func, radio_button_group='group', value=False, position=(10.0, 10.0)
+        callback=func, radio_button_group='group', value=False, size=size, position=position
     )
     p.show(auto_close=False)
     # Test switching logic
+    b_center = (int(position[0] + size / 2), int(position[1] + size / 2))
     assert b.GetRepresentation().GetState() == 0
-    p.iren._mouse_left_button_click(35, 35)
+    p.iren._mouse_left_button_click(*b_center)
     assert b.GetRepresentation().GetState() == 1
-    p.iren._mouse_left_button_click(35, 35)
+    p.iren._mouse_left_button_click(*b_center)
     assert b.GetRepresentation().GetState() == 1
     p.close()
 
@@ -385,15 +388,19 @@ def test_widget_radio_button_multiple_switch(uniform):
     p = pv.Plotter()
     func = lambda: None  # Does nothing
     p.add_mesh(uniform)
+    size = 50
+    b1_position = (10.0, 10.0)
+    b2_position = (10.0, 70.0)
     b1 = p.add_radio_button_widget(
-        callback=func, radio_button_group='group', value=True, size=50, position=(10.0, 10.0)
+        callback=func, radio_button_group='group', value=True, size=size, position=b1_position
     )
     b2 = p.add_radio_button_widget(
-        callback=func, radio_button_group='group', size=50, position=(10.0, 70.0)
+        callback=func, radio_button_group='group', size=size, position=b2_position
     )
     p.show(auto_close=False)
-    # Click b1 and switch active radio button
-    p.iren._mouse_left_button_click(35, 95)
+    # Click b2 and switch active radio button
+    b2_center = (int(b2_position[0] + size / 2), int(b2_position[1] + size / 2))
+    p.iren._mouse_left_button_click(*b2_center)
     assert b1.GetRepresentation().GetState() == 0
     assert b2.GetRepresentation().GetState() == 1
     p.close()
