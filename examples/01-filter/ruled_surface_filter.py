@@ -8,7 +8,6 @@ from vtkmodules.vtkCommonDataModel import vtkCellArray
 from vtkmodules.vtkCommonDataModel import vtkLine
 from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersModeling import vtkRuledSurfaceFilter
-from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
 
 import pyvista as pv
 
@@ -49,16 +48,10 @@ ruledSurfaceFilter = vtkRuledSurfaceFilter()
 ruledSurfaceFilter.SetInputData(polydata)
 ruledSurfaceFilter.SetResolution(21, 21)
 ruledSurfaceFilter.SetRuledModeToResample()
-
-# Create the mapper with the ruledSurfaceFilter as input
-mapper = vtkPolyDataMapper()
-mapper.SetInputConnection(ruledSurfaceFilter.GetOutputPort())
-
-# Create the actor with the mapper
-actor = pv.Actor()
-actor.SetMapper(mapper)
+ruledSurfaceFilter.Update()
 
 # Add the actor to the display
-plotter.add_actor(actor)
+# plotter.add_actor(actor)
+plotter.add_mesh(pv.wrap(ruledSurfaceFilter.GetOutput()), show_edges=True)
 
 plotter.show()
