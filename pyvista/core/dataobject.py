@@ -162,9 +162,8 @@ class DataObject:
 
         # also store field data of any nested multiblocks
         if isinstance(self, MultiBlock):
-            # new_multi = MultiBlock()
-            # new_multi.shallow_copy(self, recursive=True)
-            new_multi = self.copy()
+            new_multi = MultiBlock()
+            new_multi.shallow_copy(self, recursive=True)
             mesh_out = new_multi
             mesh_out._store_nested_field_data()
         else:
