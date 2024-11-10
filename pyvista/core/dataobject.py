@@ -162,23 +162,28 @@ class DataObject:
 
         # also store field data of any nested multiblocks
         if isinstance(self, MultiBlock):
-            self._store_nested_field_data()
+            new_multi = MultiBlock()
+            new_multi.shallow_copy(self, recursive=True)
+            mesh_out = new_multi
+            mesh_out._store_nested_field_data()
+        else:
+            mesh_out = self
 
-        writer = self._WRITERS[file_ext]()
+        writer = mesh_out._WRITERS[file_ext]()
         set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(str(file_path))
-        writer.SetInputData(self)
+        writer.SetInputData(mesh_out)
         if file_ext == '.ply' and texture is not None:
             if isinstance(texture, str):
                 writer.SetArrayName(texture)
                 array_name = texture
             elif isinstance(texture, np.ndarray):
                 array_name = '_color_array'
-                self[array_name] = texture
+                mesh_out[array_name] = texture
                 writer.SetArrayName(array_name)
 
             # enable alpha channel if applicable
-            if self[array_name].shape[-1] == 4:  # type: ignore[index]
+            if mesh_out[array_name].shape[-1] == 4:  # type: ignore[index]
                 writer.SetEnableAlpha(True)
         writer.Write()
 

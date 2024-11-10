@@ -428,15 +428,18 @@ def test_multi_block_io_nested_field_data(tmpdir, nested_level):
     new_multi = pv.read(tmpfile.strpath)
     assert 'data' in new_multi.field_data
     assert np.array_equal(new_multi.field_data[FIELD_NAME], multi.field_data[FIELD_NAME])
+    assert new_multi.n_blocks == multi.n_blocks
 
     new_nested1 = new_multi[0]
     assert 'data' in new_nested1.field_data
     assert np.array_equal(new_nested1.field_data[FIELD_NAME], nested1.field_data[FIELD_NAME])
+    assert new_nested1.n_blocks == nested1.n_blocks
 
     if nested_level == 2:
         new_nested2 = new_nested1[0]
         assert 'data' in new_nested2.field_data
         assert np.array_equal(new_nested2.field_data[FIELD_NAME], nested2.field_data[FIELD_NAME])
+        assert new_nested2.n_blocks == nested2.n_blocks
 
 
 def test_invalid_arg():
