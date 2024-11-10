@@ -75,7 +75,7 @@ actor = vtkActor()
 actor.SetMapper(mapper)
 
 # Add the actor to the display
-ren.AddActor(actor)
+plotter.add_actor(actor)
 
 # Enable user interface interactor
 iren.Initialize()
