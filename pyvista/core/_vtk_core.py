@@ -332,6 +332,7 @@ from vtkmodules.vtkFiltersModeling import vtkLoopSubdivisionFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkFiltersModeling import vtkRibbonFilter
 from vtkmodules.vtkFiltersModeling import vtkRotationalExtrusionFilter
+from vtkmodules.vtkFiltersModeling import vtkRuledSurfaceFilter
 from vtkmodules.vtkFiltersModeling import vtkSelectEnclosedPoints
 from vtkmodules.vtkFiltersModeling import vtkSubdivideTetra
 from vtkmodules.vtkFiltersModeling import vtkTrimmedExtrusionFilter
