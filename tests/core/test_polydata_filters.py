@@ -271,5 +271,5 @@ def test_ruled_surface():
         lines=[[2, 0, 1], [2, 2, 3]],
         force_float=False,
     )
-    ruled = poly.ruled_surface()
+    ruled = poly.ruled_surface(resolution=(21, 21))
     assert ruled.n_cells
