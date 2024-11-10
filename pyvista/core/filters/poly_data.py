@@ -4428,7 +4428,6 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         if resolution is not None:
             alg.SetResolution(resolution)
-        alg.SetRuleModeToResample()
         _update_alg(alg, progress_bar, 'Generating ruled surface')
         return _get_output(alg)
 
