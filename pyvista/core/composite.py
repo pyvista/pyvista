@@ -29,6 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
 from .dataset import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
+from .grid import ImageData
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.geometric_objects import Box
@@ -1414,8 +1415,7 @@ class MultiBlock(
 
             # Store nested field data in an arbitrary placeholder mesh
             nested_fdata = block.field_data
-            fdata_placeholder = pyvista.PolyData()
-            fdata_placeholder.points = [1.0, 1.0, 1.0]  # Mesh must not be empty
+            fdata_placeholder = ImageData(dimensions=(1, 1, 1))  # Mesh must not be empty
             fdata_placeholder.field_data.update(nested_fdata, copy=False)
             key = f'{PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA}-{block_name}'
             self[key] = fdata_placeholder
