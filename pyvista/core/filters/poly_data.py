@@ -4420,7 +4420,7 @@ class PolyDataFilters(DataSetFilters):
         ...     force_float=False,
         ... )
         >>> surface = poly.ruled_surface(resolution=(21, 21))
-        >>> pl.add_mesh(surface, show_edges=True)
+        >>> _ = pl.add_mesh(surface, show_edges=True)
         >>> pl.show()
 
         """
