@@ -78,7 +78,7 @@ repos:
 
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.3
+    rev: 0.29.4
     hooks:
       - id: check-github-workflows
 
@@ -105,6 +105,6 @@ repos:
       - id: rst-inline-touching-normal
 
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.9.0-1
+    rev: v3.10.0-1
     hooks:
       - id: shfmt

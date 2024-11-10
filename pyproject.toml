@@ -76,7 +76,8 @@ test = [
     'pyvista[pinned]',
     'cmocean<4.0.4',
     'colorcet<3.2.0',
-    'embreex<2.17.8',
+    # Embreex does not work with arm-based macs
+    "embreex<2.17.8; sys_platform != 'darwin' or platform_machine != 'arm64'",
     'hypothesis<6.115.6',
     'imageio<2.37.0',
     'imageio-ffmpeg<0.6.0',
@@ -242,8 +243,8 @@ plugins = ['numpy.typing.mypy_plugin','npt_promote']
 enable_error_code = [
     "ignore-without-code",
 ]
-packages = ['pyvista']
 exclude = ['pyvista/ext/']
+packages = ['pyvista']
 
 
 [tool.numpydoc_validation]

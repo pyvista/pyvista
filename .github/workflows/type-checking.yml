@@ -22,9 +22,9 @@ jobs:
         run: pip install .[typing]
 
       - name: Run Mypy
-        run: mypy pyvista
+        run: mypy
 
-        # Ensure the pre-commit hook is also working
+        # Pre-commit hook output should match the `typing` env output
       - name: Install pre-commit
         run: pip install pre-commit
 
