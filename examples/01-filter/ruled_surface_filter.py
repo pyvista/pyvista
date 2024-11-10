@@ -9,16 +9,16 @@ import pyvista as pv
 
 pv.set_jupyter_backend('static')
 
-plotter = pv.Plotter()
-polydata = pv.PolyData(
+pl = pv.Plotter()
+poly = pv.PolyData(
     [[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 1]], lines=[[2, 0, 1], [2, 2, 3]], force_float=False
 )
 
-ruledSurfaceFilter = vtkRuledSurfaceFilter()
-ruledSurfaceFilter.SetInputData(polydata)
-ruledSurfaceFilter.SetResolution(21, 21)
-ruledSurfaceFilter.SetRuledModeToResample()
-ruledSurfaceFilter.Update()
+alg = vtkRuledSurfaceFilter()
+alg.SetInputData(poly)
+alg.SetResolution(21, 21)
+alg.SetRuledModeToResample()
+alg.Update()
 
-plotter.add_mesh(pv.wrap(ruledSurfaceFilter.GetOutput()), show_edges=True)
-plotter.show()
+pl.add_mesh(pv.wrap(alg.GetOutput()), show_edges=True)
+pl.show()
