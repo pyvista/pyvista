@@ -163,7 +163,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             str,
             type[_vtk.vtkRectilinearGridWriter | _vtk.vtkXMLRectilinearGridWriter],
         ]
-    ] = {
+    ] = {  # type: ignore[assignment]
         '.vtk': _vtk.vtkRectilinearGridWriter,
         '.vtr': _vtk.vtkXMLRectilinearGridWriter,
     }
@@ -572,7 +572,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkDataSetWriter | _vtk.vtkXMLImageDataWriter]]] = {  # type: ignore[assignment]
         '.vtk': _vtk.vtkDataSetWriter,
         '.vti': _vtk.vtkXMLImageDataWriter,
     }
@@ -763,7 +763,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         >>> pl.show()
 
         """
-        return self.GetOrigin()
+        return self.GetOrigin()  # type: ignore[return-value]
 
     @origin.setter
     def origin(self, origin: Sequence[float | int]):  # numpydoc ignore=GL08
@@ -897,7 +897,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     def extent(self, new_extent: Sequence[int]):  # numpydoc ignore=GL08
         if len(new_extent) != 6:
             raise ValueError('Extent must be a vector of 6 values.')
-        self.SetExtent(new_extent)
+        self.SetExtent(new_extent)  # type: ignore[call-overload]
 
     @wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(self, *args, **kwargs):  # numpydoc ignore=PR01,RT01

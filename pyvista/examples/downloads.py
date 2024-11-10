@@ -4365,7 +4365,7 @@ def download_cubemap_park(load=True):  # pragma: no cover
 _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
     'cubemap_park/cubemap_park.zip',
     target_file='',
-    read_func=_load_as_cubemap,
+    read_func=_load_as_cubemap,  # type: ignore[arg-type]
 )
 
 
@@ -4425,7 +4425,7 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
 _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/4k.zip',
     target_file='',
-    read_func=_load_as_cubemap,
+    read_func=_load_as_cubemap,  # type: ignore[arg-type]
 )
 
 
@@ -4491,7 +4491,7 @@ def download_cubemap_space_16k(load=True):  # pragma: no cover
 _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/16k.zip',
     target_file='',
-    read_func=_load_as_cubemap,
+    read_func=_load_as_cubemap,  # type: ignore[arg-type]
 )
 
 
@@ -4614,7 +4614,7 @@ def download_gpr_path(load=True):  # pragma: no cover
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
     read_func=functools.partial(np.loadtxt, skiprows=1),  # type: ignore[arg-type]
-    load_func=pyvista.PolyData,
+    load_func=pyvista.PolyData,  # type: ignore[arg-type]
 )
 
 
@@ -6423,7 +6423,7 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
 _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_low_res.npy',
     read_func=np.load,
-    load_func=pyvista.PointSet,
+    load_func=pyvista.PointSet,  # type: ignore[arg-type]
 )
 
 
@@ -6488,7 +6488,7 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
 _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_high_res.npy',
     read_func=np.load,
-    load_func=pyvista.PointSet,
+    load_func=pyvista.PointSet,  # type: ignore[arg-type]
 )
 
 
@@ -7492,7 +7492,7 @@ def _reservoir_load_func(grid):  # pragma: no cover
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
     'reservoir/UNISIM-II-D.zip',
     target_file='UNISIM-II-D.vtu',
-    read_func=pyvista.ExplicitStructuredGrid,
+    read_func=pyvista.ExplicitStructuredGrid,  # type: ignore[arg-type]
     load_func=_reservoir_load_func,
 )
 
