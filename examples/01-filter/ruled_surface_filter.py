@@ -21,5 +21,4 @@ ruledSurfaceFilter.SetRuledModeToResample()
 ruledSurfaceFilter.Update()
 
 plotter.add_mesh(pv.wrap(ruledSurfaceFilter.GetOutput()), show_edges=True)
-
 plotter.show()
