@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import itertools
-import os
 import pathlib
 import platform
 import re
@@ -423,10 +422,8 @@ def test_multi_block_io_nested_field_data(tmpdir, nested_level):
         nested2.field_data[FIELD_NAME] = DATA * (nested_level + 1)
         nested1.append(nested2)
 
-    filename = str(tmpdir.join('tmp.vtm'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.vtm'))
     multi.save(filename)
-    print(filename)
-    print(os.listdir(pathlib.Path(filename).parent))
 
     new_multi = pv.read(filename)
     assert 'data' in new_multi.field_data
