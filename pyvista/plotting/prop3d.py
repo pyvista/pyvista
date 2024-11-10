@@ -66,7 +66,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     @scale.setter
     def scale(self, value: float | VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetScale(value)
+        self.SetScale(value)  # type: ignore[arg-type]
 
     @property
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -91,7 +91,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     @position.setter
     def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetPosition(value)
+        self.SetPosition(value)  # type: ignore[call-overload]
 
     def rotate_x(self, angle: float):
         """Rotate the entity about the x-axis.
@@ -263,7 +263,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     @orientation.setter
     def orientation(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetOrientation(value)
+        self.SetOrientation(value)  # type: ignore[call-overload]
 
     @property
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -278,7 +278,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     @origin.setter
     def origin(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetOrigin(value)
+        self.SetOrigin(value)  # type: ignore[arg-type]
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
@@ -415,7 +415,7 @@ class Prop3D(_vtk.vtkProp3D):
         (0.0, -180.0, -89.99999999999999)
 
         """
-        self.orientation = _rotation_matrix_as_orientation(rotation)
+        self.orientation = _rotation_matrix_as_orientation(rotation)  # type: ignore[arg-type]
 
 
 def _rotation_matrix_as_orientation(

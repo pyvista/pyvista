@@ -118,10 +118,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install PyVista
-        run: pip install -ve .
+        run: pip install -ve .[test]
       - name: Install requirements
         run: |
-          pip install -r requirements_test.txt
           pip install -r examples_trame/requirements.txt
       - name: Run examples
         working-directory: examples_trame

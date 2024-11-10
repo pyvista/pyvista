@@ -140,7 +140,7 @@ class Actor(Prop3D, _vtk.vtkActor):
           N Arrays:   1
 
         """
-        return self.GetMapper()
+        return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
     def mapper(self, obj):  # numpydoc ignore=GL08
@@ -390,7 +390,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         """
         if self.GetBackfaceProperty() is None:
             self.SetBackfaceProperty(self.prop.copy())
-        return self.GetBackfaceProperty()
+        return self.GetBackfaceProperty()  # type: ignore[return-value]
 
     @backface_prop.setter
     def backface_prop(self, value: pyvista.Property):  # numpydoc ignore=GL08
