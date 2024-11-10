@@ -422,10 +422,10 @@ def test_multi_block_io_nested_field_data(tmpdir, nested_level):
         nested2.field_data[FIELD_NAME] = DATA * (nested_level + 1)
         nested1.append(nested2)
 
-    tmpfile = tmpdir.join('temp.vtm')
-    multi.save(tmpfile.strpath)
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.vtm'))
+    multi.save(filename)
 
-    new_multi = pv.read(tmpfile.strpath)
+    new_multi = pv.read(filename)
     assert 'data' in new_multi.field_data
     assert np.array_equal(new_multi.field_data[FIELD_NAME], multi.field_data[FIELD_NAME])
     assert new_multi.n_blocks == multi.n_blocks
