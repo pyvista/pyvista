@@ -47,7 +47,7 @@ chart.show()
 
 # %%
 # You can also easily combine scatter and line plots using the general
-# :func:`plot() <pyvista.Chart2D.plot>` function, specifying both the line and marker
+# :func:`~pyvista.Chart2D.plot` function, specifying both the line and marker
 # style at once.
 
 x = np.arange(11)
@@ -118,7 +118,7 @@ chart.show()
 
 # %%
 # In a similar way, you can stack multiple area plots on top of
-# each other using :func:`stack() <pyvista.Chart2D.stack>`.
+# each other using :func:`~pyvista.Chart2D.stack`.
 
 x = np.arange(0, 11)
 ys = [rng.integers(1, 11, 11) for _ in range(5)]
