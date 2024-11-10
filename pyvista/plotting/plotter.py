@@ -5051,7 +5051,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkTextActor
+        pyvista.CornerAnnotation | pyvista.Text
             Text actor added to plot.
 
         Examples

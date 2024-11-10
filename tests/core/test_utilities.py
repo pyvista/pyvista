@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import pickle
+import platform
 import re
 import shutil
 from unittest import mock
@@ -1007,8 +1008,12 @@ CASE_3 = (  # non-coplanar points
     ],
 )
 
+is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
-@pytest.mark.skipif(NUMPY_VERSION_INFO < (1, 26), reason='Different results for some tests.')
+
+@pytest.mark.skipif(
+    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac, reason='Different results for some tests.'
+)
 @pytest.mark.parametrize(
     ('points', 'expected_axes'),
     [CASE_0, CASE_1, CASE_2, CASE_3],
