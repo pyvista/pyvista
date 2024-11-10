@@ -50,8 +50,6 @@ ruledSurfaceFilter.SetResolution(21, 21)
 ruledSurfaceFilter.SetRuledModeToResample()
 ruledSurfaceFilter.Update()
 
-# Add the actor to the display
-# plotter.add_actor(actor)
 plotter.add_mesh(pv.wrap(ruledSurfaceFilter.GetOutput()), show_edges=True)
 
 plotter.show()
