@@ -31,7 +31,7 @@ mesh = examples.download_st_helens().warp_by_scalar()
 
 # %%
 # Orbit around the Mt. St Helens dataset using
-# :func:`generate_orbital_path() <pyvista.Plotter.generate_orbital_path>`.
+# :func:`~pyvista.Plotter.generate_orbital_path`.
 
 p = pv.Plotter()
 p.add_mesh(mesh, lighting=False)

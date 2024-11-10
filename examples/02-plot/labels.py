@@ -38,7 +38,7 @@ poly['My Labels'] = [f'Label {i}' for i in range(poly.n_points)]
 poly
 
 # %%
-# Now plot the points with labels using :func:`add_point_labels() <pyvista.Plotter.add_point_labels>`.
+# Now plot the points with labels using :func:`~pyvista.Plotter.add_point_labels`.
 
 plotter = pv.Plotter()
 plotter.add_point_labels(poly, 'My Labels', point_size=20, font_size=36)

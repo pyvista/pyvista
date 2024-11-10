@@ -23,7 +23,7 @@ rng = np.random.default_rng(1)  # Seeded random number generator for consistent 
 
 # %%
 # This example shows how to create a 2D scatter plot from 100 randomly sampled
-# datapoints using :func:`scatter() <pyvista.Chart2D.scatter>`. By default, the chart automatically
+# datapoints using :func:`~pyvista.Chart2D.scatter`. By default, the chart automatically
 # rescales its axes such that all plotted data is visible. By right clicking on the chart
 # you can enable zooming and panning of the chart.
 
@@ -35,7 +35,7 @@ chart.show()
 
 # %%
 # To connect datapoints with lines, you can create a 2D line plot as shown in
-# the example below using :func:`line() <pyvista.Chart2D.line>`. You can also dynamically
+# the example below using :func:`~pyvista.Chart2D.line`. You can also dynamically
 # 'zoom in' on the plotted data by specifying a custom axis range yourself.
 
 x = np.linspace(0, 10, 1000)
@@ -59,7 +59,7 @@ chart.show()
 
 # %%
 # The following example shows how to create filled areas between two polylines
-# using :func:`area() <pyvista.Chart2D.area>`.
+# using :func:`~pyvista.Chart2D.area`.
 
 x = np.linspace(0, 10, 1000)
 y1 = np.cos(x) + np.sin(3 * x)
@@ -72,7 +72,7 @@ chart.title = 'Area plot'  # Set custom chart title
 chart.show()
 
 # %%
-# Bar charts are also supported using :func:`bar() <pyvista.Chart2D.bar>`.
+# Bar charts are also supported using :func:`~pyvista.Chart2D.bar`.
 # Multiple bar plots are placed next to each other.
 
 x = np.arange(1, 13)
@@ -130,7 +130,7 @@ chart.show()
 # %%
 # Beside the flexible Chart2D used in the previous examples, there are a couple
 # other dedicated charts you can create. The example below shows how a pie
-# chart can be created using :class:`ChartPie <pyvista.ChartPie>`.
+# chart can be created using :class:`~pyvista.ChartPie`.
 
 data = np.array([8.4, 6.1, 2.7, 2.4, 0.9])
 chart = pv.ChartPie(data)
@@ -139,7 +139,7 @@ chart.show()
 
 # %%
 # To summarize statistics of datasets, you can easily create a boxplot
-# using :class:`ChartBox <pyvista.ChartBox>`.
+# using :class:`~pyvista.ChartBox`.
 
 data = [rng.poisson(lam, 20) for lam in range(2, 12, 2)]
 chart = pv.ChartBox(data)
