@@ -3,6 +3,7 @@ from __future__ import annotations
 import itertools
 import pathlib
 import platform
+import re
 import weakref
 
 import numpy as np
@@ -314,8 +315,32 @@ def test_multi_block_clean(rectilinear, uniform, ant):
 def test_multi_block_repr(multiblock_all_with_nested_and_none):
     multi = multiblock_all_with_nested_and_none
     assert multi._repr_html_() is not None
-    assert repr(multi) is not None
-    assert str(multi) is not None
+    pattern = (
+        r'MultiBlock \(0x[0-9a-fA-F]+\)'
+        r'\s+N Blocks:\s{3}\d+'
+        r'\s+X Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
+        r'\s+Y Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
+        r'\s+Z Bounds:\s{3}[+-]?\d*\.\d{3}e[+-]\d+,\s+[-+]?\d\.\d+e[+-]\d+'
+    )
+    match = re.search(pattern, repr(multi))
+    assert repr(multi) == match.string
+    assert str(multi) == match.string
+
+
+def test_multi_block_repr_bounds():
+    empty_poly = pv.PolyData().extract_cells(0)
+    poly_x_bounds = repr(empty_poly).splitlines()[3]
+    poly_y_bounds = repr(empty_poly).splitlines()[4]
+    poly_z_bounds = repr(empty_poly).splitlines()[5]
+
+    empty_multiblock = pv.MultiBlock([empty_poly])
+    multi_x_bounds = repr(empty_multiblock).splitlines()[2]
+    multi_y_bounds = repr(empty_multiblock).splitlines()[3]
+    multi_z_bounds = repr(empty_multiblock).splitlines()[4]
+
+    assert multi_x_bounds == poly_x_bounds
+    assert multi_y_bounds == poly_y_bounds
+    assert multi_z_bounds == poly_z_bounds
 
 
 def test_multi_block_eq(multiblock_all_with_nested_and_none):
