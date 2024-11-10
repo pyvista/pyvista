@@ -16,6 +16,8 @@ from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor
 
 import pyvista as pv
 
+pv.set_jupyter_backend('static')
+
 # noinspection PyUnresolvedReferences
 
 
@@ -71,9 +73,6 @@ mapper.SetInputConnection(ruledSurfaceFilter.GetOutputPort())
 # Create the actor with the mapper
 actor = vtkActor()
 actor.SetMapper(mapper)
-actor.GetProperty().SetColor(colors.GetColor3d('Banana'))
-actor.GetProperty().SetSpecular(0.6)
-actor.GetProperty().SetSpecularPower(30)
 
 # Add the actor to the display
 ren.AddActor(actor)
