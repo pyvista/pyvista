@@ -3,7 +3,6 @@
 # noinspection PyUnresolvedReferences
 from __future__ import annotations
 
-from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkCellArray
 from vtkmodules.vtkCommonDataModel import vtkLine
@@ -11,27 +10,13 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData
 from vtkmodules.vtkFiltersModeling import vtkRuledSurfaceFilter
 from vtkmodules.vtkRenderingCore import vtkActor
 from vtkmodules.vtkRenderingCore import vtkPolyDataMapper
-from vtkmodules.vtkRenderingCore import vtkRenderWindow
-from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor
 
 import pyvista as pv
 
 pv.set_jupyter_backend('static')
 
-# noinspection PyUnresolvedReferences
-
-
-colors = vtkNamedColors()
-
 # Create a rendering window and renderer
 plotter = pv.Plotter()
-ren = plotter.renderer
-renWin = vtkRenderWindow()
-renWin.AddRenderer(ren)
-
-# Create a renderwindowinteractor
-iren = vtkRenderWindowInteractor()
-iren.SetRenderWindow(renWin)
 
 # Create the points for the lines.
 points = vtkPoints()
@@ -76,12 +61,5 @@ actor.SetMapper(mapper)
 
 # Add the actor to the display
 plotter.add_actor(actor)
-
-# Enable user interface interactor
-iren.Initialize()
-renWin.Render()
-ren.GetActiveCamera().Azimuth(60)
-ren.GetActiveCamera().Elevation(60)
-ren.ResetCamera()
 
 plotter.show()
