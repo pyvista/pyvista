@@ -23,9 +23,9 @@ rng = np.random.default_rng(1)  # Seeded random number generator for consistent 
 
 # %%
 # This example shows how to create a 2D scatter plot from 100 randomly sampled
-# datapoints. By default, the chart automatically rescales its axes such that
-# all plotted data is visible. By right clicking on the chart you can enable
-# zooming and panning of the chart.
+# datapoints using :func:`scatter() <pyvista.Chart2D.scatter>`. By default, the chart automatically
+# rescales its axes such that all plotted data is visible. By right clicking on the chart
+# you can enable zooming and panning of the chart.
 
 x = rng.standard_normal(100)
 y = rng.standard_normal(100)
@@ -35,8 +35,8 @@ chart.show()
 
 # %%
 # To connect datapoints with lines, you can create a 2D line plot as shown in
-# the example below. You can also dynamically 'zoom in' on the plotted data
-# by specifying a custom axis range yourself.
+# the example below using :func:`line() <pyvista.Chart2D.line>`. You can also dynamically
+# 'zoom in' on the plotted data by specifying a custom axis range yourself.
 
 x = np.linspace(0, 10, 1000)
 y = np.sin(x**2)
@@ -47,7 +47,7 @@ chart.show()
 
 # %%
 # You can also easily combine scatter and line plots using the general
-# :func:`pyvista.Chart2D.plot` function, specifying both the line and marker
+# :func:`plot() <pyvista.Chart2D.plot>` function, specifying both the line and marker
 # style at once.
 
 x = np.arange(11)
@@ -58,7 +58,8 @@ chart.plot(x, y, 'x--b')  # Marker style 'x', striped line style '--', blue colo
 chart.show()
 
 # %%
-# The following example shows how to create filled areas between two polylines.
+# The following example shows how to create filled areas between two polylines
+# using :func:`area() <pyvista.Chart2D.area>`.
 
 x = np.linspace(0, 10, 1000)
 y1 = np.cos(x) + np.sin(3 * x)
@@ -71,8 +72,8 @@ chart.title = 'Area plot'  # Set custom chart title
 chart.show()
 
 # %%
-# Bar charts are also supported. Multiple bar plots are placed next to each
-# other.
+# Bar charts are also supported using :func:`bar() <pyvista.Chart2D.bar>`.
+# Multiple bar plots are placed next to each other.
 
 x = np.arange(1, 13)
 y1 = rng.integers(1e2, 1e4, 12)
@@ -116,7 +117,8 @@ chart.grid = False  # Disable the grid lines
 chart.show()
 
 # %%
-# In a similar way, you can stack multiple area plots on top of each other.
+# In a similar way, you can stack multiple area plots on top of
+# each other using :func:`stack() <pyvista.Chart2D.stack>`.
 
 x = np.arange(0, 11)
 ys = [rng.integers(1, 11, 11) for _ in range(5)]
@@ -128,7 +130,7 @@ chart.show()
 # %%
 # Beside the flexible Chart2D used in the previous examples, there are a couple
 # other dedicated charts you can create. The example below shows how a pie
-# chart can be created.
+# chart can be created using :class:`ChartPie <pyvista.ChartPie>`.
 
 data = np.array([8.4, 6.1, 2.7, 2.4, 0.9])
 chart = pv.ChartPie(data)
@@ -136,7 +138,8 @@ chart.plot.labels = [f'slice {i}' for i in range(len(data))]
 chart.show()
 
 # %%
-# To summarize statistics of datasets, you can easily create a boxplot.
+# To summarize statistics of datasets, you can easily create a boxplot
+# using :class:`ChartBox <pyvista.ChartBox>`.
 
 data = [rng.poisson(lam, 20) for lam in range(2, 12, 2)]
 chart = pv.ChartBox(data)
