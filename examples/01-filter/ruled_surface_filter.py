@@ -76,8 +76,6 @@ actor.SetMapper(mapper)
 
 # Add the actor to the display
 ren.AddActor(actor)
-ren.SetBackground(colors.GetColor3d('SteelBlue'))
-renWin.SetWindowName('RuledSurfaceFilter')
 
 # Enable user interface interactor
 iren.Initialize()
