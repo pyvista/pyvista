@@ -29,14 +29,18 @@ from vtkmodules.vtkImagingSources import vtkImageSinusoidSource
 try:
     from vtkmodules.vtkFiltersCore import vtkExtractEdges
 except ImportError:
-    from vtkmodules.vtkFiltersExtraction import vtkExtractEdges
+    from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
+        vtkExtractEdges,
+    )
 
 # vtkCellTreeLocator moved from vtkFiltersGeneral to vtkCommonDataModel in
 # VTK commit 4a29e6f7dd9acb460644fe487d2e80aac65f7be9
 try:
     from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator
 except ImportError:
-    from vtkmodules.vtkFiltersGeneral import vtkCellTreeLocator
+    from vtkmodules.vtkFiltersGeneral import (  # type: ignore[attr-defined, no-redef]
+        vtkCellTreeLocator,
+    )
 
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray
 from vtkmodules.numpy_interface.dataset_adapter import VTKObjectWrapper
@@ -79,7 +83,7 @@ from vtkmodules.vtkCommonCore import VTK_COURIER
 from vtkmodules.vtkCommonCore import VTK_FONT_FILE
 from vtkmodules.vtkCommonCore import VTK_TIMES
 from vtkmodules.vtkCommonCore import VTK_UNSIGNED_CHAR
-from vtkmodules.vtkCommonCore import buffer_shared
+from vtkmodules.vtkCommonCore import buffer_shared  # type: ignore[attr-defined]
 from vtkmodules.vtkCommonCore import mutable
 from vtkmodules.vtkCommonCore import reference
 from vtkmodules.vtkCommonCore import vtkAbstractArray

@@ -1023,7 +1023,7 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
         """Shallow copy the given multiblock to this multiblock.
 
         Parameters
@@ -1049,7 +1049,7 @@ class MultiBlock(
 
         _replace_nested_multiblocks(self, to_copy)
 
-    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
         """Overwrite this MultiBlock with another MultiBlock as a deep copy.
 
         Parameters

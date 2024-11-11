@@ -4237,7 +4237,7 @@ class PolyDataFilters(DataSetFilters):
             _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)  # type: ignore[misc]
             poly_ijk = _preprocess_polydata(poly_ijk)
         else:
             # Compute reference volume geometry
@@ -4363,7 +4363,7 @@ class PolyDataFilters(DataSetFilters):
         poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
         poly_to_stencil.SetInputData(poly_ijk)
         poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
-        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)
+        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
         poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
         _update_alg(poly_to_stencil, progress_bar, 'Converting polydata')
 

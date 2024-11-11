@@ -66,6 +66,12 @@ pinned = [  # Pinned versions of core dependencies
     'vtk<9.4.0',
     'typing-extensions<4.13.0',
 ]
+typing= [
+    'pyvista[pinned]',
+    'numpy>=2.0.0',
+    'mypy<1.14.0',
+    'npt-promote==0.1',
+]
 test = [
     'pyvista[pinned]',
     'cmocean<4.0.4',
@@ -78,9 +84,7 @@ test = [
     'ipython<9.0.0',
     'ipywidgets<9.0.0',
     'meshio<5.4.0',
-    'mypy<1.14.0',
     'nest_asyncio<1.6.1',
-    'npt-promote==0.1',
     'numpydoc==1.8.0',
     'pyanalyze<=0.13.1',
     'pytest<8.4.0',
@@ -236,6 +240,8 @@ plugins = ['numpy.typing.mypy_plugin','npt_promote']
 enable_error_code = [
     "ignore-without-code",
 ]
+exclude = ['pyvista/ext/']
+packages = ['pyvista']
 
 
 [tool.numpydoc_validation]
