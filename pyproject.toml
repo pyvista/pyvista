@@ -213,11 +213,10 @@ filterwarnings = [
     'ignore::FutureWarning',
     'ignore::PendingDeprecationWarning',
     'ignore::DeprecationWarning',
-    # bogus numpy ABI warning (see numpy/#432)
-    'ignore:.*numpy.dtype size changed.*:RuntimeWarning',
-    'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',
-    'ignore:.*Given trait value dtype "float64":UserWarning',
-    'ignore:.*The NumPy module was reloaded*:UserWarning',
+    'ignore:.*numpy.dtype size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
+    'ignore:.*numpy.ufunc size changed.*:RuntimeWarning', # bogus numpy ABI warning (see numpy/#432)
+    'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
+    'ignore:.*The NumPy module was reloaded*:UserWarning', # bogus numpy ABI warning (see numpy/#432)
     'error::pyvista.PyVistaDeprecationWarning'
 ]
 doctest_optionflags = 'NUMBER ELLIPSIS'
@@ -269,8 +268,8 @@ checks = [
     "EX01",  # Examples: Will eventually enforce
     "YD01",  # Yields: No plan to enforce
 ]
-
-exclude = [  # don't report on objects that match any of these regex
+# don't report on objects that match any of these regex
+exclude = [
     '\._.*$',  # Ignore anything that's private (e.g., starts with _)
     '\.*Reader(\.|$)', # classes inherit from BaseReader
     '^viewer_directive\..*$',
@@ -319,10 +318,9 @@ ignore = [
     "SIM102", # https://github.com/pyvista/pyvista/pull/5877
     "SIM117", # https://github.com/pyvista/pyvista/pull/5888
     "SIM118", # https://github.com/pyvista/pyvista/pull/5837
-    # https://github.com/pyvista/pyvista/pull/5911
-    "RET505",
-    "RET506",
-    "RET507",
+    "RET505", # https://github.com/pyvista/pyvista/pull/5911
+    "RET506", # https://github.com/pyvista/pyvista/pull/5911
+    "RET507", # https://github.com/pyvista/pyvista/pull/5911
     "COM812", # May cause conflicts when used with the formatter
     "ISC001", # May cause conflicts when used with the formatter
 ]
