@@ -56,8 +56,8 @@ jupyter = [
     'trame-vtk>=2.5.8',
     'trame-vuetify>=2.3.1',
 ]
-
-pinned = [  # Pinned versions of core dependencies
+# Pinned versions of core dependencies
+pinned = [
     'matplotlib<3.9.3',
     'numpy<2.2.0',
     'pillow<11.1.0',
@@ -204,8 +204,7 @@ quiet-level = 3
 omit = [
     'pyvista/ext/coverage.py',
     'pyvista/conftest.py',
-    # kept for backwards compatibility:
-    'pyvista/plotting/theme.py',
+    'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
 
 [tool.pytest.ini_options]
@@ -273,9 +272,7 @@ checks = [
 
 exclude = [  # don't report on objects that match any of these regex
     '\._.*$',  # Ignore anything that's private (e.g., starts with _)
-    # classes inherit from BaseReader
-    '\.*Reader(\.|$)',
-    # Documentation extensions or utilities
+    '\.*Reader(\.|$)', # classes inherit from BaseReader
     '^viewer_directive\..*$',
     '^plot_directive\..*$',
     '^coverage\..*$',
@@ -300,10 +297,8 @@ quote-style = "single"
 [tool.ruff.lint]
 external = ["E131"]
 ignore = [
-    # https://github.com/pyvista/pyvista/pull/6030
-    "B028",
-    # https://github.com/pyvista/pyvista/pull/6022
-    "B904",
+    "B028", # https://github.com/pyvista/pyvista/pull/6030
+    "B904", # https://github.com/pyvista/pyvista/pull/6022
     "D105", # Missing docstring in magic method
     "D107", # Missing docstring in `__init__`
     "D203", # May conflict with the formatter
@@ -311,42 +306,25 @@ ignore = [
     "D213", # Incompatible with D212
     "D402", # First line should not be the function's signature
     "D416", # Section name ends in colon
-    # whitespace before ':'
-    "E203",
-    # line break before binary operator
-    # "W503",
-    # line length too long
-    "E501",
-    # do not assign a lambda expression, use a def
-    "E731",
-    # too many leading '#' for block comment
-    "E266",
-    # ambiguous variable name
-    "E741",
-    # module level import not at top of file
-    "E402",
-    # Quotes (temporary)
-    "Q0",
-    # bare excepts (temporary)
-    # "B001", "E722",
+    "E203", # whitespace before ':'
+    "E501", # line length too long
+    "E731", # do not assign a lambda expression, use a def
+    "E266", # too many leading '#' for block comment
+    "E741", # ambiguous variable name
+    "E402", # module level import not at top of file
+    "Q0", # Quotes (temporary)
     "E722",
-    # 'from module import *' used; unable to detect undefined names
-    "F403",
-    # https://github.com/pyvista/pyvista/pull/6037
-    "PERF203",
-    # https://github.com/pyvista/pyvista/pull/5877
-    "SIM102",
-    # https://github.com/pyvista/pyvista/pull/5888
-    "SIM117",
-    # https://github.com/pyvista/pyvista/pull/5837
-    "SIM118",
+    "F403", # 'from module import *' used; unable to detect undefined names
+    "PERF203", # https://github.com/pyvista/pyvista/pull/6037
+    "SIM102", # https://github.com/pyvista/pyvista/pull/5877
+    "SIM117", # https://github.com/pyvista/pyvista/pull/5888
+    "SIM118", # https://github.com/pyvista/pyvista/pull/5837
     # https://github.com/pyvista/pyvista/pull/5911
     "RET505",
     "RET506",
     "RET507",
-    # The following rules may cause conflicts when used with the formatter
-    "COM812",
-    "ISC001",
+    "COM812", # May cause conflicts when used with the formatter
+    "ISC001", # May cause conflicts when used with the formatter
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -402,10 +380,8 @@ allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
 "examples/**" = [
-    # https://github.com/pyvista/pyvista/pull/6014
-    "B015",
-    # https://github.com/pyvista/pyvista/pull/6019
-    "B018",
+    "B015", # https://github.com/pyvista/pyvista/pull/6014
+    "B018", # https://github.com/pyvista/pyvista/pull/6019
 ]
 "doc/source/make_tables.py" = ["D101","D102"]
 "examples/*" = ["D212","D102","D103","D205","D400","D415", "SIM115"]
