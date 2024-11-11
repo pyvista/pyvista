@@ -4439,7 +4439,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         if resolution is not None:
             _validation.validate_array(resolution, must_have_shape=2, must_have_dtype=int)
-            alg.SetResolution(resolution)
+            alg.SetResolution(resolution)  # type: ignore[arg-type]
         _update_alg(alg, progress_bar, 'Generating ruled surface')
         return _get_output(alg)
 
