@@ -4381,7 +4381,9 @@ class PolyDataFilters(DataSetFilters):
 
         return pyvista.wrap(output_volume)
 
-    def ruled_surface(self, *, resolution: VectorLike[int] | None = None, progress_bar: bool = False):
+    def ruled_surface(
+        self, *, resolution: VectorLike[int] | None = None, progress_bar: bool = False
+    ):
         """Create a ruled surface from a polyline.
 
         .. versionadded:: 0.45.0
