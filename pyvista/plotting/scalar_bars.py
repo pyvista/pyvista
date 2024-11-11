@@ -144,15 +144,15 @@ class ScalarBars:
         """Return a scalar bar actor."""
         return self._scalar_bar_actors[index]
 
-    def keys(self):
+    def keys(self):  # numpydoc ignore=RT01
         """Scalar bar keys."""
         return self._scalar_bar_actors.keys()
 
-    def values(self):
+    def values(self):  # numpydoc ignore=RT01
         """Scalar bar values."""
         return self._scalar_bar_actors.values()
 
-    def items(self):
+    def items(self):  # numpydoc ignore=RT01
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
 

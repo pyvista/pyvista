@@ -961,11 +961,11 @@ class Color:
         return Color(rgba)
 
     @classmethod
-    def from_dict(cls, dict_):
+    def from_dict(cls, dict_):  # numpydoc ignore=RT01
         """Construct from dictionary for JSON deserialization."""
         return Color(dict_)
 
-    def to_dict(self):
+    def to_dict(self):  # numpydoc ignore=RT01
         """Convert to dictionary for JSON serialization."""
         return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
