@@ -18,9 +18,6 @@ ROOT_PATH = Path(__file__).parent.parent.parent
 PYPROJECT_TOML_PATH = ROOT_PATH / 'pyproject.toml'
 OPTIONAL_DEPENDENCIES = 'typing'  # From`pip install pyvista[typing]`
 PRE_COMMIT_CONFIG_PATH = ROOT_PATH / '.pre-commit-config.yaml'
-SKIP_PACKAGES = [
-    'mypy',  # Mypy is part of typing env but not core dependencies
-]
 
 
 class _TestCaseTuple(NamedTuple):
@@ -159,8 +156,6 @@ def _get_mypy_precommit_dependencies(file_path):
 
 def test_dependency(dependency_test_case):
     package_name, project_specifier, precommit_specifier = dependency_test_case
-    if package_name in SKIP_PACKAGES:
-        pytest.skip('Known skips.')
 
     msg = _test_both_dependencies_exist(*dependency_test_case)
     if msg:
