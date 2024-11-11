@@ -4381,6 +4381,68 @@ class PolyDataFilters(DataSetFilters):
 
         return pyvista.wrap(output_volume)
 
+    def ruled_surface(
+        self, *, resolution: VectorLike[int] | None = None, progress_bar: bool = False
+    ):
+        """Create a ruled surface from a polyline.
+
+        .. versionadded:: 0.45.0
+
+        This filter is a filter that generates a surface from
+        a set of lines. The lines are assumed to be "parallel"
+        in the sense that they do not intersect and remain
+        somewhat close to one another. A surface is generated
+        by connecting the points defining each pair of lines
+        with straight lines. This creates a strip for each pair
+        of lines (i.e., a triangulation is created from two
+        generating lines). The filter can handle an arbitrary
+        number of lines, with lines i and i+1 assumed
+        connected. Note that there are several different
+        approaches for creating the ruled surface, the method
+        for creating the surface can either use the input points
+        or resample from the polylines (using a user-specified
+        resolution).
+
+        This filter implements `vtkRuledSurfaceFilter
+        <https://vtk.org/doc/nightly/html/classvtkRuledSurfaceFilter.html>`_.
+
+        Parameters
+        ----------
+        resolution : int, default: (1, 1)
+            Set the number of points in the output polyline.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Ruled surface.
+
+        Examples
+        --------
+        Create a ruled surface from a polyline.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> poly = pv.PolyData(
+        ...     [[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 1]],
+        ...     lines=[[2, 0, 1], [2, 2, 3]],
+        ...     force_float=False,
+        ... )
+        >>> surface = poly.ruled_surface(resolution=(21, 21))
+        >>> _ = pl.add_mesh(surface, show_edges=True)
+        >>> pl.show()
+
+        """
+        alg = _vtk.vtkRuledSurfaceFilter()
+        alg.SetInputData(self)
+        if resolution is not None:
+            _validation.validate_array(resolution, must_have_shape=2, must_have_dtype=int)
+            alg.SetResolution(resolution)  # type: ignore[arg-type]
+        _update_alg(alg, progress_bar, 'Generating ruled surface')
+        return _get_output(alg)
+
 
 def _length_distribution_percentile(poly, percentile, cell_length_sample_size, progress_bar):
     percentile = _validation.validate_number(
