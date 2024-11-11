@@ -377,14 +377,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
     @wraps(DataSet.plot)
-    def plot(self, *args, **kwargs):
+    def plot(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
     @wraps(PolyDataFilters.threshold)
-    def threshold(self, *args, **kwargs):
+    def threshold(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -392,7 +392,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(False).threshold(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.threshold_percent)
-    def threshold_percent(self, *args, **kwargs):
+    def threshold_percent(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -400,7 +400,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(False).threshold_percent(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.explode)
-    def explode(self, *args, **kwargs):
+    def explode(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and explode.
 
         The explode filter relies on cells.
@@ -409,7 +409,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(False).explode(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.delaunay_3d)
-    def delaunay_3d(self, *args, **kwargs):
+    def delaunay_3d(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(False).delaunay_3d(*args, **kwargs)
 
