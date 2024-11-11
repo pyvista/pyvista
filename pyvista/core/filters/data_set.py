@@ -6855,7 +6855,7 @@ class DataSetFilters:
         """
         shrink_factor = _validation.validate_number(
             shrink_factor,
-            must_have_dtype=float, 
+            must_have_dtype=float,
             must_be_in_range=[0.0, 1.0],
         )
         alg = _vtk.vtkShrinkFilter()
