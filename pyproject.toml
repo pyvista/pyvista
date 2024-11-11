@@ -73,10 +73,10 @@ typing = [
     'pyvista[pinned]',
 ]
 test = [
+    # Embreex does not work with arm-based macs
+    "embreex<2.17.8; sys_platform != 'darwin' or platform_machine != 'arm64'",
     'cmocean<4.0.4',
     'colorcet<3.2.0',
-    # Embreex does not work with arm-based macs
-    'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"',
     'hypothesis<6.115.6',
     'imageio-ffmpeg<0.6.0',
     'imageio<2.37.0',
@@ -152,6 +152,34 @@ Documentation = 'https://docs.pyvista.org/'
 "Bug Tracker" = 'https://github.com/pyvista/pyvista/issues'
 "Source Code" = 'https://github.com/pyvista/pyvista'
 
+[tool.setuptools.dynamic]
+version = {attr = 'pyvista._version.__version__'}
+
+[tool.setuptools.packages.find]
+include = [
+    'pyvista',
+    'pyvista.*',
+]
+
+[tool.setuptools.package-data]
+pyvista = [
+    'py.typed',
+]
+"pyvista.examples" = [
+    '2k_earth_daymap.jpg',
+    'airplane.ply',
+    'ant.ply',
+    'channels.vti',
+    'frog_tissues.vti',
+    'globe.vtk',
+    'hexbeam.vtk',
+    'nut.ply',
+    'pyvista_logo.png',
+    'rectilinear.vtk',
+    'sphere.ply',
+    'uniform.vtk',
+]
+
 [tool.blackdoc]
 # From https://numpydoc.readthedocs.io/en/latest/format.html
 # Extended discussion: https://github.com/pyvista/pyvista/pull/4129
@@ -163,6 +191,9 @@ line-length = 75
 source-dir = 'doc'
 build-dir = './doc/_build'
 all_files = 1
+
+[tool.upload_sphinx]
+upload-dir = 'doc/_build/html'
 
 [tool.codespell]
 skip = '*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.vtu,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*,./.git/*,./.hypothesis/*,*.yml,doc/_build/*,./doc/images/*,./dist/*,*~,.hypothesis*,./doc/examples/*,*.mypy_cache/*,*cover,./tests/tinypages/_build/*,*/_autosummary/*'
@@ -176,6 +207,27 @@ omit = [
     # kept for backwards compatibility:
     'pyvista/plotting/theme.py',
 ]
+
+[tool.pytest.ini_options]
+junit_family = 'legacy'
+filterwarnings = [
+    'error::pyvista.PyVistaDeprecationWarning',
+    'ignore:.*Given trait value dtype "float64":UserWarning',
+    # bogus numpy ABI warning (see numpy/#432)
+    'ignore:.*numpy.dtype size changed.*:RuntimeWarning',
+    'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',
+    'ignore:.*The NumPy module was reloaded*:UserWarning',
+    'ignore::DeprecationWarning',
+    'ignore::FutureWarning',
+    'ignore::PendingDeprecationWarning',
+]
+doctest_optionflags = 'NUMBER ELLIPSIS'
+testpaths = 'tests'
+markers = [
+    'needs_download: this test downloads data during execution',
+    'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
+]
+image_cache_dir = "tests/plotting/image_cache"
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -227,27 +279,6 @@ exclude = [
     # Documentation extensions or utilities
     '^viewer_directive\..*$',
 ]
-
-[tool.pytest.ini_options]
-junit_family = 'legacy'
-filterwarnings = [
-    'error::pyvista.PyVistaDeprecationWarning',
-    'ignore:.*Given trait value dtype "float64":UserWarning',
-    # bogus numpy ABI warning (see numpy/#432)
-    'ignore:.*numpy.dtype size changed.*:RuntimeWarning',
-    'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',
-    'ignore:.*The NumPy module was reloaded*:UserWarning',
-    'ignore::DeprecationWarning',
-    'ignore::FutureWarning',
-    'ignore::PendingDeprecationWarning',
-]
-doctest_optionflags = 'NUMBER ELLIPSIS'
-testpaths = 'tests'
-markers = [
-    'needs_download: this test downloads data during execution',
-    'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
-]
-image_cache_dir = "tests/plotting/image_cache"
 
 [tool.ruff]
 exclude = [
@@ -368,16 +399,6 @@ extend-select = [
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
 
-[tool.ruff.lint.isort]
-# Sort by name, don't cluster "from" vs "import"
-force-sort-within-sections = true
-# Combines "as" imports on the same line
-combine-as-imports = true
-# https://github.com/pyvista/pyvista/pull/5712
-required-imports = ["from __future__ import annotations"]
-# https://github.com/pyvista/pyvista/pull/5712
-force-single-line = true
-
 [tool.ruff.lint.per-file-ignores]
 "examples/**" = [
     # https://github.com/pyvista/pyvista/pull/6014
@@ -392,46 +413,27 @@ force-single-line = true
 "pyvista/ext/*" = ["D100", "D101", "D102", "D103"]
 "tests/*" = ["D"]
 
+[tool.ruff.lint.isort]
+# Sort by name, don't cluster "from" vs "import"
+force-sort-within-sections = true
+# Combines "as" imports on the same line
+combine-as-imports = true
+# https://github.com/pyvista/pyvista/pull/5712
+required-imports = ["from __future__ import annotations"]
+# https://github.com/pyvista/pyvista/pull/5712
+force-single-line = true
+
 [tool.ruff.lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
 
-[tool.setuptools.dynamic]
-version = {attr = 'pyvista._version.__version__'}
-
-[tool.setuptools.package-data]
-pyvista = [
-    'py.typed',
-]
-"pyvista.examples" = [
-    '2k_earth_daymap.jpg',
-    'airplane.ply',
-    'ant.ply',
-    'channels.vti',
-    'frog_tissues.vti',
-    'globe.vtk',
-    'hexbeam.vtk',
-    'nut.ply',
-    'pyvista_logo.png',
-    'rectilinear.vtk',
-    'sphere.ply',
-    'uniform.vtk',
-]
-
-[tool.setuptools.packages.find]
-include = [
-    'pyvista',
-    'pyvista.*',
-]
-
 [tool.tomlsort]
 in_place = true
-sort_first = ["key2", "pyvista[pinned]"]
+# Sorting options:
+no_sort_tables = true
+sort_inline_arrays = true
+ignore_case = true
+# Formatting options:
 spaces_before_inline_comment = 2
 spaces_indent_inline_array = 4
 trailing_comma_inline_array = true
-sort_inline_arrays = true
-ignore_case = true
-
-[tool.upload_sphinx]
-upload-dir = 'doc/_build/html'
