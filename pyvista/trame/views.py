@@ -156,7 +156,7 @@ class PyVistaRemoteView(VtkRemoteView, _BasePyVistaView):
     def push_camera(self, *args, **kwargs):  # pragma: no cover
         """No-op implementation to match local viewers."""
 
-    def update_image(self, *args, **kwargs):
+    def update_image(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Wrap update call."""
         return self.update(*args, **kwargs)
 
