@@ -19,7 +19,7 @@ jobs:
           cache: "pip"
 
       - name: Install PyVista test requirements
-        run: pip install .[test]
+        run: pip install .[typing]
 
       - name: Run Mypy
         run: mypy
