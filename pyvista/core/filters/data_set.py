@@ -6853,8 +6853,11 @@ class DataSetFilters:
         >>> shrunk.plot(show_edges=True, line_width=5)
 
         """
-        _validation.check_type(shrink_factor, float)
-        _validation.check_range(shrink_factor, rng=[0.0, 1.0])
+        shrink_factor = _validation.validate_number(
+            shrink_factor,
+            must_have_dtype=float, 
+            must_be_in_range=[0.0, 1.0],
+        )
         alg = _vtk.vtkShrinkFilter()
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
