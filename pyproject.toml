@@ -56,8 +56,8 @@ jupyter = [
     'trame-vuetify>=2.3.1',
     'trame>=2.5.2',
 ]
+# Pinned versions of core dependencies
 pinned = [
-    # Pinned versions of core dependencies
     'matplotlib<3.9.3',
     'numpy<2.2.0',
     'pillow<11.1.0',
@@ -204,19 +204,17 @@ quiet-level = 3
 omit = [
     'pyvista/conftest.py',
     'pyvista/ext/coverage.py',
-    # kept for backwards compatibility:
-    'pyvista/plotting/theme.py',
+    'pyvista/plotting/theme.py',  # kept for backwards compatibility
 ]
 
 [tool.pytest.ini_options]
 junit_family = 'legacy'
 filterwarnings = [
     'error::pyvista.PyVistaDeprecationWarning',
-    'ignore:.*Given trait value dtype "float64":UserWarning',
-    # bogus numpy ABI warning (see numpy/#432)
-    'ignore:.*numpy.dtype size changed.*:RuntimeWarning',
-    'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',
-    'ignore:.*The NumPy module was reloaded*:UserWarning',
+    'ignore:.*Given trait value dtype "float64":UserWarning',  # bogus numpy ABI warning (see numpy/#432)
+    'ignore:.*numpy.dtype size changed.*:RuntimeWarning',  # bogus numpy ABI warning (see numpy/#432)
+    'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',  # bogus numpy ABI warning (see numpy/#432)
+    'ignore:.*The NumPy module was reloaded*:UserWarning',  # bogus numpy ABI warning (see numpy/#432)
     'ignore::DeprecationWarning',
     'ignore::FutureWarning',
     'ignore::PendingDeprecationWarning',
@@ -269,14 +267,12 @@ checks = [
     "SS05",  # Appears to be broken.
     "YD01",  # Yields: No plan to enforce
 ]
+# don't report on objects that match any of these regex
 exclude = [
-    # classes inherit from BaseReader
-    '\.*Reader(\.|$)',
-    # don't report on objects that match any of these regex
+    '\.*Reader(\.|$)',  # classes inherit from BaseReader
     '\._.*$',  # Ignore anything that's private (e.g., starts with _)
     '^coverage\..*$',
     '^plot_directive\..*$',
-    # Documentation extensions or utilities
     '^viewer_directive\..*$',
 ]
 
@@ -299,12 +295,9 @@ quote-style = "single"
 [tool.ruff.lint]
 external = ["E131"]
 ignore = [
-    # https://github.com/pyvista/pyvista/pull/6030
-    "B028",
-    # https://github.com/pyvista/pyvista/pull/6022
-    "B904",
-    # The following rules may cause conflicts when used with the formatter
-    "COM812",
+    "B028",  # https://github.com/pyvista/pyvista/pull/6030
+    "B904",  # https://github.com/pyvista/pyvista/pull/6022
+    "COM812",  # May cause conflicts when used with the formatter
     "D105",  # Missing docstring in magic method
     "D107",  # Missing docstring in `__init__`
     "D203",  # May conflict with the formatter
@@ -312,40 +305,23 @@ ignore = [
     "D213",  # Incompatible with D212
     "D402",  # First line should not be the function's signature
     "D416",  # Section name ends in colon
-    # whitespace before ':'
-    "E203",
-    # too many leading '#' for block comment
-    "E266",
-    # module level import not at top of file
-    "E402",
-    # line break before binary operator
-    # "W503",
-    # line length too long
-    "E501",
-    # bare excepts (temporary)
-    # "B001", "E722",
+    "E203",  # whitespace before ':'
+    "E266",  # too many leading '#' for block comment
+    "E402",  # module level import not at top of file
+    "E501",  # line length too long
     "E722",
-    # do not assign a lambda expression, use a def
-    "E731",
-    # ambiguous variable name
-    "E741",
-    # 'from module import *' used; unable to detect undefined names
-    "F403",
-    "ISC001",
-    # https://github.com/pyvista/pyvista/pull/6037
-    "PERF203",
-    # Quotes (temporary)
-    "Q0",
-    # https://github.com/pyvista/pyvista/pull/5911
-    "RET505",
-    "RET506",
-    "RET507",
-    # https://github.com/pyvista/pyvista/pull/5877
-    "SIM102",
-    # https://github.com/pyvista/pyvista/pull/5888
-    "SIM117",
-    # https://github.com/pyvista/pyvista/pull/5837
-    "SIM118",
+    "E731",  # do not assign a lambda expression, use a def
+    "E741",  # ambiguous variable name
+    "F403",  # 'from module import *' used; unable to detect undefined names
+    "ISC001",  # May cause conflicts when used with the formatter
+    "PERF203",  # https://github.com/pyvista/pyvista/pull/6037
+    "Q0",  # Quotes (temporary)
+    "RET505",  # https://github.com/pyvista/pyvista/pull/5911
+    "RET506",  # https://github.com/pyvista/pyvista/pull/5911
+    "RET507",  # https://github.com/pyvista/pyvista/pull/5911
+    "SIM102",  # https://github.com/pyvista/pyvista/pull/5877
+    "SIM117",  # https://github.com/pyvista/pyvista/pull/5888
+    "SIM118",  # https://github.com/pyvista/pyvista/pull/5837
 ]
 fixable = ["ALL"]
 unfixable = []
@@ -401,10 +377,8 @@ allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
 "examples/**" = [
-    # https://github.com/pyvista/pyvista/pull/6014
-    "B015",
-    # https://github.com/pyvista/pyvista/pull/6019
-    "B018",
+    "B015",  # https://github.com/pyvista/pyvista/pull/6014
+    "B018",  # https://github.com/pyvista/pyvista/pull/6019
 ]
 "doc/source/make_tables.py" = ["D101", "D102"]
 "examples/*" = ["D102", "D103", "D205", "D212", "D400", "D415", "SIM115"]
