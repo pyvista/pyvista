@@ -116,7 +116,7 @@ class Observer:
         self.event_history = []
 
     @staticmethod
-    def parse_message(message):
+    def parse_message(message):  # numpydoc ignore=RT01
         """Parse the given message."""
         # Message format
         regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
@@ -163,7 +163,7 @@ class Observer:
             except Exception:
                 pass
 
-    def has_event_occurred(self):
+    def has_event_occurred(self):  # numpydoc ignore=RT01
         """Ask self if an error has occurred since last queried.
 
         This resets the observer's status.
@@ -178,7 +178,8 @@ class Observer:
 
         Returns
         -------
-            str: the last set error message
+        str
+            The last set error message.
 
         """
         if etc:
@@ -195,7 +196,7 @@ class Observer:
         self.__observing = True
 
 
-def send_errors_to_logging():
+def send_errors_to_logging():  # numpydoc ignore=RT01
     """Send all VTK error/warning messages to Python's logging module."""
     error_output = _vtk.vtkStringOutputWindow()
     error_win = _vtk.vtkOutputWindow()

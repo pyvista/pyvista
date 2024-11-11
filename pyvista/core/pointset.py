@@ -65,7 +65,7 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {
+    _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {  # type: ignore[assignment]
         '.xyz': _vtk.vtkSimplePointsWriter,
     }
 
@@ -96,7 +96,7 @@ class _PointSet(DataSet):
         alg.Update()
         return np.array(alg.GetCenter())
 
-    def shallow_copy(self, to_copy: DataSet) -> None:
+    def shallow_copy(self, to_copy: DataSet) -> None:  # type: ignore[override]
         """Create a shallow copy from a different dataset into this one.
 
         This method mutates this dataset and returns ``None``.
@@ -377,14 +377,14 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
     @wraps(DataSet.plot)
-    def plot(self, *args, **kwargs):
+    def plot(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)
         kwargs.setdefault('style', 'points')
         return pdata.plot(*args, **kwargs)
 
     @wraps(PolyDataFilters.threshold)
-    def threshold(self, *args, **kwargs):
+    def threshold(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -392,7 +392,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(False).threshold(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.threshold_percent)
-    def threshold_percent(self, *args, **kwargs):
+    def threshold_percent(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and threshold.
 
         Need this because cell-wise operations fail for PointSets.
@@ -400,7 +400,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(False).threshold_percent(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.explode)
-    def explode(self, *args, **kwargs):
+    def explode(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and explode.
 
         The explode filter relies on cells.
@@ -409,7 +409,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         return self.cast_to_polydata(False).explode(*args, **kwargs).cast_to_pointset()
 
     @wraps(PolyDataFilters.delaunay_3d)
-    def delaunay_3d(self, *args, **kwargs):
+    def delaunay_3d(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and run delaunay_3d."""
         return self.cast_to_polydata(False).delaunay_3d(*args, **kwargs)
 
@@ -739,7 +739,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                 ]
             ),
         ]
-    ] = {
+    ] = {  # type: ignore[assignment]
         '.ply': _vtk.vtkPLYWriter,
         '.vtp': _vtk.vtkXMLPolyDataWriter,
         '.stl': _vtk.vtkSTLWriter,
@@ -794,7 +794,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             if deep:
                 self.deep_copy(var_inp)
             else:
-                self.shallow_copy(var_inp)
+                self.shallow_copy(var_inp)  # type: ignore[arg-type]
             return
 
         # First parameter is points
@@ -835,7 +835,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
             setattr(self, k, v)
 
         # deprecated 0.44.0, convert to error in 0.47.0, remove 0.48.0
-        for k, v in (
+        for k, v in (  # type: ignore[assignment]
             ('n_verts', n_verts),
             ('n_strips', n_strips),
             ('n_faces', n_faces),
@@ -1065,7 +1065,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     @regular_faces.setter
     def regular_faces(self, faces: MatrixLike[int]):  # numpydoc ignore=PR01
         """Set the face cells from an (n_faces, face_size) array."""
-        self.faces = CellArray.from_regular_cells(faces)
+        self.faces = CellArray.from_regular_cells(faces)  # type: ignore[assignment]
 
     @classmethod
     def from_regular_faces(cls, points: MatrixLike[float], faces: MatrixLike[int], deep=False):
@@ -1134,7 +1134,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     @irregular_faces.setter
     def irregular_faces(self, faces: Sequence[VectorLike[int]]):  # numpydoc ignore=PR01
         """Set the faces from a sequence of face arrays."""
-        self.faces = CellArray.from_irregular_cells(faces)
+        self.faces = CellArray.from_irregular_cells(faces)  # type: ignore[assignment]
 
     @classmethod
     def from_irregular_faces(cls, points: MatrixLike[float], faces: Sequence[VectorLike[int]]):
@@ -1808,7 +1808,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             str,
             type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
         ]
-    ] = {
+    ] = {  # type: ignore[assignment]
         '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
         '.vtk': _vtk.vtkUnstructuredGridWriter,
     }
@@ -1824,7 +1824,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
                 if deep:
                     self.deep_copy(args[0])
                 else:
-                    self.shallow_copy(args[0])
+                    self.shallow_copy(args[0])  # type: ignore[arg-type]
 
             elif isinstance(args[0], (str, Path)):
                 self._from_file(args[0], **kwargs)
@@ -2383,7 +2383,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
     _WRITERS: ClassVar[
         dict[str, type[_vtk.vtkStructuredGridWriter | _vtk.vtkXMLStructuredGridWriter]]
-    ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}
+    ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}  # type: ignore[assignment]
 
     def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
         """Initialize the structured grid."""
@@ -2396,7 +2396,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             if deep:
                 self.deep_copy(uinput)
             else:
-                self.shallow_copy(uinput)
+                self.shallow_copy(uinput)  # type: ignore[arg-type]
         elif isinstance(uinput, (str, Path)):
             self._from_file(uinput, **kwargs)
         elif (
@@ -2722,7 +2722,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             for key in s1:
                 grid.cell_data.pop(key, None)
 
-        return grid
+        return grid  # type: ignore[return-value]
 
     def _reshape_point_array(self, array: NumpyArray[float]) -> NumpyArray[float]:
         """Reshape point data to a 3-D matrix."""
@@ -2792,7 +2792,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             str,
             type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
         ]
-    ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}
+    ] = {'.vtu': _vtk.vtkXMLUnstructuredGridWriter, '.vtk': _vtk.vtkUnstructuredGridWriter}  # type: ignore[assignment]
 
     def __init__(self, *args, deep: bool = False, **kwargs):
         """Initialize the explicit structured grid."""
@@ -2806,9 +2806,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                 if deep:
                     self.deep_copy(arg0)
                 else:
-                    self.shallow_copy(arg0)
+                    self.shallow_copy(arg0)  # type: ignore[arg-type]
             elif isinstance(arg0, (_vtk.vtkStructuredGrid, _vtk.vtkUnstructuredGrid)):
-                grid = arg0.cast_to_explicit_structured_grid()
+                grid = arg0.cast_to_explicit_structured_grid()  # type: ignore[union-attr]
                 self.shallow_copy(grid)
             elif isinstance(arg0, (str, Path)):
                 grid = UnstructuredGrid(arg0)
@@ -2923,7 +2923,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         elif len(cells) != 9 * n_cells:
             raise ValueError(f'Expected cells to be length {9 * n_cells}')
 
-        self.SetDimensions(dims[0], dims[1], dims[2])
+        self.SetDimensions(dims[0], dims[1], dims[2])  # type: ignore[arg-type]
         self.SetCells(CellArray(cells))
         self.SetPoints(vtk_points(points))
 
