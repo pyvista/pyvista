@@ -93,5 +93,5 @@ repos:
     rev: v0.23.1
     hooks:
       - id: toml-sort
-        args: [--in-place]
+        args: [] # Args should be blank. Set args in `pyproject.toml` instead
         types_or: [toml]
