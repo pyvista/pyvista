@@ -29,7 +29,6 @@ if TYPE_CHECKING:  # pragma: no cover
 from .dataset import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
-from .grid import ImageData
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.geometric_objects import Box
@@ -41,7 +40,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
-PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA = '_PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA'
+PYVISTA_NESTED_FIELD_DATA = '_PYVISTA_NESTED_FIELD_DATA'
 
 
 class MultiBlock(
@@ -1399,49 +1398,55 @@ class MultiBlock(
     def _store_nested_field_data(self) -> None:
         """Store field data of nested MultiBlock datasets.
 
-        This method stores the field data of nested MultiBlock datasets in a separate
-        "dummy" placeholder mesh. Use `_restore_nested_field_data` to invert this
-        process.
+        This method stores the field data of nested MultiBlock datasets in the root
+        MultiBlock's field data.
 
         This is used as a workaround to read and write nested MultiBlock field data,
         since there is a VTK issue where this field data is otherwise lost.
+
         """
-        for block_name in self.keys():
-            block = self[block_name]
+        for i, block in enumerate(self):
             if isinstance(block, MultiBlock):
                 block._store_nested_field_data()
             else:
                 continue
 
             # Store nested field data in an arbitrary placeholder mesh
+            fdata = self.field_data
             nested_fdata = block.field_data
-            fdata_placeholder = ImageData(dimensions=(1, 1, 1))  # Mesh must not be empty
-            fdata_placeholder.field_data.update(nested_fdata, copy=False)
-            key = f'{PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA}-{block_name}'
-            self[key] = fdata_placeholder
+
+            for field, value in nested_fdata.items():
+                key = f'{PYVISTA_NESTED_FIELD_DATA}-{i}-{field}'
+                fdata[key] = value
 
     def _restore_nested_field_data(self) -> None:
         """Restore field data of nested MultiBlock datasets.
 
         This method restores the field data of nested MultiBlock datasets that were
-        previously stored in a separate "dummy" placeholder mesh by
-        `_store_nested_field_data`.
+        previously stored by `_store_nested_field_data`.
 
         This is used as a workaround to read and write nested MultiBlock field data,
         since there is a VTK issue where this field data is otherwise lost.
+
         """
-        keys = self.keys()
+        fdata = self.field_data
+        keys = fdata.keys()
         if keys is not None:
-            for block_name in keys:
-                if block_name is not None and PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA in block_name:
-                    # Get field data from the placeholder mesh then delete the placeholder
-                    fdata_placeholder = self[block_name]
-                    nested_fdata = fdata_placeholder.field_data
-                    block_name_start = len(PYVISTA_NESTED_MULTIBLOCK_FIELD_DATA) + 1
-                    dataset_name = block_name[block_name_start:]
-                    block = self[dataset_name]
-                    block.field_data.update(nested_fdata, copy=False)
-                    del self[block_name]
+            for field_name in keys:
+                if field_name is not None and field_name.startswith(PYVISTA_NESTED_FIELD_DATA):
+                    # Remove prefix
+                    index_and_name_start = len(PYVISTA_NESTED_FIELD_DATA) + 1
+                    index_and_name = field_name[index_and_name_start:]
+
+                    # Split into block index and name
+                    index_str = index_and_name.split('-')[0]
+                    name_start = len(index_str) + 1
+                    name = index_and_name[name_start:]
+
+                    # Set nested field data and remove it from root multiblock
+                    nested_dataset = self[int(index_str)]
+                    nested_dataset.field_data[name] = fdata[field_name]
+                    del fdata[field_name]
 
                     # Restore field data recursively
-                    block._restore_nested_field_data()
+                    nested_dataset._restore_nested_field_data()
