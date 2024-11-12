@@ -1025,17 +1025,13 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet, recursive=False) -> None:  # type: ignore[override]
+    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
         """Shallow copy the given multiblock to this multiblock.
 
         Parameters
         ----------
         to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
             Data object to perform a shallow copy from.
-
-        recursive : bool, default: False
-            Also shallow-copy any nested :class:`~pyvista.MultiBlock` blocks. By
-            default, nested multi-blocks are not shallow-copied.
 
         """
         if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
@@ -1053,8 +1049,7 @@ class MultiBlock(
                     this_object_.replace(i, block_to_copy)
                     _replace_nested_multiblocks(this_object_[i], block_to_copy)
 
-        if not recursive:
-            _replace_nested_multiblocks(self, to_copy)
+        _replace_nested_multiblocks(self, to_copy)
 
     def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
         """Overwrite this MultiBlock with another MultiBlock as a deep copy.
