@@ -61,9 +61,9 @@ pinned = [
 typing = ['mypy<1.14.0', 'npt-promote==0.1', 'numpy>=2.0.0', 'pyvista[pinned]']
 test = [
   # Embreex does not work with arm-based macs
-  'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"',
   'cmocean<4.0.4',
   'colorcet<3.2.0',
+  'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"',
   'hypothesis<6.115.6',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
