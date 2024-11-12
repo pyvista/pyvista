@@ -406,6 +406,7 @@ def test_ensight_multi_block_io(extension, binary, tmpdir):
         assert block.array_names == array_names
 
 
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='Issue with saving empty meshes.')
 @pytest.mark.parametrize('nested_level', [1, 2])
 def test_multi_block_io_nested_field_data(tmpdir, nested_level):
     FIELD_NAME = 'data'
