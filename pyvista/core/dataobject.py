@@ -149,16 +149,16 @@ class DataObject:
             writer.SetInputData(mesh_)
             if file_ext == '.ply' and texture is not None:
                 if isinstance(texture, str):
-                    writer.SetArrayName(texture)  # type: ignore[union-attr]
+                    writer.SetArrayName(texture)
                     array_name = texture
                 elif isinstance(texture, np.ndarray):
                     array_name = '_color_array'
                     mesh_[array_name] = texture
-                    writer.SetArrayName(array_name)  # type: ignore[union-attr]
+                    writer.SetArrayName(array_name)
 
                 # enable alpha channel if applicable
-                if mesh_[array_name].shape[-1] == 4:  # type: ignore[index]
-                    writer.SetEnableAlpha(True)  # type: ignore[union-attr]
+                if mesh_[array_name].shape[-1] == 4:
+                    writer.SetEnableAlpha(True)
             writer.Write()
 
         if self._WRITERS is None:
