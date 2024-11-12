@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import itertools
 from pathlib import Path
+import pickle
 import warnings
 
 import numpy as np
@@ -13,6 +14,8 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .observers import Observer
+
+PICKLE_EXT = ('.pkl', '.pickle')
 
 
 def set_pickle_format(format: str):  # noqa: A002
@@ -207,6 +210,8 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
         raise ValueError(
             'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
         )
+    if ext in PICKLE_EXT:
+        return read_pickle(filename)
 
     try:
         reader = pyvista.get_reader(filename, force_ext)
@@ -710,6 +715,78 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
     grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
 
     return grid
+
+
+def read_pickle(filename):
+    """Load a pickled mesh from file.
+
+    Parameters
+    ----------
+    filename : str
+        The path of the pickled mesh to read.
+
+    Returns
+    -------
+    pyvista.DataObject
+        Unpickled mesh.
+
+    Examples
+    --------
+    Read in an example jpg map file as a texture.
+
+    >>> from pathlib import Path
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> Path(examples.mapfile).name
+    '2k_earth_daymap.jpg'
+    >>> texture = pv.read_texture(examples.mapfile)
+    >>> type(texture)
+    <class 'pyvista.plotting.texture.Texture'>
+
+    """
+    filename_str = str(filename)
+    if filename_str.endswith(PICKLE_EXT):
+        with open(filename_str, 'rb') as f:  # noqa: PTH123
+            mesh = pickle.load(f)
+
+    if not isinstance(mesh, pyvista.DataObject):
+        raise TypeError(
+            f'Pickled object must be an instance of {pyvista.DataObject}. Got {mesh.__class__} instead.'
+        )
+    return mesh
+
+
+def save_pickle(filename, mesh):
+    """Pickle a mesh and save it to file.
+
+    Parameters
+    ----------
+    filename : str
+        The path of the pickled mesh to save, including the extension ``'.pkl'``
+        or ``'.pickle'``.
+
+    mesh : pyvista.DataObject
+        Any PyVista mesh.
+
+    Examples
+    --------
+    Read in an example jpg map file as a texture.
+
+    >>> from pathlib import Path
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> Path(examples.mapfile).name
+    '2k_earth_daymap.jpg'
+    >>> texture = pv.read_texture(examples.mapfile)
+    >>> type(texture)
+    <class 'pyvista.plotting.texture.Texture'>
+
+    """
+    filename_str = str(filename)
+    if not filename_str.endswith(PICKLE_EXT):
+        filename_str += '.pkl'
+    with open(filename_str, 'wb') as f:  # noqa: PTH123
+        pickle.dump(mesh, f)
 
 
 def is_meshio_mesh(obj):
