@@ -766,7 +766,7 @@ def read_pickle(filename):
     Unlike other file formats, custom attributes are saved with pickled meshes.
 
     >>> mesh.custom_attribute = 42
-    >>> mesh.save_pickle('ant.pkl')
+    >>> pv.save_pickle('ant.pkl', mesh)
     >>> new_mesh = pv.read_pickle('ant.pkl')
     >>> new_mesh.custom_attribute
     42
@@ -821,7 +821,7 @@ def save_pickle(filename, mesh):
     Unlike other file formats, custom attributes are saved with pickled meshes.
 
     >>> mesh.custom_attribute = 42
-    >>> mesh.save_pickle('ant.pkl')
+    >>> pv.save_pickle('ant.pkl', mesh)
     >>> new_mesh = pv.read_pickle('ant.pkl')
     >>> new_mesh.custom_attribute
     42
