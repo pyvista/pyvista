@@ -18,10 +18,6 @@ except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
 
-# pytestmark = pytest.mark.skipif(
-#     platform.system() == 'Darwin',
-#     reason='MacOS testing on Azure fails when downloading',
-# )
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 

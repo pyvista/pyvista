@@ -433,7 +433,7 @@ class DataSetFilters:
                         axes[1] *= -1
 
         rotation = Transform().rotate(axes)
-        aligned = self.transform(rotation, inplace=False)
+        aligned = self.transform(rotation, inplace=False)  # type: ignore[misc]
         translation = Transform().translate(-np.array(aligned.center))
         if not centered:
             translation.translate(self.center)  # type: ignore[attr-defined]
@@ -1820,7 +1820,7 @@ class DataSetFilters:
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
         if extent is not None:
-            alg.SetExtent(extent)
+            alg.SetExtent(extent)  # type: ignore[call-overload]
             alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
@@ -6853,8 +6853,11 @@ class DataSetFilters:
         >>> shrunk.plot(show_edges=True, line_width=5)
 
         """
-        if not (0.0 <= shrink_factor <= 1.0):
-            raise ValueError('`shrink_factor` should be between 0.0 and 1.0')
+        shrink_factor = _validation.validate_number(
+            shrink_factor,
+            must_have_dtype=float,
+            must_be_in_range=[0.0, 1.0],
+        )
         alg = _vtk.vtkShrinkFilter()
         alg.SetInputData(self)
         alg.SetShrinkFactor(shrink_factor)
@@ -6928,7 +6931,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
         return _get_output(alg)
 
-    def transform(
+    def transform(  # type: ignore[misc]
         self: _vtk.vtkDataSet,
         trans: TransformLike,
         transform_all_input_vectors=False,
@@ -7020,30 +7023,34 @@ class DataSetFilters:
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
         converted_ints = False
-        if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)
+        if not np.issubdtype(self.points.dtype, np.floating):  # type: ignore[attr-defined]
+            self.points = self.points.astype(np.float32)  # type: ignore[attr-defined]
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
             point_vectors = [
-                name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
+                name
+                for name, data in self.point_data.items()  # type: ignore[attr-defined]
+                if data.shape == (self.n_points, 3)  # type: ignore[attr-defined]
             ]
             cell_vectors = [
-                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
+                name
+                for name, data in self.cell_data.items()  # type: ignore[attr-defined]
+                if data.shape == (self.n_cells, 3)  # type: ignore[attr-defined]
             ]
         else:
             # we'll only transform active vectors and normals
             point_vectors = [
-                self.point_data.active_vectors_name,
-                self.point_data.active_normals_name,
+                self.point_data.active_vectors_name,  # type: ignore[attr-defined]
+                self.point_data.active_normals_name,  # type: ignore[attr-defined]
             ]
             cell_vectors = [
-                self.cell_data.active_vectors_name,
-                self.cell_data.active_normals_name,
+                self.cell_data.active_vectors_name,  # type: ignore[attr-defined]
+                self.cell_data.active_normals_name,  # type: ignore[attr-defined]
             ]
         # dynamically convert each self.point_data[name] etc. to float32
         all_vectors = [point_vectors, cell_vectors]
-        all_dataset_attrs = [self.point_data, self.cell_data]
+        all_dataset_attrs = [self.point_data, self.cell_data]  # type: ignore[attr-defined]
         for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs):
             for vector_name in vector_names:
                 if vector_name is None:
@@ -7060,8 +7067,8 @@ class DataSetFilters:
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
-        active_point_scalars_name = self.point_data.active_scalars_name
-        active_cell_scalars_name = self.cell_data.active_scalars_name
+        active_point_scalars_name = self.point_data.active_scalars_name  # type: ignore[attr-defined]
+        active_cell_scalars_name = self.cell_data.active_scalars_name  # type: ignore[attr-defined]
 
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
@@ -7077,10 +7084,10 @@ class DataSetFilters:
 
         # make the previously active scalars active again
         if active_point_scalars_name is not None:
-            self.point_data.active_scalars_name = active_point_scalars_name
+            self.point_data.active_scalars_name = active_point_scalars_name  # type: ignore[attr-defined]
             res.point_data.active_scalars_name = active_point_scalars_name
         if active_cell_scalars_name is not None:
-            self.cell_data.active_scalars_name = active_cell_scalars_name
+            self.cell_data.active_scalars_name = active_cell_scalars_name  # type: ignore[attr-defined]
             res.cell_data.active_scalars_name = active_cell_scalars_name
 
         self_output = self if inplace else self.__class__()
@@ -7089,9 +7096,9 @@ class DataSetFilters:
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
         if inplace:
-            output.copy_from(res, deep=False)
+            output.copy_from(res, deep=False)  # type: ignore[attr-defined]
         else:
-            output.copy_from(res, deep=True)
+            output.copy_from(res, deep=True)  # type: ignore[attr-defined]
         return output
 
     def reflect(

@@ -2940,8 +2940,8 @@ class WidgetHelper:
             raise TypeError('Logo must be a pyvista.ImageData or a file path to an image.')
         representation = _vtk.vtkLogoRepresentation()
         representation.SetImage(logo)
-        representation.SetPosition(position)
-        representation.SetPosition2(size)
+        representation.SetPosition(position)  # type: ignore[call-overload]
+        representation.SetPosition2(size)  # type: ignore[call-overload]
         representation.GetImageProperty().SetOpacity(opacity)
         widget = _vtk.vtkLogoWidget()
         widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
