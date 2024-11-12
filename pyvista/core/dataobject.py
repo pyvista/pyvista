@@ -112,6 +112,14 @@ class DataObject:
     ) -> None:
         """Save this vtk object to file.
 
+        .. versionadded:: 0.45
+
+            Support saving pickled meshes
+
+        See Also
+        --------
+        pyvista.read
+
         Parameters
         ----------
         filename : str, pathlib.Path

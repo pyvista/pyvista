@@ -135,7 +135,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
     readers first then tries to use ``meshio``. :py:mod:`Pickled<pickle>`
-    meshes (`'.pkl' or `'.pickle`) are also supported.
+    meshes (``'.pkl'`` or ``'.pickle'``) are also supported.
 
     See :func:`pyvista.get_reader` for list of vtk formats supported.
 
@@ -151,7 +151,13 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
     .. warning::
 
         The pickle module is not secure. Only read pickled mesh files
-        (`'.pkl' or `'.pickle`) you trust. See :py:mod:`pickle` for details.
+        (``'.pkl'`` or ``'.pickle'``) you trust. See :py:mod:`pickle`
+        for details.
+
+    See Also
+    --------
+    pyvista.DataObject.save
+        Save a mesh to file.
 
     Parameters
     ----------
