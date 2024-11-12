@@ -89,9 +89,9 @@ repos:
     hooks:
       - id: shfmt
 
-  - repo: https://github.com/pappasam/toml-sort
-    rev: v0.23.1
+  - repo: https://github.com/ComPWA/taplo-pre-commit
+    rev: v0.9.3
     hooks:
-      - id: toml-sort
-        args: [] # Args should be blank. Set args in `pyproject.toml` instead
-        types_or: [toml]
+      - id: taplo-format
+        # See options: https://taplo.tamasfe.dev/configuration/formatter-options.html
+        args: [--option, "reorder_arrays=true"]
