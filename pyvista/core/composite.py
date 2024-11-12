@@ -1445,8 +1445,8 @@ class MultiBlock(
 
                     # Set nested field data and remove it from root multiblock
                     nested_dataset = self[int(index_str)]
-                    nested_dataset.field_data[name] = fdata[field_name]
+                    nested_dataset.field_data[name] = fdata[field_name]  # type: ignore[union-attr]
                     del fdata[field_name]
 
                     # Restore field data recursively
-                    nested_dataset._restore_nested_field_data()
+                    nested_dataset._restore_nested_field_data()  # type: ignore[union-attr]
