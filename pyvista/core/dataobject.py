@@ -20,9 +20,7 @@ from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
-from .utilities.fileio import PICKLE_EXT
 from .utilities.fileio import read
-from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
@@ -141,26 +139,6 @@ class DataObject:
         file size.
 
         """
-
-        def _write_vtk(mesh_):
-            writer = mesh_._WRITERS[file_ext]()
-            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
-            writer.SetFileName(str(file_path))
-            writer.SetInputData(mesh_)
-            if file_ext == '.ply' and texture is not None:
-                if isinstance(texture, str):
-                    writer.SetArrayName(texture)  # type: ignore[union-attr]
-                    array_name = texture
-                elif isinstance(texture, np.ndarray):
-                    array_name = '_color_array'
-                    mesh_[array_name] = texture
-                    writer.SetArrayName(array_name)  # type: ignore[union-attr]
-
-                # enable alpha channel if applicable
-                if mesh_[array_name].shape[-1] == 4:  # type: ignore[index]
-                    writer.SetEnableAlpha(True)  # type: ignore[union-attr]
-            writer.Write()
-
         from .composite import MultiBlock  # avoid circular import
 
         if self._WRITERS is None:
@@ -173,6 +151,11 @@ class DataObject:
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
         file_ext = file_path.suffix
+        if file_ext not in self._WRITERS:
+            raise ValueError(
+                'Invalid file extension for this data type.'
+                f' Must be one of: {self._WRITERS.keys()}',
+            )
 
         # store complex and bitarray types as field data
         self._store_metadata()
@@ -184,16 +167,23 @@ class DataObject:
         else:
             mesh_out = self
 
-        writer_ext = list(mesh_out._WRITERS.keys())
-        if file_ext in writer_ext:
-            _write_vtk(mesh_out)
-        elif file_ext in PICKLE_EXT:
-            save_pickle(filename, mesh_out)
-        else:
-            raise ValueError(
-                'Invalid file extension for this data type.'
-                f' Must be one of: {writer_ext + PICKLE_EXT}',
-            )
+        writer = mesh_out._WRITERS[file_ext]()
+        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        writer.SetFileName(str(file_path))
+        writer.SetInputData(mesh_out)
+        if file_ext == '.ply' and texture is not None:
+            if isinstance(texture, str):
+                writer.SetArrayName(texture)  # type: ignore[union-attr]
+                array_name = texture
+            elif isinstance(texture, np.ndarray):
+                array_name = '_color_array'
+                mesh_out[array_name] = texture
+                writer.SetArrayName(array_name)  # type: ignore[union-attr]
+
+            # enable alpha channel if applicable
+            if mesh_out[array_name].shape[-1] == 4:  # type: ignore[index]
+                writer.SetEnableAlpha(True)  # type: ignore[union-attr]
+        writer.Write()
 
     def _store_metadata(self) -> None:
         """Store metadata as field data."""

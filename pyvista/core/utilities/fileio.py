@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import itertools
 from pathlib import Path
-import pickle
 import warnings
 
 import numpy as np
@@ -14,8 +13,6 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .observers import Observer
-
-PICKLE_EXT = ('.pkl', '.pickle')
 
 
 def set_pickle_format(format: str):  # noqa: A002
@@ -210,8 +207,6 @@ def read(filename, force_ext=None, file_format=None, progress_bar=False):
         raise ValueError(
             'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
         )
-    if ext in PICKLE_EXT:
-        return read_pickle(filename)
 
     try:
         reader = pyvista.get_reader(filename, force_ext)
@@ -715,21 +710,6 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
     grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
 
     return grid
-
-
-def read_pickle(filename):
-    filename_str = str(filename)
-    if filename_str.endswith(PICKLE_EXT):
-        with open(filename_str, 'rb') as f:  # noqa: PTH123
-            pickle.load(f)
-
-
-def save_pickle(filename, mesh):
-    filename_str = str(filename)
-    if not filename_str.endswith(PICKLE_EXT):
-        filename_str += '.pkl'
-    with open(filename_str, 'wb') as f:  # noqa: PTH123
-        pickle.dump(mesh, f)
 
 
 def is_meshio_mesh(obj):
