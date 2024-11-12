@@ -1400,16 +1400,17 @@ class MultiBlock(
         since there is a VTK issue where this field data is otherwise lost.
 
         """
+        fdata = None
         for i, block in enumerate(self):
-            if isinstance(block, MultiBlock):
-                block._store_nested_field_data()
-            else:
+            if not isinstance(block, MultiBlock):
                 continue
+            # Store field data recursively
+            block._store_nested_field_data()
 
-            # Store nested field data in an arbitrary placeholder mesh
-            fdata = self.field_data
+            # Shallow-copy any nested field data to the root MultiBlock
+            if fdata is None:
+                fdata = self.field_data
             nested_fdata = block.field_data
-
             for field, value in nested_fdata.items():
                 key = f'{PYVISTA_NESTED_FIELD_DATA}-{i}-{field}'
                 fdata[key] = value
