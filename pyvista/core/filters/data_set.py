@@ -2712,8 +2712,8 @@ class DataSetFilters:
 
         return output
 
-    def connectivity(
-        self,
+    def connectivity(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         extraction_mode: Literal[
             'all',
             'largest',
@@ -2952,11 +2952,11 @@ class DataSetFilters:
             return extracted
 
         # Store active scalars info to restore later if needed
-        active_field, active_name = self.active_scalars_info  # type: ignore[attr-defined]
+        active_field, active_name = self.active_scalars_info
 
         # Set scalars
         if scalar_range is None:
-            input_mesh = self.copy(deep=False)  # type: ignore[attr-defined]
+            input_mesh = self.copy(deep=False)
         else:
             if isinstance(scalar_range, np.ndarray):
                 num_elements = scalar_range.size
@@ -2972,7 +2972,7 @@ class DataSetFilters:
                 )
 
             # Input will be modified, so copy first
-            input_mesh = self.copy()  # type: ignore[attr-defined]
+            input_mesh = self.copy()
             if scalars is None:
                 set_default_active_scalars(input_mesh)
             else:
@@ -3135,7 +3135,7 @@ class DataSetFilters:
 
         if inplace:
             try:
-                self.copy_from(output, deep=False)  # type: ignore[attr-defined]
+                self.copy_from(output, deep=False)
             except:
                 pass
             else:
@@ -5431,8 +5431,8 @@ class DataSetFilters:
         _update_alg(extract_sel, progress_bar, 'Extracting Points')
         return _get_output(extract_sel)
 
-    def split_values(
-        self,
+    def split_values(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         values: None
         | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
@@ -5593,8 +5593,8 @@ class DataSetFilters:
             **kwargs,
         )
 
-    def extract_values(
-        self,
+    def extract_values(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         values: None
         | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
@@ -6000,8 +6000,8 @@ class DataSetFilters:
             return values_, ranges_
 
         # Return empty mesh if input is empty mesh
-        if self.n_points == 0:  # type: ignore[attr-defined]
-            return self.copy()  # type: ignore[attr-defined]
+        if self.n_points == 0:
+            return self.copy()
 
         array, association = _validate_scalar_array(scalars, preference)
         array, num_components, component_logic = _validate_component_mode(array, component_mode)
@@ -6017,7 +6017,7 @@ class DataSetFilters:
 
         # Set default for include cells
         if include_cells is None:
-            include_cells = self.n_cells > 0  # type: ignore[attr-defined]
+            include_cells = self.n_cells > 0
 
         kwargs = dict(
             array=array,
@@ -7641,8 +7641,8 @@ class DataSetFilters:
                 as_composite=as_composite,
             )
 
-    def _bounding_box(
-        self,
+    def _bounding_box(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         *,
         matrix: NumpyArray[float] | None,
         inverse_matrix: NumpyArray[float] | None,
@@ -7659,7 +7659,7 @@ class DataSetFilters:
         _validation.check_contains(item=box_style, container=['frame', 'outline', 'face'])
 
         # Create box
-        source = pyvista.CubeFacesSource(bounds=self.bounds)  # type: ignore[attr-defined]
+        source = pyvista.CubeFacesSource(bounds=self.bounds)
         if box_style == 'frame':
             source.frame_width = frame_width
         box = source.output
@@ -7699,7 +7699,7 @@ class DataSetFilters:
                 dots = [np.dot(axes, diag) for diag in diagonals]
                 match = diagonals[np.argmax(np.sum(dots, axis=1))]
                 # Choose min bound for positive direction, max bound for negative
-                bnds = self.bounds  # type: ignore[attr-defined]
+                bnds = self.bounds
                 point = np.ones(3)
                 point[0] = bnds.x_min if match[0] == 1 else bnds.x_max
                 point[1] = bnds.y_min if match[1] == 1 else bnds.y_max
