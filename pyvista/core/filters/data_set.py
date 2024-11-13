@@ -200,8 +200,8 @@ class DataSetFilters:
             return self.transform(matrix, inplace=False), matrix
         return self.transform(matrix, inplace=False)
 
-    def align_xyz(
-        self,
+    def align_xyz(  # type: ignore[misc]
+        self: pyvista.DataSet,
         *,
         centered: bool = True,
         axis_0_direction: VectorLike[float] | str | None = None,
@@ -433,10 +433,10 @@ class DataSetFilters:
                         axes[1] *= -1
 
         rotation = Transform().rotate(axes)
-        aligned = self.transform(rotation, inplace=False)  # type: ignore[misc]
+        aligned = self.transform(rotation, inplace=False)
         translation = Transform().translate(-np.array(aligned.center))
         if not centered:
-            translation.translate(self.center)  # type: ignore[attr-defined]
+            translation.translate(self.center)
         aligned.transform(translation, inplace=True)
 
         if return_matrix:
@@ -6932,7 +6932,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def transform(  # type: ignore[misc]
-        self: _vtk.vtkDataSet,
+        self: pyvista.DataSet,
         trans: TransformLike,
         transform_all_input_vectors=False,
         inplace=True,
@@ -7023,34 +7023,32 @@ class DataSetFilters:
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
         converted_ints = False
-        if not np.issubdtype(self.points.dtype, np.floating):  # type: ignore[attr-defined]
-            self.points = self.points.astype(np.float32)  # type: ignore[attr-defined]
+        if not np.issubdtype(self.points.dtype, np.floating):
+            self.points = self.points.astype(np.float32)
             converted_ints = True
+        point_vectors: list[str | None]
+        cell_vectors: list[str | None]
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
             point_vectors = [
-                name
-                for name, data in self.point_data.items()  # type: ignore[attr-defined]
-                if data.shape == (self.n_points, 3)  # type: ignore[attr-defined]
+                name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
             ]
             cell_vectors = [
-                name
-                for name, data in self.cell_data.items()  # type: ignore[attr-defined]
-                if data.shape == (self.n_cells, 3)  # type: ignore[attr-defined]
+                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals
             point_vectors = [
-                self.point_data.active_vectors_name,  # type: ignore[attr-defined]
-                self.point_data.active_normals_name,  # type: ignore[attr-defined]
+                self.point_data.active_vectors_name,
+                self.point_data.active_normals_name,
             ]
             cell_vectors = [
-                self.cell_data.active_vectors_name,  # type: ignore[attr-defined]
-                self.cell_data.active_normals_name,  # type: ignore[attr-defined]
+                self.cell_data.active_vectors_name,
+                self.cell_data.active_normals_name,
             ]
         # dynamically convert each self.point_data[name] etc. to float32
         all_vectors = [point_vectors, cell_vectors]
-        all_dataset_attrs = [self.point_data, self.cell_data]  # type: ignore[attr-defined]
+        all_dataset_attrs = [self.point_data, self.cell_data]
         for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs):
             for vector_name in vector_names:
                 if vector_name is None:
@@ -7067,8 +7065,8 @@ class DataSetFilters:
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
-        active_point_scalars_name = self.point_data.active_scalars_name  # type: ignore[attr-defined]
-        active_cell_scalars_name = self.cell_data.active_scalars_name  # type: ignore[attr-defined]
+        active_point_scalars_name = self.point_data.active_scalars_name
+        active_cell_scalars_name = self.cell_data.active_scalars_name
 
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
@@ -7084,10 +7082,10 @@ class DataSetFilters:
 
         # make the previously active scalars active again
         if active_point_scalars_name is not None:
-            self.point_data.active_scalars_name = active_point_scalars_name  # type: ignore[attr-defined]
+            self.point_data.active_scalars_name = active_point_scalars_name
             res.point_data.active_scalars_name = active_point_scalars_name
         if active_cell_scalars_name is not None:
-            self.cell_data.active_scalars_name = active_cell_scalars_name  # type: ignore[attr-defined]
+            self.cell_data.active_scalars_name = active_cell_scalars_name
             res.cell_data.active_scalars_name = active_cell_scalars_name
 
         self_output = self if inplace else self.__class__()
@@ -7096,9 +7094,9 @@ class DataSetFilters:
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
         if inplace:
-            output.copy_from(res, deep=False)  # type: ignore[attr-defined]
+            output.copy_from(res, deep=False)
         else:
-            output.copy_from(res, deep=True)  # type: ignore[attr-defined]
+            output.copy_from(res, deep=True)
         return output
 
     def reflect(
@@ -7295,8 +7293,8 @@ class DataSetFilters:
             return pyvista.merge(list(output), merge_points=False)
         return output
 
-    def oriented_bounding_box(
-        self,
+    def oriented_bounding_box(  # type:ignore[misc]
+        self: pyvista.DataSet,
         box_style: Literal['frame', 'outline', 'face'] = 'face',
         *,
         axis_0_direction: VectorLike[float] | str | None = None,
@@ -7485,8 +7483,8 @@ class DataSetFilters:
             as_composite=as_composite,
         )
 
-    def bounding_box(
-        self,
+    def bounding_box(  # type:ignore[misc]
+        self: pyvista.DataSet,
         box_style: Literal['frame', 'outline', 'face'] = 'face',
         *,
         oriented: bool = False,
