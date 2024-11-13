@@ -50,6 +50,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
+    from ._typing_core._aliases import _ConcretePointSet
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -190,7 +191,12 @@ class _PointSet(DataSet):
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    def translate(self, xyz: VectorLike[float], transform_all_input_vectors=False, inplace=None):
+    def translate(  # type: ignore[misc]
+        self: _ConcretePointSet,
+        xyz: VectorLike[float],
+        transform_all_input_vectors=False,
+        inplace=None,
+    ):
         """Translate the mesh.
 
         Parameters
@@ -227,7 +233,8 @@ class _PointSet(DataSet):
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore[misc]
             return self
-        return super().translate(
+        return DataSet.translate(
+            self,
             xyz,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -376,7 +383,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """
         return self.cast_to_polydata(deep=False).cast_to_unstructured_grid()
 
-    @wraps(DataSet.plot)
+    @wraps(DataSet.plot)  # type:ignore[has-type]
     def plot(self, *args, **kwargs):  # numpydoc ignore=RT01
         """Cast to PolyData and plot."""
         pdata = self.cast_to_polydata(deep=False)

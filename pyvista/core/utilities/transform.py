@@ -26,6 +26,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._aliases import _ConcreteDataSet
 
 
 class Transform(_vtk.vtkTransform):
@@ -1471,7 +1472,7 @@ class Transform(_vtk.vtkTransform):
     @overload
     def apply(  # numpydoc ignore: GL08
         self,
-        obj: DataSet,
+        obj: _ConcreteDataSet,
         /,
         *,
         inverse: bool = ...,
@@ -1490,7 +1491,7 @@ class Transform(_vtk.vtkTransform):
     ) -> MultiBlock: ...
     def apply(
         self,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
+        obj: VectorLike[float] | MatrixLike[float] | _ConcreteDataSet | MultiBlock,
         /,
         *,
         inverse: bool = False,
@@ -1579,7 +1580,7 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (DataSet, MultiBlock)):
-            return obj.transform(  # type: ignore[misc]
+            return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
                 transform_all_input_vectors=transform_all_input_vectors,

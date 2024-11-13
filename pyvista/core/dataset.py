@@ -47,6 +47,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import NumpyArray
     from ._typing_core import RotationLike
     from ._typing_core import VectorLike
+    from ._typing_core._aliases import _ConcreteDataSet
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -440,7 +441,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_scalars(name)
 
-    @property
+    @property  # type: ignore[override]
     def points(self) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 
@@ -899,8 +900,8 @@ class DataSet(DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    def rotate_x(
-        self,
+    def rotate_x(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -957,14 +958,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_x(angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def rotate_y(
-        self,
+    def rotate_y(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -1020,14 +1021,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_y(angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def rotate_z(
-        self,
+    def rotate_z(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         angle: float,
         point: VectorLike[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
@@ -1084,14 +1085,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_z(angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def rotate_vector(
-        self,
+    def rotate_vector(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         vector: VectorLike[float],
         angle: float,
         point: VectorLike[float] | None = None,
@@ -1152,14 +1153,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_vector(vector, angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def rotate(
-        self,
+    def rotate(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -1226,14 +1227,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate(rotation, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def translate(
-        self,
+    def translate(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -1282,14 +1283,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         transform = Transform().translate(xyz)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def scale(
-        self,
+    def scale(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         xyz: Number | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -1347,14 +1348,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         transform = Transform().scale(xyz, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def flip_x(
-        self,
+    def flip_x(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -1409,14 +1410,14 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((1, 0, 0), point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def flip_y(
-        self,
+    def flip_y(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -1471,14 +1472,14 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((0, 1, 0), point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def flip_z(
-        self,
+    def flip_z(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -1533,14 +1534,14 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((0, 0, 1), point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
         )
 
-    def flip_normal(
-        self,
+    def flip_normal(  # type: ignore[misc]
+        self: _ConcreteDataSet,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -1599,7 +1600,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect(normal, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,

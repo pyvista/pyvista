@@ -7,6 +7,13 @@ from typing import NamedTuple
 from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.grid import ImageData
+from pyvista.core.grid import RectilinearGrid
+from pyvista.core.pointset import ExplicitStructuredGrid
+from pyvista.core.pointset import PointSet
+from pyvista.core.pointset import PolyData
+from pyvista.core.pointset import StructuredGrid
+from pyvista.core.pointset import UnstructuredGrid
 
 from ._array_like import NumberType
 from ._array_like import _ArrayLike
@@ -79,3 +86,17 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
 _ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
+
+# Concrete subclasses of `_PointSet`. Use this alias wherever a `_PointSet` annotation
+# would otherwise be used.
+_ConcretePointSet = Union[
+    ExplicitStructuredGrid, PointSet, PolyData, StructuredGrid, UnstructuredGrid
+]
+
+# Concrete subclasses of `Grid`. Use this alias wherever a `Grid` annotation
+# would otherwise be used.
+_ConcreteGrid = Union[RectilinearGrid, ImageData]
+
+# Concrete subclasses of `DataSet`. Use this alias wherever a `DataSet` annotation
+# would otherwise be used.
+_ConcreteDataSet = Union[_ConcreteGrid, _ConcretePointSet]
