@@ -490,8 +490,7 @@ def test_multi_block_shallow_copy(recursive, multiblock_all_with_nested_and_none
     multi_copy = MultiBlock()
     multi_copy.shallow_copy(multi, recursive=recursive)
     assert multi.n_blocks == multi_copy.n_blocks
-    for i in range(multi_copy.n_blocks):
-        block = multi_copy.GetBlock(i)
+    for i, block in enumerate(multi_copy):
         assert pv.is_pyvista_dataset(block) or block is None
         if isinstance(multi[i], MultiBlock):
             assert (multi[i] is multi_copy[i]) != recursive
