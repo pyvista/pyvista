@@ -132,7 +132,7 @@ class ActiveArrayInfo:
 
 
 @abstract_class
-class DataSet(DataSetFilters, DataObject):
+class DataSet(DataSetFilters, DataObject, _vtk.vtkDataSet):
     """Methods in common to spatially referenced objects.
 
     Parameters
@@ -643,8 +643,8 @@ class DataSet(DataSetFilters, DataObject):
         if preference not in ['point', 'cell', FieldAssociation.CELL, FieldAssociation.POINT]:
             raise ValueError('``preference`` must be either "point" or "cell"')
         if name is None:
-            self.GetCellData().SetActiveScalars(None)
-            self.GetPointData().SetActiveScalars(None)
+            self.GetCellData().SetActiveScalars(None)  # type:ignore[arg-type]
+            self.GetPointData().SetActiveScalars(None)  # type:ignore[arg-type]
             return FieldAssociation.NONE, np.array([])
         field = get_array_association(self, name, preference=preference)
         if field == FieldAssociation.NONE:
@@ -690,8 +690,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if name is None:
-            self.GetCellData().SetActiveVectors(None)
-            self.GetPointData().SetActiveVectors(None)
+            self.GetCellData().SetActiveVectors(None)  # type:ignore[arg-type]
+            self.GetPointData().SetActiveVectors(None)  # type:ignore[arg-type]
             field = FieldAssociation.POINT
         else:
             field = get_array_association(self, name, preference=preference)
@@ -727,8 +727,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if name is None:
-            self.GetCellData().SetActiveTensors(None)
-            self.GetPointData().SetActiveTensors(None)
+            self.GetCellData().SetActiveTensors(None)  # type:ignore[arg-type]
+            self.GetPointData().SetActiveTensors(None)  # type:ignore[arg-type]
             field = FieldAssociation.POINT
         else:
             field = get_array_association(self, name, preference=preference)
@@ -957,7 +957,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_x(angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1020,7 +1020,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_y(angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1084,7 +1084,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_z(angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1152,7 +1152,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_vector(vector, angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1226,7 +1226,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate(rotation, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1282,7 +1282,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         transform = Transform().translate(xyz)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1347,7 +1347,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         transform = Transform().scale(xyz, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1409,7 +1409,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((1, 0, 0), point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1471,7 +1471,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((0, 1, 0), point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1533,7 +1533,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((0, 0, 1), point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1599,7 +1599,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect(normal, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -2489,7 +2489,7 @@ class DataSet(DataSetFilters, DataObject):
             raise ValueError('`n` must be a positive integer.')
 
         locator = _vtk.vtkPointLocator()
-        locator.SetDataSet(self)  # type: ignore[arg-type]
+        locator.SetDataSet(self)
         locator.BuildLocator()
         if n > 1:
             id_list = _vtk.vtkIdList()
@@ -2603,7 +2603,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)  # type: ignore[arg-type]
+        locator.SetDataSet(self)
         locator.BuildLocator()
 
         cell = _vtk.vtkGenericCell()
@@ -2688,7 +2688,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)  # type: ignore[arg-type]
+        locator.SetDataSet(self)
         locator.BuildLocator()
 
         containing_cells = [locator.FindCell(node) for node in point]
@@ -2749,7 +2749,7 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             raise TypeError('Point B must be a length three tuple of floats.')
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)  # type: ignore[arg-type]
+        locator.SetDataSet(self)
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsAlongLine(
@@ -3491,9 +3491,9 @@ class DataSet(DataSetFilters, DataObject):
         npoints = cell.GetPoints().GetNumberOfPoints()
 
         closest_point = [0.0, 0.0, 0.0]
-        sub_id = _vtk.mutable(0)
+        sub_id: int = _vtk.mutable(0)  # type:ignore[assignment]
         pcoords = [0.0, 0.0, 0.0]
-        dist2 = _vtk.mutable(0.0)
+        dist2: float = _vtk.mutable(0.0)  # type:ignore[assignment]
         weights = [0.0] * npoints
 
         in_cell = np.empty(shape=co_point.shape[0], dtype=np.bool_)
