@@ -31,7 +31,7 @@ dependencies = [
   'pooch',
   'scooby>=0.5.1',
   'typing-extensions',
-  'vtk==9.4.0rc3',     # keep without version constraints
+  'vtk',               # keep without version constraints
 ]
 dynamic = ['version']
 
@@ -57,7 +57,7 @@ pinned = [
   'pooch<1.9.0',
   'scooby<0.11.0',
   'typing-extensions<4.13.0',
-  'vtk<9.4.0',
+  'vtk==9.4.0rc3',
 ]
 typing = ['mypy<1.14.0', 'npt-promote==0.1', 'numpy>=2.0.0', 'pyvista[pinned]']
 test = [
