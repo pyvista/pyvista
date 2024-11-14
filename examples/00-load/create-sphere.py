@@ -26,12 +26,13 @@ mesh.plot(show_edges=True)
 # %%
 # This gives an :class:`pyvista.PolyData` mesh, i.e. a 2D surface. In this case, it is watertight
 # and encloses a volume.
+
 mesh
 
 # %%
 # The cells are triangles. For example, the first cell
-mesh.get_cell(0).type
 
+mesh.get_cell(0).type
 
 # %%
 # Structured quadrilateral mesh of Sphere
@@ -76,6 +77,7 @@ cell.type
 
 # %%
 # The first cell has two degenerate points.
+
 cell.points
 
 # %%
@@ -197,7 +199,6 @@ pl.add_point_labels(
 pl.view_xy()
 pl.show()
 
-
 # %%
 # Next we loop over all adjacent levels of phi to form all the quadrilaterals
 # and add the layer of triangles on the ending pole.  Since we already formed
@@ -232,7 +233,6 @@ mesh = pv.PolyData(points, faces=faces)
 # All the point labels are messy when plotted, so don't add to the final plot.
 
 mesh.plot(show_edges=True)
-
 
 # %%
 # .. tags:: load
