@@ -211,6 +211,7 @@ disallow_any_generics = true
 pretty = true
 show_error_context = true
 check_untyped_defs = true
+warn_unused_configs = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 plugins = ['npt_promote', 'numpy.typing.mypy_plugin']
