@@ -2776,7 +2776,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(dataset, _vtk.vtkCompositeDataSet):
             raise TypeError(f'Invalid type ({type(dataset)}). Must be a composite dataset.')
         # always convert
-        dataset = dataset.as_polydata_blocks(copy_mesh)
+        dataset = dataset.as_polydata_blocks(copy_mesh)  # type: ignore[attr-defined]
         self.mesh = dataset  # for legacy behavior
 
         # Parse arguments
@@ -3459,9 +3459,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if user_matrix is None:
             user_matrix = np.eye(4)
         if style == 'points_gaussian':
-            self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)
+            self.mapper = PointGaussianMapper(theme=self.theme, emissive=emissive)  # type: ignore[assignment]
         else:
-            self.mapper = DataSetMapper(theme=self.theme)
+            self.mapper = DataSetMapper(theme=self.theme)  # type: ignore[assignment]
 
         if render_lines_as_tubes and show_edges:
             warnings.warn(
@@ -3720,7 +3720,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars formatting ==================================================
         if scalars is not None:
-            self.mapper.set_scalars(
+            self.mapper.set_scalars(  # type: ignore[call-arg]
                 scalars,
                 scalars_name,
                 n_colors,
@@ -3831,7 +3831,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
 
         self.add_actor(
-            actor,
+            actor,  # type: ignore[arg-type]
             reset_camera=reset_camera,
             name=name,
             pickable=pickable,
@@ -5051,7 +5051,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Returns
         -------
-        vtk.vtkTextActor
+        pyvista.CornerAnnotation | pyvista.Text
             Text actor added to plot.
 
         Examples
@@ -5431,7 +5431,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.renderer._labels[addr] = [lines, label, Color(color)]
 
         # Add to renderer
-        self.add_actor(actor, reset_camera=False, name=name, pickable=False)
+        self.add_actor(actor, reset_camera=False, name=name, pickable=False)  # type: ignore[arg-type]
         return actor
 
     @wraps(ScalarBars.remove_scalar_bar)

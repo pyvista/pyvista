@@ -271,7 +271,7 @@ class CompositeFilters:
         trans = pyvista.Transform(trans)
         output = self if inplace else self.copy()  # type: ignore[attr-defined]
         for name in self.keys():  # type: ignore[attr-defined]
-            block = output[name]
+            block = output[name]  # type: ignore[index]
             if block is not None:
                 block.transform(
                     trans,

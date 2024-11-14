@@ -9,7 +9,7 @@ not enabled by default in :attr:`pyvista.global_theme
 have issues with this routine.
 
 For this example, we will showcase the difference that depth peeling
-provides.
+provides. See :func:`~pyvista.Plotter.enable_depth_peeling`.
 
 """
 

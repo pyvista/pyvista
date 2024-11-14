@@ -4,6 +4,11 @@
 Linked Views in Subplots
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+This example demonstrates how to create linked views in PyVista subplots
+using :func:`~pyvista.Plotter.link_views`, where camera movements
+in one view are synchronized with other views. This is particularly useful when comparing
+different versions or representations of the same model.
+
 """
 
 from __future__ import annotations

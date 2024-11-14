@@ -819,7 +819,7 @@ class Property(_vtk.vtkProperty):
         if value == InterpolationType.PBR:
             self.SetInterpolationToPBR()
         else:
-            self.SetInterpolation(value)
+            self.SetInterpolation(value)  # type: ignore[arg-type]
 
     @property
     def render_points_as_spheres(self) -> bool:  # numpydoc ignore=RT01
@@ -1220,7 +1220,7 @@ class Property(_vtk.vtkProperty):
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 
-        if self.interpolation == 'Physically based rendering':
+        if str(self.interpolation) == 'Physically based rendering':
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 

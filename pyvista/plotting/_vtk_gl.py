@@ -15,7 +15,7 @@ try:
     # Necessary for displaying charts, otherwise crashes on rendering
     from vtkmodules import vtkRenderingContextOpenGL2
 except ImportError:  # pragma: no cover
-    vtkRenderingContextOpenGL2 = None
+    vtkRenderingContextOpenGL2 = None  # type: ignore[assignment]
 
 
 from vtkmodules.vtkRenderingOpenGL2 import vtkCameraPass

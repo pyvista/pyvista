@@ -794,13 +794,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     return vtk_arr
 
         # reset data association
-        if name in self.dataset._association_bitarray_names[self.association.name]:
-            self.dataset._association_bitarray_names[self.association.name].remove(name)
-        if name in self.dataset._association_complex_names[self.association.name]:
-            self.dataset._association_complex_names[self.association.name].remove(name)
+        if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
+            self.dataset._association_bitarray_names[self.association.name].remove(name)  # type: ignore[union-attr]
+        if name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
+            self.dataset._association_complex_names[self.association.name].remove(name)  # type: ignore[union-attr]
 
         if data.dtype == np.bool_:
-            self.dataset._association_bitarray_names[self.association.name].add(name)
+            self.dataset._association_bitarray_names[self.association.name].add(name)  # type: ignore[union-attr]
             data = data.view(np.uint8)
         elif np.issubdtype(data.dtype, np.complexfloating):
             if data.dtype not in (np.complex64, np.complex128):
@@ -812,7 +812,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if data.ndim != 1:
                 if data.shape[1] != 1:
                     raise ValueError('Complex data must be single dimensional.')
-            self.dataset._association_complex_names[self.association.name].add(name)
+            self.dataset._association_complex_names[self.association.name].add(name)  # type: ignore[union-attr]
 
             # complex data is stored internally as a contiguous 2 component
             # float arrays
@@ -890,7 +890,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise KeyError(f'{key} not present.')
 
         with contextlib.suppress(KeyError):
-            self.dataset._association_bitarray_names[self.association.name].remove(key)
+            self.dataset._association_bitarray_names[self.association.name].remove(key)  # type: ignore[union-attr]
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 

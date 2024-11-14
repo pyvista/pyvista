@@ -3915,8 +3915,23 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Voxelize :class:`~pyvista.PolyData` as a binary :class:`~pyvista.ImageData` mask.
 
-        Generate a voxelized representation of a surface. The voxelization can be
-        controlled in several ways.
+        The binary mask is a point data array where points inside and outside of the
+        input surface are labelled with ``foreground_value`` and ``background_value``,
+        respectively.
+
+        This filter implements `vtkPolyDataToImageStencil
+        <https://vtk.org/doc/nightly/html/classvtkPolyDataToImageStencil.html>`_. This
+        algorithm operates as follows:
+
+        * The algorithm iterates through the z-slice of the ``reference_volume``.
+        * For each slice, it cuts the input :class:`~pyvista.PolyData` surface to create
+          2D polylines at that z position. It attempts to close any open polylines.
+        * For each x position along the polylines, the corresponding y positions are
+          determined.
+        * For each slice, the grid points are labelled as foreground or background based
+          on their xy coordinates.
+
+        The voxelization can be controlled in several ways:
 
         #. Specify the output geometry using a ``reference_volume``.
 
@@ -3938,6 +3953,8 @@ class PolyDataFilters(DataSetFilters):
         used by default to estimate the spacing. On systems with VTK < 9.2, the default
         spacing is set to ``mesh_length_fraction=1/100``.
 
+        .. versionadded:: 0.45.0
+
         .. note::
             For best results, ensure the input surface is a closed surface. The
             surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
@@ -3947,6 +3964,11 @@ class PolyDataFilters(DataSetFilters):
             This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
             which return meshes with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
+
+        .. note::
+            This filter does not discard internal surfaces, due, for instance, to
+            intersecting meshes. Instead, the intersection will be considered as
+            background which may produce unexpected results. See `Examples`.
 
         Parameters
         ----------
@@ -4134,6 +4156,65 @@ class PolyDataFilters(DataSetFilters):
         >>> plot = mask_and_polydata_plotter(mask, poly)
         >>> plot.show()
 
+        Visualize the effect of internal surfaces.
+
+        >>> mesh = pv.Cylinder() + pv.Cylinder((0, 0.75, 0))
+        >>> binary_mask = mesh.voxelize_binary_mask(
+        ...     dimensions=(1, 100, 50)
+        ... ).points_to_cells()
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask)
+        >>> _ = plot.add_mesh(mesh.slice(), color='red')
+        >>> plot.show(cpos="yz")
+
+        Note how the intersection is excluded from the mask.
+        To include the voxels delimited by internal surfaces in the foreground, the internal
+        surfaces should be removed, for instance by applying a boolean union. Note that
+        this operation in unreliable in VTK but may be performed with external tools such
+        as `vtkbool <https://github.com/zippy84/vtkbool>`_.
+
+        Alternatively, the intersecting parts of the mesh can be processed sequentially.
+
+        >>> cylinder_1 = pv.Cylinder()
+        >>> cylinder_2 = pv.Cylinder((0, 0.75, 0))
+
+        >>> reference_volume = pv.ImageData(
+        ...     dimensions=(1, 100, 50),
+        ...     spacing=(1, 0.0175, 0.02),
+        ...     origin=(0, -0.5 + 0.0175 / 2, -0.5 + 0.02 / 2),
+        ... )
+
+        >>> binary_mask_1 = cylinder_1.voxelize_binary_mask(
+        ...     reference_volume=reference_volume
+        ... ).points_to_cells()
+        >>> binary_mask_2 = cylinder_2.voxelize_binary_mask(
+        ...     reference_volume=reference_volume
+        ... ).points_to_cells()
+
+        >>> binary_mask_1["mask"] = (
+        ...     binary_mask_1["mask"] | binary_mask_2["mask"]
+        ... )
+
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask_1)
+        >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
+        >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
+        >>> plot.show(cpos="yz")
+
+        When multiple internal surfaces are nested, they are successively treated as
+        interfaces between background and foreground.
+
+        >>> mesh = (
+        ...     pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
+        ... )
+        >>> binary_mask = mesh.voxelize_binary_mask(
+        ...     dimensions=(1, 50, 50)
+        ... ).points_to_cells()
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask)
+        >>> _ = plot.add_mesh(mesh.slice(), color='red')
+        >>> plot.show(cpos="yz")
+
         """
         _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
         _validation.check_greater_than(self.n_cells, 1, name='n_cells')  # type: ignore[attr-defined]
@@ -4156,7 +4237,7 @@ class PolyDataFilters(DataSetFilters):
             _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)  # type: ignore[misc]
             poly_ijk = _preprocess_polydata(poly_ijk)
         else:
             # Compute reference volume geometry
@@ -4187,7 +4268,9 @@ class PolyDataFilters(DataSetFilters):
                         1 / 100
                         if mesh_length_fraction is None
                         else _validation.validate_number(
-                            mesh_length_fraction, must_have_dtype=float, must_be_in_range=[0.0, 1.0]
+                            mesh_length_fraction,
+                            must_have_dtype=float,
+                            must_be_in_range=[0.0, 1.0],
                         )
                     )
                     spacing = self.length * mesh_length_fraction  # type: ignore[attr-defined]
@@ -4280,7 +4363,7 @@ class PolyDataFilters(DataSetFilters):
         poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
         poly_to_stencil.SetInputData(poly_ijk)
         poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
-        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)
+        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
         poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
         _update_alg(poly_to_stencil, progress_bar, 'Converting polydata')
 
@@ -4297,6 +4380,68 @@ class PolyDataFilters(DataSetFilters):
         output_volume.direction_matrix = reference_volume.direction_matrix
 
         return pyvista.wrap(output_volume)
+
+    def ruled_surface(
+        self, *, resolution: VectorLike[int] | None = None, progress_bar: bool = False
+    ):
+        """Create a ruled surface from a polyline.
+
+        .. versionadded:: 0.45.0
+
+        This filter is a filter that generates a surface from
+        a set of lines. The lines are assumed to be "parallel"
+        in the sense that they do not intersect and remain
+        somewhat close to one another. A surface is generated
+        by connecting the points defining each pair of lines
+        with straight lines. This creates a strip for each pair
+        of lines (i.e., a triangulation is created from two
+        generating lines). The filter can handle an arbitrary
+        number of lines, with lines i and i+1 assumed
+        connected. Note that there are several different
+        approaches for creating the ruled surface, the method
+        for creating the surface can either use the input points
+        or resample from the polylines (using a user-specified
+        resolution).
+
+        This filter implements `vtkRuledSurfaceFilter
+        <https://vtk.org/doc/nightly/html/classvtkRuledSurfaceFilter.html>`_.
+
+        Parameters
+        ----------
+        resolution : int, default: (1, 1)
+            Set the number of points in the output polyline.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Ruled surface.
+
+        Examples
+        --------
+        Create a ruled surface from a polyline.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> poly = pv.PolyData(
+        ...     [[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 1]],
+        ...     lines=[[2, 0, 1], [2, 2, 3]],
+        ...     force_float=False,
+        ... )
+        >>> surface = poly.ruled_surface(resolution=(21, 21))
+        >>> _ = pl.add_mesh(surface, show_edges=True)
+        >>> pl.show()
+
+        """
+        alg = _vtk.vtkRuledSurfaceFilter()
+        alg.SetInputData(self)
+        if resolution is not None:
+            _validation.validate_array(resolution, must_have_shape=2, must_have_dtype=int)
+            alg.SetResolution(resolution)  # type: ignore[arg-type]
+        _update_alg(alg, progress_bar, 'Generating ruled surface')
+        return _get_output(alg)
 
 
 def _length_distribution_percentile(poly, percentile, cell_length_sample_size, progress_bar):

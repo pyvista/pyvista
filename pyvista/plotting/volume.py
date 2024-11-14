@@ -42,7 +42,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
         BoundsTuple(x_min=0.0, x_max=9.0, y_min=0.0, y_max=9.0, z_min=0.0, z_max=9.0)
 
         """
-        return self.GetMapper()
+        return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
     def mapper(self, obj):  # numpydoc ignore=GL08
@@ -69,4 +69,4 @@ class Volume(Prop3D, _vtk.vtkVolume):
 
     @prop.setter
     def prop(self, obj: Property):  # numpydoc ignore=GL08
-        self.SetProperty(obj)
+        self.SetProperty(obj)  # type: ignore[arg-type]
