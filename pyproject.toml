@@ -211,6 +211,7 @@ disallow_any_generics = true
 pretty = true
 strict_equality = true
 show_error_context = true
+check_untyped_defs = true
 extra_checks = true
 warn_unused_configs = true
 warn_unused_ignores = true
