@@ -129,7 +129,7 @@ def Capsule(
         )
         algo.capsule_cap = True
     else:
-        algo = CapsuleSource(
+        algo = CapsuleSource(  # type: ignore[assignment]
             center=(0, 0, 0),
             direction=(1, 0, 0),
             radius=radius,
@@ -138,7 +138,7 @@ def Capsule(
             phi_resolution=resolution,
         )
     output = wrap(algo.output)
-    output.rotate_z(90, inplace=True)
+    output.rotate_z(90, inplace=True)  # type: ignore[union-attr]
     translate(output, center, direction)
     return output
 
@@ -216,7 +216,7 @@ def Cylinder(
         resolution=resolution,
     )
     output = wrap(algo.output)
-    output.rotate_z(90, inplace=True)
+    output.rotate_z(90, inplace=True)  # type: ignore[union-attr]
     translate(output, center, direction)
     return output
 
@@ -302,7 +302,7 @@ def CylinderStructured(
     zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
-    zz = zz.ravel(order='f')
+    zz = zz.ravel(order='f')  # type: ignore[arg-type]
 
     # Create the grid
     grid = pyvista.StructuredGrid()
@@ -310,7 +310,7 @@ def CylinderStructured(
     grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
     # Center at origin
-    grid.points -= np.array(grid.center)
+    grid.points -= np.array(grid.center)  # type: ignore[misc]
 
     # rotate initially to face +X direction
     grid.rotate_y(90, inplace=True)
@@ -1694,12 +1694,12 @@ def CircularArc(pointa, pointb, center, resolution=100, negative=False):
 
     arc.Update()
     angle = np.deg2rad(arc.GetAngle())
-    arc = wrap(arc.GetOutput())
+    arc = wrap(arc.GetOutput())  # type: ignore[assignment]
     # Compute distance of every point along circular arc
     center = np.array(center).ravel()
-    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
-    angles = np.linspace(0.0, 1.0, arc.n_points) * angle
-    arc['Distance'] = radius * angles
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
+    angles = np.linspace(0.0, 1.0, arc.n_points) * angle  # type: ignore[attr-defined]
+    arc['Distance'] = radius * angles  # type: ignore[index]
     return arc
 
 
@@ -1771,12 +1771,12 @@ def CircularArcFromNormal(center, resolution=100, normal=None, polar=None, angle
     arc.SetAngle(angle)
     arc.Update()
     angle = np.deg2rad(arc.GetAngle())
-    arc = wrap(arc.GetOutput())
+    arc = wrap(arc.GetOutput())  # type: ignore[assignment]
     # Compute distance of every point along circular arc
     center = np.array(center)
-    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))
+    radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
     angles = np.linspace(0.0, angle, resolution + 1)
-    arc['Distance'] = radius * angles
+    arc['Distance'] = radius * angles  # type: ignore[index]
     return arc
 
 
@@ -1926,9 +1926,9 @@ def Rectangle(points=None):
     if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
         raise ValueError('Unable to build a rectangle with less than three different points')
 
-    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
-    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
-    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2
+    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2  # type: ignore[call-overload]
+    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2  # type: ignore[call-overload]
+    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2  # type: ignore[call-overload]
 
     null_scalar_products = [
         val

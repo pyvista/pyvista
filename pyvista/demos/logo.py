@@ -114,7 +114,7 @@ def logo_letters(merge=False, depth=0.3):
         the keys are the letters and the values are the respective meshes.
 
     """
-    mesh_letters = pyvista.PolyData() if merge else {}
+    mesh_letters = pyvista.PolyData() if merge else {}  # type: ignore[var-annotated]
 
     # spacing between letters
     space_factor = 0.9

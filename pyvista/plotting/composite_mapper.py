@@ -483,7 +483,7 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         try:
             if vtk_version_info <= (9, 0, 3):  # pragma: no cover
                 vtk_ref = _vtk.reference(0)  # needed for <=9.0.3
-                block = self.DataObjectFromIndex(index, self._dataset, vtk_ref)
+                block = self.DataObjectFromIndex(index, self._dataset, vtk_ref)  # type: ignore[arg-type]
             else:
                 block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:

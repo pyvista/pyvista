@@ -312,7 +312,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
             if deep:
                 self.deep_copy(var_inp)
             else:
-                self.shallow_copy(var_inp)
+                self.shallow_copy(var_inp)  # type: ignore[arg-type]
         else:
             self.SetPoints(vtk_points(var_inp, deep=deep, force_float=force_float))
 
@@ -2574,7 +2574,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
             return super().__getitem__(key)
 
         # convert slice to VOI specification - only "basic indexing" is supported
-        voi = []
+        voi = []  # type: ignore[var-annotated]
         rate = []
         if len(key) != 3:
             raise RuntimeError('Slices must have exactly 3 dimensions.')
@@ -2585,7 +2585,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
                 start = stop = k
                 step = 1
             elif isinstance(k, slice):
-                start = k.start if k.start is not None else 0
+                start = k.start if k.start is not None else 0  # type: ignore[assignment]
                 stop = k.stop - 1 if k.stop is not None else self.dimensions[i]
                 step = k.step if k.step is not None else 1
             voi.extend((start, stop))
@@ -2645,7 +2645,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         # have no effect
 
         # add but do not make active
-        self.cell_data.set_array(ghost_cells, _vtk.vtkDataSetAttributes.GhostArrayName())
+        self.cell_data.set_array(ghost_cells, _vtk.vtkDataSetAttributes.GhostArrayName())  # type: ignore[arg-type]
         return self
 
     def hide_points(self, ind: VectorLike[bool] | VectorLike[int]) -> None:
@@ -3418,7 +3418,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                     [(0, 0, +1), (4, 5, 6, 7), (0, 1, 2, 3)],
                 ]
                 for f in faces:
-                    coords = np.sum([cell_coords, f[0]], axis=0)
+                    coords = np.sum([cell_coords, f[0]], axis=0)  # type: ignore[arg-type]
                     ind = self.cell_id(coords)
                     if ind:
                         points = self.get_cell(ind).points
@@ -3434,7 +3434,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             cell_coords = self.cell_coords(ind)
             cell_neighbors = [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)]
             for n in cell_neighbors:
-                coords = np.sum([cell_coords, n], axis=0)
+                coords = np.sum([cell_coords, n], axis=0)  # type: ignore[arg-type]
                 ind = self.cell_id(coords)
                 if ind:
                     indices.append(ind)
@@ -3446,7 +3446,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             cell_points = self.get_cell(ind).points
             if cell_points.shape[0] == 8:
                 for k in [-1, 1]:
-                    coords = np.sum([cell_coords, (0, 0, k)], axis=0)
+                    coords = np.sum([cell_coords, (0, 0, k)], axis=0)  # type: ignore[arg-type]
                     ind = self.cell_id(coords)
                     if ind:
                         indices.append(ind)
@@ -3463,7 +3463,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                     cell_z = cell_z.reshape((2, 2))
                     cell_zmin = cell_z.min(axis=1)
                     cell_zmax = cell_z.max(axis=1)
-                    coords = np.sum([cell_coords, f[0]], axis=0)
+                    coords = np.sum([cell_coords, f[0]], axis=0)  # type: ignore[arg-type]
                     for k in range(nk):
                         coords[2] = k
                         ind = self.cell_id(coords)
@@ -3588,9 +3588,9 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             else:
                 grid = self.compute_connectivity(inplace=False)
                 array = grid.cell_data['ConnectivityFlags']
-            array = array.reshape((-1, 1))
-            array = array.astype(np.uint8)
-            array = np.unpackbits(array, axis=1)
+            array = array.reshape((-1, 1))  # type: ignore[assignment]
+            array = array.astype(np.uint8)  # type: ignore[assignment]
+            array = np.unpackbits(array, axis=1)  # type: ignore[assignment]
             array = array.sum(axis=1)
             self.cell_data['number_of_connections'] = array
             return self

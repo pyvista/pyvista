@@ -155,7 +155,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return DataSetAttributes(
             vtkobject=self.GetRowData(),
-            dataset=self,
+            dataset=self,  # type: ignore[arg-type]
             association=FieldAssociation.ROW,
         )
 
@@ -297,8 +297,8 @@ class Table(DataObject, _vtk.vtkTable):
                 """Format array information for printing (internal helper)."""
                 arr = row_array(self, key)
                 dl, dh = self.get_data_range(key)
-                dl = pyvista.FLOAT_FORMAT.format(dl)
-                dh = pyvista.FLOAT_FORMAT.format(dh)
+                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
+                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
                 ncomp = arr.shape[1] if arr.ndim > 1 else 1
                 return row.format(key, arr.dtype, ncomp, dl, dh)
 

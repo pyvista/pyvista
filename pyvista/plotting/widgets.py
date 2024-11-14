@@ -202,7 +202,7 @@ class WidgetHelper:
         interaction_event = _parse_interaction_event(interaction_event)
 
         if bounds is None:
-            bounds = self.bounds
+            bounds = self.bounds  # type: ignore[attr-defined]
 
         def _the_callback(box_widget, _event):
             the_box = pyvista.PolyData()
@@ -210,7 +210,7 @@ class WidgetHelper:
             planes = _vtk.vtkPlanes()
             box_widget.GetPlanes(planes)
             if callable(callback):
-                args = [planes] if use_planes else [the_box]
+                args = [planes] if use_planes else [the_box]  # type: ignore[list-item]
                 if pass_widget:
                     args.append(box_widget)
                 try_callback(callback, *args)
@@ -219,8 +219,8 @@ class WidgetHelper:
         box_widget.GetOutlineProperty().SetColor(
             Color(color, default_color=pyvista.global_theme.font.color).float_rgb,
         )
-        box_widget.SetInteractor(self.iren.interactor)
-        box_widget.SetCurrentRenderer(self.renderer)
+        box_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+        box_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         box_widget.SetPlaceFactor(factor)
         box_widget.SetRotationEnabled(rotation_enabled)
         box_widget.SetTranslationEnabled(outline_translation)
@@ -334,7 +334,7 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(outline_algorithm(algo), name=f'{name}-outline', opacity=0.0)
+        self.add_mesh(outline_algorithm(algo), name=f'{name}-outline', opacity=0.0)  # type: ignore[attr-defined]
 
         port = 1 if invert else 0
 
@@ -380,8 +380,8 @@ class WidgetHelper:
         )
 
         if crinkle:
-            return self.add_mesh(crinkler, reset_camera=False, **kwargs)
-        return self.add_mesh(clipper.GetOutputPort(port), reset_camera=False, **kwargs)
+            return self.add_mesh(crinkler, reset_camera=False, **kwargs)  # type: ignore[attr-defined]
+        return self.add_mesh(clipper.GetOutputPort(port), reset_camera=False, **kwargs)  # type: ignore[attr-defined]
 
     def add_plane_widget(
         self,
@@ -518,9 +518,9 @@ class WidgetHelper:
         interaction_event = _parse_interaction_event(interaction_event)
 
         if origin is None:
-            origin = self.center
+            origin = self.center  # type: ignore[attr-defined]
         if bounds is None:
-            bounds = self.bounds
+            bounds = self.bounds  # type: ignore[attr-defined]
 
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
@@ -583,35 +583,35 @@ class WidgetHelper:
                 origin[2],
             )
             source.Update()
-            plane_widget = _vtk.vtkPlaneWidget()
+            plane_widget = _vtk.vtkPlaneWidget()  # type: ignore[assignment]
             plane_widget.SetHandleSize(0.01)
             # Position of the widget
             plane_widget.SetInputData(source.GetOutput())
-            plane_widget.SetRepresentationToOutline()
+            plane_widget.SetRepresentationToOutline()  # type: ignore[attr-defined]
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
-            plane_widget.SetCenter(origin)  # Necessary
+            plane_widget.SetCenter(origin)  # type: ignore[attr-defined] # Necessary
             plane_widget.GetPlaneProperty().SetColor(color.float_rgb)  # self.C_LOT[fn])
-            plane_widget.GetHandleProperty().SetColor(color.float_rgb)
+            plane_widget.GetHandleProperty().SetColor(color.float_rgb)  # type: ignore[attr-defined]
 
             if not normal_rotation:
-                plane_widget.GetHandleProperty().SetOpacity(0)
+                plane_widget.GetHandleProperty().SetOpacity(0)  # type: ignore[attr-defined]
 
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
-        plane_widget.SetInteractor(self.iren.interactor)
-        plane_widget.SetCurrentRenderer(self.renderer)
+        plane_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+        plane_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
 
         if assign_to_axis:
             # Note that normal_rotation was forced to False
             if assign_to_axis in [0, 'x', 'X']:
                 plane_widget.NormalToXAxisOn()
-                plane_widget.SetNormal(NORMALS['x'])
+                plane_widget.SetNormal(NORMALS['x'])  # type: ignore[arg-type]
             elif assign_to_axis in [1, 'y', 'Y']:
                 plane_widget.NormalToYAxisOn()
-                plane_widget.SetNormal(NORMALS['y'])
+                plane_widget.SetNormal(NORMALS['y'])  # type: ignore[arg-type]
             elif assign_to_axis in [2, 'z', 'Z']:
                 plane_widget.NormalToZAxisOn()
-                plane_widget.SetNormal(NORMALS['z'])
+                plane_widget.SetNormal(NORMALS['z'])  # type: ignore[arg-type]
             else:
                 raise RuntimeError('assign_to_axis not understood')
         else:
@@ -769,7 +769,7 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(outline_algorithm(algo), name=f'{name}-outline', opacity=0.0)
+        self.add_mesh(outline_algorithm(algo), name=f'{name}-outline', opacity=0.0)  # type: ignore[attr-defined]
 
         if isinstance(mesh, _vtk.vtkPolyData):
             clipper = _vtk.vtkClipPolyData()
@@ -777,7 +777,7 @@ class WidgetHelper:
         #     clipper = vtk.vtkClipVolume()
         #     clipper.SetMixed3DCellGeneration(True)
         else:
-            clipper = _vtk.vtkTableBasedClipDataSet()
+            clipper = _vtk.vtkTableBasedClipDataSet()  # type: ignore[assignment]
         set_algorithm_input(clipper, algo)
         clipper.SetValue(value)
         clipper.SetInsideOut(invert)  # invert the clip if needed
@@ -817,8 +817,8 @@ class WidgetHelper:
         )
 
         if crinkle:
-            return self.add_mesh(crinkler, **kwargs)
-        return self.add_mesh(clipper, **kwargs)
+            return self.add_mesh(crinkler, **kwargs)  # type: ignore[attr-defined]
+        return self.add_mesh(clipper, **kwargs)  # type: ignore[attr-defined]
 
     def add_volume_clip_plane(
         self,
@@ -913,7 +913,7 @@ class WidgetHelper:
 
         """
         if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
-            volume = self.add_volume(volume, **kwargs)
+            volume = self.add_volume(volume, **kwargs)  # type: ignore[attr-defined]
         elif not isinstance(volume, pyvista.plotting.volume.Volume):
             raise TypeError(
                 'The `volume` parameter type must be either pyvista.ImageData, '
@@ -1066,7 +1066,7 @@ class WidgetHelper:
         if origin is None:
             origin = mesh.center
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)  # type: ignore[attr-defined]
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         set_algorithm_input(alg, algo or mesh)
@@ -1081,7 +1081,7 @@ class WidgetHelper:
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
             alg.Update()  # Perform the Cut
-            plane_sliced_mesh.shallow_copy(alg.GetOutput())
+            plane_sliced_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
 
         self.add_plane_widget(
             callback=callback,
@@ -1100,7 +1100,7 @@ class WidgetHelper:
             outline_opacity=outline_opacity,
         )
 
-        return self.add_mesh(alg, **kwargs)
+        return self.add_mesh(alg, **kwargs)  # type: ignore[attr-defined]
 
     def add_mesh_slice_orthogonal(
         self,
@@ -1262,7 +1262,7 @@ class WidgetHelper:
 
         """
         if bounds is None:
-            bounds = self.bounds
+            bounds = self.bounds  # type: ignore[attr-defined]
 
         color = Color(color, default_color=pyvista.global_theme.font.color)
 
@@ -1281,8 +1281,8 @@ class WidgetHelper:
 
         line_widget = _vtk.vtkLineWidget()
         line_widget.GetLineProperty().SetColor(color.float_rgb)
-        line_widget.SetInteractor(self.iren.interactor)
-        line_widget.SetCurrentRenderer(self.renderer)
+        line_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+        line_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         line_widget.SetPlaceFactor(factor)
         line_widget.PlaceWidget(bounds)
         line_widget.SetResolution(resolution)
@@ -1531,7 +1531,7 @@ class WidgetHelper:
         >>> pl.show()
 
         """
-        if self.iren is None:
+        if self.iren is None:  # type: ignore[attr-defined]
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         if value is None:
@@ -1546,8 +1546,8 @@ class WidgetHelper:
         def normalize(point, viewport):  # numpydoc ignore=GL08
             return (point[0] * (viewport[2] - viewport[0]), point[1] * (viewport[3] - viewport[1]))
 
-        pointa = normalize(pointa, self.renderer.GetViewport())
-        pointb = normalize(pointb, self.renderer.GetViewport())
+        pointa = normalize(pointa, self.renderer.GetViewport())  # type: ignore[attr-defined]
+        pointb = normalize(pointb, self.renderer.GetViewport())  # type: ignore[attr-defined]
 
         slider_rep = _vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
@@ -1597,14 +1597,14 @@ class WidgetHelper:
                     try_callback(callback, value)
 
         slider_widget = _vtk.vtkSliderWidget()
-        slider_widget.SetInteractor(self.iren.interactor)
-        slider_widget.SetCurrentRenderer(self.renderer)
+        slider_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+        slider_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         slider_widget.SetRepresentation(slider_rep)
-        slider_widget.GetRepresentation().SetTitleHeight(title_height)
-        slider_widget.GetRepresentation().GetTitleProperty().SetOpacity(title_opacity)
-        slider_widget.GetRepresentation().GetTitleProperty().SetColor(title_color.float_rgb)
+        slider_widget.GetRepresentation().SetTitleHeight(title_height)  # type: ignore[attr-defined]
+        slider_widget.GetRepresentation().GetTitleProperty().SetOpacity(title_opacity)  # type: ignore[attr-defined]
+        slider_widget.GetRepresentation().GetTitleProperty().SetColor(title_color.float_rgb)  # type: ignore[attr-defined]
         if fmt is not None:
-            slider_widget.GetRepresentation().SetLabelFormat(fmt)
+            slider_widget.GetRepresentation().SetLabelFormat(fmt)  # type: ignore[attr-defined]
         slider_widget.On()
         slider_widget.AddObserver(_parse_interaction_event(interaction_event), _the_callback)
         _the_callback(slider_widget, None)
@@ -1739,7 +1739,7 @@ class WidgetHelper:
             title = scalars
         mesh.set_active_scalars(scalars)
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)  # type: ignore[attr-defined]
 
         alg = _vtk.vtkThreshold()
         set_algorithm_input(alg, algo or mesh)
@@ -1759,7 +1759,7 @@ class WidgetHelper:
         def callback(value):  # numpydoc ignore=GL08
             _set_threshold_limit(alg, value, method, invert)
             alg.Update()
-            threshold_mesh.shallow_copy(alg.GetOutput())
+            threshold_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
 
         self.add_slider_widget(
             callback=callback,
@@ -1771,7 +1771,7 @@ class WidgetHelper:
         )
 
         kwargs.setdefault('reset_camera', False)
-        return self.add_mesh(alg, scalars=scalars, **kwargs)
+        return self.add_mesh(alg, scalars=scalars, **kwargs)  # type: ignore[attr-defined]
 
     def add_mesh_isovalue(
         self,
@@ -1910,7 +1910,7 @@ class WidgetHelper:
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetNumberOfContours(1)  # Only one contour level
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)  # type: ignore[attr-defined]
 
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
@@ -1918,7 +1918,7 @@ class WidgetHelper:
         def callback(value):  # numpydoc ignore=GL08
             alg.SetValue(0, value)
             alg.Update()
-            isovalue_mesh.shallow_copy(alg.GetOutput())
+            isovalue_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
 
         self.add_slider_widget(
             callback=callback,
@@ -1930,7 +1930,7 @@ class WidgetHelper:
         )
 
         kwargs.setdefault('reset_camera', False)
-        return self.add_mesh(alg, scalars=scalars, **kwargs)
+        return self.add_mesh(alg, scalars=scalars, **kwargs)  # type: ignore[attr-defined]
 
     def add_spline_widget(
         self,
@@ -2021,7 +2021,7 @@ class WidgetHelper:
         color = Color(color, default_color=pyvista.global_theme.color)
 
         if bounds is None:
-            bounds = self.bounds
+            bounds = self.bounds  # type: ignore[attr-defined]
 
         ribbon = pyvista.PolyData()
 
@@ -2030,7 +2030,7 @@ class WidgetHelper:
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
             polyline = pyvista.wrap(para_source.GetOutput())
-            ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))
+            ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))  # type: ignore[union-attr]
             if callable(callback):
                 if pass_widget:
                     try_callback(callback, polyline, widget)
@@ -2040,8 +2040,8 @@ class WidgetHelper:
         spline_widget = _vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(color.float_rgb)
         spline_widget.SetNumberOfHandles(n_handles)
-        spline_widget.SetInteractor(self.iren.interactor)
-        spline_widget.SetCurrentRenderer(self.renderer)
+        spline_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+        spline_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         spline_widget.SetPlaceFactor(factor)
         spline_widget.PlaceWidget(bounds)
         spline_widget.SetResolution(resolution)
@@ -2055,7 +2055,7 @@ class WidgetHelper:
         _the_callback(spline_widget, None)
 
         if show_ribbon:
-            self.add_mesh(ribbon, color=ribbon_color, opacity=ribbon_opacity)
+            self.add_mesh(ribbon, color=ribbon_color, opacity=ribbon_opacity)  # type: ignore[attr-defined]
 
         self.spline_widgets.append(spline_widget)
         return spline_widget
@@ -2156,7 +2156,7 @@ class WidgetHelper:
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
-        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)
+        self.add_mesh(outline_algorithm(algo or mesh), name=f'{name}-outline', opacity=0.0)  # type: ignore[attr-defined]
 
         alg = _vtk.vtkCutter()  # Construct the cutter object
         # Use the grid as the data we desire to cut
@@ -2174,7 +2174,7 @@ class WidgetHelper:
             polyplane.SetPolyLine(polyline)
             alg.SetCutFunction(polyplane)  # the cutter to use the poly planes
             alg.Update()  # Perform the Cut
-            spline_sliced_mesh.shallow_copy(alg.GetOutput())
+            spline_sliced_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
 
         self.add_spline_widget(
             callback=callback,
@@ -2191,7 +2191,7 @@ class WidgetHelper:
             interaction_event=interaction_event,
         )
 
-        return self.add_mesh(alg, **kwargs)
+        return self.add_mesh(alg, **kwargs)  # type: ignore[attr-defined]
 
     def add_measurement_widget(
         self,
@@ -2224,7 +2224,7 @@ class WidgetHelper:
             The newly created distance widget.
 
         """
-        if self.iren is None:
+        if self.iren is None:  # type: ignore[attr-defined]
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         if color is None:
@@ -2237,25 +2237,25 @@ class WidgetHelper:
         representation = _vtk.vtkDistanceRepresentation3D()
         representation.SetHandleRepresentation(handle)
         widget = _vtk.vtkDistanceWidget()
-        widget.SetInteractor(self.iren.interactor)
+        widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
         widget.SetRepresentation(representation)
 
         handle.GetProperty().SetColor(*color.float_rgb)
         representation.GetLabelProperty().SetColor(*color.float_rgb)
         representation.GetLineProperty().SetColor(*color.float_rgb)
 
-        self.iren.picker = PickerType.POINT
+        self.iren.picker = PickerType.POINT  # type: ignore[attr-defined]
 
         def place_point(*_):  # numpydoc ignore=GL08
             p1 = [0, 0, 0]
             p2 = [0, 0, 0]
-            representation.GetPoint1DisplayPosition(p1)
-            representation.GetPoint2DisplayPosition(p2)
-            if self.iren.picker.Pick(p1, self.renderer):
-                pos1 = self.iren.picker.GetPickPosition()
+            representation.GetPoint1DisplayPosition(p1)  # type: ignore[arg-type]
+            representation.GetPoint2DisplayPosition(p2)  # type: ignore[arg-type]
+            if self.iren.picker.Pick(p1, self.renderer):  # type: ignore[attr-defined]
+                pos1 = self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
                 representation.GetPoint1Representation().SetWorldPosition(pos1)
-            if self.iren.picker.Pick(p2, self.renderer):
-                pos2 = self.iren.picker.GetPickPosition()
+            if self.iren.picker.Pick(p2, self.renderer):  # type: ignore[attr-defined]
+                pos2 = self.iren.picker.GetPickPosition()  # type: ignore[attr-defined]
                 representation.GetPoint2Representation().SetWorldPosition(pos2)
             representation.BuildRepresentation()
 
@@ -2389,15 +2389,15 @@ class WidgetHelper:
         for i in range(num):
             loc = center[i] if center.ndim > 1 else center
             sphere_widget = _vtk.vtkSphereWidget()
-            sphere_widget.WIDGET_INDEX = indices[i]  # Monkey patch the index
+            sphere_widget.WIDGET_INDEX = indices[i]  # type: ignore[attr-defined] # Monkey patch the index
             if style in 'wireframe':
                 sphere_widget.SetRepresentationToWireframe()
             else:
                 sphere_widget.SetRepresentationToSurface()
             sphere_widget.GetSphereProperty().SetColor(Color(colors[i]).float_rgb)
             sphere_widget.GetSelectedSphereProperty().SetColor(selected_color.float_rgb)
-            sphere_widget.SetInteractor(self.iren.interactor)
-            sphere_widget.SetCurrentRenderer(self.renderer)
+            sphere_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+            sphere_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
             sphere_widget.SetRadius(radius)
             sphere_widget.SetCenter(loc)
             sphere_widget.SetThetaResolution(theta_resolution)
@@ -2580,7 +2580,7 @@ class WidgetHelper:
         Download the interactive example at :ref:`checkbox_widget_example`.
 
         """
-        if self.iren is None:  # pragma: no cover
+        if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         def create_button(color1, color2, color3, dims=(size, size, 1)):  # numpydoc ignore=GL08
@@ -2612,9 +2612,9 @@ class WidgetHelper:
         button_rep.PlaceWidget(bounds)
 
         button_widget = _vtk.vtkButtonWidget()
-        button_widget.SetInteractor(self.iren.interactor)
+        button_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
         button_widget.SetRepresentation(button_rep)
-        button_widget.SetCurrentRenderer(self.renderer)
+        button_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         button_widget.On()
 
         def _the_callback(widget, _event):
@@ -2722,7 +2722,7 @@ class WidgetHelper:
         >>> p.show()
 
         """
-        if self.iren is None:  # pragma: no cover
+        if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
         if radio_button_group not in self.radio_button_widget_dict:
@@ -2730,14 +2730,14 @@ class WidgetHelper:
         if title is not None:
             if radio_button_group not in self.radio_button_title_dict:
                 self.radio_button_title_dict[radio_button_group] = []
-            button_title = self.add_text(
+            button_title = self.add_text(  # type: ignore[attr-defined]
                 title, position=(position[0] + size + 10.0, position[1] + 7.5), font_size=15
             )
             self.radio_button_title_dict[radio_button_group].append(button_title)
 
         color_on = Color(color_on)
         color_off = Color(color_off)
-        background_color = Color(background_color, default_color=self.background_color)
+        background_color = Color(background_color, default_color=self.background_color)  # type: ignore[attr-defined]
 
         def create_radio_button(fg_color, bg_color, size=size, smooth=2):  # numpydoc ignore=GL08
             fg_color = np.array(fg_color.int_rgb)
@@ -2780,9 +2780,9 @@ class WidgetHelper:
         button_rep.GetProperty().SetColor((1, 1, 1))
 
         button_widget = _vtk.vtkButtonWidget()
-        button_widget.SetInteractor(self.iren.interactor)
+        button_widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
         button_widget.SetRepresentation(button_rep)
-        button_widget.SetCurrentRenderer(self.renderer)
+        button_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         button_widget.On()
 
         def toggle_other_buttons_off(widget):  # numpydoc ignore=GL08
@@ -2862,7 +2862,7 @@ class WidgetHelper:
             raise VTKVersionError('vtkCameraOrientationWidget requires vtk>=9.1.0')
 
         widget = vtkCameraOrientationWidget()
-        widget.SetParentRenderer(self.renderer)
+        widget.SetParentRenderer(self.renderer)  # type: ignore[attr-defined]
         widget.SetAnimate(animate)
         widget.SetAnimatorTotalFrames(n_frames)
         widget.On()
@@ -2989,9 +2989,9 @@ class WidgetHelper:
 
             raise VTKVersionError('vtkCamera3DWidget requires vtk>=9.3.0')
         representation = vtkCamera3DRepresentation()
-        representation.SetCamera(self.renderer.GetActiveCamera())
+        representation.SetCamera(self.renderer.GetActiveCamera())  # type: ignore[attr-defined]
         widget = vtkCamera3DWidget()
-        widget.SetInteractor(self.iren.interactor)
+        widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
         widget.SetRepresentation(representation)
         widget.On()
         self.camera3d_widgets.append(widget)
