@@ -638,7 +638,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     @above_range_color.setter
     def above_range_color(self, value: bool | ColorLike):  # numpydoc ignore=GL08
-        if value in (None, False):
+        if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
             self.SetAboveRangeColor(*Color(pyvista.global_theme.above_range_color).float_rgba)
@@ -702,7 +702,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     @below_range_color.setter
     def below_range_color(self, value: bool | ColorLike):  # numpydoc ignore=GL08
-        if value in (None, False):
+        if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:
             self.SetBelowRangeColor(*Color(pyvista.global_theme.below_range_color).float_rgba)
