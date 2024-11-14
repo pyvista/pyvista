@@ -1992,8 +1992,8 @@ class _PVDReader(BaseVTKReader):
         """Set active time."""
         self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
-            get_reader(Path(self._directory) / dataset.path)
-            for dataset in self._active_datasets  # type: ignore[arg-type]
+            get_reader(Path(self._directory) / dataset.path)  # type: ignore[arg-type]
+            for dataset in self._active_datasets
         ]
 
 
