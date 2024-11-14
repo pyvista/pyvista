@@ -7,17 +7,17 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import convert_string_array
 
 from . import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import BoundsLike
+    from pyvista.core._typing_core import VectorLike
 
 
 def make_axis_labels(vmin, vmax, n, fmt):
-    """
-    Create axis labels as a vtkStringArray.
+    """Create axis labels as a vtkStringArray.
 
     Parameters
     ----------
@@ -35,6 +35,7 @@ def make_axis_labels(vmin, vmax, n, fmt):
     -------
     vtkStringArray
         The created labels as a vtkStringArray object.
+
     """
     labels = _vtk.vtkStringArray()
     for v in np.linspace(vmin, vmax, n):
@@ -234,17 +235,18 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             )
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return or set the bounding box."""
-        return self.GetBounds()
+        return BoundsTuple(*self.GetBounds())
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
-        self.SetBounds(bounds)
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
+        self.SetBounds(bounds)  # type: ignore[arg-type]
         self._update_labels()
-        self.x_axis_range = float(bounds[0]), float(bounds[1])
-        self.y_axis_range = float(bounds[2]), float(bounds[3])
-        self.z_axis_range = float(bounds[4]), float(bounds[5])
+        bnds = self.bounds
+        self.x_axis_range = bnds.x_min, bnds.x_max
+        self.y_axis_range = bnds.y_min, bnds.y_max
+        self.z_axis_range = bnds.z_min, bnds.z_max
 
     @property
     def x_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
@@ -564,7 +566,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         Parameters
         ----------
         bounds : sequence[float]
-            Bounds in the form of ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+            Bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         """
         self.bounds = bounds

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pyvista
 from pyvista.core import _validation
+from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -18,8 +19,8 @@ from .themes import Theme
 from .tools import FONTS
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
     from typing import ClassVar
-    from typing import Sequence
 
     from pyvista.core._typing_core import VectorLike
 
@@ -53,6 +54,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
     >>> from pyvista import CornerAnnotation
     >>> text = CornerAnnotation(0, 'text')
     >>> prop = text.prop
+
     """
 
     def __init__(self, position, text, prop=None, linear_font_scale_factor=None):
@@ -76,6 +78,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         -------
         str
             Text to be displayed for each corner.
+
         """
         return self.GetText(position)
 
@@ -89,6 +92,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
         text : str
             Text to be displayed for each corner.
+
         """
         corner_mappings = {
             'lower_left': self.LowerLeft,
@@ -124,6 +128,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         -------
         pyvista.TextProperty
             Property of this actor.
+
         """
         return self.GetTextProperty()
 
@@ -139,6 +144,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         -------
         float
             Font scaling factors.
+
         """
         return self.GetLinearFontScaleFactor()
 
@@ -171,6 +177,7 @@ class Text(_vtk.vtkTextActor):
     >>> from pyvista import Text
     >>> text = Text()
     >>> prop = text.prop
+
     """
 
     def __init__(self, text=None, position=None, prop=None):
@@ -193,6 +200,7 @@ class Text(_vtk.vtkTextActor):
             Text string to be displayed.
             "\n" is recognized as a carriage return/linefeed (line separator).
             The characters must be in the UTF-8 encoding.
+
         """
         return self.GetInput()
 
@@ -208,6 +216,7 @@ class Text(_vtk.vtkTextActor):
         -------
         pyvista.TextProperty
             Property of this actor.
+
         """
         return self.GetTextProperty()
 
@@ -223,6 +232,7 @@ class Text(_vtk.vtkTextActor):
         -------
         Sequence[float]
             Position coordinate.
+
         """
         return self.GetPosition()
 
@@ -392,6 +402,7 @@ class Label(_Prop3DMixin, Text):
         Notes
         -----
         The text property's font size used to control the size of the label.
+
         """
         return self.prop.font_size
 
@@ -416,10 +427,10 @@ class Label(_Prop3DMixin, Text):
         new_position = (matrix4x4 @ vector4)[:3]
         self._label_position = new_position
 
-    def _get_bounds(self):
+    def _get_bounds(self) -> BoundsTuple:
         # Define its 3D position as its bounds
         x, y, z = self._label_position
-        return x, x, y, y, z, z
+        return BoundsTuple(x, x, y, y, z, z)
 
 
 @no_new_attr
@@ -635,6 +646,7 @@ class TextProperty(_vtk.vtkTextProperty):
         -------
         pyvista.Color
             Frame color of text property.
+
         """
         return Color(self.GetFrameColor())
 
@@ -651,6 +663,7 @@ class TextProperty(_vtk.vtkTextProperty):
         int
             Width of the frame. The width is expressed in pixels.
             The default is 1 pixel.
+
         """
         return self.GetFrameWidth()
 
@@ -666,6 +679,7 @@ class TextProperty(_vtk.vtkTextProperty):
         -------
         str | None
             Font family or None.
+
         """
         return self._font_family
 
@@ -684,6 +698,7 @@ class TextProperty(_vtk.vtkTextProperty):
         -------
         int
             Font size.
+
         """
         return self.GetFontSize()
 
@@ -703,6 +718,7 @@ class TextProperty(_vtk.vtkTextProperty):
         -------
         float
             Text's orientation (in degrees).
+
         """
         return self.GetOrientation()
 
@@ -717,6 +733,7 @@ class TextProperty(_vtk.vtkTextProperty):
         ----------
         font_file : str
             Font file path.
+
         """
         path = pathlib.Path(font_file)
         path = path.resolve()
@@ -734,6 +751,7 @@ class TextProperty(_vtk.vtkTextProperty):
         str
             Text's horizontal justification.
             Should be either "left", "center" or "right".
+
         """
         justification = self.GetJustificationAsString().lower()
         if justification == 'centered':
@@ -763,6 +781,7 @@ class TextProperty(_vtk.vtkTextProperty):
         str
             Text's vertical justification.
             Should be either "bottom", "center" or "top".
+
         """
         justification = self.GetVerticalJustificationAsString().lower()
         if justification == 'centered':
@@ -814,3 +833,14 @@ class TextProperty(_vtk.vtkTextProperty):
     @bold.setter
     def bold(self, bold: bool):  # numpydoc ignore=GL08
         self.SetBold(bold)
+
+    def shallow_copy(self, to_copy: TextProperty) -> None:
+        """Create a shallow copy of the text's property.
+
+        Parameters
+        ----------
+        to_copy : pyvista.TextProperty
+            Text's property to copy from.
+
+        """
+        self.ShallowCopy(to_copy)

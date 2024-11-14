@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Tuple
 from typing import cast
 
 import numpy as np
@@ -36,11 +35,11 @@ def _validate_axes(axes):
     """
     axes = np.array(axes)
     if axes.shape != (3, 3):
-        raise ValueError("`axes` must be a (3, 3) array.")
+        raise ValueError('`axes` must be a (3, 3) array.')
 
     axes = axes / np.linalg.norm(axes, axis=1, keepdims=True)
     if not np.allclose(np.cross(axes[0], axes[1]), axes[2]):
-        raise ValueError("`axes` do not follow the right hand rule.")
+        raise ValueError('`axes` do not follow the right hand rule.')
 
     return axes
 
@@ -48,7 +47,7 @@ def _validate_axes(axes):
 def _check_callable(func, name='callback'):
     """Check if a variable is callable."""
     if func and not callable(func):
-        raise TypeError(f"`{name}` must be a callable, not {type(func)}.")
+        raise TypeError(f'`{name}` must be a callable, not {type(func)}.')
     return func
 
 
@@ -74,6 +73,7 @@ def get_angle(v1, v2):
     -------
     float
         Angle between vectors in degrees.
+
     """
     return np.rad2deg(np.arccos(np.clip(np.dot(v1, v2), -1.0, 1.0)))
 
@@ -96,6 +96,7 @@ def ray_plane_intersection(start_point, direction, plane_point, normal):
     -------
     ndarray
         Intersection point.
+
     """
     t_value = np.dot(normal, (plane_point - start_point)) / np.dot(normal, direction)
     return start_point + t_value * direction
@@ -468,7 +469,7 @@ class AffineWidget3D:
             Widget origin.
 
         """
-        return cast(Tuple[float, float, float], tuple(self._origin))
+        return cast(tuple[float, float, float], tuple(self._origin))
 
     @origin.setter
     def origin(self, value):  # numpydoc ignore=GL08
@@ -489,16 +490,16 @@ class AffineWidget3D:
         if not self._pl._picker_in_use:
             self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
         self._mouse_move_observer = self._pl.iren.add_observer(
-            "MouseMoveEvent",
+            'MouseMoveEvent',
             self._move_callback,
         )
         self._left_press_observer = self._pl.iren.add_observer(
-            "LeftButtonPressEvent",
+            'LeftButtonPressEvent',
             self._press_callback,
             interactor_style_fallback=False,
         )
         self._left_release_observer = self._pl.iren.add_observer(
-            "LeftButtonReleaseEvent",
+            'LeftButtonReleaseEvent',
             self._release_callback,
             interactor_style_fallback=False,
         )

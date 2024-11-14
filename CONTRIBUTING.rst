@@ -43,6 +43,11 @@ running:
    cd pyvista
    python -m pip install -e .
 
+.. note::
+
+   Use ``python -m pip install -e '.[dev]'`` to also install all of the
+   packages required for development.
+
 Quick Start Development with Codespaces
 ---------------------------------------
 
@@ -482,13 +487,12 @@ request. The following tests will be executed after any commit or pull
 request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
-To run our comprehensive suite of unit tests, install all the
-dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
+To run our comprehensive suite of unit tests, install PyVista with all
+developer dependencies:
 
 .. code:: bash
 
-   pip install -r requirements_test.txt
-   pip install -r requirements_docs.txt
+   pip install -e '.[dev]'
 
 Then, if you have everything installed, you can run the various test
 suites.
@@ -1113,17 +1117,6 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
-Preview the Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Once you have make a Pull Request. You can comment
-``@pyvista-bot preview`` on a pull request to preview documentation.
-Since this command is only available for
-`@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
-new contributors kindly request them to comment command.
-This is essential to safeguard the deployment site against
-potentially harmful commits.
-
 Branching Model
 ~~~~~~~~~~~~~~~
 
@@ -1211,7 +1204,7 @@ created the following will occur:
     .. code:: bash
 
        git push origin HEAD
-       git push origin --tags
+       git push origin v$(python -c "import pyvista as pv; print(pv.__version__)")
 
 #.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare

@@ -89,7 +89,7 @@ def prepare_smooth_shading(mesh, scalars, texture, split_sharp_edges, feature_an
         elif mesh.point_data.active_normals is None:
             mesh.compute_normals(cell_normals=False, inplace=True)
     except TypeError as e:
-        if "Normals cannot be computed" in repr(e):
+        if 'Normals cannot be computed' in repr(e):
             pass
         else:
             raise
@@ -150,9 +150,9 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
             # Get array from mesh
             opacity = get_array(mesh, opacity, preference=preference, err=True)
             if np.any(opacity > 1):
-                warnings.warn("Opacity scalars contain values over 1")
+                warnings.warn('Opacity scalars contain values over 1')
             if np.any(opacity < 0):
-                warnings.warn("Opacity scalars contain values less than 0")
+                warnings.warn('Opacity scalars contain values less than 0')
             custom_opac = True
         except KeyError:
             # Or get opacity transfer function (e.g. "linear")
@@ -160,7 +160,7 @@ def process_opacity(mesh, opacity, preference, n_colors, scalars, use_transparen
         else:
             if scalars.shape[0] != opacity.shape[0]:
                 raise ValueError(
-                    "Opacity array and scalars array must have the same number of elements.",
+                    'Opacity array and scalars array must have the same number of elements.',
                 )
     elif isinstance(opacity, (np.ndarray, list, tuple)):
         opacity = np.asanyarray(opacity)
@@ -205,7 +205,7 @@ def _common_arg_parser(
     # supported aliases
     clim = kwargs.pop('rng', clim)
     cmap = kwargs.pop('colormap', cmap)
-    culling = kwargs.pop("backface_culling", culling)
+    culling = kwargs.pop('backface_culling', culling)
     rgb = kwargs.pop('rgba', rgb)
     vertex_color = kwargs.pop('vertex_color', theme.edge_color)
     vertex_style = kwargs.pop('vertex_style', 'points')
@@ -264,9 +264,9 @@ def _common_arg_parser(
     else:
         interpolation = theme.lighting_params.interpolation
 
-    if "scalar" in kwargs:
+    if 'scalar' in kwargs:
         raise TypeError(
-            "`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?",
+            '`scalar` is an invalid keyword argument. Perhaps you mean `scalars` with an s?',
         )
 
     assert_empty_kwargs(**kwargs)

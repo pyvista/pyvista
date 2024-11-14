@@ -144,15 +144,15 @@ class ScalarBars:
         """Return a scalar bar actor."""
         return self._scalar_bar_actors[index]
 
-    def keys(self):
+    def keys(self):  # numpydoc ignore=RT01
         """Scalar bar keys."""
         return self._scalar_bar_actors.keys()
 
-    def values(self):
+    def values(self):  # numpydoc ignore=RT01
         """Scalar bar values."""
         return self._scalar_bar_actors.values()
 
-    def items(self):
+    def items(self):  # numpydoc ignore=RT01
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
 
@@ -368,9 +368,8 @@ class ScalarBars:
             title_font_size = theme.font.title_size
         if fmt is None:
             fmt = theme.font.fmt
-        if vertical is None:
-            if theme.colorbar_orientation.lower() == 'vertical':
-                vertical = True
+        if vertical is None and theme.colorbar_orientation.lower() == 'vertical':
+            vertical = True
 
         # Automatically choose size if not specified
         if width is None:

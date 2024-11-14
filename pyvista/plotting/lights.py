@@ -12,9 +12,9 @@ try:
     from vtkmodules.vtkRenderingCore import vtkLight
     from vtkmodules.vtkRenderingCore import vtkLightActor
 except ImportError:  # pragma: no cover
-    from vtk import vtkLight
-    from vtk import vtkLightActor
-    from vtk import vtkMatrix4x4
+    from vtk import vtkLight  # type: ignore[no-redef]
+    from vtk import vtkLightActor  # type: ignore[no-redef]
+    from vtk import vtkMatrix4x4  # type: ignore[no-redef]
 
 from typing import TYPE_CHECKING
 
@@ -598,16 +598,15 @@ class Light(vtkLight):
             return
 
         actor_state = self.cone_angle < 90 and self.positional
-        actor_name = self.actor.GetAddressAsString("")
+        actor_name = self.actor.GetAddressAsString('')
 
         # add or remove the actor from the renderer
         for renderer in self._renderers:
             if actor_state:
                 if actor_name not in renderer.actors:
                     renderer.add_actor(self.actor, render=False)
-            else:
-                if actor_name in renderer.actors:
-                    renderer.remove_actor(self.actor, render=False)
+            elif actor_name in renderer.actors:
+                renderer.remove_actor(self.actor, render=False)
 
     @property
     def exponent(self):  # numpydoc ignore=RT01

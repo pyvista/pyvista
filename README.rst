@@ -87,7 +87,7 @@ Status badges
   :target: https://github.com/prettier/prettier
   :alt: prettier
 
-.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.9+-blue.svg
    :target: https://www.python.org/downloads/
 
 .. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
@@ -109,6 +109,9 @@ Status badges
 .. |Good first issue| image:: https://img.shields.io/github/issues/pyvista/pyvista/good%20first%20issue
    :target: https://github.com/pyvista/pyvista/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22
 
+.. |GitHub Repo stars| image:: https://img.shields.io/github/stars/pyvista/pyvista
+   :target: https://github.com/pyvista/pyvista/stargazers
+
 +----------------------+------------------------------------------------+
 | Deployment           | |pypi| |conda| |Packaging status|              |
 +----------------------+------------------------------------------------+
@@ -123,6 +126,7 @@ Status badges
 | License              | |MIT|                                          |
 +----------------------+------------------------------------------------+
 | Community            | |slack| |discuss| |Good first issue|           |
+|                      | |GitHub Repo stars|                            |
 +----------------------+------------------------------------------------+
 | Formatter            | |prettier|                                     |
 +----------------------+------------------------------------------------+
@@ -187,7 +191,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.8::
+using ``pip`` on Python >= 3.9::
 
     pip install pyvista
 
@@ -259,6 +263,12 @@ their ideas. To learn more about contributing to PyVista, please see the
 .. _Contributing Guide: https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst
 .. _Code of Conduct: https://github.com/pyvista/pyvista/blob/main/CODE_OF_CONDUCT.md
 
+Star History
+============
+
+.. image:: https://api.star-history.com/svg?repos=pyvista/pyvista&type=Date
+   :alt: Star History Chart
+   :target: https://star-history.com/#pyvista/pyvista&Date
 
 Citing PyVista
 ==============

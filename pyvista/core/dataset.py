@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Sequence
 from copy import deepcopy
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
-from typing import Sequence
 from typing import cast
 import warnings
 
@@ -18,11 +18,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike
-from ._typing_core import MatrixLike
-from ._typing_core import Number
-from ._typing_core import NumpyArray
-from ._typing_core import VectorLike
+from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .errors import PyVistaDeprecationWarning
@@ -30,7 +26,6 @@ from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
-from .utilities import transformations
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _coerce_pointslike_arg
 from .utilities.arrays import get_array
@@ -39,13 +34,19 @@ from .utilities.arrays import raise_not_matching
 from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
-from .utilities.misc import check_valid_vector
 from .utilities.points import vtk_points
+from .utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterator
+
+    from ._typing_core import MatrixLike
+    from ._typing_core import Number
+    from ._typing_core import NumpyArray
+    from ._typing_core import RotationLike
+    from ._typing_core import VectorLike
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
@@ -69,6 +70,7 @@ class ActiveArrayInfo:
 
     name : str
         The name of the array.
+
     """
 
     def __init__(self, association, name):
@@ -587,7 +589,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         warnings.warn(
-            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            'Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         return self.active_texture_coordinates
@@ -600,9 +602,10 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         t_coords : np.ndarray
             Active texture coordinates on the points.
+
         """
         warnings.warn(
-            "Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.",
+            'Use of `DataSet.active_t_coords` is deprecated. Use `DataSet.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
@@ -847,6 +850,7 @@ class DataSet(DataSetFilters, DataObject):
         (842, 3)
         >>> mesh.n_points
         842
+
         """
         if self.point_data.active_normals is not None:
             return self.point_data.active_normals
@@ -898,7 +902,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_x(
         self,
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -914,7 +918,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the x-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -929,6 +933,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_x
+            Concatenate a rotation about the x-axis with a transformation.
 
         Examples
         --------
@@ -947,9 +956,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((1, 0, 0), angle, point=point, deg=True)
-        return self.transform(
+        t = Transform().rotate_x(angle, point=point)
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -958,7 +966,7 @@ class DataSet(DataSetFilters, DataObject):
     def rotate_y(
         self,
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -974,7 +982,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the y-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about.
 
         transform_all_input_vectors : bool, default: False
@@ -988,6 +996,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_y
+            Concatenate a rotation about the y-axis with a transformation.
 
         Examples
         --------
@@ -1006,9 +1019,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((0, 1, 0), angle, point=point, deg=True)
-        return self.transform(
+        t = Transform().rotate_y(angle, point=point)
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1033,8 +1045,8 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle in degrees to rotate about the z-axis.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
-            Point to rotate about.  Defaults to origin.
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
@@ -1048,6 +1060,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_z
+            Concatenate a rotation about the z-axis with a transformation.
 
         Examples
         --------
@@ -1066,9 +1083,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation((0, 0, 1), angle, point=point, deg=True)
-        return self.transform(
+        t = Transform().rotate_z(angle, point=point)
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1078,7 +1094,7 @@ class DataSet(DataSetFilters, DataObject):
         self,
         vector: VectorLike[float],
         angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
     ):
@@ -1097,7 +1113,7 @@ class DataSet(DataSetFilters, DataObject):
         angle : float
             Angle to rotate.
 
-        point : Vector, default: (0.0, 0.0, 0.0)
+        point : VectorLike[float], optional
             Point to rotate about. Defaults to origin.
 
         transform_all_input_vectors : bool, default: False
@@ -1112,6 +1128,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_vector
+            Concatenate a rotation about a vector with a transformation.
 
         Examples
         --------
@@ -1130,10 +1151,82 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show()
 
         """
-        check_valid_vector(vector)
-        check_valid_vector(point, "point")
-        t = transformations.axis_angle_rotation(vector, angle, point=point, deg=True)
-        return self.transform(
+        t = Transform().rotate_vector(vector, angle, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate(
+        self,
+        rotation: RotationLike,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        rotation : RotationLike
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate
+            Concatenate a rotation matrix with a transformation.
+
+        Examples
+        --------
+        Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
+        60 degrees.
+
+        >>> import pyvista as pv
+        >>> rotation = [
+        ...     [0.5, -0.8660254, 0.0],
+        ...     [0.8660254, 0.5, 0.0],
+        ...     [0.0, 0.0, 1.0],
+        ... ]
+
+        Use the rotation to rotate a cone about its tip.
+
+        >>> mesh = pv.Cone()
+        >>> tip = (0.5, 0.0, 0.0)
+        >>> rot = mesh.rotate(rotation, point=tip)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate(rotation, point=point)
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1170,6 +1263,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Translated dataset.
 
+        See Also
+        --------
+        pyvista.Transform.translate
+            Concatenate a translation matrix with a transformation.
+
         Examples
         --------
         Create a sphere and translate it by ``(2, 1, 2)``.
@@ -1177,15 +1275,14 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> mesh.center
-        [0.0, 0.0, 0.0]
+        (0.0, 0.0, 0.0)
         >>> trans = mesh.translate((2, 1, 2), inplace=False)
         >>> trans.center
-        [2.0, 1.0, 2.0]
+        (2.0, 1.0, 2.0)
 
         """
-        transform = _vtk.vtkTransform()
-        transform.Translate(cast(Sequence[float], xyz))
-        return self.transform(
+        transform = Transform().translate(xyz)
+        return self.transform(  # type: ignore[misc]
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1196,6 +1293,7 @@ class DataSet(DataSetFilters, DataObject):
         xyz: Number | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
+        point: VectorLike[float] | None = None,
     ):
         """Scale the mesh.
 
@@ -1217,10 +1315,18 @@ class DataSet(DataSetFilters, DataObject):
         inplace : bool, default: False
             Updates mesh in-place.
 
+        point : VectorLike[float], optional
+            Point to scale from. Defaults to origin.
+
         Returns
         -------
         pyvista.DataSet
             Scaled dataset.
+
+        See Also
+        --------
+        pyvista.Transform.scale
+            Concatenate a scale matrix with a transformation.
 
         Examples
         --------
@@ -1240,12 +1346,8 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.show(cpos="xy")
 
         """
-        if isinstance(xyz, (float, int, np.number)):
-            xyz = [xyz] * 3
-
-        transform = _vtk.vtkTransform()
-        transform.Scale(xyz)
-        return self.transform(
+        transform = Transform().scale(xyz, point=point)
+        return self.transform(  # type: ignore[misc]
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1283,6 +1385,11 @@ class DataSet(DataSetFilters, DataObject):
         pyvista.DataSet
             Flipped dataset.
 
+        See Also
+        --------
+        pyvista.Transform.flip_x
+            Concatenate a reflection about the x-axis with a transformation.
+
         Examples
         --------
         >>> import pyvista as pv
@@ -1301,9 +1408,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((1, 0, 0), point=point)
-        return self.transform(
+        t = Transform().reflect((1, 0, 0), point=point)
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1324,7 +1430,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : sequence[float], optional
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1340,6 +1446,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_y
+            Concatenate a reflection about the y-axis with a transformation.
 
         Examples
         --------
@@ -1359,9 +1470,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((0, 1, 0), point=point)
-        return self.transform(
+        t = Transform().reflect((0, 1, 0), point=point)
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1382,7 +1492,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Vector, optional
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1398,6 +1508,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_z
+            Concatenate a reflection about the z-axis with a transformation.
 
         Examples
         --------
@@ -1417,9 +1532,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(point, 'point')
-        t = transformations.reflection((0, 0, 1), point=point)
-        return self.transform(
+        t = Transform().reflect((0, 0, 1), point=point)
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1441,10 +1555,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        normal : sequence[float]
+        normal : VectorLike[float]
            Normal vector to flip about.
 
-        point : sequence[float]
+        point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
             :attr:`center <pyvista.DataSet.center>`.
 
@@ -1460,6 +1574,11 @@ class DataSet(DataSetFilters, DataObject):
         -------
         pyvista.DataSet
             Dataset flipped about its normal.
+
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
 
         Examples
         --------
@@ -1479,10 +1598,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         if point is None:
             point = self.center
-        check_valid_vector(normal, 'normal')
-        check_valid_vector(point, 'point')
-        t = transformations.reflection(normal, point=point)
-        return self.transform(
+        t = Transform().reflect(normal, point=point)
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1730,14 +1847,14 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsTuple:
         """Return the bounding box of this dataset.
 
         Returns
         -------
         BoundsLike
             Bounding box of this dataset.
-            The form is: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Examples
         --------
@@ -1746,10 +1863,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> cube = pv.Cube()
         >>> cube.bounds
-        (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5)
+        BoundsTuple(x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z_min=-0.5, z_max=0.5)
 
         """
-        return cast(BoundsLike, self.GetBounds())
+        return BoundsTuple(*self.GetBounds())
 
     @property
     def length(self) -> float:
@@ -1775,12 +1892,12 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self) -> list[float]:
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the bounding box.
 
         Returns
         -------
-        Vector
+        tuple[float, float, float]
             Center of the bounding box.
 
         Examples
@@ -1790,10 +1907,10 @@ class DataSet(DataSetFilters, DataObject):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(center=(1, 2, 0))
         >>> mesh.center
-        [1.0, 2.0, 0.0]
+        (1.0, 2.0, 0.0)
 
         """
-        return list(self.GetCenter())
+        return self.GetCenter()
 
     @property
     def volume(self) -> float:
@@ -2089,15 +2206,15 @@ class DataSet(DataSetFilters, DataObject):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
-        attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
+        attrs.append(('N Cells', self.GetNumberOfCells(), '{}'))
+        attrs.append(('N Points', self.GetNumberOfPoints(), '{}'))
         if isinstance(self, pyvista.PolyData):
-            attrs.append(("N Strips", self.n_strips, "{}"))
+            attrs.append(('N Strips', self.n_strips, '{}'))
         bds = self.bounds
-        fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
-        attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
-        attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
-        attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
+        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        attrs.append(('X Bounds', (bds[0], bds[1]), fmt))
+        attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))
+        attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))
         # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
         #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
@@ -2108,25 +2225,29 @@ class DataSet(DataSetFilters, DataObject):
         It includes header details and information about all arrays.
 
         """
-        fmt = ""
+        fmt = ''
         if self.n_arrays > 0:
             fmt += "<table style='width: 100%;'>"
-            fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
-            fmt += "<tr><td>"
+            fmt += '<tr><th>Header</th><th>Data Arrays</th></tr>'
+            fmt += '<tr><td>'
         # Get the header info
         fmt += self.head(display=False, html=True)
         # Fill out arrays
         if self.n_arrays > 0:
-            fmt += "</td><td>"
-            fmt += "\n"
+            fmt += '</td><td>'
+            fmt += '\n'
             fmt += "<table style='width: 100%;'>\n"
-            titles = ["Name", "Field", "Type", "N Comp", "Min", "Max"]
-            fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
-            row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
-            row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
+            titles = ['Name', 'Field', 'Type', 'N Comp', 'Min', 'Max']
+            fmt += '<tr>' + ''.join([f'<th>{t}</th>' for t in titles]) + '</tr>\n'
+            row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
+            row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
 
             def format_array(name, arr, field):
                 """Format array information for printing (internal helper)."""
+                if isinstance(arr, str):
+                    # Convert string scalar into a numpy array. Otherwise, get_data_range
+                    # will treat the string as an array name, not an array value.
+                    arr = np.array(arr)
                 dl, dh = self.get_data_range(arr)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
@@ -2142,9 +2263,9 @@ class DataSet(DataSetFilters, DataObject):
             for key, arr in self.field_data.items():
                 fmt += format_array(key, arr, 'Fields')
 
-            fmt += "</table>\n"
-            fmt += "\n"
-            fmt += "</td></tr> </table>"
+            fmt += '</table>\n'
+            fmt += '\n'
+            fmt += '</td></tr> </table>'
         return fmt
 
     def __repr__(self) -> str:
@@ -2190,7 +2311,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh, deep=deep)
+            self.copy_meta_from(mesh, deep=deep)  # type: ignore[arg-type]
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
@@ -2361,20 +2482,20 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if not isinstance(point, (np.ndarray, Sequence)) or len(point) != 3:
-            raise TypeError("Given point must be a length three sequence.")
+            raise TypeError('Given point must be a length three sequence.')
         if not isinstance(n, int):
-            raise TypeError("`n` must be a positive integer.")
+            raise TypeError('`n` must be a positive integer.')
         if n < 1:
-            raise ValueError("`n` must be a positive integer.")
+            raise ValueError('`n` must be a positive integer.')
 
         locator = _vtk.vtkPointLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
         if n > 1:
             id_list = _vtk.vtkIdList()
-            locator.FindClosestNPoints(n, point, id_list)
+            locator.FindClosestNPoints(n, point, id_list)  # type: ignore[arg-type]
             return vtk_id_list_to_array(id_list)
-        return locator.FindClosestPoint(point)
+        return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
     def find_closest_cell(
         self,
@@ -2482,7 +2603,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
 
         cell = _vtk.vtkGenericCell()
@@ -2496,7 +2617,7 @@ class DataSet(DataSetFilters, DataObject):
             sub_id = _vtk.mutable(0)
             dist2 = _vtk.mutable(0.0)
 
-            locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)
+            locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)  # type: ignore[call-overload]
             closest_cells.append(int(cell_id))
             closest_points.append(closest_point)
 
@@ -2567,7 +2688,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
 
         containing_cells = [locator.FindCell(node) for node in point]
@@ -2624,11 +2745,11 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if np.array(pointa).size != 3:
-            raise TypeError("Point A must be a length three tuple of floats.")
+            raise TypeError('Point A must be a length three tuple of floats.')
         if np.array(pointb).size != 3:
-            raise TypeError("Point B must be a length three tuple of floats.")
+            raise TypeError('Point B must be a length three tuple of floats.')
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsAlongLine(
@@ -2684,12 +2805,12 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if pyvista.vtk_version_info < (9, 2, 0):
-            raise VTKVersionError("pyvista.PointSet requires VTK >= 9.2.0")
+            raise VTKVersionError('pyvista.PointSet requires VTK >= 9.2.0')
 
         if np.array(pointa).size != 3:
-            raise TypeError("Point A must be a length three tuple of floats.")
+            raise TypeError('Point A must be a length three tuple of floats.')
         if np.array(pointb).size != 3:
-            raise TypeError("Point B must be a length three tuple of floats.")
+            raise TypeError('Point B must be a length three tuple of floats.')
         locator = _vtk.vtkCellLocator()
         locator.SetDataSet(cast(_vtk.vtkDataSet, self))
         locator.BuildLocator()
@@ -2706,13 +2827,13 @@ class DataSet(DataSetFilters, DataObject):
         )
         return vtk_id_list_to_array(id_list)
 
-    def find_cells_within_bounds(self, bounds: BoundsLike) -> NumpyArray[int]:
+    def find_cells_within_bounds(self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
 
         Parameters
         ----------
         bounds : sequence[float]
-            Bounding box. The form is: ``[xmin, xmax, ymin, ymax, zmin, zmax]``.
+            Bounding box. The form is: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
         Returns
         -------
@@ -2737,7 +2858,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if np.array(bounds).size != 6:
-            raise TypeError("Bounds must be a length six tuple of floats.")
+            raise TypeError('Bounds must be a length six tuple of floats.')
         locator = _vtk.vtkCellTreeLocator()
         locator.SetDataSet(cast(_vtk.vtkDataSet, self))
         locator.BuildLocator()
@@ -2806,7 +2927,7 @@ class DataSet(DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pyvista.Cell()
+        cell = pyvista.Cell()  # type: ignore[abstract]
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell
@@ -2839,11 +2960,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> for cell in mesh.cell:  # doctest: +SKIP
         ...     cell
         ...
+
         """
         for i in range(self.n_cells):
             yield self.get_cell(i)
 
-    def cell_neighbors(self, ind: int, connections: str = "points") -> list[int]:
+    def cell_neighbors(self, ind: int, connections: str = 'points') -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
         Concrete implementation of vtkDataSet's `GetCellNeighbors
@@ -2948,35 +3070,36 @@ class DataSet(DataSetFilters, DataObject):
         ...     _ = pl.add_mesh(others, show_edges=True)
         ...
         >>> pl.show()
+
         """
         if isinstance(self, _vtk.vtkExplicitStructuredGrid):
-            raise TypeError("For an ExplicitStructuredGrid, use the `neighbors` method")
+            raise TypeError('For an ExplicitStructuredGrid, use the `neighbors` method')
 
         # Build links as recommended:
         # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
-        if hasattr(self, "BuildLinks"):
+        if hasattr(self, 'BuildLinks'):
             self.BuildLinks()
 
-        needed = ["points", "edges", "faces"]
+        needed = ['points', 'edges', 'faces']
         if connections not in needed:
             raise ValueError(f'`connections` must be one of: {needed} (got "{connections}")')
 
         cell = self.get_cell(ind)
 
         iterators = {
-            "points": cell.point_ids,
-            "edges": range(cell.n_edges),
-            "faces": range(cell.n_faces),
+            'points': cell.point_ids,
+            'edges': range(cell.n_edges),
+            'faces': range(cell.n_faces),
         }
 
         def generate_ids(i: int, connections: str):  # numpydoc ignore=GL08
-            if connections == "points":
+            if connections == 'points':
                 ids = _vtk.vtkIdList()
                 ids.InsertNextId(i)
                 return ids
-            elif connections == "edges":
+            elif connections == 'edges':
                 return cell.get_edge(i).GetPointIds()
-            elif connections == "faces":
+            elif connections == 'faces':
                 return cell.get_face(i).GetPointIds()
             return None  # pragma: no cover
 
@@ -3120,6 +3243,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.view_xy()
         >>> pl.camera.zoom(4.0)
         >>> pl.show()
+
         """
         method = self.point_neighbors
         return self._get_levels_neihgbors(ind, n_levels, method)
@@ -3127,7 +3251,7 @@ class DataSet(DataSetFilters, DataObject):
     def cell_neighbors_levels(
         self,
         ind: int,
-        connections: str = "points",
+        connections: str = 'points',
         n_levels: int = 1,
     ) -> Generator[list[int], None, None]:
         """Get consecutive levels of cell neighbors.
@@ -3223,6 +3347,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.view_xy()
         >>> pl.camera.zoom(6.0)
         >>> pl.show()
+
         """
         method = partial(self.cell_neighbors, connections=connections)
         return self._get_levels_neihgbors(ind, n_levels, method)
@@ -3310,10 +3435,11 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.camera_position = "yx"
         >>> pl.camera.zoom(7.0)
         >>> pl.show()
+
         """
         # Build links as recommended:
         # https://vtk.org/doc/nightly/html/classvtkPolyData.html#adf9caaa01f72972d9a986ba997af0ac7
-        if hasattr(self, "BuildLinks"):
+        if hasattr(self, 'BuildLinks'):
             self.BuildLinks()
 
         ids = _vtk.vtkIdList()
@@ -3348,16 +3474,16 @@ class DataSet(DataSetFilters, DataObject):
         >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
         >>> mesh.get_cell(0).bounds
-        (0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
+        BoundsTuple(x_min=0.0, x_max=0.5, y_min=0.0, y_max=0.5, z_min=0.0, z_max=0.5)
         >>> mesh.point_is_inside_cell(0, [0.2, 0.2, 0.2])
         True
 
         """
         if not isinstance(ind, (int, np.integer)):
-            raise TypeError(f"ind must be an int, got {type(ind)}")
+            raise TypeError(f'ind must be an int, got {type(ind)}')
 
         if not 0 <= ind < self.n_cells:
-            raise ValueError(f"ind must be >= 0 and < {self.n_cells}, got {ind}")
+            raise ValueError(f'ind must be >= 0 and < {self.n_cells}, got {ind}')
 
         co_point, singular = _coerce_pointslike_arg(point, copy=False)
 
@@ -3375,7 +3501,7 @@ class DataSet(DataSetFilters, DataObject):
             is_inside = cell.EvaluatePosition(node, closest_point, sub_id, pcoords, dist2, weights)
             if not 0 <= is_inside <= 1:
                 raise RuntimeError(
-                    f"Computational difficulty encountered for point {node} in cell {ind}",
+                    f'Computational difficulty encountered for point {node} in cell {ind}',
                 )
             in_cell[i] = bool(is_inside)
 
@@ -3421,5 +3547,6 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         texture_coordinates : np.ndarray
             Active texture coordinates on the points.
+
         """
         self.point_data.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]

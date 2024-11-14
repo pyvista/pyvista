@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from collections import deque
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
-from typing import Sequence
 from typing import cast
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -253,6 +253,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     >>> assert np.all(np.isclose(points[:, 0], points_orig[:, 0]))
     >>> assert np.all(np.isclose(points[:, 1], -points_orig[:, 2]))
     >>> assert np.all(np.isclose(points[:, 2], points_orig[:, 1]))
+
     """
     axis = axis.lower()
     axis_to_vec = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
@@ -275,7 +276,7 @@ def is_inside_bounds(point, bounds):
         Three item cartesian point (i.e. ``[x, y, z]``).
 
     bounds : sequence[float]
-        Six item bounds in the form of ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        Six item bounds in the form of ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     Returns
     -------

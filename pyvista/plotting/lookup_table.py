@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Tuple
 from typing import Union
 from typing import cast
 
@@ -136,8 +135,8 @@ class LookupTable(_vtk.vtkLookupTable):
     scalar_range : tuple, optional
         The range of scalars which will be mapped to colors. Values outside of
         this range will be colored according to
-        :attr`LookupTable.below_range_color` and
-        :attr`LookupTable.above_range_color`.
+        :attr:`LookupTable.below_range_color` and
+        :attr:`LookupTable.above_range_color`.
 
     log_scale : bool, optional
         Use a log scale when mapping scalar values.
@@ -404,8 +403,8 @@ class LookupTable(_vtk.vtkLookupTable):
 
         This is the range of scalars which will be mapped to colors. Values
         outside of this range will be colored according to
-        :attr`LookupTable.below_range_color` and
-        :attr`LookupTable.above_range_color`.
+        :attr:`LookupTable.below_range_color` and
+        :attr:`LookupTable.above_range_color`.
 
         Examples
         --------
@@ -639,7 +638,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     @above_range_color.setter
     def above_range_color(self, value: bool | ColorLike):  # numpydoc ignore=GL08
-        if value in (None, False):
+        if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
             self.SetAboveRangeColor(*Color(pyvista.global_theme.above_range_color).float_rgba)
@@ -703,7 +702,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
     @below_range_color.setter
     def below_range_color(self, value: bool | ColorLike):  # numpydoc ignore=GL08
-        if value in (None, False):
+        if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:
             self.SetBelowRangeColor(*Color(pyvista.global_theme.below_range_color).float_rgba)
@@ -940,7 +939,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if vtk_values is None:
             return {}
         n_items = vtk_values.GetSize()
-        keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]
+        keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
         vtk_str = self.GetAnnotations()
         values = [str(vtk_str.GetValue(ii)) for ii in range(n_items)]
@@ -951,7 +950,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.ResetAnnotations()
         if values is not None:
             for val, anno in values.items():
-                self.SetAnnotation(float(val), str(anno))
+                self.SetAnnotation(float(val), str(anno))  # type: ignore[call-overload]
 
     @property
     def _lookup_type(self) -> str:
@@ -1116,7 +1115,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if opacity:
             color.append(self.GetOpacity(value))
         return cast(
-            Union[Tuple[float, float, float], Tuple[float, float, float, float]],
+            Union[tuple[float, float, float], tuple[float, float, float, float]],
             tuple(color),
         )
 

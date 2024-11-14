@@ -1,4 +1,4 @@
-"""This module contains the Property class."""
+"""Wrapper for vtkProperty."""
 
 from __future__ import annotations
 
@@ -286,6 +286,7 @@ class Property(_vtk.vtkProperty):
         >>> prop.style = 'points'
         >>> prop.point_size = 5.0
         >>> prop.plot()
+
         """
         return self.GetRepresentationAsString()
 
@@ -818,7 +819,7 @@ class Property(_vtk.vtkProperty):
         if value == InterpolationType.PBR:
             self.SetInterpolationToPBR()
         else:
-            self.SetInterpolation(value)
+            self.SetInterpolation(value)  # type: ignore[arg-type]
 
     @property
     def render_points_as_spheres(self) -> bool:  # numpydoc ignore=RT01
@@ -897,6 +898,7 @@ class Property(_vtk.vtkProperty):
         Examples
         --------
         Get the default line width and visualize it.
+
         >>> import pyvista as pv
         >>> prop = pv.Property()
         >>> prop.line_width
@@ -1096,6 +1098,7 @@ class Property(_vtk.vtkProperty):
 
         >>> prop.specular_color = 'white'
         >>> prop.plot()
+
         """
         return Color(self.GetSpecularColor())
 
@@ -1217,7 +1220,7 @@ class Property(_vtk.vtkProperty):
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 
-        if self.interpolation == 'Physically based rendering':
+        if str(self.interpolation) == 'Physically based rendering':
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 

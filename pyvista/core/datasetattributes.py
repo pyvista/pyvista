@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import contextlib
-import copy
+import copy as copylib
 from typing import TYPE_CHECKING
 from typing import Any
 import warnings
@@ -406,7 +406,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
+            'Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         return self.active_texture_coordinates
@@ -425,7 +425,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.",
+            'Use of `DataSetAttributes.active_t_coords` is deprecated. Use `DataSetAttributes.active_texture_coordinates` instead.',
             PyVistaDeprecationWarning,
         )
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
@@ -444,7 +444,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
+            'Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.',
             PyVistaDeprecationWarning,
         )
         return self.active_texture_coordinates_name
@@ -463,7 +463,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         warnings.warn(
-            "Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.",
+            'Use of `DataSetAttributes.active_t_coords_name` is deprecated. Use `DataSetAttributes.active_texture_coordinates_name` instead.',
             PyVistaDeprecationWarning,
         )
         self.active_texture_coordinates_name = name
@@ -794,13 +794,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     return vtk_arr
 
         # reset data association
-        if name in self.dataset._association_bitarray_names[self.association.name]:
-            self.dataset._association_bitarray_names[self.association.name].remove(name)
-        if name in self.dataset._association_complex_names[self.association.name]:
-            self.dataset._association_complex_names[self.association.name].remove(name)
+        if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
+            self.dataset._association_bitarray_names[self.association.name].remove(name)  # type: ignore[union-attr]
+        if name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
+            self.dataset._association_complex_names[self.association.name].remove(name)  # type: ignore[union-attr]
 
         if data.dtype == np.bool_:
-            self.dataset._association_bitarray_names[self.association.name].add(name)
+            self.dataset._association_bitarray_names[self.association.name].add(name)  # type: ignore[union-attr]
             data = data.view(np.uint8)
         elif np.issubdtype(data.dtype, np.complexfloating):
             if data.dtype not in (np.complex64, np.complex128):
@@ -812,7 +812,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if data.ndim != 1:
                 if data.shape[1] != 1:
                     raise ValueError('Complex data must be single dimensional.')
-            self.dataset._association_complex_names[self.association.name].add(name)
+            self.dataset._association_complex_names[self.association.name].add(name)  # type: ignore[union-attr]
 
             # complex data is stored internally as a contiguous 2 component
             # float arrays
@@ -890,7 +890,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise KeyError(f'{key} not present.')
 
         with contextlib.suppress(KeyError):
-            self.dataset._association_bitarray_names[self.association.name].remove(key)
+            self.dataset._association_bitarray_names[self.association.name].remove(key)  # type: ignore[union-attr]
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
@@ -1036,7 +1036,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    def update(self, array_dict: dict[str, NumpyArray[float]] | DataSetAttributes):
+    def update(
+        self, array_dict: dict[str, NumpyArray[float]] | DataSetAttributes, copy: bool = True
+    ):
         """Update arrays in this object from another dictionary or dataset attributes.
 
         For each key, value given, add the pair. If it already exists, replace
@@ -1047,6 +1049,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         array_dict : dict, DataSetAttributes
             A dictionary of ``(array name, :class:`numpy.ndarray`)`` or a
             :class:`pyvista.DataSetAttributes`.
+
+        copy : bool, default: True
+            If ``True``, arrays from ``array_dict`` are copied to this object.
 
         Examples
         --------
@@ -1075,7 +1080,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         for name, array in array_dict.items():
-            self[name] = array.copy() if hasattr(array, 'copy') else copy.copy(array)
+            if copy:
+                self[name] = array.copy() if hasattr(array, 'copy') else copylib.copy(array)
+            else:
+                self[name] = array
 
     def _raise_index_out_of_bounds(self, index: Any):
         """Raise a KeyError if array index is out of bounds."""
@@ -1170,6 +1178,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         >>> mesh.point_data._active_normals_name = 'my-normals'
         >>> mesh.point_data._active_normals_name
         'my-normals'
+
         """
         if self.GetNormals() is not None:
             return str(self.GetNormals().GetName())

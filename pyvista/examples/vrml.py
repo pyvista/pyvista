@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .downloads import download_file
+from pyvista.examples.downloads import download_file
 
 
 def download_teapot():  # pragma: no cover
@@ -23,7 +23,7 @@ def download_teapot():  # pragma: no cover
     >>> pl.show()
 
     """
-    return download_file("vrml/teapot.wrl")
+    return download_file('vrml/teapot.wrl')
 
 
 def download_sextant():  # pragma: no cover
@@ -44,4 +44,32 @@ def download_sextant():  # pragma: no cover
     >>> pl.show()
 
     """
-    return download_file("vrml/sextant.wrl")
+    return download_file('vrml/sextant.wrl')
+
+
+def download_grasshopper():  # pragma: no cover
+    """Download the grasshoper example.
+
+    .. versionadded:: 0.45
+
+    Returns
+    -------
+    str
+        Filename of the VRML file.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> vrml_file = examples.vrml.download_grasshopper()
+    >>> pl = pv.Plotter()
+    >>> pl.import_vrml(vrml_file)
+    >>> pl.camera_position = [
+    ...     (25.0, 32.0, 44.0),
+    ...     (0.0, 0.931, -6.68),
+    ...     (-0.20, 0.90, -0.44),
+    ... ]
+    >>> pl.show()
+
+    """
+    return download_file('grasshopper/grasshop.wrl')

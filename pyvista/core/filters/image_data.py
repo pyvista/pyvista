@@ -5,15 +5,19 @@ from __future__ import annotations
 from collections.abc import Iterable
 import operator
 from typing import TYPE_CHECKING
+from typing import Callable
 from typing import Literal
 from typing import cast
+import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
@@ -23,6 +27,9 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
+    from numpy.typing import NDArray
+
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -210,7 +217,7 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         voi : sequence[int]
-            Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            Length 6 iterable of ints: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
@@ -233,6 +240,7 @@ class ImageDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             ImageData subset.
+
         """
         alg = _vtk.vtkExtractVOI()
         alg.SetVOI(voi)
@@ -973,7 +981,14 @@ class ImageDataFilters(DataSetFilters):
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return cast(pyvista.PolyData, wrap(alg.GetOutput()))
 
-    def points_to_cells(self, scalars: str | None = None, *, copy: bool = True):
+    def points_to_cells(
+        self,
+        scalars: str | None = None,
+        *,
+        dimensionality: VectorLike[bool]
+        | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
+        copy: bool = True,
+    ):
         """Re-mesh image data from a point-based to a cell-based representation.
 
         This filter changes how image data is represented. Data represented as points
@@ -989,7 +1004,9 @@ class ImageDataFilters(DataSetFilters):
         input image dimensions by one along each axis (i.e. half the cell width on each
         side). For example, an image with 100 points and 99 cells along an axis at the
         input will have 101 points and 100 cells at the output. If the input has 1mm
-        spacing, the axis size will also increase from 99mm to 100mm.
+        spacing, the axis size will also increase from 99mm to 100mm. By default,
+        only non-singleton dimensions are increased such that 1D or 2D inputs remain
+        1D or 2D at the output.
 
         Since filters may be inherently cell-based (e.g. some :class:`~pyvista.DataSetFilters`)
         or may operate on point data exclusively (e.g. most :class:`~pyvista.ImageDataFilters`),
@@ -997,6 +1014,12 @@ class ImageDataFilters(DataSetFilters):
         ensuring the input data to those filters has the appropriate representation.
         This filter is also useful when plotting image data to achieve a desired visual
         effect, such as plotting images as voxel cells instead of as points.
+
+        .. note::
+            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
+            properties such as :attr:`~pyvista.ImageData.spacing` and
+            :attr:`~pyvista.ImageData.direction_matrix` are not affected.
 
         .. versionadded:: 0.44.0
 
@@ -1016,6 +1039,25 @@ class ImageDataFilters(DataSetFilters):
             this parameter to restrict the output to only include the specified array.
             By default, all point data arrays at the input are passed through as cell
             data at the output.
+
+        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"], default: 'preserve'
+            Control which dimensions will be modified by the filter.
+
+            - Can be specified as a sequence of 3 boolean to allow modification on a per
+                dimension basis.
+            - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
+              dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
+            - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
+              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              for 0D or 1D inputs.
+            - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
+              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              valid for 0D, 1D, or 2D inputs.
+            - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
+              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              any 0D, 1D, 2D, or 3D inputs.
+            - ``'preserve'`` (default): convenience alias to not modify singleton
+              dimensions.
 
         copy : bool, default: True
             Copy the input point data before associating it with the output cell data.
@@ -1075,7 +1117,59 @@ class ImageDataFilters(DataSetFilters):
         - The output has one less array (the input cell data is ignored)
         - The dimensions have increased by one
         - The bounds have increased by half the spacing
-        - The output N Cells equals the input N Points
+        - The output ``N Cells`` equals the input ``N Points``
+
+        Since the input points are 3D (i.e. there are no singleton dimensions), the
+        output cells are 3D :attr:`~pyvista.CellType.VOXEL` cells.
+
+        >>> cells_image.get_cell(0).type
+        <CellType.VOXEL: 11>
+
+        If the input points are 2D (i.e. one dimension is singleton), the
+        output cells are 2D :attr:`~pyvista.CellType.PIXEL` cells when ``dimensions`` is
+        set to ``'preserve'``.
+
+        >>> image2D = examples.load_logo()
+        >>> image2D.dimensions
+        (1920, 718, 1)
+
+        >>> pixel_cells_image = image2D.points_to_cells(
+        ...     dimensionality='preserve'
+        ... )
+        >>> pixel_cells_image.dimensions
+        (1921, 719, 1)
+        >>> pixel_cells_image.get_cell(0).type
+        <CellType.PIXEL: 8>
+
+        This is equivalent as requesting a 2D output.
+
+        >>> pixel_cells_image = image2D.points_to_cells(
+        ...     dimensionality='2D'
+        ... )
+        >>> pixel_cells_image.dimensions
+        (1921, 719, 1)
+        >>> pixel_cells_image.get_cell(0).type
+        <CellType.PIXEL: 8>
+
+        Use ``(True, True, True)`` to re-mesh 2D points as 3D cells.
+
+        >>> voxel_cells_image = image2D.points_to_cells(
+        ...     dimensionality=(True, True, True)
+        ... )
+        >>> voxel_cells_image.dimensions
+        (1921, 719, 2)
+        >>> voxel_cells_image.get_cell(0).type
+        <CellType.VOXEL: 11>
+
+        Or request a 3D output.
+
+        >>> voxel_cells_image = image2D.points_to_cells(
+        ...     dimensionality='3D'
+        ... )
+        >>> voxel_cells_image.dimensions
+        (1921, 719, 2)
+        >>> voxel_cells_image.get_cell(0).type
+        <CellType.VOXEL: 11>
 
         See :ref:`image_representations_example` for more examples using this filter.
 
@@ -1086,9 +1180,21 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
                 )
-        return self._remesh_points_cells(points_to_cells=True, scalars=scalars, copy=copy)
+        return self._remesh_points_cells(
+            points_to_cells=True,
+            scalars=scalars,
+            dimensionality=dimensionality,
+            copy=copy,
+        )
 
-    def cells_to_points(self, scalars: str | None = None, *, copy: bool = True):
+    def cells_to_points(
+        self,
+        scalars: str | None = None,
+        *,
+        dimensionality: VectorLike[bool]
+        | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
+        copy: bool = True,
+    ):
         """Re-mesh image data from a cell-based to a point-based representation.
 
         This filter changes how image data is represented. Data represented as cells
@@ -1113,6 +1219,12 @@ class ImageDataFilters(DataSetFilters):
         This filter is also useful when plotting image data to achieve a desired visual
         effect, such as plotting images as points instead of as voxel cells.
 
+        .. note::
+            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
+            properties such as :attr:`~pyvista.ImageData.spacing` and
+            :attr:`~pyvista.ImageData.direction_matrix` are not affected.
+
         .. versionadded:: 0.44.0
 
         See Also
@@ -1131,6 +1243,29 @@ class ImageDataFilters(DataSetFilters):
             this parameter to restrict the output to only include the specified array.
             By default, all cell data arrays at the input are passed through as point
             data at the output.
+
+        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"], default: 'preserve'
+            Control which dimensions will be modified by the filter.
+
+            - Can be specified as a sequence of 3 boolean to allow modification on a per
+                dimension basis.
+            - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
+              dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
+            - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
+              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              for 0D or 1D inputs.
+            - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
+              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              valid for 0D, 1D, or 2D inputs.
+            - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
+              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              any 0D, 1D, 2D, or 3D inputs.
+            - ``'preserve'`` (default): convenience alias to not modify singleton
+              dimensions.
+
+            .. note::
+                This filter does not modify singleton dimensions with ``dimensionality``
+                set as ``'preserve'`` by default.
 
         copy : bool, default: True
             Copy the input cell data before associating it with the output point data.
@@ -1190,7 +1325,7 @@ class ImageDataFilters(DataSetFilters):
         - The output has one less array (the input point data is ignored)
         - The dimensions have decreased by one
         - The bounds have decreased by half the spacing
-        - The output N Points equals the input N Cells
+        - The output ``N Points`` equals the input ``N Cells``
 
         See :ref:`image_representations_example` for more examples using this filter.
 
@@ -1201,9 +1336,20 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
                 )
-        return self._remesh_points_cells(points_to_cells=False, scalars=scalars, copy=copy)
+        return self._remesh_points_cells(
+            points_to_cells=False,
+            scalars=scalars,
+            dimensionality=dimensionality,
+            copy=copy,
+        )
 
-    def _remesh_points_cells(self, points_to_cells: bool, scalars: str | None, copy: bool):
+    def _remesh_points_cells(
+        self,
+        points_to_cells: bool,
+        scalars: str | None,
+        dimensionality: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
+        copy: bool,
+    ):
         """Re-mesh points to cells or vice-versa.
 
         The active cell or point scalars at the input will be set as active point or
@@ -1217,6 +1363,25 @@ class ImageDataFilters(DataSetFilters):
 
         scalars : str
             If set, only these scalars are passed through.
+
+        dimensionality : VectorLike[bool], Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve']
+            Control which dimensions will be modified by the filter.
+
+            - Can be specified as a sequence of 3 boolean to allow modification on a per
+                dimension basis.
+            - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
+              dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
+            - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
+              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              for 0D or 1D inputs.
+            - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
+              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              valid for 0D, 1D, or 2D inputs.
+            - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
+              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              any 0D, 1D, 2D, or 3D inputs.
+            - ``'preserve'``: convenience alias to not modify singleton
+              dimensions.
 
         copy : bool
             Copy the input data before associating it with the output data.
@@ -1243,6 +1408,7 @@ class ImageDataFilters(DataSetFilters):
 
         # Get data to use and operations to perform for the conversion
         new_image = pyvista.ImageData()
+
         if points_to_cells:
             output_scalars = scalars if scalars else _get_output_scalars('point')
             # Enlarge image so points become cell centers
@@ -1258,18 +1424,36 @@ class ImageDataFilters(DataSetFilters):
             old_data = cell_data
             new_data = new_image.point_data
 
-        dims = np.array(self.dimensions)  # type: ignore[attr-defined]
-        dims_mask = dims > 1  # Only operate on non-singleton dimensions
+        dims_mask, dims_result = self._validate_dimensional_operation(
+            operation_mask=dimensionality, operator=dims_operator, operation_size=1
+        )
+
+        # Prepare the new image
         new_image.origin = origin_operator(
             self.origin,  # type: ignore[attr-defined]
             (np.array(self.spacing) / 2) * dims_mask,  # type: ignore[attr-defined]
         )
-        new_image.dimensions = dims_operator(
-            dims,
-            dims_mask,
-        )
+        new_image.dimensions = dims_result  # type: ignore[assignment]
         new_image.spacing = self.spacing  # type: ignore[attr-defined]
-        new_image.SetDirectionMatrix(self.GetDirectionMatrix())  # type: ignore[attr-defined]
+        new_image.direction_matrix = self.direction_matrix  # type: ignore[attr-defined]
+
+        # Check the validity of the operation
+        if points_to_cells:
+            if new_image.n_cells != self.n_points:  # type: ignore[attr-defined]
+                raise ValueError(
+                    'Cannot re-mesh points to cells. The dimensions of the input'
+                    f' {self.dimensions} is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' output {new_image.dimensions} and would require to map'
+                    f' {self.n_points} points on {new_image.n_cells} cells.'  # type: ignore[attr-defined]
+                )
+        else:  # cells_to_points
+            if new_image.n_points != self.n_cells:  # type: ignore[attr-defined]
+                raise ValueError(
+                    'Cannot re-mesh cells to points. The dimensions of the input'
+                    f' {self.dimensions} is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' output {new_image.dimensions} and would require to map'
+                    f' {self.n_cells} cells on {new_image.n_points} points.'  # type: ignore[attr-defined]
+                )
 
         # Copy field data
         new_image.field_data.update(self.field_data)  # type: ignore[attr-defined]
@@ -1287,10 +1471,12 @@ class ImageDataFilters(DataSetFilters):
         pad_value: float | VectorLike[float] | Literal['wrap', 'mirror'] = 0.0,
         *,
         pad_size: int | VectorLike[int] = 1,
-        pad_singleton_dims: bool = False,
+        dimensionality: VectorLike[bool]
+        | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         scalars: str | None = None,
         pad_all_scalars: bool = False,
         progress_bar=False,
+        pad_singleton_dims: bool | None = None,
     ) -> pyvista.ImageData:
         """Enlarge an image by padding its boundaries with new points.
 
@@ -1326,17 +1512,28 @@ class ImageDataFilters(DataSetFilters):
             - Six values, one for each ``(-X, +X, -Y, +Y, -Z, +Z)`` boundary, to apply
               padding to each boundary independently.
 
-            .. note::
-                The pad size for singleton dimensions is set to ``0`` by default, even
-                if non-zero pad sizes are specified for these axes with this parameter.
-                Set ``pad_singleton_dims`` to ``True`` to override this behavior and
-                enable padding any or all dimensions.
+        dimensionality : VectorLike[bool], Literal[1, 2, 3, "1D", "2D", "3D", "preserve"], default: 'preserve'
+            Control which dimensions will be padded by the filter.
 
-        pad_singleton_dims : bool, default : False
-            Control whether to pad singleton dimensions. By default, only non-singleton
-            dimensions are padded, which means that 1D or 2D inputs will remain 1D or
-            2D after padding. Set this to ``True`` to enable padding any or all
-            dimensions.
+            - Can be specified as a sequence of 3 boolean to apply padding on a per
+                dimension basis.
+            - ``1`` or ``'1D'``: apply padding such that the output is a 1D ImageData
+              where exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``.
+              Only valid for 0D or 1D inputs.
+            - ``2`` or ``'2D'``: apply padding such that the output is a 2D ImageData
+              where exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``.
+              Only valid for 0D, 1D, or 2D inputs.
+            - ``3`` or ``'3D'``: apply padding such that the output is a 3D ImageData,
+              where all three dimensions are greater than one, e.g. ``(>1, >1, >1)``.
+              Valid for any 0D, 1D, 2D, or 3D inputs.
+
+            .. note::
+                The ``pad_size`` for singleton dimensions is set to ``0`` by default, even
+                if non-zero pad sizes are specified for these axes with this parameter.
+                Set ``dimensionality`` to a value different than ``'preserve'`` to
+                override this behavior and enable padding any or all dimensions.
+
+            .. versionadded:: 0.45.0
 
         scalars : str, optional
             Name of scalars to pad. Defaults to currently active scalars. Unless
@@ -1350,6 +1547,16 @@ class ImageDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        pad_singleton_dims : bool, optional
+            Control whether to pad singleton dimensions.
+
+            .. deprecated:: 0.45.0
+                Deprecated, use ``dimensionality='preserve'`` instead of
+                ``pad_singleton_dims=True`` and ``dimensionality='3D'`` instead of
+                ``pad_singleton_dims=False``.
+
+                Estimated removal on v0.48.0.
 
         Returns
         -------
@@ -1435,6 +1642,20 @@ class ImageDataFilters(DataSetFilters):
         >>> padded.plot(**plot_kwargs)
 
         """
+        # Deprecated on v0.45.0, estimated removal on v0.48.0
+        if pad_singleton_dims is not None:
+            if pad_singleton_dims:
+                warnings.warn(
+                    'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead',
+                    PyVistaDeprecationWarning,
+                )
+                dimensionality = '3D'
+            else:
+                warnings.warn(
+                    'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead',
+                    PyVistaDeprecationWarning,
+                )
+                dimensionality = 'preserve'
 
         def _get_num_components(array_):
             return 1 if array_.ndim == 1 else array_.shape[1]
@@ -1477,14 +1698,15 @@ class ImageDataFilters(DataSetFilters):
         elif length == 6:
             all_pad_sizes = pad_sz
         else:
-            raise ValueError(f"Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.")
+            raise ValueError(f'Pad size must have 1, 2, 3, 4, or 6 values, got {length} instead.')
 
-        if not pad_singleton_dims:
-            # Set pad size to zero for singleton dimensions (e.g. 2D cases)
-            dims = self.dimensions  # type: ignore[attr-defined]
-            dim_pairs = (dims[0], dims[0], dims[1], dims[1], dims[2], dims[2])
-            is_singleton = np.asarray(dim_pairs) == 1
-            all_pad_sizes[is_singleton] = 0
+        # Combine size 2 by 2 to get a (3, ) shaped array
+        dims_mask, _ = self._validate_dimensional_operation(
+            operation_mask=dimensionality,
+            operator=operator.add,
+            operation_size=all_pad_sizes[::2] + all_pad_sizes[1::2],
+        )
+        all_pad_sizes = all_pad_sizes * np.repeat(dims_mask, 2)
 
         # Define new extents after padding
         pad_xn, pad_xp, pad_yn, pad_yp, pad_zn, pad_zp = all_pad_sizes
@@ -1503,13 +1725,13 @@ class ImageDataFilters(DataSetFilters):
         pad_multi_component = None  # Flag for multi-component constants
         error_msg = (
             f"Invalid pad value {pad_value}. Must be 'mirror' or 'wrap', or a "
-            f"number/component vector for constant padding."
+            f'number/component vector for constant padding.'
         )
         if isinstance(pad_value, str):
             if pad_value == 'mirror':
                 alg = _vtk.vtkImageMirrorPad()
             elif pad_value == 'wrap':
-                alg = _vtk.vtkImageWrapPad()
+                alg = _vtk.vtkImageWrapPad()  # type: ignore[assignment]
             else:
                 raise ValueError(error_msg)
         else:
@@ -1522,7 +1744,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(error_msg)
             if (num_value_components := len(val)) not in [1, num_input_components]:
                 raise ValueError(
-                    f"Number of components ({num_value_components}) in pad value {pad_value} must "
+                    f'Number of components ({num_value_components}) in pad value {pad_value} must '
                     f"match the number components ({num_input_components}) in array '{scalars}'.",
                 )
             if num_input_components > 1:
@@ -1542,12 +1764,12 @@ class ImageDataFilters(DataSetFilters):
                         raise ValueError(
                             f"Cannot pad array '{array_name}' with value {pad_value}. "
                             f"Number of components ({n_comp}) in '{array_name}' must match "
-                            f"the number of components ({num_value_components}) in value."
-                            f"\nTry setting `pad_all_scalars=False` or update the array.",
+                            f'the number of components ({num_value_components}) in value.'
+                            f'\nTry setting `pad_all_scalars=False` or update the array.',
                         )
             else:
                 pad_multi_component = False
-            alg = _vtk.vtkImageConstantPad()
+            alg = _vtk.vtkImageConstantPad()  # type: ignore[assignment]
 
         alg.SetInputDataObject(self)
         alg.SetOutputWholeExtent(*padded_extents)
@@ -1603,3 +1825,461 @@ class ImageDataFilters(DataSetFilters):
         # Restore active scalars
         self.set_active_scalars(scalars, preference='point')  # type: ignore[attr-defined]
         return output
+
+    def label_connectivity(
+        self,
+        *,
+        scalars: str | None = None,
+        scalar_range: (Literal['auto', 'foreground', 'vtk_default'] | VectorLike[float]) = 'auto',
+        extraction_mode: Literal['all', 'largest', 'seeded'] = 'all',
+        point_seeds: (MatrixLike[float] | VectorLike[float] | _vtk.vtkDataSet | None) = None,
+        label_mode: Literal['size', 'constant', 'seeds'] = 'size',
+        constant_value: int | None = None,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ) -> tuple[pyvista.ImageData, NDArray[int], NDArray[int]]:
+        """Find and label connected regions in a :class:`~pyvista.ImageData`.
+
+        Only points whose `scalar` value is within the `scalar_range` are considered for
+        connectivity. A 4-connectivity is used for 2D images or a 6-connectivity for 3D
+        images. This filter operates on point-based data. If cell-based data are provided,
+        they are re-meshed to a point-based representation using
+        :func:`~pyvista.ImageDataFilters.cells_to_points` and the output is meshed back
+        to a cell-based representation with :func:`~pyvista.ImageDataFilters.points_to_cells`,
+        effectively filtering based on face connectivity. The connected regions are
+        extracted and labelled according to the strategy defined by ``extraction_mode``
+        and ``label_mode``, respectively. Unconnected regions are labelled with ``0`` value.
+
+        .. versionadded:: 0.45.0
+
+        Notes
+        -----
+        This filter implements `vtkImageConnectivityFilter
+        <https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html>`_.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Scalars to use to filter points. If ``None`` is provided, the scalars is
+            automatically set, if possible.
+
+        scalar_range : str, Literal['auto', 'foreground', 'vtk_default'], VectorLike[float], default: 'auto'
+            Points whose scalars value is within ``'scalar_range'`` are considered for
+            connectivity. The bounds are inclusive.
+
+            - ``'auto'``: includes the full data range, similarly to :meth:`~pyvista.DataSetFilters.connectivity`.
+            - ``'foreground'``: includes the full data range except the smallest value.
+            - ``'vtk_default'``: default to [``0.5``, :const:`~vtk.VTK_DOUBLE_MAX`].
+            - ``VectorLike[float]``: explicitly set the range.
+
+            The bounds are always cast to floats since vtk expects doubles. The scalars
+            data are also cast to floats to avoid unexpected behavior arising from implicit
+            type conversion. The only exceptions is if both bounds are whole numbers, in
+            which case the implicit conversion is safe. It will optimize resources consumption
+            if the data are integers.
+
+        extraction_mode : Literal['all', 'largest', 'seeded'], default: 'all'
+            Determine how the connected regions are extracted. If ``'all'``, all connected
+            regions are extracted. If ``'largest'``, only the largest region is extracted.
+            If ``'seeded'``, only the regions that include the points defined with
+            ``point_seeds`` are extracted.
+
+        point_seeds : MatrixLike[float], VectorLike[float], _vtk.vtkDataSet, optional
+            The point coordinates to use as seeds, specified as a (N, 3) array like or
+            as a :class:`~vtk.vtkDataSet`. Has no effect if ``extraction_mode`` is not
+            ``'seeded'``.
+
+        label_mode : Literal['size', 'constant', 'seeds'], default: 'size'
+            Determine how the extracted regions are labelled. If ``'size'``, label regions
+            by decreasing size (i.e., count of cells), starting at ``1``. If ``'constant'``,
+            label with the provided ``constant_value``. If ``'seeds'``, label according to
+            the seed order, starting at ``1``.
+
+        constant_value : int, optional
+            The constant label value to use. Has no effect if ``label_mode`` is not ``'seeds'``.
+
+        inplace : bool, default: False
+            If ``True``, perform an inplace labelling of the ImageData. Else, returns a
+            new ImageData.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Either the input ImageData or a generated one where connected regions are
+            labelled with a ``'RegionId'`` point-based or cell-based data.
+
+        NDArray[int]
+            The labels of each extracted regions.
+
+        NDArray[int]
+            The size (i.e., number of cells) of each extracted regions.
+
+        See Also
+        --------
+        pyvista.DataSetFilters.connectivity
+            Similar general-purpose filter that performs 1-connectivity.
+
+        Examples
+        --------
+        Prepare a segmented grid.
+
+        >>> import pyvista as pv
+        >>> segmented_grid = pv.ImageData(dimensions=(4, 3, 3))
+        >>> segmented_grid.cell_data["Data"] = [
+        ...     0,
+        ...     0,
+        ...     0,
+        ...     1,
+        ...     0,
+        ...     1,
+        ...     1,
+        ...     2,
+        ...     0,
+        ...     0,
+        ...     0,
+        ...     0,
+        ... ]
+        >>> segmented_grid.plot(show_edges=True)
+
+        Label the connected regions. The cells with a ``0`` value are excluded from the
+        connected regions and labelled with ``0``. The remaining cells define 3 different
+        regions that are labelled by decreasing size.
+
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
+        ...     scalar_range='foreground'
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
+        >>> pl.show()
+
+        Exclude the cell with a ``2`` value.
+
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
+        ...     scalar_range=[1, 1]
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
+        >>> pl.show()
+
+        Label all connected regions with a constant value.
+
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
+        ...     scalar_range='foreground',
+        ...     label_mode='constant',
+        ...     constant_value=10,
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
+        >>> pl.show()
+
+        Label only the regions that include seed points, by seed order.
+
+        >>> points = [(2, 1, 0), (0, 0, 1)]
+        >>> connected, labels, sizes = segmented_grid.label_connectivity(
+        ...     scalar_range='foreground',
+        ...     extraction_mode='seeded',
+        ...     point_seeds=points,
+        ... )
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(connected.threshold(0.5), show_edges=True)
+        >>> _ = pl.add_mesh(
+        ...     connected.threshold(0.5, invert=True),
+        ...     show_edges=True,
+        ...     opacity=0.5,
+        ... )
+        >>> pl.show()
+
+        """
+        # Get a copy of input to not overwrite data
+        input_mesh = self.copy()  # type: ignore[attr-defined]
+
+        if scalars is None:
+            set_default_active_scalars(input_mesh)
+        else:
+            input_mesh.set_active_scalars(scalars)
+
+        # Make sure we have point data (required by the filter)
+        field, scalars = input_mesh.active_scalars_info
+        if field == FieldAssociation.CELL:
+            # Convert to point data
+            input_mesh = input_mesh.cells_to_points(
+                scalars=scalars, dimensionality=(True, True, True), copy=False
+            )
+
+        # Set vtk algorithm
+        alg = _vtk.vtkImageConnectivityFilter()
+        alg.SetInputDataObject(input_mesh)
+
+        # Set the scalar range considered for connectivity
+        # vtk default is 0.5 to VTK_DOUBLE_MAX
+        # See https://vtk.org/doc/nightly/html/classvtkImageConnectivityFilter.html
+        if scalar_range != 'vtk_default':
+            if scalar_range == 'auto':
+                scalar_range = input_mesh.get_data_range(scalars, preference='point')
+            elif scalar_range == 'foreground':
+                unique_scalars = np.unique(input_mesh.point_data[scalars])
+                scalar_range = (unique_scalars[1], unique_scalars[-1])
+            else:
+                scalar_range = _validation.validate_data_range(scalar_range)
+            alg.SetScalarRange(*scalar_range)
+
+        scalars_casted_to_float = False
+        if (
+            scalar_range == 'vtk_default'
+            or not float(scalar_range[0]).is_integer()
+            or not float(scalar_range[1]).is_integer()
+        ) and np.issubdtype(input_mesh.point_data[scalars].dtype, np.integer):
+            input_mesh.point_data[scalars] = input_mesh.point_data[scalars].astype(float)
+            # Keep track of the operation to cast back to int when the operation is inplace
+            scalars_casted_to_float = True
+
+        alg.SetInputArrayToProcess(
+            0,
+            0,
+            0,
+            field.value,
+            scalars,  # type: ignore[arg-type]
+        )  # args: (idx, port, connection, field, name)
+
+        if extraction_mode == 'all':
+            alg.SetExtractionModeToAllRegions()
+        elif extraction_mode == 'largest':
+            alg.SetExtractionModeToLargestRegion()
+        elif extraction_mode == 'seeded':
+            if point_seeds is None:
+                raise ValueError(
+                    '`point_seeds` must be specified when `extraction_mode="seeded"`.',
+                )
+
+            # PointSet requires vtk >= 9.1.0
+            # See https://docs.pyvista.org/api/core/_autosummary/pyvista.pointset#pyvista.PointSet
+            elif not isinstance(point_seeds, _vtk.vtkDataSet):
+                if pyvista.vtk_version_info >= (9, 1, 0):
+                    point_seeds = pyvista.PointSet(point_seeds)
+                else:
+                    # Assign points outside the constructor to not create useless cells
+                    tmp = point_seeds
+                    point_seeds = pyvista.PolyData()
+                    point_seeds.SetPoints(pyvista.vtk_points(tmp, force_float=True))
+
+            alg.SetExtractionModeToSeededRegions()
+            alg.SetSeedData(point_seeds)
+        else:
+            raise ValueError(
+                f'Invalid `extraction_mode` "{extraction_mode}",'
+                ' use "all", "largest", or "seeded".'
+            )
+
+        if label_mode == 'size':
+            alg.SetLabelModeToSizeRank()
+        elif label_mode == 'constant':
+            alg.SetLabelModeToConstantValue()
+            if constant_value is None:
+                raise ValueError(
+                    f'`constant_value` must be provided when `extraction_mode`is "{label_mode}".'
+                )
+            alg.SetLabelConstantValue(int(constant_value))
+        elif label_mode == 'seeds':
+            if point_seeds is None:
+                raise ValueError(
+                    '`point_seeds` must be specified when `label_mode="seeds"`.',
+                )
+            alg.SetLabelModeToSeedScalar()
+        else:
+            raise ValueError(
+                f'Invalid `label_mode` "{label_mode}", use "size", "constant", or "seeds".'
+            )
+
+        _update_alg(alg, progress_bar, 'Identifying and Labelling Connected Regions')
+
+        output = _get_output(alg)
+
+        labels: NDArray[int] = _vtk.vtk_to_numpy(alg.GetExtractedRegionLabels())
+
+        sizes: NDArray[int] = _vtk.vtk_to_numpy(alg.GetExtractedRegionSizes())
+
+        if field == FieldAssociation.CELL:
+            # Convert back to cell data
+            output = output.points_to_cells(dimensionality=(True, True, True), copy=False)
+            # Add label `RegionId` to original dataset as cell data if required
+            if inplace:
+                self.cell_data['RegionId'] = output.cell_data['RegionId']  # type: ignore[attr-defined]
+                self.set_active_scalars(name='RegionId', preference='cell')  # type: ignore[attr-defined]
+
+        elif inplace:
+            # Add label `RegionId` to original dataset as point data if required
+            self.point_data['RegionId'] = output.point_data['RegionId']  # type: ignore[attr-defined]
+            self.set_active_scalars(name='RegionId', preference='point')  # type: ignore[attr-defined]
+            if scalars_casted_to_float:
+                input_mesh.point_data[scalars] = input_mesh.point_data[scalars].astype(int)
+
+        if inplace:
+            return self, labels, sizes  # type: ignore[return-value]
+        return output, labels, sizes
+
+    def _validate_dimensional_operation(
+        self,
+        operation_mask: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
+        operator: Callable,  # type: ignore[type-arg]
+        operation_size: int | VectorLike[int],
+    ) -> tuple[NDArray[np.bool_], NDArray[np.bool_]]:
+        """Validate dimensional operations (internal helper).
+
+        Return a dimensional mask to apply the operation on the source ImageData as well
+        as the resulting dimensions.
+
+        Provide convenience aliases ``0``, ``1``, ``2``, ``3`` ``'0D'``, ``'1D'``,
+        ``'2D'``, ``'3D'``, and ``'preserve'`` to automatically provide a result with
+        the proper dimensions. Raise errors if the desired output cannot be obtained.
+
+        .. versionadded:: 0.45.0
+
+        Parameters
+        ----------
+        operation_mask : VectorLike[bool], Literal['0D', '1D', '2D', '3D', 'preserve']
+            The desired mask to control whether to resize dimensions.
+
+            - Can be specified as a sequence of 3 boolean to allow modification on a per
+                dimension basis.
+            - ``0`` or ``'0D'``: convenience alias to output a 0D ImageData with
+              dimensions ``(1, 1, 1)``. Only valid for 0D inputs.
+            - ``1`` or ``'1D'``: convenience alias to output a 1D ImageData where
+              exactly one dimension is greater than one, e.g. ``(>1, 1, 1)``. Only valid
+              for 0D or 1D inputs.
+            - ``2`` or ``'2D'``: convenience alias to output a 2D ImageData where
+              exactly two dimensions are greater than one, e.g. ``(>1, >1, 1)``. Only
+              valid for 0D, 1D, or 2D inputs.
+            - ``3`` or ``'3D'``: convenience alias to output a 3D ImageData, where all
+              three dimensions are greater than one, e.g. ``(>1, >1, >1)``. Valid for
+              any 0D, 1D, 2D, or 3D inputs.
+            - ``'preserve'``: convenience alias to not modify singleton
+              dimensions.
+
+        operator: Callable
+            The operation that will be perform on the dimensions. Must be a :module:`~operator`.
+
+        operation_size : int, VectorLike[int]
+            The size of the operation, applied to all dimensions if specified as a ``int``
+            or applied on a per dimension basis.
+
+        Returns
+        -------
+        NDArray[bool]
+            A (3, ) shaped mask array that indicates which dimensions will be modified.
+
+        NDArray[int]
+            A (3, ) shaped array that with the new ImageData dimensions after applying
+            the operation.
+
+        Examples
+        --------
+        Get the dimensions on which to operate to obtain a 2D output while adding ``2``.
+
+        >>> import pyvista as pv
+        >>> import operator
+        >>> image = pv.ImageData(dimensions=(4, 1, 4))
+        >>> image._validate_dimensional_operation(
+        ...     operation_mask='2D',
+        ...     operator=operator.add,
+        ...     operation_size=2,
+        ... )
+        (array([ True, False,  True]), array([6, 1, 6]))
+
+        """
+        dimensions = np.asarray(self.dimensions)  # type: ignore[attr-defined]
+        # Build an array of the operation size
+        operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
+
+        if not isinstance(operation_mask, str):
+            # Build a bool array of the mask
+            dimensions_mask = _validation.validate_array3(
+                operation_mask,
+                reshape=True,
+                broadcast=False,
+                must_have_dtype=bool,
+                must_be_real=False,
+            )
+
+        elif operation_mask == 'preserve':
+            # Ensure that singleton dims remain unmodified
+            dimensions_mask = dimensions > 1
+
+        else:
+            # Validate that the target dimensionality is valid
+            try:
+                target_dimensionality = _validation.validate_dimensionality(operation_mask)
+            except ValueError:
+                raise ValueError(
+                    f'`{operation_mask}` is not a valid `operation_mask`.'
+                    ' Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].'
+                )
+
+            # Brute force all possible combinations: only 8 combinations to test
+            # dimensions_masks is ordered such as the behavior is predictable
+            dimensions_masks = np.array(
+                [
+                    [True, True, True],
+                    [True, True, False],
+                    [True, False, True],
+                    [False, True, True],
+                    [True, False, False],
+                    [False, True, False],
+                    [False, False, True],
+                    [False, False, False],
+                ]
+            )
+
+            # Predict the resulting dimensions for all possible masks
+            result_dims = operator(dimensions, operation_size * dimensions_masks)
+
+            # Required number of singleton dimensions to satisfy the desired dimensionality
+            nof_non_singleton = target_dimensionality
+            nof_singleton = 3 - nof_non_singleton
+
+            # Select the first admissible mask that produces the desired dimensionality
+            try:
+                dimensions_mask = dimensions_masks[
+                    ((result_dims == 1).sum(axis=1) == nof_singleton)
+                    & ((result_dims > 1).sum(axis=1) == nof_non_singleton)
+                ][0]
+
+            except IndexError:
+                desired_dimensions = {
+                    0: '(1, 1, 1)',
+                    1: '(>1, 1, 1)',
+                    2: '(>1, >1, 1)',
+                    3: '(>1, >1, >1)',
+                }[target_dimensionality]
+                raise ValueError(
+                    f'The operation requires to {operator.__name__} at least {operation_size} dimension(s) to {self.dimensions}.'  # type: ignore[attr-defined]
+                    f' A {operation_mask} ImageData with dims {desired_dimensions} cannot be obtained.'
+                )
+
+        # Check that the resulting dimensions are admissible
+        dimensions_result = operator(dimensions, operation_size * dimensions_mask)
+
+        if not (dimensions_result >= 1).all():
+            raise ValueError(
+                f'The mask {operation_mask}, size {operation_size}, and operation {operator.__name__}'
+                f' would result in {dimensions_result} which contains <= 0 dimensions.'
+            )
+
+        return dimensions_mask, dimensions_result

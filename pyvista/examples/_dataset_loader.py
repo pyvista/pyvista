@@ -32,6 +32,7 @@ downloading, reading, and processing files with a generic mapping:
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Sequence
 import functools
 import os
 from pathlib import Path
@@ -39,9 +40,6 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Generic
 from typing import Protocol
-from typing import Sequence
-from typing import Tuple
-from typing import Type
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -62,22 +60,22 @@ if TYPE_CHECKING:
 _FilePropStrType_co = TypeVar(
     '_FilePropStrType_co',
     str,
-    Tuple[str, ...],
+    tuple[str, ...],
     covariant=True,
 )
 _FilePropIntType_co = TypeVar(
     '_FilePropIntType_co',
     int,
-    Tuple[int, ...],
+    tuple[int, ...],
     covariant=True,
 )
 
 DatasetObject = Union[pv.DataSet, pv.Texture, NumpyArray[Any], pv.MultiBlock]
 DatasetType = Union[
-    Type[pv.DataSet],
-    Type[pv.Texture],
-    Type[NumpyArray[Any]],
-    Type[pv.MultiBlock],
+    type[pv.DataSet],
+    type[pv.Texture],
+    type[NumpyArray[Any]],
+    type[pv.MultiBlock],
 ]
 
 
@@ -142,7 +140,7 @@ class _SingleFilePropsProtocol(_BaseFilePropsProtocol[str, int]):
 
 
 class _MultiFilePropsProtocol(
-    _BaseFilePropsProtocol[Tuple[str, ...], Tuple[int, ...]],
+    _BaseFilePropsProtocol[tuple[str, ...], tuple[int, ...]],
 ):
     """Define file properties of multiple files."""
 
@@ -433,8 +431,8 @@ class _DownloadableFile(_SingleFile, _Downloadable[str]):
             # Absolute path must point to a built-in dataset
             assert Path(path).parent == Path(
                 dir_path,
-            ), "Absolute path must point to a built-in dataset."
-            self._base_url = "https://github.com/pyvista/pyvista/raw/main/pyvista/examples/"
+            ), 'Absolute path must point to a built-in dataset.'
+            self._base_url = 'https://github.com/pyvista/pyvista/raw/main/pyvista/examples/'
             self._source_name = Path(path).name
             # the dataset is already downloaded (it's built-in)
             # so make download() simply return the local filepath
@@ -607,7 +605,7 @@ class _MultiFileDatasetLoader(_DatasetLoader, _MultiFilePropsProtocol):
 
 class _MultiFileDownloadableDatasetLoader(
     _MultiFileDatasetLoader,
-    _Downloadable[Tuple[str, ...]],
+    _Downloadable[tuple[str, ...]],
 ):
     """Wrap multiple files for downloading and loading."""
 
@@ -764,9 +762,9 @@ def _format_file_size(size: int) -> str:
     size_flt = float(size)
     for unit in ('B', 'KB', 'MB'):
         if round(size_flt * 10) / 10 < 1000.0:
-            return f"{int(size_flt)} {unit}" if unit == 'B' else f"{size_flt:3.1f} {unit}"
+            return f'{int(size_flt)} {unit}' if unit == 'B' else f'{size_flt:3.1f} {unit}'
         size_flt /= 1000.0
-    return f"{size_flt:.1f} GB"
+    return f'{size_flt:.1f} GB'
 
 
 def _get_file_or_folder_ext(path: str):

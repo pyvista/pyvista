@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections.abc import Sequence
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
-from typing import Sequence
 from typing import TypedDict
 
 import numpy as np
 
 import pyvista as pv
-from pyvista import BoundsLike
+from pyvista import BoundsTuple
 from pyvista.core import _validation
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
@@ -29,8 +29,8 @@ from pyvista.plotting.text import Label
 from pyvista.plotting.text import TextProperty
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Iterator
     import sys
-    from typing import Iterator
 
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
@@ -172,8 +172,8 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
             ):
                 part.user_matrix = new_matrix
 
-    def _get_bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        return self.GetBounds()
+    def _get_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
+        return BoundsTuple(*self.GetBounds())
 
     @property
     def show_labels(self) -> bool:  # numpydoc ignore=RT01
@@ -415,6 +415,7 @@ class AxesAssembly(_XYZAssembly):
     ...     viewport=(0, 0, 0.5, 0.5),
     ... )
     >>> pl.show()
+
     """
 
     def _init_actors_from_source(self, geometry_source: AxesGeometrySource):
@@ -484,6 +485,8 @@ class AxesAssembly(_XYZAssembly):
             prop = label.prop
             prop.bold = True
             prop.italic = True
+            prop.enable_shadow()
+            prop.SetShadowOffset(-1, 1)
 
     def __repr__(self):
         """Representation of the axes assembly."""
@@ -496,31 +499,31 @@ class AxesAssembly(_XYZAssembly):
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
 
         attr = [
-            f"{type(self).__name__} ({hex(id(self))})",
+            f'{type(self).__name__} ({hex(id(self))})',
             *geometry_repr,
             f"  X label:                    '{self.x_label}'",
             f"  Y label:                    '{self.y_label}'",
             f"  Z label:                    '{self.z_label}'",
-            f"  Label color:                {self.label_color}",
-            f"  Show labels:                {self.show_labels}",
-            f"  Label position:             {self.label_position}",
-            "  X Color:                                     ",
-            f"      Shaft                   {self.x_color[0]}",
-            f"      Tip                     {self.x_color[1]}",
-            "  Y Color:                                     ",
-            f"      Shaft                   {self.y_color[0]}",
-            f"      Tip                     {self.y_color[1]}",
-            "  Z Color:                                     ",
-            f"      Shaft                   {self.z_color[0]}",
-            f"      Tip                     {self.z_color[1]}",
-            f"  Position:                   {self.position}",
-            f"  Orientation:                {self.orientation}",
-            f"  Origin:                     {self.origin}",
-            f"  Scale:                      {self.scale}",
-            f"  User matrix:                {mat_info}",
-            f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
-            f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
-            f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
+            f'  Label color:                {self.label_color}',
+            f'  Show labels:                {self.show_labels}',
+            f'  Label position:             {self.label_position}',
+            '  X Color:                                     ',
+            f'      Shaft                   {self.x_color[0]}',
+            f'      Tip                     {self.x_color[1]}',
+            '  Y Color:                                     ',
+            f'      Shaft                   {self.y_color[0]}',
+            f'      Tip                     {self.y_color[1]}',
+            '  Z Color:                                     ',
+            f'      Shaft                   {self.z_color[0]}',
+            f'      Tip                     {self.z_color[1]}',
+            f'  Position:                   {self.position}',
+            f'  Orientation:                {self.orientation}',
+            f'  Origin:                     {self.origin}',
+            f'  Scale:                      {self.scale}',
+            f'  User matrix:                {mat_info}',
+            f'  X Bounds                    {bnds.x_min:.3E}, {bnds.x_max:.3E}',
+            f'  Y Bounds                    {bnds.y_min:.3E}, {bnds.y_max:.3E}',
+            f'  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}',
         ]
         return '\n'.join(attr)
 
@@ -538,6 +541,7 @@ class AxesAssembly(_XYZAssembly):
         >>> axes_assembly.labels = ['X Axis', 'Y Axis', 'Z Axis']
         >>> axes_assembly.labels
         ('X Axis', 'Y Axis', 'Z Axis')
+
         """
         return self.x_label, self.y_label, self.z_label
 
@@ -779,6 +783,7 @@ class AxesAssembly(_XYZAssembly):
         ... )
         >>> axes_assembly.get_actor_prop('style')
         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
+
         """
         actors = self._filter_part_actors(axis=axis, part=part)
         values: Sequence[float | str | ColorLike]
@@ -794,7 +799,7 @@ class AxesAssembly(_XYZAssembly):
                 n_values = 3
             else:
                 n_values = 1
-            values = _validate_color_sequence(value, n_values)
+            values = _validate_color_sequence(value, n_values)  # type: ignore[arg-type]
         elif isinstance(value, Sequence) and not isinstance(value, str):
             # Number sequence
             values = value
@@ -849,23 +854,26 @@ class AxesAssembly(_XYZAssembly):
         valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
         valid_axis_official = valid_axis[3:]
         if axis not in valid_axis:
-            raise ValueError(f"Axis must be one of {valid_axis_official}.")
+            raise ValueError(f'Axis must be one of {valid_axis_official}.')
         valid_part = [0, 1, 'shaft', 'tip', 'all']
         valid_part_official = valid_part[2:]
         if part not in valid_part:
-            raise ValueError(f"Part must be one of {valid_part_official}.")
+            raise ValueError(f'Part must be one of {valid_part_official}.')
 
         # Create ordered list of filtered actors
         # Iterate over parts in <shaft-xyz> then <tip-xyz> order
         actors: list[Actor] = []
         for part_type, axis_num in itertools.product(_PartEnum, _AxisEnum):
-            if part in [part_type.name, part_type.value, 'all']:
-                if axis in [axis_num.name, axis_num.value, 'all']:
-                    # Add actor to list
-                    if part_type == _PartEnum.shaft:
-                        actors.append(self._shaft_actors[axis_num])
-                    else:
-                        actors.append(self._tip_actors[axis_num])
+            if part in [part_type.name, part_type.value, 'all'] and axis in [
+                axis_num.name,
+                axis_num.value,
+                'all',
+            ]:
+                # Add actor to list
+                if part_type == _PartEnum.shaft:
+                    actors.append(self._shaft_actors[axis_num])
+                else:
+                    actors.append(self._tip_actors[axis_num])
 
         return actors
 
@@ -911,7 +919,7 @@ def _validate_color_sequence(
     """
     try:
         # Assume we have one color
-        color_list = [Color(color)]
+        color_list = [Color(color)]  # type: ignore[arg-type]
         n_colors = 1 if n_colors is None else n_colors
         return tuple(color_list * n_colors)
     except ValueError:
@@ -928,10 +936,10 @@ def _validate_color_sequence(
             except ValueError:
                 pass
     raise ValueError(
-        f"Invalid color(s):\n"
-        f"\t{color}\n"
-        f"Input must be a single ColorLike color "
-        f"or a sequence of {n_colors} ColorLike colors.",
+        f'Invalid color(s):\n'
+        f'\t{color}\n'
+        f'Input must be a single ColorLike color '
+        f'or a sequence of {n_colors} ColorLike colors.',
     )
 
 
@@ -1051,6 +1059,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     ...     viewport=(0, 0, 0.5, 0.5),
     ... )
     >>> pl.show()
+
     """
 
     def __init__(
@@ -1136,6 +1145,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         ... ]
         >>> axes_assembly.labels
         ('east', 'west', 'north', 'south', 'up', 'down')
+
         """
         return *self.x_label, *self.y_label, *self.z_label
 
@@ -1190,6 +1200,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         >>> axes_assembly.x_label = 'anterior', 'posterior'
         >>> axes_assembly.x_label
         ('anterior', 'posterior')
+
         """
         return self._get_axis_label(_AxisEnum.x)
 
@@ -1221,6 +1232,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         >>> axes_assembly.y_label = 'left', 'right'
         >>> axes_assembly.y_label
         ('left', 'right')
+
         """
         return self._get_axis_label(_AxisEnum.y)
 
@@ -1252,6 +1264,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         >>> axes_assembly.z_label = 'superior', 'inferior'
         >>> axes_assembly.z_label
         ('superior', 'inferior')
+
         """
         return self._get_axis_label(_AxisEnum.z)
 
@@ -1449,6 +1462,7 @@ class PlanesAssembly(_XYZAssembly):
     >>> _ = pl.add_actor(planes)
     >>> planes.camera = pl.camera
     >>> pl.show()
+
     """
 
     DEFAULT_LABELS = _XYZTuple('YZ', 'ZX', 'XY')
@@ -1483,7 +1497,7 @@ class PlanesAssembly(_XYZAssembly):
         # Init planes from source
         self._geometry_source = OrthogonalPlanesSource(**kwargs)
         self._planes = self._geometry_source.output
-        self._plane_sources = self._geometry_source._plane_sources
+        self._plane_sources = self._geometry_source.sources
 
         for actor, dataset in zip(self._plane_actors, self.planes):
             actor.mapper = pv.DataSetMapper(dataset=dataset)
@@ -1545,29 +1559,29 @@ class PlanesAssembly(_XYZAssembly):
         bnds = self.bounds
 
         attr = [
-            f"{type(self).__name__} ({hex(id(self))})",
-            f"  Resolution:                 {self._geometry_source.resolution}",
-            f"  Normal sign:                {self._geometry_source.normal_sign}",
+            f'{type(self).__name__} ({hex(id(self))})',
+            f'  Resolution:                 {self._geometry_source.resolution}',
+            f'  Normal sign:                {self._geometry_source.normal_sign}',
             f"  X label:                    '{self.x_label}'",
             f"  Y label:                    '{self.y_label}'",
             f"  Z label:                    '{self.z_label}'",
-            f"  Label color:                {self.label_color}",
-            f"  Show labels:                {self.show_labels}",
-            f"  Label position:             {self.label_position}",
-            f"  Label edge:                 {self.label_edge}",
-            f"  Label offset:               {self.label_offset}",
+            f'  Label color:                {self.label_color}',
+            f'  Show labels:                {self.show_labels}',
+            f'  Label position:             {self.label_position}',
+            f'  Label edge:                 {self.label_edge}',
+            f'  Label offset:               {self.label_offset}',
             f"  Label mode:                 '{self.label_mode}'",
-            f"  X Color:                    {self.x_color}",
-            f"  Y Color:                    {self.y_color}",
-            f"  Z Color:                    {self.z_color}",
-            f"  Position:                   {self.position}",
-            f"  Orientation:                {self.orientation}",
-            f"  Origin:                     {self.origin}",
-            f"  Scale:                      {self.scale}",
-            f"  User matrix:                {mat_info}",
-            f"  X Bounds                    {bnds[0]:.3E}, {bnds[1]:.3E}",
-            f"  Y Bounds                    {bnds[2]:.3E}, {bnds[3]:.3E}",
-            f"  Z Bounds                    {bnds[4]:.3E}, {bnds[5]:.3E}",
+            f'  X Color:                    {self.x_color}',
+            f'  Y Color:                    {self.y_color}',
+            f'  Z Color:                    {self.z_color}',
+            f'  Position:                   {self.position}',
+            f'  Orientation:                {self.orientation}',
+            f'  Origin:                     {self.origin}',
+            f'  Scale:                      {self.scale}',
+            f'  User matrix:                {mat_info}',
+            f'  X Bounds                    {bnds.x_min:.3E}, {bnds.x_max:.3E}',
+            f'  Y Bounds                    {bnds.y_min:.3E}, {bnds.y_max:.3E}',
+            f'  Z Bounds                    {bnds.z_min:.3E}, {bnds.z_max:.3E}',
         ]
         return '\n'.join(attr)
 
@@ -1585,6 +1599,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> planes.labels = ['Sagittal', 'Coronal', 'Transverse']
         >>> planes.labels
         ('Sagittal', 'Coronal', 'Transverse')
+
         """
         return self.x_label, self.y_label, self.z_label
 
@@ -1606,6 +1621,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> planes.x_label = 'This plane'
         >>> planes.x_label
         'This plane'
+
         """
         return self._axis_actors[0].GetTitle()
 
@@ -1625,6 +1641,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> planes.y_label = 'This plane'
         >>> planes.y_label
         'This plane'
+
         """
         return self._axis_actors[1].GetTitle()
 
@@ -1644,6 +1661,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> planes.z_label = 'This plane'
         >>> planes.z_label
         'This plane'
+
         """
         return self._axis_actors[2].GetTitle()
 
@@ -1722,6 +1740,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> _ = pl.add_actor(planes)
         >>> planes.camera = pl.camera
         >>> pl.show()
+
         """
         return self._label_position
 
@@ -1774,6 +1793,7 @@ class PlanesAssembly(_XYZAssembly):
         >>> _ = pl.add_actor(planes)
         >>> planes.camera = pl.camera
         >>> pl.show()
+
         """
         return self._label_edge
 
@@ -1894,6 +1914,7 @@ class PlanesAssembly(_XYZAssembly):
         -------
         pyvista.MultiBlock
             Composite mesh with three planes.
+
         """
         return self._planes
 

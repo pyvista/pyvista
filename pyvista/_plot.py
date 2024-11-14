@@ -10,6 +10,8 @@ decouple the ``core`` and ``plotting`` APIs.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 
 import pyvista
@@ -213,7 +215,7 @@ def plot(
     before_close_callback = kwargs.pop('before_close_callback', None)
 
     # pop from kwargs here to avoid including them in add_mesh or add_volume
-    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
+    eye_dome_lighting = kwargs.pop('edl', eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
     auto_close = kwargs.get('auto_close')
 
@@ -243,7 +245,17 @@ def plot(
     elif anti_aliasing is False:
         pl.disable_anti_aliasing()
 
-    pl.set_background(background)
+    try:
+        pl.set_background(background)
+    except (ValueError, TypeError):
+        if isinstance(background, (str, Path)):
+            path = Path(background)
+            if path.is_file():
+                pl.add_background_image(path)
+        else:
+            raise ValueError(
+                f'Background must be color-like or a file path. Got {background} instead.'
+            )
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows

@@ -465,10 +465,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr.get_block(0)
         MultiBlock (...)
-          N Blocks    2
-          X Bounds    -0.500, 0.500
-          Y Bounds    -0.500, 0.500
-          Z Bounds    -0.500, 1.500
+          N Blocks:   2
+          X Bounds:   -5.000e-01, 5.000e-01
+          Y Bounds:   -5.000e-01, 5.000e-01
+          Z Bounds:   -5.000e-01, 1.500e+00
 
         Note this is the same as using ``__getitem__``
 
@@ -488,11 +488,10 @@ class CompositeAttributes(_vtk.vtkCompositeDataDisplayAttributes):
                 block = self.DataObjectFromIndex(index, self._dataset)
         except OverflowError:
             raise KeyError(f'Invalid block key: {index}') from None
-        if block is None:
-            if index > len(self) - 1:
-                raise KeyError(
-                    f'index {index} is out of bounds. There are only {len(self)} blocks.',
-                ) from None
+        if block is None and index > len(self) - 1:
+            raise KeyError(
+                f'index {index} is out of bounds. There are only {len(self)} blocks.',
+            ) from None
         return block
 
     def __getitem__(self, index):
@@ -583,10 +582,10 @@ class CompositePolyDataMapper(
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.dataset
         MultiBlock (...)
-          N Blocks    2
-          X Bounds    -0.500, 0.500
-          Y Bounds    -0.500, 0.500
-          Z Bounds    -0.500, 1.500
+          N Blocks:   2
+          X Bounds:   -5.000e-01, 5.000e-01
+          Y Bounds:   -5.000e-01, 5.000e-01
+          Z Bounds:   -5.000e-01, 1.500e+00
 
         """
         return self._dataset
@@ -699,11 +698,12 @@ class CompositePolyDataMapper(
         Color(name='tab:orange', hex='#ff7f0eff', opacity=255)
         >>> mapper.block_attr[2].color
         Color(name='tab:green', hex='#2ca02cff', opacity=255)
+
         """
         self.scalar_visibility = False
 
         if isinstance(color_cycler, bool):
-            colors = cycle(get_cycler("matplotlib"))
+            colors = cycle(get_cycler('matplotlib'))
         else:
             colors = cycle(get_cycler(color_cycler))
 
@@ -837,9 +837,8 @@ class CompositePolyDataMapper(
             clim = self._dataset.get_data_range(scalars_name, allow_missing=True)
         self.scalar_range = clim
 
-        if log_scale:
-            if clim[0] <= 0:
-                clim = [sys.float_info.min, clim[1]]
+        if log_scale and clim[0] <= 0:
+            clim = [sys.float_info.min, clim[1]]
 
         if isinstance(cmap, pyvista.LookupTable):
             self.lookup_table = cmap
