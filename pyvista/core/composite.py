@@ -11,7 +11,6 @@ from itertools import zip_longest
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import List
 from typing import Union
 from typing import cast
 from typing import overload
@@ -198,7 +197,7 @@ class MultiBlock(
         """
         # apply reduction of min and max over each block
         # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
-        all_bounds = [cast(List[float], block.bounds) for block in self if block]
+        all_bounds = [cast(list[float], block.bounds) for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
             minima = (0.0, 0.0, 0.0)
@@ -918,11 +917,11 @@ class MultiBlock(
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(('N Blocks', self.n_blocks, '{}'))
+        attrs.append(('N Blocks:', self.n_blocks, '{}'))
         bds = self.bounds
-        attrs.append(('X Bounds', (bds[0], bds[1]), '{:.3f}, {:.3f}'))
-        attrs.append(('Y Bounds', (bds[2], bds[3]), '{:.3f}, {:.3f}'))
-        attrs.append(('Z Bounds', (bds[4], bds[5]), '{:.3f}, {:.3f}'))
+        attrs.append(('X Bounds:', (bds[0], bds[1]), '{:.3e}, {:.3e}'))
+        attrs.append(('Y Bounds:', (bds[2], bds[3]), '{:.3e}, {:.3e}'))
+        attrs.append(('Z Bounds:', (bds[4], bds[5]), '{:.3e}, {:.3e}'))
         return attrs
 
     def _repr_html_(self) -> str:
@@ -965,7 +964,7 @@ class MultiBlock(
         # return a string that is Python console friendly
         fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 3
         row = '  {:%ds}{}\n' % max_len
         for attr in self._get_attrs():
             try:
@@ -1024,13 +1023,18 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet, recursive=False) -> None:  # type: ignore[override]
         """Shallow copy the given multiblock to this multiblock.
 
         Parameters
         ----------
         to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
             Data object to perform a shallow copy from.
+
+        recursive : bool, default: False
+            Also shallow-copy any nested :class:`~pyvista.MultiBlock` blocks. By
+            default, only the root :class:`~pyvista.MultiBlock` is shallow-copied and
+            any nested multi-blocks are not shallow-copied.
 
         """
         if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
@@ -1048,9 +1052,10 @@ class MultiBlock(
                     this_object_.replace(i, block_to_copy)
                     _replace_nested_multiblocks(this_object_[i], block_to_copy)
 
-        _replace_nested_multiblocks(self, to_copy)
+        if not recursive:
+            _replace_nested_multiblocks(self, to_copy)
 
-    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
         """Overwrite this MultiBlock with another MultiBlock as a deep copy.
 
         Parameters

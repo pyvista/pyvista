@@ -164,16 +164,16 @@ class DataObject:
         writer.SetInputData(self)
         if file_ext == '.ply' and texture is not None:
             if isinstance(texture, str):
-                writer.SetArrayName(texture)
+                writer.SetArrayName(texture)  # type: ignore[union-attr]
                 array_name = texture
             elif isinstance(texture, np.ndarray):
                 array_name = '_color_array'
                 self[array_name] = texture
-                writer.SetArrayName(array_name)
+                writer.SetArrayName(array_name)  # type: ignore[union-attr]
 
             # enable alpha channel if applicable
             if self[array_name].shape[-1] == 4:  # type: ignore[index]
-                writer.SetEnableAlpha(True)
+                writer.SetEnableAlpha(True)  # type: ignore[union-attr]
         writer.Write()
 
     def _store_metadata(self) -> None:
@@ -451,7 +451,7 @@ class DataObject:
         """
         return DataSetAttributes(
             self.GetFieldData(),
-            dataset=self,
+            dataset=self,  # type: ignore[arg-type]
             association=FieldAssociation.NONE,
         )
 
@@ -572,8 +572,7 @@ class DataObject:
 
     @user_dict.setter
     def user_dict(
-        self,
-        dict_: dict[str, _JSONValueType] | UserDict,  # type: ignore[type-arg]
+        self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]
     ):  # numpydoc ignore=GL08
         # Setting None removes the field data array
         if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():

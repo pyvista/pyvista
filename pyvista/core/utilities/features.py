@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 import sys
-from typing import Sequence
 
 import numpy as np
 
@@ -795,7 +795,7 @@ def sample_function(
 
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
-    samp.SetSampleDimensions(dim)
+    samp.SetSampleDimensions(dim)  # type: ignore[call-overload]
     samp.SetModelBounds(bounds)
     samp.SetComputeNormals(compute_normals)
     samp.SetCapping(capping)

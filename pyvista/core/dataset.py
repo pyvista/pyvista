@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Sequence
 from copy import deepcopy
 from functools import partial
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from typing import NamedTuple
-from typing import Sequence
 from typing import cast
 import warnings
 
@@ -957,7 +957,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_x(angle, point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1020,7 +1020,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_y(angle, point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1084,7 +1084,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_z(angle, point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1152,7 +1152,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_vector(vector, angle, point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1226,7 +1226,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate(rotation, point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1282,7 +1282,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         transform = Transform().translate(xyz)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1347,7 +1347,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         transform = Transform().scale(xyz, point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1409,7 +1409,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((1, 0, 0), point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1471,7 +1471,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((0, 1, 0), point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1533,7 +1533,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((0, 0, 1), point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1599,7 +1599,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect(normal, point=point)
-        return self.transform(
+        return self.transform(  # type: ignore[misc]
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -2311,7 +2311,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh, deep=deep)
+            self.copy_meta_from(mesh, deep=deep)  # type: ignore[arg-type]
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
@@ -2489,13 +2489,13 @@ class DataSet(DataSetFilters, DataObject):
             raise ValueError('`n` must be a positive integer.')
 
         locator = _vtk.vtkPointLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
         if n > 1:
             id_list = _vtk.vtkIdList()
-            locator.FindClosestNPoints(n, point, id_list)
+            locator.FindClosestNPoints(n, point, id_list)  # type: ignore[arg-type]
             return vtk_id_list_to_array(id_list)
-        return locator.FindClosestPoint(point)
+        return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
     def find_closest_cell(
         self,
@@ -2603,7 +2603,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
 
         cell = _vtk.vtkGenericCell()
@@ -2617,7 +2617,7 @@ class DataSet(DataSetFilters, DataObject):
             sub_id = _vtk.mutable(0)
             dist2 = _vtk.mutable(0.0)
 
-            locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)
+            locator.FindClosestPoint(node, closest_point, cell, cell_id, sub_id, dist2)  # type: ignore[call-overload]
             closest_cells.append(int(cell_id))
             closest_points.append(closest_point)
 
@@ -2688,7 +2688,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
 
         containing_cells = [locator.FindCell(node) for node in point]
@@ -2749,7 +2749,7 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             raise TypeError('Point B must be a length three tuple of floats.')
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsAlongLine(
@@ -2927,7 +2927,7 @@ class DataSet(DataSetFilters, DataObject):
         # Note: we have to use vtkGenericCell here since
         # GetCell(vtkIdType cellId, vtkGenericCell* cell) is thread-safe,
         # while GetCell(vtkIdType cellId) is not.
-        cell = pyvista.Cell()
+        cell = pyvista.Cell()  # type: ignore[abstract]
         self.GetCell(index, cell)
         cell.SetCellType(self.GetCellType(index))
         return cell

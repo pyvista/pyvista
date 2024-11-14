@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import overload
@@ -14,6 +15,7 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
+from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -64,6 +66,10 @@ class Transform(_vtk.vtkTransform):
 
         By default, this value is ``None``, which means that the scale, rotation, etc.
         transformations are performed about the origin ``(0, 0, 0)``.
+
+    multiply_mode : 'pre' | 'post', optional
+        Multiplication mode to use when concatenating. Set this to ``'pre'`` for
+        pre-multiplication or ``'post'`` for post-multiplication.
 
     See Also
     --------
@@ -247,14 +253,21 @@ class Transform(_vtk.vtkTransform):
     """
 
     def __init__(
-        self, trans: TransformLike | None = None, *, point: VectorLike[float] | None = None
+        self,
+        trans: TransformLike | Sequence[TransformLike] | None = None,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] = 'post',
     ):
         super().__init__()
-        self.multiply_mode = 'post'
+        self.multiply_mode = multiply_mode
         self.point = point  # type: ignore[assignment]
         self.check_finite = True
         if trans is not None:
-            self.matrix = trans  # type: ignore[assignment]
+            if isinstance(trans, Sequence):
+                [self.concatenate(t) for t in trans]
+            else:
+                self.matrix = trans  # type: ignore[assignment]
 
     def __add__(self, other: VectorLike[float] | TransformLike) -> Transform:
         """:meth:`concatenate` this transform using post-multiply semantics.
@@ -1384,7 +1397,7 @@ class Transform(_vtk.vtkTransform):
             Current inverse transformation matrix.
 
         """
-        array = array_from_vtkmatrix(self.GetInverse().GetMatrix())
+        array = array_from_vtkmatrix(self.GetInverse().GetMatrix())  # type: ignore[attr-defined]
         if self.check_finite:
             _validation.check_finite(array, name='matrix')
         return array
@@ -1436,7 +1449,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         return [
-            array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetInverse().GetMatrix())
+            array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetInverse().GetMatrix())  # type: ignore[attr-defined]
             for i in range(self.n_transformations)
         ]
 
@@ -1566,7 +1579,7 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (DataSet, MultiBlock)):
-            return obj.transform(
+            return obj.transform(  # type: ignore[misc]
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
                 transform_all_input_vectors=transform_all_input_vectors,
@@ -1588,6 +1601,203 @@ class Transform(_vtk.vtkTransform):
         # Transform many points
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
         return array if inplace else out
+
+    def decompose(
+        self,
+        *,
+        homogeneous: bool = False,
+    ) -> tuple[
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+    ]:
+        """Decompose the current transformation into its components.
+
+        Decompose the :attr:`matrix` ``M`` into
+
+        - translation ``T``
+        - rotation ``R``
+        - reflection ``N``
+        - scaling ``S``
+        - shearing ``K``
+
+        such that, when represented as 4x4 matrices, ``M = TRNSK``. The decomposition is
+        unique and is computed with polar matrix decomposition.
+
+        By default, compact representations of the transformations are returned (e.g. as a
+        3-element vector or a 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
+
+        .. note::
+
+            - The rotation is orthonormal and right-handed with positive determinant.
+            - The scaling factors are positive.
+            - The reflection is either ``1`` (no reflection) or ``-1`` (has reflection)
+              and can be used like a scaling factor.
+
+        Parameters
+        ----------
+        homogeneous : bool, default: False
+            If ``True``, return the components (translation, rotation, etc.) as 4x4
+            homogeneous matrices. By default, reflection is a scalar, translation and
+            scaling are length-3 vectors, and rotation and shear are 3x3 matrices.
+
+        Returns
+        -------
+        numpy.ndarray
+            Translation component ``T``. Returned as a 3-element vector (or a 4x4
+            translation matrix if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Rotation component ``R``. Returned as a 3x3 orthonormal rotation matrix of row
+            vectors (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 reflection
+            matrix if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Scaling component ``S``. Returned as a 3-element vector (or a 4x4 scaling matrix
+            if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Shear component ``K``. Returned as a 3x3 matrix with ones on the diagonal and
+            shear values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
+            is ``True``).
+
+        Examples
+        --------
+        Create a transform by concatenating scaling, rotation, and translation
+        matrices.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> _ = transform.scale(1, 2, 3)
+        >>> _ = transform.rotate_z(90)
+        >>> _ = transform.translate(4, 5, 6)
+        >>> transform
+        Transform (...)
+          Num Transformations: 3
+          Matrix:  [[ 0., -2.,  0.,  4.],
+                    [ 1.,  0.,  0.,  5.],
+                    [ 0.,  0.,  3.,  6.],
+                    [ 0.,  0.,  0.,  1.]]
+
+        Decompose the matrix.
+
+        >>> T, R, N, S, K = transform.decompose()
+
+        Since the input has no shear this component is the identity matrix.
+        Similarly, there are no reflections so its value is ``1``. All other components
+        are recovered perfectly and match the input.
+
+        >>> K  # shear
+        array([[1., 0., 0.],
+               [0., 1., 0.],
+               [0., 0., 1.]])
+
+        >>> S  # scale
+        array([1., 2., 3.])
+
+        >>> N  # reflection
+        array(1.)
+
+        >>> R  # rotation
+        array([[ 0., -1.,  0.],
+               [ 1.,  0.,  0.],
+               [ 0.,  0.,  1.]])
+
+        >>> T  # translation
+        array([4., 5., 6.])
+
+        Concatenate a shear component using pre-multiplication so that shearing is
+        the first transformation.
+
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.1  # xy shear
+        >>> _ = transform.concatenate(shear, multiply_mode='pre')
+
+        Repeat the decomposition and show its components. Note how the decomposed shear
+        does not perfectly match the input shear matrix values. The values of the
+        scaling and rotation components are also affected and do not exactly match the
+        input. This is expected, because the shear can be partially factored as a
+        combination of rotation and scaling.
+
+        >>> T, R, N, S, K = transform.decompose()
+
+        >>> K  # shear
+        array([[1.        , 0.03333333, 0.        ],
+               [0.01663894, 1.        , 0.        ],
+               [0.        , 0.        , 1.        ]])
+
+        >>> S  # scale
+        array([0.99944491, 2.0022213 , 3.        ])
+
+        >>> N  # reflection
+        array(1.)
+
+        >>> R  # rotation
+        array([[ 0.03331483, -0.99944491,  0.        ],
+               [ 0.99944491,  0.03331483,  0.        ],
+               [ 0.        ,  0.        ,  1.        ]])
+
+        >>> T  # translation
+        array([4., 5., 6.])
+
+        Although the values may not match the input exactly, the decomposition is
+        nevertheless valid and can be used to re-compose the original transformation.
+
+        >>> T, R, N, S, K = transform.decompose(homogeneous=True)
+        >>> T @ R @ N @ S @ K
+        array([[-5.76153045e-17, -2.00000000e+00,  0.00000000e+00,
+                 4.00000000e+00],
+               [ 1.00000000e+00,  1.00000000e-01,  0.00000000e+00,
+                 5.00000000e+00],
+               [ 0.00000000e+00,  0.00000000e+00,  3.00000000e+00,
+                 6.00000000e+00],
+               [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+                 1.00000000e+00]])
+
+        Alternatively, re-compose the transformation as a new
+        :class:`~pyvista.Transform` with pre-multiplication.
+
+        >>> recomposed = pv.Transform([T, R, N, S, K], multiply_mode='pre')
+        >>> np.allclose(recomposed.matrix, transform.matrix)
+        True
+
+        Concatenate a reflection and decompose the transform again.
+
+        >>> _ = transform.flip_x()
+        >>> T, R, N, S, K = transform.decompose()
+
+        The reflection component is now ``-1``.
+
+        >>> N  # reflection
+        array(-1.)
+
+        The decomposition may be simplified to a ``TRSK`` decomposition by combining
+        the reflection component with either the rotation or the scaling term.
+
+        Multiplying the reflection with the rotation will make it a left-handed rotation
+        with negative determinant:
+
+        >>> R = R * N
+        >>> np.linalg.det(R) < 0
+        np.True_
+
+        Alternatively, keep the rotation right-handed but make the scaling factors negative:
+
+        >>> S = S * N
+        >>> S  # scale
+        array([-0.99944491, -2.0022213 , -3.        ])
+
+        """
+        return decomposition(
+            self.matrix,
+            homogeneous=homogeneous,
+        )
 
     def invert(self) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.

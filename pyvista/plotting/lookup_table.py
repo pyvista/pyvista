@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Tuple
 from typing import Union
 from typing import cast
 
@@ -940,7 +939,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if vtk_values is None:
             return {}
         n_items = vtk_values.GetSize()
-        keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]
+        keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 
         vtk_str = self.GetAnnotations()
         values = [str(vtk_str.GetValue(ii)) for ii in range(n_items)]
@@ -951,7 +950,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.ResetAnnotations()
         if values is not None:
             for val, anno in values.items():
-                self.SetAnnotation(float(val), str(anno))
+                self.SetAnnotation(float(val), str(anno))  # type: ignore[call-overload]
 
     @property
     def _lookup_type(self) -> str:
@@ -1116,7 +1115,7 @@ class LookupTable(_vtk.vtkLookupTable):
         if opacity:
             color.append(self.GetOpacity(value))
         return cast(
-            Union[Tuple[float, float, float], Tuple[float, float, float, float]],
+            Union[tuple[float, float, float], tuple[float, float, float, float]],
             tuple(color),
         )
 

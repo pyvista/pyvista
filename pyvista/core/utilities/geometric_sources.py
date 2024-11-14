@@ -11,7 +11,6 @@ import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
-from typing import Tuple
 from typing import cast
 from typing import get_args
 
@@ -29,7 +28,7 @@ from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Sequence
+    from collections.abc import Sequence
 
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
@@ -664,7 +663,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
         """
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
-        self._center = cast(Tuple[float, float, float], valid_center)
+        self._center = cast(tuple[float, float, float], valid_center)
 
     @property
     def direction(self) -> Sequence[float]:
@@ -1026,7 +1025,7 @@ class Text3DSource(vtkVectorText):
     @center.setter
     def center(self, center: Sequence[float]):  # numpydoc ignore=GL08
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
-        self._center = cast(Tuple[float, float, float], valid_center)
+        self._center = cast(tuple[float, float, float], valid_center)
 
     @property
     def normal(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -1258,7 +1257,7 @@ class CubeSource(_vtk.vtkCubeSource):
             raise TypeError(
                 'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self.SetBounds(bounds)
+        self.SetBounds(bounds)  # type: ignore[arg-type]
 
     @property
     def center(self) -> tuple[float, float, float]:
@@ -1384,7 +1383,7 @@ class CubeSource(_vtk.vtkCubeSource):
         return {
             SINGLE_PRECISION: 'float32',
             DOUBLE_PRECISION: 'float64',
-        }[precision]
+        }[precision]  # type: ignore[index]
 
     @point_dtype.setter
     def point_dtype(self, point_dtype: str):
@@ -2426,7 +2425,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
             Center in ``[x, y, z]``.
 
         """
-        self.SetCenter(center)
+        self.SetCenter(center)  # type: ignore[call-overload]
 
     @property
     def origin(self) -> Sequence[float]:
@@ -2474,7 +2473,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
             Location in ``[x, y, z]``.
 
         """
-        self.SetPoint1(point_a)
+        self.SetPoint1(point_a)  # type: ignore[call-overload]
 
     @property
     def point_b(self) -> Sequence[float]:
@@ -2498,7 +2497,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
             Location in ``[x, y, z]``.
 
         """
-        self.SetPoint2(point_b)
+        self.SetPoint2(point_b)  # type: ignore[call-overload]
 
     @property
     def output(self):
@@ -2590,7 +2589,7 @@ class ArrowSource(_vtk.vtkArrowSource):
             The length of the tip.
 
         """
-        return self.GetTipLength()
+        return self.GetTipLength()  # type: ignore[return-value]
 
     @tip_length.setter
     def tip_length(self, tip_length: int):
@@ -2614,7 +2613,7 @@ class ArrowSource(_vtk.vtkArrowSource):
             The radius of the tip.
 
         """
-        return self.GetTipRadius()
+        return self.GetTipRadius()  # type: ignore[return-value]
 
     @tip_radius.setter
     def tip_radius(self, tip_radius: int):
@@ -2686,7 +2685,7 @@ class ArrowSource(_vtk.vtkArrowSource):
             The radius of the shaft.
 
         """
-        return self.GetShaftRadius()
+        return self.GetShaftRadius()  # type: ignore[return-value]
 
     @shaft_radius.setter
     def shaft_radius(self, shaft_radius: int):
@@ -2758,7 +2757,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
             raise TypeError(
                 'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self.SetBounds(bounds)
+        self.SetBounds(bounds)  # type: ignore[arg-type]
 
     @property
     def level(self) -> int:
@@ -3070,7 +3069,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
             or ellipsoidal (``False``).
 
         """
-        return self.GetToroidal()
+        return self.GetToroidal()  # type: ignore[return-value]
 
     @toroidal.setter
     def toroidal(self, toroidal: bool):
@@ -3800,7 +3799,7 @@ class OrthogonalPlanesSource:
     @property
     def normal_sign(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
         """Return or set the sign of the plane's normal vectors."""
-        return cast(Tuple[str, str, str], self._normal_sign)
+        return cast(tuple[str, str, str], self._normal_sign)
 
     @normal_sign.setter
     def normal_sign(self, sign: Literal['+', '-'] | Sequence[str] = '+'):  # numpydoc ignore=GL08
@@ -3892,7 +3891,7 @@ class OrthogonalPlanesSource:
         _validation.check_instance(names, (tuple, list), name='names')
         _validation.check_iterable_items(names, str, name='names')
         _validation.check_length(names, exact_length=3, name='names')
-        valid_names = cast(Tuple[str, str, str], tuple(names))
+        valid_names = cast(tuple[str, str, str], tuple(names))
         self._names = valid_names
 
         output = self._output
@@ -4029,10 +4028,10 @@ class CubeFacesSource(CubeSource):
 
     >>> output
     MultiBlock (...)
-      N Blocks    6
-      X Bounds    -0.500, 0.500
-      Y Bounds    -0.500, 0.500
-      Z Bounds    -0.500, 0.500
+      N Blocks:   6
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -5.000e-01, 5.000e-01
+      Z Bounds:   -5.000e-01, 5.000e-01
 
     >>> cube_source = pv.CubeSource()
     >>> cube_source.output
@@ -4314,7 +4313,7 @@ class CubeFacesSource(CubeSource):
                 '-' + names[2],
             )
         )
-        self._names = cast(Tuple[str, str, str, str, str, str], valid_names)
+        self._names = cast(tuple[str, str, str, str, str, str], valid_names)
 
     def update(self):
         """Update the output of the source."""
