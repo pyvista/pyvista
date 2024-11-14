@@ -226,4 +226,3 @@ Note how this varies from assigning scalars to each point
    pl.subplot(0, 1)
    pl.add_mesh(other_cube, cmap='coolwarm')
    pl.show()
-
