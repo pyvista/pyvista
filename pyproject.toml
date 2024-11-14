@@ -31,7 +31,7 @@ dependencies = [
   'pooch',
   'scooby>=0.5.1',
   'typing-extensions',
-  'vtk',               # keep without version constraints
+  'vtk==9.4.0rc3',     # keep without version constraints
 ]
 dynamic = ['version']
 
