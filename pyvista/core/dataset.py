@@ -440,7 +440,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_scalars(name)
 
-    @property
+    @property  # type:ignore[override]
     def points(self) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 
@@ -957,7 +957,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_x(angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1020,7 +1020,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_y(angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1084,7 +1084,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_z(angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1152,7 +1152,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate_vector(vector, angle, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1226,7 +1226,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         t = Transform().rotate(rotation, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1282,7 +1282,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         transform = Transform().translate(xyz)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1347,7 +1347,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         transform = Transform().scale(xyz, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             transform,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1409,7 +1409,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((1, 0, 0), point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1471,7 +1471,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((0, 1, 0), point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1533,7 +1533,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect((0, 0, 1), point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1599,7 +1599,7 @@ class DataSet(DataSetFilters, DataObject):
         if point is None:
             point = self.center
         t = Transform().reflect(normal, point=point)
-        return self.transform(  # type: ignore[misc]
+        return self.transform(
             t,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,

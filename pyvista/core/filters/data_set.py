@@ -387,7 +387,7 @@ class DataSetFilters:
                 vector = _validation.validate_array3(vector, dtype_out=float, name=name)
             return vector
 
-        axes, std = pyvista.principal_axes(self.points, return_std=True)
+        axes, std = pyvista.principal_axes(self.points, return_std=True)  # type:ignore[has-type]
 
         if axis_0_direction is None and axis_1_direction is None and axis_2_direction is None:
             # Set directions of first two axes to +X,+Y by default
@@ -6932,7 +6932,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def transform(  # type: ignore[misc]
-        self: _vtk.vtkDataSet,
+        self: pyvista.DataSet,
         trans: TransformLike,
         transform_all_input_vectors=False,
         inplace=True,
@@ -7032,34 +7032,30 @@ class DataSetFilters:
         # so convert input points and relevant vectors to float
         # (creating a new copy would be harmful much more often)
         converted_ints = False
-        if not np.issubdtype(self.points.dtype, np.floating):  # type: ignore[attr-defined]
-            self.points = self.points.astype(np.float32)  # type: ignore[attr-defined]
+        if not np.issubdtype(self.points.dtype, np.floating):
+            self.points = self.points.astype(np.float32)
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
             point_vectors = [
-                name
-                for name, data in self.point_data.items()  # type: ignore[attr-defined]
-                if data.shape == (self.n_points, 3)  # type: ignore[attr-defined]
+                name for name, data in self.point_data.items() if data.shape == (self.n_points, 3)
             ]
             cell_vectors = [
-                name
-                for name, data in self.cell_data.items()  # type: ignore[attr-defined]
-                if data.shape == (self.n_cells, 3)  # type: ignore[attr-defined]
+                name for name, data in self.cell_data.items() if data.shape == (self.n_cells, 3)
             ]
         else:
             # we'll only transform active vectors and normals
             point_vectors = [
-                self.point_data.active_vectors_name,  # type: ignore[attr-defined]
-                self.point_data.active_normals_name,  # type: ignore[attr-defined]
+                self.point_data.active_vectors_name,  # type: ignore[list-item]
+                self.point_data.active_normals_name,  # type: ignore[list-item]
             ]
             cell_vectors = [
-                self.cell_data.active_vectors_name,  # type: ignore[attr-defined]
-                self.cell_data.active_normals_name,  # type: ignore[attr-defined]
+                self.cell_data.active_vectors_name,  # type: ignore[list-item]
+                self.cell_data.active_normals_name,  # type: ignore[list-item]
             ]
         # dynamically convert each self.point_data[name] etc. to float32
         all_vectors = [point_vectors, cell_vectors]
-        all_dataset_attrs = [self.point_data, self.cell_data]  # type: ignore[attr-defined]
+        all_dataset_attrs = [self.point_data, self.cell_data]
         for vector_names, dataset_attrs in zip(all_vectors, all_dataset_attrs):
             for vector_name in vector_names:
                 if vector_name is None:
@@ -7076,8 +7072,8 @@ class DataSetFilters:
             )
 
         # vtkTransformFilter doesn't respect active scalars.  We need to track this
-        active_point_scalars_name = self.point_data.active_scalars_name  # type: ignore[attr-defined]
-        active_cell_scalars_name = self.cell_data.active_scalars_name  # type: ignore[attr-defined]
+        active_point_scalars_name = self.point_data.active_scalars_name
+        active_cell_scalars_name = self.cell_data.active_scalars_name
 
         # vtkTransformFilter sometimes doesn't transform all vector arrays
         # when there are active point/cell scalars. Use this workaround
@@ -7101,6 +7097,7 @@ class DataSetFilters:
                 output_.point_data.active_scalars_name = active_point_scalars_name
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
+        output: pyvista.DataSet
         if isinstance(self, pyvista.RectilinearGrid):
             output = pyvista.StructuredGrid()
         elif inplace:
@@ -7108,7 +7105,7 @@ class DataSetFilters:
         else:
             output = self.__class__()
 
-        if isinstance(self, pyvista.ImageData):
+        if isinstance(output, pyvista.ImageData):
             # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
             # but VTK 9+ supports oriented images.
             # To keep an ImageData -> ImageData mapping, we copy the transformed data
@@ -7130,9 +7127,9 @@ class DataSetFilters:
         # of the original dataset except for the point arrays.  Here
         # we perform a copy so the two are completely unlinked.
         if inplace:
-            output.copy_from(res, deep=False)  # type: ignore[attr-defined]
+            output.copy_from(res, deep=False)
         else:
-            output.copy_from(res, deep=True)  # type: ignore[attr-defined]
+            output.copy_from(res, deep=True)
         return output
 
     def reflect(
