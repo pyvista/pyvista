@@ -37,6 +37,8 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
+    from numbers import Number
+
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -7550,7 +7552,7 @@ class DataSetFilters:
 
     def scale(
         self,
-        xyz: float | VectorLike[float],
+        xyz: Number | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
         point: VectorLike[float] | None = None,
@@ -7564,7 +7566,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        xyz : float | Vector
+        xyz : Number | Vector
             A vector sequence defining the scale factors along x, y, and z. If
             a scalar, the same uniform scale is used along all three axes.
 
