@@ -65,12 +65,12 @@ class VtkErrorCatcher:
 
     """
 
-    def __init__(self, raise_errors=False, send_to_logging=True):
+    def __init__(self, raise_errors=False, send_to_logging=True) -> None:
         """Initialize context manager."""
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         """Observe VTK string output window for errors."""
         error_output = _vtk.vtkStringOutputWindow()
         error_win = _vtk.vtkOutputWindow()
@@ -102,7 +102,7 @@ class VtkEvent(NamedTuple):
 class Observer:
     """A standard class for observing VTK objects."""
 
-    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
+    def __init__(self, event_type='ErrorEvent', log=True, store_history=False) -> None:
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
@@ -113,7 +113,7 @@ class Observer:
         self.__log = log
 
         self.store_history = store_history
-        self.event_history = []
+        self.event_history: list[VtkEvent] = []
 
     @staticmethod
     def parse_message(message):  # numpydoc ignore=RT01
@@ -127,14 +127,14 @@ class Observer:
         else:
             return kind, path, address, alert
 
-    def log_message(self, kind, alert):
+    def log_message(self, kind, alert) -> None:
         """Parse different event types and passes them to logging."""
         if kind == 'ERROR':
             logging.error(alert)
         else:
             logging.warning(alert)
 
-    def __call__(self, _obj, _event, message):
+    def __call__(self, _obj, _event, message) -> None:
         """Declare standard call function for the observer.
 
         On an event occurrence, this function executes.
@@ -238,12 +238,12 @@ class ProgressMonitor:
         self._old_handler = None
         self._progress_bar = None
 
-    def handler(self, sig, frame):
+    def handler(self, sig, frame) -> None:
         """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
 
-    def __call__(self, obj, *args):
+    def __call__(self, obj, *args) -> None:
         """Call progress update callback.
 
         On an event occurrence, this function executes.
@@ -272,7 +272,7 @@ class ProgressMonitor:
         self.algorithm.AddObserver(self.event_type, self)
         return self._progress_bar
 
-    def __exit__(self, *args):
+    def __exit__(self, *args) -> None:
         """Exit event for ``with`` context."""
         self._progress_bar.total = 1  # type: ignore[union-attr]
         self._progress_bar.refresh()  # type: ignore[union-attr]

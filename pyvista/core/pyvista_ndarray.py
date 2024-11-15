@@ -76,7 +76,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             obj.dataset.Set(dataset)
         return obj
 
-    def __array_finalize__(self, obj):
+    def __array_finalize__(self, obj) -> None:
         """Finalize array (associate with parent metadata)."""
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
@@ -95,7 +95,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: int | NumpyArray[int], value):
+    def __setitem__(self, key: int | NumpyArray[int], value) -> None:
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates

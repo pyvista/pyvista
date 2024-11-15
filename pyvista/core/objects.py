@@ -61,7 +61,7 @@ class Table(DataObject, _vtk.vtkTable):
         else:
             raise ValueError('Only 1D or 2D arrays are supported by Tables.')
 
-    def _from_arrays(self, arrays):
+    def _from_arrays(self, arrays) -> None:
         np_table = self._prepare_arrays(arrays)
         for i, array in enumerate(np_table):
             self.row_arrays[f'Array {i}'] = array
@@ -73,7 +73,7 @@ class Table(DataObject, _vtk.vtkTable):
         for name, array in array_dict.items():
             self.row_arrays[name] = array
 
-    def _from_pandas(self, data_frame):
+    def _from_pandas(self, data_frame) -> None:
         for name in data_frame.keys():
             self.row_arrays[name] = data_frame[name].values
 
@@ -90,7 +90,7 @@ class Table(DataObject, _vtk.vtkTable):
         return self.GetNumberOfRows()
 
     @n_rows.setter
-    def n_rows(self, n):  # numpydoc ignore=GL08
+    def n_rows(self, n) -> None:  # numpydoc ignore=GL08
         """Set the number of rows.
 
         Parameters
@@ -192,7 +192,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.row_arrays.values()
 
-    def update(self, data):
+    def update(self, data) -> None:
         """Set the table data using a dict-like update.
 
         Parameters
@@ -247,15 +247,15 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self[index]
 
-    def __setitem__(self, name, scalars):
+    def __setitem__(self, name, scalars) -> None:
         """Add/set an array in the row_arrays."""
         self.row_arrays[name] = scalars
 
-    def _remove_array(self, _, key):
+    def _remove_array(self, _, key) -> None:
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
 
-    def __delitem__(self, name):
+    def __delitem__(self, name) -> None:
         """Remove an array by the specified name."""
         del self.row_arrays[name]
 
