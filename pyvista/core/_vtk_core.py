@@ -96,6 +96,7 @@ from vtkmodules.vtkCommonCore import vtkFileOutputWindow
 from vtkmodules.vtkCommonCore import vtkFloatArray
 from vtkmodules.vtkCommonCore import vtkIdList
 from vtkmodules.vtkCommonCore import vtkIdTypeArray
+from vtkmodules.vtkCommonCore import vtkIntArray
 from vtkmodules.vtkCommonCore import vtkLogger
 from vtkmodules.vtkCommonCore import vtkLookupTable
 from vtkmodules.vtkCommonCore import vtkMath

@@ -16,6 +16,7 @@ from pathlib import Path
 import numpy as np
 
 import pyvista
+from pyvista.core import _vtk_core as _vtk
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
@@ -670,6 +671,183 @@ def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
 
 
 _dataset_hydrogen_orbital = _DatasetLoader(_hydrogen_orbital_load_func)
+
+
+def load_snowflake(level: int = 6, as_triangles: bool = False):
+    """Load a Koch snowflake fractal.
+
+    The snowflake is generated recursively. By default, only the
+     outline is returned as a single :attr:`~pyvista.CellType.POLYLINE` cell.
+
+    This example is adapted from the VTK example `KochSnowflake
+    <https://examples.vtk.org/site/Python/Visualization/KochSnowflake/>`_.
+
+    For more information about the fractal, see:
+
+    - http://en.wikipedia.org/wiki/Koch_snowflake
+    - http://mathworld.wolfram.com/KochSnowflake.html.
+
+    Parameters
+    ----------
+    level : int, default: 6
+        Level of recursion to use.
+
+    as_triangles : bool, default: False
+        Return the snowflake as :attr:`~pyvista.CellType.TRIANGLE`
+        cells with an integer cell array ``'Level'`` indicating
+        the iteration level each triangle was generated.
+
+    Returns
+    -------
+    pyvista.PolyData
+        Snownflake mesh.
+
+    Examples
+    --------
+    Plot the default snowflake.
+
+    >>> from pyvista import examples
+    >>> snowflake = examples.load_snowflake()
+    >>> snowflake.plot(cpos='xy', line_width=5)
+
+    Plot the snowflake as triangles.
+
+    >>> snowflake = examples.load_snowflake(as_triangles=True)
+    >>> snowflake.plot(cpos='xy', cmap='blues', lighting=False)
+
+    .. seealso::
+
+        :ref:`Snowflake Dataset <snowflake_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _dataset_snowflake.load(level=level, as_triangles=as_triangles)
+
+
+def _snowflake_load_func(level, as_triangles):
+    from math import cos
+    from math import pi
+    from math import sin
+    from math import sqrt
+
+    def make_polyline(points, level_):
+        """Koch Snowflake as a vtkPolyLine."""
+        # Use the points from the previous iteration to create the points of the next
+        # level. There is an assumption on my part that the curve is traversed in a
+        # counterclockwise fashion. If the initial triangle above is written to
+        # describe clockwise motion, the points will face inward instead of outward.
+        for i in range(level_):
+            temp = _vtk.vtkPoints()
+            # The first point of the previous vtkPoints is the first point of the next vtkPoints.
+            temp.InsertNextPoint(*points.GetPoint(0))
+
+            # Iterate over 'edges' in the vtkPoints
+            for i in range(1, points.GetNumberOfPoints()):
+                x0, y0, z0 = points.GetPoint(i - 1)
+                x1, y1, z1 = points.GetPoint(i)
+                t = sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+                nx = (x1 - x0) / t  # x-component of edge unit tangent
+                ny = (y1 - y0) / t  # y-component of edge unit tangent
+
+                # the points describing the Koch snowflake edge
+                temp.InsertNextPoint(x0 + nx * t / 3, y0 + ny * t / 3, 0.0)
+                temp.InsertNextPoint(
+                    x0 + nx * t / 2 + ny * t * sqrt(3) / 6,
+                    y0 + ny * t / 2 - nx * t * sqrt(3) / 6,
+                    0.0,
+                )
+                temp.InsertNextPoint(x0 + nx * 2 * t / 3, y0 + ny * 2 * t / 3, 0.0)
+                temp.InsertNextPoint(x0 + nx * t, y0 + ny * t, 0.0)
+
+            points = temp
+
+        # draw the outline
+        lines = _vtk.vtkCellArray()
+        pl = _vtk.vtkPolyLine()
+        pl.GetPointIds().SetNumberOfIds(points.GetNumberOfPoints())
+        for i in range(points.GetNumberOfPoints()):
+            pl.GetPointIds().SetId(i, i)
+        lines.InsertNextCell(pl)
+
+        # complete the polydata
+        polydata = _vtk.vtkPolyData()
+        polydata.SetLines(lines)
+        polydata.SetPoints(points)
+
+        return polydata
+
+    def make_triangles(indices, cellarray, level_, data):
+        """Koch Snowflake as a collection of vtkTriangles."""
+        if len(indices) >= 3:
+            stride = len(indices) // 4
+            indices.append(indices[-1] + 1)
+
+            triangle = _vtk.vtkTriangle()
+            triangle.GetPointIds().SetId(0, indices[stride])
+            triangle.GetPointIds().SetId(1, indices[2 * stride])
+            triangle.GetPointIds().SetId(2, indices[3 * stride])
+
+            cellarray.InsertNextCell(triangle)
+            data.InsertNextValue(level_)
+
+            make_triangles(indices[0:stride], cellarray, level_ + 1, data)
+            make_triangles(indices[stride : 2 * stride], cellarray, level_ + 1, data)
+            make_triangles(indices[2 * stride : 3 * stride], cellarray, level_ + 1, data)
+            make_triangles(indices[3 * stride : -1], cellarray, level_ + 1, data)
+
+    # Initially, set up the points to be an equilateral triangle. Note that the
+    # first point is the same as the last point to make this a closed curve when
+    # I create the vtkPolyLine.
+    points = _vtk.vtkPoints()
+    for i in range(4):
+        points.InsertNextPoint(cos(2.0 * pi * i / 3), sin(2 * pi * i / 3.0), 0.0)
+
+    outline_pd = make_polyline(points, level)
+
+    if as_triangles:
+        # You have already gone through the trouble of putting the points in the
+        # right places - so 'all' you need to do now is to create polygons from the
+        # points that are in the vtkPoints.
+
+        # The points that are passed in, have an overlap of the beginning and the
+        # end. For this next trick, I will need a list of the indices in the
+        # vtkPoints. They're consecutive, so that's pretty straightforward.
+
+        indices = list(range(outline_pd.GetPoints().GetNumberOfPoints() + 1))
+        triangles = _vtk.vtkCellArray()
+
+        # Set this up for each of the initial sides, then call the recursive function.
+        stride = (len(indices) - 1) // 3
+
+        # The cell data will allow us to color the triangles based on the level of
+        # the iteration of the Koch snowflake.
+        data = _vtk.vtkIntArray()
+        data.SetNumberOfComponents(0)
+        data.SetName('Level')
+
+        # This is the starting triangle.
+        t = _vtk.vtkTriangle()
+        t.GetPointIds().SetId(0, 0)
+        t.GetPointIds().SetId(1, stride)
+        t.GetPointIds().SetId(2, 2 * stride)
+        triangles.InsertNextCell(t)
+        data.InsertNextValue(0)
+
+        make_triangles(indices[0 : stride + 1], triangles, 1, data)
+        make_triangles(indices[stride : 2 * stride + 1], triangles, 1, data)
+        make_triangles(indices[2 * stride : -1], triangles, 1, data)
+
+        triangle_pd = _vtk.vtkPolyData()
+        triangle_pd.SetPoints(outline_pd.GetPoints())
+        triangle_pd.SetPolys(triangles)
+        triangle_pd.GetCellData().SetScalars(data)
+        output = triangle_pd
+    else:
+        output = outline_pd
+    return pyvista.wrap(output)
+
+
+_dataset_snowflake = _DatasetLoader(_snowflake_load_func)
 
 
 def load_logo():
