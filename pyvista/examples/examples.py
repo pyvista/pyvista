@@ -677,7 +677,7 @@ def load_snowflake(level: int = 6, as_triangles: bool = False):
     """Load a Koch snowflake fractal.
 
     The snowflake is generated recursively. By default, only the
-     outline is returned as a single :attr:`~pyvista.CellType.POLYLINE` cell.
+    outline is returned as a single :attr:`~pyvista.CellType.POLYLINE` cell.
 
     This example is adapted from the VTK example `KochSnowflake
     <https://examples.vtk.org/site/Python/Visualization/KochSnowflake/>`_.

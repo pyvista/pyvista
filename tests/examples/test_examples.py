@@ -99,6 +99,20 @@ def test_load_hydrogen_orbital():
     assert orbital.point_data['real_wf'].dtype == np.float64
 
 
+def test_load_snowflake():
+    mesh = examples.load_snowflake()
+    assert mesh.n_lines == 1
+
+    # Test that we have 4^N triangles
+    level = 0
+    mesh = examples.load_snowflake(level=level, as_triangles=True)
+    assert mesh.n_cells == 4**level
+
+    level = 4
+    mesh = examples.load_snowflake(level=level, as_triangles=True)
+    assert mesh.n_cells == 4**level
+
+
 def test_load_logo():
     mesh = examples.load_logo()
     assert mesh.n_points
