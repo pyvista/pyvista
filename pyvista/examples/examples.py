@@ -724,7 +724,7 @@ def load_snowflake(level: int = 6, as_triangles: bool = False):
     return _dataset_snowflake.load(level=level, as_triangles=as_triangles)
 
 
-def _snowflake_load_func(level, as_triangles):
+def _snowflake_load_func(level=6, as_triangles=False):
     from math import cos
     from math import pi
     from math import sin
