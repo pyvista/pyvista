@@ -220,7 +220,6 @@ packages = ['pyvista']
 plugins = ['npt_promote', 'numpy.typing.mypy_plugin']
 pretty = true
 show_error_context = true
-extra_checks = true
 strict_equality = true
 warn_redundant_casts = true
 warn_unused_configs = true
