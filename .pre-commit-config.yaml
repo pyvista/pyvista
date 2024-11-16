@@ -94,4 +94,4 @@ repos:
     hooks:
       - id: taplo-format
         # See options: https://taplo.tamasfe.dev/configuration/formatter-options.html
-        args: [--option, "reorder_arrays=true"]
+        args: [--option, "reorder_arrays=true", --option, "reorder_keys=true"]
