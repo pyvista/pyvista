@@ -39,7 +39,13 @@ SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
-def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
+def translate(
+    surf,
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    directionx=(1.0, 0.0, 0.0),
+    directiony=(0.0, 1.0, 0.0),
+):
     """Translate and orient a mesh to a new center and direction.
 
     By default, the input mesh is considered centered at the origin
@@ -53,21 +59,34 @@ def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
         Center point to which the mesh should be translated.
     direction : tuple, optional, default: (1.0, 0.0, 0.0)
         Direction vector along which the mesh should be oriented.
+    directionx : tuple, optional, default: (1.0, 0.0, 0.0)
+        Direction of the plane's x direction in ``[x, y, z]``.
+        This is used when ``direction=None``.
+        .. versionadded:: 0.43.0
+    directiony : tuple, optional, default: (0.0, 1.0, 0.0)
+        Direction of the plane's y direction in ``[x, y, z]``.
+        This is used when ``direction=None``.
+        .. versionchanged:: 0.43.0
 
     """
-    normx = np.array(direction) / np.linalg.norm(direction)
-    normy_temp = [0.0, 1.0, 0.0]
+    if direction is not None:
+        normx = np.array(direction) / np.linalg.norm(direction)
+        normy_temp = [0.0, 1.0, 0.0]
 
-    # Adjust normy if collinear with normx since cross-product will
-    # be zero otherwise
-    if np.allclose(normx, [0, 1, 0]):
-        normy_temp = [-1.0, 0.0, 0.0]
-    elif np.allclose(normx, [0, -1, 0]):
-        normy_temp = [1.0, 0.0, 0.0]
+        # Adjust normy if collinear with normx since cross-product will
+        # be zero otherwise
+        if np.allclose(normx, [0, 1, 0]):
+            normy_temp = [-1.0, 0.0, 0.0]
+        elif np.allclose(normx, [0, -1, 0]):
+            normy_temp = [1.0, 0.0, 0.0]
 
-    normz = np.cross(normx, normy_temp)
-    normz /= np.linalg.norm(normz)
-    normy = np.cross(normz, normx)
+        normz = np.cross(normx, normy_temp)
+        normz /= np.linalg.norm(normz)
+        normy = np.cross(normz, normx)
+    else:
+        normx = np.array(directionx) / np.linalg.norm(directionx)
+        normy = np.array(directiony) / np.linalg.norm(directiony)
+        normz = np.cross(normx, normy)
 
     trans = np.zeros((4, 4))
     trans[:3, 0] = normx

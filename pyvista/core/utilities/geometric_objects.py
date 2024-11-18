@@ -1021,6 +1021,8 @@ def Plane(
     j_size=1,
     i_resolution=10,
     j_resolution=10,
+    i_direction=(1.0, 0.0, 0.0),
+    j_direction=(0.0, 1.0, 0.0),
 ):
     """Create a plane.
 
@@ -1044,6 +1046,18 @@ def Plane(
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
+    i_direction : sequence[float], default: (1.0, 0.0, 0.0)
+        Direction of the plane's i direction in ``[x, y, z]``.
+        This is used when ``direction=None``.
+
+        .. versionadded:: 0.43.0
+
+    j_direction : sequence[float], default: (0.0, 1.0, 0.0)
+        Direction of the plane's j direction in ``[x, y, z]``.
+        This is used when ``direction=None``.
+
+        .. versionadded:: 0.43.0
+
     Returns
     -------
     pyvista.PolyData
@@ -1065,7 +1079,11 @@ def Plane(
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size
     surf.rotate_y(90, inplace=True)
-    translate(surf, center, direction)
+    directionx = np.cross(i_direction, j_direction)
+    if not np.isclose(np.linalg.norm(directionx), 1.0):
+        raise ValueError('i_direction and j_direction must be 90 degrees.')
+    directiony = j_direction
+    translate(surf, center, direction, directionx, directiony)
     return surf
 
 
