@@ -155,7 +155,7 @@ def test_axes_assembly_theme(axes_assembly):
 
 def test_axes_assembly_label_position(axes_assembly):
     assert np.allclose(axes_assembly.label_position, (0.8, 0.8, 0.8))
-    label_position = (1, 2, 3)
+    label_position = (1.0, 2.0, 3.0)
     axes_assembly.label_position = label_position
     assert np.allclose(axes_assembly.label_position, label_position)
 
@@ -269,7 +269,7 @@ def test_axes_assembly_origin_init():
 
 def test_axes_assembly_scale(axes_assembly):
     assert np.allclose(axes_assembly.scale, (1.0, 1.0, 1.0))
-    scale = (1, 2, 3)
+    scale = (1.0, 2.0, 3.0)
     axes_assembly.scale = scale
     assert np.allclose(axes_assembly.scale, scale)
 
@@ -308,13 +308,13 @@ def test_axes_assembly_orientation_init():
 
 def test_axes_assembly_user_matrix(axes_assembly):
     assert np.allclose(axes_assembly.user_matrix, np.eye(4))
-    user_matrix = np.diag((2, 3, 4, 1))
+    user_matrix = np.diag((2.0, 3.0, 4.0, 1.0))
     axes_assembly.user_matrix = user_matrix
     assert np.allclose(axes_assembly.user_matrix, user_matrix)
 
 
 def test_axes_assembly_user_matrix_init():
-    user_matrix = np.diag((2, 3, 4, 1))
+    user_matrix = np.diag((2.0, 3.0, 4.0, 1.0))
     axes_assembly = pv.AxesAssembly(user_matrix=user_matrix)
     assert np.allclose(axes_assembly.user_matrix, user_matrix)
 
