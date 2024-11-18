@@ -59,7 +59,13 @@ pinned = [ # Pinned versions of core dependencies
   'vtk<9.4.0',
 ]
 
-typing = ['mypy<1.14.0', 'npt-promote==0.1', 'numpy>=2.0.0', 'pyvista[pinned]']
+typing = [
+  'lxml<5.4.0',
+  'mypy<1.14.0',
+  'npt-promote==0.1',
+  'numpy>=2.0.0',
+  'pyvista[pinned]',
+]
 
 test = [
   'cmocean<4.0.4',
