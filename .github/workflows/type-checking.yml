@@ -22,10 +22,19 @@ jobs:
         run: pip install .[typing]
 
       - name: Run Mypy
-        run: mypy
+        run: mypy --txt-report mypy-report/
 
       - name: Software Report
         run: |
           python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('Examples path:', examples.USER_DATA_PATH)"
           which python
           pip list
+
+      - name: "Upload Mypy coverage to CodeCov"
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          files: ./mypy-report/index.txt
+          flags: mypy
+          name: Mypy Static Type Coverage
