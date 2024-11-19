@@ -190,7 +190,7 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             ).reshape([-1]),
         )
 
-    final_cell_types = np.concatenate(final_cell_types)
+    final_cell_types = np.concatenate(final_cell_types)  # type: ignore[assignment]
     final_cell_arr = np.concatenate(final_cell_arr)
 
     return final_cell_types, final_cell_arr

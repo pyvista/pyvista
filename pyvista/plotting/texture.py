@@ -388,7 +388,7 @@ class Texture(DataObject, _vtk.vtkTexture):
     def cube_map(self, flag: bool):  # numpydoc ignore=GL08
         self.SetCubeMap(flag)
 
-    def copy(self):
+    def copy(self):  # type: ignore[override]
         """Make a copy of this texture.
 
         Returns
@@ -397,7 +397,7 @@ class Texture(DataObject, _vtk.vtkTexture):
             Copied texture.
 
         """
-        return Texture(self.to_image().copy())
+        return Texture(self.to_image().copy())  # type: ignore[abstract]
 
     def to_skybox(self):
         """Return the texture as a ``vtkSkybox`` if cube mapping is enabled.
@@ -416,14 +416,14 @@ class Texture(DataObject, _vtk.vtkTexture):
 
     def __repr__(self):
         """Return the object representation."""
-        return pyvista.DataSet.__repr__(self)
+        return pyvista.DataSet.__repr__(self)  # type: ignore[arg-type]
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(('Components', self.n_components, '{:d}'))
         attrs.append(('Cube Map', self.cube_map, '{:}'))
-        attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}'))
+        attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}'))  # type: ignore[arg-type]
         return attrs
 
     @property
@@ -512,12 +512,12 @@ class Texture(DataObject, _vtk.vtkTexture):
         lighting = kwargs.pop('lighting', None)
         pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
-        pl.set_environment_texture(self, True)
+        pl.set_environment_texture(self, True)  # type: ignore[arg-type]
         pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
         if show_axes:
-            pl.show_axes()
+            pl.show_axes()  # type: ignore[call-arg]
         pl.show(**kwargs)
 
     @property
@@ -652,7 +652,7 @@ def image_to_texture(image):
         The texture.
 
     """
-    return Texture(image)
+    return Texture(image)  # type: ignore[abstract]
 
 
 def numpy_to_texture(image):
@@ -686,4 +686,4 @@ def numpy_to_texture(image):
             UserWarning,
         )
 
-    return Texture(image)
+    return Texture(image)  # type: ignore[abstract]

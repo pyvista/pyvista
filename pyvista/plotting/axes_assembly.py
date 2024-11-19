@@ -170,7 +170,7 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
             if isinstance(part, (Prop3D, _Prop3DMixin)) and not np.array_equal(
                 part.user_matrix, new_matrix
             ):
-                part.user_matrix = new_matrix
+                part.user_matrix = new_matrix  # type: ignore[method-assign]
 
     def _get_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         return BoundsTuple(*self.GetBounds())
