@@ -218,11 +218,11 @@ class Light(vtkLight):
         self.actor.SetLight(self)
         self.actor.SetVisibility(show_actor)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Print a repr specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two lights are equal."""
         # attributes which are native python types and thus implement __eq__
         native_attrs = [

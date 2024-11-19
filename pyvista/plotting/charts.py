@@ -1055,7 +1055,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
-        def Initialize(self, item):
+        def Initialize(self, item) -> bool:
             # item is the _CustomContextItem subclass instance
             return True
 
@@ -1068,7 +1068,7 @@ class _CustomContextItem(_vtk.vtkPythonItem):
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
-    def paint(self, painter):
+    def paint(self, painter) -> bool:
         return True
 
 
@@ -1087,7 +1087,7 @@ class _ChartBackground(_CustomContextItem):
         self.ActiveBorderPen = Pen(color=(0.8, 0.8, 0.2))
         self.ActiveBackgroundBrush = Brush(color=(1.0, 1.0, 1.0, 0.4))
 
-    def paint(self, painter):
+    def paint(self, painter) -> bool:
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
