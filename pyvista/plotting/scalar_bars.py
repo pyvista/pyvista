@@ -53,8 +53,8 @@ class ScalarBars:
     def _remove_mapper_from_plotter(
         self,
         actor,
-        reset_camera=False,
-        render=False,
+        reset_camera: bool = False,
+        render: bool = False,
     ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
@@ -85,7 +85,7 @@ class ScalarBars:
                     self._plotter._scalar_bar_slots.add(slot)
             return
 
-    def remove_scalar_bar(self, title=None, render=True):
+    def remove_scalar_bar(self, title=None, render: bool = True):
         """Remove a scalar bar.
 
         Parameters
@@ -165,13 +165,13 @@ class ScalarBars:
         title='',
         mapper=None,
         n_labels=5,
-        italic=False,
-        bold=False,
+        italic: bool = False,
+        bold: bool = False,
         title_font_size=None,
         label_font_size=None,
         color=None,
         font_family=None,
-        shadow=False,
+        shadow: bool = False,
         width=None,
         height=None,
         position_x=None,
@@ -179,17 +179,17 @@ class ScalarBars:
         vertical=None,
         interactive=None,
         fmt=None,
-        use_opacity=True,
-        outline=False,
-        nan_annotation=False,
+        use_opacity: bool = True,
+        outline: bool = False,
+        nan_annotation: bool = False,
         below_label=None,
         above_label=None,
         background_color=None,
         n_colors=None,
-        fill=False,
-        render=False,
+        fill: bool = False,
+        render: bool = False,
         theme=None,
-        unconstrained_font_size=False,
+        unconstrained_font_size: bool = False,
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
