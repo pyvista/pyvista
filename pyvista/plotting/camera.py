@@ -642,9 +642,9 @@ class Camera(_vtk.vtkCamera):
 
         """
         frustum_planes = [0] * 24
-        self.GetFrustumPlanes(aspect, frustum_planes)
+        self.GetFrustumPlanes(aspect, frustum_planes)  # type: ignore[arg-type]
         planes = _vtk.vtkPlanes()
-        planes.SetFrustumPlanes(frustum_planes)
+        planes.SetFrustumPlanes(frustum_planes)  # type: ignore[arg-type]
 
         frustum_source = _vtk.vtkFrustumSource()
         frustum_source.ShowLinesOff()

@@ -125,7 +125,7 @@ def make_legend_face(face):
 
     """
     if face is None or face == 'none':
-        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))
+        legendface = pyvista.PolyData([0.0, 0.0, 0.0], faces=np.empty(0, dtype=int))  # type: ignore[arg-type]
     elif face in ['-', 'line']:
         legendface = _line_for_legend()
     elif face in ['^', 'triangle']:
@@ -641,7 +641,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
 
         poly = pyvista.PolyData()
-        poly.points = points
+        poly.points = points  # type: ignore[assignment]
         poly.lines = lines
 
         coordinate = _vtk.vtkCoordinate()
@@ -671,14 +671,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def border_width(self):  # numpydoc ignore=RT01
         """Return the border width."""
         if self.has_border:
-            return self._border_actor.GetProperty().GetLineWidth()
+            return self._border_actor.GetProperty().GetLineWidth()  # type: ignore[union-attr]
         return 0
 
     @property
     def border_color(self):  # numpydoc ignore=RT01
         """Return the border color."""
         if self.has_border:
-            return Color(self._border_actor.GetProperty().GetColor())
+            return Color(self._border_actor.GetProperty().GetColor())  # type: ignore[union-attr]
         return None
 
     def add_chart(self, chart, *charts):
@@ -711,7 +711,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         # lazy instantiation here to avoid creating the charts object unless needed.
         if self._charts is None:
             self._charts = Charts(self)
-            self.AddObserver('StartEvent', partial(try_callback, self._before_render_event))
+            self.AddObserver('StartEvent', partial(try_callback, self._before_render_event))  # type: ignore[arg-type]
         self._charts.add_chart(chart, *charts)
 
     @property
@@ -736,17 +736,17 @@ class Renderer(_vtk.vtkOpenGLRenderer):
            True
 
         """
-        return [*self._charts] if self.has_charts else []
+        return [*self._charts] if self.has_charts else []  # type: ignore[misc]
 
     @wraps(Charts.set_interaction)
     def set_chart_interaction(self, interactive, toggle=False):  # numpydoc ignore=PR01,RT01
         """Wrap ``Charts.set_interaction``."""
-        return self._charts.set_interaction(interactive, toggle) if self.has_charts else []
+        return self._charts.set_interaction(interactive, toggle) if self.has_charts else []  # type: ignore[union-attr]
 
     @wraps(Charts.get_charts_by_pos)
     def _get_charts_by_pos(self, pos):
         """Wrap ``Charts.get_charts_by_pos``."""
-        return self._charts.get_charts_by_pos(pos) if self.has_charts else []
+        return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
 
     def remove_chart(self, chart_or_index) -> None:
         """Remove a chart from this renderer.
@@ -1036,9 +1036,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             actor.prop.opacity = opacity
         if hasattr(self, 'axes_widget'):
             # Delete the old one
-            self.axes_widget.EnabledOff()
+            self.axes_widget.EnabledOff()  # type: ignore[has-type]
             self.Modified()
-            del self.axes_widget
+            del self.axes_widget  # type: ignore[has-type]
         if interactive is None:
             interactive = self._theme.interactive
         self.axes_widget = _vtk.vtkOrientationMarkerWidget()
@@ -2065,7 +2065,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._bounding_box = _vtk.vtkOutlineCornerSource()
             self._bounding_box.SetCornerFactor(corner_factor)
         else:
-            self._bounding_box = _vtk.vtkCubeSource()
+            self._bounding_box = _vtk.vtkCubeSource()  # type: ignore[assignment]
         self._bounding_box.SetBounds(self.bounds)
         self._bounding_box.Update()
         self._box_object = wrap(self._bounding_box.GetOutput())
@@ -2373,7 +2373,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
          <Light (Camera Light) at 0x7f1dd8155f40>]
 
         """
-        return list(self.GetLights())
+        return list(self.GetLights())  # type: ignore[call-overload]
 
     def remove_all_lights(self) -> None:
         """Remove all lights from the renderer."""
@@ -2775,7 +2775,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             and self._box_object is not None
             and self.bounding_box_actor is not None
         ):
-            if not np.allclose(self._box_object.bounds, self.bounds):
+            if not np.allclose(self._box_object.bounds, self.bounds):  # type: ignore[union-attr]
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
@@ -3538,8 +3538,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
-        self._camera = None
-        self._bounding_box = None
+        self._camera = None  # type: ignore[assignment]
+        self._bounding_box = None  # type: ignore[assignment]
         self._marker_actor = None
         self._border_actor = None
         # remove reference to parent last
@@ -3812,7 +3812,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     )
 
                 legend_face = make_legend_face(face_ or face)
-                self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)
+                self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)  # type: ignore[call-overload]
 
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
@@ -4006,7 +4006,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         ruler.GetPositionCoordinate().SetCoordinateSystemToWorld()
         ruler.GetPosition2Coordinate().SetCoordinateSystemToWorld()
-        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)
+        ruler.GetPositionCoordinate().SetReferenceCoordinate(None)  # type: ignore[arg-type]
         ruler.GetPositionCoordinate().SetValue(pointa[0], pointa[1], pointa[2])
         ruler.GetPosition2Coordinate().SetValue(pointb[0], pointb[1], pointb[2])
 
@@ -4234,6 +4234,6 @@ def _line_for_legend():
         ],  # last point needed to expand the bounds of the PolyData to be rendered smaller
     ]
     legendface = pyvista.PolyData()
-    legendface.points = np.array(points)
-    legendface.faces = [4, 0, 1, 2, 3]
+    legendface.points = np.array(points)  # type: ignore[assignment]
+    legendface.faces = [4, 0, 1, 2, 3]  # type: ignore[assignment]
     return legendface

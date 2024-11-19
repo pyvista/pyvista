@@ -49,7 +49,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
 
     def __array_finalize__(self, obj):
         """Finalize array (associate with parent metadata)."""
-        _vtk.VTKArray.__array_finalize__(self, obj)
+        _vtk.VTKArray.__array_finalize__(self, obj)  # type: ignore[arg-type]
         if np.shares_memory(self, obj):
             self.table = getattr(obj, 'table', None)
             self.VTKObject = getattr(obj, 'VTKObject', None)
@@ -74,7 +74,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
             # internal VTK array
             self.table.Get().values = self
 
-    def __array_wrap__(self, out_arr, context=None):
+    def __array_wrap__(self, out_arr, context=None):  # type: ignore[override]
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
@@ -539,7 +539,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         color = self.nan_color
-        return color.opacity
+        return color.opacity  # type: ignore[union-attr]
 
     @nan_opacity.setter
     def nan_opacity(self, value):  # numpydoc ignore=GL08
@@ -663,7 +663,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         color = self.above_range_color
-        return color.opacity
+        return color.opacity  # type: ignore[union-attr]
 
     @above_range_opacity.setter
     def above_range_opacity(self, value):  # numpydoc ignore=GL08
@@ -727,7 +727,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         color = self.below_range_color
-        return color.opacity
+        return color.opacity  # type: ignore[union-attr]
 
     @below_range_opacity.setter
     def below_range_opacity(self, value):  # numpydoc ignore=GL08
@@ -1016,7 +1016,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         label_level += self._nan_color_set
 
-        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)
+        scalar_bar = pl.add_scalar_bar(**scalar_bar_kwargs)  # type: ignore[arg-type]
         scalar_bar.SetLookupTable(self)
         scalar_bar.SetMaximumNumberOfColors(self.n_values)
         scalar_bar.SetPosition(0.03, 0.1 + label_level * 0.1)
