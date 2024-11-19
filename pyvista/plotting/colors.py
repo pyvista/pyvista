@@ -1155,7 +1155,7 @@ def color_scheme_to_cycler(scheme):
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()
         if isinstance(scheme, str):
-            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())['id'])
+            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())['id'])  # type: ignore[index]
         elif isinstance(scheme, int):
             series.SetColorScheme(scheme)
         else:

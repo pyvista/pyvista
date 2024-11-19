@@ -3580,7 +3580,7 @@ def _kitchen_split_load_func(mesh):  # pragma: no cover
     for key, extent in extents.items():  # pragma: no cover
         alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
-        alg.SetExtent(extent)
+        alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
         result = pyvista.core.filters._get_output(alg)
         kitchen[key] = result

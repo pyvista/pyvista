@@ -694,7 +694,7 @@ def validate_number(num, /, *, reshape=True, **kwargs):
         shape = [(), (1,)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', ())
     else:
-        shape = ()
+        shape = ()  # type: ignore[assignment]
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
     return validate_array(num, **kwargs)
@@ -814,7 +814,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
         shape = [3, (-1, 3)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1, 3))
     else:
-        shape = (-1, 3)
+        shape = (-1, 3)  # type: ignore[assignment]
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
     return validate_array(arr, **kwargs)
@@ -888,7 +888,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
         shape = [(), (-1), (1, -1)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
     else:
-        shape = -1
+        shape = -1  # type: ignore[assignment]
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
     return validate_array(arr, **kwargs)
 
@@ -1051,11 +1051,11 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     """
     shape = [(3,)]
     if reshape:
-        shape.append((1, 3))
-        shape.append((3, 1))
+        shape.append((1, 3))  # type: ignore[arg-type]
+        shape.append((3, 1))  # type: ignore[arg-type]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
     if broadcast:
-        shape.append(())  # allow 0D scalars
+        shape.append(())  # type: ignore[arg-type] # allow 0D scalars
         shape.append((1,))  # 1D 1-element vectors
         _set_default_kwarg_mandatory(kwargs, 'broadcast_to', (3,))
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
