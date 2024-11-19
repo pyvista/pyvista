@@ -24,6 +24,7 @@ from .colors import Color
 
 if TYPE_CHECKING:  # pragma: no cover
     from ._typing import ColorLike
+    from .renderer import Renderer
 
 
 class LightType(IntEnum):
@@ -149,14 +150,14 @@ class Light(vtkLight):
         intensity=None,
         positional=None,
         cone_angle=None,
-        show_actor=False,
+        show_actor: bool = False,
         exponent=None,
         shadow_attenuation=None,
         attenuation_values=None,
     ):
         """Initialize the light."""
         super().__init__()
-        self._renderers = []
+        self._renderers: list[Renderer] = []
         self.actor = None
 
         if position is not None:
@@ -1002,7 +1003,7 @@ class Light(vtkLight):
         phi = np.radians(azim)
         self.position = (np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta))
 
-    def copy(self, deep=True):
+    def copy(self, deep: bool = True):
         """Return a shallow or a deep copy of the light.
 
         The only mutable attribute of :class:`pyvista.Light` is the

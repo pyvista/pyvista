@@ -422,7 +422,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             )
         self._theme.load_theme(theme)
 
-    def import_gltf(self, filename, set_camera=True):
+    def import_gltf(self, filename, set_camera: bool = True):
         """Import a glTF file into the plotter.
 
         See https://www.khronos.org/gltf/ for more information.
@@ -704,7 +704,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return filename
 
-    def export_gltf(self, filename, inline_data=True, rotate_scene=True, save_normals=True) -> None:
+    def export_gltf(
+        self,
+        filename,
+        inline_data: bool = True,
+        rotate_scene: bool = True,
+        save_normals: bool = True,
+    ) -> None:
         """Export the current rendering scene as a glTF file.
 
         Visit https://gltf-viewer.donmccurdy.com/ for an online viewer.
@@ -861,7 +867,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter.SetRenderWindow(self.render_window)
         exporter.Write()
 
-    def enable_hidden_line_removal(self, all_renderers=True) -> None:
+    def enable_hidden_line_removal(self, all_renderers: bool = True) -> None:
         """Enable hidden line removal.
 
         Wireframe geometry will be drawn using hidden line removal if
@@ -901,7 +907,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.renderer.enable_hidden_line_removal()
 
-    def disable_hidden_line_removal(self, all_renderers=True) -> None:
+    def disable_hidden_line_removal(self, all_renderers: bool = True) -> None:
         """Disable hidden line removal.
 
         Enable again with :func:`enable_hidden_line_removal
@@ -1099,7 +1105,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.remove_floors``."""
         return self.renderer.remove_floors(*args, **kwargs)
 
-    def enable_3_lights(self, only_active=False) -> None:
+    def enable_3_lights(self, only_active: bool = False) -> None:
         """Enable 3-lights illumination.
 
         This will replace all pre-existing lights in the scene.
@@ -1152,7 +1158,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         raise DeprecationError('DEPRECATED: Please use ``enable_lightkit``')
 
-    def enable_lightkit(self, only_active=False) -> None:
+    def enable_lightkit(self, only_active: bool = False) -> None:
         """Enable the default light-kit lighting.
 
         See:
@@ -1195,7 +1201,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.add_light(light)
             renderer.LightFollowCameraOn()
 
-    def enable_anti_aliasing(self, aa_type='ssaa', multi_samples=None, all_renderers=True):
+    def enable_anti_aliasing(self, aa_type='ssaa', multi_samples=None, all_renderers: bool = True):
         """Enable anti-aliasing.
 
         This tends to make edges appear softer and less pixelated.
@@ -1281,7 +1287,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.renderer.enable_anti_aliasing(aa_type)
 
-    def disable_anti_aliasing(self, all_renderers=True):
+    def disable_anti_aliasing(self, all_renderers: bool = True):
         """Disable anti-aliasing.
 
         Parameters
@@ -1311,7 +1317,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.renderer.disable_anti_aliasing()
 
     @wraps(Renderer.set_focus)
-    def set_focus(self, *args, render=True, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
+    def set_focus(self, *args, render: bool = True, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_focus``."""
         log.debug('set_focus: %s, %s', str(args), str(kwargs))
         self.renderer.set_focus(*args, **kwargs)
@@ -1319,14 +1325,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.render()
 
     @wraps(Renderer.set_position)
-    def set_position(self, *args, render=True, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
+    def set_position(
+        self, *args, render: bool = True, **kwargs
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_position``."""
         self.renderer.set_position(*args, **kwargs)
         if render:
             self.render()
 
     @wraps(Renderer.set_viewup)
-    def set_viewup(self, *args, render=True, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
+    def set_viewup(self, *args, render: bool = True, **kwargs) -> None:  # numpydoc ignore=PR01,RT01
         """Wrap ``Renderer.set_viewup``."""
         self.renderer.set_viewup(*args, **kwargs)
         if render:
@@ -2005,7 +2013,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for callback in self._on_render_callbacks:
             callback(self)
 
-    def add_on_render_callback(self, callback, render_event=False) -> None:
+    def add_on_render_callback(self, callback, render_event: bool = False) -> None:
         """Add a method to be called post-render.
 
         Parameters
@@ -2381,7 +2389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer = self.renderer
         renderer.view_isometric()
 
-    def update(self, stime=1, force_redraw=True) -> None:
+    def update(self, stime=1, force_redraw: bool = True) -> None:
         """Update window, redraw, process messages query.
 
         Parameters
@@ -2427,16 +2435,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         point_size=None,
         line_width=None,
         opacity=1.0,
-        flip_scalars=False,
+        flip_scalars: bool = False,
         lighting=None,
         n_colors=256,
-        interpolate_before_map=True,
+        interpolate_before_map: bool = True,
         cmap=None,
         label=None,
         reset_camera=None,
         scalar_bar_args=None,
         show_scalar_bar=None,
-        multi_colors=False,
+        multi_colors: bool = False,
         name=None,
         render_points_as_spheres=None,
         render_lines_as_tubes=None,
@@ -2453,16 +2461,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         below_color=None,
         above_color=None,
         annotations=None,
-        pickable=True,
+        pickable: bool = True,
         preference='point',
-        log_scale=False,
+        log_scale: bool = False,
         pbr=None,
         metallic=None,
         roughness=None,
-        render=True,
+        render: bool = True,
         component=None,
-        color_missing_with_nan=False,
-        copy_mesh=False,
+        color_missing_with_nan: bool = False,
+        copy_mesh: bool = False,
         show_vertices=None,
         edge_opacity=None,
         **kwargs,
@@ -2959,7 +2967,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         point_size=None,
         line_width=None,
         opacity=None,
-        flip_scalars=False,
+        flip_scalars: bool = False,
         lighting=None,
         n_colors=256,
         interpolate_before_map=None,
@@ -2968,7 +2976,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera=None,
         scalar_bar_args=None,
         show_scalar_bar=None,
-        multi_colors=False,
+        multi_colors: bool = False,
         name=None,
         texture=None,
         render_points_as_spheres=None,
@@ -2983,23 +2991,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
         nan_opacity=1.0,
         culling=None,
         rgb=None,
-        categories=False,
+        categories: bool = False,
         silhouette=None,
-        use_transparency=False,
+        use_transparency: bool = False,
         below_color=None,
         above_color=None,
         annotations=None,
-        pickable=True,
+        pickable: bool = True,
         preference='point',
-        log_scale=False,
+        log_scale: bool = False,
         pbr=None,
         metallic=None,
         roughness=None,
-        render=True,
+        render: bool = True,
         user_matrix=None,
         component=None,
         emissive=None,
-        copy_mesh=False,
+        copy_mesh: bool = False,
         backface_params=None,
         show_vertices=None,
         edge_opacity=None,
@@ -3882,28 +3890,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity='linear',
         n_colors=256,
         cmap=None,
-        flip_scalars=False,
+        flip_scalars: bool = False,
         reset_camera=None,
         name=None,
         ambient=None,
-        categories=False,
-        culling=False,
-        multi_colors=False,
+        categories: bool = False,
+        culling: bool | str = False,
+        multi_colors: bool = False,
         blending='composite',
         mapper=None,
         scalar_bar_args=None,
         show_scalar_bar=None,
         annotations=None,
-        pickable=True,
+        pickable: bool = True,
         preference='point',
         opacity_unit_distance=None,
-        shade=False,
+        shade: bool = False,
         diffuse=0.7,  # TODO: different default for volumes
         specular=0.2,  # TODO: different default for volumes
         specular_power=10.0,  # TODO: different default for volumes
-        render=True,
+        render: bool = True,
         user_matrix=None,
-        log_scale=False,
+        log_scale: bool = False,
         **kwargs,
     ):
         """Add a volume, rendered using a smart mapper by default.
@@ -4780,7 +4788,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         kwargs.setdefault('theme', self._theme)
         return self.scalar_bars.add_scalar_bar(**kwargs)
 
-    def update_scalars(self, scalars, mesh=None, render=True) -> None:
+    def update_scalars(self, scalars, mesh=None, render: bool = True) -> None:
         """Update scalars of an object in the plotter.
 
         .. deprecated:: 0.43.0
@@ -4857,7 +4865,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self.render()
 
-    def update_coordinates(self, points, mesh=None, render=True) -> None:
+    def update_coordinates(self, points, mesh=None, render: bool = True) -> None:
         """Update the points of an object in the plotter.
 
         .. deprecated:: 0.43.0
@@ -4979,13 +4987,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         font_size=18,
         color=None,
         font=None,
-        shadow=False,
+        shadow: bool = False,
         name=None,
-        viewport=False,
+        viewport: bool = False,
         orientation=0.0,
         font_file=None,
         *,
-        render=True,
+        render: bool = True,
     ):
         """Add text to plot object in the top left corner by default.
 
@@ -5161,7 +5169,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         loop=0,
         fps=10,
         palettesize=256,
-        subrectangles=False,
+        subrectangles: bool = False,
         **kwargs,
     ) -> None:
         """Open a gif file.
@@ -5268,7 +5276,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mwriter.append_data(self.image)
 
     def get_image_depth(
-        self, fill_value=np.nan, reset_camera_clipping_range=True
+        self, fill_value=np.nan, reset_camera_clipping_range: bool = True
     ) -> pyvista.pyvista_ndarray:
         """Return a depth image representing current render window.
 
@@ -5340,7 +5348,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-    def add_lines(self, lines, color='w', width=5, label=None, name=None, connected=False) -> Actor:
+    def add_lines(
+        self, lines, color='w', width=5, label=None, name=None, connected: bool = False
+    ) -> Actor:
         """Add lines to the plotting object.
 
         Parameters
@@ -5443,28 +5453,28 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self,
         points,
         labels,
-        italic=False,
-        bold=True,
+        italic: bool = False,
+        bold: bool = True,
         font_size=None,
         text_color=None,
         font_family=None,
         font_file=None,
-        shadow=False,
-        show_points=True,
+        shadow: bool = False,
+        show_points: bool = True,
         point_color=None,
         point_size=None,
         name=None,
         shape_color='grey',
         shape='rounded_rect',
-        fill_shape=True,
+        fill_shape: bool = True,
         margin=3,
         shape_opacity=1.0,
-        pickable=False,
-        render_points_as_spheres=False,
+        pickable: bool = False,
+        render_points_as_spheres: bool = False,
         tolerance=0.001,
         reset_camera=None,
-        always_visible=False,
-        render=True,
+        always_visible: bool = False,
+        render: bool = True,
         justification_horizontal=None,
         justification_vertical=None,
         background_color=None,
@@ -5939,7 +5949,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # return image array if requested
         return image if return_img else None
 
-    def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True) -> None:
+    def save_graphic(
+        self, filename, title='PyVista Export', raster: bool = True, painter: bool = True
+    ) -> None:
         """Save a screenshot of the rendering window as a graphic file.
 
         This can be helpful for publication documents.
@@ -6021,7 +6033,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self,
         filename=None,
         transparent_background=None,
-        return_img=True,
+        return_img: bool = True,
         window_size=None,
         scale=None,
     ):
@@ -6187,9 +6199,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         focus=None,
         step=0.5,
         viewup=None,
-        write_frames=False,
-        threaded=False,
-        progress_bar=False,
+        write_frames: bool = False,
+        threaded: bool = False,
+        progress_bar: bool = False,
     ):
         """Orbit on the given path focusing on the focus point.
 
@@ -6360,7 +6372,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if self._initialized:
             del self.renderers
 
-    def add_background_image(self, image_path, scale=1.0, auto_resize=True, as_global=True):
+    def add_background_image(
+        self, image_path, scale=1.0, auto_resize: bool = True, as_global: bool = True
+    ):
         """Add a background image to a plot.
 
         Parameters
@@ -6436,7 +6450,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset camera clipping planes."""
         self.renderer.ResetCameraClippingRange()
 
-    def add_light(self, light, only_active=False) -> None:
+    def add_light(self, light, only_active: bool = False) -> None:
         """Add a Light to the scene.
 
         Parameters
@@ -6467,7 +6481,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for renderer in renderers:
             renderer.add_light(light)
 
-    def remove_all_lights(self, only_active=False) -> None:
+    def remove_all_lights(self, only_active: bool = False) -> None:
         """Remove all lights from the scene.
 
         Parameters
@@ -6627,9 +6641,9 @@ class Plotter(BasePlotter):
         border_color='k',
         border_width=2.0,
         window_size=None,
-        line_smoothing=False,
-        point_smoothing=False,
-        polygon_smoothing=False,
+        line_smoothing: bool = False,
+        point_smoothing: bool = False,
+        polygon_smoothing: bool = False,
         splitting_position=None,
         title=None,
         lighting='light kit',
@@ -6753,15 +6767,15 @@ class Plotter(BasePlotter):
         self,
         title=None,
         window_size=None,
-        interactive=True,
+        interactive: bool = True,
         auto_close=None,
-        interactive_update=False,
+        interactive_update: bool = False,
         full_screen=None,
-        screenshot=False,
-        return_img=False,
+        screenshot: bool = False,
+        return_img: bool = False,
         cpos=None,
         jupyter_backend=None,
-        return_viewer=False,
+        return_viewer: bool = False,
         return_cpos=None,
         before_close_callback=None,
         **kwargs,
@@ -7069,7 +7083,7 @@ class Plotter(BasePlotter):
         return return_values or None
 
     def add_title(
-        self, title, font_size=18, color=None, font=None, shadow=False
+        self, title, font_size=18, color=None, font=None, shadow: bool = False
     ) -> _vtk.vtkTextActor:
         """Add text to the top center of the plot.
 

@@ -8,6 +8,8 @@ from functools import partial
 from inspect import signature
 import logging
 import time
+from typing import TYPE_CHECKING
+from typing import Any
 import warnings
 import weakref
 
@@ -17,6 +19,10 @@ from pyvista.core.utilities.misc import try_callback
 
 from . import _vtk
 from .opts import PickerType
+
+if TYPE_CHECKING:
+    from vtkmodules.vtkRenderingCore import vtkInteractorStyle
+
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -84,7 +90,9 @@ class RenderWindowInteractor:
 
     """
 
-    def __init__(self, plotter, desired_update_rate=30, light_follow_camera=True, interactor=None):
+    def __init__(
+        self, plotter, desired_update_rate=30, light_follow_camera: bool = True, interactor=None
+    ):
         """Initialize."""
         if interactor is None:
             interactor = _vtk.vtkRenderWindowInteractor()
@@ -94,8 +102,8 @@ class RenderWindowInteractor:
             self.interactor.LightFollowCameraOff()
 
         # Map of observers to events
-        self._observers = {}
-        self._key_press_event_callbacks = defaultdict(list)
+        self._observers: dict[_vtk.vtkObject, int] = {}
+        self._key_press_event_callbacks: defaultdict[str, list[Any]] = defaultdict(list)
         self._click_event_callbacks = {  # type: ignore[var-annotated]
             event: {(double, v): [] for double in (False, True) for v in (False, True)}
             for event in ('LeftButtonPressEvent', 'RightButtonPressEvent')
@@ -107,7 +115,7 @@ class RenderWindowInteractor:
 
         # Set default style
         self._style = 'RubberBandPick'
-        self._style_class = None
+        self._style_class: vtkInteractorStyle | None = None
         self.__plotter = weakref.ref(plotter)
 
         # Toggle interaction style when clicked on a visible chart (to
@@ -194,7 +202,7 @@ class RenderWindowInteractor:
             event = _vtk.vtkCommand.GetEventIdFromString(event)
         return _vtk.vtkCommand.GetStringFromEventId(event)
 
-    def add_observer(self, event, call, interactor_style_fallback=True):
+    def add_observer(self, event, call, interactor_style_fallback: bool = True):
         """Add an observer for the given event.
 
         Parameters
@@ -297,7 +305,7 @@ class RenderWindowInteractor:
         for observer in observers:
             self.remove_observer(observer)
 
-    def clear_events_for_key(self, key, raise_on_missing=False):
+    def clear_events_for_key(self, key, raise_on_missing: bool = False):
         """Remove the callbacks associated to the key.
 
         Parameters
@@ -363,7 +371,9 @@ class RenderWindowInteractor:
         for callback in self._click_event_callbacks[event][double, True]:
             callback(self._plotter.click_position)
 
-    def track_click_position(self, callback=None, side='right', double=False, viewport=False):
+    def track_click_position(
+        self, callback=None, side='right', double: bool = False, viewport: bool = False
+    ):
         """Keep track of the click position.
 
         By default, it only tracks right clicks.
@@ -949,7 +959,7 @@ class RenderWindowInteractor:
         self._style_class = None
         self.update_style()
 
-    def enable_terrain_style(self, mouse_wheel_zooms=False, shift_pans=False):
+    def enable_terrain_style(self, mouse_wheel_zooms: bool = False, shift_pans: bool = False):
         """Set the interactive style to Terrain.
 
         Used to manipulate a camera which is viewing a scene with a
@@ -1334,7 +1344,7 @@ class RenderWindowInteractor:
         """
         return self.interactor.GetDesiredUpdateRate()
 
-    def create_timer(self, duration, repeating=True):
+    def create_timer(self, duration, repeating: bool = True):
         """Create a timer.
 
         Parameters
@@ -1513,7 +1523,7 @@ class RenderWindowInteractor:
         if self._style_class == self._context_style:  # pragma: no cover
             self._set_context_style(None)  # Disable context interactor style first
         if self._style_class is not None:
-            self._style_class.remove_observers()
+            self._style_class.remove_observers()  # type: ignore[attr-defined]
             self._style_class = None
 
         self.terminate_app()
