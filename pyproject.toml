@@ -210,6 +210,7 @@ markers = [
 testpaths = 'tests'
 
 [tool.mypy]
+check_untyped_defs = true
 disallow_any_generics = true
 enable_error_code = ["ignore-without-code"]
 exclude = ['pyvista/ext/']

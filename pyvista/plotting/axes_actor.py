@@ -141,7 +141,7 @@ class AxesActor(_vtk.vtkAxesActor):
     @total_length.setter
     def total_length(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
-            self.SetTotalLength(length[0], length[1], length[2])
+            self.SetTotalLength(length[0], length[1], length[2])  # type: ignore[index]
         else:
             self.SetTotalLength(length, length, length)
 
@@ -168,7 +168,7 @@ class AxesActor(_vtk.vtkAxesActor):
     @shaft_length.setter
     def shaft_length(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
-            self.SetNormalizedShaftLength(length[0], length[1], length[2])
+            self.SetNormalizedShaftLength(length[0], length[1], length[2])  # type: ignore[index]
         else:
             self.SetNormalizedShaftLength(length, length, length)
 
@@ -195,7 +195,7 @@ class AxesActor(_vtk.vtkAxesActor):
     @tip_length.setter
     def tip_length(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
-            self.SetNormalizedTipLength(length[0], length[1], length[2])
+            self.SetNormalizedTipLength(length[0], length[1], length[2])  # type: ignore[index]
         else:
             self.SetNormalizedTipLength(length, length, length)
 
@@ -222,7 +222,7 @@ class AxesActor(_vtk.vtkAxesActor):
     @label_position.setter
     def label_position(self, length):  # numpydoc ignore=GL08
         if isinstance(length, Iterable):
-            self.SetNormalizedLabelPosition(length[0], length[1], length[2])
+            self.SetNormalizedLabelPosition(length[0], length[1], length[2])  # type: ignore[index]
         else:
             self.SetNormalizedLabelPosition(length, length, length)
 

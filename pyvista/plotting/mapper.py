@@ -644,8 +644,8 @@ class _DataSetMapper(_BaseMapper):
             if rgb:
                 pass
             elif scalars.ndim == 2 and (
-                scalars.shape[0] == self.dataset.n_points
-                or scalars.shape[0] == self.dataset.n_cells
+                scalars.shape[0] == self.dataset.n_points  # type: ignore[union-attr]
+                or scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
             ):
                 if not isinstance(component, (int, type(None))):
                     raise TypeError('component must be either None or an integer')
@@ -795,11 +795,11 @@ class _DataSetMapper(_BaseMapper):
     @resolve.setter
     def resolve(self, resolve):  # numpydoc ignore=GL08
         if resolve == 'off':
-            self.SetResolveCoincidentTopologyToOff()
+            self.SetResolveCoincidentTopologyToOff()  # type: ignore[attr-defined]
         elif resolve == 'polygon_offset':
-            self.SetResolveCoincidentTopologyToPolygonOffset()
+            self.SetResolveCoincidentTopologyToPolygonOffset()  # type: ignore[attr-defined]
         elif resolve == 'shift_zbuffer':
-            self.SetResolveCoincidentTopologyToShiftZBuffer()
+            self.SetResolveCoincidentTopologyToShiftZBuffer()  # type: ignore[attr-defined]
         else:
             raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_zbuffer"')
 
@@ -824,15 +824,15 @@ class _DataSetMapper(_BaseMapper):
 
         """
         # Create a custom RGBA array to supply our opacity to
-        if opacity.size == self.dataset.n_points:
-            rgba = np.empty((self.dataset.n_points, 4), np.uint8)
-        elif opacity.size == self.dataset.n_cells:
-            rgba = np.empty((self.dataset.n_cells, 4), np.uint8)
+        if opacity.size == self.dataset.n_points:  # type: ignore[union-attr]
+            rgba = np.empty((self.dataset.n_points, 4), np.uint8)  # type: ignore[union-attr]
+        elif opacity.size == self.dataset.n_cells:  # type: ignore[union-attr]
+            rgba = np.empty((self.dataset.n_cells, 4), np.uint8)  # type: ignore[union-attr]
         else:  # pragma: no cover
             raise ValueError(
                 f'Opacity array size ({opacity.size}) does not equal '
-                f'the number of points ({self.dataset.n_points}) or the '
-                f'number of cells ({self.dataset.n_cells}).',
+                f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
+                f'number of cells ({self.dataset.n_cells}).',  # type: ignore[union-attr]
             )
 
         default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
@@ -1069,7 +1069,7 @@ class _BaseVolumeMapper(_BaseMapper):
     def dataset(self):  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         # GetInputAsDataSet unavailable on volume mappers
-        return wrap(self.GetDataSetInput())
+        return wrap(self.GetDataSetInput())  # type: ignore[attr-defined]
 
     @dataset.setter
     def dataset(
