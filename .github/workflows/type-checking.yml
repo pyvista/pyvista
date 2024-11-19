@@ -22,7 +22,7 @@ jobs:
         run: pip install .[typing]
 
       - name: Run Mypy
-        run: mypy --xml-report
+        run: mypy --xml-report .
 
       - name: Software Report
         run: |
