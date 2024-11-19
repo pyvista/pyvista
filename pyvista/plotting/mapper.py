@@ -118,7 +118,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     @scalar_range.setter
     def scalar_range(self, clim):  # numpydoc ignore=GL08
-        self.SetScalarRange(*clim)
+        self.SetScalarRange(*clim)  # type: ignore[attr-defined]
 
     @property
     def lookup_table(self) -> pyvista.LookupTable:  # numpydoc ignore=RT01
@@ -160,7 +160,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     @lookup_table.setter
     def lookup_table(self, table):  # numpydoc ignore=GL08
-        self.SetLookupTable(table)
+        self.SetLookupTable(table)  # type: ignore[attr-defined]
 
     @property
     def color_mode(self) -> str:  # numpydoc ignore=RT01
@@ -412,9 +412,9 @@ class _DataSetMapper(_BaseMapper):
         if self.color_mode == 'direct':
             return
 
-        self.dataset.point_data.pop('__rgba__', None)
+        self.dataset.point_data.pop('__rgba__', None)  # type: ignore[union-attr]
         self._configure_scalars_mode(
-            self.lookup_table(self.dataset.active_scalars),
+            self.lookup_table(self.dataset.active_scalars),  # type: ignore[union-attr]
             '__rgba__',
             self.scalar_map_mode,
             True,
@@ -447,29 +447,29 @@ class _DataSetMapper(_BaseMapper):
             ``False``, scalars are mapped to the color table.
 
         """
-        if scalars.shape[0] == self.dataset.n_points and scalars.shape[0] == self.dataset.n_cells:
+        if scalars.shape[0] == self.dataset.n_points and scalars.shape[0] == self.dataset.n_cells:  # type: ignore[union-attr]
             use_points = preference == 'point'
             use_cells = not use_points
         else:
-            use_points = scalars.shape[0] == self.dataset.n_points
-            use_cells = scalars.shape[0] == self.dataset.n_cells
+            use_points = scalars.shape[0] == self.dataset.n_points  # type: ignore[union-attr]
+            use_cells = scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
 
         # Scalars interpolation approach
         if use_points:
             if (
-                scalars_name not in self.dataset.point_data
+                scalars_name not in self.dataset.point_data  # type: ignore[union-attr]
                 or scalars_name == pyvista.DEFAULT_SCALARS_NAME
             ):
-                self.dataset.point_data.set_array(scalars, scalars_name, False)
-            self.dataset.active_scalars_name = scalars_name
+                self.dataset.point_data.set_array(scalars, scalars_name, False)  # type: ignore[union-attr]
+            self.dataset.active_scalars_name = scalars_name  # type: ignore[union-attr]
             self.scalar_map_mode = 'point'
         elif use_cells:
             if (
-                scalars_name not in self.dataset.cell_data
+                scalars_name not in self.dataset.cell_data  # type: ignore[union-attr]
                 or scalars_name == pyvista.DEFAULT_SCALARS_NAME
             ):
-                self.dataset.cell_data.set_array(scalars, scalars_name, False)
-            self.dataset.active_scalars_name = scalars_name
+                self.dataset.cell_data.set_array(scalars, scalars_name, False)  # type: ignore[union-attr]
+            self.dataset.active_scalars_name = scalars_name  # type: ignore[union-attr]
             self.scalar_map_mode = 'cell'
         else:
             raise_not_matching(scalars, self.dataset)
@@ -639,8 +639,8 @@ class _DataSetMapper(_BaseMapper):
             if rgb:
                 pass
             elif scalars.ndim == 2 and (
-                scalars.shape[0] == self.dataset.n_points
-                or scalars.shape[0] == self.dataset.n_cells
+                scalars.shape[0] == self.dataset.n_points  # type: ignore[union-attr]
+                or scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
             ):
                 if not isinstance(component, (int, type(None))):
                     raise TypeError('component must be either None or an integer')
@@ -790,11 +790,11 @@ class _DataSetMapper(_BaseMapper):
     @resolve.setter
     def resolve(self, resolve):  # numpydoc ignore=GL08
         if resolve == 'off':
-            self.SetResolveCoincidentTopologyToOff()
+            self.SetResolveCoincidentTopologyToOff()  # type: ignore[attr-defined]
         elif resolve == 'polygon_offset':
-            self.SetResolveCoincidentTopologyToPolygonOffset()
+            self.SetResolveCoincidentTopologyToPolygonOffset()  # type: ignore[attr-defined]
         elif resolve == 'shift_zbuffer':
-            self.SetResolveCoincidentTopologyToShiftZBuffer()
+            self.SetResolveCoincidentTopologyToShiftZBuffer()  # type: ignore[attr-defined]
         else:
             raise ValueError('Resolve must be either "off", "polygon_offset" or "shift_zbuffer"')
 
@@ -819,15 +819,15 @@ class _DataSetMapper(_BaseMapper):
 
         """
         # Create a custom RGBA array to supply our opacity to
-        if opacity.size == self.dataset.n_points:
-            rgba = np.empty((self.dataset.n_points, 4), np.uint8)
-        elif opacity.size == self.dataset.n_cells:
-            rgba = np.empty((self.dataset.n_cells, 4), np.uint8)
+        if opacity.size == self.dataset.n_points:  # type: ignore[union-attr]
+            rgba = np.empty((self.dataset.n_points, 4), np.uint8)  # type: ignore[union-attr]
+        elif opacity.size == self.dataset.n_cells:  # type: ignore[union-attr]
+            rgba = np.empty((self.dataset.n_cells, 4), np.uint8)  # type: ignore[union-attr]
         else:  # pragma: no cover
             raise ValueError(
                 f'Opacity array size ({opacity.size}) does not equal '
-                f'the number of points ({self.dataset.n_points}) or the '
-                f'number of cells ({self.dataset.n_cells}).',
+                f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
+                f'number of cells ({self.dataset.n_cells}).',  # type: ignore[union-attr]
             )
 
         default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
@@ -1020,7 +1020,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
 
     def use_default_splat(self):
         """Clear the fragment shader and use the default splat."""
-        self.SetSplatShaderCode(None)
+        self.SetSplatShaderCode(None)  # type: ignore[arg-type]
         self.scale_factor /= 1.5
 
     def __repr__(self):
@@ -1064,7 +1064,7 @@ class _BaseVolumeMapper(_BaseMapper):
     def dataset(self):  # numpydoc ignore=RT01
         """Return or set the dataset assigned to this mapper."""
         # GetInputAsDataSet unavailable on volume mappers
-        return wrap(self.GetDataSetInput())
+        return wrap(self.GetDataSetInput())  # type: ignore[attr-defined]
 
     @dataset.setter
     def dataset(
@@ -1141,7 +1141,7 @@ class _BaseVolumeMapper(_BaseMapper):
             raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
 
     def __del__(self):
-        self._lut = None
+        self._lut = None  # type: ignore[assignment]
 
 
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):

@@ -204,8 +204,8 @@ class Report(scooby.Report):
         scooby.Report.__init__(
             self,
             additional=additional,
-            core=core,
-            optional=optional,
+            core=core,  # type: ignore[arg-type]
+            optional=optional,  # type: ignore[arg-type]
             ncol=ncol,
             text_width=text_width,
             sort=sort,
