@@ -42,8 +42,8 @@ from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
 if TYPE_CHECKING:
-    from ..core.dataset import DataSet
     from ..core.pointset import PolyData
+    from .cube_axes_actor import CubeAxesActor
     from .lights import Light
 
 ACTOR_LOC_MAP = [
@@ -103,7 +103,7 @@ def map_loc_to_pos(loc, size, border=0.05):
     return x, y, size
 
 
-def make_legend_face(face):
+def make_legend_face(face) -> PolyData:
     """Create the legend face based on the given face.
 
     Parameters
@@ -286,14 +286,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors: dict[str, Actor] = {}
+        self._actors: dict[str, _vtk.vtkActor] = {}
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
-        self._labels: dict[str, tuple[Actor | DataSet, str, Color]] = {}  # tracks labeled actors
-        self._legend = None
+        self._labels: dict[
+            str, tuple[_vtk.vtkPolyData | _vtk.vtkImageData, str, Color]
+        ] = {}  # tracks labeled actors
+        self._legend: _vtk.vtkLegendBoxActor | None = None
         self._floor: PolyData | None = None
         self._floors: list[Actor] = []
         self._floor_kwargs: list[dict[str, Any]] = []
@@ -304,15 +306,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
-        self.cube_axes_actor = None
+        self.cube_axes_actor: CubeAxesActor | None = None
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup: dict[str, int] = {}
-        self._charts = None
+        self._charts: Charts | None = None
 
-        self._border_actor = None
+        self._border_actor: _vtk.vtkActor2D | None = None
         if border:
             self.add_border(border_color, border_width)
 
@@ -2232,7 +2234,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             j_size = ranges[1]
         else:
             raise NotImplementedError(f'Face ({face}) not implemented')
-        self._floor = pyvista.Plane(
+        floor = pyvista.Plane(
             center=center,
             direction=normal,
             i_size=i_size,
@@ -2240,7 +2242,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             i_resolution=i_resolution,
             j_resolution=j_resolution,
         )
-        self._floor.clear_data()
+        floor.clear_data()
+        self._floor = floor
 
         if lighting is None:
             lighting = self._theme.lighting
@@ -2629,7 +2632,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        name = None
+        name: str | None = None
         if isinstance(actor, str):
             name = actor
             keys = list(self._actors.keys())
@@ -2663,7 +2666,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for k, v in self._actors.items():
                 if v == actor:
                     name = k
-        self._actors.pop(name, None)
+        if name is not None:
+            self._actors.pop(name, None)
         self.update_bounds_axes()
         if reset_camera or not self.camera_set and reset_camera is None:
             self.reset_camera(render=render)
@@ -2775,7 +2779,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             and self._box_object is not None
             and self.bounding_box_actor is not None
         ):
-            if not np.allclose(self._box_object.bounds, self.bounds):  # type: ignore[union-attr]
+            if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
@@ -3538,7 +3542,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
-        self._camera = None  # type: ignore[assignment]
+        self._camera = None
         self._bounding_box = None  # type: ignore[assignment]
         self._marker_actor = None
         self._border_actor = None
@@ -3770,7 +3774,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
                 if face is not None:
                     vtk_object = make_legend_face(face)
-                self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
+                self._legend.SetEntry(i, vtk_object, text, list(color.float_rgb))
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
@@ -3812,7 +3816,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     )
 
                 legend_face = make_legend_face(face_ or face)
-                self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)  # type: ignore[call-overload]
+                self._legend.SetEntry(i, legend_face, text, list(Color(color).float_rgb))
 
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
