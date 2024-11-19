@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
 
 
-def vtk_points(points, deep=True, force_float=False):
+def vtk_points(points, deep: bool = True, force_float: bool | None = False):
     """Convert numpy array or array-like to a ``vtkPoints`` object.
 
     Parameters
@@ -148,7 +148,7 @@ def line_segments_from_points(points):
     return poly
 
 
-def lines_from_points(points, close=False):
+def lines_from_points(points, close: bool = False):
     """Make a connected line set given an array of points.
 
     Parameters
@@ -186,7 +186,7 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=None):
+def fit_plane_to_points(points, return_meta: bool = False, resolution=10, init_normal=None):
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of

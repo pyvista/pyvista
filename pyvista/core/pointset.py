@@ -115,7 +115,7 @@ class _PointSet(DataSet):
     def remove_cells(
         self,
         ind: VectorLike[bool] | VectorLike[int],
-        inplace=False,
+        inplace: bool = False,
     ) -> _PointSet:
         """Remove cells.
 
@@ -190,7 +190,9 @@ class _PointSet(DataSet):
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    def translate(self, xyz: VectorLike[float], transform_all_input_vectors=False, inplace=None):
+    def translate(
+        self, xyz: VectorLike[float], transform_all_input_vectors: bool = False, inplace=None
+    ):
         """Translate the mesh.
 
         Parameters
@@ -302,7 +304,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
             raise VTKVersionError('pyvista.PointSet requires VTK >= 9.1.0')
         return super().__new__(cls, *args, **kwargs)
 
-    def __init__(self, var_inp=None, deep=False, force_float=True):
+    def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True):
         """Initialize the pointset."""
         super().__init__()
 
@@ -324,7 +326,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    def cast_to_polydata(self, deep=True):
+    def cast_to_polydata(self, deep: bool = True):
         """Cast this dataset to polydata.
 
         Parameters
@@ -1068,7 +1070,9 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         self.faces = CellArray.from_regular_cells(faces)  # type: ignore[assignment]
 
     @classmethod
-    def from_regular_faces(cls, points: MatrixLike[float], faces: MatrixLike[int], deep=False):
+    def from_regular_faces(
+        cls, points: MatrixLike[float], faces: MatrixLike[int], deep: bool = False
+    ):
         """Alternate `pyvista.PolyData` convenience constructor from point and regular face arrays.
 
         Parameters
@@ -1414,7 +1418,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         """
         return self.GetNumberOfPolys()
 
-    def save(self, filename, binary=True, texture=None, recompute_normals=True):
+    def save(self, filename, binary: bool = True, texture=None, recompute_normals: bool = True):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
@@ -1813,7 +1817,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         '.vtk': _vtk.vtkUnstructuredGridWriter,
     }
 
-    def __init__(self, *args, deep=False, **kwargs) -> None:
+    def __init__(self, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the unstructured grid."""
         super().__init__()
 
@@ -1868,7 +1872,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    def _from_cells_dict(self, cells_dict, points, deep=True):
+    def _from_cells_dict(self, cells_dict, points, deep: bool = True):
         if points.ndim != 2 or points.shape[-1] != 3:
             raise ValueError('Points array must be a [M, 3] array')
 
@@ -1881,8 +1885,8 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         cells,
         cell_type,
         points,
-        deep=True,
-        force_float=True,
+        deep: bool = True,
+        force_float: bool = True,
     ):
         """Create VTK unstructured grid from numpy arrays.
 
@@ -2122,7 +2126,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         carr = self.GetCells()
         return _vtk.vtk_to_numpy(carr.GetConnectivityArray())
 
-    def linear_copy(self, deep=False):
+    def linear_copy(self, deep: bool = False):
         """Return a copy of the unstructured grid containing only linear cells.
 
         Converts the following cell types to their linear equivalents.
@@ -2385,7 +2389,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         dict[str, type[_vtk.vtkStructuredGridWriter | _vtk.vtkXMLStructuredGridWriter]]
     ] = {'.vtk': _vtk.vtkStructuredGridWriter, '.vts': _vtk.vtkXMLStructuredGridWriter}  # type: ignore[assignment]
 
-    def __init__(self, uinput=None, y=None, z=None, *args, deep=False, **kwargs) -> None:
+    def __init__(self, uinput=None, y=None, z=None, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the structured grid."""
         super().__init__()
 
@@ -2428,7 +2432,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         """Return the standard str representation."""
         return DataSet.__str__(self)
 
-    def _from_arrays(self, x, y, z, force_float=True):
+    def _from_arrays(self, x, y, z, force_float: bool = True):
         """Create VTK structured grid directly from numpy arrays.
 
         Parameters
@@ -2593,7 +2597,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
 
         return self.extract_subset(voi, rate, boundary=False)
 
-    def hide_cells(self, ind, inplace=False):
+    def hide_cells(self, ind, inplace: bool = False):
         """Hide cells without deleting them.
 
         Hides cells by setting the ghost_cells array to ``HIDDEN_CELL``.
@@ -2982,11 +2986,11 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     def clean(
         self,
         tolerance=0,
-        remove_unused_points=True,
-        produce_merge_map=True,
-        average_point_data=True,
+        remove_unused_points: bool = True,
+        produce_merge_map: bool = True,
+        average_point_data: bool = True,
         merging_array_name=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ) -> ExplicitStructuredGrid:
         """Merge duplicate points and remove unused points in an ExplicitStructuredGrid.
 
@@ -3551,7 +3555,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
             grid.compute_connectivity(inplace=True)
             return grid
 
-    def compute_connections(self, inplace=False):
+    def compute_connections(self, inplace: bool = False):
         """Compute an array with the number of connected cell faces.
 
         This method calculates the number of topological cell
