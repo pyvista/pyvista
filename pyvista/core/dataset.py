@@ -73,7 +73,7 @@ class ActiveArrayInfo:
 
     """
 
-    def __init__(self, association, name):
+    def __init__(self, association, name) -> None:
         """Initialize."""
         self.association = association
         self.name = name
@@ -95,7 +95,7 @@ class ActiveArrayInfo:
         state['association'] = int(self.association.value)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         """Support unpickling."""
         self.__dict__ = state.copy()
         self.association = FieldAssociation(state['association'])
@@ -117,11 +117,11 @@ class ActiveArrayInfo:
         """Provide namedtuple-like __getitem__."""
         return self._namedtuple.__getitem__(item)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         """Provide namedtuple-like __setitem__."""
         self._namedtuple.__setitem__(key, value)
 
-    def __getattr__(self, item):
+    def __getattr__(self, item) -> None:
         """Provide namedtuple-like __getattr__."""
         self._namedtuple.__getattr__(item)
 
@@ -358,7 +358,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_tensors_info.name
 
     @active_tensors_name.setter
-    def active_tensors_name(self, name: str):  # numpydoc ignore=GL08
+    def active_tensors_name(self, name: str) -> None:  # numpydoc ignore=GL08
         """Set the name of the active tensor array.
 
         Parameters
@@ -394,7 +394,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_vectors_info.name
 
     @active_vectors_name.setter
-    def active_vectors_name(self, name: str):  # numpydoc ignore=GL08
+    def active_vectors_name(self, name: str) -> None:  # numpydoc ignore=GL08
         """Set the name of the active vectors array.
 
         Parameters
@@ -429,7 +429,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_scalars_info.name
 
     @active_scalars_name.setter
-    def active_scalars_name(self, name: str):  # numpydoc ignore=GL08
+    def active_scalars_name(self, name: str) -> None:  # numpydoc ignore=GL08
         """Set the name of the active scalars.
 
         Parameters
@@ -506,7 +506,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: MatrixLike[float] | _vtk.vtkPoints):  # numpydoc ignore=GL08
+    def points(self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:  # numpydoc ignore=GL08
         """Set a reference to the points as a numpy object.
 
         Parameters
@@ -595,7 +595,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_texture_coordinates
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: NumpyArray[float]):  # numpydoc ignore=GL08
+    def active_t_coords(self, t_coords: NumpyArray[float]) -> None:  # numpydoc ignore=GL08
         """Set the active texture coordinates on the points.
 
         Parameters
@@ -3540,7 +3540,7 @@ class DataSet(DataSetFilters, DataObject):
     def active_texture_coordinates(
         self,
         texture_coordinates: NumpyArray[float],
-    ):  # numpydoc ignore=GL08
+    ) -> None:  # numpydoc ignore=GL08
         """Set the active texture coordinates on the points.
 
         Parameters

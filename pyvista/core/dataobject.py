@@ -99,7 +99,7 @@ class DataObject:
         self.shallow_copy(data)
         self._post_file_load_processing()
 
-    def _post_file_load_processing(self):
+    def _post_file_load_processing(self) -> None:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
     def save(
@@ -286,7 +286,7 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
+    def copy_meta_from(self, *args, **kwargs) -> None:  # pragma: no cover
         """Copy pyvista meta data onto this object from another object.
 
         Intended to be overridden by subclasses.
@@ -589,7 +589,7 @@ class DataObject:
                 f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.',
             )
 
-    def _config_user_dict(self):
+    def _config_user_dict(self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
         field_name = '_PYVISTA_USER_DICT'
         field_data = self.field_data
@@ -806,7 +806,7 @@ class DataObject:
                 f"Cannot unpickle '{self.__class__.__name__}'. Invalid pickle format."
             )
 
-    def _unserialize_vtk_pickle_format(self, state):
+    def _unserialize_vtk_pickle_format(self, state) -> None:
         """Support unpickle of VTK's format."""
         # The vtk state has format: ( function, (dict,) )
         unserialize_func = state[0]
