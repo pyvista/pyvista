@@ -95,3 +95,9 @@ repos:
       - id: taplo-format
         # See options: https://taplo.tamasfe.dev/configuration/formatter-options.html
         args: [--option, "reorder_arrays=true", --option, "reorder_keys=true"]
+
+  - repo: https://github.com/JelleZijlstra/autotyping
+    rev: 24.9.0
+    hooks:
+      - id: autotyping
+        args: [--safe]
