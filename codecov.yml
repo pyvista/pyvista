@@ -2,21 +2,29 @@ comment:
   layout: "diff, flags"
   behavior: default
 
-coverage:
-  status:
-    project:
-      default:
-        # basic
-        target: 90%
-        threshold: 0%
-        # advanced
-        if_not_found: success
-        if_ci_failed: error
-        if_no_uploads: error
-    patch:
-      default:
-        # basic
-        target: 90%
-        if_not_found: success
-        if_ci_failed: error
-        if_no_uploads: error
+flag_management:
+  default_rules: # the rules that will be followed for any flag added, generally
+    - statuses:
+        - type: project
+          if_not_found: success
+          if_ci_failed: error
+          if_no_uploads: error
+        - type: patch
+          if_not_found: success
+          if_ci_failed: error
+          if_no_uploads: error
+  individual_flags: # exceptions to the default rules above, stated flag by flag
+    - name: pytest
+      statuses:
+        - type: project
+          target: 90%
+          threshold: 0%
+        - type: patch
+          target: 90%
+    - name: mypy
+      statuses:
+        - type: project
+          target: 20%
+          threshold: 0%
+        - type: patch
+          target: 20%
