@@ -240,7 +240,7 @@ class ProgressMonitor:
 
     def handler(self, sig, frame):
         """Pass signal to custom interrupt handler."""
-        self._interrupt_signal_received = (sig, frame)
+        self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
 
     def __call__(self, obj, *args):
@@ -253,7 +253,7 @@ class ProgressMonitor:
         else:
             progress = obj.GetProgress()
             step = progress - self._old_progress
-            self._progress_bar.update(step)
+            self._progress_bar.update(step)  # type: ignore[union-attr]
             self._old_progress = progress
 
     def __enter__(self):
@@ -274,9 +274,9 @@ class ProgressMonitor:
 
     def __exit__(self, *args):
         """Exit event for ``with`` context."""
-        self._progress_bar.total = 1
-        self._progress_bar.refresh()
-        self._progress_bar.close()
+        self._progress_bar.total = 1  # type: ignore[union-attr]
+        self._progress_bar.refresh()  # type: ignore[union-attr]
+        self._progress_bar.close()  # type: ignore[union-attr]
         self.algorithm.RemoveObservers(self.event_type)
         if threading.current_thread().__class__.__name__ == '_MainThread':
             signal.signal(signal.SIGINT, self._old_handler)

@@ -424,7 +424,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     dims = dimensions - 1
     dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
-    image.origin = bounds[::2]
+    image.origin = bounds[::2]  # type: ignore[assignment]
     return image
 
 
