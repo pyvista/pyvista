@@ -245,6 +245,9 @@ jobs:
         name: "Upload coverage to CodeCov"
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: pytest
+          name: Pytest Test Coverage
 
       - name: Check package
         run: |
