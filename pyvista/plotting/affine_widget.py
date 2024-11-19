@@ -202,8 +202,8 @@ class AffineWidget3D:
             self._main_actor.user_matrix = np.eye(4)
         self._cached_matrix = self._main_actor.user_matrix
 
-        self._arrows = []
-        self._circles = []
+        self._arrows = []  # type: ignore[var-annotated]
+        self._circles = []  # type: ignore[var-annotated]
         self._pressing_down = False
         origin = origin if origin else actor.center
         self._origin = np.array(origin)
@@ -364,14 +364,14 @@ class AffineWidget3D:
                     angle = -angle
 
                 trans = _vtk.vtkTransform()
-                trans.Translate(self._origin)
+                trans.Translate(self._origin)  # type: ignore[call-overload]
                 trans.RotateWXYZ(
                     angle,
                     self._axes[index][0],
                     self._axes[index][1],
                     self._axes[index][2],
                 )
-                trans.Translate(-self._origin)
+                trans.Translate(-self._origin)  # type: ignore[call-overload]
                 trans.Update()
                 rot_matrix = pyvista.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = rot_matrix @ self._cached_matrix

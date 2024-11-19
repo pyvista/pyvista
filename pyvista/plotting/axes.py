@@ -127,6 +127,6 @@ class Axes(_vtk.vtkAxes):
 
     def __del__(self):
         """Clean the attributes of the class."""
-        self.axes_actor = None
-        self.actor = None
-        self.mapper = None
+        self.axes_actor = None  # type: ignore[assignment]
+        self.actor = None  # type: ignore[assignment]
+        self.mapper = None  # type: ignore[assignment]

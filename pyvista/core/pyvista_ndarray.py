@@ -85,7 +85,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class
-        _vtk.VTKArray.__array_finalize__(self, obj)
+        _vtk.VTKArray.__array_finalize__(self, obj)  # type: ignore[arg-type]
         if np.shares_memory(self, obj):
             self.dataset = getattr(obj, 'dataset', None)
             self.association = getattr(obj, 'association', FieldAssociation.NONE)

@@ -152,7 +152,7 @@ def copy_vtk_array(array, deep=True):
     if deep:
         new_array.DeepCopy(array)
     else:
-        new_array.ShallowCopy(array)
+        new_array.ShallowCopy(array)  # type: ignore[attr-defined]
 
     return new_array
 
@@ -387,7 +387,7 @@ def raise_not_matching(scalars, dataset):
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',
+            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',  # type: ignore[attr-defined]
         )
     raise ValueError(
         f'Number of scalars ({scalars.shape[0]}) '
@@ -680,7 +680,7 @@ def vtkmatrix_from_array(array):
     if array.shape == (3, 3):
         matrix = _vtk.vtkMatrix3x3()
     elif array.shape == (4, 4):
-        matrix = _vtk.vtkMatrix4x4()
+        matrix = _vtk.vtkMatrix4x4()  # type: ignore[assignment]
     else:
         raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
     m, n = array.shape
@@ -897,7 +897,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         self._update_string()
         return item
 
-    def pop(self, __key):
+    def pop(self, __key):  # type: ignore[override]
         item = super().pop(__key)
         self._update_string()
         return item

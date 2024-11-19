@@ -80,10 +80,10 @@ class CompositeFilters:
 
         """
         alg = _vtk.vtkAppendFilter()
-        for block in self:
+        for block in self:  # type: ignore[attr-defined]
             if isinstance(block, _vtk.vtkMultiBlockDataSet):
                 block = CompositeFilters.combine(
-                    block,
+                    block,  # type: ignore[arg-type]
                     merge_points=merge_points,
                     tolerance=tolerance,
                 )
@@ -143,11 +143,11 @@ class CompositeFilters:
         """
         if nested:
             return DataSetFilters.outline(
-                self,
+                self,  # type: ignore[arg-type]
                 generate_faces=generate_faces,
                 progress_bar=progress_bar,
             )
-        box = pyvista.Box(bounds=self.bounds)
+        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
     def outline_corners(self, factor=0.2, nested=False, progress_bar=False):
@@ -172,8 +172,8 @@ class CompositeFilters:
 
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
-        box = pyvista.Box(bounds=self.bounds)
+            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)  # type: ignore[arg-type]
+        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
     def _compute_normals(
@@ -190,7 +190,7 @@ class CompositeFilters:
         progress_bar=False,
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
-        if not self.is_all_polydata:
+        if not self.is_all_polydata:  # type: ignore[attr-defined]
             raise RuntimeError(
                 'This multiblock contains non-PolyData datasets. Convert all the '
                 'datasets to PolyData with `as_polydata`',
@@ -198,7 +198,7 @@ class CompositeFilters:
 
         # track original point indices
         if split_vertices and track_vertices:
-            for block in self:
+            for block in self:  # type: ignore[attr-defined]
                 ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 

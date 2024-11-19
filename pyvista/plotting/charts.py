@@ -34,7 +34,7 @@ class _vtkWrapperMeta(type):
     def __init__(cls, clsname, bases, attrs):
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
-        sig = inspect.signature(cls.__init__)
+        sig = inspect.signature(cls.__init__)  # type: ignore[misc]
         params = list(sig.parameters.values())
         params.insert(
             len(params) - 1 if params[-1].kind == inspect.Parameter.VAR_KEYWORD else len(params),
@@ -44,7 +44,7 @@ class _vtkWrapperMeta(type):
         super().__init__(clsname, bases, attrs)
 
     def __call__(cls, *args, _wrap=None, **kwargs):
-        obj = cls.__new__(cls, *args, **kwargs)
+        obj = cls.__new__(cls, *args, **kwargs)  # type: ignore[arg-type, var-annotated]
         obj._wrapped = _wrap
         obj.__init__(*args, **kwargs)
         return obj
@@ -123,7 +123,7 @@ class DocSubs:
                 return member(*args, **kwargs)
 
         elif isinstance(member, property):
-            mem_sub = property(member.fget, member.fset, member.fdel)
+            mem_sub = property(member.fget, member.fset, member.fdel)  # type: ignore[assignment]
         else:
             raise NotImplementedError(
                 'Members other than methods and properties are currently not supported.',
@@ -272,7 +272,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         if val is None:
             val = ''
         try:
-            self.SetLineType(self.LINE_STYLES[val]['id'])
+            self.SetLineType(self.LINE_STYLES[val]['id'])  # type: ignore[arg-type]
             self._line_style = val
         except KeyError:
             formatted_styles = '", "'.join(self.LINE_STYLES.keys())
@@ -355,7 +355,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
             self._texture = None
             self.SetTexture(None)
         else:
-            self._texture = pyvista.Texture(val)
+            self._texture = pyvista.Texture(val)  # type: ignore[abstract]
             self.SetTexture(self._texture.to_image())
 
     @property
@@ -474,8 +474,8 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # SetPen and SetGridPen methods are not available for older VTK versions,
             # so fallback to using wrapper objects.
-            self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())
-            self.grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())
+            self.pen = Pen(color=(0, 0, 0), _wrap=self.GetPen())  # type: ignore[call-arg]
+            self.grid_pen = Pen(color=(0.95, 0.95, 0.95), _wrap=self.GetGridPen())  # type: ignore[call-arg]
         else:
             self.pen = Pen(color=(0, 0, 0))
             self.grid_pen = Pen(color=(0.95, 0.95, 0.95))
@@ -1123,7 +1123,7 @@ class _Chart(DocSubs):
     @property
     def _scene(self):
         """Get a reference to the vtkScene in which this chart is drawn."""
-        return self.GetScene()
+        return self.GetScene()  # type: ignore[attr-defined]
 
     @property
     def _renderer(self):
@@ -1167,12 +1167,12 @@ class _Chart(DocSubs):
     @property
     def _geometry(self):
         """Chart geometry (x and y position of bottom left corner and width and height in pixels)."""
-        return tuple(self.GetSize())
+        return tuple(self.GetSize())  # type: ignore[attr-defined]
 
     @_geometry.setter
     def _geometry(self, val):
         """Set the chart geometry."""
-        self.SetSize(_vtk.vtkRectf(*val))
+        self.SetSize(_vtk.vtkRectf(*val))  # type: ignore[attr-defined]
 
     @property
     def _interactive(self):
@@ -1184,11 +1184,11 @@ class _Chart(DocSubs):
         :func:`Renderer.set_chart_interaction` method instead.
 
         """
-        return self.GetInteractive()
+        return self.GetInteractive()  # type: ignore[attr-defined]
 
     @_interactive.setter
     def _interactive(self, val):
-        self.SetInteractive(val)
+        self.SetInteractive(val)  # type: ignore[attr-defined]
 
     def _is_within(self, pos):
         """Check whether the specified position (in pixels) lies within this chart's geometry."""
@@ -1467,11 +1467,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()
+        return self.GetVisible()  # type: ignore[attr-defined]
 
     @visible.setter
     def visible(self, val):  # numpydoc ignore=GL08
-        self.SetVisible(val)
+        self.SetVisible(val)  # type: ignore[attr-defined]
 
     @doc_subs
     def toggle(self):
@@ -1514,11 +1514,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetTitle()
+        return self.GetTitle()  # type: ignore[attr-defined]
 
     @title.setter
     def title(self, val):  # numpydoc ignore=GL08
-        self.SetTitle(val)
+        self.SetTitle(val)  # type: ignore[attr-defined]
 
     @property
     @doc_subs
@@ -1543,11 +1543,11 @@ class _Chart(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetShowLegend()
+        return self.GetShowLegend()  # type: ignore[attr-defined]
 
     @legend_visible.setter
     def legend_visible(self, val):  # numpydoc ignore=GL08
-        self.SetShowLegend(val)
+        self.SetShowLegend(val)  # type: ignore[attr-defined]
 
     @doc_subs
     def show(
@@ -1629,9 +1629,9 @@ class _Chart(DocSubs):
             off_screen = pyvista.OFF_SCREEN
         pl = pyvista.Plotter(window_size=window_size, notebook=notebook, off_screen=off_screen)
         pl.background_color = background
-        pl.add_chart(self)
+        pl.add_chart(self)  # type: ignore[arg-type]
         if interactive and (not off_screen or pyvista.BUILDING_GALLERY):  # pragma: no cover
-            pl.set_chart_interaction(self)
+            pl.set_chart_interaction(self)  # type: ignore[arg-type]
         return pl.show(
             screenshot=screenshot,
             full_screen=full_screen,
@@ -1817,7 +1817,7 @@ class _Plot(DocSubs):
     @label.setter
     def label(self, val):  # numpydoc ignore=GL08
         self._label = '' if val is None else val
-        self.SetLabel(self._label)
+        self.SetLabel(self._label)  # type: ignore[attr-defined]
 
     @property
     @doc_subs
@@ -1842,11 +1842,11 @@ class _Plot(DocSubs):
            >>> chart.show()
 
         """
-        return self.GetVisible()
+        return self.GetVisible()  # type: ignore[attr-defined]
 
     @visible.setter
     def visible(self, val):  # numpydoc ignore=GL08
-        self.SetVisible(val)
+        self.SetVisible(val)  # type: ignore[attr-defined]
 
     @doc_subs
     def toggle(self):
@@ -1889,7 +1889,7 @@ class _MultiCompPlot(_Plot):
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
         self._labels = _vtk.vtkStringArray()
-        self.SetLabels(self._labels)
+        self.SetLabels(self._labels)  # type: ignore[attr-defined]
         self.color_scheme = self.DEFAULT_COLOR_SCHEME
 
     @property
@@ -1928,7 +1928,7 @@ class _MultiCompPlot(_Plot):
 
     @color_scheme.setter
     def color_scheme(self, val):  # numpydoc ignore=GL08
-        self._color_series.SetColorScheme(COLOR_SCHEMES.get(val, COLOR_SCHEMES['custom'])['id'])
+        self._color_series.SetColorScheme(COLOR_SCHEMES.get(val, COLOR_SCHEMES['custom'])['id'])  # type: ignore[index]
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
 
@@ -2464,7 +2464,7 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
         if val is None:
             val = ''
         try:
-            self.SetMarkerStyle(self.MARKER_STYLES[val]['id'])
+            self.SetMarkerStyle(self.MARKER_STYLES[val]['id'])  # type: ignore[arg-type]
             self._marker_style = val
         except KeyError:
             formatted_styles = '", "'.join(self.MARKER_STYLES.keys())
@@ -3130,12 +3130,12 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
-        self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}
+        self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}  # type: ignore[var-annotated]
         self.SetAutoSize(False)  # We manually set the appropriate size
         # Overwrite custom x-axis and y-axis using a wrapper object, as using the
         # SetAxis method causes a crash at the end of the script's execution (nonzero exit code).
-        self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))
-        self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))
+        self._x_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.BOTTOM))  # type: ignore[call-arg]
+        self._y_axis = Axis(_wrap=self.GetAxis(_vtk.vtkAxis.LEFT))  # type: ignore[call-arg]
         # Note: registering the axis prevents the nonzero exit code at the end, however
         # this results in memory leaks in the plotting tests.
         # self.SetAxis(_vtk.vtkAxis.BOTTOM, self._x_axis)
@@ -4066,14 +4066,14 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
-            return _Chart._geometry.fget(self)
+            return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
 
     @_geometry.setter
     def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
-            _Chart._geometry.fset(self, value)
+            _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
     @property
     def plot(self):  # numpydoc ignore=RT01
@@ -4130,7 +4130,7 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (1, 1)
         else:
-            return _Chart.size.fget(self)
+            return _Chart.size.fget(self)  # type: ignore[attr-defined]
 
     @size.setter
     def size(self, val):  # numpydoc ignore=GL08
@@ -4140,7 +4140,7 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
                 'Upgrade to VTK v9.2 or newer.',
             )
         else:
-            _Chart.size.fset(self, val)
+            _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
     def loc(self):  # numpydoc ignore=RT01
@@ -4172,7 +4172,7 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0)
         else:
-            return _Chart.loc.fget(self)
+            return _Chart.loc.fget(self)  # type: ignore[attr-defined]
 
     @loc.setter
     def loc(self, val):  # numpydoc ignore=GL08
@@ -4182,7 +4182,7 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
                 'Upgrade to VTK v9.2 or newer.',
             )
         else:
-            _Chart.loc.fset(self, val)
+            _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
 class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
@@ -4361,7 +4361,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
             # SetPlot method is not available for older VTK versions,
             # so fallback to using a wrapper object.
             self.AddPlot(0)
-            self._plot = PiePlot(self, data, colors, labels, _wrap=self.GetPlot(0))
+            self._plot = PiePlot(self, data, colors, labels, _wrap=self.GetPlot(0))  # type: ignore[call-arg]
         else:
             self._plot = PiePlot(self, data, colors, labels)
             self.SetPlot(self._plot)
@@ -4380,14 +4380,14 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0, *self._renderer.GetSize())
         else:
-            return _Chart._geometry.fget(self)
+            return _Chart._geometry.fget(self)  # type: ignore[attr-defined]
 
     @_geometry.setter
     def _geometry(self, value):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             raise AttributeError(f'Cannot set the geometry of {type(self).__class__}')
         else:
-            _Chart._geometry.fset(self, value)
+            _Chart._geometry.fset(self, value)  # type: ignore[attr-defined]
 
     @property
     def plot(self):  # numpydoc ignore=RT01
@@ -4442,7 +4442,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (1, 1)
         else:
-            return _Chart.size.fget(self)
+            return _Chart.size.fget(self)  # type: ignore[attr-defined]
 
     @size.setter
     def size(self, val):  # numpydoc ignore=GL08
@@ -4452,7 +4452,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
                 'Upgrade to VTK v9.2 or newer.',
             )
         else:
-            _Chart.size.fset(self, val)
+            _Chart.size.fset(self, val)  # type: ignore[attr-defined]
 
     @property
     def loc(self):  # numpydoc ignore=RT01
@@ -4484,7 +4484,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             return (0, 0)
         else:
-            return _Chart.loc.fget(self)
+            return _Chart.loc.fget(self)  # type: ignore[attr-defined]
 
     @loc.setter
     def loc(self, val):  # numpydoc ignore=GL08
@@ -4494,7 +4494,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
                 'Upgrade to VTK v9.2 or newer.',
             )
         else:
-            _Chart.loc.fset(self, val)
+            _Chart.loc.fset(self, val)  # type: ignore[attr-defined]
 
 
 # region 3D charts
@@ -4671,7 +4671,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
             )  # Store figure data in numpy array
             w, h = self._canvas.get_width_height()
             img_arr = img.reshape([h, w, 4])
-            img_data = pyvista.Texture(img_arr).to_image()  # Convert to vtkImageData
+            img_data = pyvista.Texture(img_arr).to_image()  # type: ignore[abstract] # Convert to vtkImageData
             self.SetImage(img_data)
 
     def _render_event(self, *args, plotter_render=False, **kwargs):
@@ -4849,8 +4849,8 @@ class Charts:
         for chart in charts:
             self._charts.append(chart)
             if chart._background is not None:
-                self._scene.AddItem(chart._background)
-            self._scene.AddItem(chart)
+                self._scene.AddItem(chart._background)  # type: ignore[union-attr]
+            self._scene.AddItem(chart)  # type: ignore[union-attr]
             chart._interactive = False  # Charts are not interactive by default
 
     def set_interaction(self, interactive, toggle=False):
@@ -4926,9 +4926,9 @@ class Charts:
         if chart not in self._charts:  # pragma: no cover
             raise ValueError('chart_index not present in charts collection.')
         self._charts.remove(chart)
-        self._scene.RemoveItem(chart)
+        self._scene.RemoveItem(chart)  # type: ignore[union-attr]
         if chart._background is not None:
-            self._scene.RemoveItem(chart._background)
+            self._scene.RemoveItem(chart._background)  # type: ignore[union-attr]
 
     def get_charts_by_pos(self, pos):
         """Retrieve visible charts indicated by the given mouse position.

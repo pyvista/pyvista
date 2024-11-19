@@ -183,7 +183,7 @@ def has_module(module_name):
         ``True`` if the module can be imported, otherwise ``False``.
 
     """
-    module_spec = importlib.util.find_spec(module_name)
+    module_spec = importlib.util.find_spec(module_name)  # type: ignore[attr-defined]
     return module_spec is not None
 
 
