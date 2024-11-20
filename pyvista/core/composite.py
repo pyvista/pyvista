@@ -759,7 +759,7 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Equality comparison."""
         if not isinstance(other, MultiBlock):
             return False
@@ -1286,7 +1286,7 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str) -> str:
         """Extract the real component of the active scalars of this dataset."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1300,7 +1300,7 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
 
-    def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str):
+    def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str) -> str:
         """Convert rgb float or int scalars to uint8."""
         for block in self:
             if isinstance(block, MultiBlock):

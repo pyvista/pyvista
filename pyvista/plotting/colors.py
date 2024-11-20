@@ -1013,7 +1013,7 @@ class Color:
         """Support iteration over the float RGBA representation for backward compatibility."""
         return iter(self.float_rgba)
 
-    def __repr__(self):  # pragma: no cover
+    def __repr__(self) -> str:  # pragma: no cover
         """Human readable representation."""
         kwargs = f'hex={self.hex_rgba!r}, opacity={self.opacity}'
         if self._name is not None:
