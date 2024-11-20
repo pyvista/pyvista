@@ -301,7 +301,7 @@ class BaseReader:
         self.path = str(path)
         self._set_defaults_post()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of a Reader object."""
         return f"{self.__class__.__name__}('{self.path}')"
 

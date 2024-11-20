@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
 
-def assert_empty_kwargs(**kwargs):
+def assert_empty_kwargs(**kwargs) -> bool:
     """Assert that all keyword arguments have been used (internal helper).
 
     If any keyword arguments are passed, a ``TypeError`` is raised.
@@ -169,7 +169,7 @@ class AnnotatedIntEnum(int, enum.Enum):
 
 
 @cache
-def has_module(module_name):
+def has_module(module_name) -> bool:
     """Return if a module can be imported.
 
     Parameters
