@@ -2699,14 +2699,14 @@ class DataSetFilters:
             alg.SetColorModeToColorByVector()
         else:
             raise ValueError(f"Invalid color mode '{color_mode}'")
-        
+
         if vector_mode == 'vector':
             alg.SetVectorModeToUseVector()
         elif vector_mode == 'normal':
             alg.SetVectorModeToUseNormal()
         else:
             raise ValueError(f"Invalid vector mode '{vector_mode}'")
-        
+
         if rng is not None:
             alg.SetRange(rng)
         alg.SetOrient(orient)
