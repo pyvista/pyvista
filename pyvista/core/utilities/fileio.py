@@ -326,12 +326,12 @@ def read_texture(filename, progress_bar=False):
         image = read(filename, progress_bar=progress_bar)
         if image.n_points < 2:
             raise ValueError('Problem reading the image with VTK.')
-        return pyvista.Texture(image)
+        return pyvista.Texture(image)  # type: ignore[abstract]
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pyvista.Texture(_try_imageio_imread(filename))  # pragma: no cover
+    return pyvista.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
 
 
 def read_exodus(
@@ -392,7 +392,7 @@ def read_exodus(
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
     except ImportError:
-        from vtk import vtkExodusIIReader
+        from vtk import vtkExodusIIReader  # type: ignore[no-redef]
 
     reader = vtkExodusIIReader()
     if pyvista.vtk_version_info < (9, 1, 0):  # pragma no cover
@@ -493,7 +493,7 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
             A list or a string.
 
         """
-        out = []
+        out = []  # type: ignore[var-annotated]
 
         while True:
             line = f.readline().strip()
@@ -524,7 +524,7 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
                 break
 
         if not split:
-            out = ' '.join(out)
+            out = ' '.join(out)  # type: ignore[assignment]
 
         return out
 
@@ -729,10 +729,10 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
     # Active cells
     if 'ACTNUM' in keywords:
         active = np.array(keywords['ACTNUM']) > 0.0
-        grid.hide_cells(~active, inplace=True)
+        grid.hide_cells(~active, inplace=True)  # type: ignore[arg-type]
 
     # Store unused keywords in user dict
-    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
+    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}  # type: ignore[assignment]
 
     return grid
 
@@ -916,7 +916,7 @@ def from_meshio(mesh):
                 fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)
             else:
                 fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
-            cells.append(np.hstack((fill_values, c.data)).ravel())
+            cells.append(np.hstack((fill_values, c.data)).ravel())  # type: ignore[arg-type]
 
         cell_type += [vtk_type] * len(c.data)
 
@@ -1041,7 +1041,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
             raise TypeError(f'meshio does not support VTK type {cell_type}.')
 
     # Get cells
-    cells = []
+    cells = []  # type: ignore[var-annotated]
     c = 0
     for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
         if cell_type == 42:
@@ -1056,9 +1056,9 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
             cell = (
                 cell
                 if cell_type not in pixel_voxel
-                else cell[[0, 1, 3, 2]]
+                else cell[[0, 1, 3, 2]]  # type: ignore[call-overload]
                 if cell_type == 8
-                else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+                else cell[[0, 1, 3, 2, 4, 5, 7, 6]]  # type: ignore[call-overload]
             )
             cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
             cell_type = vtk_to_meshio_type[cell_type]

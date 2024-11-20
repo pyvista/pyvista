@@ -85,7 +85,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     _new_attr_exceptions: ClassVar[list[str]] = ['_name']
 
-    def __init__(self, mapper=None, prop=None, name=None):
+    def __init__(self, mapper=None, prop=None, name=None) -> None:
         """Initialize actor."""
         super().__init__()
         if mapper is not None:
@@ -143,7 +143,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj):  # numpydoc ignore=GL08
+    def mapper(self, obj) -> None:  # numpydoc ignore=GL08
         self.SetMapper(obj)
 
     @property
@@ -165,7 +165,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):  # numpydoc ignore=GL08
+    def prop(self, obj: Property) -> None:  # numpydoc ignore=GL08
         self.SetProperty(obj)
 
     @property
@@ -200,7 +200,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetTexture()
 
     @texture.setter
-    def texture(self, obj):  # numpydoc ignore=GL08
+    def texture(self, obj) -> None:  # numpydoc ignore=GL08
         self.SetTexture(obj)
 
     @property
@@ -228,7 +228,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetPickable())
 
     @pickable.setter
-    def pickable(self, value):  # numpydoc ignore=GL08
+    def pickable(self, value) -> None:  # numpydoc ignore=GL08
         self.SetPickable(value)
 
     @property
@@ -251,10 +251,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetVisibility())
 
     @visibility.setter
-    def visibility(self, value: bool):  # numpydoc ignore=GL08
+    def visibility(self, value: bool) -> None:  # numpydoc ignore=GL08
         self.SetVisibility(value)
 
-    def plot(self, **kwargs):
+    def plot(self, **kwargs) -> None:
         """Plot just the actor.
 
         This may be useful when interrogating or debugging individual actors.
@@ -279,7 +279,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         """
         pl = pyvista.Plotter()
-        pl.add_actor(self)
+        pl.add_actor(self)  # type: ignore[arg-type]
         pl.show(**kwargs)
 
     def copy(self, deep=True) -> Actor:
@@ -393,5 +393,5 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetBackfaceProperty()  # type: ignore[return-value]
 
     @backface_prop.setter
-    def backface_prop(self, value: pyvista.Property):  # numpydoc ignore=GL08
+    def backface_prop(self, value: pyvista.Property) -> None:  # numpydoc ignore=GL08
         self.SetBackfaceProperty(value)

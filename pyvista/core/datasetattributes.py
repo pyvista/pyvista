@@ -527,9 +527,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def _patch_type(self, narray):
         """Check if array needs to be represented as a different type."""
         name = narray.VTKObject.GetName()
-        if name in self.dataset._association_bitarray_names[self.association.name]:
+        if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
             narray = narray.view(np.bool_)
-        elif name in self.dataset._association_complex_names[self.association.name]:
+        elif name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
             if narray.dtype == np.float32:
                 narray = narray.view(np.complex64)
             if narray.dtype == np.float64:

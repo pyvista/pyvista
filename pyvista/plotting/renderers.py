@@ -81,8 +81,8 @@ class Renderers:
             else:
                 m = int(shape.split('/')[0])
                 n = int(shape.split('/')[1])
-                rangen = range(n)
-                rangem = range(m)
+                rangen = range(n)  # type: ignore[assignment]
+                rangem = range(m)  # type: ignore[assignment]
 
             if splitting_position is None:
                 splitting_position = pyvista.global_theme.multi_rendering_splitting_position
@@ -173,7 +173,7 @@ class Renderers:
                         rows = np.arange(self.shape[0], dtype=int)[rows]
                     cols = group[1]
                     if isinstance(cols, slice):
-                        cols = np.arange(self.shape[1], dtype=int)[cols]
+                        cols = np.arange(self.shape[1], dtype=int)[cols]  # type: ignore[misc]
                     # Get the normalized group, i.e. extract top left corner
                     # and bottom right corner from the given rows and cols
                     norm_group = [np.min(rows), np.min(cols), np.max(rows), np.max(cols)]
@@ -207,7 +207,7 @@ class Renderers:
                     renderer = Renderer(self._plotter, border, border_color, border_width)
                     x0 = col_off[col]
                     y0 = row_off[row + nb_rows]
-                    x1 = col_off[col + nb_cols]
+                    x1 = col_off[col + nb_cols]  # type: ignore[operator]
                     y1 = row_off[row]
                     renderer.viewport = (x0, y0, x1, y1)
                     self._render_idxs[row, col] = len(self)
@@ -275,8 +275,8 @@ class Renderers:
             index_column = loc[1]
             if index_row < 0 or index_row >= self.shape[0]:
                 raise IndexError(f'Row index is out of range ({self.shape[0]})')
-            if index_column < 0 or index_column >= self.shape[1]:
-                raise IndexError(f'Column index is out of range ({self.shape[1]})')
+            if index_column < 0 or index_column >= self.shape[1]:  # type: ignore[misc]
+                raise IndexError(f'Column index is out of range ({self.shape[1]})')  # type: ignore[misc]
             return self._render_idxs[index_row, index_column]
         else:
             raise TypeError('"loc" must be an integer or a sequence.')
@@ -472,7 +472,7 @@ class Renderers:
         return renderer
 
     @property
-    def has_active_background_renderer(self):  # numpydoc ignore=RT01
+    def has_active_background_renderer(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` when Renderer has an active background renderer.
 
         Returns
@@ -498,7 +498,7 @@ class Renderers:
         """Clear all renders."""
         for renderer in self:
             renderer.clear()
-        self._shadow_renderer.clear()
+        self._shadow_renderer.clear()  # type: ignore[union-attr]
         self.clear_background_renderers()
 
     def close(self):
@@ -506,7 +506,7 @@ class Renderers:
         for renderer in self:
             renderer.close()
 
-        self._shadow_renderer.close()
+        self._shadow_renderer.close()  # type: ignore[union-attr]
 
         for renderer in self._background_renderers:
             if renderer is not None:
@@ -599,7 +599,7 @@ class Renderers:
         if all_renderers:
             for renderer in self:
                 renderer.set_background(color, top=top, right=right, side=side, corner=corner)
-            self._shadow_renderer.set_background(color)
+            self._shadow_renderer.set_background(color)  # type: ignore[union-attr]
         else:
             self.active_renderer.set_background(
                 color,
