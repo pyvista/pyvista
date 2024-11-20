@@ -169,7 +169,7 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, wrap(block))
+                self.SetBlock(i, wrap(block))  # type: ignore[arg-type]
 
     @property
     def bounds(self) -> BoundsTuple:
@@ -759,7 +759,7 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Equality comparison."""
         if not isinstance(other, MultiBlock):
             return False
@@ -902,26 +902,26 @@ class MultiBlock(
         for i in range(self.n_blocks):
             if isinstance(self[i], MultiBlock):
                 # Recursively move through nested structures
-                self[i].clean()
-                if self[i].n_blocks < 1:
+                self[i].clean()  # type: ignore[union-attr]
+                if self[i].n_blocks < 1:  # type: ignore[union-attr]
                     null_blocks.append(i)
-            elif self[i] is None or empty and self[i].n_points < 1:
+            elif self[i] is None or empty and self[i].n_points < 1:  # type: ignore[union-attr]
                 null_blocks.append(i)
         # Now remove the null/empty meshes
-        null_blocks = np.array(null_blocks, dtype=int)
+        null_blocks = np.array(null_blocks, dtype=int)  # type: ignore[assignment]
         for i in range(len(null_blocks)):
             # Cast as int because windows is super annoying
             del self[int(null_blocks[i])]
-            null_blocks -= 1
+            null_blocks -= 1  # type: ignore[assignment, operator]
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(('N Blocks:', self.n_blocks, '{}'))
         bds = self.bounds
-        attrs.append(('X Bounds:', (bds[0], bds[1]), '{:.3e}, {:.3e}'))
-        attrs.append(('Y Bounds:', (bds[2], bds[3]), '{:.3e}, {:.3e}'))
-        attrs.append(('Z Bounds:', (bds[4], bds[5]), '{:.3e}, {:.3e}'))
+        attrs.append(('X Bounds:', (bds[0], bds[1]), '{:.3e}, {:.3e}'))  # type: ignore[arg-type]
+        attrs.append(('Y Bounds:', (bds[2], bds[3]), '{:.3e}, {:.3e}'))  # type: ignore[arg-type]
+        attrs.append(('Z Bounds:', (bds[4], bds[5]), '{:.3e}, {:.3e}'))  # type: ignore[arg-type]
         return attrs
 
     def _repr_html_(self) -> str:
@@ -1271,7 +1271,7 @@ class MultiBlock(
             # bool and uint8 do not display properly, must convert to float
             self._convert_to_real_scalars(data_attr, scalars_name)
             if scalars.dtype == np.bool_:
-                dtype = np.bool_
+                dtype = np.bool_  # type: ignore[assignment]
         elif scalars.ndim > 1:
             # multi-component
             if not isinstance(component, (int, type(None))):
@@ -1286,7 +1286,7 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str) -> str:
         """Extract the real component of the active scalars of this dataset."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1300,7 +1300,7 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
 
-    def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str):
+    def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str) -> str:
         """Convert rgb float or int scalars to uint8."""
         for block in self:
             if isinstance(block, MultiBlock):

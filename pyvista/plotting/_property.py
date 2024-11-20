@@ -297,7 +297,7 @@ class Property(_vtk.vtkProperty):
         if new_style == 'wireframe':
             self.SetRepresentationToWireframe()
             if not self._color_set:
-                self.color = self._theme.outline_color  # type: ignore[attr-defined]
+                self.color = self._theme.outline_color  # type: ignore[union-attr] # type: ignore[attr-defined]
         elif new_style == 'points':
             self.SetRepresentationToPoints()
         elif new_style == 'surface':
@@ -346,8 +346,8 @@ class Property(_vtk.vtkProperty):
     @color.setter
     def color(self, value):  # numpydoc ignore=GL08
         self._color_set = value is not None
-        rgb_color = Color(value, default_color=self._theme.color)
-        self.SetColor(rgb_color.float_rgb)
+        rgb_color = Color(value, default_color=self._theme.color)  # type: ignore[union-attr]
+        self.SetColor(rgb_color.float_rgb)  # type: ignore[call-overload]
 
     @property
     def edge_color(self) -> Color:  # numpydoc ignore=RT01
@@ -379,7 +379,7 @@ class Property(_vtk.vtkProperty):
 
     @edge_color.setter
     def edge_color(self, value):  # numpydoc ignore=GL08
-        rgb_color = Color(value, default_color=self._theme.edge_color)
+        rgb_color = Color(value, default_color=self._theme.edge_color)  # type: ignore[union-attr]
         self.SetEdgeColor(rgb_color.float_rgb)
 
     @property
@@ -1220,7 +1220,7 @@ class Property(_vtk.vtkProperty):
         actor = pl.add_mesh(examples.download_bunny_coarse())
         actor.SetProperty(self)
 
-        if self.interpolation == 'Physically based rendering':
+        if str(self.interpolation) == 'Physically based rendering':
             cubemap = examples.download_sky_box_cube_map()
             pl.set_environment_texture(cubemap)
 

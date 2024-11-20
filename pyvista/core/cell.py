@@ -537,16 +537,16 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(('Type', repr(self.type), '{}' * len(repr(self.type))))
-        attrs.append(('Linear', self.is_linear, '{}'))
-        attrs.append(('Dimension', self.dimension, '{}'))
-        attrs.append(('N Points', self.n_points, '{}'))
-        attrs.append(('N Faces', self.n_faces, '{}'))
-        attrs.append(('N Edges', self.n_edges, '{}'))
+        attrs.append(('Linear', self.is_linear, '{}'))  # type: ignore[arg-type]
+        attrs.append(('Dimension', self.dimension, '{}'))  # type: ignore[arg-type]
+        attrs.append(('N Points', self.n_points, '{}'))  # type: ignore[arg-type]
+        attrs.append(('N Faces', self.n_faces, '{}'))  # type: ignore[arg-type]
+        attrs.append(('N Edges', self.n_edges, '{}'))  # type: ignore[arg-type]
         bds = self.bounds
         fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
-        attrs.append(('X Bounds', (bds[0], bds[1]), fmt))
-        attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))
-        attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))
+        attrs.append(('X Bounds', (bds[0], bds[1]), fmt))  # type: ignore[arg-type]
+        attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))  # type: ignore[arg-type]
+        attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))  # type: ignore[arg-type]
 
         return attrs
 

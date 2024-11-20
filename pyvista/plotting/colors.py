@@ -1013,7 +1013,7 @@ class Color:
         """Support iteration over the float RGBA representation for backward compatibility."""
         return iter(self.float_rgba)
 
-    def __repr__(self):  # pragma: no cover
+    def __repr__(self) -> str:  # pragma: no cover
         """Human readable representation."""
         kwargs = f'hex={self.hex_rgba!r}, opacity={self.opacity}'
         if self._name is not None:
@@ -1155,7 +1155,7 @@ def color_scheme_to_cycler(scheme):
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()
         if isinstance(scheme, str):
-            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())['id'])
+            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())['id'])  # type: ignore[index]
         elif isinstance(scheme, int):
             series.SetColorScheme(scheme)
         else:

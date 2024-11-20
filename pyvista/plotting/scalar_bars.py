@@ -156,7 +156,7 @@ class ScalarBars:
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
@@ -545,13 +545,13 @@ class ScalarBars:
 
             scalar_widget.On()
             if vertical is True or vertical is None:
-                rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
+                rep.SetOrientation(1)  # type: ignore[attr-defined] # 0 = Horizontal, 1 = Vertical
             else:
                 # y position determined empirically
                 y = -position_y / 2 - height - scalar_bar.GetPosition()[1]
-                rep.GetPositionCoordinate().SetValue(width, y)
-                rep.GetPosition2Coordinate().SetValue(height, width)
-                rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
+                rep.GetPositionCoordinate().SetValue(width, y)  # type: ignore[attr-defined]
+                rep.GetPosition2Coordinate().SetValue(height, width)  # type: ignore[attr-defined]
+                rep.SetOrientation(0)  # type: ignore[attr-defined] # 0 = Horizontal, 1 = Vertical
             self._scalar_bar_widgets[title] = scalar_widget
 
         if use_opacity:

@@ -1438,7 +1438,7 @@ def surface_from_para(
     para_source.Update()
     surf = wrap(para_source.GetOutput())
     if clean:
-        surf = surf.clean(
+        surf = surf.clean(  # type: ignore[union-attr]
             tolerance=1e-7,  # determined experimentally
             absolute=False,
             lines_to_points=False,

@@ -170,7 +170,7 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
             if isinstance(part, (Prop3D, _Prop3DMixin)) and not np.array_equal(
                 part.user_matrix, new_matrix
             ):
-                part.user_matrix = new_matrix
+                part.user_matrix = new_matrix  # type: ignore[method-assign]
 
     def _get_bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         return BoundsTuple(*self.GetBounds())
@@ -799,7 +799,7 @@ class AxesAssembly(_XYZAssembly):
                 n_values = 3
             else:
                 n_values = 1
-            values = _validate_color_sequence(value, n_values)
+            values = _validate_color_sequence(value, n_values)  # type: ignore[arg-type]
         elif isinstance(value, Sequence) and not isinstance(value, str):
             # Number sequence
             values = value
@@ -919,7 +919,7 @@ def _validate_color_sequence(
     """
     try:
         # Assume we have one color
-        color_list = [Color(color)]
+        color_list = [Color(color)]  # type: ignore[arg-type]
         n_colors = 1 if n_colors is None else n_colors
         return tuple(color_list * n_colors)
     except ValueError:

@@ -189,7 +189,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], (np.ndarray, Sequence)):
-                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
+                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)  # type: ignore[arg-type]
             else:
                 raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
@@ -202,14 +202,14 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
                 self._from_arrays(
                     np.asanyarray(args[0]),
                     np.asanyarray(args[1]),
-                    np.asanyarray(args[2]),
+                    np.asanyarray(args[2]),  # type: ignore[misc]
                     check_duplicates,
                 )
             elif all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(
                     np.asanyarray(args[0]),
                     np.asanyarray(args[1]),
-                    None,
+                    None,  # type: ignore[arg-type]
                     check_duplicates,
                 )
             else:
