@@ -2466,6 +2466,7 @@ class DataSetFilters:
         clamping=False,
         rng=None,
         color_mode='scale',
+        vector_mode='vector',
         progress_bar=False,
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
@@ -2529,6 +2530,12 @@ class DataSetFilters:
             If ``'vector'`` , color the glyphs by vector.
 
             .. versionadded:: 0.44
+
+        vector_mode : str, optional, default: ``'vector'``
+            If ``'vector'``, the glyphs are aligned using vtk vector mode.
+            If ``'normal'``, the glyphs are aligned using vtk normal mode.
+
+            .. versionadded:: 0.45
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -2695,11 +2702,17 @@ class DataSetFilters:
         else:
             raise ValueError(f"Invalid color mode '{color_mode}'")
 
+        if vector_mode == 'vector':
+            alg.SetVectorModeToUseVector()
+        elif vector_mode == 'normal':
+            alg.SetVectorModeToUseNormal()
+        else:
+            raise ValueError(f"Invalid vector mode '{vector_mode}'")
+
         if rng is not None:
             alg.SetRange(rng)
         alg.SetOrient(orient)
         alg.SetInputData(source_data)
-        alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
         _update_alg(alg, progress_bar, 'Computing Glyphs')
