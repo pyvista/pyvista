@@ -26,7 +26,10 @@ from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
+from .utilities.arrays import PointLiteral
 from .utilities.arrays import _coerce_pointslike_arg
 from .utilities.arrays import get_array
 from .utilities.arrays import get_array_association
@@ -53,7 +56,7 @@ class ActiveArrayInfoTuple(NamedTuple):
     """Active array info tuple to provide legacy support."""
 
     association: FieldAssociation
-    name: str
+    name: str | None
 
 
 class ActiveArrayInfo:
@@ -70,7 +73,7 @@ class ActiveArrayInfo:
 
     """
 
-    def __init__(self, association, name):
+    def __init__(self, association: FieldAssociation, name: str | None) -> None:
         """Initialize."""
         self.association = association
         self.name = name
@@ -92,7 +95,7 @@ class ActiveArrayInfo:
         state['association'] = int(self.association.value)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         """Support unpickling."""
         self.__dict__ = state.copy()
         self.association = FieldAssociation(state['association'])
@@ -106,21 +109,13 @@ class ActiveArrayInfo:
         """Provide namedtuple-like __iter__."""
         return self._namedtuple.__iter__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Provide namedtuple-like __repr__."""
         return self._namedtuple.__repr__()
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int):
         """Provide namedtuple-like __getitem__."""
         return self._namedtuple.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        """Provide namedtuple-like __setitem__."""
-        self._namedtuple.__setitem__(key, value)
-
-    def __getattr__(self, item):
-        """Provide namedtuple-like __getattr__."""
-        self._namedtuple.__getattr__(item)
 
     def __eq__(self, other):
         """Check equivalence (useful for serialize/deserialize tests)."""
@@ -188,7 +183,8 @@ class DataSet(DataSetFilters, DataObject):
         ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Z Height')
 
         """
-        field, name = self._active_scalars_info
+        field: FieldAssociation = self._active_scalars_info.association
+        name: str | None = self._active_scalars_info.name
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
         if name in exclude:
             name = self._last_active_scalars_name
@@ -248,7 +244,8 @@ class DataSet(DataSetFilters, DataObject):
         ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Normals')
 
         """
-        field, name = self._active_vectors_info
+        field: FieldAssociation = self._active_vectors_info.association
+        name: str | None = self._active_vectors_info.name
 
         # verify this field is still valid
         if name is not None:
@@ -310,7 +307,8 @@ class DataSet(DataSetFilters, DataObject):
                         dtype=float32)
 
         """
-        field, name = self.active_vectors_info
+        field: FieldAssociation = self.active_vectors_info.association
+        name: str | None = self.active_vectors_info.name
         if name is not None:
             try:
                 if field is FieldAssociation.POINT:
@@ -331,7 +329,8 @@ class DataSet(DataSetFilters, DataObject):
             Active tensors array.
 
         """
-        field, name = self.active_tensors_info
+        field: FieldAssociation = self.active_tensors_info.association
+        name: str | None = self.active_tensors_info.name
         if name is not None:
             try:
                 if field is FieldAssociation.POINT:
@@ -343,7 +342,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors_name(self) -> str:
+    def active_tensors_name(self) -> str | None:
         """Return the name of the active tensor array.
 
         Returns
@@ -355,7 +354,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_tensors_info.name
 
     @active_tensors_name.setter
-    def active_tensors_name(self, name: str):  # numpydoc ignore=GL08
+    def active_tensors_name(self, name: str | None) -> None:  # numpydoc ignore=GL08
         """Set the name of the active tensor array.
 
         Parameters
@@ -367,7 +366,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_tensors(name)
 
     @property
-    def active_vectors_name(self) -> str:
+    def active_vectors_name(self) -> str | None:
         """Return the name of the active vectors array.
 
         Returns
@@ -391,7 +390,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_vectors_info.name
 
     @active_vectors_name.setter
-    def active_vectors_name(self, name: str):  # numpydoc ignore=GL08
+    def active_vectors_name(self, name: str | None) -> None:  # numpydoc ignore=GL08
         """Set the name of the active vectors array.
 
         Parameters
@@ -403,7 +402,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_vectors(name)
 
     @property  # type: ignore[explicit-override, override]
-    def active_scalars_name(self) -> str:
+    def active_scalars_name(self) -> str | None:
         """Return the name of the active scalars.
 
         Returns
@@ -426,7 +425,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_scalars_info.name
 
     @active_scalars_name.setter
-    def active_scalars_name(self, name: str):  # numpydoc ignore=GL08
+    def active_scalars_name(self, name: str | None) -> None:  # numpydoc ignore=GL08
         """Set the name of the active scalars.
 
         Parameters
@@ -503,7 +502,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: MatrixLike[float] | _vtk.vtkPoints):  # numpydoc ignore=GL08
+    def points(self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:  # numpydoc ignore=GL08
         """Set a reference to the points as a numpy object.
 
         Parameters
@@ -592,7 +591,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_texture_coordinates
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: NumpyArray[float]):  # numpydoc ignore=GL08
+    def active_t_coords(self, t_coords: NumpyArray[float]) -> None:  # numpydoc ignore=GL08
         """Set the active texture coordinates on the points.
 
         Parameters
@@ -610,7 +609,7 @@ class DataSet(DataSetFilters, DataObject):
     def set_active_scalars(
         self,
         name: str | None,
-        preference='cell',
+        preference: PointLiteral | CellLiteral = 'cell',
     ) -> tuple[FieldAssociation, NumpyArray[float] | None]:
         """Find the scalars by name and appropriately sets it as active.
 
@@ -669,7 +668,9 @@ class DataSet(DataSetFilters, DataObject):
         else:  # must be cell
             return field, self.cell_data.active_scalars
 
-    def set_active_vectors(self, name: str | None, preference: str = 'point') -> None:
+    def set_active_vectors(
+        self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
+    ) -> None:
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
@@ -706,7 +707,9 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
-    def set_active_tensors(self, name: str | None, preference: str = 'point') -> None:
+    def set_active_tensors(
+        self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
+    ) -> None:
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
@@ -743,7 +746,12 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
 
-    def rename_array(self, old_name: str, new_name: str, preference='cell') -> None:
+    def rename_array(
+        self,
+        old_name: str,
+        new_name: str,
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
+    ) -> None:
         """Change array name by searching for the array then renaming it.
 
         Parameters
@@ -808,7 +816,8 @@ class DataSet(DataSetFilters, DataObject):
             Active scalars as an array.
 
         """
-        field, name = self.active_scalars_info
+        field: FieldAssociation = self.active_scalars_info.association
+        name: str | None = self.active_scalars_info.name
         if name is not None:
             try:
                 if field == FieldAssociation.POINT:
@@ -856,7 +865,7 @@ class DataSet(DataSetFilters, DataObject):
     def get_data_range(
         self,
         arr_var: str | NumpyArray[float] | None = None,
-        preference='cell',
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
@@ -1413,7 +1422,7 @@ class DataSet(DataSetFilters, DataObject):
         self,
         name: str,
         scalars: NumpyArray[float] | Sequence[float] | float,
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
         It depends on the array's length, or specified mode.
@@ -1483,15 +1492,13 @@ class DataSet(DataSetFilters, DataObject):
         ['my_array', 'Normals']
 
         """
-        names = []
+        names: list[str] = []
         names.extend(self.field_data.keys())
         names.extend(self.point_data.keys())
         names.extend(self.cell_data.keys())
-        try:
+        if self.active_scalars_name is not None:
             names.remove(self.active_scalars_name)
             names.insert(0, self.active_scalars_name)
-        except ValueError:
-            pass
         return names
 
     def _get_attrs(self):
@@ -1533,7 +1540,7 @@ class DataSet(DataSetFilters, DataObject):
             row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
             row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
 
-            def format_array(name, arr, field):
+            def format_array(name: str, arr, field):
                 """Format array information for printing (internal helper)."""
                 if isinstance(arr, str):
                     # Convert string scalar into a numpy array. Otherwise, get_data_range
@@ -1727,7 +1734,7 @@ class DataSet(DataSetFilters, DataObject):
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def find_closest_point(self, point: Iterable[float], n=1) -> int:
+    def find_closest_point(self, point: Iterable[float], n: int = 1) -> int:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -2831,7 +2838,7 @@ class DataSet(DataSetFilters, DataObject):
     def active_texture_coordinates(
         self,
         texture_coordinates: NumpyArray[float],
-    ):  # numpydoc ignore=GL08
+    ) -> None:  # numpydoc ignore=GL08
         """Set the active texture coordinates on the points.
 
         Parameters
