@@ -466,7 +466,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     BEHAVIORS: ClassVar[dict[str, int]] = {'auto': _vtk.vtkAxis.AUTO, 'fixed': _vtk.vtkAxis.FIXED}
 
-    def __init__(self, label='', range=None, grid: bool = True): -> None  # noqa: A002
+    def __init__(self, label='', range=None, grid: bool = True) -> None:  # noqa: A002
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
