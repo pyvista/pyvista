@@ -135,7 +135,7 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
         return inp
 
     # THIS IS CRUCIAL to preserve data type through filter
-    def RequestDataObject(self, _request, inInfo, outInfo):
+    def RequestDataObject(self, _request, inInfo, outInfo) -> int:
         """Preserve data type.
 
         Parameters
@@ -193,7 +193,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
         self.scalars_name = name
         self.preference = preference
 
-    def RequestData(self, _request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
 
         Parameters
@@ -241,7 +241,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
             outputType='vtkPolyData',
         )
 
-    def RequestData(self, _request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
 
         Parameters
@@ -299,7 +299,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         self.point_ids = point_ids
         self.cell_ids = cell_ids
 
-    def RequestData(self, _request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
 
         Parameters
@@ -349,7 +349,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
             outputType='vtkUnstructuredGrid',
         )
 
-    def RequestData(self, _request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution based on the input data and produce the output.
 
         Parameters

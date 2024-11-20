@@ -156,7 +156,7 @@ class ScalarBars:
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 

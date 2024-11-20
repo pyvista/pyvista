@@ -32,7 +32,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
 
     _new_attr_exceptions = ('_theme',)
 
-    def __init__(self, theme=None, **kwargs):
+    def __init__(self, theme=None, **kwargs) -> None:
         self._theme = pyvista.themes.Theme()
         if theme is None:
             # copy global theme to ensure local property theme is fixed
@@ -117,7 +117,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return self.GetScalarRange()  # type: ignore[attr-defined]
 
     @scalar_range.setter
-    def scalar_range(self, clim):  # numpydoc ignore=GL08
+    def scalar_range(self, clim) -> None:  # numpydoc ignore=GL08
         self.SetScalarRange(*clim)  # type: ignore[attr-defined]
 
     @property
@@ -159,7 +159,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return self.GetLookupTable()  # type: ignore[attr-defined]
 
     @lookup_table.setter
-    def lookup_table(self, table):  # numpydoc ignore=GL08
+    def lookup_table(self, table) -> None:  # numpydoc ignore=GL08
         self.SetLookupTable(table)  # type: ignore[attr-defined]
 
     @property
@@ -189,7 +189,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
             raise ValueError('Color mode must be either "default", "direct" or "map"')
 
     @property
-    def interpolate_before_map(self) -> bool:  # numpydoc ignore=RT01
+    def interpolate_before_map(self) -> bool | None:  # numpydoc ignore=RT01
         """Return or set the interpolation of scalars before mapping.
 
         Enabling makes for a smoother scalars display.  When ``False``,
@@ -235,7 +235,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return bool(self.GetInterpolateScalarsBeforeMapping())  # type: ignore[attr-defined]
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, value: bool):  # numpydoc ignore=GL08
+    def interpolate_before_map(self, value: bool) -> None:  # numpydoc ignore=GL08
         self.SetInterpolateScalarsBeforeMapping(value)  # type: ignore[attr-defined]
 
     @property
@@ -259,7 +259,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return self.GetArrayName()  # type: ignore[attr-defined]
 
     @array_name.setter
-    def array_name(self, name: str):  # numpydoc ignore=GL08
+    def array_name(self, name: str) -> None:  # numpydoc ignore=GL08
         """Return or set the array name or number and component to color by."""
         self.SetArrayName(name)  # type: ignore[attr-defined]
 
@@ -355,10 +355,10 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         return bool(self.GetScalarVisibility())  # type: ignore[attr-defined]
 
     @scalar_visibility.setter
-    def scalar_visibility(self, value: bool):  # numpydoc ignore=GL08
+    def scalar_visibility(self, value: bool) -> None:  # numpydoc ignore=GL08
         self.SetScalarVisibility(value)  # type: ignore[attr-defined]
 
-    def update(self):
+    def update(self) -> None:
         """Update this mapper."""
         self.Update()
 
@@ -383,7 +383,7 @@ class _DataSetMapper(_BaseMapper):
         self,
         dataset: pyvista.DataSet | None = None,
         theme: pyvista.themes.Theme | None = None,
-    ):
+    ) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         if dataset is not None:
@@ -398,10 +398,10 @@ class _DataSetMapper(_BaseMapper):
     def dataset(
         self,
         obj: pyvista.core.dataset.DataSet | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
-    ):  # numpydoc ignore=GL08
+    ) -> None:  # numpydoc ignore=GL08
         set_algorithm_input(self, obj)
 
-    def as_rgba(self):  # numpydoc ignore=GL08
+    def as_rgba(self) -> None:  # numpydoc ignore=GL08
         """Convert the active scalars to RGBA.
 
         This method is used to convert the active scalars to a fixed RGBA array
@@ -412,13 +412,14 @@ class _DataSetMapper(_BaseMapper):
         if self.color_mode == 'direct':
             return
 
-        self.dataset.point_data.pop('__rgba__', None)  # type: ignore[union-attr]
-        self._configure_scalars_mode(
-            self.lookup_table(self.dataset.active_scalars),  # type: ignore[union-attr]
-            '__rgba__',
-            self.scalar_map_mode,
-            True,
-        )
+        if self.dataset is not None:
+            self.dataset.point_data.pop('__rgba__', None)
+            self._configure_scalars_mode(
+                self.lookup_table(self.dataset.active_scalars),
+                '__rgba__',
+                self.scalar_map_mode,
+                True,
+            )
 
     def _configure_scalars_mode(
         self,
@@ -426,7 +427,7 @@ class _DataSetMapper(_BaseMapper):
         scalars_name,
         preference,
         direct_scalars_color_mode,
-    ):
+    ) -> None:
         """Configure scalar mode.
 
         Parameters
@@ -447,34 +448,38 @@ class _DataSetMapper(_BaseMapper):
             ``False``, scalars are mapped to the color table.
 
         """
-        if scalars.shape[0] == self.dataset.n_points and scalars.shape[0] == self.dataset.n_cells:  # type: ignore[union-attr]
-            use_points = preference == 'point'
-            use_cells = not use_points
-        else:
-            use_points = scalars.shape[0] == self.dataset.n_points  # type: ignore[union-attr]
-            use_cells = scalars.shape[0] == self.dataset.n_cells  # type: ignore[union-attr]
-
-        # Scalars interpolation approach
-        if use_points:
+        if self.dataset is not None:
             if (
-                scalars_name not in self.dataset.point_data  # type: ignore[union-attr]
-                or scalars_name == pyvista.DEFAULT_SCALARS_NAME
+                scalars.shape[0] == self.dataset.n_points
+                and scalars.shape[0] == self.dataset.n_cells
             ):
-                self.dataset.point_data.set_array(scalars, scalars_name, False)  # type: ignore[union-attr]
-            self.dataset.active_scalars_name = scalars_name  # type: ignore[union-attr]
-            self.scalar_map_mode = 'point'
-        elif use_cells:
-            if (
-                scalars_name not in self.dataset.cell_data  # type: ignore[union-attr]
-                or scalars_name == pyvista.DEFAULT_SCALARS_NAME
-            ):
-                self.dataset.cell_data.set_array(scalars, scalars_name, False)  # type: ignore[union-attr]
-            self.dataset.active_scalars_name = scalars_name  # type: ignore[union-attr]
-            self.scalar_map_mode = 'cell'
-        else:
-            raise_not_matching(scalars, self.dataset)
+                use_points = preference == 'point'
+                use_cells = not use_points
+            else:
+                use_points = scalars.shape[0] == self.dataset.n_points
+                use_cells = scalars.shape[0] == self.dataset.n_cells
 
-        self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
+            # Scalars interpolation approach
+            if use_points:
+                if (
+                    scalars_name not in self.dataset.point_data
+                    or scalars_name == pyvista.DEFAULT_SCALARS_NAME
+                ):
+                    self.dataset.point_data.set_array(scalars, scalars_name, False)
+                self.dataset.active_scalars_name = scalars_name
+                self.scalar_map_mode = 'point'
+            elif use_cells:
+                if (
+                    scalars_name not in self.dataset.cell_data
+                    or scalars_name == pyvista.DEFAULT_SCALARS_NAME
+                ):
+                    self.dataset.cell_data.set_array(scalars, scalars_name, False)
+                self.dataset.active_scalars_name = scalars_name
+                self.scalar_map_mode = 'cell'
+            else:
+                raise_not_matching(scalars, self.dataset)
+
+            self.color_mode = 'direct' if direct_scalars_color_mode else 'map'
 
     def set_scalars(
         self,
@@ -885,7 +890,7 @@ class DataSetMapper(_DataSetMapper, _vtk.vtkDataSetMapper):
         self,
         dataset: pyvista.DataSet | None = None,
         theme: pyvista.themes.Theme | None = None,
-    ):
+    ) -> None:
         """Initialize this class."""
         super().__init__(dataset=dataset, theme=theme)
 
@@ -923,7 +928,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
         return bool(self.GetEmissive())
 
     @emissive.setter
-    def emissive(self, value: bool):  # numpydoc ignore=GL08
+    def emissive(self, value: bool) -> None:  # numpydoc ignore=GL08
         self.SetEmissive(value)
 
     @property
@@ -937,7 +942,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
         return self.GetScaleFactor()
 
     @scale_factor.setter
-    def scale_factor(self, value: float):  # numpydoc ignore=GL08
+    def scale_factor(self, value: float) -> None:  # numpydoc ignore=GL08
         self.SetScaleFactor(value)
 
     @property
@@ -990,7 +995,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
         self.scale_factor = 1.0
         self.SetScaleArray(name)
 
-    def use_circular_splat(self, opacity: float = 1.0):
+    def use_circular_splat(self, opacity: float = 1.0) -> None:
         """Set the fragment shader code to create a circular splat.
 
         Parameters
@@ -1018,7 +1023,7 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
         # maintain consistency with the default style
         self.scale_factor *= 1.5
 
-    def use_default_splat(self):
+    def use_default_splat(self) -> None:
         """Clear the fragment shader and use the default splat."""
         self.SetSplatShaderCode(None)  # type: ignore[arg-type]
         self.scale_factor /= 1.5
@@ -1045,19 +1050,19 @@ class PointGaussianMapper(_DataSetMapper, _vtk.vtkPointGaussianMapper):
 class _BaseVolumeMapper(_BaseMapper):
     """Volume mapper class to override methods and attributes for to volume mappers."""
 
-    def __init__(self, theme=None):
+    def __init__(self, theme=None) -> None:
         """Initialize this class."""
         super().__init__(theme=theme)
         self._lut = LookupTable()
         self._scalar_range = (0.0, 256.0)
 
     @property
-    def interpolate_before_map(self):  # numpydoc ignore=RT01
+    def interpolate_before_map(self) -> bool | None:  # numpydoc ignore=RT01
         """Interpolate before map is not supported with volume mappers."""
-        return
+        return None
 
     @interpolate_before_map.setter
-    def interpolate_before_map(self, *args):  # numpydoc ignore=GL08
+    def interpolate_before_map(self, *args) -> None:  # numpydoc ignore=GL08
         pass
 
     @property
@@ -1070,7 +1075,7 @@ class _BaseVolumeMapper(_BaseMapper):
     def dataset(
         self,
         obj: pyvista.core.dataset.DataSet | _vtk.vtkAlgorithm | _vtk.vtkAlgorithmOutput,
-    ):
+    ) -> None:
         set_algorithm_input(self, obj)
 
     @property
@@ -1078,7 +1083,7 @@ class _BaseVolumeMapper(_BaseMapper):
         return self._lut
 
     @lookup_table.setter
-    def lookup_table(self, lut):  # numpydoc ignore=GL08
+    def lookup_table(self, lut) -> None:  # numpydoc ignore=GL08
         self._lut = lut
 
     @property
@@ -1087,7 +1092,7 @@ class _BaseVolumeMapper(_BaseMapper):
         return self._scalar_range
 
     @scalar_range.setter
-    def scalar_range(self, clim):  # numpydoc ignore=GL08
+    def scalar_range(self, clim) -> None:  # numpydoc ignore=GL08
         if self.lookup_table is not None:
             self.lookup_table.SetRange(*clim)
         self._scalar_range = tuple(clim)
@@ -1140,8 +1145,8 @@ class _BaseVolumeMapper(_BaseMapper):
         else:
             raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
 
-    def __del__(self):
-        self._lut = None  # type: ignore[assignment]
+    def __del__(self) -> None:
+        del self._lut
 
 
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):

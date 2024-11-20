@@ -336,7 +336,7 @@ class RenderWindowInteractor:
         self.remove_observers(_vtk.vtkCommand.MouseMoveEvent)
 
     @staticmethod
-    def _get_click_event(side):
+    def _get_click_event(side) -> str:
         side = str(side).lower()
         if side in ['right', 'r']:
             return 'RightButtonPressEvent'

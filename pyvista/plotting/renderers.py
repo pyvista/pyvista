@@ -472,7 +472,7 @@ class Renderers:
         return renderer
 
     @property
-    def has_active_background_renderer(self):  # numpydoc ignore=RT01
+    def has_active_background_renderer(self) -> bool:  # numpydoc ignore=RT01
         """Return ``True`` when Renderer has an active background renderer.
 
         Returns

@@ -55,7 +55,7 @@ class Camera(_vtk.vtkCamera):
         else:
             self._renderer = None
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two cameras are equal."""
         # attributes which are native python types and thus implement __eq__
 
