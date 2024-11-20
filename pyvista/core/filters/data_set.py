@@ -7102,7 +7102,7 @@ class DataSetFilters:
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
         if isinstance(self, pyvista.RectilinearGrid):
-            output = pyvista.StructuredGrid()
+            output: _vtk.vtkDataSet = pyvista.StructuredGrid()
         elif inplace:
             output = self
         else:
@@ -7113,14 +7113,14 @@ class DataSetFilters:
             # but VTK 9+ supports oriented images.
             # To keep an ImageData -> ImageData mapping, we copy the transformed data
             # from the filter output but manually transform the structure
-            output.copy_structure(self)
-            current_matrix = output.index_to_physical_matrix
+            output.copy_structure(self)  # type: ignore[attr-defined]
+            current_matrix = output.index_to_physical_matrix  # type: ignore[attr-defined]
             new_matrix = pyvista.Transform(current_matrix).concatenate(t).matrix
-            output.index_to_physical_matrix = new_matrix
+            output.index_to_physical_matrix = new_matrix  # type: ignore[attr-defined]
 
-            output.point_data.update(res.point_data, copy=False)
-            output.cell_data.update(res.cell_data, copy=False)
-            output.field_data.update(res.field_data, copy=False)
+            output.point_data.update(res.point_data, copy=False)  # type: ignore[attr-defined]
+            output.cell_data.update(res.cell_data, copy=False)  # type: ignore[attr-defined]
+            output.field_data.update(res.field_data, copy=False)  # type: ignore[attr-defined]
             _restore_active_scalars(self, output)
             return output
 
