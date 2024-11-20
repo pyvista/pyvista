@@ -218,11 +218,11 @@ class Light(vtkLight):
         self.actor.SetLight(self)
         self.actor.SetVisibility(show_actor)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Print a repr specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two lights are equal."""
         # attributes which are native python types and thus implement __eq__
         native_attrs = [
@@ -1069,7 +1069,7 @@ class Light(vtkLight):
             new_light.transform_matrix = self.transform_matrix
 
         # light actors are private, always copy, but copy visibility state as well
-        new_light.actor.SetVisibility(self.actor.GetVisibility())
+        new_light.actor.SetVisibility(self.actor.GetVisibility())  # type: ignore[union-attr]
 
         return new_light
 
@@ -1202,7 +1202,7 @@ class Light(vtkLight):
         """
         if not self.positional or self.cone_angle >= 90:
             return
-        self.actor.VisibilityOn()
+        self.actor.VisibilityOn()  # type: ignore[union-attr]
 
     def hide_actor(self):
         """Hide the actor for a positional light that depicts the geometry of the beam.
@@ -1218,7 +1218,7 @@ class Light(vtkLight):
         """
         if not self.positional:
             return
-        self.actor.VisibilityOff()
+        self.actor.VisibilityOff()  # type: ignore[union-attr]
 
     @property
     def renderers(self):  # numpydoc ignore=RT01

@@ -795,7 +795,7 @@ class DataSet(DataSetFilters, DataObject):
         # Update the array's name before reassigning. This prevents taking a copy of the array
         # in `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
         # See issue #5244.
-        arr.VTKObject.SetName(new_name)
+        arr.VTKObject.SetName(new_name)  # type: ignore[union-attr]
         data[new_name] = arr
 
         if was_active and field != FieldAssociation.NONE:
@@ -2249,8 +2249,8 @@ class DataSet(DataSetFilters, DataObject):
                     # will treat the string as an array name, not an array value.
                     arr = np.array(arr)
                 dl, dh = self.get_data_range(arr)
-                dl = pyvista.FLOAT_FORMAT.format(dl)
-                dh = pyvista.FLOAT_FORMAT.format(dh)
+                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
+                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
                 if name == self.active_scalars_info.name:
                     name = f'<b>{name}</b>'
                 ncomp = arr.shape[1] if arr.ndim > 1 else 1

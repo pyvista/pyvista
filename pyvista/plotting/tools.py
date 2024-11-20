@@ -442,7 +442,7 @@ def create_axes_orientation_box(
         prop_assembly.AddPart(cube_actor)
         actor = prop_assembly
     else:
-        actor = axes_actor
+        actor = axes_actor  # type: ignore[assignment]
 
     _update_axes_label_color(actor, label_color)
 
