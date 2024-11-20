@@ -2536,6 +2536,7 @@ class DataSetFilters:
             If ``'normal'``, the glyphs are aligned using vtk normal mode.
 
             .. versionadded:: 0.45
+
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
