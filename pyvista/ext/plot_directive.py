@@ -153,7 +153,7 @@ pyvista.OFF_SCREEN = True
 # -----------------------------------------------------------------------------
 
 
-def _option_boolean(arg):
+def _option_boolean(arg) -> bool:
     if not arg or not arg.strip():
         # no argument given, assume used as a flag
         return True
@@ -246,7 +246,7 @@ def _contains_doctest(text):
     return bool(m)
 
 
-def _contains_pyvista_plot(text):
+def _contains_pyvista_plot(text) -> bool:
     return '.. pyvista-plot::' in text
 
 
