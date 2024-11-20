@@ -357,7 +357,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_tensors_info.name
 
     @active_tensors_name.setter
-    def active_tensors_name(self, name: str) -> None:  # numpydoc ignore=GL08
+    def active_tensors_name(self, name: str | None) -> None:  # numpydoc ignore=GL08
         """Set the name of the active tensor array.
 
         Parameters
@@ -393,7 +393,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_vectors_info.name
 
     @active_vectors_name.setter
-    def active_vectors_name(self, name: str) -> None:  # numpydoc ignore=GL08
+    def active_vectors_name(self, name: str | None) -> None:  # numpydoc ignore=GL08
         """Set the name of the active vectors array.
 
         Parameters
@@ -428,7 +428,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_scalars_info.name
 
     @active_scalars_name.setter
-    def active_scalars_name(self, name: str) -> None:  # numpydoc ignore=GL08
+    def active_scalars_name(self, name: str | None) -> None:  # numpydoc ignore=GL08
         """Set the name of the active scalars.
 
         Parameters
@@ -612,9 +612,7 @@ class DataSet(DataSetFilters, DataObject):
     def set_active_scalars(
         self,
         name: str | None,
-        preference: Literal[
-            FieldAssociation.POINT, FieldAssociation.CELL, 'point', 'cell'
-        ] = 'cell',
+        preference: PointLiteral | CellLiteral = 'cell',
     ) -> tuple[FieldAssociation, NumpyArray[float] | None]:
         """Find the scalars by name and appropriately sets it as active.
 
@@ -870,7 +868,7 @@ class DataSet(DataSetFilters, DataObject):
     def get_data_range(
         self,
         arr_var: str | NumpyArray[float] | None = None,
-        preference: str = 'cell',
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
