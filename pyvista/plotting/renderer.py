@@ -221,7 +221,7 @@ class CameraPosition:
         """
         return [self._position, self._focal_point, self._viewup]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """List representation method."""
         return '[{},\n {},\n {}]'.format(*self.to_list())
 
@@ -665,7 +665,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return actor
 
     @property
-    def has_border(self):  # numpydoc ignore=RT01
+    def has_border(self) -> bool:  # numpydoc ignore=RT01
         """Return if the renderer has a border."""
         return self._border_actor is not None
 
