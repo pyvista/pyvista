@@ -658,7 +658,7 @@ class DataObject:
         """
         return self.GetActualMemorySize()
 
-    def copy_structure(self, dataset: _vtk.vtkDataSet | pyvista.DataSet) -> None:
+    def copy_structure(self, dataset: _vtk.vtkDataSet) -> None:
         """Copy the structure (geometry and topology) of the input dataset object.
 
         Parameters
