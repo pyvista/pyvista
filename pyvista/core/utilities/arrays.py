@@ -8,6 +8,7 @@ import enum
 from itertools import product
 import json
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import Union
 
 import numpy as np
@@ -30,6 +31,15 @@ class FieldAssociation(enum.Enum):
     CELL = _vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
     NONE = _vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
     ROW = _vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
+
+
+PointLiteral = Literal[
+    FieldAssociation.POINT,
+    'point',
+]
+CellLiteral = Literal[FieldAssociation.CELL, 'cell']
+FieldLiteral = Literal[FieldAssociation.NONE, 'field']
+RowLiteral = Literal[FieldAssociation.ROW, 'row']
 
 
 def parse_field_choice(field):
@@ -312,7 +322,12 @@ def get_array(mesh, name, preference='cell', err: bool = False) -> pyvista.ndarr
     return None
 
 
-def get_array_association(mesh, name, preference='cell', err: bool = False) -> FieldAssociation:
+def get_array_association(
+    mesh,
+    name,
+    preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
+    err: bool = False,
+) -> FieldAssociation:
     """Return the array association.
 
     Parameters
@@ -351,8 +366,8 @@ def get_array_association(mesh, name, preference='cell', err: bool = False) -> F
     farr = field_array(mesh, name)
     arrays = [parr, carr, farr]
     preferences = [FieldAssociation.POINT, FieldAssociation.CELL, FieldAssociation.NONE]
-    preference = parse_field_choice(preference)
-    if preference not in preferences:
+    preference_field = parse_field_choice(preference)
+    if preference_field not in preferences:
         raise ValueError(f'Data field ({preference}) not supported.')
 
     matches = [pref for pref, array in zip(preferences, arrays) if array is not None]
@@ -362,8 +377,8 @@ def get_array_association(mesh, name, preference='cell', err: bool = False) -> F
             raise KeyError(f'Data array ({name}) not present in this dataset.')
         return FieldAssociation.NONE
     # use preference if it applies
-    if preference in matches:
-        return preference
+    if preference_field in matches:
+        return preference_field
     # otherwise return first in order of point -> cell -> field
     return matches[0]
 
@@ -729,7 +744,9 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> None:
     n_possible_vectors = len(possible_vectors)
 
     if n_possible_vectors == 1:
-        preference = 'point' if len(possible_vectors_point) == 1 else 'cell'
+        preference: Literal['point', 'cell'] = (
+            'point' if len(possible_vectors_point) == 1 else 'cell'
+        )
         mesh.set_active_vectors(possible_vectors[0], preference=preference)
     elif n_possible_vectors < 1:
         raise MissingDataError('No vector-like data available.')
@@ -778,7 +795,9 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
     n_possible_scalars = len(possible_scalars)
 
     if n_possible_scalars == 1:
-        preference = 'point' if len(possible_scalars_point) == 1 else 'cell'
+        preference: Literal['point', 'cell'] = (
+            'point' if len(possible_scalars_point) == 1 else 'cell'
+        )
         mesh.set_active_scalars(possible_scalars[0], preference=preference)
     elif n_possible_scalars < 1:
         raise MissingDataError('No data available.')
