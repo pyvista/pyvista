@@ -2707,7 +2707,7 @@ class DataSetFilters:
         elif vector_mode == 'normal':
             alg.SetVectorModeToUseNormal()
         else:
-            raise ValueError('``vector_mode`` must be ``'vector'`` or ``'normal'``.')
+            raise ValueError(f"Invalid vector mode '{vector_mode}'")
 
         if rng is not None:
             alg.SetRange(rng)
