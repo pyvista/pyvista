@@ -2535,6 +2535,7 @@ class DataSetFilters:
             If ``'vector'``, the glyphs are aligned using vtk vector mode.
             If ``'normal'``, the glyphs are aligned using vtk normal mode.
 
+            .. versionadded:: 0.45
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
@@ -2705,7 +2706,7 @@ class DataSetFilters:
         elif vector_mode == 'normal':
             alg.SetVectorModeToUseNormal()
         else:
-            raise ValueError(f"Invalid vector mode '{vector_mode}'")
+            raise ValueError('``vector_mode`` must be ``'vector'`` or ``'normal'``.')
 
         if rng is not None:
             alg.SetRange(rng)
