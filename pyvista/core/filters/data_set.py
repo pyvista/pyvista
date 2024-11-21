@@ -49,11 +49,11 @@ class DataSetFilters:
     def _clip_with_function(
         self,
         function,
-        invert=True,
+        invert: bool = True,
         value=0.0,
-        return_clipped=False,
-        progress_bar=False,
-        crinkle=False,
+        return_clipped: bool = False,
+        progress_bar: bool = False,
+        crinkle: bool = False,
     ):
         """Clip using an implicit function (internal helper)."""
         if crinkle:
@@ -94,9 +94,9 @@ class DataSetFilters:
         max_landmarks=100,
         max_mean_distance=1e-5,
         max_iterations=500,
-        check_mean_distance=True,
-        start_by_matching_centroids=True,
-        return_matrix=False,
+        check_mean_distance: bool = True,
+        start_by_matching_centroids: bool = True,
+        return_matrix: bool = False,
     ):
         """Align a dataset to another.
 
@@ -447,12 +447,12 @@ class DataSetFilters:
         self,
         normal='x',
         origin=None,
-        invert=True,
+        invert: bool = True,
         value=0.0,
-        inplace=False,
-        return_clipped=False,
-        progress_bar=False,
-        crinkle=False,
+        inplace: bool = False,
+        return_clipped: bool = False,
+        progress_bar: bool = False,
+        crinkle: bool = False,
     ):
         """Clip a dataset by a plane by specifying the origin and normal.
 
@@ -548,11 +548,11 @@ class DataSetFilters:
     def clip_box(
         self,
         bounds=None,
-        invert=True,
+        invert: bool = True,
         factor=0.35,
-        progress_bar=False,
-        merge_points=True,
-        crinkle=False,
+        progress_bar: bool = False,
+        merge_points: bool = True,
+        crinkle: bool = False,
     ):
         """Clip a dataset by a bounding box defined by the bounds.
 
@@ -659,7 +659,7 @@ class DataSetFilters:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
         return clipped
 
-    def compute_implicit_distance(self, surface, inplace=False):
+    def compute_implicit_distance(self, surface, inplace: bool = False):
         """Compute the implicit distance from the points to a surface.
 
         This filter will compute the implicit distance from all of the
@@ -750,11 +750,11 @@ class DataSetFilters:
     def clip_scalar(
         self,
         scalars=None,
-        invert=True,
+        invert: bool = True,
         value=0.0,
-        inplace=False,
-        progress_bar=False,
-        both=False,
+        inplace: bool = False,
+        progress_bar: bool = False,
+        both: bool = False,
     ):
         """Clip a dataset by a scalar.
 
@@ -851,11 +851,11 @@ class DataSetFilters:
     def clip_surface(
         self,
         surface,
-        invert=True,
+        invert: bool = True,
         value=0.0,
-        compute_distance=False,
-        progress_bar=False,
-        crinkle=False,
+        compute_distance: bool = False,
+        progress_bar: bool = False,
+        crinkle: bool = False,
     ):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
 
@@ -933,9 +933,9 @@ class DataSetFilters:
     def slice_implicit(
         self,
         implicit_function,
-        generate_triangles=False,
-        contour=False,
-        progress_bar=False,
+        generate_triangles: bool = False,
+        contour: bool = False,
+        progress_bar: bool = False,
     ):
         """Slice a dataset by a VTK implicit function.
 
@@ -995,9 +995,9 @@ class DataSetFilters:
         self,
         normal='x',
         origin=None,
-        generate_triangles=False,
-        contour=False,
-        progress_bar=False,
+        generate_triangles: bool = False,
+        contour: bool = False,
+        progress_bar: bool = False,
     ):
         """Slice a dataset by a plane at the specified origin and normal vector orientation.
 
@@ -1065,9 +1065,9 @@ class DataSetFilters:
         x=None,
         y=None,
         z=None,
-        generate_triangles=False,
-        contour=False,
-        progress_bar=False,
+        generate_triangles: bool = False,
+        contour: bool = False,
+        progress_bar: bool = False,
     ):
         """Create three orthogonal slices through the dataset on the three cartesian planes.
 
@@ -1165,11 +1165,11 @@ class DataSetFilters:
         n=5,
         axis='x',
         tolerance=None,
-        generate_triangles=False,
-        contour=False,
+        generate_triangles: bool = False,
+        contour: bool = False,
         bounds=None,
         center=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Create many slices of the input dataset along a specified axis.
 
@@ -1286,7 +1286,13 @@ class DataSetFilters:
             output.append(slc, f'slice{i}')
         return output
 
-    def slice_along_line(self, line, generate_triangles=False, contour=False, progress_bar=False):
+    def slice_along_line(
+        self,
+        line,
+        generate_triangles: bool = False,
+        contour: bool = False,
+        progress_bar: bool = False,
+    ):
         """Slice a dataset using a polyline/spline as the path.
 
         This also works for lines generated with :func:`pyvista.Line`.
@@ -1366,14 +1372,14 @@ class DataSetFilters:
         self,
         value=None,
         scalars=None,
-        invert=False,
-        continuous=False,
+        invert: bool = False,
+        continuous: bool = False,
         preference='cell',
-        all_scalars=False,
+        all_scalars: bool = False,
         component_mode='all',
         component=0,
         method='upper',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
@@ -1570,11 +1576,11 @@ class DataSetFilters:
         self,
         percent=0.50,
         scalars=None,
-        invert=False,
-        continuous=False,
+        invert: bool = False,
+        continuous: bool = False,
         preference='cell',
         method='upper',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Threshold the dataset by a percentage of its range on the active scalars array.
 
@@ -1700,7 +1706,7 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def outline(self, generate_faces=False, progress_bar=False):
+    def outline(self, generate_faces: bool = False, progress_bar: bool = False):
         """Produce an outline of the full extent for the input dataset.
 
         Parameters
@@ -1740,7 +1746,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an outline')
         return wrap(alg.GetOutputDataObject(0))
 
-    def outline_corners(self, factor=0.2, progress_bar=False):
+    def outline_corners(self, factor=0.2, progress_bar: bool = False):
         """Produce an outline of the corners for the input dataset.
 
         Parameters
@@ -1774,7 +1780,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an Outline of the Corners')
         return wrap(alg.GetOutputDataObject(0))
 
-    def extract_geometry(self, extent: Sequence[float] | None = None, progress_bar=False):
+    def extract_geometry(self, extent: Sequence[float] | None = None, progress_bar: bool = False):
         """Extract the outer surface of a volume or structured grid dataset.
 
         This will extract all 0D, 1D, and 2D cells producing the
@@ -1825,7 +1831,9 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
 
-    def extract_all_edges(self, use_all_points=False, clear_data=False, progress_bar=False):
+    def extract_all_edges(
+        self, use_all_points: bool = False, clear_data: bool = False, progress_bar: bool = False
+    ):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
@@ -1896,8 +1904,8 @@ class DataSetFilters:
         high_point=None,
         scalar_range=None,
         preference='point',
-        set_active=True,
-        progress_bar=False,
+        set_active: bool = True,
+        progress_bar: bool = False,
     ):
         """Generate scalar values on a dataset.
 
@@ -2004,13 +2012,13 @@ class DataSetFilters:
         self,
         isosurfaces=10,
         scalars=None,
-        compute_normals=False,
-        compute_gradients=False,
-        compute_scalars=True,
+        compute_normals: bool = False,
+        compute_gradients: bool = False,
+        compute_scalars: bool = True,
         rng=None,
         preference='point',
         method='contour',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Contour an input self by an array.
 
@@ -2195,10 +2203,10 @@ class DataSetFilters:
         origin=None,
         point_u=None,
         point_v=None,
-        inplace=False,
+        inplace: bool = False,
         name='Texture Coordinates',
-        use_bounds=False,
-        progress_bar=False,
+        use_bounds: bool = False,
+        progress_bar: bool = False,
     ):
         """Texture map this dataset to a user defined plane.
 
@@ -2279,10 +2287,10 @@ class DataSetFilters:
     def texture_map_to_sphere(
         self,
         center=None,
-        prevent_seam=True,
-        inplace=False,
+        prevent_seam: bool = True,
+        inplace: bool = False,
         name='Texture Coordinates',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Texture map this dataset to a user defined sphere.
 
@@ -2352,11 +2360,11 @@ class DataSetFilters:
 
     def compute_cell_sizes(
         self,
-        length=True,
-        area=True,
-        volume=True,
-        progress_bar=False,
-        vertex_count=False,
+        length: bool = True,
+        area: bool = True,
+        volume: bool = True,
+        progress_bar: bool = False,
+        vertex_count: bool = False,
     ):
         """Compute sizes for 0D (vertex count), 1D (length), 2D (area) and 3D (volume) cells.
 
@@ -2409,7 +2417,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Cell Sizes')
         return _get_output(alg)
 
-    def cell_centers(self, vertex=True, progress_bar=False):
+    def cell_centers(self, vertex: bool = True, progress_bar: bool = False):
         """Generate points at the center of the cells in this dataset.
 
         These points can be used for placing glyphs or vectors.
@@ -2456,17 +2464,17 @@ class DataSetFilters:
 
     def glyph(
         self,
-        orient=True,
-        scale=True,
+        orient: bool | str = True,
+        scale: bool | str | Sequence[float] = True,
         factor=1.0,
         geom=None,
         indices=None,
         tolerance=None,
-        absolute=False,
-        clamping=False,
+        absolute: bool = False,
+        clamping: bool = False,
         rng=None,
         color_mode='scale',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
 
@@ -2724,13 +2732,13 @@ class DataSetFilters:
         variable_input=None,
         scalar_range=None,
         scalars=None,
-        label_regions=True,
+        label_regions: bool = True,
         region_ids=None,
         point_ids=None,
         cell_ids=None,
         closest_point=None,
-        inplace=False,
-        progress_bar=False,
+        inplace: bool = False,
+        progress_bar: bool = False,
         **kwargs,
     ):
         """Find and label connected regions.
@@ -3141,7 +3149,7 @@ class DataSetFilters:
                 return self
         return output
 
-    def extract_largest(self, inplace=False, progress_bar=False):
+    def extract_largest(self, inplace: bool = False, progress_bar: bool = False):
         """Extract largest connected set in mesh.
 
         Can be used to reduce residues obtained when generating an
@@ -3185,7 +3193,7 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def split_bodies(self, label=False, progress_bar=False):
+    def split_bodies(self, label: bool = False, progress_bar: bool = False):
         """Find, label, and split connected bodies/volumes.
 
         This splits different connected bodies into blocks in a
@@ -3250,8 +3258,8 @@ class DataSetFilters:
         scalars=None,
         factor=1.0,
         normal=None,
-        inplace=False,
-        progress_bar=False,
+        inplace: bool = False,
+        progress_bar: bool = False,
         **kwargs,
     ):
         """Warp the dataset's points by a point data scalars array's values.
@@ -3336,7 +3344,9 @@ class DataSetFilters:
             return self
         return output
 
-    def warp_by_vector(self, vectors=None, factor=1.0, inplace=False, progress_bar=False):
+    def warp_by_vector(
+        self, vectors=None, factor=1.0, inplace: bool = False, progress_bar: bool = False
+    ):
         """Warp the dataset's points by a point data vectors array's values.
 
         This modifies point coordinates by moving points along point
@@ -3412,7 +3422,7 @@ class DataSetFilters:
         else:
             return warped_mesh
 
-    def cell_data_to_point_data(self, pass_cell_data=False, progress_bar=False):
+    def cell_data_to_point_data(self, pass_cell_data: bool = False, progress_bar: bool = False):
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -3473,7 +3483,7 @@ class DataSetFilters:
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ctp(self, pass_cell_data=False, progress_bar=False, **kwargs):
+    def ctp(self, pass_cell_data: bool = False, progress_bar: bool = False, **kwargs):
         """Transform cell data into point data.
 
         Point data are specified per node and cell data specified
@@ -3510,9 +3520,9 @@ class DataSetFilters:
 
     def point_data_to_cell_data(
         self,
-        pass_point_data=False,
-        categorical=False,
-        progress_bar=False,
+        pass_point_data: bool = False,
+        categorical: bool = False,
+        progress_bar: bool = False,
     ):
         """Transform point data into cell data.
 
@@ -3587,7 +3597,7 @@ class DataSetFilters:
             active_scalars = self.active_scalars_name
         return _get_output(alg, active_scalars=active_scalars)
 
-    def ptc(self, pass_point_data=False, progress_bar=False, **kwargs):
+    def ptc(self, pass_point_data: bool = False, progress_bar: bool = False, **kwargs):
         """Transform point data into cell data.
 
         Point data are specified per node and cell data specified
@@ -3622,7 +3632,7 @@ class DataSetFilters:
             **kwargs,
         )
 
-    def triangulate(self, inplace=False, progress_bar=False):
+    def triangulate(self, inplace: bool = False, progress_bar: bool = False):
         """Return an all triangle mesh.
 
         More complex polygons will be broken down into triangles.
@@ -3665,7 +3675,7 @@ class DataSetFilters:
             return self
         return mesh
 
-    def delaunay_3d(self, alpha=0.0, tol=0.001, offset=2.5, progress_bar=False):
+    def delaunay_3d(self, alpha=0.0, tol=0.001, offset=2.5, progress_bar: bool = False):
         """Construct a 3D Delaunay triangulation of the mesh.
 
         This filter can be used to generate a 3D tetrahedral mesh from
@@ -3723,9 +3733,9 @@ class DataSetFilters:
         self,
         surface,
         tolerance=0.001,
-        inside_out=False,
-        check_surface=True,
-        progress_bar=False,
+        inside_out: bool = False,
+        check_surface: bool = True,
+        progress_bar: bool = False,
     ):
         """Mark points as to whether they are inside a closed surface.
 
@@ -3820,14 +3830,14 @@ class DataSetFilters:
         self,
         target,
         tolerance=None,
-        pass_cell_data=True,
-        pass_point_data=True,
-        categorical=False,
-        progress_bar=False,
+        pass_cell_data: bool = True,
+        pass_point_data: bool = True,
+        categorical: bool = False,
+        progress_bar: bool = False,
         locator=None,
-        pass_field_data=True,
-        mark_blank=True,
-        snap_to_closest_point=False,
+        pass_field_data: bool = True,
+        mark_blank: bool = True,
+        snap_to_closest_point: bool = False,
     ):
         """Resample array data from a passed mesh onto this mesh.
 
@@ -3973,9 +3983,9 @@ class DataSetFilters:
         strategy='null_value',
         null_value=0.0,
         n_points=None,
-        pass_cell_data=True,
-        pass_point_data=True,
-        progress_bar=False,
+        pass_cell_data: bool = True,
+        pass_point_data: bool = True,
+        progress_bar: bool = False,
     ):
         """Interpolate values onto this mesh from a given dataset.
 
@@ -4117,10 +4127,10 @@ class DataSetFilters:
         source_radius=None,
         n_points=100,
         start_position=None,
-        return_source=False,
+        return_source: bool = False,
         pointa=None,
         pointb=None,
-        progress_bar=False,
+        progress_bar: bool = False,
         **kwargs,
     ):
         """Integrate a vector field to generate streamlines.
@@ -4231,7 +4241,7 @@ class DataSetFilters:
         vectors=None,
         integrator_type=45,
         integration_direction='both',
-        surface_streamlines=False,
+        surface_streamlines: bool = False,
         initial_step_length=0.5,
         step_unit='cl',
         min_step_length=0.01,
@@ -4240,10 +4250,10 @@ class DataSetFilters:
         terminal_speed=1e-12,
         max_error=1e-6,
         max_time=None,
-        compute_vorticity=True,
+        compute_vorticity: bool = True,
         rotation_scale=1.0,
         interpolator_type='point',
-        progress_bar=False,
+        progress_bar: bool = False,
         max_length=None,
     ):
         """Generate streamlines of vectors from the points of a source mesh.
@@ -4451,8 +4461,8 @@ class DataSetFilters:
         closed_loop_maximum_distance=0.5,
         loop_angle=20,
         minimum_number_of_loop_points=4,
-        compute_vorticity=True,
-        progress_bar=False,
+        compute_vorticity: bool = True,
+        progress_bar: bool = False,
     ):
         """Generate evenly spaced streamlines on a 2D dataset.
 
@@ -4614,7 +4624,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Generating Evenly Spaced Streamlines on a 2D Dataset')
         return _get_output(alg)
 
-    def decimate_boundary(self, target_reduction=0.5, progress_bar=False):
+    def decimate_boundary(self, target_reduction=0.5, progress_bar: bool = False):
         """Return a decimated version of a triangulation of the boundary.
 
         Only the outer surface of the input dataset will be considered.
@@ -4646,7 +4656,9 @@ class DataSetFilters:
             .decimate(target_reduction)
         )
 
-    def sample_over_line(self, pointa, pointb, resolution=None, tolerance=None, progress_bar=False):
+    def sample_over_line(
+        self, pointa, pointb, resolution=None, tolerance=None, progress_bar: bool = False
+    ):
         """Sample a dataset onto a line.
 
         Parameters
@@ -4713,12 +4725,12 @@ class DataSetFilters:
         title=None,
         ylabel=None,
         figsize=None,
-        figure=True,
-        show=True,
+        figure: bool = True,
+        show: bool = True,
         tolerance=None,
         fname=None,
-        progress_bar=False,
-    ) -> None:
+        progress_bar: bool = False,
+    ) -> None::
         """Sample a dataset along a high resolution line and plot.
 
         Plot the variables of interest in 2D using matplotlib where the
@@ -4812,7 +4824,7 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def sample_over_multiple_lines(self, points, tolerance=None, progress_bar=False):
+    def sample_over_multiple_lines(self, points, tolerance=None, progress_bar: bool = False):
         """Sample a dataset onto a multiple lines.
 
         Parameters
@@ -4870,7 +4882,7 @@ class DataSetFilters:
         center,
         resolution=None,
         tolerance=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Sample a dataset over a circular arc.
 
@@ -4950,7 +4962,7 @@ class DataSetFilters:
         polar=None,
         angle=None,
         tolerance=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Sample a dataset over a circular arc defined by a normal and polar vector and plot it.
 
@@ -5039,12 +5051,12 @@ class DataSetFilters:
         title=None,
         ylabel=None,
         figsize=None,
-        figure=True,
-        show=True,
+        figure: bool = True,
+        show: bool = True,
         tolerance=None,
         fname=None,
-        progress_bar=False,
-    ) -> None:
+        progress_bar: bool = False,
+    ) -> None::
         """Sample a dataset along a circular arc and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -5168,12 +5180,12 @@ class DataSetFilters:
         title=None,
         ylabel=None,
         figsize=None,
-        figure=True,
-        show=True,
+        figure: bool = True,
+        show: bool = True,
         tolerance=None,
         fname=None,
-        progress_bar=False,
-    ) -> None:
+        progress_bar: bool = False,
+    ) -> None::
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -5294,7 +5306,7 @@ class DataSetFilters:
         if show:  # pragma: no cover
             plt.show()
 
-    def extract_cells(self, ind, invert=False, progress_bar=False):
+    def extract_cells(self, ind, invert: bool = False, progress_bar: bool = False):
         """Return a subset of the grid.
 
         Parameters
@@ -5360,7 +5372,13 @@ class DataSetFilters:
 
         return subgrid
 
-    def extract_points(self, ind, adjacent_cells=True, include_cells=True, progress_bar=False):
+    def extract_points(
+        self,
+        ind,
+        adjacent_cells: bool = True,
+        include_cells: bool = True,
+        progress_bar: bool = False,
+    ):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
         Parameters
@@ -6129,10 +6147,10 @@ class DataSetFilters:
 
     def extract_surface(
         self,
-        pass_pointid=True,
-        pass_cellid=True,
+        pass_pointid: bool = True,
+        pass_cellid: bool = True,
         nonlinear_subdivision=1,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Extract surface mesh of the grid.
 
@@ -6226,7 +6244,7 @@ class DataSetFilters:
         _update_alg(surf_filter, progress_bar, 'Extracting Surface')
         return _get_output(surf_filter)
 
-    def surface_indices(self, progress_bar=False):
+    def surface_indices(self, progress_bar: bool = False):
         """Return the surface indices of a grid.
 
         Parameters
@@ -6256,12 +6274,12 @@ class DataSetFilters:
     def extract_feature_edges(
         self,
         feature_angle=30.0,
-        boundary_edges=True,
-        non_manifold_edges=True,
-        feature_edges=True,
-        manifold_edges=True,
-        clear_data=False,
-        progress_bar=False,
+        boundary_edges: bool = True,
+        non_manifold_edges: bool = True,
+        feature_edges: bool = True,
+        manifold_edges: bool = True,
+        clear_data: bool = False,
+        progress_bar: bool = False,
     ):
         """Extract edges from the surface of the mesh.
 
@@ -6337,7 +6355,7 @@ class DataSetFilters:
             output.clear_data()
         return output
 
-    def merge_points(self, tolerance=0.0, inplace=False, progress_bar=False):
+    def merge_points(self, tolerance=0.0, inplace: bool = False, progress_bar: bool = False):
         """Merge duplicate points in this mesh.
 
         .. versionadded:: 0.45
@@ -6389,11 +6407,11 @@ class DataSetFilters:
     def merge(
         self,
         grid=None,
-        merge_points=True,
+        merge_points: bool = True,
         tolerance=0.0,
-        inplace=False,
-        main_has_priority=True,
-        progress_bar=False,
+        inplace: bool = False,
+        main_has_priority: bool = True,
+        progress_bar: bool = False,
     ):
         """Join one or many other grids to this grid.
 
@@ -6509,7 +6527,7 @@ class DataSetFilters:
         self,
         quality_measure='scaled_jacobian',
         null_value=-1.0,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
 
@@ -6642,7 +6660,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Cell Quality')
         return _get_output(alg)
 
-    def compute_boundary_mesh_quality(self, *, progress_bar=False):
+    def compute_boundary_mesh_quality(self, *, progress_bar: bool = False):
         """Compute metrics on the boundary faces of a mesh.
 
         The metrics that can be computed on the boundary faces of the mesh and are:
@@ -6698,13 +6716,13 @@ class DataSetFilters:
     def compute_derivative(
         self,
         scalars=None,
-        gradient=True,
+        gradient: bool | str = True,
         divergence=None,
         vorticity=None,
         qcriterion=None,
-        faster=False,
+        faster: bool = False,
         preference='point',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Compute derivative-based quantities of point/cell scalar field.
 
@@ -6818,7 +6836,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Computing Derivative')
         return _get_output(alg)
 
-    def shrink(self, shrink_factor=1.0, progress_bar=False):
+    def shrink(self, shrink_factor=1.0, progress_bar: bool = False):
         """Shrink the individual faces of a mesh.
 
         This filter shrinks the individual faces of a mesh rather than
@@ -6867,7 +6885,7 @@ class DataSetFilters:
             return output.extract_surface()
         return output
 
-    def tessellate(self, max_n_subdivide=3, merge_points=True, progress_bar=False):
+    def tessellate(self, max_n_subdivide=3, merge_points: bool = True, progress_bar: bool = False):
         """Tessellate a mesh.
 
         This filter approximates nonlinear FEM-like elements with linear
@@ -6934,9 +6952,9 @@ class DataSetFilters:
     def transform(  # type: ignore[misc]
         self: _vtk.vtkDataSet,
         trans: TransformLike,
-        transform_all_input_vectors=False,
-        inplace=True,
-        progress_bar=False,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = True,
+        progress_bar: bool = False,
     ):
         """Transform this mesh with a 4x4 transform.
 
@@ -7105,9 +7123,9 @@ class DataSetFilters:
         self,
         normal,
         point=None,
-        inplace=False,
-        transform_all_input_vectors=False,
-        progress_bar=False,
+        inplace: bool = False,
+        transform_all_input_vectors: bool = False,
+        progress_bar: bool = False,
     ):
         """Reflect a dataset across a plane.
 
@@ -7158,7 +7176,7 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def integrate_data(self, progress_bar=False):
+    def integrate_data(self, progress_bar: bool = False):
         """Integrate point and cell data.
 
         Area or volume is also provided in point data.
@@ -7207,7 +7225,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Integrating Variables')
         return _get_output(alg)
 
-    def partition(self, n_partitions, generate_global_id=False, as_composite=True):
+    def partition(self, n_partitions, generate_global_id: bool = False, as_composite: bool = True):
         """Break down input dataset into a requested number of partitions.
 
         Cells on boundaries are uniquely assigned to each partition without duplication.
@@ -7794,7 +7812,7 @@ class DataSetFilters:
         """
         return self.shrink(1.0)
 
-    def extract_cells_by_type(self, cell_types, progress_bar=False):
+    def extract_cells_by_type(self, cell_types, progress_bar: bool = False):
         """Extract cells of a specified type.
 
         Given an input dataset and a list of cell types, produce an output
@@ -7872,8 +7890,8 @@ class DataSetFilters:
         scalars=None,
         preference='point',
         output_scalars=None,
-        progress_bar=False,
-        inplace=False,
+        progress_bar: bool = False,
+        inplace: bool = False,
     ):
         """Sort labeled data by number of points or cells.
 
@@ -7959,12 +7977,12 @@ class DataSetFilters:
 
     def pack_labels(
         self,
-        sort=False,
+        sort: bool = False,
         scalars=None,
         preference='point',
         output_scalars=None,
-        progress_bar=False,
-        inplace=False,
+        progress_bar: bool = False,
+        inplace: bool = False,
     ):
         """Renumber labeled data such that labels are contiguous.
 

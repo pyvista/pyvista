@@ -103,7 +103,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
     """
 
-    def __init__(self, vtk_cell=None, cell_type=None, deep=False):
+    def __init__(self, vtk_cell=None, cell_type=None, deep: bool = False):
         """Initialize the cell."""
         super().__init__()
         if vtk_cell is not None:
@@ -558,7 +558,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy(self, deep=True) -> Cell:
+    def copy(self, deep: bool = True) -> Cell:
         """Return a copy of the cell.
 
         Parameters

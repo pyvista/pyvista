@@ -880,7 +880,7 @@ class MultiBlock(
         for i, name in enumerate(reversed(names)):
             self.set_block_name(i, name)
 
-    def clean(self, empty=True) -> None:
+    def clean(self, empty: bool = True) -> None:
         """Remove any null blocks in place.
 
         Parameters
@@ -987,7 +987,7 @@ class MultiBlock(
         # This method is here for consistency with the rest of the API and
         # in case we add meta data to this pbject down the road.
 
-    def copy(self, deep=True):
+    def copy(self, deep: bool = True):
         """Return a copy of the multiblock.
 
         Parameters
@@ -1023,7 +1023,7 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet, recursive=False) -> None:  # type: ignore[override]
+    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet, recursive: bool = False) -> None:  # type: ignore[override]
         """Shallow copy the given multiblock to this multiblock.
 
         Parameters
@@ -1179,7 +1179,7 @@ class MultiBlock(
 
         return field_asc, scalars
 
-    def as_polydata_blocks(self, copy=False):
+    def as_polydata_blocks(self, copy: bool = False):
         """Convert all the datasets within this MultiBlock to :class:`pyvista.PolyData`.
 
         Parameters

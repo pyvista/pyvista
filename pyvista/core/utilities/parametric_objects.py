@@ -1332,12 +1332,12 @@ def parametric_keywords(
     max_u=2 * pi,
     min_v=0.0,
     max_v=2 * pi,
-    join_u=False,
-    join_v=False,
-    twist_u=False,
-    twist_v=False,
-    clockwise=True,
-) -> None:
+    join_u: bool = False,
+    join_v: bool = False,
+    twist_u: bool = False,
+    twist_v: bool = False,
+    clockwise: bool = True,
+) -> None::
     """Apply keyword arguments to a parametric function.
 
     Parameters
@@ -1394,8 +1394,8 @@ def surface_from_para(
     u_res=100,
     v_res=100,
     w_res=100,
-    clean=False,
-    texture_coordinates=False,
+    clean: bool = False,
+    texture_coordinates: bool = False,
 ):
     """Construct a mesh from a parametric function.
 

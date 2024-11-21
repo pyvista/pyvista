@@ -181,7 +181,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
     def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
 
-    def copy(self, deep=True):
+    def copy(self, deep: bool = True):
         """Return a copy of the PartitionedDataSet.
 
         Parameters
