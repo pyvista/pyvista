@@ -16,7 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
 
 
-def vtk_points(points, deep: bool = True, force_float: bool | None = False):
+def vtk_points(points, deep: bool = True, force_float: bool = False):
     """Convert numpy array or array-like to a ``vtkPoints`` object.
 
     Parameters
