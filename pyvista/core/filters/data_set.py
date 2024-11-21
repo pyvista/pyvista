@@ -2166,10 +2166,12 @@ class DataSetFilters:
             if rng is None:
                 valid_range: list[float] = list(self.get_data_range(scalars_name))  # type: ignore[attr-defined]
             else:
-                valid_range = list(_validation.validate_data_range(rng))
+                valid_range = list(_validation.validate_data_range(rng, name='rng'))
             alg.GenerateValues(isosurfaces, valid_range)
         else:
-            valid_isosurfaces = _validation.validate_arrayN(isosurfaces, dtype_out=float)
+            valid_isosurfaces = _validation.validate_arrayN(
+                isosurfaces, dtype_out=float, name='isosurfaces'
+            )
 
             alg.SetNumberOfContours(len(valid_isosurfaces))
             for i, val in enumerate(valid_isosurfaces):
