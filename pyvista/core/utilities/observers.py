@@ -65,7 +65,7 @@ class VtkErrorCatcher:
 
     """
 
-    def __init__(self, raise_errors=False, send_to_logging=True):
+    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True):
         """Initialize context manager."""
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
@@ -102,7 +102,7 @@ class VtkEvent(NamedTuple):
 class Observer:
     """A standard class for observing VTK objects."""
 
-    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
+    def __init__(self, event_type='ErrorEvent', log: bool = True, store_history: bool = False):
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
@@ -113,7 +113,7 @@ class Observer:
         self.__log = log
 
         self.store_history = store_history
-        self.event_history = []
+        self.event_history: list[VtkEvent] = []
 
     @staticmethod
     def parse_message(message):  # numpydoc ignore=RT01
@@ -173,7 +173,7 @@ class Observer:
         self.__event_occurred = False
         return occ
 
-    def get_message(self, etc=False):
+    def get_message(self, etc: bool = False):
         """Get the last set error message.
 
         Returns

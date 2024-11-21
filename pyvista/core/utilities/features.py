@@ -45,7 +45,9 @@ def _padded_bins(mesh, density):
     ]
 
 
-def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=False):
+def voxelize(
+    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+):
     """Voxelize mesh to UnstructuredGrid.
 
     Parameters
@@ -214,7 +216,9 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     return ugrid.extract_points(mask)
 
 
-def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=False):
+def voxelize_volume(
+    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
@@ -562,9 +566,9 @@ def spherical_to_cartesian(r, phi, theta):
 
 def merge(
     datasets,
-    merge_points=True,
-    main_has_priority=True,
-    progress_bar=False,
+    merge_points: bool = True,
+    main_has_priority: bool = True,
+    progress_bar: bool = False,
 ):
     """Merge several datasets.
 

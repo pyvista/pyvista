@@ -215,7 +215,7 @@ class DataObject:
         """Return the representation methods (internal helper)."""
         raise NotImplementedError('Called only by the inherited class')
 
-    def head(self, display=True, html=None):
+    def head(self, display: bool = True, html=None):
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -302,7 +302,7 @@ class DataObject:
         """
         # called only by the inherited class
 
-    def copy(self, deep=True):
+    def copy(self, deep: bool = True):
         """Return a copy of the object.
 
         Parameters
