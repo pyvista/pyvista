@@ -652,26 +652,31 @@ def test_contour(uniform, method):
     assert 'Contour Data' in iso_new_scalars.point_data
 
 
-def test_contour_errors(uniform):
+def test_contour_errors(uniform, airplane):
     with pytest.raises(TypeError):
         uniform.contour(scalars='Spatial Cell Data')
     with pytest.raises(TypeError):
         uniform.contour(isosurfaces=pv.PolyData())
     with pytest.raises(TypeError):
         uniform.contour(isosurfaces={100, 300, 500})
-    uniform = examples.load_airplane()
-    with pytest.raises(ValueError):  # noqa: PT011
-        uniform.contour()
-    with pytest.raises(ValueError):  # noqa: PT011
-        uniform.contour(method='invalid method')
-    with pytest.raises(TypeError, match='Invalid type for `scalars`'):
-        uniform.contour(scalars=1)
     with pytest.raises(TypeError):
         uniform.contour(rng={})
-    with pytest.raises(ValueError, match='rng must be a two-length'):
+    match = 'Data Range has shape (1,) which is not allowed. Shape must be 2.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         uniform.contour(rng=[1])
-    with pytest.raises(ValueError, match='rng must be a sorted'):
+    match = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    array([2, 1])'
+    with pytest.raises(ValueError, match=re.escape(match)):
         uniform.contour(rng=[2, 1])
+
+    with pytest.raises(ValueError):  # noqa: PT011
+        airplane.contour()
+    with pytest.raises(ValueError):  # noqa: PT011
+        airplane.contour(method='invalid method')
+    with pytest.raises(TypeError, match='Invalid type for `scalars`'):
+        airplane.contour(scalars=1)
+    match = 'Input dataset for the contour filter must have scalar.'
+    with pytest.raises(ValueError, match=match):
+        airplane.contour(rng={})
 
 
 def test_elevation():
@@ -704,7 +709,8 @@ def test_elevation():
     assert elev.active_scalars_name == 'Elevation'
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
-    with pytest.raises(TypeError):
+    match = 'Data Range has shape () which is not allowed. Shape must be 2.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         elev = dataset.elevation(scalar_range=0.5, progress_bar=True)
     with pytest.raises(ValueError):  # noqa: PT011
         elev = dataset.elevation(scalar_range=[1, 2, 3], progress_bar=True)
@@ -4193,7 +4199,10 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     should_be_empty = combined.extract_cells_by_type(pv.CellType.BEZIER_CURVE)
     assert should_be_empty.n_cells == 0
 
-    with pytest.raises(TypeError, match='Invalid type'):
+    match = (
+        "cell_types has incorrect dtype of 'float64'. The dtype must be a subtype of <class 'int'>."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
         combined.extract_cells_by_type(1.0)
 
 
