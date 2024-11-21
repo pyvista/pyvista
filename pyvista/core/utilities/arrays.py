@@ -27,10 +27,10 @@ if TYPE_CHECKING:  # pragma: no cover
 class FieldAssociation(enum.Enum):
     """Represents which type of vtk field a scalar or vector array is associated with."""
 
-    POINT = _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
-    CELL = _vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
-    NONE = _vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
-    ROW = _vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
+    POINT = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS)
+    CELL = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
+    NONE = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_NONE)
+    ROW = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS)
 
 
 PointLiteral = Literal[
