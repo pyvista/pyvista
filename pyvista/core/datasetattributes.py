@@ -610,7 +610,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy: bool = False) -> None::
+    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy: bool = False) -> None:
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
