@@ -7794,7 +7794,7 @@ class DataSetFilters:
         """
         return self.shrink(1.0)
 
-    def extract_cells_by_type(self, cell_types, progress_bar=False):
+    def extract_cells_by_type(self, cell_types: int | VectorLike[int], progress_bar: bool = False):
         """Extract cells of a specified type.
 
         Given an input dataset and a list of cell types, produce an output
@@ -7855,15 +7855,11 @@ class DataSetFilters:
         """
         alg = _vtk.vtkExtractCellsByType()
         alg.SetInputDataObject(self)
-        if isinstance(cell_types, int):
-            alg.AddCellType(cell_types)
-        elif isinstance(cell_types, (np.ndarray, Sequence)):
-            for cell_type in cell_types:
-                alg.AddCellType(cell_type)
-        else:
-            raise TypeError(
-                f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.',
-            )
+        valid_cell_types = _validation.validate_arrayN(
+            cell_types, must_have_dtype=int, name='cell_types', dtype_out=int
+        )
+        for cell_type in valid_cell_types:
+            alg.AddCellType(cell_type)
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
 

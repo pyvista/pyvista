@@ -4193,7 +4193,10 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     should_be_empty = combined.extract_cells_by_type(pv.CellType.BEZIER_CURVE)
     assert should_be_empty.n_cells == 0
 
-    with pytest.raises(TypeError, match='Invalid type'):
+    match = (
+        "cell_types has incorrect dtype of 'float64'. The dtype must be a subtype of <class 'int'>."
+    )
+    with pytest.raises(TypeError, match=re.escape(match)):
         combined.extract_cells_by_type(1.0)
 
 
