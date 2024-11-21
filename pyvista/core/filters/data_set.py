@@ -2577,35 +2577,35 @@ class DataSetFilters:
         if geom is None:
             arrow = _vtk.vtkArrowSource()
             _update_alg(arrow, progress_bar, 'Making Arrow')
-            geom_list: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
+            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
-            geom_list = geom
+            geoms = geom
         else:
-            geom_list = [geom]
+            geoms = [geom]
 
         if indices is None:
             # use default "categorical" indices
-            indices = np.arange(len(geom_list))
+            indices = np.arange(len(geoms))
         elif not isinstance(indices, (np.ndarray, Sequence)):
             raise TypeError(
                 'If "geom" is a sequence then "indices" must '
                 'also be a sequence of the same length.',
             )
-        if len(indices) != len(geom_list) and len(geom_list) != 1:
+        if len(indices) != len(geoms) and len(geoms) != 1:
             raise ValueError('The sequence "indices" must be the same length as "geom".')
 
-        if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geom_list):
+        if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geoms):
             raise TypeError('Only PolyData objects can be used as glyphs.')
 
         # Run the algorithm
         alg = _vtk.vtkGlyph3D()
 
-        if len(geom_list) == 1:
+        if len(geoms) == 1:
             # use a single glyph, ignore indices
-            alg.SetSourceData(geom_list[0])
+            alg.SetSourceData(geoms[0])
         else:
-            for index, subgeom in zip(indices, geom_list):
+            for index, subgeom in zip(indices, geoms):
                 alg.SetSourceData(index, subgeom)
             if dataset.active_scalars is not None:  # type: ignore[attr-defined]
                 if dataset.active_scalars.ndim > 1:  # type: ignore[attr-defined]
@@ -2726,7 +2726,7 @@ class DataSetFilters:
         output = _get_output(alg)
 
         # Storing geom on the algorithm, for later use in legends.
-        output._glyph_geom = geom_list
+        output._glyph_geom = geoms
 
         return output
 
