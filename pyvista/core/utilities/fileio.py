@@ -92,7 +92,7 @@ def get_ext(filename):
     return ext
 
 
-def set_vtkwriter_mode(vtk_writer, use_binary=True):
+def set_vtkwriter_mode(vtk_writer, use_binary: bool = True):
     """Set any vtk writer to write as binary or ascii.
 
     Parameters
@@ -126,7 +126,7 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
     return vtk_writer
 
 
-def read(filename, force_ext=None, file_format=None, progress_bar=False):
+def read(filename, force_ext=None, file_format=None, progress_bar: bool = False):
     """Read any file type supported by ``vtk`` or ``meshio``.
 
     Automatically determines the correct reader to use then wraps the
@@ -261,7 +261,7 @@ def _apply_attrs_to_reader(reader, attrs):
             attr()
 
 
-def read_texture(filename, progress_bar=False):
+def read_texture(filename, progress_bar: bool = False):
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -311,11 +311,11 @@ def read_texture(filename, progress_bar=False):
 
 def read_exodus(
     filename,
-    animate_mode_shapes=True,
-    apply_displacements=True,
+    animate_mode_shapes: bool = True,
+    apply_displacements: bool = True,
     displacement_magnitude=1.0,
-    read_point_data=True,
-    read_cell_data=True,
+    read_point_data: bool = True,
+    read_cell_data: bool = True,
     enabled_sidesets=None,
 ):
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
@@ -402,7 +402,7 @@ def read_exodus(
     return wrap(reader.GetOutput())
 
 
-def read_grdecl(filename, elevation=True, other_keywords=None):
+def read_grdecl(filename, elevation: bool = True, other_keywords=None):
     """Read a GRDECL file (``'.GRDECL'``).
 
     Parameters
@@ -448,7 +448,7 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
         'ZONES',
     )
 
-    def read_keyword(f, split=True, converter=None):
+    def read_keyword(f, split: bool = True, converter=None):
         """Read a keyword.
 
         Parameters
