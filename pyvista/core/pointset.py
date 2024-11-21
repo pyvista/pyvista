@@ -762,7 +762,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         n_strips: int | None = None,
         deep: bool = False,
         force_ext: str | None = None,
-        force_float: bool | None = True,
+        force_float: bool = True,
         verts: CellArrayLike | None = None,
         n_verts: int | None = None,
     ) -> None:
