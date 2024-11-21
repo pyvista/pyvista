@@ -549,11 +549,11 @@ class DataSetFilters:
     def clip_box(
         self,
         bounds=None,
-        invert: bool=True,
+        invert: bool = True,
         factor=0.35,
-        progress_bar: bool=False,
-        merge_points: bool=True,
-        crinkle: bool=False,
+        progress_bar: bool = False,
+        merge_points: bool = True,
+        crinkle: bool = False,
     ):
         """Clip a dataset by a bounding box defined by the bounds.
 
@@ -1908,8 +1908,8 @@ class DataSetFilters:
         high_point=None,
         scalar_range=None,
         preference='point',
-        set_active: bool=True,
-        progress_bar: bool=False,
+        set_active: bool = True,
+        progress_bar: bool = False,
     ):
         """Generate scalar values on a dataset.
 
@@ -2016,13 +2016,13 @@ class DataSetFilters:
         self,
         isosurfaces=10,
         scalars=None,
-        compute_normals: bool=False,
-        compute_gradients: bool=False,
-        compute_scalars: bool=True,
+        compute_normals: bool = False,
+        compute_gradients: bool = False,
+        compute_scalars: bool = True,
         rng=None,
         preference='point',
         method='contour',
-        progress_bar: bool=False,
+        progress_bar: bool = False,
     ):
         """Contour an input self by an array.
 
@@ -2468,17 +2468,17 @@ class DataSetFilters:
 
     def glyph(
         self,
-        orient: bool|str=True,
-        scale: bool|str=True,
+        orient: bool | str = True,
+        scale: bool | str = True,
         factor=1.0,
         geom=None,
         indices=None,
         tolerance=None,
-        absolute: bool=False,
-        clamping: bool=False,
+        absolute: bool = False,
+        clamping: bool = False,
         rng=None,
         color_mode='scale',
-        progress_bar: bool=False,
+        progress_bar: bool = False,
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
 
@@ -7846,7 +7846,7 @@ class DataSetFilters:
         """
         return self.shrink(1.0)
 
-    def extract_cells_by_type(self, cell_types, progress_bar: bool=False):
+    def extract_cells_by_type(self, cell_types, progress_bar: bool = False):
         """Extract cells of a specified type.
 
         Given an input dataset and a list of cell types, produce an output
