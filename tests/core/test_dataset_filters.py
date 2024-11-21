@@ -674,8 +674,8 @@ def test_contour_errors(uniform):
         uniform.contour(rng=[2, 1])
 
 
-def test_elevation():
-    dataset = examples.load_uniform()
+def test_elevation(uniform):
+    dataset = uniform
     # Test default params
     elev = dataset.elevation(progress_bar=True)
     assert 'Elevation' in elev.array_names
@@ -704,7 +704,8 @@ def test_elevation():
     assert elev.active_scalars_name == 'Elevation'
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
-    with pytest.raises(TypeError):
+    match = 'Data Range has shape () which is not allowed. Shape must be 2.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         elev = dataset.elevation(scalar_range=0.5, progress_bar=True)
     with pytest.raises(ValueError):  # noqa: PT011
         elev = dataset.elevation(scalar_range=[1, 2, 3], progress_bar=True)
