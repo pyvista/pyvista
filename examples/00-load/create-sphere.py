@@ -7,6 +7,7 @@ Create Sphere Mesh Multiple Ways
 This example shows how to create meshes in different ways.
 
 """
+# sphinx_gallery_thumbnail_number = 5
 
 # %%
 from __future__ import annotations
