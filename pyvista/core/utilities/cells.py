@@ -13,7 +13,7 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
 
 
@@ -42,7 +42,7 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
 
 
 def numpy_to_idarr(
-    ind: MatrixLike[int],
+    ind: int | ArrayLike[int],
     deep: bool = False,
     return_ind: bool = False,
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:

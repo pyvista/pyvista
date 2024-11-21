@@ -7,11 +7,14 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import cast
 
+from pyvista.core import _validation
+
 if TYPE_CHECKING:  # pragma: no cover
     from meshio import Mesh
     from trimesh import Trimesh
 
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 import numpy as np
 
@@ -188,7 +191,7 @@ def is_pyvista_dataset(obj):
     return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
-def generate_plane(normal, origin):
+def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     """Return a _vtk.vtkPlane.
 
     Parameters
@@ -207,9 +210,10 @@ def generate_plane(normal, origin):
     """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
-    normal = normal / np.linalg.norm(normal)
-    plane.SetNormal(normal)
-    plane.SetOrigin(origin)
+    normal_vector = _validation.validate_array3(normal, dtype_out=float)
+    normal_vector /= np.linalg.norm(normal_vector)
+    plane.SetNormal(*normal_vector)
+    plane.SetOrigin(*origin)
     return plane
 
 
