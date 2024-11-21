@@ -63,7 +63,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         for i in range(self.n_partitions):
             partition = self.GetPartition(i)
             if not is_pyvista_dataset(partition):
-                self.SetPartition(i, wrap(partition))
+                self.SetPartition(i, wrap(partition))  # type: ignore[arg-type]
 
     @overload
     def __getitem__(self, index: int) -> DataSet | None: ...  # pragma: no cover
@@ -74,7 +74,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
     def __getitem__(self, index):
         """Get a partition by its index."""
         if isinstance(index, slice):
-            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])
+            return PartitionedDataSet([self[i] for i in range(self.n_partitions)[index]])  # type: ignore[abstract]
         else:
             if index < -self.n_partitions or index >= self.n_partitions:
                 raise IndexError(f'index ({index}) out of range for this dataset.')
@@ -179,7 +179,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
     def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
 
-    def copy(self, deep=True):
+    def copy(self, deep: bool = True):
         """Return a copy of the PartitionedDataSet.
 
         Parameters

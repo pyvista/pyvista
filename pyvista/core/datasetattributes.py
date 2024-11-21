@@ -527,9 +527,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def _patch_type(self, narray):
         """Check if array needs to be represented as a different type."""
         name = narray.VTKObject.GetName()
-        if name in self.dataset._association_bitarray_names[self.association.name]:
+        if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
             narray = narray.view(np.bool_)
-        elif name in self.dataset._association_complex_names[self.association.name]:
+        elif name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
             if narray.dtype == np.float32:
                 narray = narray.view(np.complex64)
             if narray.dtype == np.float64:
@@ -547,7 +547,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         return narray
 
-    def set_array(self, data: ArrayLike[float], name: str, deep_copy=False) -> None:
+    def set_array(self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -610,7 +610,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy=False):
+    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy: bool = False):
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -662,7 +662,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy=False):
+    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy: bool = False):
         """Set the active vectors of this data attribute.
 
         Vectors are a quantity that has magnitude and direction, such

@@ -349,7 +349,7 @@ class ConeSource(_vtk.vtkConeSource):
         direction=(1.0, 0.0, 0.0),
         height=1.0,
         radius=None,
-        capping=True,
+        capping: bool = True,
         angle=None,
         resolution=6,
     ):
@@ -626,7 +626,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         direction=(1.0, 0.0, 0.0),
         radius=0.5,
         height=1.0,
-        capping=True,
+        capping: bool = True,
         resolution=100,
     ):
         """Initialize the cylinder source class."""
@@ -949,7 +949,7 @@ class Text3DSource(vtkVectorText):
         height=None,
         center=(0.0, 0.0, 0.0),
         normal=(0.0, 0.0, 1.0),
-        process_empty_string=True,
+        process_empty_string: bool = True,
     ):
         """Initialize source."""
         super().__init__()
@@ -1103,7 +1103,7 @@ class Text3DSource(vtkVectorText):
             # become uninitialized (+/- VTK_DOUBLE_MAX) if set to empty a second time
             if is_empty_string and self.process_empty_string:
                 # Add a single point to 'fix' the bounds
-                self._output.points = (0.0, 0.0, 0.0)
+                self._output.points = (0.0, 0.0, 0.0)  # type: ignore[assignment]
 
             self._transform_output()
             self._modified = False
@@ -1168,7 +1168,7 @@ class Text3DSource(vtkVectorText):
         out.points[:, 2] *= scale_d
 
         # Center points at origin
-        out.points -= out.center
+        out.points -= out.center  # type: ignore[misc]
 
         # Move to final position.
         # Only rotate if non-default normal.
@@ -1177,7 +1177,7 @@ class Text3DSource(vtkVectorText):
             out.rotate_z(90, inplace=True)
             translate(out, self.center, self.normal)
         else:
-            out.points += self.center
+            out.points += self.center  # type: ignore[misc]
 
 
 @no_new_attr
@@ -2060,7 +2060,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         radius=1.0,
         normal=(0.0, 0.0, 1.0),
         n_sides=6,
-        fill=True,
+        fill: bool = True,
     ):
         """Initialize the polygon source class."""
         super().__init__()
@@ -2739,7 +2739,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         '_bounds',
     ]
 
-    def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
+    def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads: bool = True):
         """Initialize source."""
         super().__init__()
         self.bounds = bounds
@@ -2875,7 +2875,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         phi_roundness=1.0,
         theta_resolution=16,
         phi_resolution=16,
-        toroidal=False,
+        toroidal: bool = False,
         thickness=1 / 3,
     ):
         """Initialize source."""
@@ -3599,13 +3599,13 @@ class AxesGeometrySource:
                 # at the tip and flip its position
                 point = [0, 0, 0]
                 total_length = shaft_length[axis] + tip_length[axis]
-                point[axis] = total_length
+                point[axis] = total_length  # type: ignore[call-overload]
                 flipped_point = np.array([point]) * -1  # Flip point
                 point_id = part.n_points
                 new_face = [3, point_id, point_id, point_id]
 
                 # Update mesh
-                part.points = np.append(part.points, flipped_point, axis=0)
+                part.points = np.append(part.points, flipped_point, axis=0)  # type: ignore[assignment]
                 part.faces = np.append(part.faces, new_face)
 
     def update(self):
@@ -4344,7 +4344,7 @@ class CubeFacesSource(CubeSource):
             return frame_points, frame_faces
 
         # Get initial cube output
-        cube = CubeSource.output.fget(self)
+        cube = CubeSource.output.fget(self)  # type: ignore[attr-defined]
 
         # Extract list of points for each face in the desired order
         cube_points, cube_faces = cube.points, cube.regular_faces
@@ -4393,8 +4393,8 @@ class CubeFacesSource(CubeSource):
                 points += vector
 
             # Set poly as a single quad cell
-            face_poly.points = points
-            face_poly.faces = [4, 0, 1, 2, 3]
+            face_poly.points = points  # type: ignore[union-attr]
+            face_poly.faces = [4, 0, 1, 2, 3]  # type: ignore[union-attr]
 
             if frame_width is not None:
                 # Create frame proportional to the smallest face
@@ -4403,8 +4403,8 @@ class CubeFacesSource(CubeSource):
                     points, face_center, frame_scale
                 )
                 # Set poly as four quad cells of the frame
-                face_poly.points = frame_points
-                face_poly.faces = frame_faces
+                face_poly.points = frame_points  # type: ignore[union-attr]
+                face_poly.faces = frame_faces  # type: ignore[union-attr]
 
     @property
     def output(self) -> pyvista.MultiBlock:

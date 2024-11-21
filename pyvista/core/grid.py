@@ -171,8 +171,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     def __init__(
         self,
         *args,
-        check_duplicates=False,
-        deep=False,
+        check_duplicates: bool = False,
+        deep: bool = False,
         **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
@@ -187,7 +187,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (str, pathlib.Path)):
                 self._from_file(args[0], **kwargs)
             elif isinstance(args[0], (np.ndarray, Sequence)):
-                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)
+                self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)  # type: ignore[arg-type]
             else:
                 raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
@@ -200,14 +200,14 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
                 self._from_arrays(
                     np.asanyarray(args[0]),
                     np.asanyarray(args[1]),
-                    np.asanyarray(args[2]),
+                    np.asanyarray(args[2]),  # type: ignore[misc]
                     check_duplicates,
                 )
             elif all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(
                     np.asanyarray(args[0]),
                     np.asanyarray(args[1]),
-                    None,
+                    None,  # type: ignore[arg-type]
                     check_duplicates,
                 )
             else:
@@ -583,7 +583,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
-        deep=False,
+        deep: bool = False,
     ):
         """Initialize the uniform grid."""
         super().__init__()

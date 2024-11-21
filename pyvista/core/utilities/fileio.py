@@ -92,7 +92,7 @@ def get_ext(filename):
     return ext
 
 
-def set_vtkwriter_mode(vtk_writer, use_binary=True):
+def set_vtkwriter_mode(vtk_writer, use_binary: bool = True):
     """Set any vtk writer to write as binary or ascii.
 
     Parameters
@@ -126,7 +126,7 @@ def set_vtkwriter_mode(vtk_writer, use_binary=True):
     return vtk_writer
 
 
-def read(filename, force_ext=None, file_format=None, progress_bar=False):
+def read(filename, force_ext=None, file_format=None, progress_bar: bool = False):
     """Read any file type supported by ``vtk`` or ``meshio``.
 
     Automatically determines the correct reader to use then wraps the
@@ -261,7 +261,7 @@ def _apply_attrs_to_reader(reader, attrs):
             attr()
 
 
-def read_texture(filename, progress_bar=False):
+def read_texture(filename, progress_bar: bool = False):
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -301,21 +301,21 @@ def read_texture(filename, progress_bar=False):
         image = read(filename, progress_bar=progress_bar)
         if image.n_points < 2:
             raise ValueError('Problem reading the image with VTK.')
-        return pyvista.Texture(image)
+        return pyvista.Texture(image)  # type: ignore[abstract]
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
 
-    return pyvista.Texture(_try_imageio_imread(filename))  # pragma: no cover
+    return pyvista.Texture(_try_imageio_imread(filename))  # type: ignore[abstract] # pragma: no cover
 
 
 def read_exodus(
     filename,
-    animate_mode_shapes=True,
-    apply_displacements=True,
+    animate_mode_shapes: bool = True,
+    apply_displacements: bool = True,
     displacement_magnitude=1.0,
-    read_point_data=True,
-    read_cell_data=True,
+    read_point_data: bool = True,
+    read_cell_data: bool = True,
     enabled_sidesets=None,
 ):
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
@@ -367,7 +367,7 @@ def read_exodus(
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
     except ImportError:
-        from vtk import vtkExodusIIReader
+        from vtk import vtkExodusIIReader  # type: ignore[no-redef]
 
     reader = vtkExodusIIReader()
     if pyvista.vtk_version_info < (9, 1, 0):  # pragma no cover
@@ -402,7 +402,7 @@ def read_exodus(
     return wrap(reader.GetOutput())
 
 
-def read_grdecl(filename, elevation=True, other_keywords=None):
+def read_grdecl(filename, elevation: bool = True, other_keywords=None):
     """Read a GRDECL file (``'.GRDECL'``).
 
     Parameters
@@ -448,7 +448,7 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
         'ZONES',
     )
 
-    def read_keyword(f, split=True, converter=None):
+    def read_keyword(f, split: bool = True, converter=None):
         """Read a keyword.
 
         Parameters
@@ -468,7 +468,7 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
             A list or a string.
 
         """
-        out = []
+        out = []  # type: ignore[var-annotated]
 
         while True:
             line = f.readline().strip()
@@ -499,7 +499,7 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
                 break
 
         if not split:
-            out = ' '.join(out)
+            out = ' '.join(out)  # type: ignore[assignment]
 
         return out
 
@@ -704,10 +704,10 @@ def read_grdecl(filename, elevation=True, other_keywords=None):
     # Active cells
     if 'ACTNUM' in keywords:
         active = np.array(keywords['ACTNUM']) > 0.0
-        grid.hide_cells(~active, inplace=True)
+        grid.hide_cells(~active, inplace=True)  # type: ignore[arg-type]
 
     # Store unused keywords in user dict
-    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}
+    grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}  # type: ignore[assignment]
 
     return grid
 
@@ -783,7 +783,7 @@ def from_meshio(mesh):
                 fill_values = np.array([[len(data)] for data in c.data], dtype=c.data.dtype)
             else:
                 fill_values = np.full((len(c.data), 1), numnodes, dtype=c.data.dtype)
-            cells.append(np.hstack((fill_values, c.data)).ravel())
+            cells.append(np.hstack((fill_values, c.data)).ravel())  # type: ignore[arg-type]
 
         cell_type += [vtk_type] * len(c.data)
 
@@ -908,7 +908,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
             raise TypeError(f'meshio does not support VTK type {cell_type}.')
 
     # Get cells
-    cells = []
+    cells = []  # type: ignore[var-annotated]
     c = 0
     for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
         if cell_type == 42:
@@ -923,9 +923,9 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
             cell = (
                 cell
                 if cell_type not in pixel_voxel
-                else cell[[0, 1, 3, 2]]
+                else cell[[0, 1, 3, 2]]  # type: ignore[call-overload]
                 if cell_type == 8
-                else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+                else cell[[0, 1, 3, 2, 4, 5, 7, 6]]  # type: ignore[call-overload]
             )
             cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
             cell_type = vtk_to_meshio_type[cell_type]
