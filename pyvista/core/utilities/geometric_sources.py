@@ -349,7 +349,7 @@ class ConeSource(_vtk.vtkConeSource):
         direction=(1.0, 0.0, 0.0),
         height=1.0,
         radius=None,
-        capping=True,
+        capping: bool = True,
         angle=None,
         resolution=6,
     ):
@@ -626,7 +626,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         direction=(1.0, 0.0, 0.0),
         radius=0.5,
         height=1.0,
-        capping=True,
+        capping: bool = True,
         resolution=100,
     ):
         """Initialize the cylinder source class."""
@@ -949,7 +949,7 @@ class Text3DSource(vtkVectorText):
         height=None,
         center=(0.0, 0.0, 0.0),
         normal=(0.0, 0.0, 1.0),
-        process_empty_string=True,
+        process_empty_string: bool = True,
     ):
         """Initialize source."""
         super().__init__()
@@ -2060,7 +2060,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         radius=1.0,
         normal=(0.0, 0.0, 1.0),
         n_sides=6,
-        fill=True,
+        fill: bool = True,
     ):
         """Initialize the polygon source class."""
         super().__init__()
@@ -2739,7 +2739,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         '_bounds',
     ]
 
-    def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
+    def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads: bool = True):
         """Initialize source."""
         super().__init__()
         self.bounds = bounds
@@ -2875,7 +2875,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         phi_roundness=1.0,
         theta_resolution=16,
         phi_resolution=16,
-        toroidal=False,
+        toroidal: bool = False,
         thickness=1 / 3,
     ):
         """Initialize source."""

@@ -742,7 +742,7 @@ def check_number(num, /, *, name='Object'):
     check_instance(num, Number, allow_subclass=True, name=name)
 
 
-def check_string(obj, /, *, allow_subclass=True, name='Object'):
+def check_string(obj, /, *, allow_subclass: bool = True, name='Object'):
     """Check if an object is an instance of ``str``.
 
     Parameters
@@ -849,7 +849,7 @@ def check_iterable(obj, /, *, name='Object'):
     check_instance(obj, Iterable, allow_subclass=True, name=name)
 
 
-def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
+def check_instance(obj, /, classinfo, *, allow_subclass: bool = True, name='Object'):
     """Check if an object is an instance of the given type or types.
 
     Parameters
@@ -975,7 +975,7 @@ def check_iterable_items(
     /,
     item_type,
     *,
-    allow_subclass=True,
+    allow_subclass: bool = True,
     name='Iterable',
 ):
     """Check if an iterable's items all have a specified type.
