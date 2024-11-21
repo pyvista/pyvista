@@ -2456,17 +2456,17 @@ class DataSetFilters:
 
     def glyph(
         self,
-        orient=True,
-        scale=True,
-        factor=1.0,
-        geom=None,
-        indices=None,
-        tolerance=None,
-        absolute=False,
-        clamping=False,
-        rng=None,
-        color_mode='scale',
-        progress_bar=False,
+        orient: bool | str = True,
+        scale: bool | str = True,
+        factor: float = 1.0,
+        geom: _vtk.vtkDataSet | Sequence[_vtk.vtkDataSet] | None = None,
+        indices: VectorLike[int] | None = None,
+        tolerance: float | None = None,
+        absolute: bool = False,
+        clamping: bool = False,
+        rng: VectorLike[float] | None = None,
+        color_mode: Literal['scale', 'scalar', 'vector'] = 'scale',
+        progress_bar: bool = False,
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
 
@@ -2569,32 +2569,35 @@ class DataSetFilters:
         if geom is None:
             arrow = _vtk.vtkArrowSource()
             _update_alg(arrow, progress_bar, 'Making Arrow')
-            geom = arrow.GetOutput()
+            geom_list: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
-        if isinstance(geom, (np.ndarray, Sequence)):
-            if indices is None:
-                # use default "categorical" indices
-                indices = np.arange(len(geom))
-            if not isinstance(indices, (np.ndarray, Sequence)):
-                raise TypeError(
-                    'If "geom" is a sequence then "indices" must '
-                    'also be a sequence of the same length.',
-                )
-            if len(indices) != len(geom) and len(geom) != 1:
-                raise ValueError('The sequence "indices" must be the same length as "geom".')
+        elif isinstance(geom, (np.ndarray, Sequence)):
+            geom_list = geom
         else:
-            geom = [geom]
-        if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geom):
+            geom_list = [geom]
+
+        if indices is None:
+            # use default "categorical" indices
+            indices = np.arange(len(geom_list))
+        elif not isinstance(indices, (np.ndarray, Sequence)):
+            raise TypeError(
+                'If "geom" is a sequence then "indices" must '
+                'also be a sequence of the same length.',
+            )
+        if len(indices) != len(geom_list) and len(geom_list) != 1:
+            raise ValueError('The sequence "indices" must be the same length as "geom".')
+
+        if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geom_list):
             raise TypeError('Only PolyData objects can be used as glyphs.')
 
         # Run the algorithm
         alg = _vtk.vtkGlyph3D()
 
-        if len(geom) == 1:
+        if len(geom_list) == 1:
             # use a single glyph, ignore indices
-            alg.SetSourceData(geom[0])
+            alg.SetSourceData(geom_list[0])
         else:
-            for index, subgeom in zip(indices, geom):
+            for index, subgeom in zip(indices, geom_list):
                 alg.SetSourceData(index, subgeom)
             if dataset.active_scalars is not None:  # type: ignore[attr-defined]
                 if dataset.active_scalars.ndim > 1:  # type: ignore[attr-defined]
@@ -2606,18 +2609,25 @@ class DataSetFilters:
 
         if isinstance(scale, str):
             dataset.set_active_scalars(scale, preference='cell')  # type: ignore[attr-defined]
-            scale = True
-        elif isinstance(scale, bool) and scale:
-            try:
-                set_default_active_scalars(self)  # type: ignore[arg-type]
-            except MissingDataError:
-                warnings.warn('No data to use for scale. scale will be set to False.')
-                scale = False
-            except AmbiguousDataError as err:
-                warnings.warn(f'{err}\nIt is unclear which one to use. scale will be set to False.')
-                scale = False
+            do_scale = True
+        else:
+            if scale:
+                try:
+                    set_default_active_scalars(self)  # type: ignore[arg-type]
+                except MissingDataError:
+                    warnings.warn('No data to use for scale. scale will be set to False.')
+                    do_scale = False
+                except AmbiguousDataError as err:
+                    warnings.warn(
+                        f'{err}\nIt is unclear which one to use. scale will be set to False.'
+                    )
+                    do_scale = False
+                else:
+                    do_scale = True
+            else:
+                do_scale = False
 
-        if scale:
+        if do_scale:
             if dataset.active_scalars is not None:  # type: ignore[attr-defined]
                 if dataset.active_scalars.ndim > 1:  # type: ignore[attr-defined]
                     alg.SetScaleModeToScaleByVector()
@@ -2696,7 +2706,8 @@ class DataSetFilters:
             raise ValueError(f"Invalid color mode '{color_mode}'")
 
         if rng is not None:
-            alg.SetRange(rng)
+            valid_range = _validation.validate_data_range(rng)
+            alg.SetRange(valid_range)
         alg.SetOrient(orient)
         alg.SetInputData(source_data)
         alg.SetVectorModeToUseVector()
@@ -2707,7 +2718,7 @@ class DataSetFilters:
         output = _get_output(alg)
 
         # Storing geom on the algorithm, for later use in legends.
-        output._glyph_geom = geom
+        output._glyph_geom = geom_list
 
         return output
 
