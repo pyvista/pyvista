@@ -661,10 +661,10 @@ def test_contour_errors(uniform, airplane):
         uniform.contour(isosurfaces={100, 300, 500})
     with pytest.raises(TypeError):
         uniform.contour(rng={})
-    match = 'Data Range has shape (1,) which is not allowed. Shape must be 2.'
+    match = 'rng has shape (1,) which is not allowed. Shape must be 2.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.contour(rng=[1])
-    match = 'Data Range with 2 elements must be sorted in ascending order. Got:\n    array([2, 1])'
+    match = 'rng with 2 elements must be sorted in ascending order. Got:\n    array([2, 1])'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.contour(rng=[2, 1])
 
