@@ -171,8 +171,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     def __init__(
         self,
         *args,
-        check_duplicates=False,
-        deep=False,
+        check_duplicates: bool = False,
+        deep: bool = False,
         **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
@@ -583,7 +583,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
-        deep=False,
+        deep: bool = False,
     ):
         """Initialize the uniform grid."""
         super().__init__()

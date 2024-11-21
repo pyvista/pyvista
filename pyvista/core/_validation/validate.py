@@ -59,21 +59,21 @@ def validate_array(
     must_have_length=None,
     must_have_min_length=None,
     must_have_max_length=None,
-    must_be_nonnegative=False,
-    must_be_finite=False,
-    must_be_real=True,
-    must_be_integer=False,
-    must_be_sorted=False,
+    must_be_nonnegative: bool = False,
+    must_be_finite: bool = False,
+    must_be_real: bool = True,
+    must_be_integer: bool = False,
+    must_be_sorted: bool = False,
     must_be_in_range=None,
-    strict_lower_bound=False,
-    strict_upper_bound=False,
+    strict_lower_bound: bool = False,
+    strict_upper_bound: bool = False,
     reshape_to=None,
     broadcast_to=None,
     dtype_out=None,
-    as_any=True,
-    copy=False,
-    to_list=False,
-    to_tuple=False,
+    as_any: bool = True,
+    copy: bool = False,
+    to_list: bool = False,
+    to_tuple: bool = False,
     name='Array',
 ):
     """Check and validate a numeric array meets specific requirements.
@@ -354,8 +354,8 @@ def validate_array(
 
 def validate_axes(
     *axes,
-    normalize=True,
-    must_be_orthogonal=True,
+    normalize: bool = True,
+    must_be_orthogonal: bool = True,
     must_have_orientation='right',
     name='Axes',
 ):
@@ -483,7 +483,7 @@ def validate_axes(
     return axes_array
 
 
-def validate_transform4x4(transform, /, *, must_be_finite=True, name='Transform'):
+def validate_transform4x4(transform, /, *, must_be_finite: bool = True, name='Transform'):
     """Validate transform-like input as a 4x4 ndarray.
 
     This function supports inputs with a 3x3 or 4x4 shape. If the input is 3x3,
@@ -553,7 +553,7 @@ def validate_transform4x4(transform, /, *, must_be_finite=True, name='Transform'
     return arr
 
 
-def validate_transform3x3(transform, /, *, must_be_finite=True, name='Transform'):
+def validate_transform3x3(transform, /, *, must_be_finite: bool = True, name='Transform'):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
@@ -634,7 +634,7 @@ def _array_from_vtkmatrix(
     return array
 
 
-def validate_number(num, /, *, reshape=True, **kwargs):
+def validate_number(num, /, *, reshape: bool = True, **kwargs):
     """Validate a real, finite number.
 
     By default, the number is checked to ensure it:
@@ -749,7 +749,7 @@ def validate_data_range(rng, /, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
+def validate_arrayNx3(arr, /, *, reshape: bool = True, **kwargs):
     """Validate an array is numeric and has shape Nx3.
 
     The array is checked to ensure its input values:
@@ -820,7 +820,7 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN(arr, /, *, reshape=True, **kwargs):
+def validate_arrayN(arr, /, *, reshape: bool = True, **kwargs):
     """Validate a numeric 1D array.
 
     The array is checked to ensure its input values:
@@ -893,7 +893,7 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_unsigned(arr, /, *, reshape=True, **kwargs):
+def validate_arrayN_unsigned(arr, /, *, reshape: bool = True, **kwargs):
     """Validate a numeric 1D array of non-negative (unsigned) integers.
 
     The array is checked to ensure its input values:
@@ -980,7 +980,7 @@ def validate_arrayN_unsigned(arr, /, *, reshape=True, **kwargs):
     return validate_arrayN(arr, reshape=reshape, **kwargs)
 
 
-def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
+def validate_array3(arr, /, *, reshape: bool = True, broadcast: bool = False, **kwargs):
     """Validate a numeric 1D array with 3 elements.
 
     The array is checked to ensure its input values:
