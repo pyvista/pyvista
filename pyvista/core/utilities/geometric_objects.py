@@ -149,7 +149,7 @@ def Cylinder(
     radius=0.5,
     height=1.0,
     resolution=100,
-    capping=True,
+    capping: bool = True,
 ):
     """Create the surface of a cylinder.
 
@@ -508,7 +508,7 @@ def SolidSphere(
     phi_resolution=30,
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
-    radians=False,
+    radians: bool = False,
     tol_radius=1.0e-8,
     tol_angle=None,
 ):
@@ -663,7 +663,7 @@ def SolidSphereGeneric(
     phi=None,
     center=(0.0, 0.0, 0.0),
     direction=(0.0, 0.0, 1.0),
-    radians=False,
+    radians: bool = False,
     tol_radius=1.0e-8,
     tol_angle=None,
 ):
@@ -1181,7 +1181,7 @@ def Cube(
     y_length=1.0,
     z_length=1.0,
     bounds=None,
-    clean=True,
+    clean: bool = True,
     point_dtype='float32',
 ):
     """Create a cube.
@@ -1265,7 +1265,7 @@ def Cube(
     return cube
 
 
-def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
+def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads: bool = True):
     """Create a box with solid faces for the given bounds.
 
     Parameters
@@ -1303,7 +1303,7 @@ def Cone(
     direction=(1.0, 0.0, 0.0),
     height=1.0,
     radius=None,
-    capping=True,
+    capping: bool = True,
     angle=None,
     resolution=6,
 ):
@@ -1362,7 +1362,9 @@ def Cone(
     return algo.output
 
 
-def Polygon(center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill=True):
+def Polygon(
+    center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill: bool = True
+):
     """Create a polygon.
 
     Parameters
@@ -1623,7 +1625,7 @@ def Wavelet(
     return wrap(wavelet_source.GetOutput())
 
 
-def CircularArc(pointa, pointb, center, resolution=100, negative=False):
+def CircularArc(pointa, pointb, center, resolution=100, negative: bool = False):
     """Create a circular arc defined by two endpoints and a center.
 
     The number of segments composing the polyline is controlled by
@@ -2073,7 +2075,7 @@ def Superquadric(
     phi_roundness=1.0,
     theta_resolution=16,
     phi_resolution=16,
-    toroidal=False,
+    toroidal: bool = False,
     thickness=1 / 3,
 ):
     """Create a superquadric.

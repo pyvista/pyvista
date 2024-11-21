@@ -124,7 +124,7 @@ def _coerce_pointslike_arg(
     return points, singular
 
 
-def copy_vtk_array(array, deep=True):
+def copy_vtk_array(array, deep: bool = True):
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
@@ -203,7 +203,7 @@ def raise_has_duplicates(arr):
         raise ValueError('Array contains duplicate values.')
 
 
-def convert_array(arr, name=None, deep=False, array_type=None):
+def convert_array(arr, name=None, deep: bool = False, array_type=None):
     """Convert a NumPy array to a vtkDataArray or vice versa.
 
     Parameters
@@ -259,7 +259,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> pyvista.ndarray | None:
+def get_array(mesh, name, preference='cell', err: bool = False) -> pyvista.ndarray | None:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -326,7 +326,7 @@ def get_array_association(
     mesh,
     name,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
-    err=False,
+    err: bool = False,
 ) -> FieldAssociation:
     """Return the array association.
 
