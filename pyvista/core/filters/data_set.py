@@ -2002,15 +2002,15 @@ class DataSetFilters:
 
     def contour(
         self,
-        isosurfaces=10,
-        scalars=None,
-        compute_normals=False,
-        compute_gradients=False,
-        compute_scalars=True,
-        rng=None,
-        preference='point',
-        method='contour',
-        progress_bar=False,
+        isosurfaces: int = 10,
+        scalars: str | None = None,
+        compute_normals: bool = False,
+        compute_gradients: bool = False,
+        compute_scalars: bool = True,
+        rng: VectorLike[float] | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        method: Literal['contour', 'marching_cubes', 'flying_edges'] = 'contour',
+        progress_bar: bool = False,
     ):
         """Contour an input self by an array.
 
@@ -2125,20 +2125,11 @@ class DataSetFilters:
         else:
             raise ValueError(f"Method '{method}' is not supported")
 
-        if rng is not None:
-            if not isinstance(rng, (np.ndarray, Sequence)):
-                raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
-            rng_shape = np.shape(rng)
-            if rng_shape != (2,):
-                raise ValueError(f'rng must be a two-length array-like, not {rng}.')
-            if rng[0] > rng[1]:
-                raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
-
         if isinstance(scalars, str):
             scalars_name = scalars
         elif isinstance(scalars, (Sequence, np.ndarray)):
             scalars_name = 'Contour Data'
-            self[scalars_name] = scalars  # type: ignore[index]
+            self[scalars_name] = scalars
         elif scalars is not None:
             raise TypeError(
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
@@ -2173,14 +2164,17 @@ class DataSetFilters:
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng = self.get_data_range(scalars_name)  # type: ignore[attr-defined]
-            alg.GenerateValues(isosurfaces, rng)
-        elif isinstance(isosurfaces, (np.ndarray, Sequence)):
-            alg.SetNumberOfContours(len(isosurfaces))
-            for i, val in enumerate(isosurfaces):
-                alg.SetValue(i, val)
+                valid_range: list[float] = list(self.get_data_range(scalars_name))  # type: ignore[attr-defined]
+            else:
+                valid_range = list(_validation.validate_data_range(rng))
+            alg.GenerateValues(isosurfaces, valid_range)
         else:
-            raise TypeError('isosurfaces not understood.')
+            valid_isosurfaces = _validation.validate_arrayN(isosurfaces, dtype_out=float)
+
+            alg.SetNumberOfContours(len(valid_isosurfaces))
+            for i, val in enumerate(valid_isosurfaces):
+                alg.SetValue(i, val)
+
         _update_alg(alg, progress_bar, 'Computing Contour')
         output = _get_output(alg)
 
