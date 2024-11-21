@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
 
 
-def axis_angle_rotation(axis, angle, point=None, deg=True):
+def axis_angle_rotation(axis, angle, point=None, deg: bool = True):
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
 
     Rotations around an axis that contains the origin can easily be
@@ -247,7 +247,7 @@ def reflection(normal, point=None):
     return augmented
 
 
-def apply_transformation_to_points(transformation, points, inplace=False):
+def apply_transformation_to_points(transformation, points, inplace: bool = False):
     """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
 
     Parameters
