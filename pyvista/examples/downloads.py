@@ -27,7 +27,6 @@ import os
 from pathlib import Path
 from pathlib import PureWindowsPath
 import shutil
-from typing import Union
 import warnings
 
 import numpy as np
@@ -73,7 +72,7 @@ if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _FILE_CACHE = True
 
 else:
-    SOURCE = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+    SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
     _FILE_CACHE = False
 
 # allow user to override the local path
@@ -2394,6 +2393,9 @@ _dataset_filled_contours = _SingleFileDownloadableDatasetLoader('filledContours.
 def download_doorman(load=True):  # pragma: no cover
     """Download doorman dataset.
 
+    .. versionchanged:: 0.44.0
+        Add support for downloading the texture images.
+
     Parameters
     ----------
     load : bool, default: True
@@ -2420,11 +2422,36 @@ def download_doorman(load=True):  # pragma: no cover
             Example using this dataset.
 
     """
-    # TODO: download textures as well
     return _download_dataset(_dataset_doorman, load=load)
 
 
-_dataset_doorman = _SingleFileDownloadableDatasetLoader('doorman/doorman.obj')
+def _doorman_files_func():
+    # Multiple files needed for read, but only one gets loaded
+    doorman_obj = _SingleFileDownloadableDatasetLoader('doorman/doorman.obj')
+    doorman_mtl = _DownloadableFile('doorman/doorman.mtl')
+    t_doorMan_d = _DownloadableFile('doorman/t_doorMan_d.png')
+    t_doorMan_n = _DownloadableFile('doorman/t_doorMan_n.png')
+    t_doorMan_s = _DownloadableFile('doorman/t_doorMan_s.png')
+    t_doorMan_teeth_d = _DownloadableFile('doorman/t_doorMan_teeth_d.png')
+    t_doorMan_teeth_n = _DownloadableFile('doorman/t_doorMan_teeth_n.png')
+    t_eye_d = _DownloadableFile('doorman/t_eye_d.png')
+    t_eye_n = _DownloadableFile('doorman/t_eye_n.png')
+    return (
+        doorman_obj,
+        doorman_mtl,
+        t_doorMan_d,
+        t_doorMan_n,
+        t_doorMan_s,
+        t_doorMan_teeth_d,
+        t_doorMan_teeth_n,
+        t_eye_d,
+        t_eye_n,
+    )
+
+
+_dataset_doorman = _MultiFileDownloadableDatasetLoader(
+    files_func=_doorman_files_func,
+)
 
 
 def download_mug(load=True):  # pragma: no cover
@@ -3020,7 +3047,7 @@ def download_human(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_human()
-    >>> dataset.plot()
+    >>> dataset.plot(scalars='Color', rgb=True)
 
     .. seealso::
 
@@ -3226,11 +3253,107 @@ def download_shark(load=True):  # pragma: no cover
         :ref:`Shark Dataset <shark_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
+        :ref:`Great White Shark Dataset <great_white_shark_dataset>`
+            Similar dataset.
+
+        :ref:`Grey Nurse Shark Dataset <grey_nurse_shark_dataset>`
+            Similar dataset.
+
     """
     return _download_dataset(_dataset_shark, load=load)
 
 
 _dataset_shark = _SingleFileDownloadableDatasetLoader('shark.ply')
+
+
+def download_great_white_shark(load=True):  # pragma: no cover
+    """Download great white shark dataset.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> cpos = [(9.0, 1.0, 21.0), (-1.0, 2.0, -2.0), (0.0, 1.0, 0.0)]
+    >>> dataset = examples.download_great_white_shark()
+    >>> dataset.plot(cpos=cpos, smooth_shading=True)
+
+    .. seealso::
+
+        :ref:`Great White Shark Dataset <great_white_shark_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Shark Dataset <shark_dataset>`
+            Similar dataset.
+
+        :ref:`Grey Nurse Shark Dataset <grey_nurse_shark_dataset>`
+            Similar dataset.
+
+    """
+    return _download_dataset(_dataset_great_white_shark, load=load)
+
+
+_dataset_great_white_shark = _SingleFileDownloadableDatasetLoader(
+    'great_white_shark/greatWhite.stl'
+)
+
+
+def download_grey_nurse_shark(load=True):  # pragma: no cover
+    """Download grey nurse shark dataset.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> cpos = [
+    ...     [-200, -100, -16.0],
+    ...     [-20.0, 20.0, -2.00],
+    ...     [0.00, 0.00, 1.00],
+    ... ]
+    >>> dataset = examples.download_grey_nurse_shark()
+    >>> dataset.plot(cpos=cpos, smooth_shading=True)
+
+    .. seealso::
+
+        :ref:`Grey Nurse Shark Dataset <grey_nurse_shark_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Shark Dataset <shark_dataset>`
+            Similar dataset.
+
+        :ref:`Great White Shark Dataset <great_white_shark_dataset>`
+            Similar dataset.
+
+    """
+    return _download_dataset(_dataset_grey_nurse_shark, load=load)
+
+
+_dataset_grey_nurse_shark = _SingleFileDownloadableDatasetLoader(
+    'grey_nurse_shark/Grey_Nurse_Shark.stl'
+)
 
 
 def download_dragon(load=True):  # pragma: no cover
@@ -3413,7 +3536,8 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
     >>> point_a = (0.08, 2.50, 0.71)
     >>> point_b = (0.08, 4.50, 0.71)
     >>> line = pv.Line(point_a, point_b, resolution=39)
-    >>> dataset.streamlines_from_source(line).plot(show_grid=True)
+    >>> streamlines = dataset.streamlines_from_source(line, max_length=200)
+    >>> streamlines.plot(show_grid=True)
 
     .. seealso::
 
@@ -3456,7 +3580,7 @@ def _kitchen_split_load_func(mesh):  # pragma: no cover
     for key, extent in extents.items():  # pragma: no cover
         alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
-        alg.SetExtent(extent)
+        alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
         result = pyvista.core.filters._get_output(alg)
         kitchen[key] = result
@@ -3857,7 +3981,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
 
 
 def _damavand_volcano_load_func(volume):  # pragma: no cover
-    volume.rename_array("None", "data")
+    volume.rename_array('None', 'data')
     return volume
 
 
@@ -4241,7 +4365,7 @@ def download_cubemap_park(load=True):  # pragma: no cover
 _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
     'cubemap_park/cubemap_park.zip',
     target_file='',
-    read_func=_load_as_cubemap,
+    read_func=_load_as_cubemap,  # type: ignore[arg-type]
 )
 
 
@@ -4301,7 +4425,7 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
 _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/4k.zip',
     target_file='',
-    read_func=_load_as_cubemap,
+    read_func=_load_as_cubemap,  # type: ignore[arg-type]
 )
 
 
@@ -4367,7 +4491,7 @@ def download_cubemap_space_16k(load=True):  # pragma: no cover
 _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/16k.zip',
     target_file='',
-    read_func=_load_as_cubemap,
+    read_func=_load_as_cubemap,  # type: ignore[arg-type]
 )
 
 
@@ -4490,7 +4614,7 @@ def download_gpr_path(load=True):  # pragma: no cover
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
     read_func=functools.partial(np.loadtxt, skiprows=1),  # type: ignore[arg-type]
-    load_func=pyvista.PolyData,
+    load_func=pyvista.PolyData,  # type: ignore[arg-type]
 )
 
 
@@ -5354,6 +5478,7 @@ def _openfoam_tubes_read_func(filename):  # pragma: no cover
 _dataset_openfoam_tubes = _SingleFileDownloadableDatasetLoader(
     'fvm/turbo_incompressible/Turbo-Incompressible_3-Run_1-SOLUTION_FIELDS.zip',
     target_file='case.foam',
+    read_func=_openfoam_tubes_read_func,
 )
 
 
@@ -5604,7 +5729,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData, str, or List[str]
+    pyvista.PolyData, str, or list[str]
         The example ParaView can DataSet or file path(s).
 
     Examples
@@ -5887,7 +6012,7 @@ _dataset_cgns_multi = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_dicom_stack(load: bool = True) -> Union[pyvista.ImageData, str]:  # pragma: no cover
+def download_dicom_stack(load: bool = True) -> pyvista.ImageData | str:  # pragma: no cover
     """Download TCIA DICOM stack volume.
 
     Original download from the `The Cancer Imaging Archive (TCIA)
@@ -6298,7 +6423,7 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
 _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_low_res.npy',
     read_func=np.load,
-    load_func=pyvista.PointSet,
+    load_func=pyvista.PointSet,  # type: ignore[arg-type]
 )
 
 
@@ -6363,7 +6488,7 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
 _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_high_res.npy',
     read_func=np.load,
-    load_func=pyvista.PointSet,
+    load_func=pyvista.PointSet,  # type: ignore[arg-type]
 )
 
 
@@ -7141,7 +7266,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     >>> strl = grid.streamlines_from_source(
     ...     seed,
     ...     vectors='B',
-    ...     max_time=180,
+    ...     max_length=180,
     ...     initial_step_length=0.1,
     ...     integration_direction='both',
     ... )
@@ -7367,7 +7492,7 @@ def _reservoir_load_func(grid):  # pragma: no cover
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
     'reservoir/UNISIM-II-D.zip',
     target_file='UNISIM-II-D.vtu',
-    read_func=pyvista.ExplicitStructuredGrid,
+    read_func=pyvista.ExplicitStructuredGrid,  # type: ignore[arg-type]
     load_func=_reservoir_load_func,
 )
 
@@ -7445,7 +7570,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     >>> label_map = dataset['label_map']
     >>> label_map.get_data_range()
-    (0, 117)
+    (np.uint8(0), np.uint8(117))
 
     Create a surface mesh of the segmentation labels
 
@@ -7589,7 +7714,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
     >>> label_map = dataset['label_map']
     >>> label_map.get_data_range()
-    (0, 117)
+    (np.uint8(0), np.uint8(117))
 
     Create a surface mesh of the segmentation labels
 
@@ -7906,6 +8031,7 @@ def download_e07733s002i009(load=True):  # paragma: no cover
 
         :ref:`E07733s002i009 Dataset <e07733s002i009_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_e07733s002i009, load=load)
 
@@ -7991,3 +8117,37 @@ def _prostar_files_func():  # pragma: no cover
 
 
 _dataset_prostar = _MultiFileDownloadableDatasetLoader(_prostar_files_func)
+
+
+def download_3gqp(load=True):  # pragma: no cover
+    """Download a 3GQP dataset.
+
+    .. versionadded:: 0.44.0
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_3gqp()
+    >>> mesh.plot()
+
+    .. seealso::
+
+        :ref:`3GQP Dataset <3gqp_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_3gqp, load=load)
+
+
+_dataset_3gqp = _SingleFileDownloadableDatasetLoader('3GQP.pdb')

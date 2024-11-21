@@ -18,7 +18,7 @@ from pyvista.trame.ui.vuetify3 import select
 from pyvista.trame.ui.vuetify3 import slider
 from pyvista.trame.ui.vuetify3 import text_field
 
-###############################################################################
+# %%
 # Let's first create the menu items we want to add to the trame's toolbar.
 # Here we want a "play" button that will be later connected to a slider
 # through the ``button_play`` function. The slider itself will represent the
@@ -37,38 +37,38 @@ def custom_tools():
     )
 
     slider(
-        model=("resolution", 10),
-        tooltip="Resolution slider",
+        model=('resolution', 10),
+        tooltip='Resolution slider',
         min=3,
         max=20,
         step=1,
         dense=True,
         hide_details=True,
-        style="width: 300px",
+        style='width: 300px',
         classes='my-0 py-0 ml-1 mr-1',
     )
     text_field(
-        model=("resolution", 10),
-        tooltip="Resolution value",
+        model=('resolution', 10),
+        tooltip='Resolution value',
         readonly=True,
-        type="number",
+        type='number',
         dense=True,
         hide_details=True,
-        style="min-width: 40px; width: 60px",
+        style='min-width: 40px; width: 60px',
         classes='my-0 py-0 ml-1 mr-1',
     )
 
     divider(vertical=True, classes='mx-1')
     select(
-        model=("visibility", "Show"),
-        tooltip="Toggle visibility",
-        items=['Visibility', ["Hide", "Show"]],
+        model=('visibility', 'Show'),
+        tooltip='Toggle visibility',
+        items=['Visibility', ['Hide', 'Show']],
         hide_details=True,
         dense=True,
     )
 
 
-###############################################################################
+# %%
 # The button callback function ``button_play`` needs to be created before starting
 # the server. This function will toggle the boolean state variable ``play``
 # and flush the server, i.e. "force" the server to see the change.
@@ -81,7 +81,7 @@ def button_play():
     state.flush()
 
 
-###############################################################################
+# %%
 # We will do a simple rendering of a Cone using `ConeSouce`.
 #
 # When using the ``pl.show`` method. The function we created ``custom_tools``
@@ -94,7 +94,7 @@ mesh_actor = pl.add_mesh(algo)
 
 widget = pl.show(jupyter_kwargs=dict(add_menu_items=custom_tools), return_viewer=True)
 
-###############################################################################
+# %%
 # To interact with ``trame``'s server we need to get the server's state.
 #
 # We initialize the ``play`` variable in the shared state and this will be
@@ -108,7 +108,7 @@ state, ctrl = widget.viewer.server.state, widget.viewer.server.controller
 state.play = False
 ctrl.view_update = widget.viewer.update
 
-###############################################################################
+# %%
 # Now we can create the callback functions for our menu items.
 #
 # The functions are decorated with a ``state.change("variable")``. This means
@@ -132,7 +132,7 @@ ctrl.view_update = widget.viewer.update
 
 
 # trame callbacks
-@state.change("play")
+@state.change('play')
 async def _play(play, **kwargs):
     while state.play:
         state.resolution += 1
@@ -142,15 +142,15 @@ async def _play(play, **kwargs):
         await asyncio.sleep(0.3)
 
 
-@state.change("resolution")
+@state.change('resolution')
 def update_resolution(resolution, **kwargs):
     algo.resolution = resolution
     ctrl.view_update()
 
 
-@state.change("visibility")
+@state.change('visibility')
 def set_visibility(visibility, **kwargs):
-    toggle = {"Hide": 0, "Show": 1}
+    toggle = {'Hide': 0, 'Show': 1}
     mesh_actor.visibility = toggle[visibility]
     ctrl.view_update()
 

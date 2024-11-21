@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Start by loading the elevation data and a topographic map.
 
 # Load the elevation data as a surface
@@ -30,14 +30,14 @@ topo_map = topo_map.flip_y()  # flip to align to our dataset
 
 elevation
 
-###############################################################################
+# %%
 # Let's inspect the imagery that we just loaded.
 
 mpl.rcParams['figure.dpi'] = 500
 plt.imshow(topo_map.to_array())
 
 
-###############################################################################
+# %%
 # Once you have a topography mesh loaded as a surface mesh
 # (we use a :class:`pyvista.StructuredGrid` here) and an image loaded as a
 # :class:`pyvista.Texture` using :func:`pyvista.read_texture`,
@@ -50,15 +50,15 @@ local = elevation.clip_box(bounds, invert=False)
 # Apply texturing coordinates to associate the image to the surface
 local.texture_map_to_plane(use_bounds=True, inplace=True)
 
-###############################################################################
+# %%
 # Now display it. Note that the imagery is aligned as we expect.
-local.plot(texture=topo_map, cpos="xy")
+local.plot(texture=topo_map, cpos='xy')
 
-###############################################################################
+# %%
 # And here is a 3D perspective.
 local.plot(texture=topo_map)
 
-###############################################################################
+# %%
 # We could also display the entire region by extracting the surrounding region
 # and plotting the texture mapped local topography and the outside area
 
@@ -68,7 +68,7 @@ surrounding = elevation.clip_box(bounds, invert=True)
 # Display with a shading technique
 p = pv.Plotter()
 p.add_mesh(local, texture=topo_map)
-p.add_mesh(surrounding, color="white")
+p.add_mesh(surrounding, color='white')
 p.enable_eye_dome_lighting()
 p.camera_position = [
     (1831100.0, 5642142.0, 8168.0),
@@ -76,3 +76,5 @@ p.camera_position = [
     (-0.435, 0.248, 0.865),
 ]
 p.show()
+# %%
+# .. tags:: plot

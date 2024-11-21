@@ -32,7 +32,7 @@ from pyvista.examples import plot_cell
 rng = np.random.default_rng(2)
 
 
-###############################################################################
+# %%
 # Plot an example cell
 # ~~~~~~~~~~~~~~~~~~~~
 # PyVista contains a simple utility to plot a single cell, which is the
@@ -43,13 +43,13 @@ grid = example_cells.Wedge()
 example_cells.plot_cell(grid)
 
 
-###############################################################################
+# %%
 # This linear cell is composed of 6 points.
 
 grid.points
 
 
-###############################################################################
+# %%
 # The UnstructuredGrid is also composed of a single cell and the point indices
 # of that cell are defined in :attr:`cells <pyvista.UnstructuredGrid.cells>`.
 #
@@ -59,7 +59,7 @@ grid.points
 grid.cells
 
 
-###############################################################################
+# %%
 # Combine two UnstructuredGrids
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # We can combine two unstructured grids to create a single unstructured grid
@@ -80,7 +80,7 @@ combined = grid_b + grid_a
 plot_cell(combined, cpos='iso')
 
 
-###############################################################################
+# %%
 # This example helps to illustrate meaning behind the :attr:`cells
 # <pyvista.UnstructuredGrid.cells>` attribute. The first cell, a hexahedron
 # contains 8 points and the hexagonal prism contains 12 points. The ``cells``
@@ -89,7 +89,7 @@ plot_cell(combined, cpos='iso')
 combined.cells
 
 
-###############################################################################
+# %%
 # Cell Types
 # ~~~~~~~~~~
 # PyVista contains the :class:`pyvista.CellType` enumerator, which contains all the
@@ -103,7 +103,7 @@ print(pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 combined.celltypes == (pv.CellType.HEXAHEDRON, pv.CellType.HEXAGONAL_PRISM)
 
 
-###############################################################################
+# %%
 # Create an UnstructuredGrid with a single linear cell
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now that you know the three main inputs of an
@@ -125,7 +125,7 @@ pyrmaid = pv.UnstructuredGrid(cells, [pv.CellType.PYRAMID], points)
 example_cells.plot_cell(pyrmaid)
 
 
-###############################################################################
+# %%
 # Plot all linear cell Types
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Let's create a ``(4, 4)`` :class:`pyvista.Plotter` and plot all 16 linear
@@ -212,3 +212,5 @@ add_cell_helper(
 
 pl.background_color = 'w'
 pl.show()
+# %%
+# .. tags:: load

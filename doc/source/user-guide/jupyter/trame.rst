@@ -155,7 +155,7 @@ Setting Remote Jupyter Host with an Environment Variable
 You can set the Remote Jupyter Host manually with the flags discussed above,
 but these need to be set every time the Jupyter kernel restarts. In some environments,
 it may be more efficient to configure the Remote Jupyter Host with an environment variable.
-If set, the value for `PYVISTA_TRAME_JUPYTER_MODE` will determine the values of
+If set, the value for ``PYVISTA_TRAME_JUPYTER_MODE`` will determine the values of
 these two flags:
 
 * :py:attr:`pyvista.global_theme.trame.server_proxy_enabled
@@ -163,7 +163,7 @@ these two flags:
 * :py:attr:`pyvista.global_theme.trame.jupyter_extension_enabled
   <pyvista.plotting.themes._TrameConfig.jupyter_extension_enabled>`
 
-If set, the accepted values for `PYVISTA_TRAME_JUPYTER_MODE` include ``'extension'``, ``'proxy'``, and ``'native'``.
+If set, the accepted values for ``PYVISTA_TRAME_JUPYTER_MODE`` include ``'extension'``, ``'proxy'``, and ``'native'``.
 The following table shows how each accepted value will affect the two flags, as well as any precondition
 that must be true for the value to be applicable. To meet these prerequisites,
 review the sections above for installation instructions.
@@ -171,7 +171,7 @@ review the sections above for installation instructions.
 .. list-table::
    :header-rows: 1
 
-   * - `PYVISTA_TRAME_JUPYTER_MODE`
+   * - ``PYVISTA_TRAME_JUPYTER_MODE``
      - Description
      - Condition
      - `server_proxy_enabled`
@@ -199,24 +199,9 @@ Other Considerations
 ++++++++++++++++++++
 It may be worth using GPU acceleration, see :ref:`gpu_off_screen`.
 
-If you do not have GPU acceleration, be sure to start up a virtual
-framebuffer using ``Xvfb``.  You can either start it using bash with:
+If you do not have GPU acceleration, alternatively, an offscreen version using OSMesa libraries and ``vtk-osmesa`` is available:
 
 .. code-block:: bash
 
-    export DISPLAY=:99.0
-    export PYVISTA_OFF_SCREEN=true
-    which Xvfb
-    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-    sleep 3
-    set +x
-    exec "$@"
-
-
-Or alternatively, start it using the built in
-``pyvista.start_xvfb()``.  Please be sure to install ``xvfb`` and
-``libgl1-mesa-glx`` with:
-
-.. code-block:: bash
-
-    sudo apt-get install libgl1-mesa-dev xvfb
+    pip uninstall vtk -y
+    pip install --no-cache-dir --extra-index-url https://wheels.vtk.org vtk-osmesa

@@ -19,7 +19,7 @@ from pyvista.demos import logo
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = False
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Convert pixel art to an array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -47,7 +47,7 @@ for line in alien_str.splitlines()[1:]:  # skip first linebreak
     alien.append([line[i : i + 2] == '% ' for i in range(0, len(line), 2)])
 
 
-###############################################################################
+# %%
 # Define function to draw pixels
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Define a helper function to add pixel boxes to plotter.
@@ -76,24 +76,26 @@ def draw_pixels(plotter, pixels, center, color):
     return plotter
 
 
-###############################################################################
+# %%
 # Now you can plot a pixel art of ALIEN MONSTERS.
 
 # Display MONSTERS
 p = pv.Plotter()
-p = draw_pixels(p, alien, [-22.0, 22.0], "green")
-p = draw_pixels(p, alien, [0.0, 22.0], "green")
-p = draw_pixels(p, alien, [22.0, 22.0], "green")
-p = draw_pixels(p, alien, [-22.0, 0.0], "blue")
-p = draw_pixels(p, alien, [0.0, 0.0], "blue")
-p = draw_pixels(p, alien, [22.0, 0.0], "blue")
-p = draw_pixels(p, alien, [-22.0, -22.0], "red")
-p = draw_pixels(p, alien, [0.0, -22.0], "red")
-p = draw_pixels(p, alien, [22.0, -22.0], "red")
+p = draw_pixels(p, alien, [-22.0, 22.0], 'green')
+p = draw_pixels(p, alien, [0.0, 22.0], 'green')
+p = draw_pixels(p, alien, [22.0, 22.0], 'green')
+p = draw_pixels(p, alien, [-22.0, 0.0], 'blue')
+p = draw_pixels(p, alien, [0.0, 0.0], 'blue')
+p = draw_pixels(p, alien, [22.0, 0.0], 'blue')
+p = draw_pixels(p, alien, [-22.0, -22.0], 'red')
+p = draw_pixels(p, alien, [0.0, -22.0], 'red')
+p = draw_pixels(p, alien, [22.0, -22.0], 'red')
 
-text = logo.text_3d("ALIEN MONSTERS", depth=10.0)
+text = logo.text_3d('ALIEN MONSTERS', depth=10.0)
 text.points *= 4.0
 text.translate([-20.0, 24.0, 0.0], inplace=True)
 
-p.add_mesh(text, color="yellow")
-p.show(cpos="xy")
+p.add_mesh(text, color='yellow')
+p.show(cpos='xy')
+# %%
+# .. tags:: load

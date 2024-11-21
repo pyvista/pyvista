@@ -1,4 +1,5 @@
-""".. _plot_spheres_example:
+"""
+.. _plot_spheres_example:
 
 Scaled Gaussian Points
 ----------------------
@@ -18,7 +19,7 @@ import pyvista as pv
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # First, generate the sphere positions and radii randomly on the edge of a
 # torus.
 
@@ -39,7 +40,7 @@ pos[:, 1] = radius * np.sin(theta)
 pos[:, 2] = tube_radius * np.sin(phi)
 
 
-###############################################################################
+# %%
 # Next, create a PolyData object and add the sphere positions and radii as
 # data arrays.
 
@@ -47,7 +48,7 @@ pdata = pv.PolyData(pos)
 pdata['radius'] = rad
 
 
-###############################################################################
+# %%
 # Finally, plot the spheres using the ``points_gaussian`` style and scale them
 # by radius.
 
@@ -64,7 +65,7 @@ pl.camera.zoom(1.5)
 pl.show()
 
 
-###############################################################################
+# %%
 # Show the same plot with ``emissive=True``.
 
 pl = pv.Plotter()
@@ -79,3 +80,5 @@ actor = pl.add_mesh(
 actor.mapper.scale_array = 'radius'
 pl.camera.zoom(1.5)
 pl.show()
+# %%
+# .. tags:: plot

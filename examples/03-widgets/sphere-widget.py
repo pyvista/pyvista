@@ -24,7 +24,7 @@ from __future__ import annotations
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-##############################################################################
+# %%
 # Example A
 # +++++++++
 #
@@ -58,13 +58,13 @@ p.add_mesh(surf, color=True)
 p.show_grid()
 p.show()
 
-##############################################################################
+# %%
 # And here is a screen capture of a user interacting with this
 #
 # .. image:: ../../images/gifs/sphere-widget-a.gif
 
 
-###############################################################################
+# %%
 # Example B
 # +++++++++
 #
@@ -99,12 +99,12 @@ p.add_mesh(surf, color=True)
 p.show_grid()
 p.show()
 
-##############################################################################
+# %%
 # And here is a screen capture of a user interacting with this
 #
 # .. image:: ../../images/gifs/sphere-widget-b.gif
 
-###############################################################################
+# %%
 # Example C
 # +++++++++
 #
@@ -118,7 +118,7 @@ import pyvista as pv
 
 
 def get_colors(n):
-    """A helper function to get n colors"""
+    """Get n colors."""
     from itertools import cycle
 
     import matplotlib as mpl
@@ -156,7 +156,7 @@ def update_surface(point, i):
 # Get a list of unique colors for each widget
 colors = get_colors(len(points))
 
-##############################################################################
+# %%
 
 # Begin the plotting routine
 p = pv.Plotter()
@@ -172,7 +172,10 @@ p.show_grid()
 # Show it
 p.show()
 
-##############################################################################
+# %%
 # And here is a screen capture of a user interacting with this
 #
 # .. image:: ../../images/gifs/sphere-widget-c.gif
+#
+# %%
+# .. tags:: widgets

@@ -8,8 +8,7 @@ import enum
 from itertools import product
 import json
 from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Tuple
+from typing import Literal
 from typing import Union
 
 import numpy as np
@@ -22,7 +21,6 @@ from pyvista.core.errors import MissingDataError
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
 
@@ -33,6 +31,15 @@ class FieldAssociation(enum.Enum):
     CELL = _vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
     NONE = _vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
     ROW = _vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
+
+
+PointLiteral = Literal[
+    FieldAssociation.POINT,
+    'point',
+]
+CellLiteral = Literal[FieldAssociation.CELL, 'cell']
+FieldLiteral = Literal[FieldAssociation.NONE, 'field']
+RowLiteral = Literal[FieldAssociation.ROW, 'row']
 
 
 def parse_field_choice(field):
@@ -70,9 +77,9 @@ def parse_field_choice(field):
 
 
 def _coerce_pointslike_arg(
-    points: Union[MatrixLike[float], VectorLike[float]],
+    points: MatrixLike[float] | VectorLike[float],
     copy: bool = False,
-) -> Tuple[NumpyArray[float], bool]:
+) -> tuple[NumpyArray[float], bool]:
     """Check and coerce arg to (n, 3) np.ndarray.
 
     Parameters
@@ -96,19 +103,19 @@ def _coerce_pointslike_arg(
         points = np.asarray(points)
 
     if not isinstance(points, np.ndarray):
-        raise TypeError("Given points must be convertible to a numerical array.")
+        raise TypeError('Given points must be convertible to a numerical array.')
 
     if points.ndim > 2:
-        raise ValueError("Array of points must be 1D or 2D")
+        raise ValueError('Array of points must be 1D or 2D')
 
     if points.ndim == 2:
         if points.shape[1] != 3:
-            raise ValueError("Array of points must have three values per point (shape (n, 3))")
+            raise ValueError('Array of points must have three values per point (shape (n, 3))')
         singular = False
 
     else:
         if points.size != 3:
-            raise ValueError("Given point must have three values")
+            raise ValueError('Given point must have three values')
         singular = True
         points = np.reshape(points, [1, 3])
 
@@ -149,13 +156,13 @@ def copy_vtk_array(array, deep=True):
 
     """
     if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
-        raise TypeError(f"Invalid type {type(array)}.")
+        raise TypeError(f'Invalid type {type(array)}.')
 
     new_array = type(array)()
     if deep:
         new_array.DeepCopy(array)
     else:
-        new_array.ShallowCopy(array)
+        new_array.ShallowCopy(array)  # type: ignore[attr-defined]
 
     return new_array
 
@@ -172,6 +179,7 @@ def has_duplicates(arr):
     -------
     bool
         ``True`` if the array has any duplicates, otherwise ``False``.
+
     """
     s = np.sort(arr, axis=None)
     return (s[1:] == s[:-1]).any()
@@ -189,9 +197,10 @@ def raise_has_duplicates(arr):
     ------
     ValueError
         If the array contains duplicate values.
+
     """
     if has_duplicates(arr):
-        raise ValueError("Array contains duplicate values.")
+        raise ValueError('Array contains duplicate values.')
 
 
 def convert_array(arr, name=None, deep=False, array_type=None):
@@ -250,7 +259,7 @@ def convert_array(arr, name=None, deep=False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err=False) -> Optional[pyvista.ndarray]:
+def get_array(mesh, name, preference='cell', err=False) -> pyvista.ndarray | None:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -313,7 +322,12 @@ def get_array(mesh, name, preference='cell', err=False) -> Optional[pyvista.ndar
     return None
 
 
-def get_array_association(mesh, name, preference='cell', err=False) -> FieldAssociation:
+def get_array_association(
+    mesh,
+    name,
+    preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
+    err=False,
+) -> FieldAssociation:
     """Return the array association.
 
     Parameters
@@ -352,8 +366,8 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
     farr = field_array(mesh, name)
     arrays = [parr, carr, farr]
     preferences = [FieldAssociation.POINT, FieldAssociation.CELL, FieldAssociation.NONE]
-    preference = parse_field_choice(preference)
-    if preference not in preferences:
+    preference_field = parse_field_choice(preference)
+    if preference_field not in preferences:
         raise ValueError(f'Data field ({preference}) not supported.')
 
     matches = [pref for pref, array in zip(preferences, arrays) if array is not None]
@@ -363,8 +377,8 @@ def get_array_association(mesh, name, preference='cell', err=False) -> FieldAsso
             raise KeyError(f'Data array ({name}) not present in this dataset.')
         return FieldAssociation.NONE
     # use preference if it applies
-    if preference in matches:
-        return preference
+    if preference_field in matches:
+        return preference_field
     # otherwise return first in order of point -> cell -> field
     return matches[0]
 
@@ -384,10 +398,11 @@ def raise_not_matching(scalars, dataset):
     ------
     ValueError
         Raises a ValueError if the size of scalars does not the dataset.
+
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',
+            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',  # type: ignore[attr-defined]
         )
     raise ValueError(
         f'Number of scalars ({scalars.shape[0]}) '
@@ -567,7 +582,7 @@ def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray):
     try:
         vtkarr.SetObjectName('scalar')
     except AttributeError:
-        vtkarr.GetObjectName = lambda: 'scalar'
+        vtkarr.GetObjectName = lambda: 'scalar'  # type: ignore[method-assign]
 
 
 def convert_string_array(arr, name=None):
@@ -623,7 +638,7 @@ def convert_string_array(arr, name=None):
     arr_out = np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
     try:
         if arr.GetObjectName() == 'scalar':
-            return np.array("".join(arr_out))
+            return np.array(''.join(arr_out))
     except AttributeError:
         pass
     return arr_out
@@ -680,7 +695,7 @@ def vtkmatrix_from_array(array):
     if array.shape == (3, 3):
         matrix = _vtk.vtkMatrix3x3()
     elif array.shape == (4, 4):
-        matrix = _vtk.vtkMatrix4x4()
+        matrix = _vtk.vtkMatrix4x4()  # type: ignore[assignment]
     else:
         raise ValueError(f'Invalid shape {array.shape}, must be (3, 3) or (4, 4).')
     m, n = array.shape
@@ -729,16 +744,18 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> None:
     n_possible_vectors = len(possible_vectors)
 
     if n_possible_vectors == 1:
-        preference = 'point' if len(possible_vectors_point) == 1 else 'cell'
+        preference: Literal['point', 'cell'] = (
+            'point' if len(possible_vectors_point) == 1 else 'cell'
+        )
         mesh.set_active_vectors(possible_vectors[0], preference=preference)
     elif n_possible_vectors < 1:
-        raise MissingDataError("No vector-like data available.")
+        raise MissingDataError('No vector-like data available.')
     elif n_possible_vectors > 1:
         raise AmbiguousDataError(
-            "Multiple vector-like data available\n"
-            f"cell data: {possible_vectors_cell}.\n"
-            f"point data: {possible_vectors_point}.\n"
-            "Set one as active using DataSet.set_active_vectors(name, preference=type)",
+            'Multiple vector-like data available\n'
+            f'cell data: {possible_vectors_cell}.\n'
+            f'point data: {possible_vectors_point}.\n'
+            'Set one as active using DataSet.set_active_vectors(name, preference=type)',
         )
 
 
@@ -778,64 +795,25 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
     n_possible_scalars = len(possible_scalars)
 
     if n_possible_scalars == 1:
-        preference = 'point' if len(possible_scalars_point) == 1 else 'cell'
+        preference: Literal['point', 'cell'] = (
+            'point' if len(possible_scalars_point) == 1 else 'cell'
+        )
         mesh.set_active_scalars(possible_scalars[0], preference=preference)
     elif n_possible_scalars < 1:
-        raise MissingDataError("No data available.")
+        raise MissingDataError('No data available.')
     elif n_possible_scalars > 1:
         raise AmbiguousDataError(
-            "Multiple data available\n"
-            f"cell data: {possible_scalars_cell}.\n"
-            f"point data: {possible_scalars_point}.\n"
-            "Set one as active using DataSet.set_active_scalars(name, preference=type)",
+            'Multiple data available\n'
+            f'cell data: {possible_scalars_cell}.\n'
+            f'point data: {possible_scalars_point}.\n'
+            'Set one as active using DataSet.set_active_scalars(name, preference=type)',
         )
-
-
-def _coerce_transformlike_arg(transform_like: TransformLike) -> NumpyArray[float]:
-    """Check and coerce transform-like arg to a 4x4 numpy array.
-
-    Parameters
-    ----------
-    transform_like : np.ndarray | vtkMatrix3x3 | vtkMatrix4x4 | vtkTransform
-        Transformation matrix as a 3x3 or 4x4 numpy array, vtkMatrix, or
-        from a vtkTransform.
-
-    Returns
-    -------
-    np.ndarray
-        4x4 transformation matrix.
-
-    """
-    transform_array: NumpyArray[float] = np.eye(4)
-    if isinstance(transform_like, _vtk.vtkMatrix4x4):
-        transform_array = array_from_vtkmatrix(transform_like)
-    elif isinstance(transform_like, _vtk.vtkMatrix3x3):
-        transform_array[:3, :3] = array_from_vtkmatrix(transform_like)
-    elif isinstance(transform_like, _vtk.vtkTransform):
-        transform_array = array_from_vtkmatrix(transform_like.GetMatrix())
-    elif isinstance(transform_like, np.ndarray):
-        if transform_like.shape == (3, 3):
-            transform_array[:3, :3] = transform_like
-        elif transform_like.shape == (4, 4):
-            transform_array = transform_like
-        else:
-            raise ValueError('Transformation array must be 3x3 or 4x4.')
-    else:
-        raise TypeError(
-            'Input transform must be one of:\n'
-            '\tvtk.vtkMatrix4x4\n'
-            '\tvtk.vtkMatrix3x3\n'
-            '\tvtk.vtkTransform\n'
-            '\t4x4 np.ndarray\n'
-            '\t3x3 np.ndarray\n',
-        )
-    return transform_array
 
 
 _JSONValueType = Union[
-    dict,  # type: ignore[type-arg]
-    list,  # type: ignore[type-arg]
-    tuple,  # type: ignore[type-arg]
+    dict[str, '_JSONValueType'],
+    list['_JSONValueType'],
+    tuple['_JSONValueType'],
     str,
     int,
     float,
@@ -844,8 +822,6 @@ _JSONValueType = Union[
 ]
 
 
-# TODO: add generic type annotations 'UserDict[str, _JSONValueType]'
-#  once support for Python 3.8 is dropped
 class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-arg]
     """Dict-like object with a JSON-serialized string array representation.
 
@@ -899,6 +875,22 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         # shows this array as `str`
         _set_string_scalar_object_name(self)
 
+    def __getstate__(self):
+        """Support pickling.
+
+        This method does nothing. It only exists to make the pickle library happy.
+        Classes that store an instance of this class must pickle this array directly.
+        E.g. DataObjects can support this by storing this array as field data
+        """
+
+    def __setstate__(self, state):
+        """Support pickling.
+
+        This method does nothing. It only exists to make the pickle library happy.
+        Classes that store an instance of this class must pickle this array directly.
+        E.g. DataObjects can support this by storing this array as field data
+        """
+
     # Override any/all `UserDict` or `MutableMapping` methods which mutate
     # the dictionary. This ensures the serialized string is also updated
     # and synced with the dict
@@ -924,7 +916,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         self._update_string()
         return item
 
-    def pop(self, __key):
+    def pop(self, __key):  # type: ignore[override]
         item = super().pop(__key)
         self._update_string()
         return item

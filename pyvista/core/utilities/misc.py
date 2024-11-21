@@ -4,15 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 import enum
-from functools import lru_cache
+from functools import cache
 import importlib
 import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
-from typing import Type
 from typing import TypeVar
-from typing import Union
 import warnings
 
 import numpy as np
@@ -23,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
 
-def assert_empty_kwargs(**kwargs):
+def assert_empty_kwargs(**kwargs) -> bool:
     """Assert that all keyword arguments have been used (internal helper).
 
     If any keyword arguments are passed, a ``TypeError`` is raised.
@@ -51,13 +49,12 @@ def assert_empty_kwargs(**kwargs):
     keys = list(kwargs.keys())
     bad_arguments = ', '.join([f'"{key}"' for key in keys])
     grammar = 'is an invalid keyword argument' if n == 1 else 'are invalid keyword arguments'
-    message = f"{bad_arguments} {grammar} for `{caller}`"
+    message = f'{bad_arguments} {grammar} for `{caller}`'
     raise TypeError(message)
 
 
 def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
-    """
-    Check if a vector contains three components.
+    """Check if a vector contains three components.
 
     Parameters
     ----------
@@ -98,7 +95,7 @@ def abstract_class(cls_):  # numpydoc ignore=RT01
     def __new__(cls, *args, **kwargs):
         if cls is cls_:
             raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
-        return object.__new__(cls)
+        return super(cls_, cls).__new__(cls)
 
     cls_.__new__ = __new__
     return cls_
@@ -134,14 +131,15 @@ class AnnotatedIntEnum(int, enum.Enum):
         ------
         ValueError
             If there is no enum member with the specified annotation.
+
         """
         for value in cls:
             if value.annotation.lower() == input_str.lower():
                 return value
-        raise ValueError(f"{cls.__name__} has no value matching {input_str}")
+        raise ValueError(f'{cls.__name__} has no value matching {input_str}')
 
     @classmethod
-    def from_any(cls: Type[T], value: Union[T, int, str]) -> T:
+    def from_any(cls: type[T], value: T | int | str) -> T:
         """Create an enum member from a string, int, etc.
 
         Parameters
@@ -158,6 +156,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         ------
         ValueError
             If there is no enum member matching the specified value.
+
         """
         if isinstance(value, cls):
             return value
@@ -166,11 +165,11 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            raise ValueError(f"{cls.__name__} has no value matching {value}")
+            raise ValueError(f'{cls.__name__} has no value matching {value}')
 
 
-@lru_cache(maxsize=None)
-def has_module(module_name):
+@cache
+def has_module(module_name) -> bool:
     """Return if a module can be imported.
 
     Parameters
@@ -182,8 +181,9 @@ def has_module(module_name):
     -------
     bool
         ``True`` if the module can be imported, otherwise ``False``.
+
     """
-    module_spec = importlib.util.find_spec(module_name)
+    module_spec = importlib.util.find_spec(module_name)  # type: ignore[attr-defined]
     return module_spec is not None
 
 

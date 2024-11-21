@@ -16,7 +16,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # From NumPy Meshgrid
 # +++++++++++++++++++
 #
@@ -29,26 +29,26 @@ x, y = np.meshgrid(x, y)
 r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 
-###############################################################################
+# %%
 # Now pass the NumPy meshgrid to PyVista
 
 # Create and plot structured grid
 grid = pv.StructuredGrid(x, y, z)
 grid.plot()
 
-###############################################################################
+# %%
 
 # Plot mean curvature as well
 grid.plot_curvature(clim=[-1, 1])
 
-###############################################################################
+# %%
 # Generating a structured grid is a one-liner in this module, and the points
 # from the resulting surface can be accessed as a NumPy array:
 
 grid.points
 
 
-###############################################################################
+# %%
 # From XYZ Points
 # +++++++++++++++
 #
@@ -70,8 +70,10 @@ rng = np.random.default_rng(seed=0)
 
 
 def make_point_set():
-    """Ignore the contents of this function. Just know that it returns an
-    n by 3 numpy array of structured coordinates."""
+    """Return an n by 3 numpy array of structured coordinates.
+
+    The contents of this function can be ignored.
+    """
     n, m = 29, 32
     x = np.linspace(-200, 200, num=n) + rng.uniform(-5, 5, size=n)
     y = np.linspace(-200, 200, num=m) + rng.uniform(-5, 5, size=m)
@@ -88,7 +90,7 @@ def make_point_set():
 points = make_point_set()
 points[0:5, :]
 
-###############################################################################
+# %%
 # Now pretend that the (n by 3) NumPy array above are coordinates that you
 # have, possibly from a file with three columns of XYZ points.
 #
@@ -100,12 +102,12 @@ import matplotlib.pyplot as plt
 
 plt.figure(figsize=(10, 10))
 plt.scatter(points[:, 0], points[:, 1], c=points[:, 2])
-plt.axis("image")
-plt.xlabel("X Coordinate")
-plt.ylabel("Y Coordinate")
+plt.axis('image')
+plt.xlabel('X Coordinate')
+plt.ylabel('Y Coordinate')
 plt.show()
 
-###############################################################################
+# %%
 # In the figure above, we can see some inherit structure to the points and thus
 # we could connect the points as a structured grid. All we need to know are the
 # dimensions of the grid present. In this case, we know (because we made this
@@ -126,10 +128,10 @@ mesh.points = points
 mesh.dimensions = [29, 32, 1]
 
 # and then inspect it
-mesh.plot(show_edges=True, show_grid=True, cpos="xy")
+mesh.plot(show_edges=True, show_grid=True, cpos='xy')
 
 
-###############################################################################
+# %%
 # Extending a 2D StructuredGrid to 3D
 # +++++++++++++++++++++++++++++++++++
 #
@@ -145,7 +147,7 @@ mesh.plot(show_edges=True, show_grid=True, cpos="xy")
 struct = examples.load_structured()
 struct.plot(show_edges=True)
 
-###############################################################################
+# %%
 top = struct.points.copy()
 bottom = struct.points.copy()
 bottom[:, -1] = -10.0  # Wherever you want the plane
@@ -154,3 +156,5 @@ vol = pv.StructuredGrid()
 vol.points = np.vstack((top, bottom))
 vol.dimensions = [*struct.dimensions[0:2], 2]
 vol.plot(show_edges=True)
+# %%
+# .. tags:: load

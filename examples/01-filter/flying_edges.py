@@ -19,7 +19,7 @@ import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Spider Cage
 # ~~~~~~~~~~~
 # Use the marching cubes algorithm to extract the isosurface
@@ -51,10 +51,10 @@ x, y, z = grid.points.T
 values = spider_cage(x, y, z)
 mesh = grid.contour([1], values, method='marching_cubes')
 dist = np.linalg.norm(mesh.points, axis=1)
-mesh.plot(scalars=dist, smooth_shading=True, cmap="plasma", show_scalar_bar=False)
+mesh.plot(scalars=dist, smooth_shading=True, cmap='plasma', show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # Barth Sextic
 # ~~~~~~~~~~~~
 # Use the flying edges algorithm to extract the isosurface
@@ -93,10 +93,10 @@ x, y, z = grid.points.T
 values = barth_sextic(x, y, z)
 mesh = grid.contour([0], values, method='flying_edges')
 dist = np.linalg.norm(mesh.points, axis=1)
-mesh.plot(scalars=dist, smooth_shading=True, cmap="plasma", show_scalar_bar=False)
+mesh.plot(scalars=dist, smooth_shading=True, cmap='plasma', show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # Animate Barth Sextic
 # ~~~~~~~~~~~~~~~~~~~~
 # Show 20 frames of various isocurves extracted from the Barth sextic
@@ -122,9 +122,11 @@ for angle in np.linspace(0, np.pi, 20, endpoint=False):
         scalars=dist,
         smooth_shading=True,
         rng=[0.5, 1.5],
-        cmap="plasma",
+        cmap='plasma',
         show_scalar_bar=False,
     )
     pl.write_frame()
 
 pl.close()
+# %%
+# .. tags:: filter

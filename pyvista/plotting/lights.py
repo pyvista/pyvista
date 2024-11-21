@@ -12,9 +12,9 @@ try:
     from vtkmodules.vtkRenderingCore import vtkLight
     from vtkmodules.vtkRenderingCore import vtkLightActor
 except ImportError:  # pragma: no cover
-    from vtk import vtkLight
-    from vtk import vtkLightActor
-    from vtk import vtkMatrix4x4
+    from vtk import vtkLight  # type: ignore[no-redef]
+    from vtk import vtkLightActor  # type: ignore[no-redef]
+    from vtk import vtkMatrix4x4  # type: ignore[no-redef]
 
 from typing import TYPE_CHECKING
 
@@ -22,7 +22,7 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 from .colors import Color
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ._typing import ColorLike
 
 
@@ -218,11 +218,11 @@ class Light(vtkLight):
         self.actor.SetLight(self)
         self.actor.SetVisibility(show_actor)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Print a repr specifying the id of the light and its light type."""
         return f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>'
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two lights are equal."""
         # attributes which are native python types and thus implement __eq__
         native_attrs = [
@@ -420,7 +420,7 @@ class Light(vtkLight):
         Examples
         --------
         Create a light with a transformation matrix that corresponds to a
-        90-degree rotation around the z axis and a shift by (0, 0, -1), and
+        90-degree rotation around the z-axis and a shift by (0, 0, -1), and
         check that the light's position transforms as expected.
 
         >>> import numpy as np
@@ -474,7 +474,7 @@ class Light(vtkLight):
         Examples
         --------
         Create a light with a transformation matrix that corresponds
-        to a 90-degree rotation around the z axis and a shift by (0,
+        to a 90-degree rotation around the z-axis and a shift by (0,
         0, -1), and check that the light's focal point transforms as
         expected.
 
@@ -598,16 +598,15 @@ class Light(vtkLight):
             return
 
         actor_state = self.cone_angle < 90 and self.positional
-        actor_name = self.actor.GetAddressAsString("")
+        actor_name = self.actor.GetAddressAsString('')
 
         # add or remove the actor from the renderer
         for renderer in self._renderers:
             if actor_state:
                 if actor_name not in renderer.actors:
                     renderer.add_actor(self.actor, render=False)
-            else:
-                if actor_name in renderer.actors:
-                    renderer.remove_actor(self.actor, render=False)
+            elif actor_name in renderer.actors:
+                renderer.remove_actor(self.actor, render=False)
 
     @property
     def exponent(self):  # numpydoc ignore=RT01
@@ -785,7 +784,7 @@ class Light(vtkLight):
         Examples
         --------
         Create a light with a transformation matrix that corresponds
-        to a 90-degree rotation around the z axis and a shift by (0,
+        to a 90-degree rotation around the z-axis and a shift by (0,
         0, -1), and check that the light's position transforms as
         expected.
 
@@ -1070,7 +1069,7 @@ class Light(vtkLight):
             new_light.transform_matrix = self.transform_matrix
 
         # light actors are private, always copy, but copy visibility state as well
-        new_light.actor.SetVisibility(self.actor.GetVisibility())
+        new_light.actor.SetVisibility(self.actor.GetVisibility())  # type: ignore[union-attr]
 
         return new_light
 
@@ -1203,7 +1202,7 @@ class Light(vtkLight):
         """
         if not self.positional or self.cone_angle >= 90:
             return
-        self.actor.VisibilityOn()
+        self.actor.VisibilityOn()  # type: ignore[union-attr]
 
     def hide_actor(self):
         """Hide the actor for a positional light that depicts the geometry of the beam.
@@ -1219,7 +1218,7 @@ class Light(vtkLight):
         """
         if not self.positional:
             return
-        self.actor.VisibilityOff()
+        self.actor.VisibilityOff()  # type: ignore[union-attr]
 
     @property
     def renderers(self):  # numpydoc ignore=RT01

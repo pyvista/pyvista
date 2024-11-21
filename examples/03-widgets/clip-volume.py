@@ -19,7 +19,7 @@ from __future__ import annotations
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Create the Dataset
 # ~~~~~~~~~~~~~~~~~~
 # Create a dense :class:`pyvista.ImageData` with dimensions ``(200, 200,
@@ -35,7 +35,7 @@ grid['scalars'] = np.linalg.norm(grid.center - grid.points, axis=1)
 grid
 
 
-###############################################################################
+# %%
 # Generate the Opacity Array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Create a banded opacity array such that our dataset shows "rings" at certain
@@ -46,7 +46,7 @@ opacity = np.zeros(100)
 opacity[::10] = np.geomspace(0.01, 0.75, 10)
 
 
-###############################################################################
+# %%
 # Plot a Single Clip Plane Dataset
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the volume with a single clip plane.
@@ -59,7 +59,7 @@ pl.add_volume_clip_plane(grid, normal='-x', opacity=opacity[::-1], cmap='magma')
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot Multiple Clip Planes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the dataset using the :func:`pyvista.Plotter.add_volume_clip_plane` with
@@ -84,3 +84,5 @@ pl.add_volume_clip_plane(
     normal_rotation=False,
 )
 pl.show()
+# %%
+# .. tags:: widgets

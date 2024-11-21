@@ -14,7 +14,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 #  Define a simple plotting routine for comparing the themes.
 
 mesh = examples.download_st_helens().warp_by_scalar()
@@ -27,7 +27,7 @@ def plot_example():
     p.show()
 
 
-###############################################################################
+# %%
 # PyVista's default color theme is chosen to be generally easy on your
 # eyes and is best used when working long hours on your visualization
 # project.  The grey background and warm colormaps are chosen to make
@@ -40,47 +40,47 @@ def plot_example():
 pv.set_plot_theme('default')
 plot_example()
 
-###############################################################################
+# %%
 # PyVista also ships with a few plotting themes:
 #
 # * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme.
 # * ``'dark'``: this is designed to be night-mode friendly with dark backgrounds and color schemes.
 # * ``'document'``: this is built for use in document style plotting and making publication quality figures.
 
-###############################################################################
+# %%
 # Demo the ``'ParaView'`` theme.
 
-pv.set_plot_theme("paraview")
+pv.set_plot_theme('paraview')
 
 plot_example()
 
 
-###############################################################################
+# %%
 # Demo the ``'dark'`` theme.
 
-pv.set_plot_theme("dark")
+pv.set_plot_theme('dark')
 
 plot_example()
 
-###############################################################################
+# %%
 # Demo the ``'document'`` theme.  This theme is used on our online examples.
 
-pv.set_plot_theme("document")
+pv.set_plot_theme('document')
 
 plot_example()
 
-###############################################################################
+# %%
 # Note that you can also use color gradients for the background of the plotting
 # window.
 plotter = pv.Plotter()
 plotter.add_mesh(mesh)
 plotter.show_grid()
 # Here we set the gradient
-plotter.set_background("royalblue", top="aliceblue")
+plotter.set_background('royalblue', top='aliceblue')
 cpos = plotter.show()
 
 
-###############################################################################
+# %%
 # Modifying the Global Theme
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can control how meshes are displayed by setting individual
@@ -95,7 +95,7 @@ cpos = plotter.show()
 pv.global_theme
 
 
-###############################################################################
+# %%
 # By default, edges are not shown on meshes unless explicitly
 # specified when plotting a mesh via ``show_edges=True``.  You can
 # change this default behavior globally by changing the default
@@ -105,7 +105,7 @@ pv.global_theme.show_edges = True
 cpos = pv.Sphere().plot()
 
 
-###############################################################################
+# %%
 # You can reset pyvista to default behavior with ``restore_defaults``.
 # Note that the figure's color was reset to the default "white" color
 # rather than the 'lightblue' color default with the document theme.  Under
@@ -116,7 +116,7 @@ pv.global_theme.restore_defaults()
 cpos = pv.Sphere().plot()
 
 
-###############################################################################
+# %%
 # Creating a Custom Theme and Applying it Globally
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can create a custom theme by modifying one of the existing
@@ -137,7 +137,7 @@ pv.global_theme.load_theme(my_theme)
 cpos = pv.Sphere().plot()
 
 
-###############################################################################
+# %%
 # Creating a Custom Theme and Applying it to a Single Plotter
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # In this example, we create a custom theme from the base "default"
@@ -160,7 +160,7 @@ my_theme.background = 'white'
 cpos = pv.Sphere().plot(theme=my_theme)
 
 
-###############################################################################
+# %%
 # Alternatively, set the theme of an instance of ``Plotter``.
 
 pl = pv.Plotter(theme=my_theme)
@@ -169,6 +169,8 @@ pl.add_mesh(pv.Cube())
 cpos = pl.show()
 
 
-###############################################################################
+# %%
 # Reset to use the document theme
-pv.set_plot_theme("document")
+pv.set_plot_theme('document')
+# %%
+# .. tags:: plot

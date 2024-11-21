@@ -10,17 +10,17 @@ from pyvista.core.errors import VTKVersionError
 from pyvista.plotting.affine_widget import DARK_YELLOW
 from pyvista.plotting.affine_widget import get_angle
 from pyvista.plotting.affine_widget import ray_plane_intersection
+from tests.conftest import flaky_test
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
 
 
 def r_mat_to_euler_angles(R):
-    """
-    Extract Euler angles from a 3x3 rotation matrix using the ZYX sequence.
+    """Extract Euler angles from a 3x3 rotation matrix using the ZYX sequence.
+
     Returns the angles in radians.
     """
-
     # Check for gimbal lock: singular cases
     if abs(R[2, 0]) == 1:
         # Gimbal lock exists
@@ -166,7 +166,7 @@ def test_widget_slider(uniform):
     p = pv.Plotter()
     func = lambda value: value  # Does nothing
     p.add_mesh(uniform)
-    p.add_slider_widget(callback=func, rng=[0, 10], style="classic")
+    p.add_slider_widget(callback=func, rng=[0, 10], style='classic')
     p.close()
 
     p = pv.Plotter()
@@ -175,7 +175,7 @@ def test_widget_slider(uniform):
     with pytest.raises(TypeError, match='type for ``style``'):
         p.add_slider_widget(callback=func, rng=[0, 10], style=0)
     with pytest.raises(AttributeError):
-        p.add_slider_widget(callback=func, rng=[0, 10], style="foo")
+        p.add_slider_widget(callback=func, rng=[0, 10], style='foo')
     with pytest.raises(TypeError, match='Expected type for `interaction_event`'):
         p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=0)
     with pytest.raises(ValueError, match='Expected value for `interaction_event`'):
@@ -185,7 +185,7 @@ def test_widget_slider(uniform):
     p = pv.Plotter()
     func = lambda value, widget: value  # Does nothing
     p.add_mesh(uniform)
-    p.add_slider_widget(callback=func, rng=[0, 10], style="modern", pass_widget=True)
+    p.add_slider_widget(callback=func, rng=[0, 10], style='modern', pass_widget=True)
     p.close()
 
     p = pv.Plotter()
@@ -205,7 +205,7 @@ def test_widget_slider(uniform):
     func = lambda value: value  # Does nothing
     p = pv.Plotter()
     title_height = np.random.default_rng().random()
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_height=title_height)
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style='classic', title_height=title_height)
     assert s.GetRepresentation().GetTitleHeight() == title_height
     p.close()
 
@@ -214,21 +214,21 @@ def test_widget_slider(uniform):
     s = p.add_slider_widget(
         callback=func,
         rng=[0, 10],
-        style="classic",
+        style='classic',
         title_opacity=title_opacity,
     )
     assert s.GetRepresentation().GetTitleProperty().GetOpacity() == title_opacity
     p.close()
 
     p = pv.Plotter()
-    title_color = "red"
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", title_color=title_color)
+    title_color = 'red'
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style='classic', title_color=title_color)
     assert s.GetRepresentation().GetTitleProperty().GetColor() == pv.Color(title_color)
     p.close()
 
     p = pv.Plotter()
-    fmt = "%0.9f"
-    s = p.add_slider_widget(callback=func, rng=[0, 10], style="classic", fmt=fmt)
+    fmt = '%0.9f'
+    s = p.add_slider_widget(callback=func, rng=[0, 10], style='classic', fmt=fmt)
     assert s.GetRepresentation().GetLabelFormat() == fmt
     p.close()
 
@@ -330,6 +330,89 @@ def test_widget_closed(uniform):
     pl.close()
     with pytest.raises(RuntimeError, match='closed plotter'):
         pl.add_checkbox_button_widget(callback=lambda value: value)
+
+
+def test_widget_radio_button(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    b = p.add_radio_button_widget(callback=func, radio_button_group='group')
+    assert p.radio_button_widget_dict['group'][0] == b
+    p.close()
+    assert 'group' not in p.radio_button_widget_dict
+
+
+def test_widget_radio_button_click(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    size = 50
+    position = (10.0, 10.0)
+    b = p.add_radio_button_widget(
+        callback=func, radio_button_group='group', value=False, size=size, position=position
+    )
+    p.show(auto_close=False)
+    # Test switching logic
+    b_center = (int(position[0] + size / 2), int(position[1] + size / 2))
+    assert b.GetRepresentation().GetState() == 0
+    p.iren._mouse_left_button_click(*b_center)
+    assert b.GetRepresentation().GetState() == 1
+    p.iren._mouse_left_button_click(*b_center)
+    assert b.GetRepresentation().GetState() == 1
+    p.close()
+
+
+def test_widget_radio_button_with_title(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    p.add_radio_button_widget(callback=func, radio_button_group='group', title='my_button')
+    assert len(p.radio_button_title_dict['group']) == 1
+    p.close()
+    assert 'group' not in p.radio_button_title_dict
+
+
+def test_widget_radio_button_multiple_on(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    b1 = p.add_radio_button_widget(callback=func, radio_button_group='group', value=True)
+    b2 = p.add_radio_button_widget(callback=func, radio_button_group='group', value=True)
+    assert len(p.radio_button_widget_dict['group']) == 2
+    assert b1.GetRepresentation().GetState() == 0
+    assert b2.GetRepresentation().GetState() == 1
+    p.close()
+
+
+def test_widget_radio_button_multiple_switch(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    size = 50
+    b1_position = (10.0, 10.0)
+    b2_position = (10.0, 70.0)
+    b1 = p.add_radio_button_widget(
+        callback=func, radio_button_group='group', value=True, size=size, position=b1_position
+    )
+    b2 = p.add_radio_button_widget(
+        callback=func, radio_button_group='group', size=size, position=b2_position
+    )
+    p.show(auto_close=False)
+    # Click b2 and switch active radio button
+    b2_center = (int(b2_position[0] + size / 2), int(b2_position[1] + size / 2))
+    p.iren._mouse_left_button_click(*b2_center)
+    assert b1.GetRepresentation().GetState() == 0
+    assert b2.GetRepresentation().GetState() == 1
+    p.close()
+
+
+def test_widget_radio_button_plotter_closed(uniform):
+    p = pv.Plotter()
+    func = lambda: None  # Does nothing
+    p.add_mesh(uniform)
+    p.close()
+    with pytest.raises(RuntimeError, match='closed plotter'):
+        p.add_radio_button_widget(callback=func, radio_button_group='group')
 
 
 @pytest.mark.needs_vtk_version(9, 1)
@@ -454,6 +537,7 @@ def test_get_angle():
     assert np.isclose(result_angle, expected_angle, atol=1e-8)
 
 
+@flaky_test
 def test_affine_widget(sphere):
     interact_calls = []
     release_calls = []
@@ -642,7 +726,7 @@ def test_camera3d_widget(verify_image_cache):
     plotter.show(cpos=plotter.camera_position)
 
 
-@pytest.mark.parametrize("outline_opacity", [True, False, np.random.default_rng(0).random()])
+@pytest.mark.parametrize('outline_opacity', [True, False, np.random.default_rng(0).random()])
 def test_outline_opacity(uniform, outline_opacity):
     p = pv.Plotter()
     func = lambda normal, origin: normal  # Does nothing

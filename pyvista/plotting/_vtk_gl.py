@@ -1,5 +1,4 @@
-"""
-GL-dependent imports from VTK.
+"""GL-dependent imports from VTK.
 
 These are the modules within VTK requiring libGL that must be loaded
 across pyvista's plotting API. These imports have the potential to
@@ -9,14 +8,14 @@ raise an ImportError if the user does not have libGL installed.
 
 """
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 try:
     # Necessary for displaying charts, otherwise crashes on rendering
     from vtkmodules import vtkRenderingContextOpenGL2
 except ImportError:  # pragma: no cover
-    vtkRenderingContextOpenGL2 = None
+    vtkRenderingContextOpenGL2 = None  # type: ignore[assignment]
 
 
 from vtkmodules.vtkRenderingOpenGL2 import vtkCameraPass

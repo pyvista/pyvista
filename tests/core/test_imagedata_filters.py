@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import operator
 import re
 
 import numpy as np
@@ -7,13 +8,42 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.errors import PyVistaDeprecationWarning
 
 VTK93 = pv.vtk_version_info >= (9, 3)
 
 
-@pytest.fixture()
+@pytest.fixture
 def logo():
     return examples.load_logo()
+
+
+def variable_dimensionality_image(dimensions):
+    image = pv.ImageData(dimensions=dimensions)
+    image.point_data['image'] = 99
+    image.point_data['other'] = 42
+    image.cell_data['data'] = 142
+    return image
+
+
+@pytest.fixture
+def zero_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(1, 1, 1))
+
+
+@pytest.fixture
+def one_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(1, 2, 1))
+
+
+@pytest.fixture
+def two_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(2, 1, 2))
+
+
+@pytest.fixture
+def three_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(2, 2, 2))
 
 
 @pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
@@ -136,7 +166,7 @@ def test_contour_labeled_with_invalid_scalars():
         label_map.contour_labeled()
 
 
-@pytest.fixture()
+@pytest.fixture
 def uniform_many_scalars(uniform):
     uniform['Spatial Point Data2'] = uniform['Spatial Point Data'] * 2
     uniform['Spatial Cell Data2'] = uniform['Spatial Cell Data'] * 2
@@ -225,30 +255,93 @@ def test_cells_to_points_scalars(uniform):
         uniform.cells_to_points('Spatial Point Data')
 
 
-def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
+def test_points_to_cells_and_cells_to_points_dimensions(
+    uniform,
+    logo,
+    zero_dimensionality_image,
+    one_dimensionality_image,
+    two_dimensionality_image,
+    three_dimensionality_image,
+):
     assert uniform.dimensions == (10, 10, 10)
     assert uniform.points_to_cells().dimensions == (11, 11, 11)
     assert uniform.cells_to_points().dimensions == (9, 9, 9)
+    assert uniform.points_to_cells(dimensionality='preserve').dimensions == (11, 11, 11)
+    assert uniform.cells_to_points(dimensionality='preserve').dimensions == (9, 9, 9)
 
     assert logo.dimensions == (1920, 718, 1)
     assert logo.points_to_cells().dimensions == (1921, 719, 1)
     assert logo.cells_to_points().dimensions == (1919, 717, 1)
+    assert logo.points_to_cells(dimensionality='preserve').dimensions == (1921, 719, 1)
+    assert logo.cells_to_points(dimensionality='preserve').dimensions == (1919, 717, 1)
+
+    assert zero_dimensionality_image.dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(
+        dimensionality=(True, True, True)
+    ).dimensions == (2, 2, 2)
+    assert zero_dimensionality_image.points_to_cells(
+        dimensionality=(True, True, False)
+    ).dimensions == (2, 2, 1)
+    assert zero_dimensionality_image.points_to_cells(
+        dimensionality=(False, False, False)
+    ).dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality='0D').dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (2, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (2, 2, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (2, 2, 2)
+    assert zero_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+
+    assert one_dimensionality_image.dimensions == (1, 2, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (1, 3, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (2, 3, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (2, 3, 2)
+    assert one_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='1D').cells_to_points(
+        dimensionality='1D'
+    ).dimensions == (1, 2, 1)
+
+    assert two_dimensionality_image.dimensions == (2, 1, 2)
+    assert two_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (3, 1, 3)
+    assert two_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (3, 2, 3)
+    assert two_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert two_dimensionality_image.points_to_cells(dimensionality='2D').cells_to_points(
+        dimensionality='2D'
+    ).dimensions == (2, 1, 2)
+
+    assert three_dimensionality_image.dimensions == (2, 2, 2)
+    assert three_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (3, 3, 3)
+    assert three_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert three_dimensionality_image.points_to_cells(dimensionality='3D').cells_to_points(
+        dimensionality='3D'
+    ).dimensions == (2, 2, 2)
 
 
-@pytest.fixture()
-def single_point_image():
-    image = pv.ImageData(dimensions=(1, 1, 1))
-    image.point_data['image'] = 99
-    image.point_data['other'] = 42
-    return image
+def test_points_to_cells_and_cells_to_points_dimensions_incorrect_number_data():
+    image = pv.ImageData(dimensions=(1, 2, 2))
+    with pytest.raises(
+        ValueError,
+        match=(
+            r'Cannot re-mesh points to cells. The dimensions of the input \(1, 2, 2\) is not compatible'
+            r' with the dimensions of the output \(2, 2, 2\) and would require to map 4 points on 1 cells.'
+        ),
+    ):
+        image.points_to_cells(dimensionality=[True, False, False])
+    with pytest.raises(
+        ValueError,
+        match=(
+            r'Cannot re-mesh cells to points. The dimensions of the input \(1, 2, 2\) is not compatible'
+            r' with the dimensions of the output \(1, 2, 2\) and would require to map 1 cells on 4 points.'
+        ),
+    ):
+        image.cells_to_points(dimensionality='2D')
 
 
 @pytest.mark.parametrize('pad_size', [1, 2])
 @pytest.mark.parametrize('pad_value', [-1, 0, 1, 2])
-@pytest.mark.parametrize('pad_singleton_dims', [True, False])
-def test_pad_image(single_point_image, pad_size, pad_value, pad_singleton_dims):
-    image_point_value = single_point_image['image'][0]
-    if pad_singleton_dims:
+@pytest.mark.parametrize('dimensionality', [(True, True, True), (False, False, False)])
+def test_pad_image(zero_dimensionality_image, pad_size, pad_value, dimensionality):
+    image_point_value = zero_dimensionality_image['image'][0]
+    if all(dimensionality):
         # Input is expected to be padded
         dim = pad_size * 2 + 1
         expected_dimensions = (dim, dim, dim)
@@ -261,10 +354,10 @@ def test_pad_image(single_point_image, pad_size, pad_value, pad_singleton_dims):
         expected_dimensions = (1, 1, 1)
         expected_array = image_point_value
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
         pad_value=pad_value,
-        pad_singleton_dims=pad_singleton_dims,
+        dimensionality=dimensionality,
     )
     assert padded.dimensions == expected_dimensions
 
@@ -285,17 +378,17 @@ def test_pad_image(single_point_image, pad_size, pad_value, pad_singleton_dims):
     ],
 )
 def test_pad_image_pad_size_axis(
-    single_point_image,
+    zero_dimensionality_image,
     pad_size,
     expected_dimensions,
     expected_bounds,
 ):
-    image_point_value = single_point_image['image'][0]
+    image_point_value = zero_dimensionality_image['image'][0]
     pad_value = 7
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensionality=(True, True, True),
         pad_value=pad_value,
     )
     assert padded.dimensions == expected_dimensions
@@ -321,22 +414,22 @@ def test_pad_image_pad_size_axis(
     ],
 )
 def test_pad_image_pad_size_bounds(
-    single_point_image,
+    zero_dimensionality_image,
     pad_size,
     expected_dimensions,
     expected_bounds,
 ):
-    image_point_value = single_point_image['image'][0]
-    other_point_value = single_point_image['other'][0]
+    image_point_value = zero_dimensionality_image['image'][0]
+    other_point_value = zero_dimensionality_image['other'][0]
     pad_value = 7
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensionality=(True, True, True),
         pad_value=pad_value,
         pad_all_scalars=True,
     )
-    assert single_point_image.active_scalars_name == 'image'
+    assert zero_dimensionality_image.active_scalars_name == 'image'
     assert padded.active_scalars_name == 'image'
     assert padded.dimensions == expected_dimensions
     assert padded.bounds == expected_bounds
@@ -355,8 +448,8 @@ def test_pad_image_pad_size_bounds(
 
 @pytest.mark.parametrize('all_scalars', [True, False])
 @pytest.mark.parametrize(('scalars', 'expected_scalars'), [(None, 'image'), ('other', 'other')])
-def test_pad_image_scalars(single_point_image, all_scalars, scalars, expected_scalars):
-    padded = single_point_image.pad_image(0, scalars=scalars, pad_all_scalars=all_scalars)
+def test_pad_image_scalars(zero_dimensionality_image, all_scalars, scalars, expected_scalars):
+    padded = zero_dimensionality_image.pad_image(0, scalars=scalars, pad_all_scalars=all_scalars)
     assert padded.active_scalars_name == expected_scalars
     actual_array_names = padded.array_names
     if all_scalars:
@@ -390,30 +483,30 @@ def test_pad_image_wrap_mirror(uniform, pad_value):
         assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, 0, 0])
 
 
-def test_pad_image_multi_component(single_point_image):
-    single_point_image.clear_data()
+def test_pad_image_multi_component(zero_dimensionality_image):
+    zero_dimensionality_image.clear_data()
     new_value = np.array([10, 20, 30, 40])
-    single_point_image['scalars'] = [new_value]
+    zero_dimensionality_image['scalars'] = [new_value]
 
-    dims = np.array(single_point_image.dimensions)
+    dims = np.array(zero_dimensionality_image.dimensions)
     pad_size = 10
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         new_value,
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensionality=(True, True, True),
         pad_all_scalars=True,
         progress_bar=True,
     )
     assert np.array_equal(len(padded.active_scalars), np.prod(dims + pad_size * 2))
     assert np.all(padded.active_scalars == new_value)
 
-    single_point_image['scalars2'] = [new_value * 2]
+    zero_dimensionality_image['scalars2'] = [new_value * 2]
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         'wrap',
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensionality=(True, True, True),
         pad_all_scalars=True,
     )
     assert np.array_equal(len(padded.active_scalars), np.prod(dims + pad_size * 2))
@@ -421,22 +514,22 @@ def test_pad_image_multi_component(single_point_image):
     assert np.all(padded['scalars2'] == new_value * 2)
 
 
-def test_pad_image_raises(single_point_image, uniform, logo):
+def test_pad_image_raises(zero_dimensionality_image, uniform, logo):
     match = 'Pad size cannot be negative. Got -1.'
     with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(pad_size=-1)
+        zero_dimensionality_image.pad_image(pad_size=-1)
 
-    match = "Pad size must have 1, 2, 3, 4, or 6 values, got 5 instead."
+    match = 'Pad size must have 1, 2, 3, 4, or 6 values, got 5 instead.'
     with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(pad_size=(1, 2, 3, 4, 5))
+        zero_dimensionality_image.pad_image(pad_size=(1, 2, 3, 4, 5))
 
     match = 'Pad size must be one dimensional. Got 2 dimensions.'
     with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(pad_size=[[1]])
+        zero_dimensionality_image.pad_image(pad_size=[[1]])
 
-    match = "Pad size must be integers. Got dtype float64."
+    match = 'Pad size must be integers. Got dtype float64.'
     with pytest.raises(TypeError, match=match):
-        single_point_image.pad_image(pad_size=1.0)
+        zero_dimensionality_image.pad_image(pad_size=1.0)
 
     match = "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
     with pytest.raises(ValueError, match=match):
@@ -463,8 +556,298 @@ def test_pad_image_raises(single_point_image, uniform, logo):
     logo['single'] = range(logo.n_points)  # Create data with varying num array components
     match = (
         "Cannot pad array 'single' with value (0, 0, 0, 0). Number of components (1) in 'single' must match the number of components (4) in value."
-        "\nTry setting `pad_all_scalars=False` or update the array."
+        '\nTry setting `pad_all_scalars=False` or update the array.'
     )
     logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):
         logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=True)
+
+
+def test_pad_image_deprecation(zero_dimensionality_image):
+    match = 'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead'
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+        if pv._version.version_info >= (0, 48):
+            raise RuntimeError('Remove `pad_singleton_dims`.')
+
+    match = (
+        'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
+        if pv._version.version_info >= (0, 47):
+            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+        if pv._version.version_info >= (0, 48):
+            raise RuntimeError('Remove `pad_singleton_dims`.')
+
+
+@pytest.fixture
+def segmented_grid():
+    segmented_grid = pv.ImageData(dimensions=(4, 3, 3))
+    segmented_grid.cell_data['Data'] = [0, 0, 0, 1, 0, 1, 1, 2, 0, 0, 0, 0]
+    return segmented_grid
+
+
+def test_label_connectivity(segmented_grid):
+    # Test default parameters
+    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range='foreground')
+    assert isinstance(connected, pv.ImageData)
+    assert connected.bounds == segmented_grid.bounds
+    assert 'RegionId' in connected.cell_data
+    assert connected.cell_data['RegionId'].dtype == 'uint8'
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+    # Test that the first region id corresponds to the largest region (2 cells)
+    assert sizes[0] == 2
+
+
+def test_label_connectivity_point_data(segmented_grid):
+    # Test default parameters
+    segmented_points = segmented_grid.cells_to_points()
+    connected, labels, sizes = segmented_points.label_connectivity(scalar_range='foreground')
+    assert isinstance(connected, pv.ImageData)
+    assert connected.bounds == segmented_points.bounds
+    assert 'RegionId' in connected.point_data
+    assert connected.point_data['RegionId'].dtype == 'uint8'
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+
+
+def test_label_connectivity_scalar(segmented_grid):
+    segmented_grid.cell_data['AdditionalData'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    segmented_grid.set_active_scalars(name='AdditionalData')
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        scalars='Data', scalar_range='foreground'
+    )
+    assert all(labels == [1, 2, 3])
+
+
+def test_label_connectivity_largest_region(segmented_grid):
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        scalar_range='foreground', extraction_mode='largest'
+    )
+    # Test that only one region was labelled
+    assert all(labels == [1])
+    # Test that the first region id corresponds to the largest region (2 cells)
+    assert sizes[0] == 2
+
+
+def test_label_connectivity_seed_points(segmented_grid):
+    points = [(2, 1, 0), (0, 0, 1)]
+    with pytest.warns(
+        UserWarning,
+        match='Points is not a float type. This can cause'
+        ' issues when transforming or applying filters. Casting to ``np.float32``.'
+        ' Disable this by passing ``force_float=False``.',
+    ):
+        connected, labels, sizes = segmented_grid.label_connectivity(
+            scalar_range='foreground',
+            extraction_mode='seeded',
+            point_seeds=points,
+            label_mode='seeds',
+        )
+    # Test that two regions were labelled
+    assert all(labels == [1, 2])
+    # Test that the second region id corresponds to the largest region (2 cells) which
+    # corresponds to the second seed coordinates
+    assert sizes[1] == 2
+
+
+def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):
+    points = pv.PolyData()
+    points.points = [(2, 1, 0), (0, 0, 1)]
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        scalar_range='foreground',
+        extraction_mode='seeded',
+        point_seeds=points,
+        label_mode='seeds',
+    )
+    # Test that two regions were labelled
+    assert all(labels == [1, 2])
+    # Test that the second region id corresponds to the largest region (2 cells) which
+    # corresponds to the second seed coordinates
+    assert sizes[1] == 2
+
+
+def test_label_connectivity_scalar_range_whole_number(segmented_grid):
+    # Exclude the cell with a 2 value
+    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[1, 1])
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+    # Test that the first region id has 1 cell
+    assert sizes[0] == 1
+
+
+def test_label_connectivity_scalar_range_fractional_number(segmented_grid):
+    # Exclude the cell with a 2 value
+    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[0.5, 1.5])
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+    # Test that the first region id has 1 cell
+    assert sizes[0] == 1
+
+
+def test_label_connectivity_auto_scalar_range(segmented_grid):
+    # Exclude the cell with a 2 value
+    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range='auto')
+    # Test that only one connected regions was labelled
+    assert all(labels == 1)
+    # Test that the region has 12 cell
+    assert sizes[0] == 12
+
+
+def test_label_connectivity_scalar_range_default_vtk(segmented_grid):
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        scalar_range='vtk_default', inplace=True
+    )
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+    # Test that float are re-casted to int for inplace operation
+    assert np.issubdtype(connected.cell_data['Data'].dtype, np.integer)
+
+
+def test_label_connectivity_constant_label(segmented_grid):
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        label_mode='constant', constant_value=10
+    )
+    assert all(l in (0, 10) for l in labels)
+
+
+def test_label_connectivity_inplace_with_float_casting(segmented_grid):
+    segmented_points = segmented_grid.cells_to_points()
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        inplace=True, scalar_range=[0.5, 2.5]
+    )
+    assert connected == segmented_grid
+    assert 'RegionId' in connected.cell_data
+    assert np.issubdtype(connected.cell_data['Data'].dtype, np.integer)
+
+    connected, labels, sizes = segmented_points.label_connectivity(
+        inplace=True, scalar_range=[0.5, 2.5]
+    )
+    assert connected == segmented_points
+    assert 'RegionId' in connected.point_data
+    assert np.issubdtype(connected.point_data['Data'].dtype, np.integer)
+
+
+def test_label_connectivity_invalid_parameters(segmented_grid):
+    with pytest.raises(
+        ValueError,
+        match='Invalid `extraction_mode` "invalid", use "all", "largest", or "seeded".',
+    ):
+        _ = segmented_grid.label_connectivity(extraction_mode='invalid')
+    with pytest.raises(
+        ValueError, match='`point_seeds` must be specified when `extraction_mode="seeded"`.'
+    ):
+        _ = segmented_grid.label_connectivity(extraction_mode='seeded')
+    with pytest.raises(
+        IndexError,
+        match=r'tuple index out of range|Given points must be convertible to a numerical array',
+    ):
+        _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
+    with pytest.raises(
+        ValueError, match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".'
+    ):
+        _ = segmented_grid.label_connectivity(label_mode='invalid')
+    with pytest.raises(
+        ValueError, match='`point_seeds` must be specified when `label_mode="seeds"`.'
+    ):
+        _ = segmented_grid.label_connectivity(label_mode='seeds')
+    with pytest.raises(
+        ValueError, match='Data Range with 2 elements must be sorted in ascending order'
+    ):
+        _ = segmented_grid.label_connectivity(scalar_range=[2.0, 1.0])
+    with pytest.raises(ValueError, match='Shape must be 2'):
+        _ = segmented_grid.label_connectivity(scalar_range=[1.0, 2.0, 3.0])
+    with pytest.raises(
+        ValueError,
+        match='`constant_value` must be provided when `extraction_mode`is "constant".',
+    ):
+        _ = segmented_grid.label_connectivity(label_mode='constant')
+
+
+@pytest.mark.parametrize(
+    ('image_dims', 'operation_mask', 'operator', 'expected_dims_mask', 'expected_dims_result'),
+    [
+        ((1, 1, 1), (True, True, True), operator.add, True, (2, 4, 6)),
+        ((1, 1, 1), (False, False, False), operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), (True, False, True), operator.add, (True, False, True), (2, 1, 6)),
+        ((1, 1, 1), 'preserve', operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), '0D', operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), '1D', operator.add, (True, False, False), (2, 1, 1)),
+        ((1, 1, 2), '1D', operator.add, (False, False, True), (1, 1, 7)),
+        ((1, 1, 1), '2D', operator.add, (True, True, False), (2, 4, 1)),
+        ((1, 1, 2), '2D', operator.add, (True, False, True), (2, 1, 7)),
+        ((1, 2, 2), '2D', operator.add, (False, True, True), (1, 5, 7)),
+        ((1, 1, 1), '3D', operator.add, (True, True, True), (2, 4, 6)),
+        ((10, 10, 10), '3D', operator.sub, (True, True, True), (9, 7, 5)),
+    ],
+)
+def test_validate_dim_operation(
+    image_dims, operation_mask, operator, expected_dims_mask, expected_dims_result
+):
+    image = pv.ImageData(dimensions=image_dims)
+    dims_mask, dims_result = image._validate_dimensional_operation(
+        operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
+    )
+    assert (dims_mask == expected_dims_mask).all()
+    assert (dims_result == expected_dims_result).all()
+
+
+@pytest.mark.parametrize(
+    ('image_dims', 'operation_mask', 'operator', 'error', 'error_message'),
+    [
+        (
+            (1, 1, 1),
+            'invalid',
+            operator.add,
+            ValueError,
+            '`invalid` is not a valid `operation_mask`. Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].',
+        ),
+        (
+            (1, 1, 1),
+            (True, True, True, True),
+            operator.add,
+            ValueError,
+            'Array has shape (4,) which is not allowed.',
+        ),
+        (
+            (1, 1, 1),
+            True,
+            operator.add,
+            ValueError,
+            'Array has shape () which is not allowed. Shape must be one of [(3,), (1, 3), (3, 1)]',
+        ),
+        (
+            (2, 2, 2),
+            '1D',
+            operator.add,
+            ValueError,
+            'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). A 1D ImageData with dims (>1, 1, 1) cannot be obtained.',
+        ),
+        (
+            (2, 1, 2),
+            '3D',
+            operator.sub,
+            ValueError,
+            'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). A 3D ImageData with dims (>1, >1, >1) cannot be obtained.',
+        ),
+        (
+            (1, 2, 5),
+            (True, False, True),
+            operator.sub,
+            ValueError,
+            'The mask (True, False, True), size [1 3 5], and operation sub would result in [0 2 0] which contains <= 0 dimensions.',
+        ),
+    ],
+)
+def test_validate_dim_operation_invalid_parameters(
+    image_dims, operation_mask, operator, error, error_message
+):
+    image = pv.ImageData(dimensions=image_dims)
+    with pytest.raises(error, match=re.escape(error_message)):
+        image._validate_dimensional_operation(
+            operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
+        )

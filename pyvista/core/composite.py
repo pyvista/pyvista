@@ -9,12 +9,8 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from itertools import zip_longest
 import pathlib
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
 from typing import Union
 from typing import cast
 from typing import overload
@@ -22,10 +18,14 @@ from typing import overload
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
-from ._typing_core import BoundsLike
-from ._typing_core import NumpyArray
+from ._typing_core import BoundsTuple
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ._typing_core import NumpyArray
+
 from .dataset import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
@@ -35,14 +35,17 @@ from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Iterable
+
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
 class MultiBlock(
-    _vtk.vtkMultiBlockDataSet,
     CompositeFilters,
     DataObject,
     MutableSequence,  # type: ignore[type-arg]
+    _vtk.vtkMultiBlockDataSet,
 ):
     """A composite class to hold many data sets which can be iterated over.
 
@@ -166,10 +169,10 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, wrap(block))
+                self.SetBlock(i, wrap(block))  # type: ignore[arg-type]
 
     @property
-    def bounds(self) -> BoundsLike:
+    def bounds(self) -> BoundsTuple:
         """Find min/max for bounds across blocks.
 
         Returns
@@ -189,32 +192,30 @@ class MultiBlock(
         ... ]
         >>> blocks = pv.MultiBlock(data)
         >>> blocks.bounds
-        (-0.5, 2.5, -0.5, 2.5, -0.5, 0.5)
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=2.5, z_min=-0.5, z_max=0.5)
 
         """
         # apply reduction of min and max over each block
         # (typing.cast necessary to make mypy happy with ufunc.reduce() later)
-        all_bounds = [cast(List[float], block.bounds) for block in self if block]
+        all_bounds = [cast(list[float], block.bounds) for block in self if block]
         # edge case where block has no bounds
         if not all_bounds:  # pragma: no cover
-            minima = np.array([0.0, 0.0, 0.0])
-            maxima = np.array([0.0, 0.0, 0.0])
+            minima = (0.0, 0.0, 0.0)
+            maxima = (0.0, 0.0, 0.0)
         else:
-            minima = np.minimum.reduce(all_bounds)[::2]
-            maxima = np.maximum.reduce(all_bounds)[1::2]
+            minima = np.minimum.reduce(all_bounds)[::2].tolist()
+            maxima = np.maximum.reduce(all_bounds)[1::2].tolist()
 
         # interleave minima and maxima for bounds
-        the_bounds = np.stack([minima, maxima]).ravel('F')
-
-        return cast(BoundsLike, tuple(the_bounds))
+        return BoundsTuple(minima[0], maxima[0], minima[1], maxima[1], minima[2], maxima[2])
 
     @property
-    def center(self) -> NumpyArray[float]:
+    def center(self) -> tuple[float, float, float]:
         """Return the center of the bounding box.
 
         Returns
         -------
-        np.ndarray
+        tuple[float, float, float]
             Center of the bounding box.
 
         Examples
@@ -230,8 +231,7 @@ class MultiBlock(
         array([1., 1., 0.])
 
         """
-        # (typing.cast necessary to make mypy happy with np.reshape())
-        return np.reshape(cast(List[float], self.bounds), (3, 2)).mean(axis=1)
+        return tuple(np.reshape(self.bounds, (3, 2)).mean(axis=1).tolist())
 
     @property
     def length(self) -> float:
@@ -318,7 +318,7 @@ class MultiBlock(
         """
         return sum(block.volume for block in self if block)
 
-    def get_data_range(self, name: str, allow_missing: bool = False) -> Tuple[float, float]:  # type: ignore[explicit-override, override]
+    def get_data_range(self, name: str, allow_missing: bool = False) -> tuple[float, float]:  # type: ignore[explicit-override, override]
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
@@ -387,13 +387,12 @@ class MultiBlock(
     @overload
     def __getitem__(
         self,
-        index: Union[int, str],
-    ) -> Optional[_TypeMultiBlockLeaf]:  # noqa: D105  # numpydoc ignore=GL08
+        index: int | str,
+    ) -> _TypeMultiBlockLeaf | None:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
-    def __getitem__(self, index: slice) -> MultiBlock:  # noqa: D105
-        ...  # pragma: no cover
+    def __getitem__(self, index: slice) -> MultiBlock: ...  # pragma: no cover
 
     def __getitem__(self, index):
         """Get a block by its index or name.
@@ -416,7 +415,7 @@ class MultiBlock(
 
         return wrap(self.GetBlock(index))
 
-    def append(self, dataset: Optional[_TypeMultiBlockLeaf], name: Optional[str] = None):
+    def append(self, dataset: _TypeMultiBlockLeaf | None, name: str | None = None):
         """Add a data set to the next block index.
 
         Parameters
@@ -447,7 +446,7 @@ class MultiBlock(
         """
         # do not allow to add self
         if dataset is self:
-            raise ValueError("Cannot nest a composite dataset in itself.")
+            raise ValueError('Cannot nest a composite dataset in itself.')
 
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
@@ -501,8 +500,8 @@ class MultiBlock(
     def get(
         self,
         index: str,
-        default: Optional[_TypeMultiBlockLeaf] = None,
-    ) -> Optional[_TypeMultiBlockLeaf]:
+        default: _TypeMultiBlockLeaf | None = None,
+    ) -> _TypeMultiBlockLeaf | None:
         """Get a block by its name.
 
         If the name is non-unique then returns the first occurrence.
@@ -537,7 +536,7 @@ class MultiBlock(
         except KeyError:
             return default
 
-    def set_block_name(self, index: int, name: Optional[str]):
+    def set_block_name(self, index: int, name: str | None):
         """Set a block's string name at the specified index.
 
         Parameters
@@ -569,7 +568,7 @@ class MultiBlock(
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
-    def get_block_name(self, index: int) -> Optional[str]:
+    def get_block_name(self, index: int) -> str | None:
         """Return the string name of the block at the given index.
 
         Parameters
@@ -600,7 +599,7 @@ class MultiBlock(
             return meta.Get(_vtk.vtkCompositeDataSet.NAME())
         return None
 
-    def keys(self) -> List[Optional[str]]:
+    def keys(self) -> list[str | None]:
         """Get all the block names in the dataset.
 
         Returns
@@ -622,10 +621,10 @@ class MultiBlock(
         """
         return [self.get_block_name(i) for i in range(self.n_blocks)]
 
-    def _ipython_key_completions_(self) -> List[Optional[str]]:
+    def _ipython_key_completions_(self) -> list[str | None]:
         return self.keys()
 
-    def replace(self, index: int, dataset: Optional[_TypeMultiBlockLeaf]) -> None:
+    def replace(self, index: int, dataset: _TypeMultiBlockLeaf | None) -> None:
         """Replace dataset at index while preserving key name.
 
         Parameters
@@ -658,22 +657,22 @@ class MultiBlock(
     @overload
     def __setitem__(
         self,
-        index: Union[int, str],
-        data: Optional[_TypeMultiBlockLeaf],
-    ):  # noqa: D105  # numpydoc ignore=GL08
+        index: int | str,
+        data: _TypeMultiBlockLeaf | None,
+    ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
     def __setitem__(
         self,
         index: slice,
-        data: Iterable[Optional[_TypeMultiBlockLeaf]],
-    ):  # noqa: D105  # numpydoc ignore=GL08
+        data: Iterable[_TypeMultiBlockLeaf | None],
+    ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     def __setitem__(
         self,
-        index: Union[int, str, slice],
+        index: int | str | slice,
         data,
     ):
         """Set a block with a VTK data object.
@@ -695,7 +694,7 @@ class MultiBlock(
 
         """
         i: int = 0
-        name: Optional[str] = None
+        name: str | None = None
         if isinstance(index, str):
             try:
                 i = self.get_index_by_name(index)
@@ -739,7 +738,7 @@ class MultiBlock(
             name = f'Block-{i:02}'
         self.set_block_name(i, name)  # Note that this calls self.Modified()
 
-    def __delitem__(self, index: Union[int, str, slice]) -> None:
+    def __delitem__(self, index: int | str | slice) -> None:
         """Remove a block at the specified index."""
         if isinstance(index, slice):
             if index.indices(self.n_blocks)[2] > 0:
@@ -760,12 +759,7 @@ class MultiBlock(
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
-    def __iter__(self) -> MultiBlock:
-        """Return the iterator across all blocks."""
-        self._iter_n = 0
-        return self
-
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Equality comparison."""
         if not isinstance(other, MultiBlock):
             return False
@@ -779,20 +773,9 @@ class MultiBlock(
         if not self.keys() == other.keys():
             return False
 
-        if any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other)):
-            return False
+        return not any(self_mesh != other_mesh for self_mesh, other_mesh in zip(self, other))
 
-        return True
-
-    def __next__(self) -> Optional[_TypeMultiBlockLeaf]:
-        """Get the next block from the iterator."""
-        if self._iter_n < self.n_blocks:
-            result = self[self._iter_n]
-            self._iter_n += 1
-            return result
-        raise StopIteration
-
-    def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: Optional[str] = None) -> None:
+    def insert(self, index: int, dataset: _TypeMultiBlockLeaf, name: str | None = None) -> None:
         """Insert data before index.
 
         Parameters
@@ -832,7 +815,7 @@ class MultiBlock(
         self[index] = dataset
         self.set_block_name(index, name)
 
-    def pop(self, index: Union[int, str] = -1) -> Optional[_TypeMultiBlockLeaf]:
+    def pop(self, index: int | str = -1) -> _TypeMultiBlockLeaf | None:
         """Pop off a block at the specified index.
 
         Parameters
@@ -919,38 +902,38 @@ class MultiBlock(
         for i in range(self.n_blocks):
             if isinstance(self[i], MultiBlock):
                 # Recursively move through nested structures
-                self[i].clean()
-                if self[i].n_blocks < 1:
+                self[i].clean()  # type: ignore[union-attr]
+                if self[i].n_blocks < 1:  # type: ignore[union-attr]
                     null_blocks.append(i)
-            elif self[i] is None or empty and self[i].n_points < 1:
+            elif self[i] is None or empty and self[i].n_points < 1:  # type: ignore[union-attr]
                 null_blocks.append(i)
         # Now remove the null/empty meshes
-        null_blocks = np.array(null_blocks, dtype=int)
+        null_blocks = np.array(null_blocks, dtype=int)  # type: ignore[assignment]
         for i in range(len(null_blocks)):
             # Cast as int because windows is super annoying
             del self[int(null_blocks[i])]
-            null_blocks -= 1
+            null_blocks -= 1  # type: ignore[assignment, operator]
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("N Blocks", self.n_blocks, "{}"))
+        attrs.append(('N Blocks:', self.n_blocks, '{}'))
         bds = self.bounds
-        attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3f}, {:.3f}"))
-        attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3f}, {:.3f}"))
-        attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3f}, {:.3f}"))
+        attrs.append(('X Bounds:', (bds[0], bds[1]), '{:.3e}, {:.3e}'))  # type: ignore[arg-type]
+        attrs.append(('Y Bounds:', (bds[2], bds[3]), '{:.3e}, {:.3e}'))  # type: ignore[arg-type]
+        attrs.append(('Z Bounds:', (bds[4], bds[5]), '{:.3e}, {:.3e}'))  # type: ignore[arg-type]
         return attrs
 
     def _repr_html_(self) -> str:
         """Define a pretty representation for Jupyter notebooks."""
-        fmt = ""
+        fmt = ''
         fmt += "<table style='width: 100%;'>"
-        fmt += "<tr><th>Information</th><th>Blocks</th></tr>"
-        fmt += "<tr><td>"
-        fmt += "\n"
-        fmt += "<table>\n"
-        fmt += f"<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n"
-        row = "<tr><td>{}</td><td>{}</td></tr>\n"
+        fmt += '<tr><th>Information</th><th>Blocks</th></tr>'
+        fmt += '<tr><td>'
+        fmt += '\n'
+        fmt += '<table>\n'
+        fmt += f'<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n'
+        row = '<tr><td>{}</td><td>{}</td></tr>\n'
 
         # now make a call on the object to get its attributes as a list of len 2 tuples
         for attr in self._get_attrs():
@@ -959,30 +942,30 @@ class MultiBlock(
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
 
-        fmt += "</table>\n"
-        fmt += "\n"
-        fmt += "</td><td>"
-        fmt += "\n"
-        fmt += "<table>\n"
-        row = "<tr><th>{}</th><th>{}</th><th>{}</th></tr>\n"
-        fmt += row.format("Index", "Name", "Type")
+        fmt += '</table>\n'
+        fmt += '\n'
+        fmt += '</td><td>'
+        fmt += '\n'
+        fmt += '<table>\n'
+        row = '<tr><th>{}</th><th>{}</th><th>{}</th></tr>\n'
+        fmt += row.format('Index', 'Name', 'Type')
 
         for i in range(self.n_blocks):
             data = self[i]
             fmt += row.format(i, self.get_block_name(i), type(data).__name__)
 
-        fmt += "</table>\n"
-        fmt += "\n"
-        fmt += "</td></tr> </table>"
+        fmt += '</table>\n'
+        fmt += '\n'
+        fmt += '</td></tr> </table>'
         return fmt
 
     def __repr__(self) -> str:
         """Define an adequate representation."""
         # return a string that is Python console friendly
-        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
+        fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 4
-        row = "  {:%ds}{}\n" % max_len
+        max_len = max(len(attr[0]) for attr in self._get_attrs()) + 3
+        row = '  {:%ds}{}\n' % max_len
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
@@ -1038,10 +1021,9 @@ class MultiBlock(
         else:
             newobject.shallow_copy(self)
         newobject.copy_meta_from(self, deep)
-        newobject.wrap_nested()
         return newobject
 
-    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:
+    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet, recursive=False) -> None:  # type: ignore[override]
         """Shallow copy the given multiblock to this multiblock.
 
         Parameters
@@ -1049,18 +1031,60 @@ class MultiBlock(
         to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
             Data object to perform a shallow copy from.
 
+        recursive : bool, default: False
+            Also shallow-copy any nested :class:`~pyvista.MultiBlock` blocks. By
+            default, only the root :class:`~pyvista.MultiBlock` is shallow-copied and
+            any nested multi-blocks are not shallow-copied.
+
         """
         if pyvista.vtk_version_info >= (9, 3):  # pragma: no cover
             self.CompositeShallowCopy(to_copy)
         else:
             self.ShallowCopy(to_copy)
+        self.wrap_nested()
+
+        # Shallow copy creates new instances of nested multiblocks
+        # Iterate through the blocks to fix this recursively
+        def _replace_nested_multiblocks(this_object_, new_object):
+            for i, this_block in enumerate(this_object_):
+                if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
+                    block_to_copy = new_object.GetBlock(i)
+                    this_object_.replace(i, block_to_copy)
+                    _replace_nested_multiblocks(this_object_[i], block_to_copy)
+
+        if not recursive:
+            _replace_nested_multiblocks(self, to_copy)
+
+    def deep_copy(self, to_copy: _vtk.vtkMultiBlockDataSet) -> None:  # type: ignore[override]
+        """Overwrite this MultiBlock with another MultiBlock as a deep copy.
+
+        Parameters
+        ----------
+        to_copy : pyvista.MultiBlock or vtk.vtkMultiBlockDataSet
+            MultiBlock to perform a deep copy from.
+
+        """
+        super().deep_copy(to_copy)
+        self.wrap_nested()
+
+        # Deep copy will not copy the block name for None blocks (name is set to None instead)
+        # Iterate through the blocks to fix this recursively
+        def _set_name_for_none_blocks(this_object_, new_object_):
+            new_object_ = pyvista.wrap(new_object_)
+            for i, dataset in enumerate(new_object_):
+                if dataset is None:
+                    this_object_.set_block_name(i, new_object_.get_block_name(i))
+                elif isinstance(dataset, MultiBlock):
+                    _set_name_for_none_blocks(this_object_.GetBlock(i), dataset)
+
+        _set_name_for_none_blocks(self, to_copy)
 
     def set_active_scalars(
         self,
-        name: Optional[str],
+        name: str | None,
         preference: str = 'cell',
         allow_missing: bool = False,
-    ) -> Tuple[FieldAssociation, NumpyArray[float]]:
+    ) -> tuple[FieldAssociation, NumpyArray[float]]:
         """Find the scalars by name and appropriately set it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -1094,7 +1118,7 @@ class MultiBlock(
         The number of components of the data must match.
 
         """
-        data_assoc: List[Tuple[FieldAssociation, NumpyArray[float], _TypeMultiBlockLeaf]] = []
+        data_assoc: list[tuple[FieldAssociation, NumpyArray[float], _TypeMultiBlockLeaf]] = []
         for block in self:
             if block is not None:
                 if isinstance(block, MultiBlock):
@@ -1135,8 +1159,8 @@ class MultiBlock(
                     break
 
         # Verify array consistency
-        dims: Set[int] = set()
-        dtypes: Set[np.dtype[Any]] = set()
+        dims: set[int] = set()
+        dtypes: set[np.dtype[Any]] = set()
         for _ in self:
             for field, scalars, _ in data_assoc:
                 # only check for the active field association
@@ -1236,6 +1260,10 @@ class MultiBlock(
         if rgb:
             if scalars.ndim != 2 or scalars.shape[1] not in (3, 4):
                 raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
+            if dtype != np.uint8:
+                # uint8 is required by the mapper to display correctly
+                _validation.check_subdtype(scalars, (np.floating, np.integer), name='rgb scalars')
+                scalars_name = self._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
         elif np.issubdtype(scalars.dtype, np.complexfloating):
             # Use only the real component if an array is complex
             scalars_name = self._convert_to_real_scalars(data_attr, scalars_name)
@@ -1243,7 +1271,7 @@ class MultiBlock(
             # bool and uint8 do not display properly, must convert to float
             self._convert_to_real_scalars(data_attr, scalars_name)
             if scalars.dtype == np.bool_:
-                dtype = np.bool_
+                dtype = np.bool_  # type: ignore[assignment]
         elif scalars.ndim > 1:
             # multi-component
             if not isinstance(component, (int, type(None))):
@@ -1258,7 +1286,7 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str) -> str:
         """Extract the real component of the active scalars of this dataset."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1272,11 +1300,30 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
 
+    def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str) -> str:
+        """Convert rgb float or int scalars to uint8."""
+        for block in self:
+            if isinstance(block, MultiBlock):
+                block._convert_to_uint8_rgb_scalars(data_attr, scalars_name)
+            elif block is not None:
+                scalars = getattr(block, data_attr).get(scalars_name, None)
+                if scalars is not None:
+                    if np.issubdtype(scalars.dtype, np.floating):
+                        _validation.check_range(scalars, [0.0, 1.0], name='rgb float scalars')
+                        scalars = np.array(scalars, dtype=np.uint8) * 255
+                    elif np.issubdtype(scalars.dtype, np.integer):
+                        _validation.check_range(scalars, [0, 255], name='rgb int scalars')
+                        scalars = np.array(scalars, dtype=np.uint8)
+                    dattr = getattr(block, data_attr)
+                    dattr[f'{scalars_name}-uint8'] = scalars
+                    dattr.active_scalars_name = f'{scalars_name}-uint8'
+        return f'{scalars_name}-uint8'
+
     def _convert_to_single_component(
         self,
         data_attr: str,
         scalars_name: str,
-        component: Union[None, str],
+        component: None | str,
     ) -> str:
         """Convert multi-component scalars to a single component."""
         if component is None:

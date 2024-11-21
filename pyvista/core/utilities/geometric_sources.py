@@ -6,31 +6,34 @@ Also includes some pure-python helpers.
 
 from __future__ import annotations
 
+from enum import IntEnum
+import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Dict
-from typing import List
-from typing import Sequence
-from typing import Tuple
-from typing import Union
+from typing import Literal
+from typing import cast
+from typing import get_args
 
 import numpy as np
 from vtkmodules.vtkRenderingFreeType import vtkVectorText
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import BoundsTuple
+from pyvista.core.utilities.arrays import _coerce_pointslike_arg
+from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
 
-from .arrays import _coerce_pointslike_arg
-from .helpers import wrap
-
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import BoundsLike
+    from collections.abc import Sequence
+
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
@@ -114,9 +117,10 @@ if _vtk.vtk_version_info < (9, 3):
         >>> import pyvista as pv
         >>> source = pv.CapsuleSource()
         >>> source.output.plot(show_edges=True, line_width=5)
+
         """
 
-        _new_attr_exceptions: ClassVar[List[str]] = ['_direction']
+        _new_attr_exceptions: ClassVar[list[str]] = ['_direction']
 
         def __init__(
             self,
@@ -137,14 +141,15 @@ if _vtk.vtk_version_info < (9, 3):
             self.phi_resolution = phi_resolution
 
         @property
-        def center(self) -> Sequence[float]:
+        def center(self) -> tuple[float, float, float]:
             """Get the center in ``[x, y, z]``. Axis of the capsule passes through this point.
 
             Returns
             -------
-            sequence[float]
+            tuple[float, float, float]
                 Center in ``[x, y, z]``. Axis of the capsule passes through this
                 point.
+
             """
             return self.GetCenter()
 
@@ -157,6 +162,7 @@ if _vtk.vtk_version_info < (9, 3):
             center : sequence[float]
                 Center in ``[x, y, z]``. Axis of the capsule passes through this
                 point.
+
             """
             self.SetCenter(center)
 
@@ -169,6 +175,7 @@ if _vtk.vtk_version_info < (9, 3):
             sequence[float]
                 Direction vector in ``[x, y, z]``. Orientation vector of the
                 capsule.
+
             """
             return self._direction
 
@@ -181,6 +188,7 @@ if _vtk.vtk_version_info < (9, 3):
             direction : sequence[float]
                 Direction vector in ``[x, y, z]``. Orientation vector of the
                 capsule.
+
             """
             self._direction = direction
 
@@ -192,6 +200,7 @@ if _vtk.vtk_version_info < (9, 3):
             -------
             float
                 Cylinder length along the capsule in its specified direction.
+
             """
             return self.GetCylinderLength()
 
@@ -203,6 +212,7 @@ if _vtk.vtk_version_info < (9, 3):
             ----------
             length : float
                 Cylinder length of the capsule.
+
             """
             self.SetCylinderLength(length)
 
@@ -214,6 +224,7 @@ if _vtk.vtk_version_info < (9, 3):
             -------
             float
                 Base radius of the capsule.
+
             """
             return self.GetRadius()
 
@@ -225,6 +236,7 @@ if _vtk.vtk_version_info < (9, 3):
             ----------
             radius : float
                 Base radius of the capsule.
+
             """
             self.SetRadius(radius)
 
@@ -236,6 +248,7 @@ if _vtk.vtk_version_info < (9, 3):
             -------
             int
                 The number of points in the azimuthal direction.
+
             """
             return self.GetThetaResolution()
 
@@ -247,6 +260,7 @@ if _vtk.vtk_version_info < (9, 3):
             ----------
             theta_resolution : int
                 The number of points in the azimuthal direction.
+
             """
             self.SetThetaResolution(theta_resolution)
 
@@ -258,6 +272,7 @@ if _vtk.vtk_version_info < (9, 3):
             -------
             int
                 The number of points in the polar direction.
+
             """
             return self.GetPhiResolution()
 
@@ -269,6 +284,7 @@ if _vtk.vtk_version_info < (9, 3):
             ----------
             phi_resolution : int
                 The number of points in the polar direction.
+
             """
             self.SetPhiResolution(phi_resolution)
 
@@ -280,6 +296,7 @@ if _vtk.vtk_version_info < (9, 3):
             -------
             pyvista.PolyData
                 Capsule surface.
+
             """
             self.Update()
             return wrap(self.GetOutput())
@@ -323,6 +340,7 @@ class ConeSource(_vtk.vtkConeSource):
     >>> import pyvista as pv
     >>> source = pv.ConeSource()
     >>> source.output.plot(show_edges=True, line_width=5)
+
     """
 
     def __init__(
@@ -343,7 +361,7 @@ class ConeSource(_vtk.vtkConeSource):
         self.capping = capping
         if angle is not None and radius is not None:
             raise ValueError(
-                "Both radius and angle cannot be specified. They are mutually exclusive.",
+                'Both radius and angle cannot be specified. They are mutually exclusive.',
             )
         elif angle is not None and radius is None:
             self.angle = angle
@@ -354,14 +372,15 @@ class ConeSource(_vtk.vtkConeSource):
         self.resolution = resolution
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``. Axis of the cone passes through this point.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``. Axis of the cone passes through this
             point.
+
         """
         return self.GetCenter()
 
@@ -374,6 +393,7 @@ class ConeSource(_vtk.vtkConeSource):
         center : sequence[float]
             Center in ``[x, y, z]``. Axis of the cone passes through this
             point.
+
         """
         self.SetCenter(center)
 
@@ -386,6 +406,7 @@ class ConeSource(_vtk.vtkConeSource):
         sequence[float]
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cone.
+
         """
         return self.GetDirection()
 
@@ -398,6 +419,7 @@ class ConeSource(_vtk.vtkConeSource):
         direction : sequence[float]
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cone.
+
         """
         self.SetDirection(direction)
 
@@ -409,6 +431,7 @@ class ConeSource(_vtk.vtkConeSource):
         -------
         float
             Height along the cone in its specified direction.
+
         """
         return self.GetHeight()
 
@@ -420,6 +443,7 @@ class ConeSource(_vtk.vtkConeSource):
         ----------
         height : float
             Height of the cone.
+
         """
         self.SetHeight(height)
 
@@ -431,6 +455,7 @@ class ConeSource(_vtk.vtkConeSource):
         -------
         float
             Base radius of the cone.
+
         """
         return self.GetRadius()
 
@@ -442,6 +467,7 @@ class ConeSource(_vtk.vtkConeSource):
         ----------
         radius : float
             Base radius of the cone.
+
         """
         self.SetRadius(radius)
 
@@ -454,6 +480,7 @@ class ConeSource(_vtk.vtkConeSource):
         bool
             Enable or disable the capping the base of the cone with a
             polygon.
+
         """
         return bool(self.GetCapping())
 
@@ -466,6 +493,7 @@ class ConeSource(_vtk.vtkConeSource):
         capping : bool, optional
             Enable or disable the capping the base of the cone with a
             polygon.
+
         """
         self.SetCapping(capping)
 
@@ -478,6 +506,7 @@ class ConeSource(_vtk.vtkConeSource):
         float
             The angle in degrees between the axis of the cone and a
             generatrix.
+
         """
         return self.GetAngle()
 
@@ -490,6 +519,7 @@ class ConeSource(_vtk.vtkConeSource):
         angle : float, optional
             The angle in degrees between the axis of the cone and a
             generatrix.
+
         """
         self.SetAngle(angle)
 
@@ -501,6 +531,7 @@ class ConeSource(_vtk.vtkConeSource):
         -------
         int
             Number of points on the circular face of the cone.
+
         """
         return self.GetResolution()
 
@@ -512,6 +543,7 @@ class ConeSource(_vtk.vtkConeSource):
         ----------
         resolution : int
             Number of points on the circular face of the cone.
+
         """
         self.SetResolution(resolution)
 
@@ -523,6 +555,7 @@ class ConeSource(_vtk.vtkConeSource):
         -------
         pyvista.PolyData
             Cone surface.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -582,9 +615,10 @@ class CylinderSource(_vtk.vtkCylinderSource):
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
+
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_center', '_direction']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_center', 'center', '_direction']
 
     def __init__(
         self,
@@ -597,7 +631,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     ):
         """Initialize the cylinder source class."""
         super().__init__()
-        self._center = center
+        self.center = center
         self._direction = direction
         self.radius = radius
         self.height = height
@@ -605,14 +639,15 @@ class CylinderSource(_vtk.vtkCylinderSource):
         self.capping = capping
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get location of the centroid in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``. Axis of the cylinder passes through this
             point.
+
         """
         return self._center
 
@@ -625,8 +660,10 @@ class CylinderSource(_vtk.vtkCylinderSource):
         center : sequence[float]
             Center in ``[x, y, z]``. Axis of the cylinder passes through this
             point.
+
         """
-        self._center = center
+        valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
+        self._center = cast(tuple[float, float, float], valid_center)
 
     @property
     def direction(self) -> Sequence[float]:
@@ -637,6 +674,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         sequence[float]
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cylinder.
+
         """
         return self._direction
 
@@ -649,6 +687,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         direction : sequence[float]
             Direction vector in ``[x, y, z]``. Orientation vector of the
             cylinder.
+
         """
         self._direction = direction
 
@@ -660,6 +699,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         -------
         float
             Radius of the cylinder.
+
         """
         return self.GetRadius()
 
@@ -671,6 +711,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         ----------
         radius : float
             Radius of the cylinder.
+
         """
         self.SetRadius(radius)
 
@@ -682,6 +723,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         -------
         float
             Height of the cylinder.
+
         """
         return self.GetHeight()
 
@@ -693,6 +735,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         ----------
         height : float
             Height of the cylinder.
+
         """
         self.SetHeight(height)
 
@@ -704,6 +747,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         -------
         int
             Number of points on the circular face of the cone.
+
         """
         return self.GetResolution()
 
@@ -715,6 +759,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         ----------
         resolution : int
             Number of points on the circular face of the cone.
+
         """
         self.SetResolution(resolution)
 
@@ -726,6 +771,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         -------
         bool
             Cap cylinder ends with polygons.
+
         """
         return bool(self.GetCapping())
 
@@ -737,6 +783,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         ----------
         capping : bool, optional
             Cap cylinder ends with polygons.
+
         """
         self.SetCapping(capping)
 
@@ -750,6 +797,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         -------
         bool
             Capsule cap.
+
         """
         return bool(self.GetCapsuleCap())
 
@@ -761,6 +809,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         ----------
         capsule_cap : bool
             Capsule cap.
+
         """
         self.SetCapsuleCap(capsule_cap)
 
@@ -772,6 +821,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
         -------
         pyvista.PolyData
             Cylinder surface.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -785,9 +835,10 @@ class MultipleLinesSource(_vtk.vtkLineSource):
     ----------
     points : array_like[float], default: [[-0.5, 0.0, 0.0], [0.5, 0.0, 0.0]]
         List of points defining a broken line.
+
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['points']
+    _new_attr_exceptions: ClassVar[list[str]] = ['points']
 
     def __init__(self, points=None):
         """Initialize the multiple lines source class."""
@@ -804,17 +855,19 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         -------
         np.ndarray
             Points defining a broken line.
+
         """
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, points: Union[MatrixLike[float], VectorLike[float]]):
+    def points(self, points: MatrixLike[float] | VectorLike[float]):
         """Set the list of points defining a broken line.
 
         Parameters
         ----------
         points : VectorLike[float] | MatrixLike[float]
             List of points defining a broken line.
+
         """
         points, _ = _coerce_pointslike_arg(points)
         if not (len(points) >= 2):
@@ -829,6 +882,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         -------
         pyvista.PolyData
             Line mesh.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -875,7 +929,8 @@ class Text3DSource(vtkVectorText):
 
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = [
+    _new_attr_exceptions: ClassVar[list[str]] = [
+        'center',
         '_center',
         '_height',
         '_width',
@@ -883,8 +938,6 @@ class Text3DSource(vtkVectorText):
         '_normal',
         '_process_empty_string',
         '_output',
-        '_extrude_filter',
-        '_tri_filter',
         '_modified',
     ]
 
@@ -894,30 +947,19 @@ class Text3DSource(vtkVectorText):
         depth=None,
         width=None,
         height=None,
-        center=(0, 0, 0),
-        normal=(0, 0, 1),
+        center=(0.0, 0.0, 0.0),
+        normal=(0.0, 0.0, 1.0),
         process_empty_string=True,
     ):
         """Initialize source."""
         super().__init__()
 
-        # Create output filters to make text 3D
-        extrude = _vtk.vtkLinearExtrusionFilter()
-        extrude.SetInputConnection(self.GetOutputPort())
-        extrude.SetExtrusionTypeToNormalExtrusion()
-        extrude.SetVector(0, 0, 1)
-        self._extrude_filter = extrude
-
-        tri_filter = _vtk.vtkTriangleFilter()
-        tri_filter.SetInputConnection(extrude.GetOutputPort())
-        self._tri_filter = tri_filter
-
         self._output = pyvista.PolyData()
 
         # Set params
-        self.string = "" if string is None else string
+        self.string = '' if string is None else string
         self._process_empty_string = process_empty_string
-        self._center = center
+        self.center = center
         self._normal = normal
         self._height = height
         self._width = width
@@ -945,11 +987,6 @@ class Text3DSource(vtkVectorText):
                     f'{self.__class__.__name__}',
                 )
 
-    def __del__(self):
-        """Delete filters."""
-        self._tri_filter = None
-        self._extrude_filter = None
-
     @property
     def string(self) -> str:  # numpydoc ignore=RT01
         """Return or set the text string."""
@@ -957,7 +994,7 @@ class Text3DSource(vtkVectorText):
 
     @string.setter
     def string(self, string: str):  # numpydoc ignore=GL08
-        self.SetText("" if string is None else string)
+        self.SetText('' if string is None else string)
 
     @property
     def process_empty_string(self) -> bool:  # numpydoc ignore=RT01
@@ -977,7 +1014,7 @@ class Text3DSource(vtkVectorText):
         self._process_empty_string = value
 
     @property
-    def center(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def center(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the center of the text.
 
         The center is defined as the middle of the axis-aligned bounding box
@@ -987,10 +1024,11 @@ class Text3DSource(vtkVectorText):
 
     @center.setter
     def center(self, center: Sequence[float]):  # numpydoc ignore=GL08
-        self._center = float(center[0]), float(center[1]), float(center[2])
+        valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
+        self._center = cast(tuple[float, float, float], valid_center)
 
     @property
-    def normal(self) -> Tuple[float, float, float]:  # numpydoc ignore=RT01
+    def normal(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Return or set the normal direction of the text.
 
         The normal direction is parallel to the :attr:`depth` of the text, and
@@ -1039,7 +1077,7 @@ class Text3DSource(vtkVectorText):
     def update(self):
         """Update the output of the source."""
         if self._modified:
-            is_empty_string = self.string == "" or self.string.isspace()
+            is_empty_string = self.string == '' or self.string.isspace()
             is_2d = self.depth == 0 or (self.depth is None and self.height == 0)
             if is_empty_string or is_2d:
                 # Do not apply filters
@@ -1047,8 +1085,16 @@ class Text3DSource(vtkVectorText):
                 out = self.GetOutput()
             else:
                 # 3D case, apply filters
-                self._tri_filter.Update()
-                out = self._tri_filter.GetOutput()
+                # Create output filters to make text 3D
+                extrude = _vtk.vtkLinearExtrusionFilter()
+                extrude.SetInputConnection(self.GetOutputPort())
+                extrude.SetExtrusionTypeToNormalExtrusion()
+                extrude.SetVector(0, 0, 1)
+
+                tri_filter = _vtk.vtkTriangleFilter()
+                tri_filter.SetInputConnection(extrude.GetOutputPort())
+                tri_filter.Update()
+                out = tri_filter.GetOutput()
 
             # Modify output object
             self._output.copy_from(out)
@@ -1057,7 +1103,7 @@ class Text3DSource(vtkVectorText):
             # become uninitialized (+/- VTK_DOUBLE_MAX) if set to empty a second time
             if is_empty_string and self.process_empty_string:
                 # Add a single point to 'fix' the bounds
-                self._output.points = (0.0, 0.0, 0.0)
+                self._output.points = (0.0, 0.0, 0.0)  # type: ignore[assignment]
 
             self._transform_output()
             self._modified = False
@@ -1080,7 +1126,11 @@ class Text3DSource(vtkVectorText):
 
         # Scale mesh
         bnds = out.bounds
-        size_w, size_h, size_d = bnds[1] - bnds[0], bnds[3] - bnds[2], bnds[5] - bnds[4]
+        size_w, size_h, size_d = (
+            bnds.x_max - bnds.x_min,
+            bnds.y_max - bnds.y_min,
+            bnds.z_max - bnds.z_min,
+        )
         scale_w, scale_h, scale_d = _reciprocal((size_w, size_h, size_d))
 
         # Scale width and height first
@@ -1118,7 +1168,7 @@ class Text3DSource(vtkVectorText):
         out.points[:, 2] *= scale_d
 
         # Center points at origin
-        out.points -= out.center
+        out.points -= out.center  # type: ignore[misc]
 
         # Move to final position.
         # Only rotate if non-default normal.
@@ -1127,7 +1177,7 @@ class Text3DSource(vtkVectorText):
             out.rotate_z(90, inplace=True)
             translate(out, self.center, self.normal)
         else:
-            out.points += self.center
+            out.points += self.center  # type: ignore[misc]
 
 
 @no_new_attr
@@ -1152,7 +1202,7 @@ class CubeSource(_vtk.vtkCubeSource):
 
     bounds : sequence[float], optional
         Specify the bounding box of the cube. If given, all other size
-        arguments are ignored. ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     point_dtype : str, default: 'float32'
         Set the desired output point types. It must be either 'float32' or 'float64'.
@@ -1166,11 +1216,12 @@ class CubeSource(_vtk.vtkCubeSource):
     >>> import pyvista as pv
     >>> source = pv.CubeSource()
     >>> source.output.plot(show_edges=True, line_width=5)
+
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = [
-        "bounds",
-        "_bounds",
+    _new_attr_exceptions: ClassVar[list[str]] = [
+        'bounds',
+        '_bounds',
     ]
 
     def __init__(
@@ -1194,27 +1245,29 @@ class CubeSource(_vtk.vtkCubeSource):
         self.point_dtype = point_dtype
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return or set the bounding box of the cube."""
-        return self._bounds
+        bnds = [0.0] * 6
+        self.GetBounds(bnds)
+        return BoundsTuple(*bnds)
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self._bounds = bounds
-        self.SetBounds(bounds)
+        self.SetBounds(bounds)  # type: ignore[arg-type]
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
+
         """
         return self.GetCenter()
 
@@ -1226,6 +1279,7 @@ class CubeSource(_vtk.vtkCubeSource):
         ----------
         center : sequence[float]
             Center in ``[x, y, z]``.
+
         """
         self.SetCenter(center)
 
@@ -1237,6 +1291,7 @@ class CubeSource(_vtk.vtkCubeSource):
         -------
         float
             XLength along the cone in its specified direction.
+
         """
         return self.GetXLength()
 
@@ -1248,6 +1303,7 @@ class CubeSource(_vtk.vtkCubeSource):
         ----------
         x_length : float
             XLength of the cone.
+
         """
         self.SetXLength(x_length)
 
@@ -1259,6 +1315,7 @@ class CubeSource(_vtk.vtkCubeSource):
         -------
         float
             YLength along the cone in its specified direction.
+
         """
         return self.GetYLength()
 
@@ -1270,6 +1327,7 @@ class CubeSource(_vtk.vtkCubeSource):
         ----------
         y_length : float
             YLength of the cone.
+
         """
         self.SetYLength(y_length)
 
@@ -1281,6 +1339,7 @@ class CubeSource(_vtk.vtkCubeSource):
         -------
         float
             ZLength along the cone in its specified direction.
+
         """
         return self.GetZLength()
 
@@ -1292,6 +1351,7 @@ class CubeSource(_vtk.vtkCubeSource):
         ----------
         z_length : float
             ZLength of the cone.
+
         """
         self.SetZLength(z_length)
 
@@ -1303,6 +1363,7 @@ class CubeSource(_vtk.vtkCubeSource):
         -------
         pyvista.PolyData
             Cube surface.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -1316,12 +1377,13 @@ class CubeSource(_vtk.vtkCubeSource):
         str
             Desired output point types.
             It must be either 'float32' or 'float64'.
+
         """
         precision = self.GetOutputPointsPrecision()
         return {
             SINGLE_PRECISION: 'float32',
             DOUBLE_PRECISION: 'float64',
-        }[precision]
+        }[precision]  # type: ignore[index]
 
     @point_dtype.setter
     def point_dtype(self, point_dtype: str):
@@ -1337,6 +1399,7 @@ class CubeSource(_vtk.vtkCubeSource):
         -------
         point_dtype: str
             Desired output point types.
+
         """
         if point_dtype not in ['float32', 'float64']:
             raise ValueError("Point dtype must be either 'float32' or 'float64'")
@@ -1377,9 +1440,10 @@ class DiscSource(_vtk.vtkDiskSource):
     >>> import pyvista as pv
     >>> source = pv.DiscSource(c_res=50)
     >>> source.output.plot(show_edges=True, line_width=5)
+
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ["center"]
+    _new_attr_exceptions: ClassVar[list[str]] = ['center']
 
     def __init__(self, center=None, inner=0.25, outer=0.5, r_res=1, c_res=6):
         """Initialize the disc source class."""
@@ -1392,13 +1456,14 @@ class DiscSource(_vtk.vtkDiskSource):
         self.c_res = c_res
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
+
         """
         if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
             return self.GetCenter()
@@ -1413,6 +1478,7 @@ class DiscSource(_vtk.vtkDiskSource):
         ----------
         center : sequence[float]
             Center in ``[x, y, z]``.
+
         """
         if pyvista.vtk_version_info >= (9, 2):  # pragma: no cover
             self.SetCenter(center)
@@ -1431,6 +1497,7 @@ class DiscSource(_vtk.vtkDiskSource):
         -------
         float
             The inner radius.
+
         """
         return self.GetInnerRadius()
 
@@ -1442,6 +1509,7 @@ class DiscSource(_vtk.vtkDiskSource):
         ----------
         inner : float
             The inner radius.
+
         """
         self.SetInnerRadius(inner)
 
@@ -1453,6 +1521,7 @@ class DiscSource(_vtk.vtkDiskSource):
         -------
         float
             The outer radius.
+
         """
         return self.GetOuterRadius()
 
@@ -1464,6 +1533,7 @@ class DiscSource(_vtk.vtkDiskSource):
         ----------
         outer : float
             The outer radius.
+
         """
         self.SetOuterRadius(outer)
 
@@ -1475,6 +1545,7 @@ class DiscSource(_vtk.vtkDiskSource):
         -------
         int
             Number of points in radial direction.
+
         """
         return self.GetRadialResolution()
 
@@ -1486,6 +1557,7 @@ class DiscSource(_vtk.vtkDiskSource):
         ----------
         r_res : int
             Number of points in radial direction.
+
         """
         self.SetRadialResolution(r_res)
 
@@ -1497,6 +1569,7 @@ class DiscSource(_vtk.vtkDiskSource):
         -------
         int
             Number of points in circumferential direction.
+
         """
         return self.GetCircumferentialResolution()
 
@@ -1508,6 +1581,7 @@ class DiscSource(_vtk.vtkDiskSource):
         ----------
         c_res : int
             Number of points in circumferential direction.
+
         """
         self.SetCircumferentialResolution(c_res)
 
@@ -1519,6 +1593,7 @@ class DiscSource(_vtk.vtkDiskSource):
         -------
         pyvista.PolyData
             Line mesh.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -1563,6 +1638,7 @@ class LineSource(_vtk.vtkLineSource):
         -------
         sequence[float]
             Location in ``[x, y, z]``.
+
         """
         return self.GetPoint1()
 
@@ -1574,6 +1650,7 @@ class LineSource(_vtk.vtkLineSource):
         ----------
         pointa : sequence[float]
             Location in ``[x, y, z]``.
+
         """
         if np.array(pointa).size != 3:
             raise TypeError('Point A must be a length three tuple of floats.')
@@ -1587,6 +1664,7 @@ class LineSource(_vtk.vtkLineSource):
         -------
         sequence[float]
             Location in ``[x, y, z]``.
+
         """
         return self.GetPoint2()
 
@@ -1598,6 +1676,7 @@ class LineSource(_vtk.vtkLineSource):
         ----------
         pointb : sequence[float]
             Location in ``[x, y, z]``.
+
         """
         if np.array(pointb).size != 3:
             raise TypeError('Point B must be a length three tuple of floats.')
@@ -1611,6 +1690,7 @@ class LineSource(_vtk.vtkLineSource):
         -------
         int
             Number of pieces to divide line into.
+
         """
         return self.GetResolution()
 
@@ -1622,6 +1702,7 @@ class LineSource(_vtk.vtkLineSource):
         ----------
         resolution : int
             Number of pieces to divide line into.
+
         """
         if resolution <= 0:
             raise ValueError('Resolution must be positive')
@@ -1635,6 +1716,7 @@ class LineSource(_vtk.vtkLineSource):
         -------
         pyvista.PolyData
             Line mesh.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -1723,13 +1805,14 @@ class SphereSource(_vtk.vtkSphereSource):
         self.end_phi = end_phi
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
+
         """
         if pyvista.vtk_version_info >= (9, 2):
             return self.GetCenter()
@@ -1744,6 +1827,7 @@ class SphereSource(_vtk.vtkSphereSource):
         ----------
         center : sequence[float]
             Center in ``[x, y, z]``.
+
         """
         if pyvista.vtk_version_info >= (9, 2):
             self.SetCenter(center)
@@ -1762,6 +1846,7 @@ class SphereSource(_vtk.vtkSphereSource):
         -------
         float
             Sphere radius.
+
         """
         return self.GetRadius()
 
@@ -1773,6 +1858,7 @@ class SphereSource(_vtk.vtkSphereSource):
         ----------
         radius : float
             Sphere radius.
+
         """
         self.SetRadius(radius)
 
@@ -1784,6 +1870,7 @@ class SphereSource(_vtk.vtkSphereSource):
         -------
         int
             The number of points in the azimuthal direction.
+
         """
         return self.GetThetaResolution()
 
@@ -1795,6 +1882,7 @@ class SphereSource(_vtk.vtkSphereSource):
         ----------
         theta_resolution : int
             The number of points in the azimuthal direction.
+
         """
         self.SetThetaResolution(theta_resolution)
 
@@ -1806,6 +1894,7 @@ class SphereSource(_vtk.vtkSphereSource):
         -------
         int
             The number of points in the polar direction.
+
         """
         return self.GetPhiResolution()
 
@@ -1817,6 +1906,7 @@ class SphereSource(_vtk.vtkSphereSource):
         ----------
         phi_resolution : int
             The number of points in the polar direction.
+
         """
         self.SetPhiResolution(phi_resolution)
 
@@ -1828,6 +1918,7 @@ class SphereSource(_vtk.vtkSphereSource):
         -------
         float
             The number of points in the azimuthal direction.
+
         """
         return self.GetStartTheta()
 
@@ -1839,6 +1930,7 @@ class SphereSource(_vtk.vtkSphereSource):
         ----------
         start_theta : float
             The number of points in the azimuthal direction.
+
         """
         self.SetStartTheta(start_theta)
 
@@ -1850,6 +1942,7 @@ class SphereSource(_vtk.vtkSphereSource):
         -------
         float
             The number of points in the azimuthal direction.
+
         """
         return self.GetEndTheta()
 
@@ -1861,6 +1954,7 @@ class SphereSource(_vtk.vtkSphereSource):
         ----------
         end_theta : float
             The number of points in the azimuthal direction.
+
         """
         self.SetEndTheta(end_theta)
 
@@ -1872,6 +1966,7 @@ class SphereSource(_vtk.vtkSphereSource):
         -------
         float
             The number of points in the polar direction.
+
         """
         return self.GetStartPhi()
 
@@ -1883,6 +1978,7 @@ class SphereSource(_vtk.vtkSphereSource):
         ----------
         start_phi : float
             The number of points in the polar direction.
+
         """
         self.SetStartPhi(start_phi)
 
@@ -1894,6 +1990,7 @@ class SphereSource(_vtk.vtkSphereSource):
         -------
         float
             The number of points in the polar direction.
+
         """
         return self.GetEndPhi()
 
@@ -1905,6 +2002,7 @@ class SphereSource(_vtk.vtkSphereSource):
         ----------
         end_phi : float
             The number of points in the polar direction.
+
         """
         self.SetEndPhi(end_phi)
 
@@ -1916,6 +2014,7 @@ class SphereSource(_vtk.vtkSphereSource):
         -------
         pyvista.PolyData
             Sphere surface.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -1952,6 +2051,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
     >>> import pyvista as pv
     >>> source = pv.PolygonSource(n_sides=8)
     >>> source.output.plot(show_edges=True, line_width=5)
+
     """
 
     def __init__(
@@ -1971,13 +2071,14 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         self.fill = fill
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Get the center in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center in ``[x, y, z]``.
+
         """
         return self.GetCenter()
 
@@ -1989,6 +2090,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         ----------
         center : sequence[float]
             Center in ``[x, y, z]``.
+
         """
         self.SetCenter(center)
 
@@ -2000,6 +2102,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         -------
         float
             The radius of the polygon.
+
         """
         return self.GetRadius()
 
@@ -2011,6 +2114,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         ----------
         radius : float
             The radius of the polygon.
+
         """
         self.SetRadius(radius)
 
@@ -2022,6 +2126,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         -------
         sequence[float]
             Normal in ``[x, y, z]``.
+
         """
         return self.GetNormal()
 
@@ -2033,6 +2138,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         ----------
         normal : sequence[float]
             Normal in ``[x, y, z]``.
+
         """
         self.SetNormal(normal)
 
@@ -2044,6 +2150,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         -------
         int
             Number of sides of the polygon.
+
         """
         return self.GetNumberOfSides()
 
@@ -2055,6 +2162,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         ----------
         n_sides : int
             Number of sides of the polygon.
+
         """
         self.SetNumberOfSides(n_sides)
 
@@ -2066,6 +2174,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         -------
         bool
             Enable or disable producing filled polygons.
+
         """
         return bool(self.GetGeneratePolygon())
 
@@ -2077,6 +2186,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         ----------
         fill : bool, optional
             Enable or disable producing filled polygons.
+
         """
         self.SetGeneratePolygon(fill)
 
@@ -2088,6 +2198,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
         -------
         pyvista.PolyData
             Polygon surface.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -2123,12 +2234,12 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = ['_kinds']
+    _new_attr_exceptions: ClassVar[list[str]] = ['_kinds']
 
     def __init__(self: PlatonicSolidSource, kind='tetrahedron'):
         """Initialize the platonic solid source class."""
         super().__init__()
-        self._kinds: Dict[str, int] = {
+        self._kinds: dict[str, int] = {
             'tetrahedron': 0,
             'cube': 1,
             'octahedron': 2,
@@ -2145,6 +2256,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
         -------
         str
             The kind of Platonic solid to create.
+
         """
         return list(self._kinds.keys())[self.GetSolidType()]
 
@@ -2163,6 +2275,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
                 * ``'octahedron'`` or ``2``
                 * ``'icosahedron'`` or ``3``
                 * ``'dodecahedron'`` or ``4``
+
         """
         if isinstance(kind, str):
             if kind not in self._kinds:
@@ -2182,6 +2295,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
         -------
         pyvista.PolyData
             PlatonicSolid surface.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -2190,6 +2304,12 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 @no_new_attr
 class PlaneSource(_vtk.vtkPlaneSource):
     """Create a plane source.
+
+    The plane is defined by specifying an origin point, and then
+    two other points that, together with the origin, define two
+    axes for the plane (magnitude and direction). These axes do
+    not have to be orthogonal - so you can create a parallelogram.
+    The axes must not be parallel.
 
     .. versionadded:: 0.44
 
@@ -2201,17 +2321,37 @@ class PlaneSource(_vtk.vtkPlaneSource):
     j_resolution : int, default: 10
         Number of points on the plane in the j direction.
 
+    center : sequence[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    origin : sequence[float], default: (-0.5, -0.5, 0.0)
+        Origin in ``[x, y, z]``.
+
+    point_a : sequence[float], default: (0.5, -0.5, 0.0)
+        Location in ``[x, y, z]``.
+
+    point_b : sequence[float], default: (-0.5, 0.5, 0.0)
+        Location in ``[x, y, z]``.
+
     """
 
     def __init__(
         self,
         i_resolution=10,
         j_resolution=10,
+        center=(0.0, 0.0, 0.0),
+        origin=(-0.5, -0.5, 0.0),
+        point_a=(0.5, -0.5, 0.0),
+        point_b=(-0.5, 0.5, 0.0),
     ):
         """Initialize source."""
         super().__init__()
         self.i_resolution = i_resolution
         self.j_resolution = j_resolution
+        self.center = center
+        self.origin = origin
+        self.point_a = point_a
+        self.point_b = point_b
 
     @property
     def i_resolution(self) -> int:
@@ -2221,6 +2361,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         -------
         int
             Number of points on the plane in the i direction.
+
         """
         return self.GetXResolution()
 
@@ -2232,6 +2373,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         ----------
         i_resolution : int
             Number of points on the plane in the i direction.
+
         """
         self.SetXResolution(i_resolution)
 
@@ -2243,6 +2385,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         -------
         int
             Number of points on the plane in the j direction.
+
         """
         return self.GetYResolution()
 
@@ -2254,8 +2397,107 @@ class PlaneSource(_vtk.vtkPlaneSource):
         ----------
         j_resolution : int
             Number of points on the plane in the j direction.
+
         """
         self.SetYResolution(j_resolution)
+
+    @property
+    def center(self) -> tuple[float, float, float]:
+        """Get the center in ``[x, y, z]``.
+
+        The center of the plane is translated to the specified point.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Center in ``[x, y, z]``.
+
+        """
+        return self.GetCenter()
+
+    @center.setter
+    def center(self, center: Sequence[float]):
+        """Set the center in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        center : sequence[float]
+            Center in ``[x, y, z]``.
+
+        """
+        self.SetCenter(center)  # type: ignore[call-overload]
+
+    @property
+    def origin(self) -> Sequence[float]:
+        """Get the origin in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Origin in ``[x, y, z]``.
+
+        """
+        return self.GetOrigin()
+
+    @origin.setter
+    def origin(self, origin: Sequence[float]):
+        """Set the origin in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        origin : sequence[float]
+            Origin in ``[x, y, z]``.
+
+        """
+        self.SetOrigin(origin)
+
+    @property
+    def point_a(self) -> Sequence[float]:
+        """Get the Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+
+        """
+        return self.GetPoint1()
+
+    @point_a.setter
+    def point_a(self, point_a: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        point_a : sequence[float]
+            Location in ``[x, y, z]``.
+
+        """
+        self.SetPoint1(point_a)  # type: ignore[call-overload]
+
+    @property
+    def point_b(self) -> Sequence[float]:
+        """Get the Location in ``[x, y, z]``.
+
+        Returns
+        -------
+        sequence[float]
+            Location in ``[x, y, z]``.
+
+        """
+        return self.GetPoint2()
+
+    @point_b.setter
+    def point_b(self, point_b: Sequence[float]):
+        """Set the Location in ``[x, y, z]``.
+
+        Parameters
+        ----------
+        point_b : sequence[float]
+            Location in ``[x, y, z]``.
+
+        """
+        self.SetPoint2(point_b)  # type: ignore[call-overload]
 
     @property
     def output(self):
@@ -2265,9 +2507,36 @@ class PlaneSource(_vtk.vtkPlaneSource):
         -------
         pyvista.PolyData
             Plane mesh.
+
         """
         self.Update()
         return wrap(self.GetOutput())
+
+    @property
+    def normal(self) -> tuple[float, float, float]:  # numpydoc ignore: RT01
+        """Get the plane's normal vector."""
+        origin = np.array(self.origin)
+        v1 = self.point_a - origin
+        v2 = self.point_b - origin
+        normal = np.cross(v1, v2)
+        norm = np.linalg.norm(normal)
+        # Avoid div by zero and return +z normal by default
+        return tuple((normal / norm).tolist()) if norm else (0.0, 0.0, 1.0)
+
+    def flip_normal(self):
+        """Flip the plane's normal.
+
+        This method modifies the plane's :attr:`point_a` and :attr:`point_b` by
+        swapping them.
+        """
+        point_a = self.point_a
+        self.point_a = self.point_b
+        self.point_b = point_a
+
+    def push(self, distance: float):  # numpydoc ignore: PR01
+        """Translate the plane in the direction of the normal by the distance specified."""
+        _validation.validate_number(distance, dtype_out=float)
+        self.center = (self.center + np.array(self.normal) * distance).tolist()
 
 
 @no_new_attr
@@ -2292,6 +2561,7 @@ class ArrowSource(_vtk.vtkArrowSource):
 
     shaft_resolution : int, default: 20
         Number of faces around the shaft.
+
     """
 
     def __init__(
@@ -2317,8 +2587,9 @@ class ArrowSource(_vtk.vtkArrowSource):
         -------
         int
             The length of the tip.
+
         """
-        return self.GetTipLength()
+        return self.GetTipLength()  # type: ignore[return-value]
 
     @tip_length.setter
     def tip_length(self, tip_length: int):
@@ -2328,6 +2599,7 @@ class ArrowSource(_vtk.vtkArrowSource):
         ----------
         tip_length : int
             The length of the tip.
+
         """
         self.SetTipLength(tip_length)
 
@@ -2339,8 +2611,9 @@ class ArrowSource(_vtk.vtkArrowSource):
         -------
         int
             The radius of the tip.
+
         """
-        return self.GetTipRadius()
+        return self.GetTipRadius()  # type: ignore[return-value]
 
     @tip_radius.setter
     def tip_radius(self, tip_radius: int):
@@ -2350,6 +2623,7 @@ class ArrowSource(_vtk.vtkArrowSource):
         ----------
         tip_radius : int
             The radius of the tip.
+
         """
         self.SetTipRadius(tip_radius)
 
@@ -2361,6 +2635,7 @@ class ArrowSource(_vtk.vtkArrowSource):
         -------
         int
             The number of faces around the tip.
+
         """
         return self.GetTipResolution()
 
@@ -2372,6 +2647,7 @@ class ArrowSource(_vtk.vtkArrowSource):
         ----------
         tip_resolution : int
             The number of faces around the tip.
+
         """
         self.SetTipResolution(tip_resolution)
 
@@ -2383,6 +2659,7 @@ class ArrowSource(_vtk.vtkArrowSource):
         -------
         int
             The number of faces around the shaft.
+
         """
         return self.GetShaftResolution()
 
@@ -2394,6 +2671,7 @@ class ArrowSource(_vtk.vtkArrowSource):
         ----------
         shaft_resolution : int
             The number of faces around the shaft.
+
         """
         self.SetShaftResolution(shaft_resolution)
 
@@ -2405,8 +2683,9 @@ class ArrowSource(_vtk.vtkArrowSource):
         -------
         int
             The radius of the shaft.
+
         """
-        return self.GetShaftRadius()
+        return self.GetShaftRadius()  # type: ignore[return-value]
 
     @shaft_radius.setter
     def shaft_radius(self, shaft_radius: int):
@@ -2416,6 +2695,7 @@ class ArrowSource(_vtk.vtkArrowSource):
         ----------
         shaft_radius : int
             The radius of the shaft.
+
         """
         self.SetShaftRadius(shaft_radius)
 
@@ -2427,6 +2707,7 @@ class ArrowSource(_vtk.vtkArrowSource):
         -------
         pyvista.PolyData
             Plane mesh.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -2441,8 +2722,8 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     Parameters
     ----------
     bounds : sequence[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-        Specify the bounding box of the cube.
-        ``(xMin, xMax, yMin, yMax, zMin, zMax)``.
+        Specify the bounds of the box.
+        ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
 
     level : int, default: 0
         Level of subdivision of the faces.
@@ -2453,9 +2734,9 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
     """
 
-    _new_attr_exceptions: ClassVar[List[str]] = [
-        "bounds",
-        "_bounds",
+    _new_attr_exceptions: ClassVar[list[str]] = [
+        'bounds',
+        '_bounds',
     ]
 
     def __init__(self, bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0), level=0, quads=True):
@@ -2466,18 +2747,17 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         self.quads = quads
 
     @property
-    def bounds(self) -> BoundsLike:  # numpydoc ignore=RT01
-        """Return or set the bounding box of the cube."""
-        return self._bounds
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
+        """Return or set the bounds of the box."""
+        return BoundsTuple(*self.GetBounds())
 
     @bounds.setter
-    def bounds(self, bounds: BoundsLike):  # numpydoc ignore=GL08
+    def bounds(self, bounds: VectorLike[float]):  # numpydoc ignore=GL08
         if np.array(bounds).size != 6:
             raise TypeError(
-                'Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)',
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
             )
-        self._bounds = bounds
-        self.SetBounds(bounds)
+        self.SetBounds(bounds)  # type: ignore[arg-type]
 
     @property
     def level(self) -> int:
@@ -2487,6 +2767,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         -------
         int
             Level of subdivision of the faces.
+
         """
         return self.GetLevel()
 
@@ -2498,6 +2779,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         ----------
         level : int
             Level of subdivision of the faces.
+
         """
         self.SetLevel(level)
 
@@ -2510,6 +2792,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         bool
             Flag to tell the source to generate either a quad or two
             triangle for a set of four points.
+
         """
         return bool(self.GetQuads())
 
@@ -2522,6 +2805,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         quads : bool, optional
             Flag to tell the source to generate either a quad or two
             triangle for a set of four points.
+
         """
         self.SetQuads(quads)
 
@@ -2533,6 +2817,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
         -------
         pyvista.PolyData
             Plane mesh.
+
         """
         self.Update()
         return wrap(self.GetOutput())
@@ -2578,6 +2863,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
     thickness : float, default: 0.3333333333
         Superquadric ring thickness.
         Only applies if toroidal is set to ``True``.
+
     """
 
     def __init__(
@@ -2605,13 +2891,14 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         self.thickness = thickness
 
     @property
-    def center(self) -> Sequence[float]:
+    def center(self) -> tuple[float, float, float]:
         """Center of the superquadric in ``[x, y, z]``.
 
         Returns
         -------
-        sequence[float]
+        tuple[float, float, float]
             Center of the superquadric in ``[x, y, z]``.
+
         """
         return self.GetCenter()
 
@@ -2623,6 +2910,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         ----------
         center : sequence[float]
             Center of the superquadric in ``[x, y, z]``.
+
         """
         self.SetCenter(center)
 
@@ -2634,6 +2922,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         -------
         sequence[float]
             Scale factors of the superquadric in ``[x, y, z]``.
+
         """
         return self.GetScale()
 
@@ -2645,6 +2934,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         ----------
         scale : sequence[float]
            Scale factors of the superquadric in ``[x, y, z]``.
+
         """
         self.SetScale(scale)
 
@@ -2656,6 +2946,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         -------
         float
             Superquadric isotropic size.
+
         """
         return self.GetSize()
 
@@ -2667,6 +2958,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         ----------
         size : float
             Superquadric isotropic size.
+
         """
         self.SetSize(size)
 
@@ -2678,6 +2970,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         -------
         float
             Superquadric east/west roundness.
+
         """
         return self.GetThetaRoundness()
 
@@ -2689,6 +2982,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         ----------
         theta_roundness : float
             Superquadric east/west roundness.
+
         """
         self.SetThetaRoundness(theta_roundness)
 
@@ -2700,6 +2994,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         -------
         float
             Superquadric north/south roundness.
+
         """
         return self.GetPhiRoundness()
 
@@ -2711,6 +3006,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         ----------
         phi_roundness : float
             Superquadric north/south roundness.
+
         """
         self.SetPhiRoundness(phi_roundness)
 
@@ -2722,6 +3018,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         -------
         float
             Number of points in the longitude direction.
+
         """
         return self.GetThetaResolution()
 
@@ -2733,6 +3030,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         ----------
         theta_resolution : float
             Number of points in the longitude direction.
+
         """
         self.SetThetaResolution(round(theta_resolution / 4) * 4)
 
@@ -2744,6 +3042,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         -------
         float
             Number of points in the latitude direction.
+
         """
         return self.GetPhiResolution()
 
@@ -2755,6 +3054,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         ----------
         phi_resolution : float
             Number of points in the latitude direction.
+
         """
         self.SetPhiResolution(round(phi_resolution / 8) * 8)
 
@@ -2767,8 +3067,9 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         bool
             Whether or not the superquadric is toroidal (``True``)
             or ellipsoidal (``False``).
+
         """
-        return self.GetToroidal()
+        return self.GetToroidal()  # type: ignore[return-value]
 
     @toroidal.setter
     def toroidal(self, toroidal: bool):
@@ -2779,6 +3080,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         toroidal : bool
             Whether or not the superquadric is toroidal (``True``)
             or ellipsoidal (``False``).
+
         """
         self.SetToroidal(toroidal)
 
@@ -2790,6 +3092,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         -------
         float
             Superquadric ring thickness.
+
         """
         return self.GetThickness()
 
@@ -2801,6 +3104,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         ----------
         thickness : float
             Superquadric ring thickness.
+
         """
         self.SetThickness(thickness)
 
@@ -2812,6 +3116,1311 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         -------
         pyvista.PolyData
             Plane mesh.
+
         """
         self.Update()
         return wrap(self.GetOutput())
+
+
+class _AxisEnum(IntEnum):
+    x = 0
+    y = 1
+    z = 2
+
+
+class _PartEnum(IntEnum):
+    shaft = 0
+    tip = 1
+
+
+class AxesGeometrySource:
+    """Create axes geometry source.
+
+    Source for generating fully 3-dimensional axes shaft and tip geometry.
+
+    By default, the shafts are cylinders and the tips are cones, though other geometries
+    such as spheres and cubes are also supported. The use of an arbitrary dataset
+    for the shafts and/or tips is also supported.
+
+    Unlike :class:`pyvista.AxesActor`, the output from this source is a
+    :class:`pyvista.MultiBlock`, not an actor, and does not support colors or labels.
+    The generated axes are "true-to-scale" by default, i.e. a shaft with a
+    radius of 0.1 will truly have a radius of 0.1, and the axes may be oriented
+    arbitrarily in space (this is not the case for :class:`pyvista.AxesActor`).
+
+    Parameters
+    ----------
+    shaft_type : str | pyvista.DataSet, default: 'cylinder'
+        Shaft type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    shaft_radius : float, default: 0.025
+        Radius of the axes shafts.
+
+    shaft_length : float | VectorLike[float], default: 0.8
+        Length of the shaft for each axis.
+
+    tip_type : str | pyvista.DataSet, default: 'cone'
+        Tip type for all axes. Can be any of the following:
+
+        - ``'cylinder'``
+        - ``'sphere'``
+        - ``'hemisphere'``
+        - ``'cone'``
+        - ``'pyramid'``
+        - ``'cube'``
+        - ``'octahedron'``
+
+        Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet` may be
+        specified. In this case, the dataset must be oriented such that it "points" in
+        the positive z direction.
+
+    tip_radius : float, default: 0.1
+        Radius of the axes tips.
+
+    tip_length : float | VectorLike[float], default: 0.2
+        Length of the tip for each axis.
+
+    symmetric : bool, default: False
+        Mirror the axes such that they extend to negative values.
+
+    symmetric_bounds : bool, default: False
+        Make the bounds of the axes symmetric. This option is similar to
+        :attr:`symmetric`, except only the bounds are made to be symmetric,
+        not the actual geometry. Has no effect if :attr:`symmetric` is ``True``.
+
+    """
+
+    GeometryTypes = Literal[
+        'cylinder',
+        'sphere',
+        'hemisphere',
+        'cone',
+        'pyramid',
+        'cube',
+        'octahedron',
+    ]
+    GEOMETRY_TYPES: ClassVar[tuple[str]] = get_args(GeometryTypes)
+
+    def __init__(
+        self,
+        *,
+        shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
+        shaft_radius: float = 0.025,
+        shaft_length: float | VectorLike[float] = 0.8,
+        tip_type: GeometryTypes | pyvista.DataSet = 'cone',
+        tip_radius: float = 0.1,
+        tip_length: float | VectorLike[float] = 0.2,
+        symmetric: bool = False,
+        symmetric_bounds: bool = False,
+    ):
+        super().__init__()
+        # Init datasets
+        names = ['x_shaft', 'y_shaft', 'z_shaft', 'x_tip', 'y_tip', 'z_tip']
+        polys = [pyvista.PolyData() for _ in range(len(names))]
+        self._output = pyvista.MultiBlock(dict(zip(names, polys)))
+
+        # Store shaft/tip references in separate vars for convenience
+        self._shaft_datasets = (polys[0], polys[1], polys[2])
+        self._tip_datasets = (polys[3], polys[4], polys[5])
+
+        # Also store datasets for internal use
+        self._shaft_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
+        self._tip_datasets_normalized = [pyvista.PolyData() for _ in range(3)]
+
+        # Set geometry-dependent params
+        self.shaft_type = shaft_type  # type: ignore[assignment]
+        self.shaft_radius = shaft_radius
+        self.shaft_length = shaft_length  # type: ignore[assignment]
+        self.tip_type = tip_type  # type: ignore[assignment]
+        self.tip_radius = tip_radius
+        self.tip_length = tip_length  # type: ignore[assignment]
+
+        # Set flags
+        self._symmetric = symmetric
+        self._symmetric_bounds = symmetric_bounds
+
+    def __repr__(self):
+        """Representation of the axes."""
+        attr = [
+            f'{type(self).__name__} ({hex(id(self))})',
+            f"  Shaft type:                 '{self.shaft_type}'",
+            f'  Shaft radius:               {self.shaft_radius}',
+            f'  Shaft length:               {self.shaft_length}',
+            f"  Tip type:                   '{self.tip_type}'",
+            f'  Tip radius:                 {self.tip_radius}',
+            f'  Tip length:                 {self.tip_length}',
+            f'  Symmetric:                  {self.symmetric}',
+            f'  Symmetric bounds:           {self.symmetric_bounds}',
+        ]
+        return '\n'.join(attr)
+
+    @property
+    def symmetric(self) -> bool:  # numpydoc ignore=RT01
+        """Mirror the axes such that they extend to negative values.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric=True)
+        >>> axes_geometry_source.output.plot()
+
+        """
+        return self._symmetric
+
+    @symmetric.setter
+    def symmetric(self, val: bool):  # numpydoc ignore=GL08
+        self._symmetric = val
+
+    @property
+    def symmetric_bounds(self) -> bool:  # numpydoc ignore=RT01
+        """Enable or disable symmetry in the axes bounds.
+
+        This option is similar to :attr:`symmetric`, except instead of making
+        the axes parts symmetric, only the bounds of the axes are made to be
+        symmetric. This is achieved by adding a single invisible cell to each tip
+        dataset along each axis to simulate the symmetry. Setting this
+        parameter primarily affects camera positioning and is useful if the
+        axes are used as a widget, as it allows for the axes to rotate
+        about its origin.
+
+        Examples
+        --------
+        Get the symmetric bounds of the axes.
+
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource(
+        ...     symmetric_bounds=True
+        ... )
+        >>> axes_geometry_source.output.bounds
+        BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
+
+        >>> axes_geometry_source.output.center
+        (0.0, 0.0, 0.0)
+
+        Get the asymmetric bounds.
+
+        >>> axes_geometry_source.symmetric_bounds = False
+        >>> axes_geometry_source.output.bounds
+        BoundsTuple(x_min=-0.10000000149011612, x_max=1.0, y_min=-0.10000000149011612, y_max=1.0, z_min=-0.10000000149011612, z_max=1.0)
+
+        >>> axes_geometry_source.output.center
+        (0.45, 0.45, 0.45)
+
+        Show the difference in camera positioning with and without
+        symmetric bounds. Orientation is added for visualization.
+
+        Create actors.
+
+        >>> axes_sym = pv.AxesAssembly(
+        ...     orientation=(90, 0, 0), symmetric_bounds=True
+        ... )
+        >>> axes_asym = pv.AxesAssembly(
+        ...     orientation=(90, 0, 0), symmetric_bounds=False
+        ... )
+
+        Show multi-window plot.
+
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> _ = pl.add_text("Symmetric bounds")
+        >>> _ = pl.add_actor(axes_sym)
+        >>> pl.subplot(0, 1)
+        >>> _ = pl.add_text("Asymmetric bounds")
+        >>> _ = pl.add_actor(axes_asym)
+        >>> pl.show()
+
+        """
+        return self._symmetric_bounds
+
+    @symmetric_bounds.setter
+    def symmetric_bounds(self, val: bool):  # numpydoc ignore=GL08
+        self._symmetric_bounds = val
+
+    @property
+    def shaft_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Length of the shaft for each axis.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_length
+        (0.8, 0.8, 0.8)
+        >>> axes_geometry_source.shaft_length = 0.7
+        >>> axes_geometry_source.shaft_length
+        (0.7, 0.7, 0.7)
+        >>> axes_geometry_source.shaft_length = (1.0, 0.9, 0.5)
+        >>> axes_geometry_source.shaft_length
+        (1.0, 0.9, 0.5)
+
+        """
+        return tuple(self._shaft_length.tolist())
+
+    @shaft_length.setter
+    def shaft_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        self._shaft_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, np.inf],
+            name='Shaft length',
+        )
+
+    @property
+    def tip_length(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Length of the tip for each axis.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_length
+        (0.2, 0.2, 0.2)
+        >>> axes_geometry_source.tip_length = 0.3
+        >>> axes_geometry_source.tip_length
+        (0.3, 0.3, 0.3)
+        >>> axes_geometry_source.tip_length = (0.1, 0.4, 0.2)
+        >>> axes_geometry_source.tip_length
+        (0.1, 0.4, 0.2)
+
+        """
+        return tuple(self._tip_length.tolist())
+
+    @tip_length.setter
+    def tip_length(self, length: float | VectorLike[float]):  # numpydoc ignore=GL08
+        self._tip_length: NumpyArray[float] = _validation.validate_array3(
+            length,
+            broadcast=True,
+            must_be_in_range=[0.0, np.inf],
+            name='Tip length',
+        )
+
+    @property
+    def tip_radius(self) -> float:  # numpydoc ignore=RT01
+        """Radius of the axes tips.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_radius
+        0.1
+        >>> axes_geometry_source.tip_radius = 0.2
+        >>> axes_geometry_source.tip_radius
+        0.2
+
+        """
+        return self._tip_radius
+
+    @tip_radius.setter
+    def tip_radius(self, radius: float):  # numpydoc ignore=GL08
+        _validation.check_range(radius, (0, float('inf')), name='tip radius')
+        self._tip_radius = radius
+
+    @property
+    def shaft_radius(self):  # numpydoc ignore=RT01
+        """Radius of the axes shafts.
+
+        Value must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_radius
+        0.025
+        >>> axes_geometry_source.shaft_radius = 0.05
+        >>> axes_geometry_source.shaft_radius
+        0.05
+
+        """
+        return self._shaft_radius
+
+    @shaft_radius.setter
+    def shaft_radius(self, radius):  # numpydoc ignore=GL08
+        _validation.check_range(radius, (0, float('inf')), name='shaft radius')
+        self._shaft_radius = radius
+
+    @property
+    def shaft_type(self) -> str:  # numpydoc ignore=RT01
+        """Shaft type for all axes.
+
+        Must be a string, e.g. ``'cylinder'`` or ``'cube'`` or any other supported
+        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
+        may also be specified. In this case, the dataset must be oriented such that it
+        "points" in the positive z direction.
+
+        Examples
+        --------
+        Show a list of all shaft type options.
+
+        >>> import pyvista as pv
+        >>> pv.AxesGeometrySource.GEOMETRY_TYPES
+        ('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')
+
+        Show the default shaft type and modify it.
+
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.shaft_type
+        'cylinder'
+        >>> axes_geometry_source.shaft_type = 'cube'
+        >>> axes_geometry_source.shaft_type
+        'cube'
+
+        Set the shaft type to any 3-dimensional dataset.
+
+        >>> axes_geometry_source.shaft_type = pv.Superquadric()
+        >>> axes_geometry_source.shaft_type
+        'custom'
+
+        """
+        return self._shaft_type
+
+    @shaft_type.setter
+    def shaft_type(self, shaft_type: GeometryTypes | pyvista.DataSet):  # numpydoc ignore=GL08
+        self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
+
+    @property
+    def tip_type(self) -> str:  # numpydoc ignore=RT01
+        """Tip type for all axes.
+
+        Must be a string, e.g. ``'cone'`` or ``'sphere'`` or any other supported
+        geometry. Alternatively, any arbitrary 3-dimensional :class:`pyvista.DataSet`
+        may also be specified. In this case, the dataset must be oriented such that it
+        "points" in the positive z direction.
+
+        Examples
+        --------
+        Show a list of all shaft type options.
+
+        >>> import pyvista as pv
+        >>> pv.AxesGeometrySource.GEOMETRY_TYPES
+        ('cylinder', 'sphere', 'hemisphere', 'cone', 'pyramid', 'cube', 'octahedron')
+
+        Show the default tip type and modify it.
+
+        >>> axes_geometry_source = pv.AxesGeometrySource()
+        >>> axes_geometry_source.tip_type
+        'cone'
+        >>> axes_geometry_source.tip_type = 'sphere'
+        >>> axes_geometry_source.tip_type
+        'sphere'
+
+        Set the tip type to any 3-dimensional dataset.
+
+        >>> axes_geometry_source.tip_type = pv.Text3D('O')
+        >>> axes_geometry_source.tip_type
+        'custom'
+
+        >>> axes_geometry_source.output.plot(cpos='xy')
+
+        """
+        return self._tip_type
+
+    @tip_type.setter
+    def tip_type(self, tip_type: str | pyvista.DataSet):  # numpydoc ignore=GL08
+        self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
+
+    def _set_normalized_datasets(self, part: _PartEnum, geometry: str | pyvista.DataSet):
+        geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
+        datasets = (
+            self._shaft_datasets_normalized
+            if part == _PartEnum.shaft
+            else self._tip_datasets_normalized
+        )
+        datasets[_AxisEnum.x].copy_from(new_datasets[_AxisEnum.x])
+        datasets[_AxisEnum.y].copy_from(new_datasets[_AxisEnum.y])
+        datasets[_AxisEnum.z].copy_from(new_datasets[_AxisEnum.z])
+        return geometry_name
+
+    def _reset_shaft_and_tip_geometry(self):
+        # Store local copies of properties for iterating
+        shaft_radius, shaft_length = self.shaft_radius, self.shaft_length
+        tip_radius, tip_length = (
+            self.tip_radius,
+            self.tip_length,
+        )
+
+        nested_datasets = [self._shaft_datasets, self._tip_datasets]
+        nested_datasets_normalized = [
+            self._shaft_datasets_normalized,
+            self._tip_datasets_normalized,
+        ]
+        for part_type, axis in itertools.product(_PartEnum, _AxisEnum):
+            # Reset part by copying from the normalized version
+            part_normalized = nested_datasets_normalized[part_type][axis]
+            part = nested_datasets[part_type][axis]
+            part.copy_from(part_normalized)
+
+            # Offset so axis bounds are [0, 1]
+            part.points[:, axis] += 0.5
+
+            # Scale by length along axis, scale by radius off-axis
+            radius, length = (
+                (shaft_radius, shaft_length)
+                if part_type == _PartEnum.shaft
+                else (tip_radius, tip_length)
+            )
+            diameter = radius * 2
+            scale = [diameter] * 3
+            scale[axis] = length[axis]
+            part.scale(scale, inplace=True)
+
+            if part_type == _PartEnum.tip:
+                # Move tip to end of shaft
+                part.points[:, axis] += shaft_length[axis]
+
+            if self.symmetric:
+                # Flip and append to part
+                origin = [0, 0, 0]
+                normal = [0, 0, 0]
+                normal[axis] = 1
+                flipped = part.flip_normal(normal=normal, point=origin)
+                part.append_polydata(flipped, inplace=True)
+            elif self.symmetric_bounds and part_type == _PartEnum.tip:
+                # For this feature we add a single degenerate cell
+                # at the tip and flip its position
+                point = [0, 0, 0]
+                total_length = shaft_length[axis] + tip_length[axis]
+                point[axis] = total_length  # type: ignore[call-overload]
+                flipped_point = np.array([point]) * -1  # Flip point
+                point_id = part.n_points
+                new_face = [3, point_id, point_id, point_id]
+
+                # Update mesh
+                part.points = np.append(part.points, flipped_point, axis=0)  # type: ignore[assignment]
+                part.faces = np.append(part.faces, new_face)
+
+    def update(self):
+        """Update the output of the source."""
+        self._reset_shaft_and_tip_geometry()
+
+    @property
+    def output(self) -> pyvista.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with six blocks: one for each part
+        of the axes. The blocks are ordered by shafts first then tips, and in x-y-z order.
+        Specifically, they are named as follows:
+
+            (``'x_shaft'``, ``'y_shaft'``, ``'z_shaft'``, ``'x_tip'``, ``'y_tip'``, ``'z_tip'``)
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with separate shaft and tip datasets.
+
+        """
+        self.update()
+        return self._output
+
+    @staticmethod
+    def _make_default_part(geometry: str) -> pyvista.PolyData:
+        """Create part geometry with its length axis pointing in the +z direction."""
+        resolution = 50
+        if geometry == 'cylinder':
+            return pyvista.Cylinder(direction=(0, 0, 1), resolution=resolution)
+        elif geometry == 'sphere':
+            return pyvista.Sphere(phi_resolution=resolution, theta_resolution=resolution)
+        elif geometry == 'hemisphere':
+            return pyvista.SolidSphere(end_phi=90).extract_geometry()
+        elif geometry == 'cone':
+            return pyvista.Cone(direction=(0, 0, 1), resolution=resolution)
+        elif geometry == 'pyramid':
+            return pyvista.Pyramid().extract_geometry()
+        elif geometry == 'cube':
+            return pyvista.Cube()
+        elif geometry == 'octahedron':
+            mesh = pyvista.Octahedron()
+            mesh.cell_data.remove('FaceIndex')
+            return mesh
+        else:
+            _validation.check_contains(
+                item=geometry,
+                container=AxesGeometrySource.GEOMETRY_TYPES,
+                name='Geometry',
+            )
+            raise NotImplementedError(
+                f"Geometry '{geometry}' is not implemented"
+            )  # pragma: no cover
+
+    @staticmethod
+    def _make_any_part(geometry: str | pyvista.DataSet) -> tuple[str, pyvista.PolyData]:
+        part: pyvista.DataSet
+        part_poly: pyvista.PolyData
+        if isinstance(geometry, str):
+            name = geometry
+            part = AxesGeometrySource._make_default_part(
+                geometry,
+            )
+        elif isinstance(geometry, pyvista.DataSet):
+            name = 'custom'
+            part = geometry.copy()
+        else:
+            raise TypeError(
+                f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.',
+            )
+        part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
+        part_poly = AxesGeometrySource._normalize_part(part_poly)
+        return name, part_poly
+
+    @staticmethod
+    def _normalize_part(part: pyvista.PolyData) -> pyvista.PolyData:
+        """Scale and translate part to have origin-centered bounding box with edge length one."""
+        # Center points at origin
+        # mypy ignore since pyvista_ndarray is not compatible with np.ndarray, see GH#5434
+        part.points -= part.center  # type: ignore[misc]
+
+        # Scale so bounding box edges have length one
+        bnds = part.bounds
+        axis_length = np.array(
+            (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+        )
+        if np.any(axis_length < 1e-8):
+            raise ValueError(f'Custom axes part must be 3D. Got bounds: {bnds}.')
+        part.scale(np.reciprocal(axis_length), inplace=True)
+        return part
+
+    @staticmethod
+    def _make_axes_parts(
+        geometry: str | pyvista.DataSet,
+    ) -> tuple[str, tuple[pyvista.PolyData, pyvista.PolyData, pyvista.PolyData]]:
+        """Return three axis-aligned normalized parts centered at the origin."""
+        name, part_z = AxesGeometrySource._make_any_part(geometry)
+        part_x = part_z.copy().rotate_y(90)
+        part_y = part_z.copy().rotate_x(-90)
+        return name, (part_x, part_y, part_z)
+
+
+class OrthogonalPlanesSource:
+    """Orthogonal planes source.
+
+    This source generates three orthogonal planes. The :attr:`output` is a
+    :class:`~pyvista.MultiBlock` with named plane meshes ``'yz'``, ``'zx'``, ``'xy'``.
+    The meshes are ordered such that the first, second, and third plane is perpendicular
+    to the x, y, and z-axis, respectively.
+
+    .. versionadded:: 0.45
+
+    Parameters
+    ----------
+    bounds : VectorLike[float], default: (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+        Specify the bounds of the planes in the form: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+        The generated planes are centered in these bounds.
+
+    resolution : int | VectorLike[int], default: 2
+        Number of points on the planes in the x-y-z directions. Use a single number
+        for a uniform resolution, or three values to set independent resolutions.
+
+    normal_sign : '+' | '-' | sequence['+' | '-'], default: '+'
+        Sign of the plane's normal vectors. Use a single value to set all normals to
+        the same sign, or three values to set them independently.
+
+    names : sequence[str], default: ('xy','yz','zx')
+        Name of each plane in the generated :class:`~pyvista.MultiBlock`.
+
+    Examples
+    --------
+    Generate default orthogonal planes.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> planes_source = pv.OrthogonalPlanesSource()
+    >>> output = planes_source.output
+    >>> output.plot()
+
+    Modify the planes to fit a mesh's bounds.
+
+    >>> human = examples.download_human()
+    >>> planes_source.bounds = human.bounds
+    >>> planes_source.update()
+
+    Plot the mesh and the planes.
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
+    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True)
+    >>> pl.show()
+
+    The planes are centered geometrically, but the frontal plane is positioned a bit
+    too far forward. Use :meth:`push` to move the frontal plane.
+
+    >>> planes_source.push(0.0, -10.0, 0)
+    >>> planes_source.update()
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
+    >>> _ = pl.add_mesh(
+    ...     output, opacity=0.3, show_edges=True, line_width=10
+    ... )
+    >>> pl.view_yz()
+    >>> pl.show()
+
+    """
+
+    def __init__(
+        self,
+        bounds: VectorLike[float] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0),
+        *,
+        resolution: int | VectorLike[int] = 2,
+        normal_sign: Literal['+', '-'] | Sequence[str] = '+',
+        names: Sequence[str] = ('yz', 'zx', 'xy'),
+    ):
+        # Init sources and the output dataset
+        self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(3)])
+        self.sources = tuple(pyvista.PlaneSource() for _ in range(3))
+
+        # Init properties
+        self.bounds = bounds  # type: ignore[assignment]
+        self.resolution = resolution  # type: ignore[assignment]
+        self.normal_sign = normal_sign  # type: ignore[assignment]
+        self.names = names  # type: ignore[assignment]
+
+    @property
+    def normal_sign(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the sign of the plane's normal vectors."""
+        return cast(tuple[str, str, str], self._normal_sign)
+
+    @normal_sign.setter
+    def normal_sign(self, sign: Literal['+', '-'] | Sequence[str] = '+'):  # numpydoc ignore=GL08
+        def _check_sign(sign_):
+            allowed = ['+', '-']
+            _validation.check_contains(item=sign_, container=allowed, name='normal sign')
+
+        valid_sign: Sequence[str]
+        _validation.check_instance(sign, (tuple, list, str), name='normal sign')
+        if isinstance(sign, str):
+            _check_sign(sign)
+            valid_sign = [sign] * 3
+        else:
+            _validation.check_length(sign, exact_length=3)
+            [_check_sign(s) for s in sign]
+            valid_sign = sign
+        self._normal_sign = tuple(valid_sign)
+
+        # Modify sources
+        for source, axis_vector, sign in zip(self.sources, np.eye(3), valid_sign):
+            has_positive_normal = np.dot(source.normal, axis_vector) > 0
+            if has_positive_normal and sign == '-':
+                source.flip_normal()
+
+    @property
+    def resolution(self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
+        """Return or set the resolution of the planes."""
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, resolution: int | VectorLike[int]):  # numpydoc ignore=GL08
+        valid_resolution = _validation.validate_array3(
+            resolution, broadcast=True, to_tuple=True, name='resolution'
+        )
+        self._resolution = valid_resolution
+
+        # Modify sources
+        x_res, y_res, z_res = valid_resolution
+        yz_source, zx_source, xy_source = self.sources
+
+        yz_source.i_resolution = y_res
+        yz_source.j_resolution = z_res
+        zx_source.i_resolution = z_res
+        zx_source.j_resolution = x_res
+        xy_source.i_resolution = x_res
+        xy_source.j_resolution = y_res
+
+    @property
+    def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
+        """Return or set the bounds of the planes."""
+        return self._bounds
+
+    @bounds.setter
+    def bounds(self, bounds: BoundsTuple):  # numpydoc ignore=GL08
+        bounds_tuple = _validation.validate_array(
+            bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
+        )
+        self._bounds = BoundsTuple(*bounds_tuple)
+
+        # Modify sources
+        x_min, x_max, y_min, y_max, z_min, z_max = bounds_tuple
+        x_size, y_size, z_size = x_max - x_min, y_max - y_min, z_max - z_min
+        center = (x_max + x_min) / 2, (y_max + y_min) / 2, (z_max + z_min) / 2
+        ORIGIN = (0.0, 0.0, 0.0)
+        yz_source, zx_source, xy_source = self.sources
+
+        xy_source.point_a = x_size, 0.0, 0.0
+        xy_source.point_b = 0.0, y_size, 0.0
+        xy_source.origin = ORIGIN
+        xy_source.center = center
+
+        yz_source.point_a = 0.0, y_size, 0.0
+        yz_source.point_b = 0.0, 0.0, z_size
+        yz_source.origin = ORIGIN
+        yz_source.center = center
+
+        zx_source.point_a = 0.0, 0.0, z_size
+        zx_source.point_b = x_size, 0.0, 0.0
+        zx_source.origin = ORIGIN
+        zx_source.center = center
+
+    @property
+    def names(self) -> tuple[str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the names of the planes."""
+        return self._names
+
+    @names.setter
+    def names(self, names: Sequence[str]):  # numpydoc ignore=GL08
+        _validation.check_instance(names, (tuple, list), name='names')
+        _validation.check_iterable_items(names, str, name='names')
+        _validation.check_length(names, exact_length=3, name='names')
+        valid_names = cast(tuple[str, str, str], tuple(names))
+        self._names = valid_names
+
+        output = self._output
+        for i, name in enumerate(valid_names):
+            output.set_block_name(i, name)
+
+    def push(self, *distance: float | VectorLike[float]):  # numpydoc ignore=RT01
+        """Translate each plane by the specified distance along its normal.
+
+        Internally, this method calls :meth:`pyvista.PlaneSource.push` on each
+        plane source.
+
+        Parameters
+        ----------
+        *distance : float | VectorLike[float], default: (0.0, 0.0, 0.0)
+            Distance to move each plane.
+
+        """
+        valid_distance = _validation.validate_array3(
+            distance, broadcast=True, dtype_out=float, to_tuple=True
+        )
+        for source, dist in zip(self.sources, valid_distance):
+            source.push(dist)
+
+    def update(self):
+        """Update the output of the source."""
+        for source, plane in zip(self.sources, self._output):
+            plane.copy_from(source.output)
+
+    @property
+    def output(self) -> pyvista.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with three blocks: one for each
+        plane. The blocks are named ``'yz'``, ``'zx'``, ``'xy'``, and are ordered such
+        that the first, second, and third plane is perpendicular to the x, y, and
+        z-axis, respectively.
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with three planes.
+
+        """
+        self.update()
+        return self._output
+
+
+@no_new_attr
+class CubeFacesSource(CubeSource):
+    """Generate the faces of a cube.
+
+    This source generates a :class:`~pyvista.MultiBlock` with the six :class:`PolyData`
+    comprising the faces of a cube.
+
+    The faces may be shrunk or exploded to create equal-sized gaps or intersections
+    between the faces. Additionally, the faces may be converted to frames with a
+    constant-width border.
+
+    .. versionadded:: 0.45.0
+
+    Parameters
+    ----------
+    center : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Center in ``[x, y, z]``.
+
+    x_length : float, default: 1.0
+        Length of the cube in the x-direction.
+
+    y_length : float, default: 1.0
+        Length of the cube in the y-direction.
+
+    z_length : float, default: 1.0
+        Length of the cube in the z-direction.
+
+    bounds : sequence[float], optional
+        Specify the bounding box of the cube. If given, all other size
+        arguments are ignored. ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
+
+    frame_width : float, optional
+        Convert the faces into frames with the specified width. If set, the center
+        portion of each face is removed and the output faces will each have four quad
+        cells (one for each side of the frame) instead of a single quad cell. Values
+        must be between ``0.0`` (minimal frame) and ``1.0`` (large frame). The frame is
+        scaled to ensure it has a constant width.
+
+    shrink_factor : float, optional
+        Shrink or grow the cube's faces. If set, this is the factor by which to shrink
+        or grow each face. The amount of shrinking or growth is relative to the smallest
+        edge length of the cube, and all sides of the faces are shrunk by the same
+        (constant) value.
+
+        .. note::
+            - A value of ``1.0`` has no effect.
+            - Values between ``0.0`` and ``1.0`` will shrink the faces.
+            - Values greater than ``1.0`` will grow the faces.
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.shrink`.
+
+    explode_factor : float, optional
+        Push the faces away from (or pull them toward) the cube's center. If set, this
+        is the factor by which to move each face. The magnitude of the move is relative
+        to the smallest edge length of the cube, and all faces are moved by the same
+        (constant) amount.
+
+        .. note::
+            - A value of ``0.0`` has no effect.
+            - Increasing positive values will push the faces farther away (explode).
+            - Decreasing negative values will pull the faces closer together (implode).
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.explode`.
+
+    names : sequence[str], default: ('+X','-X','+Y','-Y','+Z','-Z')
+        Name of each face in the generated :class:`~pyvista.MultiBlock`.
+
+    point_dtype : str, default: 'float32'
+        Set the desired output point types. It must be either 'float32' or 'float64'.
+
+    Examples
+    --------
+    Generate the default faces of a cube.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> cube_faces_source = pv.CubeFacesSource()
+    >>> output = cube_faces_source.output
+    >>> output.plot(show_edges=True, line_width=10)
+
+    The output is similar to that of :class:`CubeSource` except it's a
+    :class:`~pyvista.MultiBlock`.
+
+    >>> output
+    MultiBlock (...)
+      N Blocks:   6
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -5.000e-01, 5.000e-01
+      Z Bounds:   -5.000e-01, 5.000e-01
+
+    >>> cube_source = pv.CubeSource()
+    >>> cube_source.output
+    PolyData (...)
+      N Cells:    6
+      N Points:   24
+      N Strips:   0
+      X Bounds:   -5.000e-01, 5.000e-01
+      Y Bounds:   -5.000e-01, 5.000e-01
+      Z Bounds:   -5.000e-01, 5.000e-01
+      N Arrays:   2
+
+    Use :attr:`explode_factor` to explode the faces.
+
+    >>> cube_faces_source.explode_factor = 0.5
+    >>> cube_faces_source.update()
+    >>> output.plot(show_edges=True, line_width=10)
+
+    Use :attr:`shrink_factor` to also shrink the faces.
+
+    >>> cube_faces_source.shrink_factor = 0.5
+    >>> cube_faces_source.update()
+    >>> output.plot(show_edges=True, line_width=10)
+
+    Fit cube faces to a dataset and only plot four of them.
+
+    >>> mesh = examples.load_airplane()
+    >>> cube_faces_source = pv.CubeFacesSource(bounds=mesh.bounds)
+    >>> output = cube_faces_source.output
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, color='tomato')
+    >>> _ = pl.add_mesh(output['+X'], opacity=0.5)
+    >>> _ = pl.add_mesh(output['-X'], opacity=0.5)
+    >>> _ = pl.add_mesh(output['+Y'], opacity=0.5)
+    >>> _ = pl.add_mesh(output['-Y'], opacity=0.5)
+    >>> pl.show()
+
+    Generate a frame instead of full faces.
+
+    >>> mesh = pv.ParametricEllipsoid(5, 4, 3)
+    >>> cube_faces_source = pv.CubeFacesSource(
+    ...     bounds=mesh.bounds, frame_width=0.1
+    ... )
+    >>> output = cube_faces_source.output
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(mesh, color='tomato')
+    >>> _ = pl.add_mesh(output, show_edges=True, line_width=10)
+    >>> pl.show()
+
+    """
+
+    _new_attr_exceptions: ClassVar[list[str]] = [
+        '_output',
+        '_names',
+        'names',
+        '_frame_width',
+        'frame_width',
+        '_shrink_factor',
+        'shrink_factor',
+        '_explode_factor',
+        'explode_factor',
+        '_bounds',
+        'bounds',
+    ]
+
+    class _FaceIndex(IntEnum):
+        X_NEG = 0
+        X_POS = 1
+        Y_NEG = 2
+        Y_POS = 3
+        Z_NEG = 4
+        Z_POS = 5
+
+    def __init__(
+        self,
+        *,
+        center: VectorLike[float] = (0.0, 0.0, 0.0),
+        x_length: float = 1.0,
+        y_length: float = 1.0,
+        z_length: float = 1.0,
+        bounds: VectorLike[float] | None = None,
+        frame_width: float | None = None,
+        shrink_factor: float | None = None,
+        explode_factor: float | None = None,
+        names: Sequence[str] = ('+X', '-X', '+Y', '-Y', '+Z', '-Z'),
+        point_dtype='float32',
+    ):
+        # Init CubeSource
+        super().__init__(
+            center=center,
+            x_length=x_length,
+            y_length=y_length,
+            z_length=z_length,
+            bounds=bounds,
+            point_dtype=point_dtype,
+        )
+        # Init output
+        self._output = pyvista.MultiBlock([pyvista.PolyData() for _ in range(6)])
+
+        # Set properties
+        self.frame_width = frame_width
+        self.shrink_factor = shrink_factor
+        self.explode_factor = explode_factor
+        self.names = names  # type: ignore[assignment]
+
+    @property
+    def frame_width(self) -> float | None:  # numpydoc ignore=RT01
+        """Convert the faces into frames with the specified border width.
+
+        If set, the center portion of each face is removed and the :attr:`output`
+        :class:`pyvista.PolyData` will each have four quad cells (one for each
+        side of the frame) instead of a single quad cell. Values must be between ``0.0``
+        (minimal frame) and ``1.0`` (large frame). The frame is scaled to ensure it has
+        a constant width.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cube_faces_source = pv.CubeFacesSource(
+        ...     x_length=3, y_length=2, z_length=1, frame_width=0.2
+        ... )
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=10)
+
+        >>> cube_faces_source.frame_width = 0.8
+        >>> cube_faces_source.output.plot(show_edges=True, line_width=10)
+
+        """
+        return self._frame_width
+
+    @frame_width.setter
+    def frame_width(self, width: float | None):  # numpydoc ignore=GL08
+        self._frame_width = (
+            width
+            if width is None
+            else _validation.validate_number(width, must_be_in_range=[0.0, 1.0], name='frame width')
+        )
+
+    @property
+    def shrink_factor(self) -> float | None:  # numpydoc ignore=RT01
+        """Shrink or grow the cube's faces.
+
+        If set, this is the factor by which to shrink or grow each face. The amount of
+        shrinking or growth is relative to the smallest edge length of the cube, and
+        all sides of the faces are shrunk by the same (constant) value.
+
+        .. note::
+            - A value of ``1.0`` has no effect.
+            - Values between ``0.0`` and ``1.0`` will shrink the faces.
+            - Values greater than ``1.0`` will grow the faces.
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.shrink`.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cube_faces_source = pv.CubeFacesSource(
+        ...     x_length=3, y_length=2, z_length=1, shrink_factor=0.8
+        ... )
+        >>> output = cube_faces_source.output
+        >>> output.plot(show_edges=True, line_width=10)
+
+        Note how all edges are shrunk by the same (constant) amount in terms of absolute
+        distance. Compare this to :meth:`~pyvista.DataSetFilters.shrink` where the
+        amount of shrinkage is relative to the size of the faces.
+
+        >>> exploded = pv.merge(output).shrink(0.8)
+        >>> exploded.plot(show_edges=True, line_width=10)
+
+        """
+        return self._shrink_factor
+
+    @shrink_factor.setter
+    def shrink_factor(self, factor: float | None):  # numpydoc ignore=GL08
+        self._shrink_factor = (
+            factor
+            if factor is None
+            else _validation.validate_number(
+                factor, must_be_in_range=[0.0, np.inf], name='shrink factor'
+            )
+        )
+
+    @property
+    def explode_factor(self) -> float | None:  # numpydoc ignore=RT01
+        """Push the faces away from (or pull them toward) the cube's center.
+
+        If set, this is the factor by which to move each face. The magnitude of the
+        move is relative to the smallest edge length of the cube, and all faces are
+        moved by the same (constant) amount.
+
+        .. note::
+            - A value of ``0.0`` has no effect.
+            - Increasing positive values will push the faces farther away (explode).
+            - Decreasing negative values will pull the faces closer together (implode).
+
+        This has a similar effect to using :meth:`~pyvista.DataSetFilters.explode`.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cube_faces_source = pv.CubeFacesSource(
+        ...     x_length=3, y_length=2, z_length=1, explode_factor=0.2
+        ... )
+        >>> output = cube_faces_source.output
+        >>> output.plot(show_edges=True, line_width=10)
+
+        Note how all faces are moved by the same amount. Compare this to using
+        :meth:`~pyvista.DataSetFilters.explode` where the distance each face moves
+        is relative to distance of each face to the center of the cube.
+
+        >>> exploded = pv.merge(output).explode(0.2)
+        >>> exploded.plot(show_edges=True, line_width=10)
+
+        """
+        return self._explode_factor
+
+    @explode_factor.setter
+    def explode_factor(self, factor: float | None):  # numpydoc ignore=GL08
+        self._explode_factor = (
+            factor if factor is None else _validation.validate_number(factor, name='explode factor')
+        )
+
+    @property
+    def names(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the names of the faces.
+
+        Specify three strings, one for each '+/-' face pair, or six strings, one for
+        each individual face.
+
+        If three strings, plus ``'+'`` and minus ``'-'`` characters are added to
+        the names.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> cube_faces = pv.CubeFacesSource()
+
+        Use three strings to set the names. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> cube_faces.names = ['U', 'V', 'W']
+        >>> cube_faces.names
+        ('+U', '-U', '+V', '-V', '+W', '-W')
+
+        Alternatively, use six strings to set the names explicitly.
+
+        >>> cube_faces.names = [
+        ...     'right',
+        ...     'left',
+        ...     'anterior',
+        ...     'posterior',
+        ...     'superior',
+        ...     'inferior',
+        ... ]
+        >>> cube_faces.names
+        ('right', 'left', 'anterior', 'posterior', 'superior', 'inferior')
+
+        """
+        return self._names
+
+    @names.setter
+    def names(
+        self, names: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str]
+    ):  # numpydoc ignore=GL08
+        name = 'face names'
+        _validation.check_instance(names, (list, tuple), name=name)
+        _validation.check_iterable_items(names, str, name=name)
+        _validation.check_length(names, exact_length=[3, 6], name=name)
+        valid_names = (
+            tuple(names)
+            if len(names) == 6
+            else (
+                '+' + names[0],
+                '-' + names[0],
+                '+' + names[1],
+                '-' + names[1],
+                '+' + names[2],
+                '-' + names[2],
+            )
+        )
+        self._names = cast(tuple[str, str, str, str, str, str], valid_names)
+
+    def update(self):
+        """Update the output of the source."""
+
+        def _scale_points(points_, origin_, scale_):
+            points_ -= origin_
+            points_ *= scale_
+            points_ += origin_
+            return points_
+
+        def _create_frame_from_quad_points(quad_points, center, scale):
+            """Create a picture-frame from 4 points defining a rectangle.
+
+            The inner points of the frame are generated by scaling the quad_points by
+            the length-3 scaling factor.
+            """
+            inner_points = _scale_points(quad_points.copy(), center, scale)
+
+            # Define frame quads from outer and inner points
+            quad1_points = np.vstack((quad_points[[0, 1]], inner_points[[1, 0]]))
+            quad2_points = np.vstack((quad_points[[1, 2]], inner_points[[2, 1]]))
+            quad3_points = np.vstack((quad_points[[2, 3]], inner_points[[3, 2]]))
+            quad4_points = np.vstack((quad_points[[3, 0]], inner_points[[0, 3]]))
+            frame_points = np.vstack((quad1_points, quad2_points, quad3_points, quad4_points))
+            frame_faces = np.array(
+                [[4, 0, 1, 2, 3], [4, 4, 5, 6, 7], [4, 8, 9, 10, 11], [4, 12, 13, 14, 15]]
+            ).ravel()
+            return frame_points, frame_faces
+
+        # Get initial cube output
+        cube = CubeSource.output.fget(self)  # type: ignore[attr-defined]
+
+        # Extract list of points for each face in the desired order
+        cube_points, cube_faces = cube.points, cube.regular_faces
+        Index = CubeFacesSource._FaceIndex
+        face_points = [
+            cube_points[cube_faces[Index.X_POS]],
+            cube_points[cube_faces[Index.X_NEG]],
+            cube_points[cube_faces[Index.Y_POS]],
+            cube_points[cube_faces[Index.Y_NEG]],
+            cube_points[cube_faces[Index.Z_POS]],
+            cube_points[cube_faces[Index.Z_NEG]],
+        ]
+
+        # Calc lengths/properties of cube
+        cube_center = np.array(cube.center)
+        bnds = cube.bounds
+        x_len = np.linalg.norm(bnds[1] - bnds[0])
+        y_len = np.linalg.norm(bnds[3] - bnds[2])
+        z_len = np.linalg.norm(bnds[5] - bnds[4])
+        lengths = np.array((x_len, y_len, z_len))
+        min_length = np.min(lengths)
+
+        # Store vars for updating the output
+        shrink_factor = self.shrink_factor
+        explode_factor = self.explode_factor
+        frame_width = self.frame_width
+        output = self._output
+
+        # Modify each face mesh of the output
+        for index, (name, points) in enumerate(zip(self.names, face_points)):
+            output.set_block_name(index, name)
+            face_poly = output[index]
+            face_center = np.mean(points, axis=0)
+
+            if shrink_factor is not None:
+                # Shrink proportional to the smallest face
+                shrink_scale = shrink_factor + (1 - shrink_factor) * (1 - min_length / lengths)
+                _scale_points(points, face_center, shrink_scale)
+
+            if explode_factor is not None:
+                # Move away from center by some distance proportional to the smallest face
+                explode_scale = min_length * explode_factor
+                direction = face_center - cube_center
+                direction /= np.linalg.norm(direction)
+                vector = direction * explode_scale
+                points += vector
+
+            # Set poly as a single quad cell
+            face_poly.points = points  # type: ignore[union-attr]
+            face_poly.faces = [4, 0, 1, 2, 3]  # type: ignore[union-attr]
+
+            if frame_width is not None:
+                # Create frame proportional to the smallest face
+                frame_scale = 1 - (frame_width * min_length / lengths)
+                frame_points, frame_faces = _create_frame_from_quad_points(
+                    points, face_center, frame_scale
+                )
+                # Set poly as four quad cells of the frame
+                face_poly.points = frame_points  # type: ignore[union-attr]
+                face_poly.faces = frame_faces  # type: ignore[union-attr]
+
+    @property
+    def output(self) -> pyvista.MultiBlock:
+        """Get the output of the source.
+
+        The output is a :class:`pyvista.MultiBlock` with six blocks: one for each
+        face. The blocks are named and ordered as ``('+X','-X','+Y','-Y','+Z','-Z')``.
+
+        The source is automatically updated by :meth:`update` prior to returning
+        the output.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Composite mesh with six cube faces.
+
+        """
+        self.update()
+        return self._output

@@ -1,6 +1,6 @@
 """Plotting routines."""
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 from pyvista import MAX_N_COLOR_BARS
@@ -14,6 +14,9 @@ from .actor import Actor
 from .actor_properties import ActorProperties
 from .axes import Axes
 from .axes_actor import AxesActor
+from .axes_assembly import AxesAssembly
+from .axes_assembly import AxesAssemblySymmetric
+from .axes_assembly import PlanesAssembly
 from .camera import Camera
 from .charts import Chart2D
 from .charts import ChartBox
@@ -53,6 +56,7 @@ from .renderer import CameraPosition
 from .renderer import Renderer
 from .renderer import scale_point
 from .text import CornerAnnotation
+from .text import Label
 from .text import Text
 from .text import TextProperty
 from .texture import Texture
@@ -95,7 +99,7 @@ class QtDeprecationError(Exception):  # numpydoc ignore=PR01
 
 
 class BackgroundPlotter:  # numpydoc ignore=PR01
-    """This class has been moved to pyvistaqt."""
+    """This class has been moved to pyvistaqt."""  # noqa: D404
 
     def __init__(self, *args, **kwargs):
         """Empty init."""
@@ -103,7 +107,7 @@ class BackgroundPlotter:  # numpydoc ignore=PR01
 
 
 class QtInteractor:  # numpydoc ignore=PR01
-    """This class has been moved to pyvistaqt."""
+    """This class has been moved to pyvistaqt."""  # noqa: D404
 
     def __init__(self, *args, **kwargs):
         """Empty init."""

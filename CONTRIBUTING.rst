@@ -43,6 +43,11 @@ running:
    cd pyvista
    python -m pip install -e .
 
+.. note::
+
+   Use ``python -m pip install -e '.[dev]'`` to also install all of the
+   packages required for development.
+
 Quick Start Development with Codespaces
 ---------------------------------------
 
@@ -205,7 +210,7 @@ We adhere to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_
 wherever possible, except that line widths are permitted to go beyond 79
 characters to a max of 99 characters for code. This should tend to be
 the exception rather than the norm. A uniform code style is enforced
-by `black <https://github.com/psf/black>`_ to prevent energy wasted on
+by `ruff format <https://docs.astral.sh/ruff/formatter/#the-ruff-formatter>`_ to prevent energy wasted on
 style disagreements.
 
 As for docstrings, PyVista follows the ``numpydoc`` style for its docstrings.
@@ -482,13 +487,12 @@ request. The following tests will be executed after any commit or pull
 request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
-To run our comprehensive suite of unit tests, install all the
-dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
+To run our comprehensive suite of unit tests, install PyVista with all
+developer dependencies:
 
 .. code:: bash
 
-   pip install -r requirements_test.txt
-   pip install -r requirements_docs.txt
+   pip install -e '.[dev]'
 
 Then, if you have everything installed, you can run the various test
 suites.
@@ -547,16 +551,15 @@ requirements::
 
   $ pre-commit install
   $ git commit -m "added my cool feature"
-  black....................................................................Passed
-  flake8...................................................................Passed
   codespell................................................................Passed
+  ruff.....................................................................Passed
 
 The actual installation of the environment happens before the first commit
 following ``pre-commit install``. This will take a bit longer, but subsequent
 commits will only trigger the actual style checks.
 
 Even if you are not in a situation where you are not performing or able to
-perform the above tasks, you can comment `pre-commit.ci autofix` on a pull
+perform the above tasks, you can comment ``pre-commit.ci autofix`` on a pull
 request to manually trigger auto-fixing.
 
 Notes Regarding Image Regression Testing
@@ -706,7 +709,7 @@ package name ``numpy`` should also be omitted for tests where a ``numpy.ndarray`
 expected.)
 
 Any number of related test cases (one test case per line) may be written and
-included in a single `.py` file. The test cases are all stored in
+included in a single ``.py`` file. The test cases are all stored in
 ``tests/core/typing/validation_cases``.
 
 The tests can be executed with:
@@ -876,6 +879,20 @@ is successful.
    `Notes Regarding Image Regression Testing`_ for testing methods which should
    be considered first.
 
+Controlling Cache for CI Documentation Build
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To reduce build times of the documentation for PRs, cached sphinx gallery, example data, and sphinx build directories
+are used in the CI on GitHub.  In some cases, the caching action can cause problems for a specific
+PR.  To invalidate a cache for a specific PR, one of the following labels can be applied to the PR.
+
+- ``no-example-data-cache``
+- ``no-gallery-cache``
+- ``no-sphinx-build-cache``
+
+The PR either needs a new commit, e.g. updating the branch from ``main``, or to be closed/re-opened to
+rerun the CI with the labels applied.
+
 
 Contributing to the Documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1000,7 +1017,7 @@ For example:
 .. note::
 
    The rst ``seealso`` directive must be used instead of the
-   ``See Also`` heading due to limitations with how `numpydoc` parses
+   ``See Also`` heading due to limitations with how ``numpydoc`` parses
    explicit references.
 
 Extending the Dataset Gallery
@@ -1100,17 +1117,6 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
-Preview the Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Once you have make a Pull Request. You can comment
-`@pyvista-bot preview` on a pull request to preview documentation.
-Since this command is only available for
-`@pyvista/developers <https://github.com/orgs/pyvista/teams/developers>`_ ,
-new contributors kindly request them to comment command.
-This is essential to safeguard the deployment site against
-potentially harmful commits.
-
 Branching Model
 ~~~~~~~~~~~~~~~
 
@@ -1198,7 +1204,7 @@ created the following will occur:
     .. code:: bash
 
        git push origin HEAD
-       git push origin --tags
+       git push origin v$(python -c "import pyvista as pv; print(pv.__version__)")
 
 #.  Create a list of all changes for the release. It is often helpful to
     leverage `GitHub’s compare

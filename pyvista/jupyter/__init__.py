@@ -1,6 +1,6 @@
 """Jupyter notebook plotting module."""
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 import warnings
@@ -45,7 +45,7 @@ def _validate_jupyter_backend(backend):
         try:
             from pyvista.trame.jupyter import show_trame
         except ImportError:  # pragma: no cover
-            raise ImportError('Please install `trame` and `ipywidgets` to use this feature.')
+            raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
 
     if backend == 'none':
         backend = None

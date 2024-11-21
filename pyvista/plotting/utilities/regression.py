@@ -13,7 +13,7 @@ from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
 
 
@@ -70,7 +70,7 @@ def wrap_image_array(arr):
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
     wrap_img = pyvista.wrap(img)
-    wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
+    wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])  # type: ignore[union-attr]
     return wrap_img
 
 

@@ -1,4 +1,5 @@
-""".. _openfoam_cooling_example:
+"""
+.. _openfoam_cooling_example:
 
 Electronics Cooling CFD
 -----------------------
@@ -21,7 +22,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Load the Datasets
 # ~~~~~~~~~~~~~~~~~
 # Download and load the datasets.
@@ -34,7 +35,7 @@ structure, air = examples.download_electronics_cooling()
 structure, air
 
 
-###############################################################################
+# %%
 # Plot the Electronics
 # ~~~~~~~~~~~~~~~~~~~~
 # Here we plot the temperature of the electronics using the ``"reds"`` colormap
@@ -55,7 +56,7 @@ pl.enable_anti_aliasing('fxaa')  # also try 'ssaa'
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot Air Velocity
 # ~~~~~~~~~~~~~~~~~
 # Let's plot the velocity of the air.
@@ -80,7 +81,7 @@ pl.enable_anti_aliasing('fxaa')
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot Air Temperature
 # ~~~~~~~~~~~~~~~~~~~~
 # Let's also plot the temperature of the air. This time, let's also plot the
@@ -109,7 +110,7 @@ pl.enable_anti_aliasing('fxaa')
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot Streamlines - Flow Velocity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now, let's plot the streamlines of this dataset so we can see how the air is
@@ -123,7 +124,7 @@ points = []
 for x in np.linspace(0.045, 0.105, 7, endpoint=True):
     points.extend([x, 0.2, z] for z in np.linspace(0, 0.03, 5))
 points = pv.PointSet(points)
-lines = air.streamlines_from_source(points, max_time=2.0)
+lines = air.streamlines_from_source(points, max_length=2.0)
 
 # Plot
 pl = pv.Plotter()
@@ -143,7 +144,7 @@ pl.enable_anti_aliasing('fxaa')  # also try 'ssaa'
 pl.show()
 
 
-###############################################################################
+# %%
 # Volumetric Plot - Visualize High Temperatures
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Show a 3D plot of areas of temperature.

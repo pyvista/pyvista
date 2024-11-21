@@ -1,5 +1,4 @@
-"""
-All imports from VTK (including GL-dependent).
+"""All imports from VTK (including GL-dependent).
 
 These are the modules within VTK that must be loaded across pyvista's
 plotting API. Here, we attempt to import modules using the ``vtkmodules``
@@ -8,7 +7,7 @@ the entire library.
 
 """
 
-# flake8: noqa: F401
+# ruff: noqa: F401
 from __future__ import annotations
 
 from vtkmodules.vtkChartsCore import vtkAxis
@@ -48,6 +47,7 @@ from vtkmodules.vtkInteractionWidgets import vtkSplineWidget
 from vtkmodules.vtkInteractionWidgets import vtkTexturedButtonRepresentation2D
 from vtkmodules.vtkRenderingAnnotation import vtkAnnotatedCubeActor
 from vtkmodules.vtkRenderingAnnotation import vtkAxesActor
+from vtkmodules.vtkRenderingAnnotation import vtkAxisActor
 from vtkmodules.vtkRenderingAnnotation import vtkAxisActor2D
 from vtkmodules.vtkRenderingAnnotation import vtkCornerAnnotation
 from vtkmodules.vtkRenderingAnnotation import vtkCubeAxesActor
@@ -66,7 +66,7 @@ try:
     from vtkmodules.vtkRenderingCore import vtkHardwarePicker
 except ImportError:  # pragma: no cover
     # VTK < 9.2 is missing this class
-    vtkHardwarePicker = None
+    vtkHardwarePicker = None  # type: ignore[assignment, misc]
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_OFF
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_POLYGON_OFFSET
 from vtkmodules.vtkRenderingCore import VTK_RESOLVE_SHIFT_ZBUFFER

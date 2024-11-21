@@ -15,9 +15,9 @@ from pyvista import examples
 poly = examples.load_random_hills()
 poly.plot()
 
-###############################################################################
+# %%
 # Project that surface to a plane underneath the surface
-origin = poly.center
+origin = list(poly.center)
 origin[-1] -= poly.length / 3.0
 projected = poly.project_points_to_plane(origin=origin)
 
@@ -26,3 +26,5 @@ p = pv.Plotter()
 p.add_mesh(poly)
 p.add_mesh(projected)
 p.show()
+# %%
+# .. tags:: filter

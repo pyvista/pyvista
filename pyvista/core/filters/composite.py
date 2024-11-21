@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista
@@ -11,6 +13,9 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import TransformLike
 
 
 @abstract_class
@@ -75,10 +80,10 @@ class CompositeFilters:
 
         """
         alg = _vtk.vtkAppendFilter()
-        for block in self:
+        for block in self:  # type: ignore[attr-defined]
             if isinstance(block, _vtk.vtkMultiBlockDataSet):
                 block = CompositeFilters.combine(
-                    block,
+                    block,  # type: ignore[arg-type]
                     merge_points=merge_points,
                     tolerance=tolerance,
                 )
@@ -138,11 +143,11 @@ class CompositeFilters:
         """
         if nested:
             return DataSetFilters.outline(
-                self,
+                self,  # type: ignore[arg-type]
                 generate_faces=generate_faces,
                 progress_bar=progress_bar,
             )
-        box = pyvista.Box(bounds=self.bounds)
+        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
     def outline_corners(self, factor=0.2, nested=False, progress_bar=False):
@@ -167,8 +172,8 @@ class CompositeFilters:
 
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
-        box = pyvista.Box(bounds=self.bounds)
+            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)  # type: ignore[arg-type]
+        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
     def _compute_normals(
@@ -185,7 +190,7 @@ class CompositeFilters:
         progress_bar=False,
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
-        if not self.is_all_polydata:
+        if not self.is_all_polydata:  # type: ignore[attr-defined]
             raise RuntimeError(
                 'This multiblock contains non-PolyData datasets. Convert all the '
                 'datasets to PolyData with `as_polydata`',
@@ -193,7 +198,7 @@ class CompositeFilters:
 
         # track original point indices
         if split_vertices and track_vertices:
-            for block in self:
+            for block in self:  # type: ignore[attr-defined]
                 ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 
@@ -209,3 +214,69 @@ class CompositeFilters:
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
+
+    def transform(
+        self,
+        trans: TransformLike,
+        transform_all_input_vectors=False,
+        inplace=True,
+        progress_bar=False,
+    ):
+        """Transform all blocks in this composite dataset.
+
+        .. note::
+            See also the notes at :func:`pyvista.DataSetFilters.transform` which is
+            used by this filter under the hood.
+
+        Parameters
+        ----------
+        trans : TransformLike
+            Accepts any transformation input such as a :class:`~pyvista.Transform`
+            or a 3x3 or 4x4 array.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all arrays with three components are transformed.
+            Otherwise, only the normals and vectors are transformed.
+
+        inplace : bool, default: False
+            When ``True``, modifies the dataset inplace.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Transformed dataset. Return type of all blocks matches input unless
+            input dataset is a :class:`pyvista.ImageData`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
+
+        See Also
+        --------
+        :class:`pyvista.Transform`
+            Describe linear transformations via a 4x4 matrix.
+
+        Examples
+        --------
+        Translate a mesh by ``(50, 100, 200)``. Here a :class:`~pyvista.Transform` is
+        used, but any :class:`~pyvista.TransformLike` is accepted.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.MultiBlock([pv.Sphere(), pv.Plane()])
+        >>> transform = pv.Transform().translate(50, 100, 200)
+        >>> transformed = mesh.transform(transform)
+        >>> transformed.plot(show_edges=True)
+
+        """
+        trans = pyvista.Transform(trans)
+        output = self if inplace else self.copy()  # type: ignore[attr-defined]
+        for name in self.keys():  # type: ignore[attr-defined]
+            block = output[name]  # type: ignore[index]
+            if block is not None:
+                block.transform(
+                    trans,
+                    transform_all_input_vectors=transform_all_input_vectors,
+                    inplace=True,
+                    progress_bar=progress_bar,
+                )
+        return output

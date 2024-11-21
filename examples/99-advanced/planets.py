@@ -30,7 +30,7 @@ from pyvista import examples
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Plot the Solar System with Stars in the Background
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This section relies on calculations in `Visualizing Celestial Bodies in 3D
@@ -79,7 +79,7 @@ uranus.translate((-600000.0, 0.0, 0.0), inplace=True)
 neptune.translate((-700000.0, 0.0, 0.0), inplace=True)
 
 # Add planets to Plotter.
-pl = pyvista.Plotter(lighting="none")
+pl = pyvista.Plotter(lighting='none')
 cubemap = examples.download_cubemap_space_16k()
 _ = pl.add_actor(cubemap.to_skybox())
 pl.set_environment_texture(cubemap, True)
@@ -97,7 +97,7 @@ pl.add_mesh(pluto, texture=pluto_texture, smooth_shading=True)
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot the Planets and their Textures
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Each planet here is in a different subplot. The planet's textures are from
@@ -105,24 +105,24 @@ pl.show()
 
 pl = pyvista.Plotter(shape=(3, 2))
 pl.subplot(0, 0)
-pl.add_text("Mercury")
+pl.add_text('Mercury')
 pl.add_mesh(examples.planets.download_mercury_surface(), rgb=True)
 pl.subplot(0, 1)
 pl.add_mesh(mercury, texture=mercury_texture)
 pl.subplot(1, 0)
-pl.add_text("Venus")
+pl.add_text('Venus')
 pl.add_mesh(examples.planets.download_venus_surface(atmosphere=True), rgb=True)
 pl.subplot(1, 1)
 pl.add_mesh(venus, texture=venus_texture)
 pl.subplot(2, 0)
-pl.add_text("Mars")
+pl.add_text('Mars')
 pl.add_mesh(examples.planets.download_mars_surface(), rgb=True)
 pl.subplot(2, 1)
 pl.add_mesh(mars, texture=mars_texture)
-pl.show(cpos="xy")
+pl.show(cpos='xy')
 
 
-###############################################################################
+# %%
 # Plot the Atmosphere and Surface of Venus
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we plot Venus with and without its atmosphere.
@@ -133,10 +133,10 @@ surface_texture = examples.planets.download_venus_surface(atmosphere=False, text
 
 pl = pyvista.Plotter(shape=(1, 2))
 pl.subplot(0, 0)
-pl.add_text("Venus Atmosphere")
+pl.add_text('Venus Atmosphere')
 pl.add_mesh(venus, texture=atmosphere_texture, smooth_shading=True)
 pl.subplot(0, 1)
-pl.add_text("Venus Surface")
+pl.add_text('Venus Surface')
 pl.add_mesh(venus, texture=surface_texture, smooth_shading=True)
 pl.link_views()
-pl.show(cpos="xy")
+pl.show(cpos='xy')

@@ -1,4 +1,5 @@
-""".. _openfoam_tubes_example:
+"""
+.. _openfoam_tubes_example:
 
 Plot CFD Data
 -------------
@@ -17,14 +18,14 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Download and load the example dataset.
 
 block = examples.download_openfoam_tubes()
 block
 
 
-###############################################################################
+# %%
 # Plot Cross Section
 # ~~~~~~~~~~~~~~~~~~
 # Plot the outline of the dataset along with a cross section of the flow velocity.
@@ -42,7 +43,7 @@ pl.enable_anti_aliasing()
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot Streamlines - Flow Velocity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Generate streamlines using :func:`streamlines_from_source()
@@ -58,7 +59,7 @@ pl.add_legend(face=None)
 pl.show()
 
 
-###############################################################################
+# %%
 # Now, actually generate the streamlines. Since the original inlet contains
 # 1000 points, let's reduce this to around 200 points by using every 5th point.
 #
@@ -70,7 +71,7 @@ pset = pv.PointSet(inlet.points[::5])
 lines = air.streamlines_from_source(
     pset,
     vectors='U',
-    max_time=1.0,
+    max_length=1.0,
 )
 
 pl = pv.Plotter()
@@ -89,7 +90,7 @@ pl.camera_position = 'xz'
 pl.show()
 
 
-###############################################################################
+# %%
 # Volumetric Plot - Visualize Turbulent Kinematic Viscosity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The turbulent kinematic viscosity of a fluid is a derived quantity used in

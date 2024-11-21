@@ -19,7 +19,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Define Points
 # ~~~~~~~~~~~~~
 # We will mix several cells in one grid for this example. Here we create the
@@ -68,7 +68,7 @@ polyhedron_points = [
 points = quad_points + polygon_points + hexa_points + polyhedron_points
 
 
-###############################################################################
+# %%
 # Cell connectivity
 # ~~~~~~~~~~~~~~~~~
 # Connectivity describes the indices of the points to compose each cell. The
@@ -88,7 +88,7 @@ polygon = [5, 4, 5, 6, 7, 8]
 hexa = [8, 9, 10, 11, 12, 13, 14, 15, 16]
 
 
-###############################################################################
+# %%
 # Polyhedron connectivity array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The connectivity array of polyhedra is defined differently from the rest of the cell
@@ -153,7 +153,7 @@ polyhedron_connectivity = [
 polyhedron = [len(polyhedron_connectivity), *polyhedron_connectivity]
 
 
-###############################################################################
+# %%
 # Cells array
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now we build the input cells array for the
@@ -164,7 +164,7 @@ polyhedron = [len(polyhedron_connectivity), *polyhedron_connectivity]
 cells = quad + polygon + hexa + polyhedron
 
 
-###############################################################################
+# %%
 # Cell types
 # ~~~~~~~~~~
 # We need to specify the cell types for each of the cells we define in the
@@ -176,7 +176,7 @@ cells = quad + polygon + hexa + polyhedron
 celltypes = [pv.CellType.QUAD, pv.CellType.POLYGON, pv.CellType.HEXAHEDRON, pv.CellType.POLYHEDRON]
 
 
-###############################################################################
+# %%
 # Create the grid
 # ~~~~~~~~~~~~~~~
 # To create the grid, we use the cells array we built, the cell types, and
@@ -184,7 +184,7 @@ celltypes = [pv.CellType.QUAD, pv.CellType.POLYGON, pv.CellType.HEXAHEDRON, pv.C
 
 grid = pv.UnstructuredGrid(cells, celltypes, points)
 
-###############################################################################
+# %%
 # Plot the mesh
 # ~~~~~~~~~~~~~
 # Finally, we can plot the grid we've created. Label each cell at its cell
@@ -200,3 +200,5 @@ pl.add_point_labels(
     font_size=20,
 )
 pl.show()
+# %%
+# .. tags:: load

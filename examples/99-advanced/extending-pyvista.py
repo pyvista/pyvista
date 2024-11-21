@@ -29,22 +29,22 @@ import vtk
 
 import pyvista
 
-pyvista.set_plot_theme("document")
+pyvista.set_plot_theme('document')
 
-###############################################################################
+# %%
 # A user defined subclass of :class:`pyvista.PolyData`, ``FooData`` is defined.
 # It includes a property to keep track of the point on the mesh that is
 # furthest along in the (1, 0, 1) direction.
 
 
-class FooData(pyvista.PolyData):
+class FooData(pyvista.PolyData):  # noqa: D101
     @property
     def max_point(self):
         """Returns index of point that is furthest along (1, 0, 1) direction."""
         return np.argmax(np.dot(self.points, (1.0, 0.0, 1.0)))
 
 
-###############################################################################
+# %%
 # Directly Managing Types
 # +++++++++++++++++++++++
 #
@@ -55,40 +55,40 @@ class FooData(pyvista.PolyData):
 #
 
 foo_sphere = FooData(pyvista.Sphere(theta_resolution=100, phi_resolution=100))
-print("Original foo sphere:")
-print(f"Type: {type(foo_sphere)}")
-print(f"Maximum point index: {foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print('Original foo sphere:')
+print(f'Type: {type(foo_sphere)}')
+print(f'Maximum point index: {foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
-###############################################################################
+# %%
 # Using an inplace operation like :func:`pyvista.DataSet.rotate_y` does not
 # affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)
-print("\nRotated foo sphere:")
-print(f"Type: {type(foo_sphere)}")
-print(f"Maximum point index: {foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print('\nRotated foo sphere:')
+print(f'Type: {type(foo_sphere)}')
+print(f'Maximum point index: {foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
-###############################################################################
+# %%
 # However, filter operations can return different ``DataSet`` types including
 # ones that differ from the original type.  In this case, the
 # :func:`decimate <pyvista.PolyDataFilters.decimate>` method returns a
 # :class:`pyvista.PolyData` object.
 
-print("\nDecimated foo sphere:")
+print('\nDecimated foo sphere:')
 decimated_foo_sphere = foo_sphere.decimate(0.5)
-print(f"Type: {type(decimated_foo_sphere)}")
+print(f'Type: {type(decimated_foo_sphere)}')
 
-###############################################################################
+# %%
 # It is now required to explicitly wrap the object into ``FooData``.
 
 decimated_foo_sphere = FooData(foo_sphere.decimate(0.5))
-print(f"Type: {type(decimated_foo_sphere)}")
-print(f"Maximum point index: {decimated_foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print(f'Type: {type(decimated_foo_sphere)}')
+print(f'Maximum point index: {decimated_foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
-###############################################################################
+# %%
 # Automatically Managing Types
 # ++++++++++++++++++++++++++++
 #
@@ -102,56 +102,56 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 
 pyvista._wrappers['vtkPolyData'] = FooData
 
-###############################################################################
+# %%
 # It is no longer necessary to specifically wrap :class:`pyvista.PolyData`
 # objects to obtain a ``FooData`` object.
 
 foo_sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
-print("Original foo sphere:")
-print(f"Type: {type(foo_sphere)}")
-print(f"Maximum point index: {foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print('Original foo sphere:')
+print(f'Type: {type(foo_sphere)}')
+print(f'Maximum point index: {foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
-###############################################################################
+# %%
 # Using an inplace operation like :func:`rotate_y <pyvista.DataSet.rotate_y>` does not
 # affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)
-print("\nRotated foo sphere:")
-print(f"Type: {type(foo_sphere)}")
-print(f"Maximum point index: {foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print('\nRotated foo sphere:')
+print(f'Type: {type(foo_sphere)}')
+print(f'Maximum point index: {foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
-###############################################################################
+# %%
 # Filter operations that return :class:`pyvista.PolyData` now return
 # ``FooData``
 
-print("\nDecimated foo sphere:")
+print('\nDecimated foo sphere:')
 decimated_foo_sphere = foo_sphere.decimate(0.5)
-print(f"Type: {type(decimated_foo_sphere)}")
-print(f"Maximum point index: {decimated_foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print(f'Type: {type(decimated_foo_sphere)}')
+print(f'Maximum point index: {decimated_foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
-###############################################################################
+# %%
 # Users can still create a native :class:`pyvista.PolyData` object, but
 # using this method may incur unintended consequences.  In this case,
 # it is recommended to use the directly managing types method.
 
 poly_object = pyvista.PolyData(vtk.vtkPolyData())
-print(f"Type: {type(poly_object)}")
+print(f'Type: {type(poly_object)}')
 # catch error
 try:
     poly_object.rotate_y(90, inplace=True)
 except TypeError:
-    print("This operation fails")
+    print('This operation fails')
 
-###############################################################################
+# %%
 # Usage of ``pyvista._wrappers`` may require resetting the default value
 # to avoid leaking the setting into cases where it is unused.
 
 pyvista._wrappers['vtkPolyData'] = pyvista.PolyData
 
-###############################################################################
+# %%
 # For instances where a localized usage is preferred, a tear-down method is
 # recommended.  One example is a ``try...finally`` block.
 

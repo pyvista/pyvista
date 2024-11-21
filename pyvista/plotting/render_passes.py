@@ -116,7 +116,7 @@ class RenderPasses:
         """Delete all render passes."""
         if self._renderer is not None:
             self._renderer.SetPass(None)
-        self._renderer_ref = None
+        self._renderer_ref = None  # type: ignore[assignment]
         if self.__seq_pass is not None:
             self.__seq_pass.SetPasses(None)
         self.__seq_pass = None

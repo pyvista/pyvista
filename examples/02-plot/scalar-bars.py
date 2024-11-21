@@ -20,11 +20,11 @@ from pyvista import examples
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # By default, when plotting a dataset with a scalar array, a scalar bar for that
 # array is added. To turn off this behavior, a user could specify
-# ``show_scalar_bar=False`` when calling ``.add_mesh()``. Let's start with a
-# sample dataset provide via PyVista to demonstrate the default behavior of
+# ``show_scalar_bar=False`` when calling :func:`~pyvista.Plotter.add_mesh`.
+# Let's start with a sample dataset provide via PyVista to demonstrate the default behavior of
 # scalar bar plotting:
 
 # Load St Helens DEM and warp the topography
@@ -37,7 +37,7 @@ p.add_mesh(mesh)
 # Display the scene
 p.show()
 
-###############################################################################
+# %%
 # We could also plot the scene with an interactive scalar bar to move around
 # and place where we like by specifying passing keyword arguments to control
 # the scalar bar via the ``scalar_bar_args`` parameter in
@@ -54,7 +54,7 @@ p.show()
 pv.plotting.plotter._ALL_PLOTTERS.clear()
 
 
-###############################################################################
+# %%
 # .. figure:: ../../images/gifs/scalar-bar-interactive.gif
 #
 # Or manually define the scalar bar's location:
@@ -66,7 +66,7 @@ p = pv.Plotter()
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
 
-###############################################################################
+# %%
 # The text properties of the scalar bar can also be controlled:
 
 # Controlling the text properties
@@ -76,8 +76,8 @@ sargs = dict(
     shadow=True,
     n_labels=3,
     italic=True,
-    fmt="%.1f",
-    font_family="arial",
+    fmt='%.1f',
+    font_family='arial',
 )
 
 p = pv.Plotter()
@@ -85,23 +85,25 @@ p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
 
 
-###############################################################################
+# %%
 # Labelling values outside of the scalar range
 p = pv.Plotter()
 p.add_mesh(mesh, clim=[1000, 2000], below_color='blue', above_color='red', scalar_bar_args=sargs)
 p.show()
 
 
-###############################################################################
+# %%
 # Annotate values of interest using a dictionary. The key of the dictionary
 # must be the value to annotate, and the value must be the string label.
 
 # Make a dictionary for the annotations
 annotations = {
-    2300: "High",
-    805.3: "Cutoff value",
+    2300: 'High',
+    805.3: 'Cutoff value',
 }
 
 p = pv.Plotter()
 p.add_mesh(mesh, scalars='Elevation', annotations=annotations)
 p.show()
+# %%
+# .. tags:: plot

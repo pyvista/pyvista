@@ -11,6 +11,7 @@ import threading
 import traceback
 from typing import NamedTuple
 
+import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 
@@ -19,7 +20,7 @@ def set_error_output_file(filename):
 
     Parameters
     ----------
-    filename : str
+    filename : str, Path
         Path to the file to write VTK errors to.
 
     Returns
@@ -30,9 +31,12 @@ def set_error_output_file(filename):
         VTK output window.
 
     """
-    filename = str(Path(filename).expanduser().resolve())
+    filename = Path(filename).expanduser().resolve()
     fileOutputWindow = _vtk.vtkFileOutputWindow()
-    fileOutputWindow.SetFileName(filename)
+    if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
+        fileOutputWindow.SetFileName(str(filename))
+    else:
+        fileOutputWindow.SetFileName(filename)
     outputWindow = _vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
@@ -58,6 +62,7 @@ class VtkErrorCatcher:
     >>> with pv.VtkErrorCatcher() as error_catcher:
     ...     sphere = pv.Sphere()
     ...
+
     """
 
     def __init__(self, raise_errors=False, send_to_logging=True):
@@ -111,7 +116,7 @@ class Observer:
         self.event_history = []
 
     @staticmethod
-    def parse_message(message):
+    def parse_message(message):  # numpydoc ignore=RT01
         """Parse the given message."""
         # Message format
         regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
@@ -158,7 +163,7 @@ class Observer:
             except Exception:
                 pass
 
-    def has_event_occurred(self):
+    def has_event_occurred(self):  # numpydoc ignore=RT01
         """Ask self if an error has occurred since last queried.
 
         This resets the observer's status.
@@ -173,7 +178,8 @@ class Observer:
 
         Returns
         -------
-            str: the last set error message
+        str
+            The last set error message.
 
         """
         if etc:
@@ -190,7 +196,7 @@ class Observer:
         self.__observing = True
 
 
-def send_errors_to_logging():
+def send_errors_to_logging():  # numpydoc ignore=RT01
     """Send all VTK error/warning messages to Python's logging module."""
     error_output = _vtk.vtkStringOutputWindow()
     error_win = _vtk.vtkOutputWindow()
@@ -216,12 +222,12 @@ class ProgressMonitor:
 
     """
 
-    def __init__(self, algorithm, message=""):
+    def __init__(self, algorithm, message=''):
         """Initialize observer."""
         try:
             from tqdm import tqdm  # noqa: F401
         except ImportError:
-            raise ImportError("Please install `tqdm` to monitor algorithms.")
+            raise ImportError('Please install `tqdm` to monitor algorithms.')
         self.event_type = _vtk.vtkCommand.ProgressEvent
         self.progress = 0.0
         self._last_progress = self.progress
@@ -234,7 +240,7 @@ class ProgressMonitor:
 
     def handler(self, sig, frame):
         """Pass signal to custom interrupt handler."""
-        self._interrupt_signal_received = (sig, frame)
+        self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
 
     def __call__(self, obj, *args):
@@ -247,7 +253,7 @@ class ProgressMonitor:
         else:
             progress = obj.GetProgress()
             step = progress - self._old_progress
-            self._progress_bar.update(step)
+            self._progress_bar.update(step)  # type: ignore[union-attr]
             self._old_progress = progress
 
     def __enter__(self):
@@ -268,9 +274,9 @@ class ProgressMonitor:
 
     def __exit__(self, *args):
         """Exit event for ``with`` context."""
-        self._progress_bar.total = 1
-        self._progress_bar.refresh()
-        self._progress_bar.close()
+        self._progress_bar.total = 1  # type: ignore[union-attr]
+        self._progress_bar.refresh()  # type: ignore[union-attr]
+        self._progress_bar.close()  # type: ignore[union-attr]
         self.algorithm.RemoveObservers(self.event_type)
         if threading.current_thread().__class__.__name__ == '_MainThread':
             signal.signal(signal.SIGINT, self._old_handler)

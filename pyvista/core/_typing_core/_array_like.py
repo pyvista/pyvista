@@ -23,31 +23,40 @@ Some key differences include:
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 from typing import TypeVar
 from typing import Union
 
 import numpy as np
 import numpy.typing as npt
 
-# Create alias of npt.NDArray bound to numeric types only
-NumberType = TypeVar('NumberType', bool, int, float, np.bool_, np.int_, np.float64, np.uint8)
+# Define numeric types
+NumberType = TypeVar(
+    'NumberType',
+    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
+)
 NumberType.__doc__ = """Type variable for numeric data types."""
+
+# Create a copy of the typevar which can be used for annotating a second variable.
+# Its definition should be identical to `NumberType`
+_NumberType = TypeVar(  # noqa: PYI018
+    '_NumberType',
+    bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
+)
+
 NumpyArray = npt.NDArray[NumberType]
 
-# Define generic nested sequence
-_T = TypeVar('_T')
-_FiniteNestedSequence = Union[  # Note: scalar types are excluded
-    Sequence[_T],
-    Sequence[Sequence[_T]],
-    Sequence[Sequence[Sequence[_T]]],
-    Sequence[Sequence[Sequence[Sequence[_T]]]],
+_FiniteNestedList = Union[
+    list[NumberType],
+    list[list[NumberType]],
+    list[list[list[NumberType]]],
+    list[list[list[list[NumberType]]]],
 ]
-
-_ArrayLike = Union[
-    NumpyArray[NumberType],
-    _FiniteNestedSequence[NumberType],
-    _FiniteNestedSequence[NumpyArray[NumberType]],
+_FiniteNestedTuple = Union[
+    tuple[NumberType],
+    tuple[tuple[NumberType]],
+    tuple[tuple[tuple[NumberType]]],
+    tuple[tuple[tuple[tuple[NumberType]]]],
 ]
 
 _ArrayLike1D = Union[
@@ -69,4 +78,10 @@ _ArrayLike4D = Union[
     NumpyArray[NumberType],
     Sequence[Sequence[Sequence[Sequence[NumberType]]]],
     Sequence[Sequence[Sequence[Sequence[NumpyArray[NumberType]]]]],
+]
+_ArrayLike = Union[
+    _ArrayLike1D[NumberType],
+    _ArrayLike2D[NumberType],
+    _ArrayLike3D[NumberType],
+    _ArrayLike4D[NumberType],
 ]

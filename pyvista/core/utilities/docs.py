@@ -6,11 +6,9 @@ import inspect
 import os
 import os.path as op
 import sys
-from typing import Dict
-from typing import Optional
 
 
-def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> Optional[str]:
+def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> str | None:
     """Determine the URL corresponding to a Python object.
 
     Parameters
@@ -37,6 +35,7 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
     This has been adapted to deal with our "verbose" decorator.
 
     Adapted from mne (mne/utils/docs.py), which was adapted from SciPy (doc/source/conf.py).
+
     """
     import pyvista
 
@@ -90,11 +89,11 @@ def linkcode_resolve(domain: str, info: Dict[str, str], edit: bool = False) -> O
     if 'dev' in pyvista.__version__:
         kind = 'main'
     else:  # pragma: no cover
-        kind = 'release/{}'.format('.'.join(pyvista.__version__.split('.')[:2]))
+        kind = 'release/%s' % ('.'.join(pyvista.__version__.split('.')[:2]))  # noqa: UP031
 
     blob_or_edit = 'edit' if edit else 'blob'
 
-    return f"http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}"
+    return f'http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}'
 
 
 def pv_html_page_context(
@@ -114,7 +113,7 @@ def pv_html_page_context(
 
     """
 
-    def fix_edit_link_button(link: str) -> Optional[str]:
+    def fix_edit_link_button(link: str) -> str | None:
         """Transform "edit on github" links to the correct url.
 
         This is specific to PyVista to ensure that the "edit this page" link
@@ -140,12 +139,12 @@ def pv_html_page_context(
             # We can get away with directly using the pagename since "examples"
             # in the pagename is the same as the "examples" directory in the
             # repo
-            return f"http://github.com/pyvista/pyvista/edit/main/{pagename}.py"
-        elif "_autosummary" in pagename:
+            return f'http://github.com/pyvista/pyvista/edit/main/{pagename}.py'
+        elif '_autosummary' in pagename:
             # This is an API example
             fullname = pagename.split('_autosummary')[1][1:]
             return linkcode_resolve('py', {'module': 'pyvista', 'fullname': fullname}, edit=True)
         else:
             return link
 
-    context["fix_edit_link_button"] = fix_edit_link_button
+    context['fix_edit_link_button'] = fix_edit_link_button

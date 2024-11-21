@@ -17,7 +17,7 @@ from pathlib import Path
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Let's go ahead and download the sample dataset containing an
 # :class:`pyvista.UnstructuredGrid` broken up into several files.
 #
@@ -28,11 +28,11 @@ path = str(Path(filename).parent)
 os.listdir(path)
 
 
-###############################################################################
-os.listdir(str(Path(path) / "T0000000500"))
+# %%
+os.listdir(str(Path(path) / 'T0000000500'))
 
 
-###############################################################################
+# %%
 # Note that a ``.pvtu`` file is available alongside a directory. This
 # directory contains all the parallel files or pieces that make the whole mesh.
 # We can simply read the ``.pvtu`` file and VTK will handle putting the mesh
@@ -41,10 +41,12 @@ mesh = pv.read(filename)
 mesh
 
 
-###############################################################################
+# %%
 # Plot the pieced together mesh
-mesh.plot(scalars="node_value", categories=True)
+mesh.plot(scalars='node_value', categories=True)
 
 
-###############################################################################
-mesh.plot(scalars="density")
+# %%
+mesh.plot(scalars='density')
+# %%
+# .. tags:: load

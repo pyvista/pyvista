@@ -17,7 +17,7 @@ import pyvista as pv
 # sphinx_gallery_thumbnail_number = 3
 from pyvista import examples
 
-###############################################################################
+# %%
 # First let's fetch the centers of a mesh with 2D geometries (a surface)
 mesh = examples.download_teapot()
 
@@ -31,11 +31,11 @@ centers = mesh.cell_centers()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True, line_width=1)
-pl.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
+pl.add_mesh(centers, color='r', point_size=8.0, render_points_as_spheres=True)
 pl.show(cpos=cpos)
 
 
-###############################################################################
+# %%
 # We can also do this for full 3D meshes.
 
 grid = examples.download_letter_a()
@@ -51,18 +51,18 @@ centers = grid.cell_centers()
 
 pl = pv.Plotter()
 pl.add_mesh(grid, show_edges=True, opacity=0.5, line_width=1)
-pl.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
+pl.add_mesh(centers, color='r', point_size=8.0, render_points_as_spheres=True)
 pl.show(cpos=cpos)
 
-###############################################################################
+# %%
 
 pl = pv.Plotter()
-pl.add_mesh(grid.extract_all_edges(), color="k", line_width=1)
-pl.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
+pl.add_mesh(grid.extract_all_edges(), color='k', line_width=1)
+pl.add_mesh(centers, color='r', point_size=8.0, render_points_as_spheres=True)
 pl.show(cpos=cpos)
 
 
-###############################################################################
+# %%
 # Edge centers
 # ~~~~~~~~~~~~
 # You can use :func:`cell_centers <pyvista.DataSetFilters.cell_centers>` in
@@ -86,7 +86,7 @@ pl.add_points(
 pl.show()
 
 
-###############################################################################
+# %%
 # Add labels to cells
 # ~~~~~~~~~~~~~~~~~~~
 # There is not a method to add labels to cells.
@@ -100,5 +100,7 @@ points = grid.cell_centers().points
 
 pl = pv.Plotter()
 pl.add_mesh(grid, show_edges=True)
-pl.add_point_labels(points, labels=[f"{i}" for i in range(points.shape[0])])
-pl.show(cpos="xy")
+pl.add_point_labels(points, labels=[f'{i}' for i in range(points.shape[0])])
+pl.show(cpos='xy')
+# %%
+# .. tags:: filter
