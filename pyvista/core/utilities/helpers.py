@@ -213,7 +213,7 @@ def generate_plane(normal, origin):
     return plane
 
 
-def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
+def axis_rotation(points, angle, inplace: bool = False, deg: bool = True, axis='z'):
     """Rotate points by angle about an axis.
 
     Parameters

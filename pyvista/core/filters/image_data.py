@@ -37,7 +37,9 @@ if TYPE_CHECKING:  # pragma: no cover
 class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    def gaussian_smooth(self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False):
+    def gaussian_smooth(
+        self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar: bool = False
+    ):
         """Smooth the data with a Gaussian kernel.
 
         Parameters
@@ -121,7 +123,7 @@ class ImageDataFilters(DataSetFilters):
         kernel_size=(3, 3, 3),
         scalars=None,
         preference='point',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Smooth data using a median filter.
 
@@ -202,7 +204,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Median Smoothing')
         return _get_output(alg)
 
-    def extract_subset(self, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
+    def extract_subset(
+        self, voi, rate=(1, 1, 1), boundary: bool = False, progress_bar: bool = False
+    ):
         """Select piece (e.g., volume of interest).
 
         To use this filter set the VOI ivar which are i-j-k min/max indices
@@ -267,7 +271,7 @@ class ImageDataFilters(DataSetFilters):
         erode_value=0.0,
         kernel_size=(3, 3, 3),
         scalars=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Dilates one value and erodes another.
 
@@ -358,7 +362,7 @@ class ImageDataFilters(DataSetFilters):
         out_value=0.0,
         scalars=None,
         preference='point',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Apply a threshold to scalar values in a uniform grid.
 
@@ -478,7 +482,7 @@ class ImageDataFilters(DataSetFilters):
             output[scalars] = output[scalars].astype(array_dtype)
         return output
 
-    def fft(self, output_scalars_name=None, progress_bar=False):
+    def fft(self, output_scalars_name=None, progress_bar: bool = False):
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -559,7 +563,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def rfft(self, output_scalars_name=None, progress_bar=False):
+    def rfft(self, output_scalars_name=None, progress_bar: bool = False):
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -638,7 +642,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
@@ -718,7 +722,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 
@@ -1475,7 +1479,7 @@ class ImageDataFilters(DataSetFilters):
         | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         scalars: str | None = None,
         pad_all_scalars: bool = False,
-        progress_bar=False,
+        progress_bar: bool = False,
         pad_singleton_dims: bool | None = None,
     ) -> pyvista.ImageData:
         """Enlarge an image by padding its boundaries with new points.
