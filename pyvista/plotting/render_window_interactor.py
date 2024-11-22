@@ -1416,7 +1416,7 @@ class RenderWindowInteractor:
         return self.interactor.GetPicker()
 
     @picker.setter
-    def picker(self, picker):  # numpydoc ignore=GL08
+    def picker(self, picker):
         pickers = {
             PickerType.AREA: _vtk.vtkAreaPicker,
             PickerType.CELL: _vtk.vtkCellPicker,

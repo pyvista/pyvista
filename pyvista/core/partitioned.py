@@ -229,7 +229,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         return self.GetNumberOfPartitions()
 
     @n_partitions.setter
-    def n_partitions(self, n):  # numpydoc ignore=GL08
+    def n_partitions(self, n):
         self.SetNumberOfPartitions(n)
         self.Modified()
 

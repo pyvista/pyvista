@@ -133,7 +133,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
+    def prop(self, prop: TextProperty):
         self.SetTextProperty(prop)
 
     @property
@@ -149,7 +149,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
         return self.GetLinearFontScaleFactor()
 
     @linear_font_scale_factor.setter
-    def linear_font_scale_factor(self, factor: float):  # numpydoc ignore=GL08
+    def linear_font_scale_factor(self, factor: float):
         self.SetLinearFontScaleFactor(factor)
 
 
@@ -205,7 +205,7 @@ class Text(_vtk.vtkTextActor):
         return self.GetInput()
 
     @input.setter
-    def input(self, text: str):  # numpydoc ignore=GL08
+    def input(self, text: str):
         self.SetInput(text)
 
     @property
@@ -221,7 +221,7 @@ class Text(_vtk.vtkTextActor):
         return self.GetTextProperty()
 
     @prop.setter
-    def prop(self, prop: TextProperty):  # numpydoc ignore=GL08
+    def prop(self, prop: TextProperty):
         self.SetTextProperty(prop)
 
     @property
@@ -237,7 +237,7 @@ class Text(_vtk.vtkTextActor):
         return self.GetPosition()
 
     @position.setter
-    def position(self, position: Sequence[float]):  # numpydoc ignore=GL08
+    def position(self, position: Sequence[float]):
         self.SetPosition(position[0], position[1])
 
 
@@ -391,7 +391,7 @@ class Label(_Prop3DMixin, Text):
         return self.GetPositionCoordinate().GetValue()
 
     @_label_position.setter
-    def _label_position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+    def _label_position(self, position: VectorLike[float]):
         valid_position = _validation.validate_array3(position)
         self.GetPositionCoordinate().SetValue(valid_position)
 
@@ -407,7 +407,7 @@ class Label(_Prop3DMixin, Text):
         return self.prop.font_size
 
     @size.setter
-    def size(self, size: int):  # numpydoc ignore=GL08
+    def size(self, size: int):
         self.prop.font_size = size
 
     @property
@@ -416,7 +416,7 @@ class Label(_Prop3DMixin, Text):
         return tuple(self._relative_position.tolist())
 
     @relative_position.setter
-    def relative_position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
+    def relative_position(self, position: VectorLike[float]):
         self._relative_position = _validation.validate_array3(position, dtype_out=float)
         self._post_set_update()
 
@@ -563,7 +563,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return Color(self.GetColor())
 
     @color.setter
-    def color(self, color: ColorLike):  # numpydoc ignore=GL08
+    def color(self, color: ColorLike):
         self._color_set = color is not None
         rgb_color = Color(color, default_color=self._theme.font.color)
         self.SetColor(rgb_color.float_rgb)
@@ -582,7 +582,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetOpacity()
 
     @opacity.setter
-    def opacity(self, opacity: float):  # numpydoc ignore=GL08
+    def opacity(self, opacity: float):
         _check_range(opacity, (0, 1), 'opacity')
         self.SetOpacity(opacity)
 
@@ -599,7 +599,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return Color(self.GetBackgroundColor())
 
     @background_color.setter
-    def background_color(self, color: ColorLike):  # numpydoc ignore=GL08
+    def background_color(self, color: ColorLike):
         self._background_color_set = color is not None
         rgb_color = Color(color)
         self.SetBackgroundColor(rgb_color.float_rgb)
@@ -618,7 +618,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetBackgroundOpacity()
 
     @background_opacity.setter
-    def background_opacity(self, opacity: float):  # numpydoc ignore=GL08
+    def background_opacity(self, opacity: float):
         _check_range(opacity, (0, 1), 'background_opacity')
         self.SetBackgroundOpacity(opacity)
 
@@ -635,7 +635,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return bool(self.GetFrame())
 
     @show_frame.setter
-    def show_frame(self, frame: bool):  # numpydoc ignore=GL08
+    def show_frame(self, frame: bool):
         self.SetFrame(frame)
 
     @property
@@ -651,7 +651,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return Color(self.GetFrameColor())
 
     @frame_color.setter
-    def frame_color(self, color):  # numpydoc ignore=GL08
+    def frame_color(self, color):
         self.SetFrameColor(Color(color).float_rgb)
 
     @property
@@ -668,7 +668,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetFrameWidth()
 
     @frame_width.setter
-    def frame_width(self, width: int):  # numpydoc ignore=GL08
+    def frame_width(self, width: int):
         self.SetFrameWidth(width)
 
     @property
@@ -684,7 +684,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return self._font_family
 
     @font_family.setter
-    def font_family(self, font_family: str | None):  # numpydoc ignore=GL08
+    def font_family(self, font_family: str | None):
         if font_family is None:
             font_family = self._theme.font.family
         self._font_family = font_family
@@ -703,7 +703,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetFontSize()
 
     @font_size.setter
-    def font_size(self, font_size: int):  # numpydoc ignore=GL08
+    def font_size(self, font_size: int):
         self.SetFontSize(font_size)
 
     def enable_shadow(self) -> None:
@@ -723,7 +723,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, orientation: float):  # numpydoc ignore=GL08
+    def orientation(self, orientation: float):
         self.SetOrientation(orientation)
 
     def set_font_file(self, font_file: str):
@@ -759,7 +759,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return justification
 
     @justification_horizontal.setter
-    def justification_horizontal(self, justification: str):  # numpydoc ignore=GL08
+    def justification_horizontal(self, justification: str):
         if justification.lower() == 'left':
             self.SetJustificationToLeft()
         elif justification.lower() == 'center':
@@ -789,7 +789,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return justification
 
     @justification_vertical.setter
-    def justification_vertical(self, justification: str):  # numpydoc ignore=GL08
+    def justification_vertical(self, justification: str):
         if justification.lower() == 'bottom':
             self.SetVerticalJustificationToBottom()
         elif justification.lower() == 'center':
@@ -815,7 +815,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return bool(self.GetItalic())
 
     @italic.setter
-    def italic(self, italic: bool):  # numpydoc ignore=GL08
+    def italic(self, italic: bool):
         self.SetItalic(italic)
 
     @property
@@ -831,7 +831,7 @@ class TextProperty(_vtk.vtkTextProperty):
         return bool(self.GetBold())
 
     @bold.setter
-    def bold(self, bold: bool):  # numpydoc ignore=GL08
+    def bold(self, bold: bool):
         self.SetBold(bold)
 
     def shallow_copy(self, to_copy: TextProperty) -> None:

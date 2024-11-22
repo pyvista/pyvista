@@ -671,7 +671,7 @@ class CellArray(_vtk.vtkCellArray):
         return _vtk.vtk_to_numpy(cells)
 
     @cells.setter
-    def cells(self, cells: CellsLike):  # numpydoc ignore=GL08
+    def cells(self, cells: CellsLike):
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.ImportLegacyFormat(vtk_idarr)

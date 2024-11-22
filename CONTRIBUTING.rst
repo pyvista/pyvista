@@ -354,7 +354,7 @@ documentation strings for setters and skip the GL08 check.
 .. code:: python
 
     @strips.setter
-    def strips(self, strips):  # numpydoc ignore=GL08
+    def strips(self, strips):
         if isinstance(strips, CellArray):
             self.SetStrips(strips)
         else:
