@@ -2945,7 +2945,7 @@ class DataSetFilters:
                         )  # pragma: no cover
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(before_extraction)
-                    remove.SetCellIds(numpy_to_idarr(ids_to_remove))
+                    remove.SetCellIds(numpy_to_idarr(ids_to_remove))  # type: ignore[arg-type]
                     _update_alg(remove, progress_bar, 'Removing Cells.')
                     extracted = _get_output(remove)
                     extracted.clean(

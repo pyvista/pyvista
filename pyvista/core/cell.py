@@ -731,8 +731,8 @@ class CellArray(_vtk.vtkCellArray):
         deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
-        vtk_offsets = numpy_to_idarr(offsets, deep=deep)
-        vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
+        vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))
+        vtk_connectivity = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(connectivity, deep=deep))
         self.SetData(vtk_offsets, vtk_connectivity)
 
         # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
