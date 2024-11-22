@@ -6,6 +6,16 @@ from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import cast
+from typing import overload
+
+import numpy as np
+
+import pyvista
+from pyvista.core import _vtk_core as _vtk
+
+from . import transformations
+from .fileio import from_meshio
+from .fileio import is_meshio_mesh
 
 if TYPE_CHECKING:  # pragma: no cover
     from meshio import Mesh
@@ -25,17 +35,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
-
-from typing import overload
-
-import numpy as np
-
-import pyvista
-from pyvista.core import _vtk_core as _vtk
-
-from . import transformations
-from .fileio import from_meshio
-from .fileio import is_meshio_mesh
 
 
 # Overload types should match the mappings in the `pyvista._wrappers` dict
