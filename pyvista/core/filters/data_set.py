@@ -91,7 +91,7 @@ class DataSetFilters:
 
     def align(
         self,
-        target: pyvista.DataSet,
+        target: pyvista.DataSet | _vtk.vtkDataSet,
         max_landmarks: int = 100,
         max_mean_distance: float = 1e-5,
         max_iterations: int = 500,
@@ -660,7 +660,9 @@ class DataSetFilters:
             clipped = self.extract_cells(np.unique(clipped.cell_data['cell_ids']))
         return clipped
 
-    def compute_implicit_distance(self, surface: pyvista.DataSet, inplace: bool = False):
+    def compute_implicit_distance(
+        self, surface: pyvista.DataSet | _vtk.vtkDataSet, inplace: bool = False
+    ):
         """Compute the implicit distance from the points to a surface.
 
         This filter will compute the implicit distance from all of the
@@ -851,7 +853,7 @@ class DataSetFilters:
 
     def clip_surface(
         self,
-        surface: pyvista.DataSet,
+        surface: pyvista.DataSet | _vtk.vtkDataSet,
         invert: bool = True,
         value: float = 0.0,
         compute_distance: bool = False,
@@ -913,7 +915,7 @@ class DataSetFilters:
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
-            surface = DataSetFilters.extract_geometry(surface)
+            surface = DataSetFilters.extract_geometry(surface)  # type: ignore[arg-type]
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -3842,7 +3844,7 @@ class DataSetFilters:
 
     def sample(
         self,
-        target: pyvista.DataSet,
+        target: pyvista.DataSet | _vtk.vtkDataSet,
         tolerance: float | None = None,
         pass_cell_data: bool = True,
         pass_point_data: bool = True,
@@ -3949,12 +3951,10 @@ class DataSetFilters:
         See :ref:`resampling_example` for more examples using this filter.
 
         """
-        if not pyvista.is_pyvista_dataset(target):
-            raise TypeError('`target` must be a PyVista mesh type.')
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
-        alg.SetSourceData(target)
+        alg.SetSourceData(wrap(target))
         alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
         alg.SetPassFieldArrays(pass_field_data)
@@ -3991,7 +3991,7 @@ class DataSetFilters:
 
     def interpolate(
         self,
-        target: pyvista.DataSet,
+        target: pyvista.DataSet | _vtk.vtkDataSet,
         sharpness: float = 2.0,
         radius: float = 1.0,
         strategy: Literal['null_value', 'mask_points', 'closest_point'] = 'null_value',
@@ -4095,8 +4095,7 @@ class DataSetFilters:
         See :ref:`interpolate_example` for more examples using this filter.
 
         """
-        if not pyvista.is_pyvista_dataset(target):
-            raise TypeError('`target` must be a PyVista mesh type.')
+        target = cast(pyvista.DataSet, wrap(target))
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
@@ -4256,7 +4255,7 @@ class DataSetFilters:
 
     def streamlines_from_source(
         self,
-        source: pyvista.DataSet,
+        source: pyvista.DataSet | _vtk.vtkDataSet,
         vectors: str | None = None,
         integrator_type: Literal[45, 2, 4] = 45,
         integration_direction: Literal['both', 'backward', 'forward'] = 'both',
@@ -4420,9 +4419,7 @@ class DataSetFilters:
         if max_length is None:
             max_length = 4.0 * self.GetLength()  # type: ignore[attr-defined]
 
-        if not isinstance(source, pyvista.DataSet):
-            raise TypeError('source must be a pyvista.DataSet')
-
+        source = cast(pyvista.DataSet, wrap(source))
         # vtk throws error with two Structured Grids
         # See: https://github.com/pyvista/pyvista/issues/1373
         if isinstance(self, pyvista.StructuredGrid) and isinstance(source, pyvista.StructuredGrid):
