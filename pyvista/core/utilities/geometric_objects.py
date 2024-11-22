@@ -55,7 +55,7 @@ from typing import TYPE_CHECKING
 from .helpers import wrap
 from .misc import check_valid_vector
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
@@ -1814,7 +1814,7 @@ def CircularArcFromNormal(
         normal = [0, 0, 1]
     if polar is None:
         polar = [1, 0, 0]
-    angle_float = 90.0 if angle is None else angle
+    angle_ = 90.0 if angle is None else angle
 
     arc = _vtk.vtkArcSource()
     arc.SetCenter(*center)
@@ -1824,14 +1824,14 @@ def CircularArcFromNormal(
     arc.SetNormal(*normal)
     check_valid_vector(polar, 'polar')
     arc.SetPolarVector(*polar)
-    arc.SetAngle(angle_float)
+    arc.SetAngle(angle_)
     arc.Update()
-    angle_float = np.deg2rad(arc.GetAngle())
+    angle_ = np.deg2rad(arc.GetAngle())
     arc = wrap(arc.GetOutput())  # type: ignore[assignment]
     # Compute distance of every point along circular arc
     center = np.array(center)
     radius = np.sqrt(np.sum((arc.points[0] - center) ** 2, axis=0))  # type: ignore[attr-defined]
-    angles = np.linspace(0.0, angle_float, resolution + 1)
+    angles = np.linspace(0.0, angle_, resolution + 1)
     arc['Distance'] = radius * angles  # type: ignore[index]
     return arc
 
