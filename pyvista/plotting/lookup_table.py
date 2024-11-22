@@ -207,7 +207,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self,
         cmap=None,
         n_values=256,
-        flip=False,
+        flip: bool = False,
         values=None,
         value_range=None,
         hue_range=None,

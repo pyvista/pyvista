@@ -37,7 +37,10 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
+    from numbers import Number
+
     from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
@@ -7174,6 +7177,712 @@ class DataSetFilters:
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
             progress_bar=progress_bar,
+        )
+
+    def rotate_x(
+        self,
+        angle: float,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about the x-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the x-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_x
+            Concatenate a rotation about the x-axis with a transformation.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the x-axis.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> rot = mesh.rotate_x(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate_x(angle, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate_y(
+        self,
+        angle: float,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about the y-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the y-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only
+            the points, normals and active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_y
+            Concatenate a rotation about the y-axis with a transformation.
+
+        Examples
+        --------
+        Rotate a cube 30 degrees about the y-axis.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> rot = mesh.rotate_y(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate_y(angle, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate_z(
+        self,
+        angle: float,
+        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about the z-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the z-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_z
+            Concatenate a rotation about the z-axis with a transformation.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the z-axis.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> rot = mesh.rotate_z(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate_z(angle, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate_vector(
+        self,
+        vector: VectorLike[float],
+        angle: float,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about a vector.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        vector : Vector
+            Vector to rotate about.
+
+        angle : float
+            Angle to rotate.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_vector
+            Concatenate a rotation about a vector with a transformation.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the ``(1, 1, 1)`` axis.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> rot = mesh.rotate_vector((1, 1, 1), 30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate_vector(vector, angle, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate(
+        self,
+        rotation: RotationLike,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        rotation : RotationLike
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate
+            Concatenate a rotation matrix with a transformation.
+
+        Examples
+        --------
+        Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
+        60 degrees.
+
+        >>> import pyvista as pv
+        >>> rotation = [
+        ...     [0.5, -0.8660254, 0.0],
+        ...     [0.8660254, 0.5, 0.0],
+        ...     [0.0, 0.0, 1.0],
+        ... ]
+
+        Use the rotation to rotate a cone about its tip.
+
+        >>> mesh = pv.Cone()
+        >>> tip = (0.5, 0.0, 0.0)
+        >>> rot = mesh.rotate(rotation, point=tip)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate(rotation, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def translate(
+        self,
+        xyz: VectorLike[float],
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Translate the mesh.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        xyz : Vector
+            A vector of three floats.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Translated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.translate
+            Concatenate a translation matrix with a transformation.
+
+        Examples
+        --------
+        Create a sphere and translate it by ``(2, 1, 2)``.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.center
+        (0.0, 0.0, 0.0)
+        >>> trans = mesh.translate((2, 1, 2), inplace=False)
+        >>> trans.center
+        (2.0, 1.0, 2.0)
+
+        """
+        transform = Transform().translate(xyz)
+        return self.transform(  # type: ignore[misc]
+            transform,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def scale(
+        self,
+        xyz: Number | VectorLike[float],
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+        point: VectorLike[float] | None = None,
+    ):
+        """Scale the mesh.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        xyz : Number | Vector
+            A vector sequence defining the scale factors along x, y, and z. If
+            a scalar, the same uniform scale is used along all three axes.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only
+            the points, normals and active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        point : VectorLike[float], optional
+            Point to scale from. Defaults to origin.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Scaled dataset.
+
+        See Also
+        --------
+        pyvista.Transform.scale
+            Concatenate a scale matrix with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+
+        """
+        transform = Transform().scale(xyz, point=point)
+        return self.transform(  # type: ignore[misc]
+            transform,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def flip_x(
+        self,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Flip mesh about the x-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        point : sequence[float], optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_x
+            Concatenate a reflection about the x-axis with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.flip_x(inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+
+        """
+        if point is None:
+            point = self.center  # type: ignore[attr-defined]
+        t = Transform().reflect((1, 0, 0), point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def flip_y(
+        self,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Flip mesh about the y-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        point : VectorLike[float], optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_y
+            Concatenate a reflection about the y-axis with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.flip_y(inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+
+        """
+        if point is None:
+            point = self.center  # type: ignore[attr-defined]
+        t = Transform().reflect((0, 1, 0), point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def flip_z(
+        self,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Flip mesh about the z-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        point : VectorLike[float], optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_z
+            Concatenate a reflection about the z-axis with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot().rotate_x(90, inplace=False)
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.flip_z(inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xz")
+
+        """
+        if point is None:
+            point = self.center  # type: ignore[attr-defined]
+        t = Transform().reflect((0, 0, 1), point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def flip_normal(
+        self,
+        normal: VectorLike[float],
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Flip mesh about the normal.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        normal : VectorLike[float]
+           Normal vector to flip about.
+
+        point : VectorLike[float], optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset flipped about its normal.
+
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.flip_normal([1.0, 1.0, 1.0], inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+
+        """
+        if point is None:
+            point = self.center  # type: ignore[attr-defined]
+        t = Transform().reflect(normal, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def integrate_data(self, progress_bar: bool = False):
