@@ -87,7 +87,7 @@ def wrap(  # numpydoc ignore=GL08
 ) -> PartitionedDataSet: ...
 
 
-# # Misc overloads
+# Misc overloads
 @overload
 def wrap(  # numpydoc ignore=GL08
     dataset: NumpyArray[float],
@@ -102,7 +102,7 @@ def wrap(  # numpydoc ignore=GL08
 ) -> None: ...
 
 
-# General catch-all cases
+# General catch-all cases for datasets
 @overload
 def wrap(  # numpydoc ignore=GL08
     dataset: _vtk.vtkDataSet,
@@ -122,7 +122,8 @@ def wrap(  # numpydoc ignore=GL08
 
 
 # Third-party meshes
-# These are last because they may be untyped and therefore treated as `Any`
+# These are last because they are optional dependencies and may be untyped or
+# not installed and therefore could be treated as `Any`
 @overload
 def wrap(  # numpydoc ignore=GL08
     dataset: Trimesh,
@@ -134,7 +135,14 @@ def wrap(  # numpydoc ignore=GL08
 
 
 def wrap(
-    dataset: NumpyArray[float] | _vtk.vtkDataSet | Trimesh | Mesh | None,
+    dataset: NumpyArray[float]
+    | _vtk.vtkDataObject
+    | DataSet
+    | DataObject
+    | Trimesh
+    | Mesh
+    | _vtk.vtkDataArray
+    | None,
 ) -> DataObject | pyvista_ndarray | None:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
