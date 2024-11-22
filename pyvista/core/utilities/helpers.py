@@ -107,7 +107,7 @@ def wrap(  # numpydoc ignore=GL08
 ) -> PolyData: ...
 @overload
 def wrap(  # numpydoc ignore=GL08
-    dataset: Trimesh | Mesh,
+    dataset: Mesh,
 ) -> DataSet: ...
 @overload
 def wrap(  # numpydoc ignore=GL08
