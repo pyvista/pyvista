@@ -52,14 +52,14 @@ def _get_output(
     ido = wrap(algorithm.GetInputDataObject(iport, iconnection))
     data = wrap(algorithm.GetOutputDataObject(oport))
     if not isinstance(data, pyvista.MultiBlock):
-        data.copy_meta_from(ido, deep=True)  # type: ignore[arg-type, union-attr]
-        if not data.field_data and ido.field_data:  # type: ignore[union-attr]
-            data.field_data.update(ido.field_data)  # type: ignore[union-attr]
+        data.copy_meta_from(ido, deep=True)
+        if not data.field_data and ido.field_data:
+            data.field_data.update(ido.field_data)
         if active_scalars is not None:
-            data.set_active_scalars(active_scalars, preference=active_scalars_field)  # type: ignore[union-attr]
+            data.set_active_scalars(active_scalars, preference=active_scalars_field)
     # return a PointSet if input is a pointset
     if isinstance(ido, pyvista.PointSet):
-        return data.cast_to_pointset()  # type: ignore[union-attr]
+        return data.cast_to_pointset()
     return data
 
 

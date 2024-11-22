@@ -4263,7 +4263,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 block = wrap(volume.GetBlock(idx))
                 if resolution is None:
                     try:
-                        block_resolution = block.GetSpacing()  # type: ignore[union-attr]
+                        block_resolution = block.GetSpacing()
                     except AttributeError:
                         block_resolution = resolution
                 else:

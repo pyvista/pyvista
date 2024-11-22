@@ -138,7 +138,7 @@ def Capsule(
             phi_resolution=resolution,
         )
     output = wrap(algo.output)
-    output.rotate_z(90, inplace=True)  # type: ignore[union-attr]
+    output.rotate_z(90, inplace=True)
     translate(output, center, direction)
     return output
 
@@ -216,7 +216,7 @@ def Cylinder(
         resolution=resolution,
     )
     output = wrap(algo.output)
-    output.rotate_z(90, inplace=True)  # type: ignore[union-attr]
+    output.rotate_z(90, inplace=True)
     translate(output, center, direction)
     return output
 
