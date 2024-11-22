@@ -291,7 +291,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, point_ids=True, cell_ids=True):
+    def __init__(self, point_ids: bool = True, cell_ids: bool = True):
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
@@ -379,7 +379,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
         return 1
 
 
-def outline_algorithm(inp, generate_faces=False):
+def outline_algorithm(inp, generate_faces: bool = False):
     """Add vtkOutlineFilter to pipeline.
 
     Parameters
@@ -401,7 +401,9 @@ def outline_algorithm(inp, generate_faces=False):
     return alg
 
 
-def extract_surface_algorithm(inp, pass_pointid=False, pass_cellid=False, nonlinear_subdivision=1):
+def extract_surface_algorithm(
+    inp, pass_pointid: bool = False, pass_cellid: bool = False, nonlinear_subdivision=1
+):
     """Add vtkDataSetSurfaceFilter to pipeline.
 
     Parameters
@@ -475,7 +477,7 @@ def pointset_to_polydata_algorithm(inp):
     return alg
 
 
-def add_ids_algorithm(inp, point_ids=True, cell_ids=True):
+def add_ids_algorithm(inp, point_ids: bool = True, cell_ids: bool = True):
     """Add a filter that adds point and/or cell IDs.
 
     Parameters
@@ -520,7 +522,7 @@ def crinkle_algorithm(clip, source):
     return alg
 
 
-def cell_data_to_point_data_algorithm(inp, pass_cell_data=False):
+def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):
     """Add a filter that converts cell data to point data.
 
     Parameters
@@ -542,7 +544,7 @@ def cell_data_to_point_data_algorithm(inp, pass_cell_data=False):
     return alg
 
 
-def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
+def point_data_to_cell_data_algorithm(inp, pass_point_data: bool = False):
     """Add a filter that converts point data to cell data.
 
     Parameters
