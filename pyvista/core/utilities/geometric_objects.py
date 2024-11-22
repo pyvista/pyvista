@@ -778,9 +778,9 @@ def SolidSphereGeneric(
     # Default tolerance from user is set in degrees
     # But code is in radians.
     if tol_angle is None:
-        tol_angle_float = np.deg2rad(1e-8)
+        tol_angle_ = np.deg2rad(1e-8)
     else:
-        tol_angle_float = tol_angle if radians else np.deg2rad(tol_angle)
+        tol_angle_ = tol_angle if radians else np.deg2rad(tol_angle)
 
     if theta is None:
         theta = np.linspace(0, 2 * np.pi, 30)
@@ -826,13 +826,13 @@ def SolidSphereGeneric(
         raise ValueError('minimum radius cannot be negative')
 
     # range of theta cannot be greater than 360 degrees
-    if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle_float):
+    if not _less_than_equal_or_close(theta[-1] - theta[0], 2 * np.pi, tol_angle_):
         max_angle = '2 * np.pi' if radians else '360 degrees'
         raise ValueError(f'max theta and min theta must be within {max_angle}')
 
-    if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle_float):
+    if not _greater_than_equal_or_close(phi[0], 0.0, tol_angle_):
         raise ValueError('minimum phi cannot be negative')
-    if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle_float):
+    if not _less_than_equal_or_close(phi[-1], np.pi, tol_angle_):
         max_angle = 'np.pi' if radians else '180 degrees'
         raise ValueError(f'maximum phi cannot be > {max_angle}')
 
@@ -875,13 +875,13 @@ def SolidSphereGeneric(
     else:
         include_origin = False
 
-    if np.isclose(theta[-1] - theta[0], 2 * np.pi, rtol=0.0, atol=tol_angle_float):
+    if np.isclose(theta[-1] - theta[0], 2 * np.pi, rtol=0.0, atol=tol_angle_):
         duplicate_theta = True
         theta = theta[:-1]
     else:
         duplicate_theta = False
 
-    if np.isclose(phi[0], 0.0, rtol=0.0, atol=tol_angle_float):
+    if np.isclose(phi[0], 0.0, rtol=0.0, atol=tol_angle_):
         points.extend(_spherical_to_cartesian(radius, 0.0, theta[0]))
         positive_axis = True
         phi = phi[1:]
@@ -891,7 +891,7 @@ def SolidSphereGeneric(
         positive_axis = False
     npoints_on_pos_axis = npoints_on_axis
 
-    if np.isclose(phi[-1], np.pi, rtol=0.0, atol=tol_angle_float):
+    if np.isclose(phi[-1], np.pi, rtol=0.0, atol=tol_angle_):
         points.extend(_spherical_to_cartesian(radius, np.pi, theta[0]))
         negative_axis = True
         phi = phi[:-1]
