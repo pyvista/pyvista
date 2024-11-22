@@ -38,7 +38,7 @@ from .utilities.helpers import wrap
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
 
-_TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
+_TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
 
 
 class MultiBlock(

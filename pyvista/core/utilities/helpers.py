@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
 from typing import cast
 from typing import overload
 
@@ -85,30 +87,11 @@ def wrap(  # numpydoc ignore=GL08
 ) -> PartitionedDataSet: ...
 
 
-# General catch-all cases
-@overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkDataSet,
-) -> DataSet: ...
-@overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkDataObject,
-) -> DataObject: ...
-
-
-# Misc overloads
+# # Misc overloads
 @overload
 def wrap(  # numpydoc ignore=GL08
     dataset: NumpyArray[float],
 ) -> PolyData | ImageData: ...
-@overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: Trimesh,
-) -> PolyData: ...
-@overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: Mesh,
-) -> DataSet: ...
 @overload
 def wrap(  # numpydoc ignore=GL08
     dataset: _vtk.vtkDataArray,
@@ -117,6 +100,39 @@ def wrap(  # numpydoc ignore=GL08
 def wrap(  # numpydoc ignore=GL08
     dataset: None,
 ) -> None: ...
+
+
+# General catch-all cases
+@overload
+def wrap(  # numpydoc ignore=GL08
+    dataset: _vtk.vtkDataSet,
+) -> DataSet: ...
+@overload
+def wrap(  # numpydoc ignore=GL08
+    dataset: DataSet,
+) -> DataSet: ...
+@overload
+def wrap(  # numpydoc ignore=GL08
+    dataset: _vtk.vtkDataObject,
+) -> DataObject: ...
+@overload
+def wrap(  # numpydoc ignore=GL08
+    dataset: DataObject,
+) -> DataObject: ...
+
+
+# Third-party meshes
+# These are last because they may be untyped and therefore treated as `Any`
+@overload
+def wrap(  # numpydoc ignore=GL08
+    dataset: Trimesh,
+) -> PolyData: ...
+@overload
+def wrap(  # numpydoc ignore=GL08
+    dataset: Mesh,
+) -> DataSet: ...
+
+
 def wrap(
     dataset: NumpyArray[float] | _vtk.vtkDataSet | Trimesh | Mesh | None,
 ) -> DataObject | pyvista_ndarray | None:
@@ -265,7 +281,15 @@ def wrap(
     raise NotImplementedError(f'Unable to wrap ({type(dataset)}) into a pyvista type.')
 
 
-def is_pyvista_dataset(obj):
+@overload
+def is_pyvista_dataset(  # numpydoc ignore=GL08
+    obj: pyvista.DataSet | pyvista.MultiBlock,
+) -> Literal[True]: ...
+@overload
+def is_pyvista_dataset(  # numpydoc ignore=GL08
+    obj: Any,
+) -> Literal[False]: ...
+def is_pyvista_dataset(obj: Any) -> bool:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
