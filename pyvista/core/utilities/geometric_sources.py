@@ -11,7 +11,6 @@ import itertools
 from typing import TYPE_CHECKING
 from typing import ClassVar
 from typing import Literal
-from typing import Optional
 from typing import cast
 from typing import get_args
 
@@ -355,9 +354,9 @@ class ConeSource(_vtk.vtkConeSource):
         center: VectorLike[float] = (0.0, 0.0, 0.0),
         direction: VectorLike[float] = (1.0, 0.0, 0.0),
         height: float = 1.0,
-        radius: Optional[float] = None,
+        radius: float | None = None,
         capping: bool = True,
-        angle: Optional[float] = None,
+        angle: float | None = None,
         resolution: int = 6,
     ) -> None:
         """Initialize the cone source class."""
