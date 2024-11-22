@@ -159,7 +159,7 @@ if _vtk.vtk_version_info < (9, 3):
             return self.GetCenter()
 
         @center.setter
-        def center(self, center: Sequence[float]) -> None:
+        def center(self, center: VectorLike[float]) -> None:
             """Set the center in ``[x, y, z]``. Axis of the capsule passes through this point.
 
             Parameters
@@ -169,7 +169,7 @@ if _vtk.vtk_version_info < (9, 3):
                 point.
 
             """
-            self.SetCenter(center)
+            self.SetCenter(*center)
 
         @property
         def direction(self) -> tuple[float, float, float]:
@@ -1832,7 +1832,7 @@ class SphereSource(_vtk.vtkSphereSource):
             return (0.0, 0.0, 0.0)
 
     @center.setter
-    def center(self, center: Sequence[float]):
+    def center(self, center: VectorLike[float]):
         """Set the center in ``[x, y, z]``.
 
         Parameters
@@ -1842,7 +1842,7 @@ class SphereSource(_vtk.vtkSphereSource):
 
         """
         if pyvista.vtk_version_info >= (9, 2):
-            self.SetCenter(center)
+            self.SetCenter(*center)
         else:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
@@ -2428,7 +2428,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         return self.GetCenter()
 
     @center.setter
-    def center(self, center: Sequence[float]) -> None:
+    def center(self, center: VectorLike[float]) -> None:
         """Set the center in ``[x, y, z]``.
 
         Parameters
@@ -2437,10 +2437,10 @@ class PlaneSource(_vtk.vtkPlaneSource):
             Center in ``[x, y, z]``.
 
         """
-        self.SetCenter(center)  # type: ignore[call-overload]
+        self.SetCenter(*center)
 
     @property
-    def origin(self) -> Sequence[float]:
+    def origin(self) -> tuple[float, float, float]:
         """Get the origin in ``[x, y, z]``.
 
         Returns
@@ -2452,7 +2452,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, origin: Sequence[float]) -> None:
+    def origin(self, origin: VectorLike[float]) -> None:
         """Set the origin in ``[x, y, z]``.
 
         Parameters
@@ -2461,10 +2461,10 @@ class PlaneSource(_vtk.vtkPlaneSource):
             Origin in ``[x, y, z]``.
 
         """
-        self.SetOrigin(origin)
+        self.SetOrigin(*origin)
 
     @property
-    def point_a(self) -> Sequence[float]:
+    def point_a(self) -> tuple[float, float, float]:
         """Get the Location in ``[x, y, z]``.
 
         Returns
@@ -2476,7 +2476,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         return self.GetPoint1()
 
     @point_a.setter
-    def point_a(self, point_a: Sequence[float]) -> None:
+    def point_a(self, point_a: VectorLike[float]) -> None:
         """Set the Location in ``[x, y, z]``.
 
         Parameters
@@ -2485,10 +2485,10 @@ class PlaneSource(_vtk.vtkPlaneSource):
             Location in ``[x, y, z]``.
 
         """
-        self.SetPoint1(point_a)  # type: ignore[call-overload]
+        self.SetPoint1(*point_a)
 
     @property
-    def point_b(self) -> Sequence[float]:
+    def point_b(self) -> tuple[float, float, float]:
         """Get the Location in ``[x, y, z]``.
 
         Returns
@@ -2500,7 +2500,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         return self.GetPoint2()
 
     @point_b.setter
-    def point_b(self, point_b: Sequence[float]) -> None:
+    def point_b(self, point_b: VectorLike[float]) -> None:
         """Set the Location in ``[x, y, z]``.
 
         Parameters
@@ -2917,7 +2917,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         return self.GetCenter()
 
     @center.setter
-    def center(self, center: Sequence[float]) -> None:
+    def center(self, center: VectorLike[float]) -> None:
         """Set center of the superquadric in ``[x, y, z]``.
 
         Parameters
@@ -2926,10 +2926,10 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
             Center of the superquadric in ``[x, y, z]``.
 
         """
-        self.SetCenter(center)
+        self.SetCenter(*center)
 
     @property
-    def scale(self) -> Sequence[float]:
+    def scale(self) -> tuple[float, float, float]:
         """Scale factors of the superquadric in ``[x, y, z]``.
 
         Returns
@@ -2941,7 +2941,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, scale: Sequence[float]) -> None:
+    def scale(self, scale: VectorLike[float]) -> None:
         """Set scale factors of the superquadric in ``[x, y, z]``.
 
         Parameters
@@ -2950,7 +2950,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
            Scale factors of the superquadric in ``[x, y, z]``.
 
         """
-        self.SetScale(scale)
+        self.SetScale(*scale)
 
     @property
     def size(self) -> float:
