@@ -37,6 +37,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core.wrappers import _WrappableVTKDataObjectType
 
 
 # Overload types should match the mappings in the `pyvista._wrappers` dict
@@ -105,16 +106,8 @@ def wrap(  # numpydoc ignore=GL08
 # General catch-all cases for datasets
 @overload
 def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkDataSet,
-) -> DataSet: ...
-@overload
-def wrap(  # numpydoc ignore=GL08
     dataset: DataSet,
 ) -> DataSet: ...
-@overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkDataObject,
-) -> DataObject: ...
 @overload
 def wrap(  # numpydoc ignore=GL08
     dataset: DataObject,
@@ -134,10 +127,9 @@ def wrap(  # numpydoc ignore=GL08
 ) -> DataSet: ...
 
 
-def wrap(
+def wrap(  # type: ignore[misc]
     dataset: NumpyArray[float]
-    | _vtk.vtkDataObject
-    | DataSet
+    | _WrappableVTKDataObjectType
     | DataObject
     | Trimesh
     | Mesh

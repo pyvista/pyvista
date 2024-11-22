@@ -169,7 +169,7 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, wrap(block))  # type: ignore[arg-type]
+                self.SetBlock(i, wrap(block))  # type: ignore[call-overload]
 
     @property
     def bounds(self) -> BoundsTuple:
@@ -388,7 +388,7 @@ class MultiBlock(
     def __getitem__(
         self,
         index: int | str,
-    ) -> _TypeMultiBlockLeaf | None:  # numpydoc ignore=GL08
+    ) -> _TypeMultiBlockLeaf:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
@@ -413,9 +413,9 @@ class MultiBlock(
         if index < 0:
             index = self.n_blocks + index
 
-        return wrap(self.GetBlock(index))
+        return wrap(self.GetBlock(index))  # type: ignore[call-overload]
 
-    def append(self, dataset: _TypeMultiBlockLeaf | None, name: str | None = None):
+    def append(self, dataset: _TypeMultiBlockLeaf, name: str | None = None):
         """Add a data set to the next block index.
 
         Parameters
@@ -624,7 +624,7 @@ class MultiBlock(
     def _ipython_key_completions_(self) -> list[str | None]:
         return self.keys()
 
-    def replace(self, index: int, dataset: _TypeMultiBlockLeaf | None) -> None:
+    def replace(self, index: int, dataset: _TypeMultiBlockLeaf) -> None:
         """Replace dataset at index while preserving key name.
 
         Parameters
@@ -658,7 +658,7 @@ class MultiBlock(
     def __setitem__(
         self,
         index: int | str,
-        data: _TypeMultiBlockLeaf | None,
+        data: _TypeMultiBlockLeaf,
     ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
@@ -666,7 +666,7 @@ class MultiBlock(
     def __setitem__(
         self,
         index: slice,
-        data: Iterable[_TypeMultiBlockLeaf | None],
+        data: Iterable[_TypeMultiBlockLeaf],
     ):  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
@@ -815,7 +815,7 @@ class MultiBlock(
         self[index] = dataset
         self.set_block_name(index, name)
 
-    def pop(self, index: int | str = -1) -> _TypeMultiBlockLeaf | None:
+    def pop(self, index: int | str = -1) -> _TypeMultiBlockLeaf:
         """Pop off a block at the specified index.
 
         Parameters
