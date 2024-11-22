@@ -73,7 +73,7 @@ def plot_compare_four(
     outline=None,
     outline_color='k',
     labels=('A', 'B', 'C', 'D'),
-    link=True,
+    link: bool = True,
     notebook=None,
 ):
     """Plot a 2 by 2 comparison of data objects.
