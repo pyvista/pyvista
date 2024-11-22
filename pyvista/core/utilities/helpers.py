@@ -124,7 +124,7 @@ def wrap(  # numpydoc ignore=GL08
 @overload
 def wrap(  # numpydoc ignore=GL08
     dataset: Mesh,
-) -> DataSet: ...
+) -> UnstructuredGrid: ...
 
 
 def wrap(  # type: ignore[misc]
