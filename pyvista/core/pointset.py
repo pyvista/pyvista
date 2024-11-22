@@ -304,7 +304,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
             raise VTKVersionError('pyvista.PointSet requires VTK >= 9.1.0')
         return super().__new__(cls, *args, **kwargs)
 
-    def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None::
+    def __init__(self, var_inp=None, deep: bool = False, force_float: bool = True) -> None:
         """Initialize the pointset."""
         super().__init__()
 

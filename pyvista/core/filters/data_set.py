@@ -4730,7 +4730,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ) -> None::
+    ) -> None:
         """Sample a dataset along a high resolution line and plot.
 
         Plot the variables of interest in 2D using matplotlib where the
@@ -5056,7 +5056,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ) -> None::
+    ) -> None:
         """Sample a dataset along a circular arc and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -5185,7 +5185,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ) -> None::
+    ) -> None:
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
