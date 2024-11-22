@@ -1,23 +1,4 @@
-"""Provides an easy way of generating several geometric objects.
-
-**CONTAINS**
-ArrowSource
-CylinderSource
-SphereSource
-PlaneSource
-LineSource
-CubeSource
-ConeSource
-DiscSource
-PolygonSource
-vtkPyramid
-PlatonicSolidSource
-SuperquadricSource
-Text3DSource
-
-as well as some pure-python helpers.
-
-"""
+"""Provides an easy way of generating several geometric objects."""
 
 from __future__ import annotations
 
