@@ -61,7 +61,7 @@ mesh = pv.StructuredGrid(x, y, z)
 # %%
 # The mesh has quadrilateral cells. The cells that look triangular
 # at the poles are actually degenerate quadrilaterals, i.e. two
-# points are coincident the pole, as will be shown later.
+# points are coincident at the pole, as will be shown later.
 
 mesh.plot(show_edges=True)
 
