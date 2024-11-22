@@ -125,7 +125,7 @@ if _vtk.vtk_version_info < (9, 3):
 
         """
 
-        _new_attr_exceptions: ClassVar[list[str]] = ['_direction']
+        _new_attr_exceptions: ClassVar[list[str]] = ['_direction', 'direction']
 
         def __init__(
             self,
