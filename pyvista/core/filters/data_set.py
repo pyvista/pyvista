@@ -636,19 +636,19 @@ class DataSetFilters:
                 normal = cell['Normals'][0]
                 bounds.append(normal)
                 bounds.append(cell.center)
-        bounds_array = _validation.validate_array(
+        bounds_ = _validation.validate_array(
             bounds, dtype_out=float, must_have_length=[3, 6, 12], name='bounds'
         )
-        if len(bounds_array) == 3:
+        if len(bounds_) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds  # type: ignore[attr-defined]
-            bounds_array = np.array(
+            bounds_ = np.array(
                 (
                     xmin,
-                    xmin + bounds_array[0],
+                    xmin + bounds_[0],
                     ymin,
-                    ymin + bounds_array[1],
+                    ymin + bounds_[1],
                     zmin,
-                    zmin + bounds_array[2],
+                    zmin + bounds_[2],
                 )
             )
         if crinkle:
@@ -658,7 +658,7 @@ class DataSetFilters:
             # vtkBoxClipDataSet uses vtkMergePoints by default
             alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(self)
-        alg.SetBoxClip(*bounds_array)
+        alg.SetBoxClip(*bounds_)
         port = 0
         if invert:
             # invert the clip if needed
