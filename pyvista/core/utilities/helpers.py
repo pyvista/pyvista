@@ -103,7 +103,9 @@ def wrap(  # numpydoc ignore=GL08
 ) -> None: ...
 
 
-# General catch-all cases for datasets
+# General catch-all cases for pyvista datasets
+# Do not include a catch-all for vtkDataSet or vtkDataObject since
+# only specific subclasses are supported
 @overload
 def wrap(  # numpydoc ignore=GL08
     dataset: DataSet,
@@ -115,19 +117,18 @@ def wrap(  # numpydoc ignore=GL08
 
 
 # Third-party meshes
-# These are last because they are optional dependencies and may be untyped or
-# not installed and therefore could be treated as `Any`
 @overload
 def wrap(  # numpydoc ignore=GL08
     dataset: Trimesh,
 ) -> PolyData: ...
-@overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: Mesh,
-) -> UnstructuredGrid: ...
 
 
-def wrap(  # type: ignore[misc]
+# TODO: Support meshio overload
+# @overload
+# def wrap(dataset: Mesh) -> UnstructuredGrid: ...
+
+
+def wrap(
     dataset: NumpyArray[float]
     | _WrappableVTKDataObjectType
     | DataObject
