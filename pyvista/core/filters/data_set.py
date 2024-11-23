@@ -2476,7 +2476,10 @@ class DataSetFilters:
         orient: bool | str = True,
         scale: bool | str = True,
         factor: float = 1.0,
-        geom: _vtk.vtkDataSet | Sequence[_vtk.vtkDataSet] | None = None,
+        geom: _vtk.vtkDataSet
+        | pyvista.DataSet
+        | Sequence[_vtk.vtkDataSet | pyvista.DataSet]
+        | None = None,
         indices: VectorLike[int] | None = None,
         tolerance: float | None = None,
         absolute: bool = False,
@@ -2586,7 +2589,7 @@ class DataSetFilters:
         if geom is None:
             arrow = _vtk.vtkArrowSource()
             _update_alg(arrow, progress_bar, 'Making Arrow')
-            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
+            geoms: Sequence[_vtk.vtkDataSet | pyvista.DataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
             geoms = geom
