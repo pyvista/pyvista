@@ -120,7 +120,7 @@ def Capsule(
         )
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)  # type: ignore[union-attr]
-    translate(output, center, direction)
+    translate(output, center, direction)  # type: ignore[arg-type]
     return output
 
 
@@ -198,7 +198,7 @@ def Cylinder(
     )
     output = wrap(algo.output)
     output.rotate_z(90, inplace=True)  # type: ignore[union-attr]
-    translate(output, center, direction)
+    translate(output, center, direction)  # type: ignore[arg-type]
     return output
 
 
