@@ -132,8 +132,8 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.9.1',
   'sympy==1.13.3',
-  'trame-vtk==2.8.11',
-  'trame-vuetify==2.7.1',
+  'trame-vtk==2.8.12',
+  'trame-vuetify==2.7.2',
   'trame==3.7.0',
   'trimesh==4.5.2',
 ]
