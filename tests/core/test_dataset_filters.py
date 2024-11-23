@@ -1741,11 +1741,11 @@ def test_streamlines_max_length():
         assert np.isclose(stream.length, 1)
 
     def check_deprecation():
-        if pv._version.version_info >= (0, 48):
+        if pv._version.version_info > (0, 48):
             raise RuntimeError(
                 'Convert error ``max_time`` parameter in ``streamlines_from_source``'
             )
-        if pv._version.version_info >= (0, 49):
+        if pv._version.version_info > (0, 49):
             raise RuntimeError('Remove ``max_time`` parameter in ``streamlines_from_source``')
 
     with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):
