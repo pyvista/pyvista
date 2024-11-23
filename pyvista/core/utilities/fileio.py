@@ -15,7 +15,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 from .observers import Observer
 
 
-def set_pickle_format(format: str):  # noqa: A002
+def set_pickle_format(format: str) -> None:  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
 
     Parameters
@@ -850,7 +850,7 @@ def read_meshio(filename, file_format=None):
     return from_meshio(mesh)
 
 
-def save_meshio(filename, mesh, file_format=None, **kwargs):
+def save_meshio(filename, mesh, file_format=None, **kwargs) -> None:
     """Save mesh to file using meshio.
 
     Parameters

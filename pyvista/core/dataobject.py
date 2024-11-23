@@ -17,7 +17,11 @@ import pyvista
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
+from .utilities.arrays import PointLiteral
+from .utilities.arrays import RowLiteral
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
 from .utilities.fileio import read
@@ -205,7 +209,11 @@ class DataObject:
                     del fdata[key]
 
     @abstractmethod
-    def get_data_range(self):  # pragma: no cover
+    def get_data_range(
+        self,
+        arr_var: str | None = None,
+        preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
+    ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         raise NotImplementedError(
             f'{type(self)} mesh type does not have a `get_data_range` method.',
@@ -286,7 +294,7 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
+    def copy_meta_from(self, *args, **kwargs) -> None:  # pragma: no cover
         """Copy pyvista meta data onto this object from another object.
 
         Intended to be overridden by subclasses.
@@ -370,7 +378,7 @@ class DataObject:
 
         return True
 
-    def add_field_data(self, array: NumpyArray[float], name: str, deep: bool = True):
+    def add_field_data(self, array: NumpyArray[float], name: str, deep: bool = True) -> None:
         """Add field data.
 
         Use field data when size of the data you wish to associate

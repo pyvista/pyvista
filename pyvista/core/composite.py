@@ -160,7 +160,7 @@ class MultiBlock(
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
 
-    def wrap_nested(self):
+    def wrap_nested(self) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 
         This is performed in place.
@@ -415,7 +415,7 @@ class MultiBlock(
 
         return wrap(self.GetBlock(index))
 
-    def append(self, dataset: _TypeMultiBlockLeaf | None, name: str | None = None):
+    def append(self, dataset: _TypeMultiBlockLeaf | None, name: str | None = None) -> None:
         """Add a data set to the next block index.
 
         Parameters
@@ -536,7 +536,7 @@ class MultiBlock(
         except KeyError:
             return default
 
-    def set_block_name(self, index: int, name: str | None):
+    def set_block_name(self, index: int, name: str | None) -> None:
         """Set a block's string name at the specified index.
 
         Parameters
@@ -852,7 +852,7 @@ class MultiBlock(
         del self[index]
         return data
 
-    def reverse(self):
+    def reverse(self) -> None:
         """Reverse MultiBlock in-place.
 
         Examples
@@ -880,7 +880,7 @@ class MultiBlock(
         for i, name in enumerate(reversed(names)):
             self.set_block_name(i, name)
 
-    def clean(self, empty: bool = True):
+    def clean(self, empty: bool = True) -> None:
         """Remove any null blocks in place.
 
         Parameters
@@ -981,7 +981,7 @@ class MultiBlock(
         """Return the number of blocks."""
         return self.n_blocks
 
-    def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
+    def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
@@ -1367,7 +1367,7 @@ class MultiBlock(
         cell_name = cell_names.pop() if len(cell_names) == 1 else None
         return point_name, cell_name
 
-    def clear_all_data(self):
+    def clear_all_data(self) -> None:
         """Clear all data from all blocks."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1375,7 +1375,7 @@ class MultiBlock(
             elif block is not None:
                 block.clear_data()
 
-    def clear_all_point_data(self):
+    def clear_all_point_data(self) -> None:
         """Clear all point data from all blocks."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1383,7 +1383,7 @@ class MultiBlock(
             elif block is not None:
                 block.clear_point_data()
 
-    def clear_all_cell_data(self):
+    def clear_all_cell_data(self) -> None:
         """Clear all cell data from all blocks."""
         for block in self:
             if isinstance(block, MultiBlock):

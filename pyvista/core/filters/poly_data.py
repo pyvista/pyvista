@@ -2617,7 +2617,7 @@ class PolyDataFilters(DataSetFilters):
             return self, ridx
         return newmesh, ridx
 
-    def flip_normals(self):
+    def flip_normals(self) -> None:
         """Flip normals of a triangular mesh by reversing the point ordering.
 
         Examples

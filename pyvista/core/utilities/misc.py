@@ -187,7 +187,7 @@ def has_module(module_name) -> bool:
     return module_spec is not None
 
 
-def try_callback(func, *args):
+def try_callback(func, *args) -> None:
     """Wrap a given callback in a try statement.
 
     Parameters

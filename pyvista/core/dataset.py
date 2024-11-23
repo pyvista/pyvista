@@ -864,8 +864,8 @@ class DataSet(DataSetFilters, DataObject):
 
     def get_data_range(
         self,
-        arr_var: str | NumpyArray[float] | None = None,
-        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
+        arr_var: str | None = None,
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',  # type: ignore[override]
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 

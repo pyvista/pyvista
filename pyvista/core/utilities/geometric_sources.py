@@ -39,7 +39,7 @@ SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
 DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
-def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)):
+def translate(surf, center=(0.0, 0.0, 0.0), direction=(1.0, 0.0, 0.0)) -> None:
     """Translate and orient a mesh to a new center and direction.
 
     By default, the input mesh is considered centered at the origin
@@ -1074,7 +1074,7 @@ class Text3DSource(vtkVectorText):
         _check_range(depth, rng=(0, float('inf')), parm_name='depth') if depth is not None else None
         self._depth = depth
 
-    def update(self):
+    def update(self) -> None:
         """Update the output of the source."""
         if self._modified:
             is_empty_string = self.string == '' or self.string.isspace()
@@ -2523,7 +2523,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         # Avoid div by zero and return +z normal by default
         return tuple((normal / norm).tolist()) if norm else (0.0, 0.0, 1.0)
 
-    def flip_normal(self):
+    def flip_normal(self) -> None:
         """Flip the plane's normal.
 
         This method modifies the plane's :attr:`point_a` and :attr:`point_b` by
@@ -2533,7 +2533,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
         self.point_a = self.point_b
         self.point_b = point_a
 
-    def push(self, distance: float):  # numpydoc ignore: PR01
+    def push(self, distance: float) -> None:  # numpydoc ignore: PR01
         """Translate the plane in the direction of the normal by the distance specified."""
         _validation.validate_number(distance, dtype_out=float)
         self.center = (self.center + np.array(self.normal) * distance).tolist()
@@ -3608,7 +3608,7 @@ class AxesGeometrySource:
                 part.points = np.append(part.points, flipped_point, axis=0)  # type: ignore[assignment]
                 part.faces = np.append(part.faces, new_face)
 
-    def update(self):
+    def update(self) -> None:
         """Update the output of the source."""
         self._reset_shaft_and_tip_geometry()
 
@@ -3898,7 +3898,7 @@ class OrthogonalPlanesSource:
         for i, name in enumerate(valid_names):
             output.set_block_name(i, name)
 
-    def push(self, *distance: float | VectorLike[float]):  # numpydoc ignore=RT01
+    def push(self, *distance: float | VectorLike[float]) -> None:  # numpydoc ignore=RT01
         """Translate each plane by the specified distance along its normal.
 
         Internally, this method calls :meth:`pyvista.PlaneSource.push` on each
@@ -3916,7 +3916,7 @@ class OrthogonalPlanesSource:
         for source, dist in zip(self.sources, valid_distance):
             source.push(dist)
 
-    def update(self):
+    def update(self) -> None:
         """Update the output of the source."""
         for source, plane in zip(self.sources, self._output):
             plane.copy_from(source.output)
@@ -4315,7 +4315,7 @@ class CubeFacesSource(CubeSource):
         )
         self._names = cast(tuple[str, str, str, str, str, str], valid_names)
 
-    def update(self):
+    def update(self) -> None:
         """Update the output of the source."""
 
         def _scale_points(points_, origin_, scale_):

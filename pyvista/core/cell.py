@@ -158,7 +158,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """
         return bool(self.IsLinear())
 
-    def plot(self, **kwargs):
+    def plot(self, **kwargs) -> None:
         """Plot this cell.
 
         Parameters

@@ -7,6 +7,7 @@ from functools import wraps
 import pathlib
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import NoReturn
 from typing import cast
 
 import numpy as np
@@ -462,7 +463,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         self.Modified()
 
     @Grid.dimensions.setter  # type: ignore[attr-defined]
-    def dimensions(self, _dims):  # numpydoc ignore=GL08
+    def dimensions(self, _dims) -> NoReturn:  # numpydoc ignore=GL08
         """Set Dimensions.
 
         Parameters

@@ -610,7 +610,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy: bool = False):
+    def set_scalars(
+        self, scalars: ArrayLike[float], name='scalars', deep_copy: bool = False
+    ) -> None:
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -662,7 +664,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy: bool = False):
+    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy: bool = False) -> None:
         """Set the active vectors of this data attribute.
 
         Vectors are a quantity that has magnitude and direction, such
@@ -1014,7 +1016,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         return [self.get_array(name) for name in self.keys()]
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove all arrays in this object.
 
         Examples
@@ -1038,7 +1040,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def update(
         self, array_dict: dict[str, NumpyArray[float]] | DataSetAttributes, copy: bool = True
-    ):
+    ) -> None:
         """Update arrays in this object from another dictionary or dataset attributes.
 
         For each key, value given, add the pair. If it already exists, replace

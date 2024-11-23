@@ -6,6 +6,8 @@ The data objects does not have any sort of spatial reference.
 
 from __future__ import annotations
 
+from typing import NoReturn
+
 import numpy as np
 
 import pyvista
@@ -14,6 +16,8 @@ from . import _vtk_core as _vtk
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
+from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
 
@@ -192,7 +196,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.row_arrays.values()
 
-    def update(self, data):
+    def update(self, data) -> None:
         """Set the table data using a dict-like update.
 
         Parameters
@@ -337,7 +341,7 @@ class Table(DataObject, _vtk.vtkTable):
             data_frame[name] = array
         return data_frame
 
-    def save(self, *args, **kwargs):  # pragma: no cover
+    def save(self, *args, **kwargs) -> NoReturn:  # pragma: no cover
         """Save the table."""
         raise NotImplementedError(
             "Please use the `to_pandas` method and harness Pandas' wonderful file IO methods.",
@@ -346,7 +350,7 @@ class Table(DataObject, _vtk.vtkTable):
     def get_data_range(
         self,
         arr: str | None = None,
-        preference: str = 'row',
+        preference: RowLiteral | FieldLiteral = 'row',  # type: ignore[override]
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 

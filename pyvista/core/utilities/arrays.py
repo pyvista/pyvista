@@ -9,6 +9,7 @@ from itertools import product
 import json
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import NoReturn
 from typing import Union
 
 import numpy as np
@@ -185,7 +186,7 @@ def has_duplicates(arr):
     return (s[1:] == s[:-1]).any()
 
 
-def raise_has_duplicates(arr):
+def raise_has_duplicates(arr) -> None:
     """Raise a ValueError if an array is not unique.
 
     Parameters
@@ -383,7 +384,7 @@ def get_array_association(
     return matches[0]
 
 
-def raise_not_matching(scalars, dataset):
+def raise_not_matching(scalars, dataset) -> NoReturn:
     """Raise exception about inconsistencies.
 
     Parameters

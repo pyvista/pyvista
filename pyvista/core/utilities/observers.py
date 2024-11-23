@@ -127,7 +127,7 @@ class Observer:
         else:
             return kind, path, address, alert
 
-    def log_message(self, kind, alert):
+    def log_message(self, kind, alert) -> None:
         """Parse different event types and passes them to logging."""
         if kind == 'ERROR':
             logging.error(alert)
@@ -186,7 +186,7 @@ class Observer:
             return self.__message_etc
         return self.__message
 
-    def observe(self, algorithm):
+    def observe(self, algorithm) -> None:
         """Make this an observer of an algorithm."""
         if self.__observing:
             raise RuntimeError('This error observer is already observing an algorithm.')
@@ -238,7 +238,7 @@ class ProgressMonitor:
         self._old_handler = None
         self._progress_bar = None
 
-    def handler(self, sig, frame):
+    def handler(self, sig, frame) -> None:
         """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
