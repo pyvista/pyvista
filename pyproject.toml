@@ -227,8 +227,8 @@ warn_unused_ignores = true
 
 [tool.numpydoc_validation]
 checks = [
-  "all",
-  # all but the following:
+  "all", # all but the following:
+  #
   "ES01", # Not all docstrings need an extend summary.
   "EX01", # Examples: Will eventually enforce
   "GL01", # Contradicts numpydoc examples
