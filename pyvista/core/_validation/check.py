@@ -350,7 +350,7 @@ def check_integer(
         raise ValueError(f'{name} must have integer-like values.')
 
 
-def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array'):
+def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
     """Check if an array's elements are all nonnegative.
 
     Parameters
@@ -504,7 +504,7 @@ def check_range(
     strict_lower: bool = False,
     strict_upper: bool = False,
     name: str = 'Array',
-):
+) -> None:
     """Check if an array's values are all within a specific range.
 
     Parameters
@@ -704,7 +704,7 @@ def check_ndim(
         raise ValueError(msg)
 
 
-def check_number(num, /, *, name='Object'):
+def check_number(num, /, *, name='Object') -> None:
     """Check if an object is an instance of ``Number``.
 
     A number is any instance of ``numbers.Number``, e.g.  ``int``,
@@ -742,7 +742,7 @@ def check_number(num, /, *, name='Object'):
     check_instance(num, Number, allow_subclass=True, name=name)
 
 
-def check_string(obj, /, *, allow_subclass: bool = True, name='Object'):
+def check_string(obj, /, *, allow_subclass: bool = True, name='Object') -> None:
     """Check if an object is an instance of ``str``.
 
     Parameters
@@ -780,7 +780,7 @@ def check_string(obj, /, *, allow_subclass: bool = True, name='Object'):
     check_instance(obj, str, allow_subclass=allow_subclass, name=name)
 
 
-def check_sequence(obj, /, *, name='Object'):
+def check_sequence(obj, /, *, name='Object') -> None:
     """Check if an object is an instance of ``Sequence``.
 
     Parameters
@@ -814,7 +814,7 @@ def check_sequence(obj, /, *, name='Object'):
     check_instance(obj, Sequence, allow_subclass=True, name=name)
 
 
-def check_iterable(obj, /, *, name='Object'):
+def check_iterable(obj, /, *, name='Object') -> None:
     """Check if an object is an instance of ``Iterable``.
 
     Parameters
@@ -930,7 +930,7 @@ def check_instance(obj, /, classinfo, *, allow_subclass: bool = True, name='Obje
         raise TypeError(msg)
 
 
-def check_type(obj, /, classinfo, *, name='Object'):
+def check_type(obj, /, classinfo, *, name='Object') -> None:
     """Check if an object is one of the given type or types.
 
     Notes
@@ -977,7 +977,7 @@ def check_iterable_items(
     *,
     allow_subclass: bool = True,
     name='Iterable',
-):
+) -> None:
     """Check if an iterable's items all have a specified type.
 
     Parameters
