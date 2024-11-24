@@ -48,7 +48,7 @@ pyvista.DataSetType
 .. autotypevar:: DataSetType
 
 pyvista.DataSetMultiBlockType
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
