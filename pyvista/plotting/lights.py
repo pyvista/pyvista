@@ -807,8 +807,11 @@ class Light(vtkLight):
 
     @transform_matrix.setter
     def transform_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
-        trans = _validation.validate_transform4x4(matrix)
-        self.SetTransformMatrix(vtkmatrix_from_array(trans))
+        if matrix is None or isinstance(matrix, vtkMatrix4x4):
+            self.SetTransformMatrix(matrix)
+        else:
+            trans = _validation.validate_transform4x4(matrix)
+            self.SetTransformMatrix(vtkmatrix_from_array(trans))
 
     @property
     def light_type(self):  # numpydoc ignore=RT01
