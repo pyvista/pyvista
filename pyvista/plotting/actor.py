@@ -282,7 +282,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         pl.add_actor(self)  # type: ignore[arg-type]
         pl.show(**kwargs)
 
-    def copy(self, deep=True) -> Actor:
+    def copy(self, deep: bool = True) -> Actor:
         """Create a copy of this actor.
 
         Parameters
