@@ -348,16 +348,15 @@ These standards will be enforced using ``pre-commit`` using
 If for whatever reason you feel that your function should have an exception to
 any of the rules, add an exception to the function either in the
 ``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
-comment to exclude a certain check.
+comment to exclude a certain check. For example, we can omit the ``Return``
+section from docstrings and skip the RT01 check for magic methods like ``__init__``.
 
 .. code:: python
 
-    @strips.setter
-    def strips(self, strips):
-        if isinstance(strips, CellArray):
-            self.SetStrips(strips)
-        else:
-            self.SetStrips(CellArray(strips))
+    def __init__(self: foo):  # numpydoc ignore=RT01
+        """Initialize A Class."""
+        super().__init__()
+        self.foo = foo
 
 See the available validation checks in `numpydoc Validation
 <https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
