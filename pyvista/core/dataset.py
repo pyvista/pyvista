@@ -1609,7 +1609,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh, deep=deep)  # type: ignore[arg-type]
+            self.copy_meta_from(mesh, deep=deep)
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.

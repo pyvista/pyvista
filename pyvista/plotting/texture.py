@@ -449,7 +449,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     @property
-    def dimensions(self) -> tuple[float, float]:  # numpydoc ignore=RT01
+    def dimensions(self) -> tuple[int, int]:  # numpydoc ignore=RT01
         """Dimensions of the texture.
 
         Examples

@@ -433,13 +433,21 @@ Here's an example of adding error test codes that raise deprecation warning mess
 
     with pytest.warns(PyVistaDeprecationWarning):
         addition(a, b)
-        if pv._version.version_info >= (0, 40):
+        if pv._version.version_info > (0, 40):
             raise RuntimeError("Convert error this function")
-        if pv._version.version_info >= (0, 41):
+        if pv._version.version_info > (0, 41):
             raise RuntimeError("Remove this function")
 
 In the above code example, the old test code raises an error in v0.40 and v0.41.
 This will prevent us from forgetting to remove deprecations on version upgrades.
+
+.. note::
+
+    When releasing a new version, we need to update the version number to the next
+    development version. For example, if we are releasing version 0.37.0, the next
+    development version should be 0.38.0.dev0 which is greater than 0.37.0. This is
+    why we need to check if the version is greater than 0.40.0 and 0.41.0 in the
+    test code.
 
 When adding an additional parameter to an existing method or function, you are
 encouraged to use the ``.. versionadded`` sphinx directive. For example:
