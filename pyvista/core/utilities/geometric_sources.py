@@ -22,7 +22,6 @@ import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import BoundsTuple
-from pyvista.core.pointset import PolyData
 from pyvista.core.utilities.arrays import _coerce_pointslike_arg
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import _check_range
@@ -36,6 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
+    from pyvista.core.pointset import PolyData
 
 
 SINGLE_PRECISION = _vtk.vtkAlgorithm.SINGLE_PRECISION
@@ -307,7 +307,7 @@ if _vtk.vtk_version_info < (9, 3):
 
             """
             self.Update()
-            return cast(PolyData, wrap(self.GetOutput()))
+            return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -566,7 +566,7 @@ class ConeSource(_vtk.vtkConeSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -833,7 +833,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -894,7 +894,7 @@ class MultipleLinesSource(_vtk.vtkLineSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 class Text3DSource(vtkVectorText):
@@ -1377,7 +1377,7 @@ class CubeSource(_vtk.vtkCubeSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
     @property
     def point_dtype(self: CubeSource) -> str:
@@ -1614,7 +1614,7 @@ class DiscSource(_vtk.vtkDiskSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -1733,7 +1733,7 @@ class LineSource(_vtk.vtkLineSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -2031,7 +2031,7 @@ class SphereSource(_vtk.vtkSphereSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -2215,7 +2215,7 @@ class PolygonSource(_vtk.vtkRegularPolygonSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -2312,7 +2312,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -2524,7 +2524,7 @@ class PlaneSource(_vtk.vtkPlaneSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
     @property
     def normal(self: PlaneSource) -> tuple[float, float, float]:  # numpydoc ignore: RT01
@@ -2724,7 +2724,7 @@ class ArrowSource(_vtk.vtkArrowSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -2839,7 +2839,7 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 @no_new_attr
@@ -3138,7 +3138,7 @@ class SuperquadricSource(_vtk.vtkSuperquadricSource):
 
         """
         self.Update()
-        return cast(PolyData, wrap(self.GetOutput()))
+        return cast(pyvista.PolyData, wrap(self.GetOutput()))
 
 
 class _AxisEnum(IntEnum):
@@ -3696,9 +3696,9 @@ class AxesGeometrySource:
             )  # pragma: no cover
 
     @staticmethod
-    def _make_any_part(geometry: str | pyvista.DataSet) -> tuple[str, pyvista.PolyData]:
-        part: pyvista.DataSet
-        part_poly: pyvista.PolyData
+    def _make_any_part(geometry: str | DataSet) -> tuple[str, PolyData]:
+        part: DataSet
+        part_poly: PolyData
         if isinstance(geometry, str):
             name = geometry
             part = AxesGeometrySource._make_default_part(
@@ -3734,7 +3734,7 @@ class AxesGeometrySource:
 
     @staticmethod
     def _make_axes_parts(
-        geometry: str | pyvista.DataSet,
+        geometry: str | DataSet,
     ) -> tuple[str, tuple[PolyData, PolyData, PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesGeometrySource._make_any_part(geometry)
