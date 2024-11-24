@@ -14,6 +14,8 @@ from . import _vtk_core as _vtk
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
+from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
 
@@ -346,7 +348,7 @@ class Table(DataObject, _vtk.vtkTable):
     def get_data_range(
         self,
         arr: str | None = None,
-        preference: str = 'row',
+        preference: FieldLiteral | RowLiteral = 'row',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 

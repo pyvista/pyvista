@@ -1527,7 +1527,7 @@ class DataSetFilters:
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-        arr = get_array(self, scalars, preference=preference, err=False)
+        arr = get_array(self, scalars, preference=preference, err=False)  # type: ignore[arg-type]
         if arr is None:
             raise ValueError('No arrays present to threshold.')
 
@@ -3326,7 +3326,7 @@ class DataSetFilters:
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-        _ = get_array(self, scalars, preference='point', err=True)
+        _ = get_array(self, scalars, preference='point', err=True)  # type: ignore[arg-type]
 
         field = get_array_association(self, scalars, preference='point')
         if field != FieldAssociation.POINT:
@@ -3409,7 +3409,7 @@ class DataSetFilters:
         if vectors is None:
             pyvista.set_default_active_vectors(self)  # type: ignore[arg-type]
             field, vectors = self.active_vectors_info  # type: ignore[attr-defined]
-        arr = get_array(self, vectors, preference='point')
+        arr = get_array(self, vectors, preference='point')  # type: ignore[arg-type]
         field = get_array_association(self, vectors, preference='point')
         if arr is None:
             raise ValueError('No vectors present to warp by vector.')
@@ -5913,7 +5913,7 @@ class DataSetFilters:
                 if scalars_ is None:
                     set_default_active_scalars(self)  # type: ignore[arg-type]
                     _, scalars_ = self.active_scalars_info  # type: ignore[attr-defined]
-                array_ = get_array(self, scalars_, preference=preference_, err=True)
+                array_ = get_array(self, scalars_, preference=preference_, err=True)  # type: ignore[arg-type]
             except MissingDataError:
                 raise ValueError(
                     'No point data or cell data found. Scalar data is required to use this filter.',
@@ -8829,7 +8829,7 @@ class DataSetFilters:
 
         else:  # Use numpy
             # Get mapping from input ID to output ID
-            arr = get_array(self, scalars, preference=preference, err=True)
+            arr = get_array(self, scalars, preference=preference, err=True)  # type: ignore[arg-type]
             label_numbers_in, label_sizes = np.unique(arr, return_counts=True)  # type: ignore[call-overload]
             if sort:
                 label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]

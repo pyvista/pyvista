@@ -3681,7 +3681,7 @@ class PolyDataFilters(DataSetFilters):
             if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
                 raise MissingDataError('No point scalars to contour.')
             scalars = self.active_scalars_name
-        arr = get_array(self, scalars, preference='point', err=False)
+        arr = get_array(self, scalars, preference='point', err=False)  # type: ignore[arg-type]
         if arr is None:
             raise ValueError('No arrays present to contour.')
         field = get_array_association(self, scalars, preference='point')

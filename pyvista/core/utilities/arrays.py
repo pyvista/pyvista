@@ -8,8 +8,11 @@ import enum
 from itertools import product
 import json
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
+from typing import TypeVar
 from typing import Union
+from typing import overload
 
 import numpy as np
 
@@ -22,6 +25,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.dataset import DataSet
 
 
 class FieldAssociation(enum.Enum):
@@ -42,7 +46,34 @@ FieldLiteral = Literal[FieldAssociation.NONE, 'field']
 RowLiteral = Literal[FieldAssociation.ROW, 'row']
 
 
-def parse_field_choice(field):
+@overload
+def parse_field_choice(  # numpydoc ignore: GL08
+    field: PointLiteral | Literal['p', 'points'],
+) -> Literal[FieldAssociation.POINT]: ...
+@overload
+def parse_field_choice(  # numpydoc ignore: GL08
+    field: CellLiteral | Literal['c', 'cells'],
+) -> Literal[FieldAssociation.CELL]: ...
+@overload
+def parse_field_choice(  # numpydoc ignore: GL08
+    field: FieldLiteral | Literal['f', 'fields'],
+) -> Literal[FieldAssociation.POINT]: ...
+@overload
+def parse_field_choice(  # numpydoc ignore: GL08
+    field: RowLiteral | Literal['r'],
+) -> Literal[FieldAssociation.ROW]: ...
+@overload
+def parse_field_choice(  # numpydoc ignore: GL08
+    field: FieldAssociation,
+) -> FieldAssociation: ...
+def parse_field_choice(
+    field: FieldAssociation
+    | PointLiteral
+    | CellLiteral
+    | FieldLiteral
+    | RowLiteral
+    | Literal['p', 'c', 'f', 'r', 'points', 'cells', 'fields'],
+) -> FieldAssociation:
     """Return a field association object for a given field type string.
 
     Parameters
@@ -58,22 +89,21 @@ def parse_field_choice(field):
 
     """
     if isinstance(field, str):
-        field = field.strip().lower()
-        if field in ['cell', 'c', 'cells']:
-            field = FieldAssociation.CELL
-        elif field in ['point', 'p', 'points']:
-            field = FieldAssociation.POINT
-        elif field in ['field', 'f', 'fields']:
-            field = FieldAssociation.NONE
-        elif field in ['row', 'r']:
-            field = FieldAssociation.ROW
+        field_ = field.strip().lower()
+        if field_ in ['cell', 'c', 'cells']:
+            return FieldAssociation.CELL
+        elif field_ in ['point', 'p', 'points']:
+            return FieldAssociation.POINT
+        elif field_ in ['field', 'f', 'fields']:
+            return FieldAssociation.NONE
+        elif field_ in ['row', 'r']:
+            return FieldAssociation.ROW
         else:
             raise ValueError(f'Data field ({field}) not supported.')
     elif isinstance(field, FieldAssociation):
-        pass
+        return field
     else:
         raise TypeError(f'Data field ({field}) not supported.')
-    return field
 
 
 def _coerce_pointslike_arg(
@@ -124,7 +154,10 @@ def _coerce_pointslike_arg(
     return points, singular
 
 
-def copy_vtk_array(array, deep: bool = True):
+_vtkArrayType = TypeVar('_vtkArrayType', bound=_vtk.vtkAbstractArray)
+
+
+def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:
     """Create a deep or shallow copy of a VTK array.
 
     Parameters
@@ -167,7 +200,7 @@ def copy_vtk_array(array, deep: bool = True):
     return new_array
 
 
-def has_duplicates(arr):
+def has_duplicates(arr: NumpyArray[Any]):
     """Return if an array has any duplicates.
 
     Parameters
@@ -203,7 +236,7 @@ def raise_has_duplicates(arr):
         raise ValueError('Array contains duplicate values.')
 
 
-def convert_array(arr, name=None, deep: bool = False, array_type=None):
+def convert_array(arr, name: str | None = None, deep: bool = False, array_type=None):
     """Convert a NumPy array to a vtkDataArray or vice versa.
 
     Parameters
@@ -259,7 +292,12 @@ def convert_array(arr, name=None, deep: bool = False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err: bool = False) -> pyvista.ndarray | None:
+def get_array(
+    mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
+    name: str,
+    preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
+    err: bool = False,
+) -> pyvista.ndarray | None:
     """Search point, cell and field data for an array.
 
     Parameters
@@ -290,41 +328,41 @@ def get_array(mesh, name, preference='cell', err: bool = False) -> pyvista.ndarr
         if arr is None and err:
             raise KeyError(f'Data array ({name}) not present in this dataset.')
         return arr
+    else:
+        if not isinstance(preference, str):
+            raise TypeError('`preference` must be a string')
+        if preference not in ['cell', 'point', 'field']:
+            raise ValueError(
+                f'`preference` must be either "cell", "point", "field" for a '
+                f'{type(mesh)}, not "{preference}".',
+            )
 
-    if not isinstance(preference, str):
-        raise TypeError('`preference` must be a string')
-    if preference not in ['cell', 'point', 'field']:
-        raise ValueError(
-            f'`preference` must be either "cell", "point", "field" for a '
-            f'{type(mesh)}, not "{preference}".',
-        )
+        parr = point_array(mesh, name)
+        carr = cell_array(mesh, name)
+        farr = field_array(mesh, name)
+        preference_ = parse_field_choice(preference)
+        if sum([array is not None for array in (parr, carr, farr)]) > 1:
+            if preference_ == FieldAssociation.CELL:
+                return carr
+            elif preference_ == FieldAssociation.POINT:
+                return parr
+            else:  # must be field
+                return farr
 
-    parr = point_array(mesh, name)
-    carr = cell_array(mesh, name)
-    farr = field_array(mesh, name)
-    preference = parse_field_choice(preference)
-    if sum([array is not None for array in (parr, carr, farr)]) > 1:
-        if preference == FieldAssociation.CELL:
-            return carr
-        elif preference == FieldAssociation.POINT:
+        if parr is not None:
             return parr
-        else:  # must be field
+        elif carr is not None:
+            return carr
+        elif farr is not None:
             return farr
-
-    if parr is not None:
-        return parr
-    elif carr is not None:
-        return carr
-    elif farr is not None:
-        return farr
-    elif err:
-        raise KeyError(f'Data array ({name}) not present in this dataset.')
-    return None
+        elif err:
+            raise KeyError(f'Data array ({name}) not present in this dataset.')
+        return None
 
 
 def get_array_association(
     mesh,
-    name,
+    name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
     err: bool = False,
 ) -> FieldAssociation:
@@ -411,7 +449,7 @@ def raise_not_matching(scalars, dataset):
     )
 
 
-def _assoc_array(obj, name, association='point'):
+def _assoc_array(obj, name: str, association: str = 'point'):
     """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
 
     If the array or index doesn't exist, return nothing. This matches VTK's
@@ -432,7 +470,7 @@ def _assoc_array(obj, name, association='point'):
     return None
 
 
-def point_array(obj, name):
+def point_array(obj: DataSet | _vtk.vtkDataSet, name: str):
     """Return point array of a pyvista or vtk object.
 
     Parameters
@@ -452,7 +490,7 @@ def point_array(obj, name):
     return _assoc_array(obj, name, 'point')
 
 
-def field_array(obj, name):
+def field_array(obj, name: str):
     """Return field data of a pyvista or vtk object.
 
     Parameters
@@ -472,7 +510,7 @@ def field_array(obj, name):
     return _assoc_array(obj, name, 'field')
 
 
-def cell_array(obj, name):
+def cell_array(obj, name: str):
     """Return cell array of a pyvista or vtk object.
 
     Parameters
@@ -492,7 +530,7 @@ def cell_array(obj, name):
     return _assoc_array(obj, name, 'cell')
 
 
-def row_array(obj, name):
+def row_array(obj, name: str):
     """Return row array of a vtk object.
 
     Parameters
@@ -585,7 +623,7 @@ def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray) -> None:
         vtkarr.GetObjectName = lambda: 'scalar'  # type: ignore[method-assign]
 
 
-def convert_string_array(arr, name=None):
+def convert_string_array(arr, name: str | None = None):
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
     If a scalar string is provided, it is converted to a vtkCharArray
@@ -840,34 +878,39 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
     """
 
     @property
-    def _string(self) -> str:
+    def _string(self: _SerializedDictArray) -> str:
         """Get the vtkStringArray string."""
         return ''.join([self.GetValue(i) for i in range(self.GetNumberOfValues())])
 
     @_string.setter
-    def _string(self, str_: str) -> None:
+    def _string(self: _SerializedDictArray, str_: str) -> None:
         """Set the vtkStringArray to a specified string."""
         self.SetNumberOfValues(0)  # Clear string
         for char in str_:  # Populate string
             self.InsertNextValue(char)
 
-    def _update_string(self) -> None:
+    def _update_string(self: _SerializedDictArray) -> None:
         """Format dict data as JSON and update the vtkStringArray."""
         data_str = json.dumps(self.data)
         if data_str != self._string:
             self._string = data_str
 
-    def __repr__(self):
+    def __repr__(self: _SerializedDictArray) -> str:
         """Return JSON-formatted dict representation."""
         return self._string
 
-    def __init__(self, dict_=None, /, **kwargs) -> None:
+    def __init__(
+        self: _SerializedDictArray,
+        dict_: str | dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None = None,
+        /,
+        **kwargs,
+    ) -> None:
         # Init from JSON string
         if isinstance(dict_, str):
             dict_ = json.loads(dict_)
 
         # Init UserDict
-        super().__init__(dict_, **kwargs)
+        super().__init__(dict_, **kwargs)  # type: ignore[arg-type]
         self._update_string()
 
         # Flag self as a scalar string
@@ -875,7 +918,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         # shows this array as `str`
         _set_string_scalar_object_name(self)
 
-    def __getstate__(self) -> None:
+    def __getstate__(self: _SerializedDictArray) -> None:
         """Support pickling.
 
         This method does nothing. It only exists to make the pickle library happy.
@@ -883,7 +926,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         E.g. DataObjects can support this by storing this array as field data
         """
 
-    def __setstate__(self, state) -> None:
+    def __setstate__(self: _SerializedDictArray, state: Any) -> None:
         """Support pickling.
 
         This method does nothing. It only exists to make the pickle library happy.
@@ -895,36 +938,36 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
     # the dictionary. This ensures the serialized string is also updated
     # and synced with the dict
 
-    def __setitem__(self, key, item) -> None:
+    def __setitem__(self: _SerializedDictArray, key: Any, item: Any) -> None:
         super().__setitem__(key, item)
         self._update_string()
 
-    def __delitem__(self, key) -> None:
+    def __delitem__(self: _SerializedDictArray, key: Any) -> None:
         super().__delitem__(key)
         self._update_string()
 
-    def __setattr__(self, key, value) -> None:
+    def __setattr__(self: _SerializedDictArray, key: Any, value: Any) -> None:
         object.__setattr__(self, key, value)
         self._update_string() if key != '_string' else None
 
-    def update(self, *args, **kwargs) -> None:
+    def update(self: _SerializedDictArray, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
         self._update_string()
 
-    def popitem(self):
+    def popitem(self: _SerializedDictArray) -> Any:
         item = super().popitem()
         self._update_string()
         return item
 
-    def pop(self, __key):  # type: ignore[override]
+    def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]
         item = super().pop(__key)
         self._update_string()
         return item
 
-    def clear(self) -> None:
+    def clear(self: _SerializedDictArray) -> None:
         super().clear()
         self._update_string()
 
-    def setdefault(self, *args, **kwargs) -> None:
+    def setdefault(self: _SerializedDictArray, *args, **kwargs) -> None:
         super().setdefault(*args, **kwargs)
         self._update_string()
