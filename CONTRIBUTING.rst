@@ -353,7 +353,7 @@ section from docstrings and skip the RT01 check for magic methods like ``__init_
 
 .. code:: python
 
-    def __init__(self: foo):  # numpydoc ignore=RT01
+    def __init__(self, foo):  # numpydoc ignore=RT01
         """Initialize A Class."""
         super().__init__()
         self.foo = foo
