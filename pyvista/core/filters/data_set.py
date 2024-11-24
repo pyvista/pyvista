@@ -4740,7 +4740,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ):
+    ) -> None:
         """Sample a dataset along a high resolution line and plot.
 
         Plot the variables of interest in 2D using matplotlib where the
@@ -5066,7 +5066,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ):
+    ) -> None:
         """Sample a dataset along a circular arc and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -5195,7 +5195,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ):
+    ) -> None:
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -6105,7 +6105,7 @@ class DataSetFilters:
         validation methods.
         """
 
-        def _update_id_mask(logic_):
+        def _update_id_mask(logic_) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
             id_mask[logic_] = True
@@ -8922,7 +8922,7 @@ def _swap_axes(vectors, values):
     module-level function for testing purposes.
     """
 
-    def _swap(axis_a, axis_b):
+    def _swap(axis_a, axis_b) -> None:
         axis_order = np.argmax(np.abs(vectors), axis=1)
         if axis_order[axis_a] > axis_order[axis_b]:
             vectors[[axis_a, axis_b]] = vectors[[axis_b, axis_a]]
