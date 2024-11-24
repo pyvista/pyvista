@@ -974,7 +974,7 @@ class Text3DSource(vtkVectorText):
         self._depth = depth
         self._modified = True
 
-    def __setattr__(self, name: str, value) -> None:  # numpydoc ignore=GL08
+    def __setattr__(self, name: str, value) -> None:
         """Override to set modified flag and disable setting new attributes."""
         if hasattr(self, name) and name != '_modified':
             # Set modified flag
@@ -1001,7 +1001,7 @@ class Text3DSource(vtkVectorText):
         return self.GetText()
 
     @string.setter
-    def string(self, string: str) -> None:  # numpydoc ignore=GL08
+    def string(self, string: str) -> None:
         self.SetText('' if string is None else string)
 
     @property
@@ -1018,7 +1018,7 @@ class Text3DSource(vtkVectorText):
         return self._process_empty_string
 
     @process_empty_string.setter
-    def process_empty_string(self, value: bool) -> None:  # numpydoc ignore=GL08
+    def process_empty_string(self, value: bool) -> None:
         self._process_empty_string = value
 
     @property
@@ -1031,7 +1031,7 @@ class Text3DSource(vtkVectorText):
         return self._center
 
     @center.setter
-    def center(self, center: VectorLike[float]) -> None:  # numpydoc ignore=GL08
+    def center(self, center: VectorLike[float]) -> None:
         valid_center = _validation.validate_array3(center, dtype_out=float, to_tuple=True)
         self._center = cast(tuple[float, float, float], valid_center)
 
@@ -1045,7 +1045,7 @@ class Text3DSource(vtkVectorText):
         return self._normal
 
     @normal.setter
-    def normal(self, normal: VectorLike[float]) -> None:  # numpydoc ignore=GL08
+    def normal(self, normal: VectorLike[float]) -> None:
         valid_normal = _validation.validate_array3(normal, dtype_out=float, to_tuple=True)
         self._normal = cast(tuple[float, float, float], valid_normal)
 
@@ -1055,7 +1055,7 @@ class Text3DSource(vtkVectorText):
         return self._width
 
     @width.setter
-    def width(self, width: float) -> None:  # numpydoc ignore=GL08
+    def width(self, width: float) -> None:
         _check_range(width, rng=(0, float('inf')), parm_name='width') if width is not None else None
         self._width = width
 
@@ -1065,7 +1065,7 @@ class Text3DSource(vtkVectorText):
         return self._height
 
     @height.setter
-    def height(self, height: float) -> None:  # numpydoc ignore=GL08
+    def height(self, height: float) -> None:
         (
             _check_range(height, rng=(0, float('inf')), parm_name='height')
             if height is not None
@@ -1079,7 +1079,7 @@ class Text3DSource(vtkVectorText):
         return self._depth
 
     @depth.setter
-    def depth(self, depth: float) -> None:  # numpydoc ignore=GL08
+    def depth(self, depth: float) -> None:
         _check_range(depth, rng=(0, float('inf')), parm_name='depth') if depth is not None else None
         self._depth = depth
 
@@ -3294,7 +3294,7 @@ class AxesGeometrySource:
         return self._symmetric
 
     @symmetric.setter
-    def symmetric(self, val: bool) -> None:  # numpydoc ignore=GL08
+    def symmetric(self, val: bool) -> None:
         self._symmetric = val
 
     @property
@@ -3359,7 +3359,7 @@ class AxesGeometrySource:
         return self._symmetric_bounds
 
     @symmetric_bounds.setter
-    def symmetric_bounds(self, val: bool) -> None:  # numpydoc ignore=GL08
+    def symmetric_bounds(self, val: bool) -> None:
         self._symmetric_bounds = val
 
     @property
@@ -3385,7 +3385,7 @@ class AxesGeometrySource:
         return tuple(self._shaft_length.tolist())
 
     @shaft_length.setter
-    def shaft_length(self, length: float | VectorLike[float]) -> None:  # numpydoc ignore=GL08
+    def shaft_length(self, length: float | VectorLike[float]) -> None:
         self._shaft_length: NumpyArray[float] = _validation.validate_array3(
             length,
             broadcast=True,
@@ -3416,7 +3416,7 @@ class AxesGeometrySource:
         return tuple(self._tip_length.tolist())
 
     @tip_length.setter
-    def tip_length(self, length: float | VectorLike[float]) -> None:  # numpydoc ignore=GL08
+    def tip_length(self, length: float | VectorLike[float]) -> None:
         self._tip_length: NumpyArray[float] = _validation.validate_array3(
             length,
             broadcast=True,
@@ -3444,7 +3444,7 @@ class AxesGeometrySource:
         return self._tip_radius
 
     @tip_radius.setter
-    def tip_radius(self, radius: float) -> None:  # numpydoc ignore=GL08
+    def tip_radius(self, radius: float) -> None:
         _validation.check_range(radius, (0, float('inf')), name='tip radius')
         self._tip_radius = radius
 
@@ -3468,7 +3468,7 @@ class AxesGeometrySource:
         return self._shaft_radius
 
     @shaft_radius.setter
-    def shaft_radius(self, radius: float) -> None:  # numpydoc ignore=GL08
+    def shaft_radius(self, radius: float) -> None:
         _validation.check_range(radius, (0, float('inf')), name='shaft radius')
         self._shaft_radius = radius
 
@@ -3508,9 +3508,7 @@ class AxesGeometrySource:
         return self._shaft_type
 
     @shaft_type.setter
-    def shaft_type(
-        self, shaft_type: GeometryTypes | pyvista.DataSet
-    ) -> None:  # numpydoc ignore=GL08
+    def shaft_type(self, shaft_type: GeometryTypes | pyvista.DataSet) -> None:
         self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
@@ -3551,7 +3549,7 @@ class AxesGeometrySource:
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(self, tip_type: str | pyvista.DataSet) -> None:  # numpydoc ignore=GL08
+    def tip_type(self, tip_type: str | pyvista.DataSet) -> None:
         self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
 
     def _set_normalized_datasets(self, part: _PartEnum, geometry: str | pyvista.DataSet):
@@ -3818,9 +3816,7 @@ class OrthogonalPlanesSource:
         return cast(tuple[str, str, str], self._normal_sign)
 
     @normal_sign.setter
-    def normal_sign(
-        self, sign: Literal['+', '-'] | Sequence[str] = '+'
-    ) -> None:  # numpydoc ignore=GL08
+    def normal_sign(self, sign: Literal['+', '-'] | Sequence[str] = '+') -> None:
         def _check_sign(sign_) -> None:
             allowed = ['+', '-']
             _validation.check_contains(item=sign_, container=allowed, name='normal sign')
@@ -3848,7 +3844,7 @@ class OrthogonalPlanesSource:
         return self._resolution
 
     @resolution.setter
-    def resolution(self, resolution: int | VectorLike[int]) -> None:  # numpydoc ignore=GL08
+    def resolution(self, resolution: int | VectorLike[int]) -> None:
         valid_resolution = _validation.validate_array3(
             resolution, broadcast=True, to_tuple=True, name='resolution'
         )
@@ -3871,7 +3867,7 @@ class OrthogonalPlanesSource:
         return self._bounds
 
     @bounds.setter
-    def bounds(self, bounds: BoundsTuple) -> None:  # numpydoc ignore=GL08
+    def bounds(self, bounds: BoundsTuple) -> None:
         bounds_tuple = _validation.validate_array(
             bounds, dtype_out=float, must_have_length=6, to_tuple=True, name='bounds'
         )
@@ -3905,7 +3901,7 @@ class OrthogonalPlanesSource:
         return self._names
 
     @names.setter
-    def names(self, names: Sequence[str]) -> None:  # numpydoc ignore=GL08
+    def names(self, names: Sequence[str]) -> None:
         _validation.check_instance(names, (tuple, list), name='names')
         _validation.check_iterable_items(names, str, name='names')
         _validation.check_length(names, exact_length=3, name='names')
@@ -4182,7 +4178,7 @@ class CubeFacesSource(CubeSource):
         return self._frame_width
 
     @frame_width.setter
-    def frame_width(self, width: float | None) -> None:  # numpydoc ignore=GL08
+    def frame_width(self, width: float | None) -> None:
         self._frame_width = (
             width
             if width is None
@@ -4224,7 +4220,7 @@ class CubeFacesSource(CubeSource):
         return self._shrink_factor
 
     @shrink_factor.setter
-    def shrink_factor(self, factor: float | None) -> None:  # numpydoc ignore=GL08
+    def shrink_factor(self, factor: float | None) -> None:
         self._shrink_factor = (
             factor
             if factor is None
@@ -4268,7 +4264,7 @@ class CubeFacesSource(CubeSource):
         return self._explode_factor
 
     @explode_factor.setter
-    def explode_factor(self, factor: float | None) -> None:  # numpydoc ignore=GL08
+    def explode_factor(self, factor: float | None) -> None:
         self._explode_factor = (
             factor if factor is None else _validation.validate_number(factor, name='explode factor')
         )
@@ -4314,7 +4310,7 @@ class CubeFacesSource(CubeSource):
     @names.setter
     def names(
         self, names: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str]
-    ) -> None:  # numpydoc ignore=GL08
+    ) -> None:
         name = 'face names'
         _validation.check_instance(names, (list, tuple), name=name)
         _validation.check_iterable_items(names, str, name=name)

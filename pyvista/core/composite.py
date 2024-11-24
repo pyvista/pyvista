@@ -282,7 +282,7 @@ class MultiBlock(
         return self.GetNumberOfBlocks()
 
     @n_blocks.setter
-    def n_blocks(self, n) -> None:  # numpydoc ignore=GL08
+    def n_blocks(self, n) -> None:
         """Change the total number of blocks set.
 
         Parameters
@@ -658,16 +658,14 @@ class MultiBlock(
         self,
         index: int | str,
         data: _TypeMultiBlockLeaf | None,
-    ) -> None:  # numpydoc ignore=GL08
-        ...  # pragma: no cover
+    ) -> None: ...  # pragma: no cover
 
     @overload
     def __setitem__(
         self,
         index: slice,
         data: Iterable[_TypeMultiBlockLeaf | None],
-    ) -> None:  # numpydoc ignore=GL08
-        ...  # pragma: no cover
+    ) -> None: ...  # pragma: no cover
 
     def __setitem__(
         self,

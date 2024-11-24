@@ -65,7 +65,7 @@ class Grid(DataSet):
         return self.GetDimensions()
 
     @dimensions.setter
-    def dimensions(self, dims: Sequence[int]) -> None:  # numpydoc ignore=GL08
+    def dimensions(self, dims: Sequence[int]) -> None:
         self.SetDimensions(*dims)
         self.Modified()
 
@@ -382,7 +382,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetXCoordinates())
 
     @x.setter
-    def x(self, coords: Sequence[float]) -> None:  # numpydoc ignore=GL08
+    def x(self, coords: Sequence[float]) -> None:
         self.SetXCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -419,7 +419,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetYCoordinates())
 
     @y.setter
-    def y(self, coords: Sequence[float]) -> None:  # numpydoc ignore=GL08
+    def y(self, coords: Sequence[float]) -> None:
         self.SetYCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -456,7 +456,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetZCoordinates())
 
     @z.setter
-    def z(self, coords: Sequence[float]) -> None:  # numpydoc ignore=GL08
+    def z(self, coords: Sequence[float]) -> None:
         self.SetZCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -766,7 +766,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.GetOrigin()  # type: ignore[return-value]
 
     @origin.setter
-    def origin(self, origin: Sequence[float | int]) -> None:  # numpydoc ignore=GL08
+    def origin(self, origin: Sequence[float | int]) -> None:
         self.SetOrigin(origin[0], origin[1], origin[2])
         self.Modified()
 

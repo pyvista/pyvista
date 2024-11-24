@@ -429,7 +429,7 @@ class Transform(_vtk.vtkTransform):
         return self._point
 
     @point.setter
-    def point(self, point: VectorLike[float] | None) -> None:  # numpydoc ignore=GL08
+    def point(self, point: VectorLike[float] | None) -> None:
         self._point = (
             None
             if point is None
@@ -1372,7 +1372,7 @@ class Transform(_vtk.vtkTransform):
         return array
 
     @matrix.setter
-    def matrix(self, trans: TransformLike) -> None:  # numpydoc ignore=GL08
+    def matrix(self, trans: TransformLike) -> None:
         self.identity()
         self.concatenate(trans)
 
