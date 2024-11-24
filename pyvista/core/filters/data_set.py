@@ -37,8 +37,6 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
-    from numbers import Number
-
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -7577,7 +7575,7 @@ class DataSetFilters:
 
     def scale(
         self,
-        xyz: Number | VectorLike[float],
+        xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
         point: VectorLike[float] | None = None,
