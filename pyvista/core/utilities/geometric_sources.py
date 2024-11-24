@@ -1046,8 +1046,8 @@ class Text3DSource(vtkVectorText):
 
     @normal.setter
     def normal(self, normal: VectorLike[float]) -> None:
-        valid_normal = _validation.validate_array3(normal, dtype_out=float, to_tuple=True)
-        self._normal = cast(tuple[float, float, float], valid_normal)
+        normal_ = _validation.validate_array3(normal, dtype_out=float, to_tuple=True)
+        self._normal = cast(tuple[float, float, float], normal_)
 
     @property
     def width(self) -> float | None:  # numpydoc ignore=RT01
