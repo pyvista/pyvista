@@ -3235,10 +3235,10 @@ class AxesGeometrySource:
     def __init__(
         self: AxesGeometrySource,
         *,
-        shaft_type: GeometryTypes | pyvista.DataSet = 'cylinder',
+        shaft_type: GeometryTypes | DataSet = 'cylinder',
         shaft_radius: float = 0.025,
         shaft_length: float | VectorLike[float] = 0.8,
-        tip_type: GeometryTypes | pyvista.DataSet = 'cone',
+        tip_type: GeometryTypes | DataSet = 'cone',
         tip_radius: float = 0.1,
         tip_length: float | VectorLike[float] = 0.2,
         symmetric: bool = False,
@@ -3520,7 +3520,7 @@ class AxesGeometrySource:
 
     @shaft_type.setter
     def shaft_type(
-        self: AxesGeometrySource, shaft_type: GeometryTypes | pyvista.DataSet
+        self: AxesGeometrySource, shaft_type: GeometryTypes | DataSet
     ) -> None:  # numpydoc ignore=GL08
         self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
 
@@ -3562,13 +3562,11 @@ class AxesGeometrySource:
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(
-        self: AxesGeometrySource, tip_type: str | pyvista.DataSet
-    ) -> None:  # numpydoc ignore=GL08
+    def tip_type(self: AxesGeometrySource, tip_type: str | DataSet) -> None:  # numpydoc ignore=GL08
         self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
 
     def _set_normalized_datasets(
-        self: AxesGeometrySource, part: _PartEnum, geometry: str | pyvista.DataSet
+        self: AxesGeometrySource, part: _PartEnum, geometry: str | DataSet
     ) -> str:
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
         datasets = (
