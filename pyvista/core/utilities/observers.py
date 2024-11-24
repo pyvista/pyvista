@@ -65,7 +65,7 @@ class VtkErrorCatcher:
 
     """
 
-    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True):
+    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True) -> None:
         """Initialize context manager."""
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
@@ -102,7 +102,9 @@ class VtkEvent(NamedTuple):
 class Observer:
     """A standard class for observing VTK objects."""
 
-    def __init__(self, event_type='ErrorEvent', log: bool = True, store_history: bool = False):
+    def __init__(
+        self, event_type='ErrorEvent', log: bool = True, store_history: bool = False
+    ) -> None:
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
