@@ -668,7 +668,7 @@ class CompositePolyDataMapper(
     def color_missing_with_nan(self, value: bool):  # numpydoc ignore=GL08
         self.SetColorMissingArraysWithNanColor(value)
 
-    def set_unique_colors(self, color_cycler=True):
+    def set_unique_colors(self, color_cycler: bool = True):
         """Set each block of the dataset to a unique color.
 
         This uses ``matplotlib``'s color cycler by default.

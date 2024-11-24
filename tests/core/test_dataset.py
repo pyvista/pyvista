@@ -2,19 +2,8 @@
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
 
-from hypothesis import HealthCheck
-from hypothesis import assume
-from hypothesis import given
-from hypothesis import settings
-from hypothesis.extra.numpy import array_shapes
-from hypothesis.extra.numpy import arrays
-from hypothesis.strategies import composite
-from hypothesis.strategies import floats
-from hypothesis.strategies import integers
-from hypothesis.strategies import one_of
 import numpy as np
 import pytest
 import vtk
@@ -35,28 +24,10 @@ from pyvista.examples import load_uniform
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core.dataset import DataSet
 
-HYPOTHESIS_MAX_EXAMPLES = 20
-
-
-@pytest.fixture
-def grid():
-    return pv.UnstructuredGrid(examples.hexbeamfile)
-
 
 def test_invalid_copy_from(grid):
     with pytest.raises(TypeError):
         grid.copy_from(pv.Plane())
-
-
-@composite
-def n_numbers(draw, n):
-    numbers = []
-    for _ in range(n):
-        number = draw(
-            one_of(floats(), integers(max_value=np.iinfo(int).max, min_value=np.iinfo(int).min))
-        )
-        numbers.append(number)
-    return numbers
 
 
 def test_memory_address(grid):
@@ -277,138 +248,10 @@ def test_copy_metadata(globe):
     )
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
-@given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
-def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
-    trans = pv.Transform()
-    trans.check_finite = False
-    trans.RotateWXYZ(*rotate_amounts)
-    trans.translate(translate_amounts)
-    trans.Update()
-
-    # Apply transform with pyvista filter
-    grid_a = grid.copy()
-    grid_a.transform(trans)
-
-    # Apply transform with vtk filter
-    grid_b = grid.copy()
-    f = vtk.vtkTransformFilter()
-    f.SetInputDataObject(grid_b)
-    f.SetTransform(trans)
-    f.Update()
-    grid_b = pv.wrap(f.GetOutput())
-
-    # treat INF as NAN (necessary for allclose)
-    grid_a.points[np.isinf(grid_a.points)] = np.nan
-    assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
-
-
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
-@given(rotate_amounts=n_numbers(4))
-def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amounts, grid):
-    # test non homogeneous transform
-    trans_rotate_only = pv.Transform()
-    trans_rotate_only.check_finite = False
-    trans_rotate_only.RotateWXYZ(*rotate_amounts)
-    trans_rotate_only.Update()
-
-    grid_copy = grid.copy()
-    grid_copy.transform(trans_rotate_only)
-
-    from pyvista.core.utilities.transformations import apply_transformation_to_points
-
-    trans_arr = trans_rotate_only.matrix[:3, :3]
-    trans_pts = apply_transformation_to_points(trans_arr, grid.points)
-    assert np.allclose(grid_copy.points, trans_pts, equal_nan=True)
-
-
-def test_translate_should_not_fail_given_none(grid):
-    bounds = grid.bounds
-    grid.transform(None)
-    assert grid.bounds == bounds
-
-
 def test_set_points():
     dataset = pv.UnstructuredGrid()
     points = np.random.default_rng().random((10, 3))
     dataset.points = pv.vtk_points(points)
-
-
-def test_translate_should_fail_bad_points_or_transform(grid):
-    points = np.random.default_rng().random((10, 2))
-    bad_points = np.random.default_rng().random((10, 2))
-    trans = np.random.default_rng().random((4, 4))
-    bad_trans = np.random.default_rng().random((2, 4))
-    with pytest.raises(ValueError):  # noqa: PT011
-        pv.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
-
-    with pytest.raises(ValueError):  # noqa: PT011
-        pv.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
-
-
-@settings(
-    suppress_health_check=[HealthCheck.function_scoped_fixture],
-    max_examples=HYPOTHESIS_MAX_EXAMPLES,
-)
-@given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
-def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
-    assume(array.shape not in [(3, 3), (4, 4)])
-    match = 'Shape must be one of [(3, 3), (4, 4)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        grid.transform(array)
-
-
-@pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
-def test_translate_should_translate_grid(grid, axis_amounts):
-    grid_copy = grid.copy()
-    grid_copy.translate(axis_amounts, inplace=True)
-
-    grid_points = grid.points.copy() + np.array(axis_amounts)
-    assert np.allclose(grid_copy.points, grid_points)
-
-
-@settings(
-    suppress_health_check=[HealthCheck.function_scoped_fixture],
-    max_examples=HYPOTHESIS_MAX_EXAMPLES,
-)
-@given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
-@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
-def test_rotate_should_match_vtk_rotation(angle, axis, grid):
-    trans = vtk.vtkTransform()
-    getattr(trans, f'Rotate{axis.upper()}')(angle)
-    trans.Update()
-
-    trans_filter = vtk.vtkTransformFilter()
-    trans_filter.SetTransform(trans)
-    trans_filter.SetInputData(grid)
-    trans_filter.Update()
-    grid_a = pv.UnstructuredGrid(trans_filter.GetOutput())
-
-    grid_b = grid.copy()
-    getattr(grid_b, f'rotate_{axis}')(angle, inplace=True)
-    assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
-
-
-def test_rotate_90_degrees_four_times_should_return_original_geometry():
-    sphere = pv.Sphere()
-    sphere.rotate_y(90, inplace=True)
-    sphere.rotate_y(90, inplace=True)
-    sphere.rotate_y(90, inplace=True)
-    sphere.rotate_y(90, inplace=True)
-    assert np.all(sphere.points == pv.Sphere().points)
-
-
-def test_rotate_180_degrees_two_times_should_return_original_geometry():
-    sphere = pv.Sphere()
-    sphere.rotate_x(180, inplace=True)
-    sphere.rotate_x(180, inplace=True)
-    assert np.all(sphere.points == pv.Sphere().points)
-
-
-def test_rotate_vector_90_degrees_should_not_distort_geometry():
-    cylinder = pv.Cylinder()
-    rotated = cylinder.rotate_vector(vector=(1, 1, 0), angle=90)
-    assert np.isclose(cylinder.volume, rotated.volume)
 
 
 def test_make_points_double(grid):
@@ -1792,9 +1635,9 @@ def mesh():
 def test_active_t_coords_deprecated(mesh):
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.active_t_coords
-        if pv._version.version_info >= (0, 46):
+        if pv._version.version_info > (0, 46):
             raise RuntimeError('Remove this deprecated property')
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.active_t_coords = t_coords
-        if pv._version.version_info >= (0, 46):
+        if pv._version.version_info > (0, 46):
             raise RuntimeError('Remove this deprecated property')

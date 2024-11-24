@@ -67,7 +67,7 @@ class Grid(DataSet):
         return self.GetDimensions()
 
     @dimensions.setter
-    def dimensions(self, dims: Sequence[int]):  # numpydoc ignore=GL08
+    def dimensions(self, dims: Sequence[int]) -> None:  # numpydoc ignore=GL08
         self.SetDimensions(*dims)
         self.Modified()
 
@@ -173,8 +173,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     def __init__(
         self,
         *args,
-        check_duplicates=False,
-        deep=False,
+        check_duplicates: bool = False,
+        deep: bool = False,
         **kwargs,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize the rectilinear grid."""
@@ -223,7 +223,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         """Return the str representation."""
         return DataSet.__str__(self)
 
-    def _update_dimensions(self):
+    def _update_dimensions(self) -> None:
         """Update the dimensions if coordinates have changed."""
         self.SetDimensions(len(self.x), len(self.y), len(self.z))
 
@@ -233,7 +233,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         y: NumpyArray[float],
         z: NumpyArray[float],
         check_duplicates: bool = False,
-    ):
+    ) -> None:
         """Create VTK rectilinear grid directly from numpy arrays.
 
         Each array gives the uniques coordinates of the mesh along each axial
@@ -384,7 +384,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetXCoordinates())
 
     @x.setter
-    def x(self, coords: Sequence[float]):  # numpydoc ignore=GL08
+    def x(self, coords: Sequence[float]) -> None:  # numpydoc ignore=GL08
         self.SetXCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -421,7 +421,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetYCoordinates())
 
     @y.setter
-    def y(self, coords: Sequence[float]):  # numpydoc ignore=GL08
+    def y(self, coords: Sequence[float]) -> None:  # numpydoc ignore=GL08
         self.SetYCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -458,7 +458,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetZCoordinates())
 
     @z.setter
-    def z(self, coords: Sequence[float]):  # numpydoc ignore=GL08
+    def z(self, coords: Sequence[float]) -> None:  # numpydoc ignore=GL08
         self.SetZCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -585,7 +585,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         dimensions=None,
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
-        deep=False,
+        deep: bool = False,
     ):
         """Initialize the uniform grid."""
         super().__init__()
@@ -768,7 +768,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.GetOrigin()  # type: ignore[return-value]
 
     @origin.setter
-    def origin(self, origin: Sequence[float | int]):  # numpydoc ignore=GL08
+    def origin(self, origin: Sequence[float | int]) -> None:  # numpydoc ignore=GL08
         self.SetOrigin(origin[0], origin[1], origin[2])
         self.Modified()
 
@@ -922,7 +922,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetDirectionMatrix())
 
     @direction_matrix.setter
-    def direction_matrix(self, matrix):  # numpydoc ignore: GL08
+    def direction_matrix(self, matrix) -> None:  # numpydoc ignore: GL08
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
 
     @property
