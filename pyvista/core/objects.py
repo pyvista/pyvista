@@ -301,8 +301,9 @@ class Table(DataObject, _vtk.vtkTable):
                 dl, dh = self.get_data_range(key)
                 dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
                 dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
-                ncomp = arr.shape[1] if arr.ndim > 1 else 1
-                return row.format(key, arr.dtype, ncomp, dl, dh)
+                ncomp = 0 if arr is None else arr.shape[1] if arr.ndim > 1 else 1
+                dtype = None if arr is None else arr.dtype
+                return row.format(key, dtype, ncomp, dl, dh)
 
             for i in range(self.n_arrays):
                 key = self.GetRowData().GetArrayName(i)

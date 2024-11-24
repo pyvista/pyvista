@@ -15,6 +15,7 @@ from typing import Union
 from typing import overload
 
 import numpy as np
+import numpy.typing as npt
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
@@ -26,6 +27,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core.dataset import DataSet
+    from pyvista.core.objects import Table
+    from pyvista.core.pyvista_ndarray import pyvista_ndarray
 
 
 class FieldAssociation(enum.Enum):
@@ -200,7 +203,7 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:
     return new_array
 
 
-def has_duplicates(arr: NumpyArray[Any]):
+def has_duplicates(arr: NumpyArray[Any]) -> bool:
     """Return if an array has any duplicates.
 
     Parameters
@@ -218,7 +221,7 @@ def has_duplicates(arr: NumpyArray[Any]):
     return (s[1:] == s[:-1]).any()
 
 
-def raise_has_duplicates(arr):
+def raise_has_duplicates(arr: NumpyArray[Any]) -> None:
     """Raise a ValueError if an array is not unique.
 
     Parameters
@@ -236,7 +239,23 @@ def raise_has_duplicates(arr):
         raise ValueError('Array contains duplicate values.')
 
 
-def convert_array(arr, name: str | None = None, deep: bool = False, array_type=None):
+@overload
+def convert_array(  # numpydoc ignore=GL08
+    arr: _vtk.vtkAbstractArray,
+    name: str | None = ...,
+    deep: bool = ...,
+    array_type: int | None = None,
+) -> npt.NDArray[Any]: ...
+@overload
+def convert_array(  # numpydoc ignore=GL08
+    arr: npt.ArrayLike, name: str | None = ..., deep: bool = ..., array_type: int | None = None
+) -> _vtk.vtkAbstractArray: ...
+def convert_array(
+    arr: npt.ArrayLike | _vtk.vtkAbstractArray,
+    name: str | None = None,
+    deep: bool = False,
+    array_type: int | None = None,
+) -> npt.NDArray[Any] | _vtk.vtkAbstractArray:
     """Convert a NumPy array to a vtkDataArray or vice versa.
 
     Parameters
@@ -361,7 +380,7 @@ def get_array(
 
 
 def get_array_association(
-    mesh,
+    mesh: DataSet | _vtk.vtkDataSet | _vtk.vtkTable,
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
     err: bool = False,
@@ -421,7 +440,7 @@ def get_array_association(
     return matches[0]
 
 
-def raise_not_matching(scalars, dataset):
+def raise_not_matching(scalars: npt.NDArray[Any], dataset: DataSet | Table) -> None:
     """Raise exception about inconsistencies.
 
     Parameters
@@ -429,7 +448,7 @@ def raise_not_matching(scalars, dataset):
     scalars : numpy.ndarray
         Array of scalars.
 
-    dataset : pyvista.DataSet
+    dataset : pyvista.DataSet | pyvista.Table
         Dataset to check against.
 
     Raises
@@ -440,7 +459,7 @@ def raise_not_matching(scalars, dataset):
     """
     if isinstance(dataset, _vtk.vtkTable):
         raise ValueError(
-            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',  # type: ignore[attr-defined]
+            f'Number of scalars ({scalars.shape[0]}) must match number of rows ({dataset.n_rows}).',
         )
     raise ValueError(
         f'Number of scalars ({scalars.shape[0]}) '
@@ -449,7 +468,9 @@ def raise_not_matching(scalars, dataset):
     )
 
 
-def _assoc_array(obj, name: str, association: str = 'point'):
+def _assoc_array(
+    obj: DataSet | _vtk.vtkDataSet, name: str, association: str = 'point'
+) -> pyvista_ndarray | None:
     """Return a point, cell, or field array from a pyvista.DataSet or VTK object.
 
     If the array or index doesn't exist, return nothing. This matches VTK's
@@ -470,7 +491,7 @@ def _assoc_array(obj, name: str, association: str = 'point'):
     return None
 
 
-def point_array(obj: DataSet | _vtk.vtkDataSet, name: str):
+def point_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> npt.NDArray[Any] | None:
     """Return point array of a pyvista or vtk object.
 
     Parameters
@@ -490,7 +511,7 @@ def point_array(obj: DataSet | _vtk.vtkDataSet, name: str):
     return _assoc_array(obj, name, 'point')
 
 
-def field_array(obj, name: str):
+def field_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> npt.NDArray[Any] | None:
     """Return field data of a pyvista or vtk object.
 
     Parameters
@@ -510,7 +531,7 @@ def field_array(obj, name: str):
     return _assoc_array(obj, name, 'field')
 
 
-def cell_array(obj, name: str):
+def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> npt.NDArray[Any] | None:
     """Return cell array of a pyvista or vtk object.
 
     Parameters
@@ -530,13 +551,13 @@ def cell_array(obj, name: str):
     return _assoc_array(obj, name, 'cell')
 
 
-def row_array(obj, name: str):
+def row_array(obj: _vtk.vtkTable, name: str) -> npt.NDArray[Any] | None:
     """Return row array of a vtk object.
 
     Parameters
     ----------
-    obj : vtk.vtkDataSet
-        PyVista or VTK dataset.
+    obj : vtk.vtkTable
+        PyVista or VTK table.
 
     name : str
         Name of the array.
@@ -548,10 +569,13 @@ def row_array(obj, name: str):
 
     """
     vtkarr = obj.GetRowData().GetAbstractArray(name)
-    return convert_array(vtkarr)
+    if vtkarr is not None:
+        return convert_array(vtkarr)
+    else:
+        return None
 
 
-def get_vtk_type(typ):
+def get_vtk_type(typ: npt.DTypeLike) -> int:
     """Look up the VTK type for a given numpy data type.
 
     Corrects for string type mapping issues.
@@ -567,14 +591,14 @@ def get_vtk_type(typ):
         Integer type id specified in ``vtkType.h``.
 
     """
-    typ = _vtk.get_vtk_array_type(typ)
+    typ_ = _vtk.get_vtk_array_type(typ)
     # This handles a silly string type bug
-    if typ == 3:
+    if typ_ == 3:
         return 13
-    return typ
+    return typ_
 
 
-def vtk_bit_array_to_char(vtkarr_bint):
+def vtk_bit_array_to_char(vtkarr_bint: _vtk.vtkBitArray) -> _vtk.vtkCharArray:
     """Cast vtk bit array to a char array.
 
     Parameters
@@ -597,7 +621,7 @@ def vtk_bit_array_to_char(vtkarr_bint):
     return vtkarr
 
 
-def vtk_id_list_to_array(vtk_id_list):
+def vtk_id_list_to_array(vtk_id_list: _vtk.vtkIdList) -> NumpyArray[int]:
     """Convert a vtkIdList to a NumPy array.
 
     Parameters
@@ -623,7 +647,17 @@ def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray) -> None:
         vtkarr.GetObjectName = lambda: 'scalar'  # type: ignore[method-assign]
 
 
-def convert_string_array(arr, name: str | None = None):
+@overload
+def convert_string_array(  # numpydoc ignore=GL08
+    arr: _vtk.vtkStringArray, name: str | None = ...
+) -> npt.NDArray[np.str_]: ...
+@overload
+def convert_string_array(  # numpydoc ignore=GL08
+    arr: str | npt.NDArray[np.str_], name: str | None = ...
+) -> _vtk.vtkStringArray: ...
+def convert_string_array(
+    arr: str | npt.NDArray[np.str_] | _vtk.vtkStringArray, name: str | None = None
+) -> npt.NDArray[np.str_] | _vtk.vtkStringArray:
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
     If a scalar string is provided, it is converted to a vtkCharArray
@@ -683,7 +717,7 @@ def convert_string_array(arr, name: str | None = None):
     ########################################
 
 
-def array_from_vtkmatrix(matrix) -> NumpyArray[float]:
+def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> NumpyArray[float]:
     """Convert a vtk matrix to an array.
 
     Parameters
@@ -713,7 +747,7 @@ def array_from_vtkmatrix(matrix) -> NumpyArray[float]:
     return array
 
 
-def vtkmatrix_from_array(array):
+def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4:
     """Convert a ``numpy.ndarray`` or array-like to a vtk matrix.
 
     Parameters

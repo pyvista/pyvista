@@ -9,6 +9,7 @@ from typing import Any
 import warnings
 
 import numpy as np
+import numpy.typing as npt
 
 from . import _vtk_core as _vtk
 from .errors import PyVistaDeprecationWarning
@@ -737,10 +738,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def _prepare_array(
         self,
-        data: ArrayLike[float],
+        data: npt.ArrayLike,
         name: str,
         deep_copy: bool,
-    ) -> _vtk.vtkDataArray:  # numpydoc ignore=PR01,RT01
+    ) -> _vtk.vtkAbstractArray:  # numpydoc ignore=PR01,RT01
         """Prepare an array to be added to this dataset.
 
         Notes
