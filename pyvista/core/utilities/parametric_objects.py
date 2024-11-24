@@ -1337,7 +1337,7 @@ def parametric_keywords(
     twist_u: bool = False,
     twist_v: bool = False,
     clockwise: bool = True,
-):
+) -> None:
     """Apply keyword arguments to a parametric function.
 
     Parameters

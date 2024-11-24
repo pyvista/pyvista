@@ -31,7 +31,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
 
-def _update_alg(alg, progress_bar: bool = False, message=''):
+def _update_alg(alg, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
     if progress_bar:
         with ProgressMonitor(alg, message=message):

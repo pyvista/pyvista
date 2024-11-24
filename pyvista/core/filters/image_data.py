@@ -795,7 +795,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def _change_fft_output_scalars(self, dataset, orig_name, out_name):
+    def _change_fft_output_scalars(self, dataset, orig_name, out_name) -> None:
         """Modify the name and dtype of the output scalars for an FFT filter."""
         name = orig_name if out_name is None else out_name
         pdata = dataset.point_data
