@@ -348,8 +348,7 @@ These standards will be enforced using ``pre-commit`` using
 If for whatever reason you feel that your function should have an exception to
 any of the rules, add an exception to the function either in the
 ``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
-comment to exclude a certain check. For example, we do not enforce
-documentation strings for setters and skip the GL08 check.
+comment to exclude a certain check.
 
 .. code:: python
 
