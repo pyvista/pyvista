@@ -195,7 +195,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
                 dict_[key] = value
         return dict_
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not isinstance(other, _ThemeConfig):
             return False
 

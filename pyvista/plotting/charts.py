@@ -31,7 +31,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # region Some metaclass wrapping magic
 class _vtkWrapperMeta(type):
-    def __init__(cls, clsname, bases, attrs):
+    def __init__(cls, clsname, bases, attrs) -> None:
         # Restore the signature of classes inheriting from _vtkWrapper
         # Based on https://stackoverflow.com/questions/49740290/call-from-metaclass-shadows-signature-of-init
         sig = inspect.signature(cls.__init__)  # type: ignore[misc]
@@ -83,7 +83,7 @@ class DocSubs:
     # Tag used to mark members that require docstring substitutions.
     _DOC_TAG = ':DOC_SUBS:'
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs) -> None:
         """Initialize subclasses."""
         # First substitute all members for this class (marked in a super class)
         if cls._DOC_SUBS is not None:
@@ -191,7 +191,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         '-..': {'id': _vtk.vtkPen.DASH_DOT_DOT_LINE, 'descr': 'Dash-dot-dot'},
     }
 
-    def __init__(self, color='k', width=1, style='-'):
+    def __init__(self, color='k', width=1, style='-') -> None:
         """Initialize a new Pen instance."""
         super().__init__()
         self.color = color
@@ -219,7 +219,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         return self._color
 
     @color.setter
-    def color(self, val):  # numpydoc ignore=GL08
+    def color(self, val) -> None:  # numpydoc ignore=GL08
         self._color = Color(val, default_color='black')
         self.SetColor(*self._color.int_rgba)
 
@@ -244,7 +244,7 @@ class Pen(_vtkWrapper, _vtk.vtkPen):
         return self.GetWidth()
 
     @width.setter
-    def width(self, val):  # numpydoc ignore=GL08
+    def width(self, val) -> None:  # numpydoc ignore=GL08
         self.SetWidth(float(val))
 
     @property
@@ -295,7 +295,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
 
     """
 
-    def __init__(self, color='k', texture=None):
+    def __init__(self, color='k', texture=None) -> None:
         """Initialize a new Pen instance."""
         super().__init__()
         self.color = color
@@ -324,7 +324,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         return self._color
 
     @color.setter
-    def color(self, val):  # numpydoc ignore=GL08
+    def color(self, val) -> None:  # numpydoc ignore=GL08
         self._color = Color(val, default_color='black')
         self.SetColor(*self._color.int_rgba)
 
@@ -350,7 +350,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         return self._texture
 
     @texture.setter
-    def texture(self, val):  # numpydoc ignore=GL08
+    def texture(self, val) -> None:  # numpydoc ignore=GL08
         if val is None:
             self._texture = None
             self.SetTexture(None)
@@ -390,7 +390,7 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         return self._interpolate
 
     @texture_interpolate.setter
-    def texture_interpolate(self, val):  # numpydoc ignore=GL08
+    def texture_interpolate(self, val) -> None:  # numpydoc ignore=GL08
         self._interpolate = bool(val)
         self._update_textureprops()
 
@@ -426,11 +426,11 @@ class Brush(_vtkWrapper, _vtk.vtkBrush):
         return self._repeat
 
     @texture_repeat.setter
-    def texture_repeat(self, val):  # numpydoc ignore=GL08
+    def texture_repeat(self, val) -> None:  # numpydoc ignore=GL08
         self._repeat = bool(val)
         self._update_textureprops()
 
-    def _update_textureprops(self):
+    def _update_textureprops(self) -> None:
         # Interpolation: NEAREST = 0x01, LINEAR = 0x02
         # Stretch/repeat: STRETCH = 0x04, REPEAT = 0x08
         self.SetTextureProperties(1 + int(self._interpolate) + 4 * (1 + int(self._repeat)))
@@ -466,7 +466,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     BEHAVIORS: ClassVar[dict[str, int]] = {'auto': _vtk.vtkAxis.AUTO, 'fixed': _vtk.vtkAxis.FIXED}
 
-    def __init__(self, label='', range=None, grid=True):  # noqa: A002
+    def __init__(self, label='', range=None, grid: bool = True) -> None:  # noqa: A002
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -507,7 +507,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTitle()
 
     @label.setter
-    def label(self, val):  # numpydoc ignore=GL08
+    def label(self, val) -> None:  # numpydoc ignore=GL08
         self.SetTitle(val)
 
     @property
@@ -531,7 +531,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTitleVisible()
 
     @label_visible.setter
-    def label_visible(self, val):  # numpydoc ignore=GL08
+    def label_visible(self, val) -> None:  # numpydoc ignore=GL08
         self.SetTitleVisible(bool(val))
 
     @property
@@ -557,7 +557,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTitleProperties().GetFontSize()
 
     @label_size.setter
-    def label_size(self, size):  # numpydoc ignore=GL08
+    def label_size(self, size) -> None:  # numpydoc ignore=GL08
         self.GetTitleProperties().SetFontSize(size)
 
     @property
@@ -592,7 +592,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return r
 
     @range.setter
-    def range(self, val):  # numpydoc ignore=GL08
+    def range(self, val) -> None:  # numpydoc ignore=GL08
         if val is None:
             self.behavior = 'auto'
         else:
@@ -667,7 +667,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetMargins()[0]
 
     @margin.setter
-    def margin(self, val):  # numpydoc ignore=GL08
+    def margin(self, val) -> None:  # numpydoc ignore=GL08
         # Second margin doesn't seem to have any effect? So we only expose the first entry as 'the margin'.
         m = self.GetMargins()
         self.SetMargins(val, m[1])
@@ -703,7 +703,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetLogScaleActive()
 
     @log_scale.setter
-    def log_scale(self, val):  # numpydoc ignore=GL08
+    def log_scale(self, val) -> None:  # numpydoc ignore=GL08
         # False: log_scale will be disabled, True: axis will attempt to activate log_scale if possible
         self.SetLogScale(bool(val))
 
@@ -728,7 +728,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetGridVisible()
 
     @grid.setter
-    def grid(self, val):  # numpydoc ignore=GL08
+    def grid(self, val) -> None:  # numpydoc ignore=GL08
         self.SetGridVisible(bool(val))
 
     @property
@@ -752,10 +752,10 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetAxisVisible()
 
     @visible.setter
-    def visible(self, val):  # numpydoc ignore=GL08
+    def visible(self, val) -> None:  # numpydoc ignore=GL08
         self.SetAxisVisible(bool(val))
 
-    def toggle(self):
+    def toggle(self) -> None:
         """Toggle the axis' visibility.
 
         Examples
@@ -809,7 +809,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetNumberOfTicks()
 
     @tick_count.setter
-    def tick_count(self, val):  # numpydoc ignore=GL08
+    def tick_count(self, val) -> None:  # numpydoc ignore=GL08
         if val is None or val < 0:
             val = -1
         self.SetNumberOfTicks(int(val))
@@ -848,7 +848,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return tuple(positions.GetValue(i) for i in range(positions.GetNumberOfValues()))
 
     @tick_locations.setter
-    def tick_locations(self, val):  # numpydoc ignore=GL08
+    def tick_locations(self, val) -> None:  # numpydoc ignore=GL08
         self._tick_locs.Reset()
         if val is not None:
             for loc in val:
@@ -903,7 +903,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return tuple(labels.GetValue(i) for i in range(labels.GetNumberOfValues()))
 
     @tick_labels.setter
-    def tick_labels(self, val):  # numpydoc ignore=GL08
+    def tick_labels(self, val) -> None:  # numpydoc ignore=GL08
         self._tick_labels.Reset()
         self.SetNotation(_vtk.vtkAxis.STANDARD_NOTATION)
         if isinstance(val, str):
@@ -943,7 +943,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetLabelProperties().GetFontSize()
 
     @tick_label_size.setter
-    def tick_label_size(self, size):  # numpydoc ignore=GL08
+    def tick_label_size(self, size) -> None:  # numpydoc ignore=GL08
         self.GetLabelProperties().SetFontSize(size)
 
     @property
@@ -969,7 +969,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTickLength()
 
     @tick_size.setter
-    def tick_size(self, val):  # numpydoc ignore=GL08
+    def tick_size(self, val) -> None:  # numpydoc ignore=GL08
         self.SetTickLength(val)
 
     @property
@@ -995,7 +995,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetLabelOffset()
 
     @tick_labels_offset.setter
-    def tick_labels_offset(self, val):  # numpydoc ignore=GL08
+    def tick_labels_offset(self, val) -> None:  # numpydoc ignore=GL08
         self.SetLabelOffset(float(val))
 
     @property
@@ -1019,7 +1019,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetLabelsVisible()
 
     @tick_labels_visible.setter
-    def tick_labels_visible(self, val):  # numpydoc ignore=GL08
+    def tick_labels_visible(self, val) -> None:  # numpydoc ignore=GL08
         self.SetLabelsVisible(bool(val))
         self.SetRangeLabelsVisible(bool(val))
 
@@ -1044,10 +1044,10 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
         return self.GetTicksVisible()
 
     @ticks_visible.setter
-    def ticks_visible(self, val):  # numpydoc ignore=GL08
+    def ticks_visible(self, val) -> None:  # numpydoc ignore=GL08
         self.SetTicksVisible(bool(val))
 
-    def _update_ticks(self):
+    def _update_ticks(self) -> None:
         locs = None if self._tick_locs.GetNumberOfValues() == 0 else self._tick_locs
         labels = None if self._tick_labels.GetNumberOfValues() == 0 else self._tick_labels
         self.SetCustomTickPositions(locs, labels)
@@ -1055,7 +1055,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
 class _CustomContextItem(_vtk.vtkPythonItem):
     class ItemWrapper:
-        def Initialize(self, item):
+        def Initialize(self, item) -> bool:
             # item is the _CustomContextItem subclass instance
             return True
 
@@ -1063,19 +1063,19 @@ class _CustomContextItem(_vtk.vtkPythonItem):
             # item is the _CustomContextItem subclass instance
             return item.paint(painter)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         # This will also call ItemWrapper.Initialize
         self.SetPythonObject(_CustomContextItem.ItemWrapper())
 
-    def paint(self, painter):
+    def paint(self, painter) -> bool:
         return True
 
 
 class _ChartBackground(_CustomContextItem):
     """Utility class for chart backgrounds."""
 
-    def __init__(self, chart):
+    def __init__(self, chart) -> None:
         super().__init__()
         # Note: This SHOULD be a weakref proxy, as otherwise the garbage collector will not clean up unused charts
         # (because of the cyclic references between charts and their background).
@@ -1087,7 +1087,7 @@ class _ChartBackground(_CustomContextItem):
         self.ActiveBorderPen = Pen(color=(0.8, 0.8, 0.2))
         self.ActiveBackgroundBrush = Brush(color=(1.0, 1.0, 1.0, 0.4))
 
-    def paint(self, painter):
+    def paint(self, painter) -> bool:
         if self._chart.visible:
             painter.ApplyPen(self.ActiveBorderPen if self._chart._interactive else self.BorderPen)
             painter.ApplyBrush(
@@ -1110,7 +1110,7 @@ class _Chart(DocSubs):
     # Subclasses should specify following substitutions: 'chart_name', 'chart_args', 'chart_init' and 'chart_set_labels'.
     _DOC_SUBS: dict[str, str] | None = None
 
-    def __init__(self, size=(1, 1), loc=(0, 0)):
+    def __init__(self, size=(1, 1), loc=(0, 0)) -> None:
         super().__init__()
         self._background = _ChartBackground(self)
         self._x_axis = Axis()
@@ -1130,7 +1130,7 @@ class _Chart(DocSubs):
         """Get a reference to the vtkRenderer in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
-    def _render_event(self, *args, plotter_render=False, **kwargs):
+    def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
         """Update the chart right before it will be rendered."""
         # Only resize on real VTK render events (plotter.render calls will afterwards invoke a proper render event)
         if not plotter_render:
@@ -1170,7 +1170,7 @@ class _Chart(DocSubs):
         return tuple(self.GetSize())  # type: ignore[attr-defined]
 
     @_geometry.setter
-    def _geometry(self, val):
+    def _geometry(self, val) -> None:
         """Set the chart geometry."""
         self.SetSize(_vtk.vtkRectf(*val))  # type: ignore[attr-defined]
 
@@ -1187,7 +1187,7 @@ class _Chart(DocSubs):
         return self.GetInteractive()  # type: ignore[attr-defined]
 
     @_interactive.setter
-    def _interactive(self, val):
+    def _interactive(self, val) -> None:
         self.SetInteractive(val)  # type: ignore[attr-defined]
 
     def _is_within(self, pos):
@@ -1278,7 +1278,7 @@ class _Chart(DocSubs):
         return self._background.BorderPen.color
 
     @border_color.setter
-    def border_color(self, val):  # numpydoc ignore=GL08
+    def border_color(self, val) -> None:  # numpydoc ignore=GL08
         self._background.BorderPen.color = val
 
     @property
@@ -1304,7 +1304,7 @@ class _Chart(DocSubs):
         return self._background.BorderPen.width
 
     @border_width.setter
-    def border_width(self, val):  # numpydoc ignore=GL08
+    def border_width(self, val) -> None:  # numpydoc ignore=GL08
         self._background.BorderPen.width = val
         self._background.ActiveBorderPen.width = val
 
@@ -1331,7 +1331,7 @@ class _Chart(DocSubs):
         return self._background.BorderPen.style
 
     @border_style.setter
-    def border_style(self, val):  # numpydoc ignore=GL08
+    def border_style(self, val) -> None:  # numpydoc ignore=GL08
         self._background.BorderPen.style = val
         self._background.ActiveBorderPen.style = val
 
@@ -1363,7 +1363,7 @@ class _Chart(DocSubs):
         return self._background.ActiveBorderPen.color
 
     @active_border_color.setter
-    def active_border_color(self, val):  # numpydoc ignore=GL08
+    def active_border_color(self, val) -> None:  # numpydoc ignore=GL08
         self._background.ActiveBorderPen.color = val
 
     @property
@@ -1387,7 +1387,7 @@ class _Chart(DocSubs):
         return self._background.BackgroundBrush.color
 
     @background_color.setter
-    def background_color(self, val):  # numpydoc ignore=GL08
+    def background_color(self, val) -> None:  # numpydoc ignore=GL08
         self._background.BackgroundBrush.color = val
 
     @property
@@ -1412,7 +1412,7 @@ class _Chart(DocSubs):
         return self._background.BackgroundBrush.texture
 
     @background_texture.setter
-    def background_texture(self, val):  # numpydoc ignore=GL08
+    def background_texture(self, val) -> None:  # numpydoc ignore=GL08
         self._background.BackgroundBrush.texture = val
         self._background.ActiveBackgroundBrush.texture = val
 
@@ -1442,7 +1442,7 @@ class _Chart(DocSubs):
         return self._background.ActiveBackgroundBrush.color
 
     @active_background_color.setter
-    def active_background_color(self, val):  # numpydoc ignore=GL08
+    def active_background_color(self, val) -> None:  # numpydoc ignore=GL08
         self._background.ActiveBackgroundBrush.color = val
 
     @property
@@ -1470,11 +1470,11 @@ class _Chart(DocSubs):
         return self.GetVisible()  # type: ignore[attr-defined]
 
     @visible.setter
-    def visible(self, val):  # numpydoc ignore=GL08
+    def visible(self, val) -> None:  # numpydoc ignore=GL08
         self.SetVisible(val)  # type: ignore[attr-defined]
 
     @doc_subs
-    def toggle(self):
+    def toggle(self) -> None:
         """Toggle the chart's visibility.
 
         Examples
@@ -1517,7 +1517,7 @@ class _Chart(DocSubs):
         return self.GetTitle()  # type: ignore[attr-defined]
 
     @title.setter
-    def title(self, val):  # numpydoc ignore=GL08
+    def title(self, val) -> None:  # numpydoc ignore=GL08
         self.SetTitle(val)  # type: ignore[attr-defined]
 
     @property
@@ -1546,13 +1546,13 @@ class _Chart(DocSubs):
         return self.GetShowLegend()  # type: ignore[attr-defined]
 
     @legend_visible.setter
-    def legend_visible(self, val):  # numpydoc ignore=GL08
+    def legend_visible(self, val) -> None:  # numpydoc ignore=GL08
         self.SetShowLegend(val)  # type: ignore[attr-defined]
 
     @doc_subs
     def show(
         self,
-        interactive=True,
+        interactive: bool = True,
         off_screen=None,
         full_screen=None,
         screenshot=None,
@@ -1645,7 +1645,7 @@ class _Plot(DocSubs):
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init' and 'plot_init'.
     _DOC_SUBS: dict[str, str] | None = None
 
-    def __init__(self, chart):
+    def __init__(self, chart) -> None:
         super().__init__()
         self._chart = weakref.proxy(chart)
         self._pen = Pen()
@@ -1680,7 +1680,7 @@ class _Plot(DocSubs):
         return self.pen.color
 
     @color.setter
-    def color(self, val):  # numpydoc ignore=GL08
+    def color(self, val) -> None:  # numpydoc ignore=GL08
         self.pen.color = val
         self.brush.color = val
 
@@ -1763,7 +1763,7 @@ class _Plot(DocSubs):
         return self.pen.width
 
     @line_width.setter
-    def line_width(self, val):  # numpydoc ignore=GL08
+    def line_width(self, val) -> None:  # numpydoc ignore=GL08
         self.pen.width = val
 
     @property
@@ -1790,7 +1790,7 @@ class _Plot(DocSubs):
         return self.pen.style
 
     @line_style.setter
-    def line_style(self, val):  # numpydoc ignore=GL08
+    def line_style(self, val) -> None:  # numpydoc ignore=GL08
         self.pen.style = val
 
     @property
@@ -1815,7 +1815,7 @@ class _Plot(DocSubs):
         return self._label
 
     @label.setter
-    def label(self, val):  # numpydoc ignore=GL08
+    def label(self, val) -> None:  # numpydoc ignore=GL08
         self._label = '' if val is None else val
         self.SetLabel(self._label)  # type: ignore[attr-defined]
 
@@ -1845,11 +1845,11 @@ class _Plot(DocSubs):
         return self.GetVisible()  # type: ignore[attr-defined]
 
     @visible.setter
-    def visible(self, val):  # numpydoc ignore=GL08
+    def visible(self, val) -> None:  # numpydoc ignore=GL08
         self.SetVisible(val)  # type: ignore[attr-defined]
 
     @doc_subs
-    def toggle(self):
+    def toggle(self) -> None:
         """Toggle the plot's visibility.
 
         Examples
@@ -1884,7 +1884,7 @@ class _MultiCompPlot(_Plot):
     # Subclasses should specify following substitutions: 'plot_name', 'chart_init', 'plot_init', 'multichart_init' and 'multiplot_init'.
     _DOC_SUBS: dict[str, str] | None = None
 
-    def __init__(self, chart):
+    def __init__(self, chart) -> None:
         super().__init__(chart)
         self._color_series = _vtk.vtkColorSeries()
         self._lookup_table = self._color_series.CreateLookupTable(_vtk.vtkColorSeries.CATEGORICAL)
@@ -1927,7 +1927,7 @@ class _MultiCompPlot(_Plot):
         return SCHEME_NAMES.get(self._color_series.GetColorScheme(), 'custom')
 
     @color_scheme.setter
-    def color_scheme(self, val):  # numpydoc ignore=GL08
+    def color_scheme(self, val) -> None:  # numpydoc ignore=GL08
         self._color_series.SetColorScheme(COLOR_SCHEMES.get(val, COLOR_SCHEMES['custom'])['id'])  # type: ignore[index]
         self._color_series.BuildLookupTable(self._lookup_table, _vtk.vtkColorSeries.CATEGORICAL)
         self.brush.color = self.colors[0]
@@ -2008,7 +2008,7 @@ class _MultiCompPlot(_Plot):
         return self.brush.color
 
     @color.setter
-    def color(self, val):  # numpydoc ignore=GL08
+    def color(self, val) -> None:  # numpydoc ignore=GL08
         # Override default _Plot behaviour. This makes sure the plot's "color_scheme", "colors" and "color" properties
         # (and their internal representations through color series, lookup tables and brushes) stay synchronized.
         self.colors = [val]
@@ -2077,7 +2077,7 @@ class _MultiCompPlot(_Plot):
         return self.labels[0] if self._labels.GetNumberOfValues() > 0 else ''
 
     @label.setter
-    def label(self, val):  # numpydoc ignore=GL08
+    def label(self, val) -> None:  # numpydoc ignore=GL08
         # Override default _Plot behaviour. This makes sure the plot's "labels" and "label" properties (and their
         # internal representations) stay synchronized.
         self.labels = None if val is None else [val]
@@ -2149,7 +2149,7 @@ class LinePlot2D(_Plot, _vtk.vtkPlotLine):
         width=1.0,
         style='-',
         label='',
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D line plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({'x': np.empty(0, np.float32), 'y': np.empty(0, np.float32)})
@@ -2202,7 +2202,7 @@ class LinePlot2D(_Plot, _vtk.vtkPlotLine):
         """
         return self._table['y']
 
-    def update(self, x, y):
+    def update(self, x, y) -> None:
         """Update this plot's points, through which a line is drawn.
 
         Parameters
@@ -2319,7 +2319,7 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
         size=10,
         style='o',
         label='',
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D scatter plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table({'x': np.empty(0, np.float32), 'y': np.empty(0, np.float32)})
@@ -2372,7 +2372,7 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
         """
         return self._table['y']
 
-    def update(self, x, y):
+    def update(self, x, y) -> None:
         """Update this plot's points.
 
         Parameters
@@ -2432,7 +2432,7 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
         return self.GetMarkerSize()
 
     @marker_size.setter
-    def marker_size(self, val):  # numpydoc ignore=GL08
+    def marker_size(self, val) -> None:  # numpydoc ignore=GL08
         self.SetMarkerSize(val)
 
     @property
@@ -2527,7 +2527,7 @@ class AreaPlot(_Plot, _vtk.vtkPlotArea):
         'plot_init': 'chart.area([0, 1, 2], [0, 0, 1], [1, 3, 2])',
     }
 
-    def __init__(self, chart, x, y1, y2=None, color='b', label=''):
+    def __init__(self, chart, x, y1, y2=None, color='b', label='') -> None:
         """Initialize a new 2D area plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
@@ -2608,7 +2608,7 @@ class AreaPlot(_Plot, _vtk.vtkPlotArea):
         """
         return self._table['y2']
 
-    def update(self, x, y1, y2=None):
+    def update(self, x, y1, y2=None) -> None:
         """Update this plot's points, outlining the area to draw.
 
         Parameters
@@ -2731,7 +2731,7 @@ class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
         color=None,
         orientation='V',
         label=None,
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new 2D bar plot instance."""
         super().__init__(chart)
         if not isinstance(y[0], (Sequence, np.ndarray)):
@@ -2795,7 +2795,7 @@ class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
         """
         return tuple(self._table[f'y{i}'] for i in range(self._table.n_arrays - 1))
 
-    def update(self, x, y):
+    def update(self, x, y) -> None:
         """Update the positions and/or size of the bars in this plot.
 
         Parameters
@@ -2931,7 +2931,7 @@ class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
         'multiplot_init': 'chart.stack([0, 1, 2], [[2, 1, 3], [1, 0, 2], [0, 3, 1], [3, 2, 0]])',
     }
 
-    def __init__(self, chart, x, ys, colors=None, labels=None):
+    def __init__(self, chart, x, ys, colors=None, labels=None) -> None:
         """Initialize a new 2D stack plot instance."""
         super().__init__(chart)
         if not isinstance(ys[0], (Sequence, np.ndarray)):
@@ -2994,7 +2994,7 @@ class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
         """
         return tuple(self._table[f'y{i}'] for i in range(self._table.n_arrays - 1))
 
-    def update(self, x, ys):
+    def update(self, x, ys) -> None:
         """Update the locations and/or size of the stacks (areas) in this plot.
 
         Parameters
@@ -3126,8 +3126,8 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         loc=(0, 0),
         x_label='x',
         y_label='y',
-        grid=True,
-    ):  # numpydoc ignore=PR01,RT01
+        grid: bool = True,
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
         self._plots = {plot_type: [] for plot_type in self.PLOT_TYPES.keys()}  # type: ignore[var-annotated]
@@ -3147,7 +3147,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         self.grid = grid
         self.legend_visible = True
 
-    def _render_event(self, *args, plotter_render=False, **kwargs):
+    def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
         if plotter_render:
             # TODO: should probably be called internally by VTK when plot data or axis behavior/logscale is changed?
             self.RecalculateBounds()
@@ -3608,7 +3608,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         except (KeyError, ValueError):
             raise ValueError('The given plot is not part of this chart.')
 
-    def clear(self, plot_type=None):
+    def clear(self, plot_type=None) -> None:
         """Remove all plots of the specified type from this chart.
 
         Parameters
@@ -3709,7 +3709,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         return self.x_axis.label
 
     @x_label.setter
-    def x_label(self, val):  # numpydoc ignore=GL08
+    def x_label(self, val) -> None:  # numpydoc ignore=GL08
         self.x_axis.label = val
 
     @property
@@ -3734,7 +3734,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         return self.y_axis.label
 
     @y_label.setter
-    def y_label(self, val):  # numpydoc ignore=GL08
+    def y_label(self, val) -> None:  # numpydoc ignore=GL08
         self.y_axis.label = val
 
     @property
@@ -3759,7 +3759,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         return self.x_axis.range
 
     @x_range.setter
-    def x_range(self, val):  # numpydoc ignore=GL08
+    def x_range(self, val) -> None:  # numpydoc ignore=GL08
         self.x_axis.range = val
 
     @property
@@ -3784,7 +3784,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         return self.y_axis.range
 
     @y_range.setter
-    def y_range(self, val):  # numpydoc ignore=GL08
+    def y_range(self, val) -> None:  # numpydoc ignore=GL08
         self.y_axis.range = val
 
     @property
@@ -3816,11 +3816,11 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         return self.x_axis.grid and self.y_axis.grid
 
     @grid.setter
-    def grid(self, val):  # numpydoc ignore=GL08
+    def grid(self, val) -> None:  # numpydoc ignore=GL08
         self.x_axis.grid = val
         self.y_axis.grid = val
 
-    def hide_axes(self):
+    def hide_axes(self) -> None:
         """Hide the x- and y-axis of this chart.
 
         This includes all labels, ticks and the grid.
@@ -3895,7 +3895,7 @@ class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
         'multiplot_init': 'chart.plot',
     }
 
-    def __init__(self, chart, data, colors=None, labels=None):
+    def __init__(self, chart, data, colors=None, labels=None) -> None:
         """Initialize a new box plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(
@@ -3950,7 +3950,7 @@ class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
         stats_table = pyvista.Table(self._quartiles.GetOutput())
         return tuple(stats_table[f'data_{i}'] for i in range(stats_table.n_arrays))
 
-    def update(self, data):
+    def update(self, data) -> None:
         """Update the plot's underlying dataset(s).
 
         Parameters
@@ -4039,7 +4039,7 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
         labels=None,
         size=None,
         loc=None,
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing box plots."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -4053,7 +4053,7 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
         self.SetColumnVisibilityAll(True)
         self.legend_visible = True
 
-    def _render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs) -> None:
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # In older VTK versions, ChartBox fills the entire scene, so
             # no resizing is needed (nor possible).
@@ -4231,7 +4231,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         'multiplot_init': 'chart.plot',
     }
 
-    def __init__(self, chart, data, colors=None, labels=None):
+    def __init__(self, chart, data, colors=None, labels=None) -> None:
         """Initialize a new pie plot instance."""
         super().__init__(chart)
         self._table = pyvista.Table(data)
@@ -4264,7 +4264,7 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
         """
         return self._table[0]
 
-    def update(self, data):
+    def update(self, data) -> None:
         """Update the size of the pie segments.
 
         Parameters
@@ -4348,7 +4348,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
         labels=None,
         size=None,
         loc=None,
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize a new chart containing a pie plot."""
         if vtk_version_info >= (9, 2, 0):
             self.SetAutoSize(False)  # We manually set the appropriate size
@@ -4367,7 +4367,7 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
             self.SetPlot(self._plot)
         self.legend_visible = True
 
-    def _render_event(self, *args, **kwargs):
+    def _render_event(self, *args, **kwargs) -> None:
         if vtk_version_info < (9, 2, 0):  # pragma: no cover
             # In older VTK versions, ChartPie fills the entire scene, so
             # no resizing is needed (nor possible).
@@ -4572,8 +4572,8 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         figure=None,
         size=(1, 1),
         loc=(0, 0),
-        redraw_on_render=True,
-    ):  # numpydoc ignore=PR01,RT01
+        redraw_on_render: bool = True,
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
         if figure is None:
@@ -4640,7 +4640,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         return self._redraw_on_render
 
     @redraw_on_render.setter
-    def redraw_on_render(self, val):  # numpydoc ignore=GL08
+    def redraw_on_render(self, val) -> None:  # numpydoc ignore=GL08
         self._redraw_on_render = bool(val)
 
     def _resize(self):
@@ -4658,7 +4658,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
             self.position = (int(self._loc[0] * r_w), int(self._loc[1] * r_h))
         return resize
 
-    def _redraw(self, event=None):
+    def _redraw(self, event=None) -> None:
         """Redraw the chart."""
         if event is None:
             # Manual call, so make sure canvas is redrawn first (which will callback to _redraw with a proper event defined)
@@ -4674,7 +4674,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
             img_data = pyvista.Texture(img_arr).to_image()  # type: ignore[abstract] # Convert to vtkImageData
             self.SetImage(img_data)
 
-    def _render_event(self, *args, plotter_render=False, **kwargs):
+    def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
         # Redraw figure when geometry has changed (self._resize call
         # already updated figure dimensions in that case) OR the
         # plotter's render method was called and redraw_on_render is
@@ -4743,7 +4743,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         return self._fig._suptitle.get_text()
 
     @title.setter
-    def title(self, val):  # numpydoc ignore=GL08
+    def title(self, val) -> None:  # numpydoc ignore=GL08
         self._fig.suptitle(val)
 
     @property
@@ -4776,7 +4776,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         return False if legend is None else legend.get_visible()
 
     @legend_visible.setter
-    def legend_visible(self, val):  # numpydoc ignore=GL08
+    def legend_visible(self, val) -> None:  # numpydoc ignore=GL08
         legend = self._fig.axes[0].get_legend()
         if legend is None:
             legend = self._fig.axes[0].legend()
@@ -4796,14 +4796,14 @@ class Charts:
 
     """
 
-    def __init__(self, renderer):
+    def __init__(self, renderer) -> None:
         """Create a new collection of charts for the given renderer."""
-        self._charts = []
+        self._charts: list[_Chart] = []
 
         # Postpone creation of scene and actor objects until they are
         # needed.
-        self._scene = None
-        self._actor = None
+        self._scene: _vtk.vtkContextScene | None = None
+        self._actor: _vtk.vtkContextActor | None = None
 
         # a weakref.proxy would be nice here, but that doesn't play
         # nicely with SetRenderer, so instead we'll use a weak reference
@@ -4815,7 +4815,7 @@ class Charts:
         """Return the weakly dereferenced renderer, maybe None."""
         return self.__renderer()
 
-    def _setup_scene(self):
+    def _setup_scene(self) -> None:
         """Set up a new context scene and actor for these charts."""
         self._scene = _vtk.vtkContextScene()
         self._actor = _vtk.vtkContextActor()
@@ -4824,7 +4824,7 @@ class Charts:
         self._renderer.AddActor(self._actor)
         self._scene.SetRenderer(self._renderer)
 
-    def deep_clean(self):
+    def deep_clean(self) -> None:
         """Remove all references to the chart objects and internal objects."""
         if self._scene is not None:
             charts = [*self._charts]  # Make a copy, as this list will be modified by remove_chart
@@ -4835,7 +4835,7 @@ class Charts:
         self._scene = None
         self._actor = None
 
-    def add_chart(self, *charts):
+    def add_chart(self, *charts) -> None:
         """Add charts to the collection.
 
         Parameters
@@ -4853,7 +4853,7 @@ class Charts:
             self._scene.AddItem(chart)  # type: ignore[union-attr]
             chart._interactive = False  # Charts are not interactive by default
 
-    def set_interaction(self, interactive, toggle=False):
+    def set_interaction(self, interactive, toggle: bool = False):
         """Set or toggle interaction with charts for this renderer.
 
         Interaction with other charts in this renderer is disabled when ``toggle``
@@ -4922,11 +4922,14 @@ class Charts:
             If the specified chart index is not present in the charts collection.
 
         """
-        chart = self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
+        chart: _Chart = (
+            self._charts[chart_or_index] if isinstance(chart_or_index, int) else chart_or_index
+        )
         if chart not in self._charts:  # pragma: no cover
             raise ValueError('chart_index not present in charts collection.')
         self._charts.remove(chart)
-        self._scene.RemoveItem(chart)  # type: ignore[union-attr]
+        if self._scene is not None:
+            self._scene.RemoveItem(chart)  # type: ignore[call-overload]
         if chart._background is not None:
             self._scene.RemoveItem(chart._background)  # type: ignore[union-attr]
 
@@ -4958,6 +4961,6 @@ class Charts:
         """Return an iterable of charts."""
         yield from self._charts
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Clean up before being destroyed."""
         self.deep_clean()

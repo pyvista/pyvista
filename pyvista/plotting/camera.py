@@ -55,7 +55,7 @@ class Camera(_vtk.vtkCamera):
         else:
             self._renderer = None
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Compare whether the relevant attributes of two cameras are equal."""
         # attributes which are native python types and thus implement __eq__
 
@@ -797,7 +797,9 @@ class Camera(_vtk.vtkCamera):
 
         return new_camera
 
-    def tight(self, padding=0.0, adjust_render_window=True, view='xy', negative=False):
+    def tight(
+        self, padding=0.0, adjust_render_window: bool = True, view='xy', negative: bool = False
+    ):
         """Adjust the camera position so that the actors fill the entire renderer.
 
         The camera view direction is reoriented to be normal to the ``view``

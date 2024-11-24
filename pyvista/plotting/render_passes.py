@@ -200,7 +200,7 @@ class RenderPasses:
         self._pass_collection.RemoveItem(self._shadow_map_pass)
         self._update_passes()
 
-    def enable_depth_of_field_pass(self, automatic_focal_distance=True):
+    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):
         """Enable the depth of field pass.
 
         Parameters

@@ -547,7 +547,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         return narray
 
-    def set_array(self, data: ArrayLike[float], name: str, deep_copy=False) -> None:
+    def set_array(self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -610,7 +610,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy=False) -> None:
+    def set_scalars(
+        self, scalars: ArrayLike[float], name='scalars', deep_copy: bool = False
+    ) -> None:
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -662,7 +664,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy=False):
+    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy: bool = False):
         """Set the active vectors of this data attribute.
 
         Vectors are a quantity that has magnitude and direction, such

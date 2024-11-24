@@ -111,7 +111,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    def __array_wrap__(self, out_arr, context=None, return_scalar=False):
+    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
