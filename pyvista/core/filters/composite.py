@@ -40,7 +40,7 @@ class CompositeFilters:
         gf.Update()
         return wrap(gf.GetOutputDataObject(0))
 
-    def combine(self, merge_points=False, tolerance=0.0):
+    def combine(self, merge_points: bool = False, tolerance=0.0):
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -121,7 +121,9 @@ class CompositeFilters:
 
     triangulate = DataSetFilters.triangulate
 
-    def outline(self, generate_faces=False, nested=False, progress_bar=False):
+    def outline(
+        self, generate_faces: bool = False, nested: bool = False, progress_bar: bool = False
+    ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
         Parameters
@@ -150,7 +152,7 @@ class CompositeFilters:
         box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
-    def outline_corners(self, factor=0.2, nested=False, progress_bar=False):
+    def outline_corners(self, factor=0.2, nested: bool = False, progress_bar: bool = False):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
@@ -178,16 +180,16 @@ class CompositeFilters:
 
     def _compute_normals(
         self,
-        cell_normals=True,
-        point_normals=True,
-        split_vertices=False,
-        flip_normals=False,
-        consistent_normals=True,
-        auto_orient_normals=False,
-        non_manifold_traversal=True,
+        cell_normals: bool = True,
+        point_normals: bool = True,
+        split_vertices: bool = False,
+        flip_normals: bool = False,
+        consistent_normals: bool = True,
+        auto_orient_normals: bool = False,
+        non_manifold_traversal: bool = True,
         feature_angle=30.0,
-        track_vertices=False,
-        progress_bar=False,
+        track_vertices: bool = False,
+        progress_bar: bool = False,
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]
@@ -218,9 +220,9 @@ class CompositeFilters:
     def transform(
         self,
         trans: TransformLike,
-        transform_all_input_vectors=False,
-        inplace=True,
-        progress_bar=False,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = True,
+        progress_bar: bool = False,
     ):
         """Transform all blocks in this composite dataset.
 
