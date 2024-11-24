@@ -145,7 +145,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         vtkobject: _vtk.vtkFieldData,
         dataset: _vtk.vtkDataSet | DataSet,
         association: FieldAssociation,
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize DataSetAttributes."""
         super().__init__(vtkobject=vtkobject)
         self.dataset = dataset
@@ -412,7 +412,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return self.active_texture_coordinates
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: NumpyArray[float]):  # numpydoc ignore=GL08
+    def active_t_coords(self, t_coords: NumpyArray[float]) -> None:  # numpydoc ignore=GL08
         """Set the active texture coordinates array.
 
         .. deprecated:: 0.43.0
@@ -610,7 +610,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy: bool = False):
+    def set_scalars(
+        self, scalars: ArrayLike[float], name='scalars', deep_copy: bool = False
+    ) -> None:
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -1014,7 +1016,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         return [self.get_array(name) for name in self.keys()]
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove all arrays in this object.
 
         Examples
@@ -1038,7 +1040,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def update(
         self, array_dict: dict[str, NumpyArray[float]] | DataSetAttributes, copy: bool = True
-    ):
+    ) -> None:
         """Update arrays in this object from another dictionary or dataset attributes.
 
         For each key, value given, add the pair. If it already exists, replace

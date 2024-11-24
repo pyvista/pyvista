@@ -160,7 +160,7 @@ class MultiBlock(
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
 
-    def wrap_nested(self):
+    def wrap_nested(self) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 
         This is performed in place.
@@ -282,7 +282,7 @@ class MultiBlock(
         return self.GetNumberOfBlocks()
 
     @n_blocks.setter
-    def n_blocks(self, n):  # numpydoc ignore=GL08
+    def n_blocks(self, n) -> None:  # numpydoc ignore=GL08
         """Change the total number of blocks set.
 
         Parameters
@@ -536,7 +536,7 @@ class MultiBlock(
         except KeyError:
             return default
 
-    def set_block_name(self, index: int, name: str | None):
+    def set_block_name(self, index: int, name: str | None) -> None:
         """Set a block's string name at the specified index.
 
         Parameters
@@ -659,7 +659,7 @@ class MultiBlock(
         self,
         index: int | str,
         data: _TypeMultiBlockLeaf | None,
-    ):  # numpydoc ignore=GL08
+    ) -> None:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
@@ -667,14 +667,14 @@ class MultiBlock(
         self,
         index: slice,
         data: Iterable[_TypeMultiBlockLeaf | None],
-    ):  # numpydoc ignore=GL08
+    ) -> None:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     def __setitem__(
         self,
         index: int | str | slice,
         data,
-    ):
+    ) -> None:
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
@@ -753,7 +753,7 @@ class MultiBlock(
         self._remove_ref(index)
         self.RemoveBlock(index)
 
-    def _remove_ref(self, index: int):
+    def _remove_ref(self, index: int) -> None:
         """Remove python reference to the dataset."""
         dataset = self[index]
         if hasattr(dataset, 'memory_address'):
@@ -852,7 +852,7 @@ class MultiBlock(
         del self[index]
         return data
 
-    def reverse(self):
+    def reverse(self) -> None:
         """Reverse MultiBlock in-place.
 
         Examples
@@ -880,7 +880,7 @@ class MultiBlock(
         for i, name in enumerate(reversed(names)):
             self.set_block_name(i, name)
 
-    def clean(self, empty: bool = True):
+    def clean(self, empty: bool = True) -> None:
         """Remove any null blocks in place.
 
         Parameters
@@ -981,7 +981,7 @@ class MultiBlock(
         """Return the number of blocks."""
         return self.n_blocks
 
-    def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
+    def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
@@ -1045,7 +1045,7 @@ class MultiBlock(
 
         # Shallow copy creates new instances of nested multiblocks
         # Iterate through the blocks to fix this recursively
-        def _replace_nested_multiblocks(this_object_, new_object):
+        def _replace_nested_multiblocks(this_object_, new_object) -> None:
             for i, this_block in enumerate(this_object_):
                 if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
                     block_to_copy = new_object.GetBlock(i)
@@ -1069,7 +1069,7 @@ class MultiBlock(
 
         # Deep copy will not copy the block name for None blocks (name is set to None instead)
         # Iterate through the blocks to fix this recursively
-        def _set_name_for_none_blocks(this_object_, new_object_):
+        def _set_name_for_none_blocks(this_object_, new_object_) -> None:
             new_object_ = pyvista.wrap(new_object_)
             for i, dataset in enumerate(new_object_):
                 if dataset is None:
@@ -1367,7 +1367,7 @@ class MultiBlock(
         cell_name = cell_names.pop() if len(cell_names) == 1 else None
         return point_name, cell_name
 
-    def clear_all_data(self):
+    def clear_all_data(self) -> None:
         """Clear all data from all blocks."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1375,7 +1375,7 @@ class MultiBlock(
             elif block is not None:
                 block.clear_data()
 
-    def clear_all_point_data(self):
+    def clear_all_point_data(self) -> None:
         """Clear all point data from all blocks."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1383,7 +1383,7 @@ class MultiBlock(
             elif block is not None:
                 block.clear_point_data()
 
-    def clear_all_cell_data(self):
+    def clear_all_cell_data(self) -> None:
         """Clear all cell data from all blocks."""
         for block in self:
             if isinstance(block, MultiBlock):
