@@ -2021,14 +2021,14 @@ class DataSetFilters:
 
     def contour(
         self,
-        isosurfaces=10,
-        scalars=None,
+        isosurfaces: int = 10,
+        scalars: str | None = None,
         compute_normals: bool = False,
         compute_gradients: bool = False,
         compute_scalars: bool = True,
-        rng=None,
-        preference='point',
-        method='contour',
+        rng: VectorLike[float] | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        method: Literal['contour', 'marching_cubes', 'flying_edges'] = 'contour',
         progress_bar: bool = False,
     ):
         """Contour an input self by an array.
@@ -2144,20 +2144,11 @@ class DataSetFilters:
         else:
             raise ValueError(f"Method '{method}' is not supported")
 
-        if rng is not None:
-            if not isinstance(rng, (np.ndarray, Sequence)):
-                raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
-            rng_shape = np.shape(rng)
-            if rng_shape != (2,):
-                raise ValueError(f'rng must be a two-length array-like, not {rng}.')
-            if rng[0] > rng[1]:
-                raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
-
         if isinstance(scalars, str):
             scalars_name = scalars
         elif isinstance(scalars, (Sequence, np.ndarray)):
             scalars_name = 'Contour Data'
-            self[scalars_name] = scalars  # type: ignore[index]
+            self[scalars_name] = scalars
         elif scalars is not None:
             raise TypeError(
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
@@ -2192,14 +2183,19 @@ class DataSetFilters:
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng = self.get_data_range(scalars_name)  # type: ignore[attr-defined]
-            alg.GenerateValues(isosurfaces, rng)
-        elif isinstance(isosurfaces, (np.ndarray, Sequence)):
-            alg.SetNumberOfContours(len(isosurfaces))
-            for i, val in enumerate(isosurfaces):
-                alg.SetValue(i, val)
+                rng_: list[float] = list(self.get_data_range(scalars_name))  # type: ignore[attr-defined]
+            else:
+                rng_ = list(_validation.validate_data_range(rng, name='rng'))
+            alg.GenerateValues(isosurfaces, rng_)
         else:
-            raise TypeError('isosurfaces not understood.')
+            isosurfaces_ = _validation.validate_arrayN(
+                isosurfaces, dtype_out=float, name='isosurfaces'
+            )
+
+            alg.SetNumberOfContours(len(isosurfaces_))
+            for i, val in enumerate(isosurfaces_):
+                alg.SetValue(i, val)
+
         _update_alg(alg, progress_bar, 'Computing Contour')
         output = _get_output(alg)
 
@@ -4752,7 +4748,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ):
+    ) -> None:
         """Sample a dataset along a high resolution line and plot.
 
         Plot the variables of interest in 2D using matplotlib where the
@@ -5078,7 +5074,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ):
+    ) -> None:
         """Sample a dataset along a circular arc and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -5207,7 +5203,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ):
+    ) -> None:
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -6117,7 +6113,7 @@ class DataSetFilters:
         validation methods.
         """
 
-        def _update_id_mask(logic_):
+        def _update_id_mask(logic_) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
             id_mask[logic_] = True
@@ -8934,7 +8930,7 @@ def _swap_axes(vectors, values):
     module-level function for testing purposes.
     """
 
-    def _swap(axis_a, axis_b):
+    def _swap(axis_a, axis_b) -> None:
         axis_order = np.argmax(np.abs(vectors), axis=1)
         if axis_order[axis_a] > axis_order[axis_b]:
             vectors[[axis_a, axis_b]] = vectors[[axis_b, axis_a]]
