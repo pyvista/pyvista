@@ -1978,30 +1978,30 @@ class DataSetFilters:
         """
         # Fix the projection line:
         if low_point is None:
-            low_point_vector = list(self.center)  # type: ignore[attr-defined]
-            low_point_vector[2] = self.bounds.z_min  # type: ignore[attr-defined]
+            low_point_ = list(self.center)  # type: ignore[attr-defined]
+            low_point_[2] = self.bounds.z_min  # type: ignore[attr-defined]
         else:
-            low_point_vector = _validation.validate_array3(low_point)
+            low_point_ = _validation.validate_array3(low_point)
         if high_point is None:
-            high_point_vector = list(self.center)  # type: ignore[attr-defined]
-            high_point_vector[2] = self.bounds.z_max  # type: ignore[attr-defined]
+            high_point_ = list(self.center)  # type: ignore[attr-defined]
+            high_point_[2] = self.bounds.z_max  # type: ignore[attr-defined]
         else:
-            high_point_vector = _validation.validate_array3(high_point)
+            high_point_ = _validation.validate_array3(high_point)
         # Fix scalar_range:
         if scalar_range is None:
-            valid_scalar_range = (low_point_vector[2], high_point_vector[2])
+            scalar_range_ = (low_point_[2], high_point_[2])
         elif isinstance(scalar_range, str):
-            valid_scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
+            scalar_range_ = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
         else:
-            valid_scalar_range = _validation.validate_data_range(scalar_range)
+            scalar_range_ = _validation.validate_data_range(scalar_range)
 
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
         alg.SetInputDataObject(self)
         # Set the parameters
-        alg.SetScalarRange(valid_scalar_range)
-        alg.SetLowPoint(low_point_vector)
-        alg.SetHighPoint(high_point_vector)
+        alg.SetScalarRange(scalar_range_)
+        alg.SetLowPoint(low_point_)
+        alg.SetHighPoint(high_point_)
         _update_alg(alg, progress_bar, 'Computing Elevation')
         # Decide on updating active scalars array
         output = _get_output(alg)
