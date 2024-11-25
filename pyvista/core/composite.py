@@ -38,7 +38,7 @@ from .utilities.helpers import wrap
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
 
-_TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
+_TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
 
 
 class MultiBlock(
@@ -388,7 +388,7 @@ class MultiBlock(
     def __getitem__(
         self,
         index: int | str,
-    ) -> _TypeMultiBlockLeaf | None:  # numpydoc ignore=GL08
+    ) -> _TypeMultiBlockLeaf:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
     @overload
@@ -415,7 +415,7 @@ class MultiBlock(
 
         return wrap(self.GetBlock(index))
 
-    def append(self, dataset: _TypeMultiBlockLeaf | None, name: str | None = None):
+    def append(self, dataset: _TypeMultiBlockLeaf, name: str | None = None):
         """Add a data set to the next block index.
 
         Parameters
@@ -500,8 +500,8 @@ class MultiBlock(
     def get(
         self,
         index: str,
-        default: _TypeMultiBlockLeaf | None = None,
-    ) -> _TypeMultiBlockLeaf | None:
+        default: _TypeMultiBlockLeaf = None,
+    ) -> _TypeMultiBlockLeaf:
         """Get a block by its name.
 
         If the name is non-unique then returns the first occurrence.
@@ -624,7 +624,7 @@ class MultiBlock(
     def _ipython_key_completions_(self) -> list[str | None]:
         return self.keys()
 
-    def replace(self, index: int, dataset: _TypeMultiBlockLeaf | None) -> None:
+    def replace(self, index: int, dataset: _TypeMultiBlockLeaf) -> None:
         """Replace dataset at index while preserving key name.
 
         Parameters
@@ -658,7 +658,7 @@ class MultiBlock(
     def __setitem__(
         self,
         index: int | str,
-        data: _TypeMultiBlockLeaf | None,
+        data: _TypeMultiBlockLeaf,
     ) -> None:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
@@ -666,7 +666,7 @@ class MultiBlock(
     def __setitem__(
         self,
         index: slice,
-        data: Iterable[_TypeMultiBlockLeaf | None],
+        data: Iterable[_TypeMultiBlockLeaf],
     ) -> None:  # numpydoc ignore=GL08
         ...  # pragma: no cover
 
@@ -815,7 +815,7 @@ class MultiBlock(
         self[index] = dataset
         self.set_block_name(index, name)
 
-    def pop(self, index: int | str = -1) -> _TypeMultiBlockLeaf | None:
+    def pop(self, index: int | str = -1) -> _TypeMultiBlockLeaf:
         """Pop off a block at the specified index.
 
         Parameters
