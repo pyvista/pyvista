@@ -354,6 +354,11 @@ def test_triangulate_inplace(hexbeam):
 @pytest.mark.parametrize('extension', pv.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir('tmpdir').join(f'tmp.{extension}'))
+    if extension == '.vtkhdf' and not binary:
+        with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
+            hexbeam.save(filename, binary)
+        pytest.exit(returncode=0)
+
     hexbeam.save(filename, binary)
 
     grid = pv.UnstructuredGrid(filename)
