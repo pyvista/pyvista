@@ -431,6 +431,7 @@ def test_tube():
 
 @pytest.mark.parametrize('capping', [True, False])
 def test_tube_capping(capping: bool):
+    # Had to clean due to duplicated points at the cylinder end borders.
     tube: pv.PolyData = pv.Tube(capping=capping).clean().triangulate()
     assert tube.is_manifold is capping
 
