@@ -228,7 +228,9 @@ def wrap(
 
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
-        return dataset  # type: ignore[return-value]
+        from pyvista import DataObject  # avoid circular import
+
+        return cast(DataObject, dataset)
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
