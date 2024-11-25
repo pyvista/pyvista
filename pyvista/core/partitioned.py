@@ -54,7 +54,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
                     self.append(partition)
         self.wrap_nested()
 
-    def wrap_nested(self):
+    def wrap_nested(self) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 
         This is performed in place.
@@ -83,10 +83,12 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
             return wrap(self.GetPartition(index))
 
     @overload
-    def __setitem__(self, index: int, data: DataSet | None): ...  # pragma: no cover
+    def __setitem__(self, index: int, data: DataSet | None) -> None: ...  # pragma: no cover
 
     @overload
-    def __setitem__(self, index: slice, data: Iterable[DataSet | None]): ...  # pragma: no cover
+    def __setitem__(
+        self, index: slice, data: Iterable[DataSet | None]
+    ) -> None: ...  # pragma: no cover
 
     def __setitem__(
         self,
@@ -176,7 +178,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         """Return the number of partitions."""
         return self.n_partitions
 
-    def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
+    def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
 
     def copy(self, deep: bool = True):
@@ -229,11 +231,11 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         return self.GetNumberOfPartitions()
 
     @n_partitions.setter
-    def n_partitions(self, n):  # numpydoc ignore=GL08
+    def n_partitions(self, n) -> None:  # numpydoc ignore=GL08
         self.SetNumberOfPartitions(n)
         self.Modified()
 
-    def append(self, dataset):
+    def append(self, dataset) -> None:
         """Add a data set to the next partition index.
 
         Parameters

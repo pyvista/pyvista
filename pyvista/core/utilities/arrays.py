@@ -576,7 +576,7 @@ def vtk_id_list_to_array(vtk_id_list):
     return np.array([vtk_id_list.GetId(i) for i in range(vtk_id_list.GetNumberOfIds())])
 
 
-def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray):
+def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray) -> None:
     """Set object name for scalar string arrays."""
     # This is used as a flag so that scalar arrays can be reshaped later.
     try:
@@ -845,13 +845,13 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         return ''.join([self.GetValue(i) for i in range(self.GetNumberOfValues())])
 
     @_string.setter
-    def _string(self, str_: str):
+    def _string(self, str_: str) -> None:
         """Set the vtkStringArray to a specified string."""
         self.SetNumberOfValues(0)  # Clear string
         for char in str_:  # Populate string
             self.InsertNextValue(char)
 
-    def _update_string(self):
+    def _update_string(self) -> None:
         """Format dict data as JSON and update the vtkStringArray."""
         data_str = json.dumps(self.data)
         if data_str != self._string:
@@ -861,7 +861,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         """Return JSON-formatted dict representation."""
         return self._string
 
-    def __init__(self, dict_=None, /, **kwargs):
+    def __init__(self, dict_=None, /, **kwargs) -> None:
         # Init from JSON string
         if isinstance(dict_, str):
             dict_ = json.loads(dict_)
@@ -875,7 +875,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         # shows this array as `str`
         _set_string_scalar_object_name(self)
 
-    def __getstate__(self):
+    def __getstate__(self) -> None:
         """Support pickling.
 
         This method does nothing. It only exists to make the pickle library happy.
@@ -883,7 +883,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         E.g. DataObjects can support this by storing this array as field data
         """
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         """Support pickling.
 
         This method does nothing. It only exists to make the pickle library happy.
@@ -895,19 +895,19 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
     # the dictionary. This ensures the serialized string is also updated
     # and synced with the dict
 
-    def __setitem__(self, key, item):
+    def __setitem__(self, key, item) -> None:
         super().__setitem__(key, item)
         self._update_string()
 
-    def __delitem__(self, key):
+    def __delitem__(self, key) -> None:
         super().__delitem__(key)
         self._update_string()
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key, value) -> None:
         object.__setattr__(self, key, value)
         self._update_string() if key != '_string' else None
 
-    def update(self, *args, **kwargs):
+    def update(self, *args, **kwargs) -> None:
         super().update(*args, **kwargs)
         self._update_string()
 
@@ -921,10 +921,10 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         self._update_string()
         return item
 
-    def clear(self):
+    def clear(self) -> None:
         super().clear()
         self._update_string()
 
-    def setdefault(self, *args, **kwargs):
+    def setdefault(self, *args, **kwargs) -> None:
         super().setdefault(*args, **kwargs)
         self._update_string()

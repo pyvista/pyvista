@@ -466,7 +466,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
     BEHAVIORS: ClassVar[dict[str, int]] = {'auto': _vtk.vtkAxis.AUTO, 'fixed': _vtk.vtkAxis.FIXED}
 
-    def __init__(self, label='', range=None, grid=True) -> None:  # noqa: A002
+    def __init__(self, label='', range=None, grid: bool = True) -> None:  # noqa: A002
         """Initialize a new Axis instance."""
         super().__init__()
         self._tick_locs = _vtk.vtkDoubleArray()
@@ -1130,7 +1130,7 @@ class _Chart(DocSubs):
         """Get a reference to the vtkRenderer in which this chart is drawn."""
         return self._scene.GetRenderer() if self._scene is not None else None
 
-    def _render_event(self, *args, plotter_render=False, **kwargs) -> None:
+    def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
         """Update the chart right before it will be rendered."""
         # Only resize on real VTK render events (plotter.render calls will afterwards invoke a proper render event)
         if not plotter_render:
@@ -1552,7 +1552,7 @@ class _Chart(DocSubs):
     @doc_subs
     def show(
         self,
-        interactive=True,
+        interactive: bool = True,
         off_screen=None,
         full_screen=None,
         screenshot=None,
@@ -3126,7 +3126,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         loc=(0, 0),
         x_label='x',
         y_label='y',
-        grid=True,
+        grid: bool = True,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the chart."""
         super().__init__(size, loc)
@@ -3147,7 +3147,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         self.grid = grid
         self.legend_visible = True
 
-    def _render_event(self, *args, plotter_render=False, **kwargs) -> None:
+    def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
         if plotter_render:
             # TODO: should probably be called internally by VTK when plot data or axis behavior/logscale is changed?
             self.RecalculateBounds()
@@ -4572,7 +4572,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
         figure=None,
         size=(1, 1),
         loc=(0, 0),
-        redraw_on_render=True,
+        redraw_on_render: bool = True,
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize chart."""
         super().__init__(size, loc)
@@ -4674,7 +4674,7 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
             img_data = pyvista.Texture(img_arr).to_image()  # type: ignore[abstract] # Convert to vtkImageData
             self.SetImage(img_data)
 
-    def _render_event(self, *args, plotter_render=False, **kwargs) -> None:
+    def _render_event(self, *args, plotter_render: bool = False, **kwargs) -> None:
         # Redraw figure when geometry has changed (self._resize call
         # already updated figure dimensions in that case) OR the
         # plotter's render method was called and redraw_on_render is
@@ -4853,7 +4853,7 @@ class Charts:
             self._scene.AddItem(chart)  # type: ignore[union-attr]
             chart._interactive = False  # Charts are not interactive by default
 
-    def set_interaction(self, interactive, toggle=False):
+    def set_interaction(self, interactive, toggle: bool = False):
         """Set or toggle interaction with charts for this renderer.
 
         Interaction with other charts in this renderer is disabled when ``toggle``
