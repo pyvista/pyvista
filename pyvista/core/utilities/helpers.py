@@ -15,7 +15,6 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 
-from ..objects import DataObject
 from . import transformations
 from .fileio import from_meshio
 from .fileio import is_meshio_mesh
@@ -24,6 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from meshio import Mesh
     from trimesh import Trimesh
 
+    from pyvista import DataObject
     from pyvista import DataSet
     from pyvista import ExplicitStructuredGrid
     from pyvista import ImageData
@@ -228,7 +228,7 @@ def wrap(
 
     if isinstance(dataset, tuple(pyvista._wrappers.values())):
         # Return object if it is already wrapped
-        return cast(DataObject, dataset)
+        return dataset  # type: ignore[return-value]
 
     # Check if dataset is a numpy array.  We do this first since
     # pyvista_ndarray contains a VTK type that we don't want to
