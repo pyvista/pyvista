@@ -376,7 +376,7 @@ def Arrow(
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
     if isinstance(scale, (float, int)):
-        surf.points *= scale
+        surf.points *= scale  # type: ignore[misc]
     elif scale is not None:
         raise TypeError("Scale must be either float, int or 'auto'.")
 
@@ -2104,7 +2104,7 @@ def Ellipse(semi_major_axis: float = 0.5, semi_minor_axis: float = 0.2, resoluti
 
 def Superquadric(
     center: VectorLike[float] = (0.0, 0.0, 0.0),
-    scale: VectorLike[float] | None = (1.0, 1.0, 1.0),
+    scale: VectorLike[float] = (1.0, 1.0, 1.0),
     size: float = 0.5,
     theta_roundness: float = 1.0,
     phi_roundness: float = 1.0,
@@ -2239,7 +2239,7 @@ def PlatonicSolid(
     solid.cell_data['FaceIndex'] = cell_data
     # scale and translate
     solid.scale(radius, inplace=True)
-    solid.points += np.asanyarray(center) - solid.center
+    solid.points += np.asanyarray(center) - solid.center  # type: ignore[misc]
     return solid
 
 
