@@ -16,5 +16,6 @@ from ._aliases import VectorLike  # noqa: F401
 from ._array_like import NumberType  # noqa: F401
 from ._array_like import NumpyArray  # noqa: F401
 
-if TYPE_CHECKING:
-    from ._dataset_types import _DataSetType_co  # noqa: F401
+if TYPE_CHECKING:  # pragma: no cover
+    # Avoid circular imports
+    from ._dataset_types import ConcreteDataSetType  # noqa: F401

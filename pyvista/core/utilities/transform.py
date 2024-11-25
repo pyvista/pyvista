@@ -20,12 +20,12 @@ from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import MultiBlock
+    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core import _DataSetType_co
 
 
 class Transform(_vtk.vtkTransform):
@@ -293,10 +293,10 @@ class Transform(_vtk.vtkTransform):
                 )
         return transform
 
-    def __radd__(self: Transform, other: VectorLike[float] | TransformLike) -> Transform:
+    def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
-            return self.copy().translate(other, multiply_mode='pre')  # type: ignore[arg-type]
+            return self.copy().translate(other, multiply_mode='pre')
         except TypeError:
             raise TypeError(
                 f"Unsupported operand type(s) for +: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
@@ -308,7 +308,7 @@ class Transform(_vtk.vtkTransform):
                 f'The left-side argument must be a length-3 vector.'
             )
 
-    def __mul__(self: Transform, other: float | VectorLike[float] | TransformLike) -> Transform:
+    def __mul__(self: Transform, other: float | VectorLike[float]) -> Transform:
         """:meth:`scale` this transform using post-multiply semantics."""
         try:
             return self.copy().scale(other, multiply_mode='post')
@@ -324,7 +324,7 @@ class Transform(_vtk.vtkTransform):
                 f'The right-side argument must be a single number or a length-3 vector.'
             )
 
-    def __rmul__(self: Transform, other: float | VectorLike[float] | TransformLike) -> Transform:
+    def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics."""
         try:
             return self.copy().scale(other, multiply_mode='pre')
@@ -1481,13 +1481,13 @@ class Transform(_vtk.vtkTransform):
     @overload
     def apply(  # numpydoc ignore: GL08
         self: Transform,
-        obj: _DataSetType_co,
+        obj: ConcreteDataSetType,
         /,
         *,
         inverse: bool = ...,
         copy: bool = ...,
         transform_all_input_vectors: bool = ...,
-    ) -> _DataSetType_co: ...
+    ) -> ConcreteDataSetType: ...
     @overload
     def apply(  # numpydoc ignore: GL08
         self: Transform,
@@ -1500,7 +1500,7 @@ class Transform(_vtk.vtkTransform):
     ) -> MultiBlock: ...
     def apply(
         self: Transform,
-        obj: VectorLike[float] | MatrixLike[float] | _DataSetType_co | MultiBlock,
+        obj: VectorLike[float] | MatrixLike[float] | ConcreteDataSetType | MultiBlock,
         /,
         *,
         inverse: bool = False,

@@ -14,8 +14,8 @@ from pyvista.core.pointset import UnstructuredGrid
 
 # Use this typevar wherever a `DataSet` type hint may be used
 # Unlike `DataSet`, the concrete classes here also inherit from `vtkDataSet`
-_DataSetType_co = TypeVar(  # noqa: PYI018
-    '_DataSetType_co',
+ConcreteDataSetType = TypeVar(
+    'ConcreteDataSetType',
     ImageData,
     RectilinearGrid,
     ExplicitStructuredGrid,
@@ -23,19 +23,5 @@ _DataSetType_co = TypeVar(  # noqa: PYI018
     PolyData,
     StructuredGrid,
     UnstructuredGrid,
-    covariant=True,
 )
-
-# Use this typevar wherever a `DataSet | MultiBlock` type hint may be used
-# This should be identical to above, but with `MultiBlock`
-_DataSetOrMultiBlockType_co = TypeVar(  # noqa: PYI018
-    '_DataSetOrMultiBlockType_co',
-    ImageData,
-    RectilinearGrid,
-    ExplicitStructuredGrid,
-    PointSet,
-    PolyData,
-    StructuredGrid,
-    UnstructuredGrid,
-    covariant=True,
-)
+ConcreteDataSetType.__doc__ = """Type variable of all concrete :class:`~pyvista.DataSet` classes."""
