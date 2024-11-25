@@ -37,8 +37,6 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
-    from numbers import Number
-
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -550,9 +548,9 @@ class DataSetFilters:
 
     def clip_box(
         self,
-        bounds=None,
+        bounds: float | VectorLike[float] | pyvista.PolyData | None = None,
         invert: bool = True,
-        factor=0.35,
+        factor: float = 0.35,
         progress_bar: bool = False,
         merge_points: bool = True,
         crinkle: bool = False,
@@ -636,13 +634,21 @@ class DataSetFilters:
                 normal = cell['Normals'][0]
                 bounds.append(normal)
                 bounds.append(cell.center)
-        if not isinstance(bounds, (np.ndarray, Sequence)):
-            raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
-        if len(bounds) not in [3, 6, 12]:
-            raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
-        if len(bounds) == 3:
+        bounds_ = _validation.validate_array(
+            bounds, dtype_out=float, must_have_length=[3, 6, 12], name='bounds'
+        )
+        if len(bounds_) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds  # type: ignore[attr-defined]
-            bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
+            bounds_ = np.array(
+                (
+                    xmin,
+                    xmin + bounds_[0],
+                    ymin,
+                    ymin + bounds_[1],
+                    zmin,
+                    zmin + bounds_[2],
+                )
+            )
         if crinkle:
             self.cell_data['cell_ids'] = np.arange(self.n_cells)  # type: ignore[attr-defined]
         alg = _vtk.vtkBoxClipDataSet()
@@ -650,7 +656,7 @@ class DataSetFilters:
             # vtkBoxClipDataSet uses vtkMergePoints by default
             alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(self)
-        alg.SetBoxClip(*bounds)
+        alg.SetBoxClip(*bounds_)
         port = 0
         if invert:
             # invert the clip if needed
@@ -1903,10 +1909,10 @@ class DataSetFilters:
 
     def elevation(
         self,
-        low_point=None,
-        high_point=None,
-        scalar_range=None,
-        preference='point',
+        low_point: VectorLike[float] | None = None,
+        high_point: VectorLike[float] | None = None,
+        scalar_range: str | VectorLike[float] | None = None,
+        preference: Literal['point', 'cell'] = 'point',
         set_active: bool = True,
         progress_bar: bool = False,
     ):
@@ -1981,28 +1987,30 @@ class DataSetFilters:
         """
         # Fix the projection line:
         if low_point is None:
-            low_point = list(self.center)  # type: ignore[attr-defined]
-            low_point[2] = self.bounds.z_min  # type: ignore[attr-defined]
+            low_point_ = list(self.center)  # type: ignore[attr-defined]
+            low_point_[2] = self.bounds.z_min  # type: ignore[attr-defined]
+        else:
+            low_point_ = _validation.validate_array3(low_point)
         if high_point is None:
-            high_point = list(self.center)  # type: ignore[attr-defined]
-            high_point[2] = self.bounds.z_max  # type: ignore[attr-defined]
+            high_point_ = list(self.center)  # type: ignore[attr-defined]
+            high_point_[2] = self.bounds.z_max  # type: ignore[attr-defined]
+        else:
+            high_point_ = _validation.validate_array3(high_point)
         # Fix scalar_range:
         if scalar_range is None:
-            scalar_range = (low_point[2], high_point[2])
+            scalar_range_ = (low_point_[2], high_point_[2])
         elif isinstance(scalar_range, str):
-            scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
-        elif isinstance(scalar_range, (np.ndarray, Sequence)):
-            if len(scalar_range) != 2:
-                raise ValueError('scalar_range must have a length of two defining the min and max')
+            scalar_range_ = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
         else:
-            raise TypeError(f'scalar_range argument ({scalar_range}) not understood.')
+            scalar_range_ = _validation.validate_data_range(scalar_range)
+
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
         alg.SetInputDataObject(self)
         # Set the parameters
-        alg.SetScalarRange(scalar_range)
-        alg.SetLowPoint(low_point)
-        alg.SetHighPoint(high_point)
+        alg.SetScalarRange(scalar_range_)
+        alg.SetLowPoint(low_point_)
+        alg.SetHighPoint(high_point_)
         _update_alg(alg, progress_bar, 'Computing Elevation')
         # Decide on updating active scalars array
         output = _get_output(alg)
@@ -2955,7 +2963,7 @@ class DataSetFilters:
                         )  # pragma: no cover
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(before_extraction)
-                    remove.SetCellIds(numpy_to_idarr(ids_to_remove))  # type: ignore[arg-type]
+                    remove.SetCellIds(numpy_to_idarr(ids_to_remove))
                     _update_alg(remove, progress_bar, 'Removing Cells.')
                     extracted = _get_output(remove)
                     extracted.clean(
@@ -7577,7 +7585,7 @@ class DataSetFilters:
 
     def scale(
         self,
-        xyz: Number | VectorLike[float],
+        xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
         point: VectorLike[float] | None = None,

@@ -500,8 +500,8 @@ class MultiBlock(
     def get(
         self,
         index: str,
-        default: _TypeMultiBlockLeaf | None = None,
-    ) -> _TypeMultiBlockLeaf | None:
+        default: _TypeMultiBlockLeaf = None,
+    ) -> _TypeMultiBlockLeaf:
         """Get a block by its name.
 
         If the name is non-unique then returns the first occurrence.
