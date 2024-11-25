@@ -388,8 +388,7 @@ class MultiBlock(
     def __getitem__(
         self,
         index: int | str,
-    ) -> _TypeMultiBlockLeaf:  #
-        ...  # pragma: no cover
+    ) -> _TypeMultiBlockLeaf: ...  # pragma: no cover
 
     @overload
     def __getitem__(self, index: slice) -> MultiBlock: ...  # pragma: no cover
@@ -659,16 +658,14 @@ class MultiBlock(
         self,
         index: int | str,
         data: _TypeMultiBlockLeaf,
-    ) -> None:  #
-        ...  # pragma: no cover
+    ) -> None: ...  # pragma: no cover
 
     @overload
     def __setitem__(
         self,
         index: slice,
         data: Iterable[_TypeMultiBlockLeaf],
-    ) -> None:  #
-        ...  # pragma: no cover
+    ) -> None: ...  # pragma: no cover
 
     def __setitem__(
         self,
