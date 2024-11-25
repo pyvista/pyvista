@@ -215,6 +215,9 @@ class DataObject(_vtk.DisableVtkSnakeCase, _vtk.vtkPyVistaOverride):
         file_path = file_path.resolve()
         file_ext = file_path.suffix
 
+        if file_ext == '.vtkhdf' and binary is False:
+            raise ValueError('.vtkhdf files can only be written in binary format.')
+
         # store complex and bitarray types as field data
         self._store_metadata()
 
