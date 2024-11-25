@@ -54,7 +54,7 @@ _wrappers = {
     # 'vtkParametricSpline': pyvista.Spline,
 }
 
-_WrappableVTKDataObjectType = TypeVar(  # #noqa PYI018
+_WrappableVTKDataObjectType = TypeVar(  # noqa: PYI018
     '_WrappableVTKDataObjectType',
     _vtk.vtkExplicitStructuredGrid,
     _vtk.vtkUnstructuredGrid,
