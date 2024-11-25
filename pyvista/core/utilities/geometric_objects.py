@@ -1137,7 +1137,14 @@ def MultipleLines(points=None):
     return MultipleLinesSource(points=points).output
 
 
-def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1.0, n_sides=15):
+def Tube(
+    pointa=(-0.5, 0.0, 0.0),
+    pointb=(0.5, 0.0, 0.0),
+    resolution=1,
+    radius=1.0,
+    n_sides=15,
+    capping: bool = False,
+) -> pyvista.PolyData:
     """Create a tube.
 
     Parameters
@@ -1157,6 +1164,10 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
     n_sides : int, default: 15
         Number of sides for the tube.
 
+    capping : bool, default: False
+        Turn on/off whether to cap the ends with polygons.
+            .. versionadded:: 0.45
+
     Returns
     -------
     pyvista.PolyData
@@ -1172,7 +1183,7 @@ def Tube(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1, radius=1
 
     """
     line_src = LineSource(pointa, pointb, resolution)
-    return line_src.output.tube(radius=radius, n_sides=n_sides, capping=False)
+    return line_src.output.tube(radius=radius, n_sides=n_sides, capping=capping)
 
 
 def Cube(
@@ -1363,7 +1374,11 @@ def Cone(
 
 
 def Polygon(
-    center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill: bool = True
+    center=(0.0, 0.0, 0.0),
+    radius=1.0,
+    normal=(0.0, 0.0, 1.0),
+    n_sides=6,
+    fill: bool = True,
 ):
     """Create a polygon.
 
@@ -1403,7 +1418,14 @@ def Polygon(
     return src.output
 
 
-def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), r_res=1, c_res=6):
+def Disc(
+    center=(0.0, 0.0, 0.0),
+    inner=0.25,
+    outer=0.5,
+    normal=(0.0, 0.0, 1.0),
+    r_res=1,
+    c_res=6,
+):
     """Create a polygonal disk with a hole in the center.
 
     The disk has zero height. The user can specify the inner and outer

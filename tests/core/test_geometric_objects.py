@@ -429,6 +429,12 @@ def test_tube():
         pv.Tube(pointa, (10, 1.0))
 
 
+@pytest.mark.parametrize('capping', [True, False])
+def test_tube_capping(capping: bool):
+    tube: pv.PolyData = pv.Tube(capping=capping).clean().triangulate()
+    assert tube.is_manifold is capping
+
+
 def test_capsule():
     capsule = pv.Capsule()
     assert np.any(capsule.points)
