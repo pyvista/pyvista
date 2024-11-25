@@ -1162,6 +1162,7 @@ def Tube(
 
     capping : bool, default: False
         Turn on/off whether to cap the ends with polygons.
+
             .. versionadded:: 0.45
 
     Returns
