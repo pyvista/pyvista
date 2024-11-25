@@ -1374,11 +1374,7 @@ def Cone(
 
 
 def Polygon(
-    center=(0.0, 0.0, 0.0),
-    radius=1.0,
-    normal=(0.0, 0.0, 1.0),
-    n_sides=6,
-    fill: bool = True,
+    center=(0.0, 0.0, 0.0), radius=1.0, normal=(0.0, 0.0, 1.0), n_sides=6, fill: bool = True
 ):
     """Create a polygon.
 
@@ -1418,14 +1414,7 @@ def Polygon(
     return src.output
 
 
-def Disc(
-    center=(0.0, 0.0, 0.0),
-    inner=0.25,
-    outer=0.5,
-    normal=(0.0, 0.0, 1.0),
-    r_res=1,
-    c_res=6,
-):
+def Disc(center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0.0, 0.0, 1.0), r_res=1, c_res=6):
     """Create a polygonal disk with a hole in the center.
 
     The disk has zero height. The user can specify the inner and outer
