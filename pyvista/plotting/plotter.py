@@ -7192,7 +7192,11 @@ class Plotter(BasePlotter):
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
-        return [actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset')]
+        return [
+            actor.mapper.dataset
+            for actor in self.actors.values()
+            if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset')
+        ]
 
 
 # Tracks created plotters.  This is the end of the module as we need to
