@@ -627,7 +627,7 @@ def test_check_type():
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 10),
+    sys.version_info[:2] < (3, 10),
     reason='Union type input requires python3.10 or higher',
 )
 def test_check_type_union():
