@@ -548,9 +548,9 @@ class DataSetFilters:
 
     def clip_box(
         self,
-        bounds=None,
+        bounds: float | VectorLike[float] | pyvista.PolyData | None = None,
         invert: bool = True,
-        factor=0.35,
+        factor: float = 0.35,
         progress_bar: bool = False,
         merge_points: bool = True,
         crinkle: bool = False,
@@ -634,13 +634,21 @@ class DataSetFilters:
                 normal = cell['Normals'][0]
                 bounds.append(normal)
                 bounds.append(cell.center)
-        if not isinstance(bounds, (np.ndarray, Sequence)):
-            raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
-        if len(bounds) not in [3, 6, 12]:
-            raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
-        if len(bounds) == 3:
+        bounds_ = _validation.validate_array(
+            bounds, dtype_out=float, must_have_length=[3, 6, 12], name='bounds'
+        )
+        if len(bounds_) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds  # type: ignore[attr-defined]
-            bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
+            bounds_ = np.array(
+                (
+                    xmin,
+                    xmin + bounds_[0],
+                    ymin,
+                    ymin + bounds_[1],
+                    zmin,
+                    zmin + bounds_[2],
+                )
+            )
         if crinkle:
             self.cell_data['cell_ids'] = np.arange(self.n_cells)  # type: ignore[attr-defined]
         alg = _vtk.vtkBoxClipDataSet()
@@ -648,7 +656,7 @@ class DataSetFilters:
             # vtkBoxClipDataSet uses vtkMergePoints by default
             alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(self)
-        alg.SetBoxClip(*bounds)
+        alg.SetBoxClip(*bounds_)
         port = 0
         if invert:
             # invert the clip if needed
