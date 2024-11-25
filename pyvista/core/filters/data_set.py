@@ -1909,10 +1909,10 @@ class DataSetFilters:
 
     def elevation(
         self,
-        low_point=None,
-        high_point=None,
-        scalar_range=None,
-        preference='point',
+        low_point: VectorLike[float] | None = None,
+        high_point: VectorLike[float] | None = None,
+        scalar_range: str | VectorLike[float] | None = None,
+        preference: Literal['point', 'cell'] = 'point',
         set_active: bool = True,
         progress_bar: bool = False,
     ):
@@ -1987,28 +1987,30 @@ class DataSetFilters:
         """
         # Fix the projection line:
         if low_point is None:
-            low_point = list(self.center)  # type: ignore[attr-defined]
-            low_point[2] = self.bounds.z_min  # type: ignore[attr-defined]
+            low_point_ = list(self.center)  # type: ignore[attr-defined]
+            low_point_[2] = self.bounds.z_min  # type: ignore[attr-defined]
+        else:
+            low_point_ = _validation.validate_array3(low_point)
         if high_point is None:
-            high_point = list(self.center)  # type: ignore[attr-defined]
-            high_point[2] = self.bounds.z_max  # type: ignore[attr-defined]
+            high_point_ = list(self.center)  # type: ignore[attr-defined]
+            high_point_[2] = self.bounds.z_max  # type: ignore[attr-defined]
+        else:
+            high_point_ = _validation.validate_array3(high_point)
         # Fix scalar_range:
         if scalar_range is None:
-            scalar_range = (low_point[2], high_point[2])
+            scalar_range_ = (low_point_[2], high_point_[2])
         elif isinstance(scalar_range, str):
-            scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
-        elif isinstance(scalar_range, (np.ndarray, Sequence)):
-            if len(scalar_range) != 2:
-                raise ValueError('scalar_range must have a length of two defining the min and max')
+            scalar_range_ = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
         else:
-            raise TypeError(f'scalar_range argument ({scalar_range}) not understood.')
+            scalar_range_ = _validation.validate_data_range(scalar_range)
+
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
         alg.SetInputDataObject(self)
         # Set the parameters
-        alg.SetScalarRange(scalar_range)
-        alg.SetLowPoint(low_point)
-        alg.SetHighPoint(high_point)
+        alg.SetScalarRange(scalar_range_)
+        alg.SetLowPoint(low_point_)
+        alg.SetHighPoint(high_point_)
         _update_alg(alg, progress_bar, 'Computing Elevation')
         # Decide on updating active scalars array
         output = _get_output(alg)
