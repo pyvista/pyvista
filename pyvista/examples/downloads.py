@@ -8182,7 +8182,7 @@ def download_full_head(load=True):  # pragma: no cover
 def _full_head_files_func():  # pragma: no cover
     full_head_raw = _DownloadableFile('FullHead.raw.gz')
     full_head_mha = _SingleFileDownloadableDatasetLoader('FullHead.mhd')
-    return full_head_raw, full_head_mha
+    return full_head_mha, full_head_raw
 
 
 _dataset_full_head = _MultiFileDownloadableDatasetLoader(_full_head_files_func)
