@@ -210,7 +210,7 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
     from pyvista import read
     from pyvista import wrap
 
-    def to_img(img):  # numpydoc ignore=GL08
+    def to_img(img):
         if isinstance(img, ImageData):  # pragma: no cover
             return img
         elif isinstance(img, _vtk.vtkImageData):

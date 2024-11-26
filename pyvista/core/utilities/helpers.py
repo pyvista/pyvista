@@ -286,11 +286,11 @@ def wrap(
 
 
 @overload
-def is_pyvista_dataset(  # numpydoc ignore=GL08
+def is_pyvista_dataset(
     obj: pyvista.DataSet | pyvista.MultiBlock,
 ) -> Literal[True]: ...
 @overload
-def is_pyvista_dataset(  # numpydoc ignore=GL08
+def is_pyvista_dataset(
     obj: Any,
 ) -> Literal[False]: ...
 def is_pyvista_dataset(obj: Any) -> bool:
