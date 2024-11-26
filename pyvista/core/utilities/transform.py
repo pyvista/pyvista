@@ -1467,7 +1467,7 @@ class Transform(_vtk.vtkTransform):
         return self.GetNumberOfConcatenatedTransforms()
 
     @overload
-    def apply(  # numpydoc ignore: GL08
+    def apply(
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float],
         /,
@@ -1477,7 +1477,7 @@ class Transform(_vtk.vtkTransform):
         transform_all_input_vectors: bool = ...,
     ) -> NumpyArray[float]: ...
     @overload
-    def apply(  # numpydoc ignore: GL08
+    def apply(
         self: Transform,
         obj: ConcreteDataSetType,
         /,
@@ -1487,7 +1487,7 @@ class Transform(_vtk.vtkTransform):
         transform_all_input_vectors: bool = ...,
     ) -> ConcreteDataSetType: ...
     @overload
-    def apply(  # numpydoc ignore: GL08
+    def apply(
         self: Transform,
         obj: MultiBlock,
         /,
@@ -1952,5 +1952,5 @@ class Transform(_vtk.vtkTransform):
         return self._check_finite
 
     @check_finite.setter
-    def check_finite(self: Transform, value: bool) -> None:  # numpydoc ignore: GL08
+    def check_finite(self: Transform, value: bool) -> None:
         self._check_finite = bool(value)
