@@ -354,7 +354,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_tensors_info.name
 
     @active_tensors_name.setter
-    def active_tensors_name(self, name: str | None) -> None:  # numpydoc ignore=GL08
+    def active_tensors_name(self, name: str | None) -> None:
         """Set the name of the active tensor array.
 
         Parameters
@@ -390,7 +390,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_vectors_info.name
 
     @active_vectors_name.setter
-    def active_vectors_name(self, name: str | None) -> None:  # numpydoc ignore=GL08
+    def active_vectors_name(self, name: str | None) -> None:
         """Set the name of the active vectors array.
 
         Parameters
@@ -425,7 +425,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_scalars_info.name
 
     @active_scalars_name.setter
-    def active_scalars_name(self, name: str | None) -> None:  # numpydoc ignore=GL08
+    def active_scalars_name(self, name: str | None) -> None:
         """Set the name of the active scalars.
 
         Parameters
@@ -502,7 +502,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:  # numpydoc ignore=GL08
+    def points(self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
         """Set a reference to the points as a numpy object.
 
         Parameters
@@ -591,7 +591,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_texture_coordinates
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: NumpyArray[float]) -> None:  # numpydoc ignore=GL08
+    def active_t_coords(self, t_coords: NumpyArray[float]) -> None:
         """Set the active texture coordinates on the points.
 
         Parameters
@@ -1609,7 +1609,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh, deep=deep)  # type: ignore[arg-type]
+            self.copy_meta_from(mesh, deep=deep)
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
@@ -2390,7 +2390,7 @@ class DataSet(DataSetFilters, DataObject):
             'faces': range(cell.n_faces),
         }
 
-        def generate_ids(i: int, connections: str):  # numpydoc ignore=GL08
+        def generate_ids(i: int, connections: str):
             if connections == 'points':
                 ids = _vtk.vtkIdList()
                 ids.InsertNextId(i)
@@ -2838,7 +2838,7 @@ class DataSet(DataSetFilters, DataObject):
     def active_texture_coordinates(
         self,
         texture_coordinates: NumpyArray[float],
-    ) -> None:  # numpydoc ignore=GL08
+    ) -> None:
         """Set the active texture coordinates on the points.
 
         Parameters

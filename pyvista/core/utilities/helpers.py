@@ -5,7 +5,10 @@ from __future__ import annotations
 from collections import deque
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
 from typing import cast
+from typing import overload
 
 from pyvista.core import _validation
 
@@ -174,7 +177,15 @@ def wrap(
     raise NotImplementedError(f'Unable to wrap ({type(dataset)}) into a pyvista type.')
 
 
-def is_pyvista_dataset(obj):
+@overload
+def is_pyvista_dataset(
+    obj: pyvista.DataSet | pyvista.MultiBlock,
+) -> Literal[True]: ...
+@overload
+def is_pyvista_dataset(
+    obj: Any,
+) -> Literal[False]: ...
+def is_pyvista_dataset(obj: Any) -> bool:
     """Return ``True`` if the object is a PyVista wrapped dataset.
 
     Parameters
@@ -217,7 +228,9 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     return plane
 
 
-def axis_rotation(points, angle, inplace: bool = False, deg: bool = True, axis='z'):
+def axis_rotation(
+    points: NumpyArray[float], angle: float, inplace: bool = False, deg: bool = True, axis='z'
+):
     """Rotate points by angle about an axis.
 
     Parameters

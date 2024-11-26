@@ -353,7 +353,7 @@ class WidgetHelper:
 
         self.box_clipped_meshes.append(box_clipped_mesh)
 
-        def callback(planes):  # numpydoc ignore=GL08
+        def callback(planes):
             bounds = []
             for i in range(planes.GetNumberOfPlanes()):
                 plane = planes.GetPlane(i)
@@ -789,7 +789,7 @@ class WidgetHelper:
             plane_clipped_mesh = _get_output(clipper)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(normal, loc):  # numpydoc ignore=GL08
+        def callback(normal, loc):
             function = generate_plane(normal, loc)
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
@@ -1076,7 +1076,7 @@ class WidgetHelper:
         plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
-        def callback(normal, origin):  # numpydoc ignore=GL08
+        def callback(normal, origin):
             # create the plane for clipping
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
@@ -1396,7 +1396,7 @@ class WidgetHelper:
         slider_rep = slider_widget.GetRepresentation()
         slider_rep.ShowSliderLabelOff()
 
-        def title_callback(widget, _event):  # numpydoc ignore=GL08
+        def title_callback(widget, _event):
             value = widget.GetRepresentation().GetValue()
             idx = int(value / delta)
             # handle limit index
@@ -1543,7 +1543,7 @@ class WidgetHelper:
         if fmt is None:
             fmt = pyvista.global_theme.font.fmt
 
-        def normalize(point, viewport):  # numpydoc ignore=GL08
+        def normalize(point, viewport):
             return (point[0] * (viewport[2] - viewport[0]), point[1] * (viewport[3] - viewport[1]))
 
         pointa = normalize(pointa, self.renderer.GetViewport())  # type: ignore[attr-defined]
@@ -1756,7 +1756,7 @@ class WidgetHelper:
         threshold_mesh = pyvista.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
-        def callback(value):  # numpydoc ignore=GL08
+        def callback(value):
             _set_threshold_limit(alg, value, method, invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
@@ -1915,7 +1915,7 @@ class WidgetHelper:
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
-        def callback(value):  # numpydoc ignore=GL08
+        def callback(value):
             alg.SetValue(0, value)
             alg.Update()
             isovalue_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
@@ -2167,7 +2167,7 @@ class WidgetHelper:
         spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
-        def callback(spline):  # numpydoc ignore=GL08
+        def callback(spline):
             polyline = spline.GetCell(0)
             # create the plane for clipping
             polyplane = _vtk.vtkPolyPlane()
@@ -2246,7 +2246,7 @@ class WidgetHelper:
 
         self.iren.picker = PickerType.POINT  # type: ignore[attr-defined]
 
-        def place_point(*_):  # numpydoc ignore=GL08
+        def place_point(*_):
             p1 = [0, 0, 0]
             p2 = [0, 0, 0]
             representation.GetPoint1DisplayPosition(p1)  # type: ignore[arg-type]
@@ -2583,7 +2583,7 @@ class WidgetHelper:
         if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
-        def create_button(color1, color2, color3, dims=(size, size, 1)):  # numpydoc ignore=GL08
+        def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
             color2 = np.array(Color(color2).int_rgb)
             color3 = np.array(Color(color3).int_rgb)
@@ -2739,7 +2739,7 @@ class WidgetHelper:
         color_off = Color(color_off)
         background_color = Color(background_color, default_color=self.background_color)  # type: ignore[attr-defined]
 
-        def create_radio_button(fg_color, bg_color, size=size, smooth=2):  # numpydoc ignore=GL08
+        def create_radio_button(fg_color, bg_color, size=size, smooth=2):
             fg_color = np.array(fg_color.int_rgb)
             bg_color = np.array(bg_color.int_rgb)
 
@@ -2785,7 +2785,7 @@ class WidgetHelper:
         button_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         button_widget.On()
 
-        def toggle_other_buttons_off(widget):  # numpydoc ignore=GL08
+        def toggle_other_buttons_off(widget):
             other_buttons = [
                 w for w in self.radio_button_widget_dict[radio_button_group] if w is not widget
             ]
