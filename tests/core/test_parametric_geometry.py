@@ -134,35 +134,35 @@ def test_ParametricRandomHills():
     assert geom.n_points
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(numberofhills=30)
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated parameter')
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(hillxvariance=30)
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated parameter')
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(hillyvariance=2.5)
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated parameter')
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(hillamplitude=2.5)
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated parameter')
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(randomseed=1)
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated parameter')
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(xvariancescalefactor=13)
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated parameter')
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(yvariancescalefactor=13)
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated parameter')
     with pytest.warns(PyVistaDeprecationWarning):
         geom = pv.ParametricRandomHills(amplitudescalefactor=13)
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated parameter')
     geom = pv.ParametricRandomHills(
         number_of_hills=30,
