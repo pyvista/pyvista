@@ -185,7 +185,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
     else:
         vuetify3_widgets.initialize(server)
 
-    def on_ready(**_):  # numpydoc ignore=GL08
+    def on_ready(**_):
         logger.debug(f'Server ready: {server}')
 
     if server._running_stage == 0:
@@ -456,7 +456,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 """,
         )
 
-    async def launch_it():  # numpydoc ignore=GL08
+    async def launch_it():
         await launch_server(*args, **kwargs).ready
 
     # Basically monkey patches asyncio to support this
