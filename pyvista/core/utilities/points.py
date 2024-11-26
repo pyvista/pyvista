@@ -17,8 +17,11 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def vtk_points(
-    points: VectorLike[float] | MatrixLike[float], deep: bool = True, force_float: bool = False
-):
+    points: VectorLike[float] | MatrixLike[float],
+    deep: bool = True,
+    force_float: bool = False,
+    allow_empty: bool = True,
+) -> _vtk.vtkPoints:
     """Convert numpy array or array-like to a ``vtkPoints`` object.
 
     Parameters
@@ -37,6 +40,12 @@ def vtk_points(
         though this may lead to truncation of intermediate floats
         when transforming datasets.
 
+    allow_empty : bool, default: True
+        Allow ``points`` to be an empty array. If ``False``, points
+        must structly be strictly one- or two-dimensional.
+
+        .. versionadded:: 0.45
+
     Returns
     -------
     vtk.vtkPoints
@@ -52,7 +61,14 @@ def vtk_points(
     (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
 
     """
-    points_ = _validation.validate_arrayNx3(points, name='points')
+    try:
+        points_ = _validation.validate_arrayNx3(points, name='points')
+    except ValueError as e:
+        if 'points has shape (0,)' in repr(e) and allow_empty:
+            points_ = np.asanyarray(points)
+        else:
+            raise
+
     if force_float and not np.issubdtype(points_.dtype, np.floating):
         warnings.warn(
             'Points is not a float type. This can cause issues when '

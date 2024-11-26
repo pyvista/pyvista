@@ -162,7 +162,7 @@ def KochanekSpline(
     # get interpolation density
     u_res = n_points
     if u_res is None:
-        u_res = points.shape[0]
+        u_res = points_.shape[0]
 
     u_res -= 1
     spline = surface_from_para(spline_function, u_res)
