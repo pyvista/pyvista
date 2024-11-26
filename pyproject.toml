@@ -138,7 +138,7 @@ docs = [
   'trimesh==4.5.2',
 ]
 
-dev = ['pre-commit', 'pyvista[test,docs]']
+dev = ['pre-commit', 'pyvista[test,typing]']
 
 [project.urls]
 "Bug Tracker" = 'https://github.com/pyvista/pyvista/issues'
