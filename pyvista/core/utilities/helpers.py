@@ -41,94 +41,57 @@ if TYPE_CHECKING:  # pragma: no cover
     from ..wrappers import _WrappableVTKDataObjectType
 
 
+# vtkDataSet overloads
 # Overload types should match the mappings in the `pyvista._wrappers` dict
 # Overloads should be ordered from narrow types (child class) to general types (parent class)
 @overload
-def wrap(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
-    dataset: _vtk.vtkPolyData,
-) -> PolyData: ...
+def wrap(dataset: _vtk.vtkPolyData) -> PolyData: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
-    dataset: _vtk.vtkStructuredGrid,
-) -> StructuredGrid: ...
+def wrap(dataset: _vtk.vtkStructuredGrid) -> StructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
-    dataset: _vtk.vtkExplicitStructuredGrid,
-) -> ExplicitStructuredGrid: ...
+def wrap(dataset: _vtk.vtkExplicitStructuredGrid) -> ExplicitStructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(  # type: ignore[overload-overlap]  # numpydoc ignore=GL08
-    dataset: _vtk.vtkUnstructuredGrid,
-) -> UnstructuredGrid: ...
+def wrap(dataset: _vtk.vtkUnstructuredGrid) -> UnstructuredGrid: ...  # type: ignore[overload-overlap]
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkPointSet,
-) -> PointSet: ...
+def wrap(dataset: _vtk.vtkPointSet) -> PointSet: ...
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkRectilinearGrid,
-) -> RectilinearGrid: ...
+def wrap(dataset: _vtk.vtkRectilinearGrid) -> RectilinearGrid: ...
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkStructuredPoints,
-) -> ImageData: ...
+def wrap(dataset: _vtk.vtkStructuredPoints) -> ImageData: ...
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkImageData,
-) -> ImageData: ...
+def wrap(dataset: _vtk.vtkImageData) -> ImageData: ...
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkMultiBlockDataSet,
-) -> MultiBlock: ...
+def wrap(dataset: _vtk.vtkMultiBlockDataSet) -> MultiBlock: ...
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkTable,
-) -> Table: ...
+def wrap(dataset: _vtk.vtkTable) -> Table: ...
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkPartitionedDataSet,
-) -> PartitionedDataSet: ...
-
-
-# Misc overloads
-@overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: NumpyArray[float],
-) -> PolyData | ImageData: ...
-@overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: _vtk.vtkAbstractArray,
-) -> pyvista_ndarray: ...
-@overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: None,
-) -> None: ...
+def wrap(dataset: _vtk.vtkPartitionedDataSet) -> PartitionedDataSet: ...
 
 
 # General catch-all cases for pyvista datasets
 # Do not include a catch-all for vtkDataSet or vtkDataObject since
 # only specific subclasses are supported
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: DataSet,
-) -> DataSet: ...
+def wrap(dataset: DataSet) -> DataSet: ...
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: DataObject,
-) -> DataObject: ...
+def wrap(dataset: DataObject) -> DataObject: ...
+
+
+# Misc overloads
+@overload
+def wrap(dataset: NumpyArray[float]) -> PolyData | ImageData: ...
+@overload
+def wrap(dataset: _vtk.vtkAbstractArray) -> pyvista_ndarray: ...
+@overload
+def wrap(dataset: None) -> None: ...
 
 
 # Third-party meshes
 @overload
-def wrap(  # numpydoc ignore=GL08
-    dataset: Trimesh,
-) -> PolyData: ...
-
-
+def wrap(dataset: Trimesh) -> PolyData: ...
 # TODO: Support meshio overload
 # @overload
 # def wrap(dataset: Mesh) -> UnstructuredGrid: ...
-
-
 def wrap(
     dataset: _WrappableVTKDataObjectType
     | DataObject
