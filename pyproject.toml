@@ -24,7 +24,7 @@ dependencies = [
   'pooch',
   'scooby>=0.5.1',
   'typing-extensions',
-  'vtk',               # keep without version constraints
+  'vtk<9.4.0',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
