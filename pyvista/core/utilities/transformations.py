@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import overload
 
 import numpy as np
 
@@ -11,9 +13,12 @@ from pyvista.core import _validation
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
 
 
-def axis_angle_rotation(axis, angle, point=None, deg: bool = True):
+def axis_angle_rotation(
+    axis: VectorLike[float], angle: float, point: VectorLike[float] | None = None, deg: bool = True
+) -> NumpyArray[float]:
     r"""Return a 4x4 matrix for rotation about any axis by given angle.
 
     Rotations around an axis that contains the origin can easily be
@@ -104,20 +109,20 @@ def axis_angle_rotation(axis, angle, point=None, deg: bool = True):
     if angle % (2 * np.pi) == 0:
         return np.eye(4)
 
-    axis = _validation.validate_array3(axis, dtype_out=float, name='axis')
+    axis_ = _validation.validate_array3(axis, dtype_out=float, name='axis')
     if point is not None:
-        point = _validation.validate_array3(point, dtype_out=float, name='point')
+        point_ = _validation.validate_array3(point, dtype_out=float, name='point')
 
     # check and normalize
-    axis_norm = np.linalg.norm(axis)
+    axis_norm = np.linalg.norm(axis_)
     if np.isclose(axis_norm, 0):
         raise ValueError('Cannot rotate around zero vector axis.')
     if not np.isclose(axis_norm, 1):
-        axis = axis / axis_norm
+        axis_ = axis_ / axis_norm
 
     # build Rodrigues' rotation matrix
     K = np.zeros((3, 3))
-    K[[2, 0, 1], [1, 2, 0]] = axis
+    K[[2, 0, 1], [1, 2, 0]] = axis_
     K += -K.T
 
     # the cos and sin functions can introduce some numerical error
@@ -137,12 +142,14 @@ def axis_angle_rotation(axis, angle, point=None, deg: bool = True):
     if point is not None:
         # rotation of point p would be R @ (p - point) + point
         # which is R @ p + (point - R @ point)
-        augmented[:-1, -1] = point - R @ point
+        augmented[:-1, -1] = point_ - R @ point_
 
     return augmented
 
 
-def reflection(normal, point=None):
+def reflection(
+    normal: VectorLike[float], point: VectorLike[float] | None = None
+) -> NumpyArray[float]:
     """Return a 4x4 matrix for reflection across a normal about a point.
 
     Projection to a unit vector ``n`` can be computed using the dyadic
@@ -247,7 +254,23 @@ def reflection(normal, point=None):
     return augmented
 
 
-def apply_transformation_to_points(transformation, points, inplace: bool = False):
+@overload
+def apply_transformation_to_points(
+    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[True] = True
+) -> None: ...
+@overload
+def apply_transformation_to_points(
+    transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[False] = False
+) -> NumpyArray[float]: ...
+@overload
+def apply_transformation_to_points(
+    transformation: NumpyArray[float], points: NumpyArray[float], inplace: bool = ...
+) -> NumpyArray[float] | None: ...
+def apply_transformation_to_points(
+    transformation: NumpyArray[float],
+    points: NumpyArray[float],
+    inplace: Literal[True, False] = False,
+) -> NumpyArray[float] | None:
     """Apply a given transformation matrix (3x3 or 4x4) to a set of points.
 
     Parameters
@@ -489,7 +512,7 @@ def decomposition(
     return T, R, N, S, K
 
 
-def _polar_decomposition(a):
+def _polar_decomposition(a: NumpyArray[float]) -> tuple[NumpyArray[float], NumpyArray[float]]:
     # Decompose `a=up` where u is orthonormal and p is positive semi-definite
     # See scipy.linalg.polar for details
     w, s, vh = np.linalg.svd(a, full_matrices=False)
