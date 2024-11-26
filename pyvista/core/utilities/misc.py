@@ -225,7 +225,7 @@ def threaded(fn):
 
     """
 
-    def wrapper(*args, **kwargs):  # numpydoc ignore=GL08
+    def wrapper(*args, **kwargs):
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread

@@ -921,7 +921,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return _vtk.vtk_to_numpy(self.GetVerts().GetData())
 
     @verts.setter
-    def verts(self, verts: CellArrayLike) -> None:  # numpydoc ignore=GL08
+    def verts(self, verts: CellArrayLike) -> None:
         if isinstance(verts, _vtk.vtkCellArray):
             self.SetVerts(verts)
         else:
@@ -948,7 +948,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return _vtk.vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
-    def lines(self, lines: CellArrayLike) -> None:  # numpydoc ignore=GL08
+    def lines(self, lines: CellArrayLike) -> None:
         if isinstance(lines, _vtk.vtkCellArray):
             self.SetLines(lines)
         else:
@@ -1022,7 +1022,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return array
 
     @faces.setter
-    def faces(self, faces: CellArrayLike) -> None:  # numpydoc ignore=GL08
+    def faces(self, faces: CellArrayLike) -> None:
         if isinstance(faces, _vtk.vtkCellArray):
             self.SetPolys(faces)
         else:
@@ -1207,7 +1207,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         return _vtk.vtk_to_numpy(self.GetStrips().GetData())
 
     @strips.setter
-    def strips(self, strips: CellArrayLike) -> None:  # numpydoc ignore=GL08
+    def strips(self, strips: CellArrayLike) -> None:
         if isinstance(strips, _vtk.vtkCellArray):
             self.SetStrips(strips)
         else:
@@ -2048,7 +2048,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return array
 
     @cells.setter
-    def cells(self, cells) -> None:  # numpydoc ignore=GL08
+    def cells(self, cells) -> None:
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.GetCells().ImportLegacyFormat(vtk_idarr)
 
@@ -2496,7 +2496,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         return tuple(self.GetDimensions())
 
     @dimensions.setter
-    def dimensions(self, dims) -> None:  # numpydoc ignore=GL08
+    def dimensions(self, dims) -> None:
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
         self.Modified()
@@ -3408,7 +3408,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         """
 
-        def connectivity(ind):  # numpydoc ignore=GL08
+        def connectivity(ind):
             indices = []
             cell_coords = self.cell_coords(ind)
             cell_points = self.get_cell(ind).points
@@ -3433,7 +3433,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                                 indices.append(ind)
             return indices
 
-        def topological(ind):  # numpydoc ignore=GL08
+        def topological(ind):
             indices = []
             cell_coords = self.cell_coords(ind)
             cell_neighbors = [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)]
@@ -3444,7 +3444,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
                     indices.append(ind)
             return indices
 
-        def geometric(ind):  # numpydoc ignore=GL08
+        def geometric(ind):
             indices = []
             cell_coords = self.cell_coords(ind)
             cell_points = self.get_cell(ind).points

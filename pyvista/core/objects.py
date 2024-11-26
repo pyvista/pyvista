@@ -92,7 +92,7 @@ class Table(DataObject, _vtk.vtkTable):
         return self.GetNumberOfRows()
 
     @n_rows.setter
-    def n_rows(self, n) -> None:  # numpydoc ignore=GL08
+    def n_rows(self, n) -> None:
         """Set the number of rows.
 
         Parameters

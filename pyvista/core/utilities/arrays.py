@@ -240,14 +240,14 @@ def raise_has_duplicates(arr: NumpyArray[Any]) -> None:
 
 
 @overload
-def convert_array(  # numpydoc ignore=GL08
+def convert_array(
     arr: _vtk.vtkAbstractArray,
     name: str | None = ...,
     deep: bool = ...,
     array_type: int | None = None,
 ) -> npt.NDArray[Any]: ...
 @overload
-def convert_array(  # numpydoc ignore=GL08
+def convert_array(
     arr: npt.ArrayLike, name: str | None = ..., deep: bool = ..., array_type: int | None = None
 ) -> _vtk.vtkAbstractArray: ...
 def convert_array(
@@ -648,11 +648,11 @@ def _set_string_scalar_object_name(vtkarr: _vtk.vtkStringArray) -> None:
 
 
 @overload
-def convert_string_array(  # numpydoc ignore=GL08
+def convert_string_array(
     arr: _vtk.vtkStringArray, name: str | None = ...
 ) -> npt.NDArray[np.str_]: ...
 @overload
-def convert_string_array(  # numpydoc ignore=GL08
+def convert_string_array(
     arr: str | npt.NDArray[np.str_], name: str | None = ...
 ) -> _vtk.vtkStringArray: ...
 def convert_string_array(
