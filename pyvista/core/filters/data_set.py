@@ -2513,11 +2513,10 @@ class DataSetFilters:
 
             .. note::
 
-                The provided geometry should initially be "pointing" in the
-                positive ``+x`` direction. E.g. use ``direction=(1, 0, 0)``
-                when using some :ref:`Geometric Objects <geometry_api>` or
-                rotate the geometry manually, e.g. with
-                :func:`~pyvista.DataSetFilters.rotate_vector`.
+                The reference direction is relative to ``(1, 0, 0)`` on the
+                provided geometry. That is, the provided geometry will be rotated
+                from ``(1, 0, 0)`` to the direction of the ``orient`` vector at
+                each point.
 
         indices : sequence[float], optional
             Specifies the index of each glyph in the table for lookup in case
