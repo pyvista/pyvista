@@ -429,7 +429,7 @@ class Transform(_vtk.vtkTransform):
         return self._point
 
     @point.setter
-    def point(self: Transform, point: VectorLike[float] | None) -> None:  # numpydoc ignore=GL08
+    def point(self: Transform, point: VectorLike[float] | None) -> None:
         self._point = (
             None
             if point is None
@@ -452,9 +452,7 @@ class Transform(_vtk.vtkTransform):
         return self._multiply_mode
 
     @multiply_mode.setter
-    def multiply_mode(
-        self: Transform, multiply_mode: Literal['pre', 'post']
-    ) -> None:  # numpydoc ignore=GL08
+    def multiply_mode(self: Transform, multiply_mode: Literal['pre', 'post']) -> None:
         _validation.check_contains(
             item=multiply_mode, container=['pre', 'post'], name='multiply mode'
         )
@@ -1382,7 +1380,7 @@ class Transform(_vtk.vtkTransform):
         return array
 
     @matrix.setter
-    def matrix(self: Transform, trans: TransformLike) -> None:  # numpydoc ignore=GL08
+    def matrix(self: Transform, trans: TransformLike) -> None:
         self.identity()
         self.concatenate(trans)
 

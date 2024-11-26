@@ -255,15 +255,15 @@ def reflection(
 
 
 @overload
-def apply_transformation_to_points(  # numpydoc ignore=GL08
+def apply_transformation_to_points(
     transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[True] = True
 ) -> None: ...
 @overload
-def apply_transformation_to_points(  # numpydoc ignore=GL08
+def apply_transformation_to_points(
     transformation: NumpyArray[float], points: NumpyArray[float], inplace: Literal[False] = False
 ) -> NumpyArray[float]: ...
 @overload
-def apply_transformation_to_points(  # numpydoc ignore=GL08
+def apply_transformation_to_points(
     transformation: NumpyArray[float], points: NumpyArray[float], inplace: bool = ...
 ) -> NumpyArray[float] | None: ...
 def apply_transformation_to_points(
