@@ -353,19 +353,10 @@ section from docstrings and skip the RT01 check for magic methods like ``__init_
 
 .. code:: python
 
-<<<<<<< HEAD
-    @strips.setter
-    def strips(self, strips):
-        if isinstance(strips, CellArray):
-            self.SetStrips(strips)
-        else:
-            self.SetStrips(CellArray(strips))
-=======
     def __init__(self, foo):  # numpydoc ignore=RT01
         """Initialize A Class."""
         super().__init__()
         self.foo = foo
->>>>>>> main
 
 See the available validation checks in `numpydoc Validation
 <https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
