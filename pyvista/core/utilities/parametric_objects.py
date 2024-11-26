@@ -22,7 +22,7 @@ def Spline(points, n_points=None):
     Parameters
     ----------
     points : numpy.ndarray
-        Array of points to build a splinegit a out of.  Array must be 3D
+        Array of points to build a spline out of.  Array must be 3D
         and directionally ordered.
 
     n_points : int, optional
