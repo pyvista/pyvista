@@ -1992,7 +1992,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return pyvista.PolyData(points, cells)
+    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
 
 
 def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2065,7 +2065,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return pyvista.PolyData(points, cells)
+    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
 
 
 def Ellipse(
@@ -2107,7 +2107,7 @@ def Ellipse(
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return pyvista.PolyData(points, cells)
+    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
 
 
 def Superquadric(
