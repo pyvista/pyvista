@@ -3,32 +3,26 @@
 from __future__ import annotations
 
 from math import pi
-from typing import TYPE_CHECKING
 import warnings
 
 import numpy as np
 
 import pyvista
-from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .geometric_objects import translate
 from .helpers import wrap
-
-if TYPE_CHECKING:
-    from pyvista import PolyData
-    from pyvista.core._typing_core import MatrixLike
-    from pyvista.core._typing_core import VectorLike
+from .misc import check_valid_vector
 
 
-def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None = None) -> PolyData:
+def Spline(points, n_points=None):
     """Create a spline from points.
 
     Parameters
     ----------
     points : numpy.ndarray
-        Array of points to build a spline out of.  Array must be 3D
+        Array of points to build a splinegit a out of.  Array must be 3D
         and directionally ordered.
 
     n_points : int, optional
@@ -60,27 +54,20 @@ def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None =
     ... )
 
     """
-    points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, False))
+    spline_function.SetPoints(pyvista.vtk_points(points, False))
 
     # get interpolation density
     u_res = n_points
     if u_res is None:
-        u_res = points_.shape[0]
+        u_res = points.shape[0]
 
     u_res -= 1
     spline = surface_from_para(spline_function, u_res)
     return spline.compute_arc_length()
 
 
-def KochanekSpline(
-    points: VectorLike[float] | MatrixLike[float],
-    tension: VectorLike[float] | None = None,
-    bias: VectorLike[float] | None = None,
-    continuity: VectorLike[float] | None = None,
-    n_points: int | None = None,
-) -> PolyData:
+def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=None):
     """Create a Kochanek spline from points.
 
     Parameters
@@ -126,35 +113,44 @@ def KochanekSpline(
     """
     if tension is None:
         tension = np.array([0.0, 0.0, 0.0])
-    tension_ = _validation.validate_arrayN(tension, must_be_in_range=[-1.0, 1.0], name='tension')
+    check_valid_vector(tension, 'tension')
+    if not np.all(np.abs(tension) <= 1.0):
+        raise ValueError(
+            'The absolute value of all values of the tension array elements must be <= 1.0 ',
+        )
 
     if bias is None:
         bias = np.array([0.0, 0.0, 0.0])
-    bias_ = _validation.validate_arrayN(bias, must_be_in_range=[-1.0, 1.0], name='bias')
+    check_valid_vector(bias, 'bias')
+    if not np.all(np.abs(bias) <= 1.0):
+        raise ValueError(
+            'The absolute value of all values of the bias array elements must be <= 1.0 ',
+        )
 
     if continuity is None:
         continuity = np.array([0.0, 0.0, 0.0])
-    continuity_ = _validation.validate_arrayN(
-        continuity, must_be_in_range=[-1.0, 1.0], name='continuity'
-    )
+    check_valid_vector(continuity, 'continuity')
+    if not np.all(np.abs(continuity) <= 1.0):
+        raise ValueError(
+            'The absolute value of all values continuity array elements must be <= 1.0 ',
+        )
 
-    points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points_, False))
+    spline_function.SetPoints(pyvista.vtk_points(points, False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()
     yspline = _vtk.vtkKochanekSpline()
     zspline = _vtk.vtkKochanekSpline()
-    xspline.SetDefaultBias(bias_[0])
-    yspline.SetDefaultBias(bias_[1])
-    zspline.SetDefaultBias(bias_[2])
-    xspline.SetDefaultTension(tension_[0])
-    yspline.SetDefaultTension(tension_[1])
-    zspline.SetDefaultTension(tension_[2])
-    xspline.SetDefaultContinuity(continuity_[0])
-    yspline.SetDefaultContinuity(continuity_[1])
-    zspline.SetDefaultContinuity(continuity_[2])
+    xspline.SetDefaultBias(bias[0])
+    yspline.SetDefaultBias(bias[1])
+    zspline.SetDefaultBias(bias[2])
+    xspline.SetDefaultTension(tension[0])
+    yspline.SetDefaultTension(tension[1])
+    zspline.SetDefaultTension(tension[2])
+    xspline.SetDefaultContinuity(continuity[0])
+    yspline.SetDefaultContinuity(continuity[1])
+    zspline.SetDefaultContinuity(continuity[2])
     spline_function.SetXSpline(xspline)
     spline_function.SetYSpline(yspline)
     spline_function.SetZSpline(zspline)
@@ -162,7 +158,7 @@ def KochanekSpline(
     # get interpolation density
     u_res = n_points
     if u_res is None:
-        u_res = points_.shape[0]
+        u_res = points.shape[0]
 
     u_res -= 1
     spline = surface_from_para(spline_function, u_res)
