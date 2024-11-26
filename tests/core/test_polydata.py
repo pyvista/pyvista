@@ -1184,10 +1184,10 @@ def default_n_faces():  # noqa: PT004
 
 
 def test_n_faces(default_n_faces):
-    if pv._version.version_info > (0, 46):
+    if pv._version.version_info[:2] > (0, 46):
         raise RuntimeError('Convert non-strict n_faces use to error')
 
-    if pv._version.version_info > (0, 49):
+    if pv._version.version_info[:2] > (0, 49):
         raise RuntimeError('Convert default n_faces behavior to strict')
 
     mesh = pv.PolyData(
@@ -1311,9 +1311,9 @@ def test_n_faces_etc_deprecated(cells: str):
     kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-        if pv._version.version_info > (0, 47):
+        if pv._version.version_info[:2] > (0, 47):
             raise RuntimeError(f'Convert `PolyData` `{n_cells}` deprecation warning to error')
-        if pv._version.version_info > (0, 48):
+        if pv._version.version_info[:2] > (0, 48):
             raise RuntimeError(f'Remove `PolyData` `{n_cells} constructor kwarg')
 
 
