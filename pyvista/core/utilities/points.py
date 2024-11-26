@@ -16,7 +16,9 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
 
 
-def vtk_points(points, deep: bool = True, force_float: bool = False):
+def vtk_points(
+    points: VectorLike[float] | MatrixLike[float], deep: bool = True, force_float: bool = False
+):
     """Convert numpy array or array-like to a ``vtkPoints`` object.
 
     Parameters
@@ -50,51 +52,33 @@ def vtk_points(points, deep: bool = True, force_float: bool = False):
     (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
 
     """
-    points = np.asanyarray(points)
-
-    # verify is numeric
-    if not np.issubdtype(points.dtype, np.number):
-        raise TypeError('Points must be a numeric type')
-
-    if force_float and not np.issubdtype(points.dtype, np.floating):
+    points_ = _validation.validate_arrayNx3(points, name='points')
+    if force_float and not np.issubdtype(points_.dtype, np.floating):
         warnings.warn(
             'Points is not a float type. This can cause issues when '
             'transforming or applying filters. Casting to '
             '``np.float32``. Disable this by passing '
             '``force_float=False``.',
         )
-        points = points.astype(np.float32)
-
-    # check dimensionality
-    if points.ndim == 1:
-        points = points.reshape(-1, 3)
-    elif points.ndim > 2:
-        raise ValueError(f'Dimension of ``points`` should be 1 or 2, not {points.ndim}')
-
-    # verify shape
-    if points.shape[1] != 3:
-        raise ValueError(
-            'Points array must contain three values per point. '
-            f'Shape is {points.shape} and should be (X, 3)',
-        )
+        points_ = points_.astype(np.float32)
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points, pyvista.pyvista_ndarray) and points.VTKObject is not None:
-        vtk_object = points.VTKObject
+    if not deep and isinstance(points_, pyvista.pyvista_ndarray) and points_.VTKObject is not None:
+        vtk_object = points_.VTKObject
 
         # we can only use the underlying data if `points` is not a slice of
         # the VTK data object
-        if vtk_object.GetSize() == points.size:
+        if vtk_object.GetSize() == points_.size:
             vtkpts = _vtk.vtkPoints()
-            vtkpts.SetData(points.VTKObject)
+            vtkpts.SetData(points_.VTKObject)
             return vtkpts
         else:
             deep = True
 
     # points must be contiguous
-    points = np.require(points, requirements=['C'])
+    points_ = np.require(points_, requirements=['C'])
     vtkpts = _vtk.vtkPoints()
-    vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
+    vtk_arr = _vtk.numpy_to_vtk(points_, deep=deep)
     vtkpts.SetData(vtk_arr)
 
     return vtkpts
