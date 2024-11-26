@@ -889,9 +889,8 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if arr_var is None:  # use active scalars array
-            _, arr_var_ = self.active_scalars_info
-            arr_var_ = cast(str, arr_var_)
-            if arr_var_ is None:
+            arr_var = self.active_scalars_info.name
+            if arr_var is None:
                 return (np.nan, np.nan)
 
         if isinstance(arr_var, str):
