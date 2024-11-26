@@ -690,15 +690,15 @@ def test_plot_no_active_scalars(sphere):
     plotter.add_mesh(sphere)
     with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
         plotter.update_scalars(np.arange(5))
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Convert error this method')
-        if pv._version.version_info > (0, 47):
+        if pv._version.version_info[:2] > (0, 47):
             raise RuntimeError('Remove this method')
     with pytest.raises(ValueError), pytest.warns(PyVistaDeprecationWarning):  # noqa: PT012, PT011
         plotter.update_scalars(np.arange(sphere.n_faces_strict))
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Convert error this method')
-        if pv._version.version_info > (0, 47):
+        if pv._version.version_info[:2] > (0, 47):
             raise RuntimeError('Remove this method')
 
 
@@ -1211,9 +1211,9 @@ def test_box_axes():
     plotter = pv.Plotter()
     with pytest.warns(pv.PyVistaDeprecationWarning):
         plotter.add_axes(box=True)
-    if pv._version.version_info > (0, 47):
+    if pv._version.version_info[:2] > (0, 47):
         raise RuntimeError('Convert error this function')
-    if pv._version.version_info > (0, 48):
+    if pv._version.version_info[:2] > (0, 48):
         raise RuntimeError('Remove this function')
     plotter.add_mesh(pv.Sphere())
     plotter.show()
@@ -1223,9 +1223,9 @@ def test_box_axes_color_box():
     plotter = pv.Plotter()
     with pytest.warns(pv.PyVistaDeprecationWarning):
         plotter.add_axes(box=True, box_args={'color_box': True})
-    if pv._version.version_info > (0, 47):
+    if pv._version.version_info[:2] > (0, 47):
         raise RuntimeError('Convert error this function')
-    if pv._version.version_info > (0, 48):
+    if pv._version.version_info[:2] > (0, 48):
         raise RuntimeError('Remove this function')
     plotter.add_mesh(pv.Sphere())
     plotter.show()
