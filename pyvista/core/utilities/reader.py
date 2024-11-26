@@ -238,7 +238,7 @@ class BaseVTKReader(ABC):
 
     def AddObserver(self, event_type, callback):
         """Add Observer that can be triggered during Update."""
-        self._observers.append([event_type, callback])
+        self._observers.append([event_type, callback])  # type: ignore[arg-type]
 
     def RemoveObservers(self, *args):
         """Remove Observer."""
@@ -250,7 +250,7 @@ class BaseVTKReader(ABC):
 
     def UpdateObservers(self, event_type):
         """Call matching observer."""
-        for event_type_allowed, observer in self._observers:
+        for event_type_allowed, observer in self._observers:  # type: ignore[misc]
             if event_type_allowed == event_type:
                 observer(self, event_type)
 
@@ -301,7 +301,7 @@ class BaseReader:
         self.path = str(path)
         self._set_defaults_post()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Representation of a Reader object."""
         return f"{self.__class__.__name__}('{self.path}')"
 
@@ -371,10 +371,10 @@ class BaseReader:
         """
         if self._filename is not None:
             return self._filename
-        return self.__directory
+        return self.__directory  # type: ignore[return-value]
 
     @path.setter
-    def path(self, path: str | Path):  # numpydoc ignore=GL08
+    def path(self, path: str | Path):
         if Path(path).is_dir():
             self._set_directory(path)
         elif Path(path).is_file():
@@ -413,10 +413,10 @@ class BaseReader:
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
             raise RuntimeError('File reader failed to read and/or produced no output.')
-        data._post_file_load_processing()
+        data._post_file_load_processing()  # type: ignore[union-attr]
 
         # check for any pyvista metadata
-        data._restore_metadata()
+        data._restore_metadata()  # type: ignore[union-attr]
         return data
 
     def _update_information(self):
@@ -466,7 +466,7 @@ class PointCellDataSelection:
             Number of point arrays.
 
         """
-        return self.reader.GetNumberOfPointArrays()
+        return self.reader.GetNumberOfPointArrays()  # type: ignore[attr-defined]
 
     @property
     def point_array_names(self):
@@ -478,7 +478,7 @@ class PointCellDataSelection:
             List of all point array names.
 
         """
-        return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]
+        return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]  # type: ignore[attr-defined]
 
     def enable_point_array(self, name):
         """Enable point array with name.
@@ -489,7 +489,7 @@ class PointCellDataSelection:
             Point array name.
 
         """
-        self.reader.SetPointArrayStatus(name, 1)
+        self.reader.SetPointArrayStatus(name, 1)  # type: ignore[attr-defined]
 
     def disable_point_array(self, name):
         """Disable point array with name.
@@ -500,7 +500,7 @@ class PointCellDataSelection:
             Point array name.
 
         """
-        self.reader.SetPointArrayStatus(name, 0)
+        self.reader.SetPointArrayStatus(name, 0)  # type: ignore[attr-defined]
 
     def point_array_status(self, name):
         """Get status of point array with name.
@@ -516,7 +516,7 @@ class PointCellDataSelection:
             Whether reading the cell array is enabled.
 
         """
-        return bool(self.reader.GetPointArrayStatus(name))
+        return bool(self.reader.GetPointArrayStatus(name))  # type: ignore[attr-defined]
 
     def enable_all_point_arrays(self):
         """Enable all point arrays."""
@@ -550,7 +550,7 @@ class PointCellDataSelection:
             Number of cell arrays.
 
         """
-        return self.reader.GetNumberOfCellArrays()
+        return self.reader.GetNumberOfCellArrays()  # type: ignore[attr-defined]
 
     @property
     def cell_array_names(self):
@@ -562,7 +562,7 @@ class PointCellDataSelection:
             List of all cell array names.
 
         """
-        return [self.reader.GetCellArrayName(i) for i in range(self.number_cell_arrays)]
+        return [self.reader.GetCellArrayName(i) for i in range(self.number_cell_arrays)]  # type: ignore[attr-defined]
 
     def enable_cell_array(self, name):
         """Enable cell array with name.
@@ -573,7 +573,7 @@ class PointCellDataSelection:
             Cell array name.
 
         """
-        self.reader.SetCellArrayStatus(name, 1)
+        self.reader.SetCellArrayStatus(name, 1)  # type: ignore[attr-defined]
 
     def disable_cell_array(self, name):
         """Disable cell array with name.
@@ -584,7 +584,7 @@ class PointCellDataSelection:
             Cell array name.
 
         """
-        self.reader.SetCellArrayStatus(name, 0)
+        self.reader.SetCellArrayStatus(name, 0)  # type: ignore[attr-defined]
 
     def cell_array_status(self, name):
         """Get status of cell array with name.
@@ -600,7 +600,7 @@ class PointCellDataSelection:
             Whether reading the cell array is enabled.
 
         """
-        return bool(self.reader.GetCellArrayStatus(name))
+        return bool(self.reader.GetCellArrayStatus(name))  # type: ignore[attr-defined]
 
     def enable_all_cell_arrays(self):
         """Enable all cell arrays."""
@@ -975,7 +975,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return bool(self.reader.GetDecomposePolyhedra())
 
     @decompose_polyhedra.setter
-    def decompose_polyhedra(self, value):  # numpydoc ignore=GL08
+    def decompose_polyhedra(self, value):
         self.reader.SetDecomposePolyhedra(value)
 
     @property
@@ -1001,7 +1001,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return bool(self.reader.GetSkipZeroTime())
 
     @skip_zero_time.setter
-    def skip_zero_time(self, value):  # numpydoc ignore=GL08
+    def skip_zero_time(self, value):
         self.reader.SetSkipZeroTime(value)
         self._update_information()
         self.reader.SetRefresh()
@@ -1034,7 +1034,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return bool(self.reader.GetCreateCellToPoint())
 
     @cell_to_point_creation.setter
-    def cell_to_point_creation(self, value):  # numpydoc ignore=GL08
+    def cell_to_point_creation(self, value):
         self.reader.SetCreateCellToPoint(value)
 
     @property
@@ -1241,7 +1241,7 @@ class POpenFOAMReader(OpenFOAMReader):
         return 'reconstructed' if self.reader.GetCaseType() else 'decomposed'
 
     @case_type.setter
-    def case_type(self, value):  # numpydoc ignore=GL08
+    def case_type(self, value):
         if value == 'reconstructed':
             self.reader.SetCaseType(1)
         elif value == 'decomposed':
@@ -1526,7 +1526,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return bool(self.reader.GetAutoDetectFormat())
 
     @auto_detect_format.setter
-    def auto_detect_format(self, value):  # numpydoc ignore=GL08
+    def auto_detect_format(self, value):
         self.reader.SetAutoDetectFormat(value)
 
     def add_function(self, value: int | Plot3DFunctionEnum):
@@ -1590,7 +1590,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return self.reader.GetPreserveIntermediateFunctions()
 
     @preserve_intermediate_functions.setter
-    def preserve_intermediate_functions(self, val):  # numpydoc ignore=GL08
+    def preserve_intermediate_functions(self, val):
         self.reader.SetPreserveIntermediateFunctions(val)
 
     @property
@@ -1599,7 +1599,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return self.reader.GetGamma()
 
     @gamma.setter
-    def gamma(self, val):  # numpydoc ignore=GL08
+    def gamma(self, val):
         self.reader.SetGamma(val)
 
     @property
@@ -1608,7 +1608,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return self.reader.GetR()
 
     @r_gas_constant.setter
-    def r_gas_constant(self, val):  # numpydoc ignore=GL08
+    def r_gas_constant(self, val):
         self.reader.SetR(val)
 
 
@@ -1686,7 +1686,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self._reader.GetDistributeBlocks())
 
     @distribute_blocks.setter
-    def distribute_blocks(self, value: str):  # numpydoc ignore=GL08
+    def distribute_blocks(self, value: str):
         self._reader.SetDistributeBlocks(value)
 
     def base_array_status(self, name: str) -> bool:
@@ -1860,7 +1860,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return self._reader.GetUseUnsteadyPattern()
 
     @unsteady_pattern.setter
-    def unsteady_pattern(self, enabled: bool):  # numpydoc ignore=GL08
+    def unsteady_pattern(self, enabled: bool):
         self._reader.SetUseUnsteadyPattern(bool(enabled))
 
     @property
@@ -1883,7 +1883,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return self._reader.GetUse3DVector()
 
     @vector_3d.setter
-    def vector_3d(self, enabled: bool):  # numpydoc ignore=GL08
+    def vector_3d(self, enabled: bool):
         self._reader.SetUse3DVector(bool(enabled))
 
     @property
@@ -1910,7 +1910,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return self._reader.GetLoadBndPatch()
 
     @load_boundary_patch.setter
-    def load_boundary_patch(self, enabled: bool):  # numpydoc ignore=GL08
+    def load_boundary_patch(self, enabled: bool):
         self._reader.SetLoadBndPatch(bool(enabled))
 
 
@@ -1974,25 +1974,26 @@ class _PVDReader(BaseVTKReader):
                     float(element_attrib.get('timestep', 0)),
                     int(element_attrib.get('part', 0)),
                     element_attrib['file'],
-                    element_attrib.get('group'),
+                    element_attrib.get('group'),  # type: ignore[arg-type]
                 ),
             )
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
-        self._time_mapping = {time: [] for time in self._time_values}
+        self._time_mapping = {time: [] for time in self._time_values}  # type: ignore[var-annotated]
         for dataset in self._datasets:
             self._time_mapping[dataset.time].append(dataset)
         self._SetActiveTime(self._time_values[0])
 
     def Update(self):
         """Read data and store it."""
-        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
+        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])  # type: ignore[assignment]
 
     def _SetActiveTime(self, time_value):
         """Set active time."""
         self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
-            get_reader(Path(self._directory) / dataset.path) for dataset in self._active_datasets
+            get_reader(Path(self._directory) / dataset.path)  # type: ignore[arg-type]
+            for dataset in self._active_datasets
         ]
 
 
@@ -2435,18 +2436,18 @@ class _GIFReader(BaseVTKReader):
         from PIL import ImageSequence
 
         img = Image.open(self._filename)
-        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
+        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))  # type: ignore[assignment]
 
         # load each frame to the grid (RGB since gifs do not support transparency
-        self._n_frames = img.n_frames
+        self._n_frames = img.n_frames  # type: ignore[attr-defined]
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')
+            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[attr-defined]
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:
-            self._data_object.point_data.active_scalars_name = 'frame0'
+        if 'frame0' in self._data_object.point_data:  # type: ignore[attr-defined]
+            self._data_object.point_data.active_scalars_name = 'frame0'  # type: ignore[attr-defined]
 
 
 class GIFReader(BaseReader):

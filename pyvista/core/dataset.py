@@ -26,7 +26,10 @@ from .errors import VTKVersionError
 from .filters import DataSetFilters
 from .filters import _get_output
 from .pyvista_ndarray import pyvista_ndarray
+from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
+from .utilities.arrays import PointLiteral
 from .utilities.arrays import _coerce_pointslike_arg
 from .utilities.arrays import get_array
 from .utilities.arrays import get_array_association
@@ -35,7 +38,6 @@ from .utilities.arrays import vtk_id_list_to_array
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
-from .utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -43,9 +45,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterator
 
     from ._typing_core import MatrixLike
-    from ._typing_core import Number
     from ._typing_core import NumpyArray
-    from ._typing_core import RotationLike
     from ._typing_core import VectorLike
 
 # vector array names
@@ -56,7 +56,7 @@ class ActiveArrayInfoTuple(NamedTuple):
     """Active array info tuple to provide legacy support."""
 
     association: FieldAssociation
-    name: str
+    name: str | None
 
 
 class ActiveArrayInfo:
@@ -73,7 +73,7 @@ class ActiveArrayInfo:
 
     """
 
-    def __init__(self, association, name):
+    def __init__(self, association: FieldAssociation, name: str | None) -> None:
         """Initialize."""
         self.association = association
         self.name = name
@@ -95,7 +95,7 @@ class ActiveArrayInfo:
         state['association'] = int(self.association.value)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         """Support unpickling."""
         self.__dict__ = state.copy()
         self.association = FieldAssociation(state['association'])
@@ -109,21 +109,13 @@ class ActiveArrayInfo:
         """Provide namedtuple-like __iter__."""
         return self._namedtuple.__iter__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Provide namedtuple-like __repr__."""
         return self._namedtuple.__repr__()
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int):
         """Provide namedtuple-like __getitem__."""
         return self._namedtuple.__getitem__(item)
-
-    def __setitem__(self, key, value):
-        """Provide namedtuple-like __setitem__."""
-        self._namedtuple.__setitem__(key, value)
-
-    def __getattr__(self, item):
-        """Provide namedtuple-like __getattr__."""
-        self._namedtuple.__getattr__(item)
 
     def __eq__(self, other):
         """Check equivalence (useful for serialize/deserialize tests)."""
@@ -191,7 +183,8 @@ class DataSet(DataSetFilters, DataObject):
         ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Z Height')
 
         """
-        field, name = self._active_scalars_info
+        field: FieldAssociation = self._active_scalars_info.association
+        name: str | None = self._active_scalars_info.name
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
         if name in exclude:
             name = self._last_active_scalars_name
@@ -251,7 +244,8 @@ class DataSet(DataSetFilters, DataObject):
         ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Normals')
 
         """
-        field, name = self._active_vectors_info
+        field: FieldAssociation = self._active_vectors_info.association
+        name: str | None = self._active_vectors_info.name
 
         # verify this field is still valid
         if name is not None:
@@ -313,7 +307,8 @@ class DataSet(DataSetFilters, DataObject):
                         dtype=float32)
 
         """
-        field, name = self.active_vectors_info
+        field: FieldAssociation = self.active_vectors_info.association
+        name: str | None = self.active_vectors_info.name
         if name is not None:
             try:
                 if field is FieldAssociation.POINT:
@@ -334,7 +329,8 @@ class DataSet(DataSetFilters, DataObject):
             Active tensors array.
 
         """
-        field, name = self.active_tensors_info
+        field: FieldAssociation = self.active_tensors_info.association
+        name: str | None = self.active_tensors_info.name
         if name is not None:
             try:
                 if field is FieldAssociation.POINT:
@@ -346,7 +342,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors_name(self) -> str:
+    def active_tensors_name(self) -> str | None:
         """Return the name of the active tensor array.
 
         Returns
@@ -358,7 +354,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_tensors_info.name
 
     @active_tensors_name.setter
-    def active_tensors_name(self, name: str):  # numpydoc ignore=GL08
+    def active_tensors_name(self, name: str | None) -> None:
         """Set the name of the active tensor array.
 
         Parameters
@@ -370,7 +366,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_tensors(name)
 
     @property
-    def active_vectors_name(self) -> str:
+    def active_vectors_name(self) -> str | None:
         """Return the name of the active vectors array.
 
         Returns
@@ -394,7 +390,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_vectors_info.name
 
     @active_vectors_name.setter
-    def active_vectors_name(self, name: str):  # numpydoc ignore=GL08
+    def active_vectors_name(self, name: str | None) -> None:
         """Set the name of the active vectors array.
 
         Parameters
@@ -406,7 +402,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_vectors(name)
 
     @property  # type: ignore[explicit-override, override]
-    def active_scalars_name(self) -> str:
+    def active_scalars_name(self) -> str | None:
         """Return the name of the active scalars.
 
         Returns
@@ -429,7 +425,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_scalars_info.name
 
     @active_scalars_name.setter
-    def active_scalars_name(self, name: str):  # numpydoc ignore=GL08
+    def active_scalars_name(self, name: str | None) -> None:
         """Set the name of the active scalars.
 
         Parameters
@@ -506,7 +502,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self, points: MatrixLike[float] | _vtk.vtkPoints):  # numpydoc ignore=GL08
+    def points(self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
         """Set a reference to the points as a numpy object.
 
         Parameters
@@ -595,7 +591,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_texture_coordinates
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: NumpyArray[float]):  # numpydoc ignore=GL08
+    def active_t_coords(self, t_coords: NumpyArray[float]) -> None:
         """Set the active texture coordinates on the points.
 
         Parameters
@@ -613,7 +609,7 @@ class DataSet(DataSetFilters, DataObject):
     def set_active_scalars(
         self,
         name: str | None,
-        preference='cell',
+        preference: PointLiteral | CellLiteral = 'cell',
     ) -> tuple[FieldAssociation, NumpyArray[float] | None]:
         """Find the scalars by name and appropriately sets it as active.
 
@@ -672,7 +668,9 @@ class DataSet(DataSetFilters, DataObject):
         else:  # must be cell
             return field, self.cell_data.active_scalars
 
-    def set_active_vectors(self, name: str | None, preference: str = 'point') -> None:
+    def set_active_vectors(
+        self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
+    ) -> None:
         """Find the vectors by name and appropriately sets it as active.
 
         To deactivate any active vectors, pass ``None`` as the ``name``.
@@ -709,7 +707,9 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
-    def set_active_tensors(self, name: str | None, preference: str = 'point') -> None:
+    def set_active_tensors(
+        self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
+    ) -> None:
         """Find the tensors by name and appropriately sets it as active.
 
         To deactivate any active tensors, pass ``None`` as the ``name``.
@@ -746,7 +746,12 @@ class DataSet(DataSetFilters, DataObject):
 
         self._active_tensors_info = ActiveArrayInfo(field, name)
 
-    def rename_array(self, old_name: str, new_name: str, preference='cell') -> None:
+    def rename_array(
+        self,
+        old_name: str,
+        new_name: str,
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
+    ) -> None:
         """Change array name by searching for the array then renaming it.
 
         Parameters
@@ -795,7 +800,7 @@ class DataSet(DataSetFilters, DataObject):
         # Update the array's name before reassigning. This prevents taking a copy of the array
         # in `DataSetAttributes._prepare_array` which can lead to the array being garbage collected.
         # See issue #5244.
-        arr.VTKObject.SetName(new_name)
+        arr.VTKObject.SetName(new_name)  # type: ignore[union-attr]
         data[new_name] = arr
 
         if was_active and field != FieldAssociation.NONE:
@@ -811,7 +816,8 @@ class DataSet(DataSetFilters, DataObject):
             Active scalars as an array.
 
         """
-        field, name = self.active_scalars_info
+        field: FieldAssociation = self.active_scalars_info.association
+        name: str | None = self.active_scalars_info.name
         if name is not None:
             try:
                 if field == FieldAssociation.POINT:
@@ -859,7 +865,7 @@ class DataSet(DataSetFilters, DataObject):
     def get_data_range(
         self,
         arr_var: str | NumpyArray[float] | None = None,
-        preference='cell',
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
@@ -898,712 +904,6 @@ class DataSet(DataSetFilters, DataObject):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
-
-    def rotate_x(
-        self,
-        angle: float,
-        point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Rotate mesh about the x-axis.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        angle : float
-            Angle in degrees to rotate about the x-axis.
-
-        point : VectorLike[float], optional
-            Point to rotate about. Defaults to origin.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Rotated dataset.
-
-        See Also
-        --------
-        pyvista.Transform.rotate_x
-            Concatenate a rotation about the x-axis with a transformation.
-
-        Examples
-        --------
-        Rotate a mesh 30 degrees about the x-axis.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> rot = mesh.rotate_x(30, inplace=False)
-
-        Plot the rotated mesh.
-
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(rot)
-        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
-        >>> _ = pl.add_axes_at_origin()
-        >>> pl.show()
-
-        """
-        t = Transform().rotate_x(angle, point=point)
-        return self.transform(  # type: ignore[misc]
-            t,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def rotate_y(
-        self,
-        angle: float,
-        point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Rotate mesh about the y-axis.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        angle : float
-            Angle in degrees to rotate about the y-axis.
-
-        point : VectorLike[float], optional
-            Point to rotate about.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals and active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Rotated dataset.
-
-        See Also
-        --------
-        pyvista.Transform.rotate_y
-            Concatenate a rotation about the y-axis with a transformation.
-
-        Examples
-        --------
-        Rotate a cube 30 degrees about the y-axis.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> rot = mesh.rotate_y(30, inplace=False)
-
-        Plot the rotated mesh.
-
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(rot)
-        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
-        >>> _ = pl.add_axes_at_origin()
-        >>> pl.show()
-
-        """
-        t = Transform().rotate_y(angle, point=point)
-        return self.transform(  # type: ignore[misc]
-            t,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def rotate_z(
-        self,
-        angle: float,
-        point: VectorLike[float] = (0.0, 0.0, 0.0),
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Rotate mesh about the z-axis.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        angle : float
-            Angle in degrees to rotate about the z-axis.
-
-        point : VectorLike[float], optional
-            Point to rotate about. Defaults to origin.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Rotated dataset.
-
-        See Also
-        --------
-        pyvista.Transform.rotate_z
-            Concatenate a rotation about the z-axis with a transformation.
-
-        Examples
-        --------
-        Rotate a mesh 30 degrees about the z-axis.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> rot = mesh.rotate_z(30, inplace=False)
-
-        Plot the rotated mesh.
-
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(rot)
-        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
-        >>> _ = pl.add_axes_at_origin()
-        >>> pl.show()
-
-        """
-        t = Transform().rotate_z(angle, point=point)
-        return self.transform(  # type: ignore[misc]
-            t,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def rotate_vector(
-        self,
-        vector: VectorLike[float],
-        angle: float,
-        point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Rotate mesh about a vector.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        vector : Vector
-            Vector to rotate about.
-
-        angle : float
-            Angle to rotate.
-
-        point : VectorLike[float], optional
-            Point to rotate about. Defaults to origin.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Rotated dataset.
-
-        See Also
-        --------
-        pyvista.Transform.rotate_vector
-            Concatenate a rotation about a vector with a transformation.
-
-        Examples
-        --------
-        Rotate a mesh 30 degrees about the ``(1, 1, 1)`` axis.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> rot = mesh.rotate_vector((1, 1, 1), 30, inplace=False)
-
-        Plot the rotated mesh.
-
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(rot)
-        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
-        >>> _ = pl.add_axes_at_origin()
-        >>> pl.show()
-
-        """
-        t = Transform().rotate_vector(vector, angle, point=point)
-        return self.transform(  # type: ignore[misc]
-            t,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def rotate(
-        self,
-        rotation: RotationLike,
-        point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        rotation : RotationLike
-            3x3 rotation matrix or a SciPy ``Rotation`` object.
-
-        point : VectorLike[float], optional
-            Point to rotate about. Defaults to origin.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Rotated dataset.
-
-        See Also
-        --------
-        pyvista.Transform.rotate
-            Concatenate a rotation matrix with a transformation.
-
-        Examples
-        --------
-        Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
-        60 degrees.
-
-        >>> import pyvista as pv
-        >>> rotation = [
-        ...     [0.5, -0.8660254, 0.0],
-        ...     [0.8660254, 0.5, 0.0],
-        ...     [0.0, 0.0, 1.0],
-        ... ]
-
-        Use the rotation to rotate a cone about its tip.
-
-        >>> mesh = pv.Cone()
-        >>> tip = (0.5, 0.0, 0.0)
-        >>> rot = mesh.rotate(rotation, point=tip)
-
-        Plot the rotated mesh.
-
-        >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(rot)
-        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
-        >>> _ = pl.add_axes_at_origin()
-        >>> pl.show()
-
-        """
-        t = Transform().rotate(rotation, point=point)
-        return self.transform(  # type: ignore[misc]
-            t,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def translate(
-        self,
-        xyz: VectorLike[float],
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Translate the mesh.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        xyz : Vector
-            A vector of three floats.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Translated dataset.
-
-        See Also
-        --------
-        pyvista.Transform.translate
-            Concatenate a translation matrix with a transformation.
-
-        Examples
-        --------
-        Create a sphere and translate it by ``(2, 1, 2)``.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Sphere()
-        >>> mesh.center
-        (0.0, 0.0, 0.0)
-        >>> trans = mesh.translate((2, 1, 2), inplace=False)
-        >>> trans.center
-        (2.0, 1.0, 2.0)
-
-        """
-        transform = Transform().translate(xyz)
-        return self.transform(  # type: ignore[misc]
-            transform,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def scale(
-        self,
-        xyz: Number | VectorLike[float],
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-        point: VectorLike[float] | None = None,
-    ):
-        """Scale the mesh.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        xyz : Number | Vector
-            A vector sequence defining the scale factors along x, y, and z. If
-            a scalar, the same uniform scale is used along all three axes.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are transformed. Otherwise, only
-            the points, normals and active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        point : VectorLike[float], optional
-            Point to scale from. Defaults to origin.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Scaled dataset.
-
-        See Also
-        --------
-        pyvista.Transform.scale
-            Concatenate a scale matrix with a transformation.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> pl.subplot(0, 0)
-        >>> pl.show_axes()
-        >>> _ = pl.show_grid()
-        >>> mesh1 = examples.download_teapot()
-        >>> _ = pl.add_mesh(mesh1)
-        >>> pl.subplot(0, 1)
-        >>> pl.show_axes()
-        >>> _ = pl.show_grid()
-        >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
-        >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
-
-        """
-        transform = Transform().scale(xyz, point=point)
-        return self.transform(  # type: ignore[misc]
-            transform,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def flip_x(
-        self,
-        point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Flip mesh about the x-axis.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        point : sequence[float], optional
-            Point to rotate about.  Defaults to center of mesh at
-            :attr:`center <pyvista.DataSet.center>`.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Flipped dataset.
-
-        See Also
-        --------
-        pyvista.Transform.flip_x
-            Concatenate a reflection about the x-axis with a transformation.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> pl.subplot(0, 0)
-        >>> pl.show_axes()
-        >>> mesh1 = examples.download_teapot()
-        >>> _ = pl.add_mesh(mesh1)
-        >>> pl.subplot(0, 1)
-        >>> pl.show_axes()
-        >>> mesh2 = mesh1.flip_x(inplace=False)
-        >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
-
-        """
-        if point is None:
-            point = self.center
-        t = Transform().reflect((1, 0, 0), point=point)
-        return self.transform(  # type: ignore[misc]
-            t,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def flip_y(
-        self,
-        point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Flip mesh about the y-axis.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        point : VectorLike[float], optional
-            Point to rotate about.  Defaults to center of mesh at
-            :attr:`center <pyvista.DataSet.center>`.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Flipped dataset.
-
-        See Also
-        --------
-        pyvista.Transform.flip_y
-            Concatenate a reflection about the y-axis with a transformation.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> pl.subplot(0, 0)
-        >>> pl.show_axes()
-        >>> mesh1 = examples.download_teapot()
-        >>> _ = pl.add_mesh(mesh1)
-        >>> pl.subplot(0, 1)
-        >>> pl.show_axes()
-        >>> mesh2 = mesh1.flip_y(inplace=False)
-        >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
-
-        """
-        if point is None:
-            point = self.center
-        t = Transform().reflect((0, 1, 0), point=point)
-        return self.transform(  # type: ignore[misc]
-            t,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def flip_z(
-        self,
-        point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Flip mesh about the z-axis.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        point : VectorLike[float], optional
-            Point to rotate about.  Defaults to center of mesh at
-            :attr:`center <pyvista.DataSet.center>`.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Flipped dataset.
-
-        See Also
-        --------
-        pyvista.Transform.flip_z
-            Concatenate a reflection about the z-axis with a transformation.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> pl.subplot(0, 0)
-        >>> pl.show_axes()
-        >>> mesh1 = examples.download_teapot().rotate_x(90, inplace=False)
-        >>> _ = pl.add_mesh(mesh1)
-        >>> pl.subplot(0, 1)
-        >>> pl.show_axes()
-        >>> mesh2 = mesh1.flip_z(inplace=False)
-        >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xz")
-
-        """
-        if point is None:
-            point = self.center
-        t = Transform().reflect((0, 0, 1), point=point)
-        return self.transform(  # type: ignore[misc]
-            t,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
-
-    def flip_normal(
-        self,
-        normal: VectorLike[float],
-        point: VectorLike[float] | None = None,
-        transform_all_input_vectors: bool = False,
-        inplace: bool = False,
-    ):
-        """Flip mesh about the normal.
-
-        .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
-            under the hood.
-
-        Parameters
-        ----------
-        normal : VectorLike[float]
-           Normal vector to flip about.
-
-        point : VectorLike[float], optional
-            Point to rotate about.  Defaults to center of mesh at
-            :attr:`center <pyvista.DataSet.center>`.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all input vectors are
-            transformed. Otherwise, only the points, normals and
-            active vectors are transformed.
-
-        inplace : bool, default: False
-            Updates mesh in-place.
-
-        Returns
-        -------
-        pyvista.DataSet
-            Dataset flipped about its normal.
-
-        See Also
-        --------
-        pyvista.Transform.reflect
-            Concatenate a reflection matrix with a transformation.
-
-        Examples
-        --------
-        >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> pl = pv.Plotter(shape=(1, 2))
-        >>> pl.subplot(0, 0)
-        >>> pl.show_axes()
-        >>> mesh1 = examples.download_teapot()
-        >>> _ = pl.add_mesh(mesh1)
-        >>> pl.subplot(0, 1)
-        >>> pl.show_axes()
-        >>> mesh2 = mesh1.flip_normal([1.0, 1.0, 1.0], inplace=False)
-        >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
-
-        """
-        if point is None:
-            point = self.center
-        t = Transform().reflect(normal, point=point)
-        return self.transform(  # type: ignore[misc]
-            t,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-        )
 
     def copy_meta_from(self, ido: DataSet, deep: bool = True) -> None:
         """Copy pyvista meta data onto this object from another object.
@@ -2122,7 +1422,7 @@ class DataSet(DataSetFilters, DataObject):
         self,
         name: str,
         scalars: NumpyArray[float] | Sequence[float] | float,
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Add/set an array in the point_data, or cell_data accordingly.
 
         It depends on the array's length, or specified mode.
@@ -2192,15 +1492,13 @@ class DataSet(DataSetFilters, DataObject):
         ['my_array', 'Normals']
 
         """
-        names = []
+        names: list[str] = []
         names.extend(self.field_data.keys())
         names.extend(self.point_data.keys())
         names.extend(self.cell_data.keys())
-        try:
+        if self.active_scalars_name is not None:
             names.remove(self.active_scalars_name)
             names.insert(0, self.active_scalars_name)
-        except ValueError:
-            pass
         return names
 
     def _get_attrs(self):
@@ -2242,15 +1540,15 @@ class DataSet(DataSetFilters, DataObject):
             row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
             row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
 
-            def format_array(name, arr, field):
+            def format_array(name: str, arr, field):
                 """Format array information for printing (internal helper)."""
                 if isinstance(arr, str):
                     # Convert string scalar into a numpy array. Otherwise, get_data_range
                     # will treat the string as an array name, not an array value.
                     arr = np.array(arr)
                 dl, dh = self.get_data_range(arr)
-                dl = pyvista.FLOAT_FORMAT.format(dl)
-                dh = pyvista.FLOAT_FORMAT.format(dh)
+                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
+                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
                 if name == self.active_scalars_info.name:
                     name = f'<b>{name}</b>'
                 ncomp = arr.shape[1] if arr.ndim > 1 else 1
@@ -2311,7 +1609,7 @@ class DataSet(DataSetFilters, DataObject):
         else:
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh, deep=deep)  # type: ignore[arg-type]
+            self.copy_meta_from(mesh, deep=deep)
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
@@ -2436,7 +1734,7 @@ class DataSet(DataSetFilters, DataObject):
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def find_closest_point(self, point: Iterable[float], n=1) -> int:
+    def find_closest_point(self, point: Iterable[float], n: int = 1) -> int:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -3092,7 +2390,7 @@ class DataSet(DataSetFilters, DataObject):
             'faces': range(cell.n_faces),
         }
 
-        def generate_ids(i: int, connections: str):  # numpydoc ignore=GL08
+        def generate_ids(i: int, connections: str):
             if connections == 'points':
                 ids = _vtk.vtkIdList()
                 ids.InsertNextId(i)
@@ -3540,7 +2838,7 @@ class DataSet(DataSetFilters, DataObject):
     def active_texture_coordinates(
         self,
         texture_coordinates: NumpyArray[float],
-    ):  # numpydoc ignore=GL08
+    ) -> None:
         """Set the active texture coordinates on the points.
 
         Parameters

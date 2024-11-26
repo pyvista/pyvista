@@ -65,7 +65,7 @@ class VtkErrorCatcher:
 
     """
 
-    def __init__(self, raise_errors=False, send_to_logging=True):
+    def __init__(self, raise_errors: bool = False, send_to_logging: bool = True):
         """Initialize context manager."""
         self.raise_errors = raise_errors
         self.send_to_logging = send_to_logging
@@ -102,7 +102,7 @@ class VtkEvent(NamedTuple):
 class Observer:
     """A standard class for observing VTK objects."""
 
-    def __init__(self, event_type='ErrorEvent', log=True, store_history=False):
+    def __init__(self, event_type='ErrorEvent', log: bool = True, store_history: bool = False):
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
@@ -113,7 +113,7 @@ class Observer:
         self.__log = log
 
         self.store_history = store_history
-        self.event_history = []
+        self.event_history: list[VtkEvent] = []
 
     @staticmethod
     def parse_message(message):  # numpydoc ignore=RT01
@@ -173,7 +173,7 @@ class Observer:
         self.__event_occurred = False
         return occ
 
-    def get_message(self, etc=False):
+    def get_message(self, etc: bool = False):
         """Get the last set error message.
 
         Returns
@@ -240,7 +240,7 @@ class ProgressMonitor:
 
     def handler(self, sig, frame):
         """Pass signal to custom interrupt handler."""
-        self._interrupt_signal_received = (sig, frame)
+        self._interrupt_signal_received = (sig, frame)  # type: ignore[assignment]
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
 
     def __call__(self, obj, *args):
@@ -253,7 +253,7 @@ class ProgressMonitor:
         else:
             progress = obj.GetProgress()
             step = progress - self._old_progress
-            self._progress_bar.update(step)
+            self._progress_bar.update(step)  # type: ignore[union-attr]
             self._old_progress = progress
 
     def __enter__(self):
@@ -274,9 +274,9 @@ class ProgressMonitor:
 
     def __exit__(self, *args):
         """Exit event for ``with`` context."""
-        self._progress_bar.total = 1
-        self._progress_bar.refresh()
-        self._progress_bar.close()
+        self._progress_bar.total = 1  # type: ignore[union-attr]
+        self._progress_bar.refresh()  # type: ignore[union-attr]
+        self._progress_bar.close()  # type: ignore[union-attr]
         self.algorithm.RemoveObservers(self.event_type)
         if threading.current_thread().__class__.__name__ == '_MainThread':
             signal.signal(signal.SIGINT, self._old_handler)

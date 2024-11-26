@@ -258,7 +258,7 @@ class Transform(_vtk.vtkTransform):
         *,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] = 'post',
-    ):
+    ) -> None:
         super().__init__()
         self.multiply_mode = multiply_mode
         self.point = point  # type: ignore[assignment]
@@ -429,7 +429,7 @@ class Transform(_vtk.vtkTransform):
         return self._point
 
     @point.setter
-    def point(self, point: VectorLike[float] | None):  # numpydoc ignore=GL08
+    def point(self, point: VectorLike[float] | None) -> None:
         self._point = (
             None
             if point is None
@@ -452,7 +452,7 @@ class Transform(_vtk.vtkTransform):
         return self._multiply_mode
 
     @multiply_mode.setter
-    def multiply_mode(self, multiply_mode: Literal['pre', 'post']) -> None:  # numpydoc ignore=GL08
+    def multiply_mode(self, multiply_mode: Literal['pre', 'post']) -> None:
         _validation.check_contains(
             item=multiply_mode, container=['pre', 'post'], name='multiply mode'
         )
@@ -1372,7 +1372,7 @@ class Transform(_vtk.vtkTransform):
         return array
 
     @matrix.setter
-    def matrix(self, trans: TransformLike):  # numpydoc ignore=GL08
+    def matrix(self, trans: TransformLike) -> None:
         self.identity()
         self.concatenate(trans)
 
@@ -1938,5 +1938,5 @@ class Transform(_vtk.vtkTransform):
         return self._check_finite
 
     @check_finite.setter
-    def check_finite(self, value: bool):  # numpydoc ignore: GL08
+    def check_finite(self, value: bool) -> None:  # numpydoc ignore: GL08
         self._check_finite = bool(value)

@@ -99,7 +99,7 @@ class DataObject:
         self.shallow_copy(data)
         self._post_file_load_processing()
 
-    def _post_file_load_processing(self):
+    def _post_file_load_processing(self) -> None:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
     def save(
@@ -215,7 +215,7 @@ class DataObject:
         """Return the representation methods (internal helper)."""
         raise NotImplementedError('Called only by the inherited class')
 
-    def head(self, display=True, html=None):
+    def head(self, display: bool = True, html=None):
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -286,7 +286,7 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
+    def copy_meta_from(self, *args, **kwargs) -> None:  # pragma: no cover
         """Copy pyvista meta data onto this object from another object.
 
         Intended to be overridden by subclasses.
@@ -302,7 +302,7 @@ class DataObject:
         """
         # called only by the inherited class
 
-    def copy(self, deep=True):
+    def copy(self, deep: bool = True):
         """Return a copy of the object.
 
         Parameters
@@ -333,9 +333,9 @@ class DataObject:
         newobject = thistype()
 
         if deep:
-            newobject.deep_copy(self)
+            newobject.deep_copy(self)  # type: ignore[arg-type]
         else:
-            newobject.shallow_copy(self)
+            newobject.shallow_copy(self)  # type: ignore[arg-type]
         newobject.copy_meta_from(self, deep)
         return newobject
 
@@ -571,9 +571,7 @@ class DataObject:
         return self._user_dict
 
     @user_dict.setter
-    def user_dict(
-        self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]
-    ):  # numpydoc ignore=GL08
+    def user_dict(self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]):
         # Setting None removes the field data array
         if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
             del self.field_data['_PYVISTA_USER_DICT']
@@ -589,7 +587,7 @@ class DataObject:
                 f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.',
             )
 
-    def _config_user_dict(self):
+    def _config_user_dict(self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
         field_name = '_PYVISTA_USER_DICT'
         field_data = self.field_data
@@ -767,12 +765,12 @@ class DataObject:
             to_serialize = writer.GetOutputString()
 
         elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
-            writer = _vtk.vtkDataSetWriter()
+            writer = _vtk.vtkDataSetWriter()  # type: ignore[assignment]
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
-            writer.SetFileTypeToBinary()
+            writer.SetFileTypeToBinary()  # type: ignore[attr-defined]
             writer.Write()
-            to_serialize = writer.GetOutputStdString()
+            to_serialize = writer.GetOutputStdString()  # type: ignore[attr-defined]
 
         state['vtk_serialized'] = to_serialize
 
@@ -806,7 +804,7 @@ class DataObject:
                 f"Cannot unpickle '{self.__class__.__name__}'. Invalid pickle format."
             )
 
-    def _unserialize_vtk_pickle_format(self, state):
+    def _unserialize_vtk_pickle_format(self, state) -> None:
         """Support unpickle of VTK's format."""
         # The vtk state has format: ( function, (dict,) )
         unserialize_func = state[0]
@@ -856,16 +854,16 @@ class DataObject:
             reader.Update()
 
         elif pickle_format.lower() == 'legacy':
-            reader = _vtk.vtkDataSetReader()
+            reader = _vtk.vtkDataSetReader()  # type: ignore[assignment]
             reader.ReadFromInputStringOn()
             if isinstance(vtk_serialized, bytes):
-                reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))
+                reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[attr-defined]
             elif isinstance(vtk_serialized, str):
                 reader.SetInputString(vtk_serialized)
             reader.Update()
 
-        mesh = wrap(reader.GetOutput())
+        mesh = wrap(reader.GetOutput())  # type: ignore[attr-defined]
 
         # copy data
-        self.copy_structure(mesh)
-        self.copy_attributes(mesh)
+        self.copy_structure(mesh)  # type: ignore[arg-type]
+        self.copy_attributes(mesh)  # type: ignore[arg-type]

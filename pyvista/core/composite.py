@@ -38,7 +38,7 @@ from .utilities.helpers import wrap
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
 
-_TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
+_TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
 
 
 class MultiBlock(
@@ -160,7 +160,7 @@ class MultiBlock(
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
 
-    def wrap_nested(self):
+    def wrap_nested(self) -> None:
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 
         This is performed in place.
@@ -169,7 +169,7 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, wrap(block))
+                self.SetBlock(i, wrap(block))  # type: ignore[arg-type]
 
     @property
     def bounds(self) -> BoundsTuple:
@@ -282,7 +282,7 @@ class MultiBlock(
         return self.GetNumberOfBlocks()
 
     @n_blocks.setter
-    def n_blocks(self, n):  # numpydoc ignore=GL08
+    def n_blocks(self, n) -> None:
         """Change the total number of blocks set.
 
         Parameters
@@ -388,8 +388,7 @@ class MultiBlock(
     def __getitem__(
         self,
         index: int | str,
-    ) -> _TypeMultiBlockLeaf | None:  # numpydoc ignore=GL08
-        ...  # pragma: no cover
+    ) -> _TypeMultiBlockLeaf: ...  # pragma: no cover
 
     @overload
     def __getitem__(self, index: slice) -> MultiBlock: ...  # pragma: no cover
@@ -415,7 +414,7 @@ class MultiBlock(
 
         return wrap(self.GetBlock(index))
 
-    def append(self, dataset: _TypeMultiBlockLeaf | None, name: str | None = None):
+    def append(self, dataset: _TypeMultiBlockLeaf, name: str | None = None):
         """Add a data set to the next block index.
 
         Parameters
@@ -500,8 +499,8 @@ class MultiBlock(
     def get(
         self,
         index: str,
-        default: _TypeMultiBlockLeaf | None = None,
-    ) -> _TypeMultiBlockLeaf | None:
+        default: _TypeMultiBlockLeaf = None,
+    ) -> _TypeMultiBlockLeaf:
         """Get a block by its name.
 
         If the name is non-unique then returns the first occurrence.
@@ -536,7 +535,7 @@ class MultiBlock(
         except KeyError:
             return default
 
-    def set_block_name(self, index: int, name: str | None):
+    def set_block_name(self, index: int, name: str | None) -> None:
         """Set a block's string name at the specified index.
 
         Parameters
@@ -624,7 +623,7 @@ class MultiBlock(
     def _ipython_key_completions_(self) -> list[str | None]:
         return self.keys()
 
-    def replace(self, index: int, dataset: _TypeMultiBlockLeaf | None) -> None:
+    def replace(self, index: int, dataset: _TypeMultiBlockLeaf) -> None:
         """Replace dataset at index while preserving key name.
 
         Parameters
@@ -658,23 +657,21 @@ class MultiBlock(
     def __setitem__(
         self,
         index: int | str,
-        data: _TypeMultiBlockLeaf | None,
-    ):  # numpydoc ignore=GL08
-        ...  # pragma: no cover
+        data: _TypeMultiBlockLeaf,
+    ) -> None: ...  # pragma: no cover
 
     @overload
     def __setitem__(
         self,
         index: slice,
-        data: Iterable[_TypeMultiBlockLeaf | None],
-    ):  # numpydoc ignore=GL08
-        ...  # pragma: no cover
+        data: Iterable[_TypeMultiBlockLeaf],
+    ) -> None: ...  # pragma: no cover
 
     def __setitem__(
         self,
         index: int | str | slice,
         data,
-    ):
+    ) -> None:
         """Set a block with a VTK data object.
 
         To set the name simultaneously, pass a string name as the 2nd index.
@@ -753,13 +750,13 @@ class MultiBlock(
         self._remove_ref(index)
         self.RemoveBlock(index)
 
-    def _remove_ref(self, index: int):
+    def _remove_ref(self, index: int) -> None:
         """Remove python reference to the dataset."""
         dataset = self[index]
         if hasattr(dataset, 'memory_address'):
             self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Equality comparison."""
         if not isinstance(other, MultiBlock):
             return False
@@ -815,7 +812,7 @@ class MultiBlock(
         self[index] = dataset
         self.set_block_name(index, name)
 
-    def pop(self, index: int | str = -1) -> _TypeMultiBlockLeaf | None:
+    def pop(self, index: int | str = -1) -> _TypeMultiBlockLeaf:
         """Pop off a block at the specified index.
 
         Parameters
@@ -852,7 +849,7 @@ class MultiBlock(
         del self[index]
         return data
 
-    def reverse(self):
+    def reverse(self) -> None:
         """Reverse MultiBlock in-place.
 
         Examples
@@ -880,7 +877,7 @@ class MultiBlock(
         for i, name in enumerate(reversed(names)):
             self.set_block_name(i, name)
 
-    def clean(self, empty=True):
+    def clean(self, empty: bool = True) -> None:
         """Remove any null blocks in place.
 
         Parameters
@@ -902,26 +899,26 @@ class MultiBlock(
         for i in range(self.n_blocks):
             if isinstance(self[i], MultiBlock):
                 # Recursively move through nested structures
-                self[i].clean()
-                if self[i].n_blocks < 1:
+                self[i].clean()  # type: ignore[union-attr]
+                if self[i].n_blocks < 1:  # type: ignore[union-attr]
                     null_blocks.append(i)
-            elif self[i] is None or empty and self[i].n_points < 1:
+            elif self[i] is None or empty and self[i].n_points < 1:  # type: ignore[union-attr]
                 null_blocks.append(i)
         # Now remove the null/empty meshes
-        null_blocks = np.array(null_blocks, dtype=int)
+        null_blocks = np.array(null_blocks, dtype=int)  # type: ignore[assignment]
         for i in range(len(null_blocks)):
             # Cast as int because windows is super annoying
             del self[int(null_blocks[i])]
-            null_blocks -= 1
+            null_blocks -= 1  # type: ignore[assignment, operator]
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(('N Blocks:', self.n_blocks, '{}'))
         bds = self.bounds
-        attrs.append(('X Bounds:', (bds[0], bds[1]), '{:.3e}, {:.3e}'))
-        attrs.append(('Y Bounds:', (bds[2], bds[3]), '{:.3e}, {:.3e}'))
-        attrs.append(('Z Bounds:', (bds[4], bds[5]), '{:.3e}, {:.3e}'))
+        attrs.append(('X Bounds:', (bds[0], bds[1]), '{:.3e}, {:.3e}'))  # type: ignore[arg-type]
+        attrs.append(('Y Bounds:', (bds[2], bds[3]), '{:.3e}, {:.3e}'))  # type: ignore[arg-type]
+        attrs.append(('Z Bounds:', (bds[4], bds[5]), '{:.3e}, {:.3e}'))  # type: ignore[arg-type]
         return attrs
 
     def _repr_html_(self) -> str:
@@ -981,13 +978,13 @@ class MultiBlock(
         """Return the number of blocks."""
         return self.n_blocks
 
-    def copy_meta_from(self, ido, deep):  # numpydoc ignore=PR01
+    def copy_meta_from(self, ido, deep) -> None:  # numpydoc ignore=PR01
         """Copy pyvista meta data onto this object from another object."""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency with the rest of the API and
         # in case we add meta data to this pbject down the road.
 
-    def copy(self, deep=True):
+    def copy(self, deep: bool = True):
         """Return a copy of the multiblock.
 
         Parameters
@@ -1023,7 +1020,7 @@ class MultiBlock(
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet, recursive=False) -> None:  # type: ignore[override]
+    def shallow_copy(self, to_copy: _vtk.vtkMultiBlockDataSet, recursive: bool = False) -> None:  # type: ignore[override]
         """Shallow copy the given multiblock to this multiblock.
 
         Parameters
@@ -1045,7 +1042,7 @@ class MultiBlock(
 
         # Shallow copy creates new instances of nested multiblocks
         # Iterate through the blocks to fix this recursively
-        def _replace_nested_multiblocks(this_object_, new_object):
+        def _replace_nested_multiblocks(this_object_, new_object) -> None:
             for i, this_block in enumerate(this_object_):
                 if isinstance(this_block, _vtk.vtkMultiBlockDataSet):
                     block_to_copy = new_object.GetBlock(i)
@@ -1069,7 +1066,7 @@ class MultiBlock(
 
         # Deep copy will not copy the block name for None blocks (name is set to None instead)
         # Iterate through the blocks to fix this recursively
-        def _set_name_for_none_blocks(this_object_, new_object_):
+        def _set_name_for_none_blocks(this_object_, new_object_) -> None:
             new_object_ = pyvista.wrap(new_object_)
             for i, dataset in enumerate(new_object_):
                 if dataset is None:
@@ -1179,7 +1176,7 @@ class MultiBlock(
 
         return field_asc, scalars
 
-    def as_polydata_blocks(self, copy=False):
+    def as_polydata_blocks(self, copy: bool = False):
         """Convert all the datasets within this MultiBlock to :class:`pyvista.PolyData`.
 
         Parameters
@@ -1271,7 +1268,7 @@ class MultiBlock(
             # bool and uint8 do not display properly, must convert to float
             self._convert_to_real_scalars(data_attr, scalars_name)
             if scalars.dtype == np.bool_:
-                dtype = np.bool_
+                dtype = np.bool_  # type: ignore[assignment]
         elif scalars.ndim > 1:
             # multi-component
             if not isinstance(component, (int, type(None))):
@@ -1286,7 +1283,7 @@ class MultiBlock(
 
         return field, scalars_name, dtype
 
-    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str):
+    def _convert_to_real_scalars(self, data_attr: str, scalars_name: str) -> str:
         """Extract the real component of the active scalars of this dataset."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1300,7 +1297,7 @@ class MultiBlock(
                     dattr.active_scalars_name = f'{scalars_name}-real'
         return f'{scalars_name}-real'
 
-    def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str):
+    def _convert_to_uint8_rgb_scalars(self, data_attr: str, scalars_name: str) -> str:
         """Convert rgb float or int scalars to uint8."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1367,7 +1364,7 @@ class MultiBlock(
         cell_name = cell_names.pop() if len(cell_names) == 1 else None
         return point_name, cell_name
 
-    def clear_all_data(self):
+    def clear_all_data(self) -> None:
         """Clear all data from all blocks."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1375,7 +1372,7 @@ class MultiBlock(
             elif block is not None:
                 block.clear_data()
 
-    def clear_all_point_data(self):
+    def clear_all_point_data(self) -> None:
         """Clear all point data from all blocks."""
         for block in self:
             if isinstance(block, MultiBlock):
@@ -1383,7 +1380,7 @@ class MultiBlock(
             elif block is not None:
                 block.clear_point_data()
 
-    def clear_all_cell_data(self):
+    def clear_all_cell_data(self) -> None:
         """Clear all cell data from all blocks."""
         for block in self:
             if isinstance(block, MultiBlock):
