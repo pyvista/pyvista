@@ -50,25 +50,21 @@ RowLiteral = Literal[FieldAssociation.ROW, 'row']
 
 
 @overload
-def parse_field_choice(  # numpydoc ignore: GL08
+def parse_field_choice(
     field: PointLiteral | Literal['p', 'points'],
 ) -> Literal[FieldAssociation.POINT]: ...
 @overload
-def parse_field_choice(  # numpydoc ignore: GL08
+def parse_field_choice(
     field: CellLiteral | Literal['c', 'cells'],
 ) -> Literal[FieldAssociation.CELL]: ...
 @overload
-def parse_field_choice(  # numpydoc ignore: GL08
+def parse_field_choice(
     field: FieldLiteral | Literal['f', 'fields'],
 ) -> Literal[FieldAssociation.POINT]: ...
 @overload
-def parse_field_choice(  # numpydoc ignore: GL08
-    field: RowLiteral | Literal['r'],
-) -> Literal[FieldAssociation.ROW]: ...
+def parse_field_choice(field: RowLiteral | Literal['r']) -> Literal[FieldAssociation.ROW]: ...
 @overload
-def parse_field_choice(  # numpydoc ignore: GL08
-    field: FieldAssociation,
-) -> FieldAssociation: ...
+def parse_field_choice(field: FieldAssociation) -> FieldAssociation: ...
 def parse_field_choice(
     field: FieldAssociation
     | PointLiteral
