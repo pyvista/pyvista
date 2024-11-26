@@ -42,7 +42,7 @@ def vtk_points(
 
     allow_empty : bool, default: True
         Allow ``points`` to be an empty array. If ``False``, points
-        must structly be strictly one- or two-dimensional.
+        must be strictly one- or two-dimensional.
 
         .. versionadded:: 0.45
 
