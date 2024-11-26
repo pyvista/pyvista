@@ -181,7 +181,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         return bool(self.GetInterpolate())
 
     @interpolate.setter
-    def interpolate(self, value: bool):  # numpydoc ignore=GL08
+    def interpolate(self, value: bool):
         self.SetInterpolate(value)
 
     @property
@@ -190,7 +190,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         return bool(self.GetMipmap())
 
     @mipmap.setter
-    def mipmap(self, value: bool):  # numpydoc ignore=GL08
+    def mipmap(self, value: bool):
         self.SetMipmap(value)
 
     def _from_image_data(self, image):
@@ -261,7 +261,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         return bool(self.GetRepeat())
 
     @repeat.setter
-    def repeat(self, flag: bool):  # numpydoc ignore=GL08
+    def repeat(self, flag: bool):
         self.SetRepeat(flag)
 
     def flip_x(self) -> Texture:
@@ -385,7 +385,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         return self.GetCubeMap()
 
     @cube_map.setter
-    def cube_map(self, flag: bool):  # numpydoc ignore=GL08
+    def cube_map(self, flag: bool):
         self.SetCubeMap(flag)
 
     def copy(self):  # type: ignore[override]
@@ -592,7 +592,7 @@ class Texture(DataObject, _vtk.vtkTexture):
         return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
     @wrap.setter
-    def wrap(self, value: Texture.WrapType | int):  # numpydoc ignore=GL08
+    def wrap(self, value: Texture.WrapType | int):
         if not hasattr(self, 'SetWrap'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 

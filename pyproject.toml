@@ -138,7 +138,7 @@ docs = [
   'trimesh==4.5.2',
 ]
 
-dev = ['pre-commit', 'pyvista[test,docs]']
+dev = ['pre-commit', 'pyvista[test,typing]']
 
 [project.urls]
 "Bug Tracker" = 'https://github.com/pyvista/pyvista/issues'
@@ -233,6 +233,8 @@ warn_unused_ignores = true
 
 [tool.numpydoc_validation]
 checks = [
+  "all", # all but the following:
+  #
   "ES01", # Not all docstrings need an extend summary.
   "EX01", # Examples: Will eventually enforce
   "GL01", # Contradicts numpydoc examples
@@ -240,6 +242,7 @@ checks = [
   "GL03", # Considering enforcing
   "GL06", # Found unknown section
   "GL07", # "Sections are in the wrong order. Correct order is: {correct_sections}",
+  "GL08", # The object does not have a docstring
   "GL09", # Deprecation warning should precede extended summary (check broken)
   "PR01", # "Parameters {missing_params} not documented",
   "PR02", # "Unknown parameters {unknown_params}",
@@ -255,7 +258,6 @@ checks = [
   "SA04", # See also section does not need descriptions
   "SS05", # Appears to be broken.
   "YD01", # Yields: No plan to enforce
-  "all",  # all but the following:
 ]
 exclude = [ # don't report on objects that match any of these regex
   '\.*Reader(\.|$)',        # classes inherit from BaseReader
