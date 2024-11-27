@@ -1151,7 +1151,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
                     extract.Update()
-                    picked.append(pyvista.wrap(extract.GetOutput()))  # type: ignore[arg-type]
+                    picked.append(cast(pyvista.UnstructuredGrid, pyvista.wrap(extract.GetOutput())))
 
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None  # type: ignore[union-attr]

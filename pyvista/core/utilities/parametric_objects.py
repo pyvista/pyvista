@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from math import pi
+from typing import cast
 import warnings
 
 import numpy as np
@@ -1436,9 +1437,9 @@ def surface_from_para(
     para_source.SetWResolution(w_res)
     para_source.SetGenerateTextureCoordinates(texture_coordinates)
     para_source.Update()
-    surf = wrap(para_source.GetOutput())
+    surf = cast(pyvista.PolyData, wrap(para_source.GetOutput()))
     if clean:
-        surf = surf.clean(  # type: ignore[union-attr]
+        surf = surf.clean(
             tolerance=1e-7,  # determined experimentally
             absolute=False,
             lines_to_points=False,
