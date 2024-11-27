@@ -65,7 +65,7 @@ def vtk_points(
         points_ = _validation.validate_arrayNx3(points, name='points')
     except ValueError as e:
         if 'points has shape (0,)' in repr(e) and allow_empty:
-            points_ = np.empty(shape=(0, 3), dtype=points.dtype)
+            points_ = np.empty(shape=(0, 3), dtype=np.array(points).dtype)
         else:
             raise
 
