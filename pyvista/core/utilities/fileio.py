@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import TextIO
 from typing import TypeVar
 from typing import Union
 from typing import cast
@@ -24,7 +25,6 @@ from .observers import Observer
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Sequence
-    import io
 
     import imageio
     import meshio
@@ -480,16 +480,14 @@ def read_grdecl(
 
     @overload
     def read_keyword(
-        f: io.TextIOBase, split: Literal[True] = True, converter: type = ...
+        f: TextIO, split: Literal[True] = True, converter: type = ...
     ) -> list[str]: ...
     @overload
-    def read_keyword(
-        f: io.TextIOBase, split: Literal[False] = False, converter: type = ...
-    ) -> str: ...
+    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...
     @overload
-    def read_keyword(f: io.TextIOBase, split: bool = ..., converter: type = ...) -> list[str]: ...
+    def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...
     def read_keyword(
-        f: io.TextIOBase, split: bool = True, converter: type | None = None
+        f: TextIO, split: bool = True, converter: type | None = None
     ) -> str | list[str]:
         """Read a keyword.
 
@@ -546,7 +544,7 @@ def read_grdecl(
         return out
 
     def read_buffer(
-        f: io.TextIOBase, other_keywords: Sequence[str]
+        f: TextIO, other_keywords: Sequence[str]
     ) -> tuple[dict[str, Any], Sequence[str]]:
         """Read a file buffer.
 
