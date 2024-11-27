@@ -183,15 +183,15 @@ class DataObject:
         # store complex and bitarray types as field data
         self._store_metadata()
 
-        writer_ext = self._WRITERS.keys()
-        if file_ext in writer_ext:
+        writer_exts = self._WRITERS.keys()
+        if file_ext in writer_exts:
             _write_vtk(self)
         elif file_ext in PICKLE_EXT:
             save_pickle(filename, self)
         else:
             raise ValueError(
                 'Invalid file extension for this data type.'
-                f' Must be one of: {list(writer_ext) + list(PICKLE_EXT)}',
+                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}',
             )
 
     def _store_metadata(self) -> None:
