@@ -1120,7 +1120,7 @@ class Text3DSource(vtkVectorText):
             self._modified = False
 
     @property
-    def output(self: Text3DSource) -> _vtk.vtkPolyData:  # numpydoc ignore=RT01
+    def output(self: Text3DSource) -> PolyData:  # numpydoc ignore=RT01
         """Get the output of the source.
 
         The source is automatically updated by :meth:`update` prior

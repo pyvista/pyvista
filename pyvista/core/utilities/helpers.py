@@ -298,7 +298,9 @@ def generate_plane(normal, origin):
     return plane
 
 
-def axis_rotation(points, angle, inplace: bool = False, deg: bool = True, axis='z'):
+def axis_rotation(
+    points: NumpyArray[float], angle: float, inplace: bool = False, deg: bool = True, axis='z'
+):
     """Rotate points by angle about an axis.
 
     Parameters

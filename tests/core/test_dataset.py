@@ -1387,9 +1387,9 @@ def mesh():
 def test_active_t_coords_deprecated(mesh):
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.active_t_coords
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.active_t_coords = t_coords
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
