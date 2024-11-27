@@ -1080,7 +1080,7 @@ class MultiBlock(
         def _set_name_for_none_blocks(
             this_object_: MultiBlock, new_object_: _vtk.vtkMultiBlockDataSet
         ) -> None:
-            new_object_ = cast(MultiBlock, pyvista.wrap(new_object_))
+            new_object_ = pyvista.wrap(new_object_)
             for i, dataset in enumerate(new_object_):
                 if dataset is None:
                     this_object_.set_block_name(i, new_object_.get_block_name(i))
