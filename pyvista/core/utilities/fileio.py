@@ -22,7 +22,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .observers import Observer
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
     from collections.abc import Sequence
 

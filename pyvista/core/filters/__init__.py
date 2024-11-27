@@ -33,7 +33,7 @@ import pyvista
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .. import _vtk_core as _vtk
 
 
