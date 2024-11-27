@@ -348,17 +348,15 @@ These standards will be enforced using ``pre-commit`` using
 If for whatever reason you feel that your function should have an exception to
 any of the rules, add an exception to the function either in the
 ``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
-comment to exclude a certain check. For example, we do not enforce
-documentation strings for setters and skip the GL08 check.
+comment to exclude a certain check. For example, we can omit the ``Return``
+section from docstrings and skip the RT01 check for magic methods like ``__init__``.
 
 .. code:: python
 
-    @strips.setter
-    def strips(self, strips):  # numpydoc ignore=GL08
-        if isinstance(strips, CellArray):
-            self.SetStrips(strips)
-        else:
-            self.SetStrips(CellArray(strips))
+    def __init__(self, foo):  # numpydoc ignore=RT01
+        """Initialize A Class."""
+        super().__init__()
+        self.foo = foo
 
 See the available validation checks in `numpydoc Validation
 <https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
@@ -433,9 +431,9 @@ Here's an example of adding error test codes that raise deprecation warning mess
 
     with pytest.warns(PyVistaDeprecationWarning):
         addition(a, b)
-        if pv._version.version_info > (0, 40):
+        if pv._version.version_info[:2] > (0, 40):
             raise RuntimeError("Convert error this function")
-        if pv._version.version_info > (0, 41):
+        if pv._version.version_info[:2] > (0, 41):
             raise RuntimeError("Remove this function")
 
 In the above code example, the old test code raises an error in v0.40 and v0.41.
