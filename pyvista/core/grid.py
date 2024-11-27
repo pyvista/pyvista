@@ -805,6 +805,15 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         self.SetSpacing(*spacing)
         self.Modified()
 
+    @property
+    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Do not use.
+
+        VTK is now returning the vtkStructuredCellArray upstream but this
+        instance is not usable. For now, we just return an empty array.
+        """
+        return []
+
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
