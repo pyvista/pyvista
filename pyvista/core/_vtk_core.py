@@ -591,7 +591,14 @@ vtk_version_info = VTKVersionInfo()
 
 
 def override(vtk_class):
-    """Override a VTK class with a PyVista class."""
+    """Override a VTK class with a PyVista class.
+
+    Returns
+    -------
+    callable
+        Decorator to override the VTK class with a PyVista class.
+
+    """
 
     def decorator(cls):
         if vtk_version_info >= (9, 4):
