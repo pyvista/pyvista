@@ -327,7 +327,7 @@ external = ["E131"]
 fixable = ["ALL"]
 ignore = [
   "ANN002",  # Missing annotations for `*args`
-  "ANN003",  # Missing annotations for `*args`
+  "ANN003",  # Missing annotations for `*kwargs`
   "ANN401",  # Disallow `Any`
   "B028",    # https://github.com/pyvista/pyvista/pull/6030
   "B904",    # https://github.com/pyvista/pyvista/pull/6022
@@ -374,7 +374,7 @@ allow-dict-calls-with-keyword-arguments = true
 "pyvista/ext/*" = ["D100", "D101", "D102", "D103"]
 "tests/*" = ["D"]
 
-# ANN ignores for `pyvista/core` and `pyvista/plotting`
+# ANN ignores for `pyvista/core`
 # TODO: Add annotations to any files listed below and remove it from this list
 "pyvista/core/_validation/_cast_array.py" = ["ANN"]
 "pyvista/core/_validation/check.py" = ["ANN"]
@@ -404,9 +404,11 @@ allow-dict-calls-with-keyword-arguments = true
 "pyvista/core/utilities/parametric_objects.py" = ["ANN"]
 "pyvista/core/utilities/points.py" = ["ANN"]
 "pyvista/core/utilities/reader.py" = ["ANN"]
+
+# ANN ignores for `pyvista/plotting`
 "pyvista/plotting*" = ["ANN"]
 
-# ANN ignores for files which are not in `pyvista/core` or `pyvista/plotting`
+# All other ANN ignores
 "doc*" = ["ANN"]
 "examples*" = ["ANN"]
 "pyvista/__init__.py" = ["ANN"]
