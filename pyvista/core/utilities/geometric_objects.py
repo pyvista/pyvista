@@ -1145,6 +1145,7 @@ def Tube(
     resolution: int = 1,
     radius: float = 1.0,
     n_sides: int = 15,
+    capping: bool = False,
 ) -> PolyData:
     """Create a tube.
 
@@ -1165,6 +1166,11 @@ def Tube(
     n_sides : int, default: 15
         Number of sides for the tube.
 
+    capping : bool, default: False
+        Turn on/off whether to cap the ends with polygons.
+
+            .. versionadded:: 0.45
+
     Returns
     -------
     pyvista.PolyData
@@ -1180,7 +1186,7 @@ def Tube(
 
     """
     line_src = LineSource(pointa, pointb, resolution)
-    return line_src.output.tube(radius=radius, n_sides=n_sides, capping=False)
+    return line_src.output.tube(radius=radius, n_sides=n_sides, capping=capping)
 
 
 def Cube(
