@@ -4767,7 +4767,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)  # type: ignore[attr-defined]
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        return line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
+        return line.sample(self, tolerance=tolerance, progress_bar=progress_bar)  # type: ignore[arg-type]
 
     def plot_over_line(
         self,
@@ -4928,7 +4928,7 @@ class DataSetFilters:
         """
         # Make a multiple lines and sample the dataset
         multiple_lines = pyvista.MultipleLines(points=points)
-        return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)
+        return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)  # type: ignore[arg-type]
 
     def sample_over_circular_arc(
         self,
@@ -5007,7 +5007,7 @@ class DataSetFilters:
             resolution = int(self.n_cells)  # type: ignore[attr-defined]
         # Make a circular arc and sample the dataset
         circular_arc = pyvista.CircularArc(pointa, pointb, center, resolution=resolution)
-        return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
+        return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)  # type: ignore[arg-type]
 
     def sample_over_circular_arc_normal(
         self,
@@ -5094,7 +5094,7 @@ class DataSetFilters:
             polar=polar,
             angle=angle,
         )
-        return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
+        return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)  # type: ignore[arg-type]
 
     def plot_over_circular_arc(
         self,
