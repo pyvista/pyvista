@@ -1286,7 +1286,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()  # type: ignore[union-attr]
-                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)  # type: ignore[index, union-attr]
+                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)  # type: ignore[index, union-attr, call-overload]
                     tri_smesh = smesh.extract_surface().triangulate()  # type: ignore[union-attr]
                     cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))  # type: ignore[union-attr]
