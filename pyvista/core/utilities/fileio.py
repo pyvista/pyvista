@@ -235,7 +235,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar: bool = False)
         return mesh
 
 
-def _apply_attrs_to_reader(reader, attrs):
+def _apply_attrs_to_reader(reader, attrs) -> None:
     """For a given pyvista reader, call methods according to attrs.
 
     Parameters

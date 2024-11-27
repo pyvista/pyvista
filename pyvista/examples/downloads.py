@@ -8151,3 +8151,38 @@ def download_3gqp(load=True):  # pragma: no cover
 
 
 _dataset_3gqp = _SingleFileDownloadableDatasetLoader('3GQP.pdb')
+
+
+def download_full_head(load=True):  # pragma: no cover
+    """Download the full head image.
+
+    .. versionadded:: 0.45.0
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_full_head()
+    >>> dataset.plot(volume=True)
+
+    """
+    return _download_dataset(_dataset_full_head, load=load)
+
+
+def _full_head_files_func():  # pragma: no cover
+    full_head_raw = _DownloadableFile('FullHead.raw.gz')
+    full_head_mha = _SingleFileDownloadableDatasetLoader('FullHead.mhd')
+    return full_head_mha, full_head_raw
+
+
+_dataset_full_head = _MultiFileDownloadableDatasetLoader(_full_head_files_func)
