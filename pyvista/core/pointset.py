@@ -1813,11 +1813,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     _WRITERS: ClassVar[
         dict[
             str,
-            type[
-                _vtk.vtkXMLUnstructuredGridWriter
-                | _vtk.vtkUnstructuredGridWriter
-                | _vtk.vtkHDFWriter
-            ],
+            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
         ]
     ] = {  # type: ignore[assignment]
         '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
