@@ -1468,7 +1468,7 @@ def surface_from_para(
     para_source.Update()
     surf = cast(pyvista.PolyData, wrap(para_source.GetOutput()))
     if clean:
-        surf = surf.clean(  # type: ignore[union-attr]
+        surf = surf.clean(
             tolerance=1e-7,  # determined experimentally
             absolute=False,
             lines_to_points=False,
