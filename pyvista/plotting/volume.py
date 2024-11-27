@@ -45,7 +45,7 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj):  # numpydoc ignore=GL08
+    def mapper(self, obj):
         self.SetMapper(obj)
 
     @property
@@ -68,5 +68,5 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):  # numpydoc ignore=GL08
+    def prop(self, obj: Property):
         self.SetProperty(obj)  # type: ignore[arg-type]
