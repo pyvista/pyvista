@@ -33,7 +33,7 @@ DEFAULT_VECTOR_KEY = '_vectors'
 
 
 @abstract_class
-class DataObject:
+class DataObject(_vtk.vtkPyVistaOverride):
     """Methods common to all wrapped data objects.
 
     Parameters

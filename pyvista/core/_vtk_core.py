@@ -507,3 +507,39 @@ def VTKVersionInfo():
 
 
 vtk_version_info = VTKVersionInfo()
+
+
+def override(vtk_class):
+    """Override a VTK class with a PyVista class."""
+
+    def decorator(cls):
+        if vtk_version_info >= (9, 4):
+            vtk_class.override(cls)
+        return cls
+
+    return decorator
+
+
+class vtkPyVistaOverride:
+    """Base class to automatically override VTK classes with PyVista classes."""
+
+    # TODO: `MutableSequence` base class is breaking the VTK override mechanism
+    VTK_OVERRIDE_EXCLUSIONS = (
+        'vtkMultiBlockDataSet',
+        'vtkPartitionedDataSet',
+    )
+
+    def __init_subclass__(cls, **kwargs):
+        if vtk_version_info >= (9, 4):
+            # Check for VTK base classes and call the override method
+            for base in cls.__bases__:
+                if (
+                    hasattr(base, '__module__')
+                    and base.__module__.startswith('vtkmodules.')
+                    and base.__name__ not in vtkPyVistaOverride.VTK_OVERRIDE_EXCLUSIONS
+                    and hasattr(base, 'override')
+                ):
+                    base.override(cls)
+                    break
+
+        return cls
