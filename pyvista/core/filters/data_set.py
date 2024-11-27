@@ -1679,7 +1679,7 @@ class DataSetFilters:
         """
         if scalars is None:
             set_default_active_scalars(self)
-            _, tscalars = self.active_scalars_info
+            tscalars = self.active_scalars_info.name
         else:
             tscalars = scalars
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
@@ -2182,7 +2182,9 @@ class DataSetFilters:
         # set the array to contour on
         if scalars is None:
             set_default_active_scalars(self)
-            field, scalars_name = self.active_scalars_info
+            field = self.active_scalars_info.association
+            # Safe to cast since scalars name must be str (error is raised earlier if None)
+            scalars_name = cast(str, self.active_scalars_info.name)
         else:
             field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
