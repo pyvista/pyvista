@@ -12,6 +12,8 @@ import pytest
 
 from pyvista.plotting import system_supports_plotting
 
+from .conftest import flaky_test
+
 pytest.importorskip('sphinx')
 
 # skip all tests if unable to render
@@ -21,6 +23,7 @@ if not system_supports_plotting():
 ENVIRONMENT_HOOKS = ['PLOT_SKIP', 'PLOT_SKIP_OPTIONAL']
 
 
+@flaky_test
 @pytest.mark.skipif(os.name == 'nt', reason='path issues on Azure Windows CI')
 @pytest.mark.parametrize('ename', ENVIRONMENT_HOOKS)
 @pytest.mark.parametrize('evalue', [False, True])
