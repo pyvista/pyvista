@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
-_VTKWriterAlias = Union[_vtk.vtkXMLWriter | _vtk.vtkDataWriter]
+_VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
 _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
 
 
