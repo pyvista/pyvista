@@ -844,7 +844,16 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         self.SetSpacing(*spacing_)
         self.Modified()
 
-    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
+    @property
+    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Do not use.
+
+        VTK is now returning the vtkStructuredCellArray upstream but this
+        instance is not usable. For now, we just return an empty array.
+        """
+        return []
+
+    def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
         fmt = '{}, {}, {}'.format(*[pyvista.FLOAT_FORMAT] * 3)
