@@ -444,7 +444,7 @@ class AffineWidget3D:
         return self._axes[:3, :3]
 
     @axes.setter
-    def axes(self, axes):  # numpydoc ignore=GL08
+    def axes(self, axes):
         mat = np.eye(4)
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
@@ -472,7 +472,7 @@ class AffineWidget3D:
         return cast(tuple[float, float, float], tuple(self._origin))
 
     @origin.setter
-    def origin(self, value):  # numpydoc ignore=GL08
+    def origin(self, value):
         value = np.array(value)
         diff = value - self._origin
 

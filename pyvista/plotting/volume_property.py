@@ -194,7 +194,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetInterpolationTypeAsString().split()[0].lower()
 
     @interpolation_type.setter
-    def interpolation_type(self, value: str):  # numpydoc ignore=GL08
+    def interpolation_type(self, value: str):
         if value == 'linear':
             self.SetInterpolationTypeToLinear()
         elif value == 'nearest':
@@ -216,7 +216,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetScalarOpacityUnitDistance()
 
     @opacity_unit_distance.setter
-    def opacity_unit_distance(self, value: float):  # numpydoc ignore=GL08
+    def opacity_unit_distance(self, value: float):
         self.SetScalarOpacityUnitDistance(value)
 
     @property
@@ -236,7 +236,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return bool(self.GetShade())
 
     @shade.setter
-    def shade(self, value: bool):  # numpydoc ignore=GL08
+    def shade(self, value: bool):
         self.SetShade(value)
 
     @property
@@ -262,7 +262,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return bool(self.GetIndependentComponents())
 
     @independent_components.setter
-    def independent_components(self, value: bool):  # numpydoc ignore=GL08
+    def independent_components(self, value: bool):
         self.SetIndependentComponents(value)
 
     @property
@@ -280,7 +280,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetAmbient()
 
     @ambient.setter
-    def ambient(self, value: float):  # numpydoc ignore=GL08
+    def ambient(self, value: float):
         self.SetAmbient(value)
 
     @property
@@ -298,7 +298,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetDiffuse()
 
     @diffuse.setter
-    def diffuse(self, value: float):  # numpydoc ignore=GL08
+    def diffuse(self, value: float):
         self.SetDiffuse(value)
 
     @property
@@ -317,7 +317,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetSpecular()
 
     @specular.setter
-    def specular(self, value: float):  # numpydoc ignore=GL08
+    def specular(self, value: float):
         self.SetSpecular(value)
 
     @property
@@ -330,7 +330,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
         return self.GetSpecularPower()
 
     @specular_power.setter
-    def specular_power(self, value: float):  # numpydoc ignore=GL08
+    def specular_power(self, value: float):
         self.SetSpecularPower(value)
 
     def copy(self) -> VolumeProperty:
