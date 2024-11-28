@@ -743,8 +743,10 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
     with pytest.raises(
-        IndexError,
-        match=r'tuple index out of range|Given points must be convertible to a numerical array',
+        ValueError,
+        match=re.escape(
+            'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
+        ),
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
