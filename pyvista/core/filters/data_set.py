@@ -2515,6 +2515,13 @@ class DataSetFilters:
             ``indices``. The values of the range (see ``rng``) affect lookup
             in the table.
 
+            .. note::
+
+                The reference direction is relative to ``(1, 0, 0)`` on the
+                provided geometry. That is, the provided geometry will be rotated
+                from ``(1, 0, 0)`` to the direction of the ``orient`` vector at
+                each point.
+
         indices : sequence[float], optional
             Specifies the index of each glyph in the table for lookup in case
             ``geom`` is a sequence. If given, must be the same length as

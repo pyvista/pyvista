@@ -46,7 +46,9 @@ class DataObject(_vtk.vtkPyVistaOverride):
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkXMLWriter | _vtk.vtkDataWriter]]] = {}
+    _WRITERS: ClassVar[
+        dict[str, type[_vtk.vtkXMLWriter | _vtk.vtkDataWriter | _vtk.vtkHDFWriter]]
+    ] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
@@ -154,6 +156,9 @@ class DataObject(_vtk.vtkPyVistaOverride):
                 'Invalid file extension for this data type.'
                 f' Must be one of: {self._WRITERS.keys()}',
             )
+
+        if file_ext == '.vtkhdf' and binary is False:
+            raise ValueError('.vtkhdf files can only be written in binary format.')
 
         # store complex and bitarray types as field data
         self._store_metadata()

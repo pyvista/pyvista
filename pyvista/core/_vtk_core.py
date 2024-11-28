@@ -400,6 +400,9 @@ from vtkmodules.vtkIOGeometry import vtkIVWriter
 from vtkmodules.vtkIOGeometry import vtkOBJWriter
 from vtkmodules.vtkIOGeometry import vtkProStarReader
 from vtkmodules.vtkIOGeometry import vtkSTLWriter
+
+with contextlib.suppress(ImportError):  # Introduced VTK v9.4.0
+    from vtkmodules.vtkIOHDF import vtkHDFWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
 from vtkmodules.vtkIOLegacy import vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader
