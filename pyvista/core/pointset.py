@@ -1820,7 +1820,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         '.vtk': _vtk.vtkUnstructuredGridWriter,
     }
     if _vtk.vtk_version_info >= (9, 4):  # pragma: no cover
-        _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
+        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the unstructured grid."""
