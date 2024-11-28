@@ -16,7 +16,12 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
 
 
-def vtk_points(points, deep=True, force_float=False):
+def vtk_points(
+    points: VectorLike[float] | MatrixLike[float],
+    deep: bool = True,
+    force_float: bool = False,
+    allow_empty: bool = True,
+) -> _vtk.vtkPoints:
     """Convert numpy array or array-like to a ``vtkPoints`` object.
 
     Parameters
@@ -35,6 +40,12 @@ def vtk_points(points, deep=True, force_float=False):
         though this may lead to truncation of intermediate floats
         when transforming datasets.
 
+    allow_empty : bool, default: True
+        Allow ``points`` to be an empty array. If ``False``, points
+        must be strictly one- or two-dimensional.
+
+        .. versionadded:: 0.45
+
     Returns
     -------
     vtk.vtkPoints
@@ -50,51 +61,40 @@ def vtk_points(points, deep=True, force_float=False):
     (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
 
     """
-    points = np.asanyarray(points)
+    try:
+        points_ = _validation.validate_arrayNx3(points, name='points')
+    except ValueError as e:
+        if 'points has shape (0,)' in repr(e) and allow_empty:
+            points_ = np.empty(shape=(0, 3), dtype=np.array(points).dtype)
+        else:
+            raise
 
-    # verify is numeric
-    if not np.issubdtype(points.dtype, np.number):
-        raise TypeError('Points must be a numeric type')
-
-    if force_float and not np.issubdtype(points.dtype, np.floating):
+    if force_float and not np.issubdtype(points_.dtype, np.floating):
         warnings.warn(
             'Points is not a float type. This can cause issues when '
             'transforming or applying filters. Casting to '
             '``np.float32``. Disable this by passing '
             '``force_float=False``.',
         )
-        points = points.astype(np.float32)
-
-    # check dimensionality
-    if points.ndim == 1:
-        points = points.reshape(-1, 3)
-    elif points.ndim > 2:
-        raise ValueError(f'Dimension of ``points`` should be 1 or 2, not {points.ndim}')
-
-    # verify shape
-    if points.shape[1] != 3:
-        raise ValueError(
-            'Points array must contain three values per point. '
-            f'Shape is {points.shape} and should be (X, 3)',
-        )
+        points_ = points_.astype(np.float32)
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points, pyvista.pyvista_ndarray) and points.VTKObject is not None:
-        vtk_object = points.VTKObject
+    if not deep and isinstance(points_, pyvista.pyvista_ndarray) and points_.VTKObject is not None:
+        vtk_object = points_.VTKObject
 
         # we can only use the underlying data if `points` is not a slice of
         # the VTK data object
-        if vtk_object.GetSize() == points.size:
+        if vtk_object.GetSize() == points_.size:
             vtkpts = _vtk.vtkPoints()
-            vtkpts.SetData(points.VTKObject)
+            vtkpts.SetData(points_.VTKObject)
             return vtkpts
         else:
             deep = True
 
     # points must be contiguous
-    points = np.require(points, requirements=['C'])
+    points_ = np.require(points_, requirements=['C'])
     vtkpts = _vtk.vtkPoints()
-    vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
+    vtk_arr = _vtk.numpy_to_vtk(points_, deep=deep)
     vtkpts.SetData(vtk_arr)
 
     return vtkpts
@@ -148,7 +148,7 @@ def line_segments_from_points(points):
     return poly
 
 
-def lines_from_points(points, close=False):
+def lines_from_points(points, close: bool = False):
     """Make a connected line set given an array of points.
 
     Parameters
@@ -186,7 +186,7 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=None):
+def fit_plane_to_points(points, return_meta: bool = False, resolution=10, init_normal=None):
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of

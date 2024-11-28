@@ -477,7 +477,8 @@ COLOR_SCHEMES = {
 }
 
 SCHEME_NAMES = {
-    scheme_info['id']: scheme_name for scheme_name, scheme_info in COLOR_SCHEMES.items()
+    scheme_info['id']: scheme_name  # type: ignore[index]
+    for scheme_name, scheme_info in COLOR_SCHEMES.items()
 }
 
 
@@ -960,11 +961,11 @@ class Color:
         return Color(rgba)
 
     @classmethod
-    def from_dict(cls, dict_):
+    def from_dict(cls, dict_):  # numpydoc ignore=RT01
         """Construct from dictionary for JSON deserialization."""
         return Color(dict_)
 
-    def to_dict(self):
+    def to_dict(self):  # numpydoc ignore=RT01
         """Convert to dictionary for JSON serialization."""
         return {'r': self._red, 'g': self._green, 'b': self._blue, 'a': self._opacity}
 
@@ -1012,7 +1013,7 @@ class Color:
         """Support iteration over the float RGBA representation for backward compatibility."""
         return iter(self.float_rgba)
 
-    def __repr__(self):  # pragma: no cover
+    def __repr__(self) -> str:  # pragma: no cover
         """Human readable representation."""
         kwargs = f'hex={self.hex_rgba!r}, opacity={self.opacity}'
         if self._name is not None:
@@ -1154,7 +1155,7 @@ def color_scheme_to_cycler(scheme):
     if not isinstance(scheme, _vtk.vtkColorSeries):
         series = _vtk.vtkColorSeries()
         if isinstance(scheme, str):
-            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())['id'])
+            series.SetColorScheme(COLOR_SCHEMES.get(scheme.lower())['id'])  # type: ignore[index]
         elif isinstance(scheme, int):
             series.SetColorScheme(scheme)
         else:

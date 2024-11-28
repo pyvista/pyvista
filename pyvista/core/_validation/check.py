@@ -13,12 +13,11 @@ A ``check`` function typically:
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Sequence
+from collections.abc import Sized
 from numbers import Number
 import reprlib
 from typing import TYPE_CHECKING
-from typing import Sequence
-from typing import Sized
-from typing import Tuple
 from typing import Union
 from typing import cast
 from typing import get_args
@@ -36,7 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._array_like import _NumberType
 
 
-_Shape = Union[Tuple[()], Tuple[int, ...]]
+_Shape = Union[tuple[()], tuple[int, ...]]
 _ShapeLike = Union[int, _Shape]
 
 
@@ -351,7 +350,7 @@ def check_integer(
         raise ValueError(f'{name} must have integer-like values.')
 
 
-def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array'):
+def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
     """Check if an array's elements are all nonnegative.
 
     Parameters
@@ -505,7 +504,7 @@ def check_range(
     strict_lower: bool = False,
     strict_upper: bool = False,
     name: str = 'Array',
-):
+) -> None:
     """Check if an array's values are all within a specific range.
 
     Parameters
@@ -592,6 +591,7 @@ def check_shape(
     See Also
     --------
     check_length
+    check_ndim
 
     Examples
     --------
@@ -633,7 +633,78 @@ def check_shape(
     raise ValueError(msg)
 
 
-def check_number(num, /, *, name='Object'):
+def check_ndim(
+    array: _ArrayLikeOrScalar[NumberType],
+    /,
+    ndim: Union[int, Sequence[int]],
+    *,
+    name: str = 'Array',
+):
+    """Check if an array has the specified number of dimensions.
+
+    .. note::
+        Scalar values have a dimension of ``0``.
+
+    Parameters
+    ----------
+    array : float | ArrayLike[float]
+        Number or array to check.
+
+    ndim : int | Sequence[int], optional
+        A single dimension or a sequence of allowable dimensions. If an
+        integer, the array must have this number of dimension(s). If a
+        sequence, the array must have at least one of the specified number
+        of dimensions.
+
+    name : str, default: "Array"
+        Variable name to use in the error messages if any are raised.
+
+    Raises
+    ------
+    ValueError
+        If the array does not have the required number of dimensions.
+
+    See Also
+    --------
+    check_length
+    check_shape
+
+    Examples
+    --------
+    Check if an array is one-dimensional
+
+    >>> import numpy as np
+    >>> from pyvista import _validation
+    >>> _validation.check_ndim([1, 2, 3], ndim=1)
+
+    Check if an array is two-dimensional or a scalar.
+
+    >>> _validation.check_ndim(1, ndim=(0, 2))
+
+    """
+    if not isinstance(ndim, Sequence):
+        ndim_: Sequence[int] = [ndim]
+    else:
+        ndim_ = ndim
+
+    array_ndim = _cast_to_numpy(array).ndim
+    if array_ndim not in ndim_:
+        check_ndim(ndim, [0, 1], name='ndim')
+
+        if len(ndim_) == 1:
+            check_integer(ndim_[0], strict=True, name='ndim')
+            expected = f'{ndim}'
+        else:
+            check_integer(ndim, strict=True, name='ndim')
+            expected = f'one of {ndim}'
+        msg = (
+            f'{name} has the incorrect number of dimensions. '
+            f'Got {array_ndim}, expected {expected}.'
+        )
+        raise ValueError(msg)
+
+
+def check_number(num, /, *, name='Object') -> None:
     """Check if an object is an instance of ``Number``.
 
     A number is any instance of ``numbers.Number``, e.g.  ``int``,
@@ -671,7 +742,7 @@ def check_number(num, /, *, name='Object'):
     check_instance(num, Number, allow_subclass=True, name=name)
 
 
-def check_string(obj, /, *, allow_subclass=True, name='Object'):
+def check_string(obj, /, *, allow_subclass: bool = True, name='Object') -> None:
     """Check if an object is an instance of ``str``.
 
     Parameters
@@ -709,7 +780,7 @@ def check_string(obj, /, *, allow_subclass=True, name='Object'):
     check_instance(obj, str, allow_subclass=allow_subclass, name=name)
 
 
-def check_sequence(obj, /, *, name='Object'):
+def check_sequence(obj, /, *, name='Object') -> None:
     """Check if an object is an instance of ``Sequence``.
 
     Parameters
@@ -743,7 +814,7 @@ def check_sequence(obj, /, *, name='Object'):
     check_instance(obj, Sequence, allow_subclass=True, name=name)
 
 
-def check_iterable(obj, /, *, name='Object'):
+def check_iterable(obj, /, *, name='Object') -> None:
     """Check if an object is an instance of ``Iterable``.
 
     Parameters
@@ -778,7 +849,7 @@ def check_iterable(obj, /, *, name='Object'):
     check_instance(obj, Iterable, allow_subclass=True, name=name)
 
 
-def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
+def check_instance(obj, /, classinfo, *, allow_subclass: bool = True, name='Object'):
     """Check if an object is an instance of the given type or types.
 
     Parameters
@@ -859,7 +930,7 @@ def check_instance(obj, /, classinfo, *, allow_subclass=True, name='Object'):
         raise TypeError(msg)
 
 
-def check_type(obj, /, classinfo, *, name='Object'):
+def check_type(obj, /, classinfo, *, name='Object') -> None:
     """Check if an object is one of the given type or types.
 
     Notes
@@ -904,9 +975,9 @@ def check_iterable_items(
     /,
     item_type,
     *,
-    allow_subclass=True,
+    allow_subclass: bool = True,
     name='Iterable',
-):
+) -> None:
     """Check if an iterable's items all have a specified type.
 
     Parameters
@@ -1056,6 +1127,7 @@ def check_length(
     See Also
     --------
     check_shape
+    check_ndim
 
     Examples
     --------

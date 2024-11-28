@@ -40,6 +40,13 @@ pyvista.VectorLike
 VTK Related Types
 -----------------
 
+pyvista.ConcreteDataSetType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcreteDataSetType
+
 pyvista.BoundsTuple
 ~~~~~~~~~~~~~~~~~~~
 
