@@ -20,7 +20,9 @@ from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
+from .utilities.fileio import PICKLE_EXT
 from .utilities.fileio import read
+from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
@@ -110,6 +112,14 @@ class DataObject:
     ) -> None:
         """Save this vtk object to file.
 
+        .. versionadded:: 0.45
+
+            Support saving pickled meshes
+
+        See Also
+        --------
+        pyvista.read
+
         Parameters
         ----------
         filename : str, pathlib.Path
@@ -139,6 +149,26 @@ class DataObject:
         file size.
 
         """
+
+        def _write_vtk(mesh_):
+            writer = mesh_._WRITERS[file_ext]()
+            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+            writer.SetFileName(str(file_path))
+            writer.SetInputData(mesh_)
+            if file_ext == '.ply' and texture is not None:
+                if isinstance(texture, str):
+                    writer.SetArrayName(texture)
+                    array_name = texture
+                elif isinstance(texture, np.ndarray):
+                    array_name = '_color_array'
+                    mesh_[array_name] = texture
+                    writer.SetArrayName(array_name)
+
+                # enable alpha channel if applicable
+                if mesh_[array_name].shape[-1] == 4:
+                    writer.SetEnableAlpha(True)
+            writer.Write()
+
         if self._WRITERS is None:
             raise NotImplementedError(
                 f'{self.__class__.__name__} writers are not specified,'
@@ -149,32 +179,20 @@ class DataObject:
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
         file_ext = file_path.suffix
-        if file_ext not in self._WRITERS:
-            raise ValueError(
-                'Invalid file extension for this data type.'
-                f' Must be one of: {self._WRITERS.keys()}',
-            )
 
         # store complex and bitarray types as field data
         self._store_metadata()
 
-        writer = self._WRITERS[file_ext]()
-        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
-        writer.SetFileName(str(file_path))
-        writer.SetInputData(self)
-        if file_ext == '.ply' and texture is not None:
-            if isinstance(texture, str):
-                writer.SetArrayName(texture)  # type: ignore[union-attr]
-                array_name = texture
-            elif isinstance(texture, np.ndarray):
-                array_name = '_color_array'
-                self[array_name] = texture
-                writer.SetArrayName(array_name)  # type: ignore[union-attr]
-
-            # enable alpha channel if applicable
-            if self[array_name].shape[-1] == 4:  # type: ignore[index]
-                writer.SetEnableAlpha(True)  # type: ignore[union-attr]
-        writer.Write()
+        writer_exts = self._WRITERS.keys()
+        if file_ext in writer_exts:
+            _write_vtk(self)
+        elif file_ext in PICKLE_EXT:
+            save_pickle(filename, self)
+        else:
+            raise ValueError(
+                'Invalid file extension for this data type.'
+                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}',
+            )
 
     def _store_metadata(self) -> None:
         """Store metadata as field data."""
