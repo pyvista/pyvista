@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import itertools
 from pathlib import Path
+import pickle
 import warnings
 
 import numpy as np
@@ -13,6 +14,8 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .observers import Observer
+
+PICKLE_EXT = ('.pkl', '.pickle')
 
 
 def set_pickle_format(format: str):  # noqa: A002
@@ -131,14 +134,30 @@ def read(filename, force_ext=None, file_format=None, progress_bar: bool = False)
 
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
-    readers first then tries to use ``meshio``.
+    readers first then tries to use ``meshio``. :py:mod:`Pickled<pickle>`
+    meshes (``'.pkl'`` or ``'.pickle'``) are also supported.
 
-    See :func:`pyvista.get_reader` for list of formats supported.
+    See :func:`pyvista.get_reader` for list of vtk formats supported.
 
     .. note::
        See https://github.com/nschloe/meshio for formats supported by
        ``meshio``. Be sure to install ``meshio`` with ``pip install
        meshio`` if you wish to use it.
+
+    .. versionadded:: 0.45
+
+        Support reading pickled meshes.
+
+    .. warning::
+
+        The pickle module is not secure. Only read pickled mesh files
+        (``'.pkl'`` or ``'.pickle'``) you trust. See :py:mod:`pickle`
+        for details.
+
+    See Also
+    --------
+    pyvista.DataObject.save
+        Save a mesh to file.
 
     Parameters
     ----------
@@ -180,6 +199,10 @@ def read(filename, force_ext=None, file_format=None, progress_bar: bool = False)
 
     >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
 
+    Load a pickled mesh file.
+
+    >>> mesh = pv.read("mesh.pkl")  # doctest:+SKIP
+
     """
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
@@ -207,6 +230,8 @@ def read(filename, force_ext=None, file_format=None, progress_bar: bool = False)
         raise ValueError(
             'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
         )
+    if ext in PICKLE_EXT:
+        return read_pickle(filename)
 
     try:
         reader = pyvista.get_reader(filename, force_ext)
@@ -710,6 +735,114 @@ def read_grdecl(filename, elevation: bool = True, other_keywords=None):
     grid.user_dict = {k: v for k, v in keywords.items() if k not in property_keywords}  # type: ignore[assignment]
 
     return grid
+
+
+def read_pickle(filename):
+    """Load a pickled mesh from file.
+
+    Parameters
+    ----------
+    filename : str
+        The path of the pickled mesh to read.
+
+    Returns
+    -------
+    pyvista.DataObject
+        Unpickled mesh.
+
+    Examples
+    --------
+    Save a pickled mesh and read it.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.load_ant()
+    >>> pv.save_pickle('ant.pkl', mesh)
+    >>> new_mesh = pv.read_pickle('ant.pkl')
+    >>> new_mesh
+    PolyData (...)
+      N Cells:    912
+      N Points:   486
+      N Strips:   0
+      X Bounds:   -1.601e+01, 1.601e+01
+      Y Bounds:   -9.385e+00, 9.385e+00
+      Z Bounds:   -1.678e+01, 1.678e+01
+      N Arrays:   0
+
+    Unlike other file formats, custom attributes are saved with pickled meshes.
+
+    >>> mesh.custom_attribute = 42
+    >>> pv.save_pickle('ant.pkl', mesh)
+    >>> new_mesh = pv.read_pickle('ant.pkl')
+    >>> new_mesh.custom_attribute
+    42
+
+    """
+    filename_str = str(filename)
+    if filename_str.endswith(PICKLE_EXT):
+        with open(filename_str, 'rb') as f:  # noqa: PTH123
+            mesh = pickle.load(f)
+
+        if not isinstance(mesh, pyvista.DataObject):
+            raise TypeError(
+                f'Pickled object must be an instance of {pyvista.DataObject}. Got {mesh.__class__} instead.'
+            )
+        return mesh
+    raise ValueError(
+        f'Filename must be a file path with extension {PICKLE_EXT}. Got {filename} instead.'
+    )
+
+
+def save_pickle(filename, mesh):
+    """Pickle a mesh and save it to file.
+
+    Parameters
+    ----------
+    filename : str
+        The path of the pickled mesh to save, including the extension ``'.pkl'``
+        or ``'.pickle'``.
+
+    mesh : pyvista.DataObject
+        Any PyVista mesh.
+
+    Examples
+    --------
+    Save a pickled mesh and read it.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.load_ant()
+    >>> pv.save_pickle('ant.pkl', mesh)
+    >>> new_mesh = pv.read_pickle('ant.pkl')
+    >>> new_mesh
+    PolyData (...)
+      N Cells:    912
+      N Points:   486
+      N Strips:   0
+      X Bounds:   -1.601e+01, 1.601e+01
+      Y Bounds:   -9.385e+00, 9.385e+00
+      Z Bounds:   -1.678e+01, 1.678e+01
+      N Arrays:   0
+
+    Unlike other file formats, custom attributes are saved with pickled meshes.
+
+    >>> mesh.custom_attribute = 42
+    >>> pv.save_pickle('ant.pkl', mesh)
+    >>> new_mesh = pv.read_pickle('ant.pkl')
+    >>> new_mesh.custom_attribute
+    42
+
+    """
+    filename_str = str(filename)
+    if not filename_str.endswith(PICKLE_EXT):
+        filename_str += '.pkl'
+    if not isinstance(mesh, pyvista.DataObject):
+        raise TypeError(
+            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
+        )
+
+    with open(filename_str, 'wb') as f:  # noqa: PTH123
+        pickle.dump(mesh, f)
 
 
 def is_meshio_mesh(obj):
