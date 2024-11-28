@@ -28,7 +28,7 @@ from .fileio import is_meshio_mesh
 
 def wrap(
     dataset: NumpyArray[float] | _vtk.vtkDataSet | Trimesh | Mesh | None,
-) -> pyvista.DataSet | pyvista.pyvista_ndarray | None:
+) -> pyvista.DataSet | pyvista.MultiBlock | pyvista.pyvista_ndarray | None:
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
     Other formats that are supported include:

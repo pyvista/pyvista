@@ -319,7 +319,7 @@ def load_globe_texture():
 
 _dataset_globe_texture = _SingleFileDownloadableDatasetLoader(
     mapfile,
-    read_func=pyvista.read_texture,
+    read_func=pyvista.read_texture,  # type: ignore[arg-type]
 )
 
 
