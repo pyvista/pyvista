@@ -48,8 +48,6 @@ if TYPE_CHECKING:  # pragma: no cover
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
-    points: pyvista.pyvista_ndarray
-
     def _clip_with_function(  # type: ignore[misc]
         self: ConcreteDataSetType,
         function,
@@ -7139,7 +7137,7 @@ class DataSetFilters:
         # (creating a new copy would be harmful much more often)
         converted_ints = False
         if not np.issubdtype(self.points.dtype, np.floating):
-            self.points = self.points.astype(np.float32)  # type: ignore[assignment]
+            self.points = self.points.astype(np.float32)
             converted_ints = True
         if transform_all_input_vectors:
             # all vector-shaped data will be transformed
