@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import numpy as np
 import pytest
 import trimesh
@@ -354,3 +356,10 @@ def test_vtk_points_force_float(force_float, expected_data_type):
     as_numpy = numpy_support.vtk_to_numpy(vtk_points.GetData())
 
     assert as_numpy.dtype == expected_data_type
+
+
+def test_vtk_points_allow_empty():
+    pv.vtk_points([], allow_empty=True)
+    match = 'points has shape (0,) which is not allowed. Shape must be one of [3, (-1, 3)].'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.vtk_points([], allow_empty=False)
