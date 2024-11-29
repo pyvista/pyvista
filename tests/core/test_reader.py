@@ -1180,3 +1180,13 @@ def test_grdecl_reader(tmp_path):
     include_content_copy[0] = include_content_copy[0].replace('MAPAXES', 'PLACEHOLDER')
     with pytest.warns(UserWarning, match=match):
         _ = read(content, include_content_copy)
+
+
+def test_xgmml_reader():
+    filename = examples.download_fsm(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.XGMLReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])

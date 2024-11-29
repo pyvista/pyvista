@@ -401,6 +401,7 @@ from vtkmodules.vtkIOGeometry import vtkOBJWriter
 from vtkmodules.vtkIOGeometry import vtkProStarReader
 from vtkmodules.vtkIOGeometry import vtkSTLWriter
 from vtkmodules.vtkIOInfovis import vtkDelimitedTextReader
+from vtkmodules.vtkIOInfovis import vtkXGMLReader
 from vtkmodules.vtkIOLegacy import vtkDataReader
 from vtkmodules.vtkIOLegacy import vtkDataSetReader
 from vtkmodules.vtkIOLegacy import vtkDataSetWriter

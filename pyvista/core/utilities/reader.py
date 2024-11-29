@@ -2830,6 +2830,26 @@ class ProStarReader(BaseReader):
     _vtk_class_name = 'vtkProStarReader'
 
 
+class XGMLReader(BaseReader):
+    """XGMLReader for .xgml files.
+
+    .. versionadded:: 0.45.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_fsm(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = 'vtkIOInfovis'
+    _vtk_class_name = 'vtkXGMLReader'
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2846,6 +2866,7 @@ CLASS_READERS = {
     '.gif': GIFReader,
     '.glb': GLTFReader,
     '.gltf': GLTFReader,
+    '.gml': XGMLReader,
     '.h5': FLUENTCFFReader,
     '.hdf': HDFReader,
     '.hdr': HDRReader,

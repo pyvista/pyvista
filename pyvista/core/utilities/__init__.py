@@ -212,6 +212,7 @@ from .reader import TimeReader
 from .reader import VTKDataSetReader
 from .reader import VTKPDataSetReader
 from .reader import XdmfReader
+from .reader import XGMLReader
 from .reader import XMLImageDataReader
 from .reader import XMLMultiBlockDataReader
 from .reader import XMLPartitionedDataSetReader

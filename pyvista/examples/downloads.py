@@ -8186,3 +8186,32 @@ def _full_head_files_func():  # pragma: no cover
 
 
 _dataset_full_head = _MultiFileDownloadableDatasetLoader(_full_head_files_func)
+
+
+def download_fsm(load=True):  # pragma: no cover
+    """Download the FSM dataset.
+
+    .. versionadded:: 0.45.0
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.PolyData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> mesh = examples.download_fsm()
+    >>> mesh.plot()
+
+    """
+    return _download_dataset(_dataset_fsm, load=load)
+
+
+_dataset_fsm = _SingleFileDownloadableDatasetLoader('fsm.gml')
