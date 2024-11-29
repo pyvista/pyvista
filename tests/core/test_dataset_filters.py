@@ -2872,9 +2872,10 @@ def test_interpolate():
     assert interp.n_arrays
 
 
-def test_select_enclosed_points(uniform, hexbeam):
+@pytest.mark.parametrize('use_trimesh', [True, False])
+def test_select_enclosed_points(uniform, hexbeam, use_trimesh):
     surf = pv.Sphere(center=uniform.center, radius=uniform.length / 2.0)
-    result = uniform.select_enclosed_points(surf, progress_bar=True)
+    result = uniform.select_enclosed_points(surf, progress_bar=True, use_trimesh=use_trimesh)
     assert isinstance(result, type(uniform))
     assert 'SelectedPoints' in result.array_names
     assert result['SelectedPoints'].any()
@@ -2883,14 +2884,20 @@ def test_select_enclosed_points(uniform, hexbeam):
     # Now check non-closed surface
     mesh = pv.Sphere(end_theta=270)
     surf = mesh.rotate_x(90, inplace=False)
-    result = mesh.select_enclosed_points(surf, check_surface=False, progress_bar=True)
+    result = mesh.select_enclosed_points(
+        surf, check_surface=False, progress_bar=True, use_trimesh=use_trimesh
+    )
     assert isinstance(result, type(mesh))
     assert 'SelectedPoints' in result.array_names
     assert result.n_arrays == mesh.n_arrays + 1
     with pytest.raises(RuntimeError):
-        result = mesh.select_enclosed_points(surf, check_surface=True, progress_bar=True)
+        result = mesh.select_enclosed_points(
+            surf, check_surface=True, progress_bar=True, use_trimesh=use_trimesh
+        )
     with pytest.raises(TypeError):
-        result = mesh.select_enclosed_points(hexbeam, check_surface=True, progress_bar=True)
+        result = mesh.select_enclosed_points(
+            hexbeam, check_surface=True, progress_bar=True, use_trimesh=use_trimesh
+        )
 
 
 def test_decimate_boundary():
