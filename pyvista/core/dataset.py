@@ -897,7 +897,7 @@ class DataSet(DataSetFilters, DataObject):
             name = arr_var
             arr = get_array(self, name, preference=preference, err=True)
         else:
-            arr = arr_var
+            arr = arr_var  # type: ignore[assignment]
 
         # If array has no tuples return a NaN range
         if arr is None:
