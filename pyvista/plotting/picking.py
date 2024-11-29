@@ -112,7 +112,7 @@ class PointPickingElementHandler:
         return self._picker_()  # type: ignore[misc]
 
     @picker.setter
-    def picker(self, picker):  # numpydoc ignore=GL08
+    def picker(self, picker):
         self._picker_ = weakref.ref(picker)  # type: ignore[assignment]
 
     def get_mesh(self):
@@ -1005,7 +1005,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(*args):  # numpydoc ignore=GL08
+        def end_pick_call_back(*args):
             if callback:
                 if use_actor:
                     _poked_context_callback(self_(), callback, self_()._picked_actor)  # type: ignore[union-attr]
@@ -1113,7 +1113,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):  # numpydoc ignore=GL08
+        def finalize(picked):
             if picked is None:
                 # Indicates invalid pick
                 with self_().iren.poked_subplot():  # type: ignore[union-attr]
@@ -1140,7 +1140,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             if callback is not None:
                 _poked_context_callback(self_(), callback, self_().picked_cells)  # type: ignore[union-attr]
 
-        def through_pick_callback(selection):  # numpydoc ignore=GL08
+        def through_pick_callback(selection):
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             for actor in renderer.actors.values():
@@ -1151,7 +1151,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
                     extract.Update()
-                    picked.append(pyvista.wrap(extract.GetOutput()))  # type: ignore[arg-type]
+                    picked.append(cast(pyvista.UnstructuredGrid, pyvista.wrap(extract.GetOutput())))
 
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None  # type: ignore[union-attr]
@@ -1227,7 +1227,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):  # numpydoc ignore=GL08
+        def finalize(picked):
             if picked is None:
                 # Indicates invalid pick
                 with self_().iren.poked_subplot():  # type: ignore[union-attr]
@@ -1252,7 +1252,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             if callback is not None:
                 _poked_context_callback(self_(), callback, picked)
 
-        def visible_pick_callback(selection):  # numpydoc ignore=GL08
+        def visible_pick_callback(selection):
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             x0, y0, x1, y1 = renderer.get_pick_position()
@@ -1286,7 +1286,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     smesh = smesh.copy()  # type: ignore[union-attr]
-                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)  # type: ignore[index, union-attr]
+                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)  # type: ignore[index, union-attr, call-overload]
                     tri_smesh = smesh.extract_surface().triangulate()  # type: ignore[union-attr]
                     cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
                     picked.append(smesh.extract_cells(cids_to_get))  # type: ignore[union-attr]
@@ -1725,7 +1725,7 @@ class PickingHelper(PickingMethods):
         self_ = weakref.ref(self)
         kwargs.setdefault('pickable', False)
 
-        def make_line_cells(n_points):  # numpydoc ignore=GL08
+        def make_line_cells(n_points):
             cells = np.arange(0, n_points, dtype=np.int_)
             return np.insert(cells, 0, n_points)
 

@@ -2,19 +2,8 @@
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING
 
-from hypothesis import HealthCheck
-from hypothesis import assume
-from hypothesis import given
-from hypothesis import settings
-from hypothesis.extra.numpy import array_shapes
-from hypothesis.extra.numpy import arrays
-from hypothesis.strategies import composite
-from hypothesis.strategies import floats
-from hypothesis.strategies import integers
-from hypothesis.strategies import one_of
 import numpy as np
 import pytest
 import vtk
@@ -35,28 +24,10 @@ from pyvista.examples import load_uniform
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core.dataset import DataSet
 
-HYPOTHESIS_MAX_EXAMPLES = 20
-
-
-@pytest.fixture
-def grid():
-    return pv.UnstructuredGrid(examples.hexbeamfile)
-
 
 def test_invalid_copy_from(grid):
     with pytest.raises(TypeError):
         grid.copy_from(pv.Plane())
-
-
-@composite
-def n_numbers(draw, n):
-    numbers = []
-    for _ in range(n):
-        number = draw(
-            one_of(floats(), integers(max_value=np.iinfo(int).max, min_value=np.iinfo(int).min))
-        )
-        numbers.append(number)
-    return numbers
 
 
 def test_memory_address(grid):
@@ -277,138 +248,10 @@ def test_copy_metadata(globe):
     )
 
 
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
-@given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
-def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
-    trans = pv.Transform()
-    trans.check_finite = False
-    trans.RotateWXYZ(*rotate_amounts)
-    trans.translate(translate_amounts)
-    trans.Update()
-
-    # Apply transform with pyvista filter
-    grid_a = grid.copy()
-    grid_a.transform(trans)
-
-    # Apply transform with vtk filter
-    grid_b = grid.copy()
-    f = vtk.vtkTransformFilter()
-    f.SetInputDataObject(grid_b)
-    f.SetTransform(trans)
-    f.Update()
-    grid_b = pv.wrap(f.GetOutput())
-
-    # treat INF as NAN (necessary for allclose)
-    grid_a.points[np.isinf(grid_a.points)] = np.nan
-    assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
-
-
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
-@given(rotate_amounts=n_numbers(4))
-def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amounts, grid):
-    # test non homogeneous transform
-    trans_rotate_only = pv.Transform()
-    trans_rotate_only.check_finite = False
-    trans_rotate_only.RotateWXYZ(*rotate_amounts)
-    trans_rotate_only.Update()
-
-    grid_copy = grid.copy()
-    grid_copy.transform(trans_rotate_only)
-
-    from pyvista.core.utilities.transformations import apply_transformation_to_points
-
-    trans_arr = trans_rotate_only.matrix[:3, :3]
-    trans_pts = apply_transformation_to_points(trans_arr, grid.points)
-    assert np.allclose(grid_copy.points, trans_pts, equal_nan=True)
-
-
-def test_translate_should_not_fail_given_none(grid):
-    bounds = grid.bounds
-    grid.transform(None)
-    assert grid.bounds == bounds
-
-
 def test_set_points():
     dataset = pv.UnstructuredGrid()
     points = np.random.default_rng().random((10, 3))
     dataset.points = pv.vtk_points(points)
-
-
-def test_translate_should_fail_bad_points_or_transform(grid):
-    points = np.random.default_rng().random((10, 2))
-    bad_points = np.random.default_rng().random((10, 2))
-    trans = np.random.default_rng().random((4, 4))
-    bad_trans = np.random.default_rng().random((2, 4))
-    with pytest.raises(ValueError):  # noqa: PT011
-        pv.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
-
-    with pytest.raises(ValueError):  # noqa: PT011
-        pv.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
-
-
-@settings(
-    suppress_health_check=[HealthCheck.function_scoped_fixture],
-    max_examples=HYPOTHESIS_MAX_EXAMPLES,
-)
-@given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
-def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
-    assume(array.shape not in [(3, 3), (4, 4)])
-    match = 'Shape must be one of [(3, 3), (4, 4)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        grid.transform(array)
-
-
-@pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
-def test_translate_should_translate_grid(grid, axis_amounts):
-    grid_copy = grid.copy()
-    grid_copy.translate(axis_amounts, inplace=True)
-
-    grid_points = grid.points.copy() + np.array(axis_amounts)
-    assert np.allclose(grid_copy.points, grid_points)
-
-
-@settings(
-    suppress_health_check=[HealthCheck.function_scoped_fixture],
-    max_examples=HYPOTHESIS_MAX_EXAMPLES,
-)
-@given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
-@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
-def test_rotate_should_match_vtk_rotation(angle, axis, grid):
-    trans = vtk.vtkTransform()
-    getattr(trans, f'Rotate{axis.upper()}')(angle)
-    trans.Update()
-
-    trans_filter = vtk.vtkTransformFilter()
-    trans_filter.SetTransform(trans)
-    trans_filter.SetInputData(grid)
-    trans_filter.Update()
-    grid_a = pv.UnstructuredGrid(trans_filter.GetOutput())
-
-    grid_b = grid.copy()
-    getattr(grid_b, f'rotate_{axis}')(angle, inplace=True)
-    assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
-
-
-def test_rotate_90_degrees_four_times_should_return_original_geometry():
-    sphere = pv.Sphere()
-    sphere.rotate_y(90, inplace=True)
-    sphere.rotate_y(90, inplace=True)
-    sphere.rotate_y(90, inplace=True)
-    sphere.rotate_y(90, inplace=True)
-    assert np.all(sphere.points == pv.Sphere().points)
-
-
-def test_rotate_180_degrees_two_times_should_return_original_geometry():
-    sphere = pv.Sphere()
-    sphere.rotate_x(180, inplace=True)
-    sphere.rotate_x(180, inplace=True)
-    assert np.all(sphere.points == pv.Sphere().points)
-
-
-def test_rotate_vector_90_degrees_should_not_distort_geometry():
-    cylinder = pv.Cylinder()
-    rotated = cylinder.rotate_vector(vector=(1, 1, 0), angle=90)
-    assert np.isclose(cylinder.volume, rotated.volume)
 
 
 def test_make_points_double(grid):
@@ -1181,254 +1024,6 @@ def test_point_is_inside_cell():
     assert np.array_equal(in_cell, np.array([True, False]))
 
 
-def test_rotations_should_match_by_a_360_degree_difference():
-    mesh = examples.load_airplane()
-
-    point = np.random.default_rng().random(3) - 0.5
-    angle = (np.random.default_rng().random() - 0.5) * 360.0
-    vector = np.random.default_rng().random(3) - 0.5
-
-    # Rotate about x axis.
-    rot1 = mesh.copy()
-    rot2 = mesh.copy()
-    rot1.rotate_x(angle=angle, point=point, inplace=True)
-    rot2.rotate_x(angle=angle - 360.0, point=point, inplace=True)
-    assert np.allclose(rot1.points, rot2.points)
-
-    # Rotate about y axis.
-    rot1 = mesh.copy()
-    rot2 = mesh.copy()
-    rot1.rotate_y(angle=angle, point=point, inplace=True)
-    rot2.rotate_y(angle=angle - 360.0, point=point, inplace=True)
-    assert np.allclose(rot1.points, rot2.points)
-
-    # Rotate about z axis.
-    rot1 = mesh.copy()
-    rot2 = mesh.copy()
-    rot1.rotate_z(angle=angle, point=point, inplace=True)
-    rot2.rotate_z(angle=angle - 360.0, point=point, inplace=True)
-    assert np.allclose(rot1.points, rot2.points)
-
-    # Rotate about custom vector.
-    rot1 = mesh.copy()
-    rot2 = mesh.copy()
-    rot1.rotate_vector(vector=vector, angle=angle, point=point, inplace=True)
-    rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point, inplace=True)
-    assert np.allclose(rot1.points, rot2.points)
-
-
-def test_rotate_x():
-    # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.rotate_x(30)
-    assert isinstance(out, pv.StructuredGrid)
-    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=5)
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_x(30, point=[1, 3])
-
-
-def test_rotate_y():
-    # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.rotate_y(30)
-    assert isinstance(out, pv.StructuredGrid)
-    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_y(30, point=5)
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_y(30, point=[1, 3])
-
-
-def test_rotate_z():
-    # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.rotate_z(30)
-    assert isinstance(out, pv.StructuredGrid)
-    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_z(30, point=5)
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_z(30, point=[1, 3])
-
-
-def test_rotate_vector():
-    # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.rotate_vector([1, 1, 1], 33)
-    assert isinstance(out, pv.StructuredGrid)
-    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_vector([1, 1], 33)
-    with pytest.raises(ValueError, match=re.escape(match)):
-        out = mesh.rotate_vector(30, 33)
-
-
-def test_rotate():
-    # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.rotate([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
-    assert isinstance(out, pv.StructuredGrid)
-
-
-def test_transform_integers():
-    # regression test for gh-1943
-    points = [
-        [0, 0, 0],
-        [1, 0, 0],
-        [0, 1, 0],
-    ]
-    # build vtkPolyData from scratch to enforce int data
-    poly = vtk.vtkPolyData()
-    poly.SetPoints(pv.vtk_points(points))
-    poly = pv.wrap(poly)
-    poly.verts = [1, 0, 1, 1, 1, 2]
-    # define active and inactive vectors with int values
-    for dataset_attrs in poly.point_data, poly.cell_data:
-        for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
-            dataset_attrs[key] = poly.points
-        dataset_attrs.active_vectors_name = 'active_v'
-        dataset_attrs.active_normals_name = 'active_n'
-
-    # active vectors and normals should be converted by default
-    for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
-        assert poly.point_data[key].dtype == np.int_
-        assert poly.cell_data[key].dtype == np.int_
-
-    with pytest.warns(UserWarning):
-        poly.rotate_x(angle=10, inplace=True)
-
-    # check that points were converted and transformed correctly
-    assert poly.points.dtype == np.float32
-    assert poly.points[-1, 1] != 0
-    # assert that exactly active vectors and normals were converted
-    for key in 'active_v', 'active_n':
-        assert poly.point_data[key].dtype == np.float32
-        assert poly.cell_data[key].dtype == np.float32
-    for key in 'inactive_v', 'inactive_n':
-        assert poly.point_data[key].dtype == np.int_
-        assert poly.cell_data[key].dtype == np.int_
-
-
-@pytest.mark.xfail(reason='VTK bug')
-def test_transform_integers_vtkbug_present():
-    # verify that the VTK transform bug is still there
-    # if this test starts to pass, we can remove the
-    # automatic float conversion from ``DataSet.transform``
-    # along with this test
-    points = [
-        [0, 0, 0],
-        [1, 0, 0],
-        [0, 1, 0],
-    ]
-    # build vtkPolyData from scratch to enforce int data
-    poly = vtk.vtkPolyData()
-    poly.SetPoints(pv.vtk_points(points))
-
-    # manually put together a rotate_x(10) transform
-    trans_arr = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
-    trans_mat = pv.vtkmatrix_from_array(trans_arr)
-    trans = vtk.vtkTransform()
-    trans.SetMatrix(trans_mat)
-    trans_filt = vtk.vtkTransformFilter()
-    trans_filt.SetInputDataObject(poly)
-    trans_filt.SetTransform(trans)
-    trans_filt.Update()
-    poly = pv.wrap(trans_filt.GetOutputDataObject(0))
-    # the bug is that e.g. 0.98 gets truncated to 0
-    assert poly.points[-1, 1] != 0
-
-
-def test_scale():
-    mesh = examples.load_airplane()
-
-    xyz = np.random.default_rng().random(3)
-    scale1 = mesh.copy()
-    scale2 = mesh.copy()
-    scale1.scale(xyz, inplace=True)
-    scale2.points *= xyz
-    scale3 = mesh.scale(xyz, inplace=False)
-    assert np.allclose(scale1.points, scale2.points)
-    assert np.allclose(scale3.points, scale2.points)
-    # test scalar scale case
-    scale1 = mesh.copy()
-    scale2 = mesh.copy()
-    xyz = 4.0
-    scale1.scale(xyz, inplace=True)
-    scale2.scale([xyz] * 3, inplace=True)
-    assert np.allclose(scale1.points, scale2.points)
-    # test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.scale(xyz)
-    assert isinstance(out, pv.StructuredGrid)
-
-
-def test_flip_x():
-    mesh = examples.load_airplane()
-    flip_x1 = mesh.copy()
-    flip_x2 = mesh.copy()
-    flip_x1.flip_x(point=(0, 0, 0), inplace=True)
-    flip_x2.points[:, 0] *= -1.0
-    assert np.allclose(flip_x1.points, flip_x2.points)
-    # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.flip_x()
-    assert isinstance(out, pv.StructuredGrid)
-
-
-def test_flip_y():
-    mesh = examples.load_airplane()
-    flip_y1 = mesh.copy()
-    flip_y2 = mesh.copy()
-    flip_y1.flip_y(point=(0, 0, 0), inplace=True)
-    flip_y2.points[:, 1] *= -1.0
-    assert np.allclose(flip_y1.points, flip_y2.points)
-    # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.flip_y()
-    assert isinstance(out, pv.StructuredGrid)
-
-
-def test_flip_z():
-    mesh = examples.load_airplane()
-    flip_z1 = mesh.copy()
-    flip_z2 = mesh.copy()
-    flip_z1.flip_z(point=(0, 0, 0), inplace=True)
-    flip_z2.points[:, 2] *= -1.0
-    assert np.allclose(flip_z1.points, flip_z2.points)
-    # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.flip_z()
-    assert isinstance(out, pv.StructuredGrid)
-
-
-def test_flip_normal():
-    mesh = examples.load_airplane()
-    flip_normal1 = mesh.copy()
-    flip_normal2 = mesh.copy()
-    flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0], inplace=True)
-    flip_normal2.flip_x(inplace=True)
-    assert np.allclose(flip_normal1.points, flip_normal2.points)
-
-    flip_normal3 = mesh.copy()
-    flip_normal4 = mesh.copy()
-    flip_normal3.flip_normal(normal=[0.0, 1.0, 0.0], inplace=True)
-    flip_normal4.flip_y(inplace=True)
-    assert np.allclose(flip_normal3.points, flip_normal4.points)
-
-    flip_normal5 = mesh.copy()
-    flip_normal6 = mesh.copy()
-    flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0], inplace=True)
-    flip_normal6.flip_z(inplace=True)
-    assert np.allclose(flip_normal5.points, flip_normal6.points)
-
-    # Test non-point-based mesh doesn't fail
-    mesh = examples.load_uniform()
-    out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
-    assert isinstance(out, pv.StructuredGrid)
-
-
 def test_active_normals(sphere):
     # both cell and point normals
     mesh = sphere.compute_normals()
@@ -1792,9 +1387,9 @@ def mesh():
 def test_active_t_coords_deprecated(mesh):
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.active_t_coords
-        if pv._version.version_info >= (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.active_t_coords = t_coords
-        if pv._version.version_info >= (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')

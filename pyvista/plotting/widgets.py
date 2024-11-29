@@ -28,9 +28,7 @@ from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Sequence
-
-    from pyvista.core._typing_core._array_like import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 
 def _parse_interaction_event(interaction_event):
@@ -104,11 +102,11 @@ class WidgetHelper:
         callback,
         bounds=None,
         factor=1.25,
-        rotation_enabled=True,
+        rotation_enabled: bool = True,
         color=None,
-        use_planes=False,
-        outline_translation=True,
-        pass_widget=False,
+        use_planes: bool = False,
+        outline_translation: bool = True,
+        pass_widget: bool = False,
         interaction_event='end',
     ):
         """Add a box widget to the scene.
@@ -241,12 +239,12 @@ class WidgetHelper:
     def add_mesh_clip_box(
         self,
         mesh,
-        invert=False,
-        rotation_enabled=True,
+        invert: bool = False,
+        rotation_enabled: bool = True,
         widget_color=None,
-        outline_translation=True,
-        merge_points=True,
-        crinkle=False,
+        outline_translation: bool = True,
+        merge_points: bool = True,
+        crinkle: bool = False,
         interaction_event='end',
         **kwargs,
     ):
@@ -353,7 +351,7 @@ class WidgetHelper:
 
         self.box_clipped_meshes.append(box_clipped_mesh)
 
-        def callback(planes):  # numpydoc ignore=GL08
+        def callback(planes):
             bounds = []
             for i in range(planes.GetNumberOfPlanes()):
                 plane = planes.GetPlane(i)
@@ -392,13 +390,13 @@ class WidgetHelper:
         factor=1.25,
         color=None,
         assign_to_axis=None,
-        tubing=False,
-        outline_translation=False,
-        origin_translation=True,
-        implicit=True,
-        pass_widget=False,
-        test_callback=True,
-        normal_rotation=True,
+        tubing: bool = False,
+        outline_translation: bool = False,
+        origin_translation: bool = True,
+        implicit: bool = True,
+        pass_widget: bool = False,
+        test_callback: bool = True,
+        normal_rotation: bool = True,
         interaction_event='end',
         outline_opacity=None,
     ):
@@ -641,16 +639,16 @@ class WidgetHelper:
         self,
         mesh,
         normal='x',
-        invert=False,
+        invert: bool = False,
         widget_color=None,
         value=0.0,
         assign_to_axis=None,
-        tubing=False,
-        origin_translation=True,
-        outline_translation=False,
-        implicit=True,
-        normal_rotation=True,
-        crinkle=False,
+        tubing: bool = False,
+        origin_translation: bool = True,
+        outline_translation: bool = False,
+        implicit: bool = True,
+        normal_rotation: bool = True,
+        crinkle: bool = False,
         interaction_event='end',
         origin=None,
         outline_opacity=None,
@@ -789,7 +787,7 @@ class WidgetHelper:
             plane_clipped_mesh = _get_output(clipper)
         self.plane_clipped_meshes.append(plane_clipped_mesh)
 
-        def callback(normal, loc):  # numpydoc ignore=GL08
+        def callback(normal, loc):
             function = generate_plane(normal, loc)
             clipper.SetClipFunction(function)  # the implicit function
             clipper.Update()  # Perform the Cut
@@ -824,15 +822,15 @@ class WidgetHelper:
         self,
         volume,
         normal='x',
-        invert=False,
+        invert: bool = False,
         widget_color=None,
         value=0.0,
         assign_to_axis=None,
-        tubing=False,
-        origin_translation=True,
-        outline_translation=False,
-        implicit=True,
-        normal_rotation=True,
+        tubing: bool = False,
+        origin_translation: bool = True,
+        outline_translation: bool = False,
+        implicit: bool = True,
+        normal_rotation: bool = True,
         interaction_event='end',
         origin=None,
         outline_opacity=None,
@@ -956,14 +954,14 @@ class WidgetHelper:
         self,
         mesh,
         normal='x',
-        generate_triangles=False,
+        generate_triangles: bool = False,
         widget_color=None,
         assign_to_axis=None,
-        tubing=False,
-        origin_translation=True,
-        outline_translation=False,
-        implicit=True,
-        normal_rotation=True,
+        tubing: bool = False,
+        origin_translation: bool = True,
+        outline_translation: bool = False,
+        implicit: bool = True,
+        normal_rotation: bool = True,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         origin=None,
         outline_opacity=None,
@@ -1076,7 +1074,7 @@ class WidgetHelper:
         plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.plane_sliced_meshes.append(plane_sliced_mesh)
 
-        def callback(normal, origin):  # numpydoc ignore=GL08
+        def callback(normal, origin):
             # create the plane for clipping
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
@@ -1105,9 +1103,9 @@ class WidgetHelper:
     def add_mesh_slice_orthogonal(
         self,
         mesh,
-        generate_triangles=False,
+        generate_triangles: bool = False,
         widget_color=None,
-        tubing=False,
+        tubing: bool = False,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
@@ -1192,8 +1190,8 @@ class WidgetHelper:
         factor=1.25,
         resolution=100,
         color=None,
-        use_vertices=False,
-        pass_widget=False,
+        use_vertices: bool = False,
+        pass_widget: bool = False,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add a line widget to the scene.
@@ -1396,7 +1394,7 @@ class WidgetHelper:
         slider_rep = slider_widget.GetRepresentation()
         slider_rep.ShowSliderLabelOff()
 
-        def title_callback(widget, _event):  # numpydoc ignore=GL08
+        def title_callback(widget, _event):
             value = widget.GetRepresentation().GetValue()
             idx = int(value / delta)
             # handle limit index
@@ -1417,7 +1415,7 @@ class WidgetHelper:
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         color=None,
-        pass_widget=False,
+        pass_widget: bool = False,
         interaction_event='end',
         style=None,
         title_height=0.03,
@@ -1543,7 +1541,7 @@ class WidgetHelper:
         if fmt is None:
             fmt = pyvista.global_theme.font.fmt
 
-        def normalize(point, viewport):  # numpydoc ignore=GL08
+        def normalize(point, viewport):
             return (point[0] * (viewport[2] - viewport[0]), point[1] * (viewport[3] - viewport[1]))
 
         pointa = normalize(pointa, self.renderer.GetViewport())  # type: ignore[attr-defined]
@@ -1622,14 +1620,14 @@ class WidgetHelper:
         self,
         mesh,
         scalars=None,
-        invert=False,
+        invert: bool = False,
         widget_color=None,
         preference='cell',
         title=None,
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
-        continuous=False,
-        all_scalars=False,
+        continuous: bool = False,
+        all_scalars: bool = False,
         method='upper',
         **kwargs,
     ):
@@ -1756,7 +1754,7 @@ class WidgetHelper:
         threshold_mesh = pyvista.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
-        def callback(value):  # numpydoc ignore=GL08
+        def callback(value):
             _set_threshold_limit(alg, value, method, invert)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
@@ -1777,9 +1775,9 @@ class WidgetHelper:
         self,
         mesh,
         scalars=None,
-        compute_normals=False,
-        compute_gradients=False,
-        compute_scalars=True,
+        compute_normals: bool = False,
+        compute_gradients: bool = False,
+        compute_scalars: bool = True,
         preference='point',
         title=None,
         pointa=(0.4, 0.9),
@@ -1915,7 +1913,7 @@ class WidgetHelper:
         isovalue_mesh = pyvista.wrap(alg.GetOutput())
         self.isovalue_meshes.append(isovalue_mesh)
 
-        def callback(value):  # numpydoc ignore=GL08
+        def callback(value):
             alg.SetValue(0, value)
             alg.Update()
             isovalue_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
@@ -1940,11 +1938,11 @@ class WidgetHelper:
         n_handles=5,
         resolution=25,
         color='yellow',
-        show_ribbon=False,
+        show_ribbon: bool = False,
         ribbon_color='pink',
         ribbon_opacity=0.5,
-        pass_widget=False,
-        closed=False,
+        pass_widget: bool = False,
+        closed: bool = False,
         initial_points=None,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
@@ -2069,15 +2067,15 @@ class WidgetHelper:
     def add_mesh_slice_spline(
         self,
         mesh,
-        generate_triangles=False,
+        generate_triangles: bool = False,
         n_handles=5,
         resolution=25,
         widget_color=None,
-        show_ribbon=False,
+        show_ribbon: bool = False,
         ribbon_color='pink',
         ribbon_opacity=0.5,
         initial_points=None,
-        closed=False,
+        closed: bool = False,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
         **kwargs,
     ):
@@ -2167,7 +2165,7 @@ class WidgetHelper:
         spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
         self.spline_sliced_meshes.append(spline_sliced_mesh)
 
-        def callback(spline):  # numpydoc ignore=GL08
+        def callback(spline):
             polyline = spline.GetCell(0)
             # create the plane for clipping
             polyplane = _vtk.vtkPolyPlane()
@@ -2246,7 +2244,7 @@ class WidgetHelper:
 
         self.iren.picker = PickerType.POINT  # type: ignore[attr-defined]
 
-        def place_point(*_):  # numpydoc ignore=GL08
+        def place_point(*_):
             p1 = [0, 0, 0]
             p2 = [0, 0, 0]
             representation.GetPoint1DisplayPosition(p1)  # type: ignore[arg-type]
@@ -2287,8 +2285,8 @@ class WidgetHelper:
         style='surface',
         selected_color='pink',
         indices=None,
-        pass_widget=False,
-        test_callback=True,
+        pass_widget: bool = False,
+        test_callback: bool = True,
         interaction_event=_vtk.vtkCommand.EndInteractionEvent,
     ):
         """Add one or many sphere widgets to a scene.
@@ -2425,10 +2423,10 @@ class WidgetHelper:
         self,
         actor,
         origin=None,
-        start=True,
+        start: bool = True,
         scale=0.15,
         line_radius=0.02,
-        always_visible=True,
+        always_visible: bool = True,
         axes_colors=None,
         axes=None,
         release_callback=None,
@@ -2517,7 +2515,7 @@ class WidgetHelper:
     def add_checkbox_button_widget(
         self,
         callback,
-        value=False,
+        value: bool = False,
         position=(10.0, 10.0),
         size=50,
         border_size=5,
@@ -2583,7 +2581,7 @@ class WidgetHelper:
         if self.iren is None:  # type: ignore[attr-defined] # pragma: no cover
             raise RuntimeError('Cannot add a widget to a closed plotter.')
 
-        def create_button(color1, color2, color3, dims=(size, size, 1)):  # numpydoc ignore=GL08
+        def create_button(color1, color2, color3, dims=(size, size, 1)):
             color1 = np.array(Color(color1).int_rgb)
             color2 = np.array(Color(color2).int_rgb)
             color3 = np.array(Color(color3).int_rgb)
@@ -2630,7 +2628,7 @@ class WidgetHelper:
         self,
         callback,
         radio_button_group,
-        value=False,
+        value: bool = False,
         title=None,
         position=(10.0, 10.0),
         size=50,
@@ -2739,7 +2737,7 @@ class WidgetHelper:
         color_off = Color(color_off)
         background_color = Color(background_color, default_color=self.background_color)  # type: ignore[attr-defined]
 
-        def create_radio_button(fg_color, bg_color, size=size, smooth=2):  # numpydoc ignore=GL08
+        def create_radio_button(fg_color, bg_color, size=size, smooth=2):
             fg_color = np.array(fg_color.int_rgb)
             bg_color = np.array(bg_color.int_rgb)
 
@@ -2785,7 +2783,7 @@ class WidgetHelper:
         button_widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
         button_widget.On()
 
-        def toggle_other_buttons_off(widget):  # numpydoc ignore=GL08
+        def toggle_other_buttons_off(widget):
             other_buttons = [
                 w for w in self.radio_button_widget_dict[radio_button_group] if w is not widget
             ]
@@ -2821,7 +2819,7 @@ class WidgetHelper:
                 title.VisibilityOff()
         self.radio_button_title_dict.clear()
 
-    def add_camera_orientation_widget(self, animate=True, n_frames=20):
+    def add_camera_orientation_widget(self, animate: bool = True, n_frames=20):
         """Add a camera orientation widget to the active renderer.
 
         .. note::
@@ -2884,8 +2882,8 @@ class WidgetHelper:
     def add_logo_widget(
         self,
         logo: pyvista.ImageData | str | pathlib.Path | None = None,
-        position: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.75, 0.8),
-        size: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.2, 0.2),
+        position: VectorLike[float] = (0.75, 0.8),
+        size: VectorLike[float] = (0.2, 0.2),
         opacity: float = 1.0,
     ):
         """Add a logo widget to the top of the viewport.
@@ -2934,14 +2932,19 @@ class WidgetHelper:
             from pyvista import examples
 
             logo = examples.logofile
-        if isinstance(logo, (str, pathlib.Path)):
-            logo = pyvista.read(logo)
-        if not isinstance(logo, pyvista.ImageData):
+
+        # Read dataset and narrow the logo type to ImageData
+        logo_maybe: pyvista.DataObject | str | pathlib.Path | None
+        logo_maybe = pyvista.read(logo) if isinstance(logo, (str, pathlib.Path)) else logo
+        if not isinstance(logo_maybe, pyvista.ImageData):
             raise TypeError('Logo must be a pyvista.ImageData or a file path to an image.')
+        else:
+            logo = logo_maybe
+
         representation = _vtk.vtkLogoRepresentation()
         representation.SetImage(logo)
-        representation.SetPosition(position)  # type: ignore[call-overload]
-        representation.SetPosition2(size)  # type: ignore[call-overload]
+        representation.SetPosition(*position)
+        representation.SetPosition2(*size)
         representation.GetImageProperty().SetOpacity(opacity)
         widget = _vtk.vtkLogoWidget()
         widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
