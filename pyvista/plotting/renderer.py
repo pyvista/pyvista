@@ -2036,7 +2036,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         See Also
         --------
-        pyvista.DataSetFilter.bounding_box
+        pyvista.DataSetFilters.bounding_box
             Create a bounding box or oriented bounding box for a dataset.
 
         Examples

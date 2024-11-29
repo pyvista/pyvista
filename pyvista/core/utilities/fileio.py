@@ -483,7 +483,7 @@ def read_grdecl(
     >>> import pyvista as pv
     >>> grid = pv.read('file.GRDECL')  # doctest:+SKIP
 
-    Unused keywords contained in the file are stored in :attr:`pyvista.ExplicitStructuredGrid.user_dict`:
+    Unused keywords contained in the file are stored in :attr:`pyvista.DataObject.user_dict`:
 
     >>> grid.user_dict  # doctest:+SKIP
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}

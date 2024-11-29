@@ -1474,7 +1474,7 @@ class DataSetFilters:
 
         See Also
         --------
-        threshold_percent, :meth:`~pyvista.ImageDataFilters.image_threshold`, extract_values
+        threshold_percent, extract_values, :meth:`~pyvista.ImageDataFilters.image_threshold`
 
         Returns
         -------
@@ -5499,7 +5499,7 @@ class DataSetFilters:
         dataset. Optionally, specific values and/or ranges of values may be specified to
         control which values to split from the input.
 
-        This filter is a convenience method for :meth:`~pyvista.DataSetFilter.extract_values`
+        This filter is a convenience method for :meth:`~pyvista.DataSetFilters.extract_values`
         with ``split`` set to ``True`` by default. Refer to that filter's documentation
         for more details.
 
@@ -5555,7 +5555,7 @@ class DataSetFilters:
             - ``'multi'``: the entire multi-component item must have the specified value.
 
         **kwargs : dict, optional
-            Additional keyword arguments passed to :meth:`~pyvista.DataSetFilter.extract_values`.
+            Additional keyword arguments passed to :meth:`~pyvista.DataSetFilters.extract_values`.
 
         See Also
         --------
@@ -8554,7 +8554,7 @@ class DataSetFilters:
 
         The type of output dataset is always the same as the input type. Since
         structured types of data (i.e., :class:`pyvista.ImageData`,
-        :class:`pyvista.StructuredGrid`, :class:`pyvista.RectilnearGrid`)
+        :class:`pyvista.StructuredGrid`, :class:`pyvista.RectilinearGrid`)
         are all composed of a cell of the same
         type, the output is either empty, or a shallow copy of the input.
         Unstructured data (:class:`pyvista.UnstructuredGrid`,

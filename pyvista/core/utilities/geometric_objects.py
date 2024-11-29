@@ -1498,11 +1498,11 @@ def Text3D(
     ----------
     string : str
         String to generate 3D text from. If ``None`` or an empty string,
-        the output mesh will have a single point at :attr:`center`.
+        the output mesh will have a single point at ``center``.
 
     depth : float, optional
         Depth of the text. If ``None``, the depth is set to half
-        the :attr:`height` by default. Set to ``0.0`` for planar
+        the ``height`` by default. Set to ``0.0`` for planar
         text.
 
         .. versionchanged:: 0.43
@@ -1513,13 +1513,13 @@ def Text3D(
 
     width : float, optional
         Width of the text. If ``None``, the width is scaled
-        proportional to :attr:`height`.
+        proportional to ``height``.
 
         .. versionadded:: 0.43
 
     height : float, optional
         Height of the text. If ``None``, the height is scaled
-        proportional to :attr:`width`.
+        proportional to ``width``.
 
         .. versionadded:: 0.43
 
@@ -1531,7 +1531,7 @@ def Text3D(
 
     normal : Sequence[float], default: (0.0, 0.0, 1.0)
         Normal direction of the text. The direction is parallel to the
-        :attr:`depth` of the text and points away from the front surface
+        ``depth`` of the text and points away from the front surface
         of the text.
 
         .. versionadded:: 0.43
