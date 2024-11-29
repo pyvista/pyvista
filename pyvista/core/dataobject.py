@@ -182,16 +182,16 @@ class DataObject:
 
         # also store field data of any nested multiblocks
         if isinstance(self, MultiBlock):
-            mesh_out = self.copy(deep=False)
+            mesh_out: DataObject = self.copy(deep=False)
             mesh_out._store_nested_field_data()
         else:
             mesh_out = self
 
-        writer_exts = self._WRITERS.keys()
+        writer_exts = mesh_out._WRITERS.keys()
         if file_ext in writer_exts:
-            _write_vtk(self)
+            _write_vtk(mesh_out)
         elif file_ext in PICKLE_EXT:
-            save_pickle(filename, self)
+            save_pickle(filename, mesh_out)
         else:
             raise ValueError(
                 'Invalid file extension for this data type.'
