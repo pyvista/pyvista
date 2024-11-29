@@ -45,8 +45,10 @@ from .fileio import read
 from .fileio import read_exodus
 from .fileio import read_grdecl
 from .fileio import read_meshio
+from .fileio import read_pickle
 from .fileio import read_texture
 from .fileio import save_meshio
+from .fileio import save_pickle
 from .fileio import set_pickle_format
 from .fileio import set_vtkwriter_mode
 from .geometric_objects import NORMALS
