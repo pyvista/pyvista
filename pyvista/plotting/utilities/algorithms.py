@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import traceback
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -10,6 +11,10 @@ import pyvista
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
 
 
 def algorithm_to_mesh_handler(mesh_or_algo, port=0):
@@ -187,7 +192,7 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, name: str, preference: str = 'point'):
+    def __init__(self, name: str, preference: PointLiteral | CellLiteral = 'point'):
         """Initialize algorithm."""
         super().__init__()
         self.scalars_name = name

@@ -28,9 +28,7 @@ from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Sequence
-
-    from pyvista.core._typing_core._array_like import NumpyArray
+    from pyvista.core._typing_core import VectorLike
 
 
 def _parse_interaction_event(interaction_event):
@@ -2884,8 +2882,8 @@ class WidgetHelper:
     def add_logo_widget(
         self,
         logo: pyvista.ImageData | str | pathlib.Path | None = None,
-        position: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.75, 0.8),
-        size: tuple[float, float] | Sequence[float] | NumpyArray[float] = (0.2, 0.2),
+        position: VectorLike[float] = (0.75, 0.8),
+        size: VectorLike[float] = (0.2, 0.2),
         opacity: float = 1.0,
     ):
         """Add a logo widget to the top of the viewport.
@@ -2934,14 +2932,19 @@ class WidgetHelper:
             from pyvista import examples
 
             logo = examples.logofile
-        if isinstance(logo, (str, pathlib.Path)):
-            logo = pyvista.read(logo)
-        if not isinstance(logo, pyvista.ImageData):
+
+        # Read dataset and narrow the logo type to ImageData
+        logo_maybe: pyvista.DataObject | str | pathlib.Path | None
+        logo_maybe = pyvista.read(logo) if isinstance(logo, (str, pathlib.Path)) else logo
+        if not isinstance(logo_maybe, pyvista.ImageData):
             raise TypeError('Logo must be a pyvista.ImageData or a file path to an image.')
+        else:
+            logo = logo_maybe
+
         representation = _vtk.vtkLogoRepresentation()
         representation.SetImage(logo)
-        representation.SetPosition(position)  # type: ignore[call-overload]
-        representation.SetPosition2(size)  # type: ignore[call-overload]
+        representation.SetPosition(*position)
+        representation.SetPosition2(*size)
         representation.GetImageProperty().SetOpacity(opacity)
         widget = _vtk.vtkLogoWidget()
         widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
