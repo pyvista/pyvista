@@ -218,6 +218,20 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
     (r'py:.*', '.*RotationLike'),
+    (r'py:.*', '.*NumpyArray'),
+    (r'py:.*', '.*SerializedDictArray'),
+    (r'py:.*', '.*NDArray'),
+    (r'py:.*', '.*_TypeMultiBlockLeaf'),
+    (r'py:.*', '.*_ArrayLikeOrScalar'),
+    (r'py:.*', '.*NumberType'),
+    (r'py:.*', '.*ShaftType'),
+    (r'py:.*', '.*TipType'),
+    (r'py:.*', '.*NoneType'),
+    (r'py:.*', '.*_AxesGeometryKwargs'),
+    (r'py:.*', '.*StringIO'),
+    (r'py:.*', '.*Path'),
+    (r'py:.*', '.*PickerType'),
+    (r'py:.*', '.*ElementType'),
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'ActiveArrayInfo'),
     (r'py:.*', 'FieldAssociation'),
@@ -235,6 +249,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', 'various'),
     (r'py:.*', 'vtk.*'),
+    (r'py:.*', '_vtk.*'),
 ]
 
 
