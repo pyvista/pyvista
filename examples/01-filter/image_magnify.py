@@ -11,12 +11,11 @@ from pyvista import examples
 filename = examples.download_gourds(load=False)
 
 # Read the image.
-reader = vtk.vtkPNGReader()
-reader.SetFileName(filename)
+reader = pv.get_reader(filename)
 
 # Increase the dimensions of the image.
 magnify_filter = vtk.vtkImageMagnify()
-magnify_filter.SetInputConnection(reader.GetOutputPort())
+magnify_filter.SetInputConnection(reader.reader.GetOutputPort())
 magnify_filter.SetMagnificationFactors(2, 1, 1)
 magnify_filter.Update()
 
@@ -30,7 +29,7 @@ change_filter.SetSpacingScale(
 
 # Create actors for the original and magnified images.
 original_actor = vtk.vtkImageActor()
-original_actor.GetMapper().SetInputConnection(reader.GetOutputPort())
+original_actor.GetMapper().SetInputConnection(reader.reader.GetOutputPort())
 
 magnified_actor = vtk.vtkImageActor()
 magnified_actor.GetMapper().SetInputConnection(change_filter.GetOutputPort())
