@@ -58,7 +58,7 @@ def load_ant():
     return _dataset_ant.load()
 
 
-_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pyvista.PolyData)
+_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_airplane():
@@ -84,7 +84,7 @@ def load_airplane():
     return _dataset_airplane.load()
 
 
-_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pyvista.PolyData)
+_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_sphere():
@@ -110,7 +110,7 @@ def load_sphere():
     return _dataset_sphere.load()
 
 
-_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pyvista.PolyData)
+_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_uniform():
@@ -136,7 +136,7 @@ def load_uniform():
     return _dataset_uniform.load()
 
 
-_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pyvista.ImageData)
+_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pyvista.ImageData)  # type: ignore[arg-type]
 
 
 def load_rectilinear():
@@ -164,7 +164,7 @@ def load_rectilinear():
 
 _dataset_rectilinear = _SingleFileDownloadableDatasetLoader(
     rectfile,
-    read_func=pyvista.RectilinearGrid,
+    read_func=pyvista.RectilinearGrid,  # type: ignore[arg-type]
 )
 
 
@@ -193,7 +193,7 @@ def load_hexbeam():
 
 _dataset_hexbeam = _SingleFileDownloadableDatasetLoader(
     hexbeamfile,
-    read_func=pyvista.UnstructuredGrid,
+    read_func=pyvista.UnstructuredGrid,  # type: ignore[arg-type]
 )
 
 
@@ -291,7 +291,7 @@ def load_globe():
     return _dataset_globe.load()
 
 
-_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pyvista.PolyData)
+_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_globe_texture():
@@ -319,7 +319,7 @@ def load_globe_texture():
 
 _dataset_globe_texture = _SingleFileDownloadableDatasetLoader(
     mapfile,
-    read_func=pyvista.read_texture,
+    read_func=pyvista.read_texture,  # type: ignore[arg-type]
 )
 
 
