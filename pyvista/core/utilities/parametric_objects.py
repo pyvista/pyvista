@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from math import pi
 from typing import TYPE_CHECKING
-from typing import cast
 import warnings
 
 import numpy as np
@@ -1466,7 +1465,7 @@ def surface_from_para(
     para_source.SetWResolution(w_res)
     para_source.SetGenerateTextureCoordinates(texture_coordinates)
     para_source.Update()
-    surf = cast(pyvista.PolyData, wrap(para_source.GetOutput()))
+    surf = wrap(para_source.GetOutput())
     if clean:
         surf = surf.clean(
             tolerance=1e-7,  # determined experimentally
