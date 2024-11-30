@@ -17,16 +17,18 @@ from vtkmodules.vtkInteractionImage import vtkImageViewer
 from vtkmodules.vtkIOImage import vtkMetaImageReader
 from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor
 
+from pyvista import examples
+
 # noinspection PyUnresolvedReferences
 
 
 def main():
-    fileName = get_program_parameters()
+    file_name = examples.downloads.download_full_head(load=False)
     colors = vtkNamedColors()
 
     # Read the CT data of the human head.
     reader = vtkMetaImageReader()
-    reader.SetFileName(fileName)
+    reader.SetFileName(file_name)
     reader.Update()
 
     cast = vtkImageCast()
