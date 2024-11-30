@@ -63,7 +63,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         for i in range(self.n_partitions):
             partition = self.GetPartition(i)
             if not is_pyvista_dataset(partition):
-                self.SetPartition(i, wrap(partition))  # type: ignore[arg-type]
+                self.SetPartition(i, wrap(partition))  # type: ignore[call-overload]
 
     @overload
     def __getitem__(self, index: int) -> DataSet | None: ...  # pragma: no cover
@@ -80,7 +80,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
                 raise IndexError(f'index ({index}) out of range for this dataset.')
             if index < 0:
                 index = self.n_partitions + index
-            return wrap(self.GetPartition(index))
+            return wrap(self.GetPartition(index))  # type: ignore[call-overload]
 
     @overload
     def __setitem__(self, index: int, data: DataSet | None) -> None: ...  # pragma: no cover

@@ -884,5 +884,5 @@ class DataObject:
         mesh = wrap(reader.GetOutput())  # type: ignore[attr-defined]
 
         # copy data
-        self.copy_structure(mesh)  # type: ignore[arg-type]
-        self.copy_attributes(mesh)  # type: ignore[arg-type]
+        self.copy_structure(mesh)
+        self.copy_attributes(mesh)
