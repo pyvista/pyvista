@@ -3,15 +3,11 @@
 # Handle the arguments.
 from __future__ import annotations
 
-import sys
-
 import vtk
 
-if len(sys.argv) < 2:
-    print('Required arguments: filename.png e.g. Gourds.png')
-    sys.exit(1)
+from pyvista import examples
 
-filename = sys.argv[1]
+filename = examples.download_gourds(load=False)
 
 # Read the image.
 reader = vtk.vtkPNGReader()
