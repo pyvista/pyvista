@@ -2764,7 +2764,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             and self._box_object is not None
             and self.bounding_box_actor is not None
         ):
-            if not np.allclose(self._box_object.bounds, self.bounds):  # type: ignore[union-attr]
+            if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import overload
 import warnings
 
 import numpy as np
@@ -12,7 +14,9 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import PolyData
     from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
@@ -100,7 +104,7 @@ def vtk_points(
     return vtkpts
 
 
-def line_segments_from_points(points):
+def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> PolyData:
     """Generate non-connected line segments from points.
 
     Assumes points are ordered as line segments and an even number of
@@ -143,12 +147,14 @@ def line_segments_from_points(points):
         )
     ]
     poly = pyvista.PolyData()
-    poly.points = points
+    poly.points = points  # type: ignore[assignment]
     poly.lines = lines
     return poly
 
 
-def lines_from_points(points, close: bool = False):
+def lines_from_points(
+    points: VectorLike[float] | MatrixLike[float], close: bool = False
+) -> PolyData:
     """Make a connected line set given an array of points.
 
     Parameters
@@ -176,7 +182,7 @@ def lines_from_points(points, close: bool = False):
 
     """
     poly = pyvista.PolyData()
-    poly.points = points
+    poly.points = points  # type: ignore[assignment]
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
@@ -186,7 +192,12 @@ def lines_from_points(points, close: bool = False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta: bool = False, resolution=10, init_normal=None):
+def fit_plane_to_points(
+    points: MatrixLike[float],
+    return_meta: bool = False,
+    resolution: int = 10,
+    init_normal: VectorLike[float] | None = None,
+) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -375,7 +386,7 @@ def fit_line_to_points(
     resolution: int = 1,
     init_direction: VectorLike[float] | None = None,
     return_meta: bool = False,
-):
+) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
     """Fit a line to points using its :func:`principal_axes`.
 
     The line is automatically sized and oriented to fit the extents of
@@ -506,7 +517,7 @@ def fit_line_to_points(
     return line_mesh
 
 
-def make_tri_mesh(points, faces):
+def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData:
     """Construct a ``pyvista.PolyData`` mesh using points and faces arrays.
 
     Construct a mesh from an Nx3 array of points and an Mx3 array of
@@ -575,7 +586,9 @@ def make_tri_mesh(points, faces):
     return pyvista.PolyData(points, cells)
 
 
-def vector_poly_data(orig, vec):
+def vector_poly_data(
+    orig: VectorLike[float] | MatrixLike[float], vec: VectorLike[float] | MatrixLike[float]
+) -> PolyData:
     """Create a pyvista.PolyData object composed of vectors.
 
     Parameters
@@ -665,7 +678,27 @@ def vector_poly_data(orig, vec):
     return pyvista.PolyData(pdata)
 
 
-def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
+@overload
+def principal_axes(points: MatrixLike[float]) -> NumpyArray[float]: ...
+@overload
+def principal_axes(
+    points: MatrixLike[float],
+    *,
+    return_std: Literal[True] = True,
+) -> tuple[NumpyArray[float], NumpyArray[float]]: ...
+@overload
+def principal_axes(
+    points: MatrixLike[float],
+    *,
+    return_std: Literal[False] = False,
+) -> NumpyArray[float]: ...
+@overload
+def principal_axes(
+    points: MatrixLike[float], *, return_std: bool = ...
+) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]: ...
+def principal_axes(
+    points: MatrixLike[float], *, return_std: bool = False
+) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]:
     """Compute the principal axes of a set of points.
 
     Principal axes are orthonormal vectors that best fit a set of points. The axes

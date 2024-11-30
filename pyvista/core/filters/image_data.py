@@ -984,7 +984,7 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
-        return cast(pyvista.PolyData, wrap(alg.GetOutput()))
+        return wrap(alg.GetOutput())
 
     def points_to_cells(  # type: ignore[misc]
         self: ImageData,

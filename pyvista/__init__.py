@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 import sys
 from typing import TYPE_CHECKING
+from typing import Literal
 import warnings
 
 from pyvista._plot import plot
@@ -59,7 +60,7 @@ PLOT_DIRECTIVE_THEME = None
 FLOAT_FORMAT = '{:.3e}'
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
+PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
