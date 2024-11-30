@@ -2287,3 +2287,31 @@ class ImageDataFilters(DataSetFilters):
             )
 
         return dimensions_mask, dimensions_result
+
+    def magnify(
+        self, *, factor: VectorLike[int] = (1, 1, 1), progress_bar: bool = False
+    ) -> pyvista.ImageData:
+        """Magnify an image by an integer value.
+
+        Parameters
+        ----------
+        factor : VectorLike[int], optional
+           The integer magnification factors in the i-j-k directions.
+           Initially, factors are set to 1 in all directions.
+
+        progress_bar : bool, default: False
+           Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+           Magnified image.
+
+        """
+        _validation.validate_array(factor, shape=3, must_be_integer=True, name='factor')
+        _validation.check_instance(progress_bar, bool, 'progress_bar')
+        alg = _vtk.vtkImageMagnify()
+        alg.SetInputDataObject(self)
+        alg.SetMagnificationFactors(factor)
+        _update_alg(alg, progress_bar, 'Magnifying Image')
+        return _get_output(alg)
