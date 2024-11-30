@@ -1587,7 +1587,7 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (DataSet, MultiBlock)):
-            return obj.transform(
+            return obj.transform(  # type: ignore[misc]
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
                 transform_all_input_vectors=transform_all_input_vectors,

@@ -4123,7 +4123,7 @@ class DataSetFilters:
         See :ref:`interpolate_example` for more examples using this filter.
 
         """
-        target = cast(pyvista.DataSet, wrap(target))
+        target = wrap(target)
 
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
@@ -4447,7 +4447,7 @@ class DataSetFilters:
         if max_length is None:
             max_length = 4.0 * self.GetLength()  # type: ignore[attr-defined]
 
-        source = cast(pyvista.DataSet, wrap(source))
+        source = wrap(source)
         # vtk throws error with two Structured Grids
         # See: https://github.com/pyvista/pyvista/issues/1373
         if isinstance(self, pyvista.StructuredGrid) and isinstance(source, pyvista.StructuredGrid):
