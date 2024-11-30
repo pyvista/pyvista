@@ -1079,7 +1079,7 @@ class WidgetHelper:
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane)  # the cutter to use the plane we made
             alg.Update()  # Perform the Cut
-            plane_sliced_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
+            plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.add_plane_widget(
             callback=callback,
@@ -1757,7 +1757,7 @@ class WidgetHelper:
         def callback(value):
             _set_threshold_limit(alg, value, method, invert)
             alg.Update()
-            threshold_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
+            threshold_mesh.shallow_copy(alg.GetOutput())
 
         self.add_slider_widget(
             callback=callback,
@@ -1916,7 +1916,7 @@ class WidgetHelper:
         def callback(value):
             alg.SetValue(0, value)
             alg.Update()
-            isovalue_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
+            isovalue_mesh.shallow_copy(alg.GetOutput())
 
         self.add_slider_widget(
             callback=callback,
@@ -2028,7 +2028,7 @@ class WidgetHelper:
             para_source.SetParametricFunction(widget.GetParametricSpline())
             para_source.Update()
             polyline = pyvista.wrap(para_source.GetOutput())
-            ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))  # type: ignore[union-attr]
+            ribbon.shallow_copy(polyline.ribbon(normal=(0, 0, 1), angle=90.0))
             if callable(callback):
                 if pass_widget:
                     try_callback(callback, polyline, widget)
@@ -2172,7 +2172,7 @@ class WidgetHelper:
             polyplane.SetPolyLine(polyline)
             alg.SetCutFunction(polyplane)  # the cutter to use the poly planes
             alg.Update()  # Perform the Cut
-            spline_sliced_mesh.shallow_copy(alg.GetOutput())  # type: ignore[union-attr]
+            spline_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.add_spline_widget(
             callback=callback,

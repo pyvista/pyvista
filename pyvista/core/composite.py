@@ -170,7 +170,7 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, wrap(block))  # type: ignore[arg-type]
+                self.SetBlock(i, wrap(block))  # type: ignore[call-overload]
 
     @property
     def bounds(self: MultiBlock) -> BoundsTuple:
@@ -415,7 +415,7 @@ class MultiBlock(
         if index < 0:
             index = self.n_blocks + index
 
-        return wrap(self.GetBlock(index))
+        return wrap(self.GetBlock(index))  # type: ignore[call-overload]
 
     def append(self: MultiBlock, dataset: _TypeMultiBlockLeaf, name: str | None = None) -> None:
         """Add a data set to the next block index.
@@ -1080,7 +1080,7 @@ class MultiBlock(
         def _set_name_for_none_blocks(
             this_object_: MultiBlock, new_object_: _vtk.vtkMultiBlockDataSet
         ) -> None:
-            new_object_ = cast(MultiBlock, pyvista.wrap(new_object_))
+            new_object_ = pyvista.wrap(new_object_)
             for i, dataset in enumerate(new_object_):
                 if dataset is None:
                     this_object_.set_block_name(i, new_object_.get_block_name(i))
