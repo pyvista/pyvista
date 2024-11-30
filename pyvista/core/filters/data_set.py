@@ -5507,7 +5507,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        values : number | array_like | dict, optional
+        values : float | ArrayLike[float] | dict, optional
             Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -7409,7 +7409,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        vector : Vector
+        vector : VectorLike[float]
             Vector to rotate about.
 
         angle : float
@@ -7549,7 +7549,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        xyz : Vector
+        xyz : VectorLike[float]
             A vector of three floats.
 
         transform_all_input_vectors : bool, default: False
@@ -7606,7 +7606,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        xyz : Number | Vector
+        xyz : float | VectorLike[float]
             A vector sequence defining the scale factors along x, y, and z. If
             a scalar, the same uniform scale is used along all three axes.
 

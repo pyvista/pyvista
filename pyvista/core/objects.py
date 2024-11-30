@@ -371,9 +371,9 @@ class Table(DataObject, _vtk.vtkTable):
             # use the first array in the row data
             arr = self.GetRowData().GetArrayName(0)
         if isinstance(arr, str):
-            arr = get_array(self, arr, preference=preference)
+            arr = get_array(self, arr, preference=preference)  # type: ignore[assignment]
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
