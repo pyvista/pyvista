@@ -224,6 +224,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*TransformLike'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
+    (r'py:.*', '.*CellsLike'),
     (r'py:.*', '.*ShapeLike'),
     (r'py:.*', '.*NumpyArray'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
@@ -299,7 +300,7 @@ nitpick_ignore_regex = [
     #
     # Misc. ignores
     # (r'py:.*', 'of'),
-    # (r'py:.*', 'optional'),
+    (r'py:.*', 'optional'),
     # (r'py:.*', 'or'),
     # (r'py:.*', 'various'),
 ]

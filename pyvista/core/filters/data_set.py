@@ -462,7 +462,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        normal : tuple(float) or str, default: 'x'
+        normal : tuple(float) | str, default: 'x'
             Length 3 tuple for the normal vector direction. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
@@ -494,7 +494,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.PolyData or tuple[pyvista.PolyData]
+        pyvista.PolyData | tuple[pyvista.PolyData]
             Clipped mesh when ``return_clipped=False``,
             otherwise a tuple containing the unclipped and clipped datasets.
 
@@ -6455,7 +6455,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        grid : vtk.UnstructuredGrid or list of vtk.UnstructuredGrids, optional
+        grid : vtk.vtkUnstructuredGrid | list[vtk.vtkUnstructuredGrid], optional
             Grids to merge to this grid.
 
         merge_points : bool, default: True
