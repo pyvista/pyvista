@@ -2581,6 +2581,15 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         """Points as a 4-D matrix, with x/y/z along the last dimension."""
         return self.points.reshape((*self.dimensions, 3), order='F')
 
+    @property
+    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Do not use.
+
+        VTK 9.4 is now returning the vtkStructuredCellArray but this
+        instance is not usable. For now, we just return an empty array.
+        """
+        return []
+
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = PointGrid._get_attrs(self)

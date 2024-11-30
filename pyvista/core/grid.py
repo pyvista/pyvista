@@ -107,6 +107,15 @@ class Grid(DataSet):
         dims = np.asarray(self.dimensions)
         return int(3 - (dims == 1).sum())
 
+    @property
+    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+        """Do not use.
+
+        VTK 9.4 is now returning the vtkStructuredCellArray but this
+        instance is not usable. For now, we just return an empty array.
+        """
+        return []
+
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
     """Dataset with variable spacing in the three coordinate directions.
@@ -843,15 +852,6 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         )
         self.SetSpacing(*spacing_)
         self.Modified()
-
-    @property
-    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
-        """Do not use.
-
-        VTK is now returning the vtkStructuredCellArray upstream but this
-        instance is not usable. For now, we just return an empty array.
-        """
-        return []
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
