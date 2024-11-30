@@ -4,9 +4,9 @@
 # noinspection PyUnresolvedReferences
 from __future__ import annotations
 
+import numpy as np
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkImagingColor import vtkImageHSVToRGB
-from vtkmodules.vtkImagingCore import vtkImageCast
 from vtkmodules.vtkImagingCore import vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageExtractComponents
 from vtkmodules.vtkImagingCore import vtkImageMagnify
@@ -27,14 +27,12 @@ colors = vtkNamedColors()
 
 # Read the CT data of the human head.
 reader = pv.get_reader(file_name)
-
-cast = vtkImageCast()
-cast.SetInputConnection(reader.GetOutputPort())
-cast.SetOutputScalarTypeToFloat()
+image_data = reader.read()
+image_data['MetaImage'] = image_data['MetaImage'].astype(np.float64)
 
 # Magnify the image.
 magnify = vtkImageMagnify()
-magnify.SetInputConnection(cast.GetOutputPort())
+magnify.SetInputConnection(cast.GetOutputPort())  # noqa: F821
 magnify.SetMagnificationFactors(2, 2, 1)
 magnify.InterpolateOn()
 
