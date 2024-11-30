@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from . import _vtk_core
 from ._typing_core import *
+from ._typing_core._dataset_types import ConcreteDataSetType
 from .cell import Cell
 from .cell import CellArray
 from .celltype import CellType

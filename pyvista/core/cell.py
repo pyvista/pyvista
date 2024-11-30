@@ -671,7 +671,7 @@ class CellArray(_vtk.vtkCellArray):
         return _vtk.vtk_to_numpy(cells)
 
     @cells.setter
-    def cells(self, cells: CellsLike):  # numpydoc ignore=GL08
+    def cells(self, cells: CellsLike):
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.ImportLegacyFormat(vtk_idarr)
@@ -731,8 +731,8 @@ class CellArray(_vtk.vtkCellArray):
         deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
-        vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))
-        vtk_connectivity = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(connectivity, deep=deep))
+        vtk_offsets = numpy_to_idarr(offsets, deep=deep)
+        vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
         self.SetData(vtk_offsets, vtk_connectivity)
 
         # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get

@@ -70,7 +70,7 @@ def wrap_image_array(arr):
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
     wrap_img = pyvista.wrap(img)
-    wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])  # type: ignore[union-attr]
+    wrap_img.point_data['PNGImage'] = arr[::-1].reshape(-1, arr.shape[2])
     return wrap_img
 
 
@@ -210,7 +210,7 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
     from pyvista import read
     from pyvista import wrap
 
-    def to_img(img):  # numpydoc ignore=GL08
+    def to_img(img):
         if isinstance(img, ImageData):  # pragma: no cover
             return img
         elif isinstance(img, _vtk.vtkImageData):

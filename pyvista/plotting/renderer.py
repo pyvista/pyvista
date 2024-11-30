@@ -241,7 +241,7 @@ class CameraPosition:
         return self._position
 
     @position.setter
-    def position(self, value) -> None:  # numpydoc ignore=GL08
+    def position(self, value) -> None:
         self._position = value
 
     @property
@@ -250,7 +250,7 @@ class CameraPosition:
         return self._focal_point
 
     @focal_point.setter
-    def focal_point(self, value) -> None:  # numpydoc ignore=GL08
+    def focal_point(self, value) -> None:
         self._focal_point = value
 
     @property
@@ -259,7 +259,7 @@ class CameraPosition:
         return self._viewup
 
     @viewup.setter
-    def viewup(self, value) -> None:  # numpydoc ignore=GL08
+    def viewup(self, value) -> None:
         self._viewup = value
 
 
@@ -328,7 +328,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.camera.is_set
 
     @camera_set.setter
-    def camera_set(self, is_set: bool) -> None:  # numpydoc ignore=GL08
+    def camera_set(self, is_set: bool) -> None:
         self.camera.is_set = is_set
 
     def set_color_cycler(self, color_cycler) -> None:
@@ -398,7 +398,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
 
     @camera_position.setter
-    def camera_position(self, camera_location):  # numpydoc ignore=GL08
+    def camera_position(self, camera_location):
         if camera_location is None:
             return
         elif isinstance(camera_location, str):
@@ -446,7 +446,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._camera
 
     @camera.setter
-    def camera(self, source: Camera) -> None:  # numpydoc ignore=GL08
+    def camera(self, source) -> None:
         self._camera = source
         self.SetActiveCamera(self._camera)
         self.camera_position = CameraPosition(
@@ -522,7 +522,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return Color(self.GetBackground())
 
     @background_color.setter
-    def background_color(self, color) -> None:  # numpydoc ignore=GL08
+    def background_color(self, color) -> None:
         self.set_background(color)
         self.Modified()
 
@@ -2572,7 +2572,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.camera.parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state) -> None:  # numpydoc ignore=GL08
+    def parallel_projection(self, state) -> None:
         self.camera.parallel_projection = state
         self.Modified()
 
@@ -2590,7 +2590,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.camera.parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value) -> None:  # numpydoc ignore=GL08
+    def parallel_scale(self, value) -> None:
         self.camera.parallel_scale = value
         self.Modified()
 
@@ -3567,7 +3567,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.GetLayer()
 
     @layer.setter
-    def layer(self, layer) -> None:  # numpydoc ignore=GL08
+    def layer(self, layer) -> None:
         self.SetLayer(layer)
 
     @property
@@ -3607,7 +3607,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.GetViewport()
 
     @viewport.setter
-    def viewport(self, viewport) -> None:  # numpydoc ignore=GL08
+    def viewport(self, viewport) -> None:
         self.SetViewport(viewport)
 
     @property
