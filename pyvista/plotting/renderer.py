@@ -448,7 +448,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     @camera.setter
     def camera(self, source) -> None:
         self._camera = source
-        self.SetActiveCamera(self._camera)
+        self.SetActiveCamera(self._camera)  # type: ignore[arg-type]
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),
