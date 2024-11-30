@@ -20,6 +20,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
+from typing import cast
 import uuid
 import warnings
 import weakref
@@ -29,6 +30,7 @@ import numpy as np
 import scooby
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -366,7 +368,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._suppress_rendering
 
     @suppress_rendering.setter
-    def suppress_rendering(self, value) -> None:  # numpydoc ignore=GL08
+    def suppress_rendering(self, value) -> None:
         self._suppress_rendering = bool(value)
 
     @property
@@ -413,7 +415,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._theme
 
     @theme.setter
-    def theme(self, theme) -> None:  # numpydoc ignore=GL08
+    def theme(self, theme) -> None:
         if not isinstance(theme, pyvista.plotting.themes.Theme):
             raise TypeError(
                 'Expected a pyvista theme like '
@@ -1433,7 +1435,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state: bool) -> None:  # numpydoc ignore=GL08
+    def parallel_projection(self, state: bool) -> None:
         self.renderer.parallel_projection = state
 
     @property
@@ -1442,7 +1444,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value: float) -> None:  # numpydoc ignore=GL08
+    def parallel_scale(self, value: float) -> None:
         self.renderer.parallel_scale = value
 
     @wraps(Renderer.add_axes_at_origin)
@@ -1642,7 +1644,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.camera
 
     @camera.setter
-    def camera(self, camera) -> None:  # numpydoc ignore=GL08
+    def camera(self, camera) -> None:
         self.renderer.camera = camera
 
     @property
@@ -1651,7 +1653,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.camera.is_set
 
     @camera_set.setter
-    def camera_set(self, is_set: bool) -> None:  # numpydoc ignore=GL08
+    def camera_set(self, is_set: bool) -> None:
         self.renderer.camera.is_set = is_set
 
     @property
@@ -1724,7 +1726,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.scale
 
     @scale.setter
-    def scale(self, scale) -> None:  # numpydoc ignore=GL08
+    def scale(self, scale) -> None:
         self.renderer.set_scale(*scale)
 
     @property
@@ -1771,7 +1773,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.camera_position
 
     @camera_position.setter
-    def camera_position(self, camera_location) -> None:  # numpydoc ignore=GL08
+    def camera_position(self, camera_location) -> None:
         self.renderer.camera_position = camera_location
 
     @property
@@ -1794,7 +1796,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderers.active_renderer.background_color
 
     @background_color.setter
-    def background_color(self, color) -> None:  # numpydoc ignore=GL08
+    def background_color(self, color) -> None:
         self.set_background(color)
 
     @property
@@ -1817,7 +1819,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return list(self.render_window.GetSize())  # type: ignore[union-attr]
 
     @window_size.setter
-    def window_size(self, window_size):  # numpydoc ignore=GL08
+    def window_size(self, window_size):
         self.render_window.SetSize(window_size[0], window_size[1])  # type: ignore[union-attr]
         self._window_size_unset = False
         self.render()
@@ -1964,7 +1966,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self._image_scale
 
     @image_scale.setter
-    def image_scale(self, value: int) -> None:  # numpydoc ignore=GL08
+    def image_scale(self, value: int) -> None:
         value = int(value)
         if value < 1:
             raise ValueError('Scale factor must be a positive integer.')
@@ -2135,7 +2137,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ]
 
     @pickable_actors.setter
-    def pickable_actors(self, actors=None) -> None:  # numpydoc ignore=GL08
+    def pickable_actors(self, actors=None) -> None:
         actors = [] if actors is None else actors
         if isinstance(actors, _vtk.vtkActor):
             actors = [actors]
@@ -3875,7 +3877,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def add_volume(
         self,
-        volume,
+        volume: pyvista.DataSet | pyvista.MultiBlock | NumpyArray[float],
         scalars=None,
         clim=None,
         resolution=None,
@@ -4227,14 +4229,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = wrap(volume)
+                volume = cast(pyvista.ImageData, wrap(cast(NumpyArray[float], volume)))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
                     raise ValueError('Invalid resolution dimensions.')
                 volume.spacing = resolution
             else:
-                volume = wrap(volume)
+                volume = wrap(volume)  # type: ignore[assignment]
                 if not is_pyvista_dataset(volume):
                     raise TypeError(
                         f'Object type ({type(volume)}) not supported for plotting in PyVista.',
@@ -4254,16 +4256,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
-            for idx in range(volume.GetNumberOfBlocks()):
-                if volume[idx] is None:
+            for idx, block in enumerate(volume):
+                if block is None:
                     continue
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
                 # Get the data object
-                block = wrap(volume.GetBlock(idx))
+                block = wrap(block)
                 if resolution is None:
                     try:
-                        block_resolution = block.GetSpacing()  # type: ignore[union-attr]
+                        block_resolution = block.GetSpacing()
                     except AttributeError:
                         block_resolution = resolution
                 else:
@@ -4328,6 +4330,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.',
             )
 
+        volume = cast(pyvista.DataSet, volume)
         if opacity_unit_distance is None and not isinstance(volume, pyvista.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
@@ -4450,7 +4453,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(annotations, dict):
                 self.mapper.lookup_table.annotations = annotations
 
-        self.mapper.dataset = volume
+        self.mapper.dataset = volume  # type: ignore[assignment]
         self.mapper.blend_mode = blending
         self.mapper.update()
 
@@ -7192,7 +7195,11 @@ class Plotter(BasePlotter):
             List of mesh objects such as pyvista.PolyData, pyvista.UnstructuredGrid, etc.
 
         """
-        return [actor.mapper.dataset for actor in self.actors.values() if hasattr(actor, 'mapper')]
+        return [
+            actor.mapper.dataset
+            for actor in self.actors.values()
+            if hasattr(actor, 'mapper') and hasattr(actor.mapper, 'dataset')
+        ]
 
 
 # Tracks created plotters.  This is the end of the module as we need to

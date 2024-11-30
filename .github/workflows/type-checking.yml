@@ -6,6 +6,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  MYPY_FORCE_COLOR: 1
+  TERM: xterm-color
+
 jobs:
   mypy:
     runs-on: ubuntu-latest
