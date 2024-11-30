@@ -13,7 +13,7 @@
       :toctree:
    {% for item in methods %}
       {% if not item in skipmethods %}
-        {% if name == 'Plotter' or item not in inherited_members %}
+        {% if name == 'Plotter' or name == 'ImageData' or item not in inherited_members %}
           {{ name }}.{{ item }}
         {% endif %}
       {% endif %}
