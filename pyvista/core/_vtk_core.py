@@ -233,6 +233,7 @@ from vtkmodules.vtkCommonDataModel import vtkSelectionNode
 from vtkmodules.vtkCommonDataModel import vtkStaticCellLocator
 from vtkmodules.vtkCommonDataModel import vtkStaticPointLocator
 from vtkmodules.vtkCommonDataModel import vtkStructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkStructuredPoints
 from vtkmodules.vtkCommonDataModel import vtkTable
 from vtkmodules.vtkCommonDataModel import vtkTetra
 from vtkmodules.vtkCommonDataModel import vtkTriangle
