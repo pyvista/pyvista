@@ -14,7 +14,6 @@ from vtkmodules.vtkImagingGeneral import vtkImageEuclideanToPolar
 from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageGradient
 from vtkmodules.vtkInteractionImage import vtkImageViewer
-from vtkmodules.vtkIOImage import vtkMetaImageReader
 from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor
 
 import pyvista as pv
@@ -27,9 +26,7 @@ file_name = examples.downloads.download_full_head(load=False)
 colors = vtkNamedColors()
 
 # Read the CT data of the human head.
-reader = vtkMetaImageReader()
-reader.SetFileName(file_name)
-reader.Update()
+reader = pv.get_reader(file_name)
 
 cast = vtkImageCast()
 cast.SetInputConnection(reader.GetOutputPort())
