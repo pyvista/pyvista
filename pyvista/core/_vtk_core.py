@@ -611,7 +611,6 @@ def override(vtk_class):
 class vtkPyVistaOverride:
     """Base class to automatically override VTK classes with PyVista classes."""
 
-    # TODO: `MutableSequence` base class is breaking the VTK override mechanism
     VTK_OVERRIDE_EXCLUSIONS = (
         'vtkMultiBlockDataSet',
         'vtkPartitionedDataSet',
@@ -624,10 +623,16 @@ class vtkPyVistaOverride:
                 if (
                     hasattr(base, '__module__')
                     and base.__module__.startswith('vtkmodules.')
-                    and base.__name__ not in vtkPyVistaOverride.VTK_OVERRIDE_EXCLUSIONS
                     and hasattr(base, 'override')
                 ):
-                    base.override(cls)
+                    if base.__name__ in vtkPyVistaOverride.VTK_OVERRIDE_EXCLUSIONS:
+                        # For now, just disable any upstream overrides on these classes
+                        # `MutableSequence` base class is breaking the VTK override mechanism
+                        # A fix is likely coming in VTK 9.4.1
+                        # See https://gitlab.kitware.com/vtk/vtk/-/merge_requests/11698
+                        base.override(None)
+                    else:
+                        base.override(cls)
                     break
 
         return cls
