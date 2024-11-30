@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import vtk
 
+import pyvista as pv
 from pyvista import examples
 
 filename = examples.download_gourds(load=False)
@@ -34,41 +35,11 @@ original_actor.GetMapper().SetInputConnection(reader.GetOutputPort())
 magnified_actor = vtk.vtkImageActor()
 magnified_actor.GetMapper().SetInputConnection(change_filter.GetOutputPort())
 
-# Define viewport ranges.
-# (xmin, ymin, xmax, ymax)
-original_viewport = [0.0, 0.0, 0.5, 1.0]
-magnified_viewport = [0.5, 0.0, 1.0, 1.0]
 
-# Setup renderers.
-colors = vtk.vtkNamedColors()
-
-original_renderer = vtk.vtkRenderer()
-original_renderer.SetViewport(original_viewport)
-original_renderer.AddActor(original_actor)
-original_renderer.ResetCamera()
-original_renderer.SetBackground(colors.GetColor3d('CornflowerBlue'))
-
-magnified_renderer = vtk.vtkRenderer()
-magnified_renderer.SetViewport(magnified_viewport)
-magnified_renderer.AddActor(magnified_actor)
-magnified_renderer.ResetCamera()
-magnified_renderer.SetBackground(colors.GetColor3d('SteelBlue'))
-
-# Setup render window.
-render_window = vtk.vtkRenderWindow()
-render_window.SetSize(600, 300)
-render_window.AddRenderer(original_renderer)
-render_window.AddRenderer(magnified_renderer)
-render_window.SetWindowName('ImageMagnify')
-
-# Setup render window interactor.
-render_window_interactor = vtk.vtkRenderWindowInteractor()
-style = vtk.vtkInteractorStyleImage()
-render_window_interactor.SetInteractorStyle(style)
-
-render_window_interactor.SetRenderWindow(render_window)
-
-# Start interaction.
-render_window.Render()
-render_window_interactor.Initialize()
-render_window_interactor.Start()
+plotter = pv.Plotter(shape=(1, 2))
+plotter.add_actor(original_actor)
+plotter.camera_position = 'xy'
+plotter.subplot(0, 1)
+plotter.add_actor(magnified_actor)
+plotter.camera_position = 'xy'
+plotter.show()
