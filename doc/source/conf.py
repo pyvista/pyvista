@@ -262,9 +262,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*WrapType'),
     #
     # PyVista plotting-related classes
-    (r'py:.*', '*BasePlotter'),
-    (r'py:.*', '*ScalarBars'),
-    (r'py:.*', '*Theme'),
+    (r'py:.*', '.*BasePlotter'),
+    (r'py:.*', '.*ScalarBars'),
+    (r'py:.*', '.*Theme'),
     #
     # Misc pyvista ignores
     (r'py:.*', 'principal_axes'),  # Valid ref, but is not linked correctly in some wrapped cases
