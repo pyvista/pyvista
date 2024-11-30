@@ -1004,7 +1004,7 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
 
     Returns
     -------
-    pyvista.Dataset
+    pyvista.DataSet
         The mesh read from the file.
 
     Raises

@@ -110,7 +110,7 @@ def validate_array(
         tuples of tuples, tuples of lists and ndarrays.
 
     must_have_shape : int | tuple[int, ...] | list[int, tuple[int, ...]], optional
-        :func:`Check <pyvista.core._validation.check.check_has_shape>`
+        :func:`Check <pyvista.core._validation.check.check_shape>`
         if the array has a specific shape. Specify a single shape
         or a ``list`` of any allowable shapes. If an integer, the array must
         be 1-dimensional with that length. Use a value of ``-1`` for any
@@ -125,15 +125,15 @@ def validate_array(
         sequence, the array must have at least one of the specified
         number of dimensions.
 
-    must_have_dtype : dtype_like | list[dtype_like, ...], optional
+    must_have_dtype : DTypeLike | list[DTypeLike, ...], optional
         :func:`Check <pyvista.core._validation.check.check_subdtype>`
         if the array's data-type has the given dtype. Specify a
         :class:`np.dtype` object or dtype-like base class which the
         array's data must be a subtype of. If a ``list``, the array's data
         must be a subtype of at least one of the specified dtypes.
 
-    must_have_length : int | array_like[int, ...], optional
-        :func:`Check <pyvista.core._validation.check.check_has_length>`
+    must_have_length : int | ArrayLike[int, ...], optional
+        :func:`Check <pyvista.core._validation.check.check_length>`
         if the array has the given length. If multiple values are given,
         the array's length must match one of the values.
 
@@ -146,11 +146,11 @@ def validate_array(
             consideration if applicable.
 
     must_have_min_length : int, optional
-        :func:`Check <pyvista.core._validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_length>`
         if the array's length is this value or greater.
 
     must_have_max_length : int, optional
-        :func:`Check <pyvista.core._validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_length>`
         if the array' length is this value or less.
 
     must_be_nonnegative : bool, default: False
@@ -224,7 +224,7 @@ def validate_array(
         read-only view with the specified shape. Broadcasting is done
         after reshaping (if ``reshape_to`` is not ``None``).
 
-    dtype_out : dtype_like, optional
+    dtype_out : DTypeLike, optional
         Set the data-type of the returned array. By default, the
         dtype is inferred from the input data.
 
