@@ -3,20 +3,26 @@
 from __future__ import annotations
 
 from math import pi
+from typing import TYPE_CHECKING
 import warnings
 
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .geometric_objects import translate
 from .helpers import wrap
-from .misc import check_valid_vector
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import PolyData
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import VectorLike
 
 
-def Spline(points, n_points=None):
+def Spline(points: VectorLike[float] | MatrixLike[float], n_points: int | None = None) -> PolyData:
     """Create a spline from points.
 
     Parameters
@@ -54,20 +60,27 @@ def Spline(points, n_points=None):
     ... )
 
     """
+    points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points, False))
+    spline_function.SetPoints(pyvista.vtk_points(points_, False))
 
     # get interpolation density
     u_res = n_points
     if u_res is None:
-        u_res = points.shape[0]
+        u_res = points_.shape[0]
 
     u_res -= 1
     spline = surface_from_para(spline_function, u_res)
     return spline.compute_arc_length()
 
 
-def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=None):
+def KochanekSpline(
+    points: VectorLike[float] | MatrixLike[float],
+    tension: VectorLike[float] | None = None,
+    bias: VectorLike[float] | None = None,
+    continuity: VectorLike[float] | None = None,
+    n_points: int | None = None,
+) -> PolyData:
     """Create a Kochanek spline from points.
 
     Parameters
@@ -113,44 +126,35 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     """
     if tension is None:
         tension = np.array([0.0, 0.0, 0.0])
-    check_valid_vector(tension, 'tension')
-    if not np.all(np.abs(tension) <= 1.0):
-        raise ValueError(
-            'The absolute value of all values of the tension array elements must be <= 1.0 ',
-        )
+    tension_ = _validation.validate_arrayN(tension, must_be_in_range=[-1.0, 1.0], name='tension')
 
     if bias is None:
         bias = np.array([0.0, 0.0, 0.0])
-    check_valid_vector(bias, 'bias')
-    if not np.all(np.abs(bias) <= 1.0):
-        raise ValueError(
-            'The absolute value of all values of the bias array elements must be <= 1.0 ',
-        )
+    bias_ = _validation.validate_arrayN(bias, must_be_in_range=[-1.0, 1.0], name='bias')
 
     if continuity is None:
         continuity = np.array([0.0, 0.0, 0.0])
-    check_valid_vector(continuity, 'continuity')
-    if not np.all(np.abs(continuity) <= 1.0):
-        raise ValueError(
-            'The absolute value of all values continuity array elements must be <= 1.0 ',
-        )
+    continuity_ = _validation.validate_arrayN(
+        continuity, must_be_in_range=[-1.0, 1.0], name='continuity'
+    )
 
+    points_ = _validation.validate_arrayNx3(points, name='points')
     spline_function = _vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points, False))
+    spline_function.SetPoints(pyvista.vtk_points(points_, False))
 
     # set Kochanek spline for each direction
     xspline = _vtk.vtkKochanekSpline()
     yspline = _vtk.vtkKochanekSpline()
     zspline = _vtk.vtkKochanekSpline()
-    xspline.SetDefaultBias(bias[0])
-    yspline.SetDefaultBias(bias[1])
-    zspline.SetDefaultBias(bias[2])
-    xspline.SetDefaultTension(tension[0])
-    yspline.SetDefaultTension(tension[1])
-    zspline.SetDefaultTension(tension[2])
-    xspline.SetDefaultContinuity(continuity[0])
-    yspline.SetDefaultContinuity(continuity[1])
-    zspline.SetDefaultContinuity(continuity[2])
+    xspline.SetDefaultBias(bias_[0])
+    yspline.SetDefaultBias(bias_[1])
+    zspline.SetDefaultBias(bias_[2])
+    xspline.SetDefaultTension(tension_[0])
+    yspline.SetDefaultTension(tension_[1])
+    zspline.SetDefaultTension(tension_[2])
+    xspline.SetDefaultContinuity(continuity_[0])
+    yspline.SetDefaultContinuity(continuity_[1])
+    zspline.SetDefaultContinuity(continuity_[2])
     spline_function.SetXSpline(xspline)
     spline_function.SetYSpline(yspline)
     spline_function.SetZSpline(zspline)
@@ -158,14 +162,19 @@ def KochanekSpline(points, tension=None, bias=None, continuity=None, n_points=No
     # get interpolation density
     u_res = n_points
     if u_res is None:
-        u_res = points.shape[0]
+        u_res = points_.shape[0]
 
     u_res -= 1
     spline = surface_from_para(spline_function, u_res)
     return spline.compute_arc_length()
 
 
-def ParametricBohemianDome(a=None, b=None, c=None, **kwargs):
+def ParametricBohemianDome(
+    a: float | None = None,
+    b: float | None = None,
+    c: float | None = None,
+    **kwargs,
+) -> PolyData:
     """Generate a Bohemian dome surface.
 
     Parameters
@@ -212,7 +221,7 @@ def ParametricBohemianDome(a=None, b=None, c=None, **kwargs):
     return surf
 
 
-def ParametricBour(**kwargs):
+def ParametricBour(**kwargs) -> PolyData:
     """Generate Bour's minimal surface.
 
     Parameters
@@ -245,7 +254,7 @@ def ParametricBour(**kwargs):
     return surf
 
 
-def ParametricBoy(zscale=None, **kwargs):
+def ParametricBoy(zscale: float | None = None, **kwargs) -> PolyData:
     """Generate Boy's surface.
 
     This is a model of the projective plane without singularities.  It
@@ -289,7 +298,7 @@ def ParametricBoy(zscale=None, **kwargs):
     return surf
 
 
-def ParametricCatalanMinimal(**kwargs):
+def ParametricCatalanMinimal(**kwargs) -> PolyData:
     """Generate Catalan's minimal surface.
 
     ParametricCatalanMinimal generates Catalan's minimal surface
@@ -326,7 +335,13 @@ def ParametricCatalanMinimal(**kwargs):
     return surf
 
 
-def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
+def ParametricConicSpiral(
+    a: float | None = None,
+    b: float | None = None,
+    c: float | None = None,
+    n: float | None = None,
+    **kwargs,
+) -> PolyData:
     """Generate conic spiral surfaces that resemble sea-shells.
 
     ParametricConicSpiral generates conic spiral surfaces. These can
@@ -389,7 +404,7 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
     return surf
 
 
-def ParametricCrossCap(**kwargs):
+def ParametricCrossCap(**kwargs) -> PolyData:
     """Generate a cross-cap.
 
     ParametricCrossCap generates a cross-cap which is a non-orientable
@@ -426,7 +441,7 @@ def ParametricCrossCap(**kwargs):
     return surf
 
 
-def ParametricDini(a=None, b=None, **kwargs):
+def ParametricDini(a: float | None = None, b: float | None = None, **kwargs) -> PolyData:
     """Generate Dini's surface.
 
     ParametricDini generates Dini's surface.  Dini's surface is a
@@ -475,7 +490,12 @@ def ParametricDini(a=None, b=None, **kwargs):
     return surf
 
 
-def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
+def ParametricEllipsoid(
+    xradius: float | None = None,
+    yradius: float | None = None,
+    zradius: float | None = None,
+    **kwargs,
+) -> PolyData:
     """Generate an ellipsoid.
 
     ParametricEllipsoid generates an ellipsoid.  If all the radii are
@@ -544,7 +564,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None, **kwargs):
     return surf
 
 
-def ParametricEnneper(**kwargs):
+def ParametricEnneper(**kwargs) -> PolyData:
     """Generate Enneper's surface.
 
     ParametricEnneper generates Enneper's surface.  Enneper's surface
@@ -581,7 +601,7 @@ def ParametricEnneper(**kwargs):
     return surf
 
 
-def ParametricFigure8Klein(radius=None, **kwargs):
+def ParametricFigure8Klein(radius: float | None = None, **kwargs) -> PolyData:
     """Generate a figure-8 Klein bottle.
 
     ParametricFigure8Klein generates a figure-8 Klein bottle.  A Klein
@@ -622,7 +642,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     return surf
 
 
-def ParametricHenneberg(**kwargs):
+def ParametricHenneberg(**kwargs) -> PolyData:
     """Generate Henneberg's minimal surface.
 
     Parameters
@@ -655,7 +675,7 @@ def ParametricHenneberg(**kwargs):
     return surf
 
 
-def ParametricKlein(**kwargs):
+def ParametricKlein(**kwargs) -> PolyData:
     """Generate a "classical" representation of a Klein bottle.
 
     ParametricKlein generates a "classical" representation of a Klein
@@ -692,7 +712,7 @@ def ParametricKlein(**kwargs):
     return surf
 
 
-def ParametricKuen(deltav0=None, **kwargs):
+def ParametricKuen(deltav0: float | None = None, **kwargs) -> PolyData:
     """Generate Kuens' surface.
 
     ParametricKuen generates Kuens' surface. This surface has a constant
@@ -736,7 +756,7 @@ def ParametricKuen(deltav0=None, **kwargs):
     return surf
 
 
-def ParametricMobius(radius=None, **kwargs):
+def ParametricMobius(radius: float | None = None, **kwargs) -> PolyData:
     """Generate a Mobius strip.
 
     Parameters
@@ -772,7 +792,7 @@ def ParametricMobius(radius=None, **kwargs):
     return surf
 
 
-def ParametricPluckerConoid(n=None, **kwargs):
+def ParametricPluckerConoid(n: int | None = None, **kwargs) -> PolyData:
     """Generate Plucker's conoid surface.
 
     ParametricPluckerConoid generates Plucker's conoid surface
@@ -815,7 +835,7 @@ def ParametricPluckerConoid(n=None, **kwargs):
     return surf
 
 
-def ParametricPseudosphere(**kwargs):
+def ParametricPseudosphere(**kwargs) -> PolyData:
     """Generate a pseudosphere.
 
     ParametricPseudosphere generates a parametric pseudosphere. The
@@ -853,24 +873,24 @@ def ParametricPseudosphere(**kwargs):
 
 
 def ParametricRandomHills(
-    numberofhills=None,
-    hillxvariance=None,
-    hillyvariance=None,
-    hillamplitude=None,
-    randomseed=None,
-    xvariancescalefactor=None,
-    yvariancescalefactor=None,
-    amplitudescalefactor=None,
-    number_of_hills=None,
-    hill_x_variance=None,
-    hill_y_variance=None,
-    hill_amplitude=None,
-    random_seed=None,
-    x_variance_scale_factor=None,
-    y_variance_scale_factor=None,
-    amplitude_scale_factor=None,
+    numberofhills: int | None = None,
+    hillxvariance: float | None = None,
+    hillyvariance: float | None = None,
+    hillamplitude: float | None = None,
+    randomseed: int | None = None,
+    xvariancescalefactor: float | None = None,
+    yvariancescalefactor: float | None = None,
+    amplitudescalefactor: float | None = None,
+    number_of_hills: int | None = None,
+    hill_x_variance: float | None = None,
+    hill_y_variance: float | None = None,
+    hill_amplitude: float | None = None,
+    random_seed: int | None = None,
+    x_variance_scale_factor: float | None = None,
+    y_variance_scale_factor: float | None = None,
+    amplitude_scale_factor: float | None = None,
     **kwargs,
-):
+) -> PolyData:
     """Generate a surface covered with randomly placed hills.
 
     ParametricRandomHills generates a surface covered with randomly
@@ -1065,7 +1085,7 @@ def ParametricRandomHills(
     return surf
 
 
-def ParametricRoman(radius=None, **kwargs):
+def ParametricRoman(radius: float | None = None, **kwargs) -> PolyData:
     """Generate Steiner's Roman Surface.
 
     Parameters
@@ -1103,7 +1123,14 @@ def ParametricRoman(radius=None, **kwargs):
     return surf
 
 
-def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None, n1=None, n2=None, **kwargs):
+def ParametricSuperEllipsoid(
+    xradius: float | None = None,
+    yradius: float | None = None,
+    zradius: float | None = None,
+    n1: float | None = None,
+    n2: float | None = None,
+    **kwargs,
+) -> PolyData:
     """Generate a superellipsoid.
 
     ParametricSuperEllipsoid generates a superellipsoid.  A superellipsoid
@@ -1184,15 +1211,15 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None, n1=None, 
 
 
 def ParametricSuperToroid(
-    ringradius=None,
-    crosssectionradius=None,
-    xradius=None,
-    yradius=None,
-    zradius=None,
-    n1=None,
-    n2=None,
+    ringradius: float | None = None,
+    crosssectionradius: float | None = None,
+    xradius: float | None = None,
+    yradius: float | None = None,
+    zradius: float | None = None,
+    n1: float | None = None,
+    n2: float | None = None,
     **kwargs,
-):
+) -> PolyData:
     """Generate a supertoroid.
 
     ParametricSuperToroid generates a supertoroid.  Essentially a
@@ -1282,7 +1309,9 @@ def ParametricSuperToroid(
     return surf
 
 
-def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
+def ParametricTorus(
+    ringradius: float | None = None, crosssectionradius: float | None = None, **kwargs
+) -> PolyData:
     """Generate a torus.
 
     Parameters
@@ -1327,11 +1356,11 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
 
 
 def parametric_keywords(
-    parametric_function,
-    min_u=0,
-    max_u=2 * pi,
-    min_v=0.0,
-    max_v=2 * pi,
+    parametric_function: _vtk.vtkParametricFunction,
+    min_u: float = 0.0,
+    max_u: float = 2 * pi,
+    min_v: float = 0.0,
+    max_v: float = 2 * pi,
     join_u: bool = False,
     join_v: bool = False,
     twist_u: bool = False,
@@ -1390,13 +1419,13 @@ def parametric_keywords(
 
 
 def surface_from_para(
-    parametric_function,
-    u_res=100,
-    v_res=100,
-    w_res=100,
+    parametric_function: _vtk.vtkParametricFunction,
+    u_res: int = 100,
+    v_res: int = 100,
+    w_res: int = 100,
     clean: bool = False,
     texture_coordinates: bool = False,
-):
+) -> PolyData:
     """Construct a mesh from a parametric function.
 
     Parameters
@@ -1438,7 +1467,7 @@ def surface_from_para(
     para_source.Update()
     surf = wrap(para_source.GetOutput())
     if clean:
-        surf = surf.clean(  # type: ignore[union-attr]
+        surf = surf.clean(
             tolerance=1e-7,  # determined experimentally
             absolute=False,
             lines_to_points=False,

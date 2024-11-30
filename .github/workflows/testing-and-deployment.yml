@@ -18,6 +18,7 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
+  PYTEST_ADDOPTS: "--color=yes"
 
 jobs:
   macOS:

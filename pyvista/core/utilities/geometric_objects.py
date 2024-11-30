@@ -131,7 +131,7 @@ def Capsule(
             theta_resolution=resolution,
             phi_resolution=resolution,
         )
-    output = cast(pyvista.PolyData, wrap(algo.output))
+    output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
     translate(output, center, direction)
     return output
@@ -209,7 +209,7 @@ def Cylinder(
         capping=capping,
         resolution=resolution,
     )
-    output = cast(pyvista.PolyData, wrap(algo.output))
+    output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
     translate(output, center, direction)
     return output
@@ -1145,6 +1145,7 @@ def Tube(
     resolution: int = 1,
     radius: float = 1.0,
     n_sides: int = 15,
+    capping: bool = False,
 ) -> PolyData:
     """Create a tube.
 
@@ -1165,6 +1166,11 @@ def Tube(
     n_sides : int, default: 15
         Number of sides for the tube.
 
+    capping : bool, default: False
+        Turn on/off whether to cap the ends with polygons.
+
+            .. versionadded:: 0.45
+
     Returns
     -------
     pyvista.PolyData
@@ -1180,7 +1186,7 @@ def Tube(
 
     """
     line_src = LineSource(pointa, pointb, resolution)
-    return line_src.output.tube(radius=radius, n_sides=n_sides, capping=False)
+    return line_src.output.tube(radius=radius, n_sides=n_sides, capping=capping)
 
 
 def Cube(
@@ -1881,7 +1887,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     ug.SetPoints(pyvista.vtk_points(np.array(points), False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
-    return cast(pyvista.UnstructuredGrid, wrap(ug))
+    return wrap(ug)
 
 
 def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -1919,7 +1925,7 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -1992,7 +1998,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2027,7 +2033,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
@@ -2065,7 +2071,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Ellipse(
@@ -2107,7 +2113,7 @@ def Ellipse(
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Superquadric(
