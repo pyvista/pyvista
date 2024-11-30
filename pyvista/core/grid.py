@@ -114,7 +114,7 @@ class Grid(DataSet):
         VTK 9.4 is now returning the vtkStructuredCellArray but this
         instance is not usable. For now, we just return an empty array.
         """
-        return []
+        return np.array([], dtype=int)
 
 
 class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
