@@ -2308,8 +2308,8 @@ class ImageDataFilters(DataSetFilters):
            Magnified image.
 
         """
-        _validation.validate_array(factor, shape=3, must_be_integer=True, name='factor')
-        _validation.check_instance(progress_bar, bool, 'progress_bar')
+        _validation.validate_array(factor, must_have_shape=3, must_be_integer=True, name='factor')
+        _validation.check_instance(progress_bar, bool)
         alg = _vtk.vtkImageMagnify()
         alg.SetInputDataObject(self)
         alg.SetMagnificationFactors(factor)

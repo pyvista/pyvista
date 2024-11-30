@@ -385,6 +385,7 @@ from vtkmodules.vtkImagingCore import vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageDifference
 from vtkmodules.vtkImagingCore import vtkImageExtractComponents
 from vtkmodules.vtkImagingCore import vtkImageFlip
+from vtkmodules.vtkImagingCore import vtkImageMagnify
 from vtkmodules.vtkImagingCore import vtkImageMirrorPad
 from vtkmodules.vtkImagingCore import vtkImageThreshold
 from vtkmodules.vtkImagingCore import vtkImageWrapPad
