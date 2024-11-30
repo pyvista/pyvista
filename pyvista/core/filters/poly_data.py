@@ -1678,9 +1678,9 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
-        point_normals
+        pyvista.PolyData.point_normals
             Returns the array of point normals.
-        cell_normals
+        pyvista.PolyData.cell_normals
             Returns the array of cell normals.
 
         Examples
@@ -2451,7 +2451,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        show_mesh : bool, default: true
+        show_mesh : bool, default: True
             Plot the mesh itself.
 
         mag : float, default: 1.0

@@ -110,7 +110,7 @@ def validate_array(
         tuples of tuples, tuples of lists and ndarrays.
 
     must_have_shape : int | tuple[int, ...] | list[int, tuple[int, ...]], optional
-        :func:`Check <pyvista.core.validation.check.check_has_shape>`
+        :func:`Check <pyvista.core._validation.check.check_has_shape>`
         if the array has a specific shape. Specify a single shape
         or a ``list`` of any allowable shapes. If an integer, the array must
         be 1-dimensional with that length. Use a value of ``-1`` for any
@@ -126,14 +126,14 @@ def validate_array(
         number of dimensions.
 
     must_have_dtype : dtype_like | list[dtype_like, ...], optional
-        :func:`Check <pyvista.core.validation.check.check_subdtype>`
+        :func:`Check <pyvista.core._validation.check.check_subdtype>`
         if the array's data-type has the given dtype. Specify a
         :class:`np.dtype` object or dtype-like base class which the
         array's data must be a subtype of. If a ``list``, the array's data
         must be a subtype of at least one of the specified dtypes.
 
     must_have_length : int | array_like[int, ...], optional
-        :func:`Check <pyvista.core.validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_has_length>`
         if the array has the given length. If multiple values are given,
         the array's length must match one of the values.
 
@@ -146,34 +146,34 @@ def validate_array(
             consideration if applicable.
 
     must_have_min_length : int, optional
-        :func:`Check <pyvista.core.validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_has_length>`
         if the array's length is this value or greater.
 
     must_have_max_length : int, optional
-        :func:`Check <pyvista.core.validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_has_length>`
         if the array' length is this value or less.
 
     must_be_nonnegative : bool, default: False
-        :func:`Check <pyvista.core.validation.check.check_nonnegative>`
+        :func:`Check <pyvista.core._validation.check.check_nonnegative>`
         if all elements of the array are nonnegative.
 
     must_be_finite : bool, default: False
-        :func:`Check <pyvista.core.validation.check.check_finite>`
+        :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
         and not Not a Number (``NaN``).
 
     must_be_real : bool, default: True
-        :func:`Check <pyvista.core.validation.check.check_real>`
+        :func:`Check <pyvista.core._validation.check.check_real>`
         if the array has real numbers, i.e. its data type is integer or
         floating.
 
     must_be_integer : bool, default: False
-        :func:`Check <pyvista.core.validation.check.check_integer>`
+        :func:`Check <pyvista.core._validation.check.check_integer>`
         if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
 
     must_be_sorted : bool | dict, default: False
-        :func:`Check <pyvista.core.validation.check.check_sorted>`
+        :func:`Check <pyvista.core._validation.check.check_sorted>`
         if the array's values are sorted. If ``True``, the check is
         performed with default parameters:
 
@@ -186,7 +186,7 @@ def validate_array(
         will be passed to ``check_sorted``.
 
     must_be_in_range : array_like[float, float], optional
-        :func:`Check <pyvista.core.validation.check.check_range>`
+        :func:`Check <pyvista.core._validation.check.check_range>`
         if the array's values are all within a specific range. Range
         must be array-like with two elements specifying the minimum and
         maximum data values allowed, respectively. By default, the range
@@ -499,7 +499,7 @@ def validate_transform4x4(transform, /, *, must_be_finite: bool = True, name='Tr
         or as a vtkTransform.
 
     must_be_finite : bool, default: True
-        :func:`Check <pyvista.core.validation.check.check_finite>`
+        :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
         and not Not a Number (``NaN``).
 
@@ -569,7 +569,7 @@ def validate_transform3x3(transform, /, *, must_be_finite: bool = True, name='Tr
            Therefore, any 3x3 transformation is acceptable.
 
     must_be_finite : bool, default: True
-        :func:`Check <pyvista.core.validation.check.check_finite>`
+        :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
         and not Not a Number (``NaN``).
 

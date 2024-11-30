@@ -98,8 +98,8 @@ def KochanekSpline(
     continuity : sequence[float], default: [0.0, 0.0, 0.0]
         Changes the sharpness in change between tangents.
 
-    n_points : int, default: points.shape[0]
-        Number of points on the spline.
+    n_points : int, optional
+        Number of points on the spline. Defaults to ``points.shape[0]``.
 
     Returns
     -------

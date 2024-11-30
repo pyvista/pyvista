@@ -1092,7 +1092,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         zlabel : str, default: "Z"
             Text used for the z-axis.
 
-        labels_off : bool, default: false
+        labels_off : bool, default: False
             Enable or disable the text labels for the axes.
 
         box : bool, optional
@@ -2036,7 +2036,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         See Also
         --------
-        pyvista.DataSetFilter.bounding_box
+        pyvista.DataSetFilters.bounding_box
             Create a bounding box or oriented bounding box for a dataset.
 
         Examples
@@ -2160,7 +2160,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         offset : float, default: 0.0
             Percentage offset along plane normal.
 
-        pickable : bool, default: false
+        pickable : bool, default: False
             Make this floor actor pickable in the renderer.
 
         store_floor_kwargs : bool, default: True
