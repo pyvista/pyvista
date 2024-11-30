@@ -2572,7 +2572,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         VTK 9.4 is now returning the vtkStructuredCellArray but this
         instance is not usable. For now, we just return an empty array.
         """
-        return []
+        return np.array([], dtype=int)
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
