@@ -23,6 +23,7 @@ from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -312,7 +313,7 @@ def get_array(
     name: str,
     preference: PointLiteral | CellLiteral | FieldLiteral | RowLiteral = 'cell',
     err: bool = False,
-) -> pyvista.ndarray | None:
+) -> pyvista_ndarray | None:
     """Search point, cell and field data for an array.
 
     Parameters

@@ -898,7 +898,7 @@ class DataSet(DataSetFilters, DataObject):
             name = arr_var
             arr = get_array(self, name, preference=preference, err=True)
         else:
-            arr = arr_var
+            arr = arr_var  # type: ignore[assignment]
 
         # If array has no tuples return a NaN range
         if arr is None:
@@ -1813,7 +1813,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Vector | Matrix
+        point : VectorLike[float] | MatrixLike[float]
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -1943,7 +1943,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : Vector, Matrix
+        point : VectorLike[float] | MatrixLike[float],
             Coordinates of point to query (length 3) or a
             :class:`numpy.ndarray` of ``n`` points with shape ``(n, 3)``.
 
@@ -2013,10 +2013,10 @@ class DataSet(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        pointa : Vector
+        pointa : VectorLike
             Length 3 coordinate of the start of the line.
 
-        pointb : Vector
+        pointb : VectorLike
             Length 3 coordinate of the end of the line.
 
         tolerance : float, default: 0.0
@@ -2697,7 +2697,7 @@ class DataSet(DataSetFilters, DataObject):
 
         Returns
         -------
-        listint]
+        list[int]
             List of cell IDs using the ind-th point.
 
         Examples
