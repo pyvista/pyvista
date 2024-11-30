@@ -590,31 +590,8 @@ def VTKVersionInfo():
 vtk_version_info = VTKVersionInfo()
 
 
-def override(vtk_class):
-    """Override a VTK class with a PyVista class.
-
-    Returns
-    -------
-    callable
-        Decorator to override the VTK class with a PyVista class.
-
-    """
-
-    def decorator(cls):
-        if vtk_version_info >= (9, 4):
-            vtk_class.override(cls)
-        return cls
-
-    return decorator
-
-
 class vtkPyVistaOverride:
     """Base class to automatically override VTK classes with PyVista classes."""
-
-    VTK_OVERRIDE_EXCLUSIONS = (
-        'vtkMultiBlockDataSet',
-        'vtkPartitionedDataSet',
-    )
 
     def __init_subclass__(cls, **kwargs):
         if vtk_version_info >= (9, 4):
@@ -625,14 +602,13 @@ class vtkPyVistaOverride:
                     and base.__module__.startswith('vtkmodules.')
                     and hasattr(base, 'override')
                 ):
-                    if base.__name__ in vtkPyVistaOverride.VTK_OVERRIDE_EXCLUSIONS:
-                        # For now, just disable any upstream overrides on these classes
-                        # `MutableSequence` base class is breaking the VTK override mechanism
-                        # A fix is likely coming in VTK 9.4.1
-                        # See https://gitlab.kitware.com/vtk/vtk/-/merge_requests/11698
-                        base.override(None)
-                    else:
-                        base.override(cls)
+                    # For now, just remove any overrides for these classes
+                    # There are clear issues with the current implementation
+                    # of overriding these classes upstream and until they are
+                    # resolved, we will entirely remove the overrides.
+                    # See https://gitlab.kitware.com/vtk/vtk/-/merge_requests/11698
+                    # See https://gitlab.kitware.com/vtk/vtk/-/issues/19550#note_1598883
+                    base.override(None)
                     break
 
         return cls
