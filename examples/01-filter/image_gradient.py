@@ -17,6 +17,7 @@ from vtkmodules.vtkInteractionImage import vtkImageViewer
 from vtkmodules.vtkIOImage import vtkMetaImageReader
 from vtkmodules.vtkRenderingCore import vtkRenderWindowInteractor
 
+import pyvista as pv
 from pyvista import examples
 
 # noinspection PyUnresolvedReferences
@@ -98,5 +99,8 @@ iren = vtkRenderWindowInteractor()
 viewer.SetupInteractor(iren)
 viewer.Render()
 
-iren.Initialize()
-iren.Start()
+plotter = pv.Plotter()
+plotter.iren = iren
+plotter = pv.Plotter()
+plotter.iren = iren
+plotter.show()
