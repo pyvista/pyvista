@@ -2451,7 +2451,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        show_mesh : bool, default: true
+        show_mesh : bool, default: True
             Plot the mesh itself.
 
         mag : float, default: 1.0
