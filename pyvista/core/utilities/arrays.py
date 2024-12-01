@@ -21,15 +21,14 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
+from pyvista.core.pyvista_ndarray import pyvista_ndarray
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista import pyvista_ndarray
+    from pyvista import DataSet
+    from pyvista import Table
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core.dataset import DataSet
-    from pyvista.core.objects import Table
-    from pyvista.core.pyvista_ndarray import pyvista_ndarray
 
 
 class FieldAssociation(enum.Enum):
@@ -488,7 +487,7 @@ def _assoc_array(
     return None
 
 
-def point_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> npt.NDArray[Any] | None:
+def point_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | None:
     """Return point array of a pyvista or vtk object.
 
     Parameters
@@ -508,7 +507,7 @@ def point_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> npt.NDArray[Any] |
     return _assoc_array(obj, name, 'point')
 
 
-def field_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> npt.NDArray[Any] | None:
+def field_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | None:
     """Return field data of a pyvista or vtk object.
 
     Parameters
@@ -528,7 +527,7 @@ def field_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> npt.NDArray[Any] |
     return _assoc_array(obj, name, 'field')
 
 
-def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> npt.NDArray[Any] | None:
+def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> pyvista_ndarray | None:
     """Return cell array of a pyvista or vtk object.
 
     Parameters
@@ -548,7 +547,7 @@ def cell_array(obj: DataSet | _vtk.vtkDataSet, name: str) -> npt.NDArray[Any] | 
     return _assoc_array(obj, name, 'cell')
 
 
-def row_array(obj: _vtk.vtkTable, name: str) -> npt.NDArray[Any] | None:
+def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
     """Return row array of a vtk object.
 
     Parameters
@@ -567,7 +566,7 @@ def row_array(obj: _vtk.vtkTable, name: str) -> npt.NDArray[Any] | None:
     """
     vtkarr = obj.GetRowData().GetAbstractArray(name)
     if vtkarr is not None:
-        return convert_array(vtkarr)
+        return pyvista_ndarray(convert_array(vtkarr))
     else:
         return None
 
