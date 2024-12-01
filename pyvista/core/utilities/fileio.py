@@ -126,7 +126,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
     Parameters
     ----------
-    vtk_writer : vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+    vtk_writer : vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
         The vtk writer instance to be configured.
     use_binary : bool, default: True
         If ``True``, the writer is set to write files in binary format. If
@@ -134,7 +134,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
     Returns
     -------
-    vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+    vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
         The configured vtk writer instance.
 
     """
