@@ -21,11 +21,11 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
-from pyvista.core.pyvista_ndarray import pyvista_ndarray
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
     from pyvista import Table
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -566,7 +566,7 @@ def row_array(obj: _vtk.vtkTable, name: str) -> pyvista_ndarray | None:
     """
     vtkarr = obj.GetRowData().GetAbstractArray(name)
     if vtkarr is not None:
-        return pyvista_ndarray(convert_array(vtkarr))
+        return pyvista.pyvista_ndarray(convert_array(vtkarr))
     else:
         return None
 
