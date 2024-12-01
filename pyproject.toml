@@ -50,7 +50,7 @@ jupyter = [
 ]
 
 pinned = [ # Pinned versions of core dependencies
-  'matplotlib<3.9.3',
+  'matplotlib<3.9.4',
   'numpy<2.2.0',
   'pillow<11.1.0',
   'pooch<1.9.0',
@@ -70,7 +70,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.119.5',
+  'hypothesis<6.122.1',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
   'ipython<9.0.0',
@@ -112,7 +112,7 @@ docs = [
   'mypy-extensions==1.0.0',
   'mypy==1.13.0',
   'numpydoc==1.8.0',
-  'osmnx==1.9.4',
+  'osmnx==2.0.0',
   'pypandoc==1.14',
   'pytest-sphinx==0.6.3',
   'pyvista[pinned]',
@@ -134,7 +134,7 @@ docs = [
   'trame-vtk==2.8.12',
   'trame-vuetify==2.7.2',
   'trame==3.7.0',
-  'trimesh==4.5.2',
+  'trimesh==4.5.3',
 ]
 
 dev = ['pre-commit', 'pyvista[test,typing]']
