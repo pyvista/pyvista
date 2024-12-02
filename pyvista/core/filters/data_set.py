@@ -5928,7 +5928,7 @@ class DataSetFilters:
                 set_default_active_scalars(self)  # type: ignore[arg-type]
                 _, scalars_ = self.active_scalars_info  # type: ignore[attr-defined]
             array_ = get_array(self, scalars_, preference=preference_, err=True)  # type: ignore[arg-type]
-            association_ = get_array_association(self, scalars_, preference=preference_)# type: ignore[arg-type]
+            association_ = get_array_association(self, scalars_, preference=preference_)  # type: ignore[arg-type]
             return array_, association_
 
         def _validate_component_mode(array_, component_mode_):
