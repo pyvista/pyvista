@@ -197,7 +197,7 @@ class _PointSet(DataSet):
 
         Parameters
         ----------
-        xyz : Vector
+        xyz : VectorLike[float]
             A vector of three floats of cartesian values to translate the mesh with.
 
         transform_all_input_vectors : bool, default: False
@@ -249,7 +249,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
     Parameters
     ----------
-    var_inp : vtk.vtkPointSet, Matrix, optional
+    var_inp : vtk.vtkPointSet, MatrixLike[float], optional
         Flexible input type.  Can be a ``vtk.vtkPointSet``, in which case
         this PointSet object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
@@ -534,7 +534,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ``None``, then the ``PolyData`` object will be created with
         vertex cells with ``n_verts`` equal to the number of ``points``.
 
-    faces : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+    faces : sequence[int], vtk.vtkCellArray, pyvista.CellArray, optional
         Polygonal faces of the mesh. Can be either a padded connectivity
         array or an explicit cell array object.
 
@@ -551,7 +551,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_faces : int, optional
         Deprecated. Not used.
 
-    lines : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+    lines : sequence[int], vtk.vtkCellArray, pyvista.CellArray, optional
         Line connectivity. Like ``faces``, this can be either a padded
         connectivity array or an explicit cell array object. The padded
         array format requires padding indicating the number of points in
@@ -562,7 +562,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_lines : int, optional
         Deprecated. Not used.
 
-    strips : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+    strips : sequence[int], vtk.vtkCellArray, pyvista.CellArray, optional
         Triangle strips connectivity.  Triangle strips require an
         initial triangle, and the following points of the strip. Each
         triangle is built with the new point and the two previous
@@ -596,7 +596,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
-    verts : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+    verts : sequence[int], vtk.vtkCellArray, pvyvista.CellArray, optional
         The verts connectivity.  Like ``faces``, ``lines``, and
         ``strips`` this can be supplied as either a padded array or an
         explicit cell array object. In the padded array format,
@@ -1146,7 +1146,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         Parameters
         ----------
-        points : Matrix
+        points : MatrixLike[float]
             A (n_points, 3) array of points.
 
         faces : Sequence[VectorLike[int]]
@@ -3287,7 +3287,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        int, numpy.ndarray, or None
+        int | numpy.ndarray | None
             Cell IDs. ``None`` if ``coords`` is outside the grid extent.
 
         See Also
@@ -3336,7 +3336,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        numpy.ndarray, or None
+        numpy.ndarray | None
             Cell structured coordinates. ``None`` if ``ind`` is
             outside the grid extent.
 

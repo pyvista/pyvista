@@ -413,10 +413,10 @@ class BaseReader:
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
             raise RuntimeError('File reader failed to read and/or produced no output.')
-        data._post_file_load_processing()  # type: ignore[union-attr]
+        data._post_file_load_processing()
 
         # check for any pyvista metadata
-        data._restore_metadata()  # type: ignore[union-attr]
+        data._restore_metadata()
         return data
 
     def _update_information(self) -> None:
@@ -2637,10 +2637,10 @@ class GaussianCubeReader(BaseReader):
         )
         if data is None:  # pragma: no cover
             raise RuntimeError('File reader failed to read and/or produced no output.')
-        data._post_file_load_processing()  # type: ignore[union-attr]
+        data._post_file_load_processing()
 
         # check for any pyvista metadata
-        data._restore_metadata()  # type: ignore[union-attr]
+        data._restore_metadata()
         return data
 
     @property
