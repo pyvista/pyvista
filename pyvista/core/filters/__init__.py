@@ -80,13 +80,13 @@ from .structured_grid import StructuredGridFilters
 from .unstructured_grid import UnstructuredGridFilters
 
 __all__ = [
-    '_update_alg',
-    '_get_output',
     'CompositeFilters',
     'DataSetFilters',
+    'ImageDataFilters',
     'PolyDataFilters',
     'RectilinearGridFilters',
     'StructuredGridFilters',
-    'ImageDataFilters',
     'UnstructuredGridFilters',
+    '_get_output',
+    '_update_alg',
 ]

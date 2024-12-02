@@ -42,7 +42,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 import warnings
 
-import pyvista  # noqa: TCH001
+import pyvista  # noqa: TC001
 from pyvista.core.utilities.misc import _check_range
 
 from .colors import Color
@@ -203,10 +203,8 @@ class _ThemeConfig(metaclass=_ForceSlots):
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if (
-                isinstance(attr, (tuple, list))
-                and tuple(attr) != tuple(other_attr)
-                or not attr == other_attr
-            ):
+                isinstance(attr, (tuple, list)) and tuple(attr) != tuple(other_attr)
+            ) or not attr == other_attr:
                 return False
 
         return True
@@ -250,14 +248,14 @@ class _LightingConfig(_ThemeConfig):
     """
 
     __slots__ = [
+        '_ambient',
+        '_diffuse',
+        '_emissive',
         '_interpolation',
         '_metallic',
         '_roughness',
-        '_ambient',
-        '_diffuse',
         '_specular',
         '_specular_power',
-        '_emissive',
     ]
 
     def __init__(self):
@@ -487,7 +485,7 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_number_of_peels', '_occlusion_ratio', '_enabled']
+    __slots__ = ['_enabled', '_number_of_peels', '_occlusion_ratio']
 
     def __init__(self):
         self._number_of_peels = 4
@@ -570,7 +568,7 @@ class _SilhouetteConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate', '_enabled']
+    __slots__ = ['_color', '_decimate', '_enabled', '_feature_angle', '_line_width', '_opacity']
 
     def __init__(self):
         self._color = Color('black')
@@ -703,7 +701,7 @@ class _ColorbarConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_width', '_height', '_position_x', '_position_y']
+    __slots__ = ['_height', '_position_x', '_position_y', '_width']
 
     def __init__(self):
         self._width = None
@@ -827,7 +825,7 @@ class _AxesConfig(_ThemeConfig):
 
     """
 
-    __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
+    __slots__ = ['_box', '_show', '_x_color', '_y_color', '_z_color']
 
     def __init__(self):
         self._x_color = Color('tomato')
@@ -991,7 +989,7 @@ class _Font(_ThemeConfig):
 
     """
 
-    __slots__ = ['_family', '_size', '_title_size', '_label_size', '_color', '_fmt']
+    __slots__ = ['_color', '_family', '_fmt', '_label_size', '_size', '_title_size']
 
     def __init__(self):
         self._family = 'arial'
@@ -1139,15 +1137,15 @@ class _SliderStyleConfig(_ThemeConfig):
     """PyVista configuration for a single slider style."""
 
     __slots__ = [
+        '_cap_length',
+        '_cap_opacity',
+        '_cap_width',
         '_name',
+        '_slider_color',
         '_slider_length',
         '_slider_width',
-        '_slider_color',
-        '_tube_width',
         '_tube_color',
-        '_cap_opacity',
-        '_cap_length',
-        '_cap_width',
+        '_tube_width',
     ]
 
     def __init__(self):
@@ -1427,15 +1425,15 @@ class _TrameConfig(_ThemeConfig):
     """
 
     __slots__ = [
+        '_default_mode',
         '_interactive_ratio',
-        '_still_ratio',
+        '_jupyter_extension_available',
+        '_jupyter_extension_enabled',
         '_jupyter_server_name',
         '_jupyter_server_port',
         '_server_proxy_enabled',
         '_server_proxy_prefix',
-        '_default_mode',
-        '_jupyter_extension_available',
-        '_jupyter_extension_enabled',
+        '_still_ratio',
     ]
 
     def __init__(self):
@@ -1608,10 +1606,10 @@ class _CameraConfig(_ThemeConfig):
     """
 
     __slots__ = [
-        '_position',
-        '_viewup',
         '_parallel_projection',
         '_parallel_scale',
+        '_position',
+        '_viewup',
     ]
 
     def __init__(self):
@@ -1718,62 +1716,62 @@ class Theme(_ThemeConfig):
     """
 
     __slots__ = [
-        '_name',
-        '_background',
-        '_jupyter_backend',
-        '_trame',
-        '_full_screen',
-        '_window_size',
-        '_image_scale',
-        '_camera',
-        '_notebook',
-        '_font',
+        '_above_range_color',
+        '_allow_empty_mesh',
+        '_anti_aliasing',
         '_auto_close',
+        '_axes',
+        '_background',
+        '_before_close_callback',
+        '_before_close_callback',
+        '_below_range_color',
+        '_camera',
         '_cmap',
         '_color',
         '_color_cycler',
-        '_above_range_color',
-        '_below_range_color',
-        '_nan_color',
-        '_edge_color',
-        '_line_width',
-        '_point_size',
-        '_outline_color',
-        '_floor_color',
-        '_colorbar_orientation',
         '_colorbar_horizontal',
+        '_colorbar_orientation',
         '_colorbar_vertical',
-        '_show_scalar_bar',
-        '_show_edges',
-        '_show_vertices',
-        '_lighting',
-        '_interactive',
-        '_render_points_as_spheres',
-        '_render_lines_as_tubes',
-        '_transparent_background',
-        '_title',
-        '_axes',
-        '_multi_samples',
-        '_multi_rendering_splitting_position',
-        '_volume_mapper',
-        '_smooth_shading',
         '_depth_peeling',
+        '_edge_color',
+        '_edge_opacity',
+        '_enable_camera_orientation_widget',
+        '_floor_color',
+        '_font',
+        '_full_screen',
+        '_hidden_line_removal',
+        '_image_scale',
+        '_interactive',
+        '_interpolate_before_map',
+        '_jupyter_backend',
+        '_lighting',
+        '_lighting_params',
+        '_line_width',
+        '_logo_file',
+        '_multi_rendering_splitting_position',
+        '_multi_samples',
+        '_name',
+        '_nan_color',
+        '_notebook',
+        '_opacity',
+        '_outline_color',
+        '_point_size',
+        '_render_lines_as_tubes',
+        '_render_points_as_spheres',
+        '_return_cpos',
+        '_sharp_edges_feature_angle',
+        '_show_edges',
+        '_show_scalar_bar',
+        '_show_vertices',
         '_silhouette',
         '_slider_styles',
-        '_return_cpos',
-        '_hidden_line_removal',
-        '_anti_aliasing',
-        '_enable_camera_orientation_widget',
+        '_smooth_shading',
         '_split_sharp_edges',
-        '_sharp_edges_feature_angle',
-        '_before_close_callback',
-        '_allow_empty_mesh',
-        '_lighting_params',
-        '_interpolate_before_map',
-        '_opacity',
-        '_before_close_callback',
-        '_logo_file',
-        '_edge_opacity',
+        '_title',
+        '_trame',
+        '_transparent_background',
+        '_volume_mapper',
+        '_window_size',
     ]
 
     def __init__(self):
