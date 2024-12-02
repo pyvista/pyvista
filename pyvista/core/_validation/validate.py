@@ -124,21 +124,21 @@ def validate_array(
         scalar values (i.e. 0-dimensional). Set to ``None`` if the array
         can have any shape (default).
 
-    must_have_ndim : int | Sequence[int], optional
+    must_have_ndim : int | VectorLike[int], optional
         :func:`Check <pyvista.core._validation.check.check_ndim>` if
         the array has the specified number of dimension(s). Specify a
         single dimension or a sequence of allowable dimensions. If a
         sequence, the array must have at least one of the specified
         number of dimensions.
 
-    must_have_dtype : dtype_like | list[dtype_like, ...], optional
+    must_have_dtype : DTypeLike | list[DTypeLike, ...], optional
         :func:`Check <pyvista.core.validation.check.check_subdtype>`
         if the array's data-type has the given dtype. Specify a
         :class:`np.dtype` object or dtype-like base class which the
         array's data must be a subtype of. If a ``list``, the array's data
         must be a subtype of at least one of the specified dtypes.
 
-    must_have_length : int | array_like[int, ...], optional
+    must_have_length : int | VectorLike[int], optional
         :func:`Check <pyvista.core.validation.check.check_has_length>`
         if the array has the given length. If multiple values are given,
         the array's length must match one of the values.
@@ -191,7 +191,7 @@ def validate_array(
         along a different axis, use a ``dict`` with keyword arguments that
         will be passed to ``check_sorted``.
 
-    must_be_in_range : array_like[float, float], optional
+    must_be_in_range : VectorLike[float], optional
         :func:`Check <pyvista.core.validation.check.check_range>`
         if the array's values are all within a specific range. Range
         must be array-like with two elements specifying the minimum and
@@ -230,7 +230,7 @@ def validate_array(
         read-only view with the specified shape. Broadcasting is done
         after reshaping (if ``reshape_to`` is not ``None``).
 
-    dtype_out : dtype_like, optional
+    dtype_out : DTypeLike, optional
         Set the data-type of the returned array. By default, the
         dtype is inferred from the input data.
 
@@ -372,7 +372,7 @@ def validate_axes(
 
     Parameters
     ----------
-    *axes : array_like
+    *axes : VectorLike[float] | MatrixLike[float]
         Axes to be validated. Axes may be specified as a single argument of a 3x3
         array of row vectors or as separate arguments for each 3-element axis vector.
         If only two vectors are given and ``must_have_orientation`` is not ``None``,
@@ -607,8 +607,10 @@ def validate_transform3x3(
     else:
         try:
             return validate_array(
-                transform, # type: ignore[arg-type]
-                must_have_shape=(3, 3), must_be_finite=must_be_finite, name=name
+                transform,  # type: ignore[arg-type]
+                must_have_shape=(3, 3),
+                must_be_finite=must_be_finite,
+                name=name,
             )
         except ValueError:
             pass
@@ -659,7 +661,7 @@ def validate_number(num: _T, /, *, reshape: bool = True, **kwargs) -> _T:
 
     Parameters
     ----------
-    num : int | float | array_like
+    num : float
         Number to validate.
 
     reshape : bool, default: True
@@ -725,7 +727,7 @@ def validate_data_range(rng: VectorLike[float], /, **kwargs):
 
     Parameters
     ----------
-    rng : array_like[float, float]
+    rng : VectorLike[float]
         Range to validate in the form ``(lower_bound, upper_bound)``.
 
     **kwargs : dict, optional
@@ -779,7 +781,7 @@ def validate_arrayNx3(
 
     Parameters
     ----------
-    arr : array_like
+    arr : VectorLike[float] | MatrixLike[float]
         Array to validate.
 
     reshape : bool, default: True
@@ -850,7 +852,7 @@ def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, 
 
     Parameters
     ----------
-    arr : array_like[float, ...]
+    arr : VectorLike[float]
         Array to validate.
 
     reshape : bool, default: True
@@ -927,7 +929,7 @@ def validate_arrayN_unsigned(
 
     Parameters
     ----------
-    arr : array_like[float, ...] | array_like[int, ...]
+    arr : VectorLike[float]
         Array to validate.
 
     reshape : bool, default: True
@@ -1017,7 +1019,7 @@ def validate_array3(
 
     Parameters
     ----------
-    arr : array_like[float, float, float]
+    arr : float | VectorLike[float] | MatrixLike[float]
         Array to validate.
 
     reshape : bool, default: True
