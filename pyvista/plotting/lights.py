@@ -18,11 +18,13 @@ except ImportError:  # pragma: no cover
 
 from typing import TYPE_CHECKING
 
+from pyvista.core import _validation
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 from .colors import Color
 
 if TYPE_CHECKING:  # pragma: no cover
+    from ..core._typing_core import TransformLike
     from ._typing import ColorLike
 
 
@@ -804,17 +806,12 @@ class Light(vtkLight):
         return self.GetTransformMatrix()
 
     @transform_matrix.setter
-    def transform_matrix(self, matrix):
+    def transform_matrix(self, matrix: TransformLike):
         if matrix is None or isinstance(matrix, vtkMatrix4x4):
-            trans = matrix
+            self.SetTransformMatrix(matrix)
         else:
-            try:
-                trans = vtkmatrix_from_array(matrix)
-            except ValueError:
-                raise ValueError(
-                    'Transformation matrix must be a 4-by-4 matrix or array-like.',
-                ) from None
-        self.SetTransformMatrix(trans)
+            trans = _validation.validate_transform4x4(matrix)
+            self.SetTransformMatrix(vtkmatrix_from_array(trans))
 
     @property
     def light_type(self):  # numpydoc ignore=RT01
