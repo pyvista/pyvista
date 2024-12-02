@@ -212,8 +212,8 @@ numpydoc_xref_param_type = True
 nitpicky = True
 # Except ignore these entries
 nitpick_ignore_regex = [
-    # NOTE: We need to ignore any/all pyvista objects which are used in function
-    # signatures since these are not linked by sphinx (bug).
+    # NOTE: We need to ignore any/all pyvista objects which are used as type hints
+    # in function signatures since these are not linked by sphinx (bug).
     # See https://github.com/pyvista/pyvista/pull/6206#issuecomment-2149138086
     #
     # PyVista TypeVars and TypeAliases
@@ -233,7 +233,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     #
-    # PyVista dataset-related classes
+    # Dataset-related types
     (r'py:.*', '.*DataSet'),
     (r'py:.*', '.*DataObject'),
     (r'py:.*', '.*PolyData'),
@@ -275,16 +275,17 @@ nitpick_ignore_regex = [
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
     #
-    # Built-in python types. TODO: fix links with intersphinx
+    # Built-in python types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*StringIO'),
     (r'py:.*', '.*Path'),
     (r'py:.*', '.*UserDict'),
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', '.*NoneType'),
     #
-    # NumPy types. TODO: Fix links with intersphinx
+    # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),
     (r'py:.*', 'np.*'),
+    (r'py:.*', 'npt.*'),
     (r'py:.*', 'numpy.*'),
     (r'py:.*', '.*NDArray'),
     #
@@ -298,7 +299,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '_vtk.*'),
     (r'py:.*', 'VTK'),
     #
-    # Misc. ignores
+    # Misc general ignores
     (r'py:.*', 'optional'),
 ]
 
