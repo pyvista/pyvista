@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import cast
 
 import numpy as np
 
@@ -545,17 +546,20 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @property
     def x_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the x-axis labels."""
-        return convert_string_array(self.GetAxisLabels(0))
+        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(0))
+        return convert_string_array(labels_vtk).tolist()
 
     @property
     def y_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the y-axis labels."""
-        return convert_string_array(self.GetAxisLabels(1))
+        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(1))
+        return convert_string_array(labels_vtk).tolist()
 
     @property
     def z_labels(self) -> list[str]:  # numpydoc ignore=RT01
         """Return the z-axis labels."""
-        return convert_string_array(self.GetAxisLabels(2))
+        labels_vtk = cast(_vtk.vtkStringArray, self.GetAxisLabels(2))
+        return convert_string_array(labels_vtk).tolist()
 
     def update_bounds(self, bounds):
         """Update the bounds of this actor.

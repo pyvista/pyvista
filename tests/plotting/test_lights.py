@@ -201,7 +201,7 @@ def test_transforms():
     assert light.focal_point == focal_point
     assert np.allclose(light.world_focal_point, linear_trans @ focal_point + shift)
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(TypeError, match='Input transform must be one of'):
         light.transform_matrix = 'invalid'
 
 
