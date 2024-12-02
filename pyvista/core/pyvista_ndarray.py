@@ -23,7 +23,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
 
     Parameters
     ----------
-    array : Array or vtk.vtkAbstractArray
+    array : ArrayLike or vtk.vtkAbstractArray
         Array like.
 
     dataset : pyvista.DataSet

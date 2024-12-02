@@ -462,7 +462,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        normal : tuple(float) or str, default: 'x'
+        normal : tuple(float) | str, default: 'x'
             Length 3 tuple for the normal vector direction. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
@@ -494,7 +494,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.PolyData or tuple[pyvista.PolyData]
+        pyvista.PolyData | tuple[pyvista.PolyData]
             Clipped mesh when ``return_clipped=False``,
             otherwise a tuple containing the unclipped and clipped datasets.
 
@@ -5507,7 +5507,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        values : number | array_like | dict, optional
+        values : float | ArrayLike[float] | dict, optional
             Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -6453,7 +6453,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        grid : vtk.UnstructuredGrid or list of vtk.UnstructuredGrids, optional
+        grid : vtk.vtkUnstructuredGrid | list[vtk.vtkUnstructuredGrid], optional
             Grids to merge to this grid.
 
         merge_points : bool, default: True
@@ -7409,7 +7409,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        vector : Vector
+        vector : VectorLike[float]
             Vector to rotate about.
 
         angle : float
@@ -7549,7 +7549,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        xyz : Vector
+        xyz : VectorLike[float]
             A vector of three floats.
 
         transform_all_input_vectors : bool, default: False
@@ -7606,7 +7606,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        xyz : Number | Vector
+        xyz : float | VectorLike[float]
             A vector sequence defining the scale factors along x, y, and z. If
             a scalar, the same uniform scale is used along all three axes.
 
