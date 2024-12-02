@@ -160,13 +160,13 @@ def _remove_duplicate_points(polydata):
     [None, 2, 5, [2, 5]],
     ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
 )
-@pytest.mark.parametrize('output_boundary_type', ['all', 'external'])  # , 'internal'],
+@pytest.mark.parametrize('boundary_style', ['all', 'external'])  # , 'internal'],
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_output_boundary_type(
+def test_contour_labels_boundary_style(
     labeled_image,
     select_inputs,
     select_outputs,
-    output_boundary_type,
+    boundary_style,
 ):
     # Test correct boundary_labels output
     ALL_LABEL_IDS = np.array([2, 5])
@@ -174,7 +174,7 @@ def test_contour_labels_output_boundary_type(
     mesh = labeled_image.contour_labels(
         select_inputs=select_inputs,
         select_outputs=select_outputs,
-        output_boundary_type=output_boundary_type,
+        boundary_style=boundary_style,
     )
     cleaned = _remove_duplicate_points(mesh)
     assert mesh.n_cells == cleaned.n_cells
@@ -195,7 +195,7 @@ def test_contour_labels_output_boundary_type(
 
     assert actual_output_ids == expected_output_ids
 
-    if output_boundary_type == 'all' and len(select_inputs_iter) == 2:
+    if boundary_style == 'all' and len(select_inputs_iter) == 2:
         # The two labels share a boundary by default
         # Boundary exists if no labels removed from input
         expected_shared_region_ids = ALL_LABEL_IDS
@@ -226,7 +226,7 @@ def test_contour_labels_cell_data(channels):
 
     voxel_surface_contoured = channels.contour_labels(
         smoothing=False,
-        output_boundary_type='external',
+        boundary_style='external',
     )
     vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
 

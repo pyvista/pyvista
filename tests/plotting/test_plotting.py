@@ -4576,7 +4576,7 @@ def _show_edges():
     ids=['in_None-out_None', 'in_None-out_2', 'in_2-out_2'],
 )
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_output_boundary_type(
+def test_contour_labels_boundary_style(
     labeled_image,  # noqa: F811
     select_inputs,
     select_outputs,
@@ -4595,7 +4595,7 @@ def test_contour_labels_output_boundary_type(
 
     def _generate_mesh(style):
         mesh = labeled_image.contour_labels(
-            output_boundary_type=style,
+            boundary_style=style,
             **test_kwargs,
             **fixed_kwargs,
         )

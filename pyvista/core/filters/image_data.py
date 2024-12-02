@@ -883,7 +883,7 @@ class ImageDataFilters(DataSetFilters):
             .. code::
 
                 image.contour_labels(
-                    output_boundary_type='external',  # replacement for old filter's 'output_style' param
+                    boundary_style='external',  # replacement for old filter's 'output_style' param
                     smoothing=False,  # old filter did not apply smoothing by default
                     output_mesh_type='quads',  # old filter generated quads by default
                     closed_surface=False,  # old filter generated open surfaces at input boundaries
@@ -1015,7 +1015,7 @@ class ImageDataFilters(DataSetFilters):
 
     def contour_labels(
         self,
-        output_boundary_type: Literal['all', 'external', 'internal'] = 'all',
+        boundary_style: Literal['all', 'external', 'internal'] = 'all',
         *,
         select_inputs: int | VectorLike[int] | None = None,
         select_outputs: int | VectorLike[int] | None = None,
@@ -1064,7 +1064,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        output_boundary_type : 'all' | 'internal' | 'external', default: 'all'
+        boundary_style : 'all' | 'internal' | 'external', default: 'all'
             Type of boundary polygons to generate. ``'internal'`` polygons are generated
             between two connected foreground regions. ``'external'`` polygons are
             generated between foreground background. By default, ``'all'`` boundary
@@ -1423,11 +1423,11 @@ class ImageDataFilters(DataSetFilters):
 
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
-        if isinstance(output_boundary_type, str) and output_boundary_type not in (
+        if isinstance(boundary_style, str) and boundary_style not in (
             boundary_types := ['all', 'internal', 'external']
         ):
             raise ValueError(
-                f'Boundary type must be one of {boundary_types}. Got {output_boundary_type} instead.',
+                f'Boundary type must be one of {boundary_types}. Got {boundary_style} instead.',
             )
 
         background_value = 0
@@ -1475,10 +1475,10 @@ class ImageDataFilters(DataSetFilters):
         if (old_name := 'BoundaryLabels') in output.cell_data.keys():
             new_name = 'boundary_labels'
             output.rename_array(old_name, new_name)
-            if output_boundary_type in ['external', 'internal']:
+            if boundary_style in ['external', 'internal']:
                 labels_array = output.cell_data[new_name]
                 is_external = np.any(labels_array == background_value, axis=1)
-                remove = is_external if output_boundary_type == 'internal' else ~is_external
+                remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
         if select_outputs:
