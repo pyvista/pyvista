@@ -220,13 +220,10 @@ nitpick_ignore_regex = [
     (r'py:.*', 'ipywidgets.Widget'),
     (r'py:.*', 'meshio.*'),
     (r'py:.*', 'networkx.*'),
-    (r'py:.*', 'of'),
     (r'py:.*', 'optional'),
-    (r'py:.*', 'or'),
     (r'py:.*', 'pyvista.LookupTable.n_values'),
     (r'py:.*', 'pyvista.PVDDataSet'),
     (r'py:.*', 'sys.float_info.max'),
-    (r'py:.*', 'various'),
     (r'py:.*', 'vtk.*'),
 ]
 
