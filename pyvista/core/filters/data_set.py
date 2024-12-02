@@ -1533,11 +1533,11 @@ class DataSetFilters:
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-        arr = get_array(self, scalars, preference=preference, err=False)
+        arr = get_array(self, scalars, preference=preference, err=False)  # type: ignore[arg-type]
         if arr is None:
             raise ValueError('No arrays present to threshold.')
 
-        field = get_array_association(self, scalars, preference=preference)
+        field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
 
         # Run a standard threshold algorithm
         alg = _vtk.vtkThreshold()
@@ -2168,7 +2168,7 @@ class DataSetFilters:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars_name = self.active_scalars_info  # type: ignore[attr-defined]
         else:
-            field = get_array_association(self, scalars_name, preference=preference)
+            field = get_array_association(self, scalars_name, preference=preference)  # type: ignore[arg-type]
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
             raise TypeError('Contour filter only works on point data.')
@@ -3341,9 +3341,9 @@ class DataSetFilters:
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-        _ = get_array(self, scalars, preference='point', err=True)
+        _ = get_array(self, scalars, preference='point', err=True)  # type: ignore[arg-type]
 
-        field = get_array_association(self, scalars, preference='point')
+        field = get_array_association(self, scalars, preference='point')  # type: ignore[arg-type]
         if field != FieldAssociation.POINT:
             raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
@@ -3424,8 +3424,8 @@ class DataSetFilters:
         if vectors is None:
             pyvista.set_default_active_vectors(self)  # type: ignore[arg-type]
             field, vectors = self.active_vectors_info  # type: ignore[attr-defined]
-        arr = get_array(self, vectors, preference='point')
-        field = get_array_association(self, vectors, preference='point')
+        arr = get_array(self, vectors, preference='point')  # type: ignore[arg-type]
+        field = get_array_association(self, vectors, preference='point')  # type: ignore[arg-type]
         if arr is None:
             raise ValueError('No vectors present to warp by vector.')
 
@@ -5928,7 +5928,7 @@ class DataSetFilters:
                 if scalars_ is None:
                     set_default_active_scalars(self)  # type: ignore[arg-type]
                     _, scalars_ = self.active_scalars_info  # type: ignore[attr-defined]
-                array_ = get_array(self, scalars_, preference=preference_, err=True)
+                array_ = get_array(self, scalars_, preference=preference_, err=True)  # type: ignore[arg-type]
             except MissingDataError:
                 raise ValueError(
                     'No point data or cell data found. Scalar data is required to use this filter.',
@@ -5937,7 +5937,7 @@ class DataSetFilters:
                 raise ValueError(
                     f"Array name '{scalars_}' is not valid and does not exist with this dataset.",
                 )
-            association_ = get_array_association(self, scalars_, preference=preference_)
+            association_ = get_array_association(self, scalars_, preference=preference_)  # type: ignore[arg-type]
             return array_, association_
 
         def _validate_component_mode(array_, component_mode_):
@@ -6854,7 +6854,7 @@ class DataSetFilters:
         alg.SetQCriterionArrayName(qcriterion)
 
         alg.SetFasterApproximation(faster)
-        field = get_array_association(self, scalars, preference=preference)
+        field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(self)
@@ -8840,7 +8840,7 @@ class DataSetFilters:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
 
-        field = get_array_association(self, scalars, preference=preference)
+        field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
 
         # Determine output scalars
         default_output_scalars = 'packed_labels'
@@ -8878,7 +8878,7 @@ class DataSetFilters:
 
         else:  # Use numpy
             # Get mapping from input ID to output ID
-            arr = get_array(self, scalars, preference=preference, err=True)
+            arr = get_array(self, scalars, preference=preference, err=True)  # type: ignore[arg-type]
             label_numbers_in, label_sizes = np.unique(arr, return_counts=True)  # type: ignore[call-overload]
             if sort:
                 label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
