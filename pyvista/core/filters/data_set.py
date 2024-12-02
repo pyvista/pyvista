@@ -5925,8 +5925,8 @@ class DataSetFilters:
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
             if scalars_ is None:
-                set_default_active_scalars(self)
-                _, scalars_ = self.active_scalars_info
+                set_default_active_scalars(self)  # type: ignore[arg-type]
+                _, scalars_ = self.active_scalars_info  # type: ignore[attr-defined]
             array_ = get_array(self, scalars_, preference=preference_, err=True)
             association_ = get_array_association(self, scalars_, preference=preference_)
             return array_, association_

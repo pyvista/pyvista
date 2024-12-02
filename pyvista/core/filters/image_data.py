@@ -29,7 +29,11 @@ from pyvista.core.utilities.misc import abstract_class
 if TYPE_CHECKING:  # pragma: no cover
     from numpy.typing import NDArray
 
+    from pyvista import ImageData
+    from pyvista import PolyData
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
@@ -854,7 +858,7 @@ class ImageDataFilters(DataSetFilters):
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: str | None = None,
         progress_bar: bool = False,
-    ) -> pyvista.PolyData:
+    ) -> PolyData:
         """Generate labeled contours from 3D label maps.
 
         SurfaceNets algorithm is used to extract contours preserving sharp
@@ -1080,7 +1084,7 @@ class ImageDataFilters(DataSetFilters):
         smoothing_distance: float | None = None,
         smoothing_scale: float = 1.0,
         progress_bar: bool = False,
-    ) -> pyvista.PolyData:
+    ) -> PolyData:
         """Generate surface contours from 3D image label maps.
 
         This filter uses `vtkSurfaceNets <https://vtk.org/doc/nightly/html/classvtkSurfaceNets3D.html#details>`__
@@ -1319,15 +1323,18 @@ class ImageDataFilters(DataSetFilters):
         >>> surf.plot(zoom=1.5, **plot_kwargs)
 
         """
+        temp_scalars_name = '_PYVISTA_TEMP'
 
-        def _get_unique_labels_no_background(array, background):
+        def _get_unique_labels_no_background(
+            array: NumpyArray[int], background: int
+        ) -> NumpyArray[int]:
             unique = np.unique(array)
             return unique[unique != background]
 
-        def _get_alg_input(image, scalars_):
+        def _get_alg_input(image: ImageData, scalars_: str | None) -> ImageData:
             if scalars_ is None:
                 set_default_active_scalars(image)
-                field, scalars = image.active_scalars_info
+                field, scalars_ = image.active_scalars_info._namedtuple
             else:
                 field = image.get_array_association(scalars_, preference='point')
 
@@ -1337,12 +1344,15 @@ class ImageDataFilters(DataSetFilters):
                 else image.cells_to_points(scalars=scalars_, copy=False)
             )
 
-        def _process_select_inputs(image, select_inputs_):
+        def _process_select_inputs(
+            image: ImageData,
+            select_inputs_: int | VectorLike[int],
+            scalars_: pyvista_ndarray,
+        ) -> NumpyArray[int]:
             select_inputs = np.atleast_1d(select_inputs_)
             # Remove non-selected label ids from the input. We do this by setting
             # non-selected ids to the background value to remove them from the input
-            temp_scalars = image.active_scalars
-            temp_scalars = temp_scalars.copy()
+            temp_scalars = scalars_.copy()
             input_ids = _get_unique_labels_no_background(temp_scalars, background_value)
             keep_labels = [*select_inputs, background_value]
             for label in input_ids:
@@ -1354,7 +1364,7 @@ class ImageDataFilters(DataSetFilters):
 
             return input_ids
 
-        def _set_output_mesh_type(alg_):
+        def _set_output_mesh_type(alg_: _vtk.vtkSurfaceNets3D):
             if output_mesh_type is None:
                 alg_.SetOutputMeshTypeToDefault()
             elif output_mesh_type == 'quads':
@@ -1366,7 +1376,12 @@ class ImageDataFilters(DataSetFilters):
                     f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
                 )
 
-        def _configure_boundaries(alg_, array_, select_inputs_, select_outputs_):
+        def _configure_boundaries(
+            alg_: _vtk.vtkSurfaceNets3D,
+            array_: pyvista_ndarray,
+            select_inputs_: int | VectorLike[int] | None,
+            select_outputs_: int | VectorLike[int] | None,
+        ):
             # WARNING: Setting the output style to default or boundary does not really work
             # as expected. Specifically, `SetOutputStyleToDefault` by itself will not actually
             # produce meshes with interior faces at the boundaries between foreground regions
@@ -1374,6 +1389,11 @@ class ImageDataFilters(DataSetFilters):
             # `SetLabels` below will enable internal boundaries, regardless of the value of
             # `OutputStyle`. Also, using `SetOutputStyleToBoundary` generates jagged/rough
             # 'lines' between two exterior regions; enabling internal boundaries fixes this.
+            input_ids = (
+                _process_select_inputs(alg_input, select_inputs_, array_)
+                if select_inputs_ is not None
+                else None
+            )
             alg_.SetOutputStyleToSelected()
             if select_outputs_ is not None:
                 # Use selected outputs
@@ -1381,9 +1401,9 @@ class ImageDataFilters(DataSetFilters):
                     np.atleast_1d(select_outputs_),
                     background_value,
                 )
-            elif select_inputs_ is not None:
+            elif input_ids is not None:
                 # Set outputs to be same as inputs
-                output_ids = select_inputs_
+                output_ids = input_ids
             else:
                 # Output all labels
                 output_ids = _get_unique_labels_no_background(
@@ -1393,12 +1413,12 @@ class ImageDataFilters(DataSetFilters):
             output_ids = output_ids.astype(float)
 
             # Add selected outputs
-            [alg.AddSelectedLabel(label_id) for label_id in output_ids]
+            [alg.AddSelectedLabel(label_id) for label_id in output_ids]  # type: ignore[func-returns-value]
 
             # The following logic enables the generation of internal boundaries
-            if select_inputs is not None:
+            if input_ids is not None:
                 # Generate internal boundaries for selected inputs only
-                internal_ids = input_ids
+                internal_ids: NumpyArray[int] = input_ids
             elif select_outputs is None:
                 # No inputs or outputs selected, so generate internal
                 # boundaries for all labels in input array
@@ -1409,12 +1429,19 @@ class ImageDataFilters(DataSetFilters):
                     background_value,
                 )
 
-            [alg.SetLabel(int(val), val) for val in internal_ids]
+            [alg.SetLabel(int(val), val) for val in internal_ids]  # type: ignore[func-returns-value]
 
             return output_ids
 
-        def _configure_smoothing(alg_, spacing_, iterations_, relaxation_, scale_, distance_):
-            def _is_small_number(num):
+        def _configure_smoothing(
+            alg_: _vtk.vtkSurfaceNets3D,
+            spacing_: tuple[float, float, float],
+            iterations_: int,
+            relaxation_: float,
+            scale_: float,
+            distance_: float | None,
+        ):
+            def _is_small_number(num) -> bool | np.bool_:
                 return isinstance(num, (float, int, np.floating, np.integer)) and num < 1e-8
 
             if smoothing and not _is_small_number(scale_) and not _is_small_number(distance_):
@@ -1452,22 +1479,22 @@ class ImageDataFilters(DataSetFilters):
 
         background_value = 0
 
-        alg_input = _get_alg_input(self, scalars)
+        alg_input = _get_alg_input(self, scalars)  # type: ignore[arg-type]
 
         # Pad with background values to close surfaces at image boundaries
         alg_input = alg_input.pad_image(background_value) if closed_surface else alg_input
-
-        temp_scalars_name = '_PYVISTA_TEMP'
-        input_ids = (
-            _process_select_inputs(alg_input, select_inputs) if select_inputs is not None else None
-        )
 
         alg = _vtk.vtkSurfaceNets3D()
         alg.SetBackgroundLabel(background_value)
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        _configure_boundaries(alg, alg_input.active_scalars, input_ids, select_outputs)
+        _configure_boundaries(
+            alg,
+            cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
+            select_inputs,
+            select_outputs,
+        )
         _configure_smoothing(
             alg,
             alg_input.spacing,
