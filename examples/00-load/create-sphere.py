@@ -31,7 +31,7 @@ mesh.plot(show_edges=True)
 mesh
 
 # %%
-# The cells are triangles. For example, the first cell
+# The cells are :attr:`~pyvista.CellType.TRIANGLE` cells.. For example, the first cell
 
 mesh.get_cell(0).type
 
@@ -43,7 +43,7 @@ mesh.get_cell(0).type
 # mesh that has an i-j-k ordering that allows for simplified
 # cell connectivity.
 #
-# The points are generated as a regular grid in spherical coordinates.
+# The points are generated as a regular grid in spherical coordinates using  :func:`pyvista.spherical_to_cartesian`.
 # Here, we will used the convention that ``theta`` is the
 # azimuthal angle, similar to longitude on the globe.  ``phi`` is the
 # polar angle, similar to latitude on the globe.
@@ -59,7 +59,7 @@ x, y, z = pv.spherical_to_cartesian(r_, phi_, theta_)
 mesh = pv.StructuredGrid(x, y, z)
 
 # %%
-# The mesh has quadrilateral cells. The cells that look triangular
+# The mesh has :attr:`~pyvista.CellType.QUAD` cells. cells. The cells that look triangular
 # at the poles are actually degenerate quadrilaterals, i.e. two
 # points are coincident at the pole, as will be shown later.
 
@@ -71,7 +71,7 @@ mesh.plot(show_edges=True)
 mesh
 
 # %%
-# The first cell is at the top pole, and it is a Quadrilateral.
+# The first cell is at the top pole, and it is a :attr:`~pyvista.CellType.QUAD` cell.
 
 cell = mesh.get_cell(0)
 cell.type
@@ -101,7 +101,7 @@ pl.show()
 # This example shows how a more complicated mesh can be defined.
 #
 # In contrast to the example above, this example generates a mesh
-# that does not have degenerate points at the poles. Triangle cells
+# that does not have degenerate points at the poles. :attr:`~pyvista.CellType.TRIANGLE` cells
 # will be used at the poles.  First, regenerate the structured data.
 
 radius = 0.5
@@ -112,8 +112,8 @@ phi = np.linspace(0, np.pi, nphi)
 
 # %%
 # We do not want duplicate points, so remove the duplicate in theta, which
-# results in 8 unique points in theta. Similarly, the poles at `phi=0` and
-# `phi=pi` will be handled separately to avoid duplicate points, which
+# results in 8 unique points in theta. Similarly, the poles at ``phi=0`` and
+# ``phi=pi`` will be handled separately to avoid duplicate points, which
 # results in 10 unique points in phi.  Remove these from the grid in spherical
 # coordinates.
 
@@ -123,7 +123,7 @@ phi = phi[1:-1]
 nphi -= 2
 
 # %%
-# Generate cartesian coordinates for points in the ``(N, 3)``
+# Use :func:`pyvista.spherical_to_cartesian` to generate cartesian coordinates for points in the ``(N, 3)``
 # format required by PyVista.  Note that this method results in
 # the theta variable changing the fastest.
 
