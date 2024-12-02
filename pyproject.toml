@@ -279,6 +279,7 @@ quote-style = "single"
 extend-select = [
   "A",
   "AIR",
+  "ANN",
   "ASYNC",
   "ASYNC1",
   "B",
@@ -325,6 +326,9 @@ extend-select = [
 external = ["E131"]
 fixable = ["ALL"]
 ignore = [
+  "ANN002",  # Missing annotations for `*args`
+  "ANN003",  # Missing annotations for `*kwargs`
+  "ANN401",  # Disallow `Any`
   "B028",    # https://github.com/pyvista/pyvista/pull/6030
   "B904",    # https://github.com/pyvista/pyvista/pull/6022
   "COM812",  # May cause conflicts when used with the formatter
@@ -369,6 +373,52 @@ allow-dict-calls-with-keyword-arguments = true
 "examples_trame/tests*" = ["D"]
 "pyvista/ext/*" = ["D100", "D101", "D102", "D103"]
 "tests/*" = ["D"]
+
+# ANN ignores for `pyvista/core`
+# TODO: Add annotations to any files listed below and remove it from this list
+"pyvista/core/_validation/_cast_array.py" = ["ANN"]
+"pyvista/core/_validation/check.py" = ["ANN"]
+"pyvista/core/_validation/validate.py" = ["ANN"]
+"pyvista/core/_vtk_core.py" = ["ANN"]
+"pyvista/core/cell.py" = ["ANN"]
+"pyvista/core/celltype.py" = ["ANN"]
+"pyvista/core/dataobject.py" = ["ANN"]
+"pyvista/core/datasetattributes.py" = ["ANN"]
+"pyvista/core/errors.py" = ["ANN"]
+"pyvista/core/filters**" = ["ANN"]
+"pyvista/core/grid.py" = ["ANN"]
+"pyvista/core/objects.py" = ["ANN"]
+"pyvista/core/partitioned.py" = ["ANN"]
+"pyvista/core/pointset.py" = ["ANN"]
+"pyvista/core/pyvista_ndarray.py" = ["ANN"]
+"pyvista/core/utilities/cell.py" = ["ANN"]
+"pyvista/core/utilities/cells.py" = ["ANN"]
+"pyvista/core/utilities/docs.py" = ["ANN"]
+"pyvista/core/utilities/features.py" = ["ANN"]
+"pyvista/core/utilities/helpers.py" = ["ANN"]
+"pyvista/core/utilities/image_sources.py" = ["ANN"]
+"pyvista/core/utilities/misc.py" = ["ANN"]
+"pyvista/core/utilities/observers.py" = ["ANN"]
+"pyvista/core/utilities/reader.py" = ["ANN"]
+
+# ANN ignores for `pyvista/plotting`
+"pyvista/plotting*" = ["ANN"]
+
+# All other ANN ignores
+"doc*" = ["ANN"]
+"examples*" = ["ANN"]
+"pyvista/__init__.py" = ["ANN"]
+"pyvista/_plot.py" = ["ANN"]
+"pyvista/conftest.py" = ["ANN"]
+"pyvista/demos*" = ["ANN"]
+"pyvista/errors.py" = ["ANN"]
+"pyvista/examples*" = ["ANN"]
+"pyvista/ext*" = ["ANN"]
+"pyvista/jupyter*" = ["ANN"]
+"pyvista/report.py" = ["ANN"]
+"pyvista/trame*" = ["ANN"]
+"pyvista/utilities/__init__.py" = ["ANN"]
+"tests*" = ["ANN"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true # Combines "as" imports on the same line
