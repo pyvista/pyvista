@@ -882,13 +882,11 @@ class ImageDataFilters(DataSetFilters):
 
             .. code::
 
-                n_labels = range(N)
-                contour_labels(
-                    select_outputs=n_labels,  # replacement for 'n_labels' param
-                    internal_polygons=False,  # replacement for 'output_style' param
-                    smoothing=False,  # smoothing is now on by default
-                    output_mesh_type='quads',  # mesh type is no longer fixed to 'quads'
-                    output_labels='boundary',  # return 'boundary_labels' array
+                image.contour_labels(
+                    output_boundary_type='external',  # replacement for old filter's 'output_style' param
+                    smoothing=False,  # old filter did not apply smoothing by default
+                    output_mesh_type='quads',  # old filter generated quads by default
+                    closed_surface=False,  # old filter generated open surfaces at input boundaries
                 )
 
         Parameters
