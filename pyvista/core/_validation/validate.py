@@ -21,9 +21,9 @@ import reprlib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import TypeVar
 
 import numpy as np
-from numpy.typing import ArrayLike
 
 from pyvista.core._validation import check_contains
 from pyvista.core._validation import check_finite
@@ -44,37 +44,43 @@ from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core._vtk_core import vtkTransform
 
 if TYPE_CHECKING:  # pragma: no cover
-    from numpy.typing import ArrayLike
+    import numpy.typing as npt
 
+    from pyvista.core._typing_core import ArrayLike
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import TransformLike
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._array_like import NumpyArray
+
+    from .check import _ShapeLike
 
 
 def validate_array(
-    arr,
+    arr: float | ArrayLike[float],
     /,
     *,
-    must_have_shape=None,
-    must_have_ndim=None,
-    must_have_dtype=None,
-    must_have_length=None,
-    must_have_min_length=None,
-    must_have_max_length=None,
+    must_have_shape: _ShapeLike | list[_ShapeLike] | None = None,
+    must_have_ndim: int | VectorLike[int] | None = None,
+    must_have_dtype: npt.DTypeLike | None = None,
+    must_have_length: int | VectorLike[int] | None = None,
+    must_have_min_length: int | None = None,
+    must_have_max_length: int | None = None,
     must_be_nonnegative: bool = False,
     must_be_finite: bool = False,
     must_be_real: bool = True,
     must_be_integer: bool = False,
     must_be_sorted: bool = False,
-    must_be_in_range=None,
+    must_be_in_range: VectorLike[float] | None = None,
     strict_lower_bound: bool = False,
     strict_upper_bound: bool = False,
-    reshape_to=None,
-    broadcast_to=None,
-    dtype_out=None,
+    reshape_to: int | tuple[int, ...] | None = None,
+    broadcast_to: int | tuple[int, ...] | None = None,
+    dtype_out: npt.DTypeLike = None,
     as_any: bool = True,
     copy: bool = False,
     to_list: bool = False,
     to_tuple: bool = False,
-    name='Array',
+    name: str = 'Array',
 ):
     """Check and validate a numeric array meets specific requirements.
 
@@ -353,11 +359,11 @@ def validate_array(
 
 
 def validate_axes(
-    *axes,
+    *axes: VectorLike[float] | MatrixLike[float],
     normalize: bool = True,
     must_be_orthogonal: bool = True,
-    must_have_orientation='right',
-    name='Axes',
+    must_have_orientation: Literal['right', 'left'] | None = 'right',
+    name: str = 'Axes',
 ):
     """Validate 3D axes vectors.
 
@@ -483,7 +489,9 @@ def validate_axes(
     return axes_array
 
 
-def validate_transform4x4(transform, /, *, must_be_finite: bool = True, name='Transform'):
+def validate_transform4x4(
+    transform: TransformLike, /, *, must_be_finite: bool = True, name: str = 'Transform'
+) -> NumpyArray[float]:
     """Validate transform-like input as a 4x4 ndarray.
 
     This function supports inputs with a 3x3 or 4x4 shape. If the input is 3x3,
@@ -533,7 +541,7 @@ def validate_transform4x4(transform, /, *, must_be_finite: bool = True, name='Tr
         else:
             try:
                 arr = validate_array(
-                    transform,
+                    transform,  # type: ignore[arg-type]
                     must_have_shape=[(3, 3), (4, 4)],
                     must_be_finite=must_be_finite,
                     name=name,
@@ -553,7 +561,9 @@ def validate_transform4x4(transform, /, *, must_be_finite: bool = True, name='Tr
     return arr
 
 
-def validate_transform3x3(transform, /, *, must_be_finite: bool = True, name='Transform'):
+def validate_transform3x3(
+    transform: TransformLike, /, *, must_be_finite: bool = True, name: str = 'Transform'
+):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
@@ -597,7 +607,8 @@ def validate_transform3x3(transform, /, *, must_be_finite: bool = True, name='Tr
     else:
         try:
             return validate_array(
-                transform, must_have_shape=(3, 3), must_be_finite=must_be_finite, name=name
+                transform, # type: ignore[arg-type]
+                must_have_shape=(3, 3), must_be_finite=must_be_finite, name=name
             )
         except ValueError:
             pass
@@ -634,7 +645,10 @@ def _array_from_vtkmatrix(
     return array
 
 
-def validate_number(num, /, *, reshape: bool = True, **kwargs):
+_T = TypeVar('_T', float, int)
+
+
+def validate_number(num: _T, /, *, reshape: bool = True, **kwargs) -> _T:
     """Validate a real, finite number.
 
     By default, the number is checked to ensure it:
@@ -700,7 +714,7 @@ def validate_number(num, /, *, reshape: bool = True, **kwargs):
     return validate_array(num, **kwargs)
 
 
-def validate_data_range(rng, /, **kwargs):
+def validate_data_range(rng: VectorLike[float], /, **kwargs):
     """Validate a data range.
 
     By default, the data range is checked to ensure:
@@ -749,7 +763,9 @@ def validate_data_range(rng, /, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(arr, /, *, reshape: bool = True, **kwargs):
+def validate_arrayNx3(
+    arr: VectorLike[float] | MatrixLike[float], /, *, reshape: bool = True, **kwargs
+):
     """Validate an array is numeric and has shape Nx3.
 
     The array is checked to ensure its input values:
@@ -820,7 +836,7 @@ def validate_arrayNx3(arr, /, *, reshape: bool = True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN(arr, /, *, reshape: bool = True, **kwargs):
+def validate_arrayN(arr: float | VectorLike[float], /, *, reshape: bool = True, **kwargs):
     """Validate a numeric 1D array.
 
     The array is checked to ensure its input values:
@@ -893,7 +909,9 @@ def validate_arrayN(arr, /, *, reshape: bool = True, **kwargs):
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_unsigned(arr, /, *, reshape: bool = True, **kwargs):
+def validate_arrayN_unsigned(
+    arr: VectorLike[float], /, *, reshape: bool = True, **kwargs
+) -> NumpyArray[int]:
     """Validate a numeric 1D array of non-negative (unsigned) integers.
 
     The array is checked to ensure its input values:
@@ -980,7 +998,14 @@ def validate_arrayN_unsigned(arr, /, *, reshape: bool = True, **kwargs):
     return validate_arrayN(arr, reshape=reshape, **kwargs)
 
 
-def validate_array3(arr, /, *, reshape: bool = True, broadcast: bool = False, **kwargs):
+def validate_array3(
+    arr: float | VectorLike[float] | MatrixLike[float],
+    /,
+    *,
+    reshape: bool = True,
+    broadcast: bool = False,
+    **kwargs,
+):
     """Validate a numeric 1D array with 3 elements.
 
     The array is checked to ensure its input values:
@@ -1063,7 +1088,7 @@ def validate_array3(arr, /, *, reshape: bool = True, broadcast: bool = False, **
     return validate_array(arr, **kwargs)
 
 
-def _set_default_kwarg_mandatory(kwargs: dict[str, Any], key: str, default: Any):
+def _set_default_kwarg_mandatory(kwargs: dict[str, Any], key: str, default: Any) -> None:
     """Set a kwarg and raise ValueError if not set to its default value."""
     val = kwargs.pop(key, default)
     if val != default:
@@ -1077,7 +1102,7 @@ def _set_default_kwarg_mandatory(kwargs: dict[str, Any], key: str, default: Any)
 
 
 def validate_dimensionality(
-    dimensionality: Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D'] | ArrayLike,
+    dimensionality: Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D'] | int | VectorLike[int],
     /,
     *,
     reshape: bool = True,
@@ -1135,7 +1160,7 @@ def validate_dimensionality(
         dimensionality_as_array = dimensionality_as_array.astype(np.integer)
     except ValueError:
         raise ValueError(
-            f'`{dimensionality}` is not a valid dimensionality.'  # type: ignore[str-bytes-safe]
+            f'`{dimensionality}` is not a valid dimensionality.'
             ' Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D"].'
         )
 

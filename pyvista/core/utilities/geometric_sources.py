@@ -3938,7 +3938,10 @@ class OrthogonalPlanesSource:
 
         """
         valid_distance = _validation.validate_array3(
-            distance, broadcast=True, dtype_out=float, to_tuple=True
+            distance,  # type: ignore[arg-type]
+            broadcast=True,
+            dtype_out=float,
+            to_tuple=True,
         )
         for source, dist in zip(self.sources, valid_distance):
             source.push(dist)
