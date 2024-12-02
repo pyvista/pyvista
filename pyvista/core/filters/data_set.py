@@ -3761,6 +3761,7 @@ class DataSetFilters:
         inside_out: bool = False,
         check_surface: bool = True,
         progress_bar: bool = False,
+        use_trimesh: bool | None = None,
     ):
         """Mark points as to whether they are inside a closed surface.
 
@@ -3779,6 +3780,11 @@ class DataSetFilters:
            manifold. A boolean flag can be set to force the filter to
            first check whether this is true. If ``False`` and not manifold,
            an error will be raised.
+
+        .. note::
+            Using Trimesh and rtree is recommended for most use cases. If
+            you are noticing unexpected results or rogue points, try setting
+            installing trimesh and rtree with ``use_trimesh=True``.
 
         Parameters
         ----------
@@ -3803,6 +3809,15 @@ class DataSetFilters:
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        use_trimesh : bool, default: None
+            Use the trimesh library to perform the point-in-surface check. We
+            will use trimesh by default if installed. If not installed, we will
+            fall back to VTK. If you want to force the use of VTK, set this to
+            ``False``. If you want to force the use of trimesh, set this to
+            ``True``. Trimesh has much more robust point-in-surface checks and
+            is recommended for most use cases. If using trimesh, the surface
+            must be entirely composed of triangles.
 
         Returns
         -------
@@ -3837,18 +3852,46 @@ class DataSetFilters:
                 'documentation for this function and either pass '
                 '`check_surface=False` or repair the surface.',
             )
-        alg = _vtk.vtkSelectEnclosedPoints()
-        alg.SetInputData(self)
-        alg.SetSurfaceData(surface)
-        alg.SetTolerance(tolerance)
-        alg.SetInsideOut(inside_out)
-        _update_alg(alg, progress_bar, 'Selecting Enclosed Points')
-        result = _get_output(alg)
+
+        try:
+            import rtree  # noqa: F401
+            import trimesh
+
+            has_trimesh = True
+        except ImportError:
+            has_trimesh = False
+
+        if use_trimesh and not has_trimesh:
+            raise ImportError(
+                'To use trimesh please install trimesh and rtree with:\n'
+                '\tconda install trimesh rtree\nOR\n'
+                '\tpip install trimesh rtree',
+            )
+
+        use_trimesh = (
+            use_trimesh if use_trimesh is not None else surface.is_all_triangles and has_trimesh
+        )
+
+        if use_trimesh:
+            if not surface.is_all_triangles:
+                raise ValueError('Trimesh is not supported for non-triangle surfaces.')
+            faces = surface.faces.reshape(-1, 4)[:, 1:]
+            trimesh_surface = trimesh.Trimesh(vertices=surface.points, faces=faces)
+            mask = trimesh_surface.contains(self.points).astype(np.uint8)
+        else:
+            alg = _vtk.vtkSelectEnclosedPoints()
+            alg.SetInputData(self)
+            alg.SetSurfaceData(surface)
+            alg.SetTolerance(tolerance)
+            alg.SetInsideOut(inside_out)
+            _update_alg(alg, progress_bar, 'Selecting Enclosed Points')
+            result = _get_output(alg)
+            mask = result['SelectedPoints'].astype(np.uint8)
+
         out = self.copy()  # type: ignore[attr-defined]
-        bools = result['SelectedPoints'].astype(np.uint8)
-        if len(bools) < 1:
-            bools = np.zeros(out.n_points, dtype=np.uint8)
-        out['SelectedPoints'] = bools
+        if len(mask) < 1:
+            mask = np.zeros(out.n_points, dtype=np.uint8)
+        out['SelectedPoints'] = mask
         return out
 
     def sample(
