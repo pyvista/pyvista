@@ -31,7 +31,7 @@ mesh
 # %%
 # In this case, it is :func:`manifold <pyvista.PolyData.is_manifold>` and
 # encloses a volume. To demonstrate this, there are no boundaries on the mesh
-# as indicated as no points/cells being extracted.
+# as indicated by no points/cells being extracted.
 
 boundaries = mesh.extract_feature_edges(
     non_manifold_edges=False, feature_edges=False, manifold_edges=False
@@ -237,6 +237,16 @@ faces.extend([3, nphi * ntheta + 1, nphi * ntheta, (nphi - 1) * ntheta + 1])
 # :class:`pyvista.UnstructuredGrid` could also be used.
 
 mesh = pv.PolyData(points, faces=faces)
+
+# %%
+# This mesh is :func:`manifold <pyvista.PolyData.is_manifold>` like :class:`pyvista.Sphere`.
+# To demonstrate this, there are no boundaries on the mesh
+# as indicated by no points/cells being extracted.
+
+boundaries = mesh.extract_feature_edges(
+    non_manifold_edges=False, feature_edges=False, manifold_edges=False
+)
+boundaries
 
 # %%
 # All the point labels are messy when plotted, so don't add to the final plot.
