@@ -23,6 +23,7 @@ from pyvista.core._validation import check_iterable
 from pyvista.core._validation import check_iterable_items
 from pyvista.core._validation import check_length
 from pyvista.core._validation import check_less_than
+from pyvista.core._validation import check_ndim
 from pyvista.core._validation import check_nonnegative
 from pyvista.core._validation import check_number
 from pyvista.core._validation import check_range
@@ -218,6 +219,21 @@ def test_check_shape():
     match = 'Array has shape (3,) which is not allowed. Shape must be one of [(), (4, 5)].'
     with pytest.raises(ValueError, match=escape(match)):
         check_shape((1, 2, 3), [(), (4, 5)])
+
+
+def test_check_ndim():
+    check_ndim(0, 0)
+    check_ndim(np.array(0), 0)
+    check_ndim((1, 2, 3), range(2))
+    check_ndim([[1, 2, 3]], (0, 2))
+
+    match = 'Input has the incorrect number of dimensions. Got 1, expected 0.'
+    with pytest.raises(ValueError, match=escape(match)):
+        check_ndim((1, 2, 3), 0, name='Input')
+
+    match = 'Array has the incorrect number of dimensions. Got 1, expected one of [4, 5].'
+    with pytest.raises(ValueError, match=escape(match)):
+        check_ndim((1, 2, 3), [4, 5])
 
 
 def test_validate_shape_value():
@@ -493,6 +509,7 @@ def test_validate_array(
         must_have_min_length=1,
         must_have_max_length=np.array(valid_array).size,
         must_have_shape=shape,
+        must_have_ndim=len(shape),
         reshape_to=shape,
         broadcast_to=shape,
         must_be_in_range=(np.min(valid_array), np.max(valid_array)),

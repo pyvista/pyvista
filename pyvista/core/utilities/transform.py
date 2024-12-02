@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import overload
@@ -14,11 +15,12 @@ from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.transformations import apply_transformation_to_points
 from pyvista.core.utilities.transformations import axis_angle_rotation
+from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista import DataSet
     from pyvista import MultiBlock
+    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -64,6 +66,10 @@ class Transform(_vtk.vtkTransform):
 
         By default, this value is ``None``, which means that the scale, rotation, etc.
         transformations are performed about the origin ``(0, 0, 0)``.
+
+    multiply_mode : 'pre' | 'post', optional
+        Multiplication mode to use when concatenating. Set this to ``'pre'`` for
+        pre-multiplication or ``'post'`` for post-multiplication.
 
     See Also
     --------
@@ -247,16 +253,23 @@ class Transform(_vtk.vtkTransform):
     """
 
     def __init__(
-        self, trans: TransformLike | None = None, *, point: VectorLike[float] | None = None
-    ):
+        self: Transform,
+        trans: TransformLike | Sequence[TransformLike] | None = None,
+        *,
+        point: VectorLike[float] | None = None,
+        multiply_mode: Literal['pre', 'post'] = 'post',
+    ) -> None:
         super().__init__()
-        self.multiply_mode = 'post'
+        self.multiply_mode = multiply_mode
         self.point = point  # type: ignore[assignment]
         self.check_finite = True
         if trans is not None:
-            self.matrix = trans  # type: ignore[assignment]
+            if isinstance(trans, Sequence):
+                [self.concatenate(t) for t in trans]
+            else:
+                self.matrix = trans  # type: ignore[assignment]
 
-    def __add__(self, other: VectorLike[float] | TransformLike) -> Transform:
+    def __add__(self: Transform, other: VectorLike[float] | TransformLike) -> Transform:
         """:meth:`concatenate` this transform using post-multiply semantics.
 
         Use :meth:`translate` for length-3 vector inputs, and :meth:`concatenate`
@@ -264,7 +277,7 @@ class Transform(_vtk.vtkTransform):
         """
         copied = self.copy()
         try:
-            transform = copied.translate(other, multiply_mode='post')
+            transform = copied.translate(other, multiply_mode='post')  # type: ignore[arg-type]
         except (ValueError, TypeError):
             try:
                 transform = copied.concatenate(other, multiply_mode='post')
@@ -280,7 +293,7 @@ class Transform(_vtk.vtkTransform):
                 )
         return transform
 
-    def __radd__(self, other: VectorLike[float] | TransformLike) -> Transform:
+    def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
             return self.copy().translate(other, multiply_mode='pre')
@@ -295,7 +308,7 @@ class Transform(_vtk.vtkTransform):
                 f'The left-side argument must be a length-3 vector.'
             )
 
-    def __mul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
+    def __mul__(self: Transform, other: float | VectorLike[float]) -> Transform:
         """:meth:`scale` this transform using post-multiply semantics."""
         try:
             return self.copy().scale(other, multiply_mode='post')
@@ -311,7 +324,7 @@ class Transform(_vtk.vtkTransform):
                 f'The right-side argument must be a single number or a length-3 vector.'
             )
 
-    def __rmul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
+    def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics."""
         try:
             return self.copy().scale(other, multiply_mode='pre')
@@ -326,7 +339,7 @@ class Transform(_vtk.vtkTransform):
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
 
-    def __matmul__(self, other: TransformLike) -> Transform:
+    def __matmul__(self: Transform, other: TransformLike) -> Transform:
         """:meth:`concatenate` this transform using pre-multiply semantics."""
         try:
             return self.copy().concatenate(other, multiply_mode='pre')
@@ -341,7 +354,7 @@ class Transform(_vtk.vtkTransform):
                 f'The right-side argument must be transform-like.'
             )
 
-    def copy(self) -> Transform:
+    def copy(self: Transform) -> Transform:
         """Return a deep copy of the transform.
 
         Returns
@@ -382,10 +395,10 @@ class Transform(_vtk.vtkTransform):
 
         return new_transform
 
-    def __repr__(self):
+    def __repr__(self: Transform) -> str:
         """Representation of the transform."""
 
-        def _matrix_repr():
+        def _matrix_repr() -> str:
             repr_ = np.array_repr(self.matrix)
             return repr_.replace('array(', '      ').replace(')', '').replace('      [', '[')
 
@@ -401,7 +414,7 @@ class Transform(_vtk.vtkTransform):
         return '\n'.join(lines)
 
     @property
-    def point(self) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
+    def point(self: Transform) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
         """Point to use when concatenating some transformations such as scale, rotation, etc.
 
         If set, two additional transformations are concatenated and added to
@@ -416,7 +429,7 @@ class Transform(_vtk.vtkTransform):
         return self._point
 
     @point.setter
-    def point(self, point: VectorLike[float] | None):  # numpydoc ignore=GL08
+    def point(self: Transform, point: VectorLike[float] | None) -> None:
         self._point = (
             None
             if point is None
@@ -424,7 +437,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     @property
-    def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
+    def multiply_mode(self: Transform) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
         """Set or get the multiplication mode.
 
         Set this to ``'pre'`` to set the multiplication mode to :meth:`pre_multiply`.
@@ -439,13 +452,13 @@ class Transform(_vtk.vtkTransform):
         return self._multiply_mode
 
     @multiply_mode.setter
-    def multiply_mode(self, multiply_mode: Literal['pre', 'post']) -> None:  # numpydoc ignore=GL08
+    def multiply_mode(self: Transform, multiply_mode: Literal['pre', 'post']) -> None:
         _validation.check_contains(
             item=multiply_mode, container=['pre', 'post'], name='multiply mode'
         )
         self.pre_multiply() if multiply_mode == 'pre' else self.post_multiply()
 
-    def pre_multiply(self) -> Transform:  # numpydoc ignore=RT01
+    def pre_multiply(self: Transform) -> Transform:  # numpydoc ignore=RT01
         """Set the multiplication mode to pre-multiply.
 
         In pre-multiply mode, any additional transformations (e.g. using
@@ -464,7 +477,7 @@ class Transform(_vtk.vtkTransform):
         self.PreMultiply()
         return self
 
-    def post_multiply(self) -> Transform:  # numpydoc ignore=RT01
+    def post_multiply(self: Transform) -> Transform:  # numpydoc ignore=RT01
         """Set the multiplication mode to post-multiply.
 
         In post-multiply mode, any additional transformations (e.g. using
@@ -484,8 +497,8 @@ class Transform(_vtk.vtkTransform):
         return self
 
     def scale(
-        self,
-        *factor,
+        self: Transform,
+        *factor: float | VectorLike[float],
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
@@ -501,7 +514,8 @@ class Transform(_vtk.vtkTransform):
         ----------
         *factor : float | VectorLike[float]
             Scale factor(s) to use. Use a single number for uniform scaling or
-            three numbers for non-uniform scaling.
+            three numbers for non-uniform scaling. The three factors may be
+            passed as a single vector (one arg) or an unpacked vector (three args).
 
         point : VectorLike[float], optional
             Point to scale from. By default, the object's :attr:`point` is used,
@@ -579,8 +593,8 @@ class Transform(_vtk.vtkTransform):
         )
 
     def reflect(
-        self,
-        *normal,
+        self: Transform,
+        *normal: float | VectorLike[float],
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
@@ -594,8 +608,9 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        *normal : VectorLike[float]
-            Normal direction for reflection.
+        *normal : float | VectorLike[float]
+            Normal direction for reflection. May be a single vector (one arg) or
+            unpacked vector (three args).
 
         point : VectorLike[float], optional
             Point to reflect about. By default, the object's :attr:`point` is used,
@@ -648,7 +663,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def flip_x(
-        self,
+        self: Transform,
         *,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
@@ -708,7 +723,7 @@ class Transform(_vtk.vtkTransform):
         return self.reflect((1, 0, 0), point=point, multiply_mode=multiply_mode)
 
     def flip_y(
-        self,
+        self: Transform,
         *,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
@@ -768,7 +783,7 @@ class Transform(_vtk.vtkTransform):
         return self.reflect((0, 1, 0), point=point, multiply_mode=multiply_mode)
 
     def flip_z(
-        self,
+        self: Transform,
         *,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
@@ -828,7 +843,9 @@ class Transform(_vtk.vtkTransform):
         return self.reflect((0, 0, 1), point=point, multiply_mode=multiply_mode)
 
     def translate(
-        self, *vector, multiply_mode: Literal['pre', 'post'] | None = None
+        self: Transform,
+        *vector: float | VectorLike[float],
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a translation matrix.
 
@@ -840,8 +857,9 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        *vector : VectorLike[float]
-            Vector to use for the translation.
+        *vector : float | VectorLike[float]
+            Vector to use for translation. May be a single vector (one arg) or
+            unpacked vector (three args).
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -883,7 +901,7 @@ class Transform(_vtk.vtkTransform):
         return self.concatenate(transform, multiply_mode=multiply_mode)
 
     def rotate(
-        self,
+        self: Transform,
         rotation: RotationLike,
         *,
         point: VectorLike[float] | None = None,
@@ -982,7 +1000,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def rotate_x(
-        self,
+        self: Transform,
         angle: float,
         *,
         point: VectorLike[float] | None = None,
@@ -1051,7 +1069,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def rotate_y(
-        self,
+        self: Transform,
         angle: float,
         *,
         point: VectorLike[float] | None = None,
@@ -1120,7 +1138,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def rotate_z(
-        self,
+        self: Transform,
         angle: float,
         *,
         point: VectorLike[float] | None = None,
@@ -1189,7 +1207,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def rotate_vector(
-        self,
+        self: Transform,
         vector: VectorLike[float],
         angle: float,
         *,
@@ -1259,7 +1277,10 @@ class Transform(_vtk.vtkTransform):
         )
 
     def concatenate(
-        self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None
+        self: Transform,
+        transform: TransformLike,
+        *,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a transformation matrix.
 
@@ -1331,7 +1352,7 @@ class Transform(_vtk.vtkTransform):
         return self
 
     @property
-    def matrix(self) -> NumpyArray[float]:
+    def matrix(self: Transform) -> NumpyArray[float]:
         """Return or set the current transformation matrix.
 
         Notes
@@ -1357,12 +1378,12 @@ class Transform(_vtk.vtkTransform):
         return array
 
     @matrix.setter
-    def matrix(self, trans: TransformLike):  # numpydoc ignore=GL08
+    def matrix(self: Transform, trans: TransformLike) -> None:
         self.identity()
         self.concatenate(trans)
 
     @property
-    def inverse_matrix(self) -> NumpyArray[float]:
+    def inverse_matrix(self: Transform) -> NumpyArray[float]:
         """Return the inverse of the current transformation :attr:`matrix`.
 
         Notes
@@ -1382,13 +1403,13 @@ class Transform(_vtk.vtkTransform):
             Current inverse transformation matrix.
 
         """
-        array = array_from_vtkmatrix(self.GetInverse().GetMatrix())
+        array = array_from_vtkmatrix(self.GetInverse().GetMatrix())  # type: ignore[attr-defined]
         if self.check_finite:
             _validation.check_finite(array, name='matrix')
         return array
 
     @property
-    def matrix_list(self) -> list[NumpyArray[float]]:
+    def matrix_list(self: Transform) -> list[NumpyArray[float]]:
         """Return a list of all current transformation matrices.
 
         Notes
@@ -1413,7 +1434,7 @@ class Transform(_vtk.vtkTransform):
         ]
 
     @property
-    def inverse_matrix_list(self) -> list[NumpyArray[float]]:
+    def inverse_matrix_list(self: Transform) -> list[NumpyArray[float]]:
         """Return a list of all inverse transformations applied by this :class:`Transform`.
 
         Notes
@@ -1434,18 +1455,18 @@ class Transform(_vtk.vtkTransform):
 
         """
         return [
-            array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetInverse().GetMatrix())
+            array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetInverse().GetMatrix())  # type: ignore[attr-defined]
             for i in range(self.n_transformations)
         ]
 
     @property
-    def n_transformations(self) -> int:  # numpydoc ignore: RT01
+    def n_transformations(self: Transform) -> int:  # numpydoc ignore: RT01
         """Return the current number of concatenated transformations."""
         return self.GetNumberOfConcatenatedTransforms()
 
     @overload
-    def apply(  # numpydoc ignore: GL08
-        self,
+    def apply(
+        self: Transform,
         obj: VectorLike[float] | MatrixLike[float],
         /,
         *,
@@ -1454,18 +1475,18 @@ class Transform(_vtk.vtkTransform):
         transform_all_input_vectors: bool = ...,
     ) -> NumpyArray[float]: ...
     @overload
-    def apply(  # numpydoc ignore: GL08
-        self,
-        obj: DataSet,
+    def apply(
+        self: Transform,
+        obj: ConcreteDataSetType,
         /,
         *,
         inverse: bool = ...,
         copy: bool = ...,
         transform_all_input_vectors: bool = ...,
-    ) -> DataSet: ...
+    ) -> ConcreteDataSetType: ...
     @overload
-    def apply(  # numpydoc ignore: GL08
-        self,
+    def apply(
+        self: Transform,
         obj: MultiBlock,
         /,
         *,
@@ -1474,8 +1495,8 @@ class Transform(_vtk.vtkTransform):
         transform_all_input_vectors: bool = ...,
     ) -> MultiBlock: ...
     def apply(
-        self,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
+        self: Transform,
+        obj: VectorLike[float] | MatrixLike[float] | ConcreteDataSetType | MultiBlock,
         /,
         *,
         inverse: bool = False,
@@ -1572,10 +1593,11 @@ class Transform(_vtk.vtkTransform):
 
         matrix = self.inverse_matrix if inverse else self.matrix
         # Validate array - make sure we have floats
-        array = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
+        array: NumpyArray[float] = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
 
         # Transform a single point
+        out: NumpyArray[float] | None
         if array.shape == (3,):
             out = (matrix @ (*array, 1))[:3]
             if inplace:
@@ -1585,9 +1607,209 @@ class Transform(_vtk.vtkTransform):
 
         # Transform many points
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
-        return array if inplace else out
+        if out is not None:
+            return out
+        else:
+            return array
 
-    def invert(self) -> Transform:  # numpydoc ignore: RT01
+    def decompose(
+        self: Transform,
+        *,
+        homogeneous: bool = False,
+    ) -> tuple[
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+        NumpyArray[float],
+    ]:
+        """Decompose the current transformation into its components.
+
+        Decompose the :attr:`matrix` ``M`` into
+
+        - translation ``T``
+        - rotation ``R``
+        - reflection ``N``
+        - scaling ``S``
+        - shearing ``K``
+
+        such that, when represented as 4x4 matrices, ``M = TRNSK``. The decomposition is
+        unique and is computed with polar matrix decomposition.
+
+        By default, compact representations of the transformations are returned (e.g. as a
+        3-element vector or a 3x3 matrix). Optionally, 4x4 matrices may be returned instead.
+
+        .. note::
+
+            - The rotation is orthonormal and right-handed with positive determinant.
+            - The scaling factors are positive.
+            - The reflection is either ``1`` (no reflection) or ``-1`` (has reflection)
+              and can be used like a scaling factor.
+
+        Parameters
+        ----------
+        homogeneous : bool, default: False
+            If ``True``, return the components (translation, rotation, etc.) as 4x4
+            homogeneous matrices. By default, reflection is a scalar, translation and
+            scaling are length-3 vectors, and rotation and shear are 3x3 matrices.
+
+        Returns
+        -------
+        numpy.ndarray
+            Translation component ``T``. Returned as a 3-element vector (or a 4x4
+            translation matrix if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Rotation component ``R``. Returned as a 3x3 orthonormal rotation matrix of row
+            vectors (or a 4x4 rotation matrix if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Reflection component ``N``. Returned as a NumPy scalar (or a 4x4 reflection
+            matrix if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Scaling component ``S``. Returned as a 3-element vector (or a 4x4 scaling matrix
+            if ``homogeneous`` is ``True``).
+
+        numpy.ndarray
+            Shear component ``K``. Returned as a 3x3 matrix with ones on the diagonal and
+            shear values in the off-diagonals (or as a 4x4 shearing matrix if ``homogeneous``
+            is ``True``).
+
+        Examples
+        --------
+        Create a transform by concatenating scaling, rotation, and translation
+        matrices.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> transform = pv.Transform()
+        >>> _ = transform.scale(1, 2, 3)
+        >>> _ = transform.rotate_z(90)
+        >>> _ = transform.translate(4, 5, 6)
+        >>> transform
+        Transform (...)
+          Num Transformations: 3
+          Matrix:  [[ 0., -2.,  0.,  4.],
+                    [ 1.,  0.,  0.,  5.],
+                    [ 0.,  0.,  3.,  6.],
+                    [ 0.,  0.,  0.,  1.]]
+
+        Decompose the matrix.
+
+        >>> T, R, N, S, K = transform.decompose()
+
+        Since the input has no shear this component is the identity matrix.
+        Similarly, there are no reflections so its value is ``1``. All other components
+        are recovered perfectly and match the input.
+
+        >>> K  # shear
+        array([[1., 0., 0.],
+               [0., 1., 0.],
+               [0., 0., 1.]])
+
+        >>> S  # scale
+        array([1., 2., 3.])
+
+        >>> N  # reflection
+        array(1.)
+
+        >>> R  # rotation
+        array([[ 0., -1.,  0.],
+               [ 1.,  0.,  0.],
+               [ 0.,  0.,  1.]])
+
+        >>> T  # translation
+        array([4., 5., 6.])
+
+        Concatenate a shear component using pre-multiplication so that shearing is
+        the first transformation.
+
+        >>> shear = np.eye(4)
+        >>> shear[0, 1] = 0.1  # xy shear
+        >>> _ = transform.concatenate(shear, multiply_mode='pre')
+
+        Repeat the decomposition and show its components. Note how the decomposed shear
+        does not perfectly match the input shear matrix values. The values of the
+        scaling and rotation components are also affected and do not exactly match the
+        input. This is expected, because the shear can be partially factored as a
+        combination of rotation and scaling.
+
+        >>> T, R, N, S, K = transform.decompose()
+
+        >>> K  # shear
+        array([[1.        , 0.03333333, 0.        ],
+               [0.01663894, 1.        , 0.        ],
+               [0.        , 0.        , 1.        ]])
+
+        >>> S  # scale
+        array([0.99944491, 2.0022213 , 3.        ])
+
+        >>> N  # reflection
+        array(1.)
+
+        >>> R  # rotation
+        array([[ 0.03331483, -0.99944491,  0.        ],
+               [ 0.99944491,  0.03331483,  0.        ],
+               [ 0.        ,  0.        ,  1.        ]])
+
+        >>> T  # translation
+        array([4., 5., 6.])
+
+        Although the values may not match the input exactly, the decomposition is
+        nevertheless valid and can be used to re-compose the original transformation.
+
+        >>> T, R, N, S, K = transform.decompose(homogeneous=True)
+        >>> T @ R @ N @ S @ K
+        array([[-5.76153045e-17, -2.00000000e+00,  0.00000000e+00,
+                 4.00000000e+00],
+               [ 1.00000000e+00,  1.00000000e-01,  0.00000000e+00,
+                 5.00000000e+00],
+               [ 0.00000000e+00,  0.00000000e+00,  3.00000000e+00,
+                 6.00000000e+00],
+               [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+                 1.00000000e+00]])
+
+        Alternatively, re-compose the transformation as a new
+        :class:`~pyvista.Transform` with pre-multiplication.
+
+        >>> recomposed = pv.Transform([T, R, N, S, K], multiply_mode='pre')
+        >>> np.allclose(recomposed.matrix, transform.matrix)
+        True
+
+        Concatenate a reflection and decompose the transform again.
+
+        >>> _ = transform.flip_x()
+        >>> T, R, N, S, K = transform.decompose()
+
+        The reflection component is now ``-1``.
+
+        >>> N  # reflection
+        array(-1.)
+
+        The decomposition may be simplified to a ``TRSK`` decomposition by combining
+        the reflection component with either the rotation or the scaling term.
+
+        Multiplying the reflection with the rotation will make it a left-handed rotation
+        with negative determinant:
+
+        >>> R = R * N
+        >>> np.linalg.det(R) < 0
+        np.True_
+
+        Alternatively, keep the rotation right-handed but make the scaling factors negative:
+
+        >>> S = S * N
+        >>> S  # scale
+        array([-0.99944491, -2.0022213 , -3.        ])
+
+        """
+        return decomposition(
+            self.matrix,
+            homogeneous=homogeneous,
+        )
+
+    def invert(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
 
         The current transformation :attr:`matrix` (including all matrices in the
@@ -1641,7 +1863,7 @@ class Transform(_vtk.vtkTransform):
         self.Inverse()
         return self
 
-    def identity(self) -> Transform:  # numpydoc ignore: RT01
+    def identity(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Set the transformation to the identity transformation.
 
         This can be used to "reset" the transform.
@@ -1672,7 +1894,7 @@ class Transform(_vtk.vtkTransform):
         return self
 
     @property
-    def is_inverted(self) -> bool:  # numpydoc ignore: RT01
+    def is_inverted(self: Transform) -> bool:  # numpydoc ignore: RT01
         """Get the inverse flag of the transformation.
 
         This flag is modified whenever :meth:`invert` is called.
@@ -1680,11 +1902,11 @@ class Transform(_vtk.vtkTransform):
         return bool(self.GetInverseFlag())
 
     def _concatenate_with_translations(
-        self,
+        self: Transform,
         transform: TransformLike,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
-    ):
+    ) -> Transform:
         translate_before, translate_after = self._get_point_translations(
             point=point, multiply_mode=multiply_mode
         )
@@ -1699,8 +1921,10 @@ class Transform(_vtk.vtkTransform):
         return self
 
     def _get_point_translations(
-        self, point: VectorLike[float] | None, multiply_mode: Literal['pre', 'post'] | None
-    ):
+        self: Transform,
+        point: VectorLike[float] | None,
+        multiply_mode: Literal['pre', 'post'] | None,
+    ) -> tuple[None | Transform, None | Transform]:
         point = point if point is not None else self.point
         if point is not None:
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')
@@ -1713,7 +1937,7 @@ class Transform(_vtk.vtkTransform):
         return None, None
 
     @property
-    def check_finite(self) -> bool:  # numpydoc ignore: RT01
+    def check_finite(self: Transform) -> bool:  # numpydoc ignore: RT01
         """Check that the :attr:`matrix` and :attr:`inverse_matrix` have finite values.
 
         If ``True``, all transformations are checked to ensure they only contain
@@ -1726,5 +1950,5 @@ class Transform(_vtk.vtkTransform):
         return self._check_finite
 
     @check_finite.setter
-    def check_finite(self, value: bool):  # numpydoc ignore: GL08
+    def check_finite(self: Transform, value: bool) -> None:
         self._check_finite = bool(value)

@@ -98,7 +98,7 @@ def test_init_bad_input():
     with pytest.raises(TypeError, match='Cannot work with input type'):
         pv.UnstructuredGrid(np.array(1))
 
-    with pytest.raises(TypeError, match='must be a numeric type'):
+    with pytest.raises(TypeError, match='points must have real numbers.'):
         pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
 
     rnd_generator = np.random.default_rng()
@@ -862,6 +862,18 @@ def test_create_image_data_from_specs():
     # and is a copy
     grid.origin = (0, 0, 0)
     assert grid != grid_from_grid
+
+
+def test_image_data_init_kwargs():
+    vector = (1, 2, 3)
+    image = pv.ImageData(dimensions=vector)
+    assert image.dimensions == vector
+
+    image = pv.ImageData(spacing=vector)
+    assert image.spacing == vector
+
+    image = pv.ImageData(origin=vector)
+    assert image.origin == vector
 
 
 @pytest.mark.parametrize('dims', [None, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)])

@@ -37,7 +37,9 @@ if TYPE_CHECKING:  # pragma: no cover
 class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    def gaussian_smooth(self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False):
+    def gaussian_smooth(
+        self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar: bool = False
+    ):
         """Smooth the data with a Gaussian kernel.
 
         Parameters
@@ -90,12 +92,12 @@ class ImageDataFilters(DataSetFilters):
         alg = _vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(self)
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             if field.value == 1:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
-            field = self.get_array_association(scalars, preference='point')
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field.value == 1:
                 raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
@@ -106,11 +108,11 @@ class ImageDataFilters(DataSetFilters):
             scalars,
         )  # args: (idx, port, connection, field, name)
         if isinstance(radius_factor, Iterable):
-            alg.SetRadiusFactors(radius_factor)
+            alg.SetRadiusFactors(radius_factor)  # type: ignore[call-overload]
         else:
             alg.SetRadiusFactors(radius_factor, radius_factor, radius_factor)
         if isinstance(std_dev, Iterable):
-            alg.SetStandardDeviations(std_dev)
+            alg.SetStandardDeviations(std_dev)  # type: ignore[call-overload]
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
         _update_alg(alg, progress_bar, 'Performing Gaussian Smoothing')
@@ -121,7 +123,7 @@ class ImageDataFilters(DataSetFilters):
         kernel_size=(3, 3, 3),
         scalars=None,
         preference='point',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Smooth data using a median filter.
 
@@ -187,10 +189,10 @@ class ImageDataFilters(DataSetFilters):
         alg = _vtk.vtkImageMedian3D()
         alg.SetInputDataObject(self)
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
         else:
-            field = self.get_array_association(scalars, preference=preference)
+            field = self.get_array_association(scalars, preference=preference)  # type: ignore[attr-defined]
         alg.SetInputArrayToProcess(
             0,
             0,
@@ -202,7 +204,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Median Smoothing')
         return _get_output(alg)
 
-    def extract_subset(self, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
+    def extract_subset(
+        self, voi, rate=(1, 1, 1), boundary: bool = False, progress_bar: bool = False
+    ):
         """Select piece (e.g., volume of interest).
 
         To use this filter set the VOI ivar which are i-j-k min/max indices
@@ -267,7 +271,7 @@ class ImageDataFilters(DataSetFilters):
         erode_value=0.0,
         kernel_size=(3, 3, 3),
         scalars=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Dilates one value and erodes another.
 
@@ -330,12 +334,12 @@ class ImageDataFilters(DataSetFilters):
         alg = _vtk.vtkImageDilateErode3D()
         alg.SetInputDataObject(self)
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
             if field.value == 1:
                 raise ValueError('If `scalars` not given, active scalars must be point array.')
         else:
-            field = self.get_array_association(scalars, preference='point')
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
             if field.value == 1:
                 raise ValueError('Can only process point data, given `scalars` are cell data.')
         alg.SetInputArrayToProcess(
@@ -358,7 +362,7 @@ class ImageDataFilters(DataSetFilters):
         out_value=0.0,
         scalars=None,
         preference='point',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Apply a threshold to scalar values in a uniform grid.
 
@@ -426,19 +430,19 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            set_default_active_scalars(self)  # type: ignore[arg-type]
+            field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
         else:
-            field = self.get_array_association(scalars, preference=preference)
+            field = self.get_array_association(scalars, preference=preference)  # type: ignore[attr-defined]
 
         # For some systems integer scalars won't threshold
         # correctly. Cast to float to be robust.
         cast_dtype = np.issubdtype(
-            array_dtype := self.active_scalars.dtype,
+            array_dtype := self.active_scalars.dtype,  # type: ignore[attr-defined]
             int,
         ) and array_dtype != np.dtype(np.uint8)
         if cast_dtype:
-            self[scalars] = self[scalars].astype(float, casting='safe')
+            self[scalars] = self[scalars].astype(float, casting='safe')  # type: ignore[index]
 
         alg = _vtk.vtkImageThreshold()
         alg.SetInputDataObject(self)
@@ -462,23 +466,23 @@ class ImageDataFilters(DataSetFilters):
         # set the replacement values / modes
         if in_value is not None:
             alg.SetReplaceIn(True)
-            alg.SetInValue(np.array(in_value).astype(array_dtype))
+            alg.SetInValue(np.array(in_value).astype(array_dtype))  # type: ignore[arg-type]
         else:
             alg.SetReplaceIn(False)
         if out_value is not None:
             alg.SetReplaceOut(True)
-            alg.SetOutValue(np.array(out_value).astype(array_dtype))
+            alg.SetOutValue(np.array(out_value).astype(array_dtype))  # type: ignore[arg-type]
         else:
             alg.SetReplaceOut(False)
         # run the algorithm
         _update_alg(alg, progress_bar, 'Performing Image Thresholding')
         output = _get_output(alg)
         if cast_dtype:
-            self[scalars] = self[scalars].astype(array_dtype)
+            self[scalars] = self[scalars].astype(array_dtype)  # type: ignore[index]
             output[scalars] = output[scalars].astype(array_dtype)
         return output
 
-    def fft(self, output_scalars_name=None, progress_bar=False):
+    def fft(self, output_scalars_name=None, progress_bar: bool = False):
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -538,14 +542,14 @@ class ImageDataFilters(DataSetFilters):
 
         """
         # check for active scalars, otherwise risk of segfault
-        if self.point_data.active_scalars_name is None:
+        if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
             try:
-                set_default_active_scalars(self)
+                set_default_active_scalars(self)  # type: ignore[arg-type]
             except MissingDataError:
                 raise MissingDataError('FFT filter requires point scalars.') from None
 
             # possible only cell scalars were made active
-            if self.point_data.active_scalars_name is None:
+            if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
                 raise MissingDataError('FFT filter requires point scalars.')
 
         alg = _vtk.vtkImageFFT()
@@ -554,12 +558,12 @@ class ImageDataFilters(DataSetFilters):
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
-            self.point_data.active_scalars_name,
+            self.point_data.active_scalars_name,  # type: ignore[attr-defined]
             output_scalars_name,
         )
         return output
 
-    def rfft(self, output_scalars_name=None, progress_bar=False):
+    def rfft(self, output_scalars_name=None, progress_bar: bool = False):
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -626,7 +630,7 @@ class ImageDataFilters(DataSetFilters):
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
-            self.point_data.active_scalars_name,
+            self.point_data.active_scalars_name,  # type: ignore[attr-defined]
             output_scalars_name,
         )
         return output
@@ -638,7 +642,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
@@ -706,7 +710,7 @@ class ImageDataFilters(DataSetFilters):
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
-            self.point_data.active_scalars_name,
+            self.point_data.active_scalars_name,  # type: ignore[attr-defined]
             output_scalars_name,
         )
         return output
@@ -718,7 +722,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 
@@ -786,12 +790,12 @@ class ImageDataFilters(DataSetFilters):
         output = _get_output(alg)
         self._change_fft_output_scalars(
             output,
-            self.point_data.active_scalars_name,
+            self.point_data.active_scalars_name,  # type: ignore[attr-defined]
             output_scalars_name,
         )
         return output
 
-    def _change_fft_output_scalars(self, dataset, orig_name, out_name):
+    def _change_fft_output_scalars(self, dataset, orig_name, out_name) -> None:
         """Modify the name and dtype of the output scalars for an FFT filter."""
         name = orig_name if out_name is None else out_name
         pdata = dataset.point_data
@@ -808,10 +812,10 @@ class ImageDataFilters(DataSetFilters):
 
         """
         # check for complex active point scalars, otherwise the risk of segfault
-        if self.point_data.active_scalars_name is None:
-            possible_scalars = self.point_data.keys()
+        if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
+            possible_scalars = self.point_data.keys()  # type: ignore[attr-defined]
             if len(possible_scalars) == 1:
-                self.set_active_scalars(possible_scalars[0], preference='point')
+                self.set_active_scalars(possible_scalars[0], preference='point')  # type: ignore[attr-defined]
             elif len(possible_scalars) > 1:
                 raise AmbiguousDataError(
                     'There are multiple point scalars available. Set one to be '
@@ -820,7 +824,7 @@ class ImageDataFilters(DataSetFilters):
             else:
                 raise MissingDataError('FFT filters require point scalars.')
 
-        if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):
+        if not np.issubdtype(self.point_data.active_scalars.dtype, np.complexfloating):  # type: ignore[attr-defined]
             raise ValueError(
                 'Active scalars must be complex data for this filter, represented '
                 'as an array with a datatype of `numpy.complex64` or '
@@ -979,7 +983,7 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
-        return cast(pyvista.PolyData, wrap(alg.GetOutput()))
+        return wrap(alg.GetOutput())
 
     def points_to_cells(
         self,
@@ -1016,7 +1020,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as voxel cells instead of as points.
 
         .. note::
-            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            Only the input's :attr:`~pyvista.core.Grid.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -1220,7 +1224,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as points instead of as voxel cells.
 
         .. note::
-            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            Only the input's :attr:`~pyvista.core.Grid.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -1475,7 +1479,7 @@ class ImageDataFilters(DataSetFilters):
         | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         scalars: str | None = None,
         pad_all_scalars: bool = False,
-        progress_bar=False,
+        progress_bar: bool = False,
         pad_singleton_dims: bool | None = None,
     ) -> pyvista.ImageData:
         """Enlarge an image by padding its boundaries with new points.
@@ -1490,7 +1494,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        pad_value : float | sequence[float] | 'mirror' | 'wrap', default : 0.0
+        pad_value : float | sequence[float] | 'mirror' | 'wrap', default: 0.0
             Padding value(s) given to new points outside the original image extent.
             Specify:
 
@@ -1499,7 +1503,7 @@ class ImageDataFilters(DataSetFilters):
             - ``'wrap'``: New points are filled by wrapping around the padding axis.
             - ``'mirror'``: New points are filled by mirroring the padding axis.
 
-        pad_size : int | sequence[int], default : 1
+        pad_size : int | sequence[int], default: 1
             Number of points to add to the image boundaries. Specify:
 
             - A single value to pad all boundaries equally.
@@ -1731,7 +1735,7 @@ class ImageDataFilters(DataSetFilters):
             if pad_value == 'mirror':
                 alg = _vtk.vtkImageMirrorPad()
             elif pad_value == 'wrap':
-                alg = _vtk.vtkImageWrapPad()
+                alg = _vtk.vtkImageWrapPad()  # type: ignore[assignment]
             else:
                 raise ValueError(error_msg)
         else:
@@ -1769,7 +1773,7 @@ class ImageDataFilters(DataSetFilters):
                         )
             else:
                 pad_multi_component = False
-            alg = _vtk.vtkImageConstantPad()
+            alg = _vtk.vtkImageConstantPad()  # type: ignore[assignment]
 
         alg.SetInputDataObject(self)
         alg.SetOutputWholeExtent(*padded_extents)
@@ -1785,12 +1789,12 @@ class ImageDataFilters(DataSetFilters):
                 return _get_output(alg)
 
             # Set scalars since the filter only operates on the active scalars
-            self.set_active_scalars(scalars_, preference='point')
+            self.set_active_scalars(scalars_, preference='point')  # type: ignore[attr-defined]
             if pad_multi_component is None:
                 return _update_and_get_output()
             else:
                 # Constant padding
-                alg.SetConstant(val[0])
+                alg.SetConstant(val[0])  # type: ignore[attr-defined]
                 output = _update_and_get_output()
                 if pad_multi_component is False:
                     # Single component padding
@@ -1801,7 +1805,7 @@ class ImageDataFilters(DataSetFilters):
                     output_scalars = output.active_scalars
                     num_output_components = _get_num_components(output_scalars)
                     for component in range(1, num_output_components):
-                        alg.SetConstant(val[component])
+                        alg.SetConstant(val[component])  # type: ignore[attr-defined]
                         output_scalars[:, component] = _update_and_get_output()[scalars_][
                             :,
                             component,
@@ -1847,8 +1851,8 @@ class ImageDataFilters(DataSetFilters):
         :func:`~pyvista.ImageDataFilters.cells_to_points` and the output is meshed back
         to a cell-based representation with :func:`~pyvista.ImageDataFilters.points_to_cells`,
         effectively filtering based on face connectivity. The connected regions are
-        extracted and labelled according to the strategy defined by `extraction_mode`
-        and `label_mode`, respectively. Unconnected regions are labelled with `0` value.
+        extracted and labelled according to the strategy defined by ``extraction_mode``
+        and ``label_mode``, respectively. Unconnected regions are labelled with ``0`` value.
 
         .. versionadded:: 0.45.0
 
@@ -1860,46 +1864,46 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         scalars : str, optional
-            Scalars to use to filter points. If `None` is provided, the scalars is
+            Scalars to use to filter points. If ``None`` is provided, the scalars is
             automatically set, if possible.
 
         scalar_range : str, Literal['auto', 'foreground', 'vtk_default'], VectorLike[float], default: 'auto'
-            Points whose scalars value is within `'scalar_range'` are considered for
+            Points whose scalars value is within ``'scalar_range'`` are considered for
             connectivity. The bounds are inclusive.
 
-            - `'auto'`: includes the full data range, similarly to :meth:`~pyvista.DataFilters.connectivity`.
-            - `'foreground'`: includes the full data range except the smallest value.
-            - `'vtk_default'`: default to [`0.5`, :const:`~vtk.VTK_DOUBLE_MAX`].
-            - `VectorLike[float]`: explicitly set the range.
+            - ``'auto'``: includes the full data range, similarly to :meth:`~pyvista.DataSetFilters.connectivity`.
+            - ``'foreground'``: includes the full data range except the smallest value.
+            - ``'vtk_default'``: default to [``0.5``, :const:`~vtk.VTK_DOUBLE_MAX`].
+            - ``VectorLike[float]``: explicitly set the range.
 
-            The bounds are always cast to floats since `vtk` expects doubles. The scalars
+            The bounds are always cast to floats since vtk expects doubles. The scalars
             data are also cast to floats to avoid unexpected behavior arising from implicit
             type conversion. The only exceptions is if both bounds are whole numbers, in
             which case the implicit conversion is safe. It will optimize resources consumption
             if the data are integers.
 
         extraction_mode : Literal['all', 'largest', 'seeded'], default: 'all'
-            Determine how the connected regions are extracted. If `'all'`, all connected
-            regions are extracted. If `'largest'`, only the largest region is extracted.
-            If `'seeded'`, only the regions that include the points defined with
-            `point_seeds` are extracted.
+            Determine how the connected regions are extracted. If ``'all'``, all connected
+            regions are extracted. If ``'largest'``, only the largest region is extracted.
+            If ``'seeded'``, only the regions that include the points defined with
+            ``point_seeds`` are extracted.
 
         point_seeds : MatrixLike[float], VectorLike[float], _vtk.vtkDataSet, optional
             The point coordinates to use as seeds, specified as a (N, 3) array like or
-            as a :class:`~vtk.vtkDataSet`. Has no effect if `extraction_mode` is not
-            `'seeded'`.
+            as a :class:`~vtk.vtkDataSet`. Has no effect if ``extraction_mode`` is not
+            ``'seeded'``.
 
         label_mode : Literal['size', 'constant', 'seeds'], default: 'size'
-            Determine how the extracted regions are labelled. If `'size'`, label regions
-            by decreasing size (i.e., count of cells), starting at `1`. If `'constant'`,
-            label with the provided `constant_value`. If `'seeds'`, label according to
-            the seed order, starting at `1`.
+            Determine how the extracted regions are labelled. If ``'size'``, label regions
+            by decreasing size (i.e., count of cells), starting at ``1``. If ``'constant'``,
+            label with the provided ``constant_value``. If ``'seeds'``, label according to
+            the seed order, starting at ``1``.
 
         constant_value : int, optional
-            The constant label value to use. Has no effect if `label_mode` is not `'seeds'`.
+            The constant label value to use. Has no effect if ``label_mode`` is not ``'seeds'``.
 
-        inplace : default: False
-            If `True`, perform an inplace labelling of the ImageData. Else, returns a
+        inplace : bool, default: False
+            If ``True``, perform an inplace labelling of the ImageData. Else, returns a
             new ImageData.
 
         progress_bar : bool, default: False
@@ -1909,7 +1913,7 @@ class ImageDataFilters(DataSetFilters):
         -------
         pyvista.ImageData
             Either the input ImageData or a generated one where connected regions are
-            labelled with a `'RegionId'` point-based or cell-based data.
+            labelled with a ``'RegionId'`` point-based or cell-based data.
 
         NDArray[int]
             The labels of each extracted regions.
@@ -1944,8 +1948,8 @@ class ImageDataFilters(DataSetFilters):
         ... ]
         >>> segmented_grid.plot(show_edges=True)
 
-        Label the connected regions. The cells with a `0` value are excluded from the
-        connected regions and labelled with `0`. The remaining cells define 3 different
+        Label the connected regions. The cells with a ``0`` value are excluded from the
+        connected regions and labelled with ``0``. The remaining cells define 3 different
         regions that are labelled by decreasing size.
 
         >>> connected, labels, sizes = segmented_grid.label_connectivity(
@@ -1960,7 +1964,7 @@ class ImageDataFilters(DataSetFilters):
         ... )
         >>> pl.show()
 
-        Exclude the cell with a `2` value.
+        Exclude the cell with a ``2`` value.
 
         >>> connected, labels, sizes = segmented_grid.label_connectivity(
         ...     scalar_range=[1, 1]
@@ -2056,7 +2060,7 @@ class ImageDataFilters(DataSetFilters):
             0,
             0,
             field.value,
-            scalars,
+            scalars,  # type: ignore[arg-type]
         )  # args: (idx, port, connection, field, name)
 
         if extraction_mode == 'all':

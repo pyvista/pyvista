@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import enum
-from functools import lru_cache
+from functools import cache
 import importlib
 import sys
 import threading
 import traceback
 from typing import TYPE_CHECKING
-from typing import Sequence
 from typing import TypeVar
 import warnings
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
 T = TypeVar('T', bound='AnnotatedIntEnum')
 
 
-def assert_empty_kwargs(**kwargs):
+def assert_empty_kwargs(**kwargs) -> bool:
     """Assert that all keyword arguments have been used (internal helper).
 
     If any keyword arguments are passed, a ``TypeError`` is raised.
@@ -168,8 +168,8 @@ class AnnotatedIntEnum(int, enum.Enum):
             raise ValueError(f'{cls.__name__} has no value matching {value}')
 
 
-@lru_cache(maxsize=None)
-def has_module(module_name):
+@cache
+def has_module(module_name) -> bool:
     """Return if a module can be imported.
 
     Parameters
@@ -183,11 +183,11 @@ def has_module(module_name):
         ``True`` if the module can be imported, otherwise ``False``.
 
     """
-    module_spec = importlib.util.find_spec(module_name)
+    module_spec = importlib.util.find_spec(module_name)  # type: ignore[attr-defined]
     return module_spec is not None
 
 
-def try_callback(func, *args):
+def try_callback(func, *args) -> None:
     """Wrap a given callback in a try statement.
 
     Parameters
@@ -225,7 +225,7 @@ def threaded(fn):
 
     """
 
-    def wrapper(*args, **kwargs):  # numpydoc ignore=GL08
+    def wrapper(*args, **kwargs):
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
@@ -246,7 +246,7 @@ class conditional_decorator:
 
     """
 
-    def __init__(self, dec, condition):
+    def __init__(self, dec, condition) -> None:
         """Initialize."""
         self.decorator = dec
         self.condition = condition

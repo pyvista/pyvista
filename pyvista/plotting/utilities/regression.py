@@ -107,7 +107,7 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     return img_array.reshape(tgt_size)[::-1]
 
 
-def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
+def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = False, scale=1):
     """Extract the image from the render window as an array.
 
     Parameters
@@ -155,7 +155,7 @@ def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
     return data
 
 
-def compare_images(im1, im2, threshold=1, use_vtk=True):
+def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
     """Compare two different images of the same size.
 
     Parameters
@@ -210,7 +210,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     from pyvista import read
     from pyvista import wrap
 
-    def to_img(img):  # numpydoc ignore=GL08
+    def to_img(img):
         if isinstance(img, ImageData):  # pragma: no cover
             return img
         elif isinstance(img, _vtk.vtkImageData):
