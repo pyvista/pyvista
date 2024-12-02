@@ -5696,6 +5696,10 @@ class DataSetFilters:
 
         .. versionadded:: 0.44
 
+        .. versionchanged:: 0.45
+            This filter now operates on empty inputs and will return an empty mesh for
+            these cases. Previously, an error was raised.
+
         Parameters
         ----------
         values : number | array_like | dict, optional
@@ -6034,14 +6038,15 @@ class DataSetFilters:
 
         if self.n_points == 0:  # type: ignore[attr-defined]
             # Empty input, return empty output
+            out = pyvista.UnstructuredGrid()
             if split:
                 # Do basic validation just to get num blocks for multiblock
                 _, values_ = _get_inputs_from_dict(values)
                 _, ranges_ = _get_inputs_from_dict(ranges)
                 n_values = len(np.atleast_1d(values_)) if values_ is not None else 0
                 n_ranges = len(np.atleast_2d(ranges_)) if ranges_ is not None else 0
-                return pyvista.MultiBlock([self.copy() for _ in range(n_values + n_ranges)])  # type: ignore[attr-defined]
-            return self.copy()  # type: ignore[attr-defined]
+                return pyvista.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])  # type: ignore[attr-defined]
+            return out
 
         array, association = _validate_scalar_array(scalars, preference)
         array, num_components, component_logic = _validate_component_mode(array, component_mode)
