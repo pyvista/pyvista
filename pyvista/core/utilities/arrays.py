@@ -19,6 +19,7 @@ from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -259,7 +260,7 @@ def convert_array(arr, name=None, deep: bool = False, array_type=None):
     return _vtk.vtk_to_numpy(arr)
 
 
-def get_array(mesh, name, preference='cell', err: bool = False) -> pyvista.ndarray | None:
+def get_array(mesh, name, preference='cell', err: bool = False) -> pyvista_ndarray | None:
     """Search point, cell and field data for an array.
 
     Parameters

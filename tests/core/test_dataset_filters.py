@@ -703,8 +703,8 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(rng={})
 
 
-def test_elevation():
-    dataset = examples.load_uniform()
+def test_elevation(uniform):
+    dataset = uniform
     # Test default params
     elev = dataset.elevation(progress_bar=True)
     assert 'Elevation' in elev.array_names
@@ -733,7 +733,8 @@ def test_elevation():
     assert elev.active_scalars_name == 'Elevation'
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
-    with pytest.raises(TypeError):
+    match = 'Data Range has shape () which is not allowed. Shape must be 2.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         elev = dataset.elevation(scalar_range=0.5, progress_bar=True)
     with pytest.raises(ValueError):  # noqa: PT011
         elev = dataset.elevation(scalar_range=[1, 2, 3], progress_bar=True)
@@ -1746,11 +1747,11 @@ def test_streamlines_max_length():
         assert np.isclose(stream.length, 1)
 
     def check_deprecation():
-        if pv._version.version_info > (0, 48):
+        if pv._version.version_info[:2] > (0, 48):
             raise RuntimeError(
                 'Convert error ``max_time`` parameter in ``streamlines_from_source``'
             )
-        if pv._version.version_info > (0, 49):
+        if pv._version.version_info[:2] > (0, 49):
             raise RuntimeError('Remove ``max_time`` parameter in ``streamlines_from_source``')
 
     with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):

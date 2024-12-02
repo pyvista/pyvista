@@ -74,7 +74,7 @@ class Axes(_vtk.vtkAxes):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value):  # numpydoc ignore=GL08
+    def origin(self, value):
         self.SetOrigin(value)
 
     def show_actor(self):

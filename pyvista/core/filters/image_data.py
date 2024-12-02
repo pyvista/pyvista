@@ -983,7 +983,7 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
-        return cast(pyvista.PolyData, wrap(alg.GetOutput()))
+        return wrap(alg.GetOutput())
 
     def points_to_cells(
         self,
@@ -1020,7 +1020,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as voxel cells instead of as points.
 
         .. note::
-            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            Only the input's :attr:`~pyvista.core.Grid.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -1224,7 +1224,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as points instead of as voxel cells.
 
         .. note::
-            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
+            Only the input's :attr:`~pyvista.core.Grid.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -1494,7 +1494,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        pad_value : float | sequence[float] | 'mirror' | 'wrap', default : 0.0
+        pad_value : float | sequence[float] | 'mirror' | 'wrap', default: 0.0
             Padding value(s) given to new points outside the original image extent.
             Specify:
 
@@ -1503,7 +1503,7 @@ class ImageDataFilters(DataSetFilters):
             - ``'wrap'``: New points are filled by wrapping around the padding axis.
             - ``'mirror'``: New points are filled by mirroring the padding axis.
 
-        pad_size : int | sequence[int], default : 1
+        pad_size : int | sequence[int], default: 1
             Number of points to add to the image boundaries. Specify:
 
             - A single value to pad all boundaries equally.

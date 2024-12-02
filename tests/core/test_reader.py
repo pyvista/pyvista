@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import pickle
+import re
 
 import numpy as np
 import pytest
@@ -1180,3 +1182,34 @@ def test_grdecl_reader(tmp_path):
     include_content_copy[0] = include_content_copy[0].replace('MAPAXES', 'PLACEHOLDER')
     with pytest.warns(UserWarning, match=match):
         _ = read(content, include_content_copy)
+
+
+@pytest.mark.parametrize(
+    ('data_object', 'ext'),
+    [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
+)
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='VTK version not supported.')
+def test_read_write_pickle(tmp_path, data_object, ext, datasets):
+    filepath = tmp_path / ('data_object' + ext)
+    data_object.save(filepath)
+    new_data_object = pv.read(filepath)
+    assert data_object == new_data_object
+
+    # Test raises
+    with open(str(filepath), 'wb') as f:  # noqa: PTH123
+        # Create non-mesh pickle file
+        pickle.dump([1, 2, 3], f)
+    match = (
+        "Pickled object must be an instance of <class 'pyvista.core.dataobject.DataObject'>. "
+        "Got <class 'list'> instead."
+    )
+    with pytest.raises(TypeError, match=match):
+        pv.read(filepath)
+
+    match = "Filename must be a file path with extension ('.pkl', '.pickle'). Got {} instead."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.read_pickle({})
+
+    match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.save_pickle('filename', {})

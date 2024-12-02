@@ -696,11 +696,11 @@ def test_active_t_coords_deprecated():
     mesh = pv.Cube()
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.point_data.active_t_coords
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.point_data.active_t_coords = t_coords
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
 
 
@@ -708,11 +708,11 @@ def test_active_t_coords_name_deprecated():
     mesh = pv.Cube()
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         name = mesh.point_data.active_t_coords_name
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.point_data.active_t_coords_name = name
-        if pv._version.version_info > (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
 
 
