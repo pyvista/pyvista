@@ -1535,12 +1535,12 @@ class DataSetFilters:
         # set the scalars to threshold on
         if scalars is None:
             set_default_active_scalars(self)
-            _, scalars = self.active_scalars_info
+            scalars = self.active_scalars_info.name
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
 
-        field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
+        field = get_array_association(self, scalars, preference=preference)
 
         # Run a standard threshold algorithm
         alg = _vtk.vtkThreshold()
@@ -2184,7 +2184,7 @@ class DataSetFilters:
             # Safe to cast since scalars name must be str (error is raised earlier if None)
             scalars_name = cast(str, self.active_scalars_info.name)
         else:
-            field = get_array_association(self, scalars_name, preference=preference)  # type: ignore[arg-type]
+            field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
             raise TypeError('Contour filter only works on point data.')
@@ -3365,7 +3365,7 @@ class DataSetFilters:
             field, scalars = self.active_scalars_info
         _ = get_array(self, scalars, preference='point', err=True)
 
-        field = get_array_association(self, scalars, preference='point')  # type: ignore[arg-type]
+        field = get_array_association(self, scalars, preference='point')
         if field != FieldAssociation.POINT:
             raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
@@ -5980,7 +5980,7 @@ class DataSetFilters:
             try:
                 if scalars_ is None:
                     set_default_active_scalars(self)
-                    _, scalars_ = self.active_scalars_info
+                    scalars_ = self.active_scalars_info.name
                 array_ = get_array(self, scalars_, preference=preference_, err=True)
             except MissingDataError:
                 raise ValueError(
@@ -5990,7 +5990,7 @@ class DataSetFilters:
                 raise ValueError(
                     f"Array name '{scalars_}' is not valid and does not exist with this dataset.",
                 )
-            association_ = get_array_association(self, scalars_, preference=preference_)  # type: ignore[arg-type]
+            association_ = get_array_association(self, scalars_, preference=preference_)
             return array_, association_
 
         def _validate_component_mode(array_, component_mode_):
@@ -6917,7 +6917,7 @@ class DataSetFilters:
         alg.SetQCriterionArrayName(qcriterion)
 
         alg.SetFasterApproximation(faster)
-        field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
+        field = get_array_association(self, scalars, preference=preference)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(self)
@@ -8881,9 +8881,9 @@ class DataSetFilters:
         # Set a input scalars
         if scalars is None:
             set_default_active_scalars(self)
-            _, scalars = self.active_scalars_info
+            scalars = self.active_scalars_info.name
 
-        field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
+        field = get_array_association(self, scalars, preference=preference)
 
         # Determine output scalars
         default_output_scalars = 'packed_labels'
@@ -8921,8 +8921,10 @@ class DataSetFilters:
 
         else:  # Use numpy
             # Get mapping from input ID to output ID
-            arr = get_array(self, scalars, preference=preference, err=True)  # type: ignore[arg-type]
-            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)  # type: ignore[call-overload]
+            arr = cast(
+                pyvista.pyvista_ndarray, get_array(self, scalars, preference=preference, err=True)
+            )
+            label_numbers_in, label_sizes = np.unique(arr, return_counts=True)
             if sort:
                 label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
             label_range_in = np.arange(0, np.max(label_numbers_in))
