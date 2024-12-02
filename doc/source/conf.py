@@ -246,6 +246,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*CellLiteral'),
     (r'py:.*', '.*PointLiteral'),
     (r'py:.*', '.*FieldLiteral'),
+    (r'py:.*', '.*RowLiteral'),
     (r'py:.*', '.*_SerializedDictArray'),
     #
     # PyVista AxesAssembly-related types
