@@ -1104,7 +1104,7 @@ def _set_default_kwarg_mandatory(kwargs: dict[str, Any], key: str, default: Any)
 
 
 def validate_dimensionality(
-    dimensionality: Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D'] | int | VectorLike[int],
+    dimensionality: Literal['0D', '1D', '2D', '3D'] | int | VectorLike[int],
     /,
     *,
     reshape: bool = True,
