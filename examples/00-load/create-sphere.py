@@ -34,7 +34,7 @@ mesh
 # as indicated by no points/cells being extracted.
 
 boundaries = mesh.extract_feature_edges(
-    non_manifold_edges=False, feature_edges=False, manifold_edges=False
+    non_manifold_edges=True, feature_edges=False, manifold_edges=False
 )
 boundaries
 
@@ -91,12 +91,16 @@ cell.points
 
 # %%
 # The cells on either side of the 'seam' along the start and end of
-# the azimuthal component are not connected. Visualize this by plotting
-# the boundary edges of the mesh.
+# the azimuthal component are not connected. These can be detected by
+# extracting the boundary edges.
 
 boundaries = mesh.extract_feature_edges(
-    non_manifold_edges=False, feature_edges=False, manifold_edges=False
+    non_manifold_edges=True, feature_edges=False, manifold_edges=False
 )
+boundaries
+
+# %%
+# Visualize this by plotting the boundary edges of the mesh.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True)
@@ -244,7 +248,7 @@ mesh = pv.PolyData(points, faces=faces)
 # as indicated by no points/cells being extracted.
 
 boundaries = mesh.extract_feature_edges(
-    non_manifold_edges=False, feature_edges=False, manifold_edges=False
+    non_manifold_edges=True, feature_edges=False, manifold_edges=False
 )
 boundaries
 
