@@ -771,9 +771,6 @@ class WidgetHelper:
 
         if isinstance(mesh, _vtk.vtkPolyData):
             clipper = _vtk.vtkClipPolyData()
-        # elif isinstance(mesh, vtk.vtkImageData):
-        #     clipper = vtk.vtkClipVolume()
-        #     clipper.SetMixed3DCellGeneration(True)
         else:
             clipper = _vtk.vtkTableBasedClipDataSet()  # type: ignore[assignment]
         set_algorithm_input(clipper, algo)
@@ -910,6 +907,10 @@ class WidgetHelper:
             The VTK plane widget depending on the value of ``implicit``.
 
         """
+        # TODO Try vtkClipVolume for invert and value.
+        # if isinstance(volume, vtk.vtkImageData):
+        #     clipper = vtk.vtkClipVolume()
+        #     clipper.SetMixed3DCellGeneration(True)
         if isinstance(volume, (pyvista.ImageData, pyvista.RectilinearGrid)):
             volume = self.add_volume(volume, **kwargs)  # type: ignore[attr-defined]
         elif not isinstance(volume, pyvista.plotting.volume.Volume):
