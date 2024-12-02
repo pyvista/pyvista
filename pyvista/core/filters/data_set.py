@@ -1474,7 +1474,9 @@ class DataSetFilters:
 
         See Also
         --------
-        threshold_percent, extract_values, :meth:`~pyvista.ImageDataFilters.image_threshold`
+        threshold_percent
+        :meth:`~pyvista.ImageDataFilters.image_threshold`
+        :meth:`~pyvista.DataSetFilters.extract_values`
 
         Returns
         -------
@@ -5698,7 +5700,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        values : number | array_like | dict, optional
+        values : float | ArrayLike[float] | dict, optional
             Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -8658,7 +8660,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.Dataset
+        pyvista.DataSet
             Dataset with sorted labels.
 
         Examples
@@ -8765,7 +8767,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.Dataset
+        pyvista.DataSet
             Dataset with packed labels.
 
         Examples

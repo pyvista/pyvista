@@ -580,8 +580,8 @@ def merge(
 
     Parameters
     ----------
-    datasets : sequence[:class:`pyvista.Dataset`]
-        Sequence of datasets. Can be of any :class:`pyvista.Dataset`.
+    datasets : sequence[:class:`pyvista.DataSet`]
+        Sequence of datasets. Can be of any :class:`pyvista.DataSet`.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
