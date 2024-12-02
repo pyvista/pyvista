@@ -299,10 +299,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'VTK'),
     #
     # Misc. ignores
-    # (r'py:.*', 'of'),
     (r'py:.*', 'optional'),
-    # (r'py:.*', 'or'),
-    # (r'py:.*', 'various'),
 ]
 
 
