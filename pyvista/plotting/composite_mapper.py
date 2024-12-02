@@ -783,7 +783,7 @@ class CompositePolyDataMapper(
             maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
 
-        cmap : str, list, or pyvista.LookupTable
+        cmap : str | list | pyvista.LookupTable
             Name of the Matplotlib colormap to use when mapping the
             ``scalars``.  See available Matplotlib colormaps.  Only applicable
             for when displaying ``scalars``.

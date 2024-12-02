@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Callable
+from typing import cast
 import warnings
 
 import numpy as np
@@ -12,6 +13,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaFutureWarning
@@ -82,7 +84,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         _update_alg(featureEdges, progress_bar, 'Computing Edges')
         edges = _get_output(featureEdges)
-        orig_id = pyvista.point_array(edges, 'point_ind')
+        orig_id = cast(NumpyArray[float], pyvista.point_array(edges, 'point_ind'))
 
         return np.isin(poly_data.point_data['point_ind'], orig_id, assume_unique=True)
 
@@ -2451,7 +2453,7 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        show_mesh : bool, default: true
+        show_mesh : bool, default: True
             Plot the mesh itself.
 
         mag : float, default: 1.0
@@ -2914,7 +2916,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = get_array_association(self, scalars, preference=preference)
+            field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
         if width is None:
             width = self.length * 0.1  # type: ignore[attr-defined]
         alg = _vtk.vtkRibbonFilter()
@@ -3681,10 +3683,10 @@ class PolyDataFilters(DataSetFilters):
             if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
                 raise MissingDataError('No point scalars to contour.')
             scalars = self.active_scalars_name
-        arr = get_array(self, scalars, preference='point', err=False)
+        arr = get_array(self, scalars, preference='point', err=False)  # type: ignore[arg-type]
         if arr is None:
             raise ValueError('No arrays present to contour.')
-        field = get_array_association(self, scalars, preference='point')
+        field = get_array_association(self, scalars, preference='point')  # type: ignore[arg-type]
         if field != FieldAssociation.POINT:
             raise ValueError('Only point data can be contoured.')
 
