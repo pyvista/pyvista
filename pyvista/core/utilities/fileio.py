@@ -4,6 +4,15 @@ from __future__ import annotations
 
 import itertools
 from pathlib import Path
+import pickle
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Literal
+from typing import TextIO
+from typing import TypeVar
+from typing import Union
+from typing import cast
+from typing import overload
 import warnings
 
 import numpy as np
@@ -14,8 +23,28 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .observers import Observer
 
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Iterable
+    from collections.abc import Sequence
 
-def set_pickle_format(format: str):  # noqa: A002
+    import imageio
+    import meshio
+
+    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core.composite import MultiBlock
+    from pyvista.core.dataset import DataSet
+    from pyvista.core.pointset import ExplicitStructuredGrid
+    from pyvista.core.pointset import UnstructuredGrid
+    from pyvista.core.utilities.reader import BaseReader
+    from pyvista.plotting.texture import Texture
+
+_VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
+_VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
+
+PICKLE_EXT = ('.pkl', '.pickle')
+
+
+def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa: A002
     """Set the format used to serialize :class:`pyvista.DataObject` when pickled.
 
     Parameters
@@ -45,7 +74,7 @@ def set_pickle_format(format: str):  # noqa: A002
 
     """
     supported = {'vtk', 'xml', 'legacy'}
-    format_ = format.lower()
+    format_ = cast(Literal['vtk', 'xml', 'legacy'], format.lower())
     if format_ not in supported:
         raise ValueError(
             f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.',
@@ -56,14 +85,14 @@ def set_pickle_format(format: str):  # noqa: A002
     pyvista.PICKLE_FORMAT = format_
 
 
-def _get_ext_force(filename, force_ext=None):
+def _get_ext_force(filename: str | Path, force_ext: str | None = None) -> str:
     if force_ext:
         return str(force_ext).lower()
     else:
         return get_ext(filename)
 
 
-def get_ext(filename):
+def get_ext(filename: str | Path) -> str:
     """Extract the extension of the filename.
 
     For files with the .gz suffix, the previous extension is returned as well.
@@ -92,12 +121,12 @@ def get_ext(filename):
     return ext
 
 
-def set_vtkwriter_mode(vtk_writer, use_binary: bool = True):
+def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _VTKWriterType:
     """Set any vtk writer to write as binary or ascii.
 
     Parameters
     ----------
-    vtk_writer : vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+    vtk_writer : vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
         The vtk writer instance to be configured.
     use_binary : bool, default: True
         If ``True``, the writer is set to write files in binary format. If
@@ -105,7 +134,7 @@ def set_vtkwriter_mode(vtk_writer, use_binary: bool = True):
 
     Returns
     -------
-    vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+    vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
         The configured vtk writer instance.
 
     """
@@ -126,19 +155,40 @@ def set_vtkwriter_mode(vtk_writer, use_binary: bool = True):
     return vtk_writer
 
 
-def read(filename, force_ext=None, file_format=None, progress_bar: bool = False):
+def read(
+    filename: str | Path,
+    force_ext: str | None = None,
+    file_format: str | None = None,
+    progress_bar: bool = False,
+) -> DataSet | MultiBlock:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
     Automatically determines the correct reader to use then wraps the
     corresponding mesh as a pyvista object.  Attempts native ``vtk``
-    readers first then tries to use ``meshio``.
+    readers first then tries to use ``meshio``. :py:mod:`Pickled<pickle>`
+    meshes (``'.pkl'`` or ``'.pickle'``) are also supported.
 
-    See :func:`pyvista.get_reader` for list of formats supported.
+    See :func:`pyvista.get_reader` for list of vtk formats supported.
 
     .. note::
        See https://github.com/nschloe/meshio for formats supported by
        ``meshio``. Be sure to install ``meshio`` with ``pip install
        meshio`` if you wish to use it.
+
+    .. versionadded:: 0.45
+
+        Support reading pickled meshes.
+
+    .. warning::
+
+        The pickle module is not secure. Only read pickled mesh files
+        (``'.pkl'`` or ``'.pickle'``) you trust. See :py:mod:`pickle`
+        for details.
+
+    See Also
+    --------
+    pyvista.DataObject.save
+        Save a mesh to file.
 
     Parameters
     ----------
@@ -180,6 +230,10 @@ def read(filename, force_ext=None, file_format=None, progress_bar: bool = False)
 
     >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
 
+    Load a pickled mesh file.
+
+    >>> mesh = pv.read("mesh.pkl")  # doctest:+SKIP
+
     """
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
@@ -207,6 +261,8 @@ def read(filename, force_ext=None, file_format=None, progress_bar: bool = False)
         raise ValueError(
             'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
         )
+    if ext in PICKLE_EXT:
+        return read_pickle(filename)
 
     try:
         reader = pyvista.get_reader(filename, force_ext)
@@ -235,7 +291,7 @@ def read(filename, force_ext=None, file_format=None, progress_bar: bool = False)
         return mesh
 
 
-def _apply_attrs_to_reader(reader, attrs) -> None:
+def _apply_attrs_to_reader(reader: BaseReader, attrs: dict[str, object | Sequence[object]]) -> None:
     """For a given pyvista reader, call methods according to attrs.
 
     Parameters
@@ -261,7 +317,7 @@ def _apply_attrs_to_reader(reader, attrs) -> None:
             attr()
 
 
-def read_texture(filename, progress_bar: bool = False):
+def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:
     """Load a texture from an image file.
 
     Will attempt to read any file type supported by ``vtk``, however
@@ -310,14 +366,14 @@ def read_texture(filename, progress_bar: bool = False):
 
 
 def read_exodus(
-    filename,
+    filename: str | Path,
     animate_mode_shapes: bool = True,
     apply_displacements: bool = True,
-    displacement_magnitude=1.0,
+    displacement_magnitude: float = 1.0,
     read_point_data: bool = True,
     read_cell_data: bool = True,
-    enabled_sidesets=None,
-):
+    enabled_sidesets: Iterable[str | int] | None = None,
+) -> DataSet | MultiBlock:
     """Read an ExodusII file (``'.e'`` or ``'.exo'``).
 
     Parameters
@@ -336,7 +392,7 @@ def read_exodus(
         displacement vector. If displacements are turned off, the user
         can explicitly add them by applying a warp filter.
 
-    displacement_magnitude : bool, default: 1.0
+    displacement_magnitude : float, default: 1.0
         This is a number between 0 and 1 that is used to scale the
         ``DisplacementMagnitude`` in a sinusoidal pattern.
 
@@ -346,7 +402,7 @@ def read_exodus(
     read_cell_data : bool, default: True
         Read in data associated with cells.
 
-    enabled_sidesets : str | int, optional
+    enabled_sidesets : Iterable[str | int], optional
         The name of the array that store the mapping from side set
         cells back to the global id of the elements they bound.
 
@@ -370,10 +426,7 @@ def read_exodus(
         from vtk import vtkExodusIIReader  # type: ignore[no-redef]
 
     reader = vtkExodusIIReader()
-    if pyvista.vtk_version_info < (9, 1, 0):  # pragma no cover
-        reader.SetFileName(str(filename))
-    else:
-        reader.SetFileName(filename)
+    reader.SetFileName(str(filename))
     reader.UpdateInformation()
     reader.SetAnimateModeShapes(animate_mode_shapes)
     reader.SetApplyDisplacements(apply_displacements)
@@ -399,10 +452,12 @@ def read_exodus(
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return wrap(reader.GetOutput())
+    return cast(pyvista.DataSet, wrap(reader.GetOutput()))
 
 
-def read_grdecl(filename, elevation: bool = True, other_keywords=None):
+def read_grdecl(
+    filename: str | Path, elevation: bool = True, other_keywords: Sequence[str] | None = None
+) -> ExplicitStructuredGrid:
     """Read a GRDECL file (``'.GRDECL'``).
 
     Parameters
@@ -448,7 +503,17 @@ def read_grdecl(filename, elevation: bool = True, other_keywords=None):
         'ZONES',
     )
 
-    def read_keyword(f, split: bool = True, converter=None):
+    @overload
+    def read_keyword(
+        f: TextIO, split: Literal[True] = True, converter: type = ...
+    ) -> list[str]: ...
+    @overload
+    def read_keyword(f: TextIO, split: Literal[False] = False, converter: type = ...) -> str: ...
+    @overload
+    def read_keyword(f: TextIO, split: bool = ..., converter: type = ...) -> list[str]: ...
+    def read_keyword(
+        f: TextIO, split: bool = True, converter: type | None = None
+    ) -> str | list[str]:
         """Read a keyword.
 
         Parameters
@@ -468,7 +533,7 @@ def read_grdecl(filename, elevation: bool = True, other_keywords=None):
             A list or a string.
 
         """
-        out = []  # type: ignore[var-annotated]
+        out: list[str] = []
 
         while True:
             line = f.readline().strip()
@@ -489,8 +554,8 @@ def read_grdecl(filename, elevation: bool = True, other_keywords=None):
                 end = False
 
             if split:
-                line = line.split()
-                out += [converter(x) for x in line] if converter is not None else line
+                line_ = line.split()
+                out += [converter(x) for x in line_] if converter is not None else line_
 
             else:
                 out.append(line)
@@ -499,11 +564,13 @@ def read_grdecl(filename, elevation: bool = True, other_keywords=None):
                 break
 
         if not split:
-            out = ' '.join(out)  # type: ignore[assignment]
+            return ' '.join(out)
 
         return out
 
-    def read_buffer(f, other_keywords):
+    def read_buffer(
+        f: TextIO, other_keywords: Sequence[str]
+    ) -> tuple[dict[str, Any], Sequence[str]]:
         """Read a file buffer.
 
         Parameters
@@ -523,10 +590,10 @@ def read_grdecl(filename, elevation: bool = True, other_keywords=None):
             Included file names.
 
         """
-        keys = list(property_keywords) + other_keywords
+        keys: Sequence[str] = list(property_keywords) + list(other_keywords)
         keys = tuple(keys)
 
-        keywords = {}
+        keywords: dict[str, str | list[Any]] = {}
         includes = []
 
         for line in f:
@@ -565,17 +632,17 @@ def read_grdecl(filename, elevation: bool = True, other_keywords=None):
                     for x in data:
                         if '*' in x:
                             size, x = x.split('*')
-                            keywords[key] += int(size) * [float(x)]
+                            keywords[key] += int(size) * [float(x)]  # type: ignore[operator]
 
                         else:
-                            keywords[key].append(float(x))
+                            keywords[key].append(float(x))  # type: ignore[union-attr]
 
                 else:
                     keywords[key] = data
 
         return keywords, includes
 
-    def read_keywords(filename, other_keywords):
+    def read_keywords(filename: str | Path, other_keywords: Sequence[str]) -> dict[str, Any]:
         """Read a GRDECL file and return its keywords.
 
         Parameters
@@ -592,7 +659,7 @@ def read_grdecl(filename, elevation: bool = True, other_keywords=None):
             Dictionary of read keywords.
 
         """
-        with Path.open(filename) as f:
+        with Path.open(Path(filename)) as f:
             keywords, includes = read_buffer(f, other_keywords)
 
         if includes:
@@ -712,7 +779,115 @@ def read_grdecl(filename, elevation: bool = True, other_keywords=None):
     return grid
 
 
-def is_meshio_mesh(obj):
+def read_pickle(filename):
+    """Load a pickled mesh from file.
+
+    Parameters
+    ----------
+    filename : str
+        The path of the pickled mesh to read.
+
+    Returns
+    -------
+    pyvista.DataObject
+        Unpickled mesh.
+
+    Examples
+    --------
+    Save a pickled mesh and read it.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.load_ant()
+    >>> pv.save_pickle('ant.pkl', mesh)
+    >>> new_mesh = pv.read_pickle('ant.pkl')
+    >>> new_mesh
+    PolyData (...)
+      N Cells:    912
+      N Points:   486
+      N Strips:   0
+      X Bounds:   -1.601e+01, 1.601e+01
+      Y Bounds:   -9.385e+00, 9.385e+00
+      Z Bounds:   -1.678e+01, 1.678e+01
+      N Arrays:   0
+
+    Unlike other file formats, custom attributes are saved with pickled meshes.
+
+    >>> mesh.custom_attribute = 42
+    >>> pv.save_pickle('ant.pkl', mesh)
+    >>> new_mesh = pv.read_pickle('ant.pkl')
+    >>> new_mesh.custom_attribute
+    42
+
+    """
+    filename_str = str(filename)
+    if filename_str.endswith(PICKLE_EXT):
+        with open(filename_str, 'rb') as f:  # noqa: PTH123
+            mesh = pickle.load(f)
+
+        if not isinstance(mesh, pyvista.DataObject):
+            raise TypeError(
+                f'Pickled object must be an instance of {pyvista.DataObject}. Got {mesh.__class__} instead.'
+            )
+        return mesh
+    raise ValueError(
+        f'Filename must be a file path with extension {PICKLE_EXT}. Got {filename} instead.'
+    )
+
+
+def save_pickle(filename, mesh):
+    """Pickle a mesh and save it to file.
+
+    Parameters
+    ----------
+    filename : str
+        The path of the pickled mesh to save, including the extension ``'.pkl'``
+        or ``'.pickle'``.
+
+    mesh : pyvista.DataObject
+        Any PyVista mesh.
+
+    Examples
+    --------
+    Save a pickled mesh and read it.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> mesh = examples.load_ant()
+    >>> pv.save_pickle('ant.pkl', mesh)
+    >>> new_mesh = pv.read_pickle('ant.pkl')
+    >>> new_mesh
+    PolyData (...)
+      N Cells:    912
+      N Points:   486
+      N Strips:   0
+      X Bounds:   -1.601e+01, 1.601e+01
+      Y Bounds:   -9.385e+00, 9.385e+00
+      Z Bounds:   -1.678e+01, 1.678e+01
+      N Arrays:   0
+
+    Unlike other file formats, custom attributes are saved with pickled meshes.
+
+    >>> mesh.custom_attribute = 42
+    >>> pv.save_pickle('ant.pkl', mesh)
+    >>> new_mesh = pv.read_pickle('ant.pkl')
+    >>> new_mesh.custom_attribute
+    42
+
+    """
+    filename_str = str(filename)
+    if not filename_str.endswith(PICKLE_EXT):
+        filename_str += '.pkl'
+    if not isinstance(mesh, pyvista.DataObject):
+        raise TypeError(
+            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
+        )
+
+    with open(filename_str, 'wb') as f:  # noqa: PTH123
+        pickle.dump(mesh, f)
+
+
+def is_meshio_mesh(obj: object) -> bool:
     """Test if passed object is instance of ``meshio.Mesh``.
 
     Parameters
@@ -734,7 +909,7 @@ def is_meshio_mesh(obj):
         return False
 
 
-def from_meshio(mesh):
+def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
     """Convert a ``meshio`` mesh instance to a PyVista mesh.
 
     Parameters
@@ -816,7 +991,7 @@ def from_meshio(mesh):
     return grid
 
 
-def read_meshio(filename, file_format=None):
+def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.Mesh:
     """Read any mesh file using meshio.
 
     Parameters
@@ -850,7 +1025,9 @@ def read_meshio(filename, file_format=None):
     return from_meshio(mesh)
 
 
-def save_meshio(filename, mesh, file_format=None, **kwargs):
+def save_meshio(
+    filename: str | Path, mesh: DataSet, file_format: str | None = None, **kwargs
+) -> None:
     """Save mesh to file using meshio.
 
     Parameters
@@ -913,7 +1090,7 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
         if cell_type == 42:
             cell_ = mesh.get_cell(i)
-            cell = [face.point_ids for face in cell_.faces]
+            cell: MatrixLike[int] = [face.point_ids for face in cell_.faces]
             cell_type = f'polyhedron{cell_.n_points}'
 
         else:
@@ -923,9 +1100,9 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
             cell = (
                 cell
                 if cell_type not in pixel_voxel
-                else cell[[0, 1, 3, 2]]  # type: ignore[call-overload]
+                else cell[[0, 1, 3, 2]]
                 if cell_type == 8
-                else cell[[0, 1, 3, 2, 4, 5, 7, 6]]  # type: ignore[call-overload]
+                else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
             )
             cell_type = cell_type if cell_type not in pixel_voxel else cell_type + 1
             cell_type = vtk_to_meshio_type[cell_type]
@@ -962,11 +1139,11 @@ def save_meshio(filename, mesh, file_format=None, **kwargs):
     )
 
 
-def _process_filename(filename):
+def _process_filename(filename: str | Path) -> Path:
     return Path(filename).expanduser().resolve()
 
 
-def _try_imageio_imread(filename):
+def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
     """Attempt to read a file using ``imageio.imread``.
 
     Parameters

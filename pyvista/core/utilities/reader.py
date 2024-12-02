@@ -224,11 +224,11 @@ def get_reader(filename, force_ext=None):
 class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
-    def __init__(self: BaseVTKReader):
+    def __init__(self: BaseVTKReader) -> None:
         self._data_object = None
         self._observers: list[int | Callable[[Any], Any]] = []
 
-    def SetFileName(self, filename):
+    def SetFileName(self, filename) -> None:
         """Set file name."""
         self._filename = filename
 
@@ -236,11 +236,11 @@ class BaseVTKReader(ABC):
     def UpdateInformation(self):
         """Update Information from file."""
 
-    def AddObserver(self, event_type, callback):
+    def AddObserver(self, event_type, callback) -> None:
         """Add Observer that can be triggered during Update."""
         self._observers.append([event_type, callback])  # type: ignore[arg-type]
 
-    def RemoveObservers(self, *args):
+    def RemoveObservers(self, *args) -> None:
         """Remove Observer."""
         self._observers = []
 
@@ -248,7 +248,7 @@ class BaseVTKReader(ABC):
         """GetProgress."""
         return 0.0 if self._data_object is None else 1.0
 
-    def UpdateObservers(self, event_type):
+    def UpdateObservers(self, event_type) -> None:
         """Call matching observer."""
         for event_type_allowed, observer in self._observers:  # type: ignore[misc]
             if event_type_allowed == event_type:
@@ -286,7 +286,7 @@ class BaseReader:
     _vtk_module_name: str = ''
     _vtk_class_name: str = ''
 
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         """Initialize Reader by setting path."""
         if self._vtk_class_name:
             self._reader = _lazy_vtk_instantiation(self._vtk_module_name, self._vtk_class_name)
@@ -305,7 +305,7 @@ class BaseReader:
         """Representation of a Reader object."""
         return f"{self.__class__.__name__}('{self.path}')"
 
-    def show_progress(self, msg=None):
+    def show_progress(self, msg=None) -> None:
         """Show a progress bar when loading the file.
 
         Parameters
@@ -327,7 +327,7 @@ class BaseReader:
             msg = f'Reading {Path(self.path).name}'
         self._progress_msg = msg
 
-    def hide_progress(self):
+    def hide_progress(self) -> None:
         """Hide the progress bar when loading the file.
 
         Examples
@@ -382,14 +382,14 @@ class BaseReader:
         else:
             raise FileNotFoundError(f"Path '{path}' is invalid or does not exist.")
 
-    def _set_directory(self, directory):
+    def _set_directory(self, directory) -> None:
         """Set directory and update reader."""
         self._filename = None
         self.__directory = directory
         self.reader.SetDirectoryName(directory)
         self._update_information()
 
-    def _set_filename(self, filename):
+    def _set_filename(self, filename) -> None:
         """Set filename and update reader."""
         # Private method since changing file type requires a
         # different subclass.
@@ -413,19 +413,19 @@ class BaseReader:
         data = wrap(self.reader.GetOutputDataObject(0))
         if data is None:  # pragma: no cover
             raise RuntimeError('File reader failed to read and/or produced no output.')
-        data._post_file_load_processing()  # type: ignore[union-attr]
+        data._post_file_load_processing()
 
         # check for any pyvista metadata
-        data._restore_metadata()  # type: ignore[union-attr]
+        data._restore_metadata()
         return data
 
-    def _update_information(self):
+    def _update_information(self) -> None:
         self.reader.UpdateInformation()
 
-    def _set_defaults(self):
+    def _set_defaults(self) -> None:
         """Set defaults on reader, if needed."""
 
-    def _set_defaults_post(self):
+    def _set_defaults_post(self) -> None:
         """Set defaults on reader post setting file, if needed."""
 
 
@@ -480,7 +480,7 @@ class PointCellDataSelection:
         """
         return [self.reader.GetPointArrayName(i) for i in range(self.number_point_arrays)]  # type: ignore[attr-defined]
 
-    def enable_point_array(self, name):
+    def enable_point_array(self, name) -> None:
         """Enable point array with name.
 
         Parameters
@@ -491,7 +491,7 @@ class PointCellDataSelection:
         """
         self.reader.SetPointArrayStatus(name, 1)  # type: ignore[attr-defined]
 
-    def disable_point_array(self, name):
+    def disable_point_array(self, name) -> None:
         """Disable point array with name.
 
         Parameters
@@ -518,12 +518,12 @@ class PointCellDataSelection:
         """
         return bool(self.reader.GetPointArrayStatus(name))  # type: ignore[attr-defined]
 
-    def enable_all_point_arrays(self):
+    def enable_all_point_arrays(self) -> None:
         """Enable all point arrays."""
         for name in self.point_array_names:
             self.enable_point_array(name)
 
-    def disable_all_point_arrays(self):
+    def disable_all_point_arrays(self) -> None:
         """Disable all point arrays."""
         for name in self.point_array_names:
             self.disable_point_array(name)
@@ -564,7 +564,7 @@ class PointCellDataSelection:
         """
         return [self.reader.GetCellArrayName(i) for i in range(self.number_cell_arrays)]  # type: ignore[attr-defined]
 
-    def enable_cell_array(self, name):
+    def enable_cell_array(self, name) -> None:
         """Enable cell array with name.
 
         Parameters
@@ -575,7 +575,7 @@ class PointCellDataSelection:
         """
         self.reader.SetCellArrayStatus(name, 1)  # type: ignore[attr-defined]
 
-    def disable_cell_array(self, name):
+    def disable_cell_array(self, name) -> None:
         """Disable cell array with name.
 
         Parameters
@@ -602,12 +602,12 @@ class PointCellDataSelection:
         """
         return bool(self.reader.GetCellArrayStatus(name))  # type: ignore[attr-defined]
 
-    def enable_all_cell_arrays(self):
+    def enable_all_cell_arrays(self) -> None:
         """Enable all cell arrays."""
         for name in self.cell_array_names:
             self.enable_cell_array(name)
 
-    def disable_all_cell_arrays(self):
+    def disable_all_cell_arrays(self) -> None:
         """Disable all cell arrays."""
         for name in self.cell_array_names:
             self.disable_cell_array(name)
@@ -854,7 +854,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
     _vtk_module_name = 'vtkIOEnSight'
     _vtk_class_name = 'vtkGenericEnSightReader'
 
-    def _set_filename(self, filename):
+    def _set_filename(self, filename) -> None:
         """Set filename and update reader."""
         # Private method since changing file type requires a
         # different subclass.
@@ -881,7 +881,7 @@ class EnSightReader(BaseReader, PointCellDataSelection, TimeReader):
             )
         self.reader.SetTimeValue(time_value)
 
-    def set_active_time_point(self, time_point):  # noqa: D102
+    def set_active_time_point(self, time_point) -> None:  # noqa: D102
         self.reader.SetTimeValue(self.time_point_value(time_point))
 
     @property
@@ -928,7 +928,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
     _vtk_module_name = 'vtkIOGeometry'
     _vtk_class_name = 'vtkOpenFOAMReader'
 
-    def _set_defaults_post(self):
+    def _set_defaults_post(self) -> None:
         self.enable_all_patch_arrays()
 
     @property
@@ -955,7 +955,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
             )
         self.reader.UpdateTimeStep(time_value)
 
-    def set_active_time_point(self, time_point):  # noqa: D102
+    def set_active_time_point(self, time_point) -> None:  # noqa: D102
         self.reader.UpdateTimeStep(self.time_point_value(time_point))
 
     @property
@@ -975,7 +975,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return bool(self.reader.GetDecomposePolyhedra())
 
     @decompose_polyhedra.setter
-    def decompose_polyhedra(self, value):
+    def decompose_polyhedra(self, value) -> None:
         self.reader.SetDecomposePolyhedra(value)
 
     @property
@@ -1001,7 +1001,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return bool(self.reader.GetSkipZeroTime())
 
     @skip_zero_time.setter
-    def skip_zero_time(self, value):
+    def skip_zero_time(self, value) -> None:
         self.reader.SetSkipZeroTime(value)
         self._update_information()
         self.reader.SetRefresh()
@@ -1034,7 +1034,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         return bool(self.reader.GetCreateCellToPoint())
 
     @cell_to_point_creation.setter
-    def cell_to_point_creation(self, value):
+    def cell_to_point_creation(self, value) -> None:
         self.reader.SetCreateCellToPoint(value)
 
     @property
@@ -1077,7 +1077,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         return [self.reader.GetPatchArrayName(i) for i in range(self.number_patch_arrays)]
 
-    def enable_patch_array(self, name):
+    def enable_patch_array(self, name) -> None:
         """Enable reading of patch array.
 
         Parameters
@@ -1098,7 +1098,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         self.reader.SetPatchArrayStatus(name, 1)
 
-    def disable_patch_array(self, name):
+    def disable_patch_array(self, name) -> None:
         """Disable reading of patch array.
 
         Parameters
@@ -1145,7 +1145,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         return bool(self.reader.GetPatchArrayStatus(name))
 
-    def enable_all_patch_arrays(self):
+    def enable_all_patch_arrays(self) -> None:
         """Enable reading of all patch arrays.
 
         Examples
@@ -1161,7 +1161,7 @@ class OpenFOAMReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         self.reader.EnableAllPatchArrays()
 
-    def disable_all_patch_arrays(self):
+    def disable_all_patch_arrays(self) -> None:
         """Disable reading of all patch arrays.
 
         Examples
@@ -1356,7 +1356,7 @@ class VTKDataSetReader(BaseReader):
     _vtk_module_name = 'vtkIOLegacy'
     _vtk_class_name = 'vtkDataSetReader'
 
-    def _set_defaults_post(self):
+    def _set_defaults_post(self) -> None:
         self.reader.ReadAllScalarsOn()
         self.reader.ReadAllColorScalarsOn()
         self.reader.ReadAllNormalsOn()
@@ -1496,10 +1496,10 @@ class MultiBlockPlot3DReader(BaseReader):
     STRAIN_RATE = Plot3DFunctionEnum.STRAIN_RATE
     VORTICITY_MAGNITUDE = Plot3DFunctionEnum.VORTICITY_MAGNITUDE
 
-    def _set_defaults(self):
+    def _set_defaults(self) -> None:
         self.auto_detect_format = True
 
-    def add_q_files(self, files):
+    def add_q_files(self, files) -> None:
         """Add q file(s).
 
         Parameters
@@ -1526,10 +1526,10 @@ class MultiBlockPlot3DReader(BaseReader):
         return bool(self.reader.GetAutoDetectFormat())
 
     @auto_detect_format.setter
-    def auto_detect_format(self, value):
+    def auto_detect_format(self, value) -> None:
         self.reader.SetAutoDetectFormat(value)
 
-    def add_function(self, value: int | Plot3DFunctionEnum):
+    def add_function(self, value: int | Plot3DFunctionEnum) -> None:
         """Specify additional functions to compute.
 
         The available functions are enumerated in :class:`Plot3DFunctionEnum`. The members of this enumeration are most
@@ -1558,7 +1558,7 @@ class MultiBlockPlot3DReader(BaseReader):
             value = value.value
         self.reader.AddFunction(value)
 
-    def remove_function(self, value: int | Plot3DFunctionEnum):
+    def remove_function(self, value: int | Plot3DFunctionEnum) -> None:
         """Remove one function from list of functions to compute.
 
         For details on the types of accepted values, see :meth:``add_function``.
@@ -1573,7 +1573,7 @@ class MultiBlockPlot3DReader(BaseReader):
             value = value.value
         self.reader.RemoveFunction(value)
 
-    def remove_all_functions(self):
+    def remove_all_functions(self) -> None:
         """Remove all functions from list of functions to compute."""
         self.reader.RemoveAllFunctions()
 
@@ -1590,7 +1590,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return self.reader.GetPreserveIntermediateFunctions()
 
     @preserve_intermediate_functions.setter
-    def preserve_intermediate_functions(self, val):
+    def preserve_intermediate_functions(self, val) -> None:
         self.reader.SetPreserveIntermediateFunctions(val)
 
     @property
@@ -1599,7 +1599,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return self.reader.GetGamma()
 
     @gamma.setter
-    def gamma(self, val):
+    def gamma(self, val) -> None:
         self.reader.SetGamma(val)
 
     @property
@@ -1608,7 +1608,7 @@ class MultiBlockPlot3DReader(BaseReader):
         return self.reader.GetR()
 
     @r_gas_constant.setter
-    def r_gas_constant(self, val):
+    def r_gas_constant(self, val) -> None:
         self.reader.SetR(val)
 
 
@@ -1653,7 +1653,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
     _vtk_module_name = 'vtkIOCGNSReader'
     _vtk_class_name = 'vtkCGNSReader'
 
-    def _set_defaults_post(self):
+    def _set_defaults_post(self) -> None:
         self.enable_all_point_arrays()
         self.enable_all_cell_arrays()
         self.load_boundary_patch = True
@@ -1686,7 +1686,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return bool(self._reader.GetDistributeBlocks())
 
     @distribute_blocks.setter
-    def distribute_blocks(self, value: str):
+    def distribute_blocks(self, value: str) -> None:
         self._reader.SetDistributeBlocks(value)
 
     def base_array_status(self, name: str) -> bool:
@@ -1727,7 +1727,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         """
         return self.reader.GetNumberOfBaseArrays()
 
-    def enable_all_bases(self):
+    def enable_all_bases(self) -> None:
         """Enable reading all bases.
 
         By default only the 0th base is read.
@@ -1745,7 +1745,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         """
         self._reader.EnableAllBases()
 
-    def disable_all_bases(self):
+    def disable_all_bases(self) -> None:
         """Disable reading all bases.
 
         By default only the 0th base is read.
@@ -1801,7 +1801,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         """
         return self.reader.GetNumberOfFamilyArrays()
 
-    def enable_all_families(self):
+    def enable_all_families(self) -> None:
         """Enable reading all families.
 
         By default only the 0th family is read.
@@ -1819,7 +1819,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         """
         self._reader.EnableAllFamilies()
 
-    def disable_all_families(self):
+    def disable_all_families(self) -> None:
         """Disable reading all families.
 
         Examples
@@ -1860,7 +1860,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return self._reader.GetUseUnsteadyPattern()
 
     @unsteady_pattern.setter
-    def unsteady_pattern(self, enabled: bool):
+    def unsteady_pattern(self, enabled: bool) -> None:
         self._reader.SetUseUnsteadyPattern(bool(enabled))
 
     @property
@@ -1883,7 +1883,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return self._reader.GetUse3DVector()
 
     @vector_3d.setter
-    def vector_3d(self, enabled: bool):
+    def vector_3d(self, enabled: bool) -> None:
         self._reader.SetUse3DVector(bool(enabled))
 
     @property
@@ -1910,7 +1910,7 @@ class CGNSReader(BaseReader, PointCellDataSelection):
         return self._reader.GetLoadBndPatch()
 
     @load_boundary_patch.setter
-    def load_boundary_patch(self, enabled: bool):
+    def load_boundary_patch(self, enabled: bool) -> None:
         self._reader.SetLoadBndPatch(bool(enabled))
 
 
@@ -1947,14 +1947,14 @@ class PVDDataSet:
 class _PVDReader(BaseVTKReader):
     """Simulate a VTK reader for PVD files."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self._directory = None
-        self._datasets = None
-        self._active_datasets = None
-        self._time_values = None
+        self._directory: str | None = None
+        self._datasets: list[PVDDataSet] | None = None
+        self._active_datasets: list[PVDDataSet] | None = None
+        self._time_values: list[float] | None = None
 
-    def SetFileName(self, filename):
+    def SetFileName(self, filename) -> None:
         """Set filename and update reader."""
         self._filename = str(filename)
         self._directory = str(Path(filename).parent)
@@ -1966,7 +1966,7 @@ class _PVDReader(BaseVTKReader):
         tree = ET.parse(self._filename)
         root = tree.getroot()
         dataset_elements = root[0].findall('DataSet')
-        datasets = []
+        datasets: list[PVDDataSet] = []
         for element in dataset_elements:
             element_attrib = element.attrib
             datasets.append(
@@ -1977,18 +1977,19 @@ class _PVDReader(BaseVTKReader):
                     element_attrib.get('group'),  # type: ignore[arg-type]
                 ),
             )
+
         self._datasets = sorted(datasets)
         self._time_values = sorted({dataset.time for dataset in self._datasets})
-        self._time_mapping = {time: [] for time in self._time_values}  # type: ignore[var-annotated]
+        self._time_mapping: dict[float, list[PVDDataSet]] = {time: [] for time in self._time_values}
         for dataset in self._datasets:
             self._time_mapping[dataset.time].append(dataset)
         self._SetActiveTime(self._time_values[0])
 
-    def Update(self):
+    def Update(self) -> None:
         """Read data and store it."""
         self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])  # type: ignore[assignment]
 
-    def _SetActiveTime(self, time_value):
+    def _SetActiveTime(self, time_value) -> None:
         """Set active time."""
         self._active_datasets = self._time_mapping[time_value]
         self._active_readers = [
@@ -2069,10 +2070,10 @@ class PVDReader(BaseReader, TimeReader):
         # all active datasets have the same time
         return self.reader._active_datasets[0].time
 
-    def set_active_time_value(self, time_value):  # noqa: D102
+    def set_active_time_value(self, time_value) -> None:  # noqa: D102
         self.reader._SetActiveTime(time_value)
 
-    def set_active_time_point(self, time_point):  # noqa: D102
+    def set_active_time_point(self, time_point) -> None:  # noqa: D102
         self.set_active_time_value(self.time_values[time_point])
 
 
@@ -2419,18 +2420,18 @@ class SegYReader(BaseReader):
 class _GIFReader(BaseVTKReader):
     """Simulate a VTK reader for GIF files."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._n_frames = 0
         self._current_frame = 0
 
-    def UpdateInformation(self):
+    def UpdateInformation(self) -> None:
         """Update Information from file."""
 
     def GetProgress(self):
         return self._current_frame / self._n_frames
 
-    def Update(self):
+    def Update(self) -> None:
         """Read the GIF and store internally to `_data_object`."""
         from PIL import Image
         from PIL import ImageSequence
@@ -2534,10 +2535,10 @@ class XdmfReader(BaseReader, PointCellDataSelection, TimeReader):
     def active_time_value(self):  # noqa: D102
         return self._active_time_value
 
-    def set_active_time_point(self, time_point):  # noqa: D102
+    def set_active_time_point(self, time_point) -> None:  # noqa: D102
         self.set_active_time_value(self.time_values[time_point])
 
-    def _set_defaults_post(self):
+    def _set_defaults_post(self) -> None:
         self._active_time_value = self.time_values[0]
         self.set_active_time_value(self._active_time_value)
 
@@ -2636,10 +2637,10 @@ class GaussianCubeReader(BaseReader):
         )
         if data is None:  # pragma: no cover
             raise RuntimeError('File reader failed to read and/or produced no output.')
-        data._post_file_load_processing()  # type: ignore[union-attr]
+        data._post_file_load_processing()
 
         # check for any pyvista metadata
-        data._restore_metadata()  # type: ignore[union-attr]
+        data._restore_metadata()
         return data
 
     @property
@@ -2655,7 +2656,7 @@ class GaussianCubeReader(BaseReader):
         return self.reader.GetHBScale()
 
     @hb_scale.setter
-    def hb_scale(self, hb_scale: float):
+    def hb_scale(self, hb_scale: float) -> None:
         """Set the scaling factor to compute bonds with hydrogen atoms.
 
         Parameters
@@ -2679,7 +2680,7 @@ class GaussianCubeReader(BaseReader):
         return self.reader.GetBScale()
 
     @b_scale.setter
-    def b_scale(self, b_scale: float):
+    def b_scale(self, b_scale: float) -> None:
         """Set the scaling factor to compute bonds between non-hydrogen atoms.
 
         Parameters

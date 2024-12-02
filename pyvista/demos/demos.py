@@ -81,7 +81,7 @@ def plot_glyphs(grid_sz=3, **kwargs):
 
     Returns
     -------
-    various
+    list | np.ndarray | ipywidgets.Widget
         See :func:`show <pyvista.Plotter.show>`.
 
     Examples
