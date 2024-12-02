@@ -395,3 +395,39 @@ class Actor(Prop3D, _vtk.vtkActor):
     @backface_prop.setter
     def backface_prop(self, value: pyvista.Property) -> None:
         self.SetBackfaceProperty(value)
+
+    def enable_maximum_intensity_projection(self):
+        """Enable maximum intensity projection.
+
+        This will reset the z screen coordinates so that vertices with higher
+        scalar values are closer to the screen.
+
+        .. warning::
+            Maximum Intensity Projection (MIP) does not work with opacity <1
+            unless Depth Peeling is enabled.
+
+            See :func:`pyvista.Plotter.enable_depth_peeling` for more information.
+
+        References
+        ----------
+        2014: Cowan, E.J., 'X-ray Plunge Projection' — Understanding Structural Geology
+        from Grade Data, AusIMM Monograph 30: Mineral Resource and Ore Reserve Estimation —
+        The AusIMM Guide to Good Practice, second edition, 207-220
+
+        """
+        shader_prop = self.GetShaderProperty()
+        shader_prop.AddShaderReplacement(
+            _vtk.vtkShader.Vertex,
+            '//VTK::LineWidthGLES30::Impl',  # We replace this text in the shader program
+            True,  # before the standard replacements
+            """
+            gl_Position.z = -colorTCoord[0];  //We add this line to set vertices with highest scalar values closer to the screen
+            //VTK::LineWidthGLES30::Impl", //Keeping the original text
+            """,
+            False,  # only do it once
+        )
+
+    def disable_maximum_intensity_projection(self):
+        """Disable maximum intensity projection."""
+        shader_prop = self.GetShaderProperty()
+        shader_prop.ClearAllVertexShaderReplacements()
