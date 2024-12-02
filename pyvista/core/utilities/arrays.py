@@ -989,7 +989,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         self._update_string()
         return item
 
-    def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]
+    def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]  # noqa: PYI063
         item = super().pop(__key)
         self._update_string()
         return item

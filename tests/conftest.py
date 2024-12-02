@@ -319,7 +319,7 @@ def pytest_report_header(config):
     lines.append('required packages: ' + ', '.join(items))
 
     not_found = []
-    for pkg_extra in extra.keys():
+    for pkg_extra in extra.keys():  # noqa: PLC0206
         installed = []
         for name in extra[pkg_extra]:
             try:
