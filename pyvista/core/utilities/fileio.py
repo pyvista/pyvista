@@ -32,6 +32,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core.composite import MultiBlock
+    from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import ExplicitStructuredGrid
     from pyvista.core.pointset import UnstructuredGrid
@@ -160,7 +161,7 @@ def read(
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,
-) -> DataSet | MultiBlock:
+) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
     Automatically determines the correct reader to use then wraps the
@@ -779,7 +780,7 @@ def read_grdecl(
     return grid
 
 
-def read_pickle(filename):
+def read_pickle(filename: str | Path) -> DataObject:
     """Load a pickled mesh from file.
 
     Parameters
@@ -835,7 +836,7 @@ def read_pickle(filename):
     )
 
 
-def save_pickle(filename, mesh):
+def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     """Pickle a mesh and save it to file.
 
     Parameters
