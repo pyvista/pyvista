@@ -20,7 +20,10 @@ from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import _JSONValueType
 from .utilities.arrays import _SerializedDictArray
+from .utilities.fileio import PICKLE_EXT
+from .utilities.fileio import _VTKWriterAlias
 from .utilities.fileio import read
+from .utilities.fileio import save_pickle
 from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
@@ -46,7 +49,7 @@ class DataObject:
 
     """
 
-    _WRITERS: ClassVar[dict[str, type[_vtk.vtkXMLWriter | _vtk.vtkDataWriter]]] = {}
+    _WRITERS: ClassVar[dict[str, type[_VTKWriterAlias]]] = {}
 
     def __init__(self, *args, **kwargs) -> None:
         """Initialize the data object."""
@@ -66,7 +69,7 @@ class DataObject:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
-    def shallow_copy(self, to_copy: _vtk.vtkDataObject) -> None:
+    def shallow_copy(self, to_copy: DataObject | _vtk.vtkDataObject) -> None:
         """Shallow copy the given mesh to this mesh.
 
         Parameters
@@ -99,7 +102,7 @@ class DataObject:
         self.shallow_copy(data)
         self._post_file_load_processing()
 
-    def _post_file_load_processing(self):
+    def _post_file_load_processing(self) -> None:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
     def save(
@@ -109,6 +112,14 @@ class DataObject:
         texture: NumpyArray[np.uint8] | str | None = None,
     ) -> None:
         """Save this vtk object to file.
+
+        .. versionadded:: 0.45
+
+            Support saving pickled meshes
+
+        See Also
+        --------
+        pyvista.read
 
         Parameters
         ----------
@@ -139,6 +150,26 @@ class DataObject:
         file size.
 
         """
+
+        def _write_vtk(mesh_):
+            writer = mesh_._WRITERS[file_ext]()
+            set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+            writer.SetFileName(str(file_path))
+            writer.SetInputData(mesh_)
+            if file_ext == '.ply' and texture is not None:
+                if isinstance(texture, str):
+                    writer.SetArrayName(texture)
+                    array_name = texture
+                elif isinstance(texture, np.ndarray):
+                    array_name = '_color_array'
+                    mesh_[array_name] = texture
+                    writer.SetArrayName(array_name)
+
+                # enable alpha channel if applicable
+                if mesh_[array_name].shape[-1] == 4:
+                    writer.SetEnableAlpha(True)
+            writer.Write()
+
         if self._WRITERS is None:
             raise NotImplementedError(
                 f'{self.__class__.__name__} writers are not specified,'
@@ -149,32 +180,20 @@ class DataObject:
         file_path = file_path.expanduser()
         file_path = file_path.resolve()
         file_ext = file_path.suffix
-        if file_ext not in self._WRITERS:
-            raise ValueError(
-                'Invalid file extension for this data type.'
-                f' Must be one of: {self._WRITERS.keys()}',
-            )
 
         # store complex and bitarray types as field data
         self._store_metadata()
 
-        writer = self._WRITERS[file_ext]()
-        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
-        writer.SetFileName(str(file_path))
-        writer.SetInputData(self)
-        if file_ext == '.ply' and texture is not None:
-            if isinstance(texture, str):
-                writer.SetArrayName(texture)  # type: ignore[union-attr]
-                array_name = texture
-            elif isinstance(texture, np.ndarray):
-                array_name = '_color_array'
-                self[array_name] = texture
-                writer.SetArrayName(array_name)  # type: ignore[union-attr]
-
-            # enable alpha channel if applicable
-            if self[array_name].shape[-1] == 4:  # type: ignore[index]
-                writer.SetEnableAlpha(True)  # type: ignore[union-attr]
-        writer.Write()
+        writer_exts = self._WRITERS.keys()
+        if file_ext in writer_exts:
+            _write_vtk(self)
+        elif file_ext in PICKLE_EXT:
+            save_pickle(filename, self)
+        else:
+            raise ValueError(
+                'Invalid file extension for this data type.'
+                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}',
+            )
 
     def _store_metadata(self) -> None:
         """Store metadata as field data."""
@@ -286,7 +305,7 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self, *args, **kwargs):  # pragma: no cover
+    def copy_meta_from(self, *args, **kwargs) -> None:  # pragma: no cover
         """Copy pyvista meta data onto this object from another object.
 
         Intended to be overridden by subclasses.
@@ -335,7 +354,7 @@ class DataObject:
         if deep:
             newobject.deep_copy(self)  # type: ignore[arg-type]
         else:
-            newobject.shallow_copy(self)  # type: ignore[arg-type]
+            newobject.shallow_copy(self)
         newobject.copy_meta_from(self, deep)
         return newobject
 
@@ -571,9 +590,7 @@ class DataObject:
         return self._user_dict
 
     @user_dict.setter
-    def user_dict(
-        self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]
-    ):  # numpydoc ignore=GL08
+    def user_dict(self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]):
         # Setting None removes the field data array
         if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
             del self.field_data['_PYVISTA_USER_DICT']
@@ -589,7 +606,7 @@ class DataObject:
                 f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.',
             )
 
-    def _config_user_dict(self):
+    def _config_user_dict(self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
         field_name = '_PYVISTA_USER_DICT'
         field_data = self.field_data
@@ -806,7 +823,7 @@ class DataObject:
                 f"Cannot unpickle '{self.__class__.__name__}'. Invalid pickle format."
             )
 
-    def _unserialize_vtk_pickle_format(self, state):
+    def _unserialize_vtk_pickle_format(self, state) -> None:
         """Support unpickle of VTK's format."""
         # The vtk state has format: ( function, (dict,) )
         unserialize_func = state[0]
@@ -867,5 +884,5 @@ class DataObject:
         mesh = wrap(reader.GetOutput())  # type: ignore[attr-defined]
 
         # copy data
-        self.copy_structure(mesh)  # type: ignore[arg-type]
-        self.copy_attributes(mesh)  # type: ignore[arg-type]
+        self.copy_structure(mesh)
+        self.copy_attributes(mesh)

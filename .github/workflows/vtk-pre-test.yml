@@ -49,17 +49,32 @@ jobs:
       - name: Install PyVista Testing Requirements
         run: pip install .[test]
 
-      - name: Set up VTK with OSMesa
+      - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
+        with:
+          packages: libgl1-mesa-glx xvfb
+          version: 3.0
+
+      - name: Install nightly VTK
         run: |
-          pip uninstall vtk -y
-          pip install vtk_osmesa --pre --no-cache --extra-index-url https://wheels.vtk.org
+          pip install vtk --pre --no-cache --extra-index-url https://wheels.vtk.org
+
+      - name: Core Testing (no GL)
+        run: python -m pytest --cov=pyvista -v tests/core tests/examples
+
+      - name: Plotting Testing (uses GL)
+        run: xvfb-run -a python -m pytest --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
+
+      - name: Upload Generated Images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          path: debug_images
 
       - name: Software Report
+        if: always()
         run: |
-          python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
+          xvfb-run -a python -c "import pyvista; print(pyvista.Report()); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"
           which python
           pip list
-          pip show vtk_osmesa
-
-      - name: Unit Testing
-        run: pytest -v tests/ --fail_extra_image_cache
+          pip show vtk

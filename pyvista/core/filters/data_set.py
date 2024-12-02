@@ -38,6 +38,7 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
 
@@ -461,7 +462,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        normal : tuple(float) or str, default: 'x'
+        normal : tuple(float) | str, default: 'x'
             Length 3 tuple for the normal vector direction. Can also
             be specified as a string conventional direction such as
             ``'x'`` for ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
@@ -493,7 +494,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.PolyData or tuple[pyvista.PolyData]
+        pyvista.PolyData | tuple[pyvista.PolyData]
             Clipped mesh when ``return_clipped=False``,
             otherwise a tuple containing the unclipped and clipped datasets.
 
@@ -547,9 +548,9 @@ class DataSetFilters:
 
     def clip_box(
         self,
-        bounds=None,
+        bounds: float | VectorLike[float] | pyvista.PolyData | None = None,
         invert: bool = True,
-        factor=0.35,
+        factor: float = 0.35,
         progress_bar: bool = False,
         merge_points: bool = True,
         crinkle: bool = False,
@@ -633,13 +634,21 @@ class DataSetFilters:
                 normal = cell['Normals'][0]
                 bounds.append(normal)
                 bounds.append(cell.center)
-        if not isinstance(bounds, (np.ndarray, Sequence)):
-            raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
-        if len(bounds) not in [3, 6, 12]:
-            raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
-        if len(bounds) == 3:
+        bounds_ = _validation.validate_array(
+            bounds, dtype_out=float, must_have_length=[3, 6, 12], name='bounds'
+        )
+        if len(bounds_) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = self.bounds  # type: ignore[attr-defined]
-            bounds = (xmin, xmin + bounds[0], ymin, ymin + bounds[1], zmin, zmin + bounds[2])
+            bounds_ = np.array(
+                (
+                    xmin,
+                    xmin + bounds_[0],
+                    ymin,
+                    ymin + bounds_[1],
+                    zmin,
+                    zmin + bounds_[2],
+                )
+            )
         if crinkle:
             self.cell_data['cell_ids'] = np.arange(self.n_cells)  # type: ignore[attr-defined]
         alg = _vtk.vtkBoxClipDataSet()
@@ -647,7 +656,7 @@ class DataSetFilters:
             # vtkBoxClipDataSet uses vtkMergePoints by default
             alg.SetLocator(_vtk.vtkNonMergingPointLocator())
         alg.SetInputDataObject(self)
-        alg.SetBoxClip(*bounds)
+        alg.SetBoxClip(*bounds_)
         port = 0
         if invert:
             # invert the clip if needed
@@ -1524,11 +1533,11 @@ class DataSetFilters:
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-        arr = get_array(self, scalars, preference=preference, err=False)
+        arr = get_array(self, scalars, preference=preference, err=False)  # type: ignore[arg-type]
         if arr is None:
             raise ValueError('No arrays present to threshold.')
 
-        field = get_array_association(self, scalars, preference=preference)
+        field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
 
         # Run a standard threshold algorithm
         alg = _vtk.vtkThreshold()
@@ -1900,10 +1909,10 @@ class DataSetFilters:
 
     def elevation(
         self,
-        low_point=None,
-        high_point=None,
-        scalar_range=None,
-        preference='point',
+        low_point: VectorLike[float] | None = None,
+        high_point: VectorLike[float] | None = None,
+        scalar_range: str | VectorLike[float] | None = None,
+        preference: Literal['point', 'cell'] = 'point',
         set_active: bool = True,
         progress_bar: bool = False,
     ):
@@ -1978,28 +1987,30 @@ class DataSetFilters:
         """
         # Fix the projection line:
         if low_point is None:
-            low_point = list(self.center)  # type: ignore[attr-defined]
-            low_point[2] = self.bounds.z_min  # type: ignore[attr-defined]
+            low_point_ = list(self.center)  # type: ignore[attr-defined]
+            low_point_[2] = self.bounds.z_min  # type: ignore[attr-defined]
+        else:
+            low_point_ = _validation.validate_array3(low_point)
         if high_point is None:
-            high_point = list(self.center)  # type: ignore[attr-defined]
-            high_point[2] = self.bounds.z_max  # type: ignore[attr-defined]
+            high_point_ = list(self.center)  # type: ignore[attr-defined]
+            high_point_[2] = self.bounds.z_max  # type: ignore[attr-defined]
+        else:
+            high_point_ = _validation.validate_array3(high_point)
         # Fix scalar_range:
         if scalar_range is None:
-            scalar_range = (low_point[2], high_point[2])
+            scalar_range_ = (low_point_[2], high_point_[2])
         elif isinstance(scalar_range, str):
-            scalar_range = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
-        elif isinstance(scalar_range, (np.ndarray, Sequence)):
-            if len(scalar_range) != 2:
-                raise ValueError('scalar_range must have a length of two defining the min and max')
+            scalar_range_ = self.get_data_range(arr_var=scalar_range, preference=preference)  # type: ignore[attr-defined]
         else:
-            raise TypeError(f'scalar_range argument ({scalar_range}) not understood.')
+            scalar_range_ = _validation.validate_data_range(scalar_range)
+
         # Construct the filter
         alg = _vtk.vtkElevationFilter()
         alg.SetInputDataObject(self)
         # Set the parameters
-        alg.SetScalarRange(scalar_range)
-        alg.SetLowPoint(low_point)
-        alg.SetHighPoint(high_point)
+        alg.SetScalarRange(scalar_range_)
+        alg.SetLowPoint(low_point_)
+        alg.SetHighPoint(high_point_)
         _update_alg(alg, progress_bar, 'Computing Elevation')
         # Decide on updating active scalars array
         output = _get_output(alg)
@@ -2010,14 +2021,14 @@ class DataSetFilters:
 
     def contour(
         self,
-        isosurfaces=10,
-        scalars=None,
+        isosurfaces: int = 10,
+        scalars: str | None = None,
         compute_normals: bool = False,
         compute_gradients: bool = False,
         compute_scalars: bool = True,
-        rng=None,
-        preference='point',
-        method='contour',
+        rng: VectorLike[float] | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        method: Literal['contour', 'marching_cubes', 'flying_edges'] = 'contour',
         progress_bar: bool = False,
     ):
         """Contour an input self by an array.
@@ -2133,20 +2144,11 @@ class DataSetFilters:
         else:
             raise ValueError(f"Method '{method}' is not supported")
 
-        if rng is not None:
-            if not isinstance(rng, (np.ndarray, Sequence)):
-                raise TypeError(f'Array-like rng expected, got {type(rng).__name__}.')
-            rng_shape = np.shape(rng)
-            if rng_shape != (2,):
-                raise ValueError(f'rng must be a two-length array-like, not {rng}.')
-            if rng[0] > rng[1]:
-                raise ValueError(f'rng must be a sorted min-max pair, not {rng}.')
-
         if isinstance(scalars, str):
             scalars_name = scalars
         elif isinstance(scalars, (Sequence, np.ndarray)):
             scalars_name = 'Contour Data'
-            self[scalars_name] = scalars  # type: ignore[index]
+            self[scalars_name] = scalars
         elif scalars is not None:
             raise TypeError(
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
@@ -2166,7 +2168,7 @@ class DataSetFilters:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars_name = self.active_scalars_info  # type: ignore[attr-defined]
         else:
-            field = get_array_association(self, scalars_name, preference=preference)
+            field = get_array_association(self, scalars_name, preference=preference)  # type: ignore[arg-type]
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
             raise TypeError('Contour filter only works on point data.')
@@ -2181,14 +2183,19 @@ class DataSetFilters:
         if isinstance(isosurfaces, int):
             # generate values
             if rng is None:
-                rng = self.get_data_range(scalars_name)  # type: ignore[attr-defined]
-            alg.GenerateValues(isosurfaces, rng)
-        elif isinstance(isosurfaces, (np.ndarray, Sequence)):
-            alg.SetNumberOfContours(len(isosurfaces))
-            for i, val in enumerate(isosurfaces):
-                alg.SetValue(i, val)
+                rng_: list[float] = list(self.get_data_range(scalars_name))  # type: ignore[attr-defined]
+            else:
+                rng_ = list(_validation.validate_data_range(rng, name='rng'))
+            alg.GenerateValues(isosurfaces, rng_)
         else:
-            raise TypeError('isosurfaces not understood.')
+            isosurfaces_ = _validation.validate_arrayN(
+                isosurfaces, dtype_out=float, name='isosurfaces'
+            )
+
+            alg.SetNumberOfContours(len(isosurfaces_))
+            for i, val in enumerate(isosurfaces_):
+                alg.SetValue(i, val)
+
         _update_alg(alg, progress_bar, 'Computing Contour')
         output = _get_output(alg)
 
@@ -2465,15 +2472,15 @@ class DataSetFilters:
     def glyph(
         self,
         orient: bool | str = True,
-        scale: bool | str | Sequence[float] = True,
-        factor=1.0,
-        geom=None,
-        indices=None,
-        tolerance=None,
+        scale: bool | str = True,
+        factor: float = 1.0,
+        geom: _vtk.vtkDataSet | Sequence[_vtk.vtkDataSet] | None = None,
+        indices: VectorLike[int] | None = None,
+        tolerance: float | None = None,
         absolute: bool = False,
         clamping: bool = False,
-        rng=None,
-        color_mode='scale',
+        rng: VectorLike[float] | None = None,
+        color_mode: Literal['scale', 'scalar', 'vector'] = 'scale',
         progress_bar: bool = False,
     ):
         """Copy a geometric representation (called a glyph) to the input dataset.
@@ -2507,6 +2514,13 @@ class DataSetFilters:
             case a sequence of numbers of the same length must be passed as
             ``indices``. The values of the range (see ``rng``) affect lookup
             in the table.
+
+            .. note::
+
+                The reference direction is relative to ``(1, 0, 0)`` on the
+                provided geometry. That is, the provided geometry will be rotated
+                from ``(1, 0, 0)`` to the direction of the ``orient`` vector at
+                each point.
 
         indices : sequence[float], optional
             Specifies the index of each glyph in the table for lookup in case
@@ -2577,32 +2591,35 @@ class DataSetFilters:
         if geom is None:
             arrow = _vtk.vtkArrowSource()
             _update_alg(arrow, progress_bar, 'Making Arrow')
-            geom = arrow.GetOutput()
+            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
-        if isinstance(geom, (np.ndarray, Sequence)):
-            if indices is None:
-                # use default "categorical" indices
-                indices = np.arange(len(geom))
-            if not isinstance(indices, (np.ndarray, Sequence)):
-                raise TypeError(
-                    'If "geom" is a sequence then "indices" must '
-                    'also be a sequence of the same length.',
-                )
-            if len(indices) != len(geom) and len(geom) != 1:
-                raise ValueError('The sequence "indices" must be the same length as "geom".')
+        elif isinstance(geom, (np.ndarray, Sequence)):
+            geoms = geom
         else:
-            geom = [geom]
-        if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geom):
+            geoms = [geom]
+
+        if indices is None:
+            # use default "categorical" indices
+            indices = np.arange(len(geoms))
+        elif not isinstance(indices, (np.ndarray, Sequence)):
+            raise TypeError(
+                'If "geom" is a sequence then "indices" must '
+                'also be a sequence of the same length.',
+            )
+        if len(indices) != len(geoms) and len(geoms) != 1:
+            raise ValueError('The sequence "indices" must be the same length as "geom".')
+
+        if any(not isinstance(subgeom, _vtk.vtkPolyData) for subgeom in geoms):
             raise TypeError('Only PolyData objects can be used as glyphs.')
 
         # Run the algorithm
         alg = _vtk.vtkGlyph3D()
 
-        if len(geom) == 1:
+        if len(geoms) == 1:
             # use a single glyph, ignore indices
-            alg.SetSourceData(geom[0])
+            alg.SetSourceData(geoms[0])
         else:
-            for index, subgeom in zip(indices, geom):
+            for index, subgeom in zip(indices, geoms):
                 alg.SetSourceData(index, subgeom)
             if dataset.active_scalars is not None:  # type: ignore[attr-defined]
                 if dataset.active_scalars.ndim > 1:  # type: ignore[attr-defined]
@@ -2614,18 +2631,25 @@ class DataSetFilters:
 
         if isinstance(scale, str):
             dataset.set_active_scalars(scale, preference='cell')  # type: ignore[attr-defined]
-            scale = True
-        elif isinstance(scale, bool) and scale:
-            try:
-                set_default_active_scalars(self)  # type: ignore[arg-type]
-            except MissingDataError:
-                warnings.warn('No data to use for scale. scale will be set to False.')
-                scale = False
-            except AmbiguousDataError as err:
-                warnings.warn(f'{err}\nIt is unclear which one to use. scale will be set to False.')
-                scale = False
+            do_scale = True
+        else:
+            if scale:
+                try:
+                    set_default_active_scalars(self)  # type: ignore[arg-type]
+                except MissingDataError:
+                    warnings.warn('No data to use for scale. scale will be set to False.')
+                    do_scale = False
+                except AmbiguousDataError as err:
+                    warnings.warn(
+                        f'{err}\nIt is unclear which one to use. scale will be set to False.'
+                    )
+                    do_scale = False
+                else:
+                    do_scale = True
+            else:
+                do_scale = False
 
-        if scale:
+        if do_scale:
             if dataset.active_scalars is not None:  # type: ignore[attr-defined]
                 if dataset.active_scalars.ndim > 1:  # type: ignore[attr-defined]
                     alg.SetScaleModeToScaleByVector()
@@ -2704,7 +2728,8 @@ class DataSetFilters:
             raise ValueError(f"Invalid color mode '{color_mode}'")
 
         if rng is not None:
-            alg.SetRange(rng)
+            valid_range = _validation.validate_data_range(rng)
+            alg.SetRange(valid_range)
         alg.SetOrient(orient)
         alg.SetInputData(source_data)
         alg.SetVectorModeToUseVector()
@@ -2715,7 +2740,7 @@ class DataSetFilters:
         output = _get_output(alg)
 
         # Storing geom on the algorithm, for later use in legends.
-        output._glyph_geom = geom
+        output._glyph_geom = geoms
 
         return output
 
@@ -2945,7 +2970,7 @@ class DataSetFilters:
                         )  # pragma: no cover
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(before_extraction)
-                    remove.SetCellIds(numpy_to_idarr(ids_to_remove))  # type: ignore[arg-type]
+                    remove.SetCellIds(numpy_to_idarr(ids_to_remove))
                     _update_alg(remove, progress_bar, 'Removing Cells.')
                     extracted = _get_output(remove)
                     extracted.clean(
@@ -3316,9 +3341,9 @@ class DataSetFilters:
         if scalars is None:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
-        _ = get_array(self, scalars, preference='point', err=True)
+        _ = get_array(self, scalars, preference='point', err=True)  # type: ignore[arg-type]
 
-        field = get_array_association(self, scalars, preference='point')
+        field = get_array_association(self, scalars, preference='point')  # type: ignore[arg-type]
         if field != FieldAssociation.POINT:
             raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
@@ -3399,8 +3424,8 @@ class DataSetFilters:
         if vectors is None:
             pyvista.set_default_active_vectors(self)  # type: ignore[arg-type]
             field, vectors = self.active_vectors_info  # type: ignore[attr-defined]
-        arr = get_array(self, vectors, preference='point')
-        field = get_array_association(self, vectors, preference='point')
+        arr = get_array(self, vectors, preference='point')  # type: ignore[arg-type]
+        field = get_array_association(self, vectors, preference='point')  # type: ignore[arg-type]
         if arr is None:
             raise ValueError('No vectors present to warp by vector.')
 
@@ -4730,7 +4755,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ):
+    ) -> None:
         """Sample a dataset along a high resolution line and plot.
 
         Plot the variables of interest in 2D using matplotlib where the
@@ -5056,7 +5081,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ):
+    ) -> None:
         """Sample a dataset along a circular arc and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -5185,7 +5210,7 @@ class DataSetFilters:
         tolerance=None,
         fname=None,
         progress_bar: bool = False,
-    ):
+    ) -> None:
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
 
         Plot the variables of interest in 2D where the X-axis is
@@ -5482,7 +5507,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        values : number | array_like | dict, optional
+        values : float | ArrayLike[float] | dict, optional
             Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -5903,7 +5928,7 @@ class DataSetFilters:
                 if scalars_ is None:
                     set_default_active_scalars(self)  # type: ignore[arg-type]
                     _, scalars_ = self.active_scalars_info  # type: ignore[attr-defined]
-                array_ = get_array(self, scalars_, preference=preference_, err=True)
+                array_ = get_array(self, scalars_, preference=preference_, err=True)  # type: ignore[arg-type]
             except MissingDataError:
                 raise ValueError(
                     'No point data or cell data found. Scalar data is required to use this filter.',
@@ -5912,7 +5937,7 @@ class DataSetFilters:
                 raise ValueError(
                     f"Array name '{scalars_}' is not valid and does not exist with this dataset.",
                 )
-            association_ = get_array_association(self, scalars_, preference=preference_)
+            association_ = get_array_association(self, scalars_, preference=preference_)  # type: ignore[arg-type]
             return array_, association_
 
         def _validate_component_mode(array_, component_mode_):
@@ -6095,7 +6120,7 @@ class DataSetFilters:
         validation methods.
         """
 
-        def _update_id_mask(logic_):
+        def _update_id_mask(logic_) -> None:
             """Apply component logic and update the id mask."""
             logic_ = component_logic(logic_) if component_logic else logic_
             id_mask[logic_] = True
@@ -6428,7 +6453,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        grid : vtk.UnstructuredGrid or list of vtk.UnstructuredGrids, optional
+        grid : vtk.vtkUnstructuredGrid | list[vtk.vtkUnstructuredGrid], optional
             Grids to merge to this grid.
 
         merge_points : bool, default: True
@@ -6829,7 +6854,7 @@ class DataSetFilters:
         alg.SetQCriterionArrayName(qcriterion)
 
         alg.SetFasterApproximation(faster)
-        field = get_array_association(self, scalars, preference=preference)
+        field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(self)
@@ -7174,6 +7199,712 @@ class DataSetFilters:
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
             progress_bar=progress_bar,
+        )
+
+    def rotate_x(
+        self,
+        angle: float,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about the x-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the x-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_x
+            Concatenate a rotation about the x-axis with a transformation.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the x-axis.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> rot = mesh.rotate_x(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate_x(angle, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate_y(
+        self,
+        angle: float,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about the y-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the y-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only
+            the points, normals and active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_y
+            Concatenate a rotation about the y-axis with a transformation.
+
+        Examples
+        --------
+        Rotate a cube 30 degrees about the y-axis.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> rot = mesh.rotate_y(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate_y(angle, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate_z(
+        self,
+        angle: float,
+        point: VectorLike[float] = (0.0, 0.0, 0.0),
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about the z-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the z-axis.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_z
+            Concatenate a rotation about the z-axis with a transformation.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the z-axis.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> rot = mesh.rotate_z(30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate_z(angle, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate_vector(
+        self,
+        vector: VectorLike[float],
+        angle: float,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about a vector.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        vector : VectorLike[float]
+            Vector to rotate about.
+
+        angle : float
+            Angle to rotate.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate_vector
+            Concatenate a rotation about a vector with a transformation.
+
+        Examples
+        --------
+        Rotate a mesh 30 degrees about the ``(1, 1, 1)`` axis.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> rot = mesh.rotate_vector((1, 1, 1), 30, inplace=False)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate_vector(vector, angle, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def rotate(
+        self,
+        rotation: RotationLike,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        rotation : RotationLike
+            3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+        point : VectorLike[float], optional
+            Point to rotate about. Defaults to origin.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Rotated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.rotate
+            Concatenate a rotation matrix with a transformation.
+
+        Examples
+        --------
+        Define a rotation. Here, a 3x3 matrix is used which rotates about the z-axis by
+        60 degrees.
+
+        >>> import pyvista as pv
+        >>> rotation = [
+        ...     [0.5, -0.8660254, 0.0],
+        ...     [0.8660254, 0.5, 0.0],
+        ...     [0.0, 0.0, 1.0],
+        ... ]
+
+        Use the rotation to rotate a cone about its tip.
+
+        >>> mesh = pv.Cone()
+        >>> tip = (0.5, 0.0, 0.0)
+        >>> rot = mesh.rotate(rotation, point=tip)
+
+        Plot the rotated mesh.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(rot)
+        >>> _ = pl.add_mesh(mesh, style='wireframe', line_width=3)
+        >>> _ = pl.add_axes_at_origin()
+        >>> pl.show()
+
+        """
+        t = Transform().rotate(rotation, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def translate(
+        self,
+        xyz: VectorLike[float],
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Translate the mesh.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        xyz : VectorLike[float]
+            A vector of three floats.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Translated dataset.
+
+        See Also
+        --------
+        pyvista.Transform.translate
+            Concatenate a translation matrix with a transformation.
+
+        Examples
+        --------
+        Create a sphere and translate it by ``(2, 1, 2)``.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Sphere()
+        >>> mesh.center
+        (0.0, 0.0, 0.0)
+        >>> trans = mesh.translate((2, 1, 2), inplace=False)
+        >>> trans.center
+        (2.0, 1.0, 2.0)
+
+        """
+        transform = Transform().translate(xyz)
+        return self.transform(  # type: ignore[misc]
+            transform,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def scale(
+        self,
+        xyz: float | VectorLike[float],
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+        point: VectorLike[float] | None = None,
+    ):
+        """Scale the mesh.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        xyz : float | VectorLike[float]
+            A vector sequence defining the scale factors along x, y, and z. If
+            a scalar, the same uniform scale is used along all three axes.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are transformed. Otherwise, only
+            the points, normals and active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        point : VectorLike[float], optional
+            Point to scale from. Defaults to origin.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Scaled dataset.
+
+        See Also
+        --------
+        pyvista.Transform.scale
+            Concatenate a scale matrix with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> _ = pl.show_grid()
+        >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+
+        """
+        transform = Transform().scale(xyz, point=point)
+        return self.transform(  # type: ignore[misc]
+            transform,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def flip_x(
+        self,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Flip mesh about the x-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        point : sequence[float], optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_x
+            Concatenate a reflection about the x-axis with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.flip_x(inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+
+        """
+        if point is None:
+            point = self.center  # type: ignore[attr-defined]
+        t = Transform().reflect((1, 0, 0), point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def flip_y(
+        self,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Flip mesh about the y-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        point : VectorLike[float], optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_y
+            Concatenate a reflection about the y-axis with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.flip_y(inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+
+        """
+        if point is None:
+            point = self.center  # type: ignore[attr-defined]
+        t = Transform().reflect((0, 1, 0), point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def flip_z(
+        self,
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Flip mesh about the z-axis.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        point : VectorLike[float], optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Flipped dataset.
+
+        See Also
+        --------
+        pyvista.Transform.flip_z
+            Concatenate a reflection about the z-axis with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot().rotate_x(90, inplace=False)
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.flip_z(inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xz")
+
+        """
+        if point is None:
+            point = self.center  # type: ignore[attr-defined]
+        t = Transform().reflect((0, 0, 1), point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+        )
+
+    def flip_normal(
+        self,
+        normal: VectorLike[float],
+        point: VectorLike[float] | None = None,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = False,
+    ):
+        """Flip mesh about the normal.
+
+        .. note::
+            See also the notes at :func:`transform()
+            <DataSetFilters.transform>` which is used by this filter
+            under the hood.
+
+        Parameters
+        ----------
+        normal : VectorLike[float]
+           Normal vector to flip about.
+
+        point : VectorLike[float], optional
+            Point to rotate about.  Defaults to center of mesh at
+            :attr:`center <pyvista.DataSet.center>`.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all input vectors are
+            transformed. Otherwise, only the points, normals and
+            active vectors are transformed.
+
+        inplace : bool, default: False
+            Updates mesh in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset flipped about its normal.
+
+        See Also
+        --------
+        pyvista.Transform.reflect
+            Concatenate a reflection matrix with a transformation.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> pl = pv.Plotter(shape=(1, 2))
+        >>> pl.subplot(0, 0)
+        >>> pl.show_axes()
+        >>> mesh1 = examples.download_teapot()
+        >>> _ = pl.add_mesh(mesh1)
+        >>> pl.subplot(0, 1)
+        >>> pl.show_axes()
+        >>> mesh2 = mesh1.flip_normal([1.0, 1.0, 1.0], inplace=False)
+        >>> _ = pl.add_mesh(mesh2)
+        >>> pl.show(cpos="xy")
+
+        """
+        if point is None:
+            point = self.center  # type: ignore[attr-defined]
+        t = Transform().reflect(normal, point=point)
+        return self.transform(  # type: ignore[misc]
+            t,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
         )
 
     def integrate_data(self, progress_bar: bool = False):
@@ -8075,7 +8806,7 @@ class DataSetFilters:
             set_default_active_scalars(self)  # type: ignore[arg-type]
             _, scalars = self.active_scalars_info  # type: ignore[attr-defined]
 
-        field = get_array_association(self, scalars, preference=preference)
+        field = get_array_association(self, scalars, preference=preference)  # type: ignore[arg-type]
 
         # Determine output scalars
         default_output_scalars = 'packed_labels'
@@ -8113,7 +8844,7 @@ class DataSetFilters:
 
         else:  # Use numpy
             # Get mapping from input ID to output ID
-            arr = get_array(self, scalars, preference=preference, err=True)
+            arr = get_array(self, scalars, preference=preference, err=True)  # type: ignore[arg-type]
             label_numbers_in, label_sizes = np.unique(arr, return_counts=True)  # type: ignore[call-overload]
             if sort:
                 label_numbers_in = label_numbers_in[np.argsort(label_sizes)[::-1]]
@@ -8206,7 +8937,7 @@ def _swap_axes(vectors, values):
     module-level function for testing purposes.
     """
 
-    def _swap(axis_a, axis_b):
+    def _swap(axis_a, axis_b) -> None:
         axis_order = np.argmax(np.abs(vectors), axis=1)
         if axis_order[axis_a] > axis_order[axis_b]:
             vectors[[axis_a, axis_b]] = vectors[[axis_b, axis_a]]

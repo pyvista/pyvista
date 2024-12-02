@@ -6,6 +6,8 @@ from collections import deque
 from itertools import count
 from itertools import islice
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import overload
 
 import numpy as np
 
@@ -13,7 +15,7 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
 
 
@@ -41,8 +43,18 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
     return n_cells
 
 
+@overload
 def numpy_to_idarr(
-    ind: MatrixLike[int],
+    ind: int | ArrayLike[int],
+    deep: bool = ...,
+    return_ind: Literal[True] = True,
+) -> _vtk.vtkIdTypeArray: ...
+@overload
+def numpy_to_idarr(
+    ind: int | ArrayLike[int], deep: bool = ..., return_ind: Literal[False] = False
+) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]]: ...
+def numpy_to_idarr(
+    ind: int | ArrayLike[int],
     deep: bool = False,
     return_ind: bool = False,
 ) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
