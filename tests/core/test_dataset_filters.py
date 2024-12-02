@@ -2784,7 +2784,7 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
 def test_extract_values_empty():
     empty = pv.PolyData()
     output = pv.PolyData().extract_values()
-    assert isinstance(output, pv.PolyData)
+    assert isinstance(output, pv.UnstructuredGrid)
     assert empty is not output
 
     output = empty.extract_values(split=True)
