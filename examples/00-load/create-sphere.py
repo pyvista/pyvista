@@ -1,5 +1,5 @@
 """
-.. _create_sphere:
+.. _create_sphere_example:
 
 Create Sphere Mesh Multiple Ways
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
