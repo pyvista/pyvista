@@ -70,7 +70,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.119.5',
+  'hypothesis<6.122.1',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
   'ipython<9.0.0',
@@ -104,7 +104,7 @@ docs = [
   'colorcet==3.1.0',
   'enum-tools==0.12.0',
   'imageio-ffmpeg==0.5.1',
-  'imageio==2.36.0',
+  'imageio==2.36.1',
   'jupyter_sphinx==0.5.3',
   'jupyterlab==4.3.1',
   'lxml==5.3.0',

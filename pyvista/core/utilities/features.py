@@ -397,7 +397,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     ----------
     dataset : DataSet
         Input dataset used as a reference for the grid creation.
-    dimensions : tuple of int, default: (101, 101, 101)
+    dimensions : tuple[int, int, int], default: (101, 101, 101)
         The dimensions of the grid to be created. Each value in the tuple
         represents the number of grid points along the corresponding axis.
 

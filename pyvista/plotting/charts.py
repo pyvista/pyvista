@@ -4877,7 +4877,7 @@ class Charts:
 
         Returns
         -------
-        list of Chart
+        list[Chart]
             The list of all interactive charts for this renderer.
 
         """
