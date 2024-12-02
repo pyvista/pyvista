@@ -11,6 +11,7 @@ from typing import Any
 from typing import Literal
 from typing import NamedTuple
 from typing import cast
+from typing import overload
 import warnings
 
 import numpy as np
@@ -1738,7 +1739,11 @@ class DataSet(DataSetFilters, DataObject):
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def find_closest_point(self: DataSet, point: Iterable[float], n: int = 1) -> int:
+    @overload
+    def find_closest_point(self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
+    @overload
+    def find_closest_point(self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
+    def find_closest_point(self, point: Iterable[float], n: int = 1) -> int | VectorLike[int]:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
