@@ -1399,5 +1399,5 @@ def test_active_array_info_deprecated(mesh):
     match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
-        if pv._version.version_info >= (0, 48):
+        if pv._version.version_info[:2] > (0, 48):
             raise RuntimeError('Remove this deprecated class')
