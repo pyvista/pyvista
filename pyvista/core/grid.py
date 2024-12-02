@@ -65,7 +65,7 @@ class Grid(DataSet):
         return self.GetDimensions()
 
     @dimensions.setter
-    def dimensions(self, dims: Sequence[int]):  # numpydoc ignore=GL08
+    def dimensions(self, dims: Sequence[int]) -> None:
         self.SetDimensions(*dims)
         self.Modified()
 
@@ -221,7 +221,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         """Return the str representation."""
         return DataSet.__str__(self)
 
-    def _update_dimensions(self):
+    def _update_dimensions(self) -> None:
         """Update the dimensions if coordinates have changed."""
         self.SetDimensions(len(self.x), len(self.y), len(self.z))
 
@@ -231,7 +231,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         y: NumpyArray[float],
         z: NumpyArray[float],
         check_duplicates: bool = False,
-    ):
+    ) -> None:
         """Create VTK rectilinear grid directly from numpy arrays.
 
         Each array gives the uniques coordinates of the mesh along each axial
@@ -382,7 +382,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetXCoordinates())
 
     @x.setter
-    def x(self, coords: Sequence[float]):  # numpydoc ignore=GL08
+    def x(self, coords: Sequence[float]) -> None:
         self.SetXCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -419,7 +419,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetYCoordinates())
 
     @y.setter
-    def y(self, coords: Sequence[float]):  # numpydoc ignore=GL08
+    def y(self, coords: Sequence[float]) -> None:
         self.SetYCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
@@ -456,13 +456,13 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return convert_array(self.GetZCoordinates())
 
     @z.setter
-    def z(self, coords: Sequence[float]):  # numpydoc ignore=GL08
+    def z(self, coords: Sequence[float]) -> None:
         self.SetZCoordinates(convert_array(coords))
         self._update_dimensions()
         self.Modified()
 
     @Grid.dimensions.setter  # type: ignore[attr-defined]
-    def dimensions(self, _dims):  # numpydoc ignore=GL08
+    def dimensions(self, _dims):
         """Set Dimensions.
 
         Parameters
@@ -766,7 +766,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.GetOrigin()  # type: ignore[return-value]
 
     @origin.setter
-    def origin(self, origin: Sequence[float | int]):  # numpydoc ignore=GL08
+    def origin(self, origin: Sequence[float | int]) -> None:
         self.SetOrigin(origin[0], origin[1], origin[2])
         self.Modified()
 
@@ -799,7 +799,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.GetSpacing()
 
     @spacing.setter
-    def spacing(self, spacing: Sequence[float | int]):  # numpydoc ignore=GL08
+    def spacing(self, spacing: Sequence[float | int]):
         if min(spacing) < 0:
             raise ValueError(f'Spacing must be non-negative, got {spacing}')
         self.SetSpacing(*spacing)
@@ -845,7 +845,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     def _generate_rectilinear_coords(
         self,
-    ) -> list[NumpyArray[float]]:  # numpydoc ignore=GL08
+    ) -> list[NumpyArray[float]]:
         """Generate rectilinear coordinates (internal helper).
 
         Returns
@@ -894,7 +894,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return self.GetExtent()
 
     @extent.setter
-    def extent(self, new_extent: Sequence[int]):  # numpydoc ignore=GL08
+    def extent(self, new_extent: Sequence[int]):
         if len(new_extent) != 6:
             raise ValueError('Extent must be a vector of 6 values.')
         self.SetExtent(new_extent)  # type: ignore[call-overload]
@@ -920,7 +920,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetDirectionMatrix())
 
     @direction_matrix.setter
-    def direction_matrix(self, matrix):  # numpydoc ignore: GL08
+    def direction_matrix(self, matrix) -> None:  # numpydoc ignore: GL08
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
 
     @property

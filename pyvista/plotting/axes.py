@@ -35,10 +35,10 @@ class Axes(_vtk.vtkAxes):
 
     def __init__(
         self,
-        show_actor=False,
+        show_actor: bool = False,
         actor_scale=1,
         line_width=1.0,
-        symmetric=False,
+        symmetric: bool = False,
     ):  # numpydoc ignore=PR01,RT01
         """Initialize a new axes descriptor."""
         super().__init__()
@@ -74,7 +74,7 @@ class Axes(_vtk.vtkAxes):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value):  # numpydoc ignore=GL08
+    def origin(self, value):
         self.SetOrigin(value)
 
     def show_actor(self):
