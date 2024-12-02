@@ -378,7 +378,7 @@ allow-dict-calls-with-keyword-arguments = true
 # TODO: Add annotations to any files listed below and remove it from this list
 "pyvista/core/_validation/_cast_array.py" = ["ANN"]
 "pyvista/core/_validation/check.py" = ["ANN"]
-"pyvista/core/_validation/validate.py" = ["ANN"]
+"pyvista/core/_validation/validate.py" = ["ANN202"]
 "pyvista/core/_vtk_core.py" = ["ANN"]
 "pyvista/core/cell.py" = ["ANN"]
 "pyvista/core/celltype.py" = ["ANN"]
