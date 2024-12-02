@@ -1013,60 +1013,6 @@ class ImageDataFilters(DataSetFilters):
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return wrap(alg.GetOutput())
 
-    # def split_contours(self):
-    #     ...
-    # """
-    #         MultiBlock (...)
-    #   N Blocks    4
-    #   X Bounds    75.605, 109.502
-    #   Y Bounds    75.019, 109.858
-    #   Z Bounds    89.000, 100.000
-    #
-    # Show each mesh as a different subplot.
-    #
-    # >>> plot = pv.Plotter(shape=(2, 2))
-    # >>> _ = plot.subplot(0, 0)
-    # >>> _ = plot.add_mesh(split_contours[0], **plot_kwargs)
-    # >>> _ = plot.view_xy()
-    # >>> _ = plot.subplot(0, 1)
-    # >>> _ = plot.add_mesh(split_contours[1], **plot_kwargs)
-    # >>> _ = plot.view_xy()
-    # >>> _ = plot.subplot(1, 0)
-    # >>> _ = plot.add_mesh(split_contours[2], **plot_kwargs)
-    # >>> _ = plot.view_xy()
-    # >>> _ = plot.subplot(1, 1)
-    # >>> _ = plot.add_mesh(split_contours[3], **plot_kwargs)
-    # >>> _ = plot.view_xy()
-    # >>> plot.show()
-    #
-    #
-    #   Use ``select_inputs``, to generate independently-smoothed surfaces. This can
-    # result in less noisy surfaces but will also typically result in poorly defined
-    # boundaries between two separately-contoured regions. For example, observe the
-    # gap between regions two and three.
-    #
-    # >>> selected_input2 = image.contour_labels(select_inputs=2)
-    # >>> selected_input3 = image.contour_labels(select_inputs=3)
-    # >>>
-    # >>> plot = pv.Plotter()
-    # >>> _ = plot.add_mesh(selected_input2, **plot_kwargs)
-    # >>> _ = plot.add_mesh(selected_input3, **plot_kwargs)
-    # >>> plot.view_xy()
-    # >>> plot.show()
-    #
-    # Use ``select_outputs`` to generate surfaces separately while preserving boundary
-    # definitions between regions.
-    #
-    # >>> selected_output2 = image.contour_labels(select_outputs=2)
-    # >>> selected_output3 = image.contour_labels(select_outputs=3)
-    # >>>
-    # >>> plot = pv.Plotter()
-    # >>> _ = plot.add_mesh(selected_output2, **plot_kwargs)
-    # >>> _ = plot.add_mesh(selected_output3, **plot_kwargs)
-    # >>> plot.view_xy()
-    # >>> plot.show()
-    # """
-
     def contour_labels(
         self,
         output_boundary_type: Literal['all', 'external', 'internal'] = 'all',
