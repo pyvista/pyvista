@@ -2203,7 +2203,7 @@ def download_frog_tissue(load=True):  # pragma: no cover
     .. deprecated:: 0.44.0
 
         This example does not load correctly on some systems and has been deprecated.
-        Use :func:`~pyvista.examples.load_frog_tissues` instead.
+        Use :func:`~pyvista.examples.downloads.load_frog_tissues` instead.
 
     Parameters
     ----------
@@ -5729,7 +5729,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData, str, or list[str]
+    pyvista.PolyData | str | list[str]
         The example ParaView can DataSet or file path(s).
 
     Examples

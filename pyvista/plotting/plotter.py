@@ -3853,7 +3853,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return actor
 
-    def _add_legend_label(self, actor, label, scalars, color):
+    def _add_legend_label(self, actor, label, scalars, color: Color):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
@@ -3873,7 +3873,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         geom.points -= geom.center  # type: ignore[misc]
 
         addr = actor.GetAddressAsString('')
-        self.renderer._labels[addr] = [geom, label, color]
+        self.renderer._labels[addr] = (geom, label, color)
 
     def add_volume(
         self,
@@ -5431,7 +5431,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
             addr = actor.GetAddressAsString('')
-            self.renderer._labels[addr] = [lines, label, Color(color)]
+            self.renderer._labels[addr] = (lines, label, Color(color))
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)  # type: ignore[arg-type]
