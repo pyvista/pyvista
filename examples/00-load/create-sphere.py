@@ -243,7 +243,7 @@ faces.extend([3, nphi * ntheta + 1, nphi * ntheta, (nphi - 1) * ntheta + 1])
 mesh = pv.PolyData(points, faces=faces)
 
 # %%
-# This mesh is :func:`manifold <pyvista.PolyData.is_manifold>` like :class:`pyvista.Sphere`.
+# This mesh is :func:`manifold <pyvista.PolyData.is_manifold>` like :func:`pyvista.Sphere`.
 # To demonstrate this, there are no boundaries on the mesh
 # as indicated by no points/cells being extracted.
 
