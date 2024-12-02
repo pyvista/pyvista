@@ -24,10 +24,19 @@ mesh = pv.Sphere()
 mesh.plot(show_edges=True)
 
 # %%
-# This gives an :class:`pyvista.PolyData` mesh, i.e. a 2D surface. In this case, it is watertight
-# and encloses a volume.
+# This gives an :class:`pyvista.PolyData` mesh, i.e. a 2D surface.
 
 mesh
+
+# %%
+# In this case, it is :func:`manifold <pyvista.PolyData.is_manifold>` and
+# encloses a volume. To demonstrate this, there are no boundaries on the mesh
+# as indicated as no points/cells being extracted.
+
+boundaries = mesh.extract_feature_edges(
+    non_manifold_edges=False, feature_edges=False, manifold_edges=False
+)
+boundaries
 
 # %%
 # The cells are :attr:`~pyvista.CellType.TRIANGLE` cells.. For example, the first cell
