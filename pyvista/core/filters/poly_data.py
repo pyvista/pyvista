@@ -33,6 +33,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import PolyData
     from pyvista.core._typing_core import VectorLike
 
 
@@ -90,7 +91,7 @@ class PolyDataFilters(DataSetFilters):
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar: bool = False):
         """Perform boolean operation."""
-        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined]
+        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined, has-type]
             raise ValueError(
                 'The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.',
             )
@@ -345,11 +346,11 @@ class PolyDataFilters(DataSetFilters):
         """
         return self._boolean('difference', other_mesh, tolerance, progress_bar=progress_bar)
 
-    def __add__(self, dataset):
+    def __add__(self: PolyData, dataset):  # type: ignore[misc]
         """Merge these two meshes."""
         return self.merge(dataset)
 
-    def __iadd__(self, dataset):
+    def __iadd__(self: PolyData, dataset):  # type: ignore[misc]
         """Merge another mesh into this one if possible.
 
         "If possible" means that ``dataset`` is also a :class:`PolyData`.
@@ -430,8 +431,8 @@ class PolyDataFilters(DataSetFilters):
 
         return merged
 
-    def merge(  # type: ignore[override]
-        self,
+    def merge(  # type: ignore[override, misc]
+        self: PolyData,
         dataset,
         merge_points: bool = True,
         tolerance=0.0,
@@ -543,7 +544,7 @@ class PolyDataFilters(DataSetFilters):
             else:
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
 
-            if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:  # type: ignore[attr-defined]
+            if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
                 merged = merged.extract_geometry()
             else:
                 polydata_merged = pyvista.PolyData(
@@ -571,7 +572,7 @@ class PolyDataFilters(DataSetFilters):
                 merged = polydata_merged
 
         if inplace:
-            self.deep_copy(merged)  # type: ignore[attr-defined]
+            self.deep_copy(merged)
             return self
 
         return merged
@@ -2336,7 +2337,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined]
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined, has-type]
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins,
             directions,
@@ -2389,8 +2390,8 @@ class PolyDataFilters(DataSetFilters):
 
         return locations, index_ray, index_tri
 
-    def plot_boundaries(
-        self, edge_color='red', line_width=None, progress_bar: bool = False, **kwargs
+    def plot_boundaries(  # type: ignore[misc]
+        self: PolyData, edge_color='red', line_width=None, progress_bar: bool = False, **kwargs
     ):
         """Plot boundaries of a mesh.
 
@@ -2512,7 +2513,7 @@ class PolyDataFilters(DataSetFilters):
             centers = self.cell_centers().points[::use_every]
             normals = self.cell_normals  # type: ignore[attr-defined]
         else:
-            centers = self.points[::use_every]
+            centers = self.points[::use_every]  # type: ignore[has-type]
             normals = self.point_normals  # type: ignore[attr-defined]
 
         if flip:
@@ -2592,7 +2593,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Regenerate face and point arrays
         uni = np.unique(f.compress(fmask, 0), return_inverse=True)
-        new_points = self.points.take(uni[0], 0)
+        new_points = self.points.take(uni[0], 0)  # type: ignore[has-type]
 
         nfaces = fmask.sum()
         faces = np.empty((nfaces, 4), dtype=pyvista.ID_TYPE)
@@ -2836,7 +2837,7 @@ class PolyDataFilters(DataSetFilters):
         plane = generate_plane(normal, origin)
         # Perform projection in place on the copied mesh
         f = lambda p: plane.ProjectPoint(p, p)
-        np.apply_along_axis(f, 1, mesh.points)
+        np.apply_along_axis(f, 1, mesh.points)  # type: ignore[call-overload, has-type]
         return mesh
 
     def ribbon(
@@ -3564,8 +3565,8 @@ class PolyDataFilters(DataSetFilters):
 
         return output, alg.GetNumberOfContacts()
 
-    def contour_banded(
-        self,
+    def contour_banded(  # type: ignore[misc]
+        self: PolyData,
         n_contours,
         rng=None,
         scalars=None,
@@ -3679,19 +3680,19 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
+            set_default_active_scalars(self)
+            if self.point_data.active_scalars_name is None:
                 raise MissingDataError('No point scalars to contour.')
             scalars = self.active_scalars_name
-        arr = get_array(self, scalars, preference='point', err=False)  # type: ignore[arg-type]
+        arr = get_array(self, scalars, preference='point', err=False)
         if arr is None:
             raise ValueError('No arrays present to contour.')
-        field = get_array_association(self, scalars, preference='point')  # type: ignore[arg-type]
+        field = get_array_association(self, scalars, preference='point')
         if field != FieldAssociation.POINT:
             raise ValueError('Only point data can be contoured.')
 
         if rng is None:
-            rng = (self.active_scalars.min(), self.active_scalars.max())  # type: ignore[attr-defined]
+            rng = self.get_data_range(self.active_scalars)
 
         alg = _vtk.vtkBandedPolyDataContourFilter()
         alg.SetInputArrayToProcess(
@@ -3724,12 +3725,12 @@ class PolyDataFilters(DataSetFilters):
             array = mesh.GetPointData().GetAbstractArray(i)
             name = array.GetName()
             if name is None:
-                array.SetName(self.point_data.active_scalars_name)  # type: ignore[attr-defined]
+                array.SetName(self.point_data.active_scalars_name)
         for i in range(mesh.GetCellData().GetNumberOfArrays()):
             array = mesh.GetCellData().GetAbstractArray(i)
             name = array.GetName()
             if name is None:
-                array.SetName(self.cell_data.active_scalars_name)  # type: ignore[attr-defined]
+                array.SetName(self.cell_data.active_scalars_name)
 
         if generate_contour_edges:
             return mesh, wrap(alg.GetContourEdgesOutput())
@@ -4249,7 +4250,7 @@ class PolyDataFilters(DataSetFilters):
             _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)  # type: ignore[misc]
+            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
             poly_ijk = _preprocess_polydata(poly_ijk)
         else:
             # Compute reference volume geometry
