@@ -82,7 +82,11 @@ class ActiveArrayInfoTuple(NamedTuple):
 
 
 class _ActiveArrayExistsInfoTuple(NamedTuple):
-    """Active array info tuple to provide legacy support."""
+    """Active array info tuple for arrays that exist.
+
+    This named tuple is similar to ActiveArrayInfoTuple except the
+    `name` attribute cannot be `None`.
+    """
 
     association: FieldAssociation
     name: str
