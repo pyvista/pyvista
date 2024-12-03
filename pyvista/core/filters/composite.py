@@ -15,6 +15,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import MultiBlock
     from pyvista.core._typing_core import TransformLike
 
 
@@ -121,8 +122,11 @@ class CompositeFilters:
 
     triangulate = DataSetFilters.triangulate
 
-    def outline(
-        self, generate_faces: bool = False, nested: bool = False, progress_bar: bool = False
+    def outline(  # type: ignore[misc]
+        self: MultiBlock,
+        generate_faces: bool = False,
+        nested: bool = False,
+        progress_bar: bool = False,
     ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
@@ -145,14 +149,16 @@ class CompositeFilters:
         """
         if nested:
             return DataSetFilters.outline(
-                self,  # type: ignore[arg-type]
+                self,
                 generate_faces=generate_faces,
                 progress_bar=progress_bar,
             )
-        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
+        box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
-    def outline_corners(self, factor=0.2, nested: bool = False, progress_bar: bool = False):
+    def outline_corners(  # type: ignore[misc]
+        self: MultiBlock, factor=0.2, nested: bool = False, progress_bar: bool = False
+    ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
@@ -174,8 +180,8 @@ class CompositeFilters:
 
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)  # type: ignore[arg-type]
-        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
+            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
+        box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
     def _compute_normals(
