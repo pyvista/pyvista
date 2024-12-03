@@ -719,7 +719,7 @@ def check_number(num: float, /, *, name: str = 'Object') -> None:
 
     Parameters
     ----------
-    num : Number
+    num : numbers.Number
         Number to check.
 
     name : str, default: "Object"
@@ -729,10 +729,6 @@ def check_number(num: float, /, *, name: str = 'Object') -> None:
     ------
     TypeError
         If input is not an instance of ``Number``.
-
-    See Also
-    --------
-    check_scalar
 
     Examples
     --------
