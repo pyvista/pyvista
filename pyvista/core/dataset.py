@@ -2798,7 +2798,7 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : Matrix
+        point : VectorLike[float] | MatrixLike[float]
             Point or points to query if are inside a cell.
 
         Returns

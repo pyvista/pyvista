@@ -7,10 +7,9 @@ Plot a Magnetic Field
 The following example demonstrates how PyVista can be used to plot a magnetic
 field.
 
-This example relies on :func:`streamlines_from_source()
-<pyvista.PolyDataFilters.streamlines_from_source>` to generate streamlines and
-:func:`add_volume() <pyvista.Plotter.add_volume>` to plot the strength of the
-magnetic field.
+This example relies on :func:`~pyvista.DataSetFilters.streamlines_from_source` to
+generate streamlines and :func:`add_volume() <pyvista.Plotter.add_volume>` to plot
+the strength of the magnetic field.
 
 This dataset was created from the `Coil Field Lines
 <https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html>`_
