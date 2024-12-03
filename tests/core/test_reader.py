@@ -1213,3 +1213,13 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
+
+
+def test_xgmml_reader():
+    filename = examples.download_fsm(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.XGMLReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
