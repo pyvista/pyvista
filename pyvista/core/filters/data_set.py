@@ -1446,7 +1446,7 @@ class DataSetFilters:
             origin = self.center
         plane = generate_plane(normal, origin)
         alg = _vtk.vtkPlaneCutter()
-        alg.SetInputConnection(self.GetOutputPort())
+        alg.SetInputDataObject(self)
         alg.SetPlane(plane)
         _update_alg(alg, progress_bar, 'Slicing along Plane')
         output = _get_output(alg)
