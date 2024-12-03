@@ -1681,9 +1681,9 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
-        point_normals
+        pyvista.PolyData.point_normals
             Returns the array of point normals.
-        cell_normals
+        pyvista.PolyData.cell_normals
             Returns the array of cell normals.
 
         Examples
