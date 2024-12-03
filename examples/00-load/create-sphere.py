@@ -146,8 +146,8 @@ points = np.vstack((x.ravel(), y.ravel(), z.ravel())).transpose()
 # %%
 # The first and last points are the poles.
 
-points = np.insert(points, 0, [0.0, 0.0, radius])
-points = np.append(points, [0.0, 0.0, -radius])
+points = np.insert(points, 0, [0.0, 0.0, radius], axis=0)
+points = np.append(points, [[0.0, 0.0, -radius]], axis=0)
 
 # %%
 # First we will generate the cell-point connectivity similar to the
