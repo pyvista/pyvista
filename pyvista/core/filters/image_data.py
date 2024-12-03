@@ -1291,7 +1291,7 @@ class ImageDataFilters(DataSetFilters):
         def _get_alg_input(image: ImageData, scalars_: str | None) -> ImageData:
             if scalars_ is None:
                 set_default_active_scalars(image)
-                field, scalars_ = image.active_scalars_info._namedtuple
+                field, scalars_ = image.active_scalars_info
             else:
                 field = image.get_array_association(scalars_, preference='point')
 
