@@ -26,12 +26,18 @@ Examples
 # ruff: noqa: F401
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from typing import cast
+
 import pyvista
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.observers import ProgressMonitor
 
+if TYPE_CHECKING:  # pragma: no cover
+    from .. import _vtk_core as _vtk
 
-def _update_alg(alg, progress_bar=False, message=''):
+
+def _update_alg(alg, progress_bar: bool = False, message='') -> None:
     """Update an algorithm with or without a progress bar."""
     if progress_bar:
         with ProgressMonitor(alg, message=message):
@@ -41,7 +47,7 @@ def _update_alg(alg, progress_bar=False, message=''):
 
 
 def _get_output(
-    algorithm,
+    algorithm: _vtk.vtkAlgorithm,
     iport=0,
     iconnection=0,
     oport=0,
@@ -49,8 +55,8 @@ def _get_output(
     active_scalars_field='point',
 ):
     """Get the algorithm's output and copy input's pyvista meta info."""
-    ido = wrap(algorithm.GetInputDataObject(iport, iconnection))
-    data = wrap(algorithm.GetOutputDataObject(oport))
+    ido = cast(pyvista.DataObject, wrap(algorithm.GetInputDataObject(iport, iconnection)))
+    data = cast(pyvista.DataObject, wrap(algorithm.GetOutputDataObject(oport)))
     if not isinstance(data, pyvista.MultiBlock):
         data.copy_meta_from(ido, deep=True)
         if not data.field_data and ido.field_data:

@@ -43,6 +43,11 @@ running:
    cd pyvista
    python -m pip install -e .
 
+.. note::
+
+   Use ``python -m pip install -e '.[dev]'`` to also install all of the
+   packages required for development.
+
 Quick Start Development with Codespaces
 ---------------------------------------
 
@@ -343,17 +348,15 @@ These standards will be enforced using ``pre-commit`` using
 If for whatever reason you feel that your function should have an exception to
 any of the rules, add an exception to the function either in the
 ``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
-comment to exclude a certain check. For example, we do not enforce
-documentation strings for setters and skip the GL08 check.
+comment to exclude a certain check. For example, we can omit the ``Return``
+section from docstrings and skip the RT01 check for magic methods like ``__init__``.
 
 .. code:: python
 
-    @strips.setter
-    def strips(self, strips):  # numpydoc ignore=GL08
-        if isinstance(strips, CellArray):
-            self.SetStrips(strips)
-        else:
-            self.SetStrips(CellArray(strips))
+    def __init__(self, foo):  # numpydoc ignore=RT01
+        """Initialize A Class."""
+        super().__init__()
+        self.foo = foo
 
 See the available validation checks in `numpydoc Validation
 <https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
@@ -428,13 +431,21 @@ Here's an example of adding error test codes that raise deprecation warning mess
 
     with pytest.warns(PyVistaDeprecationWarning):
         addition(a, b)
-        if pv._version.version_info >= (0, 40):
+        if pv._version.version_info[:2] > (0, 40):
             raise RuntimeError("Convert error this function")
-        if pv._version.version_info >= (0, 41):
+        if pv._version.version_info[:2] > (0, 41):
             raise RuntimeError("Remove this function")
 
 In the above code example, the old test code raises an error in v0.40 and v0.41.
 This will prevent us from forgetting to remove deprecations on version upgrades.
+
+.. note::
+
+    When releasing a new version, we need to update the version number to the next
+    development version. For example, if we are releasing version 0.37.0, the next
+    development version should be 0.38.0.dev0 which is greater than 0.37.0. This is
+    why we need to check if the version is greater than 0.40.0 and 0.41.0 in the
+    test code.
 
 When adding an additional parameter to an existing method or function, you are
 encouraged to use the ``.. versionadded`` sphinx directive. For example:
@@ -482,13 +493,12 @@ request. The following tests will be executed after any commit or pull
 request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
-To run our comprehensive suite of unit tests, install all the
-dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
+To run our comprehensive suite of unit tests, install PyVista with all
+developer dependencies:
 
 .. code:: bash
 
-   pip install -r requirements_test.txt
-   pip install -r requirements_docs.txt
+   pip install -e '.[dev]'
 
 Then, if you have everything installed, you can run the various test
 suites.
@@ -1026,8 +1036,8 @@ datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest
 For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
 featuring two datasets of musical instruments, e.g.
 
-#.  :func:`pyvista.examples.download_guitar`
-#.  :func:`pyvista.examples.download_trumpet`
+#.  :func:`pyvista.examples.downloads.download_guitar`
+#.  :func:`pyvista.examples.downloads.download_trumpet`
 
 complete the following steps:
 

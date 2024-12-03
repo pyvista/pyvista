@@ -81,7 +81,7 @@ def plot_glyphs(grid_sz=3, **kwargs):
 
     Returns
     -------
-    various
+    list | np.ndarray | ipywidgets.Widget
         See :func:`show <pyvista.Plotter.show>`.
 
     Examples
@@ -212,7 +212,7 @@ def orientation_plotter():
     pl.add_mesh(ocube['y_n'], color='green')
     pl.add_mesh(ocube['z_p'], color='red')
     pl.add_mesh(ocube['z_n'], color='red')
-    pl.show_axes()
+    pl.show_axes()  # type: ignore[call-arg]
     return pl
 
 
@@ -493,7 +493,7 @@ def plot_datasets(dataset_type=None):
     ang = np.linspace(0, np.pi / 2, 10)
     r = np.linspace(6, 10, 8)
     z = [0]
-    ang, r, z = np.meshgrid(ang, r, z)
+    ang, r, z = np.meshgrid(ang, r, z)  # type: ignore[assignment]
 
     x = r * np.sin(ang)
     y = r * np.cos(ang)
@@ -505,20 +505,20 @@ def plot_datasets(dataset_type=None):
     points = pyvista.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
 
     line = pyvista.Line()
-    line.points += np.array((2, 0, 0))
+    line.points += np.array((2, 0, 0))  # type: ignore[misc]
     line.clear_data()
 
     tri = pyvista.Triangle()
-    tri.points += np.array([0, 1, 0])
+    tri.points += np.array([0, 1, 0])  # type: ignore[misc]
     circ = pyvista.Circle()
-    circ.points += np.array([1.5, 1.5, 0])
+    circ.points += np.array([1.5, 1.5, 0])  # type: ignore[misc]
 
     poly = tri + circ
 
     ###########################################################################
     # unstructuredgrid
     pyr = pyvista.Pyramid()
-    pyr.points *= 0.7
+    pyr.points *= 0.7  # type: ignore[misc]
     cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 

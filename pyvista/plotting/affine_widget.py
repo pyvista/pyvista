@@ -143,7 +143,7 @@ class AffineWidget3D:
     Notes
     -----
     After interacting with the actor, the transform will be stored within
-    :attr:`pyvista.Actor.user_matrix` but will not be applied to the
+    :attr:`pyvista.Prop3D.user_matrix` but will not be applied to the
     dataset. Use this matrix in conjunction with
     :func:`pyvista.DataSetFilters.transform` to transform the dataset.
 
@@ -174,10 +174,10 @@ class AffineWidget3D:
         plotter,
         actor,
         origin=None,
-        start=True,
+        start: bool = True,
         scale=0.15,
         line_radius=0.02,
-        always_visible=True,
+        always_visible: bool = True,
         axes_colors=None,
         axes=None,
         release_callback=None,
@@ -202,8 +202,8 @@ class AffineWidget3D:
             self._main_actor.user_matrix = np.eye(4)
         self._cached_matrix = self._main_actor.user_matrix
 
-        self._arrows = []
-        self._circles = []
+        self._arrows = []  # type: ignore[var-annotated]
+        self._circles = []  # type: ignore[var-annotated]
         self._pressing_down = False
         origin = origin if origin else actor.center
         self._origin = np.array(origin)
@@ -364,14 +364,14 @@ class AffineWidget3D:
                     angle = -angle
 
                 trans = _vtk.vtkTransform()
-                trans.Translate(self._origin)
+                trans.Translate(self._origin)  # type: ignore[call-overload]
                 trans.RotateWXYZ(
                     angle,
                     self._axes[index][0],
                     self._axes[index][1],
                     self._axes[index][2],
                 )
-                trans.Translate(-self._origin)
+                trans.Translate(-self._origin)  # type: ignore[call-overload]
                 trans.Update()
                 rot_matrix = pyvista.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = rot_matrix @ self._cached_matrix
@@ -444,7 +444,7 @@ class AffineWidget3D:
         return self._axes[:3, :3]
 
     @axes.setter
-    def axes(self, axes):  # numpydoc ignore=GL08
+    def axes(self, axes):
         mat = np.eye(4)
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
@@ -472,7 +472,7 @@ class AffineWidget3D:
         return cast(tuple[float, float, float], tuple(self._origin))
 
     @origin.setter
-    def origin(self, value):  # numpydoc ignore=GL08
+    def origin(self, value):
         value = np.array(value)
         diff = value - self._origin
 

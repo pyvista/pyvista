@@ -59,21 +59,21 @@ def validate_array(
     must_have_length=None,
     must_have_min_length=None,
     must_have_max_length=None,
-    must_be_nonnegative=False,
-    must_be_finite=False,
-    must_be_real=True,
-    must_be_integer=False,
-    must_be_sorted=False,
+    must_be_nonnegative: bool = False,
+    must_be_finite: bool = False,
+    must_be_real: bool = True,
+    must_be_integer: bool = False,
+    must_be_sorted: bool = False,
     must_be_in_range=None,
-    strict_lower_bound=False,
-    strict_upper_bound=False,
+    strict_lower_bound: bool = False,
+    strict_upper_bound: bool = False,
     reshape_to=None,
     broadcast_to=None,
     dtype_out=None,
-    as_any=True,
-    copy=False,
-    to_list=False,
-    to_tuple=False,
+    as_any: bool = True,
+    copy: bool = False,
+    to_list: bool = False,
+    to_tuple: bool = False,
     name='Array',
 ):
     """Check and validate a numeric array meets specific requirements.
@@ -110,7 +110,7 @@ def validate_array(
         tuples of tuples, tuples of lists and ndarrays.
 
     must_have_shape : int | tuple[int, ...] | list[int, tuple[int, ...]], optional
-        :func:`Check <pyvista.core.validation.check.check_has_shape>`
+        :func:`Check <pyvista.core._validation.check.check_shape>`
         if the array has a specific shape. Specify a single shape
         or a ``list`` of any allowable shapes. If an integer, the array must
         be 1-dimensional with that length. Use a value of ``-1`` for any
@@ -125,15 +125,15 @@ def validate_array(
         sequence, the array must have at least one of the specified
         number of dimensions.
 
-    must_have_dtype : dtype_like | list[dtype_like, ...], optional
-        :func:`Check <pyvista.core.validation.check.check_subdtype>`
+    must_have_dtype : DTypeLike | list[DTypeLike, ...], optional
+        :func:`Check <pyvista.core._validation.check.check_subdtype>`
         if the array's data-type has the given dtype. Specify a
         :class:`np.dtype` object or dtype-like base class which the
         array's data must be a subtype of. If a ``list``, the array's data
         must be a subtype of at least one of the specified dtypes.
 
-    must_have_length : int | array_like[int, ...], optional
-        :func:`Check <pyvista.core.validation.check.check_has_length>`
+    must_have_length : int | ArrayLike[int, ...], optional
+        :func:`Check <pyvista.core._validation.check.check_length>`
         if the array has the given length. If multiple values are given,
         the array's length must match one of the values.
 
@@ -146,34 +146,34 @@ def validate_array(
             consideration if applicable.
 
     must_have_min_length : int, optional
-        :func:`Check <pyvista.core.validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_length>`
         if the array's length is this value or greater.
 
     must_have_max_length : int, optional
-        :func:`Check <pyvista.core.validation.check.check_has_length>`
+        :func:`Check <pyvista.core._validation.check.check_length>`
         if the array' length is this value or less.
 
     must_be_nonnegative : bool, default: False
-        :func:`Check <pyvista.core.validation.check.check_nonnegative>`
+        :func:`Check <pyvista.core._validation.check.check_nonnegative>`
         if all elements of the array are nonnegative.
 
     must_be_finite : bool, default: False
-        :func:`Check <pyvista.core.validation.check.check_finite>`
+        :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
         and not Not a Number (``NaN``).
 
     must_be_real : bool, default: True
-        :func:`Check <pyvista.core.validation.check.check_real>`
+        :func:`Check <pyvista.core._validation.check.check_real>`
         if the array has real numbers, i.e. its data type is integer or
         floating.
 
     must_be_integer : bool, default: False
-        :func:`Check <pyvista.core.validation.check.check_integer>`
+        :func:`Check <pyvista.core._validation.check.check_integer>`
         if the array's values are integer-like (i.e. that
         ``np.all(arr, np.floor(arr))``).
 
     must_be_sorted : bool | dict, default: False
-        :func:`Check <pyvista.core.validation.check.check_sorted>`
+        :func:`Check <pyvista.core._validation.check.check_sorted>`
         if the array's values are sorted. If ``True``, the check is
         performed with default parameters:
 
@@ -186,7 +186,7 @@ def validate_array(
         will be passed to ``check_sorted``.
 
     must_be_in_range : array_like[float, float], optional
-        :func:`Check <pyvista.core.validation.check.check_range>`
+        :func:`Check <pyvista.core._validation.check.check_range>`
         if the array's values are all within a specific range. Range
         must be array-like with two elements specifying the minimum and
         maximum data values allowed, respectively. By default, the range
@@ -224,7 +224,7 @@ def validate_array(
         read-only view with the specified shape. Broadcasting is done
         after reshaping (if ``reshape_to`` is not ``None``).
 
-    dtype_out : dtype_like, optional
+    dtype_out : DTypeLike, optional
         Set the data-type of the returned array. By default, the
         dtype is inferred from the input data.
 
@@ -354,8 +354,8 @@ def validate_array(
 
 def validate_axes(
     *axes,
-    normalize=True,
-    must_be_orthogonal=True,
+    normalize: bool = True,
+    must_be_orthogonal: bool = True,
     must_have_orientation='right',
     name='Axes',
 ):
@@ -483,7 +483,7 @@ def validate_axes(
     return axes_array
 
 
-def validate_transform4x4(transform, /, *, must_be_finite=True, name='Transform'):
+def validate_transform4x4(transform, /, *, must_be_finite: bool = True, name='Transform'):
     """Validate transform-like input as a 4x4 ndarray.
 
     This function supports inputs with a 3x3 or 4x4 shape. If the input is 3x3,
@@ -499,7 +499,7 @@ def validate_transform4x4(transform, /, *, must_be_finite=True, name='Transform'
         or as a vtkTransform.
 
     must_be_finite : bool, default: True
-        :func:`Check <pyvista.core.validation.check.check_finite>`
+        :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
         and not Not a Number (``NaN``).
 
@@ -553,7 +553,7 @@ def validate_transform4x4(transform, /, *, must_be_finite=True, name='Transform'
     return arr
 
 
-def validate_transform3x3(transform, /, *, must_be_finite=True, name='Transform'):
+def validate_transform3x3(transform, /, *, must_be_finite: bool = True, name='Transform'):
     """Validate transform-like input as a 3x3 ndarray.
 
     Parameters
@@ -569,7 +569,7 @@ def validate_transform3x3(transform, /, *, must_be_finite=True, name='Transform'
            Therefore, any 3x3 transformation is acceptable.
 
     must_be_finite : bool, default: True
-        :func:`Check <pyvista.core.validation.check.check_finite>`
+        :func:`Check <pyvista.core._validation.check.check_finite>`
         if all elements of the array are finite, i.e. not ``infinity``
         and not Not a Number (``NaN``).
 
@@ -634,7 +634,7 @@ def _array_from_vtkmatrix(
     return array
 
 
-def validate_number(num, /, *, reshape=True, **kwargs):
+def validate_number(num, /, *, reshape: bool = True, **kwargs):
     """Validate a real, finite number.
 
     By default, the number is checked to ensure it:
@@ -694,7 +694,7 @@ def validate_number(num, /, *, reshape=True, **kwargs):
         shape = [(), (1,)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', ())
     else:
-        shape = ()
+        shape = ()  # type: ignore[assignment]
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
     return validate_array(num, **kwargs)
@@ -749,7 +749,7 @@ def validate_data_range(rng, /, **kwargs):
     return validate_array(rng, **kwargs)
 
 
-def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
+def validate_arrayNx3(arr, /, *, reshape: bool = True, **kwargs):
     """Validate an array is numeric and has shape Nx3.
 
     The array is checked to ensure its input values:
@@ -814,13 +814,13 @@ def validate_arrayNx3(arr, /, *, reshape=True, **kwargs):
         shape = [3, (-1, 3)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1, 3))
     else:
-        shape = (-1, 3)
+        shape = (-1, 3)  # type: ignore[assignment]
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
 
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN(arr, /, *, reshape=True, **kwargs):
+def validate_arrayN(arr, /, *, reshape: bool = True, **kwargs):
     """Validate a numeric 1D array.
 
     The array is checked to ensure its input values:
@@ -888,12 +888,12 @@ def validate_arrayN(arr, /, *, reshape=True, **kwargs):
         shape = [(), (-1), (1, -1)]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
     else:
-        shape = -1
+        shape = -1  # type: ignore[assignment]
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)
     return validate_array(arr, **kwargs)
 
 
-def validate_arrayN_unsigned(arr, /, *, reshape=True, **kwargs):
+def validate_arrayN_unsigned(arr, /, *, reshape: bool = True, **kwargs):
     """Validate a numeric 1D array of non-negative (unsigned) integers.
 
     The array is checked to ensure its input values:
@@ -980,7 +980,7 @@ def validate_arrayN_unsigned(arr, /, *, reshape=True, **kwargs):
     return validate_arrayN(arr, reshape=reshape, **kwargs)
 
 
-def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
+def validate_array3(arr, /, *, reshape: bool = True, broadcast: bool = False, **kwargs):
     """Validate a numeric 1D array with 3 elements.
 
     The array is checked to ensure its input values:
@@ -1051,11 +1051,11 @@ def validate_array3(arr, /, *, reshape=True, broadcast=False, **kwargs):
     """
     shape = [(3,)]
     if reshape:
-        shape.append((1, 3))
-        shape.append((3, 1))
+        shape.append((1, 3))  # type: ignore[arg-type]
+        shape.append((3, 1))  # type: ignore[arg-type]
         _set_default_kwarg_mandatory(kwargs, 'reshape_to', (-1))
     if broadcast:
-        shape.append(())  # allow 0D scalars
+        shape.append(())  # type: ignore[arg-type] # allow 0D scalars
         shape.append((1,))  # 1D 1-element vectors
         _set_default_kwarg_mandatory(kwargs, 'broadcast_to', (3,))
     _set_default_kwarg_mandatory(kwargs, 'must_have_shape', shape)

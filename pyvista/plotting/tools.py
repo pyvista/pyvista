@@ -131,7 +131,7 @@ def create_axes_marker(
     xlabel='X',
     ylabel='Y',
     zlabel='Z',
-    labels_off=False,
+    labels_off: bool = False,
     line_width=2,
     cone_radius=0.4,
     shaft_length=0.8,
@@ -277,11 +277,11 @@ def create_axes_orientation_box(
     x_face_color='red',
     y_face_color='green',
     z_face_color='blue',
-    color_box=False,
+    color_box: bool = False,
     label_color=None,
-    labels_off=False,
+    labels_off: bool = False,
     opacity=0.5,
-    show_text_edges=False,
+    show_text_edges: bool = False,
 ):
     """Create a Box axes orientation widget with labels.
 
@@ -442,7 +442,7 @@ def create_axes_orientation_box(
         prop_assembly.AddPart(cube_actor)
         actor = prop_assembly
     else:
-        actor = axes_actor
+        actor = axes_actor  # type: ignore[assignment]
 
     _update_axes_label_color(actor, label_color)
 
@@ -537,7 +537,7 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate=True, kind='quadratic'):
+def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind='quadratic'):
     """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of

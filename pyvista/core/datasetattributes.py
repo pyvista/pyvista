@@ -9,6 +9,7 @@ from typing import Any
 import warnings
 
 import numpy as np
+import numpy.typing as npt
 
 from . import _vtk_core as _vtk
 from .errors import PyVistaDeprecationWarning
@@ -145,7 +146,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         vtkobject: _vtk.vtkFieldData,
         dataset: _vtk.vtkDataSet | DataSet,
         association: FieldAssociation,
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize DataSetAttributes."""
         super().__init__(vtkobject=vtkobject)
         self.dataset = dataset
@@ -412,7 +413,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return self.active_texture_coordinates
 
     @active_t_coords.setter
-    def active_t_coords(self, t_coords: NumpyArray[float]):  # numpydoc ignore=GL08
+    def active_t_coords(self, t_coords: NumpyArray[float]) -> None:
         """Set the active texture coordinates array.
 
         .. deprecated:: 0.43.0
@@ -450,7 +451,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return self.active_texture_coordinates_name
 
     @active_t_coords_name.setter
-    def active_t_coords_name(self, name: str) -> None:  # numpydoc ignore=GL08
+    def active_t_coords_name(self, name: str) -> None:
         """Set the name of the active texture coordinates array.
 
         .. deprecated:: 0.43.0
@@ -527,9 +528,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def _patch_type(self, narray):
         """Check if array needs to be represented as a different type."""
         name = narray.VTKObject.GetName()
-        if name in self.dataset._association_bitarray_names[self.association.name]:
+        if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
             narray = narray.view(np.bool_)
-        elif name in self.dataset._association_complex_names[self.association.name]:
+        elif name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
             if narray.dtype == np.float32:
                 narray = narray.view(np.complex64)
             if narray.dtype == np.float64:
@@ -547,7 +548,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         return narray
 
-    def set_array(self, data: ArrayLike[float], name: str, deep_copy=False) -> None:
+    def set_array(self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -610,7 +611,9 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_scalars(self, scalars: ArrayLike[float], name='scalars', deep_copy=False):
+    def set_scalars(
+        self, scalars: ArrayLike[float], name='scalars', deep_copy: bool = False
+    ) -> None:
         """Set the active scalars of the dataset with an array.
 
         In VTK and PyVista, scalars are a quantity that has no
@@ -662,7 +665,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.SetScalars(vtk_arr)
         self.VTKObject.Modified()
 
-    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy=False):
+    def set_vectors(self, vectors: MatrixLike[float], name: str, deep_copy: bool = False):
         """Set the active vectors of this data attribute.
 
         Vectors are a quantity that has magnitude and direction, such
@@ -735,10 +738,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def _prepare_array(
         self,
-        data: ArrayLike[float],
+        data: npt.ArrayLike,
         name: str,
         deep_copy: bool,
-    ) -> _vtk.vtkDataArray:  # numpydoc ignore=PR01,RT01
+    ) -> _vtk.vtkAbstractArray:  # numpydoc ignore=PR01,RT01
         """Prepare an array to be added to this dataset.
 
         Notes
@@ -794,13 +797,13 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     return vtk_arr
 
         # reset data association
-        if name in self.dataset._association_bitarray_names[self.association.name]:
-            self.dataset._association_bitarray_names[self.association.name].remove(name)
-        if name in self.dataset._association_complex_names[self.association.name]:
-            self.dataset._association_complex_names[self.association.name].remove(name)
+        if name in self.dataset._association_bitarray_names[self.association.name]:  # type: ignore[union-attr]
+            self.dataset._association_bitarray_names[self.association.name].remove(name)  # type: ignore[union-attr]
+        if name in self.dataset._association_complex_names[self.association.name]:  # type: ignore[union-attr]
+            self.dataset._association_complex_names[self.association.name].remove(name)  # type: ignore[union-attr]
 
         if data.dtype == np.bool_:
-            self.dataset._association_bitarray_names[self.association.name].add(name)
+            self.dataset._association_bitarray_names[self.association.name].add(name)  # type: ignore[union-attr]
             data = data.view(np.uint8)
         elif np.issubdtype(data.dtype, np.complexfloating):
             if data.dtype not in (np.complex64, np.complex128):
@@ -812,7 +815,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             if data.ndim != 1:
                 if data.shape[1] != 1:
                     raise ValueError('Complex data must be single dimensional.')
-            self.dataset._association_complex_names[self.association.name].add(name)
+            self.dataset._association_complex_names[self.association.name].add(name)  # type: ignore[union-attr]
 
             # complex data is stored internally as a contiguous 2 component
             # float arrays
@@ -890,7 +893,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
             raise KeyError(f'{key} not present.')
 
         with contextlib.suppress(KeyError):
-            self.dataset._association_bitarray_names[self.association.name].remove(key)
+            self.dataset._association_bitarray_names[self.association.name].remove(key)  # type: ignore[union-attr]
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
@@ -1014,7 +1017,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         return [self.get_array(name) for name in self.keys()]
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove all arrays in this object.
 
         Examples
@@ -1038,7 +1041,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
     def update(
         self, array_dict: dict[str, NumpyArray[float]] | DataSetAttributes, copy: bool = True
-    ):
+    ) -> None:
         """Update arrays in this object from another dictionary or dataset attributes.
 
         For each key, value given, add the pair. If it already exists, replace
@@ -1135,7 +1138,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_scalars_name.setter
-    def active_scalars_name(self, name: str) -> None:  # numpydoc ignore=GL08
+    def active_scalars_name(self, name: str) -> None:
         """Set name of the active scalars.
 
         Parameters
@@ -1185,7 +1188,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @_active_normals_name.setter
-    def _active_normals_name(self, name: str) -> None:  # numpydoc ignore=GL08
+    def _active_normals_name(self, name: str) -> None:
         """Set name of the active normals.
 
         Parameters
@@ -1234,7 +1237,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_vectors_name.setter
-    def active_vectors_name(self, name: str) -> None:  # numpydoc ignore=GL08
+    def active_vectors_name(self, name: str) -> None:
         """Set name of the active vectors.
 
         Parameters
@@ -1338,7 +1341,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals.setter
-    def active_normals(self, normals: MatrixLike[float]):  # numpydoc ignore=GL08
+    def active_normals(self, normals: MatrixLike[float]):
         """Set the normals.
 
         Parameters
@@ -1389,7 +1392,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals_name.setter
-    def active_normals_name(self, name: str) -> None:  # numpydoc ignore=GL08
+    def active_normals_name(self, name: str) -> None:
         """Set the name of the normals array.
 
         Parameters
@@ -1453,7 +1456,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def active_texture_coordinates(
         self,
         texture_coordinates: NumpyArray[float],
-    ):  # numpydoc ignore=GL08
+    ):
         """Set the active texture coordinates array.
 
         Parameters
@@ -1503,7 +1506,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_texture_coordinates_name.setter
-    def active_texture_coordinates_name(self, name: str) -> None:  # numpydoc ignore=GL08
+    def active_texture_coordinates_name(self, name: str) -> None:
         """Set the name of the active texture coordinates array.
 
         Parameters
