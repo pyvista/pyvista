@@ -300,7 +300,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -731,7 +731,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -843,7 +843,7 @@ class WidgetHelper:
         volume : pyvista.plotting.volume.Volume or pyvista.ImageData or pyvista.RectilinearGrid
             New dataset of type :class:`pyvista.ImageData` or
             :class:`pyvista.RectilinearGrid`, or the return value from
-            :class:`pyvista.plotting.volume.Volume` from :func:`Plotter.add_volume`.
+            :class:`pyvista.plotting.volume.Volume` from :func:`pyvista.Plotter.add_volume`.
 
         normal : str or tuple(float), optional
             The starting normal vector of the plane.
@@ -900,7 +900,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_volume` to control how the volume is
+            :func:`pyvista.Plotter.add_volume` to control how the volume is
             displayed. Only applicable if ``volume`` is either a
             :class:`pyvista.ImageData` and :class:`pyvista.RectilinearGrid`.
 
@@ -1032,7 +1032,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1142,7 +1142,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -1854,7 +1854,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -2137,7 +2137,7 @@ class WidgetHelper:
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
-            :func:`Plotter.add_mesh` to control how the mesh is
+            :func:`pyvista.Plotter.add_mesh` to control how the mesh is
             displayed.
 
         Returns
@@ -2469,13 +2469,13 @@ class WidgetHelper:
 
         Returns
         -------
-        pyvista.widgets.AffineWidget3D
+        pyvista.plotting.widgets.AffineWidget3D
             The affine widget.
 
         Notes
         -----
         After interacting with the actor, the transform will be stored within
-        :attr:`pyvista.Actor.user_matrix` but will not be applied to the
+        :attr:`pyvista.Prop3D.user_matrix` but will not be applied to the
         dataset. Use this matrix in conjunction with
         :func:`pyvista.DataSetFilters.transform` to transform the dataset.
 

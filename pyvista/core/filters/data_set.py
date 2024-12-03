@@ -1477,7 +1477,9 @@ class DataSetFilters:
 
         See Also
         --------
-        threshold_percent, :meth:`~pyvista.ImageDataFilters.image_threshold`, extract_values
+        threshold_percent
+        :meth:`~pyvista.ImageDataFilters.image_threshold`
+        :meth:`~pyvista.DataSetFilters.extract_values`
 
         Returns
         -------
@@ -5552,7 +5554,7 @@ class DataSetFilters:
         dataset. Optionally, specific values and/or ranges of values may be specified to
         control which values to split from the input.
 
-        This filter is a convenience method for :meth:`~pyvista.DataSetFilter.extract_values`
+        This filter is a convenience method for :meth:`~pyvista.DataSetFilters.extract_values`
         with ``split`` set to ``True`` by default. Refer to that filter's documentation
         for more details.
 
@@ -5608,7 +5610,7 @@ class DataSetFilters:
             - ``'multi'``: the entire multi-component item must have the specified value.
 
         **kwargs : dict, optional
-            Additional keyword arguments passed to :meth:`~pyvista.DataSetFilter.extract_values`.
+            Additional keyword arguments passed to :meth:`~pyvista.DataSetFilters.extract_values`.
 
         See Also
         --------
@@ -5751,7 +5753,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        values : number | array_like | dict, optional
+        values : float | ArrayLike[float] | dict, optional
             Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
@@ -8631,7 +8633,7 @@ class DataSetFilters:
 
         The type of output dataset is always the same as the input type. Since
         structured types of data (i.e., :class:`pyvista.ImageData`,
-        :class:`pyvista.StructuredGrid`, :class:`pyvista.RectilnearGrid`)
+        :class:`pyvista.StructuredGrid`, :class:`pyvista.RectilinearGrid`)
         are all composed of a cell of the same
         type, the output is either empty, or a shallow copy of the input.
         Unstructured data (:class:`pyvista.UnstructuredGrid`,
@@ -8735,7 +8737,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.Dataset
+        pyvista.DataSet
             Dataset with sorted labels.
 
         Examples
@@ -8842,7 +8844,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.Dataset
+        pyvista.DataSet
             Dataset with packed labels.
 
         Examples
