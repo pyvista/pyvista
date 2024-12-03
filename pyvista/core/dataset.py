@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Iterator
 from collections.abc import Sequence
 from copy import deepcopy
 from functools import partial
@@ -54,14 +55,39 @@ DEFAULT_VECTOR_KEY = '_vectors'
 
 
 class ActiveArrayInfoTuple(NamedTuple):
-    """Active array info tuple to provide legacy support."""
+    """Active array info tuple.
+
+    Parameters
+    ----------
+    association : pyvista.core.utilities.arrays.FieldAssociation
+        Association of the array.
+
+    name : str
+        The name of the array.
+
+    """
 
     association: FieldAssociation
     name: str | None
 
+    def copy(self: ActiveArrayInfoTuple) -> ActiveArrayInfoTuple:
+        """Return a copy of this object.
+
+        Returns
+        -------
+        ActiveArrayInfo
+            A copy of this object.
+
+        """
+        return ActiveArrayInfoTuple(self.association, self.name)
+
 
 class ActiveArrayInfo:
     """Active array info class with support for pickling.
+
+    .. deprecated:: 0.45
+
+        Use :class:`pyvista.core.dataset.ActiveArrayInfoTuple` instead.
 
     Parameters
     ----------
@@ -78,6 +104,11 @@ class ActiveArrayInfo:
         """Initialize."""
         self.association = association
         self.name = name
+        # Deprecated on v0.45.0, estimated removal on v0.48.0
+        warnings.warn(
+            'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
+            PyVistaDeprecationWarning,
+        )
 
     def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:
         """Return a copy of this object.
@@ -146,16 +177,16 @@ class DataSet(DataSetFilters, DataObject):
         """Initialize the common object."""
         super().__init__(*args, **kwargs)
         self._last_active_scalars_name: str | None = None
-        self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
+        self._active_scalars_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
+        self._active_vectors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
+        self._active_tensors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
 
     def __getattr__(self: DataSet, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
     @property
-    def active_scalars_info(self: DataSet) -> ActiveArrayInfo:
+    def active_scalars_info(self: DataSet) -> ActiveArrayInfoTuple:
         """Return the active scalar's association and name.
 
         Association refers to the data association (e.g. point, cell, or
@@ -186,8 +217,7 @@ class DataSet(DataSetFilters, DataObject):
         ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Z Height')
 
         """
-        field: FieldAssociation = self._active_scalars_info.association
-        name: str | None = self._active_scalars_info.name
+        field, name = self._active_scalars_info
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
         if name in exclude:
             name = self._last_active_scalars_name
@@ -203,10 +233,10 @@ class DataSet(DataSetFilters, DataObject):
 
         if name is None:
             # check for the active scalars in point or cell arrays
-            self._active_scalars_info = ActiveArrayInfo(field, None)
+            self._active_scalars_info = ActiveArrayInfoTuple(field, None)
             for attr in [self.point_data, self.cell_data]:
                 if attr.active_scalars_name is not None:
-                    self._active_scalars_info = ActiveArrayInfo(
+                    self._active_scalars_info = ActiveArrayInfoTuple(
                         attr.association,
                         attr.active_scalars_name,
                     )
@@ -215,7 +245,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_scalars_info
 
     @property
-    def active_vectors_info(self: DataSet) -> ActiveArrayInfo:
+    def active_vectors_info(self: DataSet) -> ActiveArrayInfoTuple:
         """Return the active vector's association and name.
 
         Association refers to the data association (e.g. point, cell, or
@@ -247,8 +277,7 @@ class DataSet(DataSetFilters, DataObject):
         ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Normals')
 
         """
-        field: FieldAssociation = self._active_vectors_info.association
-        name: str | None = self._active_vectors_info.name
+        field, name = self._active_vectors_info
 
         # verify this field is still valid
         if name is not None:
@@ -261,17 +290,17 @@ class DataSet(DataSetFilters, DataObject):
 
         if name is None:
             # check for the active vectors in point or cell arrays
-            self._active_vectors_info = ActiveArrayInfo(field, None)
+            self._active_vectors_info = ActiveArrayInfoTuple(field, None)
             for attr in [self.point_data, self.cell_data]:
                 name = attr.active_vectors_name
                 if name is not None:
-                    self._active_vectors_info = ActiveArrayInfo(attr.association, name)
+                    self._active_vectors_info = ActiveArrayInfoTuple(attr.association, name)
                     break
 
         return self._active_vectors_info
 
     @property
-    def active_tensors_info(self: DataSet) -> ActiveArrayInfo:
+    def active_tensors_info(self: DataSet) -> ActiveArrayInfoTuple:
         """Return the active tensor's field and name: [field, name].
 
         Returns
@@ -310,8 +339,7 @@ class DataSet(DataSetFilters, DataObject):
                         dtype=float32)
 
         """
-        field: FieldAssociation = self.active_vectors_info.association
-        name: str | None = self.active_vectors_info.name
+        field, name = self.active_vectors_info
         if name is not None:
             try:
                 if field is FieldAssociation.POINT:
@@ -664,7 +692,7 @@ class DataSet(DataSetFilters, DataObject):
                 f'Data field "{name}" with type ({field}) could not be set as the active scalars',
             )
 
-        self._active_scalars_info = ActiveArrayInfo(field, name)
+        self._active_scalars_info = ActiveArrayInfoTuple(field, name)
 
         if field == FieldAssociation.POINT:
             return field, self.point_data.active_scalars
@@ -708,7 +736,7 @@ class DataSet(DataSetFilters, DataObject):
                     f'Data field ({name}) with type ({field}) could not be set as the active vectors',
                 )
 
-        self._active_vectors_info = ActiveArrayInfo(field, name)
+        self._active_vectors_info = ActiveArrayInfoTuple(field, name)
 
     def set_active_tensors(
         self: DataSet, name: str | None, preference: PointLiteral | CellLiteral = 'point'
@@ -747,7 +775,7 @@ class DataSet(DataSetFilters, DataObject):
                     f'Data field ({name}) with type ({field}) could not be set as the active tensors',
                 )
 
-        self._active_tensors_info = ActiveArrayInfo(field, name)
+        self._active_tensors_info = ActiveArrayInfoTuple(field, name)
 
     def rename_array(
         self: DataSet,
@@ -819,8 +847,7 @@ class DataSet(DataSetFilters, DataObject):
             Active scalars as an array.
 
         """
-        field: FieldAssociation = self.active_scalars_info.association
-        name: str | None = self.active_scalars_info.name
+        field, name = self.active_scalars_info
         if name is not None:
             try:
                 if field == FieldAssociation.POINT:
