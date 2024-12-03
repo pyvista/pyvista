@@ -40,7 +40,7 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
-    from pyvista import MultiBlock
+    from pyvista.core._typing_core import ConcreteDataObjectType
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
@@ -1725,7 +1725,7 @@ class DataSetFilters:
         )
 
     def outline(  # type: ignore[misc]
-        self: _vtk.vtkDataSet | _vtk.vtkMultiBlockDataSet,
+        self: ConcreteDataObjectType,
         generate_faces: bool = False,
         progress_bar: bool = False,
     ):
@@ -1768,8 +1768,8 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Producing an outline')
         return wrap(alg.GetOutputDataObject(0))
 
-    def outline_corners(
-        self: ConcreteDataSetType | MultiBlock, factor: float = 0.2, progress_bar: bool = False
+    def outline_corners(  # type: ignore[misc]
+        self: ConcreteDataObjectType, factor: float = 0.2, progress_bar: bool = False
     ):
         """Produce an outline of the corners for the input dataset.
 
@@ -1860,7 +1860,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def extract_all_edges(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: ConcreteDataObjectType,
         use_all_points: bool = False,
         clear_data: bool = False,
         progress_bar: bool = False,

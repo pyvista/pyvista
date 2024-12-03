@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Union
 from typing import cast
 from typing import overload
 
@@ -1589,7 +1590,7 @@ class Transform(_vtk.vtkTransform):
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (DataSet, MultiBlock)):
-            obj = cast(ConcreteDataSetType | MultiBlock, obj)
+            obj = cast(Union[ConcreteDataSetType, MultiBlock], obj)
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
