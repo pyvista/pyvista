@@ -526,6 +526,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     deep : bool, default: False
         Whether to deep copy a ``vtk.vtkImageData`` object.  Keyword only.
 
+    direction_matrix : RotationLike, optional
+        The direction matrix is a 3x3 matrix which controls the orientation of the
+        image data.
+
     Examples
     --------
     Create an empty ImageData.
@@ -923,7 +927,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetDirectionMatrix())
 
     @direction_matrix.setter
-    def direction_matrix(self, matrix) -> None:  # numpydoc ignore: GL08
+    def direction_matrix(self, matrix) -> None:
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
 
     @property
