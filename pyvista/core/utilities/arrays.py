@@ -37,10 +37,10 @@ if TYPE_CHECKING:  # pragma: no cover
 class FieldAssociation(enum.Enum):
     """Represents which type of vtk field a scalar or vector array is associated with."""
 
-    POINT = _vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
-    CELL = _vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
-    NONE = _vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
-    ROW = _vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
+    POINT = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS)
+    CELL = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
+    NONE = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_NONE)
+    ROW = int(_vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS)
 
 
 PointLiteral = Literal[
@@ -919,12 +919,12 @@ def get_default_active_array_info(
         active_scalars_name = mesh.active_scalars_name
         if active_scalars_name is None:
             set_default_active_scalars(mesh)
-        association, name = mesh.active_scalars_info._namedtuple
+        association, name = mesh.active_scalars_info
     elif attribute == 'vectors':
         active_vectors_name = mesh.active_vectors_name
         if active_vectors_name is None:
             set_default_active_vectors(mesh)
-        association, name = mesh.active_vectors_info._namedtuple
+        association, name = mesh.active_vectors_info
     else:
         # Raise error
         _validation.check_contains(container=['scalars', 'vectors'], item=attribute)

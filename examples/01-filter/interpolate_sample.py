@@ -100,7 +100,7 @@ pl.show()
 # While this filter is very useful for point clouds, it is possible to use
 # it to interpolate from the points on other mesh types. With
 # unstuitable choice of ``radius`` the interpolation doesn't look very good.
-# It is recommended consider using :func:`pyvista.DataSetFilters.sample`` in a
+# It is recommended consider using :func:`pyvista.DataSetFilters.sample` in a
 # case like this (see next section below). However, there may be cases with
 # non-point cloud meshes where :func:`pyvista.DataSetFilters.interpolate` is
 # still preferred.
