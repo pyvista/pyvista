@@ -439,7 +439,7 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_scalars(name)
 
-    @property
+    @property  # type: ignore[override]
     def points(self: DataSet) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 
@@ -2771,7 +2771,7 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : Matrix
+        point : VectorLike[float] | MatrixLike[float]
             Point or points to query if are inside a cell.
 
         Returns

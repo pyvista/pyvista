@@ -1500,8 +1500,8 @@ class ImageDataFilters(DataSetFilters):
 
         return output
 
-    def points_to_cells(
-        self,
+    def points_to_cells(  # type: ignore[misc]
+        self: ImageData,
         scalars: str | None = None,
         *,
         dimensionality: VectorLike[bool]
@@ -1535,7 +1535,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as voxel cells instead of as points.
 
         .. note::
-            Only the input's :attr:`~pyvista.core.Grid.dimensions`, and
+            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -1694,10 +1694,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = self.get_array_association(  # type: ignore[attr-defined]
-                scalars,
-                preference='point',
-            )
+            field = self.get_array_association(scalars, preference='point')
             if field != FieldAssociation.POINT:
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
@@ -1709,8 +1706,8 @@ class ImageDataFilters(DataSetFilters):
             copy=copy,
         )
 
-    def cells_to_points(
-        self,
+    def cells_to_points(  # type: ignore[misc]
+        self: ImageData,
         scalars: str | None = None,
         *,
         dimensionality: VectorLike[bool]
@@ -1742,7 +1739,7 @@ class ImageDataFilters(DataSetFilters):
         effect, such as plotting images as points instead of as voxel cells.
 
         .. note::
-            Only the input's :attr:`~pyvista.core.Grid.dimensions`, and
+            Only the input's :attr:`~pyvista.ImageData.dimensions`, and
             :attr:`~pyvista.ImageData.origin` are modified by this filter. Other spatial
             properties such as :attr:`~pyvista.ImageData.spacing` and
             :attr:`~pyvista.ImageData.direction_matrix` are not affected.
@@ -1853,10 +1850,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = self.get_array_association(  # type: ignore[attr-defined]
-                scalars,
-                preference='cell',
-            )
+            field = self.get_array_association(scalars, preference='cell')
             if field != FieldAssociation.CELL:
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
@@ -1868,8 +1862,8 @@ class ImageDataFilters(DataSetFilters):
             copy=copy,
         )
 
-    def _remesh_points_cells(
-        self,
+    def _remesh_points_cells(  # type: ignore[misc]
+        self: ImageData,
         points_to_cells: bool,
         scalars: str | None,
         dimensionality: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
@@ -1928,8 +1922,8 @@ class ImageDataFilters(DataSetFilters):
                 active_scalars = active_scalars if field.name.lower() == preference else None
             return active_scalars
 
-        point_data = self.point_data  # type: ignore[attr-defined]
-        cell_data = self.cell_data  # type: ignore[attr-defined]
+        point_data = self.point_data
+        cell_data = self.cell_data
 
         # Get data to use and operations to perform for the conversion
         new_image = pyvista.ImageData()
@@ -1955,33 +1949,33 @@ class ImageDataFilters(DataSetFilters):
 
         # Prepare the new image
         new_image.origin = origin_operator(
-            self.origin,  # type: ignore[attr-defined]
-            (np.array(self.spacing) / 2) * dims_mask,  # type: ignore[attr-defined]
+            self.origin,
+            (np.array(self.spacing) / 2) * dims_mask,
         )
         new_image.dimensions = dims_result  # type: ignore[assignment]
-        new_image.spacing = self.spacing  # type: ignore[attr-defined]
-        new_image.direction_matrix = self.direction_matrix  # type: ignore[attr-defined]
+        new_image.spacing = self.spacing
+        new_image.direction_matrix = self.direction_matrix
 
         # Check the validity of the operation
         if points_to_cells:
-            if new_image.n_cells != self.n_points:  # type: ignore[attr-defined]
+            if new_image.n_cells != self.n_points:
                 raise ValueError(
                     'Cannot re-mesh points to cells. The dimensions of the input'
-                    f' {self.dimensions} is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' {self.dimensions} is not compatible with the dimensions of the'
                     f' output {new_image.dimensions} and would require to map'
-                    f' {self.n_points} points on {new_image.n_cells} cells.'  # type: ignore[attr-defined]
+                    f' {self.n_points} points on {new_image.n_cells} cells.'
                 )
         else:  # cells_to_points
-            if new_image.n_points != self.n_cells:  # type: ignore[attr-defined]
+            if new_image.n_points != self.n_cells:
                 raise ValueError(
                     'Cannot re-mesh cells to points. The dimensions of the input'
-                    f' {self.dimensions} is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' {self.dimensions} is not compatible with the dimensions of the'
                     f' output {new_image.dimensions} and would require to map'
-                    f' {self.n_cells} cells on {new_image.n_points} points.'  # type: ignore[attr-defined]
+                    f' {self.n_cells} cells on {new_image.n_points} points.'
                 )
 
         # Copy field data
-        new_image.field_data.update(self.field_data)  # type: ignore[attr-defined]
+        new_image.field_data.update(self.field_data)
 
         # Copy old data (point or cell) to new data (cell or point)
         array_names = [scalars] if scalars else old_data.keys()

@@ -54,7 +54,6 @@ from .tools import parse_font_family
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
-    from pyvista.core._typing_core import Number
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
@@ -1469,7 +1468,7 @@ class _TrameConfig(_ThemeConfig):
         self._default_mode = 'trame'
 
     @property
-    def interactive_ratio(self) -> Number:  # numpydoc ignore=RT01
+    def interactive_ratio(self) -> float:  # numpydoc ignore=RT01
         """Return or set the interactive ratio for PyVista Trame views.
 
         Examples
@@ -1481,11 +1480,11 @@ class _TrameConfig(_ThemeConfig):
         return self._interactive_ratio
 
     @interactive_ratio.setter
-    def interactive_ratio(self, interactive_ratio: Number):
+    def interactive_ratio(self, interactive_ratio: float):
         self._interactive_ratio = interactive_ratio  # type: ignore[assignment]
 
     @property
-    def still_ratio(self) -> Number:  # numpydoc ignore=RT01
+    def still_ratio(self) -> float:  # numpydoc ignore=RT01
         """Return or set the still ratio for PyVista Trame views.
 
         Examples
@@ -1497,7 +1496,7 @@ class _TrameConfig(_ThemeConfig):
         return self._still_ratio
 
     @still_ratio.setter
-    def still_ratio(self, still_ratio: Number):
+    def still_ratio(self, still_ratio: float):
         self._still_ratio = still_ratio  # type: ignore[assignment]
 
     @property

@@ -931,7 +931,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the connectivity array of the lines of this PolyData.
 
-        Lines can also be set by assigning a ``pyvista.CellArray``.
+        Lines can also be set by assigning a :class:`~pyvista.CellArray`.
 
         Examples
         --------
@@ -971,7 +971,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
-        Faces can also be set by assigning a ``pyvista.CellArray`` object instead of an array.
+        Faces can also be set by assigning a :class:`~pyvista.CellArray` object instead of an array.
 
         Returns
         -------
