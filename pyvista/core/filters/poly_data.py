@@ -4061,7 +4061,7 @@ class PolyDataFilters(DataSetFilters):
         pyvista.voxelize_volume
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
-        pyvista.ImageDataFilters.contour_labeled
+        pyvista.ImageDataFilters.contour_labels
             Filter that generates surface contours from labeled image data. Can be
             loosely considered as an inverse of this filter.
 

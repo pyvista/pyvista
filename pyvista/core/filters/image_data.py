@@ -1163,6 +1163,10 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
+        :meth:`~pyvista.PolyDataFilters.voxelize_binary_mask`
+            Filter that generates binary labeled :class:`~pyvista.ImageData` from
+            :class:`~pyvista.PolyData` surface contours. Can beloosely considered as
+            an inverse of this filter.
         :meth:`~pyvista.ImageDataFilters.cells_to_points`
             Re-mesh :class:`~pyvista.ImageData` to a points-based representation.
         :meth:`~pyvista.DataSetFilters.contour`
