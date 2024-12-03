@@ -12,12 +12,14 @@ from typing import Any
 from typing import Literal
 from typing import TypeVar
 from typing import Union
+from typing import cast
 from typing import overload
 
 import numpy as np
 import numpy.typing as npt
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
@@ -29,6 +31,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
 class FieldAssociation(enum.Enum):
@@ -876,6 +879,57 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
             f'point data: {possible_scalars_point}.\n'
             'Set one as active using DataSet.set_active_scalars(name, preference=type)',
         )
+
+
+def get_default_active_array_info(
+    mesh: pyvista.DataSet, attribute: Literal['scalars', 'vectors'] = 'scalars'
+) -> _ActiveArrayExistsInfoTuple:
+    """Get the currently active array (if set) or get default active array otherwise.
+
+    If active an active array already exists, no changes are made and info about
+    the array is returned. If no active array is set, use :func:`set_default_active_scalars`
+    or :func:`set_default_active_normals` first. An error is raised if no scalars
+    can be set.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Dataset to set default active scalars.
+
+    attribute : 'scalars' | 'normals'
+        Attribute to
+
+    Raises
+    ------
+    MissingDataError
+        If no arrays exist.
+
+    AmbiguousDataError
+        If more than one array exists.
+
+    Returns
+    -------
+    ActiveArrayInfoTuple
+        Info about the active scalars.
+
+    """
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
+
+    if attribute == 'scalars':
+        active_scalars_name = mesh.active_scalars_name
+        if active_scalars_name is None:
+            set_default_active_scalars(mesh)
+        association, name = mesh.active_scalars_info._namedtuple
+    elif attribute == 'vectors':
+        active_vectors_name = mesh.active_vectors_name
+        if active_vectors_name is None:
+            set_default_active_vectors(mesh)
+        association, name = mesh.active_vectors_info._namedtuple
+    else:
+        # Raise error
+        _validation.check_contains(container=['scalars', 'vectors'], item=attribute)
+        raise
+    return _ActiveArrayExistsInfoTuple(association=association, name=cast(str, name))
 
 
 _JSONValueType = Union[

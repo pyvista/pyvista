@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 from typing import overload
 
 import numpy as np
@@ -1581,13 +1582,15 @@ class Transform(_vtk.vtkTransform):
 
         """
         # avoid circular import
+        from pyvista import ConcreteDataSetType
         from pyvista.core.composite import MultiBlock
         from pyvista.core.dataset import DataSet
 
         inplace = not copy
         # Transform dataset
         if isinstance(obj, (DataSet, MultiBlock)):
-            return obj.transform(  # type: ignore[misc]
+            obj = cast(ConcreteDataSetType | MultiBlock, obj)
+            return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
                 transform_all_input_vectors=transform_all_input_vectors,

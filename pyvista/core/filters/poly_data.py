@@ -2510,7 +2510,7 @@ class PolyDataFilters(DataSetFilters):
         color = pyvista.Color(color, default_color=pyvista.global_theme.edge_color)
 
         if faces:
-            centers = self.cell_centers().points[::use_every]
+            centers = self.cell_centers().points[::use_every]  # type: ignore[misc]
             normals = self.cell_normals  # type: ignore[attr-defined]
         else:
             centers = self.points[::use_every]  # type: ignore[has-type]
@@ -4250,7 +4250,7 @@ class PolyDataFilters(DataSetFilters):
             _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)  # type: ignore[misc]
             poly_ijk = _preprocess_polydata(poly_ijk)
         else:
             # Compute reference volume geometry

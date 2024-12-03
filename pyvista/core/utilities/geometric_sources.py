@@ -31,6 +31,7 @@ from pyvista.core.utilities.misc import no_new_attr
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
+    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
@@ -43,7 +44,7 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 def translate(
-    surf: DataSet,
+    surf: ConcreteDataSetType,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
 ) -> None:
@@ -81,10 +82,9 @@ def translate(
     trans[:3, 1] = normy
     trans[:3, 2] = normz
     trans[3, 3] = 1
-
     surf.transform(trans)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points += np.array(center, dtype=surf.points.dtype)  # type: ignore[misc]
+        surf.points += np.array(center, dtype=surf.points.dtype)
 
 
 if _vtk.vtk_version_info < (9, 3):

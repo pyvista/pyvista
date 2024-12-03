@@ -18,15 +18,30 @@ from pyvista.core.pointset import UnstructuredGrid
 
 # Use this typevar wherever a `DataSet` type hint may be used
 # Unlike `DataSet`, the concrete classes here also inherit from `vtkDataSet`
-ConcreteDataSetAlias = Union[
-    ImageData,
-    RectilinearGrid,
+
+ConcretePointGridAlias = Union[
+    ExplicitStructuredGrid,
+    StructuredGrid,
+    UnstructuredGrid,
+]
+ConcretePointGridType = TypeVar('ConcretePointGridType', bound=ConcretePointGridAlias)
+
+ConcretePointSetAlias = Union[
     ExplicitStructuredGrid,
     PointSet,
     PolyData,
     StructuredGrid,
     UnstructuredGrid,
 ]
+ConcretePointSetType = TypeVar('ConcretePointSetType', bound=ConcretePointSetAlias)
+
+ConcreteGridAlias = Union[
+    ImageData,
+    RectilinearGrid,
+]
+ConcreteGridType = TypeVar('ConcreteGridType', bound=ConcreteGridAlias)
+
+ConcreteDataSetAlias = Union[ConcreteGridAlias, ConcretePointSetAlias]
 ConcreteDataSetType = TypeVar('ConcreteDataSetType', bound=ConcreteDataSetAlias)
 ConcreteDataSetType.__doc__ = """Type variable of all concrete :class:`~pyvista.DataSet` classes."""
 
