@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Iterator
 from collections.abc import Sequence
 from copy import deepcopy
 from functools import partial
@@ -80,6 +79,13 @@ class ActiveArrayInfoTuple(NamedTuple):
 
         """
         return ActiveArrayInfoTuple(self.association, self.name)
+
+
+class _ActiveArrayExistsInfoTuple(NamedTuple):
+    """Active array info tuple to provide legacy support."""
+
+    association: FieldAssociation
+    name: str
 
 
 class ActiveArrayInfo:

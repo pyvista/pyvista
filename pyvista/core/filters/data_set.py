@@ -28,6 +28,7 @@ from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.helpers import generate_plane
@@ -1535,9 +1536,7 @@ class DataSetFilters:
 
         """
         # set the scalars to threshold on
-        if scalars is None:
-            set_default_active_scalars(self)
-            scalars = self.active_scalars_info.name
+        scalars = set_default_active_scalars(self).name if scalars is None else scalars
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
@@ -1677,11 +1676,7 @@ class DataSetFilters:
         See :ref:`common_filter_example` for more examples using a similar filter.
 
         """
-        if scalars is None:
-            set_default_active_scalars(self)
-            tscalars = self.active_scalars_info.name
-        else:
-            tscalars = scalars
+        tscalars = set_default_active_scalars(self).name if scalars is None else scalars
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
 
         def _check_percent(percent):
@@ -2165,7 +2160,9 @@ class DataSetFilters:
         elif isinstance(scalars, (Sequence, np.ndarray)):
             scalars_name = 'Contour Data'
             self[scalars_name] = scalars
-        elif scalars is not None:
+        elif scalars is None:
+            scalars_name = set_default_active_scalars(self).name
+        else:
             raise TypeError(
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
                 'a numpy.ndarray, a string, or None.',
@@ -2179,15 +2176,8 @@ class DataSetFilters:
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
-        # set the array to contour on
-        if scalars is None:
-            set_default_active_scalars(self)
-            field = self.active_scalars_info.association
-            # Safe to cast since scalars name must be str (error is raised earlier if None)
-            scalars_name = cast(str, self.active_scalars_info.name)
-        else:
-            field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
+        field = get_array_association(self, scalars_name, preference=preference)
         if field != FieldAssociation.POINT:
             raise TypeError('Contour filter only works on point data.')
         alg.SetInputArrayToProcess(
@@ -2688,7 +2678,7 @@ class DataSetFilters:
 
         if orient:
             try:
-                pyvista.set_default_active_vectors(dataset)
+                set_default_active_vectors(dataset)
             except MissingDataError:
                 warnings.warn('No vector-like data to use for orient. orient will be set to False.')
                 orient = False
@@ -3025,12 +3015,10 @@ class DataSetFilters:
 
             # Input will be modified, so copy first
             input_mesh = self.copy()
-            if scalars is None:
-                set_default_active_scalars(input_mesh)
-            else:
+            if scalars is not None:
                 input_mesh.set_active_scalars(scalars)
+            field, name = set_default_active_scalars(input_mesh)
             # Make sure we have point data (required by the filter)
-            field, name = input_mesh.active_scalars_info
             if field == FieldAssociation.CELL:
                 # Convert to point data with a unique name
                 # The point array will be removed later
@@ -3363,8 +3351,7 @@ class DataSetFilters:
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            field, scalars = set_default_active_scalars(self)
         _ = get_array(self, scalars, preference='point', err=True)
 
         field = get_array_association(self, scalars, preference='point')
@@ -3450,8 +3437,7 @@ class DataSetFilters:
 
         """
         if vectors is None:
-            pyvista.set_default_active_vectors(self)
-            field, vectors = self.active_vectors_info
+            field, vectors = set_default_active_vectors(self)
         arr = get_array(self, vectors, preference='point')
         field = get_array_association(self, vectors, preference='point')
         if arr is None:
@@ -4448,7 +4434,7 @@ class DataSetFilters:
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
         elif vectors is None:
-            pyvista.set_default_active_vectors(self)
+            set_default_active_vectors(self)
 
         if max_time is not None:
             if max_length is not None:
@@ -4648,7 +4634,7 @@ class DataSetFilters:
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
         elif vectors is None:
-            pyvista.set_default_active_vectors(self)
+            set_default_active_vectors(self)
 
         loop_angle = loop_angle * np.pi / 180
 
@@ -4871,8 +4857,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            field, scalars = set_default_active_scalars(self)
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
 
@@ -5218,8 +5203,7 @@ class DataSetFilters:
 
         # Get variable of interest
         if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
+            scalars = set_default_active_scalars(self).name
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
 
@@ -5354,10 +5338,8 @@ class DataSetFilters:
         )
 
         # Get variable of interest
-        if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
-        values = sampled.get_array(scalars)
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
         # create the matplotlib figure
@@ -5980,9 +5962,7 @@ class DataSetFilters:
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
             try:
-                if scalars_ is None:
-                    set_default_active_scalars(self)
-                    scalars_ = self.active_scalars_info.name
+                scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
                 array_ = get_array(self, scalars_, preference=preference_, err=True)
             except MissingDataError:
                 raise ValueError(
@@ -6887,10 +6867,8 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
-        if scalars is None:
-            set_default_active_scalars(self)
-            field, scalars = self.active_scalars_info
-        if not isinstance(scalars, str):
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        if not isinstance(scalars_, str):
             raise TypeError('scalars array must be given as a string name')
         if not any((gradient, divergence, vorticity, qcriterion)):
             raise ValueError(
@@ -8881,10 +8859,7 @@ class DataSetFilters:
 
         """
         # Set a input scalars
-        if scalars is None:
-            set_default_active_scalars(self)
-            scalars = self.active_scalars_info.name
-
+        scalars = set_default_active_scalars(self).name if scalars is None else scalars
         field = get_array_association(self, scalars, preference=preference)
 
         # Determine output scalars
