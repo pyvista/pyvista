@@ -15,6 +15,7 @@ import pyvista
 
 if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import RotationLike
 
 from pyvista.core import _validation
 
@@ -588,7 +589,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
         deep: bool = False,
-        direction_matrix=None,
+        direction_matrix: RotationLike | None = None,
     ):
         """Initialize the uniform grid."""
         super().__init__()
@@ -927,7 +928,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetDirectionMatrix())
 
     @direction_matrix.setter
-    def direction_matrix(self, matrix) -> None:
+    def direction_matrix(self, matrix: RotationLike) -> None:
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
 
     @property
