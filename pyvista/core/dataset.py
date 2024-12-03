@@ -70,7 +70,7 @@ class ActiveArrayInfoTuple(NamedTuple):
     association: FieldAssociation
     name: str | None
 
-    def copy(self: DataSet) -> ActiveArrayInfoTuple:
+    def copy(self: ActiveArrayInfoTuple) -> ActiveArrayInfoTuple:
         """Return a copy of this object.
 
         Returns
