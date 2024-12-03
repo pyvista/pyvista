@@ -1013,8 +1013,8 @@ class ImageDataFilters(DataSetFilters):
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
         return wrap(alg.GetOutput())
 
-    def contour_labels(
-        self,
+    def contour_labels(  # type: ignore[misc]
+        self: ImageData,
         boundary_style: Literal['all', 'external', 'internal'] = 'all',
         *,
         select_inputs: int | VectorLike[int] | None = None,
@@ -1432,7 +1432,7 @@ class ImageDataFilters(DataSetFilters):
 
         background_value = 0
 
-        alg_input = _get_alg_input(self, scalars)  # type: ignore[arg-type]
+        alg_input = _get_alg_input(self, scalars)
 
         # Pad with background values to close surfaces at image boundaries
         alg_input = alg_input.pad_image(background_value) if closed_surface else alg_input

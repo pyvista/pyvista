@@ -5984,10 +5984,10 @@ class DataSetFilters:
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
             if scalars_ is None:
-                set_default_active_scalars(self)  # type: ignore[arg-type]
-                _, scalars_ = self.active_scalars_info  # type: ignore[attr-defined]
-            array_ = get_array(self, scalars_, preference=preference_, err=True)  # type: ignore[arg-type]
-            association_ = get_array_association(self, scalars_, preference=preference_)  # type: ignore[arg-type]
+                set_default_active_scalars(self)
+                _, scalars_ = self.active_scalars_info
+            array_ = get_array(self, scalars_, preference=preference_, err=True)
+            association_ = get_array_association(self, scalars_, preference=preference_)
             return array_, association_
 
         def _validate_component_mode(array_, component_mode_):
@@ -6091,7 +6091,7 @@ class DataSetFilters:
                     )
             return values_, ranges_
 
-        if self.n_points == 0:  # type: ignore[attr-defined]
+        if self.n_points == 0:
             # Empty input, return empty output
             out = pyvista.UnstructuredGrid()
             if split:
@@ -6100,7 +6100,7 @@ class DataSetFilters:
                 _, ranges_ = _get_inputs_from_dict(ranges)
                 n_values = len(np.atleast_1d(values_)) if values_ is not None else 0
                 n_ranges = len(np.atleast_2d(ranges_)) if ranges_ is not None else 0
-                return pyvista.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])  # type: ignore[attr-defined]
+                return pyvista.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])
             return out
 
         array, association = _validate_scalar_array(scalars, preference)
