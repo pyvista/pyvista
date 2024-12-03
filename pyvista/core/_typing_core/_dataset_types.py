@@ -20,6 +20,13 @@ from pyvista.core.pointset import UnstructuredGrid
 # required for type-checking. The abstract classes like `DataSet`, `DataObject`
 # do not inherit VTK methods whereas the concrete classes do
 
+ConcreteGridAlias = Union[
+    ImageData,
+    RectilinearGrid,
+]
+ConcreteGridType = TypeVar('ConcreteGridType', bound=ConcreteGridAlias)
+ConcreteGridType.__doc__ = """Type variable of all concrete PyVista ``Grid`` classes."""
+
 ConcretePointGridAlias = Union[
     ExplicitStructuredGrid,
     StructuredGrid,
@@ -37,13 +44,6 @@ ConcretePointSetAlias = Union[
 ]
 ConcretePointSetType = TypeVar('ConcretePointSetType', bound=ConcretePointSetAlias)
 ConcretePointSetType.__doc__ = """Type variable of all concrete PyVista ``PointSet`` classes."""
-
-ConcreteGridAlias = Union[
-    ImageData,
-    RectilinearGrid,
-]
-ConcreteGridType = TypeVar('ConcreteGridType', bound=ConcreteGridAlias)
-ConcreteGridType.__doc__ = """Type variable of all concrete PyVista ``Grid`` classes."""
 
 ConcreteDataSetAlias = Union[ConcreteGridAlias, ConcretePointSetAlias]
 ConcreteDataSetType = TypeVar('ConcreteDataSetType', bound=ConcreteDataSetAlias)
