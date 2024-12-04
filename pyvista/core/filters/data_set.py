@@ -5751,10 +5751,6 @@ class DataSetFilters:
 
         .. versionadded:: 0.44
 
-        .. versionchanged:: 0.45
-            This filter now operates on empty inputs and will return an empty mesh for
-            these cases. Previously, an error was raised.
-
         Parameters
         ----------
         values : float | ArrayLike[float] | dict, optional
