@@ -1344,12 +1344,8 @@ class ImageDataFilters(DataSetFilters):
                 alg_.SetOutputMeshTypeToDefault()
             elif output_mesh_type == 'quads':
                 alg_.SetOutputMeshTypeToQuads()
-            elif output_mesh_type == 'triangles':
+            else:  # output_mesh_type == 'triangles':
                 alg_.SetOutputMeshTypeToTriangles()
-            else:
-                raise ValueError(
-                    f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"',
-                )
 
         def _configure_boundaries(
             alg_: _vtk.vtkSurfaceNets3D,
@@ -1406,8 +1402,6 @@ class ImageDataFilters(DataSetFilters):
 
             [alg.SetLabel(int(val), val) for val in internal_ids]  # type: ignore[func-returns-value]
 
-            return output_ids
-
         def _configure_smoothing(
             alg_: _vtk.vtkSurfaceNets3D,
             spacing_: tuple[float, float, float],
@@ -1433,7 +1427,7 @@ class ImageDataFilters(DataSetFilters):
                 # and/or scale it independently
                 alg_.AutomaticSmoothingConstraintsOff()
 
-                # Dynamically calculate distance is not specified.
+                # Dynamically calculate distance if not specified.
                 # This emulates the auto-constraint calc from vtkSurfaceNets3D
                 distance_ = distance_ if distance_ else np.linalg.norm(spacing_)
                 alg_.GetSmoother().SetConstraintDistance(distance_ * scale_)
@@ -1447,6 +1441,9 @@ class ImageDataFilters(DataSetFilters):
 
         _validation.check_contains(
             container=['all', 'internal', 'external'], item=boundary_style, name='boundary_style'
+        )
+        _validation.check_contains(
+            container=[None, 'quads', 'triangles'], item=output_mesh_type, name='output_mesh_type'
         )
 
         background_value = 0

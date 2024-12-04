@@ -235,10 +235,6 @@ def test_contour_labels_cell_data(channels):
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
-    match = 'Invalid output mesh type "invalid", use "quads" or "triangles"'
-    with pytest.raises(ValueError, match=match):
-        labeled_image.contour_labels(output_mesh_type='invalid')
-
     # Nonexistent scalar key
     with pytest.raises(KeyError):
         labeled_image.contour_labels(scalars='nonexistent_key')
@@ -246,8 +242,6 @@ def test_contour_labels_raises(labeled_image):
     # Empty inputs
     with pytest.raises(pv.MissingDataError, match='No data available'):
         pv.ImageData().contour_labels()
-
-    # TODO: test float input vs int for select_input/output
 
 
 @pytest.mark.skipif(
