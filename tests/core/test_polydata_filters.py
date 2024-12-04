@@ -67,24 +67,24 @@ def poly_circle():
     return pv.PolyData(circle.points, lines=[31, *list(range(30)), 0])
 
 
-def test_decimate_polylines(poly_circle):
+def test_decimate_polyline(poly_circle):
     assert poly_circle.n_points == 30
-    decimated = poly_circle.decimate_polylines(0.5)
+    decimated = poly_circle.decimate_polyline(0.5)
     # Allow some leeway for approximtely 50%
     assert decimated.n_points >= 14
     assert decimated.n_points <= 16
 
 
-def test_decimate_polylines_maximum_error(poly_circle):
+def test_decimate_polyline_maximum_error(poly_circle):
     assert poly_circle.n_points == 30
     # low maximum error will prevent decimation.
     # Since this is a regular shape, no decimation occurs at all with suitable choice
-    decimated = poly_circle.decimate_polylines(0.5, maximum_error=0.0001)
+    decimated = poly_circle.decimate_polyline(0.5, maximum_error=0.0001)
     assert decimated.n_points == 30
 
 
-def test_decimate_polylines_inplace(poly_circle):
-    poly_circle.decimate_polylines(0.5, inplace=True)
+def test_decimate_polyline_inplace(poly_circle):
+    poly_circle.decimate_polyline(0.5, inplace=True)
     # Allow some leeway for approximtely 50%
     assert poly_circle.n_points >= 14
     assert poly_circle.n_points <= 16
