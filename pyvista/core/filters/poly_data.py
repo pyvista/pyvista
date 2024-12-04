@@ -1154,6 +1154,8 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Reduce the number of lines in a polyline mesh.
 
+        This filter uses ``vtkDecimatePolylineFilter``.
+
         .. versionadded:: 0.44.0
 
         Parameters
@@ -1177,6 +1179,14 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Decimated mesh.
+
+        Warnings
+        --------
+        From ``vtkDecimatePolylineFilter`` documentation: this algorithm is a very
+        simple implementation that overlooks some potential complexities.
+        For example, if a vertex is multiply connected, meaning that it is
+        used by multiple distinct polylines, then the extra topological
+        constraints are ignored. This can produce less than optimal results.
 
         See Also
         --------
