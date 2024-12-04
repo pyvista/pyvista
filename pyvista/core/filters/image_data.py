@@ -872,7 +872,7 @@ class ImageDataFilters(DataSetFilters):
         .. note::
            Requires ``vtk>=9.3.0``.
 
-        .. deprecated:: 0.44
+        .. deprecated:: 0.45
             This filter produces unexpected results and is deprecated.
             Use :meth:`~pyvista.ImageDataFilters.contour_labels` instead.
             See https://github.com/pyvista/pyvista/issues/5981 for details.
@@ -1065,6 +1065,8 @@ class ImageDataFilters(DataSetFilters):
         .. note::
 
             This filter requires VTK version ``9.3.0`` or greater.
+
+        .. versionadded:: 0.45
 
         Parameters
         ----------
