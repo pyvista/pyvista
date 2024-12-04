@@ -720,7 +720,7 @@ def _array_from_vtkmatrix(
     return array
 
 
-def validate_number(num: float, /, *, reshape: bool = True, **kwargs) -> float:
+def validate_number(num: float | int, /, *, reshape: bool = True, **kwargs) -> float | int:
     """Validate a real, finite number.
 
     By default, the number is checked to ensure it:
