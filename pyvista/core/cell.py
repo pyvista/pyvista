@@ -750,10 +750,10 @@ class CellArray(_vtk.vtkCellArray):
 
         Parameters
         ----------
-        offsets : IntMatrix
+        offsets : MatrixLike[int]
             Offsets array of length `n_cells + 1`.
 
-        connectivity : IntMatrix
+        connectivity : MatrixLike[int]
             Connectivity array.
 
         deep : bool, default: False

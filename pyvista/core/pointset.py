@@ -534,7 +534,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ``None``, then the ``PolyData`` object will be created with
         vertex cells with ``n_verts`` equal to the number of ``points``.
 
-    faces : sequence[int], vtk.vtkCellArray, pyvista.CellArray, optional
+    faces : sequence[int], vtk.vtkCellArray, CellArray, optional
         Polygonal faces of the mesh. Can be either a padded connectivity
         array or an explicit cell array object.
 
@@ -551,7 +551,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_faces : int, optional
         Deprecated. Not used.
 
-    lines : sequence[int], vtk.vtkCellArray, pyvista.CellArray, optional
+    lines : sequence[int], vtk.vtkCellArray, CellArray, optional
         Line connectivity. Like ``faces``, this can be either a padded
         connectivity array or an explicit cell array object. The padded
         array format requires padding indicating the number of points in
@@ -562,7 +562,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_lines : int, optional
         Deprecated. Not used.
 
-    strips : sequence[int], vtk.vtkCellArray, pyvista.CellArray, optional
+    strips : sequence[int], vtk.vtkCellArray, CellArray, optional
         Triangle strips connectivity.  Triangle strips require an
         initial triangle, and the following points of the strip. Each
         triangle is built with the new point and the two previous
@@ -596,7 +596,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
-    verts : sequence[int], vtk.vtkCellArray, pvyvista.CellArray, optional
+    verts : sequence[int], vtk.vtkCellArray, CellArray, optional
         The verts connectivity.  Like ``faces``, ``lines``, and
         ``strips`` this can be supplied as either a padded array or an
         explicit cell array object. In the padded array format,
@@ -910,7 +910,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ...     point_size=60,
         ... )
 
-        Vertex cells can also be set to a ``pyvista.CellArray``. The following
+        Vertex cells can also be set to a ``CellArray``. The following
         ``verts`` assignment is equivalent to the one above.
 
         >>> mesh.verts = pv.CellArray.from_regular_cells(
@@ -931,7 +931,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the connectivity array of the lines of this PolyData.
 
-        Lines can also be set by assigning a ``pyvista.CellArray``.
+        Lines can also be set by assigning a :class:`~pyvista.CellArray`.
 
         Examples
         --------
@@ -971,7 +971,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
-        Faces can also be set by assigning a ``pyvista.CellArray`` object instead of an array.
+        Faces can also be set by assigning a :class:`~pyvista.CellArray` object instead of an array.
 
         Returns
         -------

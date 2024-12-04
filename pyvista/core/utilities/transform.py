@@ -533,7 +533,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.scale`
+        :meth:`pyvista.DataSetFilters.scale`
             Scale a mesh.
 
         Examples
@@ -628,7 +628,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.reflect`
+        :meth:`pyvista.DataSetFilters.reflect`
             Reflect a mesh.
 
         Examples
@@ -694,7 +694,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_x
+        pyvista.DataSetFilters.flip_x
             Flip a mesh about the x-axis.
 
         Examples
@@ -754,7 +754,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_y
+        pyvista.DataSetFilters.flip_y
             Flip a mesh about the y-axis.
 
         Examples
@@ -814,7 +814,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_z
+        pyvista.DataSetFilters.flip_z
             Flip a mesh about the z-axis.
 
         Examples
@@ -868,7 +868,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.translate`
+        :meth:`pyvista.DataSetFilters.translate`
             Translate a mesh.
 
         Examples
@@ -911,7 +911,7 @@ class Transform(_vtk.vtkTransform):
 
         Create a rotation matrix and :meth:`concatenate` it with the current
         transformation :attr:`matrix` according to pre-multiply or post-multiply
-        semantics.
+        semantics. The rotation may be right-handed or left-handed.
 
         Internally, the matrix is stored in the :attr:`matrix_list`.
 
@@ -936,7 +936,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate
+        pyvista.DataSetFilters.rotate
             Rotate a mesh.
 
         Examples
@@ -994,9 +994,7 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 0., 1.]])
 
         """
-        valid_rotation = _validation.validate_transform3x3(
-            rotation, must_be_finite=self.check_finite, name='rotation'
-        )
+        valid_rotation = _validation.validate_rotation(rotation)
         return self._concatenate_with_translations(
             valid_rotation, point=point, multiply_mode=multiply_mode
         )
@@ -1037,7 +1035,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_x
+        pyvista.DataSetFilters.rotate_x
             Rotate a mesh about the x-axis.
 
         Examples
@@ -1106,7 +1104,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_y
+        pyvista.DataSetFilters.rotate_y
             Rotate a mesh about the y-axis.
 
         Examples
@@ -1175,7 +1173,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_z
+        pyvista.DataSetFilters.rotate_z
             Rotate a mesh about the z-axis.
 
         Examples
@@ -1248,7 +1246,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_vector
+        pyvista.DataSetFilters.rotate_vector
             Rotate a mesh about a vector.
 
         Examples
