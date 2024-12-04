@@ -342,7 +342,7 @@ class AxesAssembly(_XYZAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the axes. This is the point about which all rotations take place. The
-        rotations are defined by the :attr:`orientation`.
+        rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the axes.
@@ -1007,7 +1007,7 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the axes. This is the point about which all rotations take place. The
-        rotations are defined by the :attr:`orientation`.
+        rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the axes.
@@ -1341,13 +1341,13 @@ class PlanesAssembly(_XYZAssembly):
 
     label_offset : float | VectorLike[float], optional
         Vertical offset of the text labels. The offset is proportional to
-        the :attr:`length` of the assembly. Positive values move the labels away
+        the :attr:`~pyvista.Prop3D.length` of the assembly. Positive values move the labels away
         from the center; negative values move them towards it.
 
     label_size : int, default: 50
         Size of the text labels. If :attr:`label_mode` is ``'2D'``, this is the
         font size. If :attr:`label_mode` is ``'3D'``, the labels are scaled
-        proportional to the :attr:`length` of the assembly.
+        proportional to the :attr:`~pyvista.Prop3D.length` of the assembly.
 
     label_mode : '2D' | '3D', default: '2D'
         Mode to use for text labels. In 2D mode, the label actors are always visible
@@ -1379,7 +1379,7 @@ class PlanesAssembly(_XYZAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the assembly. This is the point about which all rotations take place.
-        The rotations are defined by the :attr:`orientation`.
+        The rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the assembly.
@@ -1813,7 +1813,7 @@ class PlanesAssembly(_XYZAssembly):
     def label_offset(self) -> float:  # numpydoc ignore=RT01
         """Vertical offset of the text labels.
 
-        The offset is proportional to the :attr:`length` of the assembly. Positive
+        The offset is proportional to the :attr:`~pyvista.Prop3D.length` of the assembly. Positive
         values move the labels away from the center; negative values move them
         towards it.
         """
