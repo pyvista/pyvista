@@ -15,8 +15,9 @@ import numpy as np
 import pyvista
 from pyvista.core import _validation
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
 
 
@@ -528,6 +529,10 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
     deep : bool, default: False
         Whether to deep copy a ``vtk.vtkImageData`` object.  Keyword only.
 
+    direction_matrix : RotationLike, optional
+        The direction matrix is a 3x3 matrix which controls the orientation of the
+        image data.
+
     Examples
     --------
     Create an empty ImageData.
@@ -586,6 +591,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         spacing=(1.0, 1.0, 1.0),
         origin=(0.0, 0.0, 0.0),
         deep: bool = False,
+        direction_matrix: RotationLike | None = None,
     ):
         """Initialize the uniform grid."""
         super().__init__()
@@ -615,6 +621,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                 self.dimensions = dimensions
             self.origin = origin
             self.spacing = spacing
+            if direction_matrix is not None:
+                self.direction_matrix = direction_matrix
 
     def __repr__(self):
         """Return the default representation."""
@@ -922,7 +930,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetDirectionMatrix())
 
     @direction_matrix.setter
-    def direction_matrix(self, matrix) -> None:  # numpydoc ignore: GL08
+    def direction_matrix(self, matrix: RotationLike) -> None:
         self.SetDirectionMatrix(vtkmatrix_from_array(_validation.validate_transform3x3(matrix)))
 
     @property
