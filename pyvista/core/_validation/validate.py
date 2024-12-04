@@ -721,10 +721,7 @@ def _array_from_vtkmatrix(
     return array
 
 
-_T = TypeVar('_T', float, int)
-
-
-def validate_number(num: _T, /, *, reshape: bool = True, **kwargs) -> _T:
+def validate_number(num: float | int, /, *, reshape: bool = True, **kwargs) -> float | int:
     """Validate a real, finite number.
 
     By default, the number is checked to ensure it:
