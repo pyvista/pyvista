@@ -20,17 +20,17 @@ skip_mac = pytest.mark.skipif(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def actor():
     return pv.Plotter().add_mesh(pv.Plane())
 
 
-@pytest.fixture()
+@pytest.fixture
 def actor_from_multi_block():
     return pv.Plotter().add_mesh(pv.MultiBlock([pv.Plane()]))
 
 
-@pytest.fixture()
+@pytest.fixture
 def dummy_actor(actor):
     # Define prop3d-like class
     class DummyActor(_Prop3DMixin):
@@ -53,7 +53,7 @@ def dummy_actor(actor):
     return dummy_actor
 
 
-@pytest.fixture()
+@pytest.fixture
 def vol_actor():
     vol = pv.ImageData(dimensions=(10, 10, 10))
     vol['scalars'] = 255 - vol.z * 25
@@ -72,15 +72,15 @@ def test_actor_init_empty():
     with pytest.raises(AttributeError):
         actor.not_an_attribute = None
 
-    assert actor.memory_address == actor.GetAddressAsString("")
+    assert actor.memory_address == actor.GetAddressAsString('')
 
     actor.user_matrix = None
     repr_ = repr(actor)
-    assert "User matrix:                Identity" in repr_
+    assert 'User matrix:                Identity' in repr_
 
     actor.user_matrix = np.eye(4) * 2
     repr_ = repr(actor)
-    assert "User matrix:                Set" in repr_
+    assert 'User matrix:                Set' in repr_
 
 
 def test_actor_from_argument():
@@ -291,6 +291,23 @@ def test_rotation_from(actor, func):
     expected = (10, 20, 30)
     actual = actor.orientation
     assert np.allclose(actual, expected)
+
+
+@pytest.mark.parametrize('origin', [None, [1, 2, 3]])
+def test_rotation_from_matches_dataset_rotate(origin):
+    array = [
+        [0.78410209, -0.49240388, 0.37778609],
+        [0.52128058, 0.85286853, 0.02969559],
+        [-0.33682409, 0.17364818, 0.92541658],
+    ]
+    # Rotate dataset and actor independently
+    dataset = pv.Cube()
+    actor = pv.Actor(mapper=pv.DataSetMapper(dataset=pv.Cube()))
+    dataset.rotate(array, point=origin, inplace=True)
+    actor.rotation_from(array)
+    if origin:
+        actor.origin = origin
+    assert np.allclose(dataset.bounds, actor.bounds)
 
 
 @pytest.mark.parametrize('order', ['F', 'C'])

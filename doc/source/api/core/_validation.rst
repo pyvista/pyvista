@@ -15,13 +15,13 @@ to PyVista <https://github.com/pyvista/pyvista/blob/main/CONTRIBUTING.rst>`_.
 Some common use cases for input validation are:
 
 Validate a 3-element vector:
-    * Use :func:`~pyvista.core._validation.validate_array3`
+    * Use :func:`~pyvista.core._validation.validate.validate_array3`
 Validate an Nx3 point or vector array:
-    * Use :func:`~pyvista.core._validation.validate_arrayNx3`
+    * Use :func:`~pyvista.core._validation.validate.validate_arrayNx3`
 Validate point or cell IDs:
-    * Use :func:`~pyvista.core._validation.validate_arrayN_unsigned`
+    * Use :func:`~pyvista.core._validation.validate.validate_arrayN_unsigned`
 Validate a transformation matrix:
-    * Use :func:`~pyvista.core._validation.validate_transform4x4`
+    * Use :func:`~pyvista.core._validation.validate.validate_transform4x4`
 
 API Reference
 -------------

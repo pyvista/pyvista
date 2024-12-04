@@ -11,9 +11,14 @@ from pyvista import examples
 from pyvista.core.utilities.geometric_objects import translate
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes_geometry_source():
     return pv.AxesGeometrySource()
+
+
+@pytest.fixture
+def cube_faces_source():
+    return pv.CubeFacesSource()
 
 
 def test_capsule_source():
@@ -80,13 +85,13 @@ def test_multiple_lines_source():
         algo.points = points[0, :]
 
 
-@pytest.fixture()
+@pytest.fixture
 def bunny():
     return examples.download_bunny_coarse()
 
 
-@pytest.mark.parametrize("is_negative", [True, False])
-@pytest.mark.parametrize("delta", [([0, 0, 0]), ([1e-8, 0, 0]), ([0, 0, 1e-8])])
+@pytest.mark.parametrize('is_negative', [True, False])
+@pytest.mark.parametrize('delta', [([0, 0, 0]), ([1e-8, 0, 0]), ([0, 0, 1e-8])])
 def test_translate_direction_collinear(is_negative, delta, bunny):
     mesh_in = bunny
     direction = np.array([0.0, 1.0, 0.0]) + delta
@@ -108,8 +113,7 @@ def test_translate_direction_collinear(is_negative, delta, bunny):
 
 
 def test_translate_precision():
-    """
-    Test that specifying a 64bit float as an arg, will not
+    """Test that specifying a 64bit float as an arg, will not
     introduce precision error for 32bit meshes.
     """
     val = np.float64(29380 / 18)
@@ -155,11 +159,11 @@ def test_text3d_source():
     assert len(out.split_bodies()) == 4
 
 
-@pytest.mark.parametrize('string', [" ", 'TEXT'])
+@pytest.mark.parametrize('string', [' ', 'TEXT'])
 @pytest.mark.parametrize('center', [(0, 0, 0), (1, -2, 3)])
-@pytest.mark.parametrize('height', [None, 0, 1, 2])
-@pytest.mark.parametrize('width', [None, 0, 1, 2])
-@pytest.mark.parametrize('depth', [None, 0, 1, 2])
+@pytest.mark.parametrize('height', [None, 0, 2.1])
+@pytest.mark.parametrize('width', [None, 0, 2.2])
+@pytest.mark.parametrize('depth', [None, 0, 2.3])
 @pytest.mark.parametrize('normal', [(0, 0, 1)])
 def test_text3d_source_parameters(string, center, height, width, depth, normal):
     src = pv.Text3DSource(
@@ -205,7 +209,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
     assert np.allclose(actual_width, expected_width)
     assert np.allclose(actual_height, expected_height)
     assert np.allclose(actual_depth, expected_depth)
-    assert np.array_equal(out.center, center)
+    assert np.allclose(out.center, center)
 
     if not empty_string and width and height and depth == 0:
         # Test normal direction for planar 2D meshes
@@ -228,9 +232,9 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         assert np.allclose(points_center, center, atol=1e-4)
 
 
-@pytest.fixture()
+@pytest.fixture
 def text3d_source_with_text():
-    return pv.Text3DSource("TEXT")
+    return pv.Text3DSource('TEXT')
 
 
 def test_text3d_source_update(text3d_source_with_text):
@@ -396,8 +400,31 @@ def test_plane_source():
     assert algo.j_resolution == 10
     assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
     assert np.array_equal(algo.origin, (-0.5, -0.5, 0.0))
-    assert np.array_equal(algo.point_a, (0.5, -0.5, 0.0))
-    assert np.array_equal(algo.point_b, (-0.5, 0.5, 0.0))
+    point_a = (0.5, -0.5, 0.0)
+    point_b = (-0.5, 0.5, 0.0)
+    normal = (0.0, 0.0, 1.0)
+    assert np.array_equal(algo.point_a, point_a)
+    assert np.array_equal(algo.point_b, point_b)
+    assert np.array_equal(algo.normal, normal)
+    algo.flip_normal()
+    assert np.array_equal(algo.point_a, point_b)
+    assert np.array_equal(algo.point_b, point_a)
+    assert np.array_equal(algo.normal, np.array(normal) * -1)
+
+
+def test_plane_source_push():
+    algo = pv.PlaneSource()
+    assert np.array_equal(algo.center, (0.0, 0.0, 0.0))
+    assert np.array_equal(algo.normal, (0.0, 0.0, 1.0))
+
+    distance = 5.0
+    algo.push(distance)
+    assert np.array_equal(algo.center, (0, 0, distance))
+    assert np.array_equal(algo.output.center, (0, 0, distance))
+
+    algo.push(distance)
+    assert np.array_equal(algo.center, (0, 0, distance * 2))
+    assert np.array_equal(algo.output.center, (0, 0, distance * 2))
 
 
 def test_superquadric_source():
@@ -720,6 +747,16 @@ def test_orthogonal_planes_source_names():
         planes_source.names = 'abc'
 
 
+@pytest.mark.parametrize('distance', [(10, 20, 30), [(10, 20, 30)]])
+def test_orthogonal_planes_source_push(distance):
+    planes_source = pv.OrthogonalPlanesSource()
+    planes_source.push(*distance)
+    output = planes_source.output
+    assert np.array_equal(output['yz'].bounds, (10.0, 10.0, -1.0, 1.0, -1.0, 1.0))
+    assert np.array_equal(output['zx'].bounds, (-1.0, 1.0, 20.0, 20.0, -1.0, 1.0))
+    assert np.array_equal(output['xy'].bounds, (-1.0, 1.0, -1.0, 1.0, 30.0, 30.0))
+
+
 def test_orthogonal_planes_source_normal_sign():
     planes_source = pv.OrthogonalPlanesSource()
     output = planes_source.output
@@ -745,3 +782,81 @@ def test_orthogonal_planes_source_normal_sign():
     match = "must be an instance of any type (<class 'tuple'>, <class 'list'>, <class 'str'>)"
     with pytest.raises(TypeError, match=re.escape(match)):
         planes_source.normal_sign = 0
+
+
+def test_cube_faces_source(cube_faces_source):
+    output = cube_faces_source.output
+    assert isinstance(output, pv.MultiBlock)
+    assert output.keys() == ['+X', '-X', '+Y', '-Y', '+Z', '-Z']
+    assert all(isinstance(poly, pv.PolyData) for poly in output)
+    assert output.bounds == pv.CubeSource().output.bounds
+
+
+def test_cube_faces_source_update(cube_faces_source):
+    output_before = cube_faces_source.output
+    cube_faces_source.z_length = 2  # Make an arbitrary modification
+    cube_faces_source.update()
+    output_after = cube_faces_source.output
+    assert output_before is output_after
+    assert all(output_after[i] is output_after[i] for i in range(6))
+
+
+@pytest.mark.parametrize('attr', ['shrink_factor', 'explode_factor', 'frame_width'])
+def test_cube_faces_source_set_get_factor(attr):
+    source = pv.CubeFacesSource(**{attr: 0.5})
+    assert getattr(source, attr) == 0.5
+    setattr(source, attr, 0.1)
+    assert getattr(source, attr) == 0.1
+
+
+@pytest.mark.parametrize(
+    ('face_name', 'bounds'),
+    [
+        ('+X', (0.5, 0.5, -0.5, 0.5, -0.5, 0.5)),
+        ('-X', (-0.5, -0.5, -0.5, 0.5, -0.5, 0.5)),
+        ('+Y', (-0.5, 0.5, 0.5, 0.5, -0.5, 0.5)),
+        ('-Y', (-0.5, 0.5, -0.5, -0.5, -0.5, 0.5)),
+        ('+Z', (-0.5, 0.5, -0.5, 0.5, 0.5, 0.5)),
+        ('-Z', (-0.5, 0.5, -0.5, 0.5, -0.5, -0.5)),
+    ],
+)
+@pytest.mark.parametrize(('attr', 'value'), [('shrink_factor', 1.0), ('explode_factor', 0.0)])
+def test_cube_faces_source_output_bounds(cube_faces_source, attr, value, face_name, bounds):
+    # Make sure bounds of each face are correct
+    # Parametrize with shrink and explode to ensure they do not modify order of points and faces
+    poly = cube_faces_source.output[face_name]
+    default_points = poly.points.tolist()
+    default_faces = poly.regular_faces.tolist()
+
+    setattr(cube_faces_source, attr, value)
+    cube_faces_source.update()
+
+    modified_points = poly.points.tolist()
+    modified_faces = poly.regular_faces.tolist()
+
+    assert default_points == modified_points
+    assert default_faces == modified_faces
+    assert poly.bounds == bounds
+
+
+def test_cube_faces_source_frame(cube_faces_source):
+    assert cube_faces_source.frame_width is None
+    cube_faces_source = pv.CubeFacesSource(frame_width=0.2)
+    assert cube_faces_source.frame_width == 0.2
+    cube_faces_source.frame_width = 0.3
+    assert cube_faces_source.frame_width == 0.3
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('center', (1, 2, 3)),
+        ('x_length', 42),
+        ('y_length', 42),
+        ('z_length', 42),
+        ('bounds', (0, 1, 2, 3, 4, 5)),
+    ],
+)
+def test_cube_faces_source_parent_attr(name, value):
+    source = pv.CubeFacesSource(**{name: value})
+    setattr(source, name, value)

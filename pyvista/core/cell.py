@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Tuple
 from typing import cast
 import warnings
 
@@ -20,7 +19,7 @@ from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing import Sequence
+    from collections.abc import Sequence
 
     from ._typing_core import CellsLike
     from ._typing_core import MatrixLike
@@ -104,7 +103,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
     """
 
-    def __init__(self, vtk_cell=None, cell_type=None, deep=False):
+    def __init__(self, vtk_cell=None, cell_type=None, deep: bool = False):
         """Initialize the cell."""
         super().__init__()
         if vtk_cell is not None:
@@ -136,6 +135,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).type
         <CellType.TRIANGLE: 5>
+
         """
         return CellType(self.GetCellType())
 
@@ -158,7 +158,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """
         return bool(self.IsLinear())
 
-    def plot(self, **kwargs):
+    def plot(self, **kwargs) -> None:
         """Plot this cell.
 
         Parameters
@@ -215,7 +215,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
             else:
                 return pyvista.PolyData(self.points.copy(), faces=cells)
         else:
-            raise ValueError(f"3D cells cannot be cast to PolyData: got cell type {self.type}")
+            raise ValueError(f'3D cells cannot be cast to PolyData: got cell type {self.type}')
 
     def cast_to_unstructured_grid(self) -> pyvista.UnstructuredGrid:
         """Cast this cell to an unstructured grid.
@@ -274,6 +274,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).dimension
         2
+
         """
         return self.GetCellDimension()
 
@@ -292,6 +293,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).n_points
         3
+
         """
         return self.GetNumberOfPoints()
 
@@ -310,6 +312,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         >>> mesh = Tetrahedron()
         >>> mesh.get_cell(0).n_faces
         4
+
         """
         return self.GetNumberOfFaces()
 
@@ -328,6 +331,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).n_edges
         3
+
         """
         return self.GetNumberOfEdges()
 
@@ -346,6 +350,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         >>> mesh = pv.Sphere()
         >>> mesh.get_cell(0).point_ids
         [2, 30, 0]
+
         """
         point_ids = self.GetPointIds()
         return [point_ids.GetId(i) for i in range(point_ids.GetNumberOfIds())]
@@ -367,6 +372,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         array([[0.05405951, 0.        , 0.49706897],
                [0.05287818, 0.0112396 , 0.49706897],
                [0.        , 0.        , 0.5       ]])
+
         """
         return _vtk.vtk_to_numpy(self.GetPoints().GetData())
 
@@ -401,7 +407,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
         # must deep copy here as multiple sequental calls to GetEdge overwrite
         # the underlying pointer
-        return Cell(self.GetEdge(index), deep=True)
+        return Cell(self.GetEdge(index), deep=True)  # type: ignore[abstract]
 
     @property
     def edges(self) -> list[Cell]:
@@ -477,7 +483,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         # must deep copy here as multiple sequental calls to GetFace overwrite
         # the underlying pointer
         cell = self.GetFace(index)
-        return Cell(cell, deep=True, cell_type=cell.GetCellType())
+        return Cell(cell, deep=True, cell_type=cell.GetCellType())  # type: ignore[abstract]
 
     @property
     def bounds(self) -> BoundsTuple:
@@ -520,27 +526,27 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         para_center = [0.0, 0.0, 0.0]
         sub_id = self.GetParametricCenter(para_center)
         # EvaluateLocation requires mutable sub_id
-        sub_id = _vtk.mutable(sub_id)
+        sub_id = _vtk.mutable(sub_id)  # type: ignore[assignment]
         # center and weights are returned from EvaluateLocation
         center = [0.0, 0.0, 0.0]
         weights = [0.0] * self.n_points
         self.EvaluateLocation(sub_id, para_center, center, weights)
-        return cast(Tuple[float, float, float], tuple(center))
+        return cast(tuple[float, float, float], tuple(center))
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("Type", repr(self.type), "{}" * len(repr(self.type))))
-        attrs.append(("Linear", self.is_linear, "{}"))
-        attrs.append(("Dimension", self.dimension, "{}"))
-        attrs.append(("N Points", self.n_points, "{}"))
-        attrs.append(("N Faces", self.n_faces, "{}"))
-        attrs.append(("N Edges", self.n_edges, "{}"))
+        attrs.append(('Type', repr(self.type), '{}' * len(repr(self.type))))
+        attrs.append(('Linear', self.is_linear, '{}'))  # type: ignore[arg-type]
+        attrs.append(('Dimension', self.dimension, '{}'))  # type: ignore[arg-type]
+        attrs.append(('N Points', self.n_points, '{}'))  # type: ignore[arg-type]
+        attrs.append(('N Faces', self.n_faces, '{}'))  # type: ignore[arg-type]
+        attrs.append(('N Edges', self.n_edges, '{}'))  # type: ignore[arg-type]
         bds = self.bounds
-        fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
-        attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
-        attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
-        attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
+        fmt = f'{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}'
+        attrs.append(('X Bounds', (bds[0], bds[1]), fmt))  # type: ignore[arg-type]
+        attrs.append(('Y Bounds', (bds[2], bds[3]), fmt))  # type: ignore[arg-type]
+        attrs.append(('Z Bounds', (bds[4], bds[5]), fmt))  # type: ignore[arg-type]
 
         return attrs
 
@@ -552,7 +558,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy(self, deep=True) -> Cell:
+    def copy(self, deep: bool = True) -> Cell:
         """Return a copy of the cell.
 
         Parameters
@@ -626,6 +632,7 @@ class CellArray(_vtk.vtkCellArray):
     >>> offsets = [0, 3, 6]
     >>> connectivity = [0, 1, 2, 3, 4, 5]
     >>> cellarr = CellArray.from_arrays(offsets, connectivity)
+
     """
 
     def __init__(
@@ -633,7 +640,7 @@ class CellArray(_vtk.vtkCellArray):
         cells: CellsLike | None = None,
         n_cells: int | None = None,
         deep: bool | None = None,
-    ):
+    ) -> None:
         """Initialize a vtkCellArray."""
         super().__init__()
         self.__offsets: _vtk.vtkIdTypeArray | None = None
@@ -645,7 +652,7 @@ class CellArray(_vtk.vtkCellArray):
         for k, v in (('n_cells', n_cells), ('deep', deep)):
             if v is not None:
                 warnings.warn(
-                    f"`CellArray parameter `{k}` is deprecated and no longer used.",
+                    f'`CellArray parameter `{k}` is deprecated and no longer used.',
                     PyVistaDeprecationWarning,
                 )
 
@@ -657,13 +664,14 @@ class CellArray(_vtk.vtkCellArray):
         -------
         np.ndarray
             A numpy array of the cells.
+
         """
         cells = _vtk.vtkIdTypeArray()
         self.ExportLegacyFormat(cells)
         return _vtk.vtk_to_numpy(cells)
 
     @cells.setter
-    def cells(self, cells: CellsLike):  # numpydoc ignore=GL08
+    def cells(self, cells: CellsLike):
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.ImportLegacyFormat(vtk_idarr)
@@ -673,9 +681,9 @@ class CellArray(_vtk.vtkCellArray):
         if imported_size != cells.size:
             raise CellSizeError(
                 message=(
-                    f"Cell array size is invalid. Size ({cells.size}) does not"
-                    f" match expected size ({imported_size}). This is likely"
-                    " due to invalid connectivity array."
+                    f'Cell array size is invalid. Size ({cells.size}) does not'
+                    f' match expected size ({imported_size}). This is likely'
+                    ' due to invalid connectivity array.'
                 ),
             )
         self.__offsets = self.__connectivity = None
@@ -688,6 +696,7 @@ class CellArray(_vtk.vtkCellArray):
         -------
         int
             The number of cells.
+
         """
         return self.GetNumberOfCells()
 
@@ -699,6 +708,7 @@ class CellArray(_vtk.vtkCellArray):
         -------
         np.ndarray
             Array with the point ids that define the cells' connectivity.
+
         """
         return _get_connectivity_array(self)
 
@@ -710,6 +720,7 @@ class CellArray(_vtk.vtkCellArray):
         -------
         np.ndarray
             Array used to store cell offsets.
+
         """
         return _get_offset_array(self)
 
@@ -720,8 +731,8 @@ class CellArray(_vtk.vtkCellArray):
         deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
-        vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))
-        vtk_connectivity = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(connectivity, deep=deep))
+        vtk_offsets = numpy_to_idarr(offsets, deep=deep)
+        vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
         self.SetData(vtk_offsets, vtk_connectivity)
 
         # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
@@ -739,10 +750,10 @@ class CellArray(_vtk.vtkCellArray):
 
         Parameters
         ----------
-        offsets : IntMatrix
+        offsets : MatrixLike[int]
             Offsets array of length `n_cells + 1`.
 
-        connectivity : IntMatrix
+        connectivity : MatrixLike[int]
             Connectivity array.
 
         deep : bool, default: False
@@ -772,6 +783,7 @@ class CellArray(_vtk.vtkCellArray):
         This property does not validate that the cells are all
         actually the same size. If they're not, this property may either
         raise a `ValueError` or silently return an incorrect array.
+
         """
         return _get_regular_cells(self)
 
@@ -791,6 +803,7 @@ class CellArray(_vtk.vtkCellArray):
         -------
         pyvista.CellArray
             Constructed ``CellArray``.
+
         """
         cells = np.asarray(cells, dtype=pyvista.ID_TYPE)
         n_cells, cell_size = cells.shape
@@ -812,6 +825,7 @@ class CellArray(_vtk.vtkCellArray):
         -------
         pyvista.CellArray
             Constructed ``CellArray``.
+
         """
         offsets = np.cumsum([len(c) for c in cells])
         offsets = np.concatenate([[0], offsets], dtype=pyvista.ID_TYPE)

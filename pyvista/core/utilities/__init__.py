@@ -43,9 +43,12 @@ from .fileio import get_ext
 from .fileio import is_meshio_mesh
 from .fileio import read
 from .fileio import read_exodus
+from .fileio import read_grdecl
 from .fileio import read_meshio
+from .fileio import read_pickle
 from .fileio import read_texture
 from .fileio import save_meshio
+from .fileio import save_pickle
 from .fileio import set_pickle_format
 from .fileio import set_vtkwriter_mode
 from .geometric_objects import NORMALS
@@ -87,6 +90,7 @@ from .geometric_sources import ArrowSource
 from .geometric_sources import AxesGeometrySource
 from .geometric_sources import BoxSource
 from .geometric_sources import ConeSource
+from .geometric_sources import CubeFacesSource
 from .geometric_sources import CubeSource
 from .geometric_sources import CylinderSource
 from .geometric_sources import DiscSource
@@ -152,10 +156,12 @@ from .parametric_objects import ParametricTorus
 from .parametric_objects import Spline
 from .parametric_objects import parametric_keywords
 from .parametric_objects import surface_from_para
+from .points import fit_line_to_points
 from .points import fit_plane_to_points
 from .points import line_segments_from_points
 from .points import lines_from_points
 from .points import make_tri_mesh
+from .points import principal_axes
 from .points import vector_poly_data
 from .points import vtk_points
 from .reader import AVSucdReader
@@ -219,3 +225,4 @@ from .reader import XMLRectilinearGridReader
 from .reader import XMLStructuredGridReader
 from .reader import XMLUnstructuredGridReader
 from .reader import get_reader
+from .transform import Transform
