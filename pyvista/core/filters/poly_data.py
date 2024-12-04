@@ -1156,7 +1156,7 @@ class PolyDataFilters(DataSetFilters):
 
         This filter uses ``vtkDecimatePolylineFilter``.
 
-        .. versionadded:: 0.44.0
+        .. versionadded:: 0.45.0
 
         Parameters
         ----------
