@@ -4655,6 +4655,7 @@ def test_contour_labels_smoothing_constraint(
     labeled_image.spacing = (10, 10, 10)
 
     mesh = labeled_image.contour_labels(
+        'all',
         smoothing_distance=smoothing_distance,
         smoothing_scale=smoothing_scale,
         closed_surface=False,
