@@ -587,7 +587,10 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_factor = _validation.validate_array3(
-            factor, broadcast=True, dtype_out=float, name='scale factor'
+            factor,  # type: ignore[arg-type]
+            broadcast=True,
+            dtype_out=float,
+            name='scale factor',
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
@@ -658,7 +661,9 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_normal = _validation.validate_array3(
-            normal, dtype_out=float, name='reflection normal'
+            normal,  # type: ignore[arg-type]
+            dtype_out=float,
+            name='reflection normal',
         )
         transform = reflection(valid_normal)
         return self._concatenate_with_translations(
@@ -897,7 +902,9 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_vector = _validation.validate_array3(
-            vector, dtype_out=float, name='translation vector'
+            vector,  # type: ignore[arg-type]
+            dtype_out=float,
+            name='translation vector',
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)
