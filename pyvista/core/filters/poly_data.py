@@ -1147,10 +1147,10 @@ class PolyDataFilters(DataSetFilters):
 
     def decimate_polyline(
         self,
-        reduction,
-        maximum_error=10,
-        inplace=False,
-        progress_bar=False,
+        reduction: float,
+        maximum_error: float = 10.0,
+        inplace: bool = False,
+        progress_bar: bool = False,
     ):
         """Reduce the number of lines in a polyline mesh.
 
@@ -1164,10 +1164,10 @@ class PolyDataFilters(DataSetFilters):
             Reduction factor. A value of 0.9 will leave 10% of the
             original number of vertices.
 
-        maximum_error : float, default: 1.0
+        maximum_error : float, default: 10.
             Fraction of the maximum length of the input data bounding box
             to limit reduction.  This might prevent the full reduction from
-            being achieved.
+            being achieved. Default of ``10.`` should not limit reduction.
 
         inplace : bool, default: False
             Whether to update the mesh in-place.
