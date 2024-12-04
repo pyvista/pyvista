@@ -883,7 +883,6 @@ class ImageDataFilters(DataSetFilters):
             .. code::
 
                 image.contour_labels(
-                    boundary_style='external',  # replacement for old filter's 'output_style' param
                     smoothing=False,  # old filter did not apply smoothing by default
                     output_mesh_type='quads',  # old filter generated quads by default
                     closed_surface=False,  # old filter generated open surfaces at input boundaries
@@ -1015,7 +1014,7 @@ class ImageDataFilters(DataSetFilters):
 
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
-        boundary_style: Literal['all', 'external', 'internal'] = 'all',
+        boundary_style: Literal['external', 'internal', 'all'] = 'external',
         *,
         select_inputs: int | VectorLike[int] | None = None,
         select_outputs: int | VectorLike[int] | None = None,
@@ -1057,6 +1056,11 @@ class ImageDataFilters(DataSetFilters):
             Polygons between two connected foreground regions are sorted in ascending order.
 
             E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
+
+
+        By default, this filter returns ``'external'`` contours only. Optionally,
+        only the ``'internal`'' contours or ``'all'`` contours (i.e. internal and
+        external) may be returned.
 
         .. note::
 
