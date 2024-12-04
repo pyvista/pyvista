@@ -3015,10 +3015,12 @@ class DataSetFilters:
 
             # Input will be modified, so copy first
             input_mesh = self.copy()
-            if scalars is not None:
+            if scalars is None:
+                set_default_active_scalars(input_mesh)
+            else:
                 input_mesh.set_active_scalars(scalars)
-            field, name = set_default_active_scalars(input_mesh)
             # Make sure we have point data (required by the filter)
+            field, name = input_mesh.active_scalars_info
             if field == FieldAssociation.CELL:
                 # Convert to point data with a unique name
                 # The point array will be removed later
@@ -3350,11 +3352,10 @@ class DataSetFilters:
         """
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
-        if scalars is None:
-            field, scalars = set_default_active_scalars(self)
-        _ = get_array(self, scalars, preference='point', err=True)
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        _ = get_array(self, scalars_, preference='point', err=True)
 
-        field = get_array_association(self, scalars, preference='point')
+        field = get_array_association(self, scalars_, preference='point')
         if field != FieldAssociation.POINT:
             raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
@@ -3365,7 +3366,7 @@ class DataSetFilters:
             0,
             0,
             field.value,
-            scalars,
+            scalars_,
         )  # args: (idx, port, connection, field, name)
         alg.SetScaleFactor(factor)
         if normal is not None:
@@ -4855,9 +4856,8 @@ class DataSetFilters:
         )
 
         # Get variable of interest
-        if scalars is None:
-            field, scalars = set_default_active_scalars(self)
-        values = sampled.get_array(scalars)
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
         # Remainder is plotting
@@ -4872,11 +4872,11 @@ class DataSetFilters:
             plt.plot(distance, values)
         plt.xlabel('Distance')
         if ylabel is None:
-            plt.ylabel(scalars)
+            plt.ylabel(scalars_)
         else:
             plt.ylabel(ylabel)
         if title is None:
-            plt.title(f'{scalars} Profile')
+            plt.title(f'{scalars_} Profile')
         else:
             plt.title(title)
         if fname:
@@ -5201,9 +5201,8 @@ class DataSetFilters:
         )
 
         # Get variable of interest
-        if scalars is None:
-            scalars = set_default_active_scalars(self).name
-        values = sampled.get_array(scalars)
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
         # create the matplotlib figure
@@ -5218,11 +5217,11 @@ class DataSetFilters:
             plt.plot(distance, values)
         plt.xlabel('Distance')
         if ylabel is None:
-            plt.ylabel(scalars)
+            plt.ylabel(scalars_)
         else:
             plt.ylabel(ylabel)
         if title is None:
-            plt.title(f'{scalars} Profile')
+            plt.title(f'{scalars_} Profile')
         else:
             plt.title(title)
         if fname:
