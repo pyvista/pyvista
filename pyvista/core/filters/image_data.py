@@ -1427,12 +1427,9 @@ class ImageDataFilters(DataSetFilters):
 
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
-        if isinstance(boundary_style, str) and boundary_style not in (
-            boundary_types := ['all', 'internal', 'external']
-        ):
-            raise ValueError(
-                f'Boundary type must be one of {boundary_types}. Got {boundary_style} instead.',
-            )
+        _validation.check_contains(
+            container=['all', 'internal', 'external'], item=boundary_style, name='boundary_style'
+        )
 
         background_value = 0
 
