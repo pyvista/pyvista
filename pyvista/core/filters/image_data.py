@@ -1496,12 +1496,6 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
-        # if output_style == 'extract':
-        #     multiblock = output.split_values(output_ids, component_mode='any')
-
-        # for label_id, block in zip(output_ids,multiblock):
-        #     block.cell_data[SURFACE_LABELS] = np.ones(block.n_cells)*label_id
-
         return output
 
     def points_to_cells(  # type: ignore[misc]
