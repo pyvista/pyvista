@@ -46,6 +46,7 @@ from pyvista.core._vtk_core import vtkTransform
 if TYPE_CHECKING:  # pragma: no cover
     from numpy.typing import ArrayLike
 
+    from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core._array_like import NumpyArray
 
 
@@ -483,6 +484,79 @@ def validate_axes(
     return axes_array
 
 
+def validate_rotation(
+    rotation: RotationLike,
+    must_have_handedness: Literal['right', 'left'] | None = None,
+    name: str = 'Rotation',
+):
+    """Validate a rotation as a 3x3 matrix.
+
+    The rotation is valid if its transpose equals its inverse and has a determinant
+    of ``1`` (right-handed or "proper" rotation) or ``-1`` (left-handed or "improper"
+    rotation). By default, right- and left-handed rotations are allowed.
+    Use ``must_have_handedness`` to restrict the handedness.
+
+    Parameters
+    ----------
+    rotation : RotationLike
+        3x3 rotation matrix or a SciPy ``Rotation`` object.
+
+    must_have_handedness : 'right' | 'left' | None, default: None
+        Check if the rotation has a specific handedness. If ``right``, the
+        determinant must be ``1``. If ``left``, the determinant must be ``-1``.
+        By default, either handedness is allowed.
+
+    name : str, default: "Rotation"
+        Variable name to use in the error messages if any of the
+        validation checks fail.
+
+    Returns
+    -------
+    np.ndarray
+        Validated 3x3 rotation matrix.
+
+    Examples
+    --------
+    Validate a rotation matrix. The identity matrix is used as a toy example.
+
+    >>> import numpy as np
+    >>> from pyvista import _validation
+    >>> rotation = np.eye(3)
+    >>> _validation.validate_rotation(rotation)
+    array([[1., 0., 0.],
+           [0., 1., 0.],
+           [0., 0., 1.]])
+
+    By default, left-handed rotations (which include reflections) are allowed.
+
+    >>> rotation *= -1  # Add reflections
+    >>> _validation.validate_rotation(rotation)
+    array([[-1., -0., -0.],
+           [-0., -1., -0.],
+           [-0., -0., -1.]])
+
+    """
+    check_contains(
+        item=must_have_handedness, container=['right', 'left', None], name='must_have_handedness'
+    )
+    rotation_matrix = validate_transform3x3(rotation, name=name)
+    if not np.allclose(np.linalg.inv(rotation_matrix), rotation_matrix.T):
+        raise ValueError(f'{name} is not valid. Its inverse must equal its transpose.')
+
+    if must_have_handedness is not None:
+        det = np.linalg.det(rotation_matrix)
+        if must_have_handedness == 'right' and not det > 0:
+            raise ValueError(
+                f'{name} has incorrect handedness. Expected a right-handed rotation, but got a left-handed rotation instead.'
+            )
+        elif must_have_handedness == 'left' and not det < 0:
+            raise ValueError(
+                f'{name} has incorrect handedness. Expected a left-handed rotation, but got a right-handed rotation instead.'
+            )
+
+    return rotation_matrix
+
+
 def validate_transform4x4(transform, /, *, must_be_finite: bool = True, name='Transform'):
     """Validate transform-like input as a 4x4 ndarray.
 
@@ -565,7 +639,7 @@ def validate_transform3x3(transform, /, *, must_be_finite: bool = True, name='Tr
         .. note::
 
            Although ``RotationLike`` inputs are accepted, no checks are done
-           to verify that the transformation is a actually a rotation.
+           to verify that the transformation is actually a rotation.
            Therefore, any 3x3 transformation is acceptable.
 
     must_be_finite : bool, default: True
