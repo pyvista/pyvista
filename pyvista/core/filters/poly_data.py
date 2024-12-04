@@ -1257,7 +1257,7 @@ class PolyDataFilters(DataSetFilters):
 
         mesh = _get_output(alg)
         if inplace:
-            self.copy_from(mesh, deep=False)
+            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
             return self
 
         return mesh
