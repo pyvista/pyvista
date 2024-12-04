@@ -762,7 +762,7 @@ class DataSetFilters:
 
     def clip_scalar(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        scalars=None,
+        scalars: str | None = None,
         invert: bool = True,
         value=0.0,
         inplace: bool = False,
@@ -1384,7 +1384,7 @@ class DataSetFilters:
     def threshold(  # type: ignore[misc]
         self: ConcreteDataSetType,
         value=None,
-        scalars=None,
+        scalars: str | None = None,
         invert: bool = False,
         continuous: bool = False,
         preference='cell',
@@ -1536,12 +1536,12 @@ class DataSetFilters:
 
         """
         # set the scalars to threshold on
-        scalars = set_default_active_scalars(self).name if scalars is None else scalars
-        arr = get_array(self, scalars, preference=preference, err=False)
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        arr = get_array(self, scalars_, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
 
-        field = get_array_association(self, scalars, preference=preference)
+        field = get_array_association(self, scalars_, preference=preference)
 
         # Run a standard threshold algorithm
         alg = _vtk.vtkThreshold()
@@ -1552,7 +1552,7 @@ class DataSetFilters:
             0,
             0,
             field.value,
-            scalars,
+            scalars_,
         )  # args: (idx, port, connection, field, name)
         # set thresholding parameters
         alg.SetUseContinuousCellRange(continuous)
@@ -1588,7 +1588,7 @@ class DataSetFilters:
     def threshold_percent(  # type: ignore[misc]
         self: ConcreteDataSetType,
         percent=0.50,
-        scalars=None,
+        scalars: str | None = None,
         invert: bool = False,
         continuous: bool = False,
         preference='cell',
@@ -2766,7 +2766,7 @@ class DataSetFilters:
         ] = 'all',
         variable_input=None,
         scalar_range=None,
-        scalars=None,
+        scalars: str | None = None,
         label_regions: bool = True,
         region_ids=None,
         point_ids=None,
@@ -3292,7 +3292,7 @@ class DataSetFilters:
 
     def warp_by_scalar(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        scalars=None,
+        scalars: str | None = None,
         factor=1.0,
         normal=None,
         inplace: bool = False,
@@ -3382,7 +3382,7 @@ class DataSetFilters:
 
     def warp_by_vector(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        vectors=None,
+        vectors: str | None = None,
         factor=1.0,
         inplace: bool = False,
         progress_bar: bool = False,
@@ -3436,10 +3436,9 @@ class DataSetFilters:
         more examples using this filter.
 
         """
-        if vectors is None:
-            field, vectors = set_default_active_vectors(self)
-        arr = get_array(self, vectors, preference='point')
-        field = get_array_association(self, vectors, preference='point')
+        vectors_ = set_default_active_vectors(self).name if vectors is None else vectors
+        arr = get_array(self, vectors_, preference='point')
+        field = get_array_association(self, vectors_, preference='point')
         if arr is None:
             raise ValueError('No vectors present to warp by vector.')
 
@@ -3451,7 +3450,7 @@ class DataSetFilters:
             )
         alg = _vtk.vtkWarpVector()
         alg.SetInputDataObject(self)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors_)
         alg.SetScaleFactor(factor)
         _update_alg(alg, progress_bar, 'Warping by Vector')
         warped_mesh = _get_output(alg)
@@ -4177,7 +4176,7 @@ class DataSetFilters:
 
     def streamlines(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        vectors=None,
+        vectors: str | None = None,
         source_center=None,
         source_radius=None,
         n_points=100,
@@ -4293,7 +4292,7 @@ class DataSetFilters:
     def streamlines_from_source(  # type: ignore[misc]
         self: ConcreteDataSetType,
         source,
-        vectors=None,
+        vectors: str | None = None,
         integrator_type=45,
         integration_direction='both',
         surface_streamlines: bool = False,
@@ -4503,7 +4502,7 @@ class DataSetFilters:
 
     def streamlines_evenly_spaced_2D(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        vectors=None,
+        vectors: str | None = None,
         start_position=None,
         integrator_type=2,
         step_length=0.5,
@@ -4783,7 +4782,7 @@ class DataSetFilters:
         pointa,
         pointb,
         resolution=None,
-        scalars=None,
+        scalars: str | None = None,
         title=None,
         ylabel=None,
         figsize=None,
@@ -5110,7 +5109,7 @@ class DataSetFilters:
         pointb,
         center,
         resolution=None,
-        scalars=None,
+        scalars: str | None = None,
         title=None,
         ylabel=None,
         figsize=None,
@@ -5238,7 +5237,7 @@ class DataSetFilters:
         normal=None,
         polar=None,
         angle=None,
-        scalars=None,
+        scalars: str | None = None,
         title=None,
         ylabel=None,
         figsize=None,
@@ -5354,11 +5353,11 @@ class DataSetFilters:
             plt.plot(distance, values)
         plt.xlabel('Distance')
         if ylabel is None:
-            plt.ylabel(scalars)
+            plt.ylabel(scalars_)
         else:
             plt.ylabel(ylabel)
         if title is None:
-            plt.title(f'{scalars} Profile')
+            plt.title(f'{scalars_} Profile')
         else:
             plt.title(title)
         if fname:
@@ -6785,7 +6784,7 @@ class DataSetFilters:
 
     def compute_derivative(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        scalars=None,
+        scalars: str | None = None,
         gradient: bool | str = True,
         divergence=None,
         vorticity=None,
@@ -6897,9 +6896,9 @@ class DataSetFilters:
         alg.SetQCriterionArrayName(qcriterion)
 
         alg.SetFasterApproximation(faster)
-        field = get_array_association(self, scalars, preference=preference)
+        field = get_array_association(self, scalars_, preference=preference)
         # args: (idx, port, connection, field, name)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars_)
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Derivative')
         return _get_output(alg)
@@ -8675,7 +8674,7 @@ class DataSetFilters:
 
     def sort_labels(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        scalars=None,
+        scalars: str | None = None,
         preference='point',
         output_scalars=None,
         progress_bar: bool = False,
@@ -8766,7 +8765,7 @@ class DataSetFilters:
     def pack_labels(  # type: ignore[misc]
         self: ConcreteDataSetType,
         sort: bool = False,
-        scalars=None,
+        scalars: str | None = None,
         preference='point',
         output_scalars=None,
         progress_bar: bool = False,
