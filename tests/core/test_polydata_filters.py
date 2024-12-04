@@ -61,7 +61,7 @@ def test_identical_boolean(sphere):
         sphere.boolean_intersection(sphere.copy())
 
 
-@pytest.fixture()
+@pytest.fixture
 def poly_circle():
     circle = pv.Circle(resolution=30)
     return pv.PolyData(circle.points, lines=[31, *list(range(30)), 0])
