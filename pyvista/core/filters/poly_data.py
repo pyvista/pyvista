@@ -1101,7 +1101,7 @@ class PolyDataFilters(DataSetFilters):
         --------
         decimate
             Another option for triangular meshes.
-        decimate_polylines
+        decimate_polyline
             For use with polylines.
 
         Examples
@@ -1145,7 +1145,7 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def decimate_polylines(
+    def decimate_polyline(
         self,
         reduction,
         maximum_error=10,
@@ -1203,13 +1203,13 @@ class PolyDataFilters(DataSetFilters):
 
         Decimate ~50% of points.
 
-        >>> decimate_some = circle_polyline.decimate_polylines(0.5)
+        >>> decimate_some = circle_polyline.decimate_polyline(0.5)
         >>> decimate_some.n_points
         14
 
         Decimate more points.
 
-        >>> decimate_more = circle_polyline.decimate_polylines(0.75)
+        >>> decimate_more = circle_polyline.decimate_polyline(0.75)
         >>> decimate_more.n_points
         6
 
@@ -1652,7 +1652,7 @@ class PolyDataFilters(DataSetFilters):
         --------
         decimate_pro
             Another option for triangular meshes.
-        decimate_polylines
+        decimate_polyline
             For use with polylines.
 
         Notes

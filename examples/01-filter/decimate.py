@@ -97,17 +97,16 @@ def compare_decimation(spiral, decimated):
     pl.add_mesh(spiral, line_width=5, color='r', label='Original')
     pl.add_mesh(decimated, line_width=3, color='k', label='Decimated')
     pl.view_xy()
-    pl.add_legend(face="line", size=(0.25, 0.25))
-    pl.show(screenshot="tmp.png")
+    pl.add_legend(face='line', size=(0.25, 0.25))
 
 
 # %%
-# Decimate using :func:`pyvista.PolyDataFilters.decimate_polylines` filter by
+# Decimate using :func:`pyvista.PolyDataFilters.decimate_polyline` filter by
 # target of 50%.
 
-decimated = spiral.decimate_polylines(0.5)
-print(f"Original # of points:  {spiral.n_points}")
-print(f"Decimated # of points: {decimated.n_points}")
+decimated = spiral.decimate_polyline(0.5)
+print(f'Original # of points:  {spiral.n_points}')
+print(f'Decimated # of points: {decimated.n_points}')
 
 # %%
 # The decimation looks OK at this level of reduction.
@@ -118,9 +117,9 @@ compare_decimation(spiral, decimated)
 # Using a larger level of reduction, 80%, leads to a much coarser level of
 # representation.
 
-decimated = spiral.decimate_polylines(0.8)
-print(f"Original # of points:  {spiral.n_points}")
-print(f"Decimated # of points: {decimated.n_points}")
+decimated = spiral.decimate_polyline(0.8)
+print(f'Original # of points:  {spiral.n_points}')
+print(f'Decimated # of points: {decimated.n_points}')
 
 # %%
 # The structure of the inner part of the spiral is completely
@@ -133,9 +132,9 @@ compare_decimation(spiral, decimated)
 # parameter. It is in units of fraction of the largest length of the
 # bounding box.  Note that it limits the level of reduction achieved.
 
-decimated = spiral.decimate_polylines(0.8, maximum_error=0.5)
-print(f"Original # of points:  {spiral.n_points}")
-print(f"Decimated # of points: {decimated.n_points}")
+decimated = spiral.decimate_polyline(0.8, maximum_error=0.5)
+print(f'Original # of points:  {spiral.n_points}')
+print(f'Decimated # of points: {decimated.n_points}')
 
 # %%
 # The structure of the inner part of the spiral is captured adequately.
