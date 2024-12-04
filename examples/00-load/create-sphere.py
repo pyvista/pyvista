@@ -39,7 +39,7 @@ boundaries = mesh.extract_feature_edges(
 boundaries
 
 # %%
-# The cells are :attr:`~pyvista.CellType.TRIANGLE` cells.. For example, the first cell
+# The cells are :attr:`~pyvista.CellType.TRIANGLE` cells. For example, the first cell
 
 mesh.get_cell(0).type
 
@@ -67,7 +67,7 @@ x, y, z = pv.spherical_to_cartesian(r_, phi_, theta_)
 mesh = pv.StructuredGrid(x, y, z)
 
 # %%
-# The mesh has :attr:`~pyvista.CellType.QUAD` cells. cells. The cells that look triangular
+# The mesh has :attr:`~pyvista.CellType.QUAD` cells. The cells that look triangular
 # at the poles are actually degenerate quadrilaterals, i.e. two
 # points are coincident at the pole, as will be shown later.
 
@@ -184,8 +184,8 @@ pl.show()
 
 # %%
 # Next form the quadrilaterals. This process is the same except
-# by connecting points across two levels of phi.  For point 1
-# and point 2, these are connected to point 9 and point 10. Note
+# by connecting points across two levels of ``phi``.  For point ``1``
+# and point ``2``, these are connected to point ``9`` and point ``10``. Note
 # for quadrilaterals it must be defined in a consistent direction.
 # Again, the last point(s) in the theta direction connect back to the
 # first point(s).
