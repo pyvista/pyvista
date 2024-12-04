@@ -21,7 +21,6 @@ import reprlib
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
-from typing import TypeVar
 
 import numpy as np
 
