@@ -30,6 +30,7 @@ from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
+from pyvista.core.utilities.geometric_objects import NormalsLiteral
 from pyvista.core.utilities.helpers import generate_plane
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -50,9 +51,9 @@ class DataSetFilters:
 
     def _clip_with_function(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        function,
+        function: _vtk.vtkImplicitFunction,
         invert: bool = True,
-        value=0.0,
+        value: float = 0.0,
         return_clipped: bool = False,
         progress_bar: bool = False,
         crinkle: bool = False,
@@ -63,12 +64,12 @@ class DataSetFilters:
             self.cell_data['cell_ids'] = np.arange(self.n_cells)
 
         if isinstance(self, _vtk.vtkPolyData):
-            alg = _vtk.vtkClipPolyData()
+            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         # elif isinstance(self, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
         #     alg.SetMixed3DCellGeneration(True)
         else:
-            alg = _vtk.vtkTableBasedClipDataSet()  # type: ignore[assignment]
+            alg = _vtk.vtkTableBasedClipDataSet()
         alg.SetInputDataObject(self)  # Use the grid as the data we desire to cut
         alg.SetValue(value)
         alg.SetClipFunction(function)  # the implicit function
@@ -447,10 +448,10 @@ class DataSetFilters:
 
     def clip(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        normal='x',
-        origin=None,
+        normal: VectorLike[float] | NormalsLiteral = 'x',
+        origin: VectorLike[float] | None = None,
         invert: bool = True,
-        value=0.0,
+        value: float = 0.0,
         inplace: bool = False,
         return_clipped: bool = False,
         progress_bar: bool = False,
@@ -521,13 +522,13 @@ class DataSetFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
-        if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
+        normal_vector: VectorLike[float] = (
+            NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        )
         # find center of data if origin not specified
-        if origin is None:
-            origin = self.center
+        origin_vector = self.center if origin is None else origin
         # create the plane for clipping
-        function = generate_plane(normal, origin)
+        function = generate_plane(normal_vector, origin_vector)
         # run the clip
         result = DataSetFilters._clip_with_function(
             self,
@@ -761,9 +762,9 @@ class DataSetFilters:
 
     def clip_scalar(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        scalars=None,
+        scalars: str | None = None,
         invert: bool = True,
-        value=0.0,
+        value: float = 0.0,
         inplace: bool = False,
         progress_bar: bool = False,
         both: bool = False,
@@ -831,9 +832,9 @@ class DataSetFilters:
 
         """
         if isinstance(self, _vtk.vtkPolyData):
-            alg = _vtk.vtkClipPolyData()
+            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
         else:
-            alg = _vtk.vtkTableBasedClipDataSet()  # type: ignore[assignment]
+            alg = _vtk.vtkTableBasedClipDataSet()
 
         alg.SetInputDataObject(self)
         alg.SetValue(value)
@@ -862,9 +863,9 @@ class DataSetFilters:
 
     def clip_surface(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        surface,
+        surface: pyvista.DataSet | _vtk.vtkDataSet,
         invert: bool = True,
-        value=0.0,
+        value: float = 0.0,
         compute_distance: bool = False,
         progress_bar: bool = False,
         crinkle: bool = False,
@@ -924,7 +925,7 @@ class DataSetFilters:
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
-            surface = DataSetFilters.extract_geometry(surface)
+            surface = DataSetFilters.extract_geometry(surface)  # type: ignore[type-var]
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -944,7 +945,7 @@ class DataSetFilters:
 
     def slice_implicit(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        implicit_function,
+        implicit_function: _vtk.vtkImplicitFunction,
         generate_triangles: bool = False,
         contour: bool = False,
         progress_bar: bool = False,
@@ -1005,8 +1006,8 @@ class DataSetFilters:
 
     def slice(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        normal='x',
-        origin=None,
+        normal: VectorLike[float] | NormalsLiteral = 'x',
+        origin: VectorLike[float] | None = None,
         generate_triangles: bool = False,
         contour: bool = False,
         progress_bar: bool = False,
@@ -1057,13 +1058,14 @@ class DataSetFilters:
         See :ref:`slice_example` for more examples using this filter.
 
         """
-        if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
+        normal_vector: VectorLike[float] = (
+            NORMALS[normal.lower()] if isinstance(normal, str) else normal
+        )
         # find center of data if origin not specified
-        if origin is None:
-            origin = self.center
+        origin_vector = self.center if origin is None else origin
+
         # create the plane for clipping
-        plane = generate_plane(normal, origin)
+        plane = generate_plane(normal_vector, origin_vector)
         return DataSetFilters.slice_implicit(
             self,
             plane,
@@ -1074,9 +1076,9 @@ class DataSetFilters:
 
     def slice_orthogonal(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        x=None,
-        y=None,
-        z=None,
+        x: float | None = None,
+        y: float | None = None,
+        z: float | None = None,
         generate_triangles: bool = False,
         contour: bool = False,
         progress_bar: bool = False,
@@ -1174,9 +1176,9 @@ class DataSetFilters:
 
     def slice_along_axis(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        n=5,
-        axis='x',
-        tolerance=None,
+        n: int = 5,
+        axis: Literal['x', 'y', 'z', 0, 1, 2] = 'x',
+        tolerance: float | None = None,
         generate_triangles: bool = False,
         contour: bool = False,
         bounds=None,
@@ -1247,19 +1249,21 @@ class DataSetFilters:
 
         """
         # parse axis input
-        labels = ['x', 'y', 'z']
-        label_to_index = {label: index for index, label in enumerate(labels)}
+        XYZLiteral = Literal['x', 'y', 'z']
+        labels: list[XYZLiteral] = ['x', 'y', 'z']
+        label_to_index: dict[Literal['x', 'y', 'z'], Literal[0, 1, 2]] = {'x': 0, 'y': 1, 'z': 2}
         if isinstance(axis, int):
             ax_index = axis
             ax_label = labels[ax_index]
         elif isinstance(axis, str):
-            try:
-                ax_index = label_to_index[axis.lower()]
-            except KeyError:
+            ax_str = axis.lower()
+            if ax_str in labels:
+                ax_label = cast(XYZLiteral, ax_str)
+                ax_index = label_to_index[ax_label]
+            else:
                 raise ValueError(
                     f'Axis ({axis!r}) not understood. Choose one of {labels}.',
                 ) from None
-            ax_label = axis
         # get the locations along that axis
         if bounds is None:
             bounds = self.bounds
@@ -1300,7 +1304,7 @@ class DataSetFilters:
 
     def slice_along_line(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        line,
+        line: pyvista.PolyData,
         generate_triangles: bool = False,
         contour: bool = False,
         progress_bar: bool = False,
