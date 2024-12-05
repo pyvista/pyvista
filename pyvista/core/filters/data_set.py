@@ -37,8 +37,6 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista import DataSet
-    from pyvista.core._typing_core import ConcreteDataObjectType
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
@@ -1803,7 +1801,7 @@ class DataSetFilters:
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(  # type: ignore[misc]
-        self: DataSet | _vtk.vtkDataSet,
+        self: ConcreteDataSetType,
         extent: Sequence[float] | None = None,
         progress_bar: bool = False,
     ):
@@ -1858,7 +1856,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def extract_all_edges(  # type: ignore[misc]
-        self: ConcreteDataObjectType,
+        self: ConcreteDataSetType,
         use_all_points: bool = False,
         clear_data: bool = False,
         progress_bar: bool = False,
