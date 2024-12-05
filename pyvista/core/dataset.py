@@ -82,6 +82,17 @@ class ActiveArrayInfoTuple(NamedTuple):
         return ActiveArrayInfoTuple(self.association, self.name)
 
 
+class _ActiveArrayExistsInfoTuple(NamedTuple):
+    """Active array info tuple for arrays that exist.
+
+    This named tuple is similar to ActiveArrayInfoTuple except the
+    `name` attribute cannot be `None`.
+    """
+
+    association: FieldAssociation
+    name: str
+
+
 class ActiveArrayInfo:
     """Active array info class with support for pickling.
 
