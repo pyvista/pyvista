@@ -8532,7 +8532,7 @@ class DataSetFilters:
                 point[2] = bnds.z_min if match[2] == 1 else bnds.z_max
 
                 # Transform point
-                point = (inverse_matrix @ [*point, 1])[:3]  # type: ignore[has-type]
+                point = (inverse_matrix @ [*point, 1])[:3]
                 # Make sure the point we return is one of the box's points
                 box_poly = (
                     _multiblock_to_polydata(alg_output)
@@ -8587,7 +8587,9 @@ class DataSetFilters:
         split.points += np.repeat(vec, np.diff(split.offset), axis=0)
         return split
 
-    def separate_cells(self):
+    def separate_cells(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+    ):
         """Return a copy of the dataset with separated cells with no shared points.
 
         This method may be useful when datasets have scalars that need to be
