@@ -37,6 +37,8 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import DataSet
+    from pyvista.core._typing_core import ConcreteDataObjectType
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
@@ -92,10 +94,10 @@ class DataSetFilters:
 
     def align(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        target,
-        max_landmarks=100,
-        max_mean_distance=1e-5,
-        max_iterations=500,
+        target: DataSet | _vtk.vtkDataSet,
+        max_landmarks: int = 100,
+        max_mean_distance: float = 1e-5,
+        max_iterations: int = 500,
         check_mean_distance: bool = True,
         start_by_matching_centroids: bool = True,
         return_matrix: bool = False,
@@ -189,7 +191,7 @@ class DataSetFilters:
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
         icp.SetSource(self)
-        icp.SetTarget(target)
+        icp.SetTarget(cast(_vtk.vtkDataSet, target))
         icp.GetLandmarkTransform().SetModeToRigidBody()
         icp.SetMaximumNumberOfLandmarks(max_landmarks)
         icp.SetMaximumMeanDistance(max_mean_distance)
@@ -379,15 +381,19 @@ class DataSetFilters:
 
         """
 
-        def _validate_vector(vector, name):
-            if vector is not None:
+        def _validate_vector(
+            vector: VectorLike[float] | str | None, name: str
+        ) -> NumpyArray[float] | None:
+            if vector is None:
+                vector_ = vector
+            else:
                 if isinstance(vector, str):
                     vector = vector.lower()
                     valid_strings = list(NORMALS.keys())
                     _validation.check_contains(item=vector, container=valid_strings, name=name)
                     vector = NORMALS[vector]
-                vector = _validation.validate_array3(vector, dtype_out=float, name=name)
-            return vector
+                vector_ = _validation.validate_array3(vector, dtype_out=float, name=name)
+            return vector_
 
         axes, std = pyvista.principal_axes(self.points, return_std=True)
 
@@ -670,7 +676,7 @@ class DataSetFilters:
         return clipped
 
     def compute_implicit_distance(  # type: ignore[misc]
-        self: ConcreteDataSetType, surface, inplace: bool = False
+        self: ConcreteDataSetType, surface: DataSet | _vtk.vtkDataSet, inplace: bool = False
     ):
         """Compute the implicit distance from the points to a surface.
 
@@ -1382,15 +1388,15 @@ class DataSetFilters:
 
     def threshold(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        value=None,
-        scalars=None,
+        value: float | VectorLike[float] | None = None,
+        scalars: str | None = None,
         invert: bool = False,
         continuous: bool = False,
-        preference='cell',
+        preference: Literal['point', 'cell'] = 'cell',
         all_scalars: bool = False,
-        component_mode='all',
-        component=0,
-        method='upper',
+        component_mode: Literal['component', 'all', 'any'] = 'all',
+        component: int = 0,
+        method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
     ):
         """Apply a ``vtkThreshold`` filter to the input dataset.
@@ -1453,15 +1459,15 @@ class DataSetFilters:
             with a scalar value satisfying the threshold criterion
             will extract the cell. Has no effect when using cell data.
 
-        component_mode : {'selected', 'all', 'any'}
+        component_mode : {'component', 'all', 'any'}
             The method to satisfy the criteria for the threshold of
-            multicomponent scalars.  'selected' (default)
+            multicomponent scalars.  'component' (default)
             uses only the ``component``.  'all' requires all
             components to meet criteria.  'any' is when
             any component satisfies the criteria.
 
         component : int, default: 0
-            When using ``component_mode='selected'``, this sets
+            When using ``component_mode='component'``, this sets
             which component to threshold on.
 
         method : str, default: 'upper'
@@ -1537,7 +1543,7 @@ class DataSetFilters:
         # set the scalars to threshold on
         if scalars is None:
             set_default_active_scalars(self)
-            scalars = self.active_scalars_info.name
+            scalars = cast(str, self.active_scalars_info.name)
         arr = get_array(self, scalars, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
@@ -1572,7 +1578,7 @@ class DataSetFilters:
                 raise ValueError(
                     f'scalars has {dim} components: supplied component {component} not in range',
                 )
-            alg.SetSelectedComponent(int(component))
+            alg.SetSelectedComponent(component)
         elif component_mode == 'all':
             alg.SetComponentModeToUseAll()
         elif component_mode == 'any':
@@ -1588,12 +1594,12 @@ class DataSetFilters:
 
     def threshold_percent(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        percent=0.50,
-        scalars=None,
+        percent: float = 0.50,
+        scalars: str | None = None,
         invert: bool = False,
         continuous: bool = False,
-        preference='cell',
-        method='upper',
+        preference: Literal['point', 'cell'] = 'cell',
+        method: Literal['upper', 'lower'] = 'upper',
         progress_bar: bool = False,
     ):
         """Threshold the dataset by a percentage of its range on the active scalars array.
@@ -1721,7 +1727,7 @@ class DataSetFilters:
         )
 
     def outline(  # type: ignore[misc]
-        self: _vtk.vtkDataSet | _vtk.vtkMultiBlockDataSet,
+        self: ConcreteDataObjectType,
         generate_faces: bool = False,
         progress_bar: bool = False,
     ):
@@ -1765,7 +1771,7 @@ class DataSetFilters:
         return wrap(alg.GetOutputDataObject(0))
 
     def outline_corners(  # type: ignore[misc]
-        self: _vtk.vtkDataSet | _vtk.vtkMultiBlockDataSet, factor=0.2, progress_bar: bool = False
+        self: ConcreteDataObjectType, factor: float = 0.2, progress_bar: bool = False
     ):
         """Produce an outline of the corners for the input dataset.
 
@@ -6613,8 +6619,8 @@ class DataSetFilters:
 
     def compute_cell_quality(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        quality_measure='scaled_jacobian',
-        null_value=-1.0,
+        quality_measure: str = 'scaled_jacobian',
+        null_value: float = -1.0,
         progress_bar: bool = False,
     ):
         """Compute a function of (geometric) quality for each cell of a mesh.
@@ -6805,13 +6811,13 @@ class DataSetFilters:
 
     def compute_derivative(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        scalars=None,
+        scalars: str | None = None,
         gradient: bool | str = True,
-        divergence=None,
-        vorticity=None,
-        qcriterion=None,
+        divergence: bool | str = False,
+        vorticity: bool | str = False,
+        qcriterion: bool | str = False,
         faster: bool = False,
-        preference='point',
+        preference: Literal['point', 'cell'] = 'point',
         progress_bar: bool = False,
     ):
         """Compute derivative-based quantities of point/cell scalar field.
