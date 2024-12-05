@@ -1815,7 +1815,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        extent : sequence[float], optional
+        extent : VectorLike[float], optional
             Specify a ``(x_min, x_max, y_min, y_max, z_min, z_max)`` bounding box to
             clip data.
 
@@ -1850,7 +1850,8 @@ class DataSetFilters:
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
         if extent is not None:
-            alg.SetExtent(extent)  # type: ignore[call-overload]
+            extent_ = _validation.validate_arrayN(extent, must_have_length=6, to_list=True)
+            alg.SetExtent(extent_)
             alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
