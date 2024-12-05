@@ -1022,6 +1022,7 @@ class ImageDataFilters(DataSetFilters):
         closed_surface: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
+        compute_normals: bool = True,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
         smoothing_relaxation: float = 0.5,
@@ -1133,9 +1134,25 @@ class ImageDataFilters(DataSetFilters):
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars. If cell
-            scalars are specified, the input image is re-meshed with
+            scalars are specified, the input image is first re-meshed with
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
+
+        compute_normals : bool, default: True
+            Compute point and cell normals for the contoured output using
+            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
+            enabled by default. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation (and will negatively impact
+            the shading used for rendering).
+
+            .. warning::
+
+                Enabling this option is likely to generate surfaces with normals
+                pointing outward when ``closed_surface`` is ``True`` and
+                ``boundary_style`` is ``True`` (the default). However, this is
+                not guaranteed if the generated surface is not closed or if internal
+                boundaries are generated. Do not assume the normals will point outward
+                in all cases.
 
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
@@ -1292,9 +1309,7 @@ class ImageDataFilters(DataSetFilters):
         Disable smoothing to generate staircase-like surface. Without smoothing, the
         surface has quadrilateral cells by default.
 
-        >>> surf = image.contour_labels(
-        ...     smoothing=False,
-        ... )
+        >>> surf = image.contour_labels(smoothing=False)
         >>> surf.plot(zoom=1.5, **plot_kwargs)
 
         Disable the generation of a closed surface. Since the input image has
@@ -1302,9 +1317,7 @@ class ImageDataFilters(DataSetFilters):
         setting ``closed_surface=False`` in this example causes the top and sides of
         the mesh to be "open".
 
-        >>> surf = image.contour_labels(
-        ...     closed_surface=False,
-        ... )
+        >>> surf = image.contour_labels(closed_surface=False)
         >>> surf.plot(zoom=1.5, **plot_kwargs)
 
         """
@@ -1515,7 +1528,8 @@ class ImageDataFilters(DataSetFilters):
                 strips_to_polys=False,
                 inplace=True,
             )
-
+        if compute_normals:
+            output.compute_normals(auto_orient_normals=True, inplace=True)
         return output
 
     def points_to_cells(  # type: ignore[misc]

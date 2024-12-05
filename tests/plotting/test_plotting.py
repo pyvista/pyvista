@@ -4698,6 +4698,13 @@ def test_contour_labels_compare_select_inputs_select_outputs(
     plot.show()
 
 
+@pytest.mark.parametrize('compute_normals', [True, False])
+def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa: F811
+    contour = labeled_image.contour_labels(background_value=5, compute_normals=compute_normals)
+    contour.clear_data()
+    contour.plot_normals()
+
+
 @skip_windows  # Windows colors all plane cells red (bug?)
 @pytest.mark.parametrize('normal_sign', ['+', '-'])
 @pytest.mark.parametrize('plane', ['yz', 'zx', 'xy'])
