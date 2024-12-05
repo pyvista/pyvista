@@ -37,6 +37,8 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import DataSet
+    from pyvista.core._typing_core import ConcreteDataObjectType
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
@@ -1801,7 +1803,9 @@ class DataSetFilters:
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(  # type: ignore[misc]
-        self: ConcreteDataSetType, extent: Sequence[float] | None = None, progress_bar: bool = False
+        self: DataSet | _vtk.vtkDataSet,
+        extent: Sequence[float] | None = None,
+        progress_bar: bool = False,
     ):
         """Extract the outer surface of a volume or structured grid dataset.
 
@@ -1854,7 +1858,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def extract_all_edges(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: ConcreteDataObjectType,
         use_all_points: bool = False,
         clear_data: bool = False,
         progress_bar: bool = False,
@@ -5385,7 +5389,10 @@ class DataSetFilters:
             plt.show()
 
     def extract_cells(  # type: ignore[misc]
-        self: ConcreteDataSetType, ind, invert: bool = False, progress_bar: bool = False
+        self: ConcreteDataSetType,
+        ind: int | VectorLike[int],
+        invert: bool = False,
+        progress_bar: bool = False,
     ):
         """Return a subset of the grid.
 
@@ -5426,14 +5433,18 @@ class DataSetFilters:
 
         """
         if invert:
-            _, ind = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
-            ind = [i for i in range(self.n_cells) if i not in ind]
+            ind_: VectorLike[int]
+            _, ind_ = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
+            ind_ = [i for i in range(self.n_cells) if i not in ind_]
+            ids = numpy_to_idarr(ind_)
+        else:
+            ids = numpy_to_idarr(ind)
 
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.CELL)
         selectionNode.SetContentType(_vtk.vtkSelectionNode.INDICES)
-        selectionNode.SetSelectionList(numpy_to_idarr(ind))
+        selectionNode.SetSelectionList(ids)
 
         selection = _vtk.vtkSelection()
         selection.AddNode(selectionNode)
@@ -5454,7 +5465,7 @@ class DataSetFilters:
 
     def extract_points(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        ind,
+        ind: int | VectorLike[int],
         adjacent_cells: bool = True,
         include_cells: bool = True,
         progress_bar: bool = False,
@@ -6181,7 +6192,7 @@ class DataSetFilters:
             id_mask[logic_] = True
 
         # Determine which ids to keep
-        id_mask = np.zeros((len(array),), dtype=np.bool_)
+        id_mask = np.zeros((len(array),), dtype=bool)
         if values is not None:
             for val in values:
                 logic = array == val
@@ -6229,7 +6240,7 @@ class DataSetFilters:
         self: ConcreteDataSetType,
         pass_pointid: bool = True,
         pass_cellid: bool = True,
-        nonlinear_subdivision=1,
+        nonlinear_subdivision: int = 1,
         progress_bar: bool = False,
     ):
         """Extract surface mesh of the grid.
@@ -6355,7 +6366,7 @@ class DataSetFilters:
 
     def extract_feature_edges(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        feature_angle=30.0,
+        feature_angle: float = 30.0,
         boundary_edges: bool = True,
         non_manifold_edges: bool = True,
         feature_edges: bool = True,
