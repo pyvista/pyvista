@@ -27,8 +27,8 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
-from pyvista.core.utilities.arrays import get_default_active_array_info
 from pyvista.core.utilities.arrays import set_default_active_scalars
+from pyvista.core.utilities.arrays import set_default_active_vectors
 from pyvista.core.utilities.cells import numpy_to_idarr
 from pyvista.core.utilities.geometric_objects import NORMALS
 from pyvista.core.utilities.geometric_objects import NormalsLiteral
@@ -1542,13 +1542,12 @@ class DataSetFilters:
 
         """
         # set the scalars to threshold on
-        if scalars is None:
-            _, scalars = get_default_active_array_info(self)
-        arr = get_array(self, scalars, preference=preference, err=False)
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        arr = get_array(self, scalars_, preference=preference, err=False)
         if arr is None:
             raise ValueError('No arrays present to threshold.')
 
-        field = get_array_association(self, scalars, preference=preference)
+        field = get_array_association(self, scalars_, preference=preference)
 
         # Run a standard threshold algorithm
         alg = _vtk.vtkThreshold()
@@ -1559,7 +1558,7 @@ class DataSetFilters:
             0,
             0,
             field.value,
-            scalars,
+            scalars_,
         )  # args: (idx, port, connection, field, name)
         # set thresholding parameters
         alg.SetUseContinuousCellRange(continuous)
@@ -1683,11 +1682,7 @@ class DataSetFilters:
         See :ref:`common_filter_example` for more examples using a similar filter.
 
         """
-        if scalars is None:
-            set_default_active_scalars(self)
-            tscalars = self.active_scalars_info.name
-        else:
-            tscalars = scalars
+        tscalars = set_default_active_scalars(self).name if scalars is None else scalars
         dmin, dmax = self.get_data_range(arr_var=tscalars, preference=preference)
 
         def _check_percent(percent):
@@ -2173,7 +2168,9 @@ class DataSetFilters:
         elif isinstance(scalars, (Sequence, np.ndarray)):
             scalars_name = 'Contour Data'
             self[scalars_name] = scalars
-        elif scalars is not None:
+        elif scalars is None:
+            scalars_name = set_default_active_scalars(self).name
+        else:
             raise TypeError(
                 f'Invalid type for `scalars` ({type(scalars)}). Should be either '
                 'a numpy.ndarray, a string, or None.',
@@ -2187,15 +2184,8 @@ class DataSetFilters:
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
-        # set the array to contour on
-        if scalars is None:
-            set_default_active_scalars(self)
-            field = self.active_scalars_info.association
-            # Safe to cast since scalars name must be str (error is raised earlier if None)
-            scalars_name = cast(str, self.active_scalars_info.name)
-        else:
-            field = get_array_association(self, scalars_name, preference=preference)
         # NOTE: only point data is allowed? well cells works but seems buggy?
+        field = get_array_association(self, scalars_name, preference=preference)
         if field != FieldAssociation.POINT:
             raise TypeError('Contour filter only works on point data.')
         alg.SetInputArrayToProcess(
@@ -2699,7 +2689,7 @@ class DataSetFilters:
 
         if orient:
             try:
-                pyvista.set_default_active_vectors(dataset)
+                set_default_active_vectors(dataset)
             except MissingDataError:
                 warnings.warn('No vector-like data to use for orient. orient will be set to False.')
                 orient = False
@@ -3373,11 +3363,10 @@ class DataSetFilters:
         """
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
-        if scalars is None:
-            field, scalars = get_default_active_array_info(self)
-        _ = get_array(self, scalars, preference='point', err=True)
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        _ = get_array(self, scalars_, preference='point', err=True)
 
-        field = get_array_association(self, scalars, preference='point')
+        field = get_array_association(self, scalars_, preference='point')
         if field != FieldAssociation.POINT:
             raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
@@ -3388,7 +3377,7 @@ class DataSetFilters:
             0,
             0,
             field.value,
-            scalars,
+            scalars_,
         )  # args: (idx, port, connection, field, name)
         alg.SetScaleFactor(factor)
         if normal is not None:
@@ -3459,10 +3448,9 @@ class DataSetFilters:
         more examples using this filter.
 
         """
-        if vectors is None:
-            field, vectors = get_default_active_array_info(self, attribute='vectors')
-        arr = get_array(self, vectors, preference='point')
-        field = get_array_association(self, vectors, preference='point')
+        vectors_ = set_default_active_vectors(self).name if vectors is None else vectors
+        arr = get_array(self, vectors_, preference='point')
+        field = get_array_association(self, vectors_, preference='point')
         if arr is None:
             raise ValueError('No vectors present to warp by vector.')
 
@@ -3474,7 +3462,7 @@ class DataSetFilters:
             )
         alg = _vtk.vtkWarpVector()
         alg.SetInputDataObject(self)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors_)
         alg.SetScaleFactor(factor)
         _update_alg(alg, progress_bar, 'Warping by Vector')
         warped_mesh = _get_output(alg)
@@ -4467,7 +4455,7 @@ class DataSetFilters:
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
         elif vectors is None:
-            pyvista.set_default_active_vectors(self)
+            set_default_active_vectors(self)
 
         if max_time is not None:
             if max_length is not None:
@@ -4665,7 +4653,7 @@ class DataSetFilters:
             self.set_active_scalars(vectors)
             self.set_active_vectors(vectors)
         elif vectors is None:
-            pyvista.set_default_active_vectors(self)
+            set_default_active_vectors(self)
 
         loop_angle = loop_angle * np.pi / 180
 
@@ -4887,9 +4875,8 @@ class DataSetFilters:
         )
 
         # Get variable of interest
-        if scalars is None:
-            field, scalars = get_default_active_array_info(self)
-        values = sampled.get_array(scalars)
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
+        values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
         # Remainder is plotting
@@ -4904,11 +4891,11 @@ class DataSetFilters:
             plt.plot(distance, values)
         plt.xlabel('Distance')
         if ylabel is None:
-            plt.ylabel(scalars)
+            plt.ylabel(scalars_)
         else:
             plt.ylabel(ylabel)
         if title is None:
-            plt.title(f'{scalars} Profile')
+            plt.title(f'{scalars_} Profile')
         else:
             plt.title(title)
         if fname:
@@ -5236,7 +5223,7 @@ class DataSetFilters:
         )
 
         # Get variable of interest
-        scalars_ = get_default_active_array_info(self).name if scalars is None else scalars
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
@@ -5371,7 +5358,7 @@ class DataSetFilters:
         )
 
         # Get variable of interest
-        scalars_ = get_default_active_array_info(self).name if scalars is None else scalars
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         values = sampled.get_array(scalars_)
         distance = sampled['Distance']
 
@@ -6002,9 +5989,7 @@ class DataSetFilters:
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
             try:
-                if scalars_ is None:
-                    set_default_active_scalars(self)
-                    scalars_ = self.active_scalars_info.name
+                scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
                 array_ = get_array(self, scalars_, preference=preference_, err=True)
             except MissingDataError:
                 raise ValueError(
@@ -6912,7 +6897,7 @@ class DataSetFilters:
         """
         alg = _vtk.vtkGradientFilter()
         # Check if scalars array given
-        scalars_ = get_default_active_array_info(self).name if scalars is None else scalars
+        scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         if not isinstance(scalars_, str):
             raise TypeError('scalars array must be given as a string name')
         if not any((gradient, divergence, vorticity, qcriterion)):
@@ -8902,7 +8887,7 @@ class DataSetFilters:
 
         """
         # Set a input scalars
-        scalars = get_default_active_array_info(self).name if scalars is None else scalars
+        scalars = set_default_active_scalars(self).name if scalars is None else scalars
         field = get_array_association(self, scalars, preference=preference)
 
         # Determine output scalars
