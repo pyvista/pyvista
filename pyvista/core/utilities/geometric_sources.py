@@ -35,6 +35,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
 
@@ -3515,7 +3516,9 @@ class AxesGeometrySource:
         return self._shaft_type
 
     @shaft_type.setter
-    def shaft_type(self: AxesGeometrySource, shaft_type: GeometryTypes | DataSet) -> None:
+    def shaft_type(
+        self: AxesGeometrySource, shaft_type: GeometryTypes | ConcreteDataSetAlias
+    ) -> None:
         self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
@@ -3556,11 +3559,11 @@ class AxesGeometrySource:
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(self: AxesGeometrySource, tip_type: str | DataSet) -> None:
+    def tip_type(self: AxesGeometrySource, tip_type: str | ConcreteDataSetAlias) -> None:
         self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
 
     def _set_normalized_datasets(
-        self: AxesGeometrySource, part: _PartEnum, geometry: str | DataSet
+        self: AxesGeometrySource, part: _PartEnum, geometry: str | ConcreteDataSetAlias
     ) -> str:
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
         datasets = (
@@ -3688,8 +3691,8 @@ class AxesGeometrySource:
             )  # pragma: no cover
 
     @staticmethod
-    def _make_any_part(geometry: str | DataSet) -> tuple[str, PolyData]:
-        part: DataSet
+    def _make_any_part(geometry: str | ConcreteDataSetType) -> tuple[str, PolyData]:
+        part: ConcreteDataSetAlias
         part_poly: PolyData
         if isinstance(geometry, str):
             name = geometry
@@ -3726,7 +3729,7 @@ class AxesGeometrySource:
 
     @staticmethod
     def _make_axes_parts(
-        geometry: str | DataSet,
+        geometry: str | ConcreteDataSetAlias,
     ) -> tuple[str, tuple[PolyData, PolyData, PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesGeometrySource._make_any_part(geometry)
@@ -3938,7 +3941,10 @@ class OrthogonalPlanesSource:
 
         """
         valid_distance = _validation.validate_array3(
-            distance, broadcast=True, dtype_out=float, to_tuple=True
+            distance,  # type: ignore[arg-type]
+            broadcast=True,
+            dtype_out=float,
+            to_tuple=True,
         )
         for source, dist in zip(self.sources, valid_distance):
             source.push(dist)

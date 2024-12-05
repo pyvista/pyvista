@@ -16,8 +16,16 @@ from pyvista.core.pointset import PolyData
 from pyvista.core.pointset import StructuredGrid
 from pyvista.core.pointset import UnstructuredGrid
 
-# Use this typevar wherever a `DataSet` type hint may be used
-# Unlike `DataSet`, the concrete classes here also inherit from `vtkDataSet`
+# Use these typevars wherever shared `pyvista` and `vtk` object attributes are
+# required for type-checking. The abstract classes like `DataSet`, `DataObject`
+# do not inherit VTK methods whereas the concrete classes do
+
+ConcreteGridAlias = Union[
+    ImageData,
+    RectilinearGrid,
+]
+ConcreteGridType = TypeVar('ConcreteGridType', bound=ConcreteGridAlias)
+ConcreteGridType.__doc__ = """Type variable of all concrete PyVista ``Grid`` classes."""
 
 ConcretePointGridAlias = Union[
     ExplicitStructuredGrid,
@@ -25,6 +33,7 @@ ConcretePointGridAlias = Union[
     UnstructuredGrid,
 ]
 ConcretePointGridType = TypeVar('ConcretePointGridType', bound=ConcretePointGridAlias)
+ConcretePointGridType.__doc__ = """Type variable of all concrete PyVista ``PointGrid``` classes."""
 
 ConcretePointSetAlias = Union[
     ExplicitStructuredGrid,
@@ -34,12 +43,7 @@ ConcretePointSetAlias = Union[
     UnstructuredGrid,
 ]
 ConcretePointSetType = TypeVar('ConcretePointSetType', bound=ConcretePointSetAlias)
-
-ConcreteGridAlias = Union[
-    ImageData,
-    RectilinearGrid,
-]
-ConcreteGridType = TypeVar('ConcreteGridType', bound=ConcreteGridAlias)
+ConcretePointSetType.__doc__ = """Type variable of all concrete PyVista ``PointSet`` classes."""
 
 ConcreteDataSetAlias = Union[ConcreteGridAlias, ConcretePointSetAlias]
 ConcreteDataSetType = TypeVar('ConcreteDataSetType', bound=ConcreteDataSetAlias)
@@ -52,3 +56,6 @@ ConcreteDataObjectAlias = Union[
     PartitionedDataSet,
 ]
 ConcreteDataObjectType = TypeVar('ConcreteDataObjectType', bound=ConcreteDataObjectAlias)
+ConcreteDataObjectType.__doc__ = (
+    """Type variable of all concrete :class:`~pyvista.DataObject` classes."""
+)

@@ -415,6 +415,9 @@ def Sphere(
     Pole. ``phi=0`` is on the positive z-axis by default.
     ``theta=0`` is on the positive x-axis by default.
 
+    See :ref:`create_sphere_example` for examples on creating spheres in
+    other ways.
+
     Parameters
     ----------
     radius : float, default: 0.5
