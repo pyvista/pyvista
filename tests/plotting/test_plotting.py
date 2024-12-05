@@ -4609,6 +4609,7 @@ def test_contour_labels_boundary_style(
         smoothing_distance=0.3,
         output_mesh_type='quads',
         multi_component_output=True,
+        compute_normals=False,
     )
 
     test_kwargs = dict(
@@ -4689,7 +4690,12 @@ def test_contour_labels_compare_select_inputs_select_outputs(
     labeled_image,  # noqa: F811
     smoothing,
 ):
-    common_kwargs = dict(smoothing=smoothing, smoothing_distance=0.8, output_mesh_type='quads')
+    common_kwargs = dict(
+        smoothing=smoothing,
+        smoothing_distance=0.8,
+        output_mesh_type='quads',
+        multi_component_output=True,
+    )
     mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
     mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
 

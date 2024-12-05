@@ -1545,12 +1545,13 @@ class ImageDataFilters(DataSetFilters):
             else None
         )
 
-        if (old_name := 'BoundaryLabels') in output.cell_data.keys():
-            new_name = 'boundary_labels'
-            output.rename_array(old_name, new_name)
+        VTK_NAME = 'BoundaryLabels'
+        PV_NAME = 'boundary_labels'
+        if VTK_NAME in output.cell_data.keys():
+            output.rename_array(VTK_NAME, PV_NAME)
             if boundary_style in ['external', 'internal']:
                 # Output contains all boundary cells, need to remove cells we don't want
-                labels_array = output.cell_data[new_name]
+                labels_array = output.cell_data[PV_NAME]
                 is_external = np.any(labels_array == background_value, axis=1)
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
@@ -1558,12 +1559,13 @@ class ImageDataFilters(DataSetFilters):
             if multi_component_output is None:
                 multi_component_output = boundary_style != 'external'
             if not multi_component_output:
+                # Simplify scalars to a single component
                 if boundary_style == 'external':
                     # Keep first component only
-                    output.cell_data['boundary_labels'] = output.cell_data['boundary_labels'][:, 0]
+                    output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
                 else:
                     # Compute norm
-                    output.cell_data['boundary_labels'] = np.linalg.norm(
+                    output.cell_data[PV_NAME] = np.linalg.norm(
                         output.cell_data['boundary_labels'], axis=1
                     )
 
@@ -1577,6 +1579,7 @@ class ImageDataFilters(DataSetFilters):
                 strips_to_polys=False,
                 inplace=True,
             )
+
         if compute_normals and output.n_cells > 0:
             output.compute_normals(auto_orient_normals=True, inplace=True)
         return output
