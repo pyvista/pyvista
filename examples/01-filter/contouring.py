@@ -88,6 +88,6 @@ pl.show()
 if pv.vtk_version_info >= (9, 3):
     label_map = pv.examples.load_frog_tissues()
     mesh = label_map.contour_labels()
-    mesh.plot(cmap='glasbey', cpos='yx', show_scalar_bar=False, clim=mesh.get_data_range())
+    mesh.plot(cmap='glasbey', cpos='yx', categories=True)
 # %%
 # .. tags:: filter
