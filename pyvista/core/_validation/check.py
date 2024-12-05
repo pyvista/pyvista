@@ -12,7 +12,6 @@ A ``check`` function typically:
 
 from __future__ import annotations
 
-from collections.abc import Container
 from collections.abc import Iterable
 from collections.abc import Sequence
 from collections.abc import Sized
