@@ -235,6 +235,7 @@ def test_contour_labels_cell_data(channels):
     assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_multi_component_output(labeled_image):
     # Test `None` (implicit behavior)
     poly = labeled_image.contour_labels('external')
@@ -244,7 +245,7 @@ def test_contour_labels_multi_component_output(labeled_image):
     poly = labeled_image.contour_labels('all')
     assert poly['boundary_labels'].ndim == 2
 
-    # Test `True``
+    # Test `True`
     poly = labeled_image.contour_labels('external', multi_component_output=True)
     assert poly['boundary_labels'].ndim == 2
     poly = labeled_image.contour_labels('internal', multi_component_output=True)

@@ -4660,6 +4660,7 @@ def test_contour_labels_smoothing_constraint(
         smoothing_distance=smoothing_distance,
         smoothing_scale=smoothing_scale,
         closed_surface=False,
+        compute_normals=False,
     )
 
     # Translate so origin is in bottom left corner
@@ -4699,6 +4700,7 @@ def test_contour_labels_compare_select_inputs_select_outputs(
     plot.show()
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 @pytest.mark.parametrize('compute_normals', [True, False])
 def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa: F811
     contour = labeled_image.contour_labels(background_value=5, compute_normals=compute_normals)
