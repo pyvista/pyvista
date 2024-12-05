@@ -1416,7 +1416,7 @@ class RenderWindowInteractor:
         return self.interactor.GetPicker()
 
     @picker.setter
-    def picker(self, picker):  # numpydoc ignore=GL08
+    def picker(self, picker):
         pickers = {
             PickerType.AREA: _vtk.vtkAreaPicker,
             PickerType.CELL: _vtk.vtkCellPicker,
@@ -1446,7 +1446,7 @@ class RenderWindowInteractor:
         """Add an observer to call back when pick events end.
 
         .. deprecated:: 0.42.2
-            This function is deprecated. Use :func:`pyvista.plotting.RenderWindowInteractor.add_pick_observer` instead.
+            This function is deprecated. Use :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
 
         Parameters
         ----------

@@ -15,6 +15,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import MultiBlock
     from pyvista.core._typing_core import TransformLike
 
 
@@ -40,7 +41,7 @@ class CompositeFilters:
         gf.Update()
         return wrap(gf.GetOutputDataObject(0))
 
-    def combine(self, merge_points=False, tolerance=0.0):
+    def combine(self, merge_points: bool = False, tolerance=0.0):
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -121,7 +122,12 @@ class CompositeFilters:
 
     triangulate = DataSetFilters.triangulate
 
-    def outline(self, generate_faces=False, nested=False, progress_bar=False):
+    def outline(  # type: ignore[misc]
+        self: MultiBlock,
+        generate_faces: bool = False,
+        nested: bool = False,
+        progress_bar: bool = False,
+    ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
         Parameters
@@ -143,14 +149,16 @@ class CompositeFilters:
         """
         if nested:
             return DataSetFilters.outline(
-                self,  # type: ignore[arg-type]
+                self,
                 generate_faces=generate_faces,
                 progress_bar=progress_bar,
             )
-        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
+        box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
-    def outline_corners(self, factor=0.2, nested=False, progress_bar=False):
+    def outline_corners(  # type: ignore[misc]
+        self: MultiBlock, factor=0.2, nested: bool = False, progress_bar: bool = False
+    ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
@@ -172,22 +180,22 @@ class CompositeFilters:
 
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)  # type: ignore[arg-type]
-        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
+            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
+        box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
     def _compute_normals(
         self,
-        cell_normals=True,
-        point_normals=True,
-        split_vertices=False,
-        flip_normals=False,
-        consistent_normals=True,
-        auto_orient_normals=False,
-        non_manifold_traversal=True,
+        cell_normals: bool = True,
+        point_normals: bool = True,
+        split_vertices: bool = False,
+        flip_normals: bool = False,
+        consistent_normals: bool = True,
+        auto_orient_normals: bool = False,
+        non_manifold_traversal: bool = True,
         feature_angle=30.0,
-        track_vertices=False,
-        progress_bar=False,
+        track_vertices: bool = False,
+        progress_bar: bool = False,
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
         if not self.is_all_polydata:  # type: ignore[attr-defined]
@@ -218,9 +226,9 @@ class CompositeFilters:
     def transform(
         self,
         trans: TransformLike,
-        transform_all_input_vectors=False,
-        inplace=True,
-        progress_bar=False,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = True,
+        progress_bar: bool = False,
     ):
         """Transform all blocks in this composite dataset.
 

@@ -7,7 +7,10 @@ from collections.abc import Sequence
 import contextlib
 from functools import partial
 from functools import wraps
+from typing import TYPE_CHECKING
+from typing import Any
 from typing import ClassVar
+from typing import cast
 import warnings
 
 import numpy as np
@@ -37,6 +40,11 @@ from .tools import create_north_arrow
 from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ..core.pointset import PolyData
+    from .cube_axes_actor import CubeAxesActor
+    from .lights import Light
 
 ACTOR_LOC_MAP = [
     'upper right',
@@ -95,7 +103,7 @@ def map_loc_to_pos(loc, size, border=0.05):
     return x, y, size
 
 
-def make_legend_face(face):
+def make_legend_face(face) -> PolyData:
     """Create the legend face based on the given face.
 
     Parameters
@@ -189,7 +197,7 @@ class CameraPosition:
 
     """
 
-    def __init__(self, position, focal_point, viewup):
+    def __init__(self, position, focal_point, viewup) -> None:
         """Initialize a new camera position descriptor."""
         self._position = position
         self._focal_point = focal_point
@@ -233,7 +241,7 @@ class CameraPosition:
         return self._position
 
     @position.setter
-    def position(self, value):  # numpydoc ignore=GL08
+    def position(self, value) -> None:
         self._position = value
 
     @property
@@ -242,7 +250,7 @@ class CameraPosition:
         return self._focal_point
 
     @focal_point.setter
-    def focal_point(self, value):  # numpydoc ignore=GL08
+    def focal_point(self, value) -> None:
         self._focal_point = value
 
     @property
@@ -251,7 +259,7 @@ class CameraPosition:
         return self._viewup
 
     @viewup.setter
-    def viewup(self, value):  # numpydoc ignore=GL08
+    def viewup(self, value) -> None:
         self._viewup = value
 
 
@@ -275,36 +283,38 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         border=True,
         border_color='w',
         border_width=2.0,
-    ):  # numpydoc ignore=PR01,RT01
+    ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors = {}
+        self._actors: dict[str, _vtk.vtkActor] = {}
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
-        self._labels = {}  # tracks labeled actors
-        self._legend = None
-        self._floor = None
-        self._floors = []
-        self._floor_kwargs = []
+        self._labels: dict[
+            str, tuple[_vtk.vtkPolyData | _vtk.vtkImageData, str, Color]
+        ] = {}  # tracks labeled actors
+        self._legend: _vtk.vtkLegendBoxActor | None = None
+        self._floor: PolyData | None = None
+        self._floors: list[Actor] = []
+        self._floor_kwargs: list[dict[str, Any]] = []
         # this keeps track of lights added manually to prevent garbage collection
-        self._lights = []
-        self._camera = Camera(self)
+        self._lights: list[Light] = []
+        self._camera: Camera | None = Camera(self)
         self.SetActiveCamera(self._camera)
         self._empty_str = None  # used to track reference to a vtkStringArray
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
-        self.cube_axes_actor = None
+        self.cube_axes_actor: CubeAxesActor | None = None
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
-        self._scalar_bar_slot_lookup = {}
-        self._charts = None
+        self._scalar_bar_slot_lookup: dict[str, int] = {}
+        self._charts: Charts | None = None
 
-        self._border_actor = None
+        self._border_actor: _vtk.vtkActor2D | None = None
         if border:
             self.add_border(border_color, border_width)
 
@@ -318,10 +328,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.camera.is_set
 
     @camera_set.setter
-    def camera_set(self, is_set: bool):  # numpydoc ignore=GL08
+    def camera_set(self, is_set: bool) -> None:
         self.camera.is_set = is_set
 
-    def set_color_cycler(self, color_cycler):
+    def set_color_cycler(self, color_cycler) -> None:
         """Set or reset this renderer's color cycler.
 
         This color cycler is iterated over by each sequential :class:`add_mesh() <pyvista.Plotter.add_mesh>`
@@ -388,7 +398,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         )
 
     @camera_position.setter
-    def camera_position(self, camera_location):  # numpydoc ignore=GL08
+    def camera_position(self, camera_location):
         if camera_location is None:
             return
         elif isinstance(camera_location, str):
@@ -423,7 +433,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
         self.Modified()
 
-    def reset_camera_clipping_range(self):
+    def reset_camera_clipping_range(self) -> None:
         """Reset the camera clipping range based on the bounds of the visible actors.
 
         This ensures that no props are cut off
@@ -436,9 +446,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self._camera
 
     @camera.setter
-    def camera(self, source):  # numpydoc ignore=GL08
+    def camera(self, source) -> None:
         self._camera = source
-        self.SetActiveCamera(self._camera)
+        self.SetActiveCamera(self._camera)  # type: ignore[arg-type]
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),
@@ -452,8 +462,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Return the bounds of all actors present in the rendering window."""
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
-        def _update_bounds(bounds):
-            def update_axis(ax):
+        def _update_bounds(bounds) -> None:
+            def update_axis(ax) -> None:
                 if bounds[ax * 2] < the_bounds[ax * 2]:
                     the_bounds[ax * 2] = bounds[ax * 2]
                 if bounds[ax * 2 + 1] > the_bounds[ax * 2 + 1]:
@@ -512,14 +522,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return Color(self.GetBackground())
 
     @background_color.setter
-    def background_color(self, color):  # numpydoc ignore=GL08
+    def background_color(self, color) -> None:
         self.set_background(color)
         self.Modified()
 
-    def _before_render_event(self, *args, **kwargs):
+    def _before_render_event(self, *args, **kwargs) -> None:
         """Notify all charts about render event."""
-        for chart in self._charts:  # type: ignore[union-attr]
-            chart._render_event(*args, **kwargs)
+        if self._charts is not None:
+            for chart in self._charts:
+                chart._render_event(*args, **kwargs)
 
     def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
         """Enable depth peeling to improve rendering of translucent geometry.
@@ -558,7 +569,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
         return depth_peeling_supported
 
-    def disable_depth_peeling(self):
+    def disable_depth_peeling(self) -> None:
         """Disable depth peeling."""
         self.SetUseDepthPeeling(False)
         self.Modified()
@@ -594,18 +605,18 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         else:
             raise ValueError(f'Invalid `aa_type` "{aa_type}". Should be either "fxaa" or "ssaa"')
 
-    def disable_anti_aliasing(self):
+    def disable_anti_aliasing(self) -> None:
         """Disable all anti-aliasing."""
         self._render_passes.disable_ssaa_pass()
         self.SetUseFXAA(False)
         self.Modified()
 
-    def _enable_fxaa(self):
+    def _enable_fxaa(self) -> None:
         """Enable FXAA anti-aliasing."""
         self.SetUseFXAA(True)
         self.Modified()
 
-    def _disable_fxaa(self):
+    def _disable_fxaa(self) -> None:
         """Disable FXAA anti-aliasing."""
         self.SetUseFXAA(False)
         self.Modified()
@@ -739,7 +750,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """Wrap ``Charts.get_charts_by_pos``."""
         return self._charts.get_charts_by_pos(pos) if self.has_charts else []  # type: ignore[union-attr]
 
-    def remove_chart(self, chart_or_index):
+    def remove_chart(self, chart_or_index) -> None:
         """Remove a chart from this renderer.
 
         Parameters
@@ -780,7 +791,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if self.has_charts:
-            self._charts.remove_chart(chart_or_index)  # type: ignore[union-attr]
+            cast(Charts, self._charts).remove_chart(chart_or_index)
 
     @property
     def actors(self):  # numpydoc ignore=RT01
@@ -1092,7 +1103,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         zlabel : str, default: "Z"
             Text used for the z-axis.
 
-        labels_off : bool, default: false
+        labels_off : bool, default: False
             Enable or disable the text labels for the axes.
 
         box : bool, optional
@@ -1409,7 +1420,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         axes_widget.SetViewport(viewport)
         return self.axes_actor
 
-    def hide_axes(self):
+    def hide_axes(self) -> None:
         """Hide the axes orientation widget.
 
         See Also
@@ -1431,7 +1442,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.axes_widget.EnabledOff()
             self.Modified()
 
-    def show_axes(self):
+    def show_axes(self) -> None:
         """Show the axes orientation widget.
 
         See Also
@@ -1949,7 +1960,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         kwargs.setdefault('ticks', 'both')
         return self.show_bounds(**kwargs)
 
-    def remove_bounding_box(self, render=True):
+    def remove_bounding_box(self, render=True) -> None:
         """Remove bounding box.
 
         Parameters
@@ -2036,7 +2047,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         See Also
         --------
-        pyvista.DataSetFilter.bounding_box
+        pyvista.DataSetFilters.bounding_box
             Create a bounding box or oriented bounding box for a dataset.
 
         Examples
@@ -2160,7 +2171,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         offset : float, default: 0.0
             Percentage offset along plane normal.
 
-        pickable : bool, default: false
+        pickable : bool, default: False
             Make this floor actor pickable in the renderer.
 
         store_floor_kwargs : bool, default: True
@@ -2223,7 +2234,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             j_size = ranges[1]
         else:
             raise NotImplementedError(f'Face ({face}) not implemented')
-        self._floor = pyvista.Plane(
+        floor = pyvista.Plane(
             center=center,
             direction=normal,
             i_size=i_size,
@@ -2231,7 +2242,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             i_resolution=i_resolution,
             j_resolution=j_resolution,
         )
-        self._floor.clear_data()
+        floor.clear_data()
+        self._floor = floor
 
         if lighting is None:
             lighting = self._theme.lighting
@@ -2266,7 +2278,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._floors.append(actor)
         return actor
 
-    def remove_floors(self, clear_kwargs=True, render=True):
+    def remove_floors(self, clear_kwargs=True, render=True) -> None:
         """Remove all floor actors.
 
         Parameters
@@ -2289,8 +2301,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        if getattr(self, '_floor', None) is not None:
-            self._floor.ReleaseData()  # type: ignore[union-attr]
+        if hasattr(self, '_floor') and self._floor is not None:
+            self._floor.ReleaseData()
             self._floor = None
         for actor in self._floors:
             self.remove_actor(actor, reset_camera=False, render=render)
@@ -2298,7 +2310,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if clear_kwargs:
             self._floor_kwargs.clear()
 
-    def remove_bounds_axes(self):
+    def remove_bounds_axes(self) -> None:
         """Remove bounds axes.
 
         Examples
@@ -2366,12 +2378,12 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         return list(self.GetLights())  # type: ignore[call-overload]
 
-    def remove_all_lights(self):
+    def remove_all_lights(self) -> None:
         """Remove all lights from the renderer."""
         self.RemoveAllLights()
         self._lights.clear()
 
-    def clear_actors(self):
+    def clear_actors(self) -> None:
         """Remove all actors (keep lights and properties)."""
         if self._actors:
             for actor in list(self._actors):
@@ -2379,7 +2391,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     self.remove_actor(actor, reset_camera=False, render=False)
             self.Modified()
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove all actors and properties."""
         self.clear_actors()
         if self._charts is not None:
@@ -2391,7 +2403,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
 
-    def set_focus(self, point):
+    def set_focus(self, point) -> None:
         """Set focus to a point.
 
         Parameters
@@ -2417,7 +2429,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
         self.Modified()
 
-    def set_position(self, point, reset=False, render=True):
+    def set_position(self, point, reset=False, render=True) -> None:
         """Set camera position to a point.
 
         Parameters
@@ -2453,7 +2465,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
         self.Modified()
 
-    def set_viewup(self, vector, reset=True, render=True):
+    def set_viewup(self, vector, reset=True, render=True) -> None:
         """Set camera viewup vector.
 
         Parameters
@@ -2490,7 +2502,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = True
         self.Modified()
 
-    def enable_parallel_projection(self):
+    def enable_parallel_projection(self) -> None:
         """Enable parallel projection.
 
         The camera will have a parallel projection. Parallel projection is
@@ -2517,7 +2529,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera.enable_parallel_projection()
         self.Modified()
 
-    def disable_parallel_projection(self):
+    def disable_parallel_projection(self) -> None:
         """Reset the camera to use perspective projection.
 
         Examples
@@ -2560,7 +2572,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.camera.parallel_projection
 
     @parallel_projection.setter
-    def parallel_projection(self, state):  # numpydoc ignore=GL08
+    def parallel_projection(self, state) -> None:
         self.camera.parallel_projection = state
         self.Modified()
 
@@ -2578,7 +2590,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.camera.parallel_scale
 
     @parallel_scale.setter
-    def parallel_scale(self, value):  # numpydoc ignore=GL08
+    def parallel_scale(self, value) -> None:
         self.camera.parallel_scale = value
         self.Modified()
 
@@ -2620,7 +2632,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        name = None
+        name: str | None = None
         if isinstance(actor, str):
             name = actor
             keys = list(self._actors.keys())
@@ -2654,7 +2666,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for k, v in self._actors.items():
                 if v == actor:
                     name = k
-        self._actors.pop(name, None)
+        if name is not None:
+            self._actors.pop(name, None)
         self.update_bounds_axes()
         if reset_camera or not self.camera_set and reset_camera is None:
             self.reset_camera(render=render)
@@ -2664,7 +2677,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.Modified()
         return True
 
-    def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True, render=True):
+    def set_scale(
+        self, xscale=None, yscale=None, zscale=None, reset_camera=True, render=True
+    ) -> None:
         """Scale all the actors in the scene.
 
         Scaling in performed independently on the X, Y and z-axis.
@@ -2757,14 +2772,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         position = position / np.array(self.scale).astype(float)
         return [position + np.array(focal_pt), focal_pt, self._theme.camera.viewup]
 
-    def update_bounds_axes(self):
+    def update_bounds_axes(self) -> None:
         """Update the bounds axes of the render window."""
         if (
             hasattr(self, '_box_object')
             and self._box_object is not None
             and self.bounding_box_actor is not None
         ):
-            if not np.allclose(self._box_object.bounds, self.bounds):  # type: ignore[union-attr]
+            if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
@@ -2780,7 +2795,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 self.cube_axes_actor.SetUse2DMode(False)
             self.Modified()
 
-    def reset_camera(self, render=True, bounds=None):
+    def reset_camera(self, render=True, bounds=None) -> None:
         """Reset the camera of the active render window.
 
         The camera slides along the vector defined from camera
@@ -2819,7 +2834,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.parent.render()
         self.Modified()
 
-    def isometric_view(self):
+    def isometric_view(self) -> None:
         """Reset the camera to a default isometric view.
 
         DEPRECATED: Please use ``view_isometric``.
@@ -2827,7 +2842,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_isometric()
 
-    def view_isometric(self, negative=False, render=True, bounds=None):
+    def view_isometric(self, negative=False, render=True, bounds=None) -> None:
         """Reset the camera to a default isometric view.
 
         The view will show all the actors in the scene.
@@ -2867,7 +2882,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_set = negative
         self.reset_camera(render=render, bounds=bounds)
 
-    def view_vector(self, vector, viewup=None, render=True, bounds=None):
+    def view_vector(self, vector, viewup=None, render=True, bounds=None) -> None:
         """Point the camera in the direction of the given vector.
 
         Parameters
@@ -2894,7 +2909,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.camera_position = cpos
         self.reset_camera(render=render, bounds=bounds)
 
-    def view_xy(self, negative=False, render=True, bounds=None):
+    def view_xy(self, negative=False, render=True, bounds=None) -> None:
         """View the XY plane.
 
         Parameters
@@ -2925,7 +2940,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_vector(*view_vectors('xy', negative=negative), render=render, bounds=bounds)
 
-    def view_yx(self, negative=False, render=True, bounds=None):
+    def view_yx(self, negative=False, render=True, bounds=None) -> None:
         """View the YX plane.
 
         Parameters
@@ -2956,7 +2971,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_vector(*view_vectors('yx', negative=negative), render=render, bounds=bounds)
 
-    def view_xz(self, negative=False, render=True, bounds=None):
+    def view_xz(self, negative=False, render=True, bounds=None) -> None:
         """View the XZ plane.
 
         Parameters
@@ -2987,7 +3002,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_vector(*view_vectors('xz', negative=negative), render=render, bounds=bounds)
 
-    def view_zx(self, negative=False, render=True, bounds=None):
+    def view_zx(self, negative=False, render=True, bounds=None) -> None:
         """View the ZX plane.
 
         Parameters
@@ -3018,7 +3033,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_vector(*view_vectors('zx', negative=negative), render=render, bounds=bounds)
 
-    def view_yz(self, negative=False, render=True, bounds=None):
+    def view_yz(self, negative=False, render=True, bounds=None) -> None:
         """View the YZ plane.
 
         Parameters
@@ -3049,7 +3064,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_vector(*view_vectors('yz', negative=negative), render=render, bounds=bounds)
 
-    def view_zy(self, negative=False, render=True, bounds=None):
+    def view_zy(self, negative=False, render=True, bounds=None) -> None:
         """View the ZY plane.
 
         Parameters
@@ -3080,15 +3095,15 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self.view_vector(*view_vectors('zy', negative=negative), render=render, bounds=bounds)
 
-    def disable(self):
+    def disable(self) -> None:
         """Disable this renderer's camera from being interactive."""
         self.SetInteractive(0)
 
-    def enable(self):
+    def enable(self) -> None:
         """Enable this renderer's camera to be interactive."""
         self.SetInteractive(1)
 
-    def add_blurring(self):
+    def add_blurring(self) -> None:
         """Add blurring.
 
         This can be added several times to increase the degree of blurring.
@@ -3109,7 +3124,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.add_blur_pass()
 
-    def remove_blurring(self):
+    def remove_blurring(self) -> None:
         """Remove a single blurring pass.
 
         You will need to run this multiple times to remove all blurring passes.
@@ -3126,7 +3141,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.remove_blur_pass()
 
-    def enable_depth_of_field(self, automatic_focal_distance=True):
+    def enable_depth_of_field(self, automatic_focal_distance=True) -> None:
         """Enable depth of field plotting.
 
         Parameters
@@ -3169,7 +3184,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.enable_depth_of_field_pass(automatic_focal_distance)
 
-    def disable_depth_of_field(self):
+    def disable_depth_of_field(self) -> None:
         """Disable depth of field plotting.
 
         Examples
@@ -3182,7 +3197,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.disable_depth_of_field_pass()
 
-    def enable_eye_dome_lighting(self):
+    def enable_eye_dome_lighting(self) -> None:
         """Enable eye dome lighting (EDL).
 
         Returns
@@ -3199,7 +3214,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.enable_edl_pass()
 
-    def disable_eye_dome_lighting(self):
+    def disable_eye_dome_lighting(self) -> None:
         """Disable eye dome lighting (EDL).
 
         Examples
@@ -3211,7 +3226,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.disable_edl_pass()
 
-    def enable_shadows(self):
+    def enable_shadows(self) -> None:
         """Enable shadows.
 
         Examples
@@ -3244,7 +3259,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.enable_shadow_pass()
 
-    def disable_shadows(self):
+    def disable_shadows(self) -> None:
         """Disable shadows.
 
         Examples
@@ -3256,7 +3271,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.disable_shadow_pass()
 
-    def enable_ssao(self, radius=0.5, bias=0.005, kernel_size=256, blur=True):
+    def enable_ssao(self, radius=0.5, bias=0.005, kernel_size=256, blur=True) -> None:
         """Enable surface space ambient occlusion (SSAO).
 
         SSAO can approximate shadows more efficiently than ray-tracing
@@ -3303,7 +3318,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         """
         self._render_passes.enable_ssao_pass(radius, bias, kernel_size, blur)
 
-    def disable_ssao(self):
+    def disable_ssao(self) -> None:
         """Disable surface space ambient occlusion (SSAO)."""
         self._render_passes.disable_ssao_pass()
 
@@ -3406,7 +3421,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self.SetGradientBackground(False)
         self.Modified()
 
-    def set_environment_texture(self, texture, is_srgb=False):
+    def set_environment_texture(self, texture, is_srgb=False) -> None:
         """Set the environment texture used for image based lighting.
 
         This texture is supposed to represent the scene background. If
@@ -3455,7 +3470,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetEnvironmentTexture(texture, is_srgb)
         self.Modified()
 
-    def remove_environment_texture(self):
+    def remove_environment_texture(self) -> None:
         """Remove the environment texture.
 
         Examples
@@ -3477,7 +3492,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.SetEnvironmentTexture(None)
         self.Modified()
 
-    def close(self):
+    def close(self) -> None:
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
         if hasattr(self, 'axes_widget'):
@@ -3489,14 +3504,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
-    def on_plotter_render(self):
+    def on_plotter_render(self) -> None:
         """Notify renderer components of explicit plotter render call."""
         if self._charts is not None:
             for chart in self._charts:
                 # Notify Charts that plotter.render() is called
                 chart._render_event(plotter_render=True)
 
-    def deep_clean(self, render=False):
+    def deep_clean(self, render=False) -> None:
         """Clean the renderer of the memory.
 
         Parameters
@@ -3527,22 +3542,22 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
-        self._camera = None  # type: ignore[assignment]
+        self._camera = None
         self._bounding_box = None  # type: ignore[assignment]
         self._marker_actor = None
         self._border_actor = None
         # remove reference to parent last
         self.parent = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Delete the renderer."""
         self.deep_clean()
 
-    def enable_hidden_line_removal(self):
+    def enable_hidden_line_removal(self) -> None:
         """Enable hidden line removal."""
         self.UseHiddenLineRemovalOn()
 
-    def disable_hidden_line_removal(self):
+    def disable_hidden_line_removal(self) -> None:
         """Disable hidden line removal."""
         self.UseHiddenLineRemovalOff()
 
@@ -3552,7 +3567,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.GetLayer()
 
     @layer.setter
-    def layer(self, layer):  # numpydoc ignore=GL08
+    def layer(self, layer) -> None:
         self.SetLayer(layer)
 
     @property
@@ -3592,7 +3607,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         return self.GetViewport()
 
     @viewport.setter
-    def viewport(self, viewport):  # numpydoc ignore=GL08
+    def viewport(self, viewport) -> None:
         self.SetViewport(viewport)
 
     @property
@@ -3759,7 +3774,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for i, (vtk_object, text, color) in enumerate(self._labels.values()):
                 if face is not None:
                     vtk_object = make_legend_face(face)
-                self._legend.SetEntry(i, vtk_object, text, color.float_rgb)
+                self._legend.SetEntry(i, vtk_object, text, list(color.float_rgb))
 
         else:
             self._legend.SetNumberOfEntries(len(labels))
@@ -3801,7 +3816,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                     )
 
                 legend_face = make_legend_face(face_ or face)
-                self._legend.SetEntry(i, legend_face, text, Color(color).float_rgb)  # type: ignore[call-overload]
+                self._legend.SetEntry(i, legend_face, text, list(Color(color).float_rgb))
 
         if loc is not None:
             if loc not in ACTOR_LOC_MAP:
@@ -3830,7 +3845,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.add_actor(self._legend, reset_camera=False, name=name, pickable=False)
         return self._legend
 
-    def remove_legend(self, render=True):
+    def remove_legend(self, render=True) -> None:
         """Remove the legend actor.
 
         Parameters

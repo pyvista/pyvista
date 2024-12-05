@@ -29,6 +29,7 @@ from pyvista.core.utilities.misc import abstract_class
 if TYPE_CHECKING:  # pragma: no cover
     from numpy.typing import NDArray
 
+    from pyvista import ImageData
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import VectorLike
 
@@ -37,7 +38,9 @@ if TYPE_CHECKING:  # pragma: no cover
 class ImageDataFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for uniform grid datasets."""
 
-    def gaussian_smooth(self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar=False):
+    def gaussian_smooth(
+        self, radius_factor=1.5, std_dev=2.0, scalars=None, progress_bar: bool = False
+    ):
         """Smooth the data with a Gaussian kernel.
 
         Parameters
@@ -121,7 +124,7 @@ class ImageDataFilters(DataSetFilters):
         kernel_size=(3, 3, 3),
         scalars=None,
         preference='point',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Smooth data using a median filter.
 
@@ -202,7 +205,9 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Median Smoothing')
         return _get_output(alg)
 
-    def extract_subset(self, voi, rate=(1, 1, 1), boundary=False, progress_bar=False):
+    def extract_subset(
+        self, voi, rate=(1, 1, 1), boundary: bool = False, progress_bar: bool = False
+    ):
         """Select piece (e.g., volume of interest).
 
         To use this filter set the VOI ivar which are i-j-k min/max indices
@@ -267,7 +272,7 @@ class ImageDataFilters(DataSetFilters):
         erode_value=0.0,
         kernel_size=(3, 3, 3),
         scalars=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Dilates one value and erodes another.
 
@@ -358,7 +363,7 @@ class ImageDataFilters(DataSetFilters):
         out_value=0.0,
         scalars=None,
         preference='point',
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Apply a threshold to scalar values in a uniform grid.
 
@@ -478,7 +483,7 @@ class ImageDataFilters(DataSetFilters):
             output[scalars] = output[scalars].astype(array_dtype)
         return output
 
-    def fft(self, output_scalars_name=None, progress_bar=False):
+    def fft(self, output_scalars_name=None, progress_bar: bool = False):
         """Apply a fast Fourier transform (FFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -559,7 +564,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def rfft(self, output_scalars_name=None, progress_bar=False):
+    def rfft(self, output_scalars_name=None, progress_bar: bool = False):
         """Apply a reverse fast Fourier transform (RFFT) to the active scalars.
 
         The input can be real or complex data, but the output is always
@@ -638,7 +643,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth low pass filter in the frequency domain.
 
@@ -718,7 +723,7 @@ class ImageDataFilters(DataSetFilters):
         z_cutoff,
         order=1,
         output_scalars_name=None,
-        progress_bar=False,
+        progress_bar: bool = False,
     ):
         """Perform a Butterworth high pass filter in the frequency domain.
 
@@ -791,7 +796,7 @@ class ImageDataFilters(DataSetFilters):
         )
         return output
 
-    def _change_fft_output_scalars(self, dataset, orig_name, out_name):
+    def _change_fft_output_scalars(self, dataset, orig_name, out_name) -> None:
         """Modify the name and dtype of the output scalars for an FFT filter."""
         name = orig_name if out_name is None else out_name
         pdata = dataset.point_data
@@ -979,10 +984,10 @@ class ImageDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Performing Labeled Surface Extraction')
         # Restore the original vtkLogger verbosity level
         _vtk.vtkLogger.SetStderrVerbosity(verbosity)
-        return cast(pyvista.PolyData, wrap(alg.GetOutput()))
+        return wrap(alg.GetOutput())
 
-    def points_to_cells(
-        self,
+    def points_to_cells(  # type: ignore[misc]
+        self: ImageData,
         scalars: str | None = None,
         *,
         dimensionality: VectorLike[bool]
@@ -1175,7 +1180,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference='point')
             if field != FieldAssociation.POINT:
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
@@ -1187,8 +1192,8 @@ class ImageDataFilters(DataSetFilters):
             copy=copy,
         )
 
-    def cells_to_points(
-        self,
+    def cells_to_points(  # type: ignore[misc]
+        self: ImageData,
         scalars: str | None = None,
         *,
         dimensionality: VectorLike[bool]
@@ -1331,7 +1336,7 @@ class ImageDataFilters(DataSetFilters):
 
         """
         if scalars is not None:
-            field = self.get_array_association(scalars, preference='cell')  # type: ignore[attr-defined]
+            field = self.get_array_association(scalars, preference='cell')
             if field != FieldAssociation.CELL:
                 raise ValueError(
                     f"Scalars '{scalars}' must be associated with cell data. Got {field.name.lower()} data instead.",
@@ -1343,8 +1348,8 @@ class ImageDataFilters(DataSetFilters):
             copy=copy,
         )
 
-    def _remesh_points_cells(
-        self,
+    def _remesh_points_cells(  # type: ignore[misc]
+        self: ImageData,
         points_to_cells: bool,
         scalars: str | None,
         dimensionality: VectorLike[bool] | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'],
@@ -1403,8 +1408,8 @@ class ImageDataFilters(DataSetFilters):
                 active_scalars = active_scalars if field.name.lower() == preference else None
             return active_scalars
 
-        point_data = self.point_data  # type: ignore[attr-defined]
-        cell_data = self.cell_data  # type: ignore[attr-defined]
+        point_data = self.point_data
+        cell_data = self.cell_data
 
         # Get data to use and operations to perform for the conversion
         new_image = pyvista.ImageData()
@@ -1430,33 +1435,33 @@ class ImageDataFilters(DataSetFilters):
 
         # Prepare the new image
         new_image.origin = origin_operator(
-            self.origin,  # type: ignore[attr-defined]
-            (np.array(self.spacing) / 2) * dims_mask,  # type: ignore[attr-defined]
+            self.origin,
+            (np.array(self.spacing) / 2) * dims_mask,
         )
         new_image.dimensions = dims_result  # type: ignore[assignment]
-        new_image.spacing = self.spacing  # type: ignore[attr-defined]
-        new_image.direction_matrix = self.direction_matrix  # type: ignore[attr-defined]
+        new_image.spacing = self.spacing
+        new_image.direction_matrix = self.direction_matrix
 
         # Check the validity of the operation
         if points_to_cells:
-            if new_image.n_cells != self.n_points:  # type: ignore[attr-defined]
+            if new_image.n_cells != self.n_points:
                 raise ValueError(
                     'Cannot re-mesh points to cells. The dimensions of the input'
-                    f' {self.dimensions} is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' {self.dimensions} is not compatible with the dimensions of the'
                     f' output {new_image.dimensions} and would require to map'
-                    f' {self.n_points} points on {new_image.n_cells} cells.'  # type: ignore[attr-defined]
+                    f' {self.n_points} points on {new_image.n_cells} cells.'
                 )
         else:  # cells_to_points
-            if new_image.n_points != self.n_cells:  # type: ignore[attr-defined]
+            if new_image.n_points != self.n_cells:
                 raise ValueError(
                     'Cannot re-mesh cells to points. The dimensions of the input'
-                    f' {self.dimensions} is not compatible with the dimensions of the'  # type: ignore[attr-defined]
+                    f' {self.dimensions} is not compatible with the dimensions of the'
                     f' output {new_image.dimensions} and would require to map'
-                    f' {self.n_cells} cells on {new_image.n_points} points.'  # type: ignore[attr-defined]
+                    f' {self.n_cells} cells on {new_image.n_points} points.'
                 )
 
         # Copy field data
-        new_image.field_data.update(self.field_data)  # type: ignore[attr-defined]
+        new_image.field_data.update(self.field_data)
 
         # Copy old data (point or cell) to new data (cell or point)
         array_names = [scalars] if scalars else old_data.keys()
@@ -1475,7 +1480,7 @@ class ImageDataFilters(DataSetFilters):
         | Literal[0, 1, 2, 3, '0D', '1D', '2D', '3D', 'preserve'] = 'preserve',
         scalars: str | None = None,
         pad_all_scalars: bool = False,
-        progress_bar=False,
+        progress_bar: bool = False,
         pad_singleton_dims: bool | None = None,
     ) -> pyvista.ImageData:
         """Enlarge an image by padding its boundaries with new points.
@@ -1490,7 +1495,7 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        pad_value : float | sequence[float] | 'mirror' | 'wrap', default : 0.0
+        pad_value : float | sequence[float] | 'mirror' | 'wrap', default: 0.0
             Padding value(s) given to new points outside the original image extent.
             Specify:
 
@@ -1499,7 +1504,7 @@ class ImageDataFilters(DataSetFilters):
             - ``'wrap'``: New points are filled by wrapping around the padding axis.
             - ``'mirror'``: New points are filled by mirroring the padding axis.
 
-        pad_size : int | sequence[int], default : 1
+        pad_size : int | sequence[int], default: 1
             Number of points to add to the image boundaries. Specify:
 
             - A single value to pad all boundaries equally.
@@ -2038,7 +2043,7 @@ class ImageDataFilters(DataSetFilters):
                 unique_scalars = np.unique(input_mesh.point_data[scalars])
                 scalar_range = (unique_scalars[1], unique_scalars[-1])
             else:
-                scalar_range = _validation.validate_data_range(scalar_range)
+                scalar_range = _validation.validate_data_range(scalar_range)  # type: ignore[arg-type]
             alg.SetScalarRange(*scalar_range)
 
         scalars_casted_to_float = False

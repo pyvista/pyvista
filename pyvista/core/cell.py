@@ -103,7 +103,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
 
     """
 
-    def __init__(self, vtk_cell=None, cell_type=None, deep=False):
+    def __init__(self, vtk_cell=None, cell_type=None, deep: bool = False):
         """Initialize the cell."""
         super().__init__()
         if vtk_cell is not None:
@@ -158,7 +158,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """
         return bool(self.IsLinear())
 
-    def plot(self, **kwargs):
+    def plot(self, **kwargs) -> None:
         """Plot this cell.
 
         Parameters
@@ -558,7 +558,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy(self, deep=True) -> Cell:
+    def copy(self, deep: bool = True) -> Cell:
         """Return a copy of the cell.
 
         Parameters
@@ -640,7 +640,7 @@ class CellArray(_vtk.vtkCellArray):
         cells: CellsLike | None = None,
         n_cells: int | None = None,
         deep: bool | None = None,
-    ):
+    ) -> None:
         """Initialize a vtkCellArray."""
         super().__init__()
         self.__offsets: _vtk.vtkIdTypeArray | None = None
@@ -671,7 +671,7 @@ class CellArray(_vtk.vtkCellArray):
         return _vtk.vtk_to_numpy(cells)
 
     @cells.setter
-    def cells(self, cells: CellsLike):  # numpydoc ignore=GL08
+    def cells(self, cells: CellsLike):
         cells = np.asarray(cells)
         vtk_idarr = numpy_to_idarr(cells, deep=False, return_ind=False)
         self.ImportLegacyFormat(vtk_idarr)
@@ -731,8 +731,8 @@ class CellArray(_vtk.vtkCellArray):
         deep: bool = False,
     ) -> None:
         """Set the offsets and connectivity arrays."""
-        vtk_offsets = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(offsets, deep=deep))
-        vtk_connectivity = cast(_vtk.vtkIdTypeArray, numpy_to_idarr(connectivity, deep=deep))
+        vtk_offsets = numpy_to_idarr(offsets, deep=deep)
+        vtk_connectivity = numpy_to_idarr(connectivity, deep=deep)
         self.SetData(vtk_offsets, vtk_connectivity)
 
         # Because vtkCellArray doesn't take ownership of the arrays, it's possible for them to get
@@ -750,10 +750,10 @@ class CellArray(_vtk.vtkCellArray):
 
         Parameters
         ----------
-        offsets : IntMatrix
+        offsets : MatrixLike[int]
             Offsets array of length `n_cells + 1`.
 
-        connectivity : IntMatrix
+        connectivity : MatrixLike[int]
             Connectivity array.
 
         deep : bool, default: False

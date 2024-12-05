@@ -24,7 +24,7 @@ dependencies = [
   'pooch',
   'scooby>=0.5.1',
   'typing-extensions',
-  'vtk',               # keep without version constraints
+  'vtk<9.4.0',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
@@ -50,22 +50,27 @@ jupyter = [
 ]
 
 pinned = [ # Pinned versions of core dependencies
-  'matplotlib<3.9.3',
+  'matplotlib<3.9.4',
   'numpy<2.2.0',
   'pillow<11.1.0',
   'pooch<1.9.0',
   'scooby<0.11.0',
   'typing-extensions<4.13.0',
-  'vtk<9.4.0',
 ]
 
-typing = ['mypy<1.14.0', 'npt-promote==0.1', 'numpy>=2.0.0', 'pyvista[pinned]']
+typing = [
+  'mypy<1.14.0',
+  'npt-promote==0.1',
+  'numpy>=2.0.0',
+  'pyvista[pinned]',
+  'trimesh<4.6.0',
+]
 
 test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.115.6',
+  'hypothesis<6.122.1',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
   'ipython<9.0.0',
@@ -86,7 +91,7 @@ test = [
   'sphinx<8.2.0',
   'sphinx_design<0.7.0',
   'sympy<1.14.0',
-  'tqdm<4.67.0',
+  'tqdm<4.68.0',
   'trame-vtk>=2.5.8,<2.8.12',
   'trame-vuetify>=2.3.1,<2.7.2',
   'trame>=2.5.2,<3.7.1',
@@ -99,15 +104,15 @@ docs = [
   'colorcet==3.1.0',
   'enum-tools==0.12.0',
   'imageio-ffmpeg==0.5.1',
-  'imageio==2.36.0',
+  'imageio==2.36.1',
   'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.2.5',
+  'jupyterlab==4.3.1',
   'lxml==5.3.0',
   'meshio==5.3.5',
   'mypy-extensions==1.0.0',
   'mypy==1.13.0',
   'numpydoc==1.8.0',
-  'osmnx==1.9.4',
+  'osmnx==2.0.0',
   'pypandoc==1.14',
   'pytest-sphinx==0.6.3',
   'pyvista[pinned]',
@@ -126,13 +131,13 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.9.1',
   'sympy==1.13.3',
-  'trame-vtk==2.8.11',
-  'trame-vuetify==2.7.1',
+  'trame-vtk==2.8.12',
+  'trame-vuetify==2.7.2',
   'trame==3.7.0',
-  'trimesh==4.5.2',
+  'trimesh==4.5.3',
 ]
 
-dev = ['pre-commit', 'pyvista[test,docs]']
+dev = ['pre-commit', 'pyvista[test,typing]']
 
 [project.urls]
 "Bug Tracker" = 'https://github.com/pyvista/pyvista/issues'
@@ -227,6 +232,8 @@ warn_unused_ignores = true
 
 [tool.numpydoc_validation]
 checks = [
+  "all", # all but the following:
+  #
   "ES01", # Not all docstrings need an extend summary.
   "EX01", # Examples: Will eventually enforce
   "GL01", # Contradicts numpydoc examples
@@ -234,6 +241,7 @@ checks = [
   "GL03", # Considering enforcing
   "GL06", # Found unknown section
   "GL07", # "Sections are in the wrong order. Correct order is: {correct_sections}",
+  "GL08", # The object does not have a docstring
   "GL09", # Deprecation warning should precede extended summary (check broken)
   "PR01", # "Parameters {missing_params} not documented",
   "PR02", # "Unknown parameters {unknown_params}",
@@ -249,7 +257,6 @@ checks = [
   "SA04", # See also section does not need descriptions
   "SS05", # Appears to be broken.
   "YD01", # Yields: No plan to enforce
-  "all",  # all but the following:
 ]
 exclude = [ # don't report on objects that match any of these regex
   '\.*Reader(\.|$)',        # classes inherit from BaseReader
@@ -272,6 +279,7 @@ quote-style = "single"
 extend-select = [
   "A",
   "AIR",
+  "ANN",
   "ASYNC",
   "ASYNC1",
   "B",
@@ -318,6 +326,9 @@ extend-select = [
 external = ["E131"]
 fixable = ["ALL"]
 ignore = [
+  "ANN002",  # Missing annotations for `*args`
+  "ANN003",  # Missing annotations for `*kwargs`
+  "ANN401",  # Disallow `Any`
   "B028",    # https://github.com/pyvista/pyvista/pull/6030
   "B904",    # https://github.com/pyvista/pyvista/pull/6022
   "COM812",  # May cause conflicts when used with the formatter
@@ -362,6 +373,51 @@ allow-dict-calls-with-keyword-arguments = true
 "examples_trame/tests*" = ["D"]
 "pyvista/ext/*" = ["D100", "D101", "D102", "D103"]
 "tests/*" = ["D"]
+
+# ANN ignores for `pyvista/core`
+# TODO: Add annotations to any files listed below and remove it from this list
+"pyvista/core/_validation/_cast_array.py" = ["ANN"]
+"pyvista/core/_validation/validate.py" = ["ANN202"]
+"pyvista/core/_vtk_core.py" = ["ANN"]
+"pyvista/core/cell.py" = ["ANN"]
+"pyvista/core/celltype.py" = ["ANN"]
+"pyvista/core/dataobject.py" = ["ANN"]
+"pyvista/core/datasetattributes.py" = ["ANN"]
+"pyvista/core/errors.py" = ["ANN"]
+"pyvista/core/filters**" = ["ANN"]
+"pyvista/core/grid.py" = ["ANN"]
+"pyvista/core/objects.py" = ["ANN"]
+"pyvista/core/partitioned.py" = ["ANN"]
+"pyvista/core/pointset.py" = ["ANN"]
+"pyvista/core/pyvista_ndarray.py" = ["ANN"]
+"pyvista/core/utilities/cell.py" = ["ANN"]
+"pyvista/core/utilities/cells.py" = ["ANN"]
+"pyvista/core/utilities/docs.py" = ["ANN"]
+"pyvista/core/utilities/features.py" = ["ANN"]
+"pyvista/core/utilities/helpers.py" = ["ANN"]
+"pyvista/core/utilities/image_sources.py" = ["ANN"]
+"pyvista/core/utilities/misc.py" = ["ANN"]
+"pyvista/core/utilities/observers.py" = ["ANN"]
+"pyvista/core/utilities/reader.py" = ["ANN"]
+
+# ANN ignores for `pyvista/plotting`
+"pyvista/plotting*" = ["ANN"]
+
+# All other ANN ignores
+"doc*" = ["ANN"]
+"examples*" = ["ANN"]
+"pyvista/__init__.py" = ["ANN"]
+"pyvista/_plot.py" = ["ANN"]
+"pyvista/conftest.py" = ["ANN"]
+"pyvista/demos*" = ["ANN"]
+"pyvista/errors.py" = ["ANN"]
+"pyvista/examples*" = ["ANN"]
+"pyvista/ext*" = ["ANN"]
+"pyvista/jupyter*" = ["ANN"]
+"pyvista/report.py" = ["ANN"]
+"pyvista/trame*" = ["ANN"]
+"pyvista/utilities/__init__.py" = ["ANN"]
+"tests*" = ["ANN"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true # Combines "as" imports on the same line

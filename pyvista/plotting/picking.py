@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from functools import partial
 from functools import wraps
-from typing import cast
 import warnings
 import weakref
 
@@ -76,7 +75,7 @@ class RectangleSelection:
         frustum_source.ShowLinesOff()
         frustum_source.SetPlanes(self.frustum)
         frustum_source.Update()
-        return cast(pyvista.PolyData, pyvista.wrap(frustum_source.GetOutput()))
+        return pyvista.wrap(frustum_source.GetOutput())
 
     @property
     def viewport(self) -> tuple[float, float, float, float]:  # numpydoc ignore=RT01
@@ -112,7 +111,7 @@ class PointPickingElementHandler:
         return self._picker_()  # type: ignore[misc]
 
     @picker.setter
-    def picker(self, picker):  # numpydoc ignore=GL08
+    def picker(self, picker):
         self._picker_ = weakref.ref(picker)  # type: ignore[assignment]
 
     def get_mesh(self):
@@ -1005,7 +1004,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def end_pick_call_back(*args):  # numpydoc ignore=GL08
+        def end_pick_call_back(*args):
             if callback:
                 if use_actor:
                     _poked_context_callback(self_(), callback, self_()._picked_actor)  # type: ignore[union-attr]
@@ -1113,7 +1112,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):  # numpydoc ignore=GL08
+        def finalize(picked):
             if picked is None:
                 # Indicates invalid pick
                 with self_().iren.poked_subplot():  # type: ignore[union-attr]
@@ -1140,18 +1139,18 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             if callback is not None:
                 _poked_context_callback(self_(), callback, self_().picked_cells)  # type: ignore[union-attr]
 
-        def through_pick_callback(selection):  # numpydoc ignore=GL08
+        def through_pick_callback(selection):
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             for actor in renderer.actors.values():
                 if actor.GetMapper() and actor.GetPickable():
                     input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
-                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)  # type: ignore[union-attr]
+                    input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
                     extract.SetInputData(input_mesh)
                     extract.SetImplicitFunction(selection.frustum)
                     extract.Update()
-                    picked.append(pyvista.wrap(extract.GetOutput()))  # type: ignore[arg-type]
+                    picked.append(pyvista.wrap(extract.GetOutput()))
 
             if picked.n_blocks == 0 or picked.combine().n_cells < 1:
                 self_()._picked_cell = None  # type: ignore[union-attr]
@@ -1227,7 +1226,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
         """
         self_ = weakref.ref(self)
 
-        def finalize(picked):  # numpydoc ignore=GL08
+        def finalize(picked):
             if picked is None:
                 # Indicates invalid pick
                 with self_().iren.poked_subplot():  # type: ignore[union-attr]
@@ -1252,7 +1251,7 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             if callback is not None:
                 _poked_context_callback(self_(), callback, picked)
 
-        def visible_pick_callback(selection):  # numpydoc ignore=GL08
+        def visible_pick_callback(selection):
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             x0, y0, x1, y1 = renderer.get_pick_position()
@@ -1285,11 +1284,11 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
                             'Display representations other than `surface` will result in incorrect results.',
                         )
                     smesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
-                    smesh = smesh.copy()  # type: ignore[union-attr]
-                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)  # type: ignore[index, union-attr]
-                    tri_smesh = smesh.extract_surface().triangulate()  # type: ignore[union-attr]
+                    smesh = smesh.copy()
+                    smesh['original_cell_ids'] = np.arange(smesh.n_cells)
+                    tri_smesh = smesh.extract_surface().triangulate()
                     cids_to_get = tri_smesh.extract_cells(cids)['original_cell_ids']
-                    picked.append(smesh.extract_cells(cids_to_get))  # type: ignore[union-attr]
+                    picked.append(smesh.extract_cells(cids_to_get))
 
                 # memory leak issues on vtk==9.0.20210612.dev0
                 # See: https://gitlab.kitware.com/vtk/vtk/-/issues/18239#note_973826
@@ -1725,7 +1724,7 @@ class PickingHelper(PickingMethods):
         self_ = weakref.ref(self)
         kwargs.setdefault('pickable', False)
 
-        def make_line_cells(n_points):  # numpydoc ignore=GL08
+        def make_line_cells(n_points):
             cells = np.arange(0, n_points, dtype=np.int_)
             return np.insert(cells, 0, n_points)
 
@@ -1855,8 +1854,8 @@ class PickingHelper(PickingMethods):
             if picker.GetDataSet() is None:
                 return
             mesh = pyvista.wrap(picker.GetDataSet())
-            idx = mesh.find_closest_point(picked_point)  # type: ignore[union-attr]
-            point = mesh.points[idx]  # type: ignore[union-attr]
+            idx = mesh.find_closest_point(picked_point)
+            point = mesh.points[idx]
             if self._last_picked_idx is None:
                 self.picked_geodesic = pyvista.PolyData(point)
                 self.picked_geodesic['vtkOriginalPointIds'] = [idx]
