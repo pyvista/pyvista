@@ -5,10 +5,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Union
+from typing import cast
 from typing import overload
 
 import numpy as np
 
+import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -1585,13 +1588,10 @@ class Transform(_vtk.vtkTransform):
                          [2. , 2.5, 3. ]], dtype=float32)
 
         """
-        # avoid circular import
-        from pyvista.core.composite import MultiBlock
-        from pyvista.core.dataset import DataSet
-
         inplace = not copy
         # Transform dataset
-        if isinstance(obj, (DataSet, MultiBlock)):
+        if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
+            obj = cast(Union[pyvista.ConcreteDataSetType, pyvista.MultiBlock], obj)
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,

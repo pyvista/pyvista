@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from collections.abc import Iterator
 from collections.abc import Sequence
 from copy import deepcopy
 from functools import partial
@@ -46,6 +45,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator
     from collections.abc import Iterator
 
+    from ._typing_core import ConcreteDataSetType
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
@@ -568,7 +568,9 @@ class DataSet(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self: DataSet) -> pyvista.PolyData | None:
+    def arrows(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+    ) -> pyvista.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -1243,7 +1245,9 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetCenter()
 
     @property
-    def volume(self: DataSet) -> float:
+    def volume(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+    ) -> float:
         """Return the mesh volume.
 
         This will return 0 for meshes with 2D cells.
@@ -1282,7 +1286,9 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Volume'].sum().item()
 
     @property
-    def area(self: DataSet) -> float:
+    def area(  # type:ignore[misc]
+        self: ConcreteDataSetType,
+    ) -> float:
         """Return the mesh area if 2D.
 
         This will return 0 for meshes with 3D cells.
@@ -1670,7 +1676,9 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self: DataSet, pass_cell_data: bool = False) -> pyvista.PointSet:
+    def cast_to_pointset(  # type:ignore[misc]
+        self: ConcreteDataSetType, pass_cell_data: bool = False
+    ) -> pyvista.PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1700,7 +1708,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         pset = pyvista.PointSet()
-        pset.points = self.points.copy()
+        pset.points = self.points.copy()  # type: ignore[assignment]
         if pass_cell_data:
             self = self.cell_data_to_point_data()
         pset.GetPointData().DeepCopy(self.GetPointData())
