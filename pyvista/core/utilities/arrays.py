@@ -12,6 +12,7 @@ from typing import Any
 from typing import Literal
 from typing import TypeVar
 from typing import Union
+from typing import cast
 from typing import overload
 
 import numpy as np
@@ -29,6 +30,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
 
 class FieldAssociation(enum.Enum):
@@ -772,7 +774,7 @@ def vtkmatrix_from_array(array: NumpyArray[float]) -> _vtk.vtkMatrix3x3 | _vtk.v
     return matrix
 
 
-def set_default_active_vectors(mesh: pyvista.DataSet) -> None:
+def set_default_active_vectors(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoTuple:
     """Set a default vectors array on mesh, if not already set.
 
     If an active vector already exists, no changes are made.
@@ -780,6 +782,10 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> None:
     If an active vectors does not exist, it checks for possibly cell
     or point arrays with shape ``(n, 3)``.  If only one exists, then
     it is set as the active vectors.  Otherwise, an error is raised.
+
+    .. versionchanged:: 0.45
+        The field and name of the active array is now returned.
+        Previously, ``None`` was returned.
 
     Parameters
     ----------
@@ -794,40 +800,47 @@ def set_default_active_vectors(mesh: pyvista.DataSet) -> None:
     AmbiguousDataError
         If more than one vector-like arrays exist.
 
+    Returns
+    -------
+    tuple[FieldAssociation, str]
+        The field and name of the active array.
+
     """
-    if mesh.active_vectors_name is not None:
-        return
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
-    point_data = mesh.point_data
-    cell_data = mesh.cell_data
+    if mesh.active_vectors_name is None:
+        point_data = mesh.point_data
+        cell_data = mesh.cell_data
 
-    possible_vectors_point = [
-        name for name, value in point_data.items() if value.ndim == 2 and value.shape[1] == 3
-    ]
-    possible_vectors_cell = [
-        name for name, value in cell_data.items() if value.ndim == 2 and value.shape[1] == 3
-    ]
+        possible_vectors_point = [
+            name for name, value in point_data.items() if value.ndim == 2 and value.shape[1] == 3
+        ]
+        possible_vectors_cell = [
+            name for name, value in cell_data.items() if value.ndim == 2 and value.shape[1] == 3
+        ]
 
-    possible_vectors = possible_vectors_point + possible_vectors_cell
-    n_possible_vectors = len(possible_vectors)
+        possible_vectors = possible_vectors_point + possible_vectors_cell
+        n_possible_vectors = len(possible_vectors)
 
-    if n_possible_vectors == 1:
-        preference: Literal['point', 'cell'] = (
-            'point' if len(possible_vectors_point) == 1 else 'cell'
-        )
-        mesh.set_active_vectors(possible_vectors[0], preference=preference)
-    elif n_possible_vectors < 1:
-        raise MissingDataError('No vector-like data available.')
-    elif n_possible_vectors > 1:
-        raise AmbiguousDataError(
-            'Multiple vector-like data available\n'
-            f'cell data: {possible_vectors_cell}.\n'
-            f'point data: {possible_vectors_point}.\n'
-            'Set one as active using DataSet.set_active_vectors(name, preference=type)',
-        )
+        if n_possible_vectors == 1:
+            preference: Literal['point', 'cell'] = (
+                'point' if len(possible_vectors_point) == 1 else 'cell'
+            )
+            mesh.set_active_vectors(possible_vectors[0], preference=preference)
+        elif n_possible_vectors < 1:
+            raise MissingDataError('No vector-like data available.')
+        else:  # n_possible_vectors > 1:
+            raise AmbiguousDataError(
+                'Multiple vector-like data available\n'
+                f'cell data: {possible_vectors_cell}.\n'
+                f'point data: {possible_vectors_point}.\n'
+                'Set one as active using DataSet.set_active_vectors(name, preference=type)',
+            )
+    field, name = mesh.active_vectors_info
+    return _ActiveArrayExistsInfoTuple(field, cast(str, name))
 
 
-def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
+def set_default_active_scalars(mesh: pyvista.DataSet) -> _ActiveArrayExistsInfoTuple:
     """Set a default scalars array on mesh, if not already set.
 
     If an active scalars already exists, no changes are made.
@@ -835,6 +848,10 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
     If an active scalars does not exist, it checks for point or cell
     arrays.  If only one exists, then it is set as the active scalars.
     Otherwise, an error is raised.
+
+    .. versionchanged:: 0.45
+        The field and name of the active array is now returned.
+        Previously, ``None`` was returned.
 
     Parameters
     ----------
@@ -849,33 +866,40 @@ def set_default_active_scalars(mesh: pyvista.DataSet) -> None:
     AmbiguousDataError
         If more than one array exists.
 
+    Returns
+    -------
+    tuple[FieldAssociation, str]
+        The field and name of the active array.
+
     """
-    if mesh.active_scalars_name is not None:
-        return
+    from pyvista.core.dataset import _ActiveArrayExistsInfoTuple
 
-    point_data = mesh.point_data
-    cell_data = mesh.cell_data
+    if mesh.active_scalars_name is None:
+        point_data = mesh.point_data
+        cell_data = mesh.cell_data
 
-    possible_scalars_point = point_data.keys()
-    possible_scalars_cell = cell_data.keys()
+        possible_scalars_point = point_data.keys()
+        possible_scalars_cell = cell_data.keys()
 
-    possible_scalars = possible_scalars_point + possible_scalars_cell
-    n_possible_scalars = len(possible_scalars)
+        possible_scalars = possible_scalars_point + possible_scalars_cell
+        n_possible_scalars = len(possible_scalars)
 
-    if n_possible_scalars == 1:
-        preference: Literal['point', 'cell'] = (
-            'point' if len(possible_scalars_point) == 1 else 'cell'
-        )
-        mesh.set_active_scalars(possible_scalars[0], preference=preference)
-    elif n_possible_scalars < 1:
-        raise MissingDataError('No data available.')
-    elif n_possible_scalars > 1:
-        raise AmbiguousDataError(
-            'Multiple data available\n'
-            f'cell data: {possible_scalars_cell}.\n'
-            f'point data: {possible_scalars_point}.\n'
-            'Set one as active using DataSet.set_active_scalars(name, preference=type)',
-        )
+        if n_possible_scalars == 1:
+            preference: Literal['point', 'cell'] = (
+                'point' if len(possible_scalars_point) == 1 else 'cell'
+            )
+            mesh.set_active_scalars(possible_scalars[0], preference=preference)
+        elif n_possible_scalars < 1:
+            raise MissingDataError('No data available.')
+        else:  # n_possible_scalars > 1:
+            raise AmbiguousDataError(
+                'Multiple data available\n'
+                f'cell data: {possible_scalars_cell}.\n'
+                f'point data: {possible_scalars_point}.\n'
+                'Set one as active using DataSet.set_active_scalars(name, preference=type)',
+            )
+    field, name = mesh.active_scalars_info
+    return _ActiveArrayExistsInfoTuple(field, cast(str, name))
 
 
 _JSONValueType = Union[
