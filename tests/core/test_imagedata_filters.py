@@ -567,9 +567,9 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     match = 'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead'
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
-        if pv._version.version_info > (0, 47):
+        if pv._version.version_info[:2] > (0, 47):
             raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
-        if pv._version.version_info > (0, 48):
+        if pv._version.version_info[:2] > (0, 48):
             raise RuntimeError('Remove `pad_singleton_dims`.')
 
     match = (
@@ -577,9 +577,9 @@ def test_pad_image_deprecation(zero_dimensionality_image):
     )
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
-        if pv._version.version_info > (0, 47):
+        if pv._version.version_info[:2] > (0, 47):
             raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
-        if pv._version.version_info > (0, 48):
+        if pv._version.version_info[:2] > (0, 48):
             raise RuntimeError('Remove `pad_singleton_dims`.')
 
 
@@ -743,8 +743,10 @@ def test_label_connectivity_invalid_parameters(segmented_grid):
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded')
     with pytest.raises(
-        IndexError,
-        match=r'tuple index out of range|Given points must be convertible to a numerical array',
+        ValueError,
+        match=re.escape(
+            'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
+        ),
     ):
         _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
     with pytest.raises(
