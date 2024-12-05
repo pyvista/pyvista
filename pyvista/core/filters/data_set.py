@@ -8686,10 +8686,10 @@ class DataSetFilters:
         alg = _vtk.vtkExtractCellsByType()
         alg.SetInputDataObject(self)
         valid_cell_types = _validation.validate_arrayN(
-            cell_types, must_have_dtype=int, name='cell_types', dtype_out=int
+            cell_types, must_be_integer=True, name='cell_types', dtype_out=int
         )
         for cell_type in valid_cell_types:
-            alg.AddCellType(cell_type)
+            alg.AddCellType(int(cell_type))
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
 
