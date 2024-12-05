@@ -406,6 +406,43 @@ def test_ensight_multi_block_io(extension, binary, tmpdir):
         assert block.array_names == array_names
 
 
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='Issue with saving empty meshes.')
+@pytest.mark.parametrize('nested_level', [1, 2])
+def test_multi_block_io_nested_field_data(tmpdir, nested_level):
+    FIELD_NAME = 'data'
+    DATA = np.array([1, 2, 3])
+    multi = pv.MultiBlock()
+    multi.field_data[FIELD_NAME] = DATA
+
+    nested1 = pv.MultiBlock()
+    nested1.field_data[FIELD_NAME] = DATA * (nested_level + 1)
+    multi.append(nested1)
+
+    if nested_level == 2:
+        nested2 = pv.MultiBlock()
+        nested2.field_data[FIELD_NAME] = DATA * (nested_level + 1)
+        nested1.append(nested2)
+
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.vtm'))
+    multi.save(filename)
+
+    new_multi = pv.read(filename)
+    assert 'data' in new_multi.field_data
+    assert np.array_equal(new_multi.field_data[FIELD_NAME], multi.field_data[FIELD_NAME])
+    assert new_multi.n_blocks == multi.n_blocks
+
+    new_nested1 = new_multi[0]
+    assert 'data' in new_nested1.field_data
+    assert np.array_equal(new_nested1.field_data[FIELD_NAME], nested1.field_data[FIELD_NAME])
+    assert new_nested1.n_blocks == nested1.n_blocks
+
+    if nested_level == 2:
+        new_nested2 = new_nested1[0]
+        assert 'data' in new_nested2.field_data
+        assert np.array_equal(new_nested2.field_data[FIELD_NAME], nested2.field_data[FIELD_NAME])
+        assert new_nested2.n_blocks == nested2.n_blocks
+
+
 def test_invalid_arg():
     with pytest.raises(TypeError):
         pv.MultiBlock(np.empty(10))

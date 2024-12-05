@@ -41,6 +41,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
 
+PYVISTA_NESTED_FIELD_DATA = '_PYVISTA_NESTED_FIELD_DATA'
+
 
 class MultiBlock(
     CompositeFilters,
@@ -1408,3 +1410,63 @@ class MultiBlock(
                 block.clear_all_cell_data()
             elif block is not None:
                 block.clear_cell_data()
+
+    def _post_file_load_processing(self):
+        self._restore_nested_field_data()
+
+    def _store_nested_field_data(self) -> None:
+        """Store field data of nested MultiBlock datasets.
+
+        This method stores the field data of nested MultiBlock datasets in the root
+        MultiBlock's field data.
+
+        This is used as a workaround to read and write nested MultiBlock field data,
+        since there is a VTK issue where this field data is otherwise lost.
+
+        """
+        fdata = None
+        for i, block in enumerate(self):
+            if not isinstance(block, MultiBlock):
+                continue
+            # Store field data recursively
+            block._store_nested_field_data()
+
+            # Shallow-copy any nested field data to the root MultiBlock
+            if fdata is None:
+                fdata = self.field_data
+            nested_fdata = block.field_data
+            for field, value in nested_fdata.items():
+                key = f'{PYVISTA_NESTED_FIELD_DATA}-{i}-{field}'
+                fdata[key] = value
+
+    def _restore_nested_field_data(self) -> None:
+        """Restore field data of nested MultiBlock datasets.
+
+        This method restores the field data of nested MultiBlock datasets that were
+        previously stored by `_store_nested_field_data`.
+
+        This is used as a workaround to read and write nested MultiBlock field data,
+        since there is a VTK issue where this field data is otherwise lost.
+
+        """
+        fdata = self.field_data
+        keys = fdata.keys()
+        if keys is not None:
+            for field_name in keys:
+                if field_name is not None and field_name.startswith(PYVISTA_NESTED_FIELD_DATA):
+                    # Remove prefix
+                    index_and_name_start = len(PYVISTA_NESTED_FIELD_DATA) + 1
+                    index_and_name = field_name[index_and_name_start:]
+
+                    # Split into block index and name
+                    index_str = index_and_name.split('-')[0]
+                    name_start = len(index_str) + 1
+                    name = index_and_name[name_start:]
+
+                    # Set nested field data and remove it from root multiblock
+                    nested_dataset = self[int(index_str)]
+                    nested_dataset.field_data[name] = fdata[field_name]  # type: ignore[union-attr]
+                    del fdata[field_name]
+
+                    # Restore field data recursively
+                    nested_dataset._restore_nested_field_data()  # type: ignore[union-attr]
