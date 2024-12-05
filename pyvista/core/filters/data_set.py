@@ -4434,14 +4434,14 @@ class DataSetFilters:
         See the :ref:`streamlines_example` example.
 
         """
-        integration_direction_str = str(integration_direction).strip().lower()
-        if integration_direction_str not in ['both', 'back', 'backward', 'forward']:
+        integration_direction_lower = str(integration_direction).strip().lower()
+        if integration_direction_lower not in ['both', 'back', 'backward', 'forward']:
             raise ValueError(
                 "Integration direction must be one of:\n 'backward', "
-                f"'forward', or 'both' - not '{integration_direction_str}'.",
+                f"'forward', or 'both' - not '{integration_direction_lower}'.",
             )
         else:
-            valid_integration_direction = cast(
+            integration_direction_ = cast(
                 Literal['both', 'back', 'backward', 'forward'], integration_direction
             )
         if integrator_type not in [2, 4, 45]:
@@ -4501,9 +4501,9 @@ class DataSetFilters:
         alg.SetSurfaceStreamlines(surface_streamlines)
         alg.SetTerminalSpeed(terminal_speed)
         # Model parameters
-        if valid_integration_direction == 'forward':
+        if integration_direction_ == 'forward':
             alg.SetIntegrationDirectionToForward()
-        elif valid_integration_direction in ['backward', 'back']:
+        elif integration_direction_ in ['backward', 'back']:
             alg.SetIntegrationDirectionToBackward()
         else:
             alg.SetIntegrationDirectionToBoth()
@@ -4648,7 +4648,7 @@ class DataSetFilters:
             raise ValueError("Interpolator type must be either 'cell' or 'point'")
         if step_unit not in ['l', 'cl']:
             raise ValueError("Step unit must be either 'l' or 'cl'")
-        step_unit_val = {
+        step_unit_ = {
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
@@ -4675,7 +4675,7 @@ class DataSetFilters:
         else:
             alg.SetIntegratorTypeToRungeKutta4()
         alg.SetInitialIntegrationStep(step_length)
-        alg.SetIntegrationStepUnit(step_unit_val)
+        alg.SetIntegrationStepUnit(step_unit_)
         alg.SetMaximumNumberOfSteps(max_steps)
 
         # Stopping criteria
