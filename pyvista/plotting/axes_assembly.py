@@ -1745,7 +1745,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._label_position
 
     @label_position.setter
-    def label_position(self, position: int | VectorLike[int] | None):
+    def label_position(self, position: int | VectorLike[int]):
         self._label_position = _validation.validate_array3(
             position,
             broadcast=True,

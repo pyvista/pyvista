@@ -2643,7 +2643,7 @@ class ImageDataFilters(DataSetFilters):
                 unique_scalars = np.unique(input_mesh.point_data[scalars])
                 scalar_range = (unique_scalars[1], unique_scalars[-1])
             else:
-                scalar_range = _validation.validate_data_range(scalar_range)
+                scalar_range = _validation.validate_data_range(scalar_range)  # type: ignore[arg-type]
             alg.SetScalarRange(*scalar_range)
 
         scalars_casted_to_float = False
