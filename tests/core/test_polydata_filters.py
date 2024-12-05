@@ -263,3 +263,13 @@ def test_voxelize_binary_mask_raises(sphere):
         match = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
         with pytest.raises(TypeError, match=match):
             sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
+
+
+def test_ruled_surface():
+    poly = pv.PolyData(
+        [[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 1]],
+        lines=[[2, 0, 1], [2, 2, 3]],
+        force_float=False,
+    )
+    ruled = poly.ruled_surface(resolution=(21, 21))
+    assert ruled.n_cells

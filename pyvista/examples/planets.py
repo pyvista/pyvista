@@ -30,7 +30,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
 
     """
     # https://github.com/pyvista/pyvista/pull/2994#issuecomment-1200520035
-    theta, phi = np.mgrid[0 : np.pi : lat_resolution * 1j, 0 : 2 * np.pi : lon_resolution * 1j]
+    theta, phi = np.mgrid[0 : np.pi : lat_resolution * 1j, 0 : 2 * np.pi : lon_resolution * 1j]  # type: ignore[misc]
     x = radius * np.sin(theta) * np.cos(phi)
     y = radius * np.sin(theta) * np.sin(phi)
     z = radius * np.cos(theta)
@@ -38,7 +38,7 @@ def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
     texture_coords = np.empty((sphere.n_points, 2))
     texture_coords[:, 0] = phi.ravel('F') / phi.max()
     texture_coords[:, 1] = theta[::-1, :].ravel('F') / theta.max()
-    sphere.active_texture_coordinates = texture_coords
+    sphere.active_texture_coordinates = texture_coords  # type: ignore[assignment]
     return sphere.extract_surface(pass_pointid=False, pass_cellid=False)
 
 
@@ -380,10 +380,11 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
 
     """
     disc = pyvista.Disc(inner=inner, outer=outer, c_res=c_res)
-    disc.active_texture_coordinates = np.zeros((disc.points.shape[0], 2))
+    texture_coordinates = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
-    disc.active_texture_coordinates[:, 0] = radius / np.max(radius)
-    disc.active_texture_coordinates[:, 1] = 0.0
+    texture_coordinates[:, 0] = radius / np.max(radius)
+    texture_coordinates[:, 1] = 0.0
+    disc.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
     return disc
 
 
@@ -517,7 +518,7 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -547,7 +548,7 @@ def download_moon_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -577,7 +578,7 @@ def download_mercury_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -610,7 +611,7 @@ def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -643,7 +644,7 @@ def download_mars_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -673,7 +674,7 @@ def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -703,7 +704,7 @@ def download_saturn_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -733,7 +734,7 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.ImageData, pyvista.Texture, or str
+    pyvista.ImageData | pyvista.Texture | str
         Dataset, texture, or filename of the Saturn's rings.
 
     Examples
@@ -762,7 +763,7 @@ def download_uranus_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -792,7 +793,7 @@ def download_neptune_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -822,7 +823,7 @@ def download_pluto_surface(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -852,7 +853,7 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 
@@ -891,7 +892,7 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
 
     Returns
     -------
-    pyvista.DataSet, pyvista.Texture, or str
+    pyvista.DataSet | pyvista.Texture | str
         Texture, Dataset, or path to the file depending on the ``load`` and
         ``texture`` parameters.
 

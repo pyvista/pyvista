@@ -44,13 +44,15 @@ _ShapeLike = Union[int, _Shape]
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import NumberType
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
     from pyvista.core._typing_core._array_like import _NumberType
 
 
-_Shape = Union[tuple[()], tuple[int, ...]]
-_ShapeLike = Union[int, _Shape]
+if TYPE_CHECKING:
+    _Shape = Union[tuple[()], tuple[int, ...]]
+    _ShapeLike = Union[int, _Shape]
 
 
 def check_subdtype(
@@ -59,7 +61,7 @@ def check_subdtype(
     base_dtype: Union[npt.DTypeLike, tuple[npt.DTypeLike, ...], list[npt.DTypeLike]],
     *,
     name: str = 'Input',
-):
+) -> None:
     """Check if an input's data-type is a subtype of another data-type(s).
 
     Parameters
@@ -123,7 +125,7 @@ def check_subdtype(
         raise TypeError(msg)
 
 
-def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array'):
+def check_real(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
     """Check if an array has real numbers, i.e. float or integer type.
 
     Notes
@@ -185,7 +187,7 @@ def check_sorted(
     strict: bool = False,
     axis: int = -1,
     name: str = 'Array',
-):
+) -> None:
     """Check if an array's values are sorted.
 
     Parameters
@@ -281,7 +283,7 @@ def check_sorted(
         )
 
 
-def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array'):
+def check_finite(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
     """Check if an array has finite values, i.e. no NaN or Inf values.
 
     Parameters
@@ -320,7 +322,7 @@ def check_integer(
     *,
     strict: bool = False,
     name: str = 'Array',
-):
+) -> None:
     """Check if an array has integer or integer-like float values.
 
     Parameters
@@ -364,7 +366,7 @@ def check_integer(
         raise ValueError(f'{name} must have integer-like values.')
 
 
-def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array'):
+def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = 'Array') -> None:
     """Check if an array's elements are all nonnegative.
 
     Parameters
@@ -396,7 +398,7 @@ def check_nonnegative(array: _ArrayLikeOrScalar[NumberType], /, *, name: str = '
     check_greater_than(array, 0, strict=False, name=name)
 
 
-def _validate_real_value(scalar, name='Value'):
+def _validate_real_value(scalar: float, name: str = 'Value') -> NumpyArray[float]:
     valid_scalar = _cast_to_numpy(scalar)
     check_shape(valid_scalar, (), name=name)
     check_real(valid_scalar, name=name)
@@ -410,7 +412,7 @@ def check_greater_than(
     *,
     strict: bool = True,
     name: str = 'Array',
-):
+) -> None:
     """Check if an array's elements are all greater than some value.
 
     Parameters
@@ -463,7 +465,7 @@ def check_less_than(
     *,
     strict: bool = True,
     name: str = 'Array',
-):
+) -> None:
     """Check if an array's elements are all less than some value.
 
     Parameters
@@ -518,7 +520,7 @@ def check_range(
     strict_lower: bool = False,
     strict_upper: bool = False,
     name: str = 'Array',
-):
+) -> None:
     """Check if an array's values are all within a specific range.
 
     Parameters
@@ -575,10 +577,10 @@ def check_range(
 def check_shape(
     array: _ArrayLikeOrScalar[NumberType],
     /,
-    shape: Union[_ShapeLike, list[_ShapeLike]],
+    shape: _ShapeLike | list[_ShapeLike],
     *,
     name: str = 'Array',
-):
+) -> None:
     """Check if an array has the specified shape.
 
     Parameters
@@ -650,10 +652,10 @@ def check_shape(
 def check_ndim(
     array: _ArrayLikeOrScalar[NumberType],
     /,
-    ndim: Union[int, Sequence[int]],
+    ndim: int | VectorLike[int],
     *,
     name: str = 'Array',
-):
+) -> None:
     """Check if an array has the specified number of dimensions.
 
     .. note::
@@ -696,10 +698,7 @@ def check_ndim(
     >>> _validation.check_ndim(1, ndim=(0, 2))
 
     """
-    if not isinstance(ndim, Sequence):
-        ndim_: Sequence[int] = [ndim]
-    else:
-        ndim_ = ndim
+    ndim_ = np.atleast_1d(ndim)
 
     array_ndim = _cast_to_numpy(array).ndim
     if array_ndim not in ndim_:
@@ -723,9 +722,9 @@ def check_number(
     /,
     *,
     definition: Literal['abstract', 'builtin', 'numpy'] = 'abstract',
-    must_be_real=True,
+    must_be_real: bool = True,
     name: str = 'Object',
-):
+) -> None:
     """Check if an object is a number.
 
     By default, the number must be an instance of the abstract base class :class:`numbers.Real`.
@@ -790,7 +789,6 @@ def check_number(
     check_finite
         Check for finite values.
 
-
     Examples
     --------
     Check if a float is a number.
@@ -834,7 +832,7 @@ def check_number(
     check_instance(num, valid_type, allow_subclass=True, name=name)
 
 
-def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Object'):
+def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Object') -> None:
     """Check if an object is an instance of ``str``.
 
     Parameters
@@ -872,7 +870,7 @@ def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Objec
     check_instance(obj, str, allow_subclass=allow_subclass, name=name)
 
 
-def check_sequence(obj: Sequence[Any], /, *, name: str = 'Object'):
+def check_sequence(obj: Sequence[Any], /, *, name: str = 'Object') -> None:
     """Check if an object is an instance of ``Sequence``.
 
     Parameters
@@ -906,7 +904,7 @@ def check_sequence(obj: Sequence[Any], /, *, name: str = 'Object'):
     check_instance(obj, Sequence, allow_subclass=True, name=name)
 
 
-def check_iterable(obj: Iterable[Any], /, *, name: str = 'Object'):
+def check_iterable(obj: Iterable[Any], /, *, name: str = 'Object') -> None:
     """Check if an object is an instance of ``Iterable``.
 
     Parameters
@@ -942,13 +940,13 @@ def check_iterable(obj: Iterable[Any], /, *, name: str = 'Object'):
 
 
 def check_instance(
-    obj: Any,
+    obj: object,
     /,
-    classinfo: Union[type, tuple[type, ...]],
+    classinfo: type | tuple[type, ...],
     *,
     allow_subclass: bool = True,
     name: str = 'Object',
-):
+) -> None:
     """Check if an object is an instance of the given type or types.
 
     Parameters
@@ -1032,7 +1030,7 @@ def check_instance(
         raise TypeError(msg)
 
 
-def check_type(obj: Any, /, classinfo: Union[type, tuple[type, ...]], *, name: str = 'Object'):
+def check_type(obj: object, /, classinfo: type | tuple[type, ...], *, name: str = 'Object') -> None:
     """Check if an object is one of the given type or types.
 
     Notes
@@ -1076,11 +1074,11 @@ def check_type(obj: Any, /, classinfo: Union[type, tuple[type, ...]], *, name: s
 def check_iterable_items(
     iterable_obj: Iterable[Any],
     /,
-    item_type: Union[type, tuple[type, ...]],
+    item_type: type | tuple[type, ...],
     *,
     allow_subclass: bool = True,
     name: str = 'Iterable',
-):
+) -> None:
     """Check if an iterable's items all have a specified type.
 
     Parameters
@@ -1126,7 +1124,7 @@ def check_iterable_items(
     """
     check_iterable(iterable_obj, name=name)
     any(
-        check_instance(
+        check_instance(  # type: ignore[func-returns-value]
             item,
             item_type,
             allow_subclass=allow_subclass,
@@ -1136,7 +1134,7 @@ def check_iterable_items(
     )
 
 
-def check_contains(container: Any, /, must_contain: Any, *, name: str = 'Input'):
+def check_contains(container: Any, /, must_contain: Any, *, name: str = 'Input') -> None:
     """Check if an item is in a container.
 
     Parameters
@@ -1184,7 +1182,7 @@ def check_length(
     must_be_1d: bool = False,
     allow_scalar: bool = False,
     name: str = 'Array',
-):
+) -> None:
     """Check if the length of an array meets specific requirements.
 
     Notes
@@ -1299,7 +1297,7 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
     if shape in [(), (-1,), (1,), (3,), (2,), (1, 3), (-1, 3)]:
         return cast(_Shape, shape)
 
-    def _is_valid_dim(d):
+    def _is_valid_dim(d: Any) -> bool:
         return isinstance(d, int) and d >= -1
 
     if _is_valid_dim(shape):

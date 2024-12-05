@@ -23,7 +23,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
 
     Parameters
     ----------
-    array : Array or vtk.vtkAbstractArray
+    array : ArrayLike or vtk.vtkAbstractArray
         Array like.
 
     dataset : pyvista.DataSet
@@ -76,7 +76,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             obj.dataset.Set(dataset)
         return obj
 
-    def __array_finalize__(self, obj):
+    def __array_finalize__(self, obj) -> None:
         """Finalize array (associate with parent metadata)."""
         # this is necessary to ensure that views/slices of pyvista_ndarray
         # objects stay associated with those of their parents.
@@ -85,7 +85,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         # to hold this data. I don't know why this class doesn't use the same
         # convention, but here we just map those over to the appropriate
         # attributes of this class
-        _vtk.VTKArray.__array_finalize__(self, obj)
+        _vtk.VTKArray.__array_finalize__(self, obj)  # type: ignore[arg-type]
         if np.shares_memory(self, obj):
             self.dataset = getattr(obj, 'dataset', None)
             self.association = getattr(obj, 'association', FieldAssociation.NONE)
@@ -95,7 +95,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
             self.association = FieldAssociation.NONE
             self.VTKObject = None
 
-    def __setitem__(self, key: int | NumpyArray[int], value):
+    def __setitem__(self, key: int | NumpyArray[int], value) -> None:
         """Implement [] set operator.
 
         When the array is changed it triggers "Modified()" which updates
@@ -111,7 +111,7 @@ class pyvista_ndarray(np.ndarray):  # type: ignore[type-arg]  # numpydoc ignore=
         if dataset is not None and dataset.Get():
             dataset.Get().Modified()
 
-    def __array_wrap__(self, out_arr, context=None, return_scalar=False):
+    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819

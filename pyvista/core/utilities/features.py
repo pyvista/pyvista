@@ -45,7 +45,9 @@ def _padded_bins(mesh, density):
     ]
 
 
-def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=False):
+def voxelize(
+    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+):
     """Voxelize mesh to UnstructuredGrid.
 
     Parameters
@@ -214,7 +216,9 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     return ugrid.extract_points(mask)
 
 
-def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=False):
+def voxelize_volume(
+    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
@@ -393,7 +397,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     ----------
     dataset : DataSet
         Input dataset used as a reference for the grid creation.
-    dimensions : tuple of int, default: (101, 101, 101)
+    dimensions : tuple[int, int, int], default: (101, 101, 101)
         The dimensions of the grid to be created. Each value in the tuple
         represents the number of grid points along the corresponding axis.
 
@@ -424,7 +428,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     dims = dimensions - 1
     dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
-    image.origin = bounds[::2]
+    image.origin = bounds[::2]  # type: ignore[assignment]
     return image
 
 
@@ -562,9 +566,9 @@ def spherical_to_cartesian(r, phi, theta):
 
 def merge(
     datasets,
-    merge_points=True,
-    main_has_priority=True,
-    progress_bar=False,
+    merge_points: bool = True,
+    main_has_priority: bool = True,
+    progress_bar: bool = False,
 ):
     """Merge several datasets.
 
@@ -576,8 +580,8 @@ def merge(
 
     Parameters
     ----------
-    datasets : sequence[:class:`pyvista.Dataset`]
-        Sequence of datasets. Can be of any :class:`pyvista.Dataset`.
+    datasets : sequence[:class:`pyvista.DataSet`]
+        Sequence of datasets. Can be of any :class:`pyvista.DataSet`.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
@@ -795,7 +799,7 @@ def sample_function(
 
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
-    samp.SetSampleDimensions(dim)
+    samp.SetSampleDimensions(dim)  # type: ignore[call-overload]
     samp.SetModelBounds(bounds)
     samp.SetComputeNormals(compute_normals)
     samp.SetCapping(capping)

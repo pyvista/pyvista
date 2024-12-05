@@ -56,29 +56,29 @@ def _indent_paragraph(string, level):
 _BADGE_COLORS = dict(linear='primary', primary='success', dimension='secondary', geometry='muted')
 
 
-def _generate_linear_badge(is_linear: bool):
+def _generate_linear_badge(is_linear: bool) -> str:
     text = 'Linear' if is_linear else 'Non-linear'
     return f":bdg-{_BADGE_COLORS['linear']}:`{text}`"
 
 
-def _generate_primary_badge(is_primary: bool):
+def _generate_primary_badge(is_primary: bool) -> str:
     text = 'Primary' if is_primary else 'Composite'
     return f":bdg-{_BADGE_COLORS['primary']}:`{text}`"
 
 
-def _generate_dimension_badge(dimension: int):
+def _generate_dimension_badge(dimension: int) -> str:
     return f":bdg-{_BADGE_COLORS['dimension']}:`{dimension}D`"
 
 
-def _generate_points_badge(num_points: int):
+def _generate_points_badge(num_points: int) -> str:
     return f":bdg-{_BADGE_COLORS['geometry']}:`Points: {num_points}`"
 
 
-def _generate_edges_badge(num_edges: int):
+def _generate_edges_badge(num_edges: int) -> str:
     return f":bdg-{_BADGE_COLORS['geometry']}:`Edges: {num_edges}`"
 
 
-def _generate_faces_badge(num_faces: int):
+def _generate_faces_badge(num_faces: int) -> str:
     return f":bdg-{_BADGE_COLORS['geometry']}:`Faces: {num_faces}`"
 
 
@@ -232,18 +232,18 @@ class CellType(IntEnum):
         if _cell_class or _short_doc or _long_doc or _example:
             if _cell_class:
                 cell = _cell_class()
-                linear_badge = _generate_linear_badge(cell.IsLinear())
-                primary_badge = _generate_primary_badge(cell.IsPrimaryCell())
+                linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
+                primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
 
                 points = _points_override if _points_override else cell.GetNumberOfPoints()
-                points_badge = _generate_points_badge(points)
+                points_badge = _generate_points_badge(points)  # type: ignore[arg-type]
 
                 edges = _edges_override if _edges_override else cell.GetNumberOfEdges()
-                edges_badge = _generate_edges_badge(edges)
+                edges_badge = _generate_edges_badge(edges)  # type: ignore[arg-type]
 
                 faces = _faces_override if _faces_override else cell.GetNumberOfFaces()
-                faces_badge = _generate_faces_badge(faces)
+                faces_badge = _generate_faces_badge(faces)  # type: ignore[arg-type]
 
                 badges = (
                     _indent_paragraph(

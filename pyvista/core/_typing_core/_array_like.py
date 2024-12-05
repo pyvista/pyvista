@@ -24,6 +24,7 @@ Some key differences include:
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 from typing import TypeVar
 from typing import Union
 
@@ -33,8 +34,13 @@ import numpy.typing as npt
 # Define numeric types
 
 _NumberUnion = Union[
-    type[np.floating], type[np.integer], type[np.bool_], type[float], type[int], type[bool]
-]  # type: ignore[type-arg]
+    type[np.floating[Any]],
+    type[np.integer[Any]],
+    type[np.bool_],
+    type[float],
+    type[int],
+    type[bool],
+]
 
 NumberType = TypeVar(
     'NumberType',

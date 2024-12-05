@@ -5,10 +5,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Union
+from typing import cast
 from typing import overload
 
 import numpy as np
 
+import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -19,8 +22,8 @@ from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista import DataSet
     from pyvista import MultiBlock
+    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
@@ -253,12 +256,12 @@ class Transform(_vtk.vtkTransform):
     """
 
     def __init__(
-        self,
+        self: Transform,
         trans: TransformLike | Sequence[TransformLike] | None = None,
         *,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] = 'post',
-    ):
+    ) -> None:
         super().__init__()
         self.multiply_mode = multiply_mode
         self.point = point  # type: ignore[assignment]
@@ -267,9 +270,9 @@ class Transform(_vtk.vtkTransform):
             if isinstance(trans, Sequence):
                 [self.concatenate(t) for t in trans]
             else:
-                self.matrix = trans
+                self.matrix = trans  # type: ignore[assignment]
 
-    def __add__(self, other: VectorLike[float] | TransformLike) -> Transform:
+    def __add__(self: Transform, other: VectorLike[float] | TransformLike) -> Transform:
         """:meth:`concatenate` this transform using post-multiply semantics.
 
         Use :meth:`translate` for length-3 vector inputs, and :meth:`concatenate`
@@ -277,7 +280,7 @@ class Transform(_vtk.vtkTransform):
         """
         copied = self.copy()
         try:
-            transform = copied.translate(other, multiply_mode='post')
+            transform = copied.translate(other, multiply_mode='post')  # type: ignore[arg-type]
         except (ValueError, TypeError):
             try:
                 transform = copied.concatenate(other, multiply_mode='post')
@@ -293,7 +296,7 @@ class Transform(_vtk.vtkTransform):
                 )
         return transform
 
-    def __radd__(self, other: VectorLike[float] | TransformLike) -> Transform:
+    def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
         try:
             return self.copy().translate(other, multiply_mode='pre')
@@ -308,7 +311,7 @@ class Transform(_vtk.vtkTransform):
                 f'The left-side argument must be a length-3 vector.'
             )
 
-    def __mul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
+    def __mul__(self: Transform, other: float | VectorLike[float]) -> Transform:
         """:meth:`scale` this transform using post-multiply semantics."""
         try:
             return self.copy().scale(other, multiply_mode='post')
@@ -324,7 +327,7 @@ class Transform(_vtk.vtkTransform):
                 f'The right-side argument must be a single number or a length-3 vector.'
             )
 
-    def __rmul__(self, other: float | VectorLike[float] | TransformLike) -> Transform:
+    def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics."""
         try:
             return self.copy().scale(other, multiply_mode='pre')
@@ -339,7 +342,7 @@ class Transform(_vtk.vtkTransform):
                 f'The left-side argument must be a single number or a length-3 vector.'
             )
 
-    def __matmul__(self, other: TransformLike) -> Transform:
+    def __matmul__(self: Transform, other: TransformLike) -> Transform:
         """:meth:`concatenate` this transform using pre-multiply semantics."""
         try:
             return self.copy().concatenate(other, multiply_mode='pre')
@@ -354,7 +357,7 @@ class Transform(_vtk.vtkTransform):
                 f'The right-side argument must be transform-like.'
             )
 
-    def copy(self) -> Transform:
+    def copy(self: Transform) -> Transform:
         """Return a deep copy of the transform.
 
         Returns
@@ -395,10 +398,10 @@ class Transform(_vtk.vtkTransform):
 
         return new_transform
 
-    def __repr__(self):
+    def __repr__(self: Transform) -> str:
         """Representation of the transform."""
 
-        def _matrix_repr():
+        def _matrix_repr() -> str:
             repr_ = np.array_repr(self.matrix)
             return repr_.replace('array(', '      ').replace(')', '').replace('      [', '[')
 
@@ -414,7 +417,7 @@ class Transform(_vtk.vtkTransform):
         return '\n'.join(lines)
 
     @property
-    def point(self) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
+    def point(self: Transform) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
         """Point to use when concatenating some transformations such as scale, rotation, etc.
 
         If set, two additional transformations are concatenated and added to
@@ -429,7 +432,7 @@ class Transform(_vtk.vtkTransform):
         return self._point
 
     @point.setter
-    def point(self, point: VectorLike[float] | None):  # numpydoc ignore=GL08
+    def point(self: Transform, point: VectorLike[float] | None) -> None:
         self._point = (
             None
             if point is None
@@ -437,7 +440,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     @property
-    def multiply_mode(self) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
+    def multiply_mode(self: Transform) -> Literal['pre', 'post']:  # numpydoc ignore=RT01
         """Set or get the multiplication mode.
 
         Set this to ``'pre'`` to set the multiplication mode to :meth:`pre_multiply`.
@@ -452,13 +455,13 @@ class Transform(_vtk.vtkTransform):
         return self._multiply_mode
 
     @multiply_mode.setter
-    def multiply_mode(self, multiply_mode: Literal['pre', 'post']) -> None:  # numpydoc ignore=GL08
+    def multiply_mode(self: Transform, multiply_mode: Literal['pre', 'post']) -> None:
         _validation.check_contains(
-            item=multiply_mode, container=['pre', 'post'], name='multiply mode'
+            ['pre', 'post'], must_contain=multiply_mode, name='multiply mode'
         )
         self.pre_multiply() if multiply_mode == 'pre' else self.post_multiply()
 
-    def pre_multiply(self) -> Transform:  # numpydoc ignore=RT01
+    def pre_multiply(self: Transform) -> Transform:  # numpydoc ignore=RT01
         """Set the multiplication mode to pre-multiply.
 
         In pre-multiply mode, any additional transformations (e.g. using
@@ -477,7 +480,7 @@ class Transform(_vtk.vtkTransform):
         self.PreMultiply()
         return self
 
-    def post_multiply(self) -> Transform:  # numpydoc ignore=RT01
+    def post_multiply(self: Transform) -> Transform:  # numpydoc ignore=RT01
         """Set the multiplication mode to post-multiply.
 
         In post-multiply mode, any additional transformations (e.g. using
@@ -497,8 +500,8 @@ class Transform(_vtk.vtkTransform):
         return self
 
     def scale(
-        self,
-        *factor,
+        self: Transform,
+        *factor: float | VectorLike[float],
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
@@ -514,7 +517,8 @@ class Transform(_vtk.vtkTransform):
         ----------
         *factor : float | VectorLike[float]
             Scale factor(s) to use. Use a single number for uniform scaling or
-            three numbers for non-uniform scaling.
+            three numbers for non-uniform scaling. The three factors may be
+            passed as a single vector (one arg) or an unpacked vector (three args).
 
         point : VectorLike[float], optional
             Point to scale from. By default, the object's :attr:`point` is used,
@@ -532,7 +536,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.scale`
+        :meth:`pyvista.DataSetFilters.scale`
             Scale a mesh.
 
         Examples
@@ -583,7 +587,10 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_factor = _validation.validate_array3(
-            factor, broadcast=True, dtype_out=float, name='scale factor'
+            factor,  # type: ignore[arg-type]
+            broadcast=True,
+            dtype_out=float,
+            name='scale factor',
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
@@ -592,8 +599,8 @@ class Transform(_vtk.vtkTransform):
         )
 
     def reflect(
-        self,
-        *normal,
+        self: Transform,
+        *normal: float | VectorLike[float],
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
@@ -607,8 +614,9 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        *normal : VectorLike[float]
-            Normal direction for reflection.
+        *normal : float | VectorLike[float]
+            Normal direction for reflection. May be a single vector (one arg) or
+            unpacked vector (three args).
 
         point : VectorLike[float], optional
             Point to reflect about. By default, the object's :attr:`point` is used,
@@ -626,7 +634,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.reflect`
+        :meth:`pyvista.DataSetFilters.reflect`
             Reflect a mesh.
 
         Examples
@@ -653,7 +661,9 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_normal = _validation.validate_array3(
-            normal, dtype_out=float, name='reflection normal'
+            normal,  # type: ignore[arg-type]
+            dtype_out=float,
+            name='reflection normal',
         )
         transform = reflection(valid_normal)
         return self._concatenate_with_translations(
@@ -661,7 +671,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def flip_x(
-        self,
+        self: Transform,
         *,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
@@ -692,7 +702,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_x
+        pyvista.DataSetFilters.flip_x
             Flip a mesh about the x-axis.
 
         Examples
@@ -721,7 +731,7 @@ class Transform(_vtk.vtkTransform):
         return self.reflect((1, 0, 0), point=point, multiply_mode=multiply_mode)
 
     def flip_y(
-        self,
+        self: Transform,
         *,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
@@ -752,7 +762,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_y
+        pyvista.DataSetFilters.flip_y
             Flip a mesh about the y-axis.
 
         Examples
@@ -781,7 +791,7 @@ class Transform(_vtk.vtkTransform):
         return self.reflect((0, 1, 0), point=point, multiply_mode=multiply_mode)
 
     def flip_z(
-        self,
+        self: Transform,
         *,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
@@ -812,7 +822,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_z
+        pyvista.DataSetFilters.flip_z
             Flip a mesh about the z-axis.
 
         Examples
@@ -841,7 +851,9 @@ class Transform(_vtk.vtkTransform):
         return self.reflect((0, 0, 1), point=point, multiply_mode=multiply_mode)
 
     def translate(
-        self, *vector, multiply_mode: Literal['pre', 'post'] | None = None
+        self: Transform,
+        *vector: float | VectorLike[float],
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a translation matrix.
 
@@ -853,8 +865,9 @@ class Transform(_vtk.vtkTransform):
 
         Parameters
         ----------
-        *vector : VectorLike[float]
-            Vector to use for the translation.
+        *vector : float | VectorLike[float]
+            Vector to use for translation. May be a single vector (one arg) or
+            unpacked vector (three args).
 
         multiply_mode : 'pre' | 'post', optional
             Multiplication mode to use when concatenating the matrix. By default, the
@@ -863,7 +876,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.translate`
+        :meth:`pyvista.DataSetFilters.translate`
             Translate a mesh.
 
         Examples
@@ -889,14 +902,16 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_vector = _validation.validate_array3(
-            vector, dtype_out=float, name='translation vector'
+            vector,  # type: ignore[arg-type]
+            dtype_out=float,
+            name='translation vector',
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)
         return self.concatenate(transform, multiply_mode=multiply_mode)
 
     def rotate(
-        self,
+        self: Transform,
         rotation: RotationLike,
         *,
         point: VectorLike[float] | None = None,
@@ -906,7 +921,7 @@ class Transform(_vtk.vtkTransform):
 
         Create a rotation matrix and :meth:`concatenate` it with the current
         transformation :attr:`matrix` according to pre-multiply or post-multiply
-        semantics.
+        semantics. The rotation may be right-handed or left-handed.
 
         Internally, the matrix is stored in the :attr:`matrix_list`.
 
@@ -931,7 +946,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate
+        pyvista.DataSetFilters.rotate
             Rotate a mesh.
 
         Examples
@@ -989,15 +1004,13 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 0., 1.]])
 
         """
-        valid_rotation = _validation.validate_transform3x3(
-            rotation, must_be_finite=self.check_finite, name='rotation'
-        )
+        valid_rotation = _validation.validate_rotation(rotation)
         return self._concatenate_with_translations(
             valid_rotation, point=point, multiply_mode=multiply_mode
         )
 
     def rotate_x(
-        self,
+        self: Transform,
         angle: float,
         *,
         point: VectorLike[float] | None = None,
@@ -1032,7 +1045,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_x
+        pyvista.DataSetFilters.rotate_x
             Rotate a mesh about the x-axis.
 
         Examples
@@ -1066,7 +1079,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def rotate_y(
-        self,
+        self: Transform,
         angle: float,
         *,
         point: VectorLike[float] | None = None,
@@ -1101,7 +1114,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_y
+        pyvista.DataSetFilters.rotate_y
             Rotate a mesh about the y-axis.
 
         Examples
@@ -1135,7 +1148,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def rotate_z(
-        self,
+        self: Transform,
         angle: float,
         *,
         point: VectorLike[float] | None = None,
@@ -1170,7 +1183,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_z
+        pyvista.DataSetFilters.rotate_z
             Rotate a mesh about the z-axis.
 
         Examples
@@ -1204,7 +1217,7 @@ class Transform(_vtk.vtkTransform):
         )
 
     def rotate_vector(
-        self,
+        self: Transform,
         vector: VectorLike[float],
         angle: float,
         *,
@@ -1243,7 +1256,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_vector
+        pyvista.DataSetFilters.rotate_vector
             Rotate a mesh about a vector.
 
         Examples
@@ -1274,7 +1287,10 @@ class Transform(_vtk.vtkTransform):
         )
 
     def concatenate(
-        self, transform: TransformLike, *, multiply_mode: Literal['pre', 'post'] | None = None
+        self: Transform,
+        transform: TransformLike,
+        *,
+        multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
         """Concatenate a transformation matrix.
 
@@ -1346,7 +1362,7 @@ class Transform(_vtk.vtkTransform):
         return self
 
     @property
-    def matrix(self) -> NumpyArray[float]:
+    def matrix(self: Transform) -> NumpyArray[float]:
         """Return or set the current transformation matrix.
 
         Notes
@@ -1372,12 +1388,12 @@ class Transform(_vtk.vtkTransform):
         return array
 
     @matrix.setter
-    def matrix(self, trans: TransformLike):  # numpydoc ignore=GL08
+    def matrix(self: Transform, trans: TransformLike) -> None:
         self.identity()
         self.concatenate(trans)
 
     @property
-    def inverse_matrix(self) -> NumpyArray[float]:
+    def inverse_matrix(self: Transform) -> NumpyArray[float]:
         """Return the inverse of the current transformation :attr:`matrix`.
 
         Notes
@@ -1397,13 +1413,13 @@ class Transform(_vtk.vtkTransform):
             Current inverse transformation matrix.
 
         """
-        array = array_from_vtkmatrix(self.GetInverse().GetMatrix())
+        array = array_from_vtkmatrix(self.GetInverse().GetMatrix())  # type: ignore[attr-defined]
         if self.check_finite:
             _validation.check_finite(array, name='matrix')
         return array
 
     @property
-    def matrix_list(self) -> list[NumpyArray[float]]:
+    def matrix_list(self: Transform) -> list[NumpyArray[float]]:
         """Return a list of all current transformation matrices.
 
         Notes
@@ -1428,7 +1444,7 @@ class Transform(_vtk.vtkTransform):
         ]
 
     @property
-    def inverse_matrix_list(self) -> list[NumpyArray[float]]:
+    def inverse_matrix_list(self: Transform) -> list[NumpyArray[float]]:
         """Return a list of all inverse transformations applied by this :class:`Transform`.
 
         Notes
@@ -1449,18 +1465,18 @@ class Transform(_vtk.vtkTransform):
 
         """
         return [
-            array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetInverse().GetMatrix())
+            array_from_vtkmatrix(self.GetConcatenatedTransform(i).GetInverse().GetMatrix())  # type: ignore[attr-defined]
             for i in range(self.n_transformations)
         ]
 
     @property
-    def n_transformations(self) -> int:  # numpydoc ignore: RT01
+    def n_transformations(self: Transform) -> int:  # numpydoc ignore: RT01
         """Return the current number of concatenated transformations."""
         return self.GetNumberOfConcatenatedTransforms()
 
     @overload
-    def apply(  # numpydoc ignore: GL08
-        self,
+    def apply(
+        self: Transform,
         obj: VectorLike[float] | MatrixLike[float],
         /,
         *,
@@ -1469,18 +1485,18 @@ class Transform(_vtk.vtkTransform):
         transform_all_input_vectors: bool = ...,
     ) -> NumpyArray[float]: ...
     @overload
-    def apply(  # numpydoc ignore: GL08
-        self,
-        obj: DataSet,
+    def apply(
+        self: Transform,
+        obj: ConcreteDataSetType,
         /,
         *,
         inverse: bool = ...,
         copy: bool = ...,
         transform_all_input_vectors: bool = ...,
-    ) -> DataSet: ...
+    ) -> ConcreteDataSetType: ...
     @overload
-    def apply(  # numpydoc ignore: GL08
-        self,
+    def apply(
+        self: Transform,
         obj: MultiBlock,
         /,
         *,
@@ -1489,8 +1505,8 @@ class Transform(_vtk.vtkTransform):
         transform_all_input_vectors: bool = ...,
     ) -> MultiBlock: ...
     def apply(
-        self,
-        obj: VectorLike[float] | MatrixLike[float] | DataSet | MultiBlock,
+        self: Transform,
+        obj: VectorLike[float] | MatrixLike[float] | ConcreteDataSetType | MultiBlock,
         /,
         *,
         inverse: bool = False,
@@ -1572,13 +1588,10 @@ class Transform(_vtk.vtkTransform):
                          [2. , 2.5, 3. ]], dtype=float32)
 
         """
-        # avoid circular import
-        from pyvista.core.composite import MultiBlock
-        from pyvista.core.dataset import DataSet
-
         inplace = not copy
         # Transform dataset
-        if isinstance(obj, (DataSet, MultiBlock)):
+        if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
+            obj = cast(Union[pyvista.ConcreteDataSetType, pyvista.MultiBlock], obj)
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,
@@ -1587,10 +1600,11 @@ class Transform(_vtk.vtkTransform):
 
         matrix = self.inverse_matrix if inverse else self.matrix
         # Validate array - make sure we have floats
-        array = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
+        array: NumpyArray[float] = _validation.validate_array(obj, must_have_shape=[(3,), (-1, 3)])
         array = array if np.issubdtype(array.dtype, np.floating) else array.astype(float)
 
         # Transform a single point
+        out: NumpyArray[float] | None
         if array.shape == (3,):
             out = (matrix @ (*array, 1))[:3]
             if inplace:
@@ -1600,10 +1614,13 @@ class Transform(_vtk.vtkTransform):
 
         # Transform many points
         out = apply_transformation_to_points(matrix, array, inplace=inplace)
-        return array if inplace else out
+        if out is not None:
+            return out
+        else:
+            return array
 
     def decompose(
-        self,
+        self: Transform,
         *,
         homogeneous: bool = False,
     ) -> tuple[
@@ -1799,7 +1816,7 @@ class Transform(_vtk.vtkTransform):
             homogeneous=homogeneous,
         )
 
-    def invert(self) -> Transform:  # numpydoc ignore: RT01
+    def invert(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
 
         The current transformation :attr:`matrix` (including all matrices in the
@@ -1853,7 +1870,7 @@ class Transform(_vtk.vtkTransform):
         self.Inverse()
         return self
 
-    def identity(self) -> Transform:  # numpydoc ignore: RT01
+    def identity(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Set the transformation to the identity transformation.
 
         This can be used to "reset" the transform.
@@ -1884,7 +1901,7 @@ class Transform(_vtk.vtkTransform):
         return self
 
     @property
-    def is_inverted(self) -> bool:  # numpydoc ignore: RT01
+    def is_inverted(self: Transform) -> bool:  # numpydoc ignore: RT01
         """Get the inverse flag of the transformation.
 
         This flag is modified whenever :meth:`invert` is called.
@@ -1892,11 +1909,11 @@ class Transform(_vtk.vtkTransform):
         return bool(self.GetInverseFlag())
 
     def _concatenate_with_translations(
-        self,
+        self: Transform,
         transform: TransformLike,
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
-    ):
+    ) -> Transform:
         translate_before, translate_after = self._get_point_translations(
             point=point, multiply_mode=multiply_mode
         )
@@ -1911,8 +1928,10 @@ class Transform(_vtk.vtkTransform):
         return self
 
     def _get_point_translations(
-        self, point: VectorLike[float] | None, multiply_mode: Literal['pre', 'post'] | None
-    ):
+        self: Transform,
+        point: VectorLike[float] | None,
+        multiply_mode: Literal['pre', 'post'] | None,
+    ) -> tuple[None | Transform, None | Transform]:
         point = point if point is not None else self.point
         if point is not None:
             point_array = _validation.validate_array3(point, dtype_out=float, name='point')
@@ -1925,7 +1944,7 @@ class Transform(_vtk.vtkTransform):
         return None, None
 
     @property
-    def check_finite(self) -> bool:  # numpydoc ignore: RT01
+    def check_finite(self: Transform) -> bool:  # numpydoc ignore: RT01
         """Check that the :attr:`matrix` and :attr:`inverse_matrix` have finite values.
 
         If ``True``, all transformations are checked to ensure they only contain
@@ -1938,5 +1957,5 @@ class Transform(_vtk.vtkTransform):
         return self._check_finite
 
     @check_finite.setter
-    def check_finite(self, value: bool):  # numpydoc ignore: GL08
+    def check_finite(self: Transform, value: bool) -> None:
         self._check_finite = bool(value)
