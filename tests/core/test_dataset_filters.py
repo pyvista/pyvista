@@ -698,7 +698,7 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(method='invalid method')
     with pytest.raises(TypeError, match='Invalid type for `scalars`'):
         airplane.contour(scalars=1)
-    match = 'Input dataset for the contour filter must have scalar.'
+    match = 'No data available.'
     with pytest.raises(ValueError, match=match):
         airplane.contour(rng={})
 
