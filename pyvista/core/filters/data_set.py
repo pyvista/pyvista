@@ -8634,7 +8634,7 @@ class DataSetFilters:
         return self.shrink(1.0)
 
     def extract_cells_by_type(  # type: ignore[misc]
-        self: ConcreteDataSetType, cell_types, progress_bar: bool = False
+        self: ConcreteDataSetType, cell_types: int | VectorLike[int], progress_bar: bool = False
     ):
         """Extract cells of a specified type.
 
@@ -8655,7 +8655,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        cell_types :  int | sequence[int]
+        cell_types :  int | VectorLike[int]
             The cell types to extract. Must be a single or list of integer cell
             types. See :class:`pyvista.CellType`.
 
@@ -8696,15 +8696,13 @@ class DataSetFilters:
         """
         alg = _vtk.vtkExtractCellsByType()
         alg.SetInputDataObject(self)
-        if isinstance(cell_types, int):
-            alg.AddCellType(cell_types)
-        elif isinstance(cell_types, (np.ndarray, Sequence)):
-            for cell_type in cell_types:
-                alg.AddCellType(cell_type)
-        else:
-            raise TypeError(
-                f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.',
-            )
+        valid_cell_types = _validation.validate_arrayN(
+            cell_types,
+            must_be_integer=True,
+            name='cell_types',
+        )
+        for cell_type in valid_cell_types:
+            alg.AddCellType(int(cell_type))
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
 
