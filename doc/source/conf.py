@@ -229,7 +229,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NumpyArray'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
     (r'py:.*', '.*NumberType'),
-    (r'py:.*', '.*ConcreteDataSetType'),
+    (r'py:.*', '.*Concrete.*Type'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     #

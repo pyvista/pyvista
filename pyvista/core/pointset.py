@@ -47,6 +47,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import ArrayLike
     from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike
+    from ._typing_core import ConcretePointGridType
+    from ._typing_core import ConcretePointSetType
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
@@ -190,8 +192,11 @@ class _PointSet(DataSet):
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    def translate(
-        self, xyz: VectorLike[float], transform_all_input_vectors: bool = False, inplace=None
+    def translate(  # type: ignore[misc]
+        self: ConcretePointSetType,
+        xyz: VectorLike[float],
+        transform_all_input_vectors: bool = False,
+        inplace=None,
     ):
         """Translate the mesh.
 
@@ -229,7 +234,8 @@ class _PointSet(DataSet):
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore[misc]
             return self
-        return super().translate(
+        return pyvista.DataSetFilters.translate(
+            self,
             xyz,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -1725,7 +1731,9 @@ class PointGrid(_PointSet):
         """Initialize the point grid."""
         super().__init__()
 
-    def plot_curvature(self, curv_type='mean', **kwargs):
+    def plot_curvature(  # type: ignore[misc]
+        self: ConcretePointGridType, curv_type='mean', **kwargs
+    ):
         """Plot the curvature of the external surface of the grid.
 
         Parameters

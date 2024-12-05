@@ -285,7 +285,7 @@ class _DatasetLoader:
                     [cell_types.update({cell_type: None}) for cell_type in cells]
                 else:
                     for cell_type in pv.CellType:
-                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr]
+                        extracted = data.extract_cells_by_type(cell_type)  # type: ignore[union-attr, misc]
                         if extracted.n_cells > 0:
                             cell_types[cell_type] = None
             except AttributeError:

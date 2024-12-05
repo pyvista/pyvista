@@ -564,7 +564,7 @@ def check_range(
 def check_shape(
     array: _ArrayLikeOrScalar[NumberType],
     /,
-    shape: Union[_ShapeLike, list[_ShapeLike]],
+    shape: _ShapeLike | list[_ShapeLike],
     *,
     name: str = 'Array',
 ) -> None:
@@ -639,7 +639,7 @@ def check_shape(
 def check_ndim(
     array: _ArrayLikeOrScalar[NumberType],
     /,
-    ndim: Union[int, Sequence[int]],
+    ndim: int | VectorLike[int],
     *,
     name: str = 'Array',
 ) -> None:
@@ -685,10 +685,7 @@ def check_ndim(
     >>> _validation.check_ndim(1, ndim=(0, 2))
 
     """
-    if not isinstance(ndim, Sequence):
-        ndim_: Sequence[int] = [ndim]
-    else:
-        ndim_ = ndim
+    ndim_ = np.atleast_1d(ndim)
 
     array_ndim = _cast_to_numpy(array).ndim
     if array_ndim not in ndim_:
