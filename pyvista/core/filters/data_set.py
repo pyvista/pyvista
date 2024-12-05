@@ -42,6 +42,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
 
 
 @abstract_class
@@ -7202,7 +7203,7 @@ class DataSetFilters:
         _update_alg(f, progress_bar, 'Transforming')
         res = pyvista.core.filters._get_output(f)
 
-        def _restore_active_scalars(input_: ConcreteDataSetType, output_: ConcreteDataSetType):
+        def _restore_active_scalars(input_: ConcreteDataSetAlias, output_: ConcreteDataSetAlias):
             # make the previously active scalars active again
             input_.point_data.active_scalars_name = active_point_scalars_name
             input_.cell_data.active_scalars_name = active_cell_scalars_name
@@ -7213,13 +7214,13 @@ class DataSetFilters:
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
         if isinstance(self, pyvista.RectilinearGrid):
-            output: ConcreteDataSetType = pyvista.StructuredGrid()  # type: ignore[assignment]
+            output: ConcreteDataSetAlias = pyvista.StructuredGrid()
         elif inplace:
             output = self
         else:
             output = self.__class__()
 
-        if isinstance(self, pyvista.ImageData):
+        if isinstance(output, pyvista.ImageData):
             # vtkTransformFilter returns a StructuredGrid for legacy code (before VTK 9)
             # but VTK 9+ supports oriented images.
             # To keep an ImageData -> ImageData mapping, we copy the transformed data
@@ -8567,7 +8568,7 @@ class DataSetFilters:
                 point[2] = bnds.z_min if match[2] == 1 else bnds.z_max
 
                 # Transform point
-                point = (inverse_matrix @ [*point, 1])[:3]  # type: ignore[has-type]
+                point = (inverse_matrix @ [*point, 1])[:3]
                 # Make sure the point we return is one of the box's points
                 box_poly = (
                     _multiblock_to_polydata(alg_output)
@@ -8622,7 +8623,9 @@ class DataSetFilters:
         split.points += np.repeat(vec, np.diff(split.offset), axis=0)
         return split
 
-    def separate_cells(self):
+    def separate_cells(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+    ):
         """Return a copy of the dataset with separated cells with no shared points.
 
         This method may be useful when datasets have scalars that need to be
