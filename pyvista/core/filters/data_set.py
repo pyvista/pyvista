@@ -522,13 +522,11 @@ class DataSetFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
-        normal_vector: VectorLike[float] = (
-            NORMALS[normal.lower()] if isinstance(normal, str) else normal
-        )
+        normal_: VectorLike[float] = NORMALS[normal.lower()] if isinstance(normal, str) else normal
         # find center of data if origin not specified
-        origin_vector = self.center if origin is None else origin
+        origin_ = self.center if origin is None else origin
         # create the plane for clipping
-        function = generate_plane(normal_vector, origin_vector)
+        function = generate_plane(normal_, origin_)
         # run the clip
         result = DataSetFilters._clip_with_function(
             self,
@@ -1058,14 +1056,12 @@ class DataSetFilters:
         See :ref:`slice_example` for more examples using this filter.
 
         """
-        normal_vector: VectorLike[float] = (
-            NORMALS[normal.lower()] if isinstance(normal, str) else normal
-        )
+        normal_: VectorLike[float] = NORMALS[normal.lower()] if isinstance(normal, str) else normal
         # find center of data if origin not specified
-        origin_vector = self.center if origin is None else origin
+        origin_ = self.center if origin is None else origin
 
         # create the plane for clipping
-        plane = generate_plane(normal_vector, origin_vector)
+        plane = generate_plane(normal_, origin_)
         return DataSetFilters.slice_implicit(
             self,
             plane,
