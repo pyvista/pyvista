@@ -68,6 +68,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core._array_like import _FiniteNestedList
     from pyvista.core._typing_core._array_like import _FiniteNestedTuple
 
+    from .check import _ShapeLike
+
 
 class _ValidationFlags(NamedTuple):
     same_shape: bool
