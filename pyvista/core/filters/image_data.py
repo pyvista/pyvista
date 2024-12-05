@@ -1549,6 +1549,7 @@ class ImageDataFilters(DataSetFilters):
             new_name = 'boundary_labels'
             output.rename_array(old_name, new_name)
             if boundary_style in ['external', 'internal']:
+                # Output contains all boundary cells, need to remove cells we don't want
                 labels_array = output.cell_data[new_name]
                 is_external = np.any(labels_array == background_value, axis=1)
                 remove = is_external if boundary_style == 'internal' else ~is_external
@@ -1558,8 +1559,10 @@ class ImageDataFilters(DataSetFilters):
                 multi_component_output = boundary_style != 'external'
             if not multi_component_output:
                 if boundary_style == 'external':
+                    # Keep first component only
                     output.cell_data['boundary_labels'] = output.cell_data['boundary_labels'][:, 0]
                 else:
+                    # Compute norm
                     output.cell_data['boundary_labels'] = np.linalg.norm(
                         output.cell_data['boundary_labels'], axis=1
                     )
