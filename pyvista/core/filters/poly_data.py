@@ -2571,8 +2571,8 @@ class PolyDataFilters(DataSetFilters):
         plotter.add_legend()  # type: ignore[call-arg]
         return plotter.show()
 
-    def plot_normals(
-        self,
+    def plot_normals(  # type: ignore[misc]
+        self: PolyData,
         show_mesh: bool = True,
         mag=1.0,
         flip: bool = False,
@@ -2642,13 +2642,13 @@ class PolyDataFilters(DataSetFilters):
 
         if faces:
             centers = self.cell_centers().points[::use_every]
-            normals = self.cell_normals  # type: ignore[attr-defined]
+            normals = self.cell_normals
         else:
-            centers = self.points[::use_every]  # type: ignore[has-type]
-            normals = self.point_normals  # type: ignore[attr-defined]
+            centers = self.points[::use_every]
+            normals = self.point_normals
 
         if flip:
-            normals *= -1
+            normals *= -1  # type: ignore[misc]
 
         plotter.add_arrows(
             centers,
@@ -4043,8 +4043,8 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Generating Protein Ribbons')
         return _get_output(alg)
 
-    def voxelize_binary_mask(
-        self,
+    def voxelize_binary_mask(  # type: ignore[misc]
+        self: PolyData,
         *,
         background_value: int = 0,
         foreground_value: int = 1,
@@ -4360,8 +4360,8 @@ class PolyDataFilters(DataSetFilters):
         >>> plot.show(cpos="yz")
 
         """
-        _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
-        _validation.check_greater_than(self.n_cells, 1, name='n_cells')  # type: ignore[attr-defined]
+        _validation.check_greater_than(self.n_points, 1, name='n_points')
+        _validation.check_greater_than(self.n_cells, 1, name='n_cells')
 
         def _preprocess_polydata(poly_in):
             return poly_in.compute_normals().triangulate()
@@ -4417,7 +4417,7 @@ class PolyDataFilters(DataSetFilters):
                             must_be_in_range=[0.0, 1.0],
                         )
                     )
-                    spacing = self.length * mesh_length_fraction  # type: ignore[attr-defined]
+                    spacing = self.length * mesh_length_fraction
                 else:
                     # Estimate spacing from cell length percentile
                     cell_length_percentile = (
@@ -4447,7 +4447,7 @@ class PolyDataFilters(DataSetFilters):
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
-            bnds = self.bounds  # type: ignore[attr-defined]
+            bnds = self.bounds
             x_size = bnds.x_max - bnds.x_min
             y_size = bnds.y_max - bnds.y_min
             z_size = bnds.z_max - bnds.z_min
@@ -4468,7 +4468,7 @@ class PolyDataFilters(DataSetFilters):
             # points to be 1/2 spacing width smaller than the polydata bounds
             final_spacing = sizes / np.array(reference_volume.dimensions)
             reference_volume.spacing = final_spacing
-            reference_volume.origin = np.array(self.bounds[::2]) + final_spacing / 2  # type: ignore[attr-defined]
+            reference_volume.origin = np.array(self.bounds[::2]) + final_spacing / 2
 
         # Init output structure. The image stencil filters do not support
         # orientation, so we do not set the direction matrix
