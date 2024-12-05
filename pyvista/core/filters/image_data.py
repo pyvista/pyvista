@@ -1130,10 +1130,11 @@ class ImageDataFilters(DataSetFilters):
 
         output_mesh_type : str, default: None
             Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``. By
-            default, the output mesh has triangle cells when smoothing is enabled and
-            quadrilateral cells (quads) otherwise. The mesh type can be forced to be
-            triangles or quads; however, if smoothing is enabled and the type is ``'quads'``,
-            the generated quads may not be planar.
+            default, the output mesh has :attr:`~pyvista.CellType.TRIANGLE` cells when
+            ``smoothing`` is enabled and :attr:`~pyvista.CellType.QUAD` cells (quads)
+            otherwise. The mesh type can be forced to be triangles or quads; however,
+            if smoothing is enabled and the type is ``'quads'``, the generated quads
+            may not be planar.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars. If cell
