@@ -34,6 +34,9 @@ from pyvista.core._typing_core import VectorLike
 from pyvista.core._validation._cast_array import _cast_to_numpy
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumberType
+    from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
     from pyvista.core._typing_core._array_like import _NumberType
 
@@ -41,18 +44,6 @@ _ScalarShape = tuple[()]
 _ArrayShape = tuple[int, ...]
 _Shape = Union[_ScalarShape, _ArrayShape]
 _ShapeLike = Union[int, _Shape]
-
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import NumberType
-    from pyvista.core._typing_core import NumpyArray
-    from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
-    from pyvista.core._typing_core._array_like import _NumberType
-
-
-if TYPE_CHECKING:
-    _Shape = Union[tuple[()], tuple[int, ...]]
-    _ShapeLike = Union[int, _Shape]
 
 
 def check_subdtype(
