@@ -14,6 +14,7 @@ classifiers = [
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
   'Programming Language :: Python :: 3.9',
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
@@ -24,7 +25,7 @@ dependencies = [
   'pooch',
   'scooby>=0.5.1',
   'typing-extensions',
-  'vtk<9.4.0',
+  'vtk<9.5.0',
 ]
 description = 'Easier Pythonic interface to VTK'
 dynamic = ['version']
@@ -69,7 +70,7 @@ typing = [
 test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
-  'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
+  # 'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
   'hypothesis<6.119.5',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
