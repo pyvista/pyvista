@@ -692,7 +692,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return points
 
     @points.setter
-    def points(self: ImageData, points: Never) -> None:  # numpydoc ignore=PR01
+    def points(self: ImageData, points: Never) -> Never:  # numpydoc ignore=PR01
         """Points cannot be set.
 
         This setter overrides the base class's setter to ensure a user does not
