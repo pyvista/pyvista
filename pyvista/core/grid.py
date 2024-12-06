@@ -16,6 +16,7 @@ import pyvista
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Never
+    from typing_extensions import Self
 
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
@@ -42,7 +43,7 @@ class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
 
     @property
-    def dimensions(self: Grid) -> tuple[int, int, int]:
+    def dimensions(self: Self) -> tuple[int, int, int]:
         """Return the grid's dimensions.
 
         These are effectively the number of points along each of the
@@ -72,18 +73,18 @@ class Grid(DataSet):
         return self.GetDimensions()
 
     @dimensions.setter
-    def dimensions(self: Grid, dims: VectorLike[int]) -> None:
+    def dimensions(self: Self, dims: VectorLike[int]) -> None:
         self.SetDimensions(*dims)
         self.Modified()
 
-    def _get_attrs(self: Grid) -> list[tuple[str, Any, str]]:
+    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs = DataSet._get_attrs(self)
         attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}, {:d}'))
         return attrs
 
     @property
-    def dimensionality(self: Grid) -> int:
+    def dimensionality(self: Self) -> int:
         """Return the dimensionality of the grid.
 
         Returns
