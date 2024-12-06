@@ -23,6 +23,7 @@ T = TypeVar('T')
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterator
+
     from typing_extensions import Self
 
     from pyvista import DataSet
@@ -554,9 +555,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 narray = narray.tolist()
         return narray
 
-    def set_array(
-        self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False
-    ) -> None:
+    def set_array(self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:
         """Add an array to this object.
 
         Use this method when adding arrays to the DataSet.  If
@@ -910,9 +909,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
-    def pop(
-        self: Self, key: str, default: pyvista_ndarray | T = _SENTINEL
-    ) -> pyvista_ndarray | T:
+    def pop(self: Self, key: str, default: pyvista_ndarray | T = _SENTINEL) -> pyvista_ndarray | T:
         """Remove an array and return it.
 
         Parameters
