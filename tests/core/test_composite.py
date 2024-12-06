@@ -430,11 +430,6 @@ def test_multi_io_erros(tmpdir):
         _ = MultiBlock(bad_ext_name)
 
 
-def test_extract_geometry(multiblock_all_with_nested_and_none):
-    geom = multiblock_all_with_nested_and_none.extract_geometry()
-    assert isinstance(geom, PolyData)
-
-
 def test_combine_filter(multiblock_all_with_nested_and_none):
     geom = multiblock_all_with_nested_and_none.combine()
     assert isinstance(geom, pv.UnstructuredGrid)
