@@ -3834,7 +3834,7 @@ class OrthogonalPlanesSource:
     ) -> None:
         def _check_sign(sign_: str) -> None:
             allowed = ['+', '-']
-            _validation.check_contains(item=sign_, container=allowed, name='normal sign')
+            _validation.check_contains(allowed, must_contain=sign_, name='normal sign')
 
         valid_sign: Sequence[str]
         _validation.check_instance(sign, (tuple, list, str), name='normal sign')

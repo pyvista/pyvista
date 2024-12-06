@@ -69,6 +69,7 @@ def _cast_to_numpy(
     dtype: Optional[npt.DTypeLike] = None,
     copy: bool = False,
     must_be_real: bool = False,
+    name: str = 'Array',
 ) -> NumpyArray[NumberType]:
     """Cast array to a NumPy ndarray.
 
@@ -104,6 +105,10 @@ def _cast_to_numpy(
         Raise a ``TypeError`` if the array does not have real numbers, i.e.
         its data type is not integer or floating.
 
+    name : str, default: "Array"
+        Variable name to use in the error messages if any of the
+        _validation checks fail.
+
     Raises
     ------
     ValueError
@@ -135,11 +140,9 @@ def _cast_to_numpy(
             # we requested a copy but didn't end up with one
             out = out.copy()
     except (ValueError, VisibleDeprecationWarning) as e:
-        raise ValueError(f'Input cannot be cast as {np.ndarray}.') from e
-    if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):
-        raise TypeError(f'Array must have real numbers. Got dtype {out.dtype.type}')
+        raise ValueError(f'{name} cannot be cast as {np.ndarray}.') from e
+    if must_be_real is True and not issubclass(out.dtype.type, (np.floating, np.integer)):
+        raise TypeError(f'{name} must have real numbers. Got dtype {out.dtype.type}.')
     elif out.dtype.name == 'object':
-        raise TypeError(
-            f'Object arrays are not supported. Got {arr} when casting to a NumPy array.'
-        )
+        raise TypeError(f'{name} is an object array. Object arrays are not supported.')
     return out

@@ -457,7 +457,7 @@ class Transform(_vtk.vtkTransform):
     @multiply_mode.setter
     def multiply_mode(self: Transform, multiply_mode: Literal['pre', 'post']) -> None:
         _validation.check_contains(
-            item=multiply_mode, container=['pre', 'post'], name='multiply mode'
+            ['pre', 'post'], must_contain=multiply_mode, name='multiply mode'
         )
         self.pre_multiply() if multiply_mode == 'pre' else self.post_multiply()
 
