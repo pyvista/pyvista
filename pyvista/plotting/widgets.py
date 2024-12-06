@@ -435,7 +435,7 @@ class WidgetHelper:
             'z')``.
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether
+            When using an implicit plane widget, this controls whether
             or not tubing is shown around the plane's boundaries.
 
         outline_translation : bool, optional
@@ -687,7 +687,7 @@ class WidgetHelper:
             'z')``.
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether
+            When using an implicit plane widget, this controls whether
             or not tubing is shown around the plane's boundaries.
 
         origin_translation : bool, optional
@@ -864,7 +864,7 @@ class WidgetHelper:
             'z')``.
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether
+            When using an implicit plane widget, this controls whether
             or not tubing is shown around the plane's boundaries.
 
         origin_translation : bool, optional
@@ -1134,7 +1134,7 @@ class WidgetHelper:
             * ``color='#FFFFFF'``
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether or not
+            When using an implicit plane widget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
         interaction_event : vtk.vtkCommand.EventIds, optional
