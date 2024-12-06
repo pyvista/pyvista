@@ -8,14 +8,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import ClassVar
-from typing import Never
 from typing import cast
 
 import numpy as np
 
+
 import pyvista
 
 if TYPE_CHECKING:  # pragma: no cover
+    from typing_extensions import Never
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import NumpyArray
