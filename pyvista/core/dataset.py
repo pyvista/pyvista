@@ -1726,7 +1726,9 @@ class DataSet(DataSetFilters, DataObject):
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def cast_to_poly_points(self: DataSet, pass_cell_data: bool = False) -> pyvista.PolyData:
+    def cast_to_poly_points(  # type: ignore[misc]
+        self: ConcreteDataSetType, pass_cell_data: bool = False
+    ) -> pyvista.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
