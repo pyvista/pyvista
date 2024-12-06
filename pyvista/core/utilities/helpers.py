@@ -13,6 +13,7 @@ from typing import overload
 import numpy as np
 
 import pyvista
+from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
 from . import transformations
@@ -37,6 +38,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista import UnstructuredGrid
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._dataset_types import ConcreteDataObjectAlias
     from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
 
@@ -277,7 +279,7 @@ def is_pyvista_dataset(obj: Any) -> bool:
     return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 
-def generate_plane(normal, origin):
+def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     """Return a _vtk.vtkPlane.
 
     Parameters
@@ -296,9 +298,10 @@ def generate_plane(normal, origin):
     """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
-    normal = normal / np.linalg.norm(normal)
-    plane.SetNormal(normal)
-    plane.SetOrigin(origin)
+    normal_ = _validation.validate_array3(normal, dtype_out=float)
+    normal_ /= np.linalg.norm(normal_)
+    plane.SetNormal(*normal_)
+    plane.SetOrigin(*origin)
     return plane
 
 
