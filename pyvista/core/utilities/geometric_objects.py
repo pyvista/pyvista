@@ -54,6 +54,7 @@ NORMALS = {
     '-y': [0, -1, 0],
     '-z': [0, 0, -1],
 }
+NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
 
 
 def Capsule(
