@@ -382,7 +382,6 @@ allow-dict-calls-with-keyword-arguments = true
 "pyvista/core/cell.py" = ["ANN"]
 "pyvista/core/celltype.py" = ["ANN"]
 "pyvista/core/dataobject.py" = ["ANN"]
-"pyvista/core/datasetattributes.py" = ["ANN"]
 "pyvista/core/errors.py" = ["ANN"]
 "pyvista/core/filters**" = ["ANN"]
 "pyvista/core/grid.py" = ["ANN"]
