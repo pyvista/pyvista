@@ -12,11 +12,11 @@ from typing import cast
 
 import numpy as np
 
-
 import pyvista
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Never
+
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import NumpyArray
