@@ -15,7 +15,6 @@ import numpy as np
 import pyvista
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing_extensions import Never
     from typing_extensions import Self
 
     from pyvista import StructuredGrid
@@ -475,7 +474,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         self.Modified()
 
     @Grid.dimensions.setter  # type: ignore[attr-defined]
-    def dimensions(self: Self, _dims: Never) -> Never:
+    def dimensions(self: Self, _dims: VectorLike[int]) -> None:
         """Set Dimensions.
 
         Parameters
@@ -697,7 +696,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return points
 
     @points.setter
-    def points(self: Self, points: Never) -> Never:  # numpydoc ignore=PR01
+    def points(
+        self: DataSet, points: MatrixLike[float] | _vtk.vtkPoints
+    ) -> None:  # numpydoc ignore=PR01
         """Points cannot be set.
 
         This setter overrides the base class's setter to ensure a user does not
