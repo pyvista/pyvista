@@ -218,7 +218,7 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Test collection (temporary)
-        run: python -m pytest --collect-only
+        run: python -m pytest --collect-only tests/core tests/examples
 
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista -v tests/core tests/examples
