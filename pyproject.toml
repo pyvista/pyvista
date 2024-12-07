@@ -84,6 +84,7 @@ test = [
   'pytest-pyvista==0.1.8',
   'pytest-xdist<3.7.0',
   'pytest<8.4.0',
+  'pytest_mock<3.14.0',
   'pyvista[pinned]',
   'scipy<1.14.2',
   'sphinx-book-theme<1.2.0',
