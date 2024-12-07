@@ -384,7 +384,6 @@ allow-dict-calls-with-keyword-arguments = true
 "pyvista/core/dataobject.py" = ["ANN"]
 "pyvista/core/errors.py" = ["ANN"]
 "pyvista/core/filters**" = ["ANN"]
-"pyvista/core/grid.py" = ["ANN"]
 "pyvista/core/objects.py" = ["ANN"]
 "pyvista/core/partitioned.py" = ["ANN"]
 "pyvista/core/pointset.py" = ["ANN"]
