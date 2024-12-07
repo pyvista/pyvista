@@ -349,7 +349,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
     @points.setter
     def points(
-        self: DataSet, points: MatrixLike[float] | _vtk.vtkPoints
+        self: Self, points: MatrixLike[float] | _vtk.vtkPoints
     ) -> None:  # numpydoc ignore=PR01
         """Raise an AttributeError.
 
@@ -697,7 +697,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @points.setter
     def points(
-        self: DataSet, points: MatrixLike[float] | _vtk.vtkPoints
+        self: Self, points: MatrixLike[float] | _vtk.vtkPoints
     ) -> None:  # numpydoc ignore=PR01
         """Points cannot be set.
 
