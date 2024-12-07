@@ -1,5 +1,4 @@
-"""
-Limited imports from VTK (excludes any GL-dependent).
+"""Limited imports from VTK (excludes any GL-dependent).
 
 These are the modules within VTK that must be loaded across pyvista's
 core API. Here, we attempt to import modules using the ``vtkmodules``
@@ -30,14 +29,18 @@ from vtkmodules.vtkImagingSources import vtkImageSinusoidSource
 try:
     from vtkmodules.vtkFiltersCore import vtkExtractEdges
 except ImportError:
-    from vtkmodules.vtkFiltersExtraction import vtkExtractEdges
+    from vtkmodules.vtkFiltersExtraction import (  # type: ignore[attr-defined, no-redef]
+        vtkExtractEdges,
+    )
 
 # vtkCellTreeLocator moved from vtkFiltersGeneral to vtkCommonDataModel in
 # VTK commit 4a29e6f7dd9acb460644fe487d2e80aac65f7be9
 try:
     from vtkmodules.vtkCommonDataModel import vtkCellTreeLocator
 except ImportError:
-    from vtkmodules.vtkFiltersGeneral import vtkCellTreeLocator
+    from vtkmodules.vtkFiltersGeneral import (  # type: ignore[attr-defined, no-redef]
+        vtkCellTreeLocator,
+    )
 
 from vtkmodules.numpy_interface.dataset_adapter import VTKArray
 from vtkmodules.numpy_interface.dataset_adapter import VTKObjectWrapper
@@ -46,6 +49,10 @@ from vtkmodules.util.numpy_support import get_vtk_array_type
 from vtkmodules.util.numpy_support import numpy_to_vtk
 from vtkmodules.util.numpy_support import numpy_to_vtkIdTypeArray
 from vtkmodules.util.numpy_support import vtk_to_numpy
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.util.pickle_support import serialize_VTK_data_object
+
 from vtkmodules.util.vtkAlgorithm import VTKPythonAlgorithmBase
 from vtkmodules.vtkCommonComputationalGeometry import vtkKochanekSpline
 from vtkmodules.vtkCommonComputationalGeometry import vtkParametricBohemianDome
@@ -76,7 +83,7 @@ from vtkmodules.vtkCommonCore import VTK_COURIER
 from vtkmodules.vtkCommonCore import VTK_FONT_FILE
 from vtkmodules.vtkCommonCore import VTK_TIMES
 from vtkmodules.vtkCommonCore import VTK_UNSIGNED_CHAR
-from vtkmodules.vtkCommonCore import buffer_shared
+from vtkmodules.vtkCommonCore import buffer_shared  # type: ignore[attr-defined]
 from vtkmodules.vtkCommonCore import mutable
 from vtkmodules.vtkCommonCore import reference
 from vtkmodules.vtkCommonCore import vtkAbstractArray
@@ -226,6 +233,7 @@ from vtkmodules.vtkCommonDataModel import vtkSelectionNode
 from vtkmodules.vtkCommonDataModel import vtkStaticCellLocator
 from vtkmodules.vtkCommonDataModel import vtkStaticPointLocator
 from vtkmodules.vtkCommonDataModel import vtkStructuredGrid
+from vtkmodules.vtkCommonDataModel import vtkStructuredPoints
 from vtkmodules.vtkCommonDataModel import vtkTable
 from vtkmodules.vtkCommonDataModel import vtkTetra
 from vtkmodules.vtkCommonDataModel import vtkTriangle
@@ -329,6 +337,7 @@ from vtkmodules.vtkFiltersModeling import vtkLoopSubdivisionFilter
 from vtkmodules.vtkFiltersModeling import vtkOutlineFilter
 from vtkmodules.vtkFiltersModeling import vtkRibbonFilter
 from vtkmodules.vtkFiltersModeling import vtkRotationalExtrusionFilter
+from vtkmodules.vtkFiltersModeling import vtkRuledSurfaceFilter
 from vtkmodules.vtkFiltersModeling import vtkSelectEnclosedPoints
 from vtkmodules.vtkFiltersModeling import vtkSubdivideTetra
 from vtkmodules.vtkFiltersModeling import vtkTrimmedExtrusionFilter
@@ -360,6 +369,9 @@ from vtkmodules.vtkFiltersSources import vtkSphereSource
 from vtkmodules.vtkFiltersSources import vtkSuperquadricSource
 from vtkmodules.vtkFiltersSources import vtkTessellatedBoxSource
 from vtkmodules.vtkFiltersStatistics import vtkComputeQuartiles
+
+with contextlib.suppress(ImportError):
+    from vtkmodules.vtkFiltersStatistics import vtkLengthDistribution
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToPlane
 from vtkmodules.vtkFiltersTexture import vtkTextureMapToSphere
 from vtkmodules.vtkFiltersVerdict import vtkCellQuality
@@ -381,6 +393,9 @@ from vtkmodules.vtkImagingGeneral import vtkImageGaussianSmooth
 from vtkmodules.vtkImagingGeneral import vtkImageMedian3D
 from vtkmodules.vtkImagingHybrid import vtkSampleFunction
 from vtkmodules.vtkImagingHybrid import vtkSurfaceReconstructionFilter
+from vtkmodules.vtkImagingMorphological import vtkImageConnectivityFilter
+from vtkmodules.vtkImagingStencil import vtkImageStencil
+from vtkmodules.vtkImagingStencil import vtkPolyDataToImageStencil
 from vtkmodules.vtkIOGeometry import vtkHoudiniPolyDataWriter
 from vtkmodules.vtkIOGeometry import vtkIVWriter
 from vtkmodules.vtkIOGeometry import vtkOBJWriter
@@ -486,7 +501,7 @@ def VTKVersionInfo():
         minor = ver.GetVTKMinorVersion()
         micro = ver.GetVTKBuildVersion()
     except AttributeError:  # pragma: no cover
-        warnings.warn("Unable to detect VTK version. Defaulting to v4.0.0")
+        warnings.warn('Unable to detect VTK version. Defaulting to v4.0.0')
         major, minor, micro = (4, 0, 0)
 
     return VersionInfo(major, minor, micro)

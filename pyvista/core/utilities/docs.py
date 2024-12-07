@@ -35,6 +35,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
     This has been adapted to deal with our "verbose" decorator.
 
     Adapted from mne (mne/utils/docs.py), which was adapted from SciPy (doc/source/conf.py).
+
     """
     import pyvista
 
@@ -92,7 +93,7 @@ def linkcode_resolve(domain: str, info: dict[str, str], edit: bool = False) -> s
 
     blob_or_edit = 'edit' if edit else 'blob'
 
-    return f"http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}"
+    return f'http://github.com/pyvista/pyvista/{blob_or_edit}/{kind}/pyvista/{fn}{linespec}'
 
 
 def pv_html_page_context(
@@ -138,12 +139,12 @@ def pv_html_page_context(
             # We can get away with directly using the pagename since "examples"
             # in the pagename is the same as the "examples" directory in the
             # repo
-            return f"http://github.com/pyvista/pyvista/edit/main/{pagename}.py"
-        elif "_autosummary" in pagename:
+            return f'http://github.com/pyvista/pyvista/edit/main/{pagename}.py'
+        elif '_autosummary' in pagename:
             # This is an API example
             fullname = pagename.split('_autosummary')[1][1:]
             return linkcode_resolve('py', {'module': 'pyvista', 'fullname': fullname}, edit=True)
         else:
             return link
 
-    context["fix_edit_link_button"] = fix_edit_link_button
+    context['fix_edit_link_button'] = fix_edit_link_button

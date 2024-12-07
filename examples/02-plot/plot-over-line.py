@@ -33,8 +33,8 @@ b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
 line = pv.Line(a, b)
 
 p = pv.Plotter()
-p.add_mesh(mesh, style="wireframe", color="w")
-p.add_mesh(line, color="b")
+p.add_mesh(mesh, style='wireframe', color='w')
+p.add_mesh(line, color='b')
 p.show()
 
 # %%
@@ -58,8 +58,8 @@ line = pv.Line(a, b)
 
 p = pv.Plotter()
 p.add_mesh(mesh)
-p.add_mesh(line, color="white", line_width=10)
-p.add_point_labels([a, b], ["A", "B"], font_size=48, point_color="red", text_color="red")
+p.add_mesh(line, color='white', line_width=10)
+p.add_point_labels([a, b], ['A', 'B'], font_size=48, point_color='red', text_color='red')
 p.show()
 
 # %%
@@ -68,8 +68,8 @@ mesh.plot_over_line(
     a,
     b,
     resolution=10000,
-    title="Elevation Profile",
-    ylabel="Height above sea level",
+    title='Elevation Profile',
+    ylabel='Height above sea level',
     figsize=(10, 5),
 )
 # %%

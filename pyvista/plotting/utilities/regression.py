@@ -2,19 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from typing import Optional
 from typing import cast
 
 import numpy as np
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.utilities.arrays import point_array
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
-
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista.core._typing_core import NumpyArray
 
 
 def remove_alpha(img):
@@ -101,13 +98,13 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     if image is None:
         return np.empty((0, 0, 0))
     img_size = image.dimensions
-    img_array = point_array(image, 'ImageScalars')
+    img_array = cast(NumpyArray[float], point_array(image, 'ImageScalars'))
     # Reshape and write
     tgt_size = (img_size[1], img_size[0], -1)
     return img_array.reshape(tgt_size)[::-1]
 
 
-def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
+def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = False, scale=1):
     """Extract the image from the render window as an array.
 
     Parameters
@@ -155,7 +152,7 @@ def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
     return data
 
 
-def compare_images(im1, im2, threshold=1, use_vtk=True):
+def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
     """Compare two different images of the same size.
 
     Parameters
@@ -210,7 +207,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     from pyvista import read
     from pyvista import wrap
 
-    def to_img(img):  # numpydoc ignore=GL08
+    def to_img(img):
         if isinstance(img, ImageData):  # pragma: no cover
             return img
         elif isinstance(img, _vtk.vtkImageData):
