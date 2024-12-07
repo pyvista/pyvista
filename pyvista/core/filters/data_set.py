@@ -193,7 +193,7 @@ class DataSetFilters:
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
         icp.SetSource(self)
-        icp.SetTarget(cast(_vtk.vtkDataSet, target))
+        icp.SetTarget(wrap(target))
         icp.GetLandmarkTransform().SetModeToRigidBody()
         icp.SetMaximumNumberOfLandmarks(max_landmarks)
         icp.SetMaximumMeanDistance(max_mean_distance)
@@ -4140,12 +4140,11 @@ class DataSetFilters:
         See :ref:`interpolate_example` for more examples using this filter.
 
         """
-        target = wrap(target)
-
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
-        if isinstance(target, (pyvista.ImageData, pyvista.RectilinearGrid)):
-            target = target.cast_to_unstructured_grid()
+        target_ = wrap(target)
+        if isinstance(target_, (pyvista.ImageData, pyvista.RectilinearGrid)):
+            target_ = target_.cast_to_unstructured_grid()
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
@@ -4156,7 +4155,7 @@ class DataSetFilters:
             gaussian_kernel.SetKernelFootprintToNClosest()
 
         locator = _vtk.vtkStaticPointLocator()
-        locator.SetDataSet(target)  # type: ignore[arg-type]
+        locator.SetDataSet(target_)
         locator.BuildLocator()
 
         interpolator = _vtk.vtkPointInterpolator()
