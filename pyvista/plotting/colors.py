@@ -289,11 +289,11 @@ _VTK_NAMED_COLORS = {
 
 _SPECIAL_COLORS = {'paraview_background': '#52576e'}
 
-# Sort named colors alphabetically. Exclude prefixed colors (e.g. `tab:`) and place
-# them at the end
-_sorted_named_colors = dict(sorted({**_CSS_COLORS, **_VTK_NAMED_COLORS, **_SPECIAL_COLORS}.items()))
+# Sort named colors alphabetically by group.
 _hexcolors_with_underscores = {
-    **_sorted_named_colors,
+    **dict(sorted(_CSS_COLORS.items())),
+    **dict(sorted(_VTK_NAMED_COLORS.items())),
+    **dict(sorted(_SPECIAL_COLORS.items())),
     **_TABLEAU_COLORS,
 }
 hexcolors = {_format_color_name(n): h.lower() for n, h in _hexcolors_with_underscores.items()}
