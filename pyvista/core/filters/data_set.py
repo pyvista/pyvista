@@ -1387,6 +1387,80 @@ class DataSetFilters:
             return output.contour()
         return output
 
+    def slice_along_plane(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        *,
+        normal='x',
+        origin=None,
+        generate_polygons: bool = False,
+        contour: bool = False,
+        progress_bar: bool = False,
+    ):
+        """Slice a dataset by a plane at the specified origin and normal vector orientation.
+
+        Notes
+        -----
+        Because this filter may build an initial data structure during a preprocessing step,
+        the first execution of the filter may take longer than subsequent operations.
+        Typically the first execution is still faster than
+        :func:`pyvista.DataSetFilters.slice`, but for certain types of data this may not be
+        true. However if you are using the filter to cut a dataset multiple times (as in an
+        exploratory or interactive workflow) this filter typically works well.
+
+        Parameters
+        ----------
+        normal : sequence[float] | str, default: 'x'
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1, 0, 0)`` or ``'-x'`` for ``(-1, 0, 0)``, etc.
+
+        origin : sequence[float], optional
+            The center ``(x, y, z)`` coordinate of the plane on which
+            the slice occurs.
+
+        generate_polygons : bool, default: False
+            If this is enabled (``False`` by default), the output will
+            the polygon. Otherwise the output will be the intersection
+            triangles.
+
+        contour : bool, default: False
+            If ``True``, apply a ``contour`` filter after slicing.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Sliced dataset.
+
+        Examples
+        --------
+        Slice the surface of a sphere.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> slice_x = sphere.slice_along_plane(normal='x')
+        >>> slice_y = sphere.slice_along_plane(normal='y')
+        >>> slice_z = sphere.slice_along_plane(normal='z')
+        >>> slices = slice_x + slice_y + slice_z
+        >>> slices.plot(line_width=5)
+
+        """
+        if isinstance(normal, str):
+            normal = NORMALS[normal.lower()]
+        if origin is None:
+            origin = self.center
+        plane = generate_plane(normal, origin)
+        alg = _vtk.vtkPlaneCutter()
+        alg.SetInputDataObject(self)
+        alg.SetPlane(plane)
+        _update_alg(alg, progress_bar, 'Slicing along Plane')
+        output = _get_output(alg)
+        if contour:
+            return output.contour()
+        return output
+
     def threshold(  # type: ignore[misc]
         self: ConcreteDataSetType,
         value: float | VectorLike[float] | None = None,

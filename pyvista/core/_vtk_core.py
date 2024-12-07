@@ -279,6 +279,7 @@ from vtkmodules.vtkFiltersCore import vtkGlyph3D
 from vtkmodules.vtkFiltersCore import vtkImplicitPolyDataDistance
 from vtkmodules.vtkFiltersCore import vtkMarchingCubes
 from vtkmodules.vtkFiltersCore import vtkMassProperties
+from vtkmodules.vtkFiltersCore import vtkPlaneCutter
 from vtkmodules.vtkFiltersCore import vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation
