@@ -8,6 +8,7 @@ from ._aliases import ArrayLike  # noqa: F401
 from ._aliases import BoundsTuple  # noqa: F401
 from ._aliases import CellArrayLike  # noqa: F401
 from ._aliases import CellsLike  # noqa: F401
+from ._aliases import InteractionEventType  # noqa: F401
 from ._aliases import MatrixLike  # noqa: F401
 from ._aliases import Number  # noqa: F401
 from ._aliases import RotationLike  # noqa: F401
