@@ -74,3 +74,43 @@ pyvista.TransformLike
 .. currentmodule:: pyvista
 
 .. autodata:: TransformLike
+
+
+Concrete Data Object Types
+--------------------------
+
+pyvista.ConcreteGridType
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcreteGridType
+
+pyvista.ConcretePointGridType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcretePointGridType
+
+pyvista.ConcretePointSetType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcretePointSetType
+
+
+pyvista.ConcreteDataSetType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcreteDataSetType
+
+pyvista.ConcreteDataObjectType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcreteDataObjectType

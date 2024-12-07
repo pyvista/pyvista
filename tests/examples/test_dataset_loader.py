@@ -43,7 +43,6 @@ def _generate_dataset_loader_test_cases_from_module(
     module: ModuleType,
 ) -> list[DatasetLoaderTestCase]:
     """Generate test cases by module with all dataset functions and their respective file loaders."""
-
     test_cases_dict: dict = {}
 
     def add_to_dict(func: str, dataset_function: Callable[[], Any]):
@@ -110,23 +109,22 @@ def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
     if test_case.dataset_function is None:
         return (
             f"A file loader:\n\t'{test_case.dataset_loader[0]}'\n\t{test_case.dataset_loader[1]}\n"
-            f"was found but is missing a corresponding download function.\n\n"
+            f'was found but is missing a corresponding download function.\n\n'
             f"Expected to find a function named:\n\t'download_{test_case.dataset_name}'\nGot: {test_case.dataset_function}"
         )
     elif test_case.dataset_loader is None:
         return (
             f"A download function:\n\t'{test_case.dataset_function[0]}'\n\t{test_case.dataset_function[1]}\n"
-            f"was found but is missing a corresponding file loader.\n\n"
+            f'was found but is missing a corresponding file loader.\n\n'
             f"Expected to find a loader named:\n\t'_dataset_{test_case.dataset_name}'\nGot: {test_case.dataset_loader}"
         )
     else:
         return None
 
 
-@pytest.fixture()
+@pytest.fixture
 def examples_local_repository_tmp_dir(tmp_path):
     """Create a local repository with a bunch of datasets available for download."""
-
     # setup
     repository_path = os.path.join(tmp_path, 'repo')
     os.mkdir(repository_path)
@@ -168,7 +166,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     yield repository_path
 
     # teardown
-    downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+    downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
     downloads._FILE_CACHE = False
     [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
 
@@ -269,27 +267,27 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
     path = multi_file_loader.path
     assert multi_file_loader._file_loaders_ is not None
     assert isinstance(path, tuple)
-    assert [os.path.isabs(file) for file in path]
+    assert all(os.path.isabs(file) for file in path)
     assert len(path) == 3
 
     path_loadable = multi_file_loader.path_loadable
     assert isinstance(path_loadable, tuple)
-    assert [os.path.isabs(file) for file in path_loadable]
+    assert all(os.path.isabs(file) for file in path_loadable)
     assert len(path_loadable) == 2
     assert basename_not_loaded not in path_loadable
 
     # test download
     path_download = multi_file_loader.download()
     assert path_download == path
-    assert [os.path.isfile(file) for file in path_download]
-    assert [
+    assert all(os.path.isfile(file) for file in path_download)
+    assert all(
         'https://github.com/pyvista/vtk-data/raw/master/Data/' in url
         for url in multi_file_loader.source_url_raw
-    ]
-    assert [
+    )
+    assert all(
         'https://github.com/pyvista/vtk-data/blob/master/Data/' in url
         for url in multi_file_loader.source_url_blob
-    ]
+    )
 
     # test load
     # test calling load does not store the dataset internally
@@ -322,7 +320,7 @@ def test_multi_file_loader(examples_local_repository_tmp_dir, load_func):
         assert np.array_equal(dataset_loaded.points, expected.points)
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset_loader_one_file_local():
     # Test 'download' for a local built-in dataset
     loader = _SingleFileDownloadableDatasetLoader(examples.antfile)
@@ -355,7 +353,7 @@ def test_dataset_loader_one_file_local(dataset_loader_one_file_local):
     assert loader.unique_cell_types == (pv.CellType.TRIANGLE,)
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset_loader_one_file():
     loader = _SingleFileDownloadableDatasetLoader('cow.vtp')
     loader.download()
@@ -381,7 +379,7 @@ def test_dataset_loader_one_file(dataset_loader_one_file):
     assert loader.unique_cell_types == (pv.CellType.TRIANGLE, pv.CellType.POLYGON, pv.CellType.QUAD)
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset_loader_two_files_one_loadable():
     def _files_func():
         loadable = _SingleFileDownloadableDatasetLoader('HeadMRVolume.mhd')
@@ -422,7 +420,7 @@ def test_dataset_loader_two_files_one_loadable(dataset_loader_two_files_one_load
     assert loader.unique_cell_types == (pv.CellType.VOXEL,)
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset_loader_two_files_both_loadable():
     def _files_func():
         loadable1 = _SingleFileDownloadableDatasetLoader('bolt.slc')
@@ -468,7 +466,7 @@ def test_dataset_loader_two_files_both_loadable(dataset_loader_two_files_both_lo
     assert loader.unique_cell_types == (pv.CellType.VOXEL,)
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset_loader_cubemap():
     loader = _SingleFileDownloadableDatasetLoader(
         'cubemap_park/cubemap_park.zip',
@@ -502,7 +500,7 @@ def test_dataset_loader_cubemap(dataset_loader_cubemap):
     assert loader.unique_cell_types == (pv.CellType.PIXEL,)
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset_loader_dicom():
     loader = _SingleFileDownloadableDatasetLoader('DICOM_Stack/data.zip', target_file='data')
     loader.download()
@@ -602,7 +600,7 @@ def test_dataset_loader_from_nested_files_and_directory(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def dataset_loader_nested_multiblock():
     loader = _SingleFileDownloadableDatasetLoader('mesh_fs8.exo')
     loader.download()

@@ -12,6 +12,7 @@ from .check import check_iterable
 from .check import check_iterable_items
 from .check import check_length
 from .check import check_less_than
+from .check import check_ndim
 from .check import check_nonnegative
 from .check import check_number
 from .check import check_range
@@ -29,6 +30,8 @@ from .validate import validate_arrayN_unsigned
 from .validate import validate_arrayNx3
 from .validate import validate_axes
 from .validate import validate_data_range
+from .validate import validate_dimensionality
 from .validate import validate_number
+from .validate import validate_rotation
 from .validate import validate_transform3x3
 from .validate import validate_transform4x4

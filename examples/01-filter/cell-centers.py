@@ -31,7 +31,7 @@ centers = mesh.cell_centers()
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, show_edges=True, line_width=1)
-pl.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
+pl.add_mesh(centers, color='r', point_size=8.0, render_points_as_spheres=True)
 pl.show(cpos=cpos)
 
 
@@ -51,14 +51,14 @@ centers = grid.cell_centers()
 
 pl = pv.Plotter()
 pl.add_mesh(grid, show_edges=True, opacity=0.5, line_width=1)
-pl.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
+pl.add_mesh(centers, color='r', point_size=8.0, render_points_as_spheres=True)
 pl.show(cpos=cpos)
 
 # %%
 
 pl = pv.Plotter()
-pl.add_mesh(grid.extract_all_edges(), color="k", line_width=1)
-pl.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
+pl.add_mesh(grid.extract_all_edges(), color='k', line_width=1)
+pl.add_mesh(centers, color='r', point_size=8.0, render_points_as_spheres=True)
 pl.show(cpos=cpos)
 
 
@@ -100,7 +100,7 @@ points = grid.cell_centers().points
 
 pl = pv.Plotter()
 pl.add_mesh(grid, show_edges=True)
-pl.add_point_labels(points, labels=[f"{i}" for i in range(points.shape[0])])
-pl.show(cpos="xy")
+pl.add_point_labels(points, labels=[f'{i}' for i in range(points.shape[0])])
+pl.show(cpos='xy')
 # %%
 # .. tags:: filter

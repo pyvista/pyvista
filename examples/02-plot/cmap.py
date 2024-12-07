@@ -70,7 +70,7 @@ mesh.plot(scalars='values', cmap=my_colormap)
 # %%
 # Or you could make a simple colormap... any Matplotlib colormap can be passed
 # to PyVista.
-boring_cmap = plt.get_cmap("viridis", 5)
+boring_cmap = plt.get_cmap('viridis', 5)
 mesh.plot(scalars='values', cmap=boring_cmap)
 
 # %%
@@ -112,36 +112,36 @@ p.subplot(0, 0)
 p.add_mesh(
     mesh,
     scalars='Elevation',
-    cmap="fire",
+    cmap='fire',
     lighting=True,
-    scalar_bar_args={'title': "Colorcet Fire"},
+    scalar_bar_args={'title': 'Colorcet Fire'},
 )
 
 p.subplot(0, 1)
 p.add_mesh(
     mesh,
     scalars='Elevation',
-    cmap="fire",
+    cmap='fire',
     lighting=False,
-    scalar_bar_args={'title': "Colorcet Fire (No Lighting)"},
+    scalar_bar_args={'title': 'Colorcet Fire (No Lighting)'},
 )
 
 p.subplot(1, 0)
 p.add_mesh(
     mesh,
     scalars='Elevation',
-    cmap="hot",
+    cmap='hot',
     lighting=True,
-    scalar_bar_args={'title': "Matplotlib Hot"},
+    scalar_bar_args={'title': 'Matplotlib Hot'},
 )
 
 p.subplot(1, 1)
 p.add_mesh(
     mesh,
     scalars='Elevation',
-    cmap="hot",
+    cmap='hot',
     lighting=False,
-    scalar_bar_args={'title': "Matplotlib Hot (No Lighting)"},
+    scalar_bar_args={'title': 'Matplotlib Hot (No Lighting)'},
 )
 
 p.show()

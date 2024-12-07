@@ -1,4 +1,5 @@
-""".. _eigenmodes_example:
+"""
+.. _eigenmodes_example:
 
 Display Eigenmodes of Vibration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -9,7 +10,7 @@ been computed using the Ritz method, as outlined in Visscher, William M.,
 Albert Migliori, Thomas M. Bell, et Robert A. Reinert. "On the normal modes of
 free vibration of inhomogeneous and anisotropic elastic objects". The Journal
 of the Acoustical Society of America 90, n.4 (October 1991): 2154-62.
-https://asa.scitation.org/doi/10.1121/1.401643
+https://asa.scitation.org/doi/10.1121/1.401643.
 
 """
 
@@ -28,8 +29,10 @@ import pyvista as pv
 
 
 def analytical_integral_rppd(p, q, r, a, b, c):
-    """Returns the analytical value of the RPPD integral, i.e. the integral
-    of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c)."""
+    """Return the analytical value of the RPPD integral.
+
+    This is the integral of x**p * y**q * z**r for (x, -a, a), (y, -b, b), (z, -c, c).
+    """
     if p < 0 or q < 0 or r < 0.0:
         return 0.0
     else:
@@ -45,8 +48,11 @@ def analytical_integral_rppd(p, q, r, a, b, c):
 
 
 def make_cijkl_E_nu(E=200, nu=0.3):
-    """Makes cijkl from E and nu.
-    Default values for steel are: E=200 GPa, nu=0.3."""
+    """
+    Make cijkl from E and nu.
+
+    Default values for steel are: E=200 GPa, nu=0.3.
+    """
     lambd = E * nu / (1 + nu) / (1 - 2 * nu)
     mu = E / 2 / (1 + nu)
     cij = np.zeros((6, 6))
@@ -77,8 +83,7 @@ def make_cijkl_E_nu(E=200, nu=0.3):
 
 
 def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
-    """Returns first N unique frequencies with amplitude above threshold based
-    on first decimals."""
+    """Return first N unique frequencies with amplitude above threshold based on first decimals."""
     unique_freqs, unique_indices = np.unique(np.round(freqs, decimals=decimals), return_index=True)
     nonzero = unique_freqs > thresh
     unique_freqs, unique_indices = unique_freqs[nonzero], unique_indices[nonzero]
@@ -86,7 +91,9 @@ def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
 
 
 def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
-    """This routine assembles the mass and stiffness matrix.
+    """
+    Assemble the mass and stiffness matrix.
+
     It first builds an index of basis functions as a quadruplet of
     component and polynomial order for (x^p, y^q, z^r) of maximum order N.
 
@@ -181,7 +188,7 @@ computed_freqs_kHz, mode_indices = get_first_N_above_thresh(8, freqs / 1e3, thre
 print('found the following first unique eigenfrequencies:')
 for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)):
     error = np.abs(freq2 - freq1) / freq1 * 100.0
-    print(f"freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %")
+    print(f'freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %')
 
 # %%
 # Now, let's display a mode on a mesh of the cube.
@@ -233,9 +240,9 @@ pl = pv.Plotter(shape=(2, 4))
 for i, j in product(range(2), range(4)):
     pl.subplot(i, j)
     current_index = 4 * i + j
-    vector = f"eigenmode_{current_index:02}"
+    vector = f'eigenmode_{current_index:02}'
     pl.add_text(
-        f"mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz",
+        f'mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz',
         font_size=10,
     )
     pl.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector, show_scalar_bar=False)
