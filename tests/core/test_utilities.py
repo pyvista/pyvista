@@ -1834,3 +1834,19 @@ def test_parse_interaction_event(
     expected: vtk.vtkCommand.EventIds,
 ):
     assert _parse_interaction_event(event) == expected
+
+
+def test_parse_interaction_event_raises_str():
+    with pytest.raises(
+        ValueError,
+        match='Expected.*start.*end.*always.*foo was given',
+    ):
+        _parse_interaction_event('foo')
+
+
+def test_parse_interaction_event_raises_wrong_type():
+    with pytest.raises(
+        TypeError,
+        match='.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
+    ):
+        _parse_interaction_event(1)
