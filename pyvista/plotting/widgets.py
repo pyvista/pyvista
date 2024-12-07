@@ -31,12 +31,14 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
 
 
-def _parse_interaction_event(interaction_event):
+def _parse_interaction_event(
+    interaction_event: str | _vtk.vtkCommand.EventIds,
+):
     """Parse the interaction event.
 
     Parameters
     ----------
-    interaction_event : vtk.vtkCommand.EventIds, str, optional
+    interaction_event : vtk.vtkCommand.EventIds, str
         The VTK interaction event to use for triggering the callback. Accepts
         either the strings ``'start'``, ``'end'``, ``'always'`` or a
         ``vtk.vtkCommand.EventIds``.
@@ -47,24 +49,29 @@ def _parse_interaction_event(interaction_event):
         VTK Event type.
 
     """
-    if interaction_event == 'start':
-        interaction_event = _vtk.vtkCommand.StartInteractionEvent
-    elif interaction_event == 'end':
-        interaction_event = _vtk.vtkCommand.EndInteractionEvent
-    elif interaction_event == 'always':
-        interaction_event = _vtk.vtkCommand.InteractionEvent
-    elif isinstance(interaction_event, str):
-        raise ValueError(
-            "Expected value for `interaction_event` is 'start', "
-            f"'end', or 'always'. {interaction_event} was given.",
-        )
-    elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
+    if not isinstance(interaction_event, (_vtk.vtkCommand.EventIds, str)):
         raise TypeError(
             'Expected type for `interaction_event` is either a str '
             'or an instance of `vtk.vtkCommand.EventIds`.'
             f' ({type(interaction_event)}) was given.',
         )
-    return interaction_event
+
+    if isinstance(interaction_event, _vtk.vtkCommand.EventIds):
+        return interaction_event
+
+    event_map = {
+        'start': _vtk.vtkCommand.StartInteractionEvent,
+        'end': _vtk.vtkCommand.EndInteractionEvent,
+        'always': _vtk.vtkCommand.InteractionEvent,
+    }
+    if interaction_event not in event_map:
+        expected = ', '.join(f'`{e}`' for e in event_map)
+        raise ValueError(
+            f'Expected value for `interaction_event` is {expected}.'
+            f' {interaction_event} was given.',
+        )
+
+    return event_map[interaction_event]
 
 
 class WidgetHelper:
