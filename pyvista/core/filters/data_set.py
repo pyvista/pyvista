@@ -392,7 +392,7 @@ class DataSetFilters:
                 if isinstance(vector, str):
                     vector = vector.lower()
                     valid_strings = list(NORMALS.keys())
-                    _validation.check_contains(item=vector, container=valid_strings, name=name)
+                    _validation.check_contains(valid_strings, must_contain=vector, name=name)
                     vector = NORMALS[vector]
                 vector_ = _validation.validate_array3(vector, dtype_out=float, name=name)
             return vector_
@@ -8465,7 +8465,7 @@ class DataSetFilters:
             return multiblock.combine(merge_points=False).extract_geometry()
 
         # Validate style
-        _validation.check_contains(item=box_style, container=['frame', 'outline', 'face'])
+        _validation.check_contains(['frame', 'outline', 'face'], must_contain=box_style)
 
         # Create box
         source = pyvista.CubeFacesSource(bounds=self.bounds)
