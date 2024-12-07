@@ -56,7 +56,7 @@ class DataObject:
 
     _WRITERS: ClassVar[dict[str, type[_VTKWriterAlias]]] = {}
 
-    def __init__(self: DataObject, *args, **kwargs) -> None:
+    def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the data object."""
         try:
             super().__init__(*args, **kwargs)
@@ -70,7 +70,7 @@ class DataObject:
         # view these arrays as complex128 as VTK doesn't support complex types
         self._association_complex_names: defaultdict[Any, Any] = defaultdict(set)
 
-    def __getattr__(self: DataObject, item: str) -> Any:
+    def __getattr__(self: Self, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
@@ -96,7 +96,7 @@ class DataObject:
         """
         self.DeepCopy(to_copy)
 
-    def _from_file(self: DataObject, filename: str | Path, **kwargs) -> None:
+    def _from_file(self: Self, filename: str | Path, **kwargs) -> None:
         """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
@@ -107,11 +107,11 @@ class DataObject:
         self.shallow_copy(data)
         self._post_file_load_processing()
 
-    def _post_file_load_processing(self: DataObject) -> None:
+    def _post_file_load_processing(self: Self) -> None:
         """Execute after loading a dataset from file, to be optionally overridden by subclasses."""
 
     def save(
-        self: DataObject,
+        self: Self,
         filename: Path | str,
         binary: bool = True,
         texture: NumpyArray[np.uint8] | str | None = None,
@@ -201,7 +201,7 @@ class DataObject:
                 f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}',
             )
 
-    def _store_metadata(self: DataObject) -> None:
+    def _store_metadata(self: Self) -> None:
         """Store metadata as field data."""
         fdata = self.field_data
         for assoc_name in ('bitarray', 'complex'):
@@ -212,7 +212,7 @@ class DataObject:
                     key = f'_PYVISTA_{assoc_name}_{assoc_type}_'.upper()
                     fdata[key] = list(array_names)
 
-    def _restore_metadata(self: DataObject) -> None:
+    def _restore_metadata(self: Self) -> None:
         """Restore PyVista metadata from field data.
 
         Metadata is stored using ``_store_metadata`` and contains entries in
@@ -230,17 +230,17 @@ class DataObject:
                     del fdata[key]
 
     @abstractmethod
-    def get_data_range(self: DataObject) -> tuple[float, float]:  # pragma: no cover
+    def get_data_range(self: Self) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         raise NotImplementedError(
             f'{type(self)} mesh type does not have a `get_data_range` method.',
         )
 
-    def _get_attrs(self: DataObject) -> list[tuple[str, Any, str]]:  # pragma: no cover
+    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:  # pragma: no cover
         """Return the representation methods (internal helper)."""
         raise NotImplementedError('Called only by the inherited class')
 
-    def head(self: DataObject, display: bool = True, html: bool | None = None) -> str:
+    def head(self: Self, display: bool = True, html: bool | None = None) -> str:
         """Return the header stats of this dataset.
 
         If in IPython, this will be formatted to HTML. Otherwise
@@ -303,7 +303,7 @@ class DataObject:
             fmt += row.format('N Arrays:', self.n_arrays)
         return fmt.strip()
 
-    def _repr_html_(self: DataObject) -> str:  # pragma: no cover
+    def _repr_html_(self: Self) -> str:  # pragma: no cover
         """Return a pretty representation for Jupyter notebooks.
 
         This includes header details and information about all arrays.
@@ -311,7 +311,7 @@ class DataObject:
         """
         raise NotImplementedError('Called only by the inherited class')
 
-    def copy_meta_from(self: DataObject, *args, **kwargs) -> None:  # pragma: no cover
+    def copy_meta_from(self: Self, *args, **kwargs) -> None:  # pragma: no cover
         """Copy pyvista meta data onto this object from another object.
 
         Intended to be overridden by subclasses.
@@ -364,7 +364,7 @@ class DataObject:
         newobject.copy_meta_from(self, deep)
         return newobject
 
-    def __eq__(self: DataObject, other: object) -> bool:
+    def __eq__(self: Self, other: object) -> bool:
         """Test equivalency between data objects."""
         if not isinstance(self, type(other)):
             return False
@@ -395,9 +395,7 @@ class DataObject:
 
         return True
 
-    def add_field_data(
-        self: DataObject, array: NumpyArray[float], name: str, deep: bool = True
-    ) -> None:
+    def add_field_data(self: Self, array: NumpyArray[float], name: str, deep: bool = True) -> None:
         """Add field data.
 
         Use field data when size of the data you wish to associate
@@ -452,7 +450,7 @@ class DataObject:
         self.field_data.set_array(array, name, deep_copy=deep)
 
     @property
-    def field_data(self: DataObject) -> DataSetAttributes:
+    def field_data(self: Self) -> DataSetAttributes:
         """Return FieldData as DataSetAttributes.
 
         Use field data when size of the data you wish to associate
@@ -482,7 +480,7 @@ class DataObject:
             association=FieldAssociation.NONE,
         )
 
-    def clear_field_data(self: DataObject) -> None:
+    def clear_field_data(self: Self) -> None:
         """Remove all field data.
 
         Examples
@@ -505,7 +503,7 @@ class DataObject:
         self.field_data.clear()
 
     @property
-    def user_dict(self: DataObject) -> _SerializedDictArray:
+    def user_dict(self: Self) -> _SerializedDictArray:
         """Set or return a user-specified data dictionary.
 
         The dictionary is stored as a JSON-serialized string as part of the mesh's
@@ -599,7 +597,7 @@ class DataObject:
 
     @user_dict.setter
     def user_dict(
-        self: DataObject, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]
+        self: Self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]
     ) -> None:
         # Setting None removes the field data array
         if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
@@ -616,7 +614,7 @@ class DataObject:
                 f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.',
             )
 
-    def _config_user_dict(self: DataObject) -> None:
+    def _config_user_dict(self: Self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
         field_name = '_PYVISTA_USER_DICT'
         field_data = self.field_data
@@ -647,7 +645,7 @@ class DataObject:
         field_data.VTKObject.Modified()
 
     @property
-    def memory_address(self: DataObject) -> str:
+    def memory_address(self: Self) -> str:
         """Get address of the underlying VTK C++ object.
 
         Returns
@@ -666,7 +664,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString('')
 
     @property
-    def actual_memory_size(self: DataObject) -> int:
+    def actual_memory_size(self: Self) -> int:
         """Return the actual size of the dataset object.
 
         Returns
@@ -725,7 +723,7 @@ class DataObject:
         self.CopyAttributes(dataset)
 
     def __getstate__(  # type: ignore[return]
-        self: DataObject,
+        self: Self,
     ) -> tuple[FunctionType, tuple[dict[str, Any]]] | dict[str, Any]:
         """Support pickle."""
         pickle_format = pyvista.PICKLE_FORMAT
@@ -737,7 +735,7 @@ class DataObject:
         pyvista.set_pickle_format(pickle_format)  # noqa:  RET503
 
     def _serialize_vtk_pickle_format(
-        self: DataObject,
+        self: Self,
     ) -> tuple[FunctionType, tuple[dict[str, Any]]]:
         # Note: The serialized state has format: ( function, (dict,) )
         serialized = _vtk.serialize_VTK_data_object(self)
@@ -750,7 +748,7 @@ class DataObject:
         # the same format returned by the vtk serializer.
         return serialized
 
-    def _serialize_pyvista_pickle_format(self: DataObject) -> dict[str, Any]:
+    def _serialize_pyvista_pickle_format(self: Self) -> dict[str, Any]:
         """Support pickle by serializing the VTK object data to something which can be pickled natively.
 
         The format of the serialized VTK object data depends on `pyvista.PICKLE_FORMAT` (case-insensitive).
@@ -798,12 +796,12 @@ class DataObject:
             to_serialize = writer.GetOutputString()
 
         elif pyvista.PICKLE_FORMAT.lower() == 'legacy':
-            writer = _vtk.vtkDataSetWriter()  # type: ignore[assignment]
+            writer = _vtk.vtkDataSetWriter()
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
-            writer.SetFileTypeToBinary()  # type: ignore[attr-defined]
+            writer.SetFileTypeToBinary()
             writer.Write()
-            to_serialize = writer.GetOutputStdString()  # type: ignore[attr-defined]
+            to_serialize = writer.GetOutputStdString()
 
         state['vtk_serialized'] = to_serialize
 
@@ -812,7 +810,7 @@ class DataObject:
         state['PICKLE_FORMAT'] = pyvista.PICKLE_FORMAT
         return state
 
-    def __setstate__(self: DataObject, state: Any) -> None:
+    def __setstate__(self: Self, state: Any) -> None:
         """Support unpickle."""
 
         def _is_vtk_format(state_: Any) -> bool:
@@ -838,7 +836,7 @@ class DataObject:
             )
 
     def _unserialize_vtk_pickle_format(
-        self: DataObject, state: tuple[FunctionType, tuple[dict[str, Any]]]
+        self: Self, state: tuple[FunctionType, tuple[dict[str, Any]]]
     ) -> None:
         """Support unpickle of VTK's format."""
         # The vtk state has format: ( function, (dict,) )
@@ -848,7 +846,7 @@ class DataObject:
         obj = unserialize_func(state_dict)
         self.deep_copy(obj)
 
-    def _unserialize_pyvista_pickle_format(self: DataObject, state: dict[str, Any]) -> None:
+    def _unserialize_pyvista_pickle_format(self: Self, state: dict[str, Any]) -> None:
         """Support unpickle of PyVista 'xml' and 'legacy' formats.
 
         .. note::
@@ -889,16 +887,16 @@ class DataObject:
             reader.Update()
 
         elif pickle_format.lower() == 'legacy':
-            reader = _vtk.vtkDataSetReader()  # type: ignore[assignment]
+            reader = _vtk.vtkDataSetReader()
             reader.ReadFromInputStringOn()
             if isinstance(vtk_serialized, bytes):
-                reader.SetBinaryInputString(vtk_serialized, len(vtk_serialized))  # type: ignore[attr-defined]
+                reader.SetBinaryInputString(str(vtk_serialized), len(vtk_serialized))
             elif isinstance(vtk_serialized, str):
                 reader.SetInputString(vtk_serialized)
             reader.Update()
 
-        mesh = wrap(reader.GetOutput())  # type: ignore[attr-defined]
+        mesh = wrap(reader.GetOutput())
 
         # copy data
-        self.copy_structure(mesh)
-        self.copy_attributes(mesh)
+        self.copy_structure(mesh)  # type: ignore[arg-type]
+        self.copy_attributes(mesh)  # type: ignore[arg-type]
