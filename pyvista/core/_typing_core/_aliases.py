@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
@@ -79,3 +80,5 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 
 # Undocumented alias - should be expanded in docs
 _ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
+
+InteractionEventType = Literal['end', 'start', 'always'] | _vtk.vtkCommand.EventIds
