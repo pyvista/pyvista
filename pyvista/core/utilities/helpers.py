@@ -75,8 +75,6 @@ def wrap(dataset: _vtk.vtkPartitionedDataSet) -> PartitionedDataSet: ...
 # General catch-all cases
 @overload
 def wrap(dataset: _vtk.vtkDataSet) -> ConcreteDataSetAlias: ...
-# @overload
-# def wrap(dataset: ConcreteDataSetType) -> ConcreteDataSetType: ...
 @overload
 def wrap(dataset: DataSet) -> DataSet: ...
 @overload
@@ -300,9 +298,9 @@ def generate_plane(normal: VectorLike[float], origin: VectorLike[float]):
     """
     plane = _vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
-    normal_vector = _validation.validate_array3(normal, dtype_out=float)
-    normal_vector /= np.linalg.norm(normal_vector)
-    plane.SetNormal(*normal_vector)
+    normal_ = _validation.validate_array3(normal, dtype_out=float)
+    normal_ /= np.linalg.norm(normal_)
+    plane.SetNormal(*normal_)
     plane.SetOrigin(*origin)
     return plane
 

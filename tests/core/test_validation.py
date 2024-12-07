@@ -878,13 +878,13 @@ def test_check_number():
 
 
 def test_check_contains():
-    check_contains(item='foo', container=['foo', 'bar'])
+    check_contains(['foo', 'bar'], must_contain='foo')
     match = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item='foo', container=['cat', 'bar'])
+        check_contains(['cat', 'bar'], must_contain='foo')
     match = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item=5, container=range(4), name='_input')
+        check_contains(range(4), must_contain=5, name='_input')
 
 
 @pytest.mark.parametrize('name', ['_input', 'Axes'])

@@ -96,7 +96,7 @@ class DataSetFilters:
 
     def align(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        target: pyvista.DataSet | _vtk.vtkDataSet,
+        target: DataSet | _vtk.vtkDataSet,
         max_landmarks: int = 100,
         max_mean_distance: float = 1e-5,
         max_iterations: int = 500,
@@ -383,15 +383,19 @@ class DataSetFilters:
 
         """
 
-        def _validate_vector(vector, name: str):
-            if vector is not None:
+        def _validate_vector(
+            vector: VectorLike[float] | str | None, name: str
+        ) -> NumpyArray[float] | None:
+            if vector is None:
+                vector_ = vector
+            else:
                 if isinstance(vector, str):
                     vector = vector.lower()
                     valid_strings = list(NORMALS.keys())
-                    _validation.check_contains(item=vector, container=valid_strings, name=name)
+                    _validation.check_contains(valid_strings, must_contain=vector, name=name)
                     vector = NORMALS[vector]
-                vector = _validation.validate_array3(vector, dtype_out=float, name=name)
-            return vector
+                vector_ = _validation.validate_array3(vector, dtype_out=float, name=name)
+            return vector_
 
         axes, std = pyvista.principal_axes(self.points, return_std=True)
 
@@ -525,13 +529,11 @@ class DataSetFilters:
         See :ref:`clip_with_surface_example` for more examples using this filter.
 
         """
-        normal_vector: VectorLike[float] = (
-            NORMALS[normal.lower()] if isinstance(normal, str) else normal
-        )
+        normal_: VectorLike[float] = NORMALS[normal.lower()] if isinstance(normal, str) else normal
         # find center of data if origin not specified
-        origin_vector = self.center if origin is None else origin
+        origin_ = self.center if origin is None else origin
         # create the plane for clipping
-        function = generate_plane(normal_vector, origin_vector)
+        function = generate_plane(normal_, origin_)
         # run the clip
         result = DataSetFilters._clip_with_function(
             self,
@@ -674,7 +676,7 @@ class DataSetFilters:
         return clipped
 
     def compute_implicit_distance(  # type: ignore[misc]
-        self: ConcreteDataSetType, surface: pyvista.DataSet | _vtk.vtkDataSet, inplace: bool = False
+        self: ConcreteDataSetType, surface: DataSet | _vtk.vtkDataSet, inplace: bool = False
     ):
         """Compute the implicit distance from the points to a surface.
 
@@ -1061,14 +1063,12 @@ class DataSetFilters:
         See :ref:`slice_example` for more examples using this filter.
 
         """
-        normal_vector: VectorLike[float] = (
-            NORMALS[normal.lower()] if isinstance(normal, str) else normal
-        )
+        normal_: VectorLike[float] = NORMALS[normal.lower()] if isinstance(normal, str) else normal
         # find center of data if origin not specified
-        origin_vector = self.center if origin is None else origin
+        origin_ = self.center if origin is None else origin
 
         # create the plane for clipping
-        plane = generate_plane(normal_vector, origin_vector)
+        plane = generate_plane(normal_, origin_)
         return DataSetFilters.slice_implicit(
             self,
             plane,
@@ -1462,13 +1462,13 @@ class DataSetFilters:
 
         component_mode : {'component', 'all', 'any'}
             The method to satisfy the criteria for the threshold of
-            multicomponent scalars.  'selected' (default)
+            multicomponent scalars.  'component' (default)
             uses only the ``component``.  'all' requires all
             components to meet criteria.  'any' is when
             any component satisfies the criteria.
 
         component : int, default: 0
-            When using ``component_mode='selected'``, this sets
+            When using ``component_mode='component'``, this sets
             which component to threshold on.
 
         method : str, default: 'upper'
@@ -4309,7 +4309,7 @@ class DataSetFilters:
 
     def streamlines_from_source(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        source: pyvista.DataSet | _vtk.vtkDataSet,
+        source: DataSet | _vtk.vtkDataSet,
         vectors: str | None = None,
         integrator_type: Literal[45, 2, 4] = 45,
         integration_direction: Literal['both', 'backward', 'forward'] = 'both',
@@ -8487,7 +8487,7 @@ class DataSetFilters:
             return multiblock.combine(merge_points=False).extract_geometry()
 
         # Validate style
-        _validation.check_contains(item=box_style, container=['frame', 'outline', 'face'])
+        _validation.check_contains(['frame', 'outline', 'face'], must_contain=box_style)
 
         # Create box
         source = pyvista.CubeFacesSource(bounds=self.bounds)
