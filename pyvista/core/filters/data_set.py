@@ -4467,7 +4467,7 @@ class DataSetFilters:
         if max_length is None:
             max_length = 4.0 * self.GetLength()
 
-        source = wrap(source)  # type: ignore[arg-type]
+        source = wrap(source)
         # vtk throws error with two Structured Grids
         # See: https://github.com/pyvista/pyvista/issues/1373
         if isinstance(self, pyvista.StructuredGrid) and isinstance(source, pyvista.StructuredGrid):
