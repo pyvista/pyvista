@@ -217,9 +217,6 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple matplotlib
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
-      - name: Test collection (temporary)
-        run: python -m pytest --collect-only tests/core tests/examples
-
       - name: Core Testing (no GL)
         run: python -m pytest --cov=pyvista -v tests/core tests/examples
 
@@ -227,6 +224,9 @@ jobs:
         with:
           packages: libgl1-mesa-glx xvfb
           version: 3.0
+
+      - name: Test collection (temporary)
+        run: xvfb-run -a python -m pytest --collect-only
 
       - name: Plotting Testing (uses GL)
         run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
