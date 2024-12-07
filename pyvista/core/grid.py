@@ -20,6 +20,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from pyvista import StructuredGrid
     from pyvista import UnstructuredGrid
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import VectorLike
@@ -348,7 +349,9 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
-    def points(self: Self, points: Never) -> Never:  # numpydoc ignore=PR01
+    def points(
+        self: DataSet, points: MatrixLike[float] | _vtk.vtkPoints
+    ) -> None:  # numpydoc ignore=PR01
         """Raise an AttributeError.
 
         This setter overrides the base class's setter to ensure a user
