@@ -1036,16 +1036,16 @@ def check_iterable_items(
     )
 
 
-def check_contains(*, item: Any, container: Container[Any], name: str = 'Input') -> None:
+def check_contains(container: Container[Any], /, must_contain: Any, *, name: str = 'Input') -> None:
     """Check if an item is in a container.
 
     Parameters
     ----------
-    item : Any
-        Item to check.
-
     container : Any
-        Container the item is expected to be in.
+        Container to check.
+
+    must_contain : Any
+        Item which must be in the container.
 
     name : str, default: "Input"
         Variable name to use in the error messages if any are raised.
@@ -1053,7 +1053,7 @@ def check_contains(*, item: Any, container: Container[Any], name: str = 'Input')
     Raises
     ------
     ValueError
-        If the string is not in the iterable.
+        If the item is not in the container.
 
     See Also
     --------
@@ -1065,12 +1065,12 @@ def check_contains(*, item: Any, container: Container[Any], name: str = 'Input')
     Check if ``"A"`` is in a list of strings.
 
     >>> from pyvista import _validation
-    >>> _validation.check_contains(item="A", container=["A", "B", "C"])
+    >>> _validation.check_contains(["A", "B", "C"], must_contain="A")
 
     """
-    if item not in container:
+    if must_contain not in container:
         qualifier = 'one of' if isinstance(container, (list, tuple)) else 'in'
-        msg = f"{name} '{item}' is not valid. {name} must be {qualifier}: \n\t{container}"
+        msg = f"{name} '{must_contain}' is not valid. {name} must be {qualifier}: \n\t{container}"
         raise ValueError(msg)
 
 
