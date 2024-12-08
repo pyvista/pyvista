@@ -4145,8 +4145,11 @@ class DataSetFilters:
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
         target_ = wrap(target)
-        if isinstance(target_, (pyvista.ImageData, pyvista.RectilinearGrid)):
-            target_ = target_.cast_to_unstructured_grid()
+        target_ = (
+            target_.cast_to_unstructured_grid()
+            if isinstance(target_, (pyvista.ImageData, pyvista.RectilinearGrid))
+            else target_
+        )
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
