@@ -32,14 +32,12 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
 
 
-def _parse_interaction_event(
-    interaction_event: InteractionEventType,
-):
+def _parse_interaction_event(interaction_event: InteractionEventType):
     """Parse the interaction event.
 
     Parameters
     ----------
-    interaction_event : vtk.vtkCommand.EventIds, str
+    interaction_event : InteractionEventType
         The VTK interaction event to use for triggering the callback. Accepts
         either the strings ``'start'``, ``'end'``, ``'always'`` or a
         ``vtk.vtkCommand.EventIds``.
@@ -161,7 +159,7 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -297,7 +295,7 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -474,7 +472,7 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -720,7 +718,7 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -1026,7 +1024,7 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -1147,7 +1145,7 @@ class WidgetHelper:
             When using an implicit plane widget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -1242,7 +1240,7 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -1357,7 +1355,7 @@ class WidgetHelper:
             to :attr:`pyvista.global_theme.font.color
             <pyvista.plotting.themes._Font.color>`.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -1483,7 +1481,7 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -2016,7 +2014,7 @@ class WidgetHelper:
             last point are the same, this will be a closed loop
             spline.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -2154,7 +2152,7 @@ class WidgetHelper:
         closed : bool, optional
             Make the spline a closed loop.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -2370,7 +2368,7 @@ class WidgetHelper:
             If ``True``, run the callback function after the widget is
             created.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
