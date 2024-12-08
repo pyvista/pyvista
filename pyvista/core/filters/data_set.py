@@ -868,7 +868,7 @@ class DataSetFilters:
 
     def clip_surface(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        surface: pyvista.DataSet | _vtk.vtkDataSet,
+        surface: DataSet | _vtk.vtkDataSet,
         invert: bool = True,
         value: float = 0.0,
         compute_distance: bool = False,
@@ -930,7 +930,7 @@ class DataSetFilters:
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
-            surface = DataSetFilters.extract_geometry(surface)  # type: ignore[type-var]
+            surface = wrap(surface).extract_geometry()
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -2224,11 +2224,11 @@ class DataSetFilters:
 
     def texture_map_to_plane(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        origin=None,
-        point_u=None,
-        point_v=None,
+        origin: VectorLike[float] | None = None,
+        point_u: VectorLike[float] | None = None,
+        point_v: VectorLike[float] | None = None,
         inplace: bool = False,
-        name='Texture Coordinates',
+        name: str = 'Texture Coordinates',
         use_bounds: bool = False,
         progress_bar: bool = False,
     ):
@@ -2280,7 +2280,7 @@ class DataSetFilters:
 
         """
         if use_bounds:
-            _validation.check_type(use_bounds, (int, bool))
+            _validation.check_instance(use_bounds, bool, name='use_bounds')
             bounds = self.bounds
             origin = [bounds.x_min, bounds.y_min, bounds.z_min]  # BOTTOM LEFT CORNER
             point_u = [bounds.x_max, bounds.y_min, bounds.z_min]  # BOTTOM RIGHT CORNER
@@ -2289,9 +2289,9 @@ class DataSetFilters:
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
         else:
-            alg.SetOrigin(origin)  # BOTTOM LEFT CORNER
-            alg.SetPoint1(point_u)  # BOTTOM RIGHT CORNER
-            alg.SetPoint2(point_v)  # TOP LEFT CORNER
+            alg.SetOrigin(*origin)  # BOTTOM LEFT CORNER
+            alg.SetPoint1(*point_u)  # BOTTOM RIGHT CORNER
+            alg.SetPoint2(*point_v)  # TOP LEFT CORNER
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar, 'Texturing Map to Plane')
         output = _get_output(alg)
@@ -2310,10 +2310,10 @@ class DataSetFilters:
 
     def texture_map_to_sphere(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        center=None,
+        center: VectorLike[float] | None = None,
         prevent_seam: bool = True,
         inplace: bool = False,
-        name='Texture Coordinates',
+        name: str = 'Texture Coordinates',
         progress_bar: bool = False,
     ):
         """Texture map this dataset to a user defined sphere.
@@ -2364,7 +2364,7 @@ class DataSetFilters:
             alg.SetAutomaticSphereGeneration(True)
         else:
             alg.SetAutomaticSphereGeneration(False)
-            alg.SetCenter(center)
+            alg.SetCenter(*center)
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar, 'Mapping texture to sphere')
@@ -2493,7 +2493,10 @@ class DataSetFilters:
         orient: bool | str = True,
         scale: bool | str = True,
         factor: float = 1.0,
-        geom: _vtk.vtkDataSet | Sequence[_vtk.vtkDataSet] | None = None,
+        geom: _vtk.vtkDataSet
+        | pyvista.DataSet
+        | Sequence[_vtk.vtkDataSet | pyvista.DataSet]
+        | None = None,
         indices: VectorLike[int] | None = None,
         tolerance: float | None = None,
         absolute: bool = False,
@@ -2610,7 +2613,7 @@ class DataSetFilters:
         if geom is None:
             arrow = _vtk.vtkArrowSource()
             _update_alg(arrow, progress_bar, 'Making Arrow')
-            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
+            geoms: Sequence[_vtk.vtkDataSet | pyvista.DataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
             geoms = geom
@@ -2773,14 +2776,14 @@ class DataSetFilters:
             'point_seed',
             'closest',
         ] = 'all',
-        variable_input=None,
-        scalar_range=None,
+        variable_input: float | VectorLike[float] | None = None,
+        scalar_range: VectorLike[float] | None = None,
         scalars: str | None = None,
         label_regions: bool = True,
-        region_ids=None,
-        point_ids=None,
-        cell_ids=None,
-        closest_point=None,
+        region_ids: VectorLike[int] | None = None,
+        point_ids: VectorLike[int] | None = None,
+        cell_ids: VectorLike[int] | None = None,
+        closest_point: VectorLike[float] | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
         **kwargs,
@@ -3080,7 +3083,7 @@ class DataSetFilters:
                         "`region_ids` must be specified when `extraction_mode='specified'`.",
                     )
                 else:
-                    region_ids = variable_input
+                    region_ids = cast(NumpyArray[int], variable_input)
             # this mode returns scalar data with shape that may not match
             # the number of cells/points, so we extract all and filter later
             # alg.SetExtractionModeToSpecifiedRegions()
@@ -3095,7 +3098,7 @@ class DataSetFilters:
                         "`cell_ids` must be specified when `extraction_mode='cell_seed'`.",
                     )
                 else:
-                    cell_ids = variable_input
+                    cell_ids = cast(NumpyArray[int], variable_input)
             alg.SetExtractionModeToCellSeededRegions()
             alg.InitializeSeedList()
             for i in _unravel_and_validate_ids(cell_ids):
@@ -3108,7 +3111,7 @@ class DataSetFilters:
                         "`point_ids` must be specified when `extraction_mode='point_seed'`.",
                     )
                 else:
-                    point_ids = variable_input
+                    point_ids = cast(NumpyArray[int], variable_input)
             alg.SetExtractionModeToPointSeededRegions()
             alg.InitializeSeedList()
             for i in _unravel_and_validate_ids(point_ids):
@@ -3121,7 +3124,7 @@ class DataSetFilters:
                         "`closest_point` must be specified when `extraction_mode='closest'`.",
                     )
                 else:
-                    closest_point = variable_input
+                    closest_point = cast(NumpyArray[float], variable_input)
             alg.SetExtractionModeToClosestPointRegion()
             alg.SetClosestPoint(*closest_point)
 
@@ -3304,8 +3307,8 @@ class DataSetFilters:
     def warp_by_scalar(  # type: ignore[misc]
         self: ConcreteDataSetType,
         scalars: str | None = None,
-        factor=1.0,
-        normal=None,
+        factor: float = 1.0,
+        normal: VectorLike[float] | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
         **kwargs,
@@ -3379,7 +3382,7 @@ class DataSetFilters:
         )  # args: (idx, port, connection, field, name)
         alg.SetScaleFactor(factor)
         if normal is not None:
-            alg.SetNormal(normal)
+            alg.SetNormal(*normal)
             alg.SetUseNormal(True)
         _update_alg(alg, progress_bar, 'Warping by Scalar')
         output = _get_output(alg)
@@ -3393,7 +3396,7 @@ class DataSetFilters:
     def warp_by_vector(  # type: ignore[misc]
         self: ConcreteDataSetType,
         vectors: str | None = None,
-        factor=1.0,
+        factor: float = 1.0,
         inplace: bool = False,
         progress_bar: bool = False,
     ):
@@ -3738,7 +3741,11 @@ class DataSetFilters:
         return mesh
 
     def delaunay_3d(  # type: ignore[misc]
-        self: ConcreteDataSetType, alpha=0.0, tol=0.001, offset=2.5, progress_bar: bool = False
+        self: ConcreteDataSetType,
+        alpha: float = 0.0,
+        tol: float = 0.001,
+        offset: float = 2.5,
+        progress_bar: bool = False,
     ):
         """Construct a 3D Delaunay triangulation of the mesh.
 
@@ -3795,8 +3802,8 @@ class DataSetFilters:
 
     def select_enclosed_points(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        surface,
-        tolerance=0.001,
+        surface: pyvista.PolyData,
+        tolerance: float = 0.001,
         inside_out: bool = False,
         check_surface: bool = True,
         progress_bar: bool = False,
@@ -4696,7 +4703,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def decimate_boundary(  # type: ignore[misc]
-        self: ConcreteDataSetType, target_reduction=0.5, progress_bar: bool = False
+        self: ConcreteDataSetType, target_reduction: float = 0.5, progress_bar: bool = False
     ):
         """Return a decimated version of a triangulation of the boundary.
 
@@ -4837,7 +4844,7 @@ class DataSetFilters:
         ylabel : str, optional
             The string label of the Y-axis. Defaults to variable name.
 
-        figsize : tuple(int), optional
+        figsize : tuple(int, int), optional
             The size of the new figure.
 
         figure : bool, default: True
@@ -6439,7 +6446,10 @@ class DataSetFilters:
         return output
 
     def merge_points(  # type: ignore[misc]
-        self: ConcreteDataSetType, tolerance=0.0, inplace: bool = False, progress_bar: bool = False
+        self: ConcreteDataSetType,
+        tolerance: float = 0.0,
+        inplace: bool = False,
+        progress_bar: bool = False,
     ):
         """Merge duplicate points in this mesh.
 
@@ -6491,9 +6501,9 @@ class DataSetFilters:
 
     def merge(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        grid=None,
+        grid: _vtk.vtkDataSet | Sequence[_vtk.vtkDataSet] | pyvista.MultiBlock | None = None,
         merge_points: bool = True,
-        tolerance=0.0,
+        tolerance: float = 0.0,
         inplace: bool = False,
         main_has_priority: bool = True,
         progress_bar: bool = False,
@@ -6566,7 +6576,7 @@ class DataSetFilters:
         if not main_has_priority:
             append_filter.AddInputData(self)
 
-        if isinstance(grid, pyvista.DataSet):
+        if isinstance(grid, _vtk.vtkDataSet):
             append_filter.AddInputData(grid)
         elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
@@ -6898,24 +6908,20 @@ class DataSetFilters:
 
             # bool(non-empty string/True) == True, bool(None/False) == False
         alg.SetComputeGradient(bool(gradient))
-        if isinstance(gradient, bool):
-            gradient = 'gradient'
-        alg.SetResultArrayName(gradient)
+        gradient_str = 'gradient' if isinstance(gradient, bool) else gradient
+        alg.SetResultArrayName(gradient_str)
 
         alg.SetComputeDivergence(bool(divergence))
-        if isinstance(divergence, bool):
-            divergence = 'divergence'
-        alg.SetDivergenceArrayName(divergence)
+        divergence_str = 'divergence' if isinstance(divergence, bool) else divergence
+        alg.SetDivergenceArrayName(divergence_str)
 
         alg.SetComputeVorticity(bool(vorticity))
-        if isinstance(vorticity, bool):
-            vorticity = 'vorticity'
-        alg.SetVorticityArrayName(vorticity)
+        vorticity_str = 'vorticity' if isinstance(vorticity, bool) else vorticity
+        alg.SetVorticityArrayName(vorticity_str)
 
         alg.SetComputeQCriterion(bool(qcriterion))
-        if isinstance(qcriterion, bool):
-            qcriterion = 'qcriterion'
-        alg.SetQCriterionArrayName(qcriterion)
+        qcriterion_str = 'qcriterion' if isinstance(qcriterion, bool) else qcriterion
+        alg.SetQCriterionArrayName(qcriterion_str)
 
         alg.SetFasterApproximation(faster)
         field = get_array_association(self, scalars_, preference=preference)
@@ -6926,7 +6932,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def shrink(  # type: ignore[misc]
-        self: ConcreteDataSetType, shrink_factor=1.0, progress_bar: bool = False
+        self: ConcreteDataSetType, shrink_factor: float = 1.0, progress_bar: bool = False
     ):
         """Shrink the individual faces of a mesh.
 
@@ -6978,7 +6984,7 @@ class DataSetFilters:
 
     def tessellate(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        max_n_subdivide=3,
+        max_n_subdivide: int = 3,
         merge_points: bool = True,
         progress_bar: bool = False,
     ):
@@ -7213,8 +7219,8 @@ class DataSetFilters:
 
     def reflect(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        normal,
-        point=None,
+        normal: VectorLike[float],
+        point: VectorLike[float] | None = None,
         inplace: bool = False,
         transform_all_input_vectors: bool = False,
         progress_bar: bool = False,
@@ -8027,7 +8033,7 @@ class DataSetFilters:
 
     def partition(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        n_partitions,
+        n_partitions: int,
         generate_global_id: bool = False,
         as_composite: bool = True,
     ):
@@ -8546,7 +8552,7 @@ class DataSetFilters:
         return alg_output
 
     def explode(  # type: ignore[misc]
-        self: ConcreteDataSetType, factor=0.1
+        self: ConcreteDataSetType, factor: float = 0.1
     ):
         """Push each individual cell away from the center of the dataset.
 
@@ -8697,8 +8703,8 @@ class DataSetFilters:
     def sort_labels(  # type: ignore[misc]
         self: ConcreteDataSetType,
         scalars: str | None = None,
-        preference='point',
-        output_scalars=None,
+        preference: Literal['point', 'cell'] = 'point',
+        output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
     ):
@@ -8788,8 +8794,8 @@ class DataSetFilters:
         self: ConcreteDataSetType,
         sort: bool = False,
         scalars: str | None = None,
-        preference='point',
-        output_scalars=None,
+        preference: Literal['point', 'cell'] = 'point',
+        output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
     ):
