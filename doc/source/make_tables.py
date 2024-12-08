@@ -383,14 +383,17 @@ class ColorTable(DocTable):
     """Class to generate colors table."""
 
     path = f'{COLORS_TABLE_DIR}/color_table.rst'
+    title = ''
+    value_name = 'Hex'
+    value_func = lambda c: c.hex_rgb
     header = _aligned_dedent(
         """
-        |.. list-table::
+        |.. list-table:: {}
         |   :widths: 50 20 30
         |   :header-rows: 1
         |
         |   * - Name
-        |     - Hex value
+        |     - {} value
         |     - Example
         """,
     )
@@ -413,7 +416,7 @@ class ColorTable(DocTable):
     def _table_data_from_color_sequence(colors: Sequence[pv.Color]):
         assert len(colors) > 0, 'No colors were provided.'
         colors_dict: dict[str | None, dict[str, Any]] = {
-            c.name: {'name': c.name, 'hex': c.hex_rgb, 'synonyms': []} for c in colors
+            c.name: {'color': c, 'synonyms': []} for c in colors
         }
         assert all(name is not None for name in colors_dict.keys()), 'Colors must be named.'
         # Add synonyms defined in ``color_synonyms`` dictionary.
@@ -424,20 +427,15 @@ class ColorTable(DocTable):
 
     @classmethod
     def get_header(cls, data):
-        return cls.header
+        return cls.header.format(cls.title, cls.value_name)
 
     @classmethod
     def get_row(cls, i, row_data):
         name_template = '``"{}"``'
-        names = [row_data['name']] + row_data['synonyms']
+        color = row_data['color']
+        names = [color.name] + row_data['synonyms']
         name = ' or '.join(name_template.format(n) for n in names)
-        return cls.row_template.format(name, row_data['hex'], row_data['hex'])
-
-
-def _sort_colors():
-    colors_rgb = [pv.Color(c).float_rgb for c in pv.hexcolors.values()]
-    # Sort colors by hue, saturation, and value (HSV)
-    return sorted(colors_rgb, key=lambda c: tuple(colorsys.rgb_to_hsv(*pv.Color(c).float_rgb)))
+        return cls.row_template.format(name, cls.value_func(color), color.hex_rgb)
 
 
 def _colorlike_to_float_hls(colors: Sequence[ColorLike]) -> tuple[tuple[float, float, float]]:
@@ -454,44 +452,30 @@ ALL_COLORS_FLOAT_HLS: tuple[tuple[float, float, float]] = tuple(
 )
 
 # Saturation constants
-GRAYS_SATURATION_THRESHOLD = 0.05
+GRAYS_SATURATION_THRESHOLD = 0.15
 
 # Lightness constants
 LOWER_LIGHTNESS_THRESHOLD = 0.1
 UPPER_LIGHTNESS_THRESHOLD = 0.9
 
 # Hue constants
-_360 = 360.0
-RED_HUE = 0.0
-ORANGE_HUE = 30.0 / _360
-YELLOW_HUE = 60.0 / _360
-GREEN_HUE = 120.0 / _360
-CYAN_HUE = 180.0 / _360
-BLUE_HUE = 240.0 / _360
-PINK_HUE = 300 / _360
-MAX_HUE = _360 / _360
-
-# Define boundaries between hues in range [0.0, 1.0]
-RED_ORANGE_HUE = (RED_HUE + ORANGE_HUE) / 2
-ORANGE_YELLOW_HUE = (ORANGE_HUE + YELLOW_HUE) / 2
-YELLOW_GREEN_HUE = (YELLOW_HUE + GREEN_HUE) / 2
-GREEN_CYAN_HUE = (GREEN_HUE + CYAN_HUE) / 2
-CYAN_BLUE_HUE = (CYAN_HUE + BLUE_HUE) / 2
-BLUE_PINK_HUE = (BLUE_HUE + PINK_HUE) / 2
-PINK_RED_HUE = (PINK_HUE + MAX_HUE) / 2
+ONE_SIXTH = 1.0 / 6.0
+TWO_SIXTH = 2.0 / 6.0
+THREE_SIXTH = 3.0 / 6.0
+FOUR_SIXTH = 4.0 / 6.0
+FIVE_SIXTH = 5.0 / 6.0
 
 
 class ColorClassification(StrEnum):
-    LIGHT = auto()
-    DARK = auto()
+    WHITE = auto()
+    BLACK = auto()
     GRAY = auto()
     RED = auto()
-    ORANGE = auto()
     YELLOW = auto()
     GREEN = auto()
     CYAN = auto()
     BLUE = auto()
-    PINK = auto()
+    MAGENTA = auto()
 
 
 def classify_hls_color(hls_color: tuple[float, float, float]) -> ColorClassification:
@@ -500,27 +484,25 @@ def classify_hls_color(hls_color: tuple[float, float, float]) -> ColorClassifica
 
     # Classify by lightness
     if lightness > UPPER_LIGHTNESS_THRESHOLD:
-        return ColorClassification.LIGHT
+        return ColorClassification.WHITE
     elif lightness < LOWER_LIGHTNESS_THRESHOLD:
-        return ColorClassification.DARK
+        return ColorClassification.BLACK
     # Classify by saturation
     elif saturation < GRAYS_SATURATION_THRESHOLD:
         return ColorClassification.GRAY
     # Classify by hue
-    elif hue >= PINK_RED_HUE or hue < RED_ORANGE_HUE:
+    elif hue < ONE_SIXTH:
         return ColorClassification.RED
-    elif RED_ORANGE_HUE <= hue < ORANGE_YELLOW_HUE:
-        return ColorClassification.ORANGE
-    elif ORANGE_YELLOW_HUE <= hue < YELLOW_GREEN_HUE:
+    elif ONE_SIXTH <= hue < TWO_SIXTH:
         return ColorClassification.YELLOW
-    elif YELLOW_GREEN_HUE <= hue < GREEN_CYAN_HUE:
+    elif TWO_SIXTH <= hue < THREE_SIXTH:
         return ColorClassification.GREEN
-    elif GREEN_CYAN_HUE <= hue < CYAN_BLUE_HUE:
+    elif THREE_SIXTH <= hue < FOUR_SIXTH:
         return ColorClassification.CYAN
-    elif CYAN_BLUE_HUE <= hue < BLUE_PINK_HUE:
+    elif FOUR_SIXTH <= hue < FIVE_SIXTH:
         return ColorClassification.BLUE
-    elif BLUE_PINK_HUE <= hue < PINK_RED_HUE:
-        return ColorClassification.PINK
+    elif hue >= FIVE_SIXTH:
+        return ColorClassification.MAGENTA
     else:
         raise RuntimeError(
             f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, was not categorized. \n'
@@ -528,15 +510,21 @@ def classify_hls_color(hls_color: tuple[float, float, float]) -> ColorClassifica
         )
 
 
-class ColorCategoryTable(ColorTable):
+class HLSClassificationTable(ColorTable):
     """Class to generate sorted colors table."""
 
+    value_name = 'HLS'
+    value_func = lambda c: str(c._int_hls).replace('(', '').replace(')', '')
     classification: ColorClassification
 
     @property
     @final
     def path(cls):
         return f'{COLORS_TABLE_DIR}/color_table_{cls.classification.name}.rst'
+
+    @classmethod
+    def get_header(cls, data):
+        return cls.header.format(cls.classification.name.title() + 's', cls.value_name)
 
     @classmethod
     def fetch_data(cls):
@@ -549,64 +537,58 @@ class ColorCategoryTable(ColorTable):
         return cls._table_data_from_color_sequence(color_obj)
 
 
-class ColorTableLIGHT(ColorCategoryTable):
-    """Class to generate LIGHT colors table."""
+class ColorTableWHITE(HLSClassificationTable):
+    """Class to generate WHITE colors table."""
 
-    classification = ColorClassification.LIGHT
-
-
-class ColorTableDARK(ColorCategoryTable):
-    """Class to generate DARK colors table."""
-
-    classification = ColorClassification.DARK
+    classification = ColorClassification.WHITE
 
 
-class ColorTableGRAY(ColorCategoryTable):
+class ColorTableBLACK(HLSClassificationTable):
+    """Class to generate BLACK colors table."""
+
+    classification = ColorClassification.BLACK
+
+
+class ColorTableGRAY(HLSClassificationTable):
     """Class to generate GRAY colors table."""
 
     classification = ColorClassification.GRAY
 
 
-class ColorTableRED(ColorCategoryTable):
+class ColorTableRED(HLSClassificationTable):
     """Class to generate RED colors table."""
 
     classification = ColorClassification.RED
 
 
-class ColorTableORANGE(ColorCategoryTable):
-    """Class to generate ORANGE colors table."""
-
-    classification = ColorClassification.ORANGE
-
-
-class ColorTableYELLOW(ColorCategoryTable):
+class ColorTableYELLOW(HLSClassificationTable):
     """Class to generate YELLOW colors table."""
 
     classification = ColorClassification.YELLOW
 
 
-class ColorTableGREEN(ColorCategoryTable):
+class ColorTableGREEN(HLSClassificationTable):
     """Class to generate GREEN colors table."""
 
     classification = ColorClassification.GREEN
 
 
-class ColorTableCYAN(ColorCategoryTable):
+class ColorTableCYAN(HLSClassificationTable):
     """Class to generate CYAN colors table."""
 
     classification = ColorClassification.CYAN
 
 
-class ColorTableBLUE(ColorCategoryTable):
+class ColorTableBLUE(HLSClassificationTable):
     """Class to generate BLUE colors table."""
 
     classification = ColorClassification.BLUE
 
 
-class ColorTablePINK(ColorCategoryTable):
-    """Class to generate PINK colors table."""
+class ColorTableMAGENTA(HLSClassificationTable):
+    """Class to generate MAGENTA colors table."""
 
-    classification = ColorClassification.PINK
+    classification = ColorClassification.MAGENTA
 
 
 def _get_doc(func: Callable[[], Any]) -> str | None:
@@ -2254,15 +2236,14 @@ def make_all_tables():  # noqa: D103
     ColorSchemeTable.generate()
     ColorTable.generate()
     ColorTableGRAY.generate()
-    ColorTableLIGHT.generate()
-    ColorTableDARK.generate()
+    ColorTableWHITE.generate()
+    ColorTableBLACK.generate()
     ColorTableRED.generate()
-    ColorTableORANGE.generate()
     ColorTableYELLOW.generate()
     ColorTableGREEN.generate()
     ColorTableCYAN.generate()
     ColorTableBLUE.generate()
-    ColorTablePINK.generate()
+    ColorTableMAGENTA.generate()
 
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
