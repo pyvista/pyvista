@@ -391,7 +391,6 @@ allow-dict-calls-with-keyword-arguments = true
 "pyvista/core/utilities/features.py" = ["ANN"]
 "pyvista/core/utilities/helpers.py" = ["ANN"]
 "pyvista/core/utilities/image_sources.py" = ["ANN"]
-"pyvista/core/utilities/misc.py" = ["ANN"]
 "pyvista/core/utilities/observers.py" = ["ANN"]
 "pyvista/core/utilities/reader.py" = ["ANN"]
 
