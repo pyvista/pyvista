@@ -19,6 +19,8 @@ Table of colors supported by :class:`~pyvista.Color` and :class:`pyvista.Plotter
 
     .. include:: /api/utilities/color_table/color_table_RED.rst
 
+    .. include:: /api/utilities/color_table/color_table_ORANGE.rst
+
     .. include:: /api/utilities/color_table/color_table_YELLOW.rst
 
     .. include:: /api/utilities/color_table/color_table_GREEN.rst
@@ -26,5 +28,7 @@ Table of colors supported by :class:`~pyvista.Color` and :class:`pyvista.Plotter
     .. include:: /api/utilities/color_table/color_table_CYAN.rst
 
     .. include:: /api/utilities/color_table/color_table_BLUE.rst
+
+    .. include:: /api/utilities/color_table/color_table_VIOLET.rst
 
     .. include:: /api/utilities/color_table/color_table_MAGENTA.rst
