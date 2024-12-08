@@ -40,6 +40,8 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
+    from pyvista import MultiBlock
+    from pyvista import PolyData
     from pyvista.core._typing_core import ConcreteDataObjectType
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
@@ -2493,10 +2495,7 @@ class DataSetFilters:
         orient: bool | str = True,
         scale: bool | str = True,
         factor: float = 1.0,
-        geom: _vtk.vtkDataSet
-        | pyvista.DataSet
-        | Sequence[_vtk.vtkDataSet | pyvista.DataSet]
-        | None = None,
+        geom: _vtk.vtkDataSet | DataSet | Sequence[_vtk.vtkDataSet | DataSet] | None = None,
         indices: VectorLike[int] | None = None,
         tolerance: float | None = None,
         absolute: bool = False,
@@ -2613,7 +2612,7 @@ class DataSetFilters:
         if geom is None:
             arrow = _vtk.vtkArrowSource()
             _update_alg(arrow, progress_bar, 'Making Arrow')
-            geoms: Sequence[_vtk.vtkDataSet | pyvista.DataSet] = [arrow.GetOutput()]
+            geoms: Sequence[_vtk.vtkDataSet | DataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
             geoms = geom
@@ -3802,7 +3801,7 @@ class DataSetFilters:
 
     def select_enclosed_points(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        surface: pyvista.PolyData,
+        surface: PolyData,
         tolerance: float = 0.001,
         inside_out: bool = False,
         check_surface: bool = True,
@@ -6501,7 +6500,11 @@ class DataSetFilters:
 
     def merge(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        grid: _vtk.vtkDataSet | Sequence[_vtk.vtkDataSet] | pyvista.MultiBlock | None = None,
+        grid: DataSet
+        | _vtk.vtkDataSet
+        | MultiBlock
+        | Sequence[DataSet | _vtk.vtkDataSet]
+        | None = None,
         merge_points: bool = True,
         tolerance: float = 0.0,
         inplace: bool = False,
