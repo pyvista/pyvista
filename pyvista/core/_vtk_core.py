@@ -172,6 +172,7 @@ from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_HEXAHEDRON
 from vtkmodules.vtkCommonDataModel import VTK_VERTEX
 from vtkmodules.vtkCommonDataModel import VTK_VOXEL
 from vtkmodules.vtkCommonDataModel import VTK_WEDGE
+from vtkmodules.vtkCommonDataModel import vtkAbstractCellLocator
 from vtkmodules.vtkCommonDataModel import vtkBiQuadraticQuad
 from vtkmodules.vtkCommonDataModel import vtkBiQuadraticQuadraticHexahedron
 from vtkmodules.vtkCommonDataModel import vtkBiQuadraticQuadraticWedge

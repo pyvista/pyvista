@@ -4236,7 +4236,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     raise ValueError('Invalid resolution dimensions.')
                 volume.spacing = resolution
             else:
-                volume = wrap(volume)  # type: ignore[assignment]
+                volume = wrap(volume)
                 if not is_pyvista_dataset(volume):
                     raise TypeError(
                         f'Object type ({type(volume)}) not supported for plotting in PyVista.',
