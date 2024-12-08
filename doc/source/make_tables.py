@@ -695,7 +695,7 @@ class DatasetCard:
     )[1:-1]
 
     # Template title with a reference anchor
-    dataset_title_with_ref_templxate = _aligned_dedent(
+    dataset_title_with_ref_template = _aligned_dedent(
         """
         |.. _{}:
         |
