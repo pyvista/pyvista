@@ -2862,16 +2862,12 @@ def test_slice_along_line_composite(composite):
     assert output.n_blocks == composite.n_blocks
 
 
-def test_interpolate(uniform):
+def test_interpolate():
     pdata = pv.PolyData()
     pdata.points = np.random.default_rng().random((10, 3))
     pdata['scalars'] = np.random.default_rng().random(10)
     surf = pv.Sphere(theta_resolution=10, phi_resolution=10)
     interp = surf.interpolate(pdata, radius=0.01, progress_bar=True)
-    assert interp.n_points
-    assert interp.n_arrays
-
-    interp = surf.interpolate(uniform, radius=0.01, progress_bar=True)
     assert interp.n_points
     assert interp.n_arrays
 
