@@ -28,11 +28,12 @@ from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import VectorLike
 
 
 def _parse_interaction_event(
-    interaction_event: str | _vtk.vtkCommand.EventIds,
+    interaction_event: InteractionEventType,
 ):
     """Parse the interaction event.
 
@@ -114,7 +115,7 @@ class WidgetHelper:
         use_planes: bool = False,
         outline_translation: bool = True,
         pass_widget: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
     ):
         """Add a box widget to the scene.
 
@@ -252,7 +253,7 @@ class WidgetHelper:
         outline_translation: bool = True,
         merge_points: bool = True,
         crinkle: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -404,7 +405,7 @@ class WidgetHelper:
         pass_widget: bool = False,
         test_callback: bool = True,
         normal_rotation: bool = True,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         outline_opacity=None,
     ):
         """Add a plane widget to the scene.
@@ -656,7 +657,7 @@ class WidgetHelper:
         implicit: bool = True,
         normal_rotation: bool = True,
         crinkle: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -838,7 +839,7 @@ class WidgetHelper:
         outline_translation: bool = False,
         implicit: bool = True,
         normal_rotation: bool = True,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -969,7 +970,7 @@ class WidgetHelper:
         outline_translation: bool = False,
         implicit: bool = True,
         normal_rotation: bool = True,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -1115,7 +1116,7 @@ class WidgetHelper:
         generate_triangles: bool = False,
         widget_color=None,
         tubing: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
         """Slice a mesh with three interactive planes.
@@ -1203,7 +1204,7 @@ class WidgetHelper:
         color=None,
         use_vertices: bool = False,
         pass_widget: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
     ):
         """Add a line widget to the scene.
 
@@ -1322,7 +1323,7 @@ class WidgetHelper:
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         color=None,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         style=None,
     ):
         """Add a text slider bar widget.
@@ -1432,7 +1433,7 @@ class WidgetHelper:
         pointb=(0.9, 0.9),
         color=None,
         pass_widget: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         style=None,
         title_height=0.03,
         title_opacity=1.0,
@@ -1960,7 +1961,7 @@ class WidgetHelper:
         pass_widget: bool = False,
         closed: bool = False,
         initial_points=None,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
     ):
         """Create and add a spline widget to the scene.
 
@@ -2097,7 +2098,7 @@ class WidgetHelper:
         ribbon_opacity=0.5,
         initial_points=None,
         closed: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
         """Slice a mesh with a spline widget.
@@ -2310,7 +2311,7 @@ class WidgetHelper:
         indices=None,
         pass_widget: bool = False,
         test_callback: bool = True,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
     ):
         """Add one or many sphere widgets to a scene.
 
