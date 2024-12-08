@@ -4184,13 +4184,13 @@ class DataSetFilters:
     def streamlines(  # type: ignore[misc]
         self: ConcreteDataSetType,
         vectors: str | None = None,
-        source_center=None,
-        source_radius=None,
-        n_points=100,
-        start_position=None,
+        source_center: VectorLike[float] | None = None,
+        source_radius: float | None = None,
+        n_points: int = 100,
+        start_position: VectorLike[float] | None = None,
         return_source: bool = False,
-        pointa=None,
-        pointb=None,
+        pointa: VectorLike[float] | None = None,
+        pointb: VectorLike[float] | None = None,
         progress_bar: bool = False,
         **kwargs,
     ):
@@ -4272,20 +4272,25 @@ class DataSetFilters:
             source_radius = 0.0
             n_points = 1
 
+        alg: _vtk.vtkAlgorithm
         if (pointa is not None and pointb is None) or (pointa is None and pointb is not None):
             raise ValueError('Both pointa and pointb must be provided')
         elif pointa is not None and pointb is not None:
-            source = _vtk.vtkLineSource()
-            source.SetPoint1(pointa)
-            source.SetPoint2(pointb)
-            source.SetResolution(n_points)
+            line_source = _vtk.vtkLineSource()
+            line_source.SetPoint1(*pointa)
+            line_source.SetPoint2(*pointb)
+            line_source.SetResolution(n_points)
+            alg = line_source
         else:
-            source = _vtk.vtkPointSource()  # type: ignore[assignment]
-            source.SetCenter(source_center)  # type: ignore[attr-defined]
-            source.SetRadius(source_radius)  # type: ignore[attr-defined]
-            source.SetNumberOfPoints(n_points)  # type: ignore[attr-defined]
-        source.Update()
-        input_source = wrap(source.GetOutput())
+            point_source = _vtk.vtkPointSource()
+            point_source.SetCenter(*source_center)
+            point_source.SetRadius(source_radius)
+            point_source.SetNumberOfPoints(n_points)
+            alg = point_source
+
+        alg.Update()
+        input_source = cast(pyvista.DataSet, wrap(alg.GetOutput()))
+
         output = self.streamlines_from_source(
             input_source,
             vectors,
@@ -4298,24 +4303,24 @@ class DataSetFilters:
 
     def streamlines_from_source(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        source,
+        source: DataSet | _vtk.vtkDataSet,
         vectors: str | None = None,
-        integrator_type=45,
-        integration_direction='both',
+        integrator_type: Literal[45, 2, 4] = 45,
+        integration_direction: Literal['both', 'backward', 'forward'] = 'both',
         surface_streamlines: bool = False,
-        initial_step_length=0.5,
-        step_unit='cl',
-        min_step_length=0.01,
-        max_step_length=1.0,
-        max_steps=2000,
-        terminal_speed=1e-12,
-        max_error=1e-6,
-        max_time=None,
+        initial_step_length: float = 0.5,
+        step_unit: Literal['cl', 'l'] = 'cl',
+        min_step_length: float = 0.01,
+        max_step_length: float = 1.0,
+        max_steps: int = 2000,
+        terminal_speed: float = 1e-12,
+        max_error: float = 1e-6,
+        max_time: float | None = None,
         compute_vorticity: bool = True,
-        rotation_scale=1.0,
-        interpolator_type='point',
+        rotation_scale: float = 1.0,
+        interpolator_type: Literal['point', 'cell', 'p', 'c'] = 'point',
         progress_bar: bool = False,
-        max_length=None,
+        max_length: float | None = None,
     ):
         """Generate streamlines of vectors from the points of a source mesh.
 
@@ -4420,11 +4425,15 @@ class DataSetFilters:
         See the :ref:`streamlines_example` example.
 
         """
-        integration_direction = str(integration_direction).strip().lower()
-        if integration_direction not in ['both', 'back', 'backward', 'forward']:
+        integration_direction_lower = str(integration_direction).strip().lower()
+        if integration_direction_lower not in ['both', 'back', 'backward', 'forward']:
             raise ValueError(
                 "Integration direction must be one of:\n 'backward', "
-                f"'forward', or 'both' - not '{integration_direction}'.",
+                f"'forward', or 'both' - not '{integration_direction_lower}'.",
+            )
+        else:
+            integration_direction_ = cast(
+                Literal['both', 'back', 'backward', 'forward'], integration_direction
             )
         if integrator_type not in [2, 4, 45]:
             raise ValueError('Integrator type must be one of `2`, `4`, or `45`.')
@@ -4432,7 +4441,7 @@ class DataSetFilters:
             raise ValueError("Interpolator type must be either 'cell' or 'point'")
         if step_unit not in ['l', 'cl']:
             raise ValueError("Step unit must be either 'l' or 'cl'")
-        step_unit = {
+        step_unit_val = {
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
@@ -4458,9 +4467,7 @@ class DataSetFilters:
         if max_length is None:
             max_length = 4.0 * self.GetLength()
 
-        if not isinstance(source, pyvista.DataSet):
-            raise TypeError('source must be a pyvista.DataSet')
-
+        source = wrap(source)
         # vtk throws error with two Structured Grids
         # See: https://github.com/pyvista/pyvista/issues/1373
         if isinstance(self, pyvista.StructuredGrid) and isinstance(source, pyvista.StructuredGrid):
@@ -4475,7 +4482,7 @@ class DataSetFilters:
         # general parameters
         alg.SetComputeVorticity(compute_vorticity)
         alg.SetInitialIntegrationStep(initial_step_length)
-        alg.SetIntegrationStepUnit(step_unit)
+        alg.SetIntegrationStepUnit(step_unit_val)
         alg.SetMaximumError(max_error)
         alg.SetMaximumIntegrationStep(max_step_length)
         alg.SetMaximumNumberOfSteps(max_steps)
@@ -4485,9 +4492,9 @@ class DataSetFilters:
         alg.SetSurfaceStreamlines(surface_streamlines)
         alg.SetTerminalSpeed(terminal_speed)
         # Model parameters
-        if integration_direction == 'forward':
+        if integration_direction_ == 'forward':
             alg.SetIntegrationDirectionToForward()
-        elif integration_direction in ['backward', 'back']:
+        elif integration_direction_ in ['backward', 'back']:
             alg.SetIntegrationDirectionToBackward()
         else:
             alg.SetIntegrationDirectionToBoth()
@@ -4510,18 +4517,18 @@ class DataSetFilters:
     def streamlines_evenly_spaced_2D(  # type: ignore[misc]
         self: ConcreteDataSetType,
         vectors: str | None = None,
-        start_position=None,
-        integrator_type=2,
-        step_length=0.5,
-        step_unit='cl',
-        max_steps=2000,
-        terminal_speed=1e-12,
-        interpolator_type='point',
-        separating_distance=10,
-        separating_distance_ratio=0.5,
-        closed_loop_maximum_distance=0.5,
-        loop_angle=20,
-        minimum_number_of_loop_points=4,
+        start_position: VectorLike[float] | None = None,
+        integrator_type: Literal[2, 4] = 2,
+        step_length: float = 0.5,
+        step_unit: Literal['cl', 'l'] = 'cl',
+        max_steps: int = 2000,
+        terminal_speed: float = 1e-12,
+        interpolator_type: Literal['point', 'cell', 'p', 'c'] = 'point',
+        separating_distance: float = 10.0,
+        separating_distance_ratio: float = 0.5,
+        closed_loop_maximum_distance: float = 0.5,
+        loop_angle: float = 20.0,
+        minimum_number_of_loop_points: int = 4,
         compute_vorticity: bool = True,
         progress_bar: bool = False,
     ):
@@ -4632,7 +4639,7 @@ class DataSetFilters:
             raise ValueError("Interpolator type must be either 'cell' or 'point'")
         if step_unit not in ['l', 'cl']:
             raise ValueError("Step unit must be either 'l' or 'cl'")
-        step_unit = {
+        step_unit_ = {
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
@@ -4651,7 +4658,7 @@ class DataSetFilters:
 
         # Seed for starting position
         if start_position is not None:
-            alg.SetStartPosition(start_position)
+            alg.SetStartPosition(*start_position)
 
         # Integrator controls
         if integrator_type == 2:
@@ -4659,7 +4666,7 @@ class DataSetFilters:
         else:
             alg.SetIntegratorTypeToRungeKutta4()
         alg.SetInitialIntegrationStep(step_length)
-        alg.SetIntegrationStepUnit(step_unit)
+        alg.SetIntegrationStepUnit(step_unit_)
         alg.SetMaximumNumberOfSteps(max_steps)
 
         # Stopping criteria
