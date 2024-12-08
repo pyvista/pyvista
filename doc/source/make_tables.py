@@ -531,19 +531,19 @@ def classify_hls_color(hls_color: tuple[float, float, float]) -> ColorClassifica
 class ColorCategoryTable(ColorTable):
     """Class to generate sorted colors table."""
 
-    color_category: ColorClassification
+    classification: ColorClassification
 
     @property
     @final
     def path(cls):
-        return f'{COLORS_TABLE_DIR}/color_table_{cls.color_category.name}.rst'
+        return f'{COLORS_TABLE_DIR}/color_table_{cls.classification.name}.rst'
 
     @classmethod
     def fetch_data(cls):
         colors_hls = [
             color
             for color in ALL_COLORS_FLOAT_HLS
-            if classify_hls_color(color) == cls.color_category
+            if classify_hls_color(color) == cls.classification
         ]
         color_obj = _float_hls_to_color(sorted(colors_hls))
         return cls._table_data_from_color_sequence(color_obj)
@@ -552,61 +552,61 @@ class ColorCategoryTable(ColorTable):
 class ColorTableLIGHT(ColorCategoryTable):
     """Class to generate LIGHT colors table."""
 
-    color_category = ColorClassification.LIGHT
+    classification = ColorClassification.LIGHT
 
 
 class ColorTableDARK(ColorCategoryTable):
     """Class to generate DARK colors table."""
 
-    color_category = ColorClassification.DARK
+    classification = ColorClassification.DARK
 
 
 class ColorTableGRAY(ColorCategoryTable):
     """Class to generate GRAY colors table."""
 
-    color_category = ColorClassification.GRAY
+    classification = ColorClassification.GRAY
 
 
 class ColorTableRED(ColorCategoryTable):
     """Class to generate RED colors table."""
 
-    color_category = ColorClassification.RED
+    classification = ColorClassification.RED
 
 
 class ColorTableORANGE(ColorCategoryTable):
     """Class to generate ORANGE colors table."""
 
-    color_category = ColorClassification.ORANGE
+    classification = ColorClassification.ORANGE
 
 
 class ColorTableYELLOW(ColorCategoryTable):
     """Class to generate YELLOW colors table."""
 
-    color_category = ColorClassification.YELLOW
+    classification = ColorClassification.YELLOW
 
 
 class ColorTableGREEN(ColorCategoryTable):
     """Class to generate GREEN colors table."""
 
-    color_category = ColorClassification.GREEN
+    classification = ColorClassification.GREEN
 
 
 class ColorTableCYAN(ColorCategoryTable):
     """Class to generate CYAN colors table."""
 
-    color_category = ColorClassification.CYAN
+    classification = ColorClassification.CYAN
 
 
 class ColorTableBLUE(ColorCategoryTable):
     """Class to generate BLUE colors table."""
 
-    color_category = ColorClassification.BLUE
+    classification = ColorClassification.BLUE
 
 
 class ColorTablePINK(ColorCategoryTable):
     """Class to generate PINK colors table."""
 
-    color_category = ColorClassification.PINK
+    classification = ColorClassification.PINK
 
 
 def _get_doc(func: Callable[[], Any]) -> str | None:
