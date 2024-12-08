@@ -868,7 +868,7 @@ class DataSetFilters:
 
     def clip_surface(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        surface: pyvista.DataSet | _vtk.vtkDataSet,
+        surface: DataSet | _vtk.vtkDataSet,
         invert: bool = True,
         value: float = 0.0,
         compute_distance: bool = False,
@@ -930,7 +930,7 @@ class DataSetFilters:
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
-            surface = DataSetFilters.extract_geometry(surface)
+            surface = wrap(surface).extract_geometry()
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -1802,8 +1802,8 @@ class DataSetFilters:
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(  # type: ignore[misc]
-        self: DataSet | _vtk.vtkDataSet,
-        extent: Sequence[float] | None = None,
+        self: ConcreteDataSetType,
+        extent: VectorLike[float] | None = None,
         progress_bar: bool = False,
     ):
         """Extract the outer surface of a volume or structured grid dataset.
@@ -1816,7 +1816,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        extent : sequence[float], optional
+        extent : VectorLike[float], optional
             Specify a ``(x_min, x_max, y_min, y_max, z_min, z_max)`` bounding box to
             clip data.
 
@@ -1851,7 +1851,8 @@ class DataSetFilters:
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
         if extent is not None:
-            alg.SetExtent(extent)  # type: ignore[call-overload]
+            extent_ = _validation.validate_arrayN(extent, must_have_length=6, to_list=True)
+            alg.SetExtent(extent_)
             alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
@@ -4165,7 +4166,7 @@ class DataSetFilters:
             gaussian_kernel.SetKernelFootprintToNClosest()
 
         locator = _vtk.vtkStaticPointLocator()
-        locator.SetDataSet(target)  # type: ignore[arg-type]
+        locator.SetDataSet(target)
         locator.BuildLocator()
 
         interpolator = _vtk.vtkPointInterpolator()
@@ -4431,14 +4432,14 @@ class DataSetFilters:
         See the :ref:`streamlines_example` example.
 
         """
-        integration_direction_str = str(integration_direction).strip().lower()
-        if integration_direction_str not in ['both', 'back', 'backward', 'forward']:
+        integration_direction_lower = str(integration_direction).strip().lower()
+        if integration_direction_lower not in ['both', 'back', 'backward', 'forward']:
             raise ValueError(
                 "Integration direction must be one of:\n 'backward', "
-                f"'forward', or 'both' - not '{integration_direction_str}'.",
+                f"'forward', or 'both' - not '{integration_direction_lower}'.",
             )
         else:
-            valid_integration_direction = cast(
+            integration_direction_ = cast(
                 Literal['both', 'back', 'backward', 'forward'], integration_direction
             )
         if integrator_type not in [2, 4, 45]:
@@ -4498,9 +4499,9 @@ class DataSetFilters:
         alg.SetSurfaceStreamlines(surface_streamlines)
         alg.SetTerminalSpeed(terminal_speed)
         # Model parameters
-        if valid_integration_direction == 'forward':
+        if integration_direction_ == 'forward':
             alg.SetIntegrationDirectionToForward()
-        elif valid_integration_direction in ['backward', 'back']:
+        elif integration_direction_ in ['backward', 'back']:
             alg.SetIntegrationDirectionToBackward()
         else:
             alg.SetIntegrationDirectionToBoth()
@@ -4645,7 +4646,7 @@ class DataSetFilters:
             raise ValueError("Interpolator type must be either 'cell' or 'point'")
         if step_unit not in ['l', 'cl']:
             raise ValueError("Step unit must be either 'l' or 'cl'")
-        step_unit_val = {
+        step_unit_ = {
             'cl': _vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
             'l': _vtk.vtkStreamTracer.LENGTH_UNIT,
         }[step_unit]
@@ -4672,7 +4673,7 @@ class DataSetFilters:
         else:
             alg.SetIntegratorTypeToRungeKutta4()
         alg.SetInitialIntegrationStep(step_length)
-        alg.SetIntegrationStepUnit(step_unit_val)
+        alg.SetIntegrationStepUnit(step_unit_)
         alg.SetMaximumNumberOfSteps(max_steps)
 
         # Stopping criteria
@@ -8627,7 +8628,7 @@ class DataSetFilters:
         return self.shrink(1.0)
 
     def extract_cells_by_type(  # type: ignore[misc]
-        self: ConcreteDataSetType, cell_types, progress_bar: bool = False
+        self: ConcreteDataSetType, cell_types: int | VectorLike[int], progress_bar: bool = False
     ):
         """Extract cells of a specified type.
 
@@ -8648,7 +8649,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        cell_types :  int | sequence[int]
+        cell_types :  int | VectorLike[int]
             The cell types to extract. Must be a single or list of integer cell
             types. See :class:`pyvista.CellType`.
 
@@ -8689,15 +8690,13 @@ class DataSetFilters:
         """
         alg = _vtk.vtkExtractCellsByType()
         alg.SetInputDataObject(self)
-        if isinstance(cell_types, int):
-            alg.AddCellType(cell_types)
-        elif isinstance(cell_types, (np.ndarray, Sequence)):
-            for cell_type in cell_types:
-                alg.AddCellType(cell_type)
-        else:
-            raise TypeError(
-                f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.',
-            )
+        valid_cell_types = _validation.validate_arrayN(
+            cell_types,
+            must_be_integer=True,
+            name='cell_types',
+        )
+        for cell_type in valid_cell_types:
+            alg.AddCellType(int(cell_type))
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
 

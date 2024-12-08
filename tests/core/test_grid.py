@@ -851,7 +851,8 @@ def test_create_image_data_from_specs():
     assert grid.spacing == spacing
 
     # ensure negative spacing is not allowed
-    with pytest.raises(ValueError, match='Spacing must be non-negative'):
+    match = 'spacing values must all be greater than or equal to 0.0.'
+    with pytest.raises(ValueError, match=match):
         grid = pv.ImageData(dimensions=dims, spacing=(-1, 1, 1))
 
     # uniform grid from a uniform grid
