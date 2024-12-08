@@ -195,7 +195,6 @@ omit = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "--import-mode=importlib"
 doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
   'error::pyvista.PyVistaDeprecationWarning',
