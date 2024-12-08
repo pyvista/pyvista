@@ -388,11 +388,12 @@ class ColorTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table::
-        |   :widths: 48 8 18 26
+        |   :widths: 8 48 18 26
         |   :header-rows: 1
+        |   :stub-columns: 1
         |
-        |   * - Name
-        |     - Source
+        |   * - Source
+        |     - Name
         |     - Hex value
         |     - Example
         """,
@@ -435,7 +436,7 @@ class ColorTable(DocTable):
         names = [row_data['name']] + row_data['synonyms']
         name = ' or '.join(name_template.format(n) for n in names)
         source_badge = _get_color_source_badge(row_data['name'])
-        return cls.row_template.format(name, source_badge, row_data['hex'], row_data['hex'])
+        return cls.row_template.format(source_badge, name, row_data['hex'], row_data['hex'])
 
 
 def _get_color_source_badge(name: str) -> str:
