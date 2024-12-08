@@ -381,10 +381,11 @@ def test_print_repr(grid, display, html):
     representation method for DataSet.
     """
     result = grid.head(display=display, html=html)
+    assert isinstance(result, str)
     if display and html:
-        assert result is None
+        assert result == ''
     else:
-        assert result is not None
+        assert result != ''
 
 
 def test_invalid_vector(grid):
