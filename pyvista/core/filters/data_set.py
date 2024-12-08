@@ -1802,7 +1802,9 @@ class DataSetFilters:
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(  # type: ignore[misc]
-        self: ConcreteDataSetType, extent: Sequence[float] | None = None, progress_bar: bool = False
+        self: ConcreteDataSetType,
+        extent: VectorLike[float] | None = None,
+        progress_bar: bool = False,
     ):
         """Extract the outer surface of a volume or structured grid dataset.
 
@@ -1814,7 +1816,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        extent : sequence[float], optional
+        extent : VectorLike[float], optional
             Specify a ``(x_min, x_max, y_min, y_max, z_min, z_max)`` bounding box to
             clip data.
 
@@ -1849,7 +1851,8 @@ class DataSetFilters:
         alg = _vtk.vtkGeometryFilter()
         alg.SetInputDataObject(self)
         if extent is not None:
-            alg.SetExtent(extent)  # type: ignore[call-overload]
+            extent_ = _validation.validate_arrayN(extent, must_have_length=6, to_list=True)
+            alg.SetExtent(extent_)
             alg.SetExtentClipping(True)
         _update_alg(alg, progress_bar, 'Extracting Geometry')
         return _get_output(alg)
@@ -5378,7 +5381,10 @@ class DataSetFilters:
             plt.show()
 
     def extract_cells(  # type: ignore[misc]
-        self: ConcreteDataSetType, ind, invert: bool = False, progress_bar: bool = False
+        self: ConcreteDataSetType,
+        ind: int | VectorLike[int],
+        invert: bool = False,
+        progress_bar: bool = False,
     ):
         """Return a subset of the grid.
 
@@ -5419,14 +5425,18 @@ class DataSetFilters:
 
         """
         if invert:
-            _, ind = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
-            ind = [i for i in range(self.n_cells) if i not in ind]
+            ind_: VectorLike[int]
+            _, ind_ = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
+            ind_ = [i for i in range(self.n_cells) if i not in ind_]
+            ids = numpy_to_idarr(ind_)
+        else:
+            ids = numpy_to_idarr(ind)
 
         # Create selection objects
         selectionNode = _vtk.vtkSelectionNode()
         selectionNode.SetFieldType(_vtk.vtkSelectionNode.CELL)
         selectionNode.SetContentType(_vtk.vtkSelectionNode.INDICES)
-        selectionNode.SetSelectionList(numpy_to_idarr(ind))
+        selectionNode.SetSelectionList(ids)
 
         selection = _vtk.vtkSelection()
         selection.AddNode(selectionNode)
@@ -5447,7 +5457,7 @@ class DataSetFilters:
 
     def extract_points(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        ind,
+        ind: int | VectorLike[int],
         adjacent_cells: bool = True,
         include_cells: bool = True,
         progress_bar: bool = False,
@@ -6172,7 +6182,7 @@ class DataSetFilters:
             id_mask[logic_] = True
 
         # Determine which ids to keep
-        id_mask = np.zeros((len(array),), dtype=np.bool_)
+        id_mask = np.zeros((len(array),), dtype=bool)
         if values is not None:
             for val in values:
                 logic = array == val
@@ -6220,7 +6230,7 @@ class DataSetFilters:
         self: ConcreteDataSetType,
         pass_pointid: bool = True,
         pass_cellid: bool = True,
-        nonlinear_subdivision=1,
+        nonlinear_subdivision: int = 1,
         progress_bar: bool = False,
     ):
         """Extract surface mesh of the grid.
@@ -6346,7 +6356,7 @@ class DataSetFilters:
 
     def extract_feature_edges(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        feature_angle=30.0,
+        feature_angle: float = 30.0,
         boundary_edges: bool = True,
         non_manifold_edges: bool = True,
         feature_edges: bool = True,
@@ -8612,7 +8622,7 @@ class DataSetFilters:
         return self.shrink(1.0)
 
     def extract_cells_by_type(  # type: ignore[misc]
-        self: ConcreteDataSetType, cell_types, progress_bar: bool = False
+        self: ConcreteDataSetType, cell_types: int | VectorLike[int], progress_bar: bool = False
     ):
         """Extract cells of a specified type.
 
@@ -8633,7 +8643,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        cell_types :  int | sequence[int]
+        cell_types :  int | VectorLike[int]
             The cell types to extract. Must be a single or list of integer cell
             types. See :class:`pyvista.CellType`.
 
@@ -8674,15 +8684,13 @@ class DataSetFilters:
         """
         alg = _vtk.vtkExtractCellsByType()
         alg.SetInputDataObject(self)
-        if isinstance(cell_types, int):
-            alg.AddCellType(cell_types)
-        elif isinstance(cell_types, (np.ndarray, Sequence)):
-            for cell_type in cell_types:
-                alg.AddCellType(cell_type)
-        else:
-            raise TypeError(
-                f'Invalid type {type(cell_types)} for `cell_types`. Expecting an int or a sequence.',
-            )
+        valid_cell_types = _validation.validate_arrayN(
+            cell_types,
+            must_be_integer=True,
+            name='cell_types',
+        )
+        for cell_type in valid_cell_types:
+            alg.AddCellType(int(cell_type))
         _update_alg(alg, progress_bar, 'Extracting cell types')
         return _get_output(alg)
 
