@@ -3895,7 +3895,9 @@ class DataSetFilters:
         pass_point_data: bool = True,
         categorical: bool = False,
         progress_bar: bool = False,
-        locator: str | _vtk.vtkAbstractCellLocator | None = None,
+        locator: Literal['cell', 'cell_tree', 'obb_tree', 'static_cell']
+        | _vtk.vtkAbstractCellLocator
+        | None = None,
         pass_field_data: bool = True,
         mark_blank: bool = True,
         snap_to_closest_point: bool = False,
