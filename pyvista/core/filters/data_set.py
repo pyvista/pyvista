@@ -6911,20 +6911,16 @@ class DataSetFilters:
 
             # bool(non-empty string/True) == True, bool(None/False) == False
         alg.SetComputeGradient(bool(gradient))
-        gradient_str = 'gradient' if isinstance(gradient, bool) else gradient
-        alg.SetResultArrayName(gradient_str)
+        alg.SetResultArrayName('gradient' if isinstance(gradient, bool) else gradient)
 
         alg.SetComputeDivergence(bool(divergence))
-        divergence_str = 'divergence' if isinstance(divergence, bool) else divergence
-        alg.SetDivergenceArrayName(divergence_str)
+        alg.SetDivergenceArrayName('divergence' if isinstance(divergence, bool) else divergence)
 
         alg.SetComputeVorticity(bool(vorticity))
-        vorticity_str = 'vorticity' if isinstance(vorticity, bool) else vorticity
-        alg.SetVorticityArrayName(vorticity_str)
+        alg.SetVorticityArrayName('vorticity' if isinstance(vorticity, bool) else vorticity)
 
         alg.SetComputeQCriterion(bool(qcriterion))
-        qcriterion_str = 'qcriterion' if isinstance(qcriterion, bool) else qcriterion
-        alg.SetQCriterionArrayName(qcriterion_str)
+        alg.SetQCriterionArrayName('qcriterion' if isinstance(qcriterion, bool) else qcriterion)
 
         alg.SetFasterApproximation(faster)
         field = get_array_association(self, scalars_, preference=preference)
