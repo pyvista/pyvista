@@ -39,7 +39,7 @@ def _is_valid_url(url):
         return True
 
 
-@flaky_test
+@flaky_test(exceptions=(AttributeError,))
 def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
