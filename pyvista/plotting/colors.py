@@ -7,6 +7,7 @@ Used code from matplotlib.colors.  Thanks for your work.
 # of methods defined in this module.
 from __future__ import annotations
 
+from colorsys import rgb_to_hls
 import inspect
 
 from cycler import Cycler
@@ -834,6 +835,15 @@ class Color:
 
         """
         return self.float_rgba[:3]
+
+    @property
+    def _float_hls(self) -> tuple[float, float, float]:
+        return rgb_to_hls(*self.float_rgb)
+
+    @property
+    def _int_hls(self) -> tuple[float, float, float]:
+        h, l, s = self._float_hls
+        return int(h * 360), int(l * 255), int(s * 255)
 
     @property
     def hex_rgba(self) -> str:  # numpydoc ignore=RT01
