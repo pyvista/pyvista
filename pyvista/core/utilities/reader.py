@@ -2840,6 +2840,21 @@ class ProStarReader(BaseReader):
 
 
 class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
+    """ExodusIIReader for .e and .exo files.
+
+    Reads Exodus II files
+
+    .. versionadded:: 0.45.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_mug(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+    """
     _vtk_module_name = 'vtkIOExodus'
     _vtk_class_name = 'vtkExodusIIReader'
 
@@ -2863,11 +2878,22 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         return self.reader.GetNumberOfTimeSteps()
     
     def enable_displacements(self, displacement_magnitude=1.0):
+        """Nodal positions are 'displaced' by the standard exodus
+        displacement vector
+
+        Parameters
+        ----------
+        displacement_magnitude : float, optional
+            Magnitude of displacement, default 1.0.
+
+        """
         self.reader.SetApplyDisplacements(True)
         self.reader.SetDisplacementMagnitude(displacement_magnitude)
         self.reader.Update()
 
     def disable_displacements(self):
+        """Nodal positions are not 'displaced'.
+        """
         self.reader.SetApplyDisplacements(False)
 
 
@@ -3002,7 +3028,10 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         list[float]
 
         """
-        key = _vtk.vtkStreamingDemandDrivenPipeline.TIME_STEPS()
+
+        vtkStreaming = _lazy_vtk_instantiation("vtkCommonExecutionModel",
+                                               "vtkStreamingDemandDrivenPipeline")
+        key = vtkStreaming.TIME_STEPS()
         vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 

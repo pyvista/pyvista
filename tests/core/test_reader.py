@@ -1234,7 +1234,8 @@ def test_exodus_reader():
     # Focus remainder on mug because it has multiple times 
     # and block arrays
 
-    ## Check enabling of displacements
+    ## Check enabling of displacements (To match functionality 
+    # from read_exodus)
     e_reader.enable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 1
     assert e_reader.reader.GetDisplacementMagnitude() == 1.
@@ -1251,6 +1252,7 @@ def test_exodus_reader():
     
     assert "aux_elem" in e_reader.cell_array_names
 
+    ## Check enabling and disabling of point arrays
     for name in e_reader.point_array_names:
         # Should be enabled by default
         assert e_reader.point_array_status(name)
@@ -1261,6 +1263,7 @@ def test_exodus_reader():
         e_reader.enable_point_array(name)
         assert e_reader.point_array_status(name)
 
+    ## Check enabling and disabling of cell arrays
     for name in e_reader.cell_array_names:
         # Should be enabled by default
         assert e_reader.cell_array_status(name)
@@ -1307,5 +1310,14 @@ def test_exodus_reader():
         assert e_reader._active_time_point == i, "check time point set"
     
 
+    ## Check read with point and cell arrays present
+    multiblock = e_reader.read()
 
+    unstruct = multiblock[0][0]
 
+    assert isinstance(unstruct, pv.UnstructuredGrid)
+    for key in e_reader.point_array_names:
+        assert key in unstruct.point_data.keys()
+
+    for key in e_reader.cell_array_names:
+        assert key in unstruct.cell_data.keys()
