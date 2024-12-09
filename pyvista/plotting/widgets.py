@@ -203,8 +203,6 @@ class WidgetHelper:
         >>> plotter.show()
 
         """
-        interaction_event = _parse_interaction_event(interaction_event)
-
         if bounds is None:
             bounds = self.bounds  # type: ignore[attr-defined]
 
@@ -230,7 +228,10 @@ class WidgetHelper:
         box_widget.SetTranslationEnabled(outline_translation)
         box_widget.PlaceWidget(bounds)
         box_widget.On()
-        box_widget.AddObserver(interaction_event, _the_callback)
+        box_widget.AddObserver(
+            _parse_interaction_event(interaction_event),
+            _the_callback,
+        )
         _the_callback(box_widget, None)
 
         self.box_widgets.append(box_widget)
@@ -519,8 +520,6 @@ class WidgetHelper:
         >>> pl.show()
 
         """
-        interaction_event = _parse_interaction_event(interaction_event)
-
         if origin is None:
             origin = self.center  # type: ignore[attr-defined]
         if bounds is None:
@@ -625,8 +624,7 @@ class WidgetHelper:
         plane_widget.UpdatePlacement()
         plane_widget.On()
         plane_widget.AddObserver(
-            interaction_event,
-            # _vtk.vtkCommand.InteractionEvent,
+            _parse_interaction_event(interaction_event),
             _the_callback,
         )
         if test_callback:
