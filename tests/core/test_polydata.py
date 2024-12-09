@@ -1175,7 +1175,7 @@ def test_n_faces_strict():
 
 
 @pytest.fixture
-def default_n_faces():  # noqa: PT004
+def default_n_faces():
     pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False
     yield
