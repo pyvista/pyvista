@@ -195,7 +195,7 @@ class DataSetFilters:
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
         icp.SetSource(self)
-        icp.SetTarget(cast(_vtk.vtkDataSet, target))
+        icp.SetTarget(wrap(target))
         icp.GetLandmarkTransform().SetModeToRigidBody()
         icp.SetMaximumNumberOfLandmarks(max_landmarks)
         icp.SetMaximumMeanDistance(max_mean_distance)
@@ -3898,13 +3898,15 @@ class DataSetFilters:
 
     def sample(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        target,
-        tolerance=None,
+        target: DataSet | _vtk.vtkDataSet,
+        tolerance: float | None = None,
         pass_cell_data: bool = True,
         pass_point_data: bool = True,
         categorical: bool = False,
         progress_bar: bool = False,
-        locator=None,
+        locator: Literal['cell', 'cell_tree', 'obb_tree', 'static_cell']
+        | _vtk.vtkAbstractCellLocator
+        | None = None,
         pass_field_data: bool = True,
         mark_blank: bool = True,
         snap_to_closest_point: bool = False,
@@ -4005,12 +4007,10 @@ class DataSetFilters:
         See :ref:`resampling_example` for more examples using this filter.
 
         """
-        if not pyvista.is_pyvista_dataset(target):
-            raise TypeError('`target` must be a PyVista mesh type.')
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
-        alg.SetSourceData(target)
+        alg.SetSourceData(wrap(target))
         alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
         alg.SetPassFieldArrays(pass_field_data)
@@ -4047,12 +4047,12 @@ class DataSetFilters:
 
     def interpolate(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        target,
-        sharpness=2.0,
-        radius=1.0,
-        strategy='null_value',
-        null_value=0.0,
-        n_points=None,
+        target: DataSet | _vtk.vtkDataSet,
+        sharpness: float = 2.0,
+        radius: float = 1.0,
+        strategy: Literal['null_value', 'mask_points', 'closest_point'] = 'null_value',
+        null_value: float = 0.0,
+        n_points: int | None = None,
         pass_cell_data: bool = True,
         pass_point_data: bool = True,
         progress_bar: bool = False,
@@ -4151,13 +4151,14 @@ class DataSetFilters:
         See :ref:`interpolate_example` for more examples using this filter.
 
         """
-        if not pyvista.is_pyvista_dataset(target):
-            raise TypeError('`target` must be a PyVista mesh type.')
-
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
-        if isinstance(target, (pyvista.ImageData, pyvista.RectilinearGrid)):
-            target = target.cast_to_unstructured_grid()
+        target_ = wrap(target)
+        target_ = (
+            target_.cast_to_unstructured_grid()
+            if isinstance(target_, (pyvista.ImageData, pyvista.RectilinearGrid))
+            else target_
+        )
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
@@ -4168,7 +4169,7 @@ class DataSetFilters:
             gaussian_kernel.SetKernelFootprintToNClosest()
 
         locator = _vtk.vtkStaticPointLocator()
-        locator.SetDataSet(target)
+        locator.SetDataSet(target_)
         locator.BuildLocator()
 
         interpolator = _vtk.vtkPointInterpolator()
@@ -4737,10 +4738,10 @@ class DataSetFilters:
 
     def sample_over_line(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        pointa,
-        pointb,
-        resolution=None,
-        tolerance=None,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        resolution: int | None = None,
+        tolerance: float | None = None,
         progress_bar: bool = False,
     ):
         """Sample a dataset onto a line.
@@ -4802,17 +4803,17 @@ class DataSetFilters:
 
     def plot_over_line(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        pointa,
-        pointb,
-        resolution=None,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        resolution: int | None = None,
         scalars: str | None = None,
-        title=None,
-        ylabel=None,
-        figsize=None,
+        title: str | None = None,
+        ylabel: str | None = None,
+        figsize: tuple[int, int] | None = None,
         figure: bool = True,
         show: bool = True,
-        tolerance=None,
-        fname=None,
+        tolerance: float | None = None,
+        fname: str | None = None,
         progress_bar: bool = False,
     ) -> None:
         """Sample a dataset along a high resolution line and plot.
@@ -4907,7 +4908,10 @@ class DataSetFilters:
             plt.show()
 
     def sample_over_multiple_lines(  # type: ignore[misc]
-        self: ConcreteDataSetType, points, tolerance=None, progress_bar: bool = False
+        self: ConcreteDataSetType,
+        points: MatrixLike[float],
+        tolerance: float | None = None,
+        progress_bar: bool = False,
     ):
         """Sample a dataset onto a multiple lines.
 
@@ -4961,11 +4965,11 @@ class DataSetFilters:
 
     def sample_over_circular_arc(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        pointa,
-        pointb,
-        center,
-        resolution=None,
-        tolerance=None,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        center: VectorLike[float],
+        resolution: int | None = None,
+        tolerance: float | None = None,
         progress_bar: bool = False,
     ):
         """Sample a dataset over a circular arc.
@@ -5040,12 +5044,12 @@ class DataSetFilters:
 
     def sample_over_circular_arc_normal(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        center,
-        resolution=None,
-        normal=None,
-        polar=None,
-        angle=None,
-        tolerance=None,
+        center: VectorLike[float],
+        resolution: int | None = None,
+        normal: VectorLike[float] | None = None,
+        polar: VectorLike[float] | None = None,
+        angle: float | None = None,
+        tolerance: float | None = None,
         progress_bar: bool = False,
     ):
         """Sample a dataset over a circular arc defined by a normal and polar vector and plot it.
@@ -5127,18 +5131,18 @@ class DataSetFilters:
 
     def plot_over_circular_arc(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        pointa,
-        pointb,
-        center,
-        resolution=None,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        center: VectorLike[float],
+        resolution: int | None = None,
         scalars: str | None = None,
-        title=None,
-        ylabel=None,
-        figsize=None,
+        title: str | None = None,
+        ylabel: str | None = None,
+        figsize: tuple[int, int] | None = None,
         figure: bool = True,
         show: bool = True,
-        tolerance=None,
-        fname=None,
+        tolerance: float | None = None,
+        fname: str | None = None,
         progress_bar: bool = False,
     ) -> None:
         """Sample a dataset along a circular arc and plot it.
@@ -5253,19 +5257,19 @@ class DataSetFilters:
 
     def plot_over_circular_arc_normal(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        center,
-        resolution=None,
-        normal=None,
-        polar=None,
-        angle=None,
+        center: VectorLike[float],
+        resolution: int | None = None,
+        normal: VectorLike[float] | None = None,
+        polar: VectorLike[float] | None = None,
+        angle: float | None = None,
         scalars: str | None = None,
-        title=None,
-        ylabel=None,
-        figsize=None,
+        title: str | None = None,
+        ylabel: str | None = None,
+        figsize: tuple[int, int] | None = None,
         figure: bool = True,
         show: bool = True,
-        tolerance=None,
-        fname=None,
+        tolerance: float | None = None,
+        fname: str | None = None,
         progress_bar: bool = False,
     ) -> None:
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
