@@ -841,11 +841,6 @@ class Color:
         return rgb_to_hls(*self.float_rgb)
 
     @property
-    def _int_hls(self) -> tuple[float, float, float]:
-        h, l, s = self._float_hls
-        return int(h * 360), int(l * 255), int(s * 255)
-
-    @property
     def hex_rgba(self) -> str:  # numpydoc ignore=RT01
         """Get the color value as an RGBA hexadecimal value.
 

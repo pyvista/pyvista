@@ -383,8 +383,6 @@ class ColorTable(DocTable):
 
     path = f'{COLORS_TABLE_DIR}/color_table.rst'
     title = ''
-    value_name = 'Hex'
-    value_func = lambda c: c.hex_rgb
     header = _aligned_dedent(
         """
         |.. list-table:: {}
@@ -392,7 +390,7 @@ class ColorTable(DocTable):
         |   :header-rows: 1
         |
         |   * - Name
-        |     - {} value
+        |     - Hex value
         |     - Example
         """,
     )
@@ -415,7 +413,7 @@ class ColorTable(DocTable):
     def _table_data_from_color_sequence(colors: Sequence[Color]):
         assert len(colors) > 0, 'No colors were provided.'
         colors_dict: dict[str | None, dict[str, Any]] = {
-            c.name: {'color': c, 'synonyms': []} for c in colors
+            c.name: {'name': c.name, 'hex': c.hex_rgb, 'synonyms': []} for c in colors
         }
         assert all(name is not None for name in colors_dict.keys()), 'Colors must be named.'
         # Add synonyms defined in ``color_synonyms`` dictionary.
@@ -426,15 +424,14 @@ class ColorTable(DocTable):
 
     @classmethod
     def get_header(cls, data):
-        return cls.header.format(cls.title, cls.value_name)
+        return cls.header.format(cls.title)
 
     @classmethod
     def get_row(cls, i, row_data):
         name_template = '``"{}"``'
-        color = row_data['color']
-        names = [color.name] + row_data['synonyms']
+        names = [row_data['name']] + row_data['synonyms']
         name = ' or '.join(name_template.format(n) for n in names)
-        return cls.row_template.format(name, cls.value_func(color), color.hex_rgb)
+        return cls.row_template.format(name, row_data['hex'], row_data['hex'])
 
 
 def _sort_colors_by_hls(colors: Sequence[Color]):
@@ -528,7 +525,7 @@ class ColorClassificationTable(ColorTable):
 
     @classmethod
     def get_header(cls, data):
-        return cls.header.format('**' + cls.classification.name.upper() + 'S**', cls.value_name)
+        return cls.header.format('**' + cls.classification.name.upper() + 'S**')
 
     @classmethod
     def fetch_data(cls):
