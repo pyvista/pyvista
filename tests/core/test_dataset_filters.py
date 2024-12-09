@@ -698,7 +698,7 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(method='invalid method')
     with pytest.raises(TypeError, match='Invalid type for `scalars`'):
         airplane.contour(scalars=1)
-    match = 'Input dataset for the contour filter must have scalar.'
+    match = 'No data available.'
     with pytest.raises(ValueError, match=match):
         airplane.contour(rng={})
 
@@ -4623,11 +4623,18 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA)
     assert np.all(tet_cells.celltypes == pv.CellType.TETRA)
 
+    int_array = np.array([int(pv.CellType.TETRA), int(pv.CellType.HEXAHEDRON)])
+    tet_hex_cells = combined.extract_cells_by_type(int_array)
+    assert pv.CellType.TETRA in tet_hex_cells.celltypes
+    assert pv.CellType.HEXAHEDRON in tet_hex_cells.celltypes
+
     should_be_empty = combined.extract_cells_by_type(pv.CellType.BEZIER_CURVE)
     assert should_be_empty.n_cells == 0
 
-    with pytest.raises(TypeError, match='Invalid type'):
-        combined.extract_cells_by_type(1.0)
+    combined.extract_cells_by_type(1.0)
+    match = 'cell_types must have integer-like values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        combined.extract_cells_by_type(1.1)
 
 
 def test_merge_points():

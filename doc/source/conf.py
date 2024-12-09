@@ -232,6 +232,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*Concrete.*Type'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
+    (r'py:.*', '.*NormalsLiteral'),
+    (r'py:.*', '.*T'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),
@@ -282,6 +284,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*UserDict'),
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', '.*NoneType'),
+    (r'py:.*', 'collections.*'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),
