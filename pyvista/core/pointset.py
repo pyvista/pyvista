@@ -11,6 +11,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING
 from typing import ClassVar
+from typing import Union
 from typing import cast
 import warnings
 
@@ -51,6 +52,41 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
 
+if TYPE_CHECKING:
+    _PolyDataWriterAlias = Union[
+        _vtk.vtkPLYWriter
+        | _vtk.vtkXMLPolyDataWriter
+        | _vtk.vtkSTLWriter
+        | _vtk.vtkPolyDataWriter
+        | _vtk.vtkHoudiniPolyDataWriter
+        | _vtk.vtkOBJWriter
+        | _vtk.vtkIVWriter
+        | _vtk.vtkHDFWriter
+    ]
+else:
+    _PolyDataWriterAlias = Union[
+        _vtk.vtkPLYWriter
+        | _vtk.vtkXMLPolyDataWriter
+        | _vtk.vtkSTLWriter
+        | _vtk.vtkPolyDataWriter
+        | _vtk.vtkHoudiniPolyDataWriter
+        | _vtk.vtkOBJWriter
+        | _vtk.vtkIVWriter
+    ]
+    if hasattr(_vtk, 'vtkHDFWriter'):
+        _PolyDataWriterAlias = Union[_PolyDataWriterAlias | _vtk.vtkHDFWriter]
+
+if TYPE_CHECKING:
+    _UnstructuredGridWriterAlias = Union[
+        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter | _vtk.vtkHDFWriter
+    ]
+else:
+    _UnstructuredGridWriterAlias = Union[
+        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter
+    ]
+    if hasattr(_vtk, 'vtkHDFWriter'):
+        _UnstructuredGridWriterAlias = Union[_UnstructuredGridWriterAlias | _vtk.vtkHDFWriter]
+
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
     'be changing to `False` in future versions for point-based meshes (e.g., '
@@ -65,6 +101,7 @@ class _PointSet(DataSet):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
+    # TODO: can we put the vtkhdf writer here?
     _WRITERS: ClassVar[dict[str, type[_vtk.vtkSimplePointsWriter]]] = {  # type: ignore[assignment]
         '.xyz': _vtk.vtkSimplePointsWriter,
     }
@@ -729,17 +766,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     _WRITERS: ClassVar[
         dict[
             str,
-            (
-                type[
-                    _vtk.vtkPLYWriter
-                    | _vtk.vtkXMLPolyDataWriter
-                    | _vtk.vtkSTLWriter
-                    | _vtk.vtkPolyDataWriter
-                    | _vtk.vtkHoudiniPolyDataWriter
-                    | _vtk.vtkOBJWriter
-                    | _vtk.vtkIVWriter
-                ]
-            ),
+            (type[_PolyDataWriterAlias]),
         ]
     ] = {  # type: ignore[assignment]
         '.ply': _vtk.vtkPLYWriter,
@@ -750,6 +777,8 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         '.obj': _vtk.vtkOBJWriter,
         '.iv': _vtk.vtkIVWriter,
     }
+    if _vtk.vtk_version_info >= (9, 4):  # pragma: no cover
+        _WRITERS.update({'.vtkhdf': _vtk.vtkHDFWriter})
 
     def __init__(
         self,
@@ -1810,12 +1839,14 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     _WRITERS: ClassVar[
         dict[
             str,
-            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
+            type[_UnstructuredGridWriterAlias],
         ]
     ] = {  # type: ignore[assignment]
         '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
         '.vtk': _vtk.vtkUnstructuredGridWriter,
     }
+    if _vtk.vtk_version_info >= (9, 4):  # pragma: no cover
+        _WRITERS['.vtkhdf'] = _vtk.vtkHDFWriter
 
     def __init__(self, *args, deep: bool = False, **kwargs) -> None:
         """Initialize the unstructured grid."""

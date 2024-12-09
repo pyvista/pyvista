@@ -38,7 +38,13 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
-_VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
+if TYPE_CHECKING:
+    _VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter, _vtk.vtkHDFWriter]
+else:
+    _VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
+    if hasattr(_vtk, 'vtkHDFWriter'):
+        _VTKWriterAlias = Union[_VTKWriterAlias, _vtk.vtkHDFWriter]
+
 _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
 
 PICKLE_EXT = ('.pkl', '.pickle')
