@@ -81,4 +81,4 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 # Undocumented alias - should be expanded in docs
 _ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
-InteractionEventType = Literal['end', 'start', 'always'] | _vtk.vtkCommand.EventIds
+InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
