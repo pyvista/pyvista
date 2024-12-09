@@ -76,7 +76,7 @@ pyvista.TransformLike
 .. autodata:: TransformLike
 
 pyvista.InteractionEventType
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
