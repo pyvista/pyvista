@@ -86,7 +86,8 @@ def test_scraper(tmpdir, monkeypatch, n_win, scraper_type):
         scraper = DynamicScraper()
         assert repr(scraper) == '<DynamicScraper object>'
     else:
-        raise ValueError(f'Invalid scraper type: {scraper}')
+        msg = f'Invalid scraper type: {scraper}'
+        raise ValueError(msg)
 
     src_dir = str(tmpdir)
     out_dir = str(Path(str(tmpdir)) / '_build' / 'html')

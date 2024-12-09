@@ -152,12 +152,14 @@ class DocTable:
     @classmethod
     def fetch_data(cls):
         """Get a list of row_data used to generate the table."""
-        raise NotImplementedError('Subclasses should specify a fetch_data method.')
+        msg = 'Subclasses should specify a fetch_data method.'
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_header(cls, data):
         """Get the table's header rst."""
-        raise NotImplementedError('Subclasses should specify a table header.')
+        msg = 'Subclasses should specify a table header.'
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_row(cls, i, row_data):
@@ -166,7 +168,8 @@ class DocTable:
         Can return ``None`` if no row should be generated for the provided ``row_data``.
 
         """
-        raise NotImplementedError('Subclasses should specify a get_row method.')
+        msg = 'Subclasses should specify a get_row method.'
+        raise NotImplementedError(msg)
 
 
 class LineStyleTable(DocTable):
@@ -968,7 +971,8 @@ class DatasetCard:
             elif isinstance(badge, CellTypeBadge):
                 pass  # process these separately
             elif isinstance(badge, _BaseDatasetBadge):
-                raise NotImplementedError(f'No implementation for badge type {type(badge)}.')
+                msg = f'No implementation for badge type {type(badge)}.'
+                raise NotImplementedError(msg)
         all_badges = module_badges + datatype_badges + special_badges + category_badges
         return ' '.join([badge.generate() for badge in all_badges])
 

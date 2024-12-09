@@ -100,10 +100,11 @@ class DataObject:
         """Read data objects from file."""
         data = read(filename, **kwargs)
         if not isinstance(self, type(data)):
-            raise ValueError(
+            msg = (
                 f'Reading file returned data of `{type(data).__name__}`, '
-                f'but `{type(self).__name__}` was expected.',
+                f'but `{type(self).__name__}` was expected.'
             )
+            raise ValueError(msg)
         self.shallow_copy(data)
         self._post_file_load_processing()
 
@@ -177,10 +178,11 @@ class DataObject:
             writer.Write()
 
         if self._WRITERS is None:
-            raise NotImplementedError(
+            msg = (
                 f'{self.__class__.__name__} writers are not specified,'
-                ' this should be a dict of (file extension: vtkWriter type)',
+                ' this should be a dict of (file extension: vtkWriter type)'
             )
+            raise NotImplementedError(msg)
 
         file_path = Path(filename)
         file_path = file_path.expanduser()
@@ -196,10 +198,11 @@ class DataObject:
         elif file_ext in PICKLE_EXT:
             save_pickle(filename, self)
         else:
-            raise ValueError(
+            msg = (
                 'Invalid file extension for this data type.'
-                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}',
+                f' Must be one of: {list(writer_exts) + list(PICKLE_EXT)}'
             )
+            raise ValueError(msg)
 
     def _store_metadata(self: Self) -> None:
         """Store metadata as field data."""
@@ -232,13 +235,13 @@ class DataObject:
     @abstractmethod
     def get_data_range(self: Self) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
-        raise NotImplementedError(
-            f'{type(self)} mesh type does not have a `get_data_range` method.',
-        )
+        msg = f'{type(self)} mesh type does not have a `get_data_range` method.'
+        raise NotImplementedError(msg)
 
     def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:  # pragma: no cover
         """Return the representation methods (internal helper)."""
-        raise NotImplementedError('Called only by the inherited class')
+        msg = 'Called only by the inherited class'
+        raise NotImplementedError(msg)
 
     def head(self: Self, display: bool = True, html: bool | None = None) -> str:
         """Return the header stats of this dataset.
@@ -309,7 +312,8 @@ class DataObject:
         This includes header details and information about all arrays.
 
         """
-        raise NotImplementedError('Called only by the inherited class')
+        msg = 'Called only by the inherited class'
+        raise NotImplementedError(msg)
 
     def copy_meta_from(self: Self, *args, **kwargs) -> None:  # pragma: no cover
         """Copy pyvista meta data onto this object from another object.
@@ -445,7 +449,8 @@ class DataObject:
 
         """
         if not hasattr(self, 'field_data'):
-            raise NotImplementedError(f'`{type(self)}` does not support field data')
+            msg = f'`{type(self)}` does not support field data'
+            raise NotImplementedError(msg)
 
         self.field_data.set_array(array, name, deep_copy=deep)
 
@@ -498,7 +503,8 @@ class DataObject:
 
         """
         if not hasattr(self, 'field_data'):
-            raise NotImplementedError(f'`{type(self)}` does not support field data')
+            msg = f'`{type(self)}` does not support field data'
+            raise NotImplementedError(msg)
 
         self.field_data.clear()
 
@@ -610,9 +616,8 @@ class DataObject:
         elif isinstance(dict_, UserDict):
             self._user_dict.data = dict_.data
         else:
-            raise TypeError(
-                f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.',
-            )
+            msg = f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.'
+            raise TypeError(msg)
 
     def _config_user_dict(self: Self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
@@ -762,10 +767,11 @@ class DataObject:
 
         """
         if isinstance(self, pyvista.MultiBlock):
-            raise TypeError(
+            msg = (
                 "MultiBlock is not supported with 'xml' or 'legacy' pickle formats."
                 "\nUse `pyvista.PICKLE_FORMAT='vtk'`."
             )
+            raise TypeError(msg)
         state = self.__dict__.copy()
 
         if pyvista.PICKLE_FORMAT.lower() == 'xml':
@@ -786,7 +792,8 @@ class DataObject:
                     writer = writer_type()
                     break
             else:
-                raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
+                msg = f'Cannot pickle dataset of type {self.GetDataObjectType()}'
+                raise TypeError(msg)
 
             writer.SetInputDataObject(self)
             writer.SetWriteToOutputString(True)
@@ -831,9 +838,8 @@ class DataObject:
         elif _is_pyvista_format(state):
             self._unserialize_pyvista_pickle_format(state)
         else:
-            raise RuntimeError(
-                f"Cannot unpickle '{self.__class__.__name__}'. Invalid pickle format."
-            )
+            msg = f"Cannot unpickle '{self.__class__.__name__}'. Invalid pickle format."
+            raise RuntimeError(msg)
 
     def _unserialize_vtk_pickle_format(
         self: Self, state: tuple[FunctionType, tuple[dict[str, Any]]]
@@ -880,7 +886,8 @@ class DataObject:
                     reader = reader_type()
                     break
             else:
-                raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}')
+                msg = f'Cannot unpickle dataset of type {self.GetDataObjectType()}'
+                raise TypeError(msg)
 
             reader.ReadFromInputStringOn()
             reader.SetInputString(vtk_serialized)

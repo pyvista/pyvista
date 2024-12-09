@@ -1748,11 +1748,11 @@ def test_streamlines_max_length():
 
     def check_deprecation():
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError(
-                'Convert error ``max_time`` parameter in ``streamlines_from_source``'
-            )
+            msg = 'Convert error ``max_time`` parameter in ``streamlines_from_source``'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 49):
-            raise RuntimeError('Remove ``max_time`` parameter in ``streamlines_from_source``')
+            msg = 'Remove ``max_time`` parameter in ``streamlines_from_source``'
+            raise RuntimeError(msg)
 
     with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):
         stream = mesh.streamlines(
@@ -4336,7 +4336,8 @@ def test_integrate_data_datasets(datasets):
         elif 'Volume' in integrated.array_names:
             assert integrated['Volume'] > 0
         else:
-            raise ValueError('Unexpected integration')
+            msg = 'Unexpected integration'
+            raise ValueError(msg)
 
 
 def test_integrate_data():
