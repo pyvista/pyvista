@@ -111,11 +111,9 @@ class RectilinearGridFilters:
             if 1 in self.dimensions and tetra_per_cell == 12:  # type: ignore[attr-defined]
                 msg = (
                     'Cannot split cells into 12 tetrahedrals when at least '
-                    f'one dimension is 1. Dimensions are {self.dimensions}.'
+                    f'one dimension is 1. Dimensions are {self.dimensions}.'  # type: ignore[attr-defined]
                 )
-                raise RuntimeError(
-                    msg,  # type: ignore[attr-defined]
-                )
+                raise RuntimeError(msg)
 
             alg.SetTetraPerCell(tetra_per_cell)
 

@@ -283,8 +283,8 @@ class Renderers:
                 msg = f'Row index is out of range ({self.shape[0]})'
                 raise IndexError(msg)
             if index_column < 0 or index_column >= self.shape[1]:  # type: ignore[misc]
-                msg = f'Column index is out of range ({self.shape[1]})'
-                raise IndexError(msg)  # type: ignore[misc]
+                msg = f'Column index is out of range ({self.shape[1]})'  # type: ignore[misc]
+                raise IndexError(msg)
             return self._render_idxs[index_row, index_column]
         else:
             msg = '"loc" must be an integer or a sequence.'
