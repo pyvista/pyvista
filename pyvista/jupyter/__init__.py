@@ -1,6 +1,5 @@
 """Jupyter notebook plotting module."""
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 import warnings

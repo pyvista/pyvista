@@ -1,6 +1,5 @@
 """PyVista package for 3D plotting and mesh analysis."""
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 import os
