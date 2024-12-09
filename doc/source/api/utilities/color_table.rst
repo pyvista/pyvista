@@ -11,7 +11,7 @@ The colors on this page come from various sources, and include:
 - colors from the standard :bdg-success:`TABLEAU` palette
 - default colors used by :bdg-danger:`PARAVIEW`
 
-See also Matplotlib's `list of named colors <https://matplotlib.org/stable/gallery/color/named_colors.html>`_,
+See also ``matplotlib``'s `list of named colors <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
 for additional information about the ``CSS`` and ``TABLEAU`` colors.
 
 .. dropdown:: Colors Sorted by Name
