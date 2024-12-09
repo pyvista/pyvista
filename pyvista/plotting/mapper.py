@@ -1146,7 +1146,8 @@ class _BaseVolumeMapper(_BaseMapper):
             raise TypeError(f'`blend_mode` should be either an int or str, not `{type(value)}`')
 
     def __del__(self) -> None:
-        del self._lut
+        if hasattr(self, '_lut'):
+            del self._lut
 
 
 class FixedPointVolumeRayCastMapper(_BaseVolumeMapper, _vtk.vtkFixedPointVolumeRayCastMapper):
