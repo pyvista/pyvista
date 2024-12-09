@@ -11,7 +11,10 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.utilities.fileio import _try_imageio_imread
-from pyvista.examples.downloads import download_file
+from pyvista.examples.downloads import (download_file,
+                                        _download_archive_file_or_folder)
+from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
+
 
 HAS_IMAGEIO = True
 try:
@@ -1182,6 +1185,67 @@ def test_grdecl_reader(tmp_path):
     include_content_copy[0] = include_content_copy[0].replace('MAPAXES', 'PLACEHOLDER')
     with pytest.warns(UserWarning, match=match):
         _ = read(content, include_content_copy)
+
+
+def test_nek5000_reader(tmp_path):
+    # load nek5000 file
+    filename = examples.download_nek5000(load=False)
+    
+    # test get_reader
+    nek_reader = pv.get_reader(filename)
+    
+    # test time routines
+    ## Check correct number of time points
+    assert nek_reader.number_time_points == 11, "Checks number of time points"
+    assert nek_reader._active_time_point == 0, "Checks the first time set"
+
+    assert nek_reader.time_values == [0.01*i for i in range(11)]
+
+    ## check setting and getting of time points and times
+    for i in range(11):
+        nek_reader.set_active_time_point(i)
+        assert nek_reader._active_time_point == i, "check time point set"
+
+        tp1, tp2 = nek_reader.reader.GetTimeStepRange()
+        assert tp1 == i and tp2 == i,\
+            "Check underlying reader time step setting"
+        
+        t = i*0.01
+        assert nek_reader.time_point_value(i) == t, "Check correct times"
+
+        assert nek_reader.active_time_value == t, "Check correct time set"
+
+    # check time setting based on time
+    for i in range(11):
+        nek_reader.set_active_time_value(i*0.01)
+        assert nek_reader._active_time_point == i, "check time point set"
+
+    # check deactivation of cell array routines
+    with pytest.raises(AttributeError):
+        nek_reader.number_cell_arrays
+
+    with pytest.raises(AttributeError):
+        nek_reader.cell_array_names
+
+    name = "test"
+    with pytest.raises(AttributeError):
+        nek_reader.enable_cell_array(name)
+
+    with pytest.raises(AttributeError):
+        nek_reader.disable_cell_array(name)
+
+    with pytest.raises(AttributeError):
+        nek_reader.cell_array_status(name)
+
+    with pytest.raises(AttributeError):
+        nek_reader.enable_all_cell_arrays()
+
+    with pytest.raises(AttributeError):
+        nek_reader.disable_all_cell_arrays()
+
+    # check read() method produces the correct dataset
+    nek_data = nek_reader.read()
+    assert isinstance(nek_data, pv.UnstructuredGrid), "Check read type is valid"
 
 
 @pytest.mark.parametrize(

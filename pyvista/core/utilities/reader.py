@@ -176,6 +176,8 @@ def get_reader(filename, force_ext=None):
     | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
     +----------------+---------------------------------------------+
     | ``.vtpd``      | :class:`pyvista.XMLPartitionedDataSetReader`|
+    +--------------------------------------------------------------+
+    | ``.nek5000``   | :class:`pyvista.Nek5000Reader               |
     +----------------+---------------------------------------------+
 
     Parameters
@@ -2085,6 +2087,135 @@ class PVDReader(BaseReader, TimeReader):
         self.set_active_time_value(self.time_values[time_point])
 
 
+class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
+    """
+    Class for reading .nek5000 files produced by Nek5000 and NekRS
+    
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_wavy(load=False)
+    >>> filename.split("/")[-1]  # omit the path
+    """
+    _vtk_module_name = "vtkIOParallel"
+    _vtk_class_name = "vtkNek5000Reader"
+
+    def _set_filename(self, filename) -> None:
+        super()._set_filename(filename)
+        self.set_active_time_point(0)
+
+    @property
+    def number_time_points(self):  # noqa: D102
+        """Return number of time points or iterations available to read.
+
+        Returns
+        -------
+        int
+
+        """ 
+        return self.reader.GetNumberOfTimeSteps()
+    
+    @property
+    def time_values(self):
+        """All time or iteration values.
+
+        Returns
+        -------
+        list[float]
+
+        """
+        import vtk 
+        key = vtk.vtkStreamingDemandDrivenPipeline.TIME_STEPS()
+        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
+
+    def time_point_value(self, time_point):  # noqa: D102i
+        """Value of time point or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index.
+
+        Returns
+        -------
+        float
+
+        """
+        return self.time_values[time_point]
+
+    @property
+    def active_time_value(self):  # noqa: D102
+        """Active time or iteration value.
+
+        Returns
+        -------
+        float
+
+        """
+        return self.time_values[self._active_time_point]
+
+    def set_active_time_value(self, time_value):  # noqa: D102
+        """Set active time or iteration value.
+
+        Parameters
+        ----------
+        time_value : float
+            Time or iteration value to set as active.
+
+        """
+        try:
+            index = self.time_values.index(time_value)
+        except ValueError:
+            raise ValueError(f"Time {time_value} not present") from None
+
+        self.set_active_time_point(index)
+
+    def set_active_time_point(self, time_point):  # noqa: D102
+        """Set active time or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time or iteration point index for setting active time.
+
+        """
+        self._active_time_point = time_point
+        self.reader.SetTimeStepRange(time_point,time_point)
+        self.reader.Update()
+
+    @property
+    def number_cell_arrays(self):
+        raise AttributeError("Nek 5000 data does not contain cell arrays, "
+                             "this method cannot be used")
+
+    @property
+    def cell_array_names(self):
+        raise AttributeError("Nek 5000 data does not contain cell arrays, "
+                             "this method cannot be used")
+    
+    def enable_cell_array(self, name) -> None:
+        raise AttributeError("Nek 5000 data does not contain cell arrays, "
+                             "this method cannot be used")
+    
+    def disable_cell_array(self, name) -> None:
+        raise AttributeError("Nek 5000 data does not contain cell arrays, "
+                             "this method cannot be used")
+    
+    def cell_array_status(self, name):
+        raise AttributeError("Nek 5000 data does not contain cell arrays, "
+                             "this method cannot be used")
+    
+    def enable_all_cell_arrays(self) -> None:
+        raise AttributeError("Nek 5000 data does not contain cell arrays, "
+                             "this method cannot be used")
+    
+    def disable_all_cell_arrays(self) -> None:
+        raise AttributeError("Nek 5000 data does not contain cell arrays, "
+                             "this method cannot be used")
+    
+
 class DICOMReader(BaseReader):
     """DICOM Reader for reading ``.dcm`` files.
 
@@ -3122,6 +3253,7 @@ CLASS_READERS = {
     '.mhd': MetaImageReader,
     '.mnc': MINCImageReader,
     '.mr': GESignaReader,
+    '.nek5000': Nek5000Reader,
     '.neu': GambitReader,
     '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
