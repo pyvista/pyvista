@@ -188,10 +188,11 @@ def view_vectors(view: str, negative: bool = False) -> tuple[NumpyArray[int], Nu
         vec = np.array([-1, 0, 0])
         viewup = np.array([0, 1, 0])
     else:
-        raise ValueError(
+        msg = (
             f'Unexpected value for direction {view}\n'
-            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'",
+            "    Expected: 'xy', 'yx', 'xz', 'zx', 'yz', 'zy'"
         )
+        raise ValueError(msg)
 
     if negative:
         vec *= -1

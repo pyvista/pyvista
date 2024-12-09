@@ -808,9 +808,8 @@ class AxesAssembly(_XYZAssembly):
             values = [value] * len(actors)
 
         if len(values) != len(actors):
-            raise ValueError(
-                f"Number of values ({len(values)}) in {value} must match the number of actors ({len(actors)}) for axis '{axis}' and part '{part}'"
-            )
+            msg = f"Number of values ({len(values)}) in {value} must match the number of actors ({len(actors)}) for axis '{axis}' and part '{part}'"
+            raise ValueError(msg)
 
         # Sequence is valid, now set values
         for actor, val in zip(actors, values):
@@ -854,11 +853,13 @@ class AxesAssembly(_XYZAssembly):
         valid_axis = [0, 1, 2, 'x', 'y', 'z', 'all']
         valid_axis_official = valid_axis[3:]
         if axis not in valid_axis:
-            raise ValueError(f'Axis must be one of {valid_axis_official}.')
+            msg = f'Axis must be one of {valid_axis_official}.'
+            raise ValueError(msg)
         valid_part = [0, 1, 'shaft', 'tip', 'all']
         valid_part_official = valid_part[2:]
         if part not in valid_part:
-            raise ValueError(f'Part must be one of {valid_part_official}.')
+            msg = f'Part must be one of {valid_part_official}.'
+            raise ValueError(msg)
 
         # Create ordered list of filtered actors
         # Iterate over parts in <shaft-xyz> then <tip-xyz> order
@@ -935,12 +936,13 @@ def _validate_color_sequence(
                     return tuple(color_list)
             except ValueError:
                 pass
-    raise ValueError(
+    msg = (
         f'Invalid color(s):\n'
         f'\t{color}\n'
         f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.',
+        f'or a sequence of {n_colors} ColorLike colors.'
     )
+    raise ValueError(msg)
 
 
 class AxesAssemblySymmetric(AxesAssembly):
@@ -1891,7 +1893,8 @@ class PlanesAssembly(_XYZAssembly):
     def camera(self):  # numpydoc ignore=RT01
         """Camera to use for displaying the labels."""
         if not hasattr(self, '_camera'):
-            raise ValueError('Camera has not been set.')
+            msg = 'Camera has not been set.'
+            raise ValueError(msg)
         return self._camera
 
     @camera.setter

@@ -504,9 +504,11 @@ def test_n_cells_deprecated():
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], n_cells=1)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Convert `n_cells` deprecation warning to error')
+            msg = 'Convert `n_cells` deprecation warning to error'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError('Remove `n_cells` constructor kwarg')
+            msg = 'Remove `n_cells` constructor kwarg'
+            raise RuntimeError(msg)
 
 
 @pytest.mark.parametrize('deep', [True, False])
@@ -514,6 +516,8 @@ def test_deep_deprecated(deep: bool):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.core.cell.CellArray([3, 0, 1, 2], deep=deep)
         if pv._version.version_info[:2] > (0, 47):
-            raise RuntimeError('Convert `deep` deprecation warning to error')
+            msg = 'Convert `deep` deprecation warning to error'
+            raise RuntimeError(msg)
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError('Remove `deep` constructor kwarg')
+            msg = 'Remove `deep` constructor kwarg'
+            raise RuntimeError(msg)

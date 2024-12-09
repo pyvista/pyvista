@@ -74,11 +74,13 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
     """
     if not isinstance(point, (Sequence, np.ndarray)):
-        raise TypeError(f'{name} must be a length three iterable of floats.')
+        msg = f'{name} must be a length three iterable of floats.'
+        raise TypeError(msg)
     if len(point) != 3:
         if name == '':
             name = 'Vector'
-        raise ValueError(f'{name} must be a length three iterable of floats.')
+        msg = f'{name} must be a length three iterable of floats.'
+        raise ValueError(msg)
 
 
 def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
@@ -96,7 +98,8 @@ def abstract_class(cls_):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
 
     def __new__(cls, *args, **kwargs):  # noqa: ANN001, ANN202
         if cls is cls_:
-            raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
+            msg = f'{cls.__name__} is an abstract class and may not be instantiated.'
+            raise TypeError(msg)
         return super(cls_, cls).__new__(cls)
 
     cls_.__new__ = __new__
@@ -138,7 +141,8 @@ class AnnotatedIntEnum(int, enum.Enum):
         for value in cls:
             if value.annotation.lower() == input_str.lower():
                 return value
-        raise ValueError(f'{cls.__name__} has no value matching {input_str}')
+        msg = f'{cls.__name__} has no value matching {input_str}'
+        raise ValueError(msg)
 
     @classmethod
     def from_any(cls: type[T], value: AnnotatedIntEnum | int | str) -> T:
@@ -167,7 +171,8 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            raise ValueError(f'{cls.__name__} has no value matching {value}')
+            msg = f'{cls.__name__} has no value matching {value}'
+            raise ValueError(msg)
 
 
 @cache
@@ -264,9 +269,8 @@ class conditional_decorator:
 def _check_range(value: float, rng: Sequence[float], parm_name: str) -> None:
     """Check if a parameter is within a range."""
     if value < rng[0] or value > rng[1]:
-        raise ValueError(
-            f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.',
-        )
+        msg = f'The value {float(value)} for `{parm_name}` is outside the acceptable range {tuple(rng)}.'
+        raise ValueError(msg)
 
 
 def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
@@ -283,10 +287,11 @@ def no_new_attr(cls):  # noqa: ANN001, ANN201 # numpydoc ignore=RT01
         ):
             object.__setattr__(self, name, value)
         else:
-            raise AttributeError(
+            msg = (
                 f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}',
+                f'{self.__class__.__name__}'
             )
+            raise AttributeError(msg)
 
     cls.__setattr__ = __setattr__
     return cls

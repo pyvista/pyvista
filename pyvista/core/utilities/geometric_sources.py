@@ -370,9 +370,8 @@ class ConeSource(_vtk.vtkConeSource):
         self.height = height
         self.capping = capping
         if angle is not None and radius is not None:
-            raise ValueError(
-                'Both radius and angle cannot be specified. They are mutually exclusive.',
-            )
+            msg = 'Both radius and angle cannot be specified. They are mutually exclusive.'
+            raise ValueError(msg)
         elif angle is not None and radius is None:
             self.angle = angle
         elif angle is None and radius is not None:
@@ -882,7 +881,8 @@ class MultipleLinesSource(_vtk.vtkLineSource):
         """
         points, _ = _coerce_pointslike_arg(points)
         if not (len(points) >= 2):
-            raise ValueError('>=2 points need to define multiple lines.')
+            msg = '>=2 points need to define multiple lines.'
+            raise ValueError(msg)
         self.SetPoints(pyvista.vtk_points(points))
 
     @property
@@ -994,10 +994,11 @@ class Text3DSource(vtkVectorText):
             if name in Text3DSource._new_attr_exceptions:
                 object.__setattr__(self, name, value)
             else:
-                raise AttributeError(
+                msg = (
                     f'Attribute "{name}" does not exist and cannot be added to type '
-                    f'{self.__class__.__name__}',
+                    f'{self.__class__.__name__}'
                 )
+                raise AttributeError(msg)
 
     @property
     def string(self: Text3DSource) -> str:  # numpydoc ignore=RT01
@@ -1267,9 +1268,10 @@ class CubeSource(_vtk.vtkCubeSource):
     @bounds.setter
     def bounds(self: CubeSource, bounds: VectorLike[float]) -> None:
         if np.array(bounds).size != 6:
-            raise TypeError(
-                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
+            msg = (
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)'
             )
+            raise TypeError(msg)
         self.SetBounds(bounds)  # type: ignore[arg-type]
 
     @property
@@ -1415,7 +1417,8 @@ class CubeSource(_vtk.vtkCubeSource):
 
         """
         if point_dtype not in ['float32', 'float64']:
-            raise ValueError("Point dtype must be either 'float32' or 'float64'")
+            msg = "Point dtype must be either 'float32' or 'float64'"
+            raise ValueError(msg)
         precision = {
             'float32': SINGLE_PRECISION,
             'float64': DOUBLE_PRECISION,
@@ -1505,9 +1508,8 @@ class DiscSource(_vtk.vtkDiskSource):
         else:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError(
-                'To change vtkDiskSource with `center` requires VTK 9.2 or later.',
-            )
+            msg = 'To change vtkDiskSource with `center` requires VTK 9.2 or later.'
+            raise VTKVersionError(msg)
 
     @property
     def inner(self: DiscSource) -> float:
@@ -1721,7 +1723,8 @@ class LineSource(_vtk.vtkLineSource):
 
         """
         if resolution <= 0:
-            raise ValueError('Resolution must be positive')
+            msg = 'Resolution must be positive'
+            raise ValueError(msg)
         self.SetResolution(resolution)
 
     @property
@@ -1850,9 +1853,8 @@ class SphereSource(_vtk.vtkSphereSource):
         else:  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
-            raise VTKVersionError(
-                'To change vtkSphereSource with `center` requires VTK 9.2 or later.',
-            )
+            msg = 'To change vtkSphereSource with `center` requires VTK 9.2 or later.'
+            raise VTKVersionError(msg)
 
     @property
     def radius(self: SphereSource) -> float:
@@ -2295,12 +2297,15 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
         """
         if isinstance(kind, str):
             if kind not in self._kinds:
-                raise ValueError(f'Invalid Platonic solid kind "{kind}".')
+                msg = f'Invalid Platonic solid kind "{kind}".'
+                raise ValueError(msg)
             kind = self._kinds[kind]
         elif isinstance(kind, int) and kind not in range(5):
-            raise ValueError(f'Invalid Platonic solid index "{kind}".')
+            msg = f'Invalid Platonic solid index "{kind}".'
+            raise ValueError(msg)
         elif not isinstance(kind, int):
-            raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
+            msg = f'Invalid Platonic solid index type "{type(kind).__name__}".'
+            raise ValueError(msg)
         self.SetSolidType(kind)
 
     @property
@@ -2775,9 +2780,10 @@ class BoxSource(_vtk.vtkTessellatedBoxSource):
     @bounds.setter
     def bounds(self: BoxSource, bounds: VectorLike[float]) -> None:
         if np.array(bounds).size != 6:
-            raise TypeError(
-                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)',
+            msg = (
+                'Bounds must be given as length 6 tuple: (x_min, x_max, y_min, y_max, z_min, z_max)'
             )
+            raise TypeError(msg)
         self.SetBounds(bounds)  # type: ignore[arg-type]
 
     @property
@@ -3687,9 +3693,8 @@ class AxesGeometrySource:
                 must_contain=geometry,
                 name='Geometry',
             )
-            raise NotImplementedError(
-                f"Geometry '{geometry}' is not implemented"
-            )  # pragma: no cover
+            msg = f"Geometry '{geometry}' is not implemented"
+            raise NotImplementedError(msg)  # pragma: no cover
 
     @staticmethod
     def _make_any_part(geometry: str | ConcreteDataSetType) -> tuple[str, PolyData]:
@@ -3704,9 +3709,8 @@ class AxesGeometrySource:
             name = 'custom'
             part = geometry.copy()
         else:
-            raise TypeError(
-                f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.',
-            )
+            msg = f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.'
+            raise TypeError(msg)
         part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
         part_poly = AxesGeometrySource._normalize_part(part_poly)
         return name, part_poly
@@ -3724,7 +3728,8 @@ class AxesGeometrySource:
             (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
         )
         if np.any(axis_length < 1e-8):
-            raise ValueError(f'Custom axes part must be 3D. Got bounds: {bnds}.')
+            msg = f'Custom axes part must be 3D. Got bounds: {bnds}.'
+            raise ValueError(msg)
         part.scale(np.reciprocal(axis_length), inplace=True)
         return part
 
