@@ -1297,7 +1297,7 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Volume'].sum().item()
 
     @property
-    def area(  # type:ignore[misc]
+    def area(  # type: ignore[misc]
         self: ConcreteDataSetType,
     ) -> float:
         """Return the mesh area if 2D.
@@ -1687,7 +1687,7 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(  # type:ignore[misc]
+    def cast_to_pointset(  # type: ignore[misc]
         self: ConcreteDataSetType, pass_cell_data: bool = False
     ) -> pyvista.PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
