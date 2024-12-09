@@ -8,7 +8,6 @@ from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from collections.abc import Sequence
-import colorsys
 from dataclasses import dataclass
 import sys
 
@@ -51,7 +50,6 @@ if TYPE_CHECKING:
     from types import ModuleType
 
     from pyvista.plotting.colors import Color
-    from pyvista.plotting.colors import ColorLike
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = 'api/plotting/charts'
@@ -389,7 +387,7 @@ class ColorTable(DocTable):
     value_func = lambda c: c.hex_rgb
     header = _aligned_dedent(
         """
-        |.. list-table:: **{}**
+        |.. list-table:: {}
         |   :widths: 50 20 30
         |   :header-rows: 1
         |
@@ -444,12 +442,12 @@ def _sort_colors_by_hls(colors: Sequence[Color]):
     return sorted(colors, key=lambda c: c._float_hls)
 
 
-def _colorlike_to_float_hls(colors: Sequence[ColorLike]) -> tuple[tuple[float, float, float]]:
-    return tuple(colorsys.rgb_to_hls(*pv.Color(c).float_rgb) for c in colors)
-
-
-def _float_hls_to_color(colors: Sequence[Sequence[float, float, float]]) -> tuple[Color]:
-    return tuple(pv.Color(colorsys.hls_to_rgb(*c)) for c in colors)
+# def _colorlike_to_float_hls(colors: Sequence[ColorLike]) -> tuple[tuple[float, float, float]]:
+#     return tuple(colorsys.rgb_to_hls(*pv.Color(c).float_rgb) for c in colors)
+#
+#
+# def _float_hls_to_color(colors: Sequence[Sequence[float, float, float]]) -> tuple[Color]:
+#     return tuple(pv.Color(colorsys.hls_to_rgb(*c)) for c in colors)
 
 
 ALL_COLORS: tuple[Color] = tuple(pv.Color(c) for c in pv.hexcolors.keys())
@@ -540,7 +538,7 @@ class ColorClassificationTable(ColorTable):
 
     @classmethod
     def get_header(cls, data):
-        return cls.header.format(cls.classification.name.upper() + 'S', cls.value_name)
+        return cls.header.format('**' + cls.classification.name.upper() + 'S**', cls.value_name)
 
     @classmethod
     def fetch_data(cls):
