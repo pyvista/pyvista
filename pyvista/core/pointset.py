@@ -740,6 +740,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
                     | _vtk.vtkHoudiniPolyDataWriter
                     | _vtk.vtkOBJWriter
                     | _vtk.vtkIVWriter
+                    | _vtk.vtkHDFWriter
                 ]
             ),
         ]
@@ -1810,7 +1811,11 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
     _WRITERS: ClassVar[
         dict[
             str,
-            type[_vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter],
+            type[
+                _vtk.vtkXMLUnstructuredGridWriter
+                | _vtk.vtkUnstructuredGridWriter
+                | _vtk.vtkHDFWriter
+            ],
         ]
     ] = {  # type: ignore[assignment]
         '.vtu': _vtk.vtkXMLUnstructuredGridWriter,
