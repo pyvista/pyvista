@@ -194,6 +194,7 @@ autodoc_type_aliases = {
     'CellArrayLike': 'pyvista.CellArrayLike',
     'TransformLike': 'pyvista.TransformLike',
     'RotationLike': 'pyvista.RotationLike',
+    'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")

@@ -82,3 +82,7 @@ CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
 _ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
 InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
+InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
+
+Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.
+"""
