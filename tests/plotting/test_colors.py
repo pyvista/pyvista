@@ -4,8 +4,10 @@ import itertools
 
 import matplotlib as mpl
 from matplotlib.colors import CSS4_COLORS
+from matplotlib.colors import TABLEAU_COLORS
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista.plotting.colors import get_cmap_safe
@@ -133,6 +135,33 @@ def pytest_generate_tests(metafunc):
         test_cases = zip(color_names, color_values)
         metafunc.parametrize('css4_color', test_cases, ids=color_names)
 
+    if 'tab_color' in metafunc.fixturenames:
+        color_names = list(TABLEAU_COLORS.keys())
+        color_values = list(TABLEAU_COLORS.values())
+
+        test_cases = zip(color_names, color_values)
+        metafunc.parametrize('tab_color', test_cases, ids=color_names)
+
+    if 'vtk_color' in metafunc.fixturenames:
+        # Assume any color that isn't a CSS color, tab color, or special
+        # color is a vtk color by default
+
+        SPECIAL_CASES = {'paraview_background': '#52576e'}  # Only need to store the name
+        NOT_A_VTK_COLOR = {**SPECIAL_CASES, **CSS4_COLORS, **TABLEAU_COLORS}
+
+        # vtkNamedColor expects vtk-only colors to have underscores
+        colors = pv.colors._hexcolors_with_underscores.copy()
+        for color_name in pv.colors._hexcolors_with_underscores:
+            color_fmt = color_name if color_name in SPECIAL_CASES else color_name.replace('_', '')
+            if color_fmt in NOT_A_VTK_COLOR:
+                colors.pop(color_name)
+
+        color_names = list(colors.keys())
+        color_values = list(colors.values())
+
+        test_cases = zip(color_names, color_values)
+        metafunc.parametrize('vtk_color', test_cases, ids=color_names)
+
     if 'color_synonym' in metafunc.fixturenames:
         synonyms = list(pv.colors.color_synonyms.keys())
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
@@ -141,6 +170,37 @@ def pytest_generate_tests(metafunc):
 def test_css4_colors(css4_color):
     name, value = css4_color
     assert pv.Color(name).hex_rgb.lower() == value.lower()
+
+
+def test_tab_colors(tab_color):
+    name, value = tab_color
+    assert pv.Color(name).hex_rgb.lower() == value.lower()
+
+
+def test_vtk_colors(vtk_color):
+    name, value = vtk_color
+
+    # Some pyvista colors are technically not valid VTK colors. We need to map their
+    # synonym manually for the tests
+    vtk_synonyms = {
+        'light_slate_blue': 'slate_blue_light',
+        'deep_cadmium_red': 'cadmium_red_deep',
+        'light_cadmium_red': 'cadmium_red_light',
+        'light_cadmium_yellow': 'cadmium_yellow_light',
+        'deep_cobalt_violet': 'cobalt_violet_deep',
+        'deep_naples_yellow': 'naples_yellow_deep',
+        'light_viridian': 'viridian_light',
+    }
+    name = vtk_synonyms.get(name, name)
+
+    # Get expected hex value from vtkNamedColors
+    color3ub = vtk.vtkNamedColors().GetColor3ub(name)
+    int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
+    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
+        pytest.fail(f"Color '{name}' is not a valid VTK color.")
+    expected_hex = pv.Color(int_rgb).hex_rgb
+
+    assert value.lower() == expected_hex
 
 
 def test_color_synonyms(color_synonym):
