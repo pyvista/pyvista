@@ -632,12 +632,10 @@ def validate_transform4x4(
                     '\tvtkTransform\n'
                     '\t4x4 np.ndarray\n'
                     '\t3x3 np.ndarray\n'
-                )
-                raise TypeError(
-                    msg,
                     '\tscipy.spatial.transform.Rotation\n'
                     f'Got {reprlib.repr(transform)} with type {type(transform)} instead.',
                 )
+                raise TypeError(msg)
 
     return arr
 
