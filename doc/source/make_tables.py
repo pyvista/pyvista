@@ -438,16 +438,7 @@ class ColorTable(DocTable):
 
 
 def _sort_colors_by_hls(colors: Sequence[Color]):
-    # Sort colors by hue, saturation, and value (HSV)
     return sorted(colors, key=lambda c: c._float_hls)
-
-
-# def _colorlike_to_float_hls(colors: Sequence[ColorLike]) -> tuple[tuple[float, float, float]]:
-#     return tuple(colorsys.rgb_to_hls(*pv.Color(c).float_rgb) for c in colors)
-#
-#
-# def _float_hls_to_color(colors: Sequence[Sequence[float, float, float]]) -> tuple[Color]:
-#     return tuple(pv.Color(colorsys.hls_to_rgb(*c)) for c in colors)
 
 
 ALL_COLORS: tuple[Color] = tuple(pv.Color(c) for c in pv.hexcolors.keys())
@@ -459,7 +450,7 @@ GRAYS_SATURATION_THRESHOLD = 0.15
 LOWER_LIGHTNESS_THRESHOLD = 0.1
 UPPER_LIGHTNESS_THRESHOLD = 0.9
 
-# Hue constants
+# Hue constants in range [0, 1]
 _360 = 360.0
 RED_UPPER_BOUND = 10 / _360
 ORANGE_UPPER_BOUND = 39 / _360
@@ -487,9 +478,6 @@ class ColorClassification(StrEnum):
 
 def classify_color(color: Color) -> ColorClassification:
     """Classify color based on its Hue, Lightness, and Saturation (HLS)."""
-    # Special cases: these colors visually appear to have a different hue than the
-    # classified hue
-
     hue, lightness, saturation = color._float_hls
 
     # Classify by lightness
@@ -497,9 +485,11 @@ def classify_color(color: Color) -> ColorClassification:
         return ColorClassification.WHITE
     elif lightness < LOWER_LIGHTNESS_THRESHOLD:
         return ColorClassification.BLACK
+
     # Classify by saturation
     elif saturation < GRAYS_SATURATION_THRESHOLD:
         return ColorClassification.GRAY
+
     # Classify by hue
     elif hue >= MAGENTA_UPPER_BOUND or hue < RED_UPPER_BOUND:
         return ColorClassification.RED
