@@ -2878,8 +2878,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         return self.reader.GetNumberOfTimeSteps()
     
     def enable_displacements(self, displacement_magnitude=1.0):
-        """Nodal positions are 'displaced' by the standard exodus
-        displacement vector
+        """Nodal positions are 'displaced' by the standard exodus displacement vector.
 
         Parameters
         ----------
@@ -2892,8 +2891,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.reader.Update()
 
     def disable_displacements(self):
-        """Nodal positions are not 'displaced'.
-        """
+        """Nodal positions are not 'displaced'."""
         self.reader.SetApplyDisplacements(False)
 
 
@@ -3035,7 +3033,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
-    def time_point_value(self, time_point):  # noqa: D102i
+    def time_point_value(self, time_point):  # noqa: D102
         """Value of time point or iteration by index.
 
         Parameters
