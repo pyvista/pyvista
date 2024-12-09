@@ -1213,3 +1213,99 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
+
+def test_exodus_reader():
+    # test against mug and exodus to check different valid file
+    #  extensions: .e and .exo
+
+    fname_e = examples.download_mug(load=False)
+    fname_exo = examples.download_exodus(load=False)
+
+    e_reader = pv.get_reader(fname_e)
+    exo_reader = pv.get_reader(fname_exo)
+
+    assert isinstance(e_reader,
+                      pv.core.utilities.reader.ExodusIIReader)
+    
+
+    assert isinstance(exo_reader,
+                      pv.core.utilities.reader.ExodusIIReader)
+
+    # Focus remainder on mug because it has multiple times 
+    # and block arrays
+
+    ## Check enabling of displacements
+    e_reader.enable_displacements()
+    assert e_reader.reader.GetApplyDisplacements() == 1
+    assert e_reader.reader.GetDisplacementMagnitude() == 1.
+
+    e_reader.disable_displacements()
+    assert e_reader.reader.GetApplyDisplacements() == 0
+
+    ## Check number of cell and point arrays and their names
+    assert e_reader.number_point_arrays == 2
+    assert e_reader.number_cell_arrays == 1
+
+    assert all(array in e_reader.point_array_names
+               for array in ["convected", "diffused"])
+    
+    assert "aux_elem" in e_reader.cell_array_names
+
+    for name in e_reader.point_array_names:
+        # Should be enabled by default
+        assert e_reader.point_array_status(name)
+
+        e_reader.disable_point_array(name)
+        assert not e_reader.point_array_status(name)
+
+        e_reader.enable_point_array(name)
+        assert e_reader.point_array_status(name)
+
+    for name in e_reader.cell_array_names:
+        # Should be enabled by default
+        assert e_reader.cell_array_status(name)
+
+        e_reader.disable_cell_array(name)
+        assert not e_reader.cell_array_status(name)
+
+        e_reader.enable_cell_array(name)
+        assert e_reader.cell_array_status(name)
+
+    # test time routines
+    ntimes = 21
+    dt = 0.1
+
+    ## Check correct number of time points
+    assert e_reader.number_time_points == ntimes, "Checks number of time points"
+    assert e_reader._active_time_point == 0, "Checks the first time set"
+
+    assert np.allclose(e_reader.time_values,
+                       [dt*i for i in range(ntimes)],
+                       atol=1e-8,
+                       rtol=1e-8)
+
+    ## check setting and getting of time points and times
+    for i in range(ntimes):
+        e_reader.set_active_time_point(i)
+        assert e_reader._active_time_point == i, "check time point set"
+
+        tp = e_reader.reader.GetTimeStep()
+        assert tp == i, "Check underlying reader time step setting"
+        
+        t = i*dt
+        assert np.isclose(e_reader.time_point_value(i), t,
+                          atol=1e-8,
+                          rtol=1e-8), "Check correct times"
+
+        assert np.isclose(e_reader.active_time_value, t,
+                          atol=1e-8,
+                          rtol=1e-8), "Check correct time set"
+
+    # check time setting based on time
+    for i, t in enumerate(e_reader.time_values):
+        e_reader.set_active_time_value(t)
+        assert e_reader._active_time_point == i, "check time point set"
+    
+
+
+
