@@ -1226,7 +1226,7 @@ def test_exodus_reader():
 
     assert isinstance(e_reader,
                       pv.core.utilities.reader.ExodusIIReader)
-    
+
 
     assert isinstance(exo_reader,
                       pv.core.utilities.reader.ExodusIIReader)
@@ -1249,7 +1249,7 @@ def test_exodus_reader():
 
     assert all(array in e_reader.point_array_names
                for array in ["convected", "diffused"])
-    
+
     assert "aux_elem" in e_reader.cell_array_names
 
     ## Check enabling and disabling of point arrays
@@ -1294,7 +1294,7 @@ def test_exodus_reader():
 
         tp = e_reader.reader.GetTimeStep()
         assert tp == i, "Check underlying reader time step setting"
-        
+
         t = i*dt
         assert np.isclose(e_reader.time_point_value(i), t,
                           atol=1e-8,
@@ -1308,7 +1308,7 @@ def test_exodus_reader():
     for i, t in enumerate(e_reader.time_values):
         e_reader.set_active_time_value(t)
         assert e_reader._active_time_point == i, "check time point set"
-    
+
 
     ## Check read with point and cell arrays present
     multiblock = e_reader.read()

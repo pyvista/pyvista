@@ -2865,7 +2865,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.enable_all_point_arrays()
 
         self.set_active_time_point(0)
-    
+
     @property
     def number_time_points(self):  # noqa: D102
         """Return number of time points or iterations available to read.
@@ -2874,9 +2874,9 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         -------
         int
 
-        """ 
+        """
         return self.reader.GetNumberOfTimeSteps()
-    
+
     def enable_displacements(self, displacement_magnitude=1.0):
         """Nodal positions are 'displaced' by the standard exodus displacement vector.
 
@@ -2893,7 +2893,6 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
     def disable_displacements(self):
         """Nodal positions are not 'displaced'."""
         self.reader.SetApplyDisplacements(False)
-
 
     @property
     def number_point_arrays(self):
@@ -3074,7 +3073,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
             raise ValueError(f"Time {time_value} not present. Available times are {self.time_values}") from None
 
         self.set_active_time_point(index)
-        
+
     def set_active_time_point(self, time_point):  # noqa: D102
         """Set active time or iteration by index.
 
