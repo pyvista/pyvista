@@ -223,6 +223,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*MatrixLike'),
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
+    (r'py:.*', '.*InteractionEventType'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
     (r'py:.*', '.*CellsLike'),
