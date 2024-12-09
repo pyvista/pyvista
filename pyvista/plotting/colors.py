@@ -838,6 +838,7 @@ class Color:
 
     @property
     def _float_hls(self) -> tuple[float, float, float]:
+        """Get the color as Hue, Lightness, Saturation (HLS) in range [0.0, 1.0]."""
         return rgb_to_hls(*self.float_rgb)
 
     @property
