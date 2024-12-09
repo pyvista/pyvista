@@ -839,9 +839,7 @@ class _DataSetMapper(_BaseMapper):
                 f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
                 f'number of cells ({self.dataset.n_cells}).'
             )
-            raise ValueError(
-                msg,  # type: ignore[union-attr]
-            )
+            raise ValueError(msg)  # type: ignore[union-attr]
 
         default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
 
