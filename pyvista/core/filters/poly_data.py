@@ -2620,7 +2620,7 @@ class PolyDataFilters(DataSetFilters):
             return self, ridx
         return newmesh, ridx
 
-    def flip_normals(
+    def flip_normals(  # type: ignore[misc]
         self: PolyData,
         *,
         reverse_cells: bool = True,
