@@ -835,9 +835,9 @@ class _DataSetMapper(_BaseMapper):
             rgba = np.empty((self.dataset.n_cells, 4), np.uint8)  # type: ignore[union-attr]
         else:  # pragma: no cover
             msg = (
-                f'Opacity array size ({opacity.size}) does not equal '
+                f'Opacity array size ({opacity.size}) does not equal '  # type: ignore[union-attr]
                 f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
-                f'number of cells ({self.dataset.n_cells}).'
+                f'number of cells ({self.dataset.n_cells}).'  # type: ignore[union-attr]
             )
             raise ValueError(msg)
 
