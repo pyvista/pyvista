@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import colorsys
 import itertools
 
 import matplotlib as mpl
@@ -117,6 +118,13 @@ def test_color():
         c['invalid_name']  # Invalid string index
     with pytest.raises(IndexError):
         c[4]  # Invalid integer index
+
+
+def test_color_hls():
+    lime = pv.Color('lime')
+    float_hls = lime._float_hls
+    expected_hls = colorsys.rgb_to_hls(*lime.float_rgb)
+    assert float_hls == expected_hls
 
 
 def test_color_opacity():
