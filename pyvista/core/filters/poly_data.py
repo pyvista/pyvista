@@ -2673,6 +2673,12 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Mesh with normals flipped.
 
+        See Also
+        --------
+        pyvista.PolyDataFilters.compute_normals
+        pyvista.PolyData.point_normals
+        pyvista.PolyData.cell_normals
+
         Examples
         --------
         Flip the normals of a sphere and plot the normals before and
