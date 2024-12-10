@@ -2640,7 +2640,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. warning::
 
-            This filter does not produce the correct output for triangle trips,
+            This filter does not produce the correct output for triangle strips,
             see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
             Use :meth:`~pyvista.PolyDataFilters.triangulate` to triangulate the mesh
             first.
