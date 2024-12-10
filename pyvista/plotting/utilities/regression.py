@@ -58,11 +58,14 @@ def wrap_image_array(arr):
 
     """
     if arr.ndim != 3:
-        raise ValueError('Expecting a X by Y by (3 or 4) array')
+        msg = 'Expecting a X by Y by (3 or 4) array'
+        raise ValueError(msg)
     if arr.shape[2] not in [3, 4]:
-        raise ValueError('Expecting a X by Y by (3 or 4) array')
+        msg = 'Expecting a X by Y by (3 or 4) array'
+        raise ValueError(msg)
     if arr.dtype != np.uint8:
-        raise ValueError('Expecting a np.uint8 array')
+        msg = 'Expecting a np.uint8 array'
+        raise ValueError(msg)
 
     img = _vtk.vtkImageData()
     img.SetDimensions(arr.shape[1], arr.shape[0], 1)
@@ -221,21 +224,22 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
                 img._on_first_render_request()
                 img.render()
             if img.render_window is None:
-                raise RuntimeError(
-                    'Unable to extract image from Plotter as it has already been closed.',
-                )
+                msg = 'Unable to extract image from Plotter as it has already been closed.'
+                raise RuntimeError(msg)
             return image_from_window(img.render_window, True, ignore_alpha=True)
         else:
-            raise TypeError(
+            msg = (
                 f'Unsupported data type {type(img)}.  Should be '
-                'Either a np.ndarray, vtkRenderWindow, or vtkImageData',
+                'Either a np.ndarray, vtkRenderWindow, or vtkImageData'
             )
+            raise TypeError(msg)
 
     im1 = remove_alpha(to_img(im1))
     im2 = remove_alpha(to_img(im2))
 
     if im1.GetDimensions() != im2.GetDimensions():
-        raise RuntimeError('Input images are not the same size.')
+        msg = 'Input images are not the same size.'
+        raise RuntimeError(msg)
 
     if use_vtk:
         img_diff = _vtk.vtkImageDifference()

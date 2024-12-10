@@ -106,7 +106,8 @@ class Actor(Prop3D, _vtk.vtkActor):
     @name.setter
     def name(self, value: str):
         if not value:
-            raise ValueError('Name must be truthy.')
+            msg = 'Name must be truthy.'
+            raise ValueError(msg)
         self._name = value
 
     @property

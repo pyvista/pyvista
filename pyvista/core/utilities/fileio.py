@@ -77,11 +77,13 @@ def set_pickle_format(format: Literal['vtk', 'xml', 'legacy']) -> None:  # noqa:
     supported = {'vtk', 'xml', 'legacy'}
     format_ = cast(Literal['vtk', 'xml', 'legacy'], format.lower())
     if format_ not in supported:
-        raise ValueError(
-            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.',
+        msg = (
+            f'Unsupported pickle format `{format_}`. Valid options are `{"`, `".join(supported)}`.'
         )
+        raise ValueError(msg)
     if format_ == 'vtk' and pyvista.vtk_version_info < (9, 3):
-        raise ValueError("'vtk' pickle format requires VTK >= 9.3")
+        msg = "'vtk' pickle format requires VTK >= 9.3"
+        raise ValueError(msg)
 
     pyvista.PICKLE_FORMAT = format_
 
@@ -237,7 +239,8 @@ def read(
 
     """
     if file_format is not None and force_ext is not None:
-        raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
+        msg = 'Only one of `file_format` and `force_ext` may be specified.'
+        raise ValueError(msg)
 
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
@@ -247,7 +250,8 @@ def read(
         return multi
     filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():
-        raise FileNotFoundError(f'File ({filename}) not found')
+        msg = f'File ({filename}) not found'
+        raise FileNotFoundError(msg)
 
     # Read file using meshio.read if file_format is present
     if file_format:
@@ -259,9 +263,8 @@ def read(
     if ext.lower() in ['.grdecl']:
         return read_grdecl(filename)
     if ext in ['.wrl', '.vrml']:
-        raise ValueError(
-            'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
-        )
+        msg = 'VRML files must be imported directly into a Plotter. See `pyvista.Plotter.import_vrml` for details.'
+        raise ValueError(msg)
     if ext in PICKLE_EXT:
         return read_pickle(filename)
 
@@ -270,13 +273,15 @@ def read(
     except ValueError:
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
-            raise OSError('This file was not able to be automatically read by pyvista.')
+            msg = 'This file was not able to be automatically read by pyvista.'
+            raise OSError(msg)
         from meshio._exceptions import ReadError
 
         try:
             return read_meshio(filename)
         except ReadError:
-            raise OSError('This file was not able to be automatically read by pyvista.')
+            msg = 'This file was not able to be automatically read by pyvista.'
+            raise OSError(msg)
     else:
         observer = Observer()
         observer.observe(reader.reader)
@@ -357,7 +362,8 @@ def read_texture(filename: str | Path, progress_bar: bool = False) -> Texture:
 
         image = read(filename, progress_bar=progress_bar)
         if image.n_points < 2:
-            raise ValueError('Problem reading the image with VTK.')
+            msg = 'Problem reading the image with VTK.'
+            raise ValueError(msg)
         return pyvista.Texture(image)  # type: ignore[abstract]
     except (KeyError, ValueError):
         # Otherwise, use the imageio reader
@@ -448,7 +454,8 @@ def read_exodus(
         elif isinstance(sideset, str):
             name = sideset
         else:
-            raise ValueError(f'Could not parse sideset ID/name: {sideset}')
+            msg = f'Could not parse sideset ID/name: {sideset}'
+            raise ValueError(msg)
 
         reader.SetSideSetArrayStatus(name, 1)
 
@@ -683,10 +690,12 @@ def read_grdecl(
         cylindric = keywords['SPECGRID'][4] == 'T'
 
         if cylindric:
-            raise TypeError('Cylindric grids are not supported.')
+            msg = 'Cylindric grids are not supported.'
+            raise TypeError(msg)
 
     except KeyError:
-        raise ValueError("Unable to generate grid without keyword 'SPECGRID'.")
+        msg = "Unable to generate grid without keyword 'SPECGRID'."
+        raise ValueError(msg)
 
     relative = False
 
@@ -827,13 +836,11 @@ def read_pickle(filename: str | Path) -> DataObject:
             mesh = pickle.load(f)
 
         if not isinstance(mesh, pyvista.DataObject):
-            raise TypeError(
-                f'Pickled object must be an instance of {pyvista.DataObject}. Got {mesh.__class__} instead.'
-            )
+            msg = f'Pickled object must be an instance of {pyvista.DataObject}. Got {mesh.__class__} instead.'
+            raise TypeError(msg)
         return mesh
-    raise ValueError(
-        f'Filename must be a file path with extension {PICKLE_EXT}. Got {filename} instead.'
-    )
+    msg = f'Filename must be a file path with extension {PICKLE_EXT}. Got {filename} instead.'
+    raise ValueError(msg)
 
 
 def save_pickle(filename: str | Path, mesh: DataObject) -> None:
@@ -880,9 +887,8 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     if not filename_str.endswith(PICKLE_EXT):
         filename_str += '.pkl'
     if not isinstance(mesh, pyvista.DataObject):
-        raise TypeError(
-            f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
-        )
+        msg = f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
+        raise TypeError(msg)
 
     with open(filename_str, 'wb') as f:  # noqa: PTH123
         pickle.dump(mesh, f)
@@ -1017,7 +1023,8 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
     try:
         import meshio
     except ImportError:  # pragma: no cover
-        raise ImportError('To use this feature install meshio with:\n\npip install meshio')
+        msg = 'To use this feature install meshio with:\n\npip install meshio'
+        raise ImportError(msg)
 
     # Make sure relative paths will work
     filename = Path(filename).expanduser().resolve()
@@ -1060,7 +1067,8 @@ def save_meshio(
     try:
         import meshio
     except ImportError:  # pragma: no cover
-        raise ImportError('To use this feature install meshio with:\n\npip install meshio')
+        msg = 'To use this feature install meshio with:\n\npip install meshio'
+        raise ImportError(msg)
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type
@@ -1083,7 +1091,8 @@ def save_meshio(
     pixel_voxel = {8, 11}  # Handle pixels and voxels
     for cell_type in np.unique(vtk_cell_type):
         if cell_type not in vtk_to_meshio_type.keys() and cell_type not in pixel_voxel:
-            raise TypeError(f'meshio does not support VTK type {cell_type}.')
+            msg = f'meshio does not support VTK type {cell_type}.'
+            raise TypeError(msg)
 
     # Get cells
     cells = []  # type: ignore[var-annotated]
@@ -1167,10 +1176,11 @@ def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
     try:
         from imageio import imread
     except ModuleNotFoundError:  # pragma: no cover
-        raise ModuleNotFoundError(
+        msg = (
             'Problem reading the image with VTK. Install imageio to try to read the '
             'file using imageio with:\n\n'
-            '   pip install imageio',
-        ) from None
+            '   pip install imageio'
+        )
+        raise ModuleNotFoundError(msg) from None
 
     return imread(filename)

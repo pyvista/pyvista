@@ -136,14 +136,14 @@ def set_plot_theme(theme):
         try:
             new_theme_type = _NATIVE_THEMES[theme].value
         except KeyError:
-            raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
+            msg = f"Theme {theme} not found in PyVista's native themes."
+            raise ValueError(msg)
         pyvista.global_theme.load_theme(new_theme_type())
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
-        raise TypeError(
-            f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}',
-        )
+        msg = f'Expected a ``pyvista.plotting.themes.Theme`` or ``str``, not {type(theme).__name__}'
+        raise TypeError(msg)
 
 
 # Mostly from https://stackoverflow.com/questions/56579348/how-can-i-force-subclasses-to-have-slots
@@ -1382,7 +1382,8 @@ class _SliderConfig(_ThemeConfig):
     @classic.setter
     def classic(self, config: _SliderStyleConfig):
         if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
+            msg = 'Configuration type must be `_SliderStyleConfig`'
+            raise TypeError(msg)
         self._classic = config
 
     @property
@@ -1393,7 +1394,8 @@ class _SliderConfig(_ThemeConfig):
     @modern.setter
     def modern(self, config: _SliderStyleConfig):
         if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
+            msg = 'Configuration type must be `_SliderStyleConfig`'
+            raise TypeError(msg)
         self._modern = config
 
     def __repr__(self):
@@ -1567,7 +1569,8 @@ class _TrameConfig(_ThemeConfig):
     @jupyter_extension_enabled.setter
     def jupyter_extension_enabled(self, enabled: bool):
         if enabled and not self.jupyter_extension_available:
-            raise ValueError('The trame_jupyter_extension is not available')
+            msg = 'The trame_jupyter_extension is not available'
+            raise ValueError(msg)
 
         if enabled and self.server_proxy_enabled:
             warnings.warn('Enabling jupyter_extension will disable server_proxy')
@@ -2121,7 +2124,8 @@ class Theme(_ThemeConfig):
     @trame.setter
     def trame(self, config: _TrameConfig):
         if not isinstance(config, _TrameConfig):
-            raise TypeError('Configuration type must be `_TrameConfig`.')
+            msg = 'Configuration type must be `_TrameConfig`.'
+            raise TypeError(msg)
         self._trame = config
 
     @property
@@ -2201,9 +2205,8 @@ class Theme(_ThemeConfig):
         elif isinstance(camera, _CameraConfig):
             self._camera = camera
         else:
-            raise TypeError(
-                f'camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}',
-            )
+            msg = f'camera value must either be a `dict` or a `_CameraConfig`, got {type(camera)}'
+            raise TypeError(msg)
 
     @property
     def notebook(self) -> bool | None:  # numpydoc ignore=RT01
@@ -2244,11 +2247,13 @@ class Theme(_ThemeConfig):
     @window_size.setter
     def window_size(self, window_size: list[int]):
         if len(window_size) != 2:
-            raise ValueError('Expected a length 2 iterable for ``window_size``.')
+            msg = 'Expected a length 2 iterable for ``window_size``.'
+            raise ValueError(msg)
 
         # ensure positive size
         if window_size[0] < 0 or window_size[1] < 0:
-            raise ValueError('Window size must be a positive value.')
+            msg = 'Window size must be a positive value.'
+            raise ValueError(msg)
 
         self._window_size = window_size
 
@@ -2261,7 +2266,8 @@ class Theme(_ThemeConfig):
     def image_scale(self, value: int):
         value = int(value)
         if value < 1:
-            raise ValueError('Scale factor must be a positive integer.')
+            msg = 'Scale factor must be a positive integer.'
+            raise ValueError(msg)
         self._image_scale = int(value)
 
     @property
@@ -2302,7 +2308,8 @@ class Theme(_ThemeConfig):
     @font.setter
     def font(self, config: _Font):
         if not isinstance(config, _Font):
-            raise TypeError('Configuration type must be `_Font`.')
+            msg = 'Configuration type must be `_Font`.'
+            raise TypeError(msg)
         self._font = config
 
     @property
@@ -2331,7 +2338,8 @@ class Theme(_ThemeConfig):
     def cmap(self, cmap):
         out = get_cmap_safe(cmap)  # for validation
         if out is None:
-            raise ValueError(f'Invalid color map {cmap}')
+            msg = f'Invalid color map {cmap}'
+            raise ValueError(msg)
         self._cmap = cmap
 
     @property
@@ -2517,7 +2525,8 @@ class Theme(_ThemeConfig):
     @colorbar_orientation.setter
     def colorbar_orientation(self, colorbar_orientation: str):
         if colorbar_orientation not in ['vertical', 'horizontal']:
-            raise ValueError('Colorbar orientation must be either "vertical" or "horizontal"')
+            msg = 'Colorbar orientation must be either "vertical" or "horizontal"'
+            raise ValueError(msg)
         self._colorbar_orientation = colorbar_orientation
 
     @property
@@ -2541,7 +2550,8 @@ class Theme(_ThemeConfig):
     @colorbar_horizontal.setter
     def colorbar_horizontal(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            raise TypeError('Configuration type must be `_ColorbarConfig`.')
+            msg = 'Configuration type must be `_ColorbarConfig`.'
+            raise TypeError(msg)
         self._colorbar_horizontal = config
 
     @property
@@ -2566,7 +2576,8 @@ class Theme(_ThemeConfig):
     @colorbar_vertical.setter
     def colorbar_vertical(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            raise TypeError('Configuration type must be `_ColorbarConfig`.')
+            msg = 'Configuration type must be `_ColorbarConfig`.'
+            raise TypeError(msg)
         self._colorbar_vertical = config
 
     @property
@@ -2763,9 +2774,11 @@ class Theme(_ThemeConfig):
     def anti_aliasing(self, anti_aliasing: str | None):
         if isinstance(anti_aliasing, str):
             if anti_aliasing not in ['ssaa', 'msaa', 'fxaa']:
-                raise ValueError('anti_aliasing must be either "ssaa", "msaa", or "fxaa"')
+                msg = 'anti_aliasing must be either "ssaa", "msaa", or "fxaa"'
+                raise ValueError(msg)
         elif anti_aliasing is not None:
-            raise TypeError('anti_aliasing must be either "ssaa", "msaa", "fxaa", or None')
+            msg = 'anti_aliasing must be either "ssaa", "msaa", "fxaa", or None'
+            raise TypeError(msg)
 
         self._anti_aliasing = anti_aliasing  # type: ignore[assignment]
 
@@ -2840,10 +2853,11 @@ class Theme(_ThemeConfig):
     def volume_mapper(self, mapper: str):
         mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
         if mapper not in mappers:
-            raise ValueError(
+            msg = (
                 f"Mapper ({mapper}) unknown. Available volume mappers "
-                f"include:\n {', '.join(mappers)}",
+                f"include:\n {', '.join(mappers)}"
             )
+            raise ValueError(msg)
 
         self._volume_mapper = mapper
 
@@ -2885,7 +2899,8 @@ class Theme(_ThemeConfig):
     @depth_peeling.setter
     def depth_peeling(self, config: _DepthPeelingConfig):
         if not isinstance(config, _DepthPeelingConfig):
-            raise TypeError('Configuration type must be `_DepthPeelingConfig`.')
+            msg = 'Configuration type must be `_DepthPeelingConfig`.'
+            raise TypeError(msg)
         self._depth_peeling = config
 
     @property
@@ -2907,7 +2922,8 @@ class Theme(_ThemeConfig):
     @silhouette.setter
     def silhouette(self, config: _SilhouetteConfig):
         if not isinstance(config, _SilhouetteConfig):
-            raise TypeError('Configuration type must be `_SilhouetteConfig`')
+            msg = 'Configuration type must be `_SilhouetteConfig`'
+            raise TypeError(msg)
         self._silhouette = config
 
     @property
@@ -2918,7 +2934,8 @@ class Theme(_ThemeConfig):
     @slider_styles.setter
     def slider_styles(self, config: _SliderConfig):
         if not isinstance(config, _SliderConfig):
-            raise TypeError('Configuration type must be `_SliderConfig`.')
+            msg = 'Configuration type must be `_SliderConfig`.'
+            raise TypeError(msg)
         self._slider_styles = config
 
     @property
@@ -2946,7 +2963,8 @@ class Theme(_ThemeConfig):
     @axes.setter
     def axes(self, config: _AxesConfig):
         if not isinstance(config, _AxesConfig):
-            raise TypeError('Configuration type must be `_AxesConfig`.')
+            msg = 'Configuration type must be `_AxesConfig`.'
+            raise TypeError(msg)
         self._axes = config
 
     @property
@@ -3094,9 +3112,8 @@ class Theme(_ThemeConfig):
             theme = load_theme(theme)
 
         if not isinstance(theme, Theme):
-            raise TypeError(
-                '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.',
-            )
+            msg = '``theme`` must be a pyvista theme like ``pyvista.plotting.themes.Theme``.'
+            raise TypeError(msg)
 
         for attr_name in Theme.__slots__:
             setattr(self, attr_name, getattr(theme, attr_name))
@@ -3187,7 +3204,8 @@ class Theme(_ThemeConfig):
     @lighting_params.setter
     def lighting_params(self, config: _LightingConfig):
         if not isinstance(config, _LightingConfig):
-            raise TypeError('Configuration type must be `_LightingConfig`.')
+            msg = 'Configuration type must be `_LightingConfig`.'
+            raise TypeError(msg)
         self._lighting_params = config
 
     @property
@@ -3224,7 +3242,8 @@ class Theme(_ThemeConfig):
             path = None
         else:
             if not pathlib.Path(logo_file).exists():
-                raise FileNotFoundError(f'Logo file ({logo_file}) not found.')
+                msg = f'Logo file ({logo_file}) not found.'
+                raise FileNotFoundError(msg)
             path = str(logo_file)
         self._logo_file = path
 
