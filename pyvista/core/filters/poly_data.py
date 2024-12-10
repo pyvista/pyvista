@@ -2626,6 +2626,7 @@ class PolyDataFilters(DataSetFilters):
         reverse_cells: bool = True,
         reverse_normals: bool = False,
         inplace: bool = True,
+        progress_bar: bool = False,
     ):
         """Flip the normals of a mesh.
 
@@ -2662,6 +2663,11 @@ class PolyDataFilters(DataSetFilters):
 
             .. versionadded:: 0.45
 
+        progress_bar : bool, default: True
+            Display a progress bar to indicate progress.
+
+            .. versionadded:: 0.45
+
         Returns
         -------
         pyvista.PolyData
@@ -2683,7 +2689,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetInputData(self)
         alg.SetReverseNormals(reverse_normals)
         alg.SetReverseCells(reverse_cells)
-        _update_alg(alg)
+        _update_alg(alg, progress_bar)
         output = _get_output(alg)
         if inplace:
             return self.copy_from(output)
