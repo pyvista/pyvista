@@ -2854,12 +2854,14 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
     >>> mesh.plot()
+
     """
+
     _vtk_module_name = 'vtkIOExodus'
     _vtk_class_name = 'vtkExodusIIReader'
 
-    def _set_filename(self, filename):
-        super()._set_filename(filename)
+    def _set_defaults_post(self, filename):
+        super()._set_defaults_post(filename)
 
         self.enable_all_cell_arrays()
         self.enable_all_point_arrays()
@@ -2867,7 +2869,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.set_active_time_point(0)
 
     @property
-    def number_time_points(self):  # noqa: D102
+    def number_time_points(self):
         """Return number of time points or iterations available to read.
 
         Returns
@@ -2902,6 +2904,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         -------
         int
             Number of point arrays.
+
         """
         return self.reader.GetNumberOfPointResultArrays()
 
@@ -2913,6 +2916,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         -------
         list[str]
             List of all point array names.
+
         """
         return [self.reader.GetPointResultArrayName(i) for i in range(self.number_point_arrays)]
 
@@ -2962,9 +2966,10 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         -------
         int
             Number of point arrays.
+
         """
         return self.reader.GetNumberOfElementResultArrays()
-    
+
     @property
     def cell_array_names(self):
         """Return the list of all cell array names.
@@ -2973,8 +2978,8 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         -------
         list[str]
             List of all cell array names.
-        """
 
+        """
         return [self.reader.GetElementResultArrayName(i) for i in range(self.number_cell_arrays)]
 
 
@@ -3025,14 +3030,13 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         list[float]
 
         """
-
         vtkStreaming = _lazy_vtk_instantiation("vtkCommonExecutionModel",
                                                "vtkStreamingDemandDrivenPipeline")
         key = vtkStreaming.TIME_STEPS()
         vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
-    def time_point_value(self, time_point):  # noqa: D102
+    def time_point_value(self, time_point):
         """Value of time point or iteration by index.
 
         Parameters
@@ -3048,7 +3052,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         return self.time_values[time_point]
 
     @property
-    def active_time_value(self):  # noqa: D102
+    def active_time_value(self):
         """Active time or iteration value.
 
         Returns
@@ -3058,7 +3062,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         return self.time_values[self._active_time_point]
 
-    def set_active_time_value(self, time_value):  # noqa: D102
+    def set_active_time_value(self, time_value):
         """Set active time or iteration value.
 
         Parameters
@@ -3074,7 +3078,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
 
         self.set_active_time_point(index)
 
-    def set_active_time_point(self, time_point):  # noqa: D102
+    def set_active_time_point(self, time_point):
         """Set active time or iteration by index.
 
         Parameters

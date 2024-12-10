@@ -1231,10 +1231,10 @@ def test_exodus_reader():
     assert isinstance(exo_reader,
                       pv.core.utilities.reader.ExodusIIReader)
 
-    # Focus remainder on mug because it has multiple times 
+    # Focus remainder on mug because it has multiple times
     # and block arrays
 
-    ## Check enabling of displacements (To match functionality 
+    ## Check enabling of displacements (To match functionality
     # from read_exodus)
     e_reader.enable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 1
