@@ -2982,7 +2982,6 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         return [self.reader.GetElementResultArrayName(i) for i in range(self.number_cell_arrays)]
 
-
     def enable_cell_array(self, name):
         """Enable cell array with name.
 
@@ -3030,8 +3029,9 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         list[float]
 
         """
-        vtkStreaming = _lazy_vtk_instantiation("vtkCommonExecutionModel",
-                                               "vtkStreamingDemandDrivenPipeline")
+        vtkStreaming = _lazy_vtk_instantiation(
+            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
+        )
         key = vtkStreaming.TIME_STEPS()
         vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
@@ -3074,7 +3074,9 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         try:
             index = self.time_values.index(time_value)
         except ValueError:
-            raise ValueError(f"Time {time_value} not present. Available times are {self.time_values}") from None
+            raise ValueError(
+                f'Time {time_value} not present. Available times are {self.time_values}'
+            ) from None
 
         self.set_active_time_point(index)
 

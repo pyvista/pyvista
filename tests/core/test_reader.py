@@ -1214,6 +1214,7 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.save_pickle('filename', {})
 
+
 def test_exodus_reader():
     # test against mug and exodus to check different valid file
     #  extensions: .e and .exo
@@ -1224,12 +1225,9 @@ def test_exodus_reader():
     e_reader = pv.get_reader(fname_e)
     exo_reader = pv.get_reader(fname_exo)
 
-    assert isinstance(e_reader,
-                      pv.core.utilities.reader.ExodusIIReader)
+    assert isinstance(e_reader, pv.core.utilities.reader.ExodusIIReader)
 
-
-    assert isinstance(exo_reader,
-                      pv.core.utilities.reader.ExodusIIReader)
+    assert isinstance(exo_reader, pv.core.utilities.reader.ExodusIIReader)
 
     # Focus remainder on mug because it has multiple times
     # and block arrays
@@ -1238,7 +1236,7 @@ def test_exodus_reader():
     # from read_exodus)
     e_reader.enable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 1
-    assert e_reader.reader.GetDisplacementMagnitude() == 1.
+    assert e_reader.reader.GetDisplacementMagnitude() == 1.0
 
     e_reader.disable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 0
@@ -1247,10 +1245,9 @@ def test_exodus_reader():
     assert e_reader.number_point_arrays == 2
     assert e_reader.number_cell_arrays == 1
 
-    assert all(array in e_reader.point_array_names
-               for array in ["convected", "diffused"])
+    assert all(array in e_reader.point_array_names for array in ['convected', 'diffused'])
 
-    assert "aux_elem" in e_reader.cell_array_names
+    assert 'aux_elem' in e_reader.cell_array_names
 
     ## Check enabling and disabling of point arrays
     for name in e_reader.point_array_names:
@@ -1279,36 +1276,32 @@ def test_exodus_reader():
     dt = 0.1
 
     ## Check correct number of time points
-    assert e_reader.number_time_points == ntimes, "Checks number of time points"
-    assert e_reader._active_time_point == 0, "Checks the first time set"
+    assert e_reader.number_time_points == ntimes, 'Checks number of time points'
+    assert e_reader._active_time_point == 0, 'Checks the first time set'
 
-    assert np.allclose(e_reader.time_values,
-                       [dt*i for i in range(ntimes)],
-                       atol=1e-8,
-                       rtol=1e-8)
+    assert np.allclose(e_reader.time_values, [dt * i for i in range(ntimes)], atol=1e-8, rtol=1e-8)
 
     ## check setting and getting of time points and times
     for i in range(ntimes):
         e_reader.set_active_time_point(i)
-        assert e_reader._active_time_point == i, "check time point set"
+        assert e_reader._active_time_point == i, 'check time point set'
 
         tp = e_reader.reader.GetTimeStep()
-        assert tp == i, "Check underlying reader time step setting"
+        assert tp == i, 'Check underlying reader time step setting'
 
-        t = i*dt
-        assert np.isclose(e_reader.time_point_value(i), t,
-                          atol=1e-8,
-                          rtol=1e-8), "Check correct times"
+        t = i * dt
+        assert np.isclose(
+            e_reader.time_point_value(i), t, atol=1e-8, rtol=1e-8
+        ), 'Check correct times'
 
-        assert np.isclose(e_reader.active_time_value, t,
-                          atol=1e-8,
-                          rtol=1e-8), "Check correct time set"
+        assert np.isclose(
+            e_reader.active_time_value, t, atol=1e-8, rtol=1e-8
+        ), 'Check correct time set'
 
     # check time setting based on time
     for i, t in enumerate(e_reader.time_values):
         e_reader.set_active_time_value(t)
-        assert e_reader._active_time_point == i, "check time point set"
-
+        assert e_reader._active_time_point == i, 'check time point set'
 
     ## Check read with point and cell arrays present
     multiblock = e_reader.read()
