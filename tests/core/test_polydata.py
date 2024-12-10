@@ -1154,11 +1154,12 @@ def test_flip_normals(sphere, plane):
 
 @pytest.mark.parametrize('reverse_normals', [True, False])
 @pytest.mark.parametrize('reverse_cells', [True, False])
-def test_flip_normals_parameters(plane, reverse_normals, reverse_cells):
+def test_flip_normals_parameters(reverse_normals, reverse_cells):
     point_ids = [0, 1, 3, 2]
     point_ids_reversed = point_ids[::-1]
     normal_vector = np.array((0.0, 0.0, 1.0))
     normal_vector_reversed = normal_vector * -1
+
     plane = pv.Plane(i_resolution=1, j_resolution=1)
     assert 'Normals' in plane.point_data
     assert np.allclose(plane['Normals'][0], normal_vector)
