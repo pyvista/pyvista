@@ -312,6 +312,7 @@ def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
 
     """
     x = np.array(x)
+    x = x if np.issubdtype(x.dtype, np.floating) else x.astype(float)
     zero = np.abs(x) < tol
     x[~zero] = np.reciprocal(x[~zero])
     x[zero] = 0
