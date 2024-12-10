@@ -2620,8 +2620,52 @@ class PolyDataFilters(DataSetFilters):
             return self, ridx
         return newmesh, ridx
 
-    def flip_normals(self):
-        """Flip normals of a triangular mesh by reversing the point ordering.
+    def flip_normals(
+        self: PolyData,
+        *,
+        reverse_cells: bool = True,
+        reverse_normals: bool = False,
+        inplace: bool = True,
+    ):
+        """Flip the normals of a mesh.
+
+        This filter flips normals by reversing the order of polygonal cells and/or
+        reversing the direction of point and cell normals.
+
+        .. versionchanged:: 0.45
+
+            This filter now operates on all polygon cell(s). Previously, only
+            triangle cells were supported.
+
+        .. warning::
+
+            This filter does not produce the correct output for triangle trips,
+            see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
+            Use :meth:`~pyvista.PolyDataFilters.triangulate` to triangulate the mesh
+            first.
+
+        Parameters
+        ----------
+        reverse_cells : bool, default: True
+            Reverse the order of indices in the cell connectivity list.
+
+            .. versionadded:: 0.45
+
+        reverse_normals : bool, default: False
+            Multiply the normals by ``-1`` (both point and cell normals, if present).
+            Has no effect if no active normals are set.
+
+            .. versionadded:: 0.45
+
+        inplace : bool, default: True
+            Overwrites the original mesh in-place.
+
+            .. versionadded:: 0.45
+
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh with normals flipped.
 
         Examples
         --------
@@ -2635,14 +2679,15 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
-        if not self.is_all_triangles:  # type: ignore[attr-defined]
-            raise NotAllTrianglesError('Can only flip normals on an all triangle mesh.')
-
-        f = self._connectivity_array  # type: ignore[attr-defined]
-
-        # swap first and last point index in-place
-        # See: https://stackoverflow.com/a/33362288/
-        f[::3], f[2::3] = f[2::3], f[::3].copy()
+        alg = _vtk.vtkReverseSense()
+        alg.SetInputData(self)
+        alg.SetReverseNormals(reverse_normals)
+        alg.SetReverseCells(reverse_cells)
+        _update_alg(alg)
+        output = _get_output(alg)
+        if inplace:
+            return self.copy_from(output)
+        return output
 
     def delaunay_2d(
         self,

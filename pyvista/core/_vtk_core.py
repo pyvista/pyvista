@@ -284,6 +284,7 @@ from vtkmodules.vtkFiltersCore import vtkPointDataToCellData
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation
 from vtkmodules.vtkFiltersCore import vtkResampleWithDataSet
+from vtkmodules.vtkFiltersCore import vtkReverseSense
 from vtkmodules.vtkFiltersCore import vtkSmoothPolyDataFilter
 from vtkmodules.vtkFiltersCore import vtkStripper
 from vtkmodules.vtkFiltersCore import vtkThreshold
