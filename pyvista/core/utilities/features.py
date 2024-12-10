@@ -213,7 +213,7 @@ def voxelize(
         del selection
 
     # extract cells from point indices
-    return ugrid.extract_points(mask)  # type: ignore[arg-type]
+    return ugrid.extract_points(mask)
 
 
 def voxelize_volume(
