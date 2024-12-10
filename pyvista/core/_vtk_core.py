@@ -269,6 +269,7 @@ from vtkmodules.vtkFiltersCore import vtkClipPolyData
 from vtkmodules.vtkFiltersCore import vtkConnectivityFilter
 from vtkmodules.vtkFiltersCore import vtkContourFilter
 from vtkmodules.vtkFiltersCore import vtkCutter
+from vtkmodules.vtkFiltersCore import vtkDecimatePolylineFilter
 from vtkmodules.vtkFiltersCore import vtkDecimatePro
 from vtkmodules.vtkFiltersCore import vtkDelaunay2D
 from vtkmodules.vtkFiltersCore import vtkDelaunay3D
