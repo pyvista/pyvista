@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-# ruff: noqa: F401
 from .check import check_contains
 from .check import check_finite
 from .check import check_greater_than
