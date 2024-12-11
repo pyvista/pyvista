@@ -2860,8 +2860,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
     _vtk_module_name = 'vtkIOExodus'
     _vtk_class_name = 'vtkExodusIIReader'
 
-    def _set_defaults_post(self, filename):
-        super()._set_defaults_post(filename)
+    def _set_defaults_post(self):
 
         self.enable_all_cell_arrays()
         self.enable_all_point_arrays()
