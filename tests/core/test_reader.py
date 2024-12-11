@@ -1215,9 +1215,9 @@ def test_read_write_pickle(tmp_path, data_object, ext, datasets):
         pv.save_pickle('filename', {})
 
 
-def test_exodus_reader():
+def test_exodus_reader_ext():
     # test against mug and exodus to check different valid file
-    #  extensions: .e and .exo
+    # extensions: .e and .exo
 
     fname_e = examples.download_mug(load=False)
     fname_exo = examples.download_exodus(load=False)
@@ -1226,11 +1226,12 @@ def test_exodus_reader():
     exo_reader = pv.get_reader(fname_exo)
 
     assert isinstance(e_reader, pv.core.utilities.reader.ExodusIIReader)
-
     assert isinstance(exo_reader, pv.core.utilities.reader.ExodusIIReader)
 
-    # Focus remainder on mug because it has multiple times
-    # and block arrays
+
+def test_exodus_reader():
+    # Use mug because it has multiple times and block arrays
+    e_reader = examples.download_exodus(load=False).get_reader(fname_e)
 
     ## Check enabling of displacements (To match functionality
     # from read_exodus)
