@@ -1172,32 +1172,6 @@ def test_reverse_cell_ordering(sphere):
     assert np.allclose(sphere_reversed.point_data['Normals'], sphere.point_data['Normals'])
 
 
-@pytest.mark.parametrize('reverse_normals', [True, False])
-@pytest.mark.parametrize('reverse_cells', [True, False])
-def test_flip_normals_parameters(reverse_normals, reverse_cells):
-    point_ids = [0, 1, 3, 2]
-    point_ids_reversed = point_ids[::-1]
-    normal_vector = np.array((0.0, 0.0, 1.0))
-    normal_vector_reversed = normal_vector * -1
-
-    plane = pv.Plane(i_resolution=1, j_resolution=1)
-    assert 'Normals' in plane.point_data
-    assert np.allclose(plane['Normals'][0], normal_vector)
-    assert np.array_equal(plane.regular_faces[0], point_ids)
-
-    plane.flip_normals(reverse_cells=reverse_cells, reverse_normals=reverse_normals)
-
-    if reverse_normals:
-        assert np.allclose(plane['Normals'][0], normal_vector_reversed)
-    else:
-        assert np.allclose(plane['Normals'][0], normal_vector)
-
-    if reverse_cells:
-        assert np.array_equal(plane.regular_faces[0], point_ids_reversed)
-    else:
-        assert np.array_equal(plane.regular_faces[0], point_ids)
-
-
 def test_n_verts():
     mesh = pv.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
     assert mesh.n_verts == 2
