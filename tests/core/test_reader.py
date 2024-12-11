@@ -1305,8 +1305,7 @@ def test_exodus_reader():
 
     # check for error if time not present
     bad_time = 1.25
-    err_msg = re.escape(f'Time {bad_time} not present. Available times '
-                        f'are {e_reader.time_values}')
+    err_msg = re.escape(f'Time {bad_time} not present. Available times are {e_reader.time_values}')
     with pytest.raises(ValueError, match=err_msg):
         e_reader.set_active_time_value(1.25)
 
