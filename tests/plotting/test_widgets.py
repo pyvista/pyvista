@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest.mock import ANY
 
 import numpy as np
 import pytest
@@ -846,158 +847,50 @@ def test_clear_camera3d_widget(verify_image_cache):
 class Test_event_parser:
     """Class to regroup tests for widgets that use the  `_parse_interaction_event()` function"""
 
-    def test_add_box_widget(
+    @pytest.fixture
+    def plotter(self):
+        yield (p := pv.Plotter())
+        p.close()
+
+    @pytest.mark.parametrize(
+        ('method', 'widget'),
+        [
+            ('add_box_widget', 'vtkBoxWidget'),
+            ('add_plane_widget', 'vtkImplicitPlaneWidget'),
+            ('add_line_widget', 'vtkLineWidget'),
+            ('add_text_slider_widget', 'vtkSliderWidget'),
+            ('add_slider_widget', 'vtkSliderWidget'),
+            ('add_sphere_widget', 'vtkSphereWidget'),
+            ('add_spline_widget', 'vtkSplineWidget'),
+        ],
+    )
+    def test_add_widget(
         self,
-        uniform,
+        plotter: pv.Plotter,
+        method: str,
+        widget: str,
         mocker: MockerFixture,
     ):
+        # Arrange
         mock = mocker.patch.object(widgets, '_parse_interaction_event')
         mock_vtk = mocker.patch.object(widgets, '_vtk')
 
-        p = pv.Plotter()
-        func = lambda box: box  # Does nothing
-        p.add_mesh(uniform)
-        p.add_box_widget(
-            callback=func,
-            interaction_event=(e := 'foo'),
-        )
-        p.close()
+        if widget == 'vtkSplineWidget':
+            mocker.patch.object(widgets.pyvista, 'wrap').return_value = pv.PolyData()
 
-        mock.assert_called_once_with(e)
-        mock_vtk.vtkBoxWidget().AddObserver.assert_called_once_with(
-            mock(e),
-            mocker.ANY,
-        )
+        kwargs = dict(callback=lambda *b: b, interaction_event=(e := 'foo'))
+        if widget == 'vtkLineWidget':
+            mock_vtk.vtkLineWidget().GetPoint1.return_value = (0,) * 3
+            mock_vtk.vtkLineWidget().GetPoint2.return_value = (0,) * 3
 
-    def test_add_plane_widget(
-        self,
-        mocker: MockerFixture,
-    ):
-        mock = mocker.patch.object(widgets, '_parse_interaction_event')
-        mock_vtk = mocker.patch.object(widgets, '_vtk')
+        elif widget == 'vtkSliderWidget':
+            k = 'data' if method == 'add_text_slider_widget' else 'rng'
+            kwargs[k] = [0, 1]
 
-        p = pv.Plotter()
-        func = lambda box: box  # Does nothing
-        p.add_plane_widget(
-            callback=func,
-            interaction_event=(e := 'foo'),
-        )
-        p.close()
+        # Act
+        method = getattr(plotter, method)
+        method(**kwargs)
 
-        mock.assert_called_once_with(e)
-        mock_vtk.vtkImplicitPlaneWidget().AddObserver.assert_called_with(
-            mock(e),
-            mocker.ANY,
-        )
-
-    def test_add_line_widget(
-        self,
-        mocker: MockerFixture,
-    ):
-        mock = mocker.patch.object(widgets, '_parse_interaction_event')
-        mock_vtk = mocker.patch.object(widgets, '_vtk')
-        mock_linewidget: mocker.MagicMock = mock_vtk.vtkLineWidget()
-        mock_linewidget.GetPoint1.return_value = (0,) * 3
-        mock_linewidget.GetPoint2.return_value = (0,) * 3
-
-        p = pv.Plotter()
-        func = lambda box: box  # Does nothing
-        p.add_line_widget(
-            callback=func,
-            interaction_event=(e := 'foo'),
-        )
-        p.close()
-
-        mock.assert_called_once_with(e)
-        mock_linewidget.AddObserver.assert_called_with(
-            mock(e),
-            mocker.ANY,
-        )
-
-    def test_add_text_slider_widget(
-        self,
-        mocker: MockerFixture,
-    ):
-        mock = mocker.patch.object(widgets, '_parse_interaction_event')
-        mock_vtk = mocker.patch.object(widgets, '_vtk')
-
-        p = pv.Plotter()
-        func = lambda box: box  # Does nothing
-        p.add_text_slider_widget(
-            callback=func,
-            interaction_event=(e := 'foo'),
-            data=[0, 1],
-        )
-        p.close()
-
+        # mock, mock_vtk = mockers
         mock.assert_called_with(e)
-        mock_vtk.vtkSliderWidget().AddObserver.assert_called_with(
-            mock(e),
-            mocker.ANY,
-        )
-
-    def test_add_slider_widget(
-        self,
-        mocker: MockerFixture,
-    ):
-        mock = mocker.patch.object(widgets, '_parse_interaction_event')
-        mock_vtk = mocker.patch.object(widgets, '_vtk')
-
-        p = pv.Plotter()
-        func = lambda box: box  # Does nothing
-        p.add_slider_widget(
-            callback=func,
-            interaction_event=(e := 'foo'),
-            rng=[0, 1],
-        )
-        p.close()
-
-        mock.assert_called_once_with(e)
-        mock_vtk.vtkSliderWidget().AddObserver.assert_called_with(
-            mock(e),
-            mocker.ANY,
-        )
-
-    def test_add_spline_widget(
-        self,
-        mocker: MockerFixture,
-    ):
-        mock = mocker.patch.object(widgets, '_parse_interaction_event')
-        mock_vtk = mocker.patch.object(widgets, '_vtk')
-        mock_pv_wrap = mocker.patch.object(widgets.pyvista, 'wrap')
-        mock_pv_wrap.return_value = pv.PolyData()
-
-        p = pv.Plotter()
-        func = lambda box: box  # Does nothing
-        p.add_spline_widget(
-            callback=func,
-            interaction_event=(e := 'foo'),
-        )
-        p.close()
-
-        mock.assert_called_once_with(e)
-        mock_vtk.vtkSplineWidget().AddObserver.assert_called_with(
-            mock(e),
-            mocker.ANY,
-        )
-
-    def test_add_sphere_widget(
-        self,
-        mocker: MockerFixture,
-    ):
-        mock = mocker.patch.object(widgets, '_parse_interaction_event')
-        mock_vtk = mocker.patch.object(widgets, '_vtk')
-
-        p = pv.Plotter()
-        func = lambda box: box  # Does nothing
-        p.add_sphere_widget(
-            callback=func,
-            interaction_event=(e := 'foo'),
-        )
-        p.close()
-
-        mock.assert_called_once_with(e)
-        mock_vtk.vtkSphereWidget().AddObserver.assert_called_with(
-            mock(e),
-            mocker.ANY,
-        )
+        getattr(mock_vtk, widget)().AddObserver.assert_called_with(mock(e), ANY)
