@@ -57,38 +57,38 @@ if TYPE_CHECKING:
 
 if TYPE_CHECKING:
     _PolyDataWriterAlias = Union[
-        _vtk.vtkPLYWriter
-        | _vtk.vtkXMLPolyDataWriter
-        | _vtk.vtkSTLWriter
-        | _vtk.vtkPolyDataWriter
-        | _vtk.vtkHoudiniPolyDataWriter
-        | _vtk.vtkOBJWriter
-        | _vtk.vtkIVWriter
-        | _vtk.vtkHDFWriter
+        _vtk.vtkPLYWriter,
+        _vtk.vtkXMLPolyDataWriter,
+        _vtk.vtkSTLWriter,
+        _vtk.vtkPolyDataWriter,
+        _vtk.vtkHoudiniPolyDataWriter,
+        _vtk.vtkOBJWriter,
+        _vtk.vtkIVWriter,
+        _vtk.vtkHDFWriter,
     ]
 else:
     _PolyDataWriterAlias = Union[
-        _vtk.vtkPLYWriter
-        | _vtk.vtkXMLPolyDataWriter
-        | _vtk.vtkSTLWriter
-        | _vtk.vtkPolyDataWriter
-        | _vtk.vtkHoudiniPolyDataWriter
-        | _vtk.vtkOBJWriter
-        | _vtk.vtkIVWriter
+        _vtk.vtkPLYWriter,
+        _vtk.vtkXMLPolyDataWriter,
+        _vtk.vtkSTLWriter,
+        _vtk.vtkPolyDataWriter,
+        _vtk.vtkHoudiniPolyDataWriter,
+        _vtk.vtkOBJWriter,
+        _vtk.vtkIVWriter,
     ]
     if hasattr(_vtk, 'vtkHDFWriter'):
-        _PolyDataWriterAlias = Union[_PolyDataWriterAlias | _vtk.vtkHDFWriter]
+        _PolyDataWriterAlias = Union[_PolyDataWriterAlias, _vtk.vtkHDFWriter]
 
 if TYPE_CHECKING:
     _UnstructuredGridWriterAlias = Union[
-        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter | _vtk.vtkHDFWriter
+        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
     ]
 else:
     _UnstructuredGridWriterAlias = Union[
-        _vtk.vtkXMLUnstructuredGridWriter | _vtk.vtkUnstructuredGridWriter
+        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter
     ]
     if hasattr(_vtk, 'vtkHDFWriter'):
-        _UnstructuredGridWriterAlias = Union[_UnstructuredGridWriterAlias | _vtk.vtkHDFWriter]
+        _UnstructuredGridWriterAlias = Union[_UnstructuredGridWriterAlias, _vtk.vtkHDFWriter]
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
