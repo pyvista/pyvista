@@ -248,7 +248,7 @@ def test_user_dict_values(ant, value):
     ],
 )
 def test_user_dict_write_read(tmp_path, data_object, ext):
-    if pv.vtk_version_info >= (9, 4) and ext == '.vtkhdf':
+    if pv.vtk_version_info < (9, 4) and ext == '.vtkhdf':
         pytest.exit(returncode=0)  # can't use VTKHDF on VTK<9.4.0
 
     # test dict is restored after writing to file
