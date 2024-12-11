@@ -56,6 +56,12 @@ repos:
         verbose: true
         files: ^(\.dockerignore|doc/styles/Vocab/pyvista/accept\.txt)$
 
+  - repo: https://github.com/scientific-python/cookie
+    rev: 2024.08.19
+    hooks:
+      - id: sp-repo-review
+        args: ["--show=errskip"]
+
   # this validates our github workflow files
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.29.4

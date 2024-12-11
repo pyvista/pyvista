@@ -195,6 +195,7 @@ omit = [
 ]
 
 [tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers", "-ra"]
 doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
   'error::pyvista.PyVistaDeprecationWarning',
@@ -208,16 +209,19 @@ filterwarnings = [
 ]
 image_cache_dir = "tests/plotting/image_cache"
 junit_family = 'legacy'
+log_cli_level = "INFO"
 markers = [
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
 ]
+minversion = "7"
 testpaths = 'tests'
+xfail_strict = true
 
 [tool.mypy]
 check_untyped_defs = true
 disallow_any_generics = true
-enable_error_code = ["ignore-without-code"]
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 exclude = ['pyvista/ext/']
 extra_checks = true
 ignore_missing_imports = true
@@ -227,6 +231,7 @@ pretty = true
 show_error_context = true
 strict_equality = true
 warn_redundant_casts = true
+warn_unreachable = true
 warn_unused_configs = true
 warn_unused_ignores = true
 
@@ -423,3 +428,9 @@ required-imports = [
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true # Preserve types, even if a file imports `from __future__ import annotations`.
+
+[tool.repo-review]
+# MY101: to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
+# PC140: mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
+# RTD: the documentation is not hosted by ReadTheDocs
+ignore = ["MY101", "PC140", "RTD"]
