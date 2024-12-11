@@ -62,6 +62,7 @@ typing = [
   'mypy<1.14.0',
   'npt-promote==0.1',
   'numpy>=2.0.0',
+  'pyvista-mypy-plugin',
   'pyvista[pinned]',
   'trimesh<4.6.0',
 ]
@@ -222,7 +223,7 @@ exclude = ['pyvista/ext/']
 extra_checks = true
 ignore_missing_imports = true
 packages = ['pyvista']
-plugins = ['npt_promote', 'numpy.typing.mypy_plugin']
+plugins = ['npt_promote', 'numpy.typing.mypy_plugin', 'pyvista_mypy_plugin']
 pretty = true
 show_error_context = true
 strict_equality = true

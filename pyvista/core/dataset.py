@@ -45,7 +45,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator
     from collections.abc import Iterator
 
-    from ._typing_core import ConcreteDataSetType
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
@@ -579,8 +578,8 @@ class DataSet(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+    def arrows(
+        self: DataSet,
     ) -> pyvista.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
@@ -1256,8 +1255,8 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetCenter()
 
     @property
-    def volume(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+    def volume(
+        self: DataSet,
     ) -> float:
         """Return the mesh volume.
 
@@ -1297,8 +1296,8 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Volume'].sum().item()
 
     @property
-    def area(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+    def area(
+        self: DataSet,
     ) -> float:
         """Return the mesh area if 2D.
 
@@ -1687,9 +1686,7 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(  # type: ignore[misc]
-        self: ConcreteDataSetType, pass_cell_data: bool = False
-    ) -> pyvista.PointSet:
+    def cast_to_pointset(self: DataSet, pass_cell_data: bool = False) -> pyvista.PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1719,16 +1716,14 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         pset = pyvista.PointSet()
-        pset.points = self.points.copy()  # type: ignore[assignment]
+        pset.points = self.points.copy()
         if pass_cell_data:
             self = self.cell_data_to_point_data()
         pset.GetPointData().DeepCopy(self.GetPointData())
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def cast_to_poly_points(  # type: ignore[misc]
-        self: ConcreteDataSetType, pass_cell_data: bool = False
-    ) -> pyvista.PolyData:
+    def cast_to_poly_points(self: DataSet, pass_cell_data: bool = False) -> pyvista.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1848,7 +1843,7 @@ class DataSet(DataSetFilters, DataObject):
             raise ValueError('`n` must be a positive integer.')
 
         locator = _vtk.vtkPointLocator()
-        locator.SetDataSet(self)  # type: ignore[arg-type]
+        locator.SetDataSet(self)
         locator.BuildLocator()
         if n > 1:
             id_list = _vtk.vtkIdList()
@@ -1962,7 +1957,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)  # type: ignore[arg-type]
+        locator.SetDataSet(self)
         locator.BuildLocator()
 
         cell = _vtk.vtkGenericCell()
@@ -2047,7 +2042,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)  # type: ignore[arg-type]
+        locator.SetDataSet(self)
         locator.BuildLocator()
 
         containing_cells = [locator.FindCell(node) for node in point]
@@ -2108,7 +2103,7 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             raise TypeError('Point B must be a length three tuple of floats.')
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)  # type: ignore[arg-type]
+        locator.SetDataSet(self)
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsAlongLine(

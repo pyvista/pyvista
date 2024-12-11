@@ -19,7 +19,7 @@ from ._array_like import NumpyArray  # noqa: F401
 if TYPE_CHECKING:  # pragma: no cover
     # Avoid circular imports
     from ._dataset_types import ConcreteDataObjectType  # noqa: F401
-    from ._dataset_types import ConcreteDataSetType  # noqa: F401
     from ._dataset_types import ConcreteGridType  # noqa: F401
     from ._dataset_types import ConcretePointGridType  # noqa: F401
     from ._dataset_types import ConcretePointSetType  # noqa: F401
+    from ._dataset_types import DataSetType

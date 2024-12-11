@@ -6,6 +6,7 @@ from typing import TypeVar
 from typing import Union
 
 from pyvista.core.composite import MultiBlock
+from pyvista.core.dataset import DataSet
 from pyvista.core.grid import ImageData
 from pyvista.core.grid import RectilinearGrid
 from pyvista.core.objects import Table
@@ -46,8 +47,9 @@ ConcretePointSetType = TypeVar('ConcretePointSetType', bound=ConcretePointSetAli
 ConcretePointSetType.__doc__ = """Type variable of all concrete PyVista ``PointSet`` classes."""
 
 ConcreteDataSetAlias = Union[ConcreteGridAlias, ConcretePointSetAlias]
-ConcreteDataSetType = TypeVar('ConcreteDataSetType', bound=ConcreteDataSetAlias)
-ConcreteDataSetType.__doc__ = """Type variable of all concrete :class:`~pyvista.DataSet` classes."""
+
+DataSetType = TypeVar('DataSetType', bound=DataSet)
+DataSetType.__doc__ = """Type variable for :class:`~pyvista.DataSet` classes."""
 
 ConcreteDataObjectAlias = Union[
     ConcreteDataSetAlias,
