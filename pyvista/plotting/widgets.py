@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 import pyvista
+from pyvista import vtk_version_info
+from pyvista.core._typing_core._array_like import NumpyArray
 from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import get_array_association
 from pyvista.core.utilities.geometric_objects import NORMALS
@@ -96,6 +98,7 @@ class WidgetHelper:
         self.distance_widgets = []
         self.logo_widgets = []
         self.camera3d_widgets = []
+        self.rotate_orientation_widgets = []
 
     def add_box_widget(
         self,
@@ -3006,6 +3009,114 @@ class WidgetHelper:
             camera3d_widget.Off()
         self.camera3d_widgets.clear()
 
+    def add_rotate_orientation_widget(
+        self,
+        orientation_x: float = 0.0,
+        orientation_y: float = 0.0,
+        orientation_z: float = 0.0,
+        torus_length: float = 7.5,
+        torus_thickness: float = 0.005,
+        show_arrows: bool = False,
+        arrow_distance: float = 0.0,
+        arrow_length: float = 0.05,
+        arrow_tip_length: float = 1.0,
+        arrow_tip_radius: float = 0.03,
+        arrow_shaft_radius: float = 0.001,
+    ):
+        """Add rotate_orientation_widget.
+
+        Parameters
+        ----------
+        orientation_x : float, optional, default: 0.0
+            Orientation x values. Angles are in interval [-180, 180] degrees.
+
+        orientation_y : float, optional, default: 0.0
+            Orientation y values. Angles are in interval [-180, 180] degrees.
+
+        orientation_z : float, optional, default: 0.0
+            Orientation z values. Angles are in interval [-180, 180] degrees.
+
+        torus_length : float, optional, default: 7.5
+            The length (Z scale) of the torus.
+            This is a factor of Thickness parameter. Clamped between [0.01, 100.0].
+
+        torus_thickness : float, optional, default: 0.005
+            The thickness of the torus.
+            Thickness handles width in every axes. This means Length depends on it.
+            Clamped between [0.001, 0.1].
+
+        show_arrows : bool, optional, default: False
+            Whether to show arrows.
+
+        arrow_distance : float, optional, default: 0.0
+            The distance between arrows and torus. Clamped between [0.0, 0.5].
+
+        arrow_length : float, optional, default: 0.05
+            The arrow length. This includes shaft+tip.
+            Note that double arrows are two arrows next to each other.
+            Clamped between [0.01, 0.5].
+
+        arrow_tip_length : float, optional, default: 1.0
+            The length of the arrow tip.
+            Factor of arrow length, equals if set to 1.
+            Note that double arrows are two arrows next to each other.
+            Clamped between [0.0, 1.0].
+
+        arrow_tip_radius : float, optional, default: 0.03
+            The radius of the arrow tip. Clamped between [0.001, 0.5].
+
+        arrow_shaft_radius : float, optional, default: 0.001
+            The radius of the arrow shaft. Clamped between [0.001, 0.5].
+
+        Returns
+        -------
+        vtkOrientationWidget
+            3D Widget for manipulating a vtkCamera.
+
+        Examples
+        --------
+        Use an orientation rotate widget.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube(x_length=0.5, y_length=0.5, z_length=0.5)
+        >>> p = pv.Plotter()
+        >>> _ = p.add_mesh(mesh)
+        >>> _ = p.add_rotate_orientation_widget()
+        >>> p.show()
+
+        """
+        if vtk_version_info < (9, 3):  # pragma: no cover
+            from pyvista.core.errors import VTKVersionError
+
+            raise VTKVersionError(
+                "`add_rotate_orientation_widget` cannot be used under VTK v9.3.0. Try installing VTK v9.3.0 or newer.",
+            )
+        representation = _vtk.vtkOrientationRepresentation()
+        representation.SetOrientationX(orientation_x)
+        representation.SetOrientationY(orientation_y)
+        representation.SetOrientationZ(orientation_z)
+        representation.SetTorusLength(torus_length)
+        representation.SetTorusThickness(torus_thickness)
+        representation.SetShowArrows(show_arrows)
+        representation.SetArrowDistance(arrow_distance)
+        representation.SetArrowLength(arrow_length)
+        representation.SetArrowTipLength(arrow_tip_length)
+        representation.SetArrowTipRadius(arrow_tip_radius)
+        representation.SetArrowShaftRadius(arrow_shaft_radius)
+        widget = _vtk.vtkOrientationWidget()
+        widget.SetInteractor(self.iren.interactor)  # type: ignore[attr-defined]
+        widget.SetCurrentRenderer(self.renderer)  # type: ignore[attr-defined]
+        widget.SetRepresentation(representation)
+        widget.On()
+        self.rotate_orientation_widgets.append(widget)
+        return widget
+
+    def clear_rotate_orientation_widget(self):
+        """Remove all of the rotate orientation widget."""
+        for rotate_orientation_widget in self.rotate_orientation_widgets:
+            rotate_orientation_widget.Off()
+        self.rotate_orientation_widgets.clear()
+
     def close(self):
         """Close the widgets."""
         self.clear_box_widgets()
@@ -3020,3 +3131,4 @@ class WidgetHelper:
         self.clear_measure_widgets()
         self.clear_logo_widgets()
         self.clear_camera3d_widgets()
+        self.clear_rotate_orientation_widget()
