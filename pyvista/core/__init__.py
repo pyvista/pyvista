@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from . import _vtk_core
 from ._typing_core import *
-from ._typing_core._dataset_types import ConcreteGridType
 from ._typing_core._dataset_types import DataObjectType
 from ._typing_core._dataset_types import DataSetType
 from ._typing_core._dataset_types import PointGridType

@@ -45,13 +45,13 @@ from .utilities.points import vtk_points
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
+
     from ._typing_core import ArrayLike
     from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
-    from ._typing_core import _PointSetType
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -1731,9 +1731,7 @@ class PointGrid(_PointSet):
         """Initialize the point grid."""
         super().__init__()
 
-    def plot_curvature(
-        self: Self, curv_type='mean', **kwargs
-    ):
+    def plot_curvature(self: Self, curv_type='mean', **kwargs):
         """Plot the curvature of the external surface of the grid.
 
         Parameters

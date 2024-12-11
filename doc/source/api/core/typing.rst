@@ -79,13 +79,6 @@ pyvista.TransformLike
 Data Object Types
 -----------------
 
-pyvista.ConcreteGridType
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: ConcreteGridType
-
 pyvista.PointGridType
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
