@@ -10,6 +10,7 @@ from pyvista.core.dataset import DataSet
 from pyvista.core.grid import ImageData
 from pyvista.core.grid import RectilinearGrid
 from pyvista.core.pointset import ExplicitStructuredGrid
+from pyvista.core.pointset import PointGrid
 from pyvista.core.pointset import PointSet
 from pyvista.core.pointset import PolyData
 from pyvista.core.pointset import StructuredGrid
@@ -32,8 +33,8 @@ ConcretePointGridAlias = Union[
     StructuredGrid,
     UnstructuredGrid,
 ]
-ConcretePointGridType = TypeVar('ConcretePointGridType', bound=ConcretePointGridAlias)
-ConcretePointGridType.__doc__ = """Type variable of all concrete PyVista ``PointGrid``` classes."""
+PointGridType = TypeVar('PointGridType', bound=PointGrid)
+PointGridType.__doc__ = """Type variable of all concrete PyVista ``PointGrid``` classes."""
 
 ConcretePointSetAlias = Union[
     ExplicitStructuredGrid,

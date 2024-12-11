@@ -86,12 +86,12 @@ pyvista.ConcreteGridType
 
 .. autotypevar:: ConcreteGridType
 
-pyvista.ConcretePointGridType
+pyvista.PointGridType
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
-.. autotypevar:: ConcretePointGridType
+.. autotypevar:: PointGridType
 
 pyvista._PointSetType
 ~~~~~~~~~~~~~~~~~~~~~

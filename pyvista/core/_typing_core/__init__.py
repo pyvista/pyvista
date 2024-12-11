@@ -19,7 +19,7 @@ from ._array_like import NumpyArray
 if TYPE_CHECKING:  # pragma: no cover
     # Avoid circular imports
     from ._dataset_types import ConcreteGridType
-    from ._dataset_types import ConcretePointGridType
     from ._dataset_types import DataObjectType
     from ._dataset_types import DataSetType
+    from ._dataset_types import PointGridType
     from ._dataset_types import _PointSetType
