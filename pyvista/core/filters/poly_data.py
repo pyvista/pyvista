@@ -2670,7 +2670,7 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def reverse_cell_ordering(
+    def reverse_cell_ordering(  # type: ignore[misc]
         self: PolyData,
         *,
         inplace: bool = False,
