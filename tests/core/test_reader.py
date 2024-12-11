@@ -1230,8 +1230,9 @@ def test_exodus_reader_ext():
 
 
 def test_exodus_reader():
-    # Use mug because it has multiple times and block arrays
-    e_reader = examples.download_exodus(load=False).get_reader(fname_e)
+    # check internals
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
 
     ## Check enabling of displacements (To match functionality
     # from read_exodus)
