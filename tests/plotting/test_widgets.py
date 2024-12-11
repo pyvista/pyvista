@@ -891,6 +891,6 @@ class Test_event_parser:
         method = getattr(plotter, method)
         method(**kwargs)
 
-        # mock, mock_vtk = mockers
+        # Assert
         mock.assert_called_with(e)
         getattr(mock_vtk, widget)().AddObserver.assert_called_with(mock(e), ANY)
