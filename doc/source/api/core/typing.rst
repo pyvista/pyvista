@@ -106,11 +106,11 @@ pyvista.DataSetType
 
 .. currentmodule:: pyvista
 
-.. autotypevar:: ConcreteDataSetType
+.. autotypevar:: DataSetType
 
-pyvista.ConcreteDataObjectType
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pyvista.DataObjectType
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
-.. autotypevar:: ConcreteDataObjectType
+.. autotypevar:: DataObjectType
