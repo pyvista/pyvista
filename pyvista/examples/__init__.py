@@ -1,6 +1,5 @@
 """Examples module."""
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 from . import download_3ds

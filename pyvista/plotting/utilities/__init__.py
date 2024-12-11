@@ -1,6 +1,5 @@
 """Plotting utilities."""
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 from .algorithms import active_scalars_algorithm
