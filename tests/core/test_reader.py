@@ -1303,6 +1303,13 @@ def test_exodus_reader():
         e_reader.set_active_time_value(t)
         assert e_reader._active_time_point == i, 'check time point set'
 
+    # check for error if time not present
+    bad_time = 1.25
+    err_msg = re.escape(f'Time {bad_time} not present. Available times '
+                        f'are {e_reader.time_values}')
+    with pytest.raises(ValueError, match=err_msg):
+        e_reader.set_active_time_value(1.25)
+
     ## Check read with point and cell arrays present
     multiblock = e_reader.read()
 
