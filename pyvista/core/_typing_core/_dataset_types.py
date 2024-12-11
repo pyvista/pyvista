@@ -14,6 +14,7 @@ from pyvista.core.pointset import PointSet
 from pyvista.core.pointset import PolyData
 from pyvista.core.pointset import StructuredGrid
 from pyvista.core.pointset import UnstructuredGrid
+from pyvista.core.pointset import _PointSet
 
 # Use these typevars wherever shared `pyvista` and `vtk` object attributes are
 # required for type-checking. The abstract classes like `DataSet`, `DataObject`
@@ -41,8 +42,8 @@ ConcretePointSetAlias = Union[
     StructuredGrid,
     UnstructuredGrid,
 ]
-ConcretePointSetType = TypeVar('ConcretePointSetType', bound=ConcretePointSetAlias)
-ConcretePointSetType.__doc__ = """Type variable of all concrete PyVista ``PointSet`` classes."""
+_PointSetType = TypeVar('_PointSetType', bound=_PointSet)
+_PointSetType.__doc__ = """Type variable of all concrete PyVista ``PointSet`` classes."""
 
 DataSetType = TypeVar('DataSetType', bound=DataSet)
 DataSetType.__doc__ = """Type variable for :class:`~pyvista.DataSet` classes."""

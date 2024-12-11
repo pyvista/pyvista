@@ -48,10 +48,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike
     from ._typing_core import ConcretePointGridType
-    from ._typing_core import ConcretePointSetType
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
+    from ._typing_core import _PointSetType
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
@@ -192,8 +192,8 @@ class _PointSet(DataSet):
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    def translate(  # type: ignore[misc]
-        self: ConcretePointSetType,
+    def translate(
+        self: _PointSetType,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace=None,

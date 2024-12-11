@@ -6,9 +6,9 @@ from . import _vtk_core
 from ._typing_core import *
 from ._typing_core._dataset_types import ConcreteGridType
 from ._typing_core._dataset_types import ConcretePointGridType
-from ._typing_core._dataset_types import ConcretePointSetType
 from ._typing_core._dataset_types import DataObjectType
 from ._typing_core._dataset_types import DataSetType
+from ._typing_core._dataset_types import _PointSetType
 from .cell import Cell
 from .cell import CellArray
 from .celltype import CellType
