@@ -2624,7 +2624,7 @@ class PolyDataFilters(DataSetFilters):
         self: PolyData,
         *,
         reverse_order: bool = True,
-        flip_direction: bool = False,
+        flip_direction: bool = True,
         inplace: bool = True,
         progress_bar: bool = False,
     ):

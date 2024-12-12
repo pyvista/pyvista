@@ -1144,9 +1144,8 @@ def test_flip_normals(sphere, plane):
     sphere_flipped = sphere.copy()
     sphere_flipped.flip_normals()
 
-    sphere.compute_normals(inplace=True)
-    sphere_flipped.compute_normals(inplace=True)
     assert np.allclose(sphere_flipped.point_data['Normals'], -sphere.point_data['Normals'])
+    assert np.allclose(sphere_flipped.regular_faces[0], sphere.regular_faces[0][::-1])
 
     copied = sphere.flip_normals(inplace=False)
     assert copied is not sphere
