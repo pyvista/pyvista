@@ -2638,6 +2638,11 @@ class PolyDataFilters(DataSetFilters):
             This filter now operates on all polygon cell(s). Previously, only
             triangle cells were supported.
 
+        .. versionchanged:: 0.45
+
+            This filter now flips the direction of normal vectors by default.
+            Previously, only cell ordering was reversed.
+
         .. warning::
 
             This filter does not produce the correct output for triangle strips,
