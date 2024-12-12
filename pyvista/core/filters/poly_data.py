@@ -2623,15 +2623,13 @@ class PolyDataFilters(DataSetFilters):
     def flip_normals(  # type: ignore[misc]
         self: PolyData,
         *,
-        reverse_order: bool = True,
-        flip_direction: bool = True,
         inplace: bool = True,
         progress_bar: bool = False,
     ):
         """Flip the normals of a mesh.
 
-        This filter flips normals by reversing the order of polygonal cells and/or
-        reversing the direction of point and cell normals.
+        Both the normal direction and the order of a cell's points are
+        reversed.
 
         .. versionchanged:: 0.45
 
@@ -2652,17 +2650,6 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        reverse_order : bool, default: True
-            Reverse the order of indices in the cell connectivity list.
-
-            .. versionadded:: 0.45
-
-        flip_direction : bool, default: False
-            Multiply the normals by ``-1`` (both point and cell normals, if present).
-            Has no effect if no active normals are set.
-
-            .. versionadded:: 0.45
-
         inplace : bool, default: True
             Overwrites the original mesh in-place.
 
@@ -2680,6 +2667,71 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
+        pyvista.PolyDataFilters.reverse_sense
+            More general version of this filter to reverse cell ordering and/or
+            the normals independently.
+        pyvista.PolyDataFilters.compute_normals
+        pyvista.PolyData.point_normals
+        pyvista.PolyData.cell_normals
+
+        Examples
+        --------
+        Flip the normals of a sphere and plot the normals before and
+        after the flip.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> sphere.plot_normals(mag=0.1)
+        >>> sphere.flip_normals()
+        >>> sphere.plot_normals(mag=0.1, opacity=0.5)
+
+        """
+        return self.reverse_sense(reverse_cells=True, reverse_normals=True, inplace=inplace, progress_bar=progress_bar)
+
+    def reverse_sense(  # type: ignore[misc]
+        self: PolyData,
+        *,
+        reverse_cells: bool = True,
+        reverse_normals: bool = False,
+        inplace: bool = True,
+        progress_bar: bool = False,
+    ):
+        """Reverse the order of polygonal cells and/or the normal vectors.
+
+        .. warning::
+
+            This filter does not produce the correct output for triangle strips,
+            see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
+            Use :meth:`~pyvista.PolyDataFilters.triangulate` to triangulate the mesh
+            first.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        reverse_cells : bool, default: True
+            Reverse the order of indices in the cell connectivity list.
+
+        reverse_normals : bool, default: False
+            Reverse the direction of point and cell normal vectors (if present).
+            Has no effect if no active normals are set.
+
+        inplace : bool, default: True
+            Overwrites the original mesh in-place.
+
+        progress_bar : bool, default: True
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh with reversed cells and/or normals.
+
+        See Also
+        --------
+        pyvista.PolyDataFilters.flip_normals
+            Wrapper for this filter with ``reverse_cells=True``
+            and ``reverse_normals=True``.
         pyvista.PolyDataFilters.compute_normals
         pyvista.PolyData.point_normals
         pyvista.PolyData.cell_normals
@@ -2698,8 +2750,8 @@ class PolyDataFilters(DataSetFilters):
         """
         alg = _vtk.vtkReverseSense()
         alg.SetInputData(self)
-        alg.SetReverseNormals(flip_direction)
-        alg.SetReverseCells(reverse_order)
+        alg.SetReverseNormals(reverse_normals)
+        alg.SetReverseCells(reverse_cells)
         _update_alg(alg, progress_bar)
         output = _get_output(alg)
         if inplace:
