@@ -74,3 +74,10 @@ pyvista.TransformLike
 .. currentmodule:: pyvista
 
 .. autodata:: TransformLike
+
+pyvista.InteractionEventType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autodata:: InteractionEventType
