@@ -1139,9 +1139,10 @@ def test_extrude_capping_warnings():
     with pytest.warns(PyVistaFutureWarning, match='default value of the ``capping`` keyword'):
         arc.extrude_rotate()
 
+
 @pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
 def test_flip_normals(mesh):
-    assert mesh.point_data._active_normals_name == "Normals"
+    assert mesh.point_data._active_normals_name == 'Normals'
     mesh_flipped = mesh.copy()
     mesh_flipped.flip_normals()
 
