@@ -44,6 +44,9 @@ from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
 from pyvista.examples._dataset_loader import _MultiFilePropsProtocol
 from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
+from pyvista.plotting.colors import _CSS_COLORS
+from pyvista.plotting.colors import _PARAVIEW_COLORS
+from pyvista.plotting.colors import _TABLEAU_COLORS
 
 if TYPE_CHECKING:
     from types import FunctionType
@@ -385,10 +388,12 @@ class ColorTable(DocTable):
     header = _aligned_dedent(
         """
         |.. list-table::
-        |   :widths: 50 20 30
+        |   :widths: 8 48 18 26
         |   :header-rows: 1
+        |   :stub-columns: 1
         |
-        |   * - Name
+        |   * - Source
+        |     - Name
         |     - Hex value
         |     - Example
         """,
@@ -396,6 +401,7 @@ class ColorTable(DocTable):
     row_template = _aligned_dedent(
         """
         |   * - {}
+        |     - {}
         |     - ``{}``
         |     - .. raw:: html
         |
@@ -406,7 +412,7 @@ class ColorTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``hexcolors`` dictionary.
-        return ColorTable._table_data_from_color_sequence(pv.hexcolors.keys())
+        return ColorTable._table_data_from_color_sequence(_sorted_color_names())
 
     @staticmethod
     def _table_data_from_color_sequence(colors: Iterable[ColorLike]):
@@ -426,10 +432,28 @@ class ColorTable(DocTable):
 
     @classmethod
     def get_row(cls, i, row_data):
-        name_template = '``"{}"``'
+        name_template = "``'{}'``"
         names = [row_data['name']] + row_data['synonyms']
         name = ' or '.join(name_template.format(n) for n in names)
-        return cls.row_template.format(name, row_data['hex'], row_data['hex'])
+        source_badge = _get_color_source_badge(row_data['name'])
+        return cls.row_template.format(source_badge, name, row_data['hex'], row_data['hex'])
+
+
+def _get_color_source_badge(name: str) -> str:
+    if name in _CSS_COLORS:
+        return ':bdg-primary:`CSS`'
+    elif name in _TABLEAU_COLORS:
+        return ':bdg-success:`TABLEAU`'
+    elif name in _PARAVIEW_COLORS:
+        return ':bdg-danger:`PARAVIEW`'
+    else:
+        raise KeyError(f'Invalid color name "{name}".')
+
+
+def _sorted_color_names():
+    color_names = [pv.Color(c).name for c in pv.hexcolors.keys()]
+    # Sort colors by hue, saturation, and value (HSV)
+    return sorted(color_names, key=lambda name: name.replace('tab:', ''))
 
 
 def _sort_colors():
@@ -2100,3 +2124,7 @@ def make_all_tables():  # noqa: D103
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
     make_all_carousels(CAROUSEL_LIST)
+
+
+if __name__ == '__main__':
+    make_all_tables()
