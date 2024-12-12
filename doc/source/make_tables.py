@@ -514,8 +514,6 @@ def classify_color(color: Color) -> ColorClassification:
 class ColorClassificationTable(ColorTable):
     """Class to generate sorted colors table."""
 
-    value_name = 'HLS'
-    value_func = lambda c: str(c._int_hls).replace('(', '').replace(')', '')
     classification: ColorClassification
 
     @property

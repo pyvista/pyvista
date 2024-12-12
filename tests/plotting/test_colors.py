@@ -122,9 +122,9 @@ def test_color():
 
 def test_color_hls():
     lime = pv.Color('lime')
-    float_hls = lime._float_hls
+    actual_hls = lime._float_hls
     expected_hls = colorsys.rgb_to_hls(*lime.float_rgb)
-    assert float_hls == expected_hls
+    assert actual_hls == expected_hls
 
 
 def test_color_opacity():
