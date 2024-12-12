@@ -1279,14 +1279,14 @@ def test_exodus_reader():
 
     ## Check correct number of time points
     assert e_reader.number_time_points == ntimes, 'Checks number of time points'
-    assert e_reader._active_time_point == 0, 'Checks the first time set'
+    assert e_reader.reader.GetTimeStep() == 0, 'Checks the first time set'
 
     assert np.allclose(e_reader.time_values, [dt * i for i in range(ntimes)], atol=1e-8, rtol=1e-8)
 
     ## check setting and getting of time points and times
     for i in range(ntimes):
         e_reader.set_active_time_point(i)
-        assert e_reader._active_time_point == i, 'check time point set'
+        assert e_reader.reader.GetTimeStep() == i, 'check time point set'
 
         tp = e_reader.reader.GetTimeStep()
         assert tp == i, 'Check underlying reader time step setting'
@@ -1303,7 +1303,7 @@ def test_exodus_reader():
     # check time setting based on time
     for i, t in enumerate(e_reader.time_values):
         e_reader.set_active_time_value(t)
-        assert e_reader._active_time_point == i, 'check time point set'
+        assert e_reader.reader.GetTimeStep() == i, 'check time point set'
 
     # check for error if time not present
     bad_time = 1.25

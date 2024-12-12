@@ -3058,7 +3058,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         float
 
         """
-        return self.time_values[self._active_time_point]
+        return self.time_values[self.reader.GetTimeStep()]
 
     def set_active_time_value(self, time_value):
         """Set active time or iteration value.
@@ -3087,7 +3087,6 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
             Time or iteration point index for setting active time.
 
         """
-        self._active_time_point = time_point
         self.reader.SetTimeStep(time_point)
         self.reader.Update()
 
