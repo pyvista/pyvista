@@ -40,6 +40,8 @@ from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
+    from pyvista import MultiBlock
+    from pyvista import PolyData
     from pyvista.core._typing_core import ConcreteDataObjectType
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
@@ -193,7 +195,7 @@ class DataSetFilters:
         """
         icp = _vtk.vtkIterativeClosestPointTransform()
         icp.SetSource(self)
-        icp.SetTarget(cast(_vtk.vtkDataSet, target))
+        icp.SetTarget(wrap(target))
         icp.GetLandmarkTransform().SetModeToRigidBody()
         icp.SetMaximumNumberOfLandmarks(max_landmarks)
         icp.SetMaximumMeanDistance(max_mean_distance)
@@ -868,7 +870,7 @@ class DataSetFilters:
 
     def clip_surface(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        surface: pyvista.DataSet | _vtk.vtkDataSet,
+        surface: DataSet | _vtk.vtkDataSet,
         invert: bool = True,
         value: float = 0.0,
         compute_distance: bool = False,
@@ -930,7 +932,7 @@ class DataSetFilters:
 
         """
         if not isinstance(surface, _vtk.vtkPolyData):
-            surface = DataSetFilters.extract_geometry(surface)  # type: ignore[type-var]
+            surface = wrap(surface).extract_geometry()
         function = _vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -2224,11 +2226,11 @@ class DataSetFilters:
 
     def texture_map_to_plane(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        origin=None,
-        point_u=None,
-        point_v=None,
+        origin: VectorLike[float] | None = None,
+        point_u: VectorLike[float] | None = None,
+        point_v: VectorLike[float] | None = None,
         inplace: bool = False,
-        name='Texture Coordinates',
+        name: str = 'Texture Coordinates',
         use_bounds: bool = False,
         progress_bar: bool = False,
     ):
@@ -2280,7 +2282,7 @@ class DataSetFilters:
 
         """
         if use_bounds:
-            _validation.check_type(use_bounds, (int, bool))
+            _validation.check_instance(use_bounds, bool, name='use_bounds')
             bounds = self.bounds
             origin = [bounds.x_min, bounds.y_min, bounds.z_min]  # BOTTOM LEFT CORNER
             point_u = [bounds.x_max, bounds.y_min, bounds.z_min]  # BOTTOM RIGHT CORNER
@@ -2289,9 +2291,9 @@ class DataSetFilters:
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
         else:
-            alg.SetOrigin(origin)  # BOTTOM LEFT CORNER
-            alg.SetPoint1(point_u)  # BOTTOM RIGHT CORNER
-            alg.SetPoint2(point_v)  # TOP LEFT CORNER
+            alg.SetOrigin(*origin)  # BOTTOM LEFT CORNER
+            alg.SetPoint1(*point_u)  # BOTTOM RIGHT CORNER
+            alg.SetPoint2(*point_v)  # TOP LEFT CORNER
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar, 'Texturing Map to Plane')
         output = _get_output(alg)
@@ -2310,10 +2312,10 @@ class DataSetFilters:
 
     def texture_map_to_sphere(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        center=None,
+        center: VectorLike[float] | None = None,
         prevent_seam: bool = True,
         inplace: bool = False,
-        name='Texture Coordinates',
+        name: str = 'Texture Coordinates',
         progress_bar: bool = False,
     ):
         """Texture map this dataset to a user defined sphere.
@@ -2364,7 +2366,7 @@ class DataSetFilters:
             alg.SetAutomaticSphereGeneration(True)
         else:
             alg.SetAutomaticSphereGeneration(False)
-            alg.SetCenter(center)
+            alg.SetCenter(*center)
         alg.SetPreventSeam(prevent_seam)
         alg.SetInputDataObject(self)
         _update_alg(alg, progress_bar, 'Mapping texture to sphere')
@@ -2493,7 +2495,7 @@ class DataSetFilters:
         orient: bool | str = True,
         scale: bool | str = True,
         factor: float = 1.0,
-        geom: _vtk.vtkDataSet | Sequence[_vtk.vtkDataSet] | None = None,
+        geom: _vtk.vtkDataSet | DataSet | Sequence[_vtk.vtkDataSet | DataSet] | None = None,
         indices: VectorLike[int] | None = None,
         tolerance: float | None = None,
         absolute: bool = False,
@@ -2610,7 +2612,7 @@ class DataSetFilters:
         if geom is None:
             arrow = _vtk.vtkArrowSource()
             _update_alg(arrow, progress_bar, 'Making Arrow')
-            geoms: Sequence[_vtk.vtkDataSet] = [arrow.GetOutput()]
+            geoms: Sequence[_vtk.vtkDataSet | DataSet] = [arrow.GetOutput()]
         # Check if a table of geometries was passed
         elif isinstance(geom, (np.ndarray, Sequence)):
             geoms = geom
@@ -2773,14 +2775,14 @@ class DataSetFilters:
             'point_seed',
             'closest',
         ] = 'all',
-        variable_input=None,
-        scalar_range=None,
+        variable_input: float | VectorLike[float] | None = None,
+        scalar_range: VectorLike[float] | None = None,
         scalars: str | None = None,
         label_regions: bool = True,
-        region_ids=None,
-        point_ids=None,
-        cell_ids=None,
-        closest_point=None,
+        region_ids: VectorLike[int] | None = None,
+        point_ids: VectorLike[int] | None = None,
+        cell_ids: VectorLike[int] | None = None,
+        closest_point: VectorLike[float] | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
         **kwargs,
@@ -3080,7 +3082,7 @@ class DataSetFilters:
                         "`region_ids` must be specified when `extraction_mode='specified'`.",
                     )
                 else:
-                    region_ids = variable_input
+                    region_ids = cast(NumpyArray[int], variable_input)
             # this mode returns scalar data with shape that may not match
             # the number of cells/points, so we extract all and filter later
             # alg.SetExtractionModeToSpecifiedRegions()
@@ -3095,7 +3097,7 @@ class DataSetFilters:
                         "`cell_ids` must be specified when `extraction_mode='cell_seed'`.",
                     )
                 else:
-                    cell_ids = variable_input
+                    cell_ids = cast(NumpyArray[int], variable_input)
             alg.SetExtractionModeToCellSeededRegions()
             alg.InitializeSeedList()
             for i in _unravel_and_validate_ids(cell_ids):
@@ -3108,7 +3110,7 @@ class DataSetFilters:
                         "`point_ids` must be specified when `extraction_mode='point_seed'`.",
                     )
                 else:
-                    point_ids = variable_input
+                    point_ids = cast(NumpyArray[int], variable_input)
             alg.SetExtractionModeToPointSeededRegions()
             alg.InitializeSeedList()
             for i in _unravel_and_validate_ids(point_ids):
@@ -3121,7 +3123,7 @@ class DataSetFilters:
                         "`closest_point` must be specified when `extraction_mode='closest'`.",
                     )
                 else:
-                    closest_point = variable_input
+                    closest_point = cast(NumpyArray[float], variable_input)
             alg.SetExtractionModeToClosestPointRegion()
             alg.SetClosestPoint(*closest_point)
 
@@ -3304,8 +3306,8 @@ class DataSetFilters:
     def warp_by_scalar(  # type: ignore[misc]
         self: ConcreteDataSetType,
         scalars: str | None = None,
-        factor=1.0,
-        normal=None,
+        factor: float = 1.0,
+        normal: VectorLike[float] | None = None,
         inplace: bool = False,
         progress_bar: bool = False,
         **kwargs,
@@ -3379,7 +3381,7 @@ class DataSetFilters:
         )  # args: (idx, port, connection, field, name)
         alg.SetScaleFactor(factor)
         if normal is not None:
-            alg.SetNormal(normal)
+            alg.SetNormal(*normal)
             alg.SetUseNormal(True)
         _update_alg(alg, progress_bar, 'Warping by Scalar')
         output = _get_output(alg)
@@ -3393,7 +3395,7 @@ class DataSetFilters:
     def warp_by_vector(  # type: ignore[misc]
         self: ConcreteDataSetType,
         vectors: str | None = None,
-        factor=1.0,
+        factor: float = 1.0,
         inplace: bool = False,
         progress_bar: bool = False,
     ):
@@ -3738,7 +3740,11 @@ class DataSetFilters:
         return mesh
 
     def delaunay_3d(  # type: ignore[misc]
-        self: ConcreteDataSetType, alpha=0.0, tol=0.001, offset=2.5, progress_bar: bool = False
+        self: ConcreteDataSetType,
+        alpha: float = 0.0,
+        tol: float = 0.001,
+        offset: float = 2.5,
+        progress_bar: bool = False,
     ):
         """Construct a 3D Delaunay triangulation of the mesh.
 
@@ -3795,8 +3801,8 @@ class DataSetFilters:
 
     def select_enclosed_points(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        surface,
-        tolerance=0.001,
+        surface: PolyData,
+        tolerance: float = 0.001,
         inside_out: bool = False,
         check_surface: bool = True,
         progress_bar: bool = False,
@@ -3892,13 +3898,15 @@ class DataSetFilters:
 
     def sample(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        target,
-        tolerance=None,
+        target: DataSet | _vtk.vtkDataSet,
+        tolerance: float | None = None,
         pass_cell_data: bool = True,
         pass_point_data: bool = True,
         categorical: bool = False,
         progress_bar: bool = False,
-        locator=None,
+        locator: Literal['cell', 'cell_tree', 'obb_tree', 'static_cell']
+        | _vtk.vtkAbstractCellLocator
+        | None = None,
         pass_field_data: bool = True,
         mark_blank: bool = True,
         snap_to_closest_point: bool = False,
@@ -3999,12 +4007,10 @@ class DataSetFilters:
         See :ref:`resampling_example` for more examples using this filter.
 
         """
-        if not pyvista.is_pyvista_dataset(target):
-            raise TypeError('`target` must be a PyVista mesh type.')
         alg = _vtk.vtkResampleWithDataSet()  # Construct the ResampleWithDataSet object
         alg.SetInputData(self)  # Set the Input data (actually the source i.e. where to sample from)
         # Set the Source data (actually the target, i.e. where to sample to)
-        alg.SetSourceData(target)
+        alg.SetSourceData(wrap(target))
         alg.SetPassCellArrays(pass_cell_data)
         alg.SetPassPointArrays(pass_point_data)
         alg.SetPassFieldArrays(pass_field_data)
@@ -4041,12 +4047,12 @@ class DataSetFilters:
 
     def interpolate(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        target,
-        sharpness=2.0,
-        radius=1.0,
-        strategy='null_value',
-        null_value=0.0,
-        n_points=None,
+        target: DataSet | _vtk.vtkDataSet,
+        sharpness: float = 2.0,
+        radius: float = 1.0,
+        strategy: Literal['null_value', 'mask_points', 'closest_point'] = 'null_value',
+        null_value: float = 0.0,
+        n_points: int | None = None,
         pass_cell_data: bool = True,
         pass_point_data: bool = True,
         progress_bar: bool = False,
@@ -4145,13 +4151,14 @@ class DataSetFilters:
         See :ref:`interpolate_example` for more examples using this filter.
 
         """
-        if not pyvista.is_pyvista_dataset(target):
-            raise TypeError('`target` must be a PyVista mesh type.')
-
         # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
         # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
-        if isinstance(target, (pyvista.ImageData, pyvista.RectilinearGrid)):
-            target = target.cast_to_unstructured_grid()
+        target_ = wrap(target)
+        target_ = (
+            target_.cast_to_unstructured_grid()
+            if isinstance(target_, (pyvista.ImageData, pyvista.RectilinearGrid))
+            else target_
+        )
 
         gaussian_kernel = _vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
@@ -4162,7 +4169,7 @@ class DataSetFilters:
             gaussian_kernel.SetKernelFootprintToNClosest()
 
         locator = _vtk.vtkStaticPointLocator()
-        locator.SetDataSet(target)
+        locator.SetDataSet(target_)
         locator.BuildLocator()
 
         interpolator = _vtk.vtkPointInterpolator()
@@ -4696,7 +4703,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def decimate_boundary(  # type: ignore[misc]
-        self: ConcreteDataSetType, target_reduction=0.5, progress_bar: bool = False
+        self: ConcreteDataSetType, target_reduction: float = 0.5, progress_bar: bool = False
     ):
         """Return a decimated version of a triangulation of the boundary.
 
@@ -4731,10 +4738,10 @@ class DataSetFilters:
 
     def sample_over_line(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        pointa,
-        pointb,
-        resolution=None,
-        tolerance=None,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        resolution: int | None = None,
+        tolerance: float | None = None,
         progress_bar: bool = False,
     ):
         """Sample a dataset onto a line.
@@ -4796,17 +4803,17 @@ class DataSetFilters:
 
     def plot_over_line(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        pointa,
-        pointb,
-        resolution=None,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        resolution: int | None = None,
         scalars: str | None = None,
-        title=None,
-        ylabel=None,
-        figsize=None,
+        title: str | None = None,
+        ylabel: str | None = None,
+        figsize: tuple[int, int] | None = None,
         figure: bool = True,
         show: bool = True,
-        tolerance=None,
-        fname=None,
+        tolerance: float | None = None,
+        fname: str | None = None,
         progress_bar: bool = False,
     ) -> None:
         """Sample a dataset along a high resolution line and plot.
@@ -4837,7 +4844,7 @@ class DataSetFilters:
         ylabel : str, optional
             The string label of the Y-axis. Defaults to variable name.
 
-        figsize : tuple(int), optional
+        figsize : tuple(int, int), optional
             The size of the new figure.
 
         figure : bool, default: True
@@ -4901,7 +4908,10 @@ class DataSetFilters:
             plt.show()
 
     def sample_over_multiple_lines(  # type: ignore[misc]
-        self: ConcreteDataSetType, points, tolerance=None, progress_bar: bool = False
+        self: ConcreteDataSetType,
+        points: MatrixLike[float],
+        tolerance: float | None = None,
+        progress_bar: bool = False,
     ):
         """Sample a dataset onto a multiple lines.
 
@@ -4955,11 +4965,11 @@ class DataSetFilters:
 
     def sample_over_circular_arc(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        pointa,
-        pointb,
-        center,
-        resolution=None,
-        tolerance=None,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        center: VectorLike[float],
+        resolution: int | None = None,
+        tolerance: float | None = None,
         progress_bar: bool = False,
     ):
         """Sample a dataset over a circular arc.
@@ -5034,12 +5044,12 @@ class DataSetFilters:
 
     def sample_over_circular_arc_normal(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        center,
-        resolution=None,
-        normal=None,
-        polar=None,
-        angle=None,
-        tolerance=None,
+        center: VectorLike[float],
+        resolution: int | None = None,
+        normal: VectorLike[float] | None = None,
+        polar: VectorLike[float] | None = None,
+        angle: float | None = None,
+        tolerance: float | None = None,
         progress_bar: bool = False,
     ):
         """Sample a dataset over a circular arc defined by a normal and polar vector and plot it.
@@ -5121,18 +5131,18 @@ class DataSetFilters:
 
     def plot_over_circular_arc(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        pointa,
-        pointb,
-        center,
-        resolution=None,
+        pointa: VectorLike[float],
+        pointb: VectorLike[float],
+        center: VectorLike[float],
+        resolution: int | None = None,
         scalars: str | None = None,
-        title=None,
-        ylabel=None,
-        figsize=None,
+        title: str | None = None,
+        ylabel: str | None = None,
+        figsize: tuple[int, int] | None = None,
         figure: bool = True,
         show: bool = True,
-        tolerance=None,
-        fname=None,
+        tolerance: float | None = None,
+        fname: str | None = None,
         progress_bar: bool = False,
     ) -> None:
         """Sample a dataset along a circular arc and plot it.
@@ -5247,19 +5257,19 @@ class DataSetFilters:
 
     def plot_over_circular_arc_normal(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        center,
-        resolution=None,
-        normal=None,
-        polar=None,
-        angle=None,
+        center: VectorLike[float],
+        resolution: int | None = None,
+        normal: VectorLike[float] | None = None,
+        polar: VectorLike[float] | None = None,
+        angle: float | None = None,
         scalars: str | None = None,
-        title=None,
-        ylabel=None,
-        figsize=None,
+        title: str | None = None,
+        ylabel: str | None = None,
+        figsize: tuple[int, int] | None = None,
         figure: bool = True,
         show: bool = True,
-        tolerance=None,
-        fname=None,
+        tolerance: float | None = None,
+        fname: str | None = None,
         progress_bar: bool = False,
     ) -> None:
         """Sample a dataset along a resolution circular arc defined by a normal and polar vector and plot it.
@@ -5457,7 +5467,7 @@ class DataSetFilters:
 
     def extract_points(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        ind: int | VectorLike[int],
+        ind: int | VectorLike[int] | VectorLike[bool],
         adjacent_cells: bool = True,
         include_cells: bool = True,
         progress_bar: bool = False,
@@ -6439,7 +6449,10 @@ class DataSetFilters:
         return output
 
     def merge_points(  # type: ignore[misc]
-        self: ConcreteDataSetType, tolerance=0.0, inplace: bool = False, progress_bar: bool = False
+        self: ConcreteDataSetType,
+        tolerance: float = 0.0,
+        inplace: bool = False,
+        progress_bar: bool = False,
     ):
         """Merge duplicate points in this mesh.
 
@@ -6491,9 +6504,13 @@ class DataSetFilters:
 
     def merge(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        grid=None,
+        grid: DataSet
+        | _vtk.vtkDataSet
+        | MultiBlock
+        | Sequence[DataSet | _vtk.vtkDataSet]
+        | None = None,
         merge_points: bool = True,
-        tolerance=0.0,
+        tolerance: float = 0.0,
         inplace: bool = False,
         main_has_priority: bool = True,
         progress_bar: bool = False,
@@ -6566,7 +6583,7 @@ class DataSetFilters:
         if not main_has_priority:
             append_filter.AddInputData(self)
 
-        if isinstance(grid, pyvista.DataSet):
+        if isinstance(grid, _vtk.vtkDataSet):
             append_filter.AddInputData(grid)
         elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
@@ -6898,24 +6915,16 @@ class DataSetFilters:
 
             # bool(non-empty string/True) == True, bool(None/False) == False
         alg.SetComputeGradient(bool(gradient))
-        if isinstance(gradient, bool):
-            gradient = 'gradient'
-        alg.SetResultArrayName(gradient)
+        alg.SetResultArrayName('gradient' if isinstance(gradient, bool) else gradient)
 
         alg.SetComputeDivergence(bool(divergence))
-        if isinstance(divergence, bool):
-            divergence = 'divergence'
-        alg.SetDivergenceArrayName(divergence)
+        alg.SetDivergenceArrayName('divergence' if isinstance(divergence, bool) else divergence)
 
         alg.SetComputeVorticity(bool(vorticity))
-        if isinstance(vorticity, bool):
-            vorticity = 'vorticity'
-        alg.SetVorticityArrayName(vorticity)
+        alg.SetVorticityArrayName('vorticity' if isinstance(vorticity, bool) else vorticity)
 
         alg.SetComputeQCriterion(bool(qcriterion))
-        if isinstance(qcriterion, bool):
-            qcriterion = 'qcriterion'
-        alg.SetQCriterionArrayName(qcriterion)
+        alg.SetQCriterionArrayName('qcriterion' if isinstance(qcriterion, bool) else qcriterion)
 
         alg.SetFasterApproximation(faster)
         field = get_array_association(self, scalars_, preference=preference)
@@ -6926,7 +6935,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def shrink(  # type: ignore[misc]
-        self: ConcreteDataSetType, shrink_factor=1.0, progress_bar: bool = False
+        self: ConcreteDataSetType, shrink_factor: float = 1.0, progress_bar: bool = False
     ):
         """Shrink the individual faces of a mesh.
 
@@ -6978,7 +6987,7 @@ class DataSetFilters:
 
     def tessellate(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        max_n_subdivide=3,
+        max_n_subdivide: int = 3,
         merge_points: bool = True,
         progress_bar: bool = False,
     ):
@@ -7213,8 +7222,8 @@ class DataSetFilters:
 
     def reflect(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        normal,
-        point=None,
+        normal: VectorLike[float],
+        point: VectorLike[float] | None = None,
         inplace: bool = False,
         transform_all_input_vectors: bool = False,
         progress_bar: bool = False,
@@ -8027,7 +8036,7 @@ class DataSetFilters:
 
     def partition(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        n_partitions,
+        n_partitions: int,
         generate_global_id: bool = False,
         as_composite: bool = True,
     ):
@@ -8546,7 +8555,7 @@ class DataSetFilters:
         return alg_output
 
     def explode(  # type: ignore[misc]
-        self: ConcreteDataSetType, factor=0.1
+        self: ConcreteDataSetType, factor: float = 0.1
     ):
         """Push each individual cell away from the center of the dataset.
 
@@ -8697,8 +8706,8 @@ class DataSetFilters:
     def sort_labels(  # type: ignore[misc]
         self: ConcreteDataSetType,
         scalars: str | None = None,
-        preference='point',
-        output_scalars=None,
+        preference: Literal['point', 'cell'] = 'point',
+        output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
     ):
@@ -8788,8 +8797,8 @@ class DataSetFilters:
         self: ConcreteDataSetType,
         sort: bool = False,
         scalars: str | None = None,
-        preference='point',
-        output_scalars=None,
+        preference: Literal['point', 'cell'] = 'point',
+        output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
     ):
