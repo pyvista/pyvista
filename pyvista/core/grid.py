@@ -963,7 +963,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetIndexToPhysicalMatrix())
 
     @index_to_physical_matrix.setter
-    def index_to_physical_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
+    def index_to_physical_matrix(self: Self, matrix: TransformLike) -> None:  # numpydoc ignore=GL08
         T, R, N, S, K = pyvista.Transform(matrix).decompose()
         if not np.allclose(K, np.eye(3)):
             warnings.warn(
@@ -993,5 +993,5 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         return array_from_vtkmatrix(self.GetPhysicalToIndexMatrix())
 
     @physical_to_index_matrix.setter
-    def physical_to_index_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
+    def physical_to_index_matrix(self: Self, matrix: TransformLike) -> None:  # numpydoc ignore=GL08
         self.index_to_physical_matrix = pyvista.Transform(matrix).inverse_matrix

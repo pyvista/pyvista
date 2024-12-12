@@ -7233,7 +7233,7 @@ class DataSetFilters:
             # but VTK 9+ supports oriented images.
             # To keep an ImageData -> ImageData mapping, we copy the transformed data
             # from the filter output but manually transform the structure
-            output.copy_structure(self)
+            output.copy_structure(self)  # type: ignore[arg-type]
             current_matrix = output.index_to_physical_matrix
             new_matrix = pyvista.Transform(current_matrix).concatenate(t).matrix
             output.index_to_physical_matrix = new_matrix
