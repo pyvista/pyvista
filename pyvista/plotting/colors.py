@@ -45,7 +45,7 @@ IPYGANY_MAP = {
 # Following colors are copied from matplotlib.colors, synonyms (colors with a
 # different name but same hex value) are removed and put in the `color_synonyms`
 # dictionary. An extra `paraview_background` color is added.
-hexcolors = {
+_CSS_COLORS = {
     'aliceblue': '#F0F8FF',
     'antiquewhite': '#FAEBD7',
     'aquamarine': '#7FFFD4',
@@ -151,7 +151,6 @@ hexcolors = {
     'paleturquoise': '#AFEEEE',
     'palevioletred': '#DB7093',
     'papayawhip': '#FFEFD5',
-    'paraview_background': '#52576e',
     'peachpuff': '#FFDAB9',
     'peru': '#CD853F',
     'pink': '#FFC0CB',
@@ -187,6 +186,8 @@ hexcolors = {
     'whitesmoke': '#F5F5F5',
     'yellow': '#FFFF00',
     'yellowgreen': '#9ACD32',
+}
+_TABLEAU_COLORS = {
     'tab:blue': '#1f77b4',
     'tab:orange': '#ff7f0e',
     'tab:green': '#2ca02c',
@@ -198,6 +199,14 @@ hexcolors = {
     'tab:olive': '#bcbd22',
     'tab:cyan': '#17becf',
 }
+_PARAVIEW_COLORS = {'paraview_background': '#52576e'}
+
+hexcolors = {
+    **_CSS_COLORS,
+    **_PARAVIEW_COLORS,
+    **_TABLEAU_COLORS,
+}
+hexcolors = {name: hex_.lower() for name, hex_ in hexcolors.items()}
 
 color_names = {h.lower(): n for n, h in hexcolors.items()}
 
