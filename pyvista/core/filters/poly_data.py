@@ -16,7 +16,6 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -2621,8 +2620,64 @@ class PolyDataFilters(DataSetFilters):
             return self, ridx
         return newmesh, ridx
 
-    def flip_normals(self):
-        """Flip normals of a triangular mesh by reversing the point ordering.
+    def flip_normals(  # type: ignore[misc]
+        self: PolyData,
+        *,
+        reverse_cells: bool = True,
+        reverse_normals: bool = False,
+        inplace: bool = True,
+        progress_bar: bool = False,
+    ):
+        """Flip the normals of a mesh.
+
+        This filter flips normals by reversing the order of polygonal cells and/or
+        reversing the direction of point and cell normals.
+
+        .. versionchanged:: 0.45
+
+            This filter now operates on all polygon cell(s). Previously, only
+            triangle cells were supported.
+
+        .. warning::
+
+            This filter does not produce the correct output for triangle strips,
+            see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
+            Use :meth:`~pyvista.PolyDataFilters.triangulate` to triangulate the mesh
+            first.
+
+        Parameters
+        ----------
+        reverse_cells : bool, default: True
+            Reverse the order of indices in the cell connectivity list.
+
+            .. versionadded:: 0.45
+
+        reverse_normals : bool, default: False
+            Multiply the normals by ``-1`` (both point and cell normals, if present).
+            Has no effect if no active normals are set.
+
+            .. versionadded:: 0.45
+
+        inplace : bool, default: True
+            Overwrites the original mesh in-place.
+
+            .. versionadded:: 0.45
+
+        progress_bar : bool, default: True
+            Display a progress bar to indicate progress.
+
+            .. versionadded:: 0.45
+
+        Returns
+        -------
+        pyvista.PolyData
+            Mesh with normals flipped.
+
+        See Also
+        --------
+        pyvista.PolyDataFilters.compute_normals
+        pyvista.PolyData.point_normals
+        pyvista.PolyData.cell_normals
 
         Examples
         --------
@@ -2636,29 +2691,6 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
-        # Deprecated on v0.45.0, estimated removal on v0.48.0
-        warnings.warn(
-            '`flip_normals` is deprecated. Use `reverse_cell_ordering` instead. '
-            'Note that `inplace` is `False` by default for the new filter.',
-            PyVistaDeprecationWarning,
-        )
-        if not self.is_all_triangles:  # type: ignore[attr-defined]
-            raise NotAllTrianglesError('Can only flip normals on an all triangle mesh.')
-
-        f = self._connectivity_array  # type: ignore[attr-defined]
-
-        # swap first and last point index in-place
-        # See: https://stackoverflow.com/a/33362288/
-        f[::3], f[2::3] = f[2::3], f[::3].copy()
-
-    def _reverse_sense(  # type: ignore[misc]
-        self: PolyData,
-        *,
-        reverse_cells: bool,
-        reverse_normals: bool,
-        inplace: bool,
-        progress_bar: bool,
-    ):
         alg = _vtk.vtkReverseSense()
         alg.SetInputData(self)
         alg.SetReverseNormals(reverse_normals)
@@ -2666,152 +2698,8 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar)
         output = _get_output(alg)
         if inplace:
-            self.copy_from(output)
-            return self
+            return self.copy_from(output)
         return output
-
-    def reverse_cell_ordering(
-        self: PolyData,
-        *,
-        inplace: bool = False,
-        progress_bar: bool = False,
-    ):
-        """Reverse the order of indices in the cell connectivity list.
-
-        .. note::
-
-            Polygon cells have an implicitly-defined orientation, and reversing
-            the ordering affects how normals are computed by filters like
-            :meth:`~pyvista.PolyDataFilters.compute_normals`.
-
-        .. note::
-            This filter does not modify any existing normals which may be present
-            in the dataset. To reverse the normals `without` reversing the cell
-            ordering, consider using :meth:`~pyvista.PolyDataFilters.flip_normal_vectors`
-            instead.
-
-        .. warning::
-
-            This filter does not produce the correct output for triangle strips,
-            see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
-            Use :meth:`~pyvista.PolyDataFilters.triangulate` to triangulate the mesh
-            first.
-
-        .. versionadded:: 0.45
-
-        Parameters
-        ----------
-        inplace : bool, default: True
-            Overwrites the original mesh in-place.
-
-        progress_bar : bool, default: True
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.PolyData
-            Mesh with reversed cell ordering.
-
-        See Also
-        --------
-        pyvista.PolyDataFilters.compute_normals
-        pyvista.PolyData.point_normals
-        pyvista.PolyData.cell_normals
-
-        Examples
-        --------
-        Reverse the cell ordering of a sphere. Show the point ids of the first cell
-        before and after reversing.
-
-        >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
-        >>> sphere.regular_faces[0]
-        array([ 2, 30,  0])
-
-        >>> sphere_reversed = sphere.reverse_cell_ordering()
-        >>> sphere_reversed.regular_faces[0]
-        array([ 0, 30,  2])
-
-        Note that the sphere has pre-computed normals which have not been
-        affected by this filter.
-
-        >>> sphere.point_data['Normals'][0]
-        pyvista_ndarray([0., 0., 1.], dtype=float32)
-
-        >>> sphere_reversed.point_data['Normals'][0]
-        pyvista_ndarray([0., 0., 1.], dtype=float32)
-
-        """
-        return self._reverse_sense(
-            reverse_cells=True, reverse_normals=False, inplace=inplace, progress_bar=progress_bar
-        )
-
-    def flip_normal_vectors(  # type: ignore[misc]
-        self: PolyData,
-        *,
-        inplace: bool = False,
-        progress_bar: bool = False,
-    ):
-        """Flip the direction of the mesh's point and cell normal vectors.
-
-        This filter effectively multiplies the point and cell normals by ``-1``.
-        It has no effect if no active normals are currently set.
-
-        .. note::
-
-            Polygon cells have an implicitly-defined orientation. To ensure
-            that this mesh's normals are consistent with this implicit definition,
-            consider using :meth:`~pyvista.PolyDataFilters.reverse_cell_ordering`
-            and re-computing normals with :meth:`~pyvista.PolyDataFilters.compute_normals`
-            instead.
-
-        .. versionadded:: 0.45
-
-        Parameters
-        ----------
-        inplace : bool, default: True
-            Overwrites the original mesh in-place.
-
-        progress_bar : bool, default: True
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.PolyData
-            Mesh with point and cell normal directions flipped.
-
-        See Also
-        --------
-        pyvista.PolyDataFilters.compute_normals
-        pyvista.PolyData.point_normals
-        pyvista.PolyData.cell_normals
-
-        Examples
-        --------
-        Flip the normal vectors of a sphere. Show one of the normal vectors
-        before and after the flip.
-
-        >>> import pyvista as pv
-        >>> sphere = pv.Sphere()
-        >>> sphere.point_data['Normals'][0]
-        pyvista_ndarray([0., 0., 1.], dtype=float32)
-
-        >>> sphere_flipped = sphere.flip_normal_vectors()
-        >>> sphere_flipped.point_data['Normals'][0]
-        pyvista_ndarray([-0., -0., -1.], dtype=float32)
-
-        Note that the sphere's cell ordering has not been affected by this filter.
-
-        >>> sphere.regular_faces[0]
-        array([ 2, 30,  0])
-
-        >>> sphere_flipped.regular_faces[0]
-        array([ 2, 30,  0])
-
-        """
-        return self._reverse_sense(
-            reverse_cells=False, reverse_normals=True, inplace=inplace, progress_bar=progress_bar
-        )
 
     def delaunay_2d(
         self,

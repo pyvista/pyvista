@@ -14,7 +14,6 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
-from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
@@ -1142,34 +1141,15 @@ def test_extrude_capping_warnings():
 
 
 def test_flip_normals(sphere, plane):
-    with pytest.warns(PyVistaDeprecationWarning):
-        sphere.flip_normals()
+    sphere_flipped = sphere.copy()
+    sphere_flipped.flip_normals()
 
-
-def test_flip_normal_vectors(sphere):
-    sphere_flipped = sphere.flip_normal_vectors(inplace=True, progress_bar=True)
-    assert sphere_flipped is sphere
-
-    sphere_flipped = sphere.flip_normal_vectors()
-    assert sphere_flipped is not sphere
-
+    sphere.compute_normals(inplace=True)
+    sphere_flipped.compute_normals(inplace=True)
     assert np.allclose(sphere_flipped.point_data['Normals'], -sphere.point_data['Normals'])
 
-    # Test ordering is unfaffected
-    assert np.allclose(sphere_flipped.faces, sphere.faces)
-
-
-def test_reverse_cell_ordering(sphere):
-    sphere_reversed = sphere.reverse_cell_ordering(inplace=True, progress_bar=True)
-    assert sphere_reversed is sphere
-
-    sphere_reversed = sphere.reverse_cell_ordering()
-    assert sphere_reversed is not sphere
-
-    assert np.allclose(sphere_reversed.regular_faces[0], sphere.regular_faces[0][::-1])
-
-    # Test normals are unfaffected
-    assert np.allclose(sphere_reversed.point_data['Normals'], sphere.point_data['Normals'])
+    copied = sphere.flip_normals(inplace=False)
+    assert copied is not sphere
 
 
 @pytest.mark.parametrize('reverse_normals', [True, False])
