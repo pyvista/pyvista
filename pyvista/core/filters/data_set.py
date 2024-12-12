@@ -9,6 +9,7 @@ import functools
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import cast
+from typing import overload
 import warnings
 
 import matplotlib.pyplot as plt
@@ -39,15 +40,35 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
+    from typing import TypedDict
+
+    from typing_extensions import NotRequired
+    from typing_extensions import TypeAlias
+    from typing_extensions import Unpack
+
     from pyvista import DataSet
+    from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PolyData
+    from pyvista import RectilinearGrid
+    from pyvista import StructuredGrid
+    from pyvista import UnstructuredGrid
+    from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import DataObjectType
     from pyvista.core._typing_core import DataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
+
+    _MergeObjectType: TypeAlias = (
+        DataSet | _vtk.vtkDataSet | MultiBlock | Sequence[DataSet | _vtk.vtkDataSet] | None
+    )
+
+    class _TransformKwargs(TypedDict):
+        transform_all_input_vectors: NotRequired[bool]
+        inplace: NotRequired[bool]
+        progress_bar: NotRequired[bool]
 
 
 @abstract_class
@@ -642,7 +663,7 @@ class DataSetFilters:
                 cell = poly.extract_cells(cid)
                 normal = cell['Normals'][0]
                 bounds.append(normal)
-                bounds.append(cell.center)
+                bounds.append(cell.center)  # type: ignore[arg-type]
         bounds_ = _validation.validate_array(
             bounds, dtype_out=float, must_have_length=[3, 6, 12], name='bounds'
         )
@@ -3806,7 +3827,7 @@ class DataSetFilters:
         inside_out: bool = False,
         check_surface: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> DataSetType:
         """Mark points as to whether they are inside a closed surface.
 
         This evaluates all the input points to determine whether they are in an
@@ -3851,8 +3872,9 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.PolyData
-            Mesh containing the ``point_data['SelectedPoints']`` array.
+        pyvista.DataSet
+            Mesh containing the ``point_data['SelectedPoints']`` array. Return type
+            matches input.
 
         Examples
         --------
@@ -3910,7 +3932,7 @@ class DataSetFilters:
         pass_field_data: bool = True,
         mark_blank: bool = True,
         snap_to_closest_point: bool = False,
-    ):
+    ) -> DataSetType:
         """Resample array data from a passed mesh onto this mesh.
 
         For `mesh1.sample(mesh2)`, the arrays from `mesh2` are sampled onto
@@ -3976,7 +3998,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.DataSet
-            Dataset containing resampled data.
+            Dataset containing resampled data. Return type matches input.
 
         See Also
         --------
@@ -4056,7 +4078,7 @@ class DataSetFilters:
         pass_cell_data: bool = True,
         pass_point_data: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> DataSetType:
         """Interpolate values onto this mesh from a given dataset.
 
         The ``target`` dataset is typically a point cloud. Only point data from
@@ -4203,7 +4225,7 @@ class DataSetFilters:
         pointb: VectorLike[float] | None = None,
         progress_bar: bool = False,
         **kwargs,
-    ):
+    ) -> PolyData | tuple[PolyData, PolyData]:
         """Integrate a vector field to generate streamlines.
 
         The default behavior uses a sphere as the source - set its
@@ -4299,7 +4321,7 @@ class DataSetFilters:
             alg = point_source
 
         alg.Update()
-        input_source = cast(pyvista.DataSet, wrap(alg.GetOutput()))
+        input_source = wrap(alg.GetOutput())
 
         output = self.streamlines_from_source(
             input_source,
@@ -4331,7 +4353,7 @@ class DataSetFilters:
         interpolator_type: Literal['point', 'cell', 'p', 'c'] = 'point',
         progress_bar: bool = False,
         max_length: float | None = None,
-    ):
+    ) -> PolyData:
         """Generate streamlines of vectors from the points of a source mesh.
 
         The integration is performed using a specified integrator, by default
@@ -4541,7 +4563,7 @@ class DataSetFilters:
         minimum_number_of_loop_points: int = 4,
         compute_vorticity: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Generate evenly spaced streamlines on a 2D dataset.
 
         This filter only supports datasets that lie on the xy plane, i.e. ``z=0``.
@@ -4704,7 +4726,7 @@ class DataSetFilters:
 
     def decimate_boundary(  # type: ignore[misc]
         self: DataSetType, target_reduction: float = 0.5, progress_bar: bool = False
-    ):
+    ) -> PolyData:
         """Return a decimated version of a triangulation of the boundary.
 
         Only the outer surface of the input dataset will be considered.
@@ -4743,7 +4765,7 @@ class DataSetFilters:
         resolution: int | None = None,
         tolerance: float | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Sample a dataset onto a line.
 
         Parameters
@@ -4912,7 +4934,7 @@ class DataSetFilters:
         points: MatrixLike[float],
         tolerance: float | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Sample a dataset onto a multiple lines.
 
         Parameters
@@ -4971,7 +4993,7 @@ class DataSetFilters:
         resolution: int | None = None,
         tolerance: float | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Sample a dataset over a circular arc.
 
         Parameters
@@ -5051,7 +5073,7 @@ class DataSetFilters:
         angle: float | None = None,
         tolerance: float | None = None,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Sample a dataset over a circular arc defined by a normal and polar vector and plot it.
 
         The number of segments composing the polyline is controlled by
@@ -5395,7 +5417,7 @@ class DataSetFilters:
         ind: int | VectorLike[int],
         invert: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Return a subset of the grid.
 
         Parameters
@@ -5471,7 +5493,7 @@ class DataSetFilters:
         adjacent_cells: bool = True,
         include_cells: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
         Parameters
@@ -5559,7 +5581,7 @@ class DataSetFilters:
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         **kwargs,
-    ):
+    ) -> MultiBlock:
         """Split mesh into separate sub-meshes using point or cell data.
 
         By default, this filter generates a separate mesh for each unique value in the
@@ -5693,7 +5715,7 @@ class DataSetFilters:
         """
         if values is None and ranges is None:
             values = '_unique'  # type: ignore[assignment]
-        return self.extract_values(
+        output = self.extract_values(
             values=values,
             ranges=ranges,
             scalars=scalars,
@@ -5702,6 +5724,7 @@ class DataSetFilters:
             split=True,
             **kwargs,
         )
+        return cast(pyvista.MultiBlock, output)
 
     def extract_values(  # type: ignore[misc]
         self: DataSetType,
@@ -5727,7 +5750,7 @@ class DataSetFilters:
         pass_point_ids: bool = True,
         pass_cell_ids: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid | MultiBlock:
         """Return a subset of the mesh based on the value(s) of point or cell data.
 
         Points and cells may be extracted with a single value, multiple values, a range
@@ -6109,7 +6132,16 @@ class DataSetFilters:
 
         # Return empty mesh if input is empty mesh
         if self.n_points == 0:
-            return self.copy()
+            # Empty input, return empty output
+            out = pyvista.UnstructuredGrid()
+            if split:
+                # Do basic validation just to get num blocks for multiblock
+                _, values_ = _get_inputs_from_dict(values)
+                _, ranges_ = _get_inputs_from_dict(ranges)
+                n_values = len(np.atleast_1d(values_)) if values_ is not None else 0
+                n_ranges = len(np.atleast_2d(ranges_)) if ranges_ is not None else 0
+                return pyvista.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])
+            return out
 
         array, association = _validate_scalar_array(scalars, preference)
         array, num_components, component_logic = _validate_component_mode(array, component_mode)
@@ -6242,7 +6274,7 @@ class DataSetFilters:
         pass_cellid: bool = True,
         nonlinear_subdivision: int = 1,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Extract surface mesh of the grid.
 
         Parameters
@@ -6337,7 +6369,7 @@ class DataSetFilters:
 
     def surface_indices(  # type: ignore[misc]
         self: DataSetType, progress_bar: bool = False
-    ):
+    ) -> pyvista_ndarray:
         """Return the surface indices of a grid.
 
         Parameters
@@ -6373,7 +6405,7 @@ class DataSetFilters:
         manifold_edges: bool = True,
         clear_data: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData:
         """Extract edges from the surface of the mesh.
 
         If the given mesh is not PolyData, the external surface of the given
@@ -6431,7 +6463,7 @@ class DataSetFilters:
         See the :ref:`extract_edges_example` for more examples using this filter.
 
         """
-        dataset = self
+        dataset: DataSetType | PolyData = self
         if not isinstance(dataset, _vtk.vtkPolyData):
             dataset = DataSetFilters.extract_surface(dataset)
         featureEdges = _vtk.vtkFeatureEdges()
@@ -6453,7 +6485,7 @@ class DataSetFilters:
         tolerance: float = 0.0,
         inplace: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | UnstructuredGrid:
         """Merge duplicate points in this mesh.
 
         .. versionadded:: 0.45
@@ -6504,17 +6536,13 @@ class DataSetFilters:
 
     def merge(  # type: ignore[misc]
         self: DataSetType,
-        grid: DataSet
-        | _vtk.vtkDataSet
-        | MultiBlock
-        | Sequence[DataSet | _vtk.vtkDataSet]
-        | None = None,
+        grid: _MergeObjectType = None,
         merge_points: bool = True,
         tolerance: float = 0.0,
         inplace: bool = False,
         main_has_priority: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Join one or many other grids to this grid.
 
         Grid is updated in-place by default.
@@ -6597,21 +6625,22 @@ class DataSetFilters:
         merged = _get_output(append_filter)
         if inplace:
             if type(self) is type(merged):
+                cast(pyvista.UnstructuredGrid, self)
                 self.deep_copy(merged)
-                return self
+                return cast(pyvista.UnstructuredGrid, self)
             else:
                 raise TypeError(f'Mesh type {type(self)} cannot be overridden by output.')
         return merged
 
     def __add__(  # type: ignore[misc]
-        self: DataSetType, dataset
-    ):
+        self: DataSetType, dataset: _MergeObjectType
+    ) -> UnstructuredGrid:
         """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
         return DataSetFilters.merge(self, dataset)
 
-    def __iadd__(  # type: ignore[misc]
-        self: DataSetType, dataset
-    ):
+    def __iadd__(  # type: ignore[misc]  # noqa: PYI034
+        self: UnstructuredGrid, dataset: _MergeObjectType
+    ) -> UnstructuredGrid:
         """Merge another mesh into this one if possible.
 
         "If possible" means that ``self`` is a :class:`pyvista.UnstructuredGrid`.
@@ -6634,7 +6663,7 @@ class DataSetFilters:
         quality_measure: str = 'scaled_jacobian',
         null_value: float = -1.0,
         progress_bar: bool = False,
-    ):
+    ) -> DataSetType:
         """Compute a function of (geometric) quality for each cell of a mesh.
 
         The per-cell quality is added to the mesh's cell data, in an
@@ -6768,7 +6797,7 @@ class DataSetFilters:
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
         self: DataSetType, *, progress_bar: bool = False
-    ):
+    ) -> DataSetType:
         """Compute metrics on the boundary faces of a mesh.
 
         The metrics that can be computed on the boundary faces of the mesh and are:
@@ -6831,7 +6860,7 @@ class DataSetFilters:
         faster: bool = False,
         preference: Literal['point', 'cell'] = 'point',
         progress_bar: bool = False,
-    ):
+    ) -> DataSetType:
         """Compute derivative-based quantities of point/cell scalar field.
 
         Utilize ``vtkGradientFilter`` to compute derivative-based quantities,
@@ -6881,7 +6910,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.DataSet
-            Dataset with calculated derivative.
+            Dataset with calculated derivative. Return type matches input.
 
         Examples
         --------
@@ -6936,7 +6965,7 @@ class DataSetFilters:
 
     def shrink(  # type: ignore[misc]
         self: DataSetType, shrink_factor: float = 1.0, progress_bar: bool = False
-    ):
+    ) -> UnstructuredGrid | PolyData:
         """Shrink the individual faces of a mesh.
 
         This filter shrinks the individual faces of a mesh rather than
@@ -6953,8 +6982,8 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset with shrunk faces.  Return type matches input.
+        pyvista.UnstructuredGrid | pyvista.PolyData
+            Dataset with shrunk faces. PolyData is returned if the input is PolyData.
 
         Examples
         --------
@@ -6990,7 +7019,7 @@ class DataSetFilters:
         max_n_subdivide: int = 3,
         merge_points: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> UnstructuredGrid:
         """Tessellate a mesh.
 
         This filter approximates nonlinear FEM-like elements with linear
@@ -7014,8 +7043,8 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.DataSet
-            Dataset with tessellated mesh.  Return type matches input.
+        pyvista.UnstructuredGrid
+            Tessellated mesh.
 
         Examples
         --------
@@ -7054,13 +7083,31 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Tessellating Mesh')
         return _get_output(alg)
 
+    @overload
+    def transform(  # type: ignore[misc]
+        self: ImageData,
+        trans: TransformLike,
+        **kwargs: Unpack[_TransformKwargs],
+    ) -> StructuredGrid: ...
+    @overload
+    def transform(  # type: ignore[misc]
+        self: RectilinearGrid,
+        trans: TransformLike,
+        **kwargs: Unpack[_TransformKwargs],
+    ) -> StructuredGrid: ...
+    @overload
+    def transform(  # type: ignore[misc]
+        self: DataSetType,
+        trans: TransformLike,
+        **kwargs: Unpack[_TransformKwargs],
+    ) -> DataSetType: ...
     def transform(  # type: ignore[misc]
         self: DataSetType,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> DataSetType | StructuredGrid:
         """Transform this mesh with a 4x4 transform.
 
         .. warning::
@@ -7227,7 +7274,7 @@ class DataSetFilters:
         inplace: bool = False,
         transform_all_input_vectors: bool = False,
         progress_bar: bool = False,
-    ):
+    ) -> DataSetType:
         """Reflect a dataset across a plane.
 
         Parameters
@@ -7283,7 +7330,7 @@ class DataSetFilters:
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Rotate mesh about the x-axis.
 
         .. note::
@@ -7347,7 +7394,7 @@ class DataSetFilters:
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Rotate mesh about the y-axis.
 
         .. note::
@@ -7410,7 +7457,7 @@ class DataSetFilters:
         point: VectorLike[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Rotate mesh about the z-axis.
 
         .. note::
@@ -7475,7 +7522,7 @@ class DataSetFilters:
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Rotate mesh about a vector.
 
         .. note::
@@ -7542,7 +7589,7 @@ class DataSetFilters:
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
 
         .. note::
@@ -7615,7 +7662,7 @@ class DataSetFilters:
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Translate the mesh.
 
         .. note::
@@ -7672,7 +7719,7 @@ class DataSetFilters:
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
         point: VectorLike[float] | None = None,
-    ):
+    ) -> DataSetType:
         """Scale the mesh.
 
         .. note::
@@ -7736,7 +7783,7 @@ class DataSetFilters:
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Flip mesh about the x-axis.
 
         .. note::
@@ -7798,7 +7845,7 @@ class DataSetFilters:
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Flip mesh about the y-axis.
 
         .. note::
@@ -7860,7 +7907,7 @@ class DataSetFilters:
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Flip mesh about the z-axis.
 
         .. note::
@@ -7923,7 +7970,7 @@ class DataSetFilters:
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Flip mesh about the normal.
 
         .. note::
@@ -7985,7 +8032,7 @@ class DataSetFilters:
 
     def integrate_data(  # type: ignore[misc]
         self: DataSetType, progress_bar: bool = False
-    ):
+    ) -> UnstructuredGrid:
         """Integrate point and cell data.
 
         Area or volume is also provided in point data.
@@ -8039,7 +8086,7 @@ class DataSetFilters:
         n_partitions: int,
         generate_global_id: bool = False,
         as_composite: bool = True,
-    ):
+    ) -> MultiBlock | UnstructuredGrid:
         """Break down input dataset into a requested number of partitions.
 
         Cells on boundaries are uniquely assigned to each partition without duplication.
@@ -8137,7 +8184,7 @@ class DataSetFilters:
         frame_width: float = 0.1,
         return_meta: bool = False,
         as_composite: bool = True,
-    ):
+    ) -> PolyData | MultiBlock | tuple[PolyData | MultiBlock, NumpyArray[float], NumpyArray[float]]:
         """Return an oriented bounding box (OBB) for this dataset.
 
         By default, the bounding box is a :class:`~pyvista.MultiBlock` with six
@@ -8325,7 +8372,7 @@ class DataSetFilters:
         frame_width: float = 0.1,
         return_meta: bool = False,
         as_composite: bool = True,
-    ):
+    ) -> PolyData | MultiBlock | tuple[PolyData | MultiBlock, NumpyArray[float], NumpyArray[float]]:
         """Return a bounding box for this dataset.
 
         By default, the box is an axis-aligned bounding box (AABB) returned as a
@@ -8486,7 +8533,7 @@ class DataSetFilters:
         frame_width: float,
         return_meta: bool,
         as_composite: bool,
-    ):
+    ) -> PolyData | MultiBlock | tuple[PolyData | MultiBlock, NumpyArray[float], NumpyArray[float]]:
         def _multiblock_to_polydata(multiblock):
             return multiblock.combine(merge_points=False).extract_geometry()
 
@@ -8556,7 +8603,7 @@ class DataSetFilters:
 
     def explode(  # type: ignore[misc]
         self: DataSetType, factor: float = 0.1
-    ):
+    ) -> UnstructuredGrid:
         """Push each individual cell away from the center of the dataset.
 
         Parameters
@@ -8593,12 +8640,12 @@ class DataSetFilters:
             split = split.cast_to_unstructured_grid()
 
         vec = (split.cell_centers().points - split.center) * factor
-        split.points += np.repeat(vec, np.diff(split.offset), axis=0)
+        split.points += np.repeat(vec, np.diff(split.offset), axis=0)  # type: ignore[misc]
         return split
 
     def separate_cells(  # type: ignore[misc]
         self: DataSetType,
-    ):
+    ) -> UnstructuredGrid | PolyData:
         """Return a copy of the dataset with separated cells with no shared points.
 
         This method may be useful when datasets have scalars that need to be
@@ -8607,8 +8654,9 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid
-            UnstructuredGrid with isolated cells.
+        pyvista.UnstructuredGrid | pyvista.PolyData
+            UnstructuredGrid with isolated cells. PolyData is returned if the input is
+            PolyData.
 
         Examples
         --------
@@ -8632,7 +8680,7 @@ class DataSetFilters:
 
     def extract_cells_by_type(  # type: ignore[misc]
         self: DataSetType, cell_types: int | VectorLike[int], progress_bar: bool = False
-    ):
+    ) -> DataSetType:
         """Extract cells of a specified type.
 
         Given an input dataset and a list of cell types, produce an output
@@ -8710,7 +8758,7 @@ class DataSetFilters:
         output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Sort labeled data by number of points or cells.
 
         This filter renumbers scalar label data of any type with ``N`` labels
@@ -8801,7 +8849,7 @@ class DataSetFilters:
         output_scalars: str | None = None,
         progress_bar: bool = False,
         inplace: bool = False,
-    ):
+    ) -> DataSetType:
         """Renumber labeled data such that labels are contiguous.
 
         This filter renumbers scalar label data of any type with ``N`` labels
