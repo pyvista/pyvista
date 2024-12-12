@@ -2623,8 +2623,8 @@ class PolyDataFilters(DataSetFilters):
     def flip_normals(  # type: ignore[misc]
         self: PolyData,
         *,
-        reverse_cells: bool = True,
-        reverse_normals: bool = False,
+        reverse_order: bool = True,
+        flip_direction: bool = False,
         inplace: bool = True,
         progress_bar: bool = False,
     ):
@@ -2647,12 +2647,12 @@ class PolyDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        reverse_cells : bool, default: True
+        reverse_order : bool, default: True
             Reverse the order of indices in the cell connectivity list.
 
             .. versionadded:: 0.45
 
-        reverse_normals : bool, default: False
+        flip_direction : bool, default: False
             Multiply the normals by ``-1`` (both point and cell normals, if present).
             Has no effect if no active normals are set.
 
@@ -2693,8 +2693,8 @@ class PolyDataFilters(DataSetFilters):
         """
         alg = _vtk.vtkReverseSense()
         alg.SetInputData(self)
-        alg.SetReverseNormals(reverse_normals)
-        alg.SetReverseCells(reverse_cells)
+        alg.SetReverseNormals(flip_direction)
+        alg.SetReverseCells(reverse_order)
         _update_alg(alg, progress_bar)
         output = _get_output(alg)
         if inplace:

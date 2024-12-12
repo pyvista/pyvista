@@ -1165,7 +1165,7 @@ def test_flip_normals_parameters(reverse_normals, reverse_cells):
     assert np.allclose(plane['Normals'][0], normal_vector)
     assert np.array_equal(plane.regular_faces[0], point_ids)
 
-    plane.flip_normals(reverse_cells=reverse_cells, reverse_normals=reverse_normals)
+    plane.flip_normals(reverse_order=reverse_cells, flip_direction=reverse_normals)
 
     if reverse_normals:
         assert np.allclose(plane['Normals'][0], normal_vector_reversed)
