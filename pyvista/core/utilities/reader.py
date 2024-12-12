@@ -71,13 +71,13 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.dem``       | :class:`pyvista.DEMReader`                  |
     +----------------+---------------------------------------------+
-    | ``.e``         | :class:`pyvista.ExodusIIReader`              |
+    | ``.e``         | :class:`pyvista.ExodusIIReader`             |
     +----------------+---------------------------------------------+
-    | ``.exo``       | :class:`pyvista.ExodusIIReader`              |
+    | ``.exo``       | :class:`pyvista.ExodusIIReader`             |
     +----------------+---------------------------------------------+
-    | ``.exii``      | :class:`pyvista.ExodusIIReader`              |
+    | ``.exii``      | :class:`pyvista.ExodusIIReader`             |
     +----------------+---------------------------------------------+
-    | ``.ex2``       | :class:`pyvista.ExodusIIReader`              |
+    | ``.ex2``       | :class:`pyvista.ExodusIIReader`             |
     +----------------+---------------------------------------------+
     | ``.facet``     | :class:`pyvista.FacetReader`                |
     +----------------+---------------------------------------------+
