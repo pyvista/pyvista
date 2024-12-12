@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from ._aliases import ArrayLike
 from ._aliases import BoundsTuple
 from ._aliases import CellArrayLike
@@ -15,10 +13,7 @@ from ._aliases import TransformLike
 from ._aliases import VectorLike
 from ._array_like import NumberType
 from ._array_like import NumpyArray
-
-if TYPE_CHECKING:  # pragma: no cover
-    # Avoid circular imports
-    from ._dataset_types import DataObjectType
-    from ._dataset_types import DataSetType
-    from ._dataset_types import PointGridType
-    from ._dataset_types import _PointSetType
+from ._dataset_types import DataObjectType
+from ._dataset_types import DataSetType
+from ._dataset_types import PointGridType
+from ._dataset_types import _PointSetType

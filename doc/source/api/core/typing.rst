@@ -74,36 +74,3 @@ pyvista.TransformLike
 .. currentmodule:: pyvista
 
 .. autodata:: TransformLike
-
-
-Data Object Types
------------------
-
-pyvista.PointGridType
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: PointGridType
-
-pyvista._PointSetType
-~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: _PointSetType
-
-
-pyvista.DataSetType
-~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: DataSetType
-
-pyvista.DataObjectType
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: DataObjectType
