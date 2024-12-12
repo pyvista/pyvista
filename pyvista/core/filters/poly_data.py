@@ -2700,6 +2700,9 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Reverse the order of polygonal cells and/or the normal vectors.
 
+        By default, only the cells are reversed. Use :meth:`pyvista.PolyDataFilters.flip_normals`
+        to flip both cells `and` normals by default.
+
         .. warning::
 
             This filter does not produce the correct output for triangle strips,
@@ -2732,22 +2735,32 @@ class PolyDataFilters(DataSetFilters):
         See Also
         --------
         pyvista.PolyDataFilters.flip_normals
-            Wrapper for this filter with ``reverse_cells=True``
-            and ``reverse_normals=True``.
         pyvista.PolyDataFilters.compute_normals
         pyvista.PolyData.point_normals
         pyvista.PolyData.cell_normals
 
         Examples
         --------
-        Flip the normals of a sphere and plot the normals before and
-        after the flip.
+        Show the initial cell ordering and normal direction of a sphere.
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> sphere.plot_normals(mag=0.1)
-        >>> sphere.flip_normals()
-        >>> sphere.plot_normals(mag=0.1, opacity=0.5)
+        >>> sphere.regular_faces[0]
+        array([ 2, 30,  0])
+        >>> sphere.point_data['Normals'][0]
+        pyvista_ndarray([0., 0., 1.], dtype=float32)
+
+        Reverse the cell ordering.
+
+        >>> sphere.reverse_sense(reverse_cells=True)
+        >>> sphere.regular_faces[0]
+        array([ 0, 30,  2])
+
+        Reverse the normal vectors.
+
+        >>> sphere.reverse_sense(reverse_normals=True)
+        >>> sphere.point_data['Normals'][0]
+        pyvista_ndarray([-0., -0., -1.], dtype=float32)
 
         """
         alg = _vtk.vtkReverseSense()
