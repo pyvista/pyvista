@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+from unittest.mock import ANY
+
 import numpy as np
 import pytest
 import vtk
@@ -7,10 +10,14 @@ import vtk
 import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import VTKVersionError
+from pyvista.plotting import widgets
 from pyvista.plotting.affine_widget import DARK_YELLOW
 from pyvista.plotting.affine_widget import get_angle
 from pyvista.plotting.affine_widget import ray_plane_intersection
 from tests.conftest import flaky_test
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
@@ -835,3 +842,55 @@ def test_clear_camera3d_widget(verify_image_cache):
     pl.add_camera3d_widget()
     pl.clear_camera3d_widgets()
     pl.show(cpos='xy')
+
+
+class Test_event_parser:
+    """Class to regroup tests for widgets that use the  `_parse_interaction_event()` function"""
+
+    @pytest.fixture
+    def plotter(self):
+        yield (p := pv.Plotter())
+        p.close()
+
+    @pytest.mark.parametrize(
+        ('method', 'widget'),
+        [
+            ('add_box_widget', 'vtkBoxWidget'),
+            ('add_plane_widget', 'vtkImplicitPlaneWidget'),
+            ('add_line_widget', 'vtkLineWidget'),
+            ('add_text_slider_widget', 'vtkSliderWidget'),
+            ('add_slider_widget', 'vtkSliderWidget'),
+            ('add_sphere_widget', 'vtkSphereWidget'),
+            ('add_spline_widget', 'vtkSplineWidget'),
+        ],
+    )
+    def test_add_widget(
+        self,
+        plotter: pv.Plotter,
+        method: str,
+        widget: str,
+        mocker: MockerFixture,
+    ):
+        # Arrange
+        mock = mocker.patch.object(widgets, '_parse_interaction_event')
+        mock_vtk = mocker.patch.object(widgets, '_vtk')
+
+        if widget == 'vtkSplineWidget':
+            mocker.patch.object(widgets.pyvista, 'wrap').return_value = pv.PolyData()
+
+        kwargs = dict(callback=lambda *b: b, interaction_event=(e := 'foo'))
+        if widget == 'vtkLineWidget':
+            mock_vtk.vtkLineWidget().GetPoint1.return_value = (0,) * 3
+            mock_vtk.vtkLineWidget().GetPoint2.return_value = (0,) * 3
+
+        elif widget == 'vtkSliderWidget':
+            k = 'data' if method == 'add_text_slider_widget' else 'rng'
+            kwargs[k] = [0, 1]
+
+        # Act
+        method = getattr(plotter, method)
+        method(**kwargs)
+
+        # Assert
+        mock.assert_called_with(e)
+        getattr(mock_vtk, widget)().AddObserver.assert_called_with(mock(e), ANY)
