@@ -2686,7 +2686,9 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
-        return self.reverse_sense(reverse_cells=True, reverse_normals=True, inplace=inplace, progress_bar=progress_bar)
+        return self.reverse_sense(
+            reverse_cells=True, reverse_normals=True, inplace=inplace, progress_bar=progress_bar
+        )
 
     def reverse_sense(  # type: ignore[misc]
         self: PolyData,
