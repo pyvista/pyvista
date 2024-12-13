@@ -228,7 +228,7 @@ _PARAVIEW_COLORS = {'paraview_background': '#52576e'}
 #   names consistent with CSS names. In many cases this altered color name is
 #   supported directly by vtkNamedColors, but in some cases this technically is no
 #   longer a valid named vtk color
-_VTK_NAMED_COLORS = {
+_VTK_COLORS = {
     'alizarin_crimson': '#e32636',
     'aureoline_yellow': '#ffa824',
     'banana': '#e3cf57',
@@ -298,7 +298,7 @@ _hexcolors_with_underscores = {
     **_CSS_COLORS,
     **_PARAVIEW_COLORS,
     **_TABLEAU_COLORS,
-    **_VTK_NAMED_COLORS,
+    **_VTK_COLORS,
 }
 hexcolors = _format_color_dict(_hexcolors_with_underscores)
 

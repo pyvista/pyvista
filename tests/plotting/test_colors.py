@@ -17,7 +17,6 @@ from pyvista.plotting.colors import get_cmap_safe
 
 COLORMAPS = ['Greys']
 FORMATED_CSS_COLORS = _format_color_dict(pv.plotting.colors._CSS_COLORS)
-FORMATED_COLOR_SYNONYMS = _format_color_dict(pv.plotting.colors._color_synonyms_with_underscores)
 
 try:
     import cmocean  # noqa: F401
