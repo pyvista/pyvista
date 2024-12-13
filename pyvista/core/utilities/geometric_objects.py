@@ -1995,9 +1995,9 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         msg = 'Unable to build a rectangle with less than three different points'
         raise ValueError(msg)
 
-    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2  # type: ignore[call-overload]
-    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2  # type: ignore[call-overload]
-    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2  # type: ignore[call-overload]
+    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
+    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
+    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2
 
     null_scalar_products = [
         val

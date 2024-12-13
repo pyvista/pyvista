@@ -8,6 +8,7 @@ from ._aliases import ArrayLike
 from ._aliases import BoundsTuple
 from ._aliases import CellArrayLike
 from ._aliases import CellsLike
+from ._aliases import InteractionEventType
 from ._aliases import MatrixLike
 from ._aliases import Number
 from ._aliases import RotationLike
