@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import colorsys
 import itertools
 
 import matplotlib as mpl
@@ -10,9 +11,13 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista.plotting.colors import _format_color_dict
+from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import get_cmap_safe
 
 COLORMAPS = ['Greys']
+FORMATED_CSS_COLORS = _format_color_dict(pv.plotting.colors._CSS_COLORS)
+FORMATED_COLOR_SYNONYMS = _format_color_dict(pv.plotting.colors._color_synonyms_with_underscores)
 
 try:
     import cmocean  # noqa: F401
@@ -121,6 +126,13 @@ def test_color():
         c[4]  # Invalid integer index
 
 
+def test_color_hls():
+    lime = pv.Color('lime')
+    actual_hls = lime._float_hls
+    expected_hls = colorsys.rgb_to_hls(*lime.float_rgb)
+    assert actual_hls == expected_hls
+
+
 def test_color_opacity():
     color = pv.Color(opacity=0.5)
     assert color.opacity == 128
@@ -168,13 +180,23 @@ def pytest_generate_tests(metafunc):
 
 
 def test_css4_colors(css4_color):
+    # Test value
     name, value = css4_color
     assert pv.Color(name).hex_rgb.lower() == value.lower()
 
+    # Test name
+    if _format_color_name(name) not in FORMATED_CSS_COLORS:
+        alt_name = pv.plotting.colors.color_synonyms[name]
+        assert _format_color_name(alt_name) in FORMATED_CSS_COLORS
+
 
 def test_tab_colors(tab_color):
+    # Test value
     name, value = tab_color
     assert pv.Color(name).hex_rgb.lower() == value.lower()
+
+    # Test name
+    assert name in pv.plotting.colors._TABLEAU_COLORS
 
 
 def test_vtk_colors(vtk_color):

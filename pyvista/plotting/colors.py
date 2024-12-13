@@ -7,6 +7,7 @@ Used code from matplotlib.colors.  Thanks for your work.
 # of methods defined in this module.
 from __future__ import annotations
 
+from colorsys import rgb_to_hls
 import inspect
 
 from cycler import Cycler
@@ -44,6 +45,10 @@ IPYGANY_MAP = {
 
 def _format_color_name(string):
     return string.lower().replace('_', '')
+
+
+def _format_color_dict(colors: dict[str, str]):
+    return {_format_color_name(n): h.lower() for n, h in colors.items()}
 
 
 # Define named colors by group/origin:
@@ -211,6 +216,8 @@ _TABLEAU_COLORS = {
     'tab:cyan': '#17becf',
 }
 
+_PARAVIEW_COLORS = {'paraview_background': '#52576e'}
+
 # Colors from https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html
 # The vtk colors are only partially supported:
 # - VTK colors with the same name as CSS colors but different values are excluded
@@ -221,7 +228,6 @@ _TABLEAU_COLORS = {
 #   names consistent with CSS names. In many cases this altered color name is
 #   supported directly by vtkNamedColors, but in some cases this technically is no
 #   longer a valid named vtk color
-
 _VTK_NAMED_COLORS = {
     'alizarin_crimson': '#e32636',
     'aureoline_yellow': '#ffa824',
@@ -287,16 +293,14 @@ _VTK_NAMED_COLORS = {
     'zinc_white': '#fcf7ff',
 }
 
-_SPECIAL_COLORS = {'paraview_background': '#52576e'}
-
 # Sort named colors alphabetically by group.
 _hexcolors_with_underscores = {
-    **dict(sorted(_CSS_COLORS.items())),
-    **dict(sorted(_VTK_NAMED_COLORS.items())),
-    **dict(sorted(_SPECIAL_COLORS.items())),
+    **_CSS_COLORS,
+    **_PARAVIEW_COLORS,
     **_TABLEAU_COLORS,
+    **_VTK_NAMED_COLORS,
 }
-hexcolors = {_format_color_name(n): h.lower() for n, h in _hexcolors_with_underscores.items()}
+hexcolors = _format_color_dict(_hexcolors_with_underscores)
 
 color_names = {h: n for n, h in hexcolors.items()}
 
@@ -939,6 +943,11 @@ class Color:
 
         """
         return self.float_rgba[:3]
+
+    @property
+    def _float_hls(self) -> tuple[float, float, float]:
+        """Get the color as Hue, Lightness, Saturation (HLS) in range [0.0, 1.0]."""
+        return rgb_to_hls(*self.float_rgb)
 
     @property
     def hex_rgba(self) -> str:  # numpydoc ignore=RT01
