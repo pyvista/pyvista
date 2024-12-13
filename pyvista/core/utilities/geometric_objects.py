@@ -1019,8 +1019,8 @@ def SolidSphereGeneric(
 def Plane(
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (0.0, 0.0, 1.0),
-    i_size: int = 1,
-    j_size: int = 1,
+    i_size: float = 1.0,
+    j_size: float = 1.0,
     i_resolution: int = 10,
     j_resolution: int = 10,
 ) -> PolyData:

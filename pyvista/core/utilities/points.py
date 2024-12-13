@@ -353,7 +353,7 @@ def fit_plane_to_points(
     i_resolution, j_resolution = valid_resolution
 
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(
+    aligned, matrix = pyvista.PolyData(points).align_xyz(  # type: ignore[attr-defined]
         return_matrix=True, axis_2_direction=init_normal
     )
 
@@ -499,7 +499,7 @@ def fit_line_to_points(
 
     """
     # Align points to the xyz-axes
-    aligned, matrix = pyvista.PolyData(points).align_xyz(
+    aligned, matrix = pyvista.PolyData(points).align_xyz(  # type: ignore[attr-defined]
         axis_0_direction=init_direction, return_matrix=True
     )
 
