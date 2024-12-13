@@ -1681,6 +1681,8 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
+        pyvista.PolyDataFilters.flip_normals
+            Flip existing normals without computing new ones.
         pyvista.PolyData.point_normals
             Returns the array of point normals.
         pyvista.PolyData.cell_normals
@@ -2628,13 +2630,16 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Flip the normals of a mesh.
 
-        Both the normal direction and the order of a cell's points are
-        reversed.
+        This filter reverses the order of a cell's points. If the mesh has active 
+        point and/or cell normals defined, their direction is also flipped.
+
+        Use :meth:`pyvista.PolyDataFilters.reverse_sense` instead to reverse cell ordering 
+        and/or flip the normal vectors independently.
 
         .. versionchanged:: 0.45
 
-            This filter now operates on all polygon cell(s). Previously, only
-            triangle cells were supported.
+            This filter now operates on all polygon :class:`cell types <pyvista.CellType>`. Previously, only
+            :attr:`~pyvista.CellType.TRIANGLE` cells were supported.
 
         .. versionchanged:: 0.45
 
@@ -2643,8 +2648,8 @@ class PolyDataFilters(DataSetFilters):
 
         .. warning::
 
-            This filter does not produce the correct output for triangle strips,
-            see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
+            This filter does not produce the correct output for :attr:`~pyvista.CellType.TRIANGLE_STRIP`
+            cells, see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
             Use :meth:`~pyvista.PolyDataFilters.triangulate` to triangulate the mesh
             first.
 
@@ -2655,7 +2660,7 @@ class PolyDataFilters(DataSetFilters):
 
             .. versionadded:: 0.45
 
-        progress_bar : bool, default: True
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
             .. versionadded:: 0.45
@@ -2668,11 +2673,13 @@ class PolyDataFilters(DataSetFilters):
         See Also
         --------
         pyvista.PolyDataFilters.reverse_sense
-            More general version of this filter to reverse cell ordering and/or
-            the normals independently.
+            Reverse cell order and/or flip normal vectors independently.
         pyvista.PolyDataFilters.compute_normals
+            Compute new normals. Includes the option to flip the normals.
         pyvista.PolyData.point_normals
+            Returns the array of point normals.
         pyvista.PolyData.cell_normals
+            Returns the array of cell normals.
 
         Examples
         --------
@@ -2698,15 +2705,15 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = True,
         progress_bar: bool = False,
     ):
-        """Reverse the order of polygonal cells and/or the normal vectors.
+        """Reverse the order of polygonal cells and/or reverse the normal vectors.
 
         By default, only the cells are reversed. Use :meth:`pyvista.PolyDataFilters.flip_normals`
-        to flip both cells `and` normals by default.
+        instead to flip both cells `and` normals by default.
 
         .. warning::
 
-            This filter does not produce the correct output for triangle strips,
-            see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
+            This filter does not produce the correct output for :attr:`~pyvista.CellType.TRIANGLE_STRIP`
+            cells, see https://gitlab.kitware.com/vtk/vtk/-/issues/18634.
             Use :meth:`~pyvista.PolyDataFilters.triangulate` to triangulate the mesh
             first.
 
@@ -2724,7 +2731,7 @@ class PolyDataFilters(DataSetFilters):
         inplace : bool, default: True
             Overwrites the original mesh in-place.
 
-        progress_bar : bool, default: True
+        progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         Returns
@@ -2735,9 +2742,13 @@ class PolyDataFilters(DataSetFilters):
         See Also
         --------
         pyvista.PolyDataFilters.flip_normals
+            Reverse cell order and flip normal vectors by default.
         pyvista.PolyDataFilters.compute_normals
+            Compute new normals. Includes the option to flip the normals.
         pyvista.PolyData.point_normals
+            Returns the array of point normals.
         pyvista.PolyData.cell_normals
+            Returns the array of cell normals.
 
         Examples
         --------
