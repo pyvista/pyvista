@@ -2630,10 +2630,10 @@ class PolyDataFilters(DataSetFilters):
     ):
         """Flip the normals of a mesh.
 
-        This filter reverses the order of a cell's points. If the mesh has active 
+        This filter reverses the order of a cell's points. If the mesh has active
         point and/or cell normals defined, their direction is also flipped.
 
-        Use :meth:`pyvista.PolyDataFilters.reverse_sense` instead to reverse cell ordering 
+        Use :meth:`pyvista.PolyDataFilters.reverse_sense` instead to reverse cell ordering
         and/or flip the normal vectors independently.
 
         .. versionchanged:: 0.45
