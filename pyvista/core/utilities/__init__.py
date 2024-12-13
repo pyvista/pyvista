@@ -1,6 +1,5 @@
 """Utilities routines."""
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 import contextlib
@@ -43,9 +42,12 @@ from .fileio import get_ext
 from .fileio import is_meshio_mesh
 from .fileio import read
 from .fileio import read_exodus
+from .fileio import read_grdecl
 from .fileio import read_meshio
+from .fileio import read_pickle
 from .fileio import read_texture
 from .fileio import save_meshio
+from .fileio import save_pickle
 from .fileio import set_pickle_format
 from .fileio import set_vtkwriter_mode
 from .geometric_objects import NORMALS
@@ -153,6 +155,7 @@ from .parametric_objects import ParametricTorus
 from .parametric_objects import Spline
 from .parametric_objects import parametric_keywords
 from .parametric_objects import surface_from_para
+from .points import fit_line_to_points
 from .points import fit_plane_to_points
 from .points import line_segments_from_points
 from .points import lines_from_points

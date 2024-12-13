@@ -1,5 +1,4 @@
-"""
-Support dynamic or static jupyter notebook plotting.
+"""Support dynamic or static jupyter notebook plotting.
 
 Includes:
 
@@ -41,7 +40,7 @@ def handle_plotter(plotter, backend=None, screenshot=None, **kwargs):
     return show_static_image(plotter, screenshot)
 
 
-def show_static_image(plotter, screenshot):
+def show_static_image(plotter, screenshot):  # numpydoc ignore=RT01
     """Display a static image to be displayed within a jupyter notebook."""
     import PIL.Image
 

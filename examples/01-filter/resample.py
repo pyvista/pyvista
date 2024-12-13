@@ -1,25 +1,12 @@
 """
 .. _resampling_example:
 
-Resampling
-~~~~~~~~~~
-
-There are two main methods of interpolating or sampling data from a target mesh
-in PyVista. :func:`pyvista.DataSetFilters.interpolate` uses a distance weighting
-kernel to interpolate point data from nearby points of the target mesh onto
-the desired points.
-:func:`pyvista.DataSetFilters.sample` interpolates data using the
-interpolation scheme of the enclosing cell from the target mesh.
-
-If the target mesh is a point cloud, i.e. there is no connectivity in the cell
-structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
-preferred.  If interpolation is desired within the cells of the target mesh, then
-:func:`pyvista.DataSetFilters.sample` is typically desired.
-
+Detailed Resampling
+~~~~~~~~~~~~~~~~~~~
 
 This example uses :func:`pyvista.DataSetFilters.sample`.
-For :func:`pyvista.DataSetFilters.interpolate`, see :ref:`interpolate_example`.
-
+:func:`pyvista.DataSetFilters.interpolate` is similar, and the two
+methods are compared in :ref:`interpolate_sample_example`.
 
 Resample one mesh's point/cell arrays onto another mesh's nodes.
 """
@@ -53,7 +40,7 @@ p.show()
 result = mesh.sample(data_to_probe)
 
 # Plot result
-name = "Spatial Point Data"
+name = 'Spatial Point Data'
 result.plot(scalars=name, clim=data_to_probe.get_data_range(name))
 
 # %%

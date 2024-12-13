@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 import pyvista
@@ -11,6 +13,10 @@ from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import MultiBlock
+    from pyvista.core._typing_core import TransformLike
 
 
 @abstract_class
@@ -35,7 +41,7 @@ class CompositeFilters:
         gf.Update()
         return wrap(gf.GetOutputDataObject(0))
 
-    def combine(self, merge_points=False, tolerance=0.0):
+    def combine(self, merge_points: bool = False, tolerance=0.0):
         """Combine all blocks into a single unstructured grid.
 
         Parameters
@@ -75,10 +81,10 @@ class CompositeFilters:
 
         """
         alg = _vtk.vtkAppendFilter()
-        for block in self:
+        for block in self:  # type: ignore[attr-defined]
             if isinstance(block, _vtk.vtkMultiBlockDataSet):
                 block = CompositeFilters.combine(
-                    block,
+                    block,  # type: ignore[arg-type]
                     merge_points=merge_points,
                     tolerance=tolerance,
                 )
@@ -116,7 +122,12 @@ class CompositeFilters:
 
     triangulate = DataSetFilters.triangulate
 
-    def outline(self, generate_faces=False, nested=False, progress_bar=False):
+    def outline(  # type: ignore[misc]
+        self: MultiBlock,
+        generate_faces: bool = False,
+        nested: bool = False,
+        progress_bar: bool = False,
+    ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
         Parameters
@@ -145,7 +156,9 @@ class CompositeFilters:
         box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
-    def outline_corners(self, factor=0.2, nested=False, progress_bar=False):
+    def outline_corners(  # type: ignore[misc]
+        self: MultiBlock, factor=0.2, nested: bool = False, progress_bar: bool = False
+    ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
@@ -173,19 +186,19 @@ class CompositeFilters:
 
     def _compute_normals(
         self,
-        cell_normals=True,
-        point_normals=True,
-        split_vertices=False,
-        flip_normals=False,
-        consistent_normals=True,
-        auto_orient_normals=False,
-        non_manifold_traversal=True,
+        cell_normals: bool = True,
+        point_normals: bool = True,
+        split_vertices: bool = False,
+        flip_normals: bool = False,
+        consistent_normals: bool = True,
+        auto_orient_normals: bool = False,
+        non_manifold_traversal: bool = True,
         feature_angle=30.0,
-        track_vertices=False,
-        progress_bar=False,
+        track_vertices: bool = False,
+        progress_bar: bool = False,
     ):
         """Compute point and/or cell normals for a multi-block dataset."""
-        if not self.is_all_polydata:
+        if not self.is_all_polydata:  # type: ignore[attr-defined]
             raise RuntimeError(
                 'This multiblock contains non-PolyData datasets. Convert all the '
                 'datasets to PolyData with `as_polydata`',
@@ -193,7 +206,7 @@ class CompositeFilters:
 
         # track original point indices
         if split_vertices and track_vertices:
-            for block in self:
+            for block in self:  # type: ignore[attr-defined]
                 ids = np.arange(block.n_points, dtype=pyvista.ID_TYPE)
                 block.point_data.set_array(ids, 'pyvistaOriginalPointIds')
 
@@ -209,3 +222,69 @@ class CompositeFilters:
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
+
+    def transform(
+        self,
+        trans: TransformLike,
+        transform_all_input_vectors: bool = False,
+        inplace: bool = True,
+        progress_bar: bool = False,
+    ):
+        """Transform all blocks in this composite dataset.
+
+        .. note::
+            See also the notes at :func:`pyvista.DataSetFilters.transform` which is
+            used by this filter under the hood.
+
+        Parameters
+        ----------
+        trans : TransformLike
+            Accepts any transformation input such as a :class:`~pyvista.Transform`
+            or a 3x3 or 4x4 array.
+
+        transform_all_input_vectors : bool, default: False
+            When ``True``, all arrays with three components are transformed.
+            Otherwise, only the normals and vectors are transformed.
+
+        inplace : bool, default: False
+            When ``True``, modifies the dataset inplace.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.MultiBlock
+            Transformed dataset. Return type of all blocks matches input unless
+            input dataset is a :class:`pyvista.ImageData`, in which
+            case the output datatype is a :class:`pyvista.StructuredGrid`.
+
+        See Also
+        --------
+        :class:`pyvista.Transform`
+            Describe linear transformations via a 4x4 matrix.
+
+        Examples
+        --------
+        Translate a mesh by ``(50, 100, 200)``. Here a :class:`~pyvista.Transform` is
+        used, but any :class:`~pyvista.TransformLike` is accepted.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.MultiBlock([pv.Sphere(), pv.Plane()])
+        >>> transform = pv.Transform().translate(50, 100, 200)
+        >>> transformed = mesh.transform(transform)
+        >>> transformed.plot(show_edges=True)
+
+        """
+        trans = pyvista.Transform(trans)
+        output = self if inplace else self.copy()  # type: ignore[attr-defined]
+        for name in self.keys():  # type: ignore[attr-defined]
+            block = output[name]  # type: ignore[index]
+            if block is not None:
+                block.transform(
+                    trans,
+                    transform_all_input_vectors=transform_all_input_vectors,
+                    inplace=True,
+                    progress_bar=progress_bar,
+                )
+        return output

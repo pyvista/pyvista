@@ -21,7 +21,7 @@ mesh = pv.read(filename)
 # using the :class:`pyvista.Plotter`:
 
 plotter = pv.Plotter(off_screen=True)
-plotter.add_mesh(mesh, color="orange")
+plotter.add_mesh(mesh, color='orange')
 plotter.show(screenshot='airplane.png')
 
 # %%
