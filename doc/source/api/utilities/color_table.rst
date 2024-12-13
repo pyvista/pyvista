@@ -7,8 +7,8 @@ Table of named colors supported by :class:`~pyvista.Color` and :class:`~pyvista.
 
 The colors on this page come from various sources, and include:
 
-- all web-standard :bdg-primary:`CSS` named colors
-- most :bdg-secondary:`VTK` colors available from :bdg-secondary:`VTK`'https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html#VTKColorNames
+- all web-standard :bdg-primary:`CSS` `named colors <https://www.w3.org/TR/css-color-4/#named-colors>`_
+- most :bdg-secondary:`VTK` `named colors <https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html#VTKColorNames>`_
 - colors from the standard :bdg-success:`TABLEAU` palette
 - default colors used by :bdg-danger:`PARAVIEW`
 
