@@ -28,15 +28,16 @@ from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import VectorLike
 
 
-def _parse_interaction_event(interaction_event):
+def _parse_interaction_event(interaction_event: InteractionEventType):
     """Parse the interaction event.
 
     Parameters
     ----------
-    interaction_event : vtk.vtkCommand.EventIds, str, optional
+    interaction_event : InteractionEventType
         The VTK interaction event to use for triggering the callback. Accepts
         either the strings ``'start'``, ``'end'``, ``'always'`` or a
         ``vtk.vtkCommand.EventIds``.
@@ -47,24 +48,29 @@ def _parse_interaction_event(interaction_event):
         VTK Event type.
 
     """
-    if interaction_event == 'start':
-        interaction_event = _vtk.vtkCommand.StartInteractionEvent
-    elif interaction_event == 'end':
-        interaction_event = _vtk.vtkCommand.EndInteractionEvent
-    elif interaction_event == 'always':
-        interaction_event = _vtk.vtkCommand.InteractionEvent
-    elif isinstance(interaction_event, str):
-        raise ValueError(
-            "Expected value for `interaction_event` is 'start', "
-            f"'end', or 'always'. {interaction_event} was given.",
-        )
-    elif not isinstance(interaction_event, _vtk.vtkCommand.EventIds):
+    if not isinstance(interaction_event, (_vtk.vtkCommand.EventIds, str)):
         raise TypeError(
             'Expected type for `interaction_event` is either a str '
             'or an instance of `vtk.vtkCommand.EventIds`.'
             f' ({type(interaction_event)}) was given.',
         )
-    return interaction_event
+
+    if isinstance(interaction_event, _vtk.vtkCommand.EventIds):
+        return interaction_event
+
+    event_map = {
+        'start': _vtk.vtkCommand.StartInteractionEvent,
+        'end': _vtk.vtkCommand.EndInteractionEvent,
+        'always': _vtk.vtkCommand.InteractionEvent,
+    }
+    if interaction_event not in event_map:
+        expected = ', '.join(f'`{e}`' for e in event_map)
+        raise ValueError(
+            f'Expected value for `interaction_event` is {expected}.'
+            f' {interaction_event} was given.',
+        )
+
+    return event_map[interaction_event]
 
 
 class WidgetHelper:
@@ -107,7 +113,7 @@ class WidgetHelper:
         use_planes: bool = False,
         outline_translation: bool = True,
         pass_widget: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
     ):
         """Add a box widget to the scene.
 
@@ -153,7 +159,7 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -197,8 +203,6 @@ class WidgetHelper:
         >>> plotter.show()
 
         """
-        interaction_event = _parse_interaction_event(interaction_event)
-
         if bounds is None:
             bounds = self.bounds  # type: ignore[attr-defined]
 
@@ -224,7 +228,10 @@ class WidgetHelper:
         box_widget.SetTranslationEnabled(outline_translation)
         box_widget.PlaceWidget(bounds)
         box_widget.On()
-        box_widget.AddObserver(interaction_event, _the_callback)
+        box_widget.AddObserver(
+            _parse_interaction_event(interaction_event),
+            _the_callback,
+        )
         _the_callback(box_widget, None)
 
         self.box_widgets.append(box_widget)
@@ -245,7 +252,7 @@ class WidgetHelper:
         outline_translation: bool = True,
         merge_points: bool = True,
         crinkle: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
         """Clip a mesh using a box widget.
@@ -289,7 +296,7 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -397,7 +404,7 @@ class WidgetHelper:
         pass_widget: bool = False,
         test_callback: bool = True,
         normal_rotation: bool = True,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         outline_opacity=None,
     ):
         """Add a plane widget to the scene.
@@ -435,7 +442,7 @@ class WidgetHelper:
             'z')``.
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether
+            When using an implicit plane widget, this controls whether
             or not tubing is shown around the plane's boundaries.
 
         outline_translation : bool, optional
@@ -466,7 +473,7 @@ class WidgetHelper:
             rotating the normal. This is forced to ``False`` when
             ``assign_to_axis`` is set.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -513,8 +520,6 @@ class WidgetHelper:
         >>> pl.show()
 
         """
-        interaction_event = _parse_interaction_event(interaction_event)
-
         if origin is None:
             origin = self.center  # type: ignore[attr-defined]
         if bounds is None:
@@ -619,8 +624,7 @@ class WidgetHelper:
         plane_widget.UpdatePlacement()
         plane_widget.On()
         plane_widget.AddObserver(
-            interaction_event,
-            # _vtk.vtkCommand.InteractionEvent,
+            _parse_interaction_event(interaction_event),
             _the_callback,
         )
         if test_callback:
@@ -649,7 +653,7 @@ class WidgetHelper:
         implicit: bool = True,
         normal_rotation: bool = True,
         crinkle: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -687,7 +691,7 @@ class WidgetHelper:
             'z')``.
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether
+            When using an implicit plane widget, this controls whether
             or not tubing is shown around the plane's boundaries.
 
         origin_translation : bool, optional
@@ -712,7 +716,7 @@ class WidgetHelper:
         crinkle : bool, optional
             Crinkle the clip by extracting the entire cells along the clip.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -831,7 +835,7 @@ class WidgetHelper:
         outline_translation: bool = False,
         implicit: bool = True,
         normal_rotation: bool = True,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -864,7 +868,7 @@ class WidgetHelper:
             'z')``.
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether
+            When using an implicit plane widget, this controls whether
             or not tubing is shown around the plane's boundaries.
 
         origin_translation : bool, optional
@@ -962,7 +966,7 @@ class WidgetHelper:
         outline_translation: bool = False,
         implicit: bool = True,
         normal_rotation: bool = True,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
         origin=None,
         outline_opacity=None,
         **kwargs,
@@ -997,7 +1001,7 @@ class WidgetHelper:
             options are (0, 'x'), (1, 'y'), or (2, 'z').
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether or not
+            When using an implicit plane widget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
         origin_translation : bool, optional
@@ -1018,8 +1022,10 @@ class WidgetHelper:
             effectively disabled. This prevents the user from rotating the
             normal. This is forced to ``False`` when ``assign_to_axis`` is set.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         origin : tuple(float), optional
             The starting coordinate of the center of the plane.
@@ -1094,7 +1100,7 @@ class WidgetHelper:
             implicit=implicit,
             origin=origin,
             normal_rotation=normal_rotation,
-            interaction_event=interaction_event,
+            interaction_event=_parse_interaction_event(interaction_event),
             outline_opacity=outline_opacity,
         )
 
@@ -1106,7 +1112,7 @@ class WidgetHelper:
         generate_triangles: bool = False,
         widget_color=None,
         tubing: bool = False,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
         """Slice a mesh with three interactive planes.
@@ -1134,11 +1140,13 @@ class WidgetHelper:
             * ``color='#FFFFFF'``
 
         tubing : bool, optional
-            When using an implicit plane wiget, this controls whether or not
+            When using an implicit plane widget, this controls whether or not
             tubing is shown around the plane's boundaries.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -1176,7 +1184,7 @@ class WidgetHelper:
                 generate_triangles=generate_triangles,
                 widget_color=widget_color,
                 tubing=tubing,
-                interaction_event=interaction_event,
+                interaction_event=_parse_interaction_event(interaction_event),
                 **axkwargs,
             )
             actors.append(a)
@@ -1192,7 +1200,7 @@ class WidgetHelper:
         color=None,
         use_vertices: bool = False,
         pass_widget: bool = False,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
     ):
         """Add a line widget to the scene.
 
@@ -1230,8 +1238,10 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         Returns
         -------
@@ -1286,7 +1296,10 @@ class WidgetHelper:
         line_widget.SetResolution(resolution)
         line_widget.Modified()
         line_widget.On()
-        line_widget.AddObserver(interaction_event, _the_callback)
+        line_widget.AddObserver(
+            _parse_interaction_event(interaction_event),
+            _the_callback,
+        )
         _the_callback(line_widget, None)
 
         self.line_widgets.append(line_widget)
@@ -1306,7 +1319,7 @@ class WidgetHelper:
         pointa=(0.4, 0.9),
         pointb=(0.9, 0.9),
         color=None,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         style=None,
     ):
         """Add a text slider bar widget.
@@ -1340,7 +1353,7 @@ class WidgetHelper:
             to :attr:`pyvista.global_theme.font.color
             <pyvista.plotting.themes._Font.color>`.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -1416,7 +1429,7 @@ class WidgetHelper:
         pointb=(0.9, 0.9),
         color=None,
         pass_widget: bool = False,
-        interaction_event='end',
+        interaction_event: InteractionEventType = 'end',
         style=None,
         title_height=0.03,
         title_opacity=1.0,
@@ -1466,7 +1479,7 @@ class WidgetHelper:
             If ``True``, the widget will be passed as the last
             argument of the callback.
 
-        interaction_event : vtk.vtkCommand.EventIds, str, optional
+        interaction_event : InteractionEventType, optional
             The VTK interaction event to use for triggering the
             callback. Accepts either the strings ``'start'``, ``'end'``,
             ``'always'`` or a ``vtk.vtkCommand.EventIds``.
@@ -1944,7 +1957,7 @@ class WidgetHelper:
         pass_widget: bool = False,
         closed: bool = False,
         initial_points=None,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
     ):
         """Create and add a spline widget to the scene.
 
@@ -1999,8 +2012,10 @@ class WidgetHelper:
             last point are the same, this will be a closed loop
             spline.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         Returns
         -------
@@ -2049,7 +2064,10 @@ class WidgetHelper:
             spline_widget.SetClosed(closed)
         spline_widget.Modified()
         spline_widget.On()
-        spline_widget.AddObserver(interaction_event, _the_callback)
+        spline_widget.AddObserver(
+            _parse_interaction_event(interaction_event),
+            _the_callback,
+        )
         _the_callback(spline_widget, None)
 
         if show_ribbon:
@@ -2076,7 +2094,7 @@ class WidgetHelper:
         ribbon_opacity=0.5,
         initial_points=None,
         closed: bool = False,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
         **kwargs,
     ):
         """Slice a mesh with a spline widget.
@@ -2132,8 +2150,10 @@ class WidgetHelper:
         closed : bool, optional
             Make the spline a closed loop.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         **kwargs : dict, optional
             All additional keyword arguments are passed to
@@ -2186,7 +2206,7 @@ class WidgetHelper:
             ribbon_opacity=ribbon_opacity,
             initial_points=initial_points,
             closed=closed,
-            interaction_event=interaction_event,
+            interaction_event=_parse_interaction_event(interaction_event),
         )
 
         return self.add_mesh(alg, **kwargs)  # type: ignore[attr-defined]
@@ -2287,7 +2307,7 @@ class WidgetHelper:
         indices=None,
         pass_widget: bool = False,
         test_callback: bool = True,
-        interaction_event=_vtk.vtkCommand.EndInteractionEvent,
+        interaction_event: InteractionEventType = 'end',
     ):
         """Add one or many sphere widgets to a scene.
 
@@ -2346,8 +2366,10 @@ class WidgetHelper:
             If ``True``, run the callback function after the widget is
             created.
 
-        interaction_event : vtk.vtkCommand.EventIds, optional
-            The VTK interaction event to use for triggering the callback.
+        interaction_event : InteractionEventType, optional
+            The VTK interaction event to use for triggering the
+            callback. Accepts either the strings ``'start'``, ``'end'``,
+            ``'always'`` or a ``vtk.vtkCommand.EventIds``.
 
         Returns
         -------
@@ -2402,7 +2424,10 @@ class WidgetHelper:
             sphere_widget.SetPhiResolution(phi_resolution)
             sphere_widget.Modified()
             sphere_widget.On()
-            sphere_widget.AddObserver(interaction_event, _the_callback)
+            sphere_widget.AddObserver(
+                _parse_interaction_event(interaction_event),
+                _the_callback,
+            )
             self.sphere_widgets.append(sphere_widget)
 
         if test_callback is True:
