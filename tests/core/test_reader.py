@@ -1234,7 +1234,7 @@ def test_exodus_reader():
     fname_e = examples.download_mug(load=False)
     e_reader = pv.get_reader(fname_e)
 
-    ## Check enabling of displacements (To match functionality
+    ## check enabling of displacements (To match functionality
     # from read_exodus)
     e_reader.enable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 1
@@ -1243,7 +1243,7 @@ def test_exodus_reader():
     e_reader.disable_displacements()
     assert e_reader.reader.GetApplyDisplacements() == 0
 
-    ## Check number of cell and point arrays and their names
+    ## check number of cell and point arrays and their names
     assert e_reader.number_point_arrays == 2
     assert e_reader.number_cell_arrays == 1
 
@@ -1251,7 +1251,7 @@ def test_exodus_reader():
 
     assert 'aux_elem' in e_reader.cell_array_names
 
-    ## Check enabling and disabling of point arrays
+    ## check enabling and disabling of point arrays
     for name in e_reader.point_array_names:
         # Should be enabled by default
         assert e_reader.point_array_status(name)
@@ -1262,7 +1262,7 @@ def test_exodus_reader():
         e_reader.enable_point_array(name)
         assert e_reader.point_array_status(name)
 
-    ## Check enabling and disabling of cell arrays
+    ## check enabling and disabling of cell arrays
     for name in e_reader.cell_array_names:
         # Should be enabled by default
         assert e_reader.cell_array_status(name)
@@ -1277,7 +1277,7 @@ def test_exodus_reader():
     ntimes = 21
     dt = 0.1
 
-    ## Check correct number of time points
+    ## check correct number of time points
     assert e_reader.number_time_points == ntimes, 'Checks number of time points'
     assert e_reader.reader.GetTimeStep() == 0, 'Checks the first time set'
 
@@ -1311,7 +1311,7 @@ def test_exodus_reader():
     with pytest.raises(ValueError, match=err_msg):
         e_reader.set_active_time_value(1.25)
 
-    ## Check read with point and cell arrays present
+    ## check read with point and cell arrays present
     multiblock = e_reader.read()
 
     unstruct = multiblock[0][0]
