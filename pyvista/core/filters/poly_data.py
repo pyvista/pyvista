@@ -1148,6 +1148,7 @@ class PolyDataFilters(DataSetFilters):
     def decimate_polyline(
         self,
         reduction: float,
+        *,
         maximum_error: float = 10.0,
         inplace: bool = False,
         progress_bar: bool = False,
