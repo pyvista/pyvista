@@ -194,6 +194,7 @@ autodoc_type_aliases = {
     'CellArrayLike': 'pyvista.CellArrayLike',
     'TransformLike': 'pyvista.TransformLike',
     'RotationLike': 'pyvista.RotationLike',
+    'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
@@ -222,6 +223,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*MatrixLike'),
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
+    (r'py:.*', '.*InteractionEventType'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
     (r'py:.*', '.*CellsLike'),
@@ -232,6 +234,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*Concrete.*Type'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
+    (r'py:.*', '.*NormalsLiteral'),
+    (r'py:.*', '.*T'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),
@@ -282,6 +286,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*UserDict'),
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', '.*NoneType'),
+    (r'py:.*', 'collections.*'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),

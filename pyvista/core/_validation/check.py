@@ -12,6 +12,7 @@ A ``check`` function typically:
 
 from __future__ import annotations
 
+from collections.abc import Container
 from collections.abc import Iterable
 from collections.abc import Sequence
 from collections.abc import Sized
@@ -1125,7 +1126,7 @@ def check_iterable_items(
     )
 
 
-def check_contains(container: Any, /, must_contain: Any, *, name: str = 'Input') -> None:
+def check_contains(container: Container[Any], /, must_contain: Any, *, name: str = 'Input') -> None:
     """Check if an item is in a container.
 
     Parameters

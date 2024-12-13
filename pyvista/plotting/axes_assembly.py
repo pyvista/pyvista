@@ -1805,7 +1805,9 @@ class PlanesAssembly(_XYZAssembly):
             else _validate_label_sequence(edge, n_labels=3, name='label edge')
         )
         for edge_ in valid_edge:
-            _validation.check_contains(['top', 'bottom', 'right', 'left'], must_contain=edge_)
+            _validation.check_contains(
+                ['top', 'bottom', 'right', 'left'], must_contain=edge_, name='label_edge'
+            )
         self._label_edge = tuple(valid_edge)
         self._update_label_positions()
 
@@ -1838,7 +1840,7 @@ class PlanesAssembly(_XYZAssembly):
 
     @label_mode.setter
     def label_mode(self, mode: Literal['2D', '3D']):
-        _validation.check_contains(['2D', '3D'], must_contain=mode)
+        _validation.check_contains(['2D', '3D'], must_contain=mode, name='label_mode')
         self._label_mode = mode
         use_2D = mode == '2D'
         for axis in self._axis_actors:

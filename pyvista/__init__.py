@@ -1,12 +1,12 @@
 """PyVista package for 3D plotting and mesh analysis."""
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 import os
 import sys
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import cast
 import warnings
 
 from pyvista._plot import plot
@@ -24,7 +24,7 @@ from pyvista.report import Report
 from pyvista.report import get_gpu_info
 
 # get the int type from vtk
-ID_TYPE = _get_vtk_id_type()
+ID_TYPE = cast(int, _get_vtk_id_type())
 
 # determine if using at least vtk 9.0.0
 if vtk_version_info.major < 9:  # pragma: no cover

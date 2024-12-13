@@ -3683,8 +3683,8 @@ class AxesGeometrySource:
             return mesh
         else:
             _validation.check_contains(
-                item=geometry,
-                container=AxesGeometrySource.GEOMETRY_TYPES,
+                AxesGeometrySource.GEOMETRY_TYPES,
+                must_contain=geometry,
                 name='Geometry',
             )
             raise NotImplementedError(
