@@ -7,6 +7,7 @@ Used code from matplotlib.colors.  Thanks for your work.
 # of methods defined in this module.
 from __future__ import annotations
 
+from colorsys import rgb_to_hls
 import inspect
 
 from cycler import Cycler
@@ -843,6 +844,11 @@ class Color:
 
         """
         return self.float_rgba[:3]
+
+    @property
+    def _float_hls(self) -> tuple[float, float, float]:
+        """Get the color as Hue, Lightness, Saturation (HLS) in range [0.0, 1.0]."""
+        return rgb_to_hls(*self.float_rgb)
 
     @property
     def hex_rgba(self) -> str:  # numpydoc ignore=RT01
