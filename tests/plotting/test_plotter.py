@@ -390,6 +390,9 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
     with pytest.raises(TypeError, match='not supported for volume rendering'):
         pl.add_volume(sphere)
 
+    with pytest.raises(TypeError, match='not supported for plotting in PyVista'):
+        pl.add_volume(pv.Table())
+
 
 def test_plotter_add_volume_clim(uniform: pv.ImageData):
     """Verify clim is set correctly for volume."""
