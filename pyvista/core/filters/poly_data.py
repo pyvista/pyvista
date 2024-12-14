@@ -1098,6 +1098,13 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Decimated mesh.
 
+        See Also
+        --------
+        decimate
+            Another option for triangular meshes.
+        decimate_polyline
+            For use with polylines.
+
         Examples
         --------
         Decimate a sphere.  First plot the sphere.
@@ -1129,6 +1136,124 @@ class PolyDataFilters(DataSetFilters):
 
         if max_degree is not None:
             alg.SetDegree(max_degree)
+
+        _update_alg(alg, progress_bar, 'Decimating Mesh')
+
+        mesh = _get_output(alg)
+        if inplace:
+            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
+            return self
+
+        return mesh
+
+    def decimate_polyline(
+        self,
+        reduction: float,
+        *,
+        maximum_error: float = 10.0,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        """Reduce the number of lines in a polyline mesh.
+
+        This filter uses ``vtkDecimatePolylineFilter``.
+
+        .. versionadded:: 0.45.0
+
+        Parameters
+        ----------
+        reduction : float
+            Reduction factor. A value of 0.9 will leave 10% of the
+            original number of vertices.
+
+        maximum_error : float, default: 10.
+            Fraction of the maximum length of the input data bounding box
+            to limit reduction.  This might prevent the full reduction from
+            being achieved. Default of ``10.`` should not limit reduction.
+
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Decimated mesh.
+
+        Warnings
+        --------
+        From ``vtkDecimatePolylineFilter`` documentation: this algorithm is a very
+        simple implementation that overlooks some potential complexities.
+        For example, if a vertex is multiply connected, meaning that it is
+        used by multiple distinct polylines, then the extra topological
+        constraints are ignored. This can produce less than optimal results.
+
+        See Also
+        --------
+        decimate
+            For use with triangular meshes.
+        decimate_pro
+            Another option for triangular meshes.
+
+        Examples
+        --------
+        Generate a circle, builtin function returns a Polygon cell.
+
+        >>> import pyvista as pv
+        >>> circle = pv.Circle(resolution=30)
+
+        Convert to a Polyline. A polyline requires duplicating reference
+        to initial point to close the circle.
+
+        >>> circle_polyline = pv.PolyData(
+        ...     circle.points, lines=[31] + list(range(30)) + [0]
+        ... )
+        >>> circle_polyline.n_points
+        30
+
+        Decimate ~50% of points.
+
+        >>> decimate_some = circle_polyline.decimate_polyline(0.5)
+        >>> decimate_some.n_points
+        14
+
+        Decimate more points.
+
+        >>> decimate_more = circle_polyline.decimate_polyline(0.75)
+        >>> decimate_more.n_points
+        6
+
+        Compare decimated polylines.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(
+        ...     circle_polyline, label='Circle', color='red', line_width=5
+        ... )
+        >>> _ = pl.add_mesh(
+        ...     decimate_some,
+        ...     label='Decimated some',
+        ...     color='blue',
+        ...     line_width=5,
+        ... )
+        >>> _ = pl.add_mesh(
+        ...     decimate_more,
+        ...     label='Decimated more',
+        ...     color='black',
+        ...     line_width=5,
+        ... )
+        >>> pl.view_xy()
+        >>> _ = pl.add_legend(face="line", size=(0.25, 0.25))
+        >>> pl.show()
+
+        See :ref:`decimate_example` for more examples using this filter.
+
+        """
+        alg = _vtk.vtkDecimatePolylineFilter()
+        alg.SetInputData(self)
+        alg.SetTargetReduction(reduction)
+        alg.SetMaximumError(maximum_error)
 
         _update_alg(alg, progress_bar, 'Decimating Mesh')
 
@@ -1534,6 +1659,13 @@ class PolyDataFilters(DataSetFilters):
         -------
         pyvista.PolyData
             Decimated mesh.
+
+        See Also
+        --------
+        decimate_pro
+            Another option for triangular meshes.
+        decimate_polyline
+            For use with polylines.
 
         Notes
         -----
