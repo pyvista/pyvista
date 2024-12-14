@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import importlib.util
 import locale
 import os
 from pathlib import Path
@@ -24,7 +25,6 @@ make_tables.make_all_tables()
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
-from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
 from pyvista.plotting.utilities.sphinx_gallery import DynamicScraper
 
@@ -437,14 +437,7 @@ reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed
-has_osmnx = False
-try:
-    import fiona  # noqa: F401
-    import osmnx  # noqa: F401
-
-    has_osmnx = True
-except:
-    pass
+has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmnx')
 
 
 sphinx_gallery_conf = {
@@ -522,7 +515,6 @@ SphinxDocString._str_examples = _str_examples
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import sphinx_book_theme  # noqa: F401
 
 html_theme = 'sphinx_book_theme'
 html_context = {

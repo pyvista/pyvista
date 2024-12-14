@@ -358,7 +358,7 @@ ignore = [
   "SIM117",  # https://github.com/pyvista/pyvista/pull/5888
   "SIM118",  # https://github.com/pyvista/pyvista/pull/5837
 ]
-unfixable = []
+unfixable = ['F401']
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
@@ -373,7 +373,12 @@ allow-dict-calls-with-keyword-arguments = true
 ]
 "examples_trame/*" = ["D100", "D103"]
 "examples_trame/tests*" = ["D"]
+"pyvista/core/_vtk_core*" = ["PLC0414"]
 "pyvista/ext/*" = ["D100", "D101", "D102", "D103"]
+"pyvista/plotting/_typing.py" = ["PLC0414"]
+"pyvista/plotting/_vtk.py" = ["PLC0414"]
+"pyvista/plotting/_vtk_gl.py" = ["PLC0414"]
+"pyvista/utilities/*" = ["PLC0414"]
 "tests/*" = ["D"]
 
 # ANN ignores for `pyvista/core`
