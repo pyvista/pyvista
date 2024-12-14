@@ -940,8 +940,8 @@ class Color:
         >>> c
         Color(name='darkblue', hex='#00008b80', opacity=128)
 
-        When creating a new ``Color``, the name may be delimited with a space
-        `` ``, hyphen ``-``, or underscore ``_``, or written as a single word.
+        When creating a new ``Color``, the name may be delimited with a space,
+        hyphen, underscore, or written as a single word.
 
         >>> c = pv.Color("dark blue", default_opacity=0.5)
 
@@ -950,6 +950,7 @@ class Color:
         >>> c = pv.Color("DarkBlue", default_opacity=0.5)
 
         However, the name is always standardized as a single lower-case word.
+
         >>> c
         Color(name='darkblue', hex='#00008b80', opacity=128)
 
