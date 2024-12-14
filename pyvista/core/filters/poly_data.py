@@ -1814,14 +1814,14 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
-        pyvista.PolyDataFilters.flip_normal_vectors
-            Flip existing normals without computing new ones.
-        pyvista.PolyDataFilters.flip_faces
-            Flip the orientation of the faces.
         pyvista.PolyData.point_normals
             Returns the array of point normals.
         pyvista.PolyData.cell_normals
             Returns the array of cell normals.
+        pyvista.PolyDataFilters.flip_normal_vectors
+            Flip cell and point normals.
+        pyvista.PolyDataFilters.flip_faces
+            Flip the orientation of the faces.
 
         Examples
         --------
@@ -2816,7 +2816,9 @@ class PolyDataFilters(DataSetFilters):
         """Flip the orientation of the faces.
 
         The flip is performed by reversing the order of indices in the cell
-        connectivity list.
+        connectivity list. In other libraries, this operation is sometimes
+        referred to as "flip orientation", "reverse cells", "reverse face
+        orientations", or similar.
 
         .. note::
 
