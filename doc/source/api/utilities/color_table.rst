@@ -24,7 +24,7 @@ for additional information about the ``CSS`` and ``TAB`` colors.
 
 .. note::
 
-    Some color names are not internally consistent, e.g.:
+    Some color names are not internally consistent. For example,
 
     - ``'darkgray'`` is lighter than ``'gray'``,
     - ``'lightpink'`` is darker than ``'pink'``, and
