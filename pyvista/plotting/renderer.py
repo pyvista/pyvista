@@ -303,7 +303,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._lights: list[Light] = []
         self._camera: Camera | None = Camera(self)
         self.SetActiveCamera(self._camera)
-        self._empty_str = None  # used to track reference to a vtkStringArray
+        self._empty_str: _vtk.vtkStringArray | None = (
+            None  # used to track reference to a vtkStringArray
+        )
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
         self.cube_axes_actor: CubeAxesActor | None = None
@@ -705,7 +707,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # type: ignore[unreachable]
 
             raise VTKVersionError(
                 'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.',
@@ -2779,7 +2781,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             and self._box_object is not None
             and self.bounding_box_actor is not None
         ):
-            if not np.allclose(self._box_object.bounds, self.bounds):
+            if not np.allclose(self._box_object.bounds, self.bounds):  # type: ignore[unreachable]
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
@@ -3529,7 +3531,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if hasattr(self, '_box_object'):
             self.remove_bounding_box(render=render)
         if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
-            self.disable_shadows()
+            self.disable_shadows()  # type: ignore[unreachable]
         try:
             if self._charts is not None:
                 self._charts.deep_clean()

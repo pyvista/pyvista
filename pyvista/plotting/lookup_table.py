@@ -281,7 +281,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return None
+            return None  # type: ignore[unreachable]
         return self.GetValueRange()
 
     @value_range.setter
@@ -318,7 +318,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return None
+            return None  # type: ignore[unreachable]
         return self.GetHueRange()
 
     @hue_range.setter
@@ -443,7 +443,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return None
+            return None  # type: ignore[unreachable]
         return self.GetAlphaRange()
 
     @alpha_range.setter
@@ -473,7 +473,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return None
+            return None  # type: ignore[unreachable]
         return self.GetSaturationRange()
 
     @saturation_range.setter
@@ -907,7 +907,7 @@ class LookupTable(_vtk.vtkLookupTable):
     @n_values.setter
     def n_values(self, value: int):
         if self._cmap is not None:
-            self.apply_cmap(self._cmap, value)
+            self.apply_cmap(self._cmap, value)  # type: ignore[unreachable]
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
             raise RuntimeError(
@@ -937,7 +937,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         vtk_values = self.GetAnnotatedValues()
         if vtk_values is None:
-            return {}
+            return {}  # type: ignore[unreachable]
         n_items = vtk_values.GetSize()
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 

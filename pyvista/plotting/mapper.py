@@ -499,7 +499,7 @@ class _DataSetMapper(_BaseMapper):
         cmap=None,
         flip_scalars: bool = False,
         opacity=None,
-        categories: bool = False,
+        categories: bool | int = False,
         clim=None,
     ):
         """Set the scalars on this mapper.
@@ -832,7 +832,7 @@ class _DataSetMapper(_BaseMapper):
             raise ValueError(
                 f'Opacity array size ({opacity.size}) does not equal '
                 f'the number of points ({self.dataset.n_points}) or the '  # type: ignore[union-attr]
-                f'number of cells ({self.dataset.n_cells}).',  # type: ignore[union-attr]
+                f'number of cells ({self.dataset.n_cells}).',
             )
 
         default_color = self._theme.color if self._theme is not None else pyvista.global_theme.color
