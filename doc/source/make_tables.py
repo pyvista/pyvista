@@ -589,7 +589,7 @@ class ColorTableORANGE(ColorClassificationTable):
 
 
 class ColorTableBROWN(ColorClassificationTable):
-    """Class to generate ORANGE colors table."""
+    """Class to generate BROWN colors table."""
 
     classification = ColorClassification.BROWN
 

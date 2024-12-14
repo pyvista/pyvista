@@ -56,12 +56,6 @@ def _format_color_dict(colors: dict[str, str]):
     return {_format_color_name(n): h.lower() for n, h in colors.items()}
 
 
-# Define named colors by group/origin:
-# - Define a separate dict for each group.
-# - Include underscores between words.
-# - Add single colors or special colors, e.g.`paraview_background` to `_SPECIAL_COLORS`
-# - Add synonyms (colors with a different name but same hex value) to `color_synonyms`
-
 # Colors from the CSS standard. Matches matplotlib.colors.CSS4_COLORS
 # but with synonyms removed
 _CSS_COLORS = {
@@ -207,7 +201,6 @@ _CSS_COLORS = {
 }
 
 # Tableau colors. Matches matplotlib.colors.TABLEAU_COLORS
-# but with underscores added
 _TABLEAU_COLORS = {
     'tab:blue': '#1f77b4',
     'tab:orange': '#ff7f0e',
@@ -297,7 +290,6 @@ _VTK_COLORS = {
     'zinc_white': '#fcf7ff',
 }
 
-# Sort named colors alphabetically by group.
 hexcolors = _format_color_dict(_CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS | _VTK_COLORS)
 
 color_names = {h: n for n, h in hexcolors.items()}
@@ -313,24 +305,23 @@ color_char_to_word = {
     'w': 'white',
 }
 
-_color_synonyms_with_underscores = {
+_color_synonyms = {
     **color_char_to_word,
     'aqua': 'cyan',
-    'dark_grey': 'dark_gray',
-    'dark_slate_grey': 'dark_slate_gray',
-    'dim_grey': 'dim_gray',
+    'darkgrey': 'darkgray',
+    'darkslategrey': 'darkslategray',
+    'dimgrey': 'dimgray',
     'fuchsia': 'magenta',
     'grey': 'gray',
-    'light_grey': 'light_gray',
-    'light_slate_grey': 'light_slate_gray',
+    'lightgrey': 'lightgray',
+    'lightslategrey': 'lightslategray',
     'pv': 'paraview_background',
     'paraview': 'paraview_background',
-    'slate_grey': 'slate_gray',
-    'light_goldenrod': 'light_goldenrod_yellow',
+    'slategrey': 'slategray',
+    'lightgoldenrod': 'lightgoldenrodyellow',
 }
 color_synonyms = {
-    _format_color_name(syn): _format_color_name(name)
-    for syn, name in _color_synonyms_with_underscores.items()
+    _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
 }
 
 matplotlib_default_colors = [
