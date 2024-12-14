@@ -10,7 +10,7 @@ The colors on this page come from various sources, and include:
 - :bdg-primary:`CSS` - all standard `named web colors <https://www.w3.org/TR/css-color-4/#named-colors>`_
 - :bdg-secondary:`VTK` - colors from `vtkNamedColors <https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html#VTKColorNames>`_
 - :bdg-success:`TAB` - classic color palette of 10 colors used by ``Tableau``
-- :bdg-danger:`PARA` - default colors used by ``ParaView``
+- :bdg-danger:`PV` - default colors used by ``ParaView``
 
 See also ``matplotlib``'s `list of named colors <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
 for additional information about the ``CSS`` and ``TAB`` colors.
