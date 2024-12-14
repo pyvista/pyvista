@@ -771,8 +771,9 @@ def test_texture_map_to_plane():
     assert 'Texture Coordinates' in dataset.array_names
 
 
-def test_texture_map_to_sphere():
-    dataset = pv.Sphere(radius=1.0)
+@pytest.mark.parametrize('dataset', ['uniform', 'sphere'])
+def test_texture_map_to_sphere(uniform, sphere, dataset):
+    dataset = uniform if dataset == 'uniform' else sphere
     # Automatically decide plane
     out = dataset.texture_map_to_sphere(inplace=False, prevent_seam=False, progress_bar=True)
     assert isinstance(out, type(dataset))
@@ -1463,6 +1464,7 @@ def test_split_bodies():
 def test_warp_by_scalar():
     data = examples.load_uniform()
     warped = data.warp_by_scalar(progress_bar=True)
+    assert isinstance(warped, pv.StructuredGrid)
     assert data.n_points == warped.n_points
     warped = data.warp_by_scalar(scale_factor=3, progress_bar=True)
     assert data.n_points == warped.n_points
@@ -1472,14 +1474,30 @@ def test_warp_by_scalar():
     foo = examples.load_hexbeam()
     foo.point_data.active_scalars_name = 'sample_point_scalars'
     warped = foo.warp_by_scalar(progress_bar=True)
+    assert isinstance(warped, pv.UnstructuredGrid)
     foo.warp_by_scalar(inplace=True, progress_bar=True)
     assert np.allclose(foo.points, warped.points)
 
 
-def test_warp_by_vector():
+def test_warp_by_scalar_return_type(uniform):
+    uniform['vectors'] = np.ones((uniform.n_points, 3))
+    warped = uniform.warp_by_vector()
+    assert isinstance(warped, pv.StructuredGrid)
+
+    rg = uniform.cast_to_rectilinear_grid()
+    warped = rg.warp_by_vector()
+    assert isinstance(warped, pv.StructuredGrid)
+
+    ug = uniform.cast_to_unstructured_grid()
+    warped = ug.warp_by_vector()
+    assert isinstance(warped, pv.UnstructuredGrid)
+
+
+def test_warp_by_vector(uniform):
     # Test when inplace=False (default)
     data = examples.load_sphere_vectors()
     warped = data.warp_by_vector(progress_bar=True)
+    assert isinstance(warped, pv.PolyData)
     assert data.n_points == warped.n_points
     assert not np.allclose(data.points, warped.points)
     warped = data.warp_by_vector(factor=3, progress_bar=True)
@@ -1490,6 +1508,20 @@ def test_warp_by_vector():
     warped = foo.warp_by_vector(progress_bar=True)
     foo.warp_by_vector(inplace=True, progress_bar=True)
     assert np.allclose(foo.points, warped.points)
+
+
+def test_warp_by_vector_return_type(uniform):
+    uniform['vectors'] = np.ones((uniform.n_points, 3))
+    warped = uniform.warp_by_vector()
+    assert isinstance(warped, pv.StructuredGrid)
+
+    rg = uniform.cast_to_rectilinear_grid()
+    warped = rg.warp_by_vector()
+    assert isinstance(warped, pv.StructuredGrid)
+
+    ug = uniform.cast_to_unstructured_grid()
+    warped = ug.warp_by_vector()
+    assert isinstance(warped, pv.UnstructuredGrid)
 
 
 def test_invalid_warp_scalar(sphere):

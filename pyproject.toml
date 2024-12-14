@@ -62,6 +62,7 @@ typing = [
   'mypy<1.14.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
+  'pyvista-mypy-plugin==0.1',
   'pyvista[pinned]',
   'trimesh<4.6.0',
 ]
@@ -223,7 +224,7 @@ exclude = ['pyvista/ext/']
 extra_checks = true
 ignore_missing_imports = true
 packages = ['pyvista']
-plugins = ['npt_promote', 'numpy.typing.mypy_plugin']
+plugins = ['npt_promote', 'numpy.typing.mypy_plugin', 'pyvista_mypy_plugin']
 pretty = true
 show_error_context = true
 strict_equality = true
@@ -382,7 +383,14 @@ allow-dict-calls-with-keyword-arguments = true
 "pyvista/core/_validation/validate.py" = ["ANN202"]
 "pyvista/core/_vtk_core.py" = ["ANN"]
 "pyvista/core/errors.py" = ["ANN"]
-"pyvista/core/filters**" = ["ANN"]
+"pyvista/core/filters/__init__.py" = ["ANN"]
+"pyvista/core/filters/composite.py" = ["ANN"]
+"pyvista/core/filters/data_set.py" = ["ANN001", "ANN202"]
+"pyvista/core/filters/image_data.py" = ["ANN"]
+"pyvista/core/filters/poly_data.py" = ["ANN"]
+"pyvista/core/filters/rectilinear_grid.py" = ["ANN"]
+"pyvista/core/filters/structured_grid.py" = ["ANN"]
+"pyvista/core/filters/unstructured_grid.py" = ["ANN"]
 "pyvista/core/objects.py" = ["ANN"]
 "pyvista/core/partitioned.py" = ["ANN"]
 "pyvista/core/pointset.py" = ["ANN"]

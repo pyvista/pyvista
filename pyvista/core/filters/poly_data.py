@@ -33,7 +33,9 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import DataSet
     from pyvista import PolyData
+    from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import VectorLike
 
 
@@ -433,13 +435,13 @@ class PolyDataFilters(DataSetFilters):
 
     def merge(  # type: ignore[override, misc]
         self: PolyData,
-        dataset,
+        dataset: DataSet,
         merge_points: bool = True,
         tolerance=0.0,
         inplace: bool = False,
         main_has_priority: bool = True,
         progress_bar: bool = False,
-    ):
+    ) -> PolyData | UnstructuredGrid:
         """Merge this mesh with one or more datasets.
 
         .. note::
@@ -521,7 +523,7 @@ class PolyDataFilters(DataSetFilters):
         if inplace and not is_polydata:
             raise TypeError('In-place merge requires both input datasets to be PolyData.')
 
-        merged = DataSetFilters.merge(
+        merged: PolyData | UnstructuredGrid = DataSetFilters.merge(
             self,
             dataset,
             merge_points=merge_points,
