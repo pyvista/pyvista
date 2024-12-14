@@ -2807,7 +2807,7 @@ class PolyDataFilters(DataSetFilters):
             return self
         return output
 
-    def flip_faces(
+    def flip_faces(  # type: ignore[misc]
         self: PolyData,
         *,
         inplace: bool = False,
