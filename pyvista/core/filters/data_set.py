@@ -1079,8 +1079,8 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def slice_orthogonal(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+    def slice_orthogonal(
+        self: ConcreteDataSetType | MultiBlock,
         x: float | None = None,
         y: float | None = None,
         z: float | None = None,
@@ -1179,8 +1179,8 @@ class DataSetFilters:
         )
         return output
 
-    def slice_along_axis(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+    def slice_along_axis(
+        self: ConcreteDataSetType | MultiBlock,
         n: int = 5,
         axis: Literal['x', 'y', 'z', 0, 1, 2] = 'x',
         tolerance: float | None = None,
@@ -2043,8 +2043,8 @@ class DataSetFilters:
 
     def contour(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        isosurfaces: int = 10,
-        scalars: str | None = None,
+        isosurfaces: int | Sequence[float] = 10,
+        scalars: str | NumpyArray[float] | None = None,
         compute_normals: bool = False,
         compute_gradients: bool = False,
         compute_scalars: bool = True,
@@ -2168,7 +2168,7 @@ class DataSetFilters:
 
         if isinstance(scalars, str):
             scalars_name = scalars
-        elif isinstance(scalars, (Sequence, np.ndarray)):
+        elif isinstance(scalars, np.ndarray):
             scalars_name = 'Contour Data'
             self[scalars_name] = scalars
         elif scalars is None:

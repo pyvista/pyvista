@@ -39,7 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from ._typing_core import NumpyArray
 
-_TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
+_TypeMultiBlockLeaf = Union['MultiBlock', DataSet]
 
 
 class MultiBlock(
