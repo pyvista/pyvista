@@ -1392,7 +1392,7 @@ class BoxAssembly(_XYZAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the box. This is the point about which all rotations take place. The
-        rotations are defined by the :attr:`orientation`.
+        rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : float | VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the box.
@@ -1584,9 +1584,11 @@ class BoxAssembly(_XYZAssembly):
                 prop.line_width = DEFAULT_PROPERTY.line_width
 
     @property
-    @wraps(CubeFacesSource.frame_width.fget)  # type: ignore[attr-defined]
     def frame_width(self) -> float | None:  # numpydoc ignore=PR01,RT01
-        """Wrap :class:`pyvista.CubeFacesSource.frame_width`."""
+        """Width of frame to use when :attr:`box_style` is ``'frames'``.
+
+        See :class:`pyvista.CubeFacesSource.frame_width` for details.
+        """
         return self._geometry_source.frame_width
 
     @frame_width.setter
