@@ -20,7 +20,7 @@ from .colors import Color
 from .colors import get_cycler
 from .mapper import _BaseMapper
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
     import cycler
