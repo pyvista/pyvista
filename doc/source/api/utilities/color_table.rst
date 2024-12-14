@@ -23,14 +23,16 @@ for additional information about the ``CSS`` and ``TAB`` colors.
     etc. See :attr:`~pyvista.Color.name` for examples.
 
 .. note::
+
     Some color names are not internally consistent, e.g.:
 
     - ``'darkgray'`` is lighter than ``'gray'``,
     - ``'lightpink'`` is darker than ``'pink'``, and
     - ``'cadmiumyellow'`` is classified as an Orange color.
 
+.. dropdown:: All Colors
 
-.. dropdown:: All Colors Sorted by Name
+    All named colors sorted alphabetically.
 
     .. include:: /api/utilities/color_table/color_table.rst
 
