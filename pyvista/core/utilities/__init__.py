@@ -1,6 +1,5 @@
 """Utilities routines."""
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 import contextlib

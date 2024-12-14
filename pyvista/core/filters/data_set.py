@@ -5467,7 +5467,7 @@ class DataSetFilters:
 
     def extract_points(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        ind: int | VectorLike[int],
+        ind: int | VectorLike[int] | VectorLike[bool],
         adjacent_cells: bool = True,
         include_cells: bool = True,
         progress_bar: bool = False,
