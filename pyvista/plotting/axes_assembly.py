@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from abc import ABC
 from abc import abstractmethod
 from collections.abc import Sequence
+from functools import wraps
 import itertools
 from typing import TYPE_CHECKING
 from typing import Any
@@ -17,6 +19,7 @@ import pyvista as pv
 from pyvista import BoundsTuple
 from pyvista.core import _validation
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
+from pyvista.core.utilities.geometric_sources import CubeFacesSource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
@@ -62,6 +65,15 @@ class _AxesGeometryKwargs(TypedDict):
     symmetric_bounds: bool
 
 
+class _CubeFacesKwargs(TypedDict):
+    center: VectorLike[float]
+    x_length: float
+    y_length: float
+    z_length: float
+    bounds: VectorLike[float] | None
+    point_dtype: str
+
+
 class _OrthogonalPlanesKwargs(TypedDict):
     bounds: VectorLike[float]
     resolution: int | VectorLike[int]
@@ -74,7 +86,7 @@ class _XYZTuple(NamedTuple):
     z: Any
 
 
-class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
+class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly, ABC):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -152,6 +164,14 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         self.scale = scale  # type: ignore[assignment]
         self.origin = origin  # type: ignore[assignment]
         self.user_matrix = user_matrix  # type: ignore[assignment]
+
+    def __new__(cls, *args, **kwargs):
+        # Check subclasses have implemented abstract methods
+        if hasattr(cls, '__abstractmethods__') and len(cls.__abstractmethods__) > 0:
+            raise TypeError(
+                f'Class {cls.__name__} must implement abstract methods {tuple(sorted(cls.__abstractmethods__))}'
+            )
+        return super().__new__(cls, *args, **kwargs)
 
     @property
     def parts(self):
@@ -1283,6 +1303,616 @@ class AxesAssemblySymmetric(AxesAssembly):
         vector_position_minus = self._get_offset_label_position_vectors(label_position_minus)
         for label, position in zip(labels_minus, vector_position_minus):
             label.relative_position = position
+
+
+class BoxAssembly(_XYZAssembly):
+    """Assembly of labeled box faces.
+
+    Box with faces that can be stylized and colored, and labels that follow the
+    camera.
+
+    Parameters
+    ----------
+    box_style : 'frames' | 'tubes' | 'faces', default: 'frames'
+        Style of the box.
+
+    frame_width : float, optional
+        Convert the faces into frames with the specified width. If set, the center
+        portion of each face is removed. Values must be between ``0.0`` (minimal frame)
+        and ``1.0`` (large frame). The frame is scaled to ensure it has a constant width.
+
+    shrink_factor : float, optional
+        Shrink or grow the faces by some factor. The amount of shrinking or growth is
+        relative to the smallest edge length of the box, and all sides of the faces are
+        shrunk by the same (constant) value.
+
+    explode_factor : float, optional
+        Push the faces away from (or pull them toward) the box's center by some factor.
+        The magnitude of the move is relative to the smallest edge length of the cube,
+        and all faces are moved by the same (constant) amount.
+
+    x_label : str, default: ('+X', '-X')
+        Text labels for the positive and negative x-axis. Specify two strings or a
+        single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
+        are added. Alternatively, set the labels with :attr:`labels`.
+
+    y_label : str, default: ('+Y', '-Y')
+        Text labels for the positive and negative y-axis. Specify two strings or a
+        single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
+        are added. Alternatively, set the labels with :attr:`labels`.
+
+    z_label : str, default: ('+Z', '-Z')
+        Text labels for the positive and negative z-axis. Specify two strings or a
+        single string. If a single string, plus ``'+'`` and minus ``'-'`` characters
+        are added. Alternatively, set the labels with :attr:`labels`.
+
+    labels : Sequence[str], optional
+        Text labels for the box. Specify three strings, one for each axis, or
+        six strings, one for each +/- axis. If three strings plus ``'+'`` and minus
+        ``'-'`` characters are added. This is an alternative parameter to using
+        :attr:`x_label`, :attr:`y_label`, and :attr:`z_label` separately.
+
+    label_color : ColorLike, default: 'black'
+        Color of the text labels.
+
+    show_labels : bool, default: True
+        Show or hide the text labels.
+
+    label_position : float | VectorLike[float], optional
+        Position of the text labels along each axis. By default, the labels are
+        positioned at the ends of the shafts.
+
+    label_size : int, default: 50
+        Size of the text labels.
+
+    x_color : ColorLike | Sequence[ColorLike], optional
+        Color of the x-axis faces.
+
+    y_color : ColorLike | Sequence[ColorLike], optional
+        Color of the y-axis faces.
+
+    z_color : ColorLike | Sequence[ColorLike], optional
+        Color of the z-axis faces.
+
+    opacity : float | VectorLike[float], default: 1.0,
+        Opacity of the box's faces.
+
+    culling : 'front' | 'back' | None, default: None
+        Control face :attr:`~pyvista.Property.culling`. Set to ``'front'`` to only
+        render the back faces of the box, or ``back`` to only render the front faces.
+
+    position : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Position of the box in space.
+
+    orientation : VectorLike[float], default: (0, 0, 0)
+        Orientation angles of the box which define rotations about the
+        world's x-y-z axes. The angles are specified in degrees and in
+        x-y-z order. However, the actual rotations are applied in the
+        around the y-axis first, then the x-axis, and finally the z-axis.
+
+    origin : VectorLike[float], default: (0.0, 0.0, 0.0)
+        Origin of the box. This is the point about which all rotations take place. The
+        rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
+
+    scale : float | VectorLike[float], default: (1.0, 1.0, 1.0)
+        Scaling factor applied to the box.
+
+    user_matrix : MatrixLike[float], optional
+        A 4x4 transformation matrix applied to the box. Defaults to the identity matrix.
+        The user matrix is the last transformation applied to the assembly.
+
+    **kwargs
+        Keyword arguments passed to :class:`pyvista.CubeFacesSource`.
+
+    Examples
+    --------
+    Add a box assembly to a plot. It has a ``'frames'`` :attr:`box_style` by default.
+
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> box = pv.BoxAssembly()
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_actor(box)
+    >>> pl.show()
+
+    Cull the front faces and hide the labels to only render the frame behind a mesh.
+
+    >>> box.culling = 'front'
+    >>> box.show_labels = False
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(pv.Sphere())
+    >>> _ = pl.add_actor(box)
+    >>> pl.show()
+
+    Use the ``'tubes'`` :attr:`box_style` and fit the box to a mesh. We also customize
+    the axes labels to use the ``RAS`` coordinate system for medical applications.
+
+    >>> human = examples.download_human()
+    >>> # RAS coordinates: right/left, anterior/posterior, superior/inferior
+    >>> labels = ['R', 'L', 'A', 'P', 'S', 'I']
+    >>> box = pv.BoxAssembly(
+    ...     bounds=human.bounds,
+    ...     box_style='tubes',
+    ...     labels=labels,
+    ...     label_color='gray',
+    ... )
+
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
+    >>> _ = pl.add_actor(box)
+    >>> pl.show()
+
+    Add the box as a custom orientation widget with
+    :func:`~pyvista.Renderer.add_orientation_widget`. For this use case we also use
+    the ``'faces'`` :attr:`box_style`.
+
+    >>> box = pv.BoxAssembly(box_style='faces')
+    >>> pl = pv.Plotter()
+    >>> _ = pl.add_mesh(pv.Cone())
+    >>> _ = pl.add_orientation_widget(
+    ...     box,
+    ...     viewport=(0, 0, 0.3, 0.3),
+    ... )
+    >>> pl.show()
+
+    """
+
+    def __init__(
+        self,
+        *,
+        box_style: Literal['frames', 'tubes', 'faces'] = 'frames',
+        frame_width: float | None = None,
+        shrink_factor: float | None = None,
+        explode_factor: float | None = None,
+        x_label: str | Sequence[str] | None = None,
+        y_label: str | Sequence[str] | None = None,
+        z_label: str | Sequence[str] | None = None,
+        labels: Sequence[str] | None = None,
+        label_color: ColorLike = 'black',
+        show_labels: bool = True,
+        label_position: float | VectorLike[float] | None = None,
+        label_size: int = 50,
+        x_color: ColorLike | Sequence[ColorLike] | None = None,
+        y_color: ColorLike | Sequence[ColorLike] | None = None,
+        z_color: ColorLike | Sequence[ColorLike] | None = None,
+        opacity: float | VectorLike[float] = 1.0,
+        culling: Literal['front', 'back'] | None = None,
+        position: VectorLike[float] = (0.0, 0.0, 0.0),
+        orientation: VectorLike[float] = (0.0, 0.0, 0.0),
+        origin: VectorLike[float] = (0.0, 0.0, 0.0),
+        scale: VectorLike[float] = (1.0, 1.0, 1.0),
+        user_matrix: MatrixLike[float] | None = None,
+        **kwargs: Unpack[_CubeFacesKwargs],
+    ):
+        # Init geometry
+        self._geometry_source = CubeFacesSource(**kwargs)
+        self._face_datasets = self._geometry_source.output
+        # Init face actors
+        self._face_actors = tuple(
+            [Actor(mapper=pv.DataSetMapper(dataset=dataset)) for dataset in self._face_datasets]
+        )
+        self._face_actors_plus = self._face_actors[0::2]
+        self._face_actors_minus = self._face_actors[1::2]
+
+        # Init label actors
+        self._label_actors = tuple(Label() for _ in range(6))
+        self._label_actors_plus = self._label_actors[0::2]
+        self._label_actors_minus = self._label_actors[1::2]
+
+        _XYZAssembly.__init__(
+            self,
+            xyz_actors=tuple(zip(self._face_actors_plus, self._face_actors_minus)),  # type: ignore[arg-type]
+            xyz_label_actors=tuple(zip(self._label_actors_plus, self._label_actors_minus)),  # type: ignore[arg-type]
+            x_label=x_label,
+            y_label=y_label,
+            z_label=z_label,
+            labels=labels,
+            label_color=label_color,
+            show_labels=show_labels,
+            label_position=label_position,
+            label_size=label_size,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            position=position,
+            orientation=orientation,
+            origin=origin,
+            scale=scale,
+            user_matrix=user_matrix,
+        )
+        self.box_style = box_style
+        self.opacity = opacity  # type: ignore[assignment]
+        self.culling = culling
+
+        if frame_width is not None:
+            self.frame_width = frame_width  # type: ignore[method-assign]
+        if shrink_factor is not None:
+            self.shrink_factor = shrink_factor  # type: ignore[method-assign]
+        if explode_factor is not None:
+            self.explode_factor = explode_factor  # type: ignore[method-assign]
+
+        for label in self._label_actor_iterator:
+            prop = label.prop
+            prop.bold = True
+            prop.justification_vertical = 'center'
+            prop.justification_horizontal = 'center'
+
+    @property
+    def box_style(self) -> Literal['frames', 'tubes', 'faces']:  # numpydoc ignore=RT01
+        """Style of the box."""
+        return self._box_style
+
+    @box_style.setter
+    def box_style(self, style: Literal['frames', 'tubes', 'faces']):  # numpydoc ignore=GL08
+        self._box_style = style
+
+        props: list[pv.Property] = [actor.prop for actor in self._face_actors]
+        DEFAULT_PROPERTY = pv.Property()
+
+        if style == 'frames':
+            self.shrink_factor = None  # type: ignore[method-assign]
+            self.explode_factor = None  # type: ignore[method-assign]
+            self.frame_width = 0.05  # type: ignore[method-assign]
+            for prop in props:
+                prop.lighting = True
+                prop.ambient = 0.5
+                prop.render_lines_as_tubes = False
+                prop.style = 'surface'
+                prop.line_width = DEFAULT_PROPERTY.line_width
+
+        elif style == 'tubes':
+            self.shrink_factor = 0.99  # type: ignore[method-assign]
+            self.explode_factor = None  # type: ignore[method-assign]
+            self.frame_width = None  # type: ignore[method-assign]
+            for prop in props:
+                prop.lighting = DEFAULT_PROPERTY.lighting
+                prop.ambient = DEFAULT_PROPERTY.ambient
+                prop.render_lines_as_tubes = True
+                prop.style = 'wireframe'
+                prop.line_width = 10
+
+        elif style == 'faces':
+            self.shrink_factor = None  # type: ignore[method-assign]
+            self.explode_factor = None  # type: ignore[method-assign]
+            self.frame_width = None  # type: ignore[method-assign]
+            for prop in props:
+                prop.lighting = DEFAULT_PROPERTY.lighting
+                prop.ambient = DEFAULT_PROPERTY.ambient
+                prop.render_lines_as_tubes = False
+                prop.style = 'surface'
+                prop.line_width = DEFAULT_PROPERTY.line_width
+
+    @property
+    def frame_width(self) -> float | None:  # numpydoc ignore=PR01,RT01
+        """Width of frame to use when :attr:`box_style` is ``'frames'``.
+
+        See :class:`pyvista.CubeFacesSource.frame_width` for details.
+        """
+        return self._geometry_source.frame_width
+
+    @frame_width.setter
+    def frame_width(self, width: float | None):  # numpydoc ignore=PR01,GL08
+        """Wrap :class:`pyvista.CubeFacesSource.frame_width`."""
+        self._geometry_source.frame_width = width
+        self._geometry_source.update()
+
+    @property
+    @wraps(CubeFacesSource.shrink_factor.fget)  # type: ignore[attr-defined]
+    def shrink_factor(self) -> float | None:  # numpydoc ignore=PR01,RT01
+        """Wrap :class:`pyvista.CubeFacesSource.shrink_factor`."""
+        return self._geometry_source.shrink_factor
+
+    @shrink_factor.setter
+    def shrink_factor(self, factor: float | None):  # numpydoc ignore=PR01,GL08
+        """Wrap :class:`pyvista.CubeFacesSource.shrink_factor`."""
+        self._geometry_source.shrink_factor = factor
+        self._geometry_source.update()
+
+    @property
+    @wraps(CubeFacesSource.explode_factor.fget)  # type: ignore[attr-defined]
+    def explode_factor(self) -> float | None:  # numpydoc ignore=PR01,RT01
+        """Wrap :class:`pyvista.CubeFacesSource.explode_factor`."""
+        return self._geometry_source.explode_factor
+
+    @explode_factor.setter
+    def explode_factor(self, factor: float | None):  # numpydoc ignore=PR01,GL08
+        """Wrap :class:`pyvista.CubeFacesSource.explode_factor`."""
+        self._geometry_source.explode_factor = factor
+        self._geometry_source.update()
+        self._update_label_positions()
+
+    @property
+    def labels(self) -> tuple[str, str, str, str, str, str]:  # numpydoc ignore=RT01
+        """Return or set the axes labels.
+
+        Specify three strings, one for each axis, or six strings, one for each +/- axis.
+        If three strings, plus ``'+'`` and minus ``'-'`` characters are added.
+        This property may be used as an alternative to using :attr:`x_label`,
+        :attr:`y_label`, and :attr:`z_label` separately.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+
+        Use three strings to set the labels. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> axes_assembly.labels = ['U', 'V', 'W']
+        >>> axes_assembly.labels
+        ('+U', '-U', '+V', '-V', '+W', '-W')
+
+        Alternatively, use six strings to set the labels explicitly.
+
+        >>> axes_assembly.labels = [
+        ...     'east',
+        ...     'west',
+        ...     'north',
+        ...     'south',
+        ...     'up',
+        ...     'down',
+        ... ]
+        >>> axes_assembly.labels
+        ('east', 'west', 'north', 'south', 'up', 'down')
+
+        """
+        return *self.x_label, *self.y_label, *self.z_label
+
+    @labels.setter
+    def labels(
+        self, labels: list[str] | tuple[str, str, str] | tuple[str, str, str, str, str, str]
+    ):  # numpydoc ignore=GL08
+        valid_labels = _validate_label_sequence(labels, n_labels=[3, 6], name='labels')
+        if len(valid_labels) == 3:
+            self.x_label = valid_labels[0]
+            self.y_label = valid_labels[1]
+            self.z_label = valid_labels[2]
+        else:
+            self.x_label = valid_labels[0:2]
+            self.y_label = valid_labels[2:4]
+            self.z_label = valid_labels[4:6]
+
+    def _get_axis_label(self, axis: _AxisEnum) -> tuple[str, str]:
+        label_plus = self._label_actors_plus[axis].input
+        label_minus = self._label_actors_minus[axis].input
+        return label_plus, label_minus
+
+    def _set_axis_label(self, axis: _AxisEnum, label: str | list[str] | tuple[str, str]):
+        if isinstance(label, str):
+            label_plus, label_minus = '+' + label, '-' + label
+        else:
+            label_plus, label_minus = _validate_label_sequence(label, n_labels=2, name='label')
+        self._label_actors_plus[axis].input = label_plus
+        self._label_actors_minus[axis].input = label_minus
+
+    def _get_axis_color(self, axis: _AxisEnum) -> tuple[Color, Color]:
+        color_plus = self._face_actors_plus[axis].prop.color
+        color_minus = self._face_actors_minus[axis].prop.color
+        return color_plus, color_minus
+
+    def _set_axis_color(self, axis: _AxisEnum, color: ColorLike | Sequence[ColorLike]):
+        color_plus, color_minus = _validate_color_sequence(color, 2)
+        self._face_actors_plus[axis].prop.color = color_plus
+        self._face_actors_plus[axis].prop.edge_color = color_plus
+        self._face_actors_minus[axis].prop.color = color_minus
+        self._face_actors_minus[axis].prop.edge_color = color_minus
+
+    @property
+    def x_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the x-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.x)
+
+    @x_color.setter
+    def x_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.x, color)
+
+    @property
+    def y_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the y-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.y)
+
+    @y_color.setter
+    def y_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.y, color)
+
+    @property
+    def z_color(self) -> tuple[Color, Color]:  # numpydoc ignore=RT01
+        """Color of the z-axis shaft and tip."""
+        return self._get_axis_color(_AxisEnum.z)
+
+    @z_color.setter
+    def z_color(self, color: ColorLike | Sequence[ColorLike]):  # numpydoc ignore=GL08
+        self._set_axis_color(_AxisEnum.z, color)
+
+    @property
+    def opacity(self) -> tuple[float, float, float, float, float, float]:  # numpydoc ignore=RT01
+        """Opacity of the planes."""
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, opacity: float):  # numpydoc ignore=GL08
+        valid_opacity = _validation.validate_array(
+            opacity, broadcast_to=(6,), dtype_out=float, to_tuple=True
+        )
+        self._opacity = valid_opacity
+        for actor, opacity in zip(self._face_actors, valid_opacity):
+            actor.prop.opacity = opacity
+
+    @property
+    def culling(self) -> Literal['front', 'back'] | None:  # numpydoc ignore=RT01
+        """Return or set face :attr:`~pyvista.Property.culling`.
+
+        Set to ``'front'`` to only render the back faces of the box, or ``back`` to
+        only render the front faces.
+        """
+        return self._culling
+
+    @culling.setter
+    def culling(self, culling: Literal['front', 'back'] | None):  # numpydoc ignore=GL08
+        self._culling = culling
+        valid_culling = 'none' if culling is None else culling
+        for actor in self._face_actors:
+            actor.prop.culling = valid_culling
+
+    @property
+    def label_size(self) -> int:  # numpydoc ignore=RT01
+        """Size of the text labels.
+
+        Must be a positive integer.
+        """
+        return self._label_size
+
+    @label_size.setter
+    def label_size(self, size: int):  # numpydoc ignore=GL08
+        self._label_size = size
+        for label in self._label_actor_iterator:
+            label.size = size
+
+    # TODO: implement label position
+    @property
+    def label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Position of the text label along each axis.
+
+        By default, the labels are positioned at the ends of the shafts.
+
+        Values must be non-negative.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssembly()
+        >>> axes_assembly.label_position
+        (0.8, 0.8, 0.8)
+        >>> axes_assembly.label_position = 0.3
+        >>> axes_assembly.label_position
+        (0.3, 0.3, 0.3)
+        >>> axes_assembly.label_position = (0.1, 0.4, 0.2)
+        >>> axes_assembly.label_position
+        (0.1, 0.4, 0.2)
+
+        """
+        position = self._label_position
+        return self._shaft_and_tip_geometry_source.shaft_length if position is None else position  # type: ignore[attr-defined]
+
+    @label_position.setter
+    def label_position(self, position: float | VectorLike[float] | None):  # numpydoc ignore=GL08
+        self._label_position = (
+            None
+            if position is None
+            else _validation.validate_array3(
+                position,
+                broadcast=True,
+                must_be_in_range=[0, np.inf],
+                name='Label position',
+                dtype_out=float,
+                to_tuple=True,
+            )
+        )
+        self._update_label_positions()
+
+    @property
+    def x_label(self) -> tuple[str, str]:  # numpydoc ignore=RT01
+        """Return or set the labels for the positive and negative x-axis.
+
+        The labels may be set with a single string or two strings. If a single string,
+        plus ``'+'`` and minus ``'-'`` characters are added. Alternatively, set the
+        labels with :attr:`labels`.
+
+        Examples
+        --------
+        Set the labels with a single string. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+        >>> axes_assembly.x_label = 'Axis'
+        >>> axes_assembly.x_label
+        ('+Axis', '-Axis')
+
+        Set the labels explicitly with two strings.
+
+        >>> axes_assembly.x_label = 'anterior', 'posterior'
+        >>> axes_assembly.x_label
+        ('anterior', 'posterior')
+
+        """
+        return self._get_axis_label(_AxisEnum.x)
+
+    @x_label.setter
+    def x_label(self, label: str | list[str] | tuple[str, str]):  # numpydoc ignore=GL08
+        self._set_axis_label(_AxisEnum.x, label)
+
+    @property
+    def y_label(self) -> tuple[str, str]:  # numpydoc ignore=RT01
+        """Return or set the labels for the positive and negative y-axis.
+
+        The labels may be set with a single string or two strings. If a single string,
+        plus ``'+'`` and minus ``'-'`` characters are added. Alternatively, set the
+        labels with :attr:`labels`.
+
+        Examples
+        --------
+        Set the labels with a single string. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+        >>> axes_assembly.y_label = 'Axis'
+        >>> axes_assembly.y_label
+        ('+Axis', '-Axis')
+
+        Set the labels explicitly with two strings.
+
+        >>> axes_assembly.y_label = 'left', 'right'
+        >>> axes_assembly.y_label
+        ('left', 'right')
+
+        """
+        return self._get_axis_label(_AxisEnum.y)
+
+    @y_label.setter
+    def y_label(self, label: str | list[str] | tuple[str, str]):  # numpydoc ignore=GL08
+        self._set_axis_label(_AxisEnum.y, label)
+
+    @property
+    def z_label(self) -> tuple[str, str]:  # numpydoc ignore=RT01
+        """Return or set the labels for the positive and negative z-axis.
+
+        The labels may be set with a single string or two strings. If a single string,
+        plus ``'+'`` and minus ``'-'`` characters are added. Alternatively, set the
+        labels with :attr:`labels`.
+
+        Examples
+        --------
+        Set the labels with a single string. Plus ``'+'`` and minus ``'-'``
+        characters are added automatically.
+
+        >>> import pyvista as pv
+        >>> axes_assembly = pv.AxesAssemblySymmetric()
+        >>> axes_assembly.z_label = 'Axis'
+        >>> axes_assembly.z_label
+        ('+Axis', '-Axis')
+
+        Set the labels explicitly with two strings.
+
+        >>> axes_assembly.z_label = 'superior', 'inferior'
+        >>> axes_assembly.z_label
+        ('superior', 'inferior')
+
+        """
+        return self._get_axis_label(_AxisEnum.z)
+
+    @z_label.setter
+    def z_label(self, label: str | list[str] | tuple[str, str]):  # numpydoc ignore=GL08
+        self._set_axis_label(_AxisEnum.z, label)
+
+    def _update_label_positions(self):
+        faces = self._face_datasets
+        box_center = faces.center
+        for face, label in zip(self._face_datasets, self._label_actors):
+            face_center = np.array(face.center)
+            label.relative_position = (face_center - box_center) + box_center  # type: ignore[assignment]
 
 
 class PlanesAssembly(_XYZAssembly):
