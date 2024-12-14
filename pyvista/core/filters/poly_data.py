@@ -1682,8 +1682,10 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
-        pyvista.PolyDataFilters.flip_normals
+        pyvista.PolyDataFilters.flip_normal_vectors
             Flip existing normals without computing new ones.
+        pyvista.PolyDataFilters.flip_faces
+            Flip the orientation of the faces.
         pyvista.PolyData.point_normals
             Returns the array of point normals.
         pyvista.PolyData.cell_normals
@@ -2634,7 +2636,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere.plot_normals(mag=0.1)
-        >>> sphere.flip_normals()
+        >>> sphere.flip_normals()  # doctest:+SKIP
         >>> sphere.plot_normals(mag=0.1, opacity=0.5)
 
         """
@@ -2679,7 +2681,10 @@ class PolyDataFilters(DataSetFilters):
         inplace: bool = False,
         progress_bar: bool = False,
     ):
-        """Flip faces by reversing the order of indices in the cell connectivity list.
+        """Flip the orientation of the faces.
+
+        The flip is performed by reversing the order of indices in the cell
+        connectivity list.
 
         .. note::
 
@@ -2793,7 +2798,7 @@ class PolyDataFilters(DataSetFilters):
         See Also
         --------
         pyvista.PolyDataFilters.flip_faces
-            Reverse the order of indices in the cell connectivity list.
+            Flip the orientation of the faces.
         pyvista.PolyDataFilters.compute_normals
             Compute new normals. Includes the option to flip the normals.
         pyvista.PolyData.point_normals
