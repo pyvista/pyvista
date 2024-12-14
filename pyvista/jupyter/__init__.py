@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import warnings
+import importlib.util
 
 import pyvista
-from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import PyVistaDeprecationWarning as PyVistaDeprecationWarning
 
 ALLOWED_BACKENDS = [
     'static',
@@ -28,9 +28,7 @@ def _validate_jupyter_backend(backend):
         backend = 'none'
     backend = backend.lower()
 
-    try:
-        import IPython
-    except ImportError:  # pragma: no cover
+    if not importlib.util.find_spec('IPython'):
         raise ImportError('Install IPython to display with pyvista in a notebook.')
 
     if backend not in ALLOWED_BACKENDS:
@@ -42,7 +40,7 @@ def _validate_jupyter_backend(backend):
 
     if backend in ['server', 'client', 'trame', 'html']:
         try:
-            from pyvista.trame.jupyter import show_trame
+            from pyvista.trame.jupyter import show_trame as show_trame
         except ImportError:  # pragma: no cover
             raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
 

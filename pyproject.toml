@@ -364,7 +364,7 @@ unfixable = ['F401']
 allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["PLC0414"]
 "doc/source/make_tables.py" = ["D101", "D102"]
 "examples/*" = ["D102", "D103", "D205", "D212", "D400", "D415", "SIM115"]
 "examples/**" = [
