@@ -326,7 +326,7 @@ def Arrow(
     tip_resolution: int = 20,
     shaft_radius: float = 0.05,
     shaft_resolution: int = 20,
-    scale: float | Literal['auto'] = 1.0,
+    scale: float | Literal['auto'] | None = 1.0,
 ) -> PolyData:
     """Create an arrow.
 
@@ -382,9 +382,9 @@ def Arrow(
 
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
-    elif isinstance(scale, (float, int)):
+    if isinstance(scale, (float, int)):
         surf.points *= scale  # type: ignore[misc]
-    else:
+    elif scale is not None:
         raise TypeError("Scale must be either float, int or 'auto'.")
 
     translate(surf, start, direction)
