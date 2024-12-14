@@ -57,8 +57,9 @@ def _format_color_dict(colors: dict[str, str]):
     return {_format_color_name(n): h.lower() for n, h in colors.items()}
 
 
-# Colors from the CSS standard. Matches matplotlib.colors.CSS4_COLORS
-# but with synonyms removed
+# Following colors are copied from matplotlib.colors, synonyms (colors with a
+# different name but same hex value) are removed and put in the `color_synonyms`
+# dictionary. An extra `paraview_background` color is added.
 _CSS_COLORS = {
     'aliceblue': '#F0F8FF',
     'antiquewhite': '#FAEBD7',
