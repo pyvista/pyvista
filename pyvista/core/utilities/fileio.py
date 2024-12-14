@@ -424,7 +424,6 @@ def read_exodus(
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
     except ImportError:
-        # TODO: import from vtkmodules to fix the `import-untyped` error
         from vtk import vtkExodusIIReader  # type: ignore[no-redef, import-untyped]
 
     reader = vtkExodusIIReader()
