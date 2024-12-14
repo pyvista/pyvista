@@ -1013,7 +1013,7 @@ class Color:
         >>> import pyvista as pv
         >>> c = pv.Color("darkblue", default_opacity=0.5)
         >>> c
-        Color(name='darkblue', hex='#0000ff80', opacity=128)
+        Color(name='darkblue', hex='#00008b80', opacity=128)
 
         When creating a new ``Color``, the name may be delimited with a space
         `` ``, hyphen ``-``, or underscore ``_``, or written as single word .
@@ -1027,7 +1027,7 @@ class Color:
         However, the name is always standardized as a single lower-case word.
         >>> c
         >>> c
-        Color(name='darkblue', hex='#0000ff80', opacity=128)
+        Color(name='darkblue', hex='#00008b80', opacity=128)
 
         """
         return self._name
