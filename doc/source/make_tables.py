@@ -447,9 +447,9 @@ def _get_color_source_badge(name: str) -> str:
     if name in _format_color_dict(_CSS_COLORS):
         return ':bdg-primary:`CSS`'
     elif name in _format_color_dict(_TABLEAU_COLORS):
-        return ':bdg-success:`TABLEAU`'
+        return ':bdg-success:`TAB`'
     elif name in _format_color_dict(_PARAVIEW_COLORS):
-        return ':bdg-danger:`PARAVIEW`'
+        return ':bdg-danger:`PARA`'
     elif name in _format_color_dict(_VTK_COLORS):
         return ':bdg-secondary:`VTK`'
     else:

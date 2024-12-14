@@ -43,8 +43,13 @@ IPYGANY_MAP = {
 }
 
 
-def _format_color_name(string):
-    return string.lower().replace('_', '')
+_ALLOWED_COLOR_NAME_DELIMITERS = '_- '
+_REMOVE_DELIMITER_LOOKUP = str.maketrans('', '', _ALLOWED_COLOR_NAME_DELIMITERS)
+
+
+def _format_color_name(name: str):
+    """Format name as lower-case and remove delimiters."""
+    return name.lower().translate(_REMOVE_DELIMITER_LOOKUP)
 
 
 def _format_color_dict(colors: dict[str, str]):
@@ -58,136 +63,136 @@ def _format_color_dict(colors: dict[str, str]):
 # - Add synonyms (colors with a different name but same hex value) to `color_synonyms`
 
 # Colors from the CSS standard. Matches matplotlib.colors.CSS4_COLORS
-# but with underscores added
+# but with synonyms removed
 _CSS_COLORS = {
-    'alice_blue': '#F0F8FF',
-    'antique_white': '#FAEBD7',
+    'aliceblue': '#F0F8FF',
+    'antiquewhite': '#FAEBD7',
     'aquamarine': '#7FFFD4',
     'azure': '#F0FFFF',
     'beige': '#F5F5DC',
     'bisque': '#FFE4C4',
     'black': '#000000',
-    'blanched_almond': '#FFEBCD',
+    'blanchedalmond': '#FFEBCD',
     'blue': '#0000FF',
-    'blue_violet': '#8A2BE2',
+    'blueviolet': '#8A2BE2',
     'brown': '#A52A2A',
-    'burly_wood': '#DEB887',
-    'cadet_blue': '#5F9EA0',
+    'burlywood': '#DEB887',
+    'cadetblue': '#5F9EA0',
     'chartreuse': '#7FFF00',
     'chocolate': '#D2691E',
     'coral': '#FF7F50',
-    'cornflower_blue': '#6495ED',
+    'cornflowerblue': '#6495ED',
     'cornsilk': '#FFF8DC',
     'crimson': '#DC143C',
     'cyan': '#00FFFF',
-    'dark_blue': '#00008B',
-    'dark_cyan': '#008B8B',
-    'dark_goldenrod': '#B8860B',
-    'dark_gray': '#A9A9A9',
-    'dark_green': '#006400',
-    'dark_khaki': '#BDB76B',
-    'dark_magenta': '#8B008B',
-    'dark_olive_green': '#556B2F',
-    'dark_orange': '#FF8C00',
-    'dark_orchid': '#9932CC',
-    'dark_red': '#8B0000',
-    'dark_salmon': '#E9967A',
-    'dark_sea_green': '#8FBC8F',
-    'dark_slate_blue': '#483D8B',
-    'dark_slate_gray': '#2F4F4F',
-    'dark_turquoise': '#00CED1',
-    'dark_violet': '#9400D3',
-    'deep_pink': '#FF1493',
-    'deep_sky_blue': '#00BFFF',
-    'dim_gray': '#696969',
-    'dodger_blue': '#1E90FF',
-    'fire_brick': '#B22222',
-    'floral_white': '#FFFAF0',
-    'forest_green': '#228B22',
+    'darkblue': '#00008B',
+    'darkcyan': '#008B8B',
+    'darkgoldenrod': '#B8860B',
+    'darkgray': '#A9A9A9',
+    'darkgreen': '#006400',
+    'darkkhaki': '#BDB76B',
+    'darkmagenta': '#8B008B',
+    'darkolivegreen': '#556B2F',
+    'darkorange': '#FF8C00',
+    'darkorchid': '#9932CC',
+    'darkred': '#8B0000',
+    'darksalmon': '#E9967A',
+    'darkseagreen': '#8FBC8F',
+    'darkslateblue': '#483D8B',
+    'darkslategray': '#2F4F4F',
+    'darkturquoise': '#00CED1',
+    'darkviolet': '#9400D3',
+    'deeppink': '#FF1493',
+    'deepskyblue': '#00BFFF',
+    'dimgray': '#696969',
+    'dodgerblue': '#1E90FF',
+    'firebrick': '#B22222',
+    'floralwhite': '#FFFAF0',
+    'forestgreen': '#228B22',
     'gainsboro': '#DCDCDC',
-    'ghost_white': '#F8F8FF',
+    'ghostwhite': '#F8F8FF',
     'gold': '#FFD700',
     'goldenrod': '#DAA520',
     'gray': '#808080',
     'green': '#008000',
-    'green_yellow': '#ADFF2F',
+    'greenyellow': '#ADFF2F',
     'honeydew': '#F0FFF0',
-    'hot_pink': '#FF69B4',
-    'indian_red': '#CD5C5C',
+    'hotpink': '#FF69B4',
+    'indianred': '#CD5C5C',
     'indigo': '#4B0082',
     'ivory': '#FFFFF0',
     'khaki': '#F0E68C',
     'lavender': '#E6E6FA',
-    'lavender_blush': '#FFF0F5',
-    'lawn_green': '#7CFC00',
-    'lemon_chiffon': '#FFFACD',
-    'light_blue': '#ADD8E6',
-    'light_coral': '#F08080',
-    'light_cyan': '#E0FFFF',
-    'light_goldenrod_yellow': '#FAFAD2',
-    'light_gray': '#D3D3D3',
-    'light_green': '#90EE90',
-    'light_pink': '#FFB6C1',
-    'light_salmon': '#FFA07A',
-    'light_sea_green': '#20B2AA',
-    'light_sky_blue': '#87CEFA',
-    'light_slate_gray': '#778899',
-    'light_steel_blue': '#B0C4DE',
-    'light_yellow': '#FFFFE0',
+    'lavenderblush': '#FFF0F5',
+    'lawngreen': '#7CFC00',
+    'lemonchiffon': '#FFFACD',
+    'lightblue': '#ADD8E6',
+    'lightcoral': '#F08080',
+    'lightcyan': '#E0FFFF',
+    'lightgoldenrodyellow': '#FAFAD2',
+    'lightgray': '#D3D3D3',
+    'lightgreen': '#90EE90',
+    'lightpink': '#FFB6C1',
+    'lightsalmon': '#FFA07A',
+    'lightseagreen': '#20B2AA',
+    'lightskyblue': '#87CEFA',
+    'lightslategray': '#778899',
+    'lightsteelblue': '#B0C4DE',
+    'lightyellow': '#FFFFE0',
     'lime': '#00FF00',
-    'lime_green': '#32CD32',
+    'limegreen': '#32CD32',
     'linen': '#FAF0E6',
     'magenta': '#FF00FF',
     'maroon': '#800000',
-    'medium_aquamarine': '#66CDAA',
-    'medium_blue': '#0000CD',
-    'medium_orchid': '#BA55D3',
-    'medium_purple': '#9370DB',
-    'medium_sea_green': '#3CB371',
-    'medium_slate_blue': '#7B68EE',
-    'medium_spring_green': '#00FA9A',
-    'medium_turquoise': '#48D1CC',
-    'medium_violet_red': '#C71585',
-    'midnight_blue': '#191970',
-    'mint_cream': '#F5FFFA',
-    'misty_rose': '#FFE4E1',
+    'mediumaquamarine': '#66CDAA',
+    'mediumblue': '#0000CD',
+    'mediumorchid': '#BA55D3',
+    'mediumpurple': '#9370DB',
+    'mediumseagreen': '#3CB371',
+    'mediumslateblue': '#7B68EE',
+    'mediumspringgreen': '#00FA9A',
+    'mediumturquoise': '#48D1CC',
+    'mediumvioletred': '#C71585',
+    'midnightblue': '#191970',
+    'mintcream': '#F5FFFA',
+    'mistyrose': '#FFE4E1',
     'moccasin': '#FFE4B5',
-    'navajo_white': '#FFDEAD',
+    'navajowhite': '#FFDEAD',
     'navy': '#000080',
-    'old_lace': '#FDF5E6',
+    'oldlace': '#FDF5E6',
     'olive': '#808000',
-    'olive_drab': '#6B8E23',
+    'olivedrab': '#6B8E23',
     'orange': '#FFA500',
-    'orange_red': '#FF4500',
+    'orangered': '#FF4500',
     'orchid': '#DA70D6',
-    'pale_goldenrod': '#EEE8AA',
-    'pale_green': '#98FB98',
-    'pale_turquoise': '#AFEEEE',
-    'pale_violet_red': '#DB7093',
-    'papaya_whip': '#FFEFD5',
-    'peach_puff': '#FFDAB9',
+    'palegoldenrod': '#EEE8AA',
+    'palegreen': '#98FB98',
+    'paleturquoise': '#AFEEEE',
+    'palevioletred': '#DB7093',
+    'papayawhip': '#FFEFD5',
+    'peachpuff': '#FFDAB9',
     'peru': '#CD853F',
     'pink': '#FFC0CB',
     'plum': '#DDA0DD',
-    'powder_blue': '#B0E0E6',
+    'powderblue': '#B0E0E6',
     'purple': '#800080',
-    'rebecca_purple': '#663399',
+    'rebeccapurple': '#663399',
     'red': '#FF0000',
-    'rosy_brown': '#BC8F8F',
-    'royal_blue': '#4169E1',
-    'saddle_brown': '#8B4513',
+    'rosybrown': '#BC8F8F',
+    'royalblue': '#4169E1',
+    'saddlebrown': '#8B4513',
     'salmon': '#FA8072',
-    'sandy_brown': '#F4A460',
-    'sea_green': '#2E8B57',
+    'sandybrown': '#F4A460',
+    'seagreen': '#2E8B57',
     'seashell': '#FFF5EE',
     'sienna': '#A0522D',
     'silver': '#C0C0C0',
-    'sky_blue': '#87CEEB',
-    'slate_blue': '#6A5ACD',
-    'slate_gray': '#708090',
+    'skyblue': '#87CEEB',
+    'slateblue': '#6A5ACD',
+    'slategray': '#708090',
     'snow': '#FFFAFA',
-    'spring_green': '#00FF7F',
-    'steel_blue': '#4682B4',
+    'springgreen': '#00FF7F',
+    'steelblue': '#4682B4',
     'tan': '#D2B48C',
     'teal': '#008080',
     'thistle': '#D8BFD8',
@@ -196,9 +201,9 @@ _CSS_COLORS = {
     'violet': '#EE82EE',
     'wheat': '#F5DEB3',
     'white': '#FFFFFF',
-    'white_smoke': '#F5F5F5',
+    'whitesmoke': '#F5F5F5',
     'yellow': '#FFFF00',
-    'yellow_green': '#9ACD32',
+    'yellowgreen': '#9ACD32',
 }
 
 # Tableau colors. Matches matplotlib.colors.TABLEAU_COLORS
@@ -215,7 +220,6 @@ _TABLEAU_COLORS = {
     'tab:olive': '#bcbd22',
     'tab:cyan': '#17becf',
 }
-
 _PARAVIEW_COLORS = {'paraview_background': '#52576e'}
 
 # Colors from https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html
@@ -225,9 +229,9 @@ _PARAVIEW_COLORS = {'paraview_background': '#52576e'}
 # - Not all VTK synonyms are supported.
 # - Colors with adjective suffixes are renamed to use a prefix instead
 #   (e.g. 'green_pale' is renamed to 'pale_green'). This is done to keep VTK color
-#   names consistent with CSS names. In many cases this altered color name is
+#   names consistent with CSS names. In most cases this altered color name is
 #   supported directly by vtkNamedColors, but in some cases this technically is no
-#   longer a valid named vtk color
+#   longer a valid named vtk color. See tests.
 _VTK_COLORS = {
     'alizarin_crimson': '#e32636',
     'aureoline_yellow': '#ffa824',
@@ -294,13 +298,7 @@ _VTK_COLORS = {
 }
 
 # Sort named colors alphabetically by group.
-_hexcolors_with_underscores = {
-    **_CSS_COLORS,
-    **_PARAVIEW_COLORS,
-    **_TABLEAU_COLORS,
-    **_VTK_COLORS,
-}
-hexcolors = _format_color_dict(_hexcolors_with_underscores)
+hexcolors = _format_color_dict(_CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS | _VTK_COLORS)
 
 color_names = {h: n for n, h in hexcolors.items()}
 
@@ -824,7 +822,7 @@ class Color:
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
         arg = n
-        n = n.lower().replace('_', '')
+        n = _format_color_name(n)
         if n in color_synonyms:
             # Synonym of registered color name
             # Convert from synonym to full hex
@@ -1007,6 +1005,9 @@ class Color:
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
+        The name is always formatted as a lower case string without
+        any delimiters.
+
         See :ref:`color_table` for a list of supported colors.
 
         Returns
@@ -1016,12 +1017,26 @@ class Color:
 
         Examples
         --------
-        Create a blue color with half opacity.
+        Create a dark blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity=0.5)
+        >>> c = pv.Color("darkblue", default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80', opacity=128)
+        Color(name='darkblue', hex='#0000ff80', opacity=128)
+
+        When creating a new ``Color``, the name may be delimited with a space
+        `` ``, hyphen ``-``, or underscore ``_``, or written as single word .
+
+        >>> c = pv.Color("dark blue", default_opacity=0.5)
+
+        Upper-case letters are also supported.
+
+        >>> c = pv.Color("DarkBlue", default_opacity=0.5)
+
+        However, the name is always standardized as a single lower-case word.
+        >>> c
+        >>> c
+        Color(name='darkblue', hex='#0000ff80', opacity=128)
 
         """
         return self._name

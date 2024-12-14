@@ -11,12 +11,9 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista.plotting.colors import _format_color_dict
-from pyvista.plotting.colors import _format_color_name
 from pyvista.plotting.colors import get_cmap_safe
 
 COLORMAPS = ['Greys']
-FORMATED_CSS_COLORS = _format_color_dict(pv.plotting.colors._CSS_COLORS)
 
 try:
     import cmocean  # noqa: F401
@@ -125,6 +122,11 @@ def test_color():
         c[4]  # Invalid integer index
 
 
+@pytest.mark.parametrize('delimiter', ['-', '_', ' '])
+def test_color_name_delimiter(delimiter):
+    pv.Color(f'deep{delimiter}cobalt{delimiter}violet')
+
+
 def test_color_hls():
     lime = pv.Color('lime')
     actual_hls = lime._float_hls
@@ -154,21 +156,8 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize('tab_color', test_cases, ids=color_names)
 
     if 'vtk_color' in metafunc.fixturenames:
-        # Assume any color that isn't a CSS color, tab color, or special
-        # color is a vtk color by default
-
-        SPECIAL_CASES = {'paraview_background': '#52576e'}  # Only need to store the name
-        NOT_A_VTK_COLOR = {**SPECIAL_CASES, **CSS4_COLORS, **TABLEAU_COLORS}
-
-        # vtkNamedColor expects vtk-only colors to have underscores
-        colors = pv.colors._hexcolors_with_underscores.copy()
-        for color_name in pv.colors._hexcolors_with_underscores:
-            color_fmt = color_name if color_name in SPECIAL_CASES else color_name.replace('_', '')
-            if color_fmt in NOT_A_VTK_COLOR:
-                colors.pop(color_name)
-
-        color_names = list(colors.keys())
-        color_values = list(colors.values())
+        color_names = list(pv.plotting.colors._VTK_COLORS.keys())
+        color_values = list(pv.plotting.colors._VTK_COLORS.values())
 
         test_cases = zip(color_names, color_values)
         metafunc.parametrize('vtk_color', test_cases, ids=color_names)
@@ -184,9 +173,9 @@ def test_css4_colors(css4_color):
     assert pv.Color(name).hex_rgb.lower() == value.lower()
 
     # Test name
-    if _format_color_name(name) not in FORMATED_CSS_COLORS:
+    if name not in CSS4_COLORS:
         alt_name = pv.plotting.colors.color_synonyms[name]
-        assert _format_color_name(alt_name) in FORMATED_CSS_COLORS
+        assert alt_name in CSS4_COLORS
 
 
 def test_tab_colors(tab_color):
@@ -203,7 +192,7 @@ def test_vtk_colors(vtk_color):
 
     # Some pyvista colors are technically not valid VTK colors. We need to map their
     # synonym manually for the tests
-    vtk_synonyms = {
+    vtk_synonyms = {  # pyvista_color : vtk_color
         'light_slate_blue': 'slate_blue_light',
         'deep_cadmium_red': 'cadmium_red_deep',
         'light_cadmium_red': 'cadmium_red_light',

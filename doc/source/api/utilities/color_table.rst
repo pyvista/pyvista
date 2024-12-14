@@ -15,6 +15,21 @@ The colors on this page come from various sources, and include:
 See also ``matplotlib``'s `list of named colors <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
 for additional information about the ``CSS`` and ``TAB`` colors.
 
+.. note::
+
+    Many colors have multiple names which refer to the same color (e.g. ``'gray'`` and
+    ``'grey'``). These alternate names are listed where applicable. Underscores, spaces,
+    and hyphens are also acceptable inputs, e.g. ``'dark blue'``, ``'fire_brick'``,
+    etc. See :attr:`~pyvista.Color.name` for examples.
+
+.. note::
+    Some color names are not internally consistent, e.g.:
+
+    - ``'darkgray'`` is lighter than ``'gray'``,
+    - ``'lightpink'`` is darker than ``'pink'``, and
+    - ``'cadmiumyellow'`` is classified as an Orange color.
+
+
 .. dropdown:: All Colors Sorted by Name
 
     .. include:: /api/utilities/color_table/color_table.rst
