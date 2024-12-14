@@ -61,6 +61,7 @@ pinned = [ # Pinned versions of core dependencies
 typing = [
   'IPython<8.31.0',
   'imageio<2.37.0',
+  'ipywidgets<8.2.0',
   'mypy<1.14.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
@@ -223,7 +224,7 @@ testpaths = 'tests'
 check_untyped_defs = true
 disallow_any_generics = true
 enable_error_code = ["ignore-without-code"]
-exclude = ['pyvista/ext/']
+exclude = ['pyvista/conftest.py', 'pyvista/ext/']
 extra_checks = true
 packages = ['pyvista']
 plugins = ['npt_promote', 'numpy.typing.mypy_plugin']

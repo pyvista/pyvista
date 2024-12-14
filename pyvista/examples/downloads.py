@@ -5358,7 +5358,7 @@ def download_osmnx_graph(load=True):  # pragma: no cover
     if pyvista._version.version_info >= (0, 47):
         raise RuntimeError('Remove this deprecated function')
     try:
-        import osmnx  # type: ignore[import-untyped] # noqa: F401
+        import osmnx  # type: ignore[import-not-found] # noqa: F401
     except ImportError:
         raise ImportError('Install `osmnx` to use this example')
     return _download_dataset(_dataset_osmnx_graph, load=load)
