@@ -47,6 +47,7 @@ from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
 from pyvista.plotting.colors import _CSS_COLORS
 from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
+from pyvista.plotting.colors import _format_color_dict
 
 if TYPE_CHECKING:
     from types import FunctionType
@@ -442,20 +443,14 @@ class ColorTable(DocTable):
 
 
 def _get_color_source_badge(name: str) -> str:
-    if name in _CSS_COLORS:
+    if name in _format_color_dict(_CSS_COLORS):
         return ':bdg-primary:`CSS`'
-    elif name in _TABLEAU_COLORS:
+    elif name in _format_color_dict(_TABLEAU_COLORS):
         return ':bdg-success:`TABLEAU`'
-    elif name in _PARAVIEW_COLORS:
+    elif name in _format_color_dict(_PARAVIEW_COLORS):
         return ':bdg-danger:`PARAVIEW`'
     else:
         raise KeyError(f'Invalid color name "{name}".')
-
-
-def _sorted_color_names():
-    color_names = [pv.Color(c).name for c in pv.hexcolors.keys()]
-    # Sort colors by hue, saturation, and value (HSV)
-    return sorted(color_names, key=lambda name: name.replace('tab:', ''))
 
 
 def _sort_colors_by_hls(colors: Sequence[Color]):

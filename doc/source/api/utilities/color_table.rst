@@ -12,7 +12,14 @@ The colors on this page come from various sources, and include:
 - default colors used by :bdg-danger:`PARAVIEW`
 
 See also ``matplotlib``'s `list of named colors <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
-for additional information about the ``CSS`` and ``TABLEAU`` colors.
+for additional information about the ``CSS`` and ``TAB`` colors.
+
+.. note::
+
+    Many colors have multiple names which refer to the same color (``'gray'`` and ``'grey'``,
+    for example). These alternate names are listed where applicable. Underscores, spaces,
+    and hyphens between words are also acceptable inputs. See :attr:`Color.name <pyvista.Color.name>`
+    for examples.
 
 .. dropdown:: Colors Sorted by Name
 

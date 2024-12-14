@@ -121,6 +121,13 @@ def test_color():
         c[4]  # Invalid integer index
 
 
+@pytest.mark.parametrize('delimiter', ['-', '_', ' '])
+def test_color_name_delimiter(delimiter):
+    name = f'medium{delimiter}spring{delimiter}green'
+    c = pv.Color(name)
+    assert c.name == name.replace(delimiter, '')
+
+
 def test_color_hls():
     lime = pv.Color('lime')
     actual_hls = lime._float_hls

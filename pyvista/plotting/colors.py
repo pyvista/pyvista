@@ -42,9 +42,22 @@ IPYGANY_MAP = {
     'spectral': 'Spectral',
 }
 
-# Following colors are copied from matplotlib.colors, synonyms (colors with a
-# different name but same hex value) are removed and put in the `color_synonyms`
-# dictionary. An extra `paraview_background` color is added.
+
+_ALLOWED_COLOR_NAME_DELIMITERS = '_- '
+_REMOVE_DELIMITER_LOOKUP = str.maketrans('', '', _ALLOWED_COLOR_NAME_DELIMITERS)
+
+
+def _format_color_name(name: str):
+    """Format name as lower-case and remove delimiters."""
+    return name.lower().translate(_REMOVE_DELIMITER_LOOKUP)
+
+
+def _format_color_dict(colors: dict[str, str]):
+    return {_format_color_name(n): h.lower() for n, h in colors.items()}
+
+
+# Colors from the CSS standard. Matches matplotlib.colors.CSS4_COLORS
+# but with synonyms removed
 _CSS_COLORS = {
     'aliceblue': '#F0F8FF',
     'antiquewhite': '#FAEBD7',
@@ -201,14 +214,9 @@ _TABLEAU_COLORS = {
 }
 _PARAVIEW_COLORS = {'paraview_background': '#52576e'}
 
-hexcolors = {
-    **_CSS_COLORS,
-    **_PARAVIEW_COLORS,
-    **_TABLEAU_COLORS,
-}
-hexcolors = {name: hex_.lower() for name, hex_ in hexcolors.items()}
+hexcolors = _format_color_dict(_CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS)
 
-color_names = {h.lower(): n for n, h in hexcolors.items()}
+color_names = {h: n for n, h in hexcolors.items()}
 
 color_char_to_word = {
     'b': 'blue',
@@ -221,7 +229,7 @@ color_char_to_word = {
     'w': 'white',
 }
 
-color_synonyms = {
+_color_synonyms = {
     **color_char_to_word,
     'aqua': 'cyan',
     'darkgrey': 'darkgray',
@@ -234,6 +242,10 @@ color_synonyms = {
     'pv': 'paraview_background',
     'paraview': 'paraview_background',
     'slategrey': 'slategray',
+    'lightgoldenrod': 'lightgoldenrodyellow',
+}
+color_synonyms = {
+    _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
 }
 
 matplotlib_default_colors = [
@@ -725,7 +737,7 @@ class Color:
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
         arg = n
-        n = n.lower()
+        n = _format_color_name(n)
         if n in color_synonyms:
             # Synonym of registered color name
             # Convert from synonym to full hex
@@ -908,6 +920,9 @@ class Color:
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
+        The name is always formatted as a lower case string without
+        any delimiters.
+
         See :ref:`color_table` for a list of supported colors.
 
         Returns
@@ -917,12 +932,25 @@ class Color:
 
         Examples
         --------
-        Create a blue color with half opacity.
+        Create a dark blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity=0.5)
+        >>> c = pv.Color("darkblue", default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80', opacity=128)
+        Color(name='darkblue', hex='#00008b80', opacity=128)
+
+        When creating a new ``Color``, the name may be delimited with a space
+        `` ``, hyphen ``-``, or underscore ``_``, or written as a single word.
+
+        >>> c = pv.Color("dark blue", default_opacity=0.5)
+
+        Upper-case letters are also supported.
+
+        >>> c = pv.Color("DarkBlue", default_opacity=0.5)
+
+        However, the name is always standardized as a single lower-case word.
+        >>> c
+        Color(name='darkblue', hex='#00008b80', opacity=128)
 
         """
         return self._name
