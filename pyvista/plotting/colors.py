@@ -1026,7 +1026,6 @@ class Color:
 
         However, the name is always standardized as a single lower-case word.
         >>> c
-        >>> c
         Color(name='darkblue', hex='#00008b80', opacity=128)
 
         """

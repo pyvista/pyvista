@@ -7,10 +7,10 @@ Table of named colors supported by :class:`~pyvista.Color` and :class:`~pyvista.
 
 The colors on this page come from various sources, and include:
 
-- :bdg-primary:`CSS` - all standard `named web colors <https://www.w3.org/TR/css-color-4/#named-colors>`_
-- :bdg-secondary:`VTK` - colors from `vtkNamedColors <https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html#VTKColorNames>`_
-- :bdg-success:`TAB` - classic color palette of 10 colors used by ``Tableau``
-- :bdg-danger:`PV` - default colors used by ``ParaView``
+- :bdg-primary:`CSS`  all standard `named web colors <https://www.w3.org/TR/css-color-4/#named-colors>`_
+- :bdg-secondary:`VTK`  colors from `vtkNamedColors <https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html#VTKColorNames>`_
+- :bdg-success:`TAB`  palette of 10 colors used by ``Tableau``
+- :bdg-danger:`PV`  default colors used by ``ParaView``
 
 See also ``matplotlib``'s `list of named colors <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
 for additional information about the ``CSS`` and ``TAB`` colors.
@@ -19,7 +19,7 @@ for additional information about the ``CSS`` and ``TAB`` colors.
 
     Many colors have multiple names which refer to the same color (``'gray'`` and ``'grey'``,
     for example). These alternate names are listed where applicable. Underscores, spaces,
-    and hyphens are also acceptable inputs. See :attr:`~pyvista.Color.name` for examples.
+    and hyphens are also acceptable inputs. See :attr:`Color.name <pyvista.Color.name>` for examples.
 
 .. note::
 
@@ -27,7 +27,7 @@ for additional information about the ``CSS`` and ``TAB`` colors.
 
     - ``'darkgray'`` is lighter than ``'gray'``,
     - ``'lightpink'`` is darker than ``'pink'``, and
-    - ``'cadmiumyellow'`` is classified as an Orange color.
+    - ``'cadmiumyellow'`` is classified as an ``Orange`` color.
 
 .. dropdown:: All Colors
 
