@@ -1068,7 +1068,7 @@ def get_cmap_safe(cmap):
 
         # Try colorcet first
         if has_module('colorcet'):
-            import colorcet
+            import colorcet  # type: ignore[import-untyped]
 
             try:
                 return colorcet.cm[cmap]
@@ -1077,7 +1077,7 @@ def get_cmap_safe(cmap):
 
         # Try cmocean second
         if has_module('cmocean'):
-            import cmocean
+            import cmocean  # type: ignore[import-not-found]
 
             try:
                 return getattr(cmocean.cm, cmap)

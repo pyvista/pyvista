@@ -630,11 +630,11 @@ def load_hydrogen_orbital(n=1, l=0, m=0, zoom_fac=1.0):
 
 def _hydrogen_orbital_load_func(n=1, l=0, m=0, zoom_fac=1.0):
     try:
-        from sympy import lambdify
-        from sympy.abc import phi
+        from sympy import lambdify  # type: ignore[import-not-found]
+        from sympy.abc import phi  # type: ignore[import-not-found]
         from sympy.abc import r
         from sympy.abc import theta
-        from sympy.physics.hydrogen import Psi_nlm
+        from sympy.physics.hydrogen import Psi_nlm  # type: ignore[import-not-found]
     except ImportError:  # pragma: no cover
         raise ImportError(
             '\n\nInstall sympy to run this example. Run:\n\n    pip install sympy\n',

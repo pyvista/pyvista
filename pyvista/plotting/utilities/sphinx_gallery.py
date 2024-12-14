@@ -38,7 +38,7 @@ def html_rst(
     srcsetpaths=None,
 ):  # pragma: no cover  # numpydoc ignore=PR01,RT01
     """Generate reST for viewer with exported scene."""
-    from sphinx_gallery.scrapers import _get_srcset_st
+    from sphinx_gallery.scrapers import _get_srcset_st  # type: ignore[import-not-found]
     from sphinx_gallery.scrapers import figure_rst
 
     if srcsetpaths is None:

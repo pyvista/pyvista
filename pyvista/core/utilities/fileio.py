@@ -28,7 +28,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
     import imageio
-    import meshio
+    import meshio  # type: ignore[import-not-found]
 
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core.composite import MultiBlock
@@ -271,7 +271,7 @@ def read(
         # if using force_ext, we are explicitly only using vtk readers
         if force_ext is not None:
             raise OSError('This file was not able to be automatically read by pyvista.')
-        from meshio._exceptions import ReadError
+        from meshio._exceptions import ReadError  # type: ignore[import-not-found]
 
         try:
             return read_meshio(filename)
@@ -424,7 +424,8 @@ def read_exodus(
     try:
         from vtkmodules.vtkIOExodus import vtkExodusIIReader
     except ImportError:
-        from vtk import vtkExodusIIReader  # type: ignore[no-redef]
+        # TODO: import from vtkmodules to fix the `import-untyped` error
+        from vtk import vtkExodusIIReader  # type: ignore[no-redef, import-untyped]
 
     reader = vtkExodusIIReader()
     reader.SetFileName(str(filename))
@@ -930,11 +931,11 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
 
     """
     try:  # meshio<5.0 compatibility
-        from meshio.vtk._vtk import meshio_to_vtk_type
+        from meshio.vtk._vtk import meshio_to_vtk_type  # type: ignore[import-not-found]
         from meshio.vtk._vtk import vtk_type_to_numnodes
     except ImportError:  # pragma: no cover
-        from meshio._vtk_common import meshio_to_vtk_type
-        from meshio.vtk._vtk_42 import vtk_type_to_numnodes
+        from meshio._vtk_common import meshio_to_vtk_type  # type: ignore[import-not-found]
+        from meshio.vtk._vtk_42 import vtk_type_to_numnodes  # type: ignore[import-not-found]
 
     # Extract cells from meshio.Mesh object
     cells = []

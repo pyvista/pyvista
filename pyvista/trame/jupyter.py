@@ -7,13 +7,13 @@ import logging
 import os
 import warnings
 
-from trame.widgets import html as html_widgets
+from trame.widgets import html as html_widgets  # type: ignore[import-not-found]
 from trame.widgets import vtk as vtk_widgets
 from trame.widgets import vuetify as vuetify2_widgets
 from trame.widgets import vuetify3 as vuetify3_widgets
 
 try:
-    from ipywidgets.widgets import HTML
+    from ipywidgets.widgets import HTML  # type: ignore[import-untyped]
 except ImportError:
     HTML = object
 
@@ -401,7 +401,9 @@ def show_trame(
     )
 
     if jupyter_extension_enabled:  # pragma: no cover
-        from trame_client.ui.core import iframe_url_builder_jupyter_extension
+        from trame_client.ui.core import (  # type: ignore[import-not-found]
+            iframe_url_builder_jupyter_extension,
+        )
 
         iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
         src = iframe_attrs['src']
@@ -446,7 +448,7 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     """
     try:
-        import nest_asyncio
+        import nest_asyncio  # type: ignore[import-not-found]
     except ImportError:
         raise ImportError(
             """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:

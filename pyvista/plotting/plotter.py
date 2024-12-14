@@ -636,7 +636,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         try:
-            from trame_vtk.tools.vtksz2html import write_html
+            from trame_vtk.tools.vtksz2html import write_html  # type: ignore[import-not-found]
         except ImportError:  # pragma: no cover
             raise ImportError('Please install trame dependencies: pip install "pyvista[jupyter]"')
 

@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from trame.ui.vuetify3 import VAppLayout
-from trame.widgets import html
+from trame.ui.vuetify3 import VAppLayout  # type: ignore[import-not-found]
+from trame.widgets import html  # type: ignore[import-not-found]
 from trame.widgets import vuetify3 as vuetify
 
 from pyvista.trame.views import PyVistaLocalView
@@ -21,7 +21,7 @@ from pyvista.trame.views import PyVistaRemoteView
 from .base_viewer import BaseViewer
 
 if TYPE_CHECKING:  # pragma: no cover
-    from trame_client.ui.core import AbstractLayout
+    from trame_client.ui.core import AbstractLayout  # type: ignore[import-not-found]
 
 
 def button(click, icon, tooltip):  # numpydoc ignore=PR01

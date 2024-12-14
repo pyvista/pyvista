@@ -11,12 +11,12 @@ from __future__ import annotations
 import io
 from typing import TYPE_CHECKING
 
-from trame.app import get_server
+from trame.app import get_server  # type: ignore[import-not-found]
 
 import pyvista
 
 if TYPE_CHECKING:  # pragma: no cover
-    from trame_client.ui.core import AbstractLayout
+    from trame_client.ui.core import AbstractLayout  # type: ignore[import-not-found]
 
 
 class BaseViewer:

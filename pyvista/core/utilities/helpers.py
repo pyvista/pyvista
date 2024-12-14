@@ -21,7 +21,7 @@ from .fileio import from_meshio
 from .fileio import is_meshio_mesh
 
 if TYPE_CHECKING:  # pragma: no cover
-    from meshio import Mesh
+    from meshio import Mesh  # type: ignore[import-not-found]
     from trimesh import Trimesh
 
     from pyvista import DataObject

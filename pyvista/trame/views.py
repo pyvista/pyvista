@@ -5,11 +5,11 @@ from __future__ import annotations
 import io
 import weakref
 
-from trame.app import get_server as trame_get_server
-from trame.widgets.vtk import VtkLocalView
+from trame.app import get_server as trame_get_server  # type: ignore[import-untyped]
+from trame.widgets.vtk import VtkLocalView  # type: ignore[import-untyped]
 from trame.widgets.vtk import VtkRemoteLocalView
 from trame.widgets.vtk import VtkRemoteView
-from trame_vtk.tools.vtksz2html import write_html
+from trame_vtk.tools.vtksz2html import write_html  # type: ignore[import-untyped]
 
 CLOSED_PLOTTER_ERROR = 'The render window for this plotter has been destroyed. Do not call `show()` for the plotter before passing to trame.'
 

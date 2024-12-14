@@ -30,9 +30,9 @@ import shutil
 import warnings
 
 import numpy as np
-import pooch
+import pooch  # type: ignore[import-untyped]
 from pooch import Unzip
-from pooch.utils import get_logger
+from pooch.utils import get_logger  # type: ignore[import-untyped]
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
@@ -5358,7 +5358,7 @@ def download_osmnx_graph(load=True):  # pragma: no cover
     if pyvista._version.version_info >= (0, 47):
         raise RuntimeError('Remove this deprecated function')
     try:
-        import osmnx  # noqa: F401
+        import osmnx  # type: ignore[import-untyped] # noqa: F401
     except ImportError:
         raise ImportError('Install `osmnx` to use this example')
     return _download_dataset(_dataset_osmnx_graph, load=load)

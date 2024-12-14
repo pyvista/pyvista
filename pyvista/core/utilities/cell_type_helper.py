@@ -5,7 +5,8 @@ from __future__ import annotations
 try:
     from vtkmodules import vtkCommonDataModel
 except:  # pragma: no cover
-    import vtk as vtkCommonDataModel  # type: ignore[no-redef]
+    # TODO: import from vtkmodules to fix `import-untyped` error
+    import vtk as vtkCommonDataModel  # type: ignore[no-redef, import-untyped]
 
 vtkcell_types = [
     ['VTK_EMPTY_CELL', 'vtkEmptyCell'],

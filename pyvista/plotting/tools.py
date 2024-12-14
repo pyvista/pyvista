@@ -657,7 +657,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
                 if not interpolate:
                     raise ValueError('No interpolation.')
                 # Use a quadratic interp if scipy is available
-                from scipy.interpolate import interp1d
+                from scipy.interpolate import interp1d  # type: ignore[import-not-found]
 
                 # quadratic has best/smoothest results
                 f = interp1d(xo, mapping, kind=kind)

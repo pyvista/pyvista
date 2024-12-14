@@ -15,7 +15,7 @@ from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
 
 with contextlib.suppress(ImportError):
-    from scipy.spatial.transform import Rotation
+    from scipy.spatial.transform import Rotation  # type: ignore[import-not-found]
 
 # NOTE:
 # Type aliases are automatically expanded in the documentation.

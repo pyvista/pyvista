@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import pooch
+import pooch  # type: ignore[import-untyped]
 
 from .downloads import USER_DATA_PATH
 

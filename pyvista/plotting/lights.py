@@ -12,7 +12,8 @@ try:
     from vtkmodules.vtkRenderingCore import vtkLight
     from vtkmodules.vtkRenderingCore import vtkLightActor
 except ImportError:  # pragma: no cover
-    from vtk import vtkLight  # type: ignore[no-redef]
+    # TODO: import these explicitly from `vtkmodules` to fix the `import-untyped` errors
+    from vtk import vtkLight  # type: ignore[no-redef,import-untyped]
     from vtk import vtkLightActor  # type: ignore[no-redef]
     from vtk import vtkMatrix4x4  # type: ignore[no-redef]
 

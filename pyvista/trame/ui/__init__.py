@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import warnings
 
-from trame.app import get_server
+from trame.app import get_server  # type: ignore[import-not-found]
 
 from .vuetify2 import Viewer as Vue2Viewer
 from .vuetify3 import Viewer as Vue3Viewer
