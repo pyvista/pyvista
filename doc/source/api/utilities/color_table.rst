@@ -12,7 +12,7 @@ The colors on this page come from various sources, and include:
 - default colors used by :bdg-danger:`PARAVIEW`
 
 See also ``matplotlib``'s `list of named colors <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
-for additional information about the ``CSS`` and ``TAB`` colors.
+for additional information about the ``CSS`` and ``TABLEAU`` colors.
 
 .. note::
 
