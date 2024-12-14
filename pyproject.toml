@@ -60,9 +60,11 @@ pinned = [ # Pinned versions of core dependencies
 
 typing = [
   'IPython<8.31.0',
+  'imageio<2.37.0',
   'mypy<1.14.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
+  'pandas-stubs<2.2.4',
   'pyvista[pinned]',
   'trimesh<4.6.0',
   'types-tqdm<4.67.0',

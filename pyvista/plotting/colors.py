@@ -1068,7 +1068,7 @@ def get_cmap_safe(cmap):
 
         # Try colorcet first
         if has_module('colorcet'):
-            import colorcet  # type: ignore[import-untyped]
+            import colorcet  # type: ignore[import-not-found]
 
             try:
                 return colorcet.cm[cmap]
