@@ -14,6 +14,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
@@ -1140,43 +1141,39 @@ def test_extrude_capping_warnings():
         arc.extrude_rotate()
 
 
+def test_flip_normals(sphere):
+    with pytest.warns(PyVistaDeprecationWarning):
+        sphere.flip_normals()
+
+
 @pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
-def test_flip_normals(mesh):
-    assert mesh.point_data._active_normals_name == 'Normals'
-    mesh_flipped = mesh.copy()
-    mesh_flipped.flip_normals()
+def test_flip_normal_vectors(mesh):
+    mesh = mesh.compute_normals()
+    flipped = mesh.flip_normal_vectors(inplace=True, progress_bar=True)
+    assert flipped is mesh
 
-    assert np.allclose(mesh_flipped.point_data['Normals'], -mesh.point_data['Normals'])
-    assert np.allclose(mesh_flipped.regular_faces[0], mesh.regular_faces[0][::-1])
+    flipped = mesh.flip_normal_vectors()
+    assert flipped is not mesh
 
-    copied = mesh.flip_normals(inplace=False)
-    assert copied is not sphere
+    assert np.allclose(flipped.point_data['Normals'], -mesh.point_data['Normals'])
+    assert np.allclose(flipped.cell_data['Normals'], -mesh.cell_data['Normals'])
+
+    # Test ordering is unaffected
+    assert np.allclose(flipped.faces, mesh.faces)
 
 
-@pytest.mark.parametrize('reverse_normals', [True, False])
-@pytest.mark.parametrize('reverse_cells', [True, False])
-def test_reverse_sense(reverse_normals, reverse_cells):
-    point_ids = [0, 1, 3, 2]
-    point_ids_reversed = point_ids[::-1]
-    normal_vector = np.array((0.0, 0.0, 1.0))
-    normal_vector_reversed = normal_vector * -1
+@pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
+def test_flip_faces(mesh):
+    flipped = mesh.flip_faces(inplace=True, progress_bar=True)
+    assert flipped is mesh
 
-    plane = pv.Plane(i_resolution=1, j_resolution=1)
-    assert 'Normals' in plane.point_data
-    assert np.allclose(plane['Normals'][0], normal_vector)
-    assert np.array_equal(plane.regular_faces[0], point_ids)
+    flipped = mesh.flip_faces()
+    assert flipped is not mesh
 
-    plane.reverse_sense(reverse_cells=reverse_cells, reverse_normals=reverse_normals)
+    assert np.allclose(flipped.regular_faces[0], mesh.regular_faces[0][::-1])
 
-    if reverse_normals:
-        assert np.allclose(plane['Normals'][0], normal_vector_reversed)
-    else:
-        assert np.allclose(plane['Normals'][0], normal_vector)
-
-    if reverse_cells:
-        assert np.array_equal(plane.regular_faces[0], point_ids_reversed)
-    else:
-        assert np.array_equal(plane.regular_faces[0], point_ids)
+    # Test normals are unaffected
+    assert np.allclose(flipped.point_data['Normals'], mesh.point_data['Normals'])
 
 
 def test_n_verts():
