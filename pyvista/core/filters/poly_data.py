@@ -2847,7 +2847,7 @@ class PolyDataFilters(DataSetFilters):
         angle=0.0,
         factor=2.0,
         normal=None,
-        tcoords: bool = False,
+        tcoords: bool | str = False,
         preference='points',
         progress_bar: bool = False,
     ):
