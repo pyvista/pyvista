@@ -17,10 +17,10 @@ for additional information about the ``CSS`` and ``TAB`` colors.
 
 .. note::
 
-    Many colors have multiple names which refer to the same color (e.g. ``'gray'`` and
-    ``'grey'``). These alternate names are listed where applicable. Underscores, spaces,
-    and hyphens are also acceptable inputs, e.g. ``'dark blue'``, ``'fire_brick'``,
-    etc. See :attr:`~pyvista.Color.name` for examples.
+    Many colors have multiple names which refer to the same color (``'gray'`` and ``'grey'``,
+    for example). These alternate names are listed where applicable. Underscores, spaces,
+    and hyphens are also acceptable inputs (``'dark blue'``, ``'fire_brick'``).
+    See :attr:`~pyvista.Color.name` for examples.
 
 .. note::
 
