@@ -2774,8 +2774,8 @@ class PolyDataFilters(DataSetFilters):
         """
         # Deprecated on v0.45.0, estimated removal on v0.48.0
         warnings.warn(
-            '`flip_normals` is deprecated. Use `reverse_cell_ordering` instead. '
-            'Note that `inplace` is `False` by default for the new filter.',
+            '`flip_normals` is deprecated. Use `flip_faces` instead. '
+            'Note that `inplace` is now `False` by default for the new filter.',
             PyVistaDeprecationWarning,
         )
         if not self.is_all_triangles:  # type: ignore[attr-defined]
