@@ -1016,7 +1016,7 @@ class Color:
         Color(name='darkblue', hex='#00008b80', opacity=128)
 
         When creating a new ``Color``, the name may be delimited with a space
-        `` ``, hyphen ``-``, or underscore ``_``, or written as single word .
+        `` ``, hyphen ``-``, or underscore ``_``, or written as a single word.
 
         >>> c = pv.Color("dark blue", default_opacity=0.5)
 
