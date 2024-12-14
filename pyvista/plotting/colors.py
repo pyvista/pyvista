@@ -43,7 +43,7 @@ IPYGANY_MAP = {
 }
 
 
-_ALLOWED_COLOR_NAME_DELIMITERS = '_- '
+_ALLOWED_COLOR_NAME_DELIMITERS = '_' + '-' + ' '
 _REMOVE_DELIMITER_LOOKUP = str.maketrans('', '', _ALLOWED_COLOR_NAME_DELIMITERS)
 
 
@@ -53,6 +53,7 @@ def _format_color_name(name: str):
 
 
 def _format_color_dict(colors: dict[str, str]):
+    """Format name hex value."""
     return {_format_color_name(n): h.lower() for n, h in colors.items()}
 
 
