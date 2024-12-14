@@ -382,9 +382,9 @@ def Arrow(
 
     if scale == 'auto':
         scale = float(np.linalg.norm(direction))
-    if isinstance(scale, (float, int)):
+    elif isinstance(scale, (float, int)):
         surf.points *= scale  # type: ignore[misc]
-    elif scale is not None:
+    else:
         raise TypeError("Scale must be either float, int or 'auto'.")
 
     translate(surf, start, direction)

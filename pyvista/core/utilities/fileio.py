@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import itertools
 from pathlib import Path
 import pickle
@@ -25,7 +26,6 @@ from .observers import Observer
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
-    from collections.abc import Sequence
 
     import imageio
     import meshio
@@ -157,7 +157,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
 
 def read(
-    filename: str | Path,
+    filename: str | Path | Sequence[str | Path],
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,
@@ -193,7 +193,7 @@ def read(
 
     Parameters
     ----------
-    filename : str, Path
+    filename : str, Path, Sequence[str | Path]
         The string path to the file to read. If a list of files is
         given, a :class:`pyvista.MultiBlock` dataset is returned with
         each file being a separate block in the dataset.
@@ -239,11 +239,11 @@ def read(
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
 
-    if isinstance(filename, (list, tuple)):
+    if isinstance(filename, Sequence):
         multi = pyvista.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
-            multi.append(read(each, file_format=file_format), name)
+            multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
         return multi
     filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():

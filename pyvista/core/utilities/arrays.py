@@ -248,12 +248,19 @@ def convert_array(
 def convert_array(
     arr: npt.ArrayLike, name: str | None = ..., deep: bool = ..., array_type: int | None = None
 ) -> _vtk.vtkAbstractArray: ...
+@overload
 def convert_array(
-    arr: npt.ArrayLike | _vtk.vtkAbstractArray,
+    arr: None,
     name: str | None = None,
     deep: bool = False,
     array_type: int | None = None,
-) -> npt.NDArray[Any] | _vtk.vtkAbstractArray:
+) -> None: ...
+def convert_array(
+    arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
+    name: str | None = None,
+    deep: bool = False,
+    array_type: int | None = None,
+) -> npt.NDArray[Any] | _vtk.vtkAbstractArray | None:
     """Convert a NumPy array to a vtkDataArray or vice versa.
 
     Parameters
