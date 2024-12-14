@@ -173,9 +173,9 @@ def test_css4_colors(css4_color):
     assert pv.Color(name).hex_rgb.lower() == value.lower()
 
     # Test name
-    if name not in CSS4_COLORS:
+    if name not in pv.plotting.colors._CSS_COLORS:
         alt_name = pv.plotting.colors.color_synonyms[name]
-        assert alt_name in CSS4_COLORS
+        assert alt_name in pv.plotting.colors._CSS_COLORS
 
 
 def test_tab_colors(tab_color):
