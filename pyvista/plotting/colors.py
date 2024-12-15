@@ -320,9 +320,7 @@ _color_synonyms = {
     'slategrey': 'slategray',
     'lightgoldenrod': 'lightgoldenrodyellow',
 }
-color_synonyms = {
-    _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
-}
+
 color_synonyms = {
     _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
 }
