@@ -416,7 +416,7 @@ class Texture(DataObject, _vtk.vtkTexture):
 
     def __repr__(self):
         """Return the object representation."""
-        return pyvista.DataSet.__repr__(self)  # type: ignore[arg-type]
+        return pyvista.DataSet.__repr__(self)  # type: ignore[type-var]
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
