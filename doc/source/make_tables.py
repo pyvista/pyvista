@@ -452,12 +452,6 @@ def _get_color_source_badge(name: str) -> str:
         raise KeyError(f'Invalid color name "{name}".')
 
 
-def _sorted_color_names():
-    color_names = [pv.Color(c).name for c in pv.hexcolors.keys()]
-    # Sort colors by hue, saturation, and value (HSV)
-    return sorted(color_names, key=lambda name: name.replace('tab:', ''))
-
-
 def _sort_colors_by_hls(colors: Sequence[Color]):
     return sorted(colors, key=lambda c: c._float_hls)
 
@@ -470,6 +464,8 @@ GRAYS_SATURATION_THRESHOLD = 0.15
 # Lightness constants
 LOWER_LIGHTNESS_THRESHOLD = 0.1
 UPPER_LIGHTNESS_THRESHOLD = 0.9
+
+BROWN_SATURATION_LIGHTNESS_THRESHOLD = 1.2
 
 # Hue constants in range [0, 1]
 _360 = 360.0
@@ -490,6 +486,7 @@ class ColorClassification(StrEnum):
     RED = auto()
     YELLOW = auto()
     ORANGE = auto()
+    BROWN = auto()
     GREEN = auto()
     CYAN = auto()
     BLUE = auto()
@@ -515,7 +512,12 @@ def classify_color(color: Color) -> ColorClassification:
     elif hue >= MAGENTA_UPPER_BOUND or hue < RED_UPPER_BOUND:
         return ColorClassification.RED
     elif RED_UPPER_BOUND <= hue < ORANGE_UPPER_BOUND:
-        return ColorClassification.ORANGE
+        # Split oranges into oranges and browns
+        # Browns have a relatively low lightness and/or saturation
+        if (lightness + saturation) < BROWN_SATURATION_LIGHTNESS_THRESHOLD:
+            return ColorClassification.BROWN
+        else:
+            return ColorClassification.ORANGE
     elif ORANGE_UPPER_BOUND <= hue < YELLOW_UPPER_BOUND:
         return ColorClassification.YELLOW
     elif YELLOW_UPPER_BOUND <= hue < GREEN_UPPER_BOUND:
@@ -584,6 +586,12 @@ class ColorTableORANGE(ColorClassificationTable):
     """Class to generate ORANGE colors table."""
 
     classification = ColorClassification.ORANGE
+
+
+class ColorTableBROWN(ColorClassificationTable):
+    """Class to generate BROWN colors table."""
+
+    classification = ColorClassification.BROWN
 
 
 class ColorTableYELLOW(ColorClassificationTable):
@@ -2271,6 +2279,7 @@ def make_all_tables():  # noqa: D103
     ColorTableBLACK.generate()
     ColorTableRED.generate()
     ColorTableORANGE.generate()
+    ColorTableBROWN.generate()
     ColorTableYELLOW.generate()
     ColorTableGREEN.generate()
     ColorTableCYAN.generate()
