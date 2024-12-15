@@ -172,6 +172,7 @@ from .reader import CGNSReader
 from .reader import DEMReader
 from .reader import DICOMReader
 from .reader import EnSightReader
+from .reader import ExodusIIReader
 from .reader import FacetReader
 from .reader import FLUENTCFFReader
 from .reader import FluentReader
