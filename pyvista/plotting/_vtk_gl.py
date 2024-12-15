@@ -30,6 +30,7 @@ from vtkmodules.vtkRenderingOpenGL2 import vtkOpenGLTexture
 from vtkmodules.vtkRenderingOpenGL2 import vtkRenderPassCollection
 from vtkmodules.vtkRenderingOpenGL2 import vtkRenderStepsPass
 from vtkmodules.vtkRenderingOpenGL2 import vtkSequencePass
+from vtkmodules.vtkRenderingOpenGL2 import vtkShader
 from vtkmodules.vtkRenderingOpenGL2 import vtkShadowMapPass
 from vtkmodules.vtkRenderingOpenGL2 import vtkSSAAPass
 from vtkmodules.vtkRenderingOpenGL2 import vtkSSAOPass
