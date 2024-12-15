@@ -591,7 +591,7 @@ class Color:
     or ``float``) is considered a :data:`ColorLike` parameter and can be converted
     by this class.
 
-    See :ref:`color_table` for a list of supported colors.
+    See :ref:`named_colors` for a list of supported colors.
 
     .. note:
 
@@ -1000,7 +1000,7 @@ class Color:
         The name is always formatted as a lower case string without
         any delimiters.
 
-        See :ref:`color_table` for a list of supported colors.
+        See :ref:`named_colors` for a list of supported colors.
 
         Returns
         -------

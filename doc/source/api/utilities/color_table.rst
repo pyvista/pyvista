@@ -1,9 +1,9 @@
-.. _color_table:
+.. _named_colors:
 
-Color Table
-===========
+Named Colors
+============
 
-Table of named colors supported by :class:`~pyvista.Color` and :class:`~pyvista.Plotter`.
+Tables of named colors supported by :class:`~pyvista.Color` and :class:`~pyvista.Plotter`.
 
 The colors on this page come from various sources, and include:
 
@@ -22,7 +22,7 @@ for additional information about the ``CSS`` and ``TAB`` colors.
     and hyphens between words are also acceptable inputs. See :attr:`Color.name <pyvista.Color.name>`
     for examples.
 
-.. note::
+.. warning::
 
     Some color names are not internally consistent. For example,
 
@@ -30,11 +30,17 @@ for additional information about the ``CSS`` and ``TAB`` colors.
     - ``'lightpink'`` is darker than ``'pink'``, and
     - ``'cadmiumyellow'`` is classified as an ``Orange`` color.
 
+Sorted By Name
+--------------
+
 .. dropdown:: All Colors
 
     All named colors sorted alphabetically.
 
     .. include:: /api/utilities/color_table/color_table.rst
+
+Sorted by Color
+---------------
 
 .. dropdown:: Blacks
     :open:
