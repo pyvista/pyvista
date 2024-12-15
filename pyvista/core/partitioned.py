@@ -8,13 +8,14 @@ from typing import overload
 
 from . import _vtk_core as _vtk
 from .dataobject import DataObject
-from .dataset import DataSet
 from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
+
+    from .dataset import DataSet
 
 
 class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence):  # type: ignore[type-arg]
