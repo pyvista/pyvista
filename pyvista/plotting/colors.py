@@ -42,8 +42,7 @@ IPYGANY_MAP = {
     'spectral': 'Spectral',
 }
 
-
-_ALLOWED_COLOR_NAME_DELIMITERS = '_- '
+_ALLOWED_COLOR_NAME_DELIMITERS = '_' + '-' + ' '
 _REMOVE_DELIMITER_LOOKUP = str.maketrans('', '', _ALLOWED_COLOR_NAME_DELIMITERS)
 
 
@@ -53,6 +52,7 @@ def _format_color_name(name: str):
 
 
 def _format_color_dict(colors: dict[str, str]):
+    """Format name and hex value."""
     return {_format_color_name(n): h.lower() for n, h in colors.items()}
 
 
@@ -319,6 +319,9 @@ _color_synonyms = {
     'paraview': 'paraview_background',
     'slategrey': 'slategray',
     'lightgoldenrod': 'lightgoldenrodyellow',
+}
+color_synonyms = {
+    _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
 }
 color_synonyms = {
     _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
@@ -1015,8 +1018,8 @@ class Color:
         >>> c
         Color(name='darkblue', hex='#00008b80', opacity=128)
 
-        When creating a new ``Color``, the name may be delimited with a space
-        `` ``, hyphen ``-``, or underscore ``_``, or written as a single word.
+        When creating a new ``Color``, the name may be delimited with a space,
+        hyphen, underscore, or written as a single word.
 
         >>> c = pv.Color("dark blue", default_opacity=0.5)
 
@@ -1025,6 +1028,7 @@ class Color:
         >>> c = pv.Color("DarkBlue", default_opacity=0.5)
 
         However, the name is always standardized as a single lower-case word.
+
         >>> c
         Color(name='darkblue', hex='#00008b80', opacity=128)
 

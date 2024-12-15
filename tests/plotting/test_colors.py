@@ -124,7 +124,9 @@ def test_color():
 
 @pytest.mark.parametrize('delimiter', ['-', '_', ' '])
 def test_color_name_delimiter(delimiter):
-    pv.Color(f'deep{delimiter}cobalt{delimiter}violet')
+    name = f'medium{delimiter}spring{delimiter}green'
+    c = pv.Color(name)
+    assert c.name == name.replace(delimiter, '')
 
 
 def test_color_hls():
