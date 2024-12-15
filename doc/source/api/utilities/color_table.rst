@@ -30,6 +30,8 @@ for additional information about the ``CSS`` and ``TABLEAU`` colors.
 
     .. include:: /api/utilities/color_table/color_table_ORANGE.rst
 
+    .. include:: /api/utilities/color_table/color_table_BROWN.rst
+
     .. include:: /api/utilities/color_table/color_table_YELLOW.rst
 
     .. include:: /api/utilities/color_table/color_table_GREEN.rst
