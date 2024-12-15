@@ -35,8 +35,6 @@ Sorted by Name
 
 .. dropdown:: All Colors
 
-    All named colors sorted alphabetically.
-
     .. include:: /api/utilities/color_table/color_table.rst
 
 Sorted by Color
