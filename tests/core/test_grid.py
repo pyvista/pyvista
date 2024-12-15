@@ -1153,6 +1153,13 @@ def test_imagedata_direction_matrix():
     assert np.allclose(poly_points.bounds, expected_bounds)
 
 
+def test_imagedata_direction_matrix_orthonormal(uniform):
+    # Test matrix does not enforce orthogonality
+    matrix_not_orthonormal = np.reshape(range(1, 10), (3, 3))
+    uniform.direction_matrix = matrix_not_orthonormal
+    assert np.array_equal(uniform.direction_matrix, matrix_not_orthonormal)
+
+
 def test_imagedata_index_to_physical_matrix():
     # Create image with arbitrary translation (origin) and rotation (direction)
     image = pv.ImageData()
@@ -1165,6 +1172,19 @@ def test_imagedata_index_to_physical_matrix():
     ijk_to_xyz = image.index_to_physical_matrix
     assert np.allclose(ijk_to_xyz, expected_transform.matrix)
 
+    xyz_to_ijk = image.physical_to_index_matrix
+    assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
+
+    # Test setters
+    I3 = np.eye(3)
+    I4 = np.eye(4)
+    image.index_to_physical_matrix = I4
+    assert np.allclose(image.index_to_physical_matrix, I4)
+    assert np.allclose(image.spacing, (1, 1, 1))
+    assert np.allclose(image.origin, (0, 0, 0))
+    assert np.allclose(image.direction_matrix, I3)
+
+    image.physical_to_index_matrix = expected_transform.inverse_matrix
     xyz_to_ijk = image.physical_to_index_matrix
     assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
 
