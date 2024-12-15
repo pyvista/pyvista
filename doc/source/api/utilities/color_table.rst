@@ -3,7 +3,7 @@
 Named Colors
 ============
 
-Tables of named colors supported by :class:`~pyvista.Color` and :class:`~pyvista.Plotter`.
+Named colors supported by :class:`~pyvista.Color` and :class:`~pyvista.Plotter`.
 
 The colors on this page come from various sources, and include:
 
