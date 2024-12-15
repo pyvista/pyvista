@@ -378,7 +378,7 @@ allow-dict-calls-with-keyword-arguments = true
 "pyvista/plotting/_typing.py" = ["PLC0414"]
 "pyvista/plotting/_vtk.py" = ["PLC0414"]
 "pyvista/plotting/_vtk_gl.py" = ["PLC0414"]
-"pyvista/utilities/*" = ["PLC0414"]
+"pyvista/utilities/*" = ["F401"] # deprecated modules
 "tests/*" = ["D"]
 
 # ANN ignores for `pyvista/core`

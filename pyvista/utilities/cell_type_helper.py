@@ -2,4 +2,4 @@
 
 from __future__ import annotations
 
-from . import __getattr__ as __getattr__
+from . import __getattr__
