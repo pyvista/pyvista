@@ -69,7 +69,7 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
-class Widget(HTML):  # numpydoc ignore=PR01
+class Widget(HTML):  # numpydoc ignore=PR01  # type: ignore[misc]
     """Custom HTML iframe widget for trame viewer."""
 
     def __init__(self, viewer, src, width=None, height=None, iframe_attrs=None, **kwargs):
