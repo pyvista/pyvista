@@ -358,13 +358,13 @@ ignore = [
   "SIM117",  # https://github.com/pyvista/pyvista/pull/5888
   "SIM118",  # https://github.com/pyvista/pyvista/pull/5837
 ]
-unfixable = []
+unfixable = ['F401']
 
 [tool.ruff.lint.flake8-comprehensions]
 allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+"__init__.py" = ["PLC0414"]
 "doc/source/make_tables.py" = ["D101", "D102"]
 "examples/*" = ["D102", "D103", "D205", "D212", "D400", "D415", "SIM115"]
 "examples/**" = [
@@ -373,7 +373,12 @@ allow-dict-calls-with-keyword-arguments = true
 ]
 "examples_trame/*" = ["D100", "D103"]
 "examples_trame/tests*" = ["D"]
+"pyvista/core/_vtk_core*" = ["PLC0414"]
 "pyvista/ext/*" = ["D100", "D101", "D102", "D103"]
+"pyvista/plotting/_typing.py" = ["PLC0414"]
+"pyvista/plotting/_vtk.py" = ["PLC0414"]
+"pyvista/plotting/_vtk_gl.py" = ["PLC0414"]
+"pyvista/utilities/*" = ["F401"] # deprecated modules
 "tests/*" = ["D"]
 
 # ANN ignores for `pyvista/core`
