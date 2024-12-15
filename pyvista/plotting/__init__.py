@@ -78,7 +78,7 @@ from .utilities import *
 from .utilities.sphinx_gallery import _get_sg_image_scraper as _get_sg_image_scraper
 from .volume import Volume as Volume
 from .volume_property import VolumeProperty as VolumeProperty
-from .widgets import AffineWidget3D as AffineWidget3D
+from .affine_widget import AffineWidget3D as AffineWidget3D
 from .widgets import WidgetHelper as WidgetHelper
 
 

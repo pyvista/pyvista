@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.core.dataset import DataObject
+from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 

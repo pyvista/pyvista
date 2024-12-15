@@ -84,7 +84,7 @@ from .geometric_objects import Text3D as Text3D
 from .geometric_objects import Triangle as Triangle
 from .geometric_objects import Tube as Tube
 from .geometric_objects import Wavelet as Wavelet
-from .geometric_objects import translate as translate
+from .geometric_sources import translate as translate
 from .geometric_sources import ArrowSource as ArrowSource
 from .geometric_sources import AxesGeometrySource as AxesGeometrySource
 from .geometric_sources import BoxSource as BoxSource

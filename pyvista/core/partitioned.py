@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from typing import overload
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject
+from .dataobject import DataObject
 from .dataset import DataSet
 from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
