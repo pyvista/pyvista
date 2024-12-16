@@ -399,7 +399,7 @@ class Renderers:
 
         Returns
         -------
-        list of Chart
+        list[Chart]
             The list of all interactive charts for the active renderer.
 
         """

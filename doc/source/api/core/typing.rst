@@ -40,13 +40,6 @@ pyvista.VectorLike
 VTK Related Types
 -----------------
 
-pyvista.ConcreteDataSetType
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: ConcreteDataSetType
-
 pyvista.BoundsTuple
 ~~~~~~~~~~~~~~~~~~~
 
@@ -81,3 +74,50 @@ pyvista.TransformLike
 .. currentmodule:: pyvista
 
 .. autodata:: TransformLike
+
+pyvista.InteractionEventType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autodata:: InteractionEventType
+
+
+Concrete Data Object Types
+--------------------------
+
+pyvista.ConcreteGridType
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcreteGridType
+
+pyvista.ConcretePointGridType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcretePointGridType
+
+pyvista.ConcretePointSetType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcretePointSetType
+
+
+pyvista.ConcreteDataSetType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcreteDataSetType
+
+pyvista.ConcreteDataObjectType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcreteDataObjectType

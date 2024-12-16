@@ -20,6 +20,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
+from typing import cast
 import uuid
 import warnings
 import weakref
@@ -29,6 +30,7 @@ import numpy as np
 import scooby
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -48,6 +50,7 @@ from ._plotting import prepare_smooth_shading
 from ._plotting import process_opacity
 from ._property import Property
 from .actor import Actor
+from .camera import Camera
 from .colors import Color
 from .colors import get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
@@ -61,7 +64,6 @@ from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
-from .renderer import Camera
 from .renderer import Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
@@ -70,9 +72,6 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import normalize  # noqa: F401
-from .tools import opacity_transfer_function  # noqa: F401
-from .tools import parse_font_family  # noqa: F401
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import decimation_algorithm
@@ -3851,7 +3850,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return actor
 
-    def _add_legend_label(self, actor, label, scalars, color):
+    def _add_legend_label(self, actor, label, scalars, color: Color):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
@@ -3871,11 +3870,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         geom.points -= geom.center  # type: ignore[misc]
 
         addr = actor.GetAddressAsString('')
-        self.renderer._labels[addr] = [geom, label, color]
+        self.renderer._labels[addr] = (geom, label, color)
 
     def add_volume(
         self,
-        volume,
+        volume: pyvista.DataSet | pyvista.MultiBlock | NumpyArray[float],
         scalars=None,
         clim=None,
         resolution=None,
@@ -4227,7 +4226,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = wrap(volume)
+                volume = cast(pyvista.ImageData, wrap(cast(NumpyArray[float], volume)))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
@@ -4254,16 +4253,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
-            for idx in range(volume.GetNumberOfBlocks()):
-                if volume[idx] is None:
+            for idx, block in enumerate(volume):
+                if block is None:
                     continue
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
                 # Get the data object
-                block = wrap(volume.GetBlock(idx))
+                block = wrap(block)
                 if resolution is None:
                     try:
-                        block_resolution = block.GetSpacing()  # type: ignore[union-attr]
+                        block_resolution = block.GetSpacing()
                     except AttributeError:
                         block_resolution = resolution
                 else:
@@ -4328,6 +4327,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.',
             )
 
+        volume = cast(pyvista.DataSet, volume)
         if opacity_unit_distance is None and not isinstance(volume, pyvista.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
@@ -4450,7 +4450,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(annotations, dict):
                 self.mapper.lookup_table.annotations = annotations
 
-        self.mapper.dataset = volume
+        self.mapper.dataset = volume  # type: ignore[assignment]
         self.mapper.blend_mode = blending
         self.mapper.update()
 
@@ -5235,7 +5235,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         kwargs['loop'] = loop
         kwargs['palettesize'] = palettesize
         kwargs['subrectangles'] = subrectangles
-        if scooby.meets_version(__version__, '2.28.1'):
+        if scooby.knowledge.meets_version(__version__, '2.28.1'):
             kwargs['duration'] = 1000 * 1 / fps
         else:  # pragma: no cover
             kwargs['fps'] = fps
@@ -5428,7 +5428,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
             addr = actor.GetAddressAsString('')
-            self.renderer._labels[addr] = [lines, label, Color(color)]
+            self.renderer._labels[addr] = (lines, label, Color(color))
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)  # type: ignore[arg-type]

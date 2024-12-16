@@ -47,7 +47,7 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 """
 
 
-def _indent_paragraph(string, level):
+def _indent_paragraph(string: str, level: int) -> str:
     indentation = ''.join(['    '] * level)
     return textwrap.indent(textwrap.dedent(string).strip(), indentation)
 
@@ -162,9 +162,9 @@ class CellType(IntEnum):
 
     """
 
-    def __new__(
-        cls,
-        value,
+    def __new__(  # noqa: PYI034
+        cls: type[CellType],
+        value: int,
         _cell_class: type[_vtk.vtkCell] | None = None,
         _short_doc: str | None = None,
         _long_doc: str | None = None,
@@ -172,7 +172,7 @@ class CellType(IntEnum):
         _points_override: Literal['variable', 'n/a'] | None = None,
         _edges_override: Literal['variable', 'n/a'] | None = None,
         _faces_override: Literal['variable', 'n/a'] | None = None,
-    ):
+    ) -> CellType:
         """Create new enum.
 
         Optionally specify documentation info.

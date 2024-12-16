@@ -7,6 +7,7 @@ Used code from matplotlib.colors.  Thanks for your work.
 # of methods defined in this module.
 from __future__ import annotations
 
+from colorsys import rgb_to_hls
 import inspect
 
 from cycler import Cycler
@@ -41,10 +42,25 @@ IPYGANY_MAP = {
     'spectral': 'Spectral',
 }
 
+
+_ALLOWED_COLOR_NAME_DELIMITERS = '_' + '-' + ' '
+_REMOVE_DELIMITER_LOOKUP = str.maketrans('', '', _ALLOWED_COLOR_NAME_DELIMITERS)
+
+
+def _format_color_name(name: str):
+    """Format name as lower-case and remove delimiters."""
+    return name.lower().translate(_REMOVE_DELIMITER_LOOKUP)
+
+
+def _format_color_dict(colors: dict[str, str]):
+    """Format name hex value."""
+    return {_format_color_name(n): h.lower() for n, h in colors.items()}
+
+
 # Following colors are copied from matplotlib.colors, synonyms (colors with a
 # different name but same hex value) are removed and put in the `color_synonyms`
 # dictionary. An extra `paraview_background` color is added.
-hexcolors = {
+_CSS_COLORS = {
     'aliceblue': '#F0F8FF',
     'antiquewhite': '#FAEBD7',
     'aquamarine': '#7FFFD4',
@@ -150,7 +166,6 @@ hexcolors = {
     'paleturquoise': '#AFEEEE',
     'palevioletred': '#DB7093',
     'papayawhip': '#FFEFD5',
-    'paraview_background': '#52576e',
     'peachpuff': '#FFDAB9',
     'peru': '#CD853F',
     'pink': '#FFC0CB',
@@ -186,6 +201,8 @@ hexcolors = {
     'whitesmoke': '#F5F5F5',
     'yellow': '#FFFF00',
     'yellowgreen': '#9ACD32',
+}
+_TABLEAU_COLORS = {
     'tab:blue': '#1f77b4',
     'tab:orange': '#ff7f0e',
     'tab:green': '#2ca02c',
@@ -197,8 +214,11 @@ hexcolors = {
     'tab:olive': '#bcbd22',
     'tab:cyan': '#17becf',
 }
+_PARAVIEW_COLORS = {'paraview_background': '#52576e'}
 
-color_names = {h.lower(): n for n, h in hexcolors.items()}
+hexcolors = _format_color_dict(_CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS)
+
+color_names = {h: n for n, h in hexcolors.items()}
 
 color_char_to_word = {
     'b': 'blue',
@@ -211,7 +231,7 @@ color_char_to_word = {
     'w': 'white',
 }
 
-color_synonyms = {
+_color_synonyms = {
     **color_char_to_word,
     'aqua': 'cyan',
     'darkgrey': 'darkgray',
@@ -224,6 +244,9 @@ color_synonyms = {
     'pv': 'paraview_background',
     'paraview': 'paraview_background',
     'slategrey': 'slategray',
+}
+color_synonyms = {
+    _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
 }
 
 matplotlib_default_colors = [
@@ -715,7 +738,7 @@ class Color:
     def _from_str(self, n: str):
         """Construct color from a name or hex string."""
         arg = n
-        n = n.lower()
+        n = _format_color_name(n)
         if n in color_synonyms:
             # Synonym of registered color name
             # Convert from synonym to full hex
@@ -836,6 +859,11 @@ class Color:
         return self.float_rgba[:3]
 
     @property
+    def _float_hls(self) -> tuple[float, float, float]:
+        """Get the color as Hue, Lightness, Saturation (HLS) in range [0.0, 1.0]."""
+        return rgb_to_hls(*self.float_rgb)
+
+    @property
     def hex_rgba(self) -> str:  # numpydoc ignore=RT01
         """Get the color value as an RGBA hexadecimal value.
 
@@ -893,6 +921,9 @@ class Color:
     def name(self) -> str | None:  # numpydoc ignore=RT01
         """Get the color name.
 
+        The name is always formatted as a lower case string without
+        any delimiters.
+
         See :ref:`color_table` for a list of supported colors.
 
         Returns
@@ -902,12 +933,26 @@ class Color:
 
         Examples
         --------
-        Create a blue color with half opacity.
+        Create a dark blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity=0.5)
+        >>> c = pv.Color("darkblue", default_opacity=0.5)
         >>> c
-        Color(name='blue', hex='#0000ff80', opacity=128)
+        Color(name='darkblue', hex='#00008b80', opacity=128)
+
+        When creating a new ``Color``, the name may be delimited with a space,
+        hyphen, underscore, or written as a single word.
+
+        >>> c = pv.Color("dark blue", default_opacity=0.5)
+
+        Upper-case letters are also supported.
+
+        >>> c = pv.Color("DarkBlue", default_opacity=0.5)
+
+        However, the name is always standardized as a single lower-case word.
+
+        >>> c
+        Color(name='darkblue', hex='#00008b80', opacity=128)
 
         """
         return self._name

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import pickle
+import re
 
 import numpy as np
 import pytest
@@ -1180,3 +1182,143 @@ def test_grdecl_reader(tmp_path):
     include_content_copy[0] = include_content_copy[0].replace('MAPAXES', 'PLACEHOLDER')
     with pytest.warns(UserWarning, match=match):
         _ = read(content, include_content_copy)
+
+
+@pytest.mark.parametrize(
+    ('data_object', 'ext'),
+    [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
+)
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='VTK version not supported.')
+def test_read_write_pickle(tmp_path, data_object, ext, datasets):
+    filepath = tmp_path / ('data_object' + ext)
+    data_object.save(filepath)
+    new_data_object = pv.read(filepath)
+    assert data_object == new_data_object
+
+    # Test raises
+    with open(str(filepath), 'wb') as f:  # noqa: PTH123
+        # Create non-mesh pickle file
+        pickle.dump([1, 2, 3], f)
+    match = (
+        "Pickled object must be an instance of <class 'pyvista.core.dataobject.DataObject'>. "
+        "Got <class 'list'> instead."
+    )
+    with pytest.raises(TypeError, match=match):
+        pv.read(filepath)
+
+    match = "Filename must be a file path with extension ('.pkl', '.pickle'). Got {} instead."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.read_pickle({})
+
+    match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.save_pickle('filename', {})
+
+
+def test_exodus_reader_ext():
+    # test against mug and exodus to check different valid file
+    # extensions: .e and .exo
+
+    fname_e = examples.download_mug(load=False)
+    fname_exo = examples.download_exodus(load=False)
+
+    e_reader = pv.get_reader(fname_e)
+    exo_reader = pv.get_reader(fname_exo)
+
+    assert isinstance(e_reader, pv.core.utilities.reader.ExodusIIReader)
+    assert isinstance(exo_reader, pv.core.utilities.reader.ExodusIIReader)
+
+
+def test_exodus_reader():
+    # check internals
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    ## check enabling of displacements (To match functionality
+    # from read_exodus)
+    e_reader.enable_displacements()
+    assert e_reader.reader.GetApplyDisplacements() == 1
+    assert e_reader.reader.GetDisplacementMagnitude() == 1.0
+
+    e_reader.disable_displacements()
+    assert e_reader.reader.GetApplyDisplacements() == 0
+
+    ## check number of cell and point arrays and their names
+    assert e_reader.number_point_arrays == 2
+    assert e_reader.number_cell_arrays == 1
+
+    assert all(array in e_reader.point_array_names for array in ['convected', 'diffused'])
+
+    assert 'aux_elem' in e_reader.cell_array_names
+
+    ## check enabling and disabling of point arrays
+    for name in e_reader.point_array_names:
+        # Should be enabled by default
+        assert e_reader.point_array_status(name)
+
+        e_reader.disable_point_array(name)
+        assert not e_reader.point_array_status(name)
+
+        e_reader.enable_point_array(name)
+        assert e_reader.point_array_status(name)
+
+    ## check enabling and disabling of cell arrays
+    for name in e_reader.cell_array_names:
+        # Should be enabled by default
+        assert e_reader.cell_array_status(name)
+
+        e_reader.disable_cell_array(name)
+        assert not e_reader.cell_array_status(name)
+
+        e_reader.enable_cell_array(name)
+        assert e_reader.cell_array_status(name)
+
+    # test time routines
+    ntimes = 21
+    dt = 0.1
+
+    ## check correct number of time points
+    assert e_reader.number_time_points == ntimes, 'Checks number of time points'
+    assert e_reader.reader.GetTimeStep() == 0, 'Checks the first time set'
+
+    assert np.allclose(e_reader.time_values, [dt * i for i in range(ntimes)], atol=1e-8, rtol=1e-8)
+
+    ## check setting and getting of time points and times
+    for i in range(ntimes):
+        e_reader.set_active_time_point(i)
+        assert e_reader.reader.GetTimeStep() == i, 'check time point set'
+
+        tp = e_reader.reader.GetTimeStep()
+        assert tp == i, 'Check underlying reader time step setting'
+
+        t = i * dt
+        assert np.isclose(
+            e_reader.time_point_value(i), t, atol=1e-8, rtol=1e-8
+        ), 'Check correct times'
+
+        assert np.isclose(
+            e_reader.active_time_value, t, atol=1e-8, rtol=1e-8
+        ), 'Check correct time set'
+
+    # check time setting based on time
+    for i, t in enumerate(e_reader.time_values):
+        e_reader.set_active_time_value(t)
+        assert e_reader.reader.GetTimeStep() == i, 'check time point set'
+
+    # check for error if time not present
+    bad_time = 1.25
+    err_msg = re.escape(f'Time {bad_time} not present. Available times are {e_reader.time_values}')
+    with pytest.raises(ValueError, match=err_msg):
+        e_reader.set_active_time_value(1.25)
+
+    ## check read with point and cell arrays present
+    multiblock = e_reader.read()
+
+    unstruct = multiblock[0][0]
+
+    assert isinstance(unstruct, pv.UnstructuredGrid)
+    for key in e_reader.point_array_names:
+        assert key in unstruct.point_data.keys()
+
+    for key in e_reader.cell_array_names:
+        assert key in unstruct.cell_data.keys()

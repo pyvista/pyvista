@@ -7,14 +7,15 @@ from typing import TYPE_CHECKING
 from typing import overload
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject
-from .dataset import DataSet
+from .dataobject import DataObject
 from .errors import PartitionedDataSetsNotSupported
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
+
+    from .dataset import DataSet
 
 
 class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence):  # type: ignore[type-arg]
@@ -63,7 +64,7 @@ class PartitionedDataSet(_vtk.vtkPartitionedDataSet, DataObject, MutableSequence
         for i in range(self.n_partitions):
             partition = self.GetPartition(i)
             if not is_pyvista_dataset(partition):
-                self.SetPartition(i, wrap(partition))  # type: ignore[arg-type]
+                self.SetPartition(i, wrap(partition))
 
     @overload
     def __getitem__(self, index: int) -> DataSet | None: ...  # pragma: no cover

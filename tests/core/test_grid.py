@@ -98,7 +98,7 @@ def test_init_bad_input():
     with pytest.raises(TypeError, match='Cannot work with input type'):
         pv.UnstructuredGrid(np.array(1))
 
-    with pytest.raises(TypeError, match='must be a numeric type'):
+    with pytest.raises(TypeError, match='points must have real numbers.'):
         pv.UnstructuredGrid(np.array([2, 0, 1]), np.array(1), 'woa')
 
     rnd_generator = np.random.default_rng()
@@ -851,7 +851,8 @@ def test_create_image_data_from_specs():
     assert grid.spacing == spacing
 
     # ensure negative spacing is not allowed
-    with pytest.raises(ValueError, match='Spacing must be non-negative'):
+    match = 'spacing values must all be greater than or equal to 0.0.'
+    with pytest.raises(ValueError, match=match):
         grid = pv.ImageData(dimensions=dims, spacing=(-1, 1, 1))
 
     # uniform grid from a uniform grid
@@ -874,6 +875,10 @@ def test_image_data_init_kwargs():
 
     image = pv.ImageData(origin=vector)
     assert image.origin == vector
+
+    matrix = np.eye(3) * 2
+    image = pv.ImageData(direction_matrix=matrix)
+    assert np.allclose(image.direction_matrix, matrix)
 
 
 @pytest.mark.parametrize('dims', [None, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)])
@@ -1148,6 +1153,13 @@ def test_imagedata_direction_matrix():
     assert np.allclose(poly_points.bounds, expected_bounds)
 
 
+def test_imagedata_direction_matrix_orthonormal(uniform):
+    # Test matrix does not enforce orthogonality
+    matrix_not_orthonormal = np.reshape(range(1, 10), (3, 3))
+    uniform.direction_matrix = matrix_not_orthonormal
+    assert np.array_equal(uniform.direction_matrix, matrix_not_orthonormal)
+
+
 def test_imagedata_index_to_physical_matrix():
     # Create image with arbitrary translation (origin) and rotation (direction)
     image = pv.ImageData()
@@ -1160,6 +1172,19 @@ def test_imagedata_index_to_physical_matrix():
     ijk_to_xyz = image.index_to_physical_matrix
     assert np.allclose(ijk_to_xyz, expected_transform.matrix)
 
+    xyz_to_ijk = image.physical_to_index_matrix
+    assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
+
+    # Test setters
+    I3 = np.eye(3)
+    I4 = np.eye(4)
+    image.index_to_physical_matrix = I4
+    assert np.allclose(image.index_to_physical_matrix, I4)
+    assert np.allclose(image.spacing, (1, 1, 1))
+    assert np.allclose(image.origin, (0, 0, 0))
+    assert np.allclose(image.direction_matrix, I3)
+
+    image.physical_to_index_matrix = expected_transform.inverse_matrix
     xyz_to_ijk = image.physical_to_index_matrix
     assert np.allclose(xyz_to_ijk, expected_transform.inverse_matrix)
 

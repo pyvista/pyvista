@@ -5,10 +5,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Union
+from typing import cast
 from typing import overload
 
 import numpy as np
 
+import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -454,7 +457,7 @@ class Transform(_vtk.vtkTransform):
     @multiply_mode.setter
     def multiply_mode(self: Transform, multiply_mode: Literal['pre', 'post']) -> None:
         _validation.check_contains(
-            item=multiply_mode, container=['pre', 'post'], name='multiply mode'
+            ['pre', 'post'], must_contain=multiply_mode, name='multiply mode'
         )
         self.pre_multiply() if multiply_mode == 'pre' else self.post_multiply()
 
@@ -533,7 +536,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.scale`
+        :meth:`pyvista.DataSetFilters.scale`
             Scale a mesh.
 
         Examples
@@ -584,7 +587,10 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_factor = _validation.validate_array3(
-            factor, broadcast=True, dtype_out=float, name='scale factor'
+            factor,  # type: ignore[arg-type]
+            broadcast=True,
+            dtype_out=float,
+            name='scale factor',
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
@@ -628,7 +634,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.reflect`
+        :meth:`pyvista.DataSetFilters.reflect`
             Reflect a mesh.
 
         Examples
@@ -655,7 +661,9 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_normal = _validation.validate_array3(
-            normal, dtype_out=float, name='reflection normal'
+            normal,  # type: ignore[arg-type]
+            dtype_out=float,
+            name='reflection normal',
         )
         transform = reflection(valid_normal)
         return self._concatenate_with_translations(
@@ -694,7 +702,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_x
+        pyvista.DataSetFilters.flip_x
             Flip a mesh about the x-axis.
 
         Examples
@@ -754,7 +762,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_y
+        pyvista.DataSetFilters.flip_y
             Flip a mesh about the y-axis.
 
         Examples
@@ -814,7 +822,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_z
+        pyvista.DataSetFilters.flip_z
             Flip a mesh about the z-axis.
 
         Examples
@@ -868,7 +876,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.translate`
+        :meth:`pyvista.DataSetFilters.translate`
             Translate a mesh.
 
         Examples
@@ -894,7 +902,9 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_vector = _validation.validate_array3(
-            vector, dtype_out=float, name='translation vector'
+            vector,  # type: ignore[arg-type]
+            dtype_out=float,
+            name='translation vector',
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)
@@ -911,7 +921,7 @@ class Transform(_vtk.vtkTransform):
 
         Create a rotation matrix and :meth:`concatenate` it with the current
         transformation :attr:`matrix` according to pre-multiply or post-multiply
-        semantics.
+        semantics. The rotation may be right-handed or left-handed.
 
         Internally, the matrix is stored in the :attr:`matrix_list`.
 
@@ -936,7 +946,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate
+        pyvista.DataSetFilters.rotate
             Rotate a mesh.
 
         Examples
@@ -994,9 +1004,7 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 0., 1.]])
 
         """
-        valid_rotation = _validation.validate_transform3x3(
-            rotation, must_be_finite=self.check_finite, name='rotation'
-        )
+        valid_rotation = _validation.validate_rotation(rotation)
         return self._concatenate_with_translations(
             valid_rotation, point=point, multiply_mode=multiply_mode
         )
@@ -1037,7 +1045,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_x
+        pyvista.DataSetFilters.rotate_x
             Rotate a mesh about the x-axis.
 
         Examples
@@ -1106,7 +1114,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_y
+        pyvista.DataSetFilters.rotate_y
             Rotate a mesh about the y-axis.
 
         Examples
@@ -1175,7 +1183,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_z
+        pyvista.DataSetFilters.rotate_z
             Rotate a mesh about the z-axis.
 
         Examples
@@ -1248,7 +1256,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_vector
+        pyvista.DataSetFilters.rotate_vector
             Rotate a mesh about a vector.
 
         Examples
@@ -1580,13 +1588,10 @@ class Transform(_vtk.vtkTransform):
                          [2. , 2.5, 3. ]], dtype=float32)
 
         """
-        # avoid circular import
-        from pyvista.core.composite import MultiBlock
-        from pyvista.core.dataset import DataSet
-
         inplace = not copy
         # Transform dataset
-        if isinstance(obj, (DataSet, MultiBlock)):
+        if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
+            obj = cast(Union[pyvista.ConcreteDataSetType, pyvista.MultiBlock], obj)
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,

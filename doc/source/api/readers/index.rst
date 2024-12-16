@@ -30,6 +30,7 @@ Reader Classes
     DEMReader
     DICOMReader
     EnSightReader
+    ExodusIIReader
     FacetReader
     FLUENTCFFReader
     FluentReader
