@@ -228,6 +228,7 @@ enable_error_code = ['ignore-without-code']
 exclude = ['pyvista/conftest.py', 'pyvista/ext/']
 extra_checks = true
 ignore_missing_imports = false
+no_implicit_reexport = true
 packages = ['pyvista']
 plugins = ['npt_promote', 'numpy.typing.mypy_plugin']
 pretty = true

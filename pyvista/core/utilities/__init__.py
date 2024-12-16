@@ -84,7 +84,6 @@ from .geometric_objects import Text3D as Text3D
 from .geometric_objects import Triangle as Triangle
 from .geometric_objects import Tube as Tube
 from .geometric_objects import Wavelet as Wavelet
-from .geometric_objects import translate as translate
 from .geometric_sources import ArrowSource as ArrowSource
 from .geometric_sources import AxesGeometrySource as AxesGeometrySource
 from .geometric_sources import BoxSource as BoxSource
@@ -102,6 +101,7 @@ from .geometric_sources import PolygonSource as PolygonSource
 from .geometric_sources import SphereSource as SphereSource
 from .geometric_sources import SuperquadricSource as SuperquadricSource
 from .geometric_sources import Text3DSource as Text3DSource
+from .geometric_sources import translate as translate
 from .image_sources import ImageEllipsoidSource as ImageEllipsoidSource
 from .image_sources import ImageGaussianSource as ImageGaussianSource
 from .image_sources import ImageGridSource as ImageGridSource
