@@ -71,6 +71,14 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.dem``       | :class:`pyvista.DEMReader`                  |
     +----------------+---------------------------------------------+
+    | ``.e``         | :class:`pyvista.ExodusIIReader`             |
+    +----------------+---------------------------------------------+
+    | ``.exo``       | :class:`pyvista.ExodusIIReader`             |
+    +----------------+---------------------------------------------+
+    | ``.exii``      | :class:`pyvista.ExodusIIReader`             |
+    +----------------+---------------------------------------------+
+    | ``.ex2``       | :class:`pyvista.ExodusIIReader`             |
+    +----------------+---------------------------------------------+
     | ``.facet``     | :class:`pyvista.FacetReader`                |
     +----------------+---------------------------------------------+
     | ``.foam``      | :class:`pyvista.POpenFOAMReader`            |
@@ -2833,6 +2841,257 @@ class ProStarReader(BaseReader):
     _vtk_class_name = 'vtkProStarReader'
 
 
+class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
+    """ExodusIIReader for .e and .exo files.
+
+    Reads Exodus II files
+
+    .. versionadded:: 0.45.0
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_mug(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
+
+    """
+
+    _vtk_module_name = 'vtkIOExodus'
+    _vtk_class_name = 'vtkExodusIIReader'
+
+    def _set_defaults_post(self):
+        self.enable_all_cell_arrays()
+        self.enable_all_point_arrays()
+
+        self.set_active_time_point(0)
+
+    @property
+    def number_time_points(self):
+        """Return number of time points or iterations available to read.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfTimeSteps()
+
+    def enable_displacements(self, displacement_magnitude=1.0):
+        """Nodal positions are 'displaced' by the standard exodus displacement vector.
+
+        Parameters
+        ----------
+        displacement_magnitude : float, optional
+            Magnitude of displacement, default 1.0.
+
+        """
+        self.reader.SetApplyDisplacements(True)
+        self.reader.SetDisplacementMagnitude(displacement_magnitude)
+        self.reader.Update()
+
+    def disable_displacements(self):
+        """Nodal positions are not 'displaced'."""
+        self.reader.SetApplyDisplacements(False)
+
+    @property
+    def number_point_arrays(self):
+        """Return the number of point arrays.
+
+        Returns
+        -------
+        int
+            Number of point arrays.
+
+        """
+        return self.reader.GetNumberOfPointResultArrays()
+
+    @property
+    def point_array_names(self):
+        """Return the list of all point array names.
+
+        Returns
+        -------
+        list[str]
+            List of all point array names.
+
+        """
+        return [self.reader.GetPointResultArrayName(i) for i in range(self.number_point_arrays)]
+
+    def enable_point_array(self, name):
+        """Enable point array with name.
+
+        Parameters
+        ----------
+        name : str
+            Point array name.
+
+        """
+        self.reader.SetPointResultArrayStatus(name, 1)
+
+    def disable_point_array(self, name):
+        """Disable point array with name.
+
+        Parameters
+        ----------
+        name : str
+            Point array name.
+
+        """
+        self.reader.SetPointResultArrayStatus(name, 0)
+
+    def point_array_status(self, name):
+        """Get status of point array with name.
+
+        Parameters
+        ----------
+        name : str
+            Point array name.
+
+        Returns
+        -------
+        bool
+            Whether reading the cell array is enabled.
+
+        """
+        return bool(self.reader.GetPointResultArrayStatus(name))
+
+    @property
+    def number_cell_arrays(self):
+        """Return the number of point arrays.
+
+        Returns
+        -------
+        int
+            Number of point arrays.
+
+        """
+        return self.reader.GetNumberOfElementResultArrays()
+
+    @property
+    def cell_array_names(self):
+        """Return the list of all cell array names.
+
+        Returns
+        -------
+        list[str]
+            List of all cell array names.
+
+        """
+        return [self.reader.GetElementResultArrayName(i) for i in range(self.number_cell_arrays)]
+
+    def enable_cell_array(self, name):
+        """Enable cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        """
+        self.reader.SetElementResultArrayStatus(name, 1)
+
+    def disable_cell_array(self, name):
+        """Disable cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        """
+        self.reader.SetElementResultArrayStatus(name, 0)
+
+    def cell_array_status(self, name):
+        """Get status of cell array with name.
+
+        Parameters
+        ----------
+        name : str
+            Cell array name.
+
+        Returns
+        -------
+        bool
+            Whether reading the cell array is enabled.
+
+        """
+        return bool(self.reader.GetElementResultArrayStatus(name))
+
+    @property
+    def time_values(self):
+        """All time or iteration values.
+
+        Returns
+        -------
+        list[float]
+
+        """
+        vtkStreaming = _lazy_vtk_instantiation(
+            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
+        )
+        key = vtkStreaming.TIME_STEPS()
+        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
+
+    def time_point_value(self, time_point):
+        """Value of time point or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index.
+
+        Returns
+        -------
+        float
+
+        """
+        return self.time_values[time_point]
+
+    @property
+    def active_time_value(self):
+        """Active time or iteration value.
+
+        Returns
+        -------
+        float
+
+        """
+        return self.time_values[self.reader.GetTimeStep()]
+
+    def set_active_time_value(self, time_value):
+        """Set active time or iteration value.
+
+        Parameters
+        ----------
+        time_value : float
+            Time or iteration value to set as active.
+
+        """
+        try:
+            index = self.time_values.index(time_value)
+        except ValueError:
+            msg = f'Time {time_value} not present. Available times are {self.time_values}'
+            raise ValueError(msg) from None
+
+        self.set_active_time_point(index)
+
+    def set_active_time_point(self, time_point):
+        """Set active time or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time or iteration point index for setting active time.
+
+        """
+        self.reader.SetTimeStep(time_point)
+        self.reader.Update()
+
+
 CLASS_READERS = {
     # Standard dataset readers:
     '.bmp': BMPReader,
@@ -2843,6 +3102,10 @@ CLASS_READERS = {
     '.dat': TecplotReader,
     '.dcm': DICOMReader,
     '.dem': DEMReader,
+    '.e': ExodusIIReader,
+    '.ex2': ExodusIIReader,
+    '.exo': ExodusIIReader,
+    '.exii': ExodusIIReader,
     '.facet': FacetReader,
     '.foam': POpenFOAMReader,
     '.g': BYUReader,

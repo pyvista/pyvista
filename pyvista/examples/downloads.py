@@ -22,6 +22,7 @@ Examples
 from __future__ import annotations
 
 import functools
+import importlib.util
 import logging
 import os
 from pathlib import Path
@@ -5363,9 +5364,7 @@ def download_osmnx_graph(load=True):  # pragma: no cover
     if pyvista._version.version_info >= (0, 47):
         msg = 'Remove this deprecated function'
         raise RuntimeError(msg)
-    try:
-        import osmnx  # noqa: F401
-    except ImportError:
+    if not importlib.util.find_spec('osmnx'):
         msg = 'Install `osmnx` to use this example'
         raise ImportError(msg)
     return _download_dataset(_dataset_osmnx_graph, load=load)

@@ -22,7 +22,7 @@ from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
-from .dataset import DataObject
+from .dataobject import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray

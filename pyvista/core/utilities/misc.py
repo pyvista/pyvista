@@ -190,7 +190,7 @@ def has_module(module_name: str) -> bool:
         ``True`` if the module can be imported, otherwise ``False``.
 
     """
-    module_spec = importlib.util.find_spec(module_name)  # type: ignore[attr-defined]
+    module_spec = importlib.util.find_spec(module_name)
     return module_spec is not None
 
 
@@ -317,6 +317,7 @@ def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
 
     """
     x = np.array(x)
+    x = x if np.issubdtype(x.dtype, np.floating) else x.astype(float)
     zero = np.abs(x) < tol
     x[~zero] = np.reciprocal(x[~zero])
     x[zero] = 0
