@@ -12,7 +12,7 @@ from __future__ import annotations
 
 try:
     # Necessary for displaying charts, otherwise crashes on rendering
-    from vtkmodules import vtkRenderingContextOpenGL2
+    from vtkmodules import vtkRenderingContextOpenGL2 as vtkRenderingContextOpenGL2
 except ImportError:  # pragma: no cover
     vtkRenderingContextOpenGL2 = None  # type: ignore[assignment]
 

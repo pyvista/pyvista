@@ -13,7 +13,7 @@ from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-from .geometric_objects import translate
+from .geometric_sources import translate
 from .helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
