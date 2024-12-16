@@ -9,19 +9,19 @@ from typing import Literal
 from typing import cast
 import warnings
 
-from pyvista._plot import plot
-from pyvista._version import __version__
-from pyvista._version import version_info
+from pyvista._plot import plot as plot
+from pyvista._version import __version__ as __version__
+from pyvista._version import version_info as version_info
 from pyvista.core import *
-from pyvista.core import _validation
-from pyvista.core._vtk_core import vtk_version_info
+from pyvista.core import _validation as _validation
+from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
-from pyvista.core.wrappers import _wrappers
-from pyvista.jupyter import set_jupyter_backend
-from pyvista.report import GPUInfo
-from pyvista.report import Report
-from pyvista.report import get_gpu_info
+from pyvista.core.wrappers import _wrappers as _wrappers
+from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
+from pyvista.report import GPUInfo as GPUInfo
+from pyvista.report import Report as Report
+from pyvista.report import get_gpu_info as get_gpu_info
 
 # get the int type from vtk
 ID_TYPE = cast(int, _get_vtk_id_type())
@@ -70,11 +70,11 @@ MAX_N_COLOR_BARS = 10
 
 # Import all modules for type checkers and linters
 if TYPE_CHECKING:  # pragma: no cover
-    from pyvista import demos
-    from pyvista import examples
-    from pyvista import ext
-    from pyvista import trame
-    from pyvista import utilities
+    from pyvista import demos as demos
+    from pyvista import examples as examples
+    from pyvista import ext as ext
+    from pyvista import trame as trame
+    from pyvista import utilities as utilities
     from pyvista.plotting import *
 
 
@@ -106,7 +106,7 @@ def __getattr__(name):
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
-        import pyvista.plotting
+        import pyvista.plotting  # noqa: F401
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
