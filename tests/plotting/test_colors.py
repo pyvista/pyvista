@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import colorsys
+import importlib.util
 import itertools
 
 import matplotlib as mpl
@@ -15,20 +16,12 @@ from pyvista.plotting.colors import get_cmap_safe
 
 COLORMAPS = ['Greys']
 
-try:
-    import cmocean  # noqa: F401
-
+if importlib.util.find_spec('cmocean'):
     COLORMAPS.append('algae')
-except ImportError:
-    pass
 
 
-try:
-    import colorcet  # noqa: F401
-
+if importlib.util.find_spec('colorcet'):
     COLORMAPS.append('fire')
-except:
-    pass
 
 
 @pytest.mark.parametrize('cmap', COLORMAPS)
