@@ -1655,12 +1655,12 @@ class DataSet(DataSetFilters, DataObject):
                 f'The Input DataSet type {type(mesh)} must be '
                 f'compatible with the one being overwritten {type(self)}',
             )
-        if deep:
+        if deep:  # type: ignore[unreachable]
             self.deep_copy(mesh)
         else:
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
-            self.copy_meta_from(mesh, deep=deep)  # type: ignore[unreachable]
+            self.copy_meta_from(mesh, deep=deep)
 
     def cast_to_unstructured_grid(self: Self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
