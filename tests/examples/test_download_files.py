@@ -1066,10 +1066,13 @@ def test_load_pluto():
     assert mesh.n_cells
 
 
-def test_load_nek5000():
+def test_download_nek5000():
     filename = examples.download_nek5000(load=False)
     assert Path(filename).is_file()
     assert filename.endswith('nek5000')
+
+    nek_reader = pv.get_reader(filename)
+    assert nek_reader.number_time_points == 11
 
     nek_data = examples.download_nek5000(load=True)
     assert isinstance(nek_data, pv.UnstructuredGrid)
