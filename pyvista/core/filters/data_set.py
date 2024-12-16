@@ -48,7 +48,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
 
 
 @abstract_class
@@ -7056,7 +7055,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def transform(  # type: ignore[misc]
-        self: DataSetType,
+        self: DataSet,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool = True,
@@ -7211,7 +7210,7 @@ class DataSetFilters:
         _update_alg(f, progress_bar, 'Transforming')
         res = pyvista.core.filters._get_output(f)
 
-        def _restore_active_scalars(input_: ConcreteDataSetAlias, output_: ConcreteDataSetAlias):
+        def _restore_active_scalars(input_: DataSet, output_: DataSet):
             # make the previously active scalars active again
             input_.point_data.active_scalars_name = active_point_scalars_name
             input_.cell_data.active_scalars_name = active_cell_scalars_name
@@ -7222,7 +7221,7 @@ class DataSetFilters:
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
         if isinstance(self, pyvista.RectilinearGrid):
-            output: ConcreteDataSetAlias = pyvista.StructuredGrid()
+            output: DataSet = pyvista.StructuredGrid()
         elif inplace:
             output = self
         else:

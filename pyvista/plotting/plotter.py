@@ -73,9 +73,6 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import normalize  # noqa: F401
-from .tools import opacity_transfer_function  # noqa: F401
-from .tools import parse_font_family  # noqa: F401
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import decimation_algorithm
