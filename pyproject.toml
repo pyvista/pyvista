@@ -279,7 +279,7 @@ docstring-code-format = false
 quote-style = 'single'
 
 [tool.ruff.lint]
-extend-safe-fixes = ["EM"]
+extend-safe-fixes = ['EM']
 extend-select = [
   'A',
   'AIR',
