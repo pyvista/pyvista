@@ -19,6 +19,8 @@ from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:  # pragma: no cover
+    from matplotlib import colors
+
     from ._typing import ColorLike
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
@@ -199,7 +201,7 @@ class LookupTable(_vtk.vtkLookupTable):
     """
 
     _nan_color_set = False
-    _cmap = None
+    _cmap: colors.Colormap | colors.ListedColormap | None = None
     _values_manual = False
     _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
@@ -281,7 +283,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return None  # type: ignore[unreachable]
+            return None
         return self.GetValueRange()
 
     @value_range.setter
@@ -318,7 +320,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return None  # type: ignore[unreachable]
+            return None
         return self.GetHueRange()
 
     @hue_range.setter
@@ -327,7 +329,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def cmap(self) -> str | None:  # numpydoc ignore=RT01
+    def cmap(self) -> colors.Colormap | colors.ListedColormap | None:  # numpydoc ignore=RT01
         """Return or set the color map used by this lookup table.
 
         Examples
@@ -443,7 +445,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return None  # type: ignore[unreachable]
+            return None
         return self.GetAlphaRange()
 
     @alpha_range.setter
@@ -473,7 +475,7 @@ class LookupTable(_vtk.vtkLookupTable):
 
         """
         if self._cmap:
-            return None  # type: ignore[unreachable]
+            return None
         return self.GetSaturationRange()
 
     @saturation_range.setter
@@ -907,7 +909,7 @@ class LookupTable(_vtk.vtkLookupTable):
     @n_values.setter
     def n_values(self, value: int):
         if self._cmap is not None:
-            self.apply_cmap(self._cmap, value)  # type: ignore[unreachable]
+            self.apply_cmap(self._cmap, value)
             self.SetNumberOfTableValues(value)
         elif self._values_manual:
             raise RuntimeError(
