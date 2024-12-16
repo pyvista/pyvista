@@ -1258,9 +1258,9 @@ def test_nek5000_reader():
     nek_data = nek_reader.read()
     assert isinstance(nek_data, pv.UnstructuredGrid), 'Check read type is valid'
     assert all(
-        key in nek_data.point_data.keys()
-        for key in ['Pressure', 'Velocity', 'Velocity Magnitude']
+        key in nek_data.point_data.keys() for key in ['Pressure', 'Velocity', 'Velocity Magnitude']
     )
+
 
 @pytest.mark.parametrize(
     ('data_object', 'ext'),
