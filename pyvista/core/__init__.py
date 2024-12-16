@@ -8,7 +8,7 @@ from .cell import Cell as Cell
 from .cell import CellArray as CellArray
 from .celltype import CellType as CellType
 from .composite import MultiBlock as MultiBlock
-from .dataset import DataObject as DataObject
+from .dataobject import DataObject as DataObject
 from .dataset import DataSet as DataSet
 from .datasetattributes import DataSetAttributes as DataSetAttributes
 from .errors import AmbiguousDataError as AmbiguousDataError
