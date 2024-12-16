@@ -691,7 +691,7 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 html_baseurl = 'https://docs.pyvista.org/'
 
 
-TYPE_ALIASES = ['VectorLike']
+TYPE_ALIASES = ['pyvista.VectorLike']
 
 
 def resolve_type_aliases(app, env, node, contnode):
