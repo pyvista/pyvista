@@ -248,6 +248,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*PolyData'),
     (r'py:.*', '.*UnstructuredGrid'),
     (r'py:.*', '.*_TypeMultiBlockLeaf'),
+    (r'py:.*', '.*Grid'),
+    (r'py:.*', '.*PointGrid'),
+    (r'py:.*', '.*_PointSet'),
     #
     # PyVista array-related types
     (r'py:.*', 'ActiveArrayInfo'),
