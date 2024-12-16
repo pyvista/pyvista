@@ -11,6 +11,7 @@ from ._typing import Chart as Chart
 from ._typing import ColorLike as ColorLike
 from .actor import Actor as Actor
 from .actor_properties import ActorProperties as ActorProperties
+from .affine_widget import AffineWidget3D as AffineWidget3D
 from .axes import Axes as Axes
 from .axes_actor import AxesActor as AxesActor
 from .axes_assembly import AxesAssembly as AxesAssembly
@@ -78,7 +79,6 @@ from .utilities import *
 from .utilities.sphinx_gallery import _get_sg_image_scraper as _get_sg_image_scraper
 from .volume import Volume as Volume
 from .volume_property import VolumeProperty as VolumeProperty
-from .widgets import AffineWidget3D as AffineWidget3D
 from .widgets import WidgetHelper as WidgetHelper
 
 

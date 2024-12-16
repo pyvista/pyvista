@@ -14,7 +14,7 @@ from pyvista._version import __version__ as __version__
 from pyvista._version import version_info as version_info
 from pyvista.core import *
 from pyvista.core import _validation as _validation
-from pyvista.core._vtk_core import vtk_version_info
+from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
 from pyvista.core.wrappers import _wrappers as _wrappers
