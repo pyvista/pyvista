@@ -1,16 +1,16 @@
 """Trame utilities for running in Jupyter."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
 import warnings
 
-from trame.widgets import (
-    html as html_widgets,
-    vtk as vtk_widgets,
-    vuetify as vuetify2_widgets,
-    vuetify3 as vuetify3_widgets,
-)
+from trame.widgets import html as html_widgets
+from trame.widgets import vtk as vtk_widgets
+from trame.widgets import vuetify as vuetify2_widgets
+from trame.widgets import vuetify3 as vuetify3_widgets
 
 try:
     from ipywidgets.widgets import HTML
@@ -19,8 +19,10 @@ except ImportError:
 
 
 import pyvista
-from pyvista.trame.ui import UI_TITLE, get_viewer
-from pyvista.trame.views import CLOSED_PLOTTER_ERROR, get_server
+from pyvista.trame.ui import UI_TITLE
+from pyvista.trame.ui import get_viewer
+from pyvista.trame.views import CLOSED_PLOTTER_ERROR
+from pyvista.trame.views import get_server
 
 SERVER_DOWN_MESSAGE = """Trame server has not launched.
 
@@ -67,7 +69,7 @@ class TrameJupyterServerDownError(RuntimeError):
         super().__init__(JUPYTER_SERVER_DOWN_MESSAGE)
 
 
-class Widget(HTML):  # numpydoc ignore=PR01
+class Widget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
     """Custom HTML iframe widget for trame viewer."""
 
     def __init__(self, viewer, src, width=None, height=None, iframe_attrs=None, **kwargs):
@@ -80,16 +82,16 @@ class Widget(HTML):  # numpydoc ignore=PR01
         if iframe_attrs is None:
             iframe_attrs = {}
 
-        border = "border: 1px solid rgb(221,221,221);"
+        border = 'border: 1px solid rgb(221,221,221);'
 
         iframe_attrs = {
             **iframe_attrs,
-            "src": src,
-            "class": "pyvista",
-            "style": f"width: {width}; height: {height}; {border}",
+            'src': src,
+            'class': 'pyvista',
+            'style': f'width: {width}; height: {height}; {border}',
         }
 
-        iframe_attrs_str = " ".join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
+        iframe_attrs_str = ' '.join(f'{key}="{value!s}"' for key, value in iframe_attrs.items())
 
         value = f'<iframe {iframe_attrs_str}></iframe>'
 
@@ -108,7 +110,7 @@ class Widget(HTML):  # numpydoc ignore=PR01
         return self._src
 
 
-class EmbeddableWidget(HTML):  # numpydoc ignore=PR01
+class EmbeddableWidget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
     """Custom HTML iframe widget for embedding the trame viewer."""
 
     def __init__(self, plotter, width, height, **kwargs):
@@ -119,7 +121,7 @@ class EmbeddableWidget(HTML):  # numpydoc ignore=PR01
         src = scene.getvalue().replace('"', '&quot;')
         # eventually we could maybe expose this, but for now make sure we're at least
         # consistent with matplotlib's color (light gray)
-        border = "border: 1px solid rgb(221,221,221);"
+        border = 'border: 1px solid rgb(221,221,221);'
         value = f'<iframe srcdoc="{src}" class="pyvista" style="width: {width}; height: {height}; {border}"></iframe>'
         super().__init__(value, **kwargs)
         self._src = src
@@ -147,7 +149,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
         ``127.0.0.1`` by default unless user sets the environment variable ``TRAME_DEFAULT_HOST``.
 
     wslink_backend : str, optional
-        The the wslink backend that the server should use
+        The wslink backend that the server should use
         ``aiohttp`` by default, ``jupyter`` if the `trame_jupyter_extension <https://github.com/Kitware/trame-jupyter-extension>`_ is used.
 
     **kwargs : dict, optional
@@ -172,7 +174,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
     if (
         wslink_backend is None and pyvista.global_theme.trame.jupyter_extension_enabled
     ):  # pragma: no cover
-        wslink_backend = "jupyter"
+        wslink_backend = 'jupyter'
 
     # Must enable all used modules
     html_widgets.initialize(server)
@@ -183,7 +185,7 @@ def launch_server(server=None, port=None, host=None, wslink_backend=None, **kwar
     else:
         vuetify3_widgets.initialize(server)
 
-    def on_ready(**_):  # numpydoc ignore=GL08
+    def on_ready(**_):
         logger.debug(f'Server ready: {server}')
 
     if server._running_stage == 0:
@@ -228,7 +230,12 @@ def build_url(
 
 
 def initialize(
-    server, plotter, mode=None, default_server_rendering=True, collapse_menu=False, **kwargs
+    server,
+    plotter,
+    mode=None,
+    default_server_rendering=True,
+    collapse_menu=False,
+    **kwargs,
 ):  # numpydoc ignore=PR01,RT01
     """Generate the UI for a given plotter."""
     state = server.state
@@ -372,9 +379,9 @@ def show_trame(
     else:
         server = get_server(name=name)
     if name is None and not server.running:
-        wslink_backend = "aiohttp"
+        wslink_backend = 'aiohttp'
         if jupyter_extension_enabled:  # pragma: no cover
-            wslink_backend = "jupyter"
+            wslink_backend = 'jupyter'
 
         elegantly_launch(server, wslink_backend=wslink_backend)
         if not server.running:  # pragma: no cover
@@ -397,7 +404,7 @@ def show_trame(
         from trame_client.ui.core import iframe_url_builder_jupyter_extension
 
         iframe_attrs = iframe_url_builder_jupyter_extension(viewer.layout)
-        src = iframe_attrs["src"]
+        src = iframe_attrs['src']
     else:
         # TODO: The build_url function could possibly be replaced by
         # trame's upstream url builders in trame_client.ui.core
@@ -446,10 +453,10 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
 
     from pyvista.trame.jupyter import launch_server
     await launch_server().ready
-"""
+""",
         )
 
-    async def launch_it():  # numpydoc ignore=GL08
+    async def launch_it():
         await launch_server(*args, **kwargs).ready
 
     # Basically monkey patches asyncio to support this

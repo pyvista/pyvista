@@ -1,21 +1,25 @@
-"""This module provides a wrapper for vtk.vtkTexture."""
+"""Wrapper for vtk.vtkTexture."""
+
+from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Tuple, Union
+from typing import TYPE_CHECKING
 import warnings
 
 import numpy as np
 
 import pyvista
-from pyvista.core._typing_core import NumpyArray
-from pyvista.core.dataset import DataObject
+from pyvista.core.dataobject import DataObject
 from pyvista.core.utilities.fileio import _try_imageio_imread
 from pyvista.core.utilities.misc import AnnotatedIntEnum
 
 from . import _vtk
 
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import NumpyArray
 
-class Texture(_vtk.vtkTexture, DataObject):
+
+class Texture(DataObject, _vtk.vtkTexture):
     """Wrap vtkTexture.
 
     Textures can be used to apply images to surfaces, as in the case of
@@ -46,11 +50,11 @@ class Texture(_vtk.vtkTexture, DataObject):
     --------
     Load a texture from file. File should be a "image" or "image-like" file.
 
-    >>> import os
+    >>> from pathlib import Path
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> path = examples.download_masonry_texture(load=False)
-    >>> os.path.basename(path)
+    >>> Path(path).name
     'masonry.bmp'
     >>> texture = pv.Texture(path)
     >>> texture
@@ -111,7 +115,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
     def __init__(self, uinput=None, **kwargs):
         """Initialize the texture."""
-        super().__init__(uinput, **kwargs)
+        super().__init__(uinput)
 
         if isinstance(uinput, _vtk.vtkTexture):
             self._from_texture(uinput)
@@ -132,7 +136,7 @@ class Texture(_vtk.vtkTexture, DataObject):
                 if not isinstance(image, pyvista.ImageData):
                     raise TypeError(
                         'If a sequence, the each item in the first argument must be a '
-                        'pyvista.ImageData'
+                        'pyvista.ImageData',
                     )
                 # must flip y for cubemap to display properly
                 self.SetInputDataObject(i, image._flip_uniform(1))
@@ -145,7 +149,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         try:
             image = pyvista.read(filename, **kwargs)
             if image.n_points < 2:
-                raise RuntimeError("Problem reading the image with VTK.")  # pragma: no cover
+                raise RuntimeError('Problem reading the image with VTK.')  # pragma: no cover
             self._from_image_data(image)
         except (KeyError, ValueError, OSError):
             self._from_array(_try_imageio_imread(filename))  # pragma: no cover
@@ -177,7 +181,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return bool(self.GetInterpolate())
 
     @interpolate.setter
-    def interpolate(self, value: bool):  # numpydoc ignore=GL08
+    def interpolate(self, value: bool):
         self.SetInterpolate(value)
 
     @property
@@ -186,7 +190,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return bool(self.GetMipmap())
 
     @mipmap.setter
-    def mipmap(self, value: bool):  # numpydoc ignore=GL08
+    def mipmap(self, value: bool):
         self.SetMipmap(value)
 
     def _from_image_data(self, image):
@@ -210,7 +214,8 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         grid = pyvista.ImageData(dimensions=(image.shape[1], image.shape[0], 1))
         grid.point_data['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape(
-            (-1, n_components), order='F'
+            (-1, n_components),
+            order='F',
         )
         grid.set_active_scalars('Image')
         self._from_image_data(grid)
@@ -256,10 +261,10 @@ class Texture(_vtk.vtkTexture, DataObject):
         return bool(self.GetRepeat())
 
     @repeat.setter
-    def repeat(self, flag: bool):  # numpydoc ignore=GL08
+    def repeat(self, flag: bool):
         self.SetRepeat(flag)
 
-    def flip_x(self) -> 'Texture':
+    def flip_x(self) -> Texture:
         """Flip the texture in the x direction.
 
         Returns
@@ -275,9 +280,9 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> flipped.plot()
 
         """
-        return Texture(self.to_image()._flip_uniform(0))
+        return Texture(self.to_image()._flip_uniform(0))  # type: ignore[abstract]
 
-    def flip_y(self) -> 'Texture':
+    def flip_y(self) -> Texture:
         """Flip the texture in the y direction.
 
         Returns
@@ -293,7 +298,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> flipped.plot()
 
         """
-        return Texture(self.to_image()._flip_uniform(1))
+        return Texture(self.to_image()._flip_uniform(1))  # type: ignore[abstract]
 
     def to_image(self):
         """Return the texture as an image.
@@ -335,10 +340,10 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         """
         return self.to_image().active_scalars.reshape(
-            list(self.dimensions)[::-1] + [self.n_components]
+            list(self.dimensions)[::-1] + [self.n_components],
         )[::-1]
 
-    def rotate_cw(self) -> 'Texture':
+    def rotate_cw(self) -> Texture:
         """Rotate this texture 90 degrees clockwise.
 
         Returns
@@ -354,9 +359,9 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> rotated.plot()
 
         """
-        return Texture(np.rot90(self.to_array()))
+        return Texture(np.rot90(self.to_array()))  # type: ignore[abstract]
 
-    def rotate_ccw(self) -> 'Texture':
+    def rotate_ccw(self) -> Texture:
         """Rotate this texture 90 degrees counter-clockwise.
 
         Returns
@@ -372,7 +377,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         >>> rotated.plot()
 
         """
-        return Texture(np.rot90(self.to_array(), k=3))
+        return Texture(np.rot90(self.to_array(), k=3))  # type: ignore[abstract]
 
     @property
     def cube_map(self) -> bool:  # numpydoc ignore=RT01
@@ -380,18 +385,19 @@ class Texture(_vtk.vtkTexture, DataObject):
         return self.GetCubeMap()
 
     @cube_map.setter
-    def cube_map(self, flag: bool):  # numpydoc ignore=GL08
+    def cube_map(self, flag: bool):
         self.SetCubeMap(flag)
 
-    def copy(self):
+    def copy(self):  # type: ignore[override]
         """Make a copy of this texture.
 
         Returns
         -------
         pyvista.Texture
             Copied texture.
+
         """
-        return Texture(self.to_image().copy())
+        return Texture(self.to_image().copy())  # type: ignore[abstract]
 
     def to_skybox(self):
         """Return the texture as a ``vtkSkybox`` if cube mapping is enabled.
@@ -406,17 +412,18 @@ class Texture(_vtk.vtkTexture, DataObject):
             skybox = _vtk.vtkSkybox()
             skybox.SetTexture(self)
             return skybox
+        return None
 
     def __repr__(self):
         """Return the object representation."""
-        return pyvista.DataSet.__repr__(self)
+        return pyvista.DataSet.__repr__(self)  # type: ignore[type-var]
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
-        attrs.append(("Components", self.n_components, "{:d}"))
-        attrs.append(("Cube Map", self.cube_map, "{:}"))
-        attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}"))
+        attrs.append(('Components', self.n_components, '{:d}'))
+        attrs.append(('Cube Map', self.cube_map, '{:}'))
+        attrs.append(('Dimensions', self.dimensions, '{:d}, {:d}'))  # type: ignore[arg-type]
         return attrs
 
     @property
@@ -442,7 +449,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         return input_data.GetPointData().GetScalars().GetNumberOfComponents()
 
     @property
-    def dimensions(self) -> Tuple[float, float]:  # numpydoc ignore=RT01
+    def dimensions(self) -> tuple[int, int]:  # numpydoc ignore=RT01
         """Dimensions of the texture.
 
         Examples
@@ -471,7 +478,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         Returns
         -------
-        various or None
+        pyvista.Actor | None
             See the returns section of :func:`pyvista.plot`.
 
         Examples
@@ -505,16 +512,16 @@ class Texture(_vtk.vtkTexture, DataObject):
         lighting = kwargs.pop('lighting', None)
         pl = pyvista.Plotter(lighting=lighting)
         pl.add_actor(self.to_skybox())
-        pl.set_environment_texture(self, True)
+        pl.set_environment_texture(self, True)  # type: ignore[arg-type]
         pl.add_mesh(pyvista.Sphere(), pbr=True, roughness=0.5, metallic=1.0)
         pl.camera_position = cpos
         pl.camera.zoom(zoom)
         if show_axes:
-            pl.show_axes()
+            pl.show_axes()  # type: ignore[call-arg]
         pl.show(**kwargs)
 
     @property
-    def wrap(self) -> 'Texture.WrapType':  # numpydoc ignore=RT01
+    def wrap(self) -> Texture.WrapType:  # numpydoc ignore=RT01
         """Return or set the Wrap mode for the texture coordinates.
 
         Wrap mode for the texture coordinates valid values are:
@@ -582,10 +589,10 @@ class Texture(_vtk.vtkTexture, DataObject):
 
             raise VTKVersionError('`wrap` requires VTK v9.1.0 or newer.')
 
-        return Texture.WrapType(self.GetWrap())  # type: ignore
+        return Texture.WrapType(self.GetWrap())  # type: ignore[call-arg]
 
     @wrap.setter
-    def wrap(self, value: Union['Texture.WrapType', int]):  # numpydoc ignore=GL08
+    def wrap(self, value: Texture.WrapType | int):
         if not hasattr(self, 'SetWrap'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
@@ -593,7 +600,7 @@ class Texture(_vtk.vtkTexture, DataObject):
 
         self.SetWrap(value)
 
-    def to_grayscale(self) -> 'Texture':
+    def to_grayscale(self) -> Texture:
         """Convert this texture as a single component (grayscale) texture.
 
         Returns
@@ -628,7 +635,7 @@ class Texture(_vtk.vtkTexture, DataObject):
         data = self.to_array()
         r, g, b = data[..., 0], data[..., 1], data[..., 2]
         data = (0.299 * r + 0.587 * g + 0.114 * b).round().astype(np.uint8)
-        return Texture(data)
+        return Texture(data)  # type: ignore[abstract]
 
 
 def image_to_texture(image):
@@ -645,7 +652,7 @@ def image_to_texture(image):
         The texture.
 
     """
-    return Texture(image)
+    return Texture(image)  # type: ignore[abstract]
 
 
 def numpy_to_texture(image):
@@ -679,4 +686,4 @@ def numpy_to_texture(image):
             UserWarning,
         )
 
-    return Texture(image)
+    return Texture(image)  # type: ignore[abstract]

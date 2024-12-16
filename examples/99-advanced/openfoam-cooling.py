@@ -1,4 +1,5 @@
-""".. _openfoam_cooling_example:
+"""
+.. _openfoam_cooling_example:
 
 Electronics Cooling CFD
 -----------------------
@@ -14,12 +15,14 @@ post processed according to this `README.md
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Load the Datasets
 # ~~~~~~~~~~~~~~~~~
 # Download and load the datasets.
@@ -32,7 +35,7 @@ structure, air = examples.download_electronics_cooling()
 structure, air
 
 
-###############################################################################
+# %%
 # Plot the Electronics
 # ~~~~~~~~~~~~~~~~~~~~
 # Here we plot the temperature of the electronics using the ``"reds"`` colormap
@@ -42,13 +45,18 @@ structure, air
 pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
 pl.add_mesh(
-    structure, scalars='T', smooth_shading=True, split_sharp_edges=True, cmap='reds', ambient=0.2
+    structure,
+    scalars='T',
+    smooth_shading=True,
+    split_sharp_edges=True,
+    cmap='reds',
+    ambient=0.2,
 )
 pl.enable_anti_aliasing('fxaa')  # also try 'ssaa'
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot Air Velocity
 # ~~~~~~~~~~~~~~~~~
 # Let's plot the velocity of the air.
@@ -73,7 +81,7 @@ pl.enable_anti_aliasing('fxaa')
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot Air Temperature
 # ~~~~~~~~~~~~~~~~~~~~
 # Let's also plot the temperature of the air. This time, let's also plot the
@@ -82,7 +90,11 @@ pl.show()
 pl = pv.Plotter()
 pl.enable_ssao(radius=0.01)
 pl.add_mesh(
-    z_slice, scalars='T', lighting=False, scalar_bar_args={'title': 'Temperature'}, cmap='reds'
+    z_slice,
+    scalars='T',
+    lighting=False,
+    scalar_bar_args={'title': 'Temperature'},
+    cmap='reds',
 )
 pl.add_mesh(
     structure,
@@ -98,7 +110,7 @@ pl.enable_anti_aliasing('fxaa')
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot Streamlines - Flow Velocity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Now, let's plot the streamlines of this dataset so we can see how the air is
@@ -112,7 +124,7 @@ points = []
 for x in np.linspace(0.045, 0.105, 7, endpoint=True):
     points.extend([x, 0.2, z] for z in np.linspace(0, 0.03, 5))
 points = pv.PointSet(points)
-lines = air.streamlines_from_source(points, max_time=2.0)
+lines = air.streamlines_from_source(points, max_length=2.0)
 
 # Plot
 pl = pv.Plotter()
@@ -132,7 +144,7 @@ pl.enable_anti_aliasing('fxaa')  # also try 'ssaa'
 pl.show()
 
 
-###############################################################################
+# %%
 # Volumetric Plot - Visualize High Temperatures
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Show a 3D plot of areas of temperature.

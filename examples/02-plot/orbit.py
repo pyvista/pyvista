@@ -22,25 +22,28 @@ with ``.show(auto_close=False)``.  You may also have to set
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
 mesh = examples.download_st_helens().warp_by_scalar()
 
-###############################################################################
-# Orbit around the Mt. St Helens dataset.
+# %%
+# Orbit around the Mt. St Helens dataset using
+# :func:`~pyvista.Plotter.generate_orbital_path`.
 
 p = pv.Plotter()
 p.add_mesh(mesh, lighting=False)
 p.camera.zoom(1.5)
 p.show(auto_close=False)
 path = p.generate_orbital_path(n_points=36, shift=mesh.length)
-p.open_gif("orbit.gif")
+p.open_gif('orbit.gif')
 p.orbit_on_path(path, write_frames=True)
 p.close()
 
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
 p.add_mesh(mesh, lighting=False)
@@ -48,21 +51,23 @@ p.show_grid()
 p.show(auto_close=False)
 viewup = [0.5, 0.5, 1]
 path = p.generate_orbital_path(factor=2.0, shift=10000, viewup=viewup, n_points=36)
-p.open_gif("orbit.gif")
+p.open_gif('orbit.gif')
 p.orbit_on_path(path, write_frames=True, viewup=[0, 0, 1], step=0.05)
 p.close()
 
 
-###############################################################################
+# %%
 
 mesh = examples.download_dragon()
 viewup = [0, 1, 0]
 
-###############################################################################
+# %%
 p = pv.Plotter()
 p.add_mesh(mesh)
 p.show(auto_close=False)
 path = p.generate_orbital_path(factor=2.0, n_points=36, viewup=viewup, shift=0.2)
-p.open_gif("orbit.gif")
+p.open_gif('orbit.gif')
 p.orbit_on_path(path, write_frames=True, viewup=viewup, step=0.05)
 p.close()
+# %%
+# .. tags:: plot

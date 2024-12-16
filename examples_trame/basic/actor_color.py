@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from trame.app import get_server
-from trame.ui.vuetify import SinglePageLayout
-from trame.widgets import vuetify
+from trame.ui.vuetify3 import SinglePageLayout
+from trame.widgets import vuetify3
 
 import pyvista as pv
 from pyvista.plotting.colors import hexcolors
@@ -12,10 +14,10 @@ from pyvista.trame.ui import plotter_ui
 
 pv.OFF_SCREEN = True
 
-server = get_server()
+server = get_server(client_type='vue3')
 state, ctrl = server.state, server.controller
 
-state.trame__title = "Actor Color"
+state.trame__title = 'Actor Color'
 ctrl.on_server_ready.add(ctrl.view_update)
 
 
@@ -34,8 +36,8 @@ actor = pl.add_mesh(mesh, color='seagreen')
 # -----------------------------------------------------------------------------
 
 
-@state.change("color")
-def color(color="seagreen", **kwargs):
+@state.change('color')
+def color(color='seagreen', **kwargs):
     actor.prop.color = color
     ctrl.view_update()
 
@@ -46,26 +48,26 @@ def color(color="seagreen", **kwargs):
 
 
 with SinglePageLayout(server) as layout:
-    layout.title.set_text("Actor Color")
+    layout.title.set_text('Actor Color')
     layout.icon.click = ctrl.view_reset_camera
 
     with layout.toolbar:
-        vuetify.VSpacer()
-        vuetify.VSelect(
-            label="Color",
-            v_model=("color", "seagreen"),
-            items=("array_list", list(hexcolors.keys())),
+        vuetify3.VSpacer()
+        vuetify3.VSelect(
+            label='Color',
+            v_model=('color', 'seagreen'),
+            items=('array_list', list(hexcolors.keys())),
             hide_details=True,
-            dense=True,
+            density='compact',
             outlined=True,
-            classes="pt-1 ml-2",
-            style="max-width: 250px",
+            classes='pt-1 ml-2',
+            style='max-width: 250px',
         )
 
     with layout.content:
-        with vuetify.VContainer(
+        with vuetify3.VContainer(
             fluid=True,
-            classes="pa-0 fill-height",
+            classes='pa-0 fill-height',
         ):
             # Use PyVista UI template for Plotters
             view = plotter_ui(pl, default_server_rendering=False)

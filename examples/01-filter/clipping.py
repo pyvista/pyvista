@@ -8,6 +8,8 @@ Clip/cut any dataset using planes or boxes.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -15,7 +17,7 @@ from pyvista import examples
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
-###############################################################################
+# %%
 # Clip with Plane
 # +++++++++++++++
 #
@@ -32,7 +34,7 @@ p.camera_position = [(0.24, 0.32, 0.7), (0.02, 0.03, -0.02), (-0.12, 0.93, -0.34
 p.show()
 
 
-###############################################################################
+# %%
 # Clip with Bounds
 # ++++++++++++++++
 #
@@ -50,7 +52,7 @@ p.add_legend()
 p.show()
 
 
-###############################################################################
+# %%
 # Clip with Rotated Box
 # +++++++++++++++++++++
 #
@@ -63,28 +65,28 @@ roi = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500,
 roi.rotate_z(33, inplace=True)
 
 p = pv.Plotter()
-p.add_mesh(roi, opacity=0.75, color="red")
+p.add_mesh(roi, opacity=0.75, color='red')
 p.add_mesh(mesh, opacity=0.5)
 p.show()
 
-###############################################################################
+# %%
 # Run the box clipping algorithm
 extracted = mesh.clip_box(roi, invert=False)
 
 p = pv.Plotter(shape=(1, 2))
-p.add_mesh(roi, opacity=0.75, color="red")
+p.add_mesh(roi, opacity=0.75, color='red')
 p.add_mesh(mesh)
 p.subplot(0, 1)
 p.add_mesh(extracted)
-p.add_mesh(roi, opacity=0.75, color="red")
+p.add_mesh(roi, opacity=0.75, color='red')
 p.link_views()
 p.view_isometric()
 p.show()
 
-###############################################################################
+# %%
 # Crinkled Clipping
 # +++++++++++++++++
-# Crinkled clipping is useful if you don’t want the clip filter to truly clip
+# Crinkled clipping is useful if you don't want the clip filter to truly clip
 # cells on the boundary, but want to preserve the input cell structure and to
 # pass the entire cell on through the boundary.
 #
@@ -96,20 +98,20 @@ p.show()
 # Input mesh
 mesh = pv.Wavelet()
 
-###############################################################################
+# %%
 # Define clipping plane
 normal = (1, 1, 1)
 plane = pv.Plane(i_size=30, j_size=30, direction=normal)
 
-###############################################################################
+# %%
 # Perform a standard clip
 clipped = mesh.clip(normal=normal)
 
-###############################################################################
+# %%
 # Perform a crinkled clip
 crinkled = mesh.clip(normal=normal, crinkle=True)
 
-###############################################################################
+# %%
 # Plot comparison
 p = pv.Plotter(shape=(1, 2))
 p.add_mesh(clipped, show_edges=True)
@@ -119,3 +121,5 @@ p.add_mesh(crinkled, show_edges=True)
 p.add_mesh(plane.extract_feature_edges(), color='r')
 p.link_views()
 p.show()
+# %%
+# .. tags:: filter

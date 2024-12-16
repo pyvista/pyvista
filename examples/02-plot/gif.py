@@ -12,12 +12,13 @@ Generate a moving gif from an active plotter.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
 
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # Create a structured grid
 # ~~~~~~~~~~~~~~~~~~~~~~~~
 # Create a structured grid and make a "wave" my shifting the Z position based
@@ -31,11 +32,11 @@ z = np.sin(r)
 
 # Create and structured surface
 grid = pv.StructuredGrid(x, y, z)
-grid["Height"] = z.ravel()
+grid['Height'] = z.ravel()
 grid.plot()
 
 
-###############################################################################
+# %%
 # Generate a GIF
 # ~~~~~~~~~~~~~~
 # Generate a GIF using ``off_screen=True`` parameter.
@@ -44,14 +45,14 @@ grid.plot()
 plotter = pv.Plotter(notebook=False, off_screen=True)
 plotter.add_mesh(
     grid,
-    scalars="Height",
+    scalars='Height',
     lighting=False,
     show_edges=True,
     clim=[-1, 1],
 )
 
 # Open a gif
-plotter.open_gif("wave.gif")
+plotter.open_gif('wave.gif')
 
 # Update Z and write a frame for each updated position
 nframe = 15
@@ -59,9 +60,11 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     z = np.sin(r + phase)
     # Update values inplace
     grid.points[:, -1] = z.ravel()
-    grid["Height"] = z.ravel()
+    grid['Height'] = z.ravel()
     # Write a frame. This triggers a render.
     plotter.write_frame()
 
 # Closes and finalizes movie
 plotter.close()
+# %%
+# .. tags:: plot

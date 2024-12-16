@@ -4,12 +4,15 @@
 Geometric Objects
 ~~~~~~~~~~~~~~~~~
 
-The "Hello, world!" of VTK
+The "Hello, world!" of VTK.
+Uses objects from :ref:`geometry_api`.
 """
+
+from __future__ import annotations
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # This runs through several of the available geometric objects available in
 # VTK which PyVista provides simple convenience methods for generating.
 #
@@ -25,7 +28,7 @@ cone = pv.Cone()
 poly = pv.Polygon()
 disc = pv.Disc()
 
-###############################################################################
+# %%
 # Now let's plot them all in one window
 
 p = pv.Plotter(shape=(3, 3))
@@ -52,3 +55,5 @@ p.subplot(2, 2)
 p.add_mesh(disc, color='lightblue', show_edges=True)
 # Render all of them
 p.show()
+# %%
+# .. tags:: load

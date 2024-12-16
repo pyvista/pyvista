@@ -11,6 +11,8 @@ to compute the cell qualities. For a full list of the various quality metrics
 available, please refer to the documentation for that filter.
 """
 
+from __future__ import annotations
+
 from pyvista import examples
 
 mesh = examples.download_cow().triangulate().decimate(0.7)
@@ -21,10 +23,12 @@ cpos = [
     (-0.2970769821136617, 0.9100381451936025, 0.2890948650371137),
 ]
 
-###############################################################################
+# %%
 # Compute the cell quality. Note that there are many different quality measures
 qual = mesh.compute_cell_quality(quality_measure='scaled_jacobian')
 qual
 
-###############################################################################
+# %%
 qual.plot(cpos=cpos, scalars='CellQuality')
+# %%
+# .. tags:: filter

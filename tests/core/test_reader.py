@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import os
-import platform
+from pathlib import Path
+import pickle
+import re
 
 import numpy as np
 import pytest
@@ -16,15 +20,15 @@ except ModuleNotFoundError:
     HAS_IMAGEIO = False
 
 
-pytestmark = pytest.mark.skipif(
-    platform.system() == 'Darwin', reason='MacOS testing on Azure fails when downloading'
-)
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason='Test fails on Windows')
 
 
-def test_get_reader_fail():
+def test_get_reader_fail(tmp_path):
     with pytest.raises(ValueError):  # noqa: PT011
-        pv.get_reader("not_a_supported_file.no_data")
+        pv.get_reader('not_a_supported_file.no_data')
+    match = '`pyvista.get_reader` does not support reading from directory:\n\t'
+    with pytest.raises(ValueError, match=match):
+        pv.get_reader(str(tmp_path))
 
 
 def test_reader_invalid_file():
@@ -34,7 +38,7 @@ def test_reader_invalid_file():
 
 
 def test_xmlimagedatareader(tmpdir):
-    tmpfile = tmpdir.join("temp.vti")
+    tmpfile = tmpdir.join('temp.vti')
     mesh = pv.ImageData()
     mesh.save(tmpfile.strpath)
 
@@ -47,7 +51,7 @@ def test_xmlimagedatareader(tmpdir):
 
 
 def test_xmlrectilineargridreader(tmpdir):
-    tmpfile = tmpdir.join("temp.vtr")
+    tmpfile = tmpdir.join('temp.vtr')
     mesh = pv.RectilinearGrid()
     mesh.save(tmpfile.strpath)
 
@@ -60,7 +64,7 @@ def test_xmlrectilineargridreader(tmpdir):
 
 
 def test_xmlunstructuredgridreader(tmpdir):
-    tmpfile = tmpdir.join("temp.vtu")
+    tmpfile = tmpdir.join('temp.vtu')
     mesh = pv.UnstructuredGrid()
     mesh.save(tmpfile.strpath)
 
@@ -73,7 +77,7 @@ def test_xmlunstructuredgridreader(tmpdir):
 
 
 def test_xmlpolydatareader(tmpdir):
-    tmpfile = tmpdir.join("temp.vtp")
+    tmpfile = tmpdir.join('temp.vtp')
     mesh = pv.Sphere()
     mesh.save(tmpfile.strpath)
 
@@ -86,7 +90,7 @@ def test_xmlpolydatareader(tmpdir):
 
 
 def test_xmlstructuredgridreader(tmpdir):
-    tmpfile = tmpdir.join("temp.vts")
+    tmpfile = tmpdir.join('temp.vts')
     mesh = pv.StructuredGrid()
     mesh.save(tmpfile.strpath)
 
@@ -99,7 +103,7 @@ def test_xmlstructuredgridreader(tmpdir):
 
 
 def test_xmlmultiblockreader(tmpdir):
-    tmpfile = tmpdir.join("temp.vtm")
+    tmpfile = tmpdir.join('temp.vtm')
     mesh = pv.MultiBlock([pv.Sphere() for i in range(5)])
     mesh.save(tmpfile.strpath)
 
@@ -114,7 +118,7 @@ def test_xmlmultiblockreader(tmpdir):
 
 
 def test_reader_cell_point_data(tmpdir):
-    tmpfile = tmpdir.join("temp.vtp")
+    tmpfile = tmpdir.join('temp.vtp')
     mesh = pv.Sphere()
     mesh['height'] = mesh.points[:, 1]
     mesh['id'] = np.arange(mesh.n_cells)
@@ -248,7 +252,7 @@ def test_ensightreader_timepoints():
     reader.set_active_time_point(0)
     assert reader.active_time_value == 1.0
 
-    with pytest.raises(ValueError, match="Not a valid time"):
+    with pytest.raises(ValueError, match='Not a valid time'):
         reader.set_active_time_value(1000.0)
 
 
@@ -261,25 +265,25 @@ def test_ensightreader_time_sets():
     reader.set_active_time_set(1)
     assert reader.number_time_points == 11
 
-    mesh = reader.read()["all"]
+    mesh = reader.read()['all']
     assert reader.number_time_points == 11
-    assert np.isclose(mesh["displacement"][1, 1], 0.0, 1e-10)
+    assert np.isclose(mesh['displacement'][1, 1], 0.0, 1e-10)
 
     reader.set_active_time_value(reader.time_values[-1])
-    mesh = reader.read()["all"]
-    assert np.isclose(mesh["displacement"][1, 1], 0.0028727285, 1e-10)
+    mesh = reader.read()['all']
+    assert np.isclose(mesh['displacement'][1, 1], 0.0028727285, 1e-10)
 
     reader.set_active_time_set(0)
     assert reader.number_time_points == 1
 
-    with pytest.raises(IndexError, match="Time set index"):
+    with pytest.raises(IndexError, match='Time set index'):
         reader.set_active_time_set(2)
 
 
 def test_dcmreader(tmpdir):
     # Test reading directory (image stack)
     directory = examples.download_dicom_stack(load=False)
-    reader = pv.DICOMReader(directory)  # ``get_reader`` doesn't support directories
+    reader = pv.get_reader(directory)
     assert directory in str(reader)
     assert isinstance(reader, pv.DICOMReader)
     assert reader.path == directory
@@ -289,7 +293,7 @@ def test_dcmreader(tmpdir):
     assert all([mesh.n_points, mesh.n_cells])
 
     # Test reading single file (*.dcm)
-    filename = os.path.join(directory, "1-1.dcm")
+    filename = str(Path(directory) / '1-1.dcm')
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.DICOMReader)
     assert reader.path == filename
@@ -486,8 +490,8 @@ def test_pvdreader():
     assert len(active_datasets) == 1
     active_dataset0 = active_datasets[0]
     assert active_dataset0.time == 0.0
-    assert active_dataset0.path == "wavy/wavy00.vts"
-    assert active_dataset0.group == ""
+    assert active_dataset0.path == 'wavy/wavy00.vts'
+    assert active_dataset0.group == ''
     assert active_dataset0.part == 0
 
     assert len(reader.datasets) == len(reader.time_values)
@@ -512,7 +516,7 @@ def test_pvdreader():
 def test_pvdreader_no_time_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no timestep or group and two parts.
-    filename = os.path.join(os.path.dirname(filename), 'dualSphereNoTime.pvd')
+    filename = str(Path(filename).parent / 'dualSphereNoTime.pvd')
 
     reader = pv.PVDReader(filename)
     assert reader.time_values == [0.0]
@@ -529,7 +533,7 @@ def test_pvdreader_no_time_group():
 def test_pvdreader_no_part_group():
     filename = examples.download_dual_sphere_animation(load=False)  # download all the files
     # Use a pvd file that has no parts and with timesteps.
-    filename = os.path.join(os.path.dirname(filename), 'dualSphereAnimation4NoPart.pvd')
+    filename = str(Path(filename).parent / 'dualSphereAnimation4NoPart.pvd')
 
     reader = pv.PVDReader(filename)
     assert reader.active_time_value == 0.0
@@ -539,7 +543,7 @@ def test_pvdreader_no_part_group():
     assert len(reader.active_datasets) == 2
     for dataset in reader.active_datasets:
         assert dataset.time == 1.0
-        assert dataset.group == ""
+        assert dataset.group == ''
         assert dataset.part == 0
 
 
@@ -562,7 +566,7 @@ def test_openfoamreader_arrays_time():
 def test_openfoamreader_active_time():
     # vtk < 9.1.0 does not support
     if pv.vtk_version_info < (9, 1, 0):
-        pytest.xfail("OpenFOAMReader GetTimeValue missing on vtk<9.1.0")
+        pytest.xfail('OpenFOAMReader GetTimeValue missing on vtk<9.1.0')
 
     reader = get_cavity_reader()
     assert reader.active_time_value == 0.0
@@ -572,7 +576,8 @@ def test_openfoamreader_active_time():
     assert reader.active_time_value == 1.0
 
     with pytest.raises(
-        ValueError, match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]'
+        ValueError,
+        match=r'Not a valid .* time values: \[0.0, 0.5, 1.0, 1.5, 2.0, 2.5\]',
     ):
         reader.set_active_time_value(1000)
 
@@ -581,60 +586,61 @@ def test_openfoamreader_read_data_time_value():
     reader = get_cavity_reader()
 
     reader.set_active_time_value(0.0)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 0.0, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 0.0, 0.0, 1e-10)
 
     reader.set_active_time_value(0.5)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(1.0)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(1.5)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(2.0)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
 
     reader.set_active_time_value(2.5)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
 def test_openfoamreader_read_data_time_point():
     reader = get_cavity_reader()
 
     reader.set_active_time_point(0)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 0.0, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 0.0, 0.0, 1e-10)
 
     reader.set_active_time_point(1)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.524879113887437e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(2)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.5253094867803156e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(3)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525657641352154e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(4)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.5258551836013794e-05, 0.0, 1e-10)
 
     reader.set_active_time_point(5)
-    data = reader.read()["internalMesh"]
-    assert np.isclose(data.cell_data["U"][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
+    data = reader.read()['internalMesh']
+    assert np.isclose(data.cell_data['U'][:, 1].mean(), 4.525951953837648e-05, 0.0, 1e-10)
 
 
 @pytest.mark.skipif(
-    pv.vtk_version_info > (9, 3), reason="polyhedra decomposition was removed after 9.3"
+    pv.vtk_version_info > (9, 3),
+    reason='polyhedra decomposition was removed after 9.3',
 )
 def test_openfoam_decompose_polyhedra():
     reader = get_cavity_reader()
@@ -753,7 +759,7 @@ def test_read_cgns():
     filename = examples.download_cgns_structured(load=False)
     reader = pv.get_reader(filename)
     assert isinstance(reader, pv.CGNSReader)
-    assert "CGNS" in str(reader)
+    assert 'CGNS' in str(reader)
     reader.show_progress()
     assert reader._progress_bar is True
 
@@ -977,11 +983,342 @@ def test_xdmf_reader():
     reader.set_active_time_point(0)
     assert reader.active_time_value == 0.0
 
-    with pytest.raises(ValueError, match="Not a valid time"):
+    with pytest.raises(ValueError, match='Not a valid time'):
         reader.set_active_time_value(1000.0)
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
+@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_try_imageio_imread():
     img = _try_imageio_imread(examples.mapfile)
     assert isinstance(img, (imageio.core.util.Array, np.ndarray))
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason='Requires VTK>=9.1.0 for a concrete PartitionedDataSetWriter class.',
+)
+def test_xmlpartitioneddatasetreader(tmpdir):
+    tmpfile = tmpdir.join('temp.vtpd')
+    partitions = pv.PartitionedDataSet(
+        [pv.Wavelet(extent=(0, 10, 0, 10, 0, 5)), pv.Wavelet(extent=(0, 10, 0, 10, 5, 10))],
+    )
+    partitions.save(tmpfile.strpath)
+    new_partitions = pv.read(tmpfile.strpath)
+    assert isinstance(new_partitions, pv.PartitionedDataSet)
+    assert len(new_partitions) == len(partitions)
+    for i, new_partition in enumerate(new_partitions):
+        assert isinstance(new_partition, pv.ImageData)
+        assert new_partitions[i].n_cells == partitions[i].n_cells
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 3, 0),
+    reason='Requires VTK>=9.3.0 for a concrete FLUENTCFFReader class.',
+)
+def test_fluentcffreader():
+    filename = examples.download_room_cff(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.FLUENTCFFReader)
+    assert reader.path == filename
+
+    blocks = reader.read()
+    assert blocks.n_blocks == 1
+    assert isinstance(blocks[0], pv.UnstructuredGrid)
+    assert blocks.bounds == (0.0, 4.0, 0.0, 4.0, 0.0, 0.0)
+
+
+def test_gambitreader():
+    filename = examples.download_prism(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GambitReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
+)
+def test_gaussian_cubes_reader():
+    filename = examples.download_m4_total_density(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GaussianCubeReader)
+    assert reader.path == filename
+
+    hb_scale = 1.1
+    b_scale = 10.0
+    reader.hb_scale = hb_scale
+    reader.b_scale = b_scale
+    assert reader.hb_scale == hb_scale
+    assert reader.b_scale == b_scale
+
+    grid = reader.read(grid=True)
+    assert isinstance(grid, pv.ImageData)
+    assert all([grid.n_points, grid.n_cells])
+
+    poly = reader.read(grid=False)
+    assert isinstance(poly, pv.PolyData)
+    assert all([poly.n_points, poly.n_cells])
+
+
+def test_gesignareader():
+    filename = examples.download_e07733s002i009(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.GESignaReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info < (9, 1, 0),
+    reason='Requires VTK>=9.1.0 for a concrete GaussianCubeReader class.',
+)
+def test_pdbreader():
+    filename = examples.download_caffeine(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.PDBReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_particle_reader():
+    filename = examples.download_particles(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.ParticleReader)
+    assert reader.path == filename
+
+    reader.endian = 'BigEndian'
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+    reader.endian = 'LittleEndian'
+
+    with pytest.raises(ValueError, match='Invalid endian:'):
+        reader.endian = 'InvalidEndian'
+
+
+def test_prostar_reader():
+    filename = examples.download_prostar(load=False)
+    reader = pv.get_reader(filename)
+    assert isinstance(reader, pv.ProStarReader)
+    assert reader.path == filename
+
+    mesh = reader.read()
+    assert all([mesh.n_points, mesh.n_cells])
+
+
+def test_grdecl_reader(tmp_path):
+    def read(content, include_content, **kwargs):
+        path = tmp_path
+
+        with Path.open(path / '3x3x3.grdecl', 'w') as f:
+            f.write(''.join(content))
+
+        with Path.open(path / '3x3x3_include.grdecl', 'w') as f:
+            f.write(''.join(include_content))
+
+        return pv.core.utilities.fileio.read_grdecl(path / '3x3x3.grdecl', **kwargs)
+
+    path = Path(__file__).parent.parent / 'example_files'
+
+    with Path.open(path / '3x3x3.grdecl') as f:
+        content = list(f)
+
+    with Path.open(path / '3x3x3_include.grdecl') as f:
+        include_content = list(f)
+
+    # Test base sample file
+    grid = read(content, include_content, other_keywords=['KEYWORD'])
+
+    assert grid.n_cells == 27
+    assert grid.n_points == 216
+    assert np.allclose(grid.cell_data['PORO'].sum(), 0.1 * 27)
+    assert grid.user_dict['MAPAXES'] == [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+    assert grid.user_dict['MAPUNITS'] == 'METRES'
+    assert grid.user_dict['GRIDUNIT'] == 'METRES MAP'
+    assert ''.join(grid.user_dict['KEYWORD']) == '1234'
+    assert np.count_nonzero(grid.cell_data['vtkGhostType']) == 5
+    assert np.allclose(grid.points[:, 1].sum(), 108.0)
+
+    # Test fails
+    match = 'Cylindric grids are not supported'
+    content_copy = list(content)
+    content_copy[1] = content_copy[1].replace('F', 'T')
+    with pytest.raises(TypeError, match=match):
+        _ = read(content_copy, include_content)
+
+    match = "Unable to generate grid without keyword 'SPECGRID'"
+    content_copy = list(content)
+    content_copy[0] = content_copy[0].replace('SPECGRID', 'PLACEHOLDER')
+    with pytest.raises(ValueError, match=match):
+        _ = read(content_copy, include_content)
+
+    # Test relative coordinates
+    include_content[5] = include_content[5].replace('METRES MAP', 'METRES')
+    grid = read(content, include_content)
+    assert np.allclose(grid.points[:, 1].sum(), 324.0)
+
+    # Test relative warnings
+    match = 'Unable to convert relative coordinates with different grid and map units'
+    include_content_copy = list(include_content)
+    include_content_copy[3] = include_content_copy[3].replace('METRES', 'FEET')
+    with pytest.warns(UserWarning, match=match):
+        _ = read(content, include_content_copy)
+
+    match = "Unable to convert relative coordinates without keyword 'MAPUNITS'"
+    include_content_copy = list(include_content)
+    include_content_copy[2] = include_content_copy[2].replace('MAPUNITS', 'PLACEHOLDER')
+    with pytest.warns(UserWarning, match=match):
+        _ = read(content, include_content_copy)
+
+    match = "Unable to convert relative coordinates without keyword 'MAPAXES'"
+    include_content_copy = list(include_content)
+    include_content_copy[0] = include_content_copy[0].replace('MAPAXES', 'PLACEHOLDER')
+    with pytest.warns(UserWarning, match=match):
+        _ = read(content, include_content_copy)
+
+
+@pytest.mark.parametrize(
+    ('data_object', 'ext'),
+    [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
+)
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='VTK version not supported.')
+def test_read_write_pickle(tmp_path, data_object, ext, datasets):
+    filepath = tmp_path / ('data_object' + ext)
+    data_object.save(filepath)
+    new_data_object = pv.read(filepath)
+    assert data_object == new_data_object
+
+    # Test raises
+    with open(str(filepath), 'wb') as f:  # noqa: PTH123
+        # Create non-mesh pickle file
+        pickle.dump([1, 2, 3], f)
+    match = (
+        "Pickled object must be an instance of <class 'pyvista.core.dataobject.DataObject'>. "
+        "Got <class 'list'> instead."
+    )
+    with pytest.raises(TypeError, match=match):
+        pv.read(filepath)
+
+    match = "Filename must be a file path with extension ('.pkl', '.pickle'). Got {} instead."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        pv.read_pickle({})
+
+    match = "Only <class 'pyvista.core.dataobject.DataObject'> are supported for pickling. Got <class 'dict'> instead."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        pv.save_pickle('filename', {})
+
+
+def test_exodus_reader_ext():
+    # test against mug and exodus to check different valid file
+    # extensions: .e and .exo
+
+    fname_e = examples.download_mug(load=False)
+    fname_exo = examples.download_exodus(load=False)
+
+    e_reader = pv.get_reader(fname_e)
+    exo_reader = pv.get_reader(fname_exo)
+
+    assert isinstance(e_reader, pv.core.utilities.reader.ExodusIIReader)
+    assert isinstance(exo_reader, pv.core.utilities.reader.ExodusIIReader)
+
+
+def test_exodus_reader():
+    # check internals
+    fname_e = examples.download_mug(load=False)
+    e_reader = pv.get_reader(fname_e)
+
+    ## check enabling of displacements (To match functionality
+    # from read_exodus)
+    e_reader.enable_displacements()
+    assert e_reader.reader.GetApplyDisplacements() == 1
+    assert e_reader.reader.GetDisplacementMagnitude() == 1.0
+
+    e_reader.disable_displacements()
+    assert e_reader.reader.GetApplyDisplacements() == 0
+
+    ## check number of cell and point arrays and their names
+    assert e_reader.number_point_arrays == 2
+    assert e_reader.number_cell_arrays == 1
+
+    assert all(array in e_reader.point_array_names for array in ['convected', 'diffused'])
+
+    assert 'aux_elem' in e_reader.cell_array_names
+
+    ## check enabling and disabling of point arrays
+    for name in e_reader.point_array_names:
+        # Should be enabled by default
+        assert e_reader.point_array_status(name)
+
+        e_reader.disable_point_array(name)
+        assert not e_reader.point_array_status(name)
+
+        e_reader.enable_point_array(name)
+        assert e_reader.point_array_status(name)
+
+    ## check enabling and disabling of cell arrays
+    for name in e_reader.cell_array_names:
+        # Should be enabled by default
+        assert e_reader.cell_array_status(name)
+
+        e_reader.disable_cell_array(name)
+        assert not e_reader.cell_array_status(name)
+
+        e_reader.enable_cell_array(name)
+        assert e_reader.cell_array_status(name)
+
+    # test time routines
+    ntimes = 21
+    dt = 0.1
+
+    ## check correct number of time points
+    assert e_reader.number_time_points == ntimes, 'Checks number of time points'
+    assert e_reader.reader.GetTimeStep() == 0, 'Checks the first time set'
+
+    assert np.allclose(e_reader.time_values, [dt * i for i in range(ntimes)], atol=1e-8, rtol=1e-8)
+
+    ## check setting and getting of time points and times
+    for i in range(ntimes):
+        e_reader.set_active_time_point(i)
+        assert e_reader.reader.GetTimeStep() == i, 'check time point set'
+
+        tp = e_reader.reader.GetTimeStep()
+        assert tp == i, 'Check underlying reader time step setting'
+
+        t = i * dt
+        assert np.isclose(
+            e_reader.time_point_value(i), t, atol=1e-8, rtol=1e-8
+        ), 'Check correct times'
+
+        assert np.isclose(
+            e_reader.active_time_value, t, atol=1e-8, rtol=1e-8
+        ), 'Check correct time set'
+
+    # check time setting based on time
+    for i, t in enumerate(e_reader.time_values):
+        e_reader.set_active_time_value(t)
+        assert e_reader.reader.GetTimeStep() == i, 'check time point set'
+
+    # check for error if time not present
+    bad_time = 1.25
+    err_msg = re.escape(f'Time {bad_time} not present. Available times are {e_reader.time_values}')
+    with pytest.raises(ValueError, match=err_msg):
+        e_reader.set_active_time_value(1.25)
+
+    ## check read with point and cell arrays present
+    multiblock = e_reader.read()
+
+    unstruct = multiblock[0][0]
+
+    assert isinstance(unstruct, pv.UnstructuredGrid)
+    for key in e_reader.point_array_names:
+        assert key in unstruct.point_data.keys()
+
+    for key in e_reader.cell_array_names:
+        assert key in unstruct.cell_data.keys()

@@ -9,13 +9,14 @@ using the ``extract_surface`` filter.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
 
 import numpy as np
 
 import pyvista as pv
 from pyvista import CellType
 
-###############################################################################
+# %%
 # Create a quadratic cell and extract its surface
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a single quadratic hexahedral cell and then extract its surface
@@ -53,11 +54,13 @@ quad_pts = np.array(
         (lin_pts[1] + lin_pts[5]) / 2,
         (lin_pts[2] + lin_pts[6]) / 2,
         (lin_pts[3] + lin_pts[7]) / 2,
-    ]
+    ],
 )
 
 # introduce a minor variation to the location of the mid-side points
-quad_pts += np.random.default_rng().random(quad_pts.shape) * 0.3
+# seed the random numbers for reproducibility
+rng = np.random.default_rng(seed=0)
+quad_pts += rng.random(quad_pts.shape) * 0.3
 pts = np.vstack((lin_pts, quad_pts))
 
 # create the grid
@@ -70,7 +73,7 @@ surf = grid.extract_surface()
 surf.plot(show_scalar_bar=False)
 
 
-###############################################################################
+# %%
 # Nonlinear Surface Subdivision
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Should your UnstructuredGrid contain quadratic cells, you can
@@ -81,3 +84,5 @@ surf.plot(show_scalar_bar=False)
 
 surf_subdivided = grid.extract_surface(nonlinear_subdivision=5)
 surf_subdivided.plot(show_scalar_bar=False)
+# %%
+# .. tags:: filter

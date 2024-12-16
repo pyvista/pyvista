@@ -1,5 +1,7 @@
 """Filters module with class to manage filters/algorithms for structured grid datasets."""
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista
@@ -13,7 +15,7 @@ from pyvista.core.utilities.misc import abstract_class
 class StructuredGridFilters(DataSetFilters):
     """An internal class to manage filters/algorithms for structured grid datasets."""
 
-    def extract_subset(self, voi, rate=(1, 1, 1), boundary=False):
+    def extract_subset(self, voi, rate=(1, 1, 1), boundary: bool = False):
         """Select piece (e.g., volume of interest).
 
         To use this filter set the VOI ivar which are i-j-k min/max
@@ -29,7 +31,7 @@ class StructuredGridFilters(DataSetFilters):
         Parameters
         ----------
         voi : sequence[int]
-            Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            Length 6 iterable of ints: ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
             These bounds specify the volume of interest in i-j-k min/max
             indices.
 
@@ -126,72 +128,74 @@ class StructuredGridFilters(DataSetFilters):
             raise RuntimeError('Concatenation axis must be <= 2.')
 
         # check dimensions are compatible
-        for i, (dim1, dim2) in enumerate(zip(self.dimensions, other.dimensions)):
+        for i, (dim1, dim2) in enumerate(zip(self.dimensions, other.dimensions)):  # type: ignore[attr-defined]
             if i == axis:
                 continue
             if dim1 != dim2:
                 raise ValueError(
-                    f'StructuredGrids with dimensions {self.dimensions} and {other.dimensions} '
-                    'are not compatible.'
+                    f'StructuredGrids with dimensions {self.dimensions} and {other.dimensions} '  # type: ignore[attr-defined]
+                    'are not compatible.',
                 )
 
         # check point/cell variables are the same
-        if not set(self.point_data.keys()) == set(other.point_data.keys()):
+        if not set(self.point_data.keys()) == set(other.point_data.keys()):  # type: ignore[attr-defined]
             raise RuntimeError('Grid to concatenate has different point array names.')
-        if not set(self.cell_data.keys()) == set(other.cell_data.keys()):
+        if not set(self.cell_data.keys()) == set(other.cell_data.keys()):  # type: ignore[attr-defined]
             raise RuntimeError('Grid to concatenate has different cell array names.')
 
         # check that points are coincident (within tolerance) along seam
         if not np.allclose(
-            np.take(self.points_matrix, indices=-1, axis=axis),
+            np.take(self.points_matrix, indices=-1, axis=axis),  # type: ignore[attr-defined]
             np.take(other.points_matrix, indices=0, axis=axis),
             atol=tolerance,
         ):
             raise RuntimeError(
                 f'Grids cannot be joined along axis {axis}, as points '
-                'are not coincident within tolerance of {tolerance}.'
+                'are not coincident within tolerance of {tolerance}.',
             )
 
         # slice to cut off the repeated grid face
         slice_spec = [slice(None, None, None)] * 3
         slice_spec[axis] = slice(0, -1, None)
-        slice_spec = tuple(slice_spec)  # trigger basic indexing
+        slice_spec = tuple(slice_spec)  # type: ignore[assignment] # trigger basic indexing
 
         # concatenate points, cutting off duplicate
         new_points = np.concatenate(
-            (self.points_matrix[slice_spec], other.points_matrix), axis=axis
+            (self.points_matrix[slice_spec], other.points_matrix),  # type: ignore[attr-defined]
+            axis=axis,
         )
 
         # concatenate point arrays, cutting off duplicate
         new_point_data = {}
-        for name, point_array in self.point_data.items():
-            arr_1 = self._reshape_point_array(point_array)
+        for name, point_array in self.point_data.items():  # type: ignore[attr-defined]
+            arr_1 = self._reshape_point_array(point_array)  # type: ignore[attr-defined]
             arr_2 = other._reshape_point_array(other.point_data[name])
             if not np.array_equal(
-                np.take(arr_1, indices=-1, axis=axis), np.take(arr_2, indices=0, axis=axis)
+                np.take(arr_1, indices=-1, axis=axis),
+                np.take(arr_2, indices=0, axis=axis),
             ):
                 raise RuntimeError(
                     f'Grids cannot be joined along axis {axis}, as field '
-                    '`{name}` is not identical along the seam.'
+                    '`{name}` is not identical along the seam.',
                 )
             new_point_data[name] = np.concatenate((arr_1[slice_spec], arr_2), axis=axis).ravel(
-                order='F'
+                order='F',
             )
 
-        new_dims = np.array(self.dimensions)
+        new_dims = np.array(self.dimensions)  # type: ignore[attr-defined]
         new_dims[axis] += other.dimensions[axis] - 1
 
         # concatenate cell arrays
         new_cell_data = {}
-        for name, cell_array in self.cell_data.items():
-            arr_1 = self._reshape_cell_array(cell_array)
+        for name, cell_array in self.cell_data.items():  # type: ignore[attr-defined]
+            arr_1 = self._reshape_cell_array(cell_array)  # type: ignore[attr-defined]
             arr_2 = other._reshape_cell_array(other.cell_data[name])
             new_cell_data[name] = np.concatenate((arr_1, arr_2), axis=axis).ravel(order='F')
 
         # assemble output
         joined = pyvista.StructuredGrid()
         joined.dimensions = list(new_dims)
-        joined.points = new_points.reshape((-1, 3), order='F')
+        joined.points = new_points.reshape((-1, 3), order='F')  # type: ignore[assignment]
         joined.point_data.update(new_point_data)
         joined.cell_data.update(new_cell_data)
 

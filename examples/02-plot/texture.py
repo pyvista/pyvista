@@ -7,13 +7,15 @@ Applying Textures
 Plot a mesh with an image projected onto it as a texture.
 """
 
-from matplotlib.cm import get_cmap
+from __future__ import annotations
+
+from matplotlib.pyplot import get_cmap
 import numpy as np
 
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Texture mapping is easily implemented using PyVista. Many of the geometric
 # objects come preloaded with texture coordinates, so quickly creating a
 # surface and displaying an image is simply:
@@ -27,7 +29,7 @@ surf = pv.Cylinder()
 surf.plot(texture=tex)
 
 
-###############################################################################
+# %%
 # But what if your dataset doesn't have texture coordinates? Then you can
 # harness the :func:`pyvista.DataSetFilters.texture_map_to_plane` filter to
 # properly map an image to a dataset's surface.
@@ -46,7 +48,7 @@ curvsurf.texture_map_to_plane(inplace=True)
 
 curvsurf.plot(texture=tex)
 
-###############################################################################
+# %%
 # Display scalar data along with a texture by ensuring the
 # ``interpolate_before_map`` setting is ``False`` and specifying both the
 # ``texture`` and ``scalars`` arguments.
@@ -56,7 +58,7 @@ elevated = curvsurf.elevation()
 elevated.plot(scalars='Elevation', cmap='terrain', texture=tex, interpolate_before_map=False)
 
 
-###############################################################################
+# %%
 # Note that this process can be completed with any image texture.
 
 # use the puppy image
@@ -64,7 +66,7 @@ tex = examples.download_puppy_texture()
 curvsurf.plot(texture=tex)
 
 
-###############################################################################
+# %%
 # Textures from Files
 # +++++++++++++++++++
 #
@@ -78,7 +80,7 @@ tex = pv.read_texture(image_file)
 curvsurf.plot(texture=tex)
 
 
-###############################################################################
+# %%
 # NumPy Arrays as Textures
 # ++++++++++++++++++++++++
 #
@@ -93,11 +95,11 @@ A, b = 500, 100
 zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
 
 # Creating a custom RGB image
-cmap = get_cmap("nipy_spectral")
+cmap = get_cmap('nipy_spectral')
 norm = lambda x: (x - np.nanmin(x)) / (np.nanmax(x) - np.nanmin(x))
 hue = norm(zz.ravel())
 colors = (cmap(hue)[:, 0:3] * 255.0).astype(np.uint8)
-image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
+image = colors.reshape((xx.shape[0], xx.shape[1], 3), order='F')
 
 # Convert 3D numpy array to texture
 tex = pv.numpy_to_texture(image)
@@ -105,7 +107,7 @@ tex = pv.numpy_to_texture(image)
 # Render it
 curvsurf.plot(texture=tex)
 
-###############################################################################
+# %%
 # Create a GIF Movie with updating textures
 # +++++++++++++++++++++++++++++++++++++++++
 # Generate a moving gif from an active plotter with updating textures.
@@ -115,10 +117,10 @@ mesh = curvsurf.extract_surface()
 # Create a plotter object
 plotter = pv.Plotter(notebook=False, off_screen=True)
 
-actor = plotter.add_mesh(mesh, smooth_shading=True, color="white")
+actor = plotter.add_mesh(mesh, smooth_shading=True, color='white')
 
 # Open a gif
-plotter.open_gif("texture.gif")
+plotter.open_gif('texture.gif')
 
 # Update Z and write a frame for each updated position
 nframe = 15
@@ -131,7 +133,7 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     hue = norm(zz.ravel()) * 0.5 * (1.0 + np.sin(phase))
     colors = (cmap(hue)[:, 0:3] * 255.0).astype(np.uint8)
-    image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
+    image = colors.reshape((xx.shape[0], xx.shape[1], 3), order='F')
 
     # Convert 3D numpy array to texture
     actor.texture = pv.numpy_to_texture(image)
@@ -144,7 +146,7 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
 # Closes and finalizes movie
 plotter.close()
 
-###############################################################################
+# %%
 # Textures with Transparency
 # ++++++++++++++++++++++++++
 #
@@ -158,13 +160,13 @@ plotter.close()
 rgba = examples.download_rgba_texture()
 rgba.n_components
 
-###############################################################################
+# %%
 
 # Render it
 curvsurf.plot(texture=rgba, show_grid=True)
 
 
-###############################################################################
+# %%
 # Repeating Textures
 # ++++++++++++++++++
 #
@@ -182,7 +184,7 @@ yc = np.linspace(0, axial_num_puppies, curvsurf.dimensions[1])
 xxc, yyc = np.meshgrid(xc, yc)
 puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 
-###############################################################################
+# %%
 # By defining texture coordinates that range ``(0, 4)`` on each axis, we will
 # produce 4 repetitions of the same texture on this mesh.
 #
@@ -191,15 +193,15 @@ puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 
 curvsurf.active_texture_coordinates = puppy_coords
 
-###############################################################################
+# %%
 # Now display all the puppies.
 
 # use the puppy image
 tex = examples.download_puppy_texture()
-curvsurf.plot(texture=tex, cpos="xy")
+curvsurf.plot(texture=tex, cpos='xy')
 
 
-###############################################################################
+# %%
 # Spherical Texture Coordinates
 # +++++++++++++++++++++++++++++
 # We have a built in convienance method for mapping textures to spherical
@@ -211,7 +213,7 @@ mesh.texture_map_to_sphere(inplace=True)
 mesh.plot(texture=tex)
 
 
-###############################################################################
+# %%
 # The helper method above does not always produce the desired texture
 # coordinates, so sometimes it must be done manually. Here is a great, user
 # contributed example from `this support issue <https://github.com/pyvista/pyvista-support/issues/257>`_
@@ -220,7 +222,11 @@ mesh.plot(texture=tex)
 # the mesh that will be used as the globe. Note the `start_theta` for a slight
 # overlappig
 sphere = pv.Sphere(
-    radius=1, theta_resolution=120, phi_resolution=120, start_theta=270.001, end_theta=270
+    radius=1,
+    theta_resolution=120,
+    phi_resolution=120,
+    start_theta=270.001,
+    end_theta=270,
 )
 
 # Initialize the texture coordinates array
@@ -236,3 +242,5 @@ for i in range(sphere.points.shape[0]):
 # And let's display it with a world map
 tex = examples.load_globe_texture()
 sphere.plot(texture=tex)
+# %%
+# .. tags:: plot

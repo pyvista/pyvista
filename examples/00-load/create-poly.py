@@ -8,11 +8,13 @@ Creating a :class:`pyvista.PolyData` (surface mesh) from vertices and faces.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 # A PolyData object can be created quickly from numpy arrays.  The vertex array
 # contains the locations of the points in the mesh and the face array contains
 # the number of points of each face and the indices of the vertices which
@@ -27,7 +29,7 @@ faces = np.hstack(
         [4, 0, 1, 2, 3],  # square
         [3, 0, 1, 4],  # triangle
         [3, 1, 2, 4],  # triangle
-    ]
+    ],
 )
 
 surf = pv.PolyData(vertices, faces)
@@ -42,7 +44,7 @@ surf.plot(
 )
 
 
-###############################################################################
+# %%
 # Polygonal PolyData
 # ~~~~~~~~~~~~~~~~~~
 # Create a three face polygonal mesh directly from points and faces.
@@ -78,3 +80,5 @@ faces = np.concatenate((face_a, face_b, face_c))
 
 mesh = pv.PolyData(points, faces)
 mesh.plot(show_edges=True, line_width=5)
+# %%
+# .. tags:: load

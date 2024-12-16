@@ -30,8 +30,13 @@ Reader Classes
     DEMReader
     DICOMReader
     EnSightReader
+    ExodusIIReader
     FacetReader
+    FLUENTCFFReader
     FluentReader
+    GambitReader
+    GaussianCubeReader
+    GESignaReader
     GIFReader
     GLTFReader
     HDFReader
@@ -39,11 +44,14 @@ Reader Classes
     JPEGReader
     MFIXReader
     MetaImageReader
+    MINCImageReader
     MultiBlockPlot3DReader
     NIFTIReader
     NRRDReader
     OBJReader
     OpenFOAMReader
+    ParticleReader
+    PDBReader
     PLYReader
     PNGReader
     PNMReader
@@ -51,6 +59,7 @@ Reader Classes
     PTSReader
     PVDReader
     Plot3DMetaReader
+    ProStarReader
     SLCReader
     STLReader
     SegYReader
@@ -63,6 +72,7 @@ Reader Classes
     XMLPImageDataReader
     XMLPRectilinearGridReader
     XMLPUnstructuredGridReader
+    XMLPartitionedDataSetReader
     XMLPolyDataReader
     XMLRectilinearGridReader
     XMLStructuredGridReader

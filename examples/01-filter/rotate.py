@@ -11,10 +11,12 @@ image. The camera location is the same in all four images.
 """
 
 # sphinx_gallery_thumbnail_number = 3
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Define camera and axes
 # ++++++++++++++++++++++
 #
@@ -30,7 +32,7 @@ camera.focal_point = (5.0, 5.0, 5.0)
 axes = pv.Axes(show_actor=True, actor_scale=2.0, line_width=5)
 axes.origin = (3.0, 3.0, 3.0)
 
-###############################################################################
+# %%
 # Original Mesh
 # +++++++++++++
 #
@@ -38,14 +40,14 @@ axes.origin = (3.0, 3.0, 3.0)
 
 p = pv.Plotter()
 
-p.add_text("Mesh", font_size=24)
+p.add_text('Mesh', font_size=24)
 p.add_actor(axes.actor)
 p.camera = camera
 p.add_mesh(mesh)
 
 p.show()
 
-###############################################################################
+# %%
 # Rotation about the x axis
 # +++++++++++++++++++++++++
 #
@@ -54,7 +56,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("X-Axis Rotation", font_size=24)
+p.add_text('X-Axis Rotation', font_size=24)
 p.add_actor(axes.actor)
 p.camera = camera
 
@@ -64,7 +66,7 @@ for i in range(6):
 
 p.show()
 
-###############################################################################
+# %%
 # Rotation about the y axis
 # +++++++++++++++++++++++++
 #
@@ -73,7 +75,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Y-Axis Rotation", font_size=24)
+p.add_text('Y-Axis Rotation', font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 
@@ -83,7 +85,7 @@ for i in range(6):
 
 p.show()
 
-###############################################################################
+# %%
 # Rotation about the z axis
 # +++++++++++++++++++++++++
 #
@@ -92,7 +94,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Z-Axis Rotation", font_size=24)
+p.add_text('Z-Axis Rotation', font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 
@@ -102,7 +104,7 @@ for i in range(6):
 
 p.show()
 
-###############################################################################
+# %%
 # Rotation about a custom vector
 # ++++++++++++++++++++++++++++++
 #
@@ -111,7 +113,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Custom Vector Rotation", font_size=24)
+p.add_text('Custom Vector Rotation', font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 for i in range(6):
@@ -120,3 +122,5 @@ for i in range(6):
     p.add_mesh(rot)
 
 p.show()
+# %%
+# .. tags:: filter

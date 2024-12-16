@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import importlib
-import pathlib
+from pathlib import Path
 
 import pytest
 
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-namespace_data = pathlib.Path(__file__).parent / 'namespace-plotting.txt'
-with open(namespace_data) as f:
+namespace_data = Path(__file__).parent / 'namespace-plotting.txt'
+with namespace_data.open() as f:
     namespace = f.read().splitlines()
     # ignore commented data
     namespace = [n.split(', ')[0] for n in namespace if not n.startswith('#')]

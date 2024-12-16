@@ -1,6 +1,9 @@
 """Image regression module."""
 
-from typing import Optional, cast
+from __future__ import annotations
+
+from typing import Optional
+from typing import cast
 
 import numpy as np
 
@@ -95,13 +98,13 @@ def run_image_filter(imfilter: _vtk.vtkWindowToImageFilter) -> NumpyArray[float]
     if image is None:
         return np.empty((0, 0, 0))
     img_size = image.dimensions
-    img_array = point_array(image, 'ImageScalars')
+    img_array = cast(NumpyArray[float], point_array(image, 'ImageScalars'))
     # Reshape and write
     tgt_size = (img_size[1], img_size[0], -1)
     return img_array.reshape(tgt_size)[::-1]
 
 
-def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
+def image_from_window(render_window, as_vtk: bool = False, ignore_alpha: bool = False, scale=1):
     """Extract the image from the render window as an array.
 
     Parameters
@@ -149,7 +152,7 @@ def image_from_window(render_window, as_vtk=False, ignore_alpha=False, scale=1):
     return data
 
 
-def compare_images(im1, im2, threshold=1, use_vtk=True):
+def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
     """Compare two different images of the same size.
 
     Parameters
@@ -199,9 +202,12 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
     >>> pv.compare_images(img1, img2)  # doctest:+SKIP
 
     """
-    from pyvista import ImageData, Plotter, read, wrap
+    from pyvista import ImageData
+    from pyvista import Plotter
+    from pyvista import read
+    from pyvista import wrap
 
-    def to_img(img):  # numpydoc ignore=GL08
+    def to_img(img):
         if isinstance(img, ImageData):  # pragma: no cover
             return img
         elif isinstance(img, _vtk.vtkImageData):
@@ -216,13 +222,13 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
                 img.render()
             if img.render_window is None:
                 raise RuntimeError(
-                    'Unable to extract image from Plotter as it has already been closed.'
+                    'Unable to extract image from Plotter as it has already been closed.',
                 )
             return image_from_window(img.render_window, True, ignore_alpha=True)
         else:
             raise TypeError(
                 f'Unsupported data type {type(img)}.  Should be '
-                'Either a np.ndarray, vtkRenderWindow, or vtkImageData'
+                'Either a np.ndarray, vtkRenderWindow, or vtkImageData',
             )
 
     im1 = remove_alpha(to_img(im1))

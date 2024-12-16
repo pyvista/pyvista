@@ -20,6 +20,8 @@ See `Kitware: Screen-Space Ambient Occlusion
 
 # sphinx_gallery_start_ignore
 # the different options of ssao are more clear in static images
+from __future__ import annotations
+
 PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
@@ -30,7 +32,7 @@ from pyvista import examples
 
 grid = pv.ImageData(dimensions=(5, 5, 5)).explode(0.2)
 
-###############################################################################
+# %%
 # Plot with defaults
 # ~~~~~~~~~~~~~~~~~~
 # Let's plot this without SSAO. Note how the lighting is identical for each
@@ -41,10 +43,10 @@ pl.add_mesh(grid)
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot with SSAO
 # ~~~~~~~~~~~~~~
-# Now plot this with SSAO. Note how adjacent cubes affect the lighting of each
+# Now plot this with SSAO using :func:`~pyvista.Plotter.enable_ssao`. Note how adjacent cubes affect the lighting of each
 # other to make it look less artificial.
 #
 # With a low ``kernel_size``, the image will be rendered quickly at the expense
@@ -56,7 +58,7 @@ pl.enable_ssao(kernel_size=32)
 pl.show()
 
 
-###############################################################################
+# %%
 # Improve the SSAO rendering
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we've increased the ``kernel_size`` to improve the quality of the SSAO
@@ -70,7 +72,7 @@ pl.enable_anti_aliasing('ssaa')
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot a CAD model without SSAO
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here's another example without SSAO. This is a CAD model of a Raspberry PI
@@ -85,7 +87,7 @@ pl.camera.zoom(1.7)
 pl.show()
 
 
-###############################################################################
+# %%
 # Plot with SSAO
 # ~~~~~~~~~~~~~~
 # Here's the same CAD model with SSAO. Note how we had to increase both
@@ -102,7 +104,7 @@ pl.camera.zoom(1.7)
 pl.show()
 
 
-###############################################################################
+# %%
 # Increase the Radius
 # ~~~~~~~~~~~~~~~~~~~
 # Here we've increased the ``radius`` to the point where the case occlusion now
@@ -114,3 +116,5 @@ pl.enable_ssao(radius=15, bias=0.5)
 pl.enable_anti_aliasing('ssaa')
 pl.camera.zoom(1.7)
 pl.show()
+# %%
+# .. tags:: plot

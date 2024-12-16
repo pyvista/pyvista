@@ -7,6 +7,8 @@ Ray Tracing
 Single line segment ray tracing for PolyData objects.
 """
 
+from __future__ import annotations
+
 import pyvista as pv
 
 # Create source to ray trace
@@ -25,8 +27,10 @@ intersection = pv.PolyData(points)
 
 # Render the result
 p = pv.Plotter()
-p.add_mesh(sphere, show_edges=True, opacity=0.5, color="w", lighting=False, label="Test Mesh")
-p.add_mesh(ray, color="blue", line_width=5, label="Ray Segment")
-p.add_mesh(intersection, color="maroon", point_size=25, label="Intersection Points")
+p.add_mesh(sphere, show_edges=True, opacity=0.5, color='w', lighting=False, label='Test Mesh')
+p.add_mesh(ray, color='blue', line_width=5, label='Ray Segment')
+p.add_mesh(intersection, color='maroon', point_size=25, label='Intersection Points')
 p.add_legend()
 p.show()
+# %%
+# .. tags:: filter

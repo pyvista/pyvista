@@ -1,5 +1,7 @@
 """Demos to show off the functionality of PyVista."""
 
+from __future__ import annotations
+
 import time
 
 import numpy as np
@@ -34,11 +36,13 @@ def glyphs(grid_sz=3):
     >>> mesh.plot()
 
     """
+    # Seed rng for reproducible plots
+    rng = np.random.default_rng(seed=0)
+
     n = 10
     values = np.arange(n)  # values for scalars to look up glyphs by
 
     # taken from:
-    rng = np.random.default_rng()
     params = rng.uniform(0.5, 2, size=(n, 2))  # (n1, n2) parameters for the toroids
 
     geoms = [pyvista.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
@@ -54,7 +58,12 @@ def glyphs(grid_sz=3):
 
     # construct the glyphs on top of the mesh; don't scale by scalars now
     return mesh.glyph(
-        geom=geoms, indices=values, scale=False, factor=0.3, rng=(0, n - 1), orient=False
+        geom=geoms,
+        indices=values,
+        scale=False,
+        factor=0.3,
+        rng=(0, n - 1),
+        orient=False,
     )
 
 
@@ -72,7 +81,7 @@ def plot_glyphs(grid_sz=3, **kwargs):
 
     Returns
     -------
-    various
+    list | np.ndarray | ipywidgets.Widget
         See :func:`show <pyvista.Plotter.show>`.
 
     Examples
@@ -203,7 +212,7 @@ def orientation_plotter():
     pl.add_mesh(ocube['y_n'], color='green')
     pl.add_mesh(ocube['z_p'], color='red')
     pl.add_mesh(ocube['z_n'], color='red')
-    pl.show_axes()
+    pl.show_axes()  # type: ignore[call-arg]
     return pl
 
 
@@ -254,14 +263,17 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
     sgrid = pyvista.StructuredGrid(X, Y, Z)
 
     mesh = sgrid.extract_surface()
-    mesh["Height"] = Z.ravel()
+    mesh['Height'] = Z.ravel()
 
     # Start a plotter object and set the scalars to the Z height
     plotter = pyvista.Plotter(notebook=notebook)
-    plotter.add_mesh(mesh, scalars="Height", show_scalar_bar=False, smooth_shading=True)
+    plotter.add_mesh(mesh, scalars='Height', show_scalar_bar=False, smooth_shading=True)
     plotter.camera_position = cpos
     plotter.show(
-        title='Wave Example', window_size=[800, 600], auto_close=False, interactive_update=True
+        title='Wave Example',
+        window_size=[800, 600],
+        auto_close=False,
+        interactive_update=True,
     )
 
     # Update Z and display a frame for each updated position
@@ -274,7 +286,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, notebook=None):
         phase = telap * 2 * np.pi * frequency
         Z = np.sin(R + phase)
         mesh.points[:, -1] = Z.ravel()
-        mesh["Height"] = Z.ravel()
+        mesh['Height'] = Z.ravel()
 
         mesh.compute_normals(inplace=True)
 
@@ -372,7 +384,9 @@ def plot_ants_plane(notebook=None):
     # Add airplane mesh and make the color equal to the Y position
     plane_scalars = airplane.points[:, 1]
     plotter.add_mesh(
-        airplane, scalars=plane_scalars, scalar_bar_args={'title': 'Plane Y\nLocation'}
+        airplane,
+        scalars=plane_scalars,
+        scalar_bar_args={'title': 'Plane Y\nLocation'},
     )
     plotter.add_text('Ants and Plane Example')
     plotter.show()
@@ -456,12 +470,11 @@ def plot_datasets(dataset_type=None):
         'RectilinearGrid',
         'StructuredGrid',
     ]
-    if dataset_type is not None:
-        if dataset_type not in allowable_types:
-            raise ValueError(
-                f'Invalid dataset_type {dataset_type}.  Must be one '
-                f'of the following: {allowable_types}'
-            )
+    if dataset_type is not None and dataset_type not in allowable_types:
+        raise ValueError(
+            f'Invalid dataset_type {dataset_type}.  Must be one '
+            f'of the following: {allowable_types}',
+        )
 
     ###########################################################################
     # uniform grid
@@ -480,7 +493,7 @@ def plot_datasets(dataset_type=None):
     ang = np.linspace(0, np.pi / 2, 10)
     r = np.linspace(6, 10, 8)
     z = [0]
-    ang, r, z = np.meshgrid(ang, r, z)
+    ang, r, z = np.meshgrid(ang, r, z)  # type: ignore[assignment]
 
     x = r * np.sin(ang)
     y = r * np.cos(ang)
@@ -492,27 +505,24 @@ def plot_datasets(dataset_type=None):
     points = pyvista.PolyData([[1.0, 2.0, 2.0], [2.0, 2.0, 2.0]])
 
     line = pyvista.Line()
-    line.points += np.array((2, 0, 0))
+    line.points += np.array((2, 0, 0))  # type: ignore[misc]
     line.clear_data()
 
     tri = pyvista.Triangle()
-    tri.points += np.array([0, 1, 0])
+    tri.points += np.array([0, 1, 0])  # type: ignore[misc]
     circ = pyvista.Circle()
-    circ.points += np.array([1.5, 1.5, 0])
+    circ.points += np.array([1.5, 1.5, 0])  # type: ignore[misc]
 
     poly = tri + circ
 
     ###########################################################################
     # unstructuredgrid
     pyr = pyvista.Pyramid()
-    pyr.points *= 0.7
+    pyr.points *= 0.7  # type: ignore[misc]
     cube = pyvista.Cube(center=(2, 0, 0))
     ugrid = circ + pyr + cube + tri
 
-    if dataset_type is not None:
-        pl = pyvista.Plotter()
-    else:
-        pl = pyvista.Plotter(shape='3/2')
+    pl = pyvista.Plotter() if dataset_type is not None else pyvista.Plotter(shape='3/2')
 
     # polydata
     if dataset_type is None:

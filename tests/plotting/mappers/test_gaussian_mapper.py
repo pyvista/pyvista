@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import pytest
 
 import pyvista as pv
 from pyvista.plotting.mapper import PointGaussianMapper
 
 
-@pytest.fixture()
+@pytest.fixture
 def mapper(sphere):
     sphere['array'] = sphere.points[:, 2]
     pl = pv.Plotter()

@@ -3,7 +3,7 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.8+.
+PyVista is supported on Python versions 3.9+.
 
 For the best experience, please considering using Anaconda as a virtual
 environment and package manager for Python and following the instructions to
@@ -281,7 +281,7 @@ related packages:
     conda create --name vtk_env python=3.9
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista trame
+    pip install jupyter pyvista[jupyter] trame
 
     # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
     # https://stackoverflow.com/q/32389599

@@ -8,8 +8,9 @@ This example applies the ``warp_by_vector`` filter to a sphere mesh that has
 3D displacement vectors defined at each node.
 """
 
-###############################################################################
+# %%
 # We first compare the unwarped sphere to the warped sphere.
+from __future__ import annotations
 
 from itertools import product
 
@@ -21,14 +22,14 @@ warped = sphere.warp_by_vector()
 
 p = pv.Plotter(shape=(1, 2))
 p.subplot(0, 0)
-p.add_text("Before warp")
+p.add_text('Before warp')
 p.add_mesh(sphere, color='white')
 p.subplot(0, 1)
-p.add_text("After warp")
+p.add_text('After warp')
 p.add_mesh(warped, color='white')
 p.show()
 
-###############################################################################
+# %%
 # We then use several values for the scale factor applied to the warp
 # operation. Applying a warping factor that is too high can often lead to
 # unrealistic results.
@@ -41,3 +42,5 @@ for i, j in product(range(2), repeat=2):
     p.add_mesh(sphere.warp_by_vector(factor=warp_factors[idx]))
     p.add_text(f'factor={warp_factors[idx]}')
 p.show()
+# %%
+# .. tags:: filter

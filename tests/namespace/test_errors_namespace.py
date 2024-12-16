@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -25,7 +27,7 @@ def test_core_errors_namespace(name):
         PyVistaDeprecationWarning,
         match=rf'now imported as: `from pyvista\.core\.errors import {name}`\.',
     ):
-        import pyvista.errors as errors
+        import pyvista.errors as errors  # noqa: PLR0402
 
         assert hasattr(errors, name)
 
@@ -42,6 +44,6 @@ def test_plotting_errors_namespace(name):
         PyVistaDeprecationWarning,
         match=rf'now imported as: `from pyvista\.plotting\.errors import {name}`\.',
     ):
-        import pyvista.errors as errors
+        import pyvista.errors as errors  # noqa: PLR0402
 
         assert hasattr(errors, name)

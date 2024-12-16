@@ -16,6 +16,8 @@ software.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
@@ -30,52 +32,52 @@ from pyvista import examples
 
 # Load the sample data
 mesh = examples.download_antarctica_velocity()
-mesh["magnitude"] = np.linalg.norm(mesh["ssavelocity"], axis=1)
+mesh['magnitude'] = np.linalg.norm(mesh['ssavelocity'], axis=1)
 mesh
 
-###############################################################################
+# %%
 # Here is a helper to extract regions of the mesh based on the simulation node.
 
 
 def extract_node(node):
-    idx = mesh["node_value"] == node
+    idx = mesh['node_value'] == node
     return mesh.extract_points(idx)
 
 
-###############################################################################
+# %%
 
 p = pv.Plotter()
-p.add_mesh(mesh, scalars="node_value")
-for node in np.unique(mesh["node_value"]):
+p.add_mesh(mesh, scalars='node_value')
+for node in np.unique(mesh['node_value']):
     loc = extract_node(node).center
-    p.add_point_labels(loc, [f"Node {node}"])
-p.show(cpos="xy")
+    p.add_point_labels(loc, [f'Node {node}'])
+p.show(cpos='xy')
 
 
-###############################################################################
+# %%
 
-vel_dargs = dict(scalars="magnitude", clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
+vel_dargs = dict(scalars='magnitude', clim=[1e-3, 1e4], cmap='Blues', log_scale=True)
 
-mesh.plot(cpos="xy", **vel_dargs)
+mesh.plot(cpos='xy', **vel_dargs)
 
-###############################################################################
+# %%
 
 a = extract_node(12)
 b = extract_node(20)
 
-###############################################################################
+# %%
 
 pl = pv.Plotter()
 pl.add_mesh(a, **vel_dargs)
 pl.add_mesh(b, **vel_dargs)
 pl.show(cpos='xy')
 
-###############################################################################
+# %%
 # plot vectors without mesh
 
 pl = pv.Plotter()
-pl.add_mesh(a.glyph(orient="ssavelocity", factor=20), **vel_dargs)
-pl.add_mesh(b.glyph(orient="ssavelocity", factor=20), **vel_dargs)
+pl.add_mesh(a.glyph(orient='ssavelocity', factor=20), **vel_dargs)
+pl.add_mesh(b.glyph(orient='ssavelocity', factor=20), **vel_dargs)
 pl.camera_position = [
     (-1114684.6969340036, 293863.65389149904, 752186.603224546),
     (-1114684.6969340036, 293863.65389149904, 0.0),
@@ -84,7 +86,7 @@ pl.camera_position = [
 pl.show()
 
 
-###############################################################################
+# %%
 # Compare directions. Normalize them so we can get a reasonable direction
 # comparison.
 
@@ -107,7 +109,7 @@ pl.camera_position = [
 pl.show()
 
 
-###############################################################################
+# %%
 # flow_a that agrees with the mean flow path of flow_b
 agree = flow_a.dot(flow_b.mean(0))
 
@@ -116,7 +118,7 @@ pl.add_mesh(a, scalars=agree, cmap='bwr', scalar_bar_args={'title': 'Flow agreem
 pl.add_mesh(b, color='w')
 pl.show(cpos='xy')
 
-###############################################################################
+# %%
 agree = flow_b.dot(flow_a.mean(0))
 
 pl = pv.Plotter()

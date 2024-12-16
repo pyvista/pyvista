@@ -59,7 +59,8 @@ You can create one by defining a 2D array of Cartesian coordinates like so:
     import numpy as np
     import pyvista as pv
 
-    points = np.random.rand(100, 3)
+    rng = np.random.default_rng(seed=0)
+    points = rng.random((100, 3))
     mesh = pv.PolyData(points)
     mesh.plot(point_size=10, style='points')
 
@@ -225,8 +226,3 @@ Note how this varies from assigning scalars to each point
    pl.subplot(0, 1)
    pl.add_mesh(other_cube, cmap='coolwarm')
    pl.show()
-
-.. note::
-   We use :func:`pyvista.PolyDataFilters.clean` to merge the faces of
-   the cube since, by default, the cube is created with unmerged faces
-   and duplicate points.

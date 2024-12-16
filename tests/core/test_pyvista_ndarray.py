@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 from unittest import mock
 
 import numpy as np
 import pytest
 import vtk as _vtk
 
-from pyvista import examples, pyvista_ndarray
+from pyvista import examples
+from pyvista import pyvista_ndarray
 
 
-@pytest.fixture()
+@pytest.fixture
 def pyvista_ndarray_1d():
     return pyvista_ndarray([1.0, 2.0, 3.0])
 
@@ -61,7 +64,7 @@ def test_modifying_modifies_dataset():
 
 # TODO: This currently doesn't work for single element indexing operations!
 # in these cases, the __array_finalize__ method is not called
-@pytest.mark.skip()
+@pytest.mark.skip
 def test_slices_are_associated_single_index():
     dataset = examples.load_structured()
     points = pyvista_ndarray(dataset.GetPoints().GetData(), dataset=dataset)

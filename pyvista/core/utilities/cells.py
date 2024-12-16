@@ -1,14 +1,22 @@
 """PyVista wrapping of vtkCellArray."""
 
+from __future__ import annotations
+
 from collections import deque
-from itertools import count, islice
-from typing import Tuple, Union
+from itertools import count
+from itertools import islice
+from typing import TYPE_CHECKING
+from typing import Literal
+from typing import overload
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
-from pyvista.core._typing_core import MatrixLike, NumpyArray
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pyvista.core._typing_core import ArrayLike
+    from pyvista.core._typing_core import NumpyArray
 
 
 def ncells_from_cells(cells: NumpyArray[int]) -> int:
@@ -31,13 +39,27 @@ def ncells_from_cells(cells: NumpyArray[int]) -> int:
         skip = next(it, None)
         if skip is None:
             break
-        consumer.extend(islice(it, skip))  # type: ignore
+        consumer.extend(islice(it, skip))  # type: ignore[arg-type]
     return n_cells
 
 
+@overload
 def numpy_to_idarr(
-    ind: MatrixLike[int], deep: bool = False, return_ind: bool = False
-) -> Union[Tuple[_vtk.vtkIdTypeArray, NumpyArray[int]], _vtk.vtkIdTypeArray]:
+    ind: int | ArrayLike[int], deep: bool = ..., return_ind: Literal[True] = True
+) -> _vtk.vtkIdTypeArray: ...
+@overload
+def numpy_to_idarr(
+    ind: int | ArrayLike[int], deep: bool = ..., return_ind: Literal[False] = False
+) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]]: ...
+@overload
+def numpy_to_idarr(
+    ind: int | ArrayLike[int], deep: bool = ..., return_ind: bool = ...
+) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray: ...
+def numpy_to_idarr(
+    ind: int | ArrayLike[int],
+    deep: bool = False,
+    return_ind: bool = False,
+) -> tuple[_vtk.vtkIdTypeArray, NumpyArray[int]] | _vtk.vtkIdTypeArray:
     """Safely convert a numpy array to a vtkIdTypeArray.
 
     Parameters
@@ -137,15 +159,16 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
     >>> cell_types, cell_arr = create_mixed_cells(
     ...     {vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])}
     ... )
+
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 
     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
-        raise ValueError("Found unknown or unsupported VTK cell type in your requested cells")
+        raise ValueError('Found unknown or unsupported VTK cell type in your requested cells')
 
     if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in mixed_cell_dict.keys()]):
         raise ValueError(
-            "You requested a cell type with variable length, which can't be used in this method"
+            "You requested a cell type with variable length, which can't be used in this method",
         )
 
     final_cell_types = []
@@ -160,14 +183,14 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
             or (cells_arr.ndim == 2 and cells_arr.shape[-1] != nr_points_per_elem)
         ):
             raise ValueError(
-                f"Expected an np.ndarray of size [N, {nr_points_per_elem}] or [N*{nr_points_per_elem}] with an integral type"
+                f'Expected an np.ndarray of size [N, {nr_points_per_elem}] or [N*{nr_points_per_elem}] with an integral type',
             )
 
         if np.any(cells_arr < 0):
-            raise ValueError(f"Non-valid index (<0) given for cells of type {elem_t}")
+            raise ValueError(f'Non-valid index (<0) given for cells of type {elem_t}')
 
         if nr_points is not None and np.any(cells_arr >= nr_points):
-            raise ValueError(f"Non-valid index (>={nr_points}) given for cells of type {elem_t}")
+            raise ValueError(f'Non-valid index (>={nr_points}) given for cells of type {elem_t}')
 
         if cells_arr.ndim == 1:  # Flattened array present
             cells_arr = cells_arr.reshape([-1, nr_points_per_elem])
@@ -176,11 +199,12 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         final_cell_types.append(np.array([elem_t] * nr_elems, dtype=np.uint8))
         final_cell_arr.append(
             np.concatenate(
-                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr], axis=-1
-            ).reshape([-1])
+                [np.ones_like(cells_arr[..., :1]) * nr_points_per_elem, cells_arr],
+                axis=-1,
+            ).reshape([-1]),
         )
 
-    final_cell_types = np.concatenate(final_cell_types)
+    final_cell_types = np.concatenate(final_cell_types)  # type: ignore[assignment]
     final_cell_arr = np.concatenate(final_cell_arr)
 
     return final_cell_types, final_cell_arr
@@ -211,13 +235,14 @@ def get_mixed_cells(vtkobj):
         If vtkobj is not a pyvista.UnstructuredGrid, any of the
         present cells are unsupported, or have dynamic cell sizes,
         like VTK_POLYGON.
+
     """
     from .cell_type_helper import enum_cell_type_nr_points_map
 
     return_dict = {}
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):
-        raise ValueError("Expected a pyvista object")
+        raise ValueError('Expected a pyvista object')
 
     nr_cells = vtkobj.n_cells
     if nr_cells == 0:
@@ -229,12 +254,12 @@ def get_mixed_cells(vtkobj):
     unique_cell_types = np.unique(cell_types)
 
     if not np.all([k in enum_cell_type_nr_points_map for k in unique_cell_types]):
-        raise ValueError("Found unknown or unsupported VTK cell type in the present cells")
+        raise ValueError('Found unknown or unsupported VTK cell type in the present cells')
 
     if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in unique_cell_types]):
         raise ValueError(
-            "You requested a cell-dictionary with a variable length cell, which is not supported "
-            "currently"
+            'You requested a cell-dictionary with a variable length cell, which is not supported '
+            'currently',
         )
 
     cell_sizes = np.zeros_like(cell_types)
@@ -251,7 +276,7 @@ def get_mixed_cells(vtkobj):
         current_cell_starts = cell_starts[mask]
 
         cells_inds = current_cell_starts[..., np.newaxis] + np.arange(cell_size)[np.newaxis].astype(
-            cell_starts.dtype
+            cell_starts.dtype,
         )
 
         return_dict[cell_type] = cells[cells_inds]

@@ -1,5 +1,7 @@
 """Contains the BackgroundRenderer class."""
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista
@@ -40,7 +42,7 @@ class BackgroundRenderer(Renderer):
         self._modified_observer = None
         self._prior_window_size = None
         if view_port is not None:
-            self.SetViewport(view_port)
+            self.viewport = view_port
 
         # create image actor
         image_actor = _vtk.vtkImageActor()
@@ -68,7 +70,7 @@ class BackgroundRenderer(Renderer):
             self._prior_window_size = self.parent.window_size
 
         actor = self._actors['background']
-        image_data = actor.GetInput()
+        image_data = actor.GetInput()  # type: ignore[attr-defined]
         origin = image_data.GetOrigin()
         extent = image_data.GetExtent()
         spacing = image_data.GetSpacing()

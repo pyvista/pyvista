@@ -7,9 +7,11 @@ another mesh
 
 """
 
-###############################################################################
+# %%
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -22,30 +24,32 @@ dargs = dict(show_edges=True)
 rot = mesh.rotate_y(90, inplace=False)
 
 p = pv.Plotter()
-p.add_mesh(mesh, color="Crimson", **dargs)
-p.add_mesh(rot, color="mintcream", opacity=0.35, **dargs)
+p.add_mesh(mesh, color='Crimson', **dargs)
+p.add_mesh(rot, color='mintcream', opacity=0.35, **dargs)
 p.camera_position = cpos
 p.show()
 
-###############################################################################
+# %%
 # Mark points inside with 1 and outside with a 0
 select = mesh.select_enclosed_points(rot)
 
 select
-###############################################################################
+# %%
 # Extract two meshes, one completely inside and one completely outside the
 # enclosing surface.
 
 inside = select.threshold(0.5)
 outside = select.threshold(0.5, invert=True)
 
-###############################################################################
+# %%
 # display the results
 
 p = pv.Plotter()
-p.add_mesh(outside, color="Crimson", **dargs)
-p.add_mesh(inside, color="green", **dargs)
-p.add_mesh(rot, color="mintcream", opacity=0.35, **dargs)
+p.add_mesh(outside, color='Crimson', **dargs)
+p.add_mesh(inside, color='green', **dargs)
+p.add_mesh(rot, color='mintcream', opacity=0.35, **dargs)
 
 p.camera_position = cpos
 p.show()
+# %%
+# .. tags:: filter

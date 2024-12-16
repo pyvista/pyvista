@@ -18,37 +18,39 @@ that the given digital elevation model (DEM) is structured (gridded and not
 triangulated): this is common for DEMs.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Download a gridded topography surface (DEM)
 dem = examples.download_crater_topo()
 dem
 
-###############################################################################
+# %%
 # Now let's subsample and extract an area of interest to make this example
 # simple (also the DEM we just load is pretty big).
 # Since the DEM we loaded is a :class:`pyvista.ImageData` mesh, we can use
 # the :func:`pyvista.ImageDataFilters.extract_subset` filter:
 subset = dem.extract_subset((500, 900, 400, 800, 0, 0), (5, 5, 1))
-subset.plot(cpos="xy")
+subset.plot(cpos='xy')
 
 
-###############################################################################
+# %%
 # Now that we have a region of interest for our terrain following mesh, lets
 # make a 3D surface of that DEM:
 terrain = subset.warp_by_scalar()
 terrain
 
-###############################################################################
+# %%
 terrain.plot()
 
 
-###############################################################################
+# %%
 # And now we have a 3D structured surface of the terrain. We can now extend
 # that structured surface into a 3D mesh to form a terrain following grid.
 # To do this, we first our cell spacings in the z-direction (these start
@@ -64,10 +66,10 @@ yy = np.repeat(terrain.y, len(z_cells), axis=-1)
 zz = np.repeat(terrain.z, len(z_cells), axis=-1) - np.cumsum(z_cells).reshape((1, 1, -1))
 
 mesh = pv.StructuredGrid(xx, yy, zz)
-mesh["Elevation"] = zz.ravel(order="F")
+mesh['Elevation'] = zz.ravel(order='F')
 mesh
 
-###############################################################################
+# %%
 cpos = [
     (1826736.796308761, 5655837.275274233, 4676.8405505181745),
     (1821066.1790519988, 5649248.765538796, 943.0995128226014),
@@ -75,3 +77,5 @@ cpos = [
 ]
 
 mesh.plot(show_edges=True, lighting=False, cpos=cpos)
+# %%
+# .. tags:: load

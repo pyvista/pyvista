@@ -11,18 +11,20 @@ slices simultaneously.
 """
 
 # sphinx_gallery_thumbnail_number = 2
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
 mesh = examples.download_embryo()
 mesh.bounds
 
-##############################################################################
+# %%
 # Create three slices. Easily control their locations with the ``x``, ``y``,
 # and ``z`` arguments.
 slices = mesh.slice_orthogonal(x=100, z=75)
 
-##############################################################################
+# %%
 cpos = [
     (540.9115516905358, -617.1912234499737, 180.5084853429126),
     (128.31920055083387, 126.4977720785509, 111.77682599082095),
@@ -36,7 +38,7 @@ p.show_grid()
 p.show(cpos=cpos)
 
 
-##############################################################################
+# %%
 
 p = pv.Plotter(shape=(2, 2))
 # XYZ - show 3D scene first
@@ -64,3 +66,5 @@ p.camera_position = 'xz'
 p.enable_parallel_projection()
 
 p.show()
+# %%
+# .. tags:: plot

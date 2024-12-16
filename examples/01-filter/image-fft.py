@@ -17,6 +17,8 @@ This example was inspired by `Image denoising by FFT
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -28,7 +30,7 @@ PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
 # sphinx_gallery_end_ignore
 
 
-###############################################################################
+# %%
 # Load the example Moon landing image and plot it.
 
 image = examples.download_moonlanding_image()
@@ -42,7 +44,7 @@ grey_theme.axes.show = False
 image.plot(theme=grey_theme, cpos='xy', text='Unprocessed Moon Landing Image')
 
 
-###############################################################################
+# %%
 # Apply FFT to the image
 # ~~~~~~~~~~~~~~~~~~~~~~
 # FFT will be applied to the active scalars, ``'PNGImage'``, the default
@@ -55,7 +57,7 @@ fft_image = image.fft()
 fft_image.point_data
 
 
-###############################################################################
+# %%
 # Plot the FFT of the image
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 # Plot the absolute value of the FFT of the image.
@@ -66,7 +68,7 @@ fft_image.point_data
 
 fft_image.plot(
     scalars=np.abs(fft_image.point_data['PNGImage']),
-    cpos="xy",
+    cpos='xy',
     theme=grey_theme,
     log_scale=True,
     text='Moon Landing Image FFT',
@@ -74,7 +76,7 @@ fft_image.plot(
 )
 
 
-###############################################################################
+# %%
 # Remove the noise from the ``fft_image``
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Effectively, we want to remove high frequency (noisy) data from our image.
@@ -98,7 +100,7 @@ data[:, int(width * ratio_to_keep) : -int(width * ratio_to_keep)] = 0
 
 fft_image.plot(
     scalars=np.abs(data),
-    cpos="xy",
+    cpos='xy',
     theme=grey_theme,
     log_scale=True,
     text='Moon Landing Image FFT with Noise Removed',
@@ -106,7 +108,7 @@ fft_image.plot(
 )
 
 
-###############################################################################
+# %%
 # Convert to the spatial domain using reverse FFT
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Finally, convert the image data back to the "spatial" domain and plot it.
@@ -114,4 +116,6 @@ fft_image.plot(
 
 rfft = fft_image.rfft()
 rfft['PNGImage'] = np.real(rfft['PNGImage'])
-rfft.plot(cpos="xy", theme=grey_theme, text='Processed Moon Landing Image')
+rfft.plot(cpos='xy', theme=grey_theme, text='Processed Moon Landing Image')
+# %%
+# .. tags:: filter

@@ -8,11 +8,13 @@ Table of Glyphs
 up. This example demonstrates this functionality.
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
 
-###############################################################################
+# %%
 #
 # We can allow tables of glyphs in a backward-compatible way by
 # allowing a sequence of geometries as well as single (scalar)
@@ -42,7 +44,7 @@ params = np.array(
         [1.49598881, 0.83495047],
         [1.52442129, 0.89600688],
         [1.92212387, 0.78096621],
-    ]
+    ],
 )
 
 geoms = [pv.ParametricSuperToroid(n1=n1, n2=n2) for n1, n2 in params]
@@ -54,7 +56,7 @@ mesh = pv.StructuredGrid(x, y, z)
 # add random scalars
 # rng_int = rng.integers(0, N, size=x.size)
 rng_int = np.array(
-    [4, 1, 2, 0, 4, 0, 1, 4, 3, 1, 1, 3, 3, 4, 3, 4, 4, 3, 3, 2, 2, 1, 1, 1, 2, 0, 3]
+    [4, 1, 2, 0, 4, 0, 1, 4, 3, 1, 1, 3, 3, 4, 3, 4, 4, 3, 3, 2, 2, 1, 1, 1, 2, 0, 3],
 )
 mesh.point_data['scalars'] = rng_int
 
@@ -65,3 +67,5 @@ glyphs = mesh.glyph(geom=geoms, indices=values, scale=False, factor=0.3, rng=(0,
 plotter = pv.Plotter()
 plotter.add_mesh(glyphs, specular=1, specular_power=15, smooth_shading=True, show_scalar_bar=False)
 plotter.show()
+# %%
+# .. tags:: filter

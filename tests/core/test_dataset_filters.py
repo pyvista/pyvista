@@ -1,25 +1,55 @@
-import itertools
-import os
-import platform
-from unittest.mock import Mock, patch
+from __future__ import annotations
 
+import functools
+import itertools
+from pathlib import Path
+import platform
+import re
+from typing import Any
+from typing import NamedTuple
+from unittest.mock import Mock
+from unittest.mock import patch
+
+from hypothesis import HealthCheck
+from hypothesis import assume
+from hypothesis import given
+from hypothesis import settings
+from hypothesis.extra.numpy import array_shapes
+from hypothesis.extra.numpy import arrays
+from hypothesis.strategies import composite
+from hypothesis.strategies import floats
+from hypothesis.strategies import integers
+from hypothesis.strategies import one_of
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.core import _vtk_core
 from pyvista.core.celltype import CellType
-from pyvista.core.errors import (
-    MissingDataError,
-    NotAllTrianglesError,
-    PyVistaDeprecationWarning,
-    VTKVersionError,
-)
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.errors import VTKVersionError
+from pyvista.core.filters.data_set import _swap_axes
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
-skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
+skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
+
+HYPOTHESIS_MAX_EXAMPLES = 20
+
+
+@composite
+def n_numbers(draw, n):
+    numbers = []
+    for _ in range(n):
+        number = draw(
+            one_of(floats(), integers(max_value=np.iinfo(int).max, min_value=np.iinfo(int).min))
+        )
+        numbers.append(number)
+    return numbers
 
 
 def aprox_le(a, b, rtol=1e-5, atol=1e-8):
@@ -54,7 +84,7 @@ class GetOutput:
         return self._mock.call_args_list[-1][0][0]
 
 
-@pytest.fixture()
+@pytest.fixture
 def composite(datasets):
     return pv.MultiBlock(datasets)
 
@@ -93,11 +123,16 @@ def test_clip_filter(datasets):
                 assert isinstance(clp, pv.UnstructuredGrid)
 
     # crinkle clip
-    clp = pv.Wavelet().clip(normal=(1, 1, 1), crinkle=True)
+    mesh = pv.Wavelet()
+    clp = mesh.clip(normal=(1, 1, 1), crinkle=True)
     assert clp is not None
-    clp1, clp2 = pv.Wavelet().clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
+    clp1, clp2 = mesh.clip(normal=(1, 1, 1), return_clipped=True, crinkle=True)
     assert clp1 is not None
     assert clp2 is not None
+    set_a = set(clp1.cell_data['cell_ids'])
+    set_b = set(clp2.cell_data['cell_ids'])
+    assert set_a.isdisjoint(set_b)
+    assert set_a.union(set_b) == set(range(mesh.n_cells))
 
 
 @skip_mac
@@ -113,7 +148,10 @@ def test_clip_by_scalars_filter(datasets, both, invert):
 
         if both:
             clps = dataset.clip_scalar(
-                scalars='to_clip', value=clip_value, both=True, invert=invert
+                scalars='to_clip',
+                value=clip_value,
+                both=True,
+                invert=invert,
             )
             assert len(clps) == 2
             expect_les = (invert, not invert)
@@ -253,9 +291,9 @@ def test_implicit_distance():
     xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
     dataset = pv.RectilinearGrid(xx, yy, zz)
     res = dataset.compute_implicit_distance(surface)
-    assert "implicit_distance" in res.point_data
+    assert 'implicit_distance' in res.point_data
     dataset.compute_implicit_distance(surface, inplace=True)
-    assert "implicit_distance" in dataset.point_data
+    assert 'implicit_distance' in dataset.point_data
 
 
 def test_slice_filter(datasets):
@@ -280,7 +318,6 @@ def test_slice_filter_composite(composite):
 
 def test_slice_orthogonal_filter(datasets):
     """This tests the slice filter on all datatypes available filters"""
-
     for dataset in datasets:
         slices = dataset.slice_orthogonal(progress_bar=True)
         assert slices is not None
@@ -358,14 +395,14 @@ def test_threshold_all_scalars():
     mesh = pv.Sphere()
     mesh.clear_data()
 
-    mesh["scalar0"] = np.zeros(mesh.n_points)
-    mesh["scalar1"] = np.ones(mesh.n_points)
-    mesh.set_active_scalars("scalar1")
+    mesh['scalar0'] = np.zeros(mesh.n_points)
+    mesh['scalar1'] = np.ones(mesh.n_points)
+    mesh.set_active_scalars('scalar1')
     thresh_all = mesh.threshold(value=0.5, all_scalars=True)  # only uses scalar1
     assert thresh_all.n_points == mesh.n_points
     assert thresh_all.n_cells == mesh.n_cells
 
-    mesh["scalar1"][0 : int(mesh.n_points / 2)] = 0.0
+    mesh['scalar1'][0 : int(mesh.n_points / 2)] = 0.0
     thresh = mesh.threshold(value=0.5, all_scalars=False)
     thresh_all = mesh.threshold(value=0.5, all_scalars=True)
     assert thresh_all.n_points < mesh.n_points
@@ -375,10 +412,10 @@ def test_threshold_all_scalars():
     assert thresh_all.n_cells < thresh.n_cells
 
     mesh.clear_data()
-    mesh["scalar0"] = np.zeros(mesh.n_cells)
-    mesh["scalar1"] = np.ones(mesh.n_cells)
-    mesh["scalar1"][0 : int(mesh.n_cells / 2)] = 0.0
-    mesh.set_active_scalars("scalar1")
+    mesh['scalar0'] = np.zeros(mesh.n_cells)
+    mesh['scalar1'] = np.ones(mesh.n_cells)
+    mesh['scalar1'][0 : int(mesh.n_cells / 2)] = 0.0
+    mesh.set_active_scalars('scalar1')
     thresh = mesh.threshold(value=0.5, all_scalars=False)
     thresh_all = mesh.threshold(value=0.5, all_scalars=True)
     # when thresholding by cell data, all_scalars has no effect since it has 1 value per cell
@@ -394,28 +431,28 @@ def test_threshold_multicomponent():
     data[0:3, 0] = 1
     data[2:4, 1] = 2
     data[2, 2] = 3
-    mesh["data"] = data
+    mesh['data'] = data
 
-    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0)
+    thresh = mesh.threshold(value=0.5, scalars='data', component_mode='component', component=0)
     assert thresh.n_cells == 3
-    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="component", component=1)
+    thresh = mesh.threshold(value=0.5, scalars='data', component_mode='component', component=1)
     assert thresh.n_cells == 2
-    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="all")
+    thresh = mesh.threshold(value=0.5, scalars='data', component_mode='all')
     assert thresh.n_cells == 1
-    thresh = mesh.threshold(value=0.5, scalars="data", component_mode="any")
+    thresh = mesh.threshold(value=0.5, scalars='data', component_mode='any')
     assert thresh.n_cells == 4
 
     with pytest.raises(ValueError):  # noqa: PT011
-        mesh.threshold(value=0.5, scalars="data", component_mode="not a mode")
+        mesh.threshold(value=0.5, scalars='data', component_mode='not a mode')
 
     with pytest.raises(ValueError):  # noqa: PT011
-        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=-1)
+        mesh.threshold(value=0.5, scalars='data', component_mode='component', component=-1)
 
     with pytest.raises(ValueError):  # noqa: PT011
-        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=3)
+        mesh.threshold(value=0.5, scalars='data', component_mode='component', component=3)
 
     with pytest.raises(TypeError):
-        mesh.threshold(value=0.5, scalars="data", component_mode="component", component=0.5)
+        mesh.threshold(value=0.5, scalars='data', component_mode='component', component=0.5)
 
 
 def test_threshold_percent(datasets):
@@ -424,7 +461,9 @@ def test_threshold_percent(datasets):
     # Only test data sets that have arrays
     for i, dataset in enumerate(datasets[0:3]):
         thresh = dataset.threshold_percent(
-            percent=percents[i], invert=inverts[i], progress_bar=True
+            percent=percents[i],
+            invert=inverts[i],
+            progress_bar=True,
         )
         assert thresh is not None
         assert isinstance(thresh, pv.UnstructuredGrid)
@@ -637,59 +676,65 @@ def test_contour(uniform, method):
     assert 'Contour Data' in iso_new_scalars.point_data
 
 
-def test_contour_errors(uniform):
+def test_contour_errors(uniform, airplane):
     with pytest.raises(TypeError):
         uniform.contour(scalars='Spatial Cell Data')
     with pytest.raises(TypeError):
         uniform.contour(isosurfaces=pv.PolyData())
     with pytest.raises(TypeError):
         uniform.contour(isosurfaces={100, 300, 500})
-    uniform = examples.load_airplane()
-    with pytest.raises(ValueError):  # noqa: PT011
-        uniform.contour()
-    with pytest.raises(ValueError):  # noqa: PT011
-        uniform.contour(method='invalid method')
-    with pytest.raises(TypeError, match='Invalid type for `scalars`'):
-        uniform.contour(scalars=1)
     with pytest.raises(TypeError):
         uniform.contour(rng={})
-    with pytest.raises(ValueError, match='rng must be a two-length'):
+    match = 'rng has shape (1,) which is not allowed. Shape must be 2.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         uniform.contour(rng=[1])
-    with pytest.raises(ValueError, match='rng must be a sorted'):
+    match = 'rng with 2 elements must be sorted in ascending order. Got:\n    array([2, 1])'
+    with pytest.raises(ValueError, match=re.escape(match)):
         uniform.contour(rng=[2, 1])
 
+    with pytest.raises(ValueError):  # noqa: PT011
+        airplane.contour()
+    with pytest.raises(ValueError):  # noqa: PT011
+        airplane.contour(method='invalid method')
+    with pytest.raises(TypeError, match='Invalid type for `scalars`'):
+        airplane.contour(scalars=1)
+    match = 'No data available.'
+    with pytest.raises(ValueError, match=match):
+        airplane.contour(rng={})
 
-def test_elevation():
-    dataset = examples.load_uniform()
+
+def test_elevation(uniform):
+    dataset = uniform
     # Test default params
     elev = dataset.elevation(progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
-    assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
+    assert elev.active_scalars_name == 'Elevation'
+    assert elev.get_data_range() == (dataset.bounds.z_min, dataset.bounds.z_max)
     # test vector args
     c = list(dataset.center)
     t = list(c)  # cast so it does not point to `c`
     t[2] = dataset.bounds[-1]
     elev = dataset.elevation(low_point=c, high_point=t, progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
-    assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
+    assert elev.active_scalars_name == 'Elevation'
+    assert elev.get_data_range() == (dataset.center[2], dataset.bounds.z_max)
     # Test not setting active
     elev = dataset.elevation(set_active=False, progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' != elev.active_scalars_name
+    assert elev.active_scalars_name != 'Elevation'
     # Set use a range by scalar name
     elev = dataset.elevation(scalar_range='Spatial Point Data', progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
+    assert elev.active_scalars_name == 'Elevation'
     assert dataset.get_data_range('Spatial Point Data') == (elev.get_data_range('Elevation'))
     # Set use a user defined range
     elev = dataset.elevation(scalar_range=[1.0, 100.0], progress_bar=True)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
+    assert elev.active_scalars_name == 'Elevation'
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
-    with pytest.raises(TypeError):
+    match = 'Data Range has shape () which is not allowed. Shape must be 2.'
+    with pytest.raises(ValueError, match=re.escape(match)):
         elev = dataset.elevation(scalar_range=0.5, progress_bar=True)
     with pytest.raises(ValueError):  # noqa: PT011
         elev = dataset.elevation(scalar_range=[1, 2, 3], progress_bar=True)
@@ -711,10 +756,13 @@ def test_texture_map_to_plane():
     # Define the plane explicitly
     bnds = dataset.bounds
     origin = bnds[0::2]
-    point_u = (bnds[1], bnds[2], bnds[4])
-    point_v = (bnds[0], bnds[3], bnds[4])
+    point_u = (bnds.x_max, bnds.y_max, bnds.z_min)
+    point_v = (bnds.x_min, bnds.y_min, bnds.z_min)
     out = dataset.texture_map_to_plane(
-        origin=origin, point_u=point_u, point_v=point_v, progress_bar=True
+        origin=origin,
+        point_u=point_u,
+        point_v=point_v,
+        progress_bar=True,
     )
     assert isinstance(out, type(dataset))
     assert 'Texture Coordinates' in out.array_names
@@ -730,7 +778,9 @@ def test_texture_map_to_sphere():
     assert isinstance(out, type(dataset))
     # Define the center explicitly
     out = dataset.texture_map_to_sphere(
-        center=(0.1, 0.0, 0.0), prevent_seam=True, progress_bar=True
+        center=(0.1, 0.0, 0.0),
+        prevent_seam=True,
+        progress_bar=True,
     )
     assert isinstance(out, type(dataset))
     assert 'Texture Coordinates' in out.array_names
@@ -767,6 +817,14 @@ def test_cell_centers(datasets):
         assert isinstance(result, pv.PolyData)
 
 
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_cell_center_pointset(airplane):
+    pointset = airplane.cast_to_pointset()
+    result = pointset.cell_centers(progress_bar=True)
+    assert result is not None
+    assert isinstance(result, pv.PolyData)
+
+
 def test_cell_centers_composite(composite):
     # Now test composite data structures
     output = composite.cell_centers(progress_bar=True)
@@ -775,15 +833,15 @@ def test_cell_centers_composite(composite):
 
 def test_glyph(datasets, sphere):
     for dataset in datasets:
-        dataset["vectors"] = np.ones_like(dataset.points)
+        dataset['vectors'] = np.ones_like(dataset.points)
         result = dataset.glyph(progress_bar=True)
         assert result is not None
         assert isinstance(result, pv.PolyData)
     # Test different options for glyph filter
     sphere_sans_arrays = sphere.copy()
     sphere.compute_normals(inplace=True)
-    sphere["vectors"] = np.ones([sphere.n_points, 3])
-    sphere.set_active_vectors("vectors")
+    sphere['vectors'] = np.ones([sphere.n_points, 3])
+    sphere.set_active_vectors('vectors')
     sphere.point_data['arr'] = np.ones(sphere.n_points)
 
     assert sphere.glyph(scale=False, progress_bar=True)
@@ -810,15 +868,20 @@ def test_glyph(datasets, sphere):
     assert sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)), progress_bar=True)
     assert sphere.glyph(geom=geoms, progress_bar=True)
     assert sphere.glyph(
-        geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1, progress_bar=True
+        geom=geoms,
+        scale='arr',
+        orient='Normals',
+        factor=0.1,
+        tolerance=0.1,
+        progress_bar=True,
     )
     assert sphere.glyph(geom=geoms[:1], indices=[None], progress_bar=True)
 
     with pytest.warns(Warning):  # tries to orient but no orientation vector available
         assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
 
-    sphere_sans_arrays["vec1"] = np.ones((sphere_sans_arrays.n_points, 3))
-    sphere_sans_arrays["vec2"] = np.ones((sphere_sans_arrays.n_points, 3))
+    sphere_sans_arrays['vec1'] = np.ones((sphere_sans_arrays.n_points, 3))
+    sphere_sans_arrays['vec2'] = np.ones((sphere_sans_arrays.n_points, 3))
     with pytest.warns(Warning):  # tries to orient but multiple orientation vectors are possible
         assert sphere_sans_arrays.glyph(geom=geoms, progress_bar=True)
 
@@ -989,22 +1052,34 @@ def test_glyph_orient_and_scale():
     geom = pv.Line()
     scale = 10.0
     orient = np.array([[0.0, 0.0, 1.0]])
-    grid["z_axis"] = orient * scale
-    glyph1 = grid.glyph(geom=geom, orient="z_axis", scale="z_axis")
-    glyph2 = grid.glyph(geom=geom, orient=False, scale="z_axis")
-    glyph3 = grid.glyph(geom=geom, orient="z_axis", scale=False)
+    grid['z_axis'] = orient * scale
+    glyph1 = grid.glyph(geom=geom, orient='z_axis', scale='z_axis')
+    glyph2 = grid.glyph(geom=geom, orient=False, scale='z_axis')
+    glyph3 = grid.glyph(geom=geom, orient='z_axis', scale=False)
     glyph4 = grid.glyph(geom=geom, orient=False, scale=False)
-    assert glyph1.bounds[4] == geom.bounds[0] * scale
-    assert glyph1.bounds[5] == geom.bounds[1] * scale
-    assert glyph2.bounds[0] == geom.bounds[0] * scale
-    assert glyph2.bounds[1] == geom.bounds[1] * scale
-    assert glyph3.bounds[4] == geom.bounds[0]
-    assert glyph3.bounds[5] == geom.bounds[1]
-    assert glyph4.bounds[0] == geom.bounds[0]
-    assert glyph4.bounds[1] == geom.bounds[1]
+    assert glyph1.bounds.z_min == geom.bounds.x_min * scale
+    assert glyph1.bounds.z_max == geom.bounds.x_max * scale
+    assert glyph2.bounds.x_min == geom.bounds.x_min * scale
+    assert glyph2.bounds.x_max == geom.bounds.x_max * scale
+    assert glyph3.bounds.z_min == geom.bounds.x_min
+    assert glyph3.bounds.z_max == geom.bounds.x_max
+    assert glyph4.bounds.x_min == geom.bounds.x_min
+    assert glyph4.bounds.x_max == geom.bounds.x_max
 
 
-@pytest.fixture()
+@pytest.mark.parametrize('color_mode', ['scale', 'scalar', 'vector'])
+def test_glyph_color_mode(sphere, color_mode):
+    # define vector data
+    sphere.point_data['velocity'] = sphere.points[:, [1, 0, 2]] * [-1, 1, 0]
+    sphere.glyph(color_mode=color_mode)
+
+
+def test_glyph_raises(sphere):
+    with pytest.raises(ValueError, match="Invalid color mode 'foo'"):
+        sphere.glyph(color_mode='foo', scale=False, orient=False)
+
+
+@pytest.fixture
 def connected_datasets():
     # This is similar to the datasets fixture, but the PolyData is fully connected
     return [
@@ -1016,12 +1091,12 @@ def connected_datasets():
     ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def foot_bones():
     return examples.download_foot_bones()
 
 
-@pytest.fixture()
+@pytest.fixture
 def connected_datasets_single_disconnected_cell(connected_datasets):
     # Create datasets of MultiBlocks with either 'point' or 'cell' scalar
     # data, where a single cell (or its points) has a completely different
@@ -1062,13 +1137,18 @@ def connected_datasets_single_disconnected_cell(connected_datasets):
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
-    'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
+    'extraction_mode',
+    ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'],
 )
 @pytest.mark.parametrize('label_regions', [True, False])
 @pytest.mark.parametrize('scalar_range', [True, False])
 @pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_inplace_and_output_type(
-    datasets, dataset_index, extraction_mode, label_regions, scalar_range
+    datasets,
+    dataset_index,
+    extraction_mode,
+    label_regions,
+    scalar_range,
 ):
     # parameterize with label_regions and scalar_range as these parameters
     # have branches which may modify input/input type
@@ -1110,7 +1190,8 @@ def test_connectivity_inplace_and_output_type(
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
-    'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
+    'extraction_mode',
+    ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'],
 )
 @pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_label_regions(datasets, dataset_index, extraction_mode):
@@ -1189,12 +1270,16 @@ def test_connectivity_raises(
 
 @pytest.mark.parametrize('dataset_index', list(range(5)))
 @pytest.mark.parametrize(
-    'extraction_mode', ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest']
+    'extraction_mode',
+    ['all', 'largest', 'specified', 'cell_seed', 'point_seed', 'closest'],
 )
 @pytest.mark.parametrize('association', ['cell', 'point'])
 @pytest.mark.needs_vtk_version(9, 1, 0)
 def test_connectivity_scalar_range(
-    connected_datasets_single_disconnected_cell, dataset_index, extraction_mode, association
+    connected_datasets_single_disconnected_cell,
+    dataset_index,
+    extraction_mode,
+    association,
 ):
     dataset = connected_datasets_single_disconnected_cell[dataset_index][association]
 
@@ -1214,7 +1299,8 @@ def test_connectivity_scalar_range(
 
     # test no cells are removed
     conn_with_full_range = dataset.connectivity(
-        **common_args, scalar_range=dataset.get_data_range()
+        **common_args,
+        scalar_range=dataset.get_data_range(),
     )
     assert conn_with_full_range.n_cells == dataset.n_cells
 
@@ -1523,23 +1609,23 @@ def test_sample():
     for locator in ['cell', 'cell_tree', 'obb_tree', 'static_cell']:
         sample_test(locator=locator)
     with pytest.raises(ValueError):  # noqa: PT011
-        sample_test(locator="invalid")
+        sample_test(locator='invalid')
     sample_test(pass_cell_data=False)
     sample_test(pass_point_data=False)
     sample_test(pass_field_data=False)
     if pv.vtk_version_info >= (9, 3):
         sample_test(snap_to_closest_point=True)
     else:
-        with pytest.raises(VTKVersionError, match="snap_to_closest_point"):
+        with pytest.raises(VTKVersionError, match='snap_to_closest_point'):
             sample_test(snap_to_closest_point=True)
 
 
 def test_sample_composite():
     mesh0 = pv.ImageData(dimensions=(11, 11, 1), origin=(0.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0))
     mesh1 = pv.ImageData(dimensions=(11, 11, 1), origin=(10.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0))
-    mesh0["common_data"] = np.zeros(mesh0.n_points)
-    mesh1["common_data"] = np.ones(mesh1.n_points)
-    mesh0["partial_data"] = np.zeros(mesh0.n_points)
+    mesh0['common_data'] = np.zeros(mesh0.n_points)
+    mesh1['common_data'] = np.ones(mesh1.n_points)
+    mesh0['partial_data'] = np.zeros(mesh0.n_points)
 
     composite = pv.MultiBlock([mesh0, mesh1])
 
@@ -1548,65 +1634,48 @@ def test_sample_composite():
             [5.0, 5.0, 0.0],
             [15.0, 5.0, 0.0],
             [25.0, 5.0, 0.0],  # outside domain
-        ]
+        ],
     )
 
     result = probe_points.sample(composite)
-    assert "common_data" in result.point_data
+    assert 'common_data' in result.point_data
     # Need pass partial arrays?
-    assert "partial_data" not in result.point_data
-    assert "vtkValidPointMask" in result.point_data
-    assert "vtkGhostType" in result.point_data
+    assert 'partial_data' not in result.point_data
+    assert 'vtkValidPointMask' in result.point_data
+    assert 'vtkGhostType' in result.point_data
     # data outside domain is 0
-    assert np.array_equal(result["common_data"], [0.0, 1.0, 0.0])
-    assert np.array_equal(result["vtkValidPointMask"], [1, 1, 0])
+    assert np.array_equal(result['common_data'], [0.0, 1.0, 0.0])
+    assert np.array_equal(result['vtkValidPointMask'], [1, 1, 0])
 
     result = probe_points.sample(composite, mark_blank=False)
-    assert "vtkGhostType" not in result.point_data
+    assert 'vtkGhostType' not in result.point_data
 
     small_mesh_0 = pv.ImageData(
-        dimensions=(6, 6, 1), origin=(0.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0)
+        dimensions=(6, 6, 1),
+        origin=(0.0, 0.0, 0.0),
+        spacing=(1.0, 1.0, 1.0),
     )
     small_mesh_1 = pv.ImageData(
-        dimensions=(6, 6, 1), origin=(10.0, 0.0, 0.0), spacing=(1.0, 1.0, 1.0)
+        dimensions=(6, 6, 1),
+        origin=(10.0, 0.0, 0.0),
+        spacing=(1.0, 1.0, 1.0),
     )
 
     probe_composite = pv.MultiBlock([small_mesh_0, small_mesh_1])
     result = probe_composite.sample(composite)
-    assert "common_data" in result[0].point_data
+    assert 'common_data' in result[0].point_data
     # Need pass partial arrays?
-    assert "partial_data" not in result[0].point_data
-    assert "vtkValidPointMask" in result[0].point_data
-    assert "vtkGhostType" in result[0].point_data
-
-
-@pytest.mark.parametrize('use_points', [True, False])
-@pytest.mark.parametrize('categorical', [True, False])
-@pytest.mark.parametrize('locator', [None, _vtk_core.vtkStaticCellLocator()])
-def test_probe(categorical, use_points, locator):
-    mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
-    data_to_probe = examples.load_uniform()
-    if use_points:
-        dataset = np.array(mesh.points)
-    else:
-        dataset = mesh
-    with pytest.warns(PyVistaDeprecationWarning):
-        result = data_to_probe.probe(
-            dataset, tolerance=1e-5, categorical=categorical, progress_bar=True, locator=locator
-        )
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
-    result = mesh.sample(data_to_probe, tolerance=1.0, progress_bar=True)
-    name = 'Spatial Point Data'
-    assert name in result.array_names
-    assert isinstance(result, type(mesh))
+    assert 'partial_data' not in result[0].point_data
+    assert 'vtkValidPointMask' in result[0].point_data
+    assert 'vtkGhostType' in result[0].point_data
 
 
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
 def test_streamlines_dir(uniform_vec, integration_direction):
     stream = uniform_vec.streamlines(
-        'vectors', integration_direction=integration_direction, progress_bar=True
+        'vectors',
+        integration_direction=integration_direction,
+        progress_bar=True,
     )
     assert all([stream.n_points, stream.n_cells])
 
@@ -1620,7 +1689,9 @@ def test_streamlines_type(uniform_vec, integrator_type):
 @pytest.mark.parametrize('interpolator_type', ['point', 'cell'])
 def test_streamlines_cell_point(uniform_vec, interpolator_type):
     stream = uniform_vec.streamlines(
-        'vectors', interpolator_type=interpolator_type, progress_bar=True
+        'vectors',
+        interpolator_type=interpolator_type,
+        progress_bar=True,
     )
     assert all([stream.n_points, stream.n_cells])
 
@@ -1641,6 +1712,72 @@ def test_streamlines_start_position(uniform_vec):
     stream = uniform_vec.streamlines('vectors', start_position=(0.5, 0.0, 0.0), progress_bar=True)
 
     assert all([stream.n_points, stream.n_cells])
+
+
+def test_streamlines_max_length():
+    # mesh that is 50x50x50 length units in size
+    mesh = pv.ImageData(dimensions=(6, 6, 6), spacing=(10, 10, 10))
+
+    vel = np.zeros((mesh.n_points, 3))
+    vel[:, 0] = 1
+    mesh['vel'] = vel
+
+    for step_unit in ('cl', 'l'):
+        # First show that the default integrates to near the end of the domain.
+        # Use max_step_length to limit error near end of domain.
+        stream = mesh.streamlines(
+            vectors='vel',
+            start_position=(0, 0, 0),
+            integration_direction='forward',
+            step_unit=step_unit,
+            max_step_length=0.1,
+        )
+        # It doesn't identify edge of domain, and just stops at last point inside domain.
+        # Check that is ended reasonably close to edge of domain.
+        assert stream.length > 45
+
+        # Next show that the max_length is satisfied
+        stream = mesh.streamlines(
+            vectors='vel',
+            start_position=(0, 0, 0),
+            integration_direction='forward',
+            max_length=1,
+            step_unit=step_unit,
+        )
+        assert np.isclose(stream.length, 1)
+
+    def check_deprecation():
+        if pv._version.version_info[:2] > (0, 48):
+            raise RuntimeError(
+                'Convert error ``max_time`` parameter in ``streamlines_from_source``'
+            )
+        if pv._version.version_info[:2] > (0, 49):
+            raise RuntimeError('Remove ``max_time`` parameter in ``streamlines_from_source``')
+
+    with pytest.warns(PyVistaDeprecationWarning, match='``max_time`` parameter is deprecated'):
+        stream = mesh.streamlines(
+            vectors='vel',
+            start_position=(0, 0, 0),
+            integration_direction='forward',
+            max_time=1,
+            max_step_length=0.1,
+        )
+        check_deprecation()
+    assert np.isclose(stream.length, 1)
+
+    with pytest.warns(
+        PyVistaDeprecationWarning,
+        match='``max_length`` and ``max_time`` provided. Ignoring deprecated ``max_time``.',
+    ):
+        stream = mesh.streamlines(
+            vectors='vel',
+            start_position=(0, 0, 0),
+            integration_direction='forward',
+            max_time=5,
+            max_length=1,
+        )
+        check_deprecation()
+    assert np.isclose(stream.length, 1)
 
 
 def test_streamlines_errors(uniform_vec):
@@ -1678,8 +1815,8 @@ def test_streamlines_from_source_structured_grids():
     mesh = pv.StructuredGrid(x, y, z)
     x2, y2, z2 = np.meshgrid(np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5), np.arange(-1, 1, 0.5))
     mesh2 = pv.StructuredGrid(x2, y2, z2)
-    mesh["vectors"] = np.ones([mesh.n_points, 3])
-    mesh.set_active_vectors("vectors")
+    mesh['vectors'] = np.ones([mesh.n_points, 3])
+    mesh.set_active_vectors('vectors')
 
     with pv.VtkErrorCatcher(raise_errors=True):
         stream = mesh.streamlines_from_source(mesh2)
@@ -1690,8 +1827,8 @@ def mesh_2D_velocity():
     mesh = pv.Plane(i_resolution=100, j_resolution=100)
     velocity = np.zeros([mesh.n_points, 3])
     velocity[:, 0] = 1
-    mesh["velocity"] = velocity
-    mesh.set_active_vectors("velocity")
+    mesh['velocity'] = velocity
+    mesh.set_active_vectors('velocity')
     return mesh
 
 
@@ -1716,7 +1853,7 @@ def test_streamlines_evenly_spaced_2D_start_position():
 def test_streamlines_evenly_spaced_2D_vectors():
     mesh = mesh_2D_velocity()
     mesh.set_active_vectors(None)
-    streams = mesh.streamlines_evenly_spaced_2D(vectors="velocity", progress_bar=True)
+    streams = mesh.streamlines_evenly_spaced_2D(vectors='velocity', progress_bar=True)
     assert all([streams.n_points, streams.n_cells])
 
 
@@ -1739,13 +1876,13 @@ def test_streamlines_evenly_spaced_2D_errors():
         mesh.streamlines_evenly_spaced_2D(integrator_type=45)
 
     with pytest.raises(ValueError):  # noqa: PT011
-        mesh.streamlines_evenly_spaced_2D(interpolator_type="not valid")
+        mesh.streamlines_evenly_spaced_2D(interpolator_type='not valid')
 
     with pytest.raises(ValueError):  # noqa: PT011
-        mesh.streamlines_evenly_spaced_2D(step_unit="not valid")
+        mesh.streamlines_evenly_spaced_2D(step_unit='not valid')
 
 
-@pytest.mark.xfail()
+@pytest.mark.xfail
 def test_streamlines_nonxy_plane():
     # streamlines_evenly_spaced_2D only works for xy plane datasets
     # test here so that fixes in vtk can be caught
@@ -1777,12 +1914,12 @@ def test_sample_over_line():
 
 
 def test_plot_over_line(tmpdir):
-    tmp_dir = tmpdir.mkdir("tmpdir")
+    tmp_dir = tmpdir.mkdir('tmpdir')
     filename = str(tmp_dir.join('tmp.png'))
     mesh = examples.load_uniform()
     # Make two points to construct the line between
-    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
-    b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
+    b = [mesh.bounds.x_max, mesh.bounds.y_max, mesh.bounds.z_max]
     mesh.plot_over_line(a, b, resolution=1000, show=False, progress_bar=True)
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
@@ -1797,7 +1934,7 @@ def test_plot_over_line(tmpdir):
         fname=filename,
         progress_bar=True,
     )
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
     # Should fail if scalar name does not exist
     with pytest.raises(KeyError):
         mesh.plot_over_line(
@@ -1819,7 +1956,8 @@ def test_sample_over_multiple_lines():
     line[name] = np.linspace(0, 10, 10)
 
     sampled_multiple_lines = line.sample_over_multiple_lines(
-        [[0, 0, 0.5], [0, 0, 1], [0, 0, 1.5]], progress_bar=True
+        [[0, 0, 0.5], [0, 0, 1], [0, 0, 1.5]],
+        progress_bar=True,
     )
 
     expected_result = np.array([0.5, 1, 1.5])
@@ -1829,17 +1967,16 @@ def test_sample_over_multiple_lines():
 
 def test_sample_over_circular_arc():
     """Test that we get a circular arc."""
-
     name = 'values'
 
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    xmin = uniform.bounds[0]
-    xmax = uniform.bounds[1]
-    ymin = uniform.bounds[2]
-    zmin = uniform.bounds[4]
-    zmax = uniform.bounds[5]
+    xmin = uniform.bounds.x_min
+    xmax = uniform.bounds.x_max
+    ymin = uniform.bounds.y_min
+    zmin = uniform.bounds.z_min
+    zmax = uniform.bounds.z_max
     pointa = [xmin, ymin, zmax]
     pointb = [xmax, ymin, zmin]
     center = [xmin, ymin, zmin]
@@ -1852,7 +1989,10 @@ def test_sample_over_circular_arc():
     # test no resolution
     sphere = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     sampled_from_sphere = sphere.sample_over_circular_arc(
-        [3, 1, 1], [-3, -1, -1], [0, 0, 0], progress_bar=True
+        [3, 1, 1],
+        [-3, -1, -1],
+        [0, 0, 0],
+        progress_bar=True,
     )
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
 
@@ -1862,24 +2002,28 @@ def test_sample_over_circular_arc():
 
 def test_sample_over_circular_arc_normal():
     """Test that we get a circular arc_normal."""
-
     name = 'values'
 
     uniform = examples.load_uniform()
     uniform[name] = uniform.points[:, 2]
 
-    xmin = uniform.bounds[0]
-    ymin = uniform.bounds[2]
-    ymax = uniform.bounds[3]
-    zmin = uniform.bounds[4]
-    zmax = uniform.bounds[5]
+    xmin = uniform.bounds.x_min
+    ymin = uniform.bounds.y_min
+    ymax = uniform.bounds.y_max
+    zmin = uniform.bounds.z_min
+    zmax = uniform.bounds.z_max
     normal = [xmin, ymax, zmin]
     polar = [xmin, ymin, zmax]
     angle = 90.0 * np.random.default_rng().random()
     resolution = np.random.default_rng().integers(10000)
     center = [xmin, ymin, zmin]
     sampled_arc_normal = uniform.sample_over_circular_arc_normal(
-        center, resolution=resolution, normal=normal, polar=polar, angle=angle, progress_bar=True
+        center,
+        resolution=resolution,
+        normal=normal,
+        polar=polar,
+        angle=angle,
+        progress_bar=True,
     )
     angles = np.linspace(np.pi / 2.0, np.pi / 2.0 - np.deg2rad(angle), resolution + 1)
 
@@ -1890,7 +2034,10 @@ def test_sample_over_circular_arc_normal():
     # test no resolution
     sphere = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     sampled_from_sphere = sphere.sample_over_circular_arc_normal(
-        [0, 0, 0], polar=[3, 1, 1], angle=180, progress_bar=True
+        [0, 0, 0],
+        polar=[3, 1, 1],
+        angle=180,
+        progress_bar=True,
     )
     assert sampled_from_sphere.n_points == sphere.n_cells + 1
 
@@ -1900,17 +2047,23 @@ def test_sample_over_circular_arc_normal():
 
 def test_plot_over_circular_arc(tmpdir):
     mesh = examples.load_uniform()
-    tmp_dir = tmpdir.mkdir("tmpdir")
+    tmp_dir = tmpdir.mkdir('tmpdir')
     filename = str(tmp_dir.join('tmp.png'))
 
     # Make two points and center to construct the circular arc between
-    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-    b = [mesh.bounds[1], mesh.bounds[2], mesh.bounds[4]]
-    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    a = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+    b = [mesh.bounds.x_max, mesh.bounds.y_min, mesh.bounds.z_min]
+    center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc(
-        a, b, center, resolution=1000, show=False, fname=filename, progress_bar=True
+        a,
+        b,
+        center,
+        resolution=1000,
+        show=False,
+        fname=filename,
+        progress_bar=True,
     )
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
@@ -1942,18 +2095,23 @@ def test_plot_over_circular_arc(tmpdir):
 
 def test_plot_over_circular_arc_normal(tmpdir):
     mesh = examples.load_uniform()
-    tmp_dir = tmpdir.mkdir("tmpdir")
+    tmp_dir = tmpdir.mkdir('tmpdir')
     filename = str(tmp_dir.join('tmp.png'))
 
     # Make center and normal/polar vector to construct the circular arc between
-    # normal = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[5]]
-    polar = [mesh.bounds[0], mesh.bounds[3], mesh.bounds[4]]
+    # normal = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_max]
+    polar = [mesh.bounds.x_min, mesh.bounds.y_max, mesh.bounds.z_min]
     angle = 90
-    center = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    center = [mesh.bounds.x_min, mesh.bounds.y_min, mesh.bounds.z_min]
     mesh.plot_over_circular_arc_normal(
-        center, polar=polar, angle=angle, show=False, fname=filename, progress_bar=True
+        center,
+        polar=polar,
+        angle=angle,
+        show=False,
+        fname=filename,
+        progress_bar=True,
     )
-    assert os.path.isfile(filename)
+    assert Path(filename).is_file()
 
     # Test multicomponent
     mesh['foo'] = np.random.default_rng().random((mesh.n_cells, 3))
@@ -1986,7 +2144,7 @@ def test_plot_over_circular_arc_normal(tmpdir):
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
-    x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
+    x = y = z = np.linspace(model.bounds.x_min, model.bounds.x_max, num=n)
     points = np.c_[x, y, z]
     spline = pv.Spline(points, n)
     slc = model.slice_along_line(spline, progress_bar=True)
@@ -1994,14 +2152,14 @@ def test_slice_along_line():
     slc = model.slice_along_line(spline, contour=True, progress_bar=True)
     assert slc.n_points > 0
     # Now check a simple line
-    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
-    b = [model.bounds[1], model.bounds[3], model.bounds[5]]
+    a = [model.bounds.x_min, model.bounds.y_min, model.bounds.z_min]
+    b = [model.bounds.x_max, model.bounds.y_max, model.bounds.z_max]
     line = pv.Line(a, b, resolution=10)
     slc = model.slice_along_line(line, progress_bar=True)
     assert slc.n_points > 0
     # Now check a bad input
-    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
-    b = [model.bounds[1], model.bounds[2], model.bounds[5]]
+    a = [model.bounds.x_min, model.bounds.y_min, model.bounds.z_min]
+    b = [model.bounds.x_max, model.bounds.y_min, model.bounds.z_max]
     line2 = pv.Line(a, b, resolution=10)
     line = line2.cast_to_unstructured_grid().merge(line.cast_to_unstructured_grid())
     with pytest.raises(ValueError):  # noqa: PT011
@@ -2020,7 +2178,8 @@ def extract_points_invalid(sphere):
         sphere.extract_points(object)
 
 
-def test_extract_points():
+@pytest.fixture
+def grid4x4():
     # mesh points (4x4 regular grid)
     vertices = np.array(
         [
@@ -2055,30 +2214,649 @@ def test_extract_points():
             [4, 8, 9, 13, 12],  # square
             [4, 9, 10, 14, 13],  # square
             [4, 10, 11, 15, 14],  # square
-        ]
+        ],
     )
-    # create pv object
     surf = pv.PolyData(vertices, faces)
+    surf.point_data['labels'] = range(surf.n_points)
+    surf.cell_data['labels'] = range(surf.n_cells)
+    return surf
+
+
+@pytest.fixture
+def extracted_with_adjacent_False(grid4x4):
+    """Return expected output for adjacent_cells=False and include_cells=True"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0]
+    expected_point_ids = [0, 1, 4, 5]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [4, 0, 1, 3, 2]
+    celltypes = np.full(1, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.fixture
+def extracted_with_adjacent_True(grid4x4):
+    """Return expected output for adjacent_cells=True and include_cells=True"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0, 1, 3, 4]
+    expected_point_ids = [0, 1, 2, 4, 5, 6, 8, 9, 10]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [4, 0, 1, 4, 3, 4, 1, 2, 5, 4, 4, 3, 4, 7, 6, 4, 4, 5, 8, 7]
+    celltypes = np.full(4, CellType.QUAD, dtype=np.uint8)
+    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.fixture
+def extracted_with_include_cells_False(grid4x4):
+    """Return expected output for adjacent_cells=True and include_cells=False"""
+    input_point_ids = [0, 1, 4, 5]
+    expected_cell_ids = [0, 0, 0, 0]
+    expected_point_ids = [0, 1, 4, 5]
+    expected_verts = grid4x4.points[expected_point_ids, :]
+    expected_faces = [1, 0, 1, 1, 1, 2, 1, 3]
+    celltypes = np.full(4, CellType.VERTEX, dtype=np.uint8)
+    expected_surf = pv.UnstructuredGrid(expected_faces, celltypes, expected_verts)
+    expected_surf.point_data['labels'] = expected_point_ids
+    expected_surf.cell_data['labels'] = expected_cell_ids
+    return grid4x4, input_point_ids, expected_cell_ids, expected_surf
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_adjacent_cells_True(dataset_filter, extracted_with_adjacent_True):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+
     # extract sub-surface with adjacent cells
-    sub_surf_adj = surf.extract_points(np.array([0, 1, 4, 5]), progress_bar=True)
-    # extract sub-surface without adjacent cells
-    sub_surf = surf.extract_points(np.array([0, 1, 4, 5]), adjacent_cells=False, progress_bar=True)
-    # extract sub-surface without cells
-    sub_surf_nocells = surf.extract_points(
-        np.array([0, 1, 4, 5]), include_cells=False, progress_bar=True
+    sub_surf_adj = dataset_filter(
+        input_surf,
+        input_point_ids,
+        adjacent_cells=True,
+        progress_bar=True,
     )
-    # check sub-surface size
-    assert sub_surf.n_points == 4
-    assert sub_surf.n_cells == 1
+
     assert sub_surf_adj.n_points == 9
+    assert np.array_equal(sub_surf_adj.points, expected_surf.points)
     assert sub_surf_adj.n_cells == 4
-    assert sub_surf_nocells.cells[0] == 1
+    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_adjacent_cells_False(dataset_filter, extracted_with_adjacent_False):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_False
+    # extract sub-surface without adjacent cells
+    sub_surf = dataset_filter(input_surf, input_point_ids, adjacent_cells=False, progress_bar=True)
+
+    assert sub_surf.n_points == 4
+    assert np.array_equal(sub_surf.points, expected_surf.points)
+    assert sub_surf.n_cells == 1
+    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize(
+    'dataset_filter',
+    [pv.DataSetFilters.extract_points, pv.DataSetFilters.extract_values],
+)
+def test_extract_points_include_cells_False(
+    dataset_filter,
+    grid4x4,
+    extracted_with_include_cells_False,
+):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_include_cells_False
+    # extract sub-surface without cells
+    sub_surf_nocells = dataset_filter(
+        input_surf,
+        input_point_ids,
+        adjacent_cells=True,
+        include_cells=False,
+        progress_bar=True,
+    )
+    assert np.array_equal(sub_surf_nocells.points, expected_surf.points)
+    assert np.array_equal(sub_surf_nocells.cells, expected_surf.cells)
+    assert all(celltype == pv.CellType.VERTEX for celltype in sub_surf_nocells.celltypes)
+
+
+def test_extract_points_default(extracted_with_adjacent_True):
+    input_surf, input_point_ids, _, expected_surf = extracted_with_adjacent_True
+    # test adjacent_cells=True and include_cells=True by default
+    sub_surf_adj = input_surf.extract_points(input_point_ids)
+
+    assert np.array_equal(sub_surf_adj.points, expected_surf.points)
+    assert np.array_equal(sub_surf_adj.cells, expected_surf.cells)
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+@pytest.mark.parametrize('adjacent_fixture', [True, False])
+def test_extract_values_preference(
+    preference,
+    adjacent_fixture,
+    extracted_with_adjacent_True,
+    extracted_with_adjacent_False,
+):
+    # test points are extracted with point data (with adjacent = False by default)
+    # test cells are extracted with cell data
+    fixture = extracted_with_adjacent_True if adjacent_fixture else extracted_with_adjacent_False
+    input_surf, input_point_ids, input_cell_ids, expected_surf = fixture
+
+    func = functools.partial(input_surf.extract_values, scalars='labels', preference=preference)
+    if preference == 'point':
+        sub_surf = func(input_point_ids)
+        if not adjacent_fixture:
+            pytest.xfail(
+                'Will not match expected output since adjacent is True by default for point data ',
+            )
+    else:
+        sub_surf = func(input_cell_ids)
+
+    assert np.array_equal(sub_surf.points, expected_surf.points)
+    assert np.array_equal(sub_surf.cells, expected_surf.cells)
+
+
+def extract_values_values():
+    # Define values to extract all 16 points or all 9 cells of the 4x4 grid
+    point_values = [
+        range(16),
+        list(range(16)),
+        np.array(range(16)),
+    ]
+    cell_values = [
+        range(10),
+        list(range(10)),
+        np.array(range(10)),
+    ]
+
+    return list(zip(point_values, cell_values))
+
+
+@pytest.mark.parametrize('preference', ['point', 'cell'])
+@pytest.mark.parametrize('invert', [True, False])
+@pytest.mark.parametrize('values', extract_values_values())
+def test_extract_values_input_values_and_invert(preference, values, invert, grid4x4):
+    # test extracting all points or cells
+    values = values[0] if preference == 'point' else values[1]
+    extracted = grid4x4.extract_values(values, preference=preference, invert=invert)
+    if invert:
+        assert extracted.n_points == 0
+        assert extracted.n_cells == 0
+        assert extracted.n_arrays == 0
+    else:
+        assert np.array_equal(extracted.points, grid4x4.points)
+        assert np.array_equal(extracted.cells, grid4x4.faces)
+
+
+def test_extract_values_open_intervals(grid4x4):
+    extracted = grid4x4.extract_values(ranges=[float('-inf'), float('inf')])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+    extracted = grid4x4.extract_values(ranges=[0, np.inf])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+    extracted = grid4x4.extract_values(ranges=[-np.inf, 16])
+    assert extracted.n_points == 16
+    assert extracted.n_cells == 9
+
+
+SMALL_VOLUME = 1**3
+BIG_VOLUME = 2**3
+
+
+@pytest.fixture
+def labeled_data():
+    bounds = np.array((-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
+    small_box = pv.Box(bounds=bounds)
+    big_box = pv.Box(bounds=bounds * 2)
+    labeled = (small_box + big_box).extract_geometry().connectivity()
+    assert isinstance(labeled, pv.PolyData)
+    assert labeled.array_names == ['RegionId', 'RegionId']
+    assert np.allclose(small_box.volume, SMALL_VOLUME)
+    assert np.allclose(big_box.volume, BIG_VOLUME)
+    return small_box, big_box, labeled
+
+
+def add_component_to_labeled_data(labeled_data, offset):
+    """Add second component to scalars by duplicating first component and adding offset."""
+    if offset is None:
+        return labeled_data
+    small_box, big_box, labeled_data = labeled_data
+
+    point_data = labeled_data.point_data['RegionId']
+    point_data = np.vstack([point_data, point_data + offset]).T
+    labeled_data.point_data['RegionId'] = point_data
+
+    cell_data = labeled_data.cell_data['RegionId']
+    cell_data = np.vstack([cell_data, cell_data + offset]).T
+    labeled_data.cell_data['RegionId'] = cell_data
+
+    return small_box, big_box, labeled_data
+
+
+class SplitComponentTestCase(NamedTuple):
+    component_offset: Any
+    component_mode: Any
+    expected_n_blocks: Any
+    expected_volume: Any
+
+
+split_component_test_cases = [
+    SplitComponentTestCase(
+        component_offset=None,
+        component_mode=0,
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=None,
+        component_mode='any',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=None,
+        component_mode='all',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='0',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='1',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='any',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=0,
+        component_mode='all',
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode=0,
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode=1,
+        expected_n_blocks=2,
+        expected_volume=[SMALL_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode='any',
+        expected_n_blocks=4,
+        expected_volume=[SMALL_VOLUME, SMALL_VOLUME, BIG_VOLUME, BIG_VOLUME],
+    ),
+    SplitComponentTestCase(
+        component_offset=-0.5,
+        component_mode='all',
+        expected_n_blocks=4,
+        expected_volume=[0, 0, 0, 0],
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ('component_offset', 'component_mode', 'expected_n_blocks', 'expected_volume'),
+    split_component_test_cases,
+)
+@pytest.mark.parametrize(
+    ('dataset_filter', 'kwargs'),
+    [
+        (pv.DataSetFilters.split_values, {}),
+        (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
+    ],
+)
+def test_split_values_extract_values_component(
+    dataset_filter,
+    kwargs,
+    labeled_data,
+    component_offset,
+    component_mode,
+    expected_n_blocks,
+    expected_volume,
+):
+    # Add second component to fixture for test as needed
+    small_box, big_box, labeled_data = add_component_to_labeled_data(
+        labeled_data,
+        component_offset,
+    )
+    multiblock = dataset_filter(labeled_data, component_mode=component_mode, **kwargs)
+    assert isinstance(multiblock, pv.MultiBlock)
+    assert multiblock.n_blocks == expected_n_blocks
+    assert all(isinstance(block, pv.UnstructuredGrid) for block in multiblock)
+
+    # Convert to polydata to test volume
+    multiblock = multiblock.as_polydata_blocks()
+    assert expected_n_blocks == len(expected_volume)
+    assert all(
+        np.allclose(block.volume, volume) for block, volume in zip(multiblock, expected_volume)
+    )
+
+
+def test_extract_values_split_ranges_values(labeled_data):
+    _, _, labeled_data = labeled_data
+    extracted = labeled_data.extract_values(values=[0, 1], ranges=[[0, 0], [1, 1]], split=True)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == 4
+    extracted_value0 = extracted[0]
+    extracted_value1 = extracted[1]
+    extracted_range00 = extracted[2]
+    extracted_range11 = extracted[3]
+    assert extracted_value0 == extracted_range00
+    assert extracted_value1 == extracted_range11
+
+
+# Test cases with and/or without dict inputs
+# Include swapped [name, value] or [value, name] inputs
+values_nodict_ranges_dict = dict(values=0, ranges=dict(rng=[0, 0])), ['Block-00', 'rng']
+values_dict_ranges_nodict = dict(values={0: 'val'}, ranges=[0, 0]), ['val', 'Block-01']
+values_dict_ranges_dict = dict(values=dict(val=0), ranges={(0, 0): 'rng'}), ['val', 'rng']
+values_component_dict = (
+    dict(values=dict(val0=[0], val1=[1]), component_mode='multi'),
+    [
+        'val0',
+        'val1',
+    ],
+)
+
+
+@pytest.mark.parametrize(
+    ('dict_inputs', 'block_names'),
+    [
+        values_nodict_ranges_dict,
+        values_dict_ranges_nodict,
+        values_dict_ranges_dict,
+        values_component_dict,
+    ],
+)
+def test_extract_values_dict_input(labeled_data, dict_inputs, block_names):
+    _, _, labeled_data = labeled_data
+    extracted = labeled_data.extract_values(**dict_inputs, split=True)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == 2
+    assert extracted.keys() == block_names
+
+
+BLACK = [0.0, 0.0, 0.0]
+WHITE = [1.0, 1.0, 1.0]
+RED = [1.0, 0.0, 0.0]
+GREEN = [0.0, 1.0, 0.0]
+BLUE = [0.0, 0.0, 1.0]
+COLORS_LIST = [BLACK, WHITE, RED, GREEN, BLUE]
+
+
+@pytest.fixture
+def point_cloud_colors():
+    # Define point cloud where the points and rgb scalars are the same
+    array = COLORS_LIST
+    point_cloud = pv.PointSet(array)
+    point_cloud['colors'] = array
+    return point_cloud
+
+
+@pytest.fixture
+def point_cloud_colors_duplicates(point_cloud_colors):
+    # Same fixture as point_cloud_colors but with double the points
+    copied = point_cloud_colors.copy()
+    copied.points += 0.5
+    return point_cloud_colors + copied
+
+
+class ComponentModeTestCase(NamedTuple):
+    values: Any
+    component_mode: Any
+    expected: Any
+    expected_invert: Any
+
+
+component_mode_test_cases = [
+    ComponentModeTestCase(
+        values=0,
+        component_mode=0,
+        expected=[BLACK, GREEN, BLUE],
+        expected_invert=[WHITE, RED],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode=1,
+        expected=[BLACK, RED, BLUE],
+        expected_invert=[WHITE, GREEN],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode=2,
+        expected=[BLACK, RED, GREEN],
+        expected_invert=[WHITE, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode='any',
+        expected=[BLACK, RED, GREEN, BLUE],
+        expected_invert=[WHITE],
+    ),
+    ComponentModeTestCase(
+        values=1,
+        component_mode='any',
+        expected=[WHITE, RED, GREEN, BLUE],
+        expected_invert=[BLACK],
+    ),
+    ComponentModeTestCase(
+        values=0,
+        component_mode='all',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=1,
+        component_mode='all',
+        expected=[WHITE],
+        expected_invert=[BLACK, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=BLACK,
+        component_mode='multi',
+        expected=[BLACK],
+        expected_invert=[WHITE, RED, GREEN, BLUE],
+    ),
+    ComponentModeTestCase(
+        values=[WHITE, RED],
+        component_mode='multi',
+        expected=[WHITE, RED],
+        expected_invert=[BLACK, GREEN, BLUE],
+    ),
+]
+
+
+@pytest.mark.parametrize('values_as_ranges', [True, False])
+@pytest.mark.parametrize(('split', 'invert'), [(True, False), (False, True), (False, False)])
+@pytest.mark.parametrize(
+    ('values', 'component_mode', 'expected', 'expected_invert'),
+    component_mode_test_cases,
+)
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_extract_values_component_mode(
+    point_cloud_colors,
+    values,
+    component_mode,
+    expected,
+    expected_invert,
+    invert,
+    split,
+    values_as_ranges,
+):
+    values_kwarg = dict(values=values)
+    if values_as_ranges:
+        # Get additional test coverage by converting single value inputs into a range
+        if component_mode == 'multi':
+            pytest.skip("Cannot use ranges with 'multi' mode.")
+        values_kwarg = dict(ranges=[values - 0.5, values + 0.5])
+
+    extracted = point_cloud_colors.extract_values(
+        **values_kwarg,
+        component_mode=component_mode,
+        split=split,
+        invert=invert,
+    )
+    single_mesh = extracted.combine() if split else extracted
+    actual_points = single_mesh.points
+    actual_colors = single_mesh['colors']
+    assert np.array_equal(actual_points, expected_invert if invert else expected)
+    assert np.array_equal(actual_colors, expected_invert if invert else expected)
+
+
+@pytest.mark.parametrize(
+    ('dataset_filter', 'kwargs'),
+    [
+        (pv.DataSetFilters.split_values, {}),
+        (pv.DataSetFilters.extract_values, dict(values='_unique', split=True)),
+    ],
+)
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_extract_values_component_values_split_unique(
+    point_cloud_colors_duplicates,
+    dataset_filter,
+    kwargs,
+):
+    extracted = dataset_filter(point_cloud_colors_duplicates, component_mode='multi', **kwargs)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert extracted.n_blocks == len(COLORS_LIST)
+    assert (
+        np.array_equal(block['colors'], [color, color])
+        for block, color in zip(extracted, COLORS_LIST)
+    )
+
+
+@pytest.mark.parametrize('pass_point_ids', [True, False])
+@pytest.mark.parametrize('pass_cell_ids', [True, False])
+def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
+    POINT_IDS = 'vtkOriginalPointIds'
+    CELL_IDS = 'vtkOriginalCellIds'
+    extracted = grid4x4.extract_values(ranges=grid4x4.get_data_range())
+    assert extracted.point_data.keys() == ['labels', POINT_IDS]
+    assert extracted.cell_data.keys() == ['labels', CELL_IDS]
+
+    extracted = grid4x4.extract_values(
+        ranges=grid4x4.get_data_range(),
+        pass_point_ids=pass_point_ids,
+        pass_cell_ids=pass_cell_ids,
+    )
+    if pass_cell_ids:
+        assert CELL_IDS in extracted.cell_data
+    if pass_point_ids:
+        assert POINT_IDS in extracted.point_data
+
+    extracted = grid4x4.extract_values(
+        ranges=grid4x4.get_data_range(preference='point'),
+        invert=True,
+        pass_point_ids=pass_point_ids,
+        pass_cell_ids=pass_cell_ids,
+    )
+    if pass_cell_ids:
+        assert extracted.cell_data.keys() == []
+    if pass_point_ids:
+        assert extracted.point_data.keys() == []
+
+
+def test_extract_values_empty():
+    assert pv.PolyData().extract_values()
+
+
+def test_extract_values_raises(grid4x4):
+    match = 'Values must be numeric.'
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values('abc')
+
+    match = 'Values must be one-dimensional. Got 2d values.'
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values([[2, 3]])
+
+    match = 'Ranges must be 2 dimensional. Got 3.'
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(ranges=[[[0, 1]]])
+
+    match = 'Ranges must be numeric.'
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values(ranges='abc')
+
+    match = 'Invalid range [1 0] specified. Lower value cannot be greater than upper value.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[1, 0])
+
+    match = 'No ranges or values were specified. At least one must be specified.'
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values()
+
+    match = "Invalid dict mapping. The dict's keys or values must contain strings."
+    with pytest.raises(TypeError, match=match):
+        grid4x4.extract_values({0: 1})
+
+    match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(0, scalars='invalid_scalars')
+
+    match = 'No point data or cell data found. Scalar data is required to use this filter.'
+    grid = grid4x4.copy()
+    grid.clear_data()
+    with pytest.raises(ValueError, match=match):
+        grid.extract_values([0])
+
+    match = "Invalid component index '1' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(component_mode=1)
+
+    match = "Invalid component index '-1' specified"
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(component_mode=-1)
+
+    match = "Invalid component 'foo'. Must be an integer, 'any', 'all', or 'multi'."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(component_mode='foo')
+
+    match = "Ranges cannot be extracted using component mode 'multi'. Expected None, got [0, 1]."
+    with pytest.raises(TypeError, match=re.escape(match)):
+        grid4x4.extract_values(ranges=[0, 1], component_mode='multi')
+
+    match = 'Component values cannot be more than 2 dimensions. Got 3.'
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(values=[[[0]]], component_mode='multi')
+
+    match = "Invalid component index '2' specified for scalars with 1 component(s). Value must be one of: (0,)."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(component_mode=2)
+
+    match = 'Num components in values array (2) must match num components in data array (1).'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid4x4.extract_values(values=[0, 1], component_mode='multi')
 
 
 def test_slice_along_line_composite(composite):
     # Now test composite data structures
-    a = [composite.bounds[0], composite.bounds[2], composite.bounds[4]]
-    b = [composite.bounds[1], composite.bounds[3], composite.bounds[5]]
+    a = [composite.bounds.x_min, composite.bounds.y_min, composite.bounds.z_min]
+    b = [composite.bounds.x_max, composite.bounds.y_max, composite.bounds.z_max]
     line = pv.Line(a, b, resolution=10)
     output = composite.slice_along_line(line, progress_bar=True)
     assert output.n_blocks == composite.n_blocks
@@ -2151,7 +2929,7 @@ def test_extract_surface():
             (lin_pts[1] + lin_pts[5]) / 2,
             (lin_pts[2] + lin_pts[6]) / 2,
             (lin_pts[3] + lin_pts[7]) / 2,
-        ]
+        ],
     )
 
     # introduce a minor variation to the location of the mid-side points
@@ -2185,6 +2963,29 @@ def test_merge_general(uniform):
     # Pure PolyData inputs should yield poly data output
     merged = uniform.extract_surface() + con
     assert isinstance(merged, pv.PolyData)
+
+
+def test_merge_active_normals():
+    plane = pv.Plane()
+
+    # Check default normals
+    default_normal = np.array([0, 0, 1])
+    assert np.array_equal(plane['Normals'][0], default_normal)
+    assert np.array_equal(plane.active_normals[0], default_normal)
+    assert np.array_equal(plane.point_normals[0], default_normal)
+
+    # Customize the normals
+    plane['Normals'] *= -1
+    negative_normal = -default_normal
+    assert np.array_equal(plane['Normals'][0], negative_normal)
+    assert np.array_equal(plane.active_normals[0], negative_normal)
+    assert np.array_equal(plane.point_normals[0], negative_normal)
+
+    # Now test merge
+    merged = pv.merge([plane])
+    assert np.array_equal(merged['Normals'][0], negative_normal)
+    assert np.array_equal(merged.active_normals[0], negative_normal)
+    assert np.array_equal(merged.point_normals[0], negative_normal)
 
 
 def test_iadd_general(uniform, hexbeam, sphere):
@@ -2296,7 +3097,10 @@ def test_compute_derivatives(random_hills):
     assert np.shape(grad['gradient'])[1] == 3
 
     grad = mesh.compute_derivative(
-        scalars='Elevation', gradient=True, faster=True, progress_bar=True
+        scalars='Elevation',
+        gradient=True,
+        faster=True,
+        progress_bar=True,
     )
     assert 'gradient' in grad.array_names
     assert np.shape(grad['gradient'])[0] == mesh.n_points
@@ -2399,7 +3203,8 @@ def test_median_smooth_outlier():
     volume_outlier.point_data['point_data'] = point_data_outlier.flatten(order='F')
     volume_outlier_smoothed = volume_outlier.median_smooth()
     assert np.array_equal(
-        volume.point_data['point_data'], volume_outlier_smoothed.point_data['point_data']
+        volume.point_data['point_data'],
+        volume_outlier_smoothed.point_data['point_data'],
     )
 
 
@@ -2425,7 +3230,8 @@ def test_image_dilate_erode_dilation():
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_dilated = volume.image_dilate_erode()  # default is binary dilation
     assert np.array_equal(
-        volume_dilated.point_data['point_data'], point_data_dilated.flatten(order='F')
+        volume_dilated.point_data['point_data'],
+        point_data_dilated.flatten(order='F'),
     )
 
 
@@ -2437,7 +3243,8 @@ def test_image_dilate_erode_erosion():
     volume.point_data['point_data'] = point_data.flatten(order='F')
     volume_eroded = volume.image_dilate_erode(0, 1)  # binary erosion
     assert np.array_equal(
-        volume_eroded.point_data['point_data'], point_data_eroded.flatten(order='F')
+        volume_eroded.point_data['point_data'],
+        point_data_eroded.flatten(order='F'),
     )
 
 
@@ -2462,13 +3269,38 @@ def test_image_dilate_erode_cell_data_active():
         volume.image_dilate_erode()
 
 
-def test_image_threshold_output_type():
+def test_image_threshold_output_type(uniform):
     threshold = 10  # 'random' value
-    volume = examples.load_uniform()
-    volume_thresholded = volume.image_threshold(threshold)
+    volume_thresholded = uniform.image_threshold(threshold)
     assert isinstance(volume_thresholded, pv.ImageData)
-    volume_thresholded = volume.image_threshold(threshold, scalars='Spatial Point Data')
+    volume_thresholded = uniform.image_threshold(threshold, scalars='Spatial Point Data')
     assert isinstance(volume_thresholded, pv.ImageData)
+
+
+def test_image_threshold_raises(uniform):
+    match = 'Threshold must have one or two values, got 3.'
+    with pytest.raises(ValueError, match=match):
+        uniform.image_threshold([1, 2, 3])
+
+
+@pytest.mark.parametrize('value_dtype', [float, int])
+@pytest.mark.parametrize('array_dtype', [float, int, np.uint8])
+def test_image_threshold_dtype(value_dtype, array_dtype):
+    image = pv.ImageData(dimensions=(2, 2, 2))
+    thresh_value = value_dtype(4)
+    assert type(thresh_value) is value_dtype
+
+    data_array = np.array(range(8), dtype=array_dtype)
+    image['Data'] = data_array
+
+    thresh = image.image_threshold(thresh_value)
+    assert thresh['Data'].dtype == np.dtype(array_dtype)
+
+    expected_array = [0, 0, 0, 0, 1, 1, 1, 1]
+    actual_array = thresh['Data']
+    assert np.array_equal(actual_array, expected_array)
+
+    assert image['Data'].dtype == thresh['Data'].dtype
 
 
 def test_image_threshold_wrong_threshold_length():
@@ -2505,7 +3337,8 @@ def test_image_threshold_upper(in_value, out_value):
         point_data_thresholded[~in_value_mask] = out_value
     volume_thresholded = volume.image_threshold(threshold, in_value=in_value, out_value=out_value)
     assert np.array_equal(
-        volume_thresholded.point_data['point_data'], point_data_thresholded.flatten(order='F')
+        volume_thresholded.point_data['point_data'],
+        point_data_thresholded.flatten(order='F'),
     )
 
 
@@ -2531,7 +3364,8 @@ def test_image_threshold_between(in_value, out_value):
         point_data_thresholded[~in_value_mask] = out_value
     volume_thresholded = volume.image_threshold(threshold, in_value=in_value, out_value=out_value)
     assert np.array_equal(
-        volume_thresholded.point_data['point_data'], point_data_thresholded.flatten(order='F')
+        volume_thresholded.point_data['point_data'],
+        point_data_thresholded.flatten(order='F'),
     )
 
 
@@ -2542,10 +3376,11 @@ def test_extract_subset_structured():
     assert voi.dimensions == (4, 4, 1)
 
 
-@pytest.fixture()
+@pytest.fixture
 def structured_grids_split_coincident():
     """Two structured grids which are coincident along second axis (axis=1), and
-    the grid from which they were extracted."""
+    the grid from which they were extracted.
+    """
     structured = examples.load_structured()
     point_data = (np.ones((80, 80)) * np.arange(0, 80)).ravel(order='F')
     cell_data = (np.ones((79, 79)) * np.arange(0, 79)).T.ravel(order='F')
@@ -2556,7 +3391,7 @@ def structured_grids_split_coincident():
     return voi_1, voi_2, structured
 
 
-@pytest.fixture()
+@pytest.fixture
 def structured_grids_split_disconnected():
     """Two structured grids which are disconnected."""
     structured = examples.load_structured()
@@ -2570,7 +3405,8 @@ def structured_grids_split_disconnected():
 
 
 def test_concatenate_structured(
-    structured_grids_split_coincident, structured_grids_split_disconnected
+    structured_grids_split_coincident,
+    structured_grids_split_disconnected,
 ):
     voi_1, voi_2, structured = structured_grids_split_coincident
     joined = voi_1.concatenate(voi_2, axis=1)
@@ -2655,7 +3491,7 @@ def test_tessellate():
             [1.0, 0.5, 0.0],
             [1.5, 1.5, 0.0],
             [0.5, 1.5, 0.0],
-        ]
+        ],
     )
     cells = np.array([6, 0, 1, 2, 3, 4, 5])
     cell_types = np.array([CellType.QUADRATIC_TRIANGLE])
@@ -2671,7 +3507,8 @@ def test_tessellate():
 
 
 @pytest.mark.parametrize(
-    ('num_cell_arrays', 'num_point_data'), itertools.product([0, 1, 2], [0, 1, 2])
+    ('num_cell_arrays', 'num_point_data'),
+    itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
     # rotate about x-axis by 90 degrees
@@ -2712,7 +3549,8 @@ def test_transform_mesh(datasets, num_cell_arrays, num_point_data):
 
 
 @pytest.mark.parametrize(
-    ('num_cell_arrays', 'num_point_data'), itertools.product([0, 1, 2], [0, 1, 2])
+    ('num_cell_arrays', 'num_point_data'),
+    itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
@@ -2742,61 +3580,108 @@ def test_transform_mesh_and_vectors(datasets, num_cell_arrays, num_point_data):
 
         for i in range(num_cell_arrays):
             assert dataset.cell_data[f'C{i}'][:, 0] == pytest.approx(
-                transformed.cell_data[f'C{i}'][:, 0]
+                transformed.cell_data[f'C{i}'][:, 0],
             )
             assert dataset.cell_data[f'C{i}'][:, 2] == pytest.approx(
-                -transformed.cell_data[f'C{i}'][:, 1]
+                -transformed.cell_data[f'C{i}'][:, 1],
             )
             assert dataset.cell_data[f'C{i}'][:, 1] == pytest.approx(
-                transformed.cell_data[f'C{i}'][:, 2]
+                transformed.cell_data[f'C{i}'][:, 2],
             )
 
         for i in range(num_point_data):
             assert dataset.point_data[f'P{i}'][:, 0] == pytest.approx(
-                transformed.point_data[f'P{i}'][:, 0]
+                transformed.point_data[f'P{i}'][:, 0],
             )
             assert dataset.point_data[f'P{i}'][:, 2] == pytest.approx(
-                -transformed.point_data[f'P{i}'][:, 1]
+                -transformed.point_data[f'P{i}'][:, 1],
             )
             assert dataset.point_data[f'P{i}'][:, 1] == pytest.approx(
-                transformed.point_data[f'P{i}'][:, 2]
+                transformed.point_data[f'P{i}'][:, 2],
             )
+
+        # Verify active scalars are not changed
+        expected_point_scalars_name = orig_dataset.point_data.active_scalars_name
+        actual_point_scalars_name = transformed.point_data.active_scalars_name
+        assert actual_point_scalars_name == expected_point_scalars_name
+
+        expected_cell_scalars_name = orig_dataset.cell_data.active_scalars_name
+        actual_cell_scalars_name = transformed.cell_data.active_scalars_name
+        assert actual_cell_scalars_name == expected_cell_scalars_name
 
 
 @pytest.mark.parametrize(
-    ("num_cell_arrays", "num_point_data"), itertools.product([0, 1, 2], [0, 1, 2])
+    ('num_cell_arrays', 'num_point_data'),
+    itertools.product([0, 1, 2], [0, 1, 2]),
 )
 def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data):
     for dataset in datasets:
         tf = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 90)
         dataset.clear_data()
         for i in range(num_cell_arrays):
-            dataset.cell_data[f"C{i}"] = np.random.default_rng().integers(
-                np.iinfo(int).max, size=(dataset.n_cells, 3)
+            dataset.cell_data[f'C{i}'] = np.random.default_rng().integers(
+                np.iinfo(int).max,
+                size=(dataset.n_cells, 3),
             )
         for i in range(num_point_data):
-            dataset.point_data[f"P{i}"] = np.random.default_rng().integers(
-                np.iinfo(int).max, size=(dataset.n_points, 3)
+            dataset.point_data[f'P{i}'] = np.random.default_rng().integers(
+                np.iinfo(int).max,
+                size=(dataset.n_points, 3),
             )
         if not (num_cell_arrays == 0 and num_point_data == 0):
-            with pytest.warns(UserWarning, match="Integer"):
+            with pytest.warns(UserWarning, match='Integer'):
                 _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types(dataset):
-    # assert that transformations of these types throw the correct error
+def test_transform_inplace_rectilinear(rectilinear):
+    # assert that transformations of this type raises the correct error
     tf = pv.core.utilities.transformations.axis_angle_rotation(
-        (1, 0, 0), 90
+        (1, 0, 0),
+        90,
     )  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):
-        dataset.transform(tf, inplace=True)
+        rectilinear.transform(tf, inplace=True)
+
+
+@pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
+def test_transform_imagedata(uniform, spacing):
+    # Transformations affect origin, spacing, and direction, so test these here
+    uniform.spacing = spacing
+
+    # Test scaling
+    vector123 = np.array((1, 2, 3))
+    uniform.scale(vector123, inplace=True)
+    expected_spacing = spacing * vector123
+    assert np.allclose(uniform.spacing, expected_spacing)
+
+    # Test direction
+    rotation = pv.Transform().rotate_vector(vector123, 30).matrix[:3, :3]
+    uniform.rotate(rotation, inplace=True)
+    assert np.allclose(uniform.direction_matrix, rotation)
+
+    # Test translation by centering data
+    vector = np.array(uniform.center) * -1
+    translation = pv.Transform().translate(vector)
+    uniform.transform(translation, inplace=True)
+    assert isinstance(uniform, pv.ImageData)
+    assert np.array_equal(uniform.origin, vector)
+
+    # Test applying a second translation
+    translated = uniform.transform(translation, inplace=False)
+    assert np.allclose(translated.origin, vector * 2)
+    assert np.allclose(translated.center, uniform.origin)
+
+
+def test_transform_imagedata_warns_with_shear(uniform):
+    shear = np.eye(4)
+    shear[0, 1] = 0.1
+
+    with pytest.warns(
+        Warning,
+        match='The transformation matrix has a shear component which has been removed. \n'
+        'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+    ):
+        uniform.transform(shear)
 
 
 def test_reflect_mesh_about_point(datasets):
@@ -2816,14 +3701,19 @@ def test_reflect_mesh_with_vectors(datasets):
 
         # add vector data to cell and point arrays
         dataset.cell_data['C'] = np.arange(dataset.n_cells)[:, np.newaxis] * np.array(
-            [1, 2, 3], dtype=float
+            [1, 2, 3],
+            dtype=float,
         ).reshape((1, 3))
         dataset.point_data['P'] = np.arange(dataset.n_points)[:, np.newaxis] * np.array(
-            [1, 2, 3], dtype=float
+            [1, 2, 3],
+            dtype=float,
         ).reshape((1, 3))
 
         reflected = dataset.reflect(
-            (1, 0, 0), transform_all_input_vectors=True, inplace=False, progress_bar=True
+            (1, 0, 0),
+            transform_all_input_vectors=True,
+            inplace=False,
+            progress_bar=True,
         )
 
         # assert isinstance(reflected, type(dataset))
@@ -2835,16 +3725,20 @@ def test_reflect_mesh_with_vectors(datasets):
         # assert normals are reflected
         if hasattr(dataset, 'compute_normals'):
             assert np.allclose(
-                dataset.cell_data['Normals'][:, 0], -reflected.cell_data['Normals'][:, 0]
+                dataset.cell_data['Normals'][:, 0],
+                -reflected.cell_data['Normals'][:, 0],
             )
             assert np.allclose(
-                dataset.cell_data['Normals'][:, 1:], reflected.cell_data['Normals'][:, 1:]
+                dataset.cell_data['Normals'][:, 1:],
+                reflected.cell_data['Normals'][:, 1:],
             )
             assert np.allclose(
-                dataset.point_data['Normals'][:, 0], -reflected.point_data['Normals'][:, 0]
+                dataset.point_data['Normals'][:, 0],
+                -reflected.point_data['Normals'][:, 0],
             )
             assert np.allclose(
-                dataset.point_data['Normals'][:, 1:], reflected.point_data['Normals'][:, 1:]
+                dataset.point_data['Normals'][:, 1:],
+                reflected.point_data['Normals'][:, 1:],
             )
 
         # assert other vector fields are reflected
@@ -2871,17 +3765,386 @@ def test_reflect_inplace(dataset):
     assert np.allclose(dataset.points[:, 1:], orig.points[:, 1:])
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types_2(dataset):
+def test_transform_inplace_bad_types_2(rectilinear):
     # assert that transformations of these types throw the correct error
     with pytest.raises(TypeError):
-        dataset.reflect((1, 0, 0), inplace=True)
+        rectilinear.reflect((1, 0, 0), inplace=True)
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@given(rotate_amounts=n_numbers(4), translate_amounts=n_numbers(3))
+def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
+    trans = pv.Transform()
+    trans.check_finite = False
+    trans.RotateWXYZ(*rotate_amounts)
+    trans.translate(translate_amounts)
+    trans.Update()
+
+    # Apply transform with pyvista filter
+    grid_a = grid.copy()
+    grid_a.transform(trans)
+
+    # Apply transform with vtk filter
+    grid_b = grid.copy()
+    f = vtk.vtkTransformFilter()
+    f.SetInputDataObject(grid_b)
+    f.SetTransform(trans)
+    f.Update()
+    grid_b = pv.wrap(f.GetOutput())
+
+    # treat INF as NAN (necessary for allclose)
+    grid_a.points[np.isinf(grid_a.points)] = np.nan
+    assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
+
+
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
+@given(rotate_amounts=n_numbers(4))
+def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amounts, grid):
+    # test non homogeneous transform
+    trans_rotate_only = pv.Transform()
+    trans_rotate_only.check_finite = False
+    trans_rotate_only.RotateWXYZ(*rotate_amounts)
+    trans_rotate_only.Update()
+
+    grid_copy = grid.copy()
+    grid_copy.transform(trans_rotate_only)
+
+    from pyvista.core.utilities.transformations import apply_transformation_to_points
+
+    trans_arr = trans_rotate_only.matrix[:3, :3]
+    trans_pts = apply_transformation_to_points(trans_arr, grid.points)
+    assert np.allclose(grid_copy.points, trans_pts, equal_nan=True)
+
+
+def test_translate_should_not_fail_given_none(grid):
+    bounds = grid.bounds
+    grid.transform(None)
+    assert grid.bounds == bounds
+
+
+def test_translate_should_fail_bad_points_or_transform(grid):
+    points = np.random.default_rng().random((10, 2))
+    bad_points = np.random.default_rng().random((10, 2))
+    trans = np.random.default_rng().random((4, 4))
+    bad_trans = np.random.default_rng().random((2, 4))
+    with pytest.raises(ValueError):  # noqa: PT011
+        pv.core.utilities.transformations.apply_transformation_to_points(trans, bad_points)
+
+    with pytest.raises(ValueError):  # noqa: PT011
+        pv.core.utilities.transformations.apply_transformation_to_points(bad_trans, points)
+
+
+@settings(
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+    max_examples=HYPOTHESIS_MAX_EXAMPLES,
+)
+@given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
+def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
+    assume(array.shape not in [(3, 3), (4, 4)])
+    match = 'Shape must be one of [(3, 3), (4, 4)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        grid.transform(array)
+
+
+@pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
+def test_translate_should_translate_grid(grid, axis_amounts):
+    grid_copy = grid.copy()
+    grid_copy.translate(axis_amounts, inplace=True)
+
+    grid_points = grid.points.copy() + np.array(axis_amounts)
+    assert np.allclose(grid_copy.points, grid_points)
+
+
+@settings(
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+    max_examples=HYPOTHESIS_MAX_EXAMPLES,
+)
+@given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
+@pytest.mark.parametrize('axis', ['x', 'y', 'z'])
+def test_rotate_should_match_vtk_rotation(angle, axis, grid):
+    trans = vtk.vtkTransform()
+    getattr(trans, f'Rotate{axis.upper()}')(angle)
+    trans.Update()
+
+    trans_filter = vtk.vtkTransformFilter()
+    trans_filter.SetTransform(trans)
+    trans_filter.SetInputData(grid)
+    trans_filter.Update()
+    grid_a = pv.UnstructuredGrid(trans_filter.GetOutput())
+
+    grid_b = grid.copy()
+    getattr(grid_b, f'rotate_{axis}')(angle, inplace=True)
+    assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
+
+
+def test_rotate_90_degrees_four_times_should_return_original_geometry():
+    sphere = pv.Sphere()
+    sphere.rotate_y(90, inplace=True)
+    sphere.rotate_y(90, inplace=True)
+    sphere.rotate_y(90, inplace=True)
+    sphere.rotate_y(90, inplace=True)
+    assert np.all(sphere.points == pv.Sphere().points)
+
+
+def test_rotate_180_degrees_two_times_should_return_original_geometry():
+    sphere = pv.Sphere()
+    sphere.rotate_x(180, inplace=True)
+    sphere.rotate_x(180, inplace=True)
+    assert np.all(sphere.points == pv.Sphere().points)
+
+
+def test_rotate_vector_90_degrees_should_not_distort_geometry():
+    cylinder = pv.Cylinder()
+    rotated = cylinder.rotate_vector(vector=(1, 1, 0), angle=90)
+    assert np.isclose(cylinder.volume, rotated.volume)
+
+
+def test_rotations_should_match_by_a_360_degree_difference():
+    mesh = examples.load_airplane()
+
+    point = np.random.default_rng().random(3) - 0.5
+    angle = (np.random.default_rng().random() - 0.5) * 360.0
+    vector = np.random.default_rng().random(3) - 0.5
+
+    # Rotate about x axis.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_x(angle=angle, point=point, inplace=True)
+    rot2.rotate_x(angle=angle - 360.0, point=point, inplace=True)
+    assert np.allclose(rot1.points, rot2.points)
+
+    # Rotate about y axis.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_y(angle=angle, point=point, inplace=True)
+    rot2.rotate_y(angle=angle - 360.0, point=point, inplace=True)
+    assert np.allclose(rot1.points, rot2.points)
+
+    # Rotate about z axis.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_z(angle=angle, point=point, inplace=True)
+    rot2.rotate_z(angle=angle - 360.0, point=point, inplace=True)
+    assert np.allclose(rot1.points, rot2.points)
+
+    # Rotate about custom vector.
+    rot1 = mesh.copy()
+    rot2 = mesh.copy()
+    rot1.rotate_vector(vector=vector, angle=angle, point=point, inplace=True)
+    rot2.rotate_vector(vector=vector, angle=angle - 360.0, point=point, inplace=True)
+    assert np.allclose(rot1.points, rot2.points)
+
+
+def test_rotate_x():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_x(30)
+    assert isinstance(out, pv.ImageData)
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_x(30, point=5)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_x(30, point=[1, 3])
+
+
+def test_rotate_y():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_y(30)
+    assert isinstance(out, pv.ImageData)
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_y(30, point=5)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_y(30, point=[1, 3])
+
+
+def test_rotate_z():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_z(30)
+    assert isinstance(out, pv.ImageData)
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_z(30, point=5)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_z(30, point=[1, 3])
+
+
+def test_rotate_vector():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate_vector([1, 1, 1], 33)
+    assert isinstance(out, pv.ImageData)
+    match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_vector([1, 1], 33)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        out = mesh.rotate_vector(30, 33)
+
+
+def test_rotate():
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.rotate([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+    assert isinstance(out, pv.ImageData)
+
+
+def test_transform_integers():
+    # regression test for gh-1943
+    points = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+    ]
+    # build vtkPolyData from scratch to enforce int data
+    poly = vtk.vtkPolyData()
+    poly.SetPoints(pv.vtk_points(points))
+    poly = pv.wrap(poly)
+    poly.verts = [1, 0, 1, 1, 1, 2]
+    # define active and inactive vectors with int values
+    for dataset_attrs in poly.point_data, poly.cell_data:
+        for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
+            dataset_attrs[key] = poly.points
+        dataset_attrs.active_vectors_name = 'active_v'
+        dataset_attrs.active_normals_name = 'active_n'
+
+    # active vectors and normals should be converted by default
+    for key in 'active_v', 'inactive_v', 'active_n', 'inactive_n':
+        assert poly.point_data[key].dtype == np.int_
+        assert poly.cell_data[key].dtype == np.int_
+
+    with pytest.warns(UserWarning):
+        poly.rotate_x(angle=10, inplace=True)
+
+    # check that points were converted and transformed correctly
+    assert poly.points.dtype == np.float32
+    assert poly.points[-1, 1] != 0
+    # assert that exactly active vectors and normals were converted
+    for key in 'active_v', 'active_n':
+        assert poly.point_data[key].dtype == np.float32
+        assert poly.cell_data[key].dtype == np.float32
+    for key in 'inactive_v', 'inactive_n':
+        assert poly.point_data[key].dtype == np.int_
+        assert poly.cell_data[key].dtype == np.int_
+
+
+@pytest.mark.xfail(reason='VTK bug')
+def test_transform_integers_vtkbug_present():
+    # verify that the VTK transform bug is still there
+    # if this test starts to pass, we can remove the
+    # automatic float conversion from ``DataSet.transform``
+    # along with this test
+    points = [
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 1, 0],
+    ]
+    # build vtkPolyData from scratch to enforce int data
+    poly = vtk.vtkPolyData()
+    poly.SetPoints(pv.vtk_points(points))
+
+    # manually put together a rotate_x(10) transform
+    trans_arr = pv.core.utilities.transformations.axis_angle_rotation((1, 0, 0), 10, deg=True)
+    trans_mat = pv.vtkmatrix_from_array(trans_arr)
+    trans = vtk.vtkTransform()
+    trans.SetMatrix(trans_mat)
+    trans_filt = vtk.vtkTransformFilter()
+    trans_filt.SetInputDataObject(poly)
+    trans_filt.SetTransform(trans)
+    trans_filt.Update()
+    poly = pv.wrap(trans_filt.GetOutputDataObject(0))
+    # the bug is that e.g. 0.98 gets truncated to 0
+    assert poly.points[-1, 1] != 0
+
+
+def test_scale():
+    mesh = examples.load_airplane()
+
+    xyz = np.random.default_rng().random(3)
+    scale1 = mesh.copy()
+    scale2 = mesh.copy()
+    scale1.scale(xyz, inplace=True)
+    scale2.points *= xyz
+    scale3 = mesh.scale(xyz, inplace=False)
+    assert np.allclose(scale1.points, scale2.points)
+    assert np.allclose(scale3.points, scale2.points)
+    # test scalar scale case
+    scale1 = mesh.copy()
+    scale2 = mesh.copy()
+    xyz = 4.0
+    scale1.scale(xyz, inplace=True)
+    scale2.scale([xyz] * 3, inplace=True)
+    assert np.allclose(scale1.points, scale2.points)
+    # test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.scale(xyz)
+    assert isinstance(out, pv.ImageData)
+
+
+def test_flip_x():
+    mesh = examples.load_airplane()
+    flip_x1 = mesh.copy()
+    flip_x2 = mesh.copy()
+    flip_x1.flip_x(point=(0, 0, 0), inplace=True)
+    flip_x2.points[:, 0] *= -1.0
+    assert np.allclose(flip_x1.points, flip_x2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_x()
+    assert isinstance(out, pv.ImageData)
+
+
+def test_flip_y():
+    mesh = examples.load_airplane()
+    flip_y1 = mesh.copy()
+    flip_y2 = mesh.copy()
+    flip_y1.flip_y(point=(0, 0, 0), inplace=True)
+    flip_y2.points[:, 1] *= -1.0
+    assert np.allclose(flip_y1.points, flip_y2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_y()
+    assert isinstance(out, pv.ImageData)
+
+
+def test_flip_z():
+    mesh = examples.load_airplane()
+    flip_z1 = mesh.copy()
+    flip_z2 = mesh.copy()
+    flip_z1.flip_z(point=(0, 0, 0), inplace=True)
+    flip_z2.points[:, 2] *= -1.0
+    assert np.allclose(flip_z1.points, flip_z2.points)
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_z()
+    assert isinstance(out, pv.ImageData)
+
+
+def test_flip_normal():
+    mesh = examples.load_airplane()
+    flip_normal1 = mesh.copy()
+    flip_normal2 = mesh.copy()
+    flip_normal1.flip_normal(normal=[1.0, 0.0, 0.0], inplace=True)
+    flip_normal2.flip_x(inplace=True)
+    assert np.allclose(flip_normal1.points, flip_normal2.points)
+
+    flip_normal3 = mesh.copy()
+    flip_normal4 = mesh.copy()
+    flip_normal3.flip_normal(normal=[0.0, 1.0, 0.0], inplace=True)
+    flip_normal4.flip_y(inplace=True)
+    assert np.allclose(flip_normal3.points, flip_normal4.points)
+
+    flip_normal5 = mesh.copy()
+    flip_normal6 = mesh.copy()
+    flip_normal5.flip_normal(normal=[0.0, 0.0, 1.0], inplace=True)
+    flip_normal6.flip_z(inplace=True)
+    assert np.allclose(flip_normal5.points, flip_normal6.points)
+
+    # Test non-point-based mesh doesn't fail
+    mesh = examples.load_uniform()
+    out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
+    assert isinstance(out, pv.ImageData)
 
 
 def test_extrude_rotate():
@@ -2903,20 +4166,20 @@ def test_extrude_rotate():
         progress_bar=True,
         capping=True,
     )
-    zmax = poly.bounds[5]
+    zmax = poly.bounds.z_max
     assert zmax == translation
-    xmax = poly.bounds[1]
-    assert xmax == line.bounds[1] + dradius
+    xmax = poly.bounds.x_max
+    assert xmax == line.bounds.x_max + dradius
 
     poly = line.extrude_rotate(angle=90.0, progress_bar=True, capping=True)
-    xmin = poly.bounds[0]
-    xmax = poly.bounds[1]
-    ymin = poly.bounds[2]
-    ymax = poly.bounds[3]
-    assert xmin == line.bounds[0]
-    assert xmax == line.bounds[1]
-    assert ymin == line.bounds[0]
-    assert ymax == line.bounds[1]
+    xmin = poly.bounds.x_min
+    xmax = poly.bounds.x_max
+    ymin = poly.bounds.y_min
+    ymax = poly.bounds.y_max
+    assert xmin == line.bounds.x_min
+    assert xmax == line.bounds.x_max
+    assert ymin == line.bounds.x_min
+    assert ymax == line.bounds.x_max
 
     rotation_axis = (0, 1, 0)
     if not pv.vtk_version_info >= (9, 1, 0):
@@ -2924,7 +4187,10 @@ def test_extrude_rotate():
             poly = line.extrude_rotate(rotation_axis=rotation_axis, capping=True)
     else:
         poly = line.extrude_rotate(
-            rotation_axis=rotation_axis, resolution=resolution, progress_bar=True, capping=True
+            rotation_axis=rotation_axis,
+            resolution=resolution,
+            progress_bar=True,
+            capping=True,
         )
         assert poly.n_cells == line.n_points - 1
         assert poly.n_points == (resolution + 1) * line.n_points
@@ -2945,26 +4211,47 @@ def test_extrude_rotate_inplace():
 def test_extrude_trim():
     direction = (0, 0, 1)
     mesh = pv.Plane(
-        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+        center=(0, 0, 0),
+        direction=direction,
+        i_size=1,
+        j_size=1,
+        i_resolution=10,
+        j_resolution=10,
     )
     trim_surface = pv.Plane(
-        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+        center=(0, 0, 1),
+        direction=direction,
+        i_size=2,
+        j_size=2,
+        i_resolution=20,
+        j_resolution=20,
     )
     poly = mesh.extrude_trim(direction, trim_surface)
     assert np.isclose(poly.volume, 1.0)
 
 
-@pytest.mark.parametrize('extrusion', ["boundary_edges", "all_edges"])
+@pytest.mark.parametrize('extrusion', ['boundary_edges', 'all_edges'])
 @pytest.mark.parametrize(
-    'capping', ["intersection", "minimum_distance", "maximum_distance", "average_distance"]
+    'capping',
+    ['intersection', 'minimum_distance', 'maximum_distance', 'average_distance'],
 )
 def test_extrude_trim_strategy(extrusion, capping):
     direction = (0, 0, 1)
     mesh = pv.Plane(
-        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+        center=(0, 0, 0),
+        direction=direction,
+        i_size=1,
+        j_size=1,
+        i_resolution=10,
+        j_resolution=10,
     )
     trim_surface = pv.Plane(
-        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+        center=(0, 0, 1),
+        direction=direction,
+        i_size=2,
+        j_size=2,
+        i_resolution=20,
+        j_resolution=20,
     )
     poly = mesh.extrude_trim(direction, trim_surface, extrusion=extrusion, capping=capping)
     assert isinstance(poly, pv.PolyData)
@@ -2977,11 +4264,11 @@ def test_extrude_trim_catch():
     mesh = pv.Plane()
     trim_surface = pv.Plane()
     with pytest.raises(ValueError):  # noqa: PT011
-        _ = mesh.extrude_trim(direction, trim_surface, extrusion="Invalid strategy")
+        _ = mesh.extrude_trim(direction, trim_surface, extrusion='Invalid strategy')
     with pytest.raises(TypeError, match='Invalid type'):
         _ = mesh.extrude_trim(direction, trim_surface, extrusion=0)
     with pytest.raises(ValueError):  # noqa: PT011
-        _ = mesh.extrude_trim(direction, trim_surface, capping="Invalid strategy")
+        _ = mesh.extrude_trim(direction, trim_surface, capping='Invalid strategy')
     with pytest.raises(TypeError, match='Invalid type'):
         _ = mesh.extrude_trim(direction, trim_surface, capping=0)
     with pytest.raises(TypeError):
@@ -2993,10 +4280,20 @@ def test_extrude_trim_catch():
 def test_extrude_trim_inplace():
     direction = (0, 0, 1)
     mesh = pv.Plane(
-        center=(0, 0, 0), direction=direction, i_size=1, j_size=1, i_resolution=10, j_resolution=10
+        center=(0, 0, 0),
+        direction=direction,
+        i_size=1,
+        j_size=1,
+        i_resolution=10,
+        j_resolution=10,
     )
     trim_surface = pv.Plane(
-        center=(0, 0, 1), direction=direction, i_size=2, j_size=2, i_resolution=20, j_resolution=20
+        center=(0, 0, 1),
+        direction=direction,
+        i_size=2,
+        j_size=2,
+        i_resolution=20,
+        j_resolution=20,
     )
     mesh.extrude_trim(direction, trim_surface, inplace=True, progress_bar=True)
     assert np.isclose(mesh.volume, 1.0)
@@ -3061,12 +4358,12 @@ def test_integrate_data_datasets(datasets):
     """Test multiple dataset types."""
     for dataset in datasets:
         integrated = dataset.integrate_data()
-        if "Area" in integrated.array_names:
-            assert integrated["Area"] > 0
-        elif "Volume" in integrated.array_names:
-            assert integrated["Volume"] > 0
+        if 'Area' in integrated.array_names:
+            assert integrated['Area'] > 0
+        elif 'Volume' in integrated.array_names:
+            assert integrated['Volume'] > 0
         else:
-            raise ValueError("Unexpected integration")
+            raise ValueError('Unexpected integration')
 
 
 def test_integrate_data():
@@ -3074,13 +4371,13 @@ def test_integrate_data():
     # sphere with radius = 0.5, area = pi
     # increase resolution to increase precision
     sphere = pv.Sphere(theta_resolution=100, phi_resolution=100)
-    sphere.cell_data["cdata"] = 2 * np.ones(sphere.n_cells)
-    sphere.point_data["pdata"] = 3 * np.ones(sphere.n_points)
+    sphere.cell_data['cdata'] = 2 * np.ones(sphere.n_cells)
+    sphere.point_data['pdata'] = 3 * np.ones(sphere.n_points)
 
     integrated = sphere.integrate_data()
-    assert np.isclose(integrated["Area"], np.pi, rtol=1e-3)
-    assert np.isclose(integrated["cdata"], 2 * np.pi, rtol=1e-3)
-    assert np.isclose(integrated["pdata"], 3 * np.pi, rtol=1e-3)
+    assert np.isclose(integrated['Area'], np.pi, rtol=1e-3)
+    assert np.isclose(integrated['cdata'], 2 * np.pi, rtol=1e-3)
+    assert np.isclose(integrated['pdata'], 3 * np.pi, rtol=1e-3)
 
 
 def test_align():
@@ -3102,6 +4399,216 @@ def test_align():
     assert np.abs(dist).mean() < 1e-3
 
 
+def test_align_xyz():
+    mesh = examples.download_oblique_cone()
+    aligned = mesh.align_xyz()
+    assert np.allclose(aligned.center, (0, 0, 0))
+
+    aligned = mesh.align_xyz(centered=False)
+    assert np.allclose(aligned.center, mesh.center)
+
+
+def test_align_xyz_return_matrix():
+    mesh = examples.download_oblique_cone()
+    initial_bounds = mesh.bounds
+
+    aligned, matrix = mesh.align_xyz(return_matrix=True)
+    assert isinstance(matrix, np.ndarray)
+    assert matrix.shape == (4, 4)
+
+    inverse_matrix = pv.Transform(matrix).inverse_matrix
+    inverted_mesh = aligned.transform(inverse_matrix, inplace=False)
+    inverted_bounds = inverted_mesh.bounds
+
+    assert np.allclose(inverted_bounds, initial_bounds)
+
+
+@pytest.mark.parametrize(
+    ('as_composite', 'mesh_type'), [(True, pv.MultiBlock), (False, pv.PolyData)]
+)
+def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
+    box = sphere.bounding_box(as_composite=as_composite)
+    assert isinstance(box, mesh_type)
+    assert box.bounds == sphere.bounds
+
+
+def test_oriented_bounding_box():
+    rotation = pv.transformations.axis_angle_rotation((1, 2, 3), 30)
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb = box_mesh.oriented_bounding_box()
+    assert obb.bounds == box_mesh.bounds
+
+
+@pytest.mark.parametrize('oriented', [True, False])
+@pytest.mark.parametrize('as_composite', [True, False])
+def test_bounding_box_return_meta(oriented, as_composite):
+    # Generate a random rotation matrix
+    vector = np.random.default_rng().random((3,))
+    angle = np.random.default_rng().random((1,)) * 360
+    rotation = pv.transformations.axis_angle_rotation(vector, angle)
+
+    # Transform a box manually and get its OBB
+    box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
+    box_mesh.transform(rotation)
+    obb, point, axes = box_mesh.bounding_box(
+        oriented=oriented, return_meta=True, as_composite=as_composite
+    )
+    ATOL = 1e-6  # Needed for numerical error from calculating the principal axes
+    if oriented:
+        # Test axes are equal (up to a difference in sign)
+        expected_axes = pv.principal_axes(box_mesh.points)
+        identity = np.abs(expected_axes @ axes.T)
+        assert np.allclose(identity, np.eye(3), atol=ATOL)
+    else:
+        # Test identity always returned for non-oriented box
+        assert np.array_equal(axes, np.eye(3))
+        bnds = box_mesh.bounds
+        assert np.array_equal(point, (bnds.x_min, bnds.y_min, bnds.z_min))
+
+    # Test the returned point is one of the box's points
+    if as_composite:
+        assert any(point in face.points for face in obb)
+
+        # Also test that box's normals are aligned with the axes directions
+        assert np.allclose(axes[0], obb['+X'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[1], obb['+Y'].cell_normals[0], atol=ATOL)
+        assert np.allclose(axes[2], obb['+Z'].cell_normals[0], atol=ATOL)
+    else:
+        assert point in obb.points
+
+
+DELTA = 0.1
+
+
+@pytest.fixture
+def planar_mesh():
+    # Define planar data with largest variation in x, then y
+    # Use a delta to make data slightly asymmetric so the principal axes
+    # are not computed as the identity matrix (we want some negative axes for the tests)
+    points = np.array([[2 + DELTA, 1 + DELTA, 0], [2, -1, 0], [-2, 1, 0], [-2, -1, 0]])
+    axes = pv.principal_axes(points)
+    assert np.allclose(axes, [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], atol=DELTA)
+    return pv.PolyData(points)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('axis_0_direction', [1, 0, 0]),
+        ('axis_0_direction', [-1, 0, 0]),
+        ('axis_1_direction', [0, 1, 0]),
+        ('axis_1_direction', [0, -1, 0]),
+        ('axis_2_direction', [0, 0, 1]),
+        ('axis_2_direction', [0, 0, -1]),
+    ],
+)
+def test_align_xyz_single_axis_direction(planar_mesh, name, value):
+    _, matrix = planar_mesh.align_xyz(**{name: value}, return_matrix=True)
+    axes = matrix[:3, :3]
+
+    # Test that the axis has the right direction
+    axis = np.flatnonzero(value)
+    assert np.allclose(axes[axis], value, atol=DELTA)
+
+
+def test_align_xyz_no_axis_direction(planar_mesh):
+    # Test that axis-aligned principal axes with negative directions are "converted"
+    # into the identity matrix (i.e. the negative directions are flipped to be positive)
+    axes_in = pv.principal_axes(planar_mesh.points)
+    _, matrix = planar_mesh.align_xyz(return_matrix=True)
+    axes_out = matrix[:3, :3]
+
+    identity = np.eye(3)
+    assert not np.allclose(axes_in, identity, atol=DELTA)
+    assert np.allclose(axes_out, identity, atol=DELTA)
+
+
+def test_align_xyz_two_axis_directions(planar_mesh):
+    axis_0_direction = [-1, 0, 0]
+    axis_1_direction = [0, -1, 0]
+    _, matrix = planar_mesh.align_xyz(
+        axis_0_direction=axis_0_direction, axis_1_direction=axis_1_direction, return_matrix=True
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [axis_0_direction, axis_1_direction, [0, 0, 1]], atol=DELTA)
+
+    axis_1_direction = [0, -1, 0]
+    axis_2_direction = [0, 0, -1]
+    _, matrix = planar_mesh.align_xyz(
+        axis_1_direction=axis_1_direction, axis_2_direction=axis_2_direction, return_matrix=True
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [[1, 0, 0], axis_1_direction, axis_2_direction], atol=DELTA)
+
+
+def test_align_xyz_three_axis_directions(planar_mesh):
+    axis_2_direction = np.array((0.0, 0.0, -1.0))
+    _, matrix = planar_mesh.align_xyz(
+        axis_0_direction='x',
+        axis_1_direction='-y',
+        axis_2_direction=axis_2_direction,  # test has no effect
+        return_matrix=True,
+    )
+    axes = matrix[:3, :3]
+    assert np.allclose(axes, [[1, 0, 0], [0, -1, 0], [0, 0, -1]], atol=DELTA)
+
+    match = 'Invalid `axis_2_direction` [-0. -0.  1.]. This direction results in a left-handed transformation.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        _ = planar_mesh.align_xyz(
+            axis_0_direction='x',
+            axis_1_direction='-y',
+            axis_2_direction=axis_2_direction * -1,
+            return_matrix=True,
+        )
+
+
+def test_align_xyz_swap_axes():
+    # create planar data with equal variance in x and z
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
+    _, matrix = pv.PolyData(points).align_xyz(return_matrix=True)
+    axes = matrix[:3, :3]
+    assert np.array_equal(axes, [[1, 0, 0], [0, 0, 1], [0, -1, 0]])  # XZY (instead of ZXY)
+
+    # create planar data with equal variance in x and y
+    points = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]])
+    _, matrix = pv.PolyData(points).align_xyz(return_matrix=True)
+    axes = matrix[:3, :3]
+    assert np.array_equal(axes, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])  # XYZ (instead of YXZ)
+
+
+@pytest.mark.parametrize('x', [(1, 0, 0), (-1, 0, 0)])
+@pytest.mark.parametrize('y', [(0, 1, 0), (0, -1, 0)])
+@pytest.mark.parametrize('z', [(0, 0, 1), (0, 0, -1)])
+@pytest.mark.parametrize('order', itertools.permutations([0, 1, 2]))
+@pytest.mark.parametrize(
+    ('test_case', 'values'),
+    [
+        ('swap_all', [1, 1, 1]),
+        ('swap_none', [3, 2, 1]),
+        ('swap_0_1', [2, 2, 1]),
+        ('swap_1_2', [2, 1, 1]),
+    ],
+)
+def test_swap_axes(x, y, z, order, test_case, values):
+    axes = np.array((x, y, z))[list(order)]
+    swapped = _swap_axes(axes, values)
+    if test_case == 'swap_all':
+        # All axes have the same weight, expect swap to have x-y-z order
+        assert np.array_equal(np.abs(swapped), np.eye(3))
+    elif test_case == 'swap_none':
+        # Expect no swapping, output is input
+        assert np.array_equal(axes, swapped)
+    elif test_case == 'swap_0_1':
+        first_index = np.flatnonzero(swapped[0])[0]
+        second_index = np.flatnonzero(swapped[1])[0]
+        assert first_index < second_index
+    elif test_case == 'swap_1_2':
+        first_index = np.flatnonzero(swapped[1])[0]
+        second_index = np.flatnonzero(swapped[2])[0]
+        assert first_index < second_index
+
+
 def test_subdivide_tetra(tetbeam):
     grid = tetbeam.subdivide_tetra()
     assert grid.n_cells == tetbeam.n_cells * 12
@@ -3116,11 +4623,18 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA)
     assert np.all(tet_cells.celltypes == pv.CellType.TETRA)
 
+    int_array = np.array([int(pv.CellType.TETRA), int(pv.CellType.HEXAHEDRON)])
+    tet_hex_cells = combined.extract_cells_by_type(int_array)
+    assert pv.CellType.TETRA in tet_hex_cells.celltypes
+    assert pv.CellType.HEXAHEDRON in tet_hex_cells.celltypes
+
     should_be_empty = combined.extract_cells_by_type(pv.CellType.BEZIER_CURVE)
     assert should_be_empty.n_cells == 0
 
-    with pytest.raises(TypeError, match='Invalid type'):
-        combined.extract_cells_by_type(1.0)
+    combined.extract_cells_by_type(1.0)
+    match = 'cell_types must have integer-like values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        combined.extract_cells_by_type(1.1)
 
 
 def test_merge_points():
@@ -3136,7 +4650,23 @@ def test_merge_points():
     )
 
 
-@pytest.fixture()
+@pytest.mark.parametrize('inplace', [True, False])
+def test_merge_points_filter(inplace):
+    # Set up
+    cells = [2, 0, 1]
+    celltypes = [pv.CellType.LINE]
+    points = np.array([[0.0, 0.0, 0.0], [0.5, 0.0, 0.0]])
+    mesh = pv.UnstructuredGrid(cells, celltypes, points)
+    assert mesh.n_points == 2
+
+    # Do test
+    output = mesh.merge_points(inplace=inplace, tolerance=1.0)
+    assert output.n_points == 1
+    assert isinstance(mesh, pv.UnstructuredGrid)
+    assert (mesh is output) == inplace
+
+
+@pytest.fixture
 def labeled_image():
     image = pv.ImageData(dimensions=(2, 2, 2))
     image['labels'] = [0, 3, 3, 3, 3, 0, 2, 2]
@@ -3158,7 +4688,7 @@ def test_sort_labels(labeled_image):
 
 
 def test_pack_labels(labeled_image):
-    labeled_image["misc"] = [0, 0, 0, 0, 0, 0, 0, 0]
+    labeled_image['misc'] = [0, 0, 0, 0, 0, 0, 0, 0]
     packed = labeled_image.pack_labels(progress_bar=True)
     assert np.array_equal(packed['packed_labels'], [0, 2, 2, 2, 2, 0, 1, 1])
     assert 'labels' in packed.array_names

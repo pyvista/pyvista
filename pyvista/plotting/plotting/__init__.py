@@ -1,5 +1,7 @@
 """Deprecated pyvista.plotting.plotting module."""
 
+from __future__ import annotations
+
 import importlib
 import inspect
 import warnings
@@ -17,7 +19,7 @@ def __getattr__(name):
             value = inspect.getattr_static(module, name)
         except AttributeError:
             raise AttributeError(
-                f'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `{name}`.'
+                f'Module `pyvista.plotting.plotting` has been deprecated and we could not automatically find `{name}`.',
             ) from None
     import_path = f'from pyvista.plotting import {name}'
     message = f'The `pyvista.plotting.plotting` module has been deprecated. `{name}` is now imported as: `{import_path}`.'

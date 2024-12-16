@@ -5,24 +5,28 @@ All other tests requiring rendering should to in
 
 """
 
+from __future__ import annotations
+
 import os
+from pathlib import Path
 
 import numpy as np
 import pytest
 import vtk
 
 import pyvista as pv
-from pyvista.core.errors import MissingDataError, PyVistaDeprecationWarning
+from pyvista.core.errors import MissingDataError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.plotting import _plotting
 from pyvista.plotting.errors import RenderWindowUnavailable
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
-@pytest.mark.skipif(uses_egl(), reason="OSMesa/EGL builds will not fail.")
+@pytest.mark.skipif(uses_egl(), reason='OSMesa/EGL builds will not fail.')
 def test_plotter_image_before_show():
     plotter = pv.Plotter()
-    with pytest.raises(AttributeError, match="not yet been set up"):
-        plotter.image
+    with pytest.raises(AttributeError, match='not yet been set up'):
+        _ = plotter.image
 
 
 def test_has_render_window_fail():
@@ -42,7 +46,7 @@ def test_render_lines_as_tubes_show_edges_warning(sphere):
     assert actor.prop.render_lines_as_tubes
 
 
-@pytest.mark.skipif(uses_egl(), reason="OSMesa/EGL builds will not fail.")
+@pytest.mark.skipif(uses_egl(), reason='OSMesa/EGL builds will not fail.')
 def test_screenshot_fail_suppressed_rendering():
     plotter = pv.Plotter()
     plotter.suppress_rendering = True
@@ -108,7 +112,7 @@ def test_pickable_actors():
     assert sphere not in pickable
     assert cube not in pickable
 
-    with pytest.raises(TypeError, match="Expected a vtkActor instance or "):
+    with pytest.raises(TypeError, match='Expected a vtkActor instance or '):
         plotter.pickable_actors = [0, 10]
 
 
@@ -126,17 +130,17 @@ def test_prepare_smooth_shading_texture(globe):
     """Test edge cases for smooth shading"""
     mesh, scalars = _plotting.prepare_smooth_shading(globe, None, True, True, False, None)
     assert scalars is None
-    assert "Normals" in mesh.point_data
-    assert "Texture Coordinates" in mesh.point_data
+    assert 'Normals' in mesh.point_data
+    assert 'Texture Coordinates' in mesh.point_data
 
 
 def test_prepare_smooth_shading_not_poly(hexbeam):
     """Test edge cases for smooth shading"""
-    scalars_name = "sample_point_scalars"
+    scalars_name = 'sample_point_scalars'
     scalars = hexbeam.point_data[scalars_name]
     mesh, scalars = _plotting.prepare_smooth_shading(hexbeam, scalars, False, True, True, None)
 
-    assert "Normals" in mesh.point_data
+    assert 'Normals' in mesh.point_data
 
     expected_mesh = hexbeam.extract_surface().compute_normals(
         cell_normals=False,
@@ -144,6 +148,22 @@ def test_prepare_smooth_shading_not_poly(hexbeam):
     )
 
     assert np.allclose(mesh[scalars_name], expected_mesh[scalars_name])
+
+
+@pytest.mark.parametrize('split_sharp_edges', [True, False])
+def test_prepare_smooth_shading_point_cloud(split_sharp_edges):
+    point_cloud = pv.PolyData([0.0, 0.0, 0.0])
+    assert point_cloud.n_verts == point_cloud.n_cells
+    mesh, scalars = _plotting.prepare_smooth_shading(
+        point_cloud,
+        None,
+        True,
+        split_sharp_edges,
+        False,
+        None,
+    )
+    assert scalars is None
+    assert 'Normals' not in mesh.point_data
 
 
 def test_smooth_shading_shallow_copy(sphere):
@@ -185,7 +205,7 @@ def test_remove_scalars_single(sphere, hexbeam):
     pl.add_mesh(hexbeam, scalars=range(hexbeam.n_cells), copy_mesh=True)
 
     # arrays will be added to the mesh
-    pl.mesh.n_arrays == 1
+    assert pl.mesh.n_arrays == 1
 
     # but not the original data
     assert sphere.n_arrays == 0
@@ -198,8 +218,8 @@ def test_active_scalars_remain(sphere, hexbeam):
     """Ensure active scalars remain active despite plotting different scalars when copy_mesh=True."""
     sphere.clear_data()
     hexbeam.clear_data()
-    point_data_name = "point_data"
-    cell_data_name = "cell_data"
+    point_data_name = 'point_data'
+    cell_data_name = 'cell_data'
     sphere[point_data_name] = np.random.default_rng().random(sphere.n_points)
     hexbeam[cell_data_name] = np.random.default_rng().random(hexbeam.n_cells)
     assert sphere.point_data.active_scalars_name == point_data_name
@@ -215,10 +235,10 @@ def test_active_scalars_remain(sphere, hexbeam):
 
 
 def test_no_added_with_scalar_bar(sphere):
-    point_data_name = "data"
+    point_data_name = 'data'
     sphere[point_data_name] = np.random.default_rng().random(sphere.n_points)
     pl = pv.Plotter()
-    pl.add_mesh(sphere, scalar_bar_args={"title": "some_title"})
+    pl.add_mesh(sphere, scalar_bar_args={'title': 'some_title'})
     assert sphere.n_arrays == 1
 
 
@@ -289,7 +309,7 @@ def test_add_points_invalid_style(sphere):
         pl.add_points(sphere, style='wireframe')
 
 
-@pytest.mark.parametrize(("connected", "n_lines"), [(False, 2), (True, 3)])
+@pytest.mark.parametrize(('connected', 'n_lines'), [(False, 2), (True, 3)])
 def test_add_lines(connected, n_lines):
     pl = pv.Plotter()
     points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
@@ -365,10 +385,13 @@ def test_plotter_add_volume_raises(uniform: pv.ImageData, sphere: pv.PolyData):
     uniform.clear_data()
     pl = pv.Plotter()
     with pytest.raises(MissingDataError):
-        pl.add_volume(uniform, cmap="coolwarm", opacity="linear")
+        pl.add_volume(uniform, cmap='coolwarm', opacity='linear')
 
     with pytest.raises(TypeError, match='not supported for volume rendering'):
         pl.add_volume(sphere)
+
+    with pytest.raises(TypeError, match='not supported for plotting in PyVista'):
+        pl.add_volume(pv.Table())
 
 
 def test_plotter_add_volume_clim(uniform: pv.ImageData):
@@ -403,10 +426,10 @@ def test_multi_block_color_cycler():
     """Test passing a custom color cycler"""
     plotter = pv.Plotter()
     data = {
-        "sphere1": pv.Sphere(center=(1, 0, 0)),
-        "sphere2": pv.Sphere(center=(2, 0, 0)),
-        "sphere3": pv.Sphere(center=(3, 0, 0)),
-        "sphere4": pv.Sphere(center=(4, 0, 0)),
+        'sphere1': pv.Sphere(center=(1, 0, 0)),
+        'sphere2': pv.Sphere(center=(2, 0, 0)),
+        'sphere3': pv.Sphere(center=(3, 0, 0)),
+        'sphere4': pv.Sphere(center=(4, 0, 0)),
     }
     spheres = pv.MultiBlock(data)
     actor, mapper = plotter.add_composite(spheres)
@@ -465,10 +488,10 @@ def test_plotter_update_coordinates(sphere):
         pl = pv.Plotter()
         pl.add_mesh(sphere)
         pl.update_coordinates(sphere.points * 2.0)
-        if pv._version.version_info >= (0, 46):
-            raise RuntimeError("Convert error this method")
-        if pv._version.version_info >= (0, 47):
-            raise RuntimeError("Remove this method")
+        if pv._version.version_info[:2] > (0, 46):
+            raise RuntimeError('Convert error this method')
+        if pv._version.version_info[:2] > (0, 47):
+            raise RuntimeError('Remove this method')
 
 
 def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
@@ -482,14 +505,14 @@ def test_only_screenshots_flag(sphere, tmpdir, global_variables_reset):
     entries_after = os.listdir(pv.FIGURE_PATH)
     assert len(entries) + 1 == len(entries_after)
 
-    res_file = list(set(entries_after) - set(entries))[0]
+    res_file = next(iter(set(entries_after) - set(entries)))
     pv.ON_SCREENSHOT = False
-    sphere_screenshot = "sphere_screenshot.png"
+    sphere_screenshot = 'sphere_screenshot.png'
     pl = pv.Plotter()
     pl.add_mesh(sphere)
     pl.show(screenshot=sphere_screenshot)
-    sphere_path = os.path.join(pv.FIGURE_PATH, sphere_screenshot)
-    res_path = os.path.join(pv.FIGURE_PATH, res_file)
+    sphere_path = str(Path(pv.FIGURE_PATH) / sphere_screenshot)
+    res_path = str(Path(pv.FIGURE_PATH) / res_file)
     error = pv.compare_images(sphere_path, res_path)
     assert error < 100
 
@@ -499,14 +522,43 @@ def test_legend_font(sphere):
     plotter.add_mesh(sphere)
     legend_labels = [['sphere', 'r']]
     legend = plotter.add_legend(
-        labels=legend_labels, border=True, bcolor=None, size=[0.1, 0.1], font_family='times'
+        labels=legend_labels,
+        border=True,
+        bcolor=None,
+        size=[0.1, 0.1],
+        font_family='times',
     )
     assert legend.GetEntryTextProperty().GetFontFamily() == vtk.VTK_TIMES
 
 
-@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X")
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='Functions not implemented before 9.3.X')
 def test_edge_opacity(sphere):
     edge_opacity = np.random.default_rng().random()
     pl = pv.Plotter(sphere)
     actor = pl.add_mesh(sphere, edge_opacity=edge_opacity)
     assert actor.prop.edge_opacity == edge_opacity
+
+
+def test_add_ruler_scale():
+    plotter = pv.Plotter()
+    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5)
+    min_, max_ = ruler.GetRange()
+    assert min_ == 0.0
+    assert max_ == 0.6
+
+    ruler = plotter.add_ruler([-0.6, 0.0, 0], [0.6, 0.0, 0], scale=0.5, flip_range=True)
+    min_, max_ = ruler.GetRange()
+    assert min_ == 0.6
+    assert max_ == 0.0
+
+
+def test_plotter_shape():
+    pl = pv.Plotter()
+    assert isinstance(pl.shape, tuple)
+    assert pl.shape == (1, 1)
+    assert isinstance(pl.shape[0], int)
+
+    pl = pv.Plotter(shape=(1, 2))
+    assert isinstance(pl.shape, tuple)
+    assert pl.shape == (1, 2)
+    assert isinstance(pl.shape[0], int)

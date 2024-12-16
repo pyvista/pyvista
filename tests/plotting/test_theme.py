@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import pytest
@@ -7,11 +9,14 @@ import pyvista as pv
 from pyvista import colors
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.examples.downloads import download_file
-from pyvista.plotting.themes import Theme, _AxesConfig, _set_plot_theme_from_env, _SliderStyleConfig
+from pyvista.plotting.themes import Theme
+from pyvista.plotting.themes import _AxesConfig
+from pyvista.plotting.themes import _set_plot_theme_from_env
+from pyvista.plotting.themes import _SliderStyleConfig
 from pyvista.plotting.utilities.gl_checks import uses_egl
 
 
-@pytest.fixture()
+@pytest.fixture
 def default_theme():
     return pv.plotting.themes.Theme()
 
@@ -20,13 +25,14 @@ def test_update_from_dict(default_theme):
     assert not default_theme.show_edges
     assert default_theme.slider_style.cap_opacity == 1
 
-    default_theme.update_from_dict({"show_edges": True, "slider_style": {"cap_opacity": 0}})
+    default_theme.update_from_dict({'show_edges': True, 'slider_style': {'cap_opacity': 0}})
     assert default_theme.show_edges
     assert default_theme.slider_style.cap_opacity == 0
 
 
 @pytest.mark.parametrize(
-    'parm', [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)]
+    'parm',
+    [('enabled', True), ('occlusion_ratio', 0.5), ('number_of_peels', 2)],
 )
 def test_depth_peeling_config(default_theme, parm):
     attr, value = parm
@@ -112,12 +118,12 @@ def test_invalid_color_str_single_char():
 
 
 def test_color_str():
-    clr = colors.Color("k")
-    assert (0.0, 0.0, 0.0) == clr
-    clr = colors.Color("black")
-    assert (0.0, 0.0, 0.0) == clr
-    clr = colors.Color("white")
-    assert (1.0, 1.0, 1.0) == clr
+    clr = colors.Color('k')
+    assert clr == (0.0, 0.0, 0.0)
+    clr = colors.Color('black')
+    assert clr == (0.0, 0.0, 0.0)
+    clr = colors.Color('white')
+    assert clr == (1.0, 1.0, 1.0)
     with pytest.raises(ValueError):  # noqa: PT011
         colors.Color('not a color')
 
@@ -193,6 +199,22 @@ def test_axes_box(default_theme):
     new_value = not default_theme.axes.box
     default_theme.axes.box = new_value
     assert default_theme.axes.box == new_value
+
+
+def test_axes_color(default_theme):
+    new_value = colors.Color('black')
+    assert default_theme.axes.x_color != new_value
+    default_theme.axes.x_color = new_value
+    assert default_theme.axes.x_color == new_value
+
+    assert default_theme.axes.y_color != new_value
+    default_theme.axes.y_color = new_value
+    assert default_theme.axes.y_color == new_value
+
+    new_value = colors.Color('black')
+    assert default_theme.axes.z_color != new_value
+    default_theme.axes.z_color = new_value
+    assert default_theme.axes.z_color == new_value
 
 
 def test_axes_show(default_theme):
@@ -281,7 +303,7 @@ def test_window_size(default_theme):
 
 
 def test_camera(default_theme):
-    with pytest.raises(TypeError, match="camera value must either be a"):
+    with pytest.raises(TypeError, match='camera value must either be a'):
         default_theme.camera = [1, 0, 0]
 
     # test _CameraConfig usage
@@ -409,7 +431,7 @@ def test_repr(default_theme):
     for line in rep.splitlines():
         if ':' in line:
             pref, *rest = line.split(':', 1)
-            assert pref.endswith(' '), f"Key str too long or need to raise key length:\n{pref!r}"
+            assert pref.endswith(' '), f'Key str too long or need to raise key length:\n{pref!r}'
 
 
 def test_theme_slots(default_theme):
@@ -461,7 +483,7 @@ def test_plotter_set_theme():
 
 
 def test_load_theme(tmpdir, default_theme):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     Theme.dark_theme().save(filename)
     loaded_theme = pv.load_theme(filename)
     assert loaded_theme == Theme.dark_theme()
@@ -471,7 +493,7 @@ def test_load_theme(tmpdir, default_theme):
 
 
 def test_save_before_close_callback(tmpdir, default_theme):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.json'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     dark_theme = Theme.dark_theme()
 
     def fun(plotter):
@@ -497,7 +519,7 @@ def test_anti_aliasing(default_theme):
         default_theme.anti_aliasing = 42
 
 
-@pytest.mark.skipif(uses_egl(), reason="Requires non-OSMesa/EGL VTK build.")
+@pytest.mark.skipif(uses_egl(), reason='Requires non-OSMesa/EGL VTK build.')
 def test_anti_aliasing_fxaa(default_theme):
     default_theme.anti_aliasing = 'fxaa'
     assert default_theme.anti_aliasing == 'fxaa'
@@ -618,30 +640,29 @@ def test_set_plot_theme_from_env():
 
 
 def test_deprecation_theme_classes():
-
     if pv._version.version_info >= (0, 48):
-        raise RuntimeError("Convert Theme subclass warnings to error")
+        raise RuntimeError('Convert Theme subclass warnings to error')
 
     if pv._version.version_info >= (0, 49):
-        raise RuntimeError("Remove Theme subclasses")
+        raise RuntimeError('Remove Theme subclasses')
 
-    with pytest.warns(PyVistaDeprecationWarning, match="DarkTheme is deprecated."):
+    with pytest.warns(PyVistaDeprecationWarning, match='DarkTheme is deprecated.'):
         depr_theme = pv.plotting.themes.DarkTheme()
     assert Theme.dark_theme() == depr_theme
 
-    with pytest.warns(PyVistaDeprecationWarning, match="ParaViewTheme is deprecated."):
+    with pytest.warns(PyVistaDeprecationWarning, match='ParaViewTheme is deprecated.'):
         depr_theme = pv.plotting.themes.ParaViewTheme()
     assert Theme.paraview_theme() == depr_theme
 
-    with pytest.warns(PyVistaDeprecationWarning, match="DocumentTheme is deprecated."):
+    with pytest.warns(PyVistaDeprecationWarning, match='DocumentTheme is deprecated.'):
         depr_theme = pv.plotting.themes.DocumentTheme()
     assert Theme.document_theme() == depr_theme
 
-    with pytest.warns(PyVistaDeprecationWarning, match="DocumentProTheme is deprecated."):
+    with pytest.warns(PyVistaDeprecationWarning, match='DocumentProTheme is deprecated.'):
         depr_theme = pv.plotting.themes.DocumentProTheme()
     assert Theme.document_pro_theme() == depr_theme
 
-    with pytest.warns(PyVistaDeprecationWarning, match="_TestingTheme is deprecated."):
+    with pytest.warns(PyVistaDeprecationWarning, match='_TestingTheme is deprecated.'):
         depr_theme = pv.plotting.themes._TestingTheme()
     assert Theme.testing_theme() == depr_theme
 
@@ -651,7 +672,7 @@ def test_trame_config():
 
     # Enabling extension when extension is not available should raise exception
     assert not trame_config.jupyter_extension_available
-    with pytest.raises(Exception):  # noqa: PT011
+    with pytest.raises(Exception):  # noqa: B017, PT011
         trame_config.jupyter_extension_enabled = True
 
     # Pretend the extension is available
@@ -687,11 +708,11 @@ def test_theme_defaults():
         assert Theme.from_default(name) == theme()
 
     my_theme = Theme.dark_theme()
-    Theme.register_default("my_theme", my_theme.to_dict(), """My theme documentation.""")
+    Theme.register_default('my_theme', my_theme.to_dict(), """My theme documentation.""")
     assert Theme.my_theme() == Theme.dark_theme()
 
     my_theme.show_edges = True
-    Theme.register_default("my_theme", my_theme.to_dict(), """My theme documentation.""")
+    Theme.register_default('my_theme', my_theme.to_dict(), """My theme documentation.""")
     assert Theme.my_theme() != Theme.dark_theme()
 
 
@@ -706,7 +727,7 @@ def test_slider_style_defaults():
 
     my_slider_theme = _SliderStyleConfig.classic_theme()
     _SliderStyleConfig.register_default(
-        "my_slider_theme", my_slider_theme.to_dict(), """My theme documentation."""
+        'my_slider_theme', my_slider_theme.to_dict(), """My theme documentation."""
     )
 
     theme = _SliderStyleConfig.my_slider_theme()
@@ -715,7 +736,6 @@ def test_slider_style_defaults():
 
 
 def test_kwargs_setting():
-
     # first show the default settings
     my_theme = Theme()
     assert not my_theme.show_edges
@@ -729,3 +749,8 @@ def test_kwargs_setting():
     # next set kwarg via class
     my_theme = Theme(axes=_AxesConfig(box=False))
     assert not my_theme.axes.box
+
+
+def test_box_axes(default_theme):
+    default_theme.axes.box = True
+    _ = pv.Sphere().plot(theme=default_theme)

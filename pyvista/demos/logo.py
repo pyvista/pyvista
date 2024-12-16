@@ -14,7 +14,10 @@ plot_logo(screenshot='pyvista_logo_sm_sq.png', window_size=(960, 960), cpos=cpos
 
 """
 
+from __future__ import annotations
+
 import os
+from pathlib import Path
 
 import numpy as np
 
@@ -22,7 +25,7 @@ import pyvista
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
 
-THIS_PATH = os.path.dirname(os.path.realpath(__file__))
+THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
 LOGO_TITLE = 'PyVista'
 
@@ -43,6 +46,7 @@ def atomize(grid, shift_fac=0.1, scale=0.9):
     -------
     pyvista.UnstructuredGrid
         The atomized mesh with individually shifted and scaled cells.
+
     """
     cent = grid.center
     cells = []
@@ -108,11 +112,9 @@ def logo_letters(merge=False, depth=0.3):
         If merge is ``True``, returns a single merged mesh containing all the
         letters in "PyVista". If merge is ``False``, returns a dictionary where
         the keys are the letters and the values are the respective meshes.
+
     """
-    if merge:
-        mesh_letters = pyvista.PolyData()
-    else:
-        mesh_letters = {}
+    mesh_letters = pyvista.PolyData() if merge else {}  # type: ignore[var-annotated]
 
     # spacing between letters
     space_factor = 0.9
@@ -142,6 +144,7 @@ def logo_voxel(density=0.03):
     -------
     pyvista.UnstructuredGrid
         Voxelized PyVista logo as an unstructured grid.
+
     """
     return pyvista.voxelize(text_3d(LOGO_TITLE, depth=0.3), density)
 
@@ -243,7 +246,11 @@ def plot_logo(
     faces[:, 1:] = faces[:, 1:][:, ::-1]
     v_grid_atom_surf.faces = faces
     plotter.add_mesh(
-        v_grid_atom_surf, scalars='scalars', show_edges=True, cmap='winter', show_scalar_bar=False
+        v_grid_atom_surf,
+        scalars='scalars',
+        show_edges=True,
+        cmap='winter',
+        show_scalar_bar=False,
     )
 
     # letter 'i'
@@ -293,7 +300,7 @@ def plot_logo(
     plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False)
 
     if show_note:
-        text = text_3d("You can move me!", depth=0.1)
+        text = text_3d('You can move me!', depth=0.1)
         text.points *= 0.1
         text.translate([4.0, -0.3, 0], inplace=True)
         plotter.add_mesh(text, color='black')

@@ -8,6 +8,8 @@ Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
 values.
 """
 
+from __future__ import annotations
+
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +17,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Any colormap built for ``matplotlib``, ``colorcet``, or ``cmocean`` is fully
 # compatible with PyVista. Colormaps are typically specified by passing the
 # string name of the colormap to the plotting routine via the ``cmap``
@@ -28,7 +30,7 @@ from pyvista import examples
 # .. _Colorcet's complete list: https://colorcet.holoviz.org/user_guide/index.html
 # .. _cmocean's complete list: https://matplotlib.org/cmocean/
 
-###############################################################################
+# %%
 # Custom Made Colormaps
 # +++++++++++++++++++++
 #
@@ -39,7 +41,7 @@ mesh = examples.download_st_helens().warp_by_scalar()
 # Add scalar array with range (0, 100) that correlates with elevation
 mesh['values'] = pv.plotting.tools.normalize(mesh['Elevation']) * 100
 
-###############################################################################
+# %%
 # Build a custom colormap - here we make a colormap with 5 discrete colors
 # and we specify the ranges where those colors fall:
 
@@ -61,22 +63,22 @@ newcolors[mapping < 1] = black
 # Make the colormap from the listed colors
 my_colormap = ListedColormap(newcolors)
 
-###############################################################################
+# %%
 # Simply pass the colormap to the plotting routine.
 mesh.plot(scalars='values', cmap=my_colormap)
 
-###############################################################################
+# %%
 # Or you could make a simple colormap... any Matplotlib colormap can be passed
 # to PyVista.
-boring_cmap = plt.cm.get_cmap("viridis", 5)
+boring_cmap = plt.get_cmap('viridis', 5)
 mesh.plot(scalars='values', cmap=boring_cmap)
 
-###############################################################################
+# %%
 # You can also pass a list of color strings to the color map.  This
 # approach divides up the colormap into 5 equal parts.
 mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
-###############################################################################
+# %%
 # If you still wish to have control of the separation of values, you
 # can do this by creating a scalar array and passing that to the
 # plotter along with the colormap
@@ -89,7 +91,7 @@ scalars[mesh['values'] < 1] = 0  # black
 
 mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
-###############################################################################
+# %%
 # Matplotlib vs. Colorcet
 # +++++++++++++++++++++++
 #
@@ -110,36 +112,38 @@ p.subplot(0, 0)
 p.add_mesh(
     mesh,
     scalars='Elevation',
-    cmap="fire",
+    cmap='fire',
     lighting=True,
-    scalar_bar_args={'title': "Colorcet Fire"},
+    scalar_bar_args={'title': 'Colorcet Fire'},
 )
 
 p.subplot(0, 1)
 p.add_mesh(
     mesh,
     scalars='Elevation',
-    cmap="fire",
+    cmap='fire',
     lighting=False,
-    scalar_bar_args={'title': "Colorcet Fire (No Lighting)"},
+    scalar_bar_args={'title': 'Colorcet Fire (No Lighting)'},
 )
 
 p.subplot(1, 0)
 p.add_mesh(
     mesh,
     scalars='Elevation',
-    cmap="hot",
+    cmap='hot',
     lighting=True,
-    scalar_bar_args={'title': "Matplotlib Hot"},
+    scalar_bar_args={'title': 'Matplotlib Hot'},
 )
 
 p.subplot(1, 1)
 p.add_mesh(
     mesh,
     scalars='Elevation',
-    cmap="hot",
+    cmap='hot',
     lighting=False,
-    scalar_bar_args={'title': "Matplotlib Hot (No Lighting)"},
+    scalar_bar_args={'title': 'Matplotlib Hot (No Lighting)'},
 )
 
 p.show()
+# %%
+# .. tags:: plot

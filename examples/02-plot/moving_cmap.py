@@ -8,6 +8,8 @@ by updating the scalars.
 
 """
 
+from __future__ import annotations
+
 import numpy as np
 
 import pyvista as pv
@@ -28,7 +30,7 @@ def hopf_fiber(p, phi):
             p[0] * np.sin(phi) - p[1] * np.cos(phi),
             p[0] * np.cos(phi) + p[1] * np.sin(phi),
             (1 + p[2]) * np.sin(phi),
-        ]
+        ],
     ) / np.sqrt(2 * (1 + p[2]))
 
 
@@ -54,7 +56,7 @@ mesh = grid.extract_geometry().clean(tolerance=1e-6)
 dists = np.linalg.norm(mesh.points, axis=1)
 dists = 2 * np.pi * (dists - dists.min()) / (dists.max() - dists.min())
 
-mesh["distances"] = np.sin(dists)
+mesh['distances'] = np.sin(dists)
 
 # Make the movie
 pltr = pv.Plotter(window_size=[512, 512])
@@ -62,16 +64,18 @@ pltr.set_focus([0, 0, 0])
 pltr.set_position([40, 0, 0])
 pltr.add_mesh(
     mesh,
-    scalars="distances",
+    scalars='distances',
     smooth_shading=True,
     specular=1,
-    cmap="nipy_spectral",
+    cmap='nipy_spectral',
     show_scalar_bar=False,
 )
-pltr.open_gif("Hopf_torus.gif")
+pltr.open_gif('Hopf_torus.gif')
 
 for t in np.linspace(0, 2 * np.pi, 60, endpoint=False):
-    mesh["distances"] = np.sin(dists - t)
+    mesh['distances'] = np.sin(dists - t)
     pltr.write_frame()
 
 pltr.show()
+# %%
+# .. tags:: plot

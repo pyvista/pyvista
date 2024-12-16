@@ -34,6 +34,20 @@ demonstrate features.
    >>> plotter = demos.orientation_plotter()
    >>> plotter.show()
 
+Dataset Gallery
+---------------
+Many of PyVista's datasets are showcased in the dataset gallery.
+You can browse the gallery to find a particular kind of dataset and
+view file and instance metadata for all datasets.
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/examples/dataset_gallery
+
+API Reference
+-------------
+
 .. currentmodule:: pyvista
 
 .. autosummary::
@@ -42,8 +56,12 @@ demonstrate features.
    examples.examples
    examples.downloads
    examples.planets
+   examples.vrml
+   examples.download_3ds
    demos.demos
 
+Usage Considerations
+--------------------
 .. warning::
    As you browse this repository and think about how you might use our 3D
    models and range datasets, please remember that several of these artifacts
@@ -105,6 +123,7 @@ directory to PyVista via ``VTK_DATA_PATH``. Note how the path ends in
    git clone https://github.com/pyvista/vtk-data.git
    export VTK_DATA_PATH=/home/alex/python/vtk-data/Data
 
+.. _examples_cells:
 
 Cells
 -----
@@ -126,6 +145,7 @@ cell types.
    Triangle
    TriangleStrip
    Polygon
+   Pixel
    Quadrilateral
    Tetrahedron
    Voxel
@@ -134,3 +154,20 @@ cell types.
    Pyramid
    PentagonalPrism
    HexagonalPrism
+   QuadraticEdge
+   QuadraticTriangle
+   QuadraticQuadrilateral
+   QuadraticPolygon
+   QuadraticTetrahedron
+   QuadraticHexahedron
+   QuadraticWedge
+   QuadraticPyramid
+   BiQuadraticQuadrilateral
+   TriQuadraticHexahedron
+   TriQuadraticPyramid
+   QuadraticLinearQuadrilateral
+   QuadraticLinearWedge
+   BiQuadraticQuadraticWedge
+   BiQuadraticQuadraticHexahedron
+   BiQuadraticTriangle
+   CubicLine

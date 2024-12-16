@@ -10,6 +10,8 @@ the mapping between a :class:`pyvista.DataSet`'s scalars and RGBA colors.
 
 """
 
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista import examples
 
@@ -23,7 +25,7 @@ bracket = examples.download_fea_bracket().cell_data_to_point_data()
 bracket
 
 
-###############################################################################
+# %%
 # Default Color Map - Lookup Table
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # First, let's plot using the default color map, "viridis". Internally, PyVista
@@ -36,7 +38,7 @@ actor = pl.add_mesh(bracket)
 actor.mapper.lookup_table
 
 
-###############################################################################
+# %%
 # Plot the Lookup Table
 # ~~~~~~~~~~~~~~~~~~~~~
 # You can also plot lookup table to see the mapping between the scalar values
@@ -47,7 +49,7 @@ actor = pl.add_mesh(bracket)
 actor.mapper.lookup_table.plot()
 
 
-###############################################################################
+# %%
 # Plot the DataSet
 # ~~~~~~~~~~~~~~~~
 # Let's plot the dataset using the automatically generated lookup table.
@@ -57,7 +59,7 @@ pl.add_mesh(bracket)
 pl.show()
 
 
-###############################################################################
+# %%
 # Create a Custom Lookup Table using a Matplotlib Color Map
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we create a lookup table with a narrow table range (same as ``clim``)
@@ -70,7 +72,7 @@ lut.above_range_color = 'r'
 lut.plot()
 
 
-###############################################################################
+# %%
 # Plot the bracket with the custom colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # You can set assign the lookup table when using ``add_mesh`` with ``cmap=``.
@@ -81,7 +83,7 @@ actor = pl.add_mesh(bracket, cmap=lut, lighting=False)
 pl.show()
 
 
-###############################################################################
+# %%
 # Create a Custom Lookup Table using VTK's Methods
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # If you want to create a completely unique color map, you can use attributes
@@ -97,7 +99,7 @@ lut.scalar_range = (2, 18)
 lut.plot()
 
 
-###############################################################################
+# %%
 # Plot the bracket with the custom colormap
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Assign this custom color map to the plotter and disable lighting to improve
@@ -108,7 +110,7 @@ actor = pl.add_mesh(bracket, cmap=lut, lighting=False)
 pl.show()
 
 
-###############################################################################
+# %%
 # Custom colormap with widgets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Here we plot the scalars and dynamically change the lookup table through
@@ -152,13 +154,17 @@ pl.add_slider_widget(
     tube_width=0.003,
 )
 pl.add_slider_widget(
-    set_max_alpha, (0, 1), value=lut.alpha_range[1], interaction_event='always', tube_width=0.0
+    set_max_alpha,
+    (0, 1),
+    value=lut.alpha_range[1],
+    interaction_event='always',
+    tube_width=0.0,
 )
 
 pl.show()
 
 
-###############################################################################
+# %%
 # Control Several Lookup Table Attributes
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Demonstrate the use of several slider bar widgets with lookup table
@@ -200,10 +206,7 @@ def make_double_slider(attr, idx):
         if attr == 'scalar_range':
             actor.mapper.scalar_range = getattr(lut, attr)
 
-    if attr == 'scalar_range':
-        rng = scalars_rng
-    else:
-        rng = (0, 1)
+    rng = scalars_rng if attr == 'scalar_range' else (0, 1)
 
     # create two overlapping slider bars by hiding the tube of the second
     pl.add_slider_widget(
@@ -237,3 +240,5 @@ make_double_slider('scalar_range', 4)
 
 pl.camera_position = [(9.021, 5.477, 7.780), (-0.679, 1.349, 0.874), (-0.498, -0.228, 0.836)]
 cpos = pl.show(return_cpos=True)
+# %%
+# .. tags:: plot
