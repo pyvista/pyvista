@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from pyvista.core.dataset import DataObject
+from pyvista.core.dataobject import DataObject
 from pyvista.core.dataset import DataSet
 from pyvista.core.grid import Grid
 from pyvista.core.pointset import PointGrid
