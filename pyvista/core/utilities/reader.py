@@ -2207,46 +2207,36 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 
         """
         if time_point < 0 or time_point >= self.number_time_points:
-            raise ValueError(f'Time point out of range [0, {self.number_time_points-1}]')
+            raise ValueError(
+                f'Time point ({time_point}) out of range [0, {self.number_time_points-1}]'
+            )
 
         self.set_active_time_value(self.time_values[time_point])
 
+    _cell_attr_err_msg = 'Nek5000 data does not contain cell arrays, this method cannot be used'
+
     @property
     def number_cell_arrays(self):  # noqa: D102
-        raise AttributeError(
-            'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
-        )
+        raise AttributeError(self._cell_attr_err_msg)
 
     @property
     def cell_array_names(self):  # noqa: D102
-        raise AttributeError(
-            'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
-        )
+        raise AttributeError(self._cell_attr_err_msg)
 
     def enable_cell_array(self, name) -> None:  # noqa: D102
-        raise AttributeError(
-            'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
-        )
+        raise AttributeError(self._cell_attr_err_msg)
 
     def disable_cell_array(self, name) -> None:  # noqa: D102
-        raise AttributeError(
-            'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
-        )
+        raise AttributeError(self._cell_attr_err_msg)
 
     def cell_array_status(self, name):  # noqa: D102
-        raise AttributeError(
-            'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
-        )
+        raise AttributeError(self._cell_attr_err_msg)
 
     def enable_all_cell_arrays(self) -> None:  # noqa: D102
-        raise AttributeError(
-            'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
-        )
+        raise AttributeError(self._cell_attr_err_msg)
 
     def disable_all_cell_arrays(self) -> None:  # noqa: D102
-        raise AttributeError(
-            'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
-        )
+        raise AttributeError(self._cell_attr_err_msg)
 
 
 class DICOMReader(BaseReader):

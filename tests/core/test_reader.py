@@ -1220,6 +1220,14 @@ def test_nek5000_reader():
         for array in ['Pressure', 'Velocity', 'Velocity Magnitude']
     )
 
+    match = re.escape('Time point (-1) out of range [0, 10]')
+    with pytest.raises(ValueError, match=match):
+        nek_reader.set_active_time_point(-1)
+
+    match = re.escape('Time point (11) out of range [0, 10]')
+    with pytest.raises(ValueError, match=match):
+        nek_reader.set_active_time_point(11)
+
     # check deactivation of cell array routines
     with pytest.raises(AttributeError):
         _ = nek_reader.number_cell_arrays
