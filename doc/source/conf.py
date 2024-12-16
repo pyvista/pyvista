@@ -691,7 +691,24 @@ ogp_image = 'https://docs.pyvista.org/_static/pyvista_banner_small.png'
 html_baseurl = 'https://docs.pyvista.org/'
 
 
+TYPE_ALIASES = ['VectorLike']
+
+
+def resolve_type_aliases(app, env, node, contnode):
+    """Resolve :class: references to our type aliases as :attr: instead."""
+    if (
+        node['refdomain'] == 'py'
+        and node['reftype'] == 'class'
+        and node['reftarget'] in TYPE_ALIASES
+    ):
+        return app.env.get_domain('py').resolve_xref(
+            env, node['refdoc'], app.builder, 'attr', node['reftarget'], node, contnode
+        )
+    return None
+
+
 def setup(app):  # noqa: D103
+    app.connect('missing-reference', resolve_type_aliases)
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
