@@ -2090,12 +2090,16 @@ class PVDReader(BaseReader, TimeReader):
 class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
     """Class for reading .nek5000 files produced by Nek5000 and NekRS.
 
+    .. versionadded:: 0.45.0
+
     Examples
     --------
     >>> import pyvista as pv
     >>> from pyvista import examples
-    >>> filename = examples.download_wavy(load=False)
-    >>> filename.split("/")[-1]  # omit the path
+    >>> filename = examples.download_nek5000(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot()
 
     """
 
@@ -2203,43 +2207,43 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
 
         """
         if time_point < 0 or time_point >= self.number_time_points:
-            raise ValueError(f"Time point out of range [0, {self.number_time_points-1}]")
+            raise ValueError(f'Time point out of range [0, {self.number_time_points-1}]')
 
         self.set_active_time_value(self.time_values[time_point])
 
     @property
-    def number_cell_arrays(self): # noqa: D102
+    def number_cell_arrays(self):  # noqa: D102
         raise AttributeError(
             'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
         )
 
     @property
-    def cell_array_names(self): # noqa: D102
+    def cell_array_names(self):  # noqa: D102
         raise AttributeError(
             'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
         )
 
-    def enable_cell_array(self, name) -> None: # noqa: D102
+    def enable_cell_array(self, name) -> None:  # noqa: D102
         raise AttributeError(
             'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
         )
 
-    def disable_cell_array(self, name) -> None: # noqa: D102
+    def disable_cell_array(self, name) -> None:  # noqa: D102
         raise AttributeError(
             'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
         )
 
-    def cell_array_status(self, name): # noqa: D102
+    def cell_array_status(self, name):  # noqa: D102
         raise AttributeError(
             'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
         )
 
-    def enable_all_cell_arrays(self) -> None: # noqa: D102
+    def enable_all_cell_arrays(self) -> None:  # noqa: D102
         raise AttributeError(
             'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
         )
 
-    def disable_all_cell_arrays(self) -> None: # noqa: D102
+    def disable_all_cell_arrays(self) -> None:  # noqa: D102
         raise AttributeError(
             'Nek 5000 data does not contain cell arrays, ' 'this method cannot be used'
         )
