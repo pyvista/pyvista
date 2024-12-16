@@ -196,7 +196,7 @@ omit = [
 ]
 
 [tool.pytest.ini_options]
-addopts = ["--strict-config", "--strict-markers", "-ra"]
+addopts = ['--strict-config', '--strict-markers', '-ra']
 doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
   'error::pyvista.PyVistaDeprecationWarning',
@@ -223,7 +223,7 @@ xfail_strict = true
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_subclassing_any = true
-enable_error_code = ['ignore-without-code', "redundant-expr", "truthy-bool"]
+enable_error_code = ['ignore-without-code', 'redundant-expr', 'truthy-bool']
 exclude = ['pyvista/ext/']
 extra_checks = true
 ignore_missing_imports = true
@@ -439,8 +439,8 @@ keep-runtime-typing = true # Preserve types, even if a file imports `from __futu
 
 [tool.repo-review]
 ignore = [
-  "MY101", # to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
-  "PC111", # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
-  "PC140", # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
-  "RTD",   # RTD: the documentation is not hosted by ReadTheDocs
+  'MY101', # to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
+  'PC111', # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
+  'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
+  'RTD',   # RTD: the documentation is not hosted by ReadTheDocs
 ]
