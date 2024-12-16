@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import itertools
 from pathlib import Path
 import pickle
@@ -25,7 +26,6 @@ from .observers import Observer
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
-    from collections.abc import Sequence
 
     import imageio
     import meshio
@@ -239,13 +239,14 @@ def read(
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
 
-    if isinstance(filename, (list, tuple)):
+    if isinstance(filename, Sequence) and not isinstance(filename, str):
         multi = pyvista.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
             multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
         return multi
-    filename = Path(filename).expanduser().resolve()  # type: ignore[arg-type]
+
+    filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():
         raise FileNotFoundError(f'File ({filename}) not found')
 

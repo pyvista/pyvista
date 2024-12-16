@@ -289,7 +289,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._actors: dict[str, _vtk.vtkActor] = {}
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
-        self.bounding_box_actor = None
+        self.bounding_box_actor: Actor | None = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
         self._labels: dict[
@@ -2072,7 +2072,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._bounding_box = _vtk.vtkCubeSource()  # type: ignore[assignment]
         self._bounding_box.SetBounds(self.bounds)
         self._bounding_box.Update()
-        self._box_object = wrap(self._bounding_box.GetOutput())
+        _output: _vtk.vtkPolyData = self._bounding_box.GetOutput()
+        self._box_object = wrap(_output)
         name = f'BoundingBox({hex(id(self._box_object))})'
 
         mapper = _vtk.vtkDataSetMapper()
@@ -2781,7 +2782,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             and self._box_object is not None
             and self.bounding_box_actor is not None
         ):
-            if not np.allclose(self._box_object.bounds, self.bounds):  # type: ignore[unreachable]
+            if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
