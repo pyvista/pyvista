@@ -3,12 +3,12 @@
 Named Colors
 ============
 
-Named colors supported by :class:`~pyvista.Color` and :class:`~pyvista.Plotter`.
+Named colors supported by :class:`~pyvista.Color` and plotting-related classes such as
+:class:`~pyvista.Plotter`.
 
 The colors on this page come from various sources, and include:
 
 - :bdg-primary:`CSS` - all standard `named web colors <https://www.w3.org/TR/css-color-4/#named-colors>`_
-- :bdg-secondary:`VTK` - colors from `vtkNamedColors <https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html#VTKColorNames>`_
 - :bdg-success:`TAB` - palette of 10 colors used by ``Tableau``
 - :bdg-danger:`PV` - default colors used by ``ParaView``
 
