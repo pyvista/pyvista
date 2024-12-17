@@ -1259,9 +1259,9 @@ class _SliderStyleConfig(_ThemeConfig):
         self._name = None
         self.slider_length = 0.05
         self.slider_width = 0.05
-        self.slider_color = (0, 0, 0)
+        self.slider_color = Color((0, 0, 0))
         self.tube_width = 0.04
-        self.tube_color = (0, 0, 0)
+        self.tube_color = Color((0, 0, 0))
         self.cap_opacity = 1.0
         self.cap_length = 0.01
         self.cap_width = 0.05
