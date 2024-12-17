@@ -189,6 +189,7 @@ autodoc_type_aliases = {
     'ColorLike': 'pyvista.ColorLike',
     'ArrayLike': 'pyvista.ArrayLike',
     'VectorLike': 'pyvista.VectorLike',
+    'pyvista.VectorLike': 'VectorLike',
     'MatrixLike': 'pyvista.MatrixLike',
     'BoundsLike': 'pyvista.BoundsLike',
     'CellsLike': 'pyvista.CellsLike',
