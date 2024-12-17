@@ -2,32 +2,54 @@
 
 from __future__ import annotations
 
-import importlib.util
+__all__: list[str] = ['promote_type']
 
-__all__: list[str] = []
+import importlib.util
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
+    from typing import Callable
+
+    from mypy.plugin import ClassDefContext
+    from mypy.types import Instance
+    from typing_extensions import Self
+
+
+def promote_type(*types: type) -> Callable[[Any], Any]:
+    """Duck-type type-promotion decorator used by the mypy plugin.
+
+    Apply this decorator to a class to promote its type statically.
+    This tells `mypy` to treat the decorated class as though it's
+    equivalent to another class.
+
+    .. note::
+        This decorator does nothing at runtime and merely passes the object through.
+
+    Parameters
+    ----------
+    types : type
+        Type(s) to promote the class to. The types are only used statically by mypy.
+
+    Returns
+    -------
+    type
+        Decorated class.
+
+    """
+    return lambda obj: obj
+
 
 if importlib.util.find_spec('mypy'):
-    from typing import TYPE_CHECKING
-
     from mypy.nodes import CallExpr
     from mypy.nodes import NameExpr
     from mypy.nodes import RefExpr
     from mypy.plugin import Plugin
 
-    from .decorator import promote_type
-
-    if TYPE_CHECKING:
-        from typing import Any
-        from typing import Callable
-
-        from mypy.plugin import ClassDefContext
-        from mypy.types import Instance
-        from typing_extensions import Self
-
     def _promote_type_callback(ctx: ClassDefContext) -> None:
         """Apply the `promote_type` decorator.
 
-        The decorated class is captured and promoted it to the type(s) provided
+        The decorated class is captured and promoted to the type(s) provided
         by the decorator's argument(s).
         """
         for decorator in ctx.cls.decorators:
