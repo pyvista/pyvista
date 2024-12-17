@@ -2109,7 +2109,6 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
     _vtk_class_name = 'vtkNek5000Reader'
 
     def __init__(self, path):
-
         # nek5000 reader requires vtk >= 9.3
         if pyvista.vtk_version_info < (9, 3):
             raise pyvista.VTKVersionError('Nek5000Reader is only available for vtk>=9.3')
