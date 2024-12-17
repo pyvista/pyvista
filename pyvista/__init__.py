@@ -4,33 +4,16 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import TYPE_CHECKING
+
 from typing import Literal
 from typing import cast
 import warnings
 
-from pyvista._plot import plot as plot
-from pyvista._version import __version__ as __version__
-from pyvista._version import version_info as version_info
+
 from pyvista.core import *
 from pyvista.core import _validation as _validation
 from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
-from pyvista.core.cell import _get_vtk_id_type
-from pyvista.core.utilities.observers import send_errors_to_logging
-from pyvista.core.wrappers import _wrappers as _wrappers
-from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
-from pyvista.report import GPUInfo as GPUInfo
-from pyvista.report import Report as Report
-from pyvista.report import get_gpu_info as get_gpu_info
 
-# get the int type from vtk
-ID_TYPE = cast(int, _get_vtk_id_type())
-
-# determine if using at least vtk 9.0.0
-if vtk_version_info.major < 9:  # pragma: no cover
-    from pyvista.core.errors import VTKVersionError
-
-    raise VTKVersionError('VTK version must be 9.0.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -49,9 +32,6 @@ FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)
 
 ON_SCREENSHOT = os.environ.get('PYVISTA_ON_SCREENSHOT', 'false').lower() == 'true'
 
-# Send VTK messages to the logging module:
-send_errors_to_logging()
-
 # theme to use by default for the plot directive
 PLOT_DIRECTIVE_THEME = None
 
@@ -66,16 +46,6 @@ PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9
 DEFAULT_SCALARS_NAME = 'Data'
 
 MAX_N_COLOR_BARS = 10
-
-
-# Import all modules for type checkers and linters
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista import demos as demos
-    from pyvista import examples as examples
-    from pyvista import ext as ext
-    from pyvista import trame as trame
-    from pyvista import utilities as utilities
-    from pyvista.plotting import *
 
 
 # Lazily import/access the plotting module
@@ -103,10 +73,6 @@ def __getattr__(name):
     }
     if name in allow:
         return importlib.import_module(f'pyvista.{name}')
-
-    # avoid recursive import
-    if 'pyvista.plotting' not in sys.modules:
-        import pyvista.plotting  # noqa: F401
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)
