@@ -7,7 +7,7 @@ __all__: list[str] = ['promote_type']
 import importlib.util
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
     from typing import Callable
 
@@ -40,7 +40,7 @@ def promote_type(*types: type) -> Callable[[Any], Any]:
     return lambda obj: obj
 
 
-if importlib.util.find_spec('mypy'):
+if importlib.util.find_spec('mypy'):  # pragma: no cover
     from mypy.nodes import CallExpr
     from mypy.nodes import NameExpr
     from mypy.nodes import RefExpr
