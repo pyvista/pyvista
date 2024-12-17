@@ -13,7 +13,7 @@ from typing import NamedTuple
 from typing import cast
 from typing import overload
 import warnings
-
+from pyvista_mypy_plugin import promote_type
 import numpy as np
 
 import pyvista
@@ -168,7 +168,7 @@ class ActiveArrayInfo:
             return self.name == other.name and same_association
         return False
 
-
+@promote_type(_vtk.vtkDataSet)
 @abstract_class
 class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects.
