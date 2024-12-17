@@ -53,13 +53,12 @@ def _format_color_name(name: str):
 
 
 def _format_color_dict(colors: dict[str, str]):
-    """Format name hex value."""
+    """Format name and hex value."""
     return {_format_color_name(n): h.lower() for n, h in colors.items()}
 
 
-# Following colors are copied from matplotlib.colors, synonyms (colors with a
-# different name but same hex value) are removed and put in the `color_synonyms`
-# dictionary. An extra `paraview_background` color is added.
+# Colors from the CSS standard. Matches matplotlib.colors.CSS4_COLORS
+# but with synonyms removed
 _CSS_COLORS = {
     'aliceblue': '#F0F8FF',
     'antiquewhite': '#FAEBD7',
@@ -202,6 +201,8 @@ _CSS_COLORS = {
     'yellow': '#FFFF00',
     'yellowgreen': '#9ACD32',
 }
+
+# Tableau colors. Matches matplotlib.colors.TABLEAU_COLORS
 _TABLEAU_COLORS = {
     'tab:blue': '#1f77b4',
     'tab:orange': '#ff7f0e',
@@ -515,7 +516,7 @@ class Color:
     or ``float``) is considered a :data:`ColorLike` parameter and can be converted
     by this class.
 
-    See :ref:`color_table` for a list of supported colors.
+    See :ref:`named_colors` for a list of supported colors.
 
     .. note:
 
@@ -924,7 +925,7 @@ class Color:
         The name is always formatted as a lower case string without
         any delimiters.
 
-        See :ref:`color_table` for a list of supported colors.
+        See :ref:`named_colors` for a list of supported colors.
 
         Returns
         -------
