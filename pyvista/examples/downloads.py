@@ -8200,7 +8200,7 @@ def download_nek5000(load=True):
 
     Returns
     -------
-    pyvista.Nek5000Reader | str
+    pyvista.UnstructuredGrid | str
         DataSet or filename depending on ``load``.
 
     Examples
@@ -8208,6 +8208,11 @@ def download_nek5000(load=True):
     >>> from pyvista import examples
     >>> dataset = examples.download_nek5000()
     >>> dataset.plot()
+
+    .. seealso::
+    
+        :ref:`Nek5000 Dataset <nek5000_dataset>`
+            See this dataset in the Dataset Gallery for more info.
 
     """
     return _download_dataset(_dataset_nek5000, load=load)

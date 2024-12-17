@@ -178,7 +178,7 @@ def get_reader(filename, force_ext=None):
     | ``.xdmf``      | :class:`pyvista.XdmfReader`                 |
     +----------------+---------------------------------------------+
     | ``.vtpd``      | :class:`pyvista.XMLPartitionedDataSetReader`|
-    +--------------------------------------------------------------+
+    +----------------+---------------------------------------------+
 
     Parameters
     ----------
