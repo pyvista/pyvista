@@ -2044,8 +2044,8 @@ class DataSetFilters:
 
     def contour(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        isosurfaces: int = 10,
-        scalars: str | None = None,
+        isosurfaces: int | Sequence[float] = 10,
+        scalars: str | VectorLike[float] | None = None,
         compute_normals: bool = False,
         compute_gradients: bool = False,
         compute_scalars: bool = True,
