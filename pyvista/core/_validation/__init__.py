@@ -31,6 +31,3 @@ from .validate import validate_axes as validate_axes
 from .validate import validate_data_range as validate_data_range
 from .validate import validate_dimensionality as validate_dimensionality
 from .validate import validate_number as validate_number
-from .validate import validate_rotation as validate_rotation
-from .validate import validate_transform3x3 as validate_transform3x3
-from .validate import validate_transform4x4 as validate_transform4x4
