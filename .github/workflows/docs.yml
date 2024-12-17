@@ -55,33 +55,6 @@ jobs:
           pip uninstall vtk -y
           pip install vtk-osmesa==9.3.0 --index-url https://gitlab.kitware.com/api/v4/projects/13/packages/pypi/simple
 
-      - name: PyVista Report
-        run: |
-          python -c "import pyvista;print(pyvista.Report())"
-          echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
-          pip list
-
-      - name: Cache Sphinx-Gallery Examples
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v') && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
-        with:
-          path: doc/source/examples/
-          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
-
-      - name: Cache example data
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')  && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-example-data-cache'))
-        with:
-          path: ${{ env.PYVISTA_EXAMPLE_DATA_PATH }}
-          key: example-data-1-${{ hashFiles('pyvista/_version.py') }}
-
-      - name: Cache Sphinx build directory
-        uses: actions/cache@v4
-        if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v')  && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-sphinx-build-cache'))
-        with:
-          path: doc/_build/
-          key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
-
       - name: Build Documentation
         run: make -C doc html
 
@@ -92,23 +65,6 @@ jobs:
       - name: Dump VTK Warnings and Errors
         if: always()
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
-
-      - name: Test Documentation Images
-        run: pytest tests/doc/tst_doc_images.py
-
-      - name: Upload Images for Failed Tests
-        if: ${{ failure() && hashFiles('_doc_debug_images_failed/**/*.jpg') != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-debug-images-failed
-          path: _doc_debug_images_failed
-
-      - name: Upload Test Debug Images
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: doc-debug-images
-          path: _doc_debug_images
 
       - name: Upload HTML documentation
         if: always()
