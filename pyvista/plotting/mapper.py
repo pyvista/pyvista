@@ -377,7 +377,7 @@ class _DataSetMapper(_BaseMapper):
 
     """
 
-    _cmap = None
+    _cmap: str | None = None
 
     def __init__(
         self,
