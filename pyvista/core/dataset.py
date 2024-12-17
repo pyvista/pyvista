@@ -13,8 +13,9 @@ from typing import NamedTuple
 from typing import cast
 from typing import overload
 import warnings
-from pyvista_mypy_plugin import promote_type
+
 import numpy as np
+from pyvista_mypy_plugin import promote_type
 
 import pyvista
 
@@ -167,6 +168,7 @@ class ActiveArrayInfo:
             same_association = int(self.association.value) == int(other.association.value)
             return self.name == other.name and same_association
         return False
+
 
 @promote_type(_vtk.vtkDataSet)
 @abstract_class

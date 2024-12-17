@@ -8,8 +8,9 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
-from pyvista_mypy_plugin import promote_type
+
 import numpy as np
+from pyvista_mypy_plugin import promote_type
 
 import pyvista
 
@@ -38,6 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
+
 
 @promote_type(_vtk.vtkDataObject)
 @abstract_class
