@@ -24,6 +24,7 @@ Some key differences include:
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 from typing import TypeVar
 from typing import Union
 
@@ -31,6 +32,16 @@ import numpy as np
 import numpy.typing as npt
 
 # Define numeric types
+
+_NumberUnion = Union[
+    type[np.floating[Any]],
+    type[np.integer[Any]],
+    type[np.bool_],
+    type[float],
+    type[int],
+    type[bool],
+]
+
 NumberType = TypeVar(
     'NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
@@ -43,6 +54,9 @@ _NumberType = TypeVar(  # noqa: PYI018
     '_NumberType',
     bound=Union[np.floating, np.integer, np.bool_, float, int, bool],  # type: ignore[type-arg]
 )
+
+_PyNumberType = TypeVar('_PyNumberType', float, int, bool)  # noqa: PYI018
+_NpNumberType = TypeVar('_NpNumberType', np.float64, np.int_, np.bool_)  # noqa: PYI018
 
 NumpyArray = npt.NDArray[NumberType]
 
