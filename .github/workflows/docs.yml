@@ -78,11 +78,6 @@ jobs:
           name: examples
           path: doc/source/examples/
 
-      - name: Get Notebooks
-        run: |
-          mkdir _notebooks
-          find doc/source/examples -type f -name '*.ipynb' | cpio -p -d -v _notebooks/
-
       - uses: actions/upload-artifact@v4
         with:
           name: pyvista-notebooks
