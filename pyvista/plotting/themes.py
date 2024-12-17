@@ -277,11 +277,10 @@ class _ThemeConfig(metaclass=_ForceSlots):
 
         """
 
-        @classmethod
         def return_theme(cls):
             return cls.from_dict(dict_)
 
-        setattr(cls, name, return_theme)
+        setattr(cls, name, classmethod(return_theme))
         attr = getattr(cls, name)
         attr.__func__.__name__ = name
         if doc is not None:
