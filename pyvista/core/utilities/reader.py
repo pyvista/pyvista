@@ -2101,7 +2101,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
     >>> filename = examples.download_nek5000(load=False)
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot()
+    >>> mesh.plot(scalars='Velocity', cpos='xy')
 
     """
 

@@ -8208,7 +8208,7 @@ def download_nek5000(load=True):
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_nek5000()
-    >>> dataset.plot()
+    >>> dataset.plot(scalars='Velocity', cpos='xy')
 
     .. seealso::
 
