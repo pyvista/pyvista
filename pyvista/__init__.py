@@ -6,13 +6,11 @@ import os
 import sys
 
 from typing import Literal
-from typing import cast
 import warnings
 
 
 from pyvista.core import *
 from pyvista.core import _validation as _validation
-from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 
 
 # catch annoying numpy/vtk future warning:

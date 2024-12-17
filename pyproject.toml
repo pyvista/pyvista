@@ -145,8 +145,6 @@ dev = ['pre-commit', 'pyvista[test,typing]']
 Documentation = 'https://docs.pyvista.org/'
 'Source Code' = 'https://github.com/pyvista/pyvista'
 
-[tool.setuptools.dynamic]
-version = { attr = 'pyvista._version.__version__' }
 
 [tool.setuptools.packages.find]
 include = ['pyvista', 'pyvista.*']

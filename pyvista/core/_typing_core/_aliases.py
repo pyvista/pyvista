@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import contextlib
-from typing import Literal
 from typing import NamedTuple
 from typing import Union
 
-from pyvista.core import _vtk_core as _vtk
 
 from ._array_like import NumberType
 from ._array_like import _ArrayLike
@@ -45,20 +43,6 @@ ArrayLike.__doc__ = """Any-dimensional array-like object with numerical values.
 
 Includes sequences, nested sequences, and numpy arrays. Scalar values are not included.
 """
-if 'Rotation' in locals():
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3, Rotation]
-else:
-    RotationLike = Union[MatrixLike[float], _vtk.vtkMatrix3x3]  # type: ignore[misc]
-RotationLike.__doc__ = """Array or object representing a spatial rotation.
-
-Includes 3x3 arrays and SciPy Rotation objects.
-"""
-
-TransformLike = Union[RotationLike, _vtk.vtkMatrix4x4, _vtk.vtkTransform]
-TransformLike.__doc__ = """Array or object representing a spatial transformation.
-
-Includes 3x3 and 4x4 arrays as well as SciPy Rotation objects."""
-
 
 class BoundsTuple(NamedTuple):
     """Tuple of six values representing 3D bounds.
@@ -76,13 +60,6 @@ class BoundsTuple(NamedTuple):
 
 CellsLike = Union[MatrixLike[int], VectorLike[int]]
 
-CellArrayLike = Union[CellsLike, _vtk.vtkCellArray]
-
 # Undocumented alias - should be expanded in docs
 _ArrayLikeOrScalar = Union[NumberType, ArrayLike[NumberType]]
 
-InteractionEventType = Union[Literal['end', 'start', 'always'], _vtk.vtkCommand.EventIds]
-InteractionEventType.__doc__ = """Interaction event mostly used for widgets.
-
-Includes both strings such as `end`, 'start' and `always` and `_vtk.vtkCommand.EventIds`.
-"""
