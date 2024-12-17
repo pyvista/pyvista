@@ -39,7 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     _VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter, _vtk.vtkHDFWriter]
 else:
     _VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
