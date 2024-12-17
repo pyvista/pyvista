@@ -5,18 +5,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
-from typing import Optional
+
+from mypy.nodes import CallExpr
+from mypy.nodes import NameExpr
+from mypy.nodes import RefExpr
+from mypy.plugin import ClassDefContext
+from mypy.plugin import Plugin
 
 if TYPE_CHECKING:
     from typing import Any
 
     from mypy.types import Instance
     from typing_extensions import Self
-from mypy.nodes import CallExpr
-from mypy.nodes import NameExpr
-from mypy.nodes import RefExpr
-from mypy.plugin import ClassDefContext
-from mypy.plugin import Plugin
+
 
 __all__: list[str] = []
 
@@ -70,7 +71,7 @@ class _PyVistaPlugin(Plugin):
 
     def get_class_decorator_hook(
         self: Self, fullname: str
-    ) -> Optional[Callable[[ClassDefContext], None]]:
+    ) -> Callable[[ClassDefContext], None] | None:
         def _get_type_fullname(typ: Any) -> str:
             return f'{typ.__module__}.{typ.__qualname__}'
 
