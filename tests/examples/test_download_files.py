@@ -1071,8 +1071,10 @@ def test_download_nek5000():
     assert Path(filename).is_file()
     assert filename.endswith('nek5000')
 
-    nek_reader = pv.get_reader(filename)
-    assert nek_reader.number_time_points == 11
+    # nek5000 reader can only be used with vtk >= 9.3
+    if pv.vtk_version_info >= (9, 3):
+        nek_reader = pv.get_reader(filename)
+        assert nek_reader.number_time_points == 11
 
-    nek_data = examples.download_nek5000(load=True)
-    assert isinstance(nek_data, pv.UnstructuredGrid)
+        nek_data = examples.download_nek5000(load=True)
+        assert isinstance(nek_data, pv.UnstructuredGrid)

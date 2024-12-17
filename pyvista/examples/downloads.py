@@ -8196,7 +8196,8 @@ def download_nek5000(load=True):
     ----------
     load : bool, optional
         Load the dataset after downloading it when ``True``.  Set this
-        to ``False`` and only the filename will be returned.
+        to ``False`` and only the filename will be returned. True requires
+        vtk >= 9.3
 
     Returns
     -------
@@ -8210,7 +8211,7 @@ def download_nek5000(load=True):
     >>> dataset.plot()
 
     .. seealso::
-    
+
         :ref:`Nek5000 Dataset <nek5000_dataset>`
             See this dataset in the Dataset Gallery for more info.
 

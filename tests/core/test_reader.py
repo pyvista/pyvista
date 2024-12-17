@@ -1188,6 +1188,12 @@ def test_nek5000_reader():
     # load nek5000 file
     filename = examples.download_nek5000(load=False)
 
+    # this class only available for vtk versions >= 9.3
+    if pv.vtk_version_info < (9, 3):
+        with pytest.raises(pv.VTKVersionError):
+            _ = pv.get_reader(filename)
+        return
+
     # test get_reader
     nek_reader = pv.get_reader(filename)
 
