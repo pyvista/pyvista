@@ -59,7 +59,6 @@ pinned = [ # Pinned versions of core dependencies
 ]
 
 typing = [
-  'ducktype-mypy-plugin==0.2.dev1',
   'mypy<1.14.0',
   'npt-promote==0.2',
   'numpy>=2.0.0',
@@ -70,7 +69,6 @@ typing = [
 test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
-  'ducktype-mypy-plugin==0.2.dev1',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
   'hypothesis<6.122.1',
   'imageio-ffmpeg<0.6.0',
@@ -105,7 +103,6 @@ test = [
 docs = [
   'cmocean==4.0.3',
   'colorcet==3.1.0',
-  'ducktype-mypy-plugin==0.2.dev1',
   'enum-tools==0.12.0',
   'imageio-ffmpeg==0.5.1',
   'imageio==2.36.1',
@@ -228,7 +225,11 @@ extra_checks = true
 ignore_missing_imports = true
 no_implicit_reexport = true
 packages = ['pyvista']
-plugins = ['ducktype_mypy_plugin', 'npt_promote', 'numpy.typing.mypy_plugin']
+plugins = [
+  'npt_promote',
+  'numpy.typing.mypy_plugin',
+  'pyvista.typing.mypy_plugin',
+]
 pretty = true
 show_error_context = true
 strict_equality = true

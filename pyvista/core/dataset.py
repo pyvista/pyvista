@@ -14,10 +14,10 @@ from typing import cast
 from typing import overload
 import warnings
 
-from ducktype_mypy_plugin import promote_type
 import numpy as np
 
 import pyvista
+from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple

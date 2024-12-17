@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
 
-from ducktype_mypy_plugin import promote_type
 import numpy as np
 
 import pyvista
+from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
