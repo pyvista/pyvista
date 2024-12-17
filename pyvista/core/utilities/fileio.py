@@ -41,12 +41,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 if TYPE_CHECKING:  # pragma: no cover
     _VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter, _vtk.vtkHDFWriter]
-else:
-    _VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
-    if hasattr(_vtk, 'vtkHDFWriter'):
-        _VTKWriterAlias = Union[_VTKWriterAlias, _vtk.vtkHDFWriter]
-
-_VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
+    _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
 
 PICKLE_EXT = ('.pkl', '.pickle')
 
