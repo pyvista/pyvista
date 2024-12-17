@@ -38,9 +38,7 @@ from pyvista.core._validation import check_string
 from pyvista.core._validation import check_subdtype
 from pyvista.core._validation._cast_array import _cast_to_numpy
 from pyvista.core._validation._cast_array import _cast_to_tuple
-from pyvista.core._vtk_core import vtkMatrix3x3
-from pyvista.core._vtk_core import vtkMatrix4x4
-from pyvista.core._vtk_core import vtkTransform
+
 
 if TYPE_CHECKING:  # pragma: no cover
     import numpy.typing as npt
