@@ -11,6 +11,8 @@ PyVista allows developers to register themes to show as available as a custom th
 
 ###############################################################################
 # The commonly available default themes can be inspected.
+from __future__ import annotations
+
 import pyvista as pv
 from pyvista.plotting.themes import Theme
 
@@ -19,27 +21,27 @@ Theme.defaults()
 ###############################################################################
 # Make a plot for comparison later.
 
-pv.set_plot_theme("vtk")
+pv.set_plot_theme('vtk')
 pv.plot(pv.Sphere())
 
 
 ###############################################################################
 # Registering a custom themes is done through specifying a dictionary.
 
-edge_theme_dict = {"show_edges": True}
+edge_theme_dict = {'show_edges': True}
 
 ###############################################################################
 # Register theme as a default with name ``edge_theme`` and a docstring.
 
 Theme.register_default(
-    "edge_theme",
+    'edge_theme',
     edge_theme_dict,
     doc="""Theme that shows edges.""",
 )
 
 ###############################################################################
 # Activate new default theme and replot.
-pv.set_plot_theme("edge_theme")
+pv.set_plot_theme('edge_theme')
 pv.plot(pv.Sphere())
 
 ###############################################################################
@@ -50,4 +52,4 @@ pv.global_theme.load_theme(custom_edge_theme)
 
 ###############################################################################
 # Reset to use the document theme.
-pv.set_plot_theme("document")
+pv.set_plot_theme('document')
