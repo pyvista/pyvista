@@ -2045,7 +2045,7 @@ class DataSetFilters:
     def contour(  # type: ignore[misc]
         self: ConcreteDataSetType,
         isosurfaces: int | Sequence[float] = 10,
-        scalars: str | VectorLike[float] | None = None,
+        scalars: str | NumpyArray[float] | None = None,
         compute_normals: bool = False,
         compute_gradients: bool = False,
         compute_scalars: bool = True,
@@ -2169,7 +2169,7 @@ class DataSetFilters:
 
         if isinstance(scalars, str):
             scalars_name = scalars
-        elif isinstance(scalars, (Sequence, np.ndarray)):
+        elif isinstance(scalars, (Sequence, np.ndarray)) and not isinstance(scalars, str):
             scalars_name = 'Contour Data'
             self[scalars_name] = scalars
         elif scalars is None:
