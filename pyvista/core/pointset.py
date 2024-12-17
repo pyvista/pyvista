@@ -55,7 +55,6 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
 
-if TYPE_CHECKING:  # pragma: no cover
     _PolyDataWriterAlias = Union[
         _vtk.vtkPLYWriter,
         _vtk.vtkXMLPolyDataWriter,
@@ -66,29 +65,11 @@ if TYPE_CHECKING:  # pragma: no cover
         _vtk.vtkIVWriter,
         _vtk.vtkHDFWriter,
     ]
-else:
-    _PolyDataWriterAlias = Union[
-        _vtk.vtkPLYWriter,
-        _vtk.vtkXMLPolyDataWriter,
-        _vtk.vtkSTLWriter,
-        _vtk.vtkPolyDataWriter,
-        _vtk.vtkHoudiniPolyDataWriter,
-        _vtk.vtkOBJWriter,
-        _vtk.vtkIVWriter,
-    ]
-    if hasattr(_vtk, 'vtkHDFWriter'):
-        _PolyDataWriterAlias = Union[_PolyDataWriterAlias, _vtk.vtkHDFWriter]
 
-if TYPE_CHECKING:  # pragma: no cover
     _UnstructuredGridWriterAlias = Union[
         _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter, _vtk.vtkHDFWriter
     ]
-else:
-    _UnstructuredGridWriterAlias = Union[
-        _vtk.vtkXMLUnstructuredGridWriter, _vtk.vtkUnstructuredGridWriter
-    ]
-    if hasattr(_vtk, 'vtkHDFWriter'):
-        _UnstructuredGridWriterAlias = Union[_UnstructuredGridWriterAlias, _vtk.vtkHDFWriter]
+
 
 DEFAULT_INPLACE_WARNING = (
     'You did not specify a value for `inplace` and the default value will '
