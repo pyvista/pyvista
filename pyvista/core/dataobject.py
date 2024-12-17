@@ -12,7 +12,7 @@ from typing import cast
 import numpy as np
 
 import pyvista
-from pyvista.typing.mypy_plugin import promote_type
+from pyvista.typing import promote_type
 
 from . import _vtk_core as _vtk
 from .datasetattributes import DataSetAttributes
