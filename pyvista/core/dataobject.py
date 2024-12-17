@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import cast
 
+from ducktype_mypy_plugin import promote_type
 import numpy as np
-from pyvista_mypy_plugin import promote_type
 
 import pyvista
 

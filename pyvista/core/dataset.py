@@ -14,8 +14,8 @@ from typing import cast
 from typing import overload
 import warnings
 
+from ducktype_mypy_plugin import promote_type
 import numpy as np
-from pyvista_mypy_plugin import promote_type
 
 import pyvista
 
