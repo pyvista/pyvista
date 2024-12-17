@@ -1287,7 +1287,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_style.cap_width = 0.02
 
         """
-        return self._cap_width  # type: ignore[return-value]
+        return self._cap_width
 
     @cap_width.setter
     def cap_width(self, cap_width: float):
@@ -1303,7 +1303,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_style.cap_length = 0.01
 
         """
-        return self._cap_length  # type: ignore[return-value]
+        return self._cap_length
 
     @cap_length.setter
     def cap_length(self, cap_length: float):
@@ -1319,7 +1319,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_style.cap_opacity = 1.0
 
         """
-        return self._cap_opacity  # type: ignore[return-value]
+        return self._cap_opacity
 
     @cap_opacity.setter
     def cap_opacity(self, cap_opacity: float):
@@ -1336,7 +1336,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_style.tube_color = 'black'
 
         """
-        return self._tube_color  # type: ignore[return-value]
+        return self._tube_color
 
     @tube_color.setter
     def tube_color(self, tube_color: ColorLike):
@@ -1352,7 +1352,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_style.tube_width = 0.005
 
         """
-        return self._tube_width  # type: ignore[return-value]
+        return self._tube_width
 
     @tube_width.setter
     def tube_width(self, tube_width: float):
@@ -1368,7 +1368,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_style.slider_color = 'grey'
 
         """
-        return self._slider_color  # type: ignore[return-value]
+        return self._slider_color
 
     @slider_color.setter
     def slider_color(self, slider_color: ColorLike):
@@ -1384,7 +1384,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_style.slider_width = 0.04
 
         """
-        return self._slider_width  # type: ignore[return-value]
+        return self._slider_width
 
     @slider_width.setter
     def slider_width(self, slider_width: float):
@@ -1400,7 +1400,7 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> pv.global_theme.slider_style.slider_length = 0.02
 
         """
-        return self._slider_length  # type: ignore[return-value]
+        return self._slider_length
 
     @slider_length.setter
     def slider_length(self, slider_length: float):
