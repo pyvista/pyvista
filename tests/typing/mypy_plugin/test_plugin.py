@@ -4,8 +4,9 @@ import os
 from pathlib import Path
 import subprocess
 
-from ducktype_mypy_plugin import promote_type
 import pytest
+
+from pyvista.typing.mypy_plugin import promote_type
 
 TEST_DIR = str(Path(__file__).parent)
 ROOT_DIR = str(Path(TEST_DIR).parent.parent.parent)
