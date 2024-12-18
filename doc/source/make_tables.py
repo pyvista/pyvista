@@ -449,9 +449,9 @@ def _get_color_source_badge(name: str) -> str:
     if name in _format_color_dict(_CSS_COLORS):
         return ':bdg-primary:`CSS`'
     elif name in _format_color_dict(_TABLEAU_COLORS):
-        return ':bdg-success:`TABLEAU`'
+        return ':bdg-success:`TAB`'
     elif name in _format_color_dict(_PARAVIEW_COLORS):
-        return ':bdg-danger:`PARAVIEW`'
+        return ':bdg-danger:`PV`'
     else:
         msg = f'Invalid color name "{name}".'
         raise KeyError(msg)
@@ -552,10 +552,6 @@ class ColorClassificationTable(ColorTable):
     @final
     def path(cls):
         return f'{COLORS_TABLE_DIR}/color_table_{cls.classification.name}.rst'
-
-    @classmethod
-    def get_header(cls, data):
-        return cls.header.format('**' + cls.classification.name.upper() + 'S**')
 
     @classmethod
     def fetch_data(cls):
