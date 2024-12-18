@@ -341,6 +341,8 @@ class MultiBlock(
         mini, maxi = np.inf, -np.inf
         for i in range(self.n_blocks):
             data = self[i]
+            if data is None:
+                continue
             # get the scalars if available - recursive
             try:
                 tmi, tma = data.get_data_range(name)
@@ -451,7 +453,7 @@ class MultiBlock(
         index = self.n_blocks  # note off by one so use as index
         # always wrap since we may need to reference the VTK memory address
         wrapped = wrap(dataset)
-        if isinstance(wrapped, pyvista_ndarray):  # type: ignore[unreachable]
+        if isinstance(wrapped, pyvista_ndarray):
             raise TypeError('dataset should not be or contain an array')
         dataset = wrapped
         self.n_blocks += 1
@@ -500,8 +502,8 @@ class MultiBlock(
     def get(
         self: MultiBlock,
         index: str,
-        default: _TypeMultiBlockLeaf | None = None,
-    ) -> _TypeMultiBlockLeaf | None:
+        default: _TypeMultiBlockLeaf = None,
+    ) -> _TypeMultiBlockLeaf:
         """Get a block by its name.
 
         If the name is non-unique then returns the first occurrence.
@@ -755,7 +757,7 @@ class MultiBlock(
         """Remove python reference to the dataset."""
         dataset = self[index]
         if hasattr(dataset, 'memory_address'):
-            self._refs.pop(dataset.memory_address, None)
+            self._refs.pop(dataset.memory_address, None)  # type: ignore[union-attr]
 
     def __eq__(self: MultiBlock, other: object) -> bool:
         """Equality comparison."""
@@ -902,10 +904,10 @@ class MultiBlock(
         for i in range(self.n_blocks):
             if isinstance(self[i], MultiBlock):
                 # Recursively move through nested structures
-                self[i].clean()
-                if self[i].n_blocks < 1:
+                self[i].clean()  # type: ignore[union-attr]
+                if self[i].n_blocks < 1:  # type: ignore[union-attr]
                     null_blocks.append(i)
-            elif self[i] is None or empty and self[i].n_points < 1:
+            elif self[i] is None or empty and self[i].n_points < 1:  # type: ignore[union-attr]
                 null_blocks.append(i)
         # Now remove the null/empty meshes
         null_blocks = np.array(null_blocks, dtype=int)  # type: ignore[assignment]
