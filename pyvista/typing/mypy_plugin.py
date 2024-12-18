@@ -40,7 +40,7 @@ def promote_type(*types: type) -> Callable[[Any], Any]:
     return lambda obj: obj
 
 
-if importlib.util.find_spec('mypy'):  # pragma: no cover
+if importlib.util.find_spec('mypy'):
     from mypy.nodes import CallExpr
     from mypy.nodes import NameExpr
     from mypy.nodes import RefExpr
