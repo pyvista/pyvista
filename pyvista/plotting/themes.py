@@ -1257,13 +1257,13 @@ class _SliderStyleConfig(_ThemeConfig):
     def __init__(self, **kwargs):
         """Initialize the slider style configuration."""
         self._name = None
-        self.slider_length = 0.05
-        self.slider_width = 0.05
+        self.slider_length = 0.01
+        self.slider_width = 0.02
         self.slider_color = Color((0, 0, 0))
-        self.tube_width = 0.025
+        self.tube_width = 0.01
         self.tube_color = Color((0, 0, 0))
         self.cap_opacity = 1.0
-        self.cap_length = 0.025
+        self.cap_length = 0.005
         self.cap_width = 0.05
 
         self._handle_kwargs(**kwargs)
@@ -1434,13 +1434,13 @@ class _SliderStyleConfig(_ThemeConfig):
         >>> import pyvista as pv
         >>> pv.global_theme.slider_style.default_theme()
         <BLANKLINE>
-                Slider length    : 0.05
-                Slider width     : 0.05
+                Slider length    : 0.01
+                Slider width     : 0.02
                 Slider color     : Color(name='black', hex='#000000ff', opacity=255)
-                Tube width       : 0.025
+                Tube width       : 0.01
                 Tube color       : Color(name='black', hex='#000000ff', opacity=255)
                 Cap opacity      : 1.0
-                Cap length       : 0.025
+                Cap length       : 0.005
                 Cap width        : 0.05
 
         """
