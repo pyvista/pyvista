@@ -205,50 +205,6 @@ def test_contour_labels_boundary_style(
     assert np.unique(labeled_image.active_scalars).tolist() == [0, 2, 5]
 
 
-# @pytest.mark.needs_vtk_version(9, 3, 0)
-# def test_contour_labels_closed_surface(labeled_image):
-#     mesh_closed = labeled_image.contour_labels(closed_surface=True, output_mesh_type='quads')
-#     mesh_open = labeled_image.contour_labels(closed_surface=False, output_mesh_type='quads')
-#     assert mesh_closed.n_cells - mesh_open.n_cells == 1
-#
-#
-# @pytest.mark.needs_vtk_version(9, 3, 0)
-# def test_contour_labels_cell_data(channels):
-#     # Extract voxelized surface from image with cell voxels in two ways
-#     # Both should have an equal number of quad cells
-#
-#     voxel_surface_contoured = channels.contour_labels(
-#         smoothing=False,
-#         boundary_style='external',
-#     )
-#     vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
-#
-#     assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
-
-
-# @pytest.mark.needs_vtk_version(9, 3, 0)
-# def test_contour_labels_multi_component_output(labeled_image):
-#     # Test `None` (implicit behavior)
-#     poly = labeled_image.contour_labels('external')
-#     assert poly['boundary_labels'].ndim == 1
-#     poly = labeled_image.contour_labels('internal')
-#     assert poly['boundary_labels'].ndim == 2
-#     poly = labeled_image.contour_labels('all')
-#     assert poly['boundary_labels'].ndim == 2
-#
-#     # Test `True`
-#     poly = labeled_image.contour_labels('external', multi_component_output=True)
-#     assert poly['boundary_labels'].ndim == 2
-#     poly = labeled_image.contour_labels('internal', multi_component_output=True)
-#     assert poly['boundary_labels'].ndim == 2
-#
-#     # Test `False`
-#     poly = labeled_image.contour_labels('external', multi_component_output=False)
-#     assert poly['boundary_labels'].ndim == 1
-#     poly = labeled_image.contour_labels('internal', multi_component_output=False)
-#     assert poly['boundary_labels'].ndim == 1
-
-
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
