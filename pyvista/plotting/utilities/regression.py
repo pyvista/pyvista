@@ -217,6 +217,7 @@ def compare_images(im1, im2, threshold=1, use_vtk: bool = True):
         elif isinstance(img, np.ndarray):
             return wrap_image_array(img)
         elif isinstance(img, Plotter):
+            # must be rendered first else segfault
             if img._first_time:  # type: ignore[has-type]
                 img._on_first_render_request()
                 img.render()
