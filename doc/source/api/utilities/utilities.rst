@@ -110,12 +110,12 @@ Colors
    Color
    ColorLike
 
-Table of colors supported by the :class:`~pyvista.Color` class:
+Named colors supported by the :class:`~pyvista.Color` class:
 
 .. toctree::
    :maxdepth: 3
 
-   /api/utilities/color_table
+   /api/utilities/named_colors
 
 Miscellaneous
 ~~~~~~~~~~~~~
