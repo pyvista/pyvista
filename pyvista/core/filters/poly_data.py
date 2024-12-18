@@ -4193,7 +4193,7 @@ class PolyDataFilters(DataSetFilters):
         pyvista.voxelize_volume
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
-        pyvista.ImageDataFilters.contour_labels
+        pyvista.ImageDataFilters.contour_labeled
             Filter that generates surface contours from labeled image data. Can be
             loosely considered as an inverse of this filter.
 
@@ -4293,7 +4293,7 @@ class PolyDataFilters(DataSetFilters):
         an existing mask.
 
         >>> volume = examples.load_frog_tissues()
-        >>> poly = volume.contour_labels()
+        >>> poly = volume.contour_labeled(smoothing=True)
 
         Now create the mask from the polydata using the volume as a reference.
 
