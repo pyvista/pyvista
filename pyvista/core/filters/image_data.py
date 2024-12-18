@@ -847,7 +847,7 @@ class ImageDataFilters(DataSetFilters):
         alg.Update()
         return cast(pyvista.ImageData, wrap(alg.GetOutput()))
 
-    def contour_labeled(  # pragma: no cover
+    def contour_labeled(
         self,
         n_labels: int | None = None,
         smoothing: bool = False,
