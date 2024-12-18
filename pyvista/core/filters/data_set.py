@@ -5993,17 +5993,8 @@ class DataSetFilters:
 
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
-            try:
-                scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
-                array_ = get_array(self, scalars_, preference=preference_, err=True)
-            except MissingDataError:
-                raise ValueError(
-                    'No point data or cell data found. Scalar data is required to use this filter.',
-                )
-            except KeyError:
-                raise ValueError(
-                    f"Array name '{scalars_}' is not valid and does not exist with this dataset.",
-                )
+            scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
+            array_ = get_array(self, scalars_, preference=preference_, err=True)
             association_ = get_array_association(self, scalars_, preference=preference_)
             return array_, association_
 
@@ -6108,9 +6099,17 @@ class DataSetFilters:
                     )
             return values_, ranges_
 
-        # Return empty mesh if input is empty mesh
         if self.n_points == 0:
-            return self.copy()
+            # Empty input, return empty output
+            out = pyvista.UnstructuredGrid()
+            if split:
+                # Do basic validation just to get num blocks for multiblock
+                _, values_ = _get_inputs_from_dict(values)
+                _, ranges_ = _get_inputs_from_dict(ranges)
+                n_values = len(np.atleast_1d(values_)) if values_ is not None else 0
+                n_ranges = len(np.atleast_2d(ranges_)) if ranges_ is not None else 0
+                return pyvista.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])
+            return out
 
         array, association = _validate_scalar_array(scalars, preference)
         array, num_components, component_logic = _validate_component_mode(array, component_mode)
