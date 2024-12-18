@@ -22,6 +22,7 @@ Examples
 from __future__ import annotations
 
 import functools
+import importlib.util
 import logging
 import os
 from pathlib import Path
@@ -72,7 +73,7 @@ if 'PYVISTA_VTK_DATA' in os.environ:  # pragma: no cover
     _FILE_CACHE = True
 
 else:
-    SOURCE = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+    SOURCE = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
     _FILE_CACHE = False
 
 # allow user to override the local path
@@ -339,7 +340,7 @@ def download_masonry_texture(load=True):  # pragma: no cover
 
 _dataset_masonry_texture = _SingleFileDownloadableDatasetLoader(
     'masonry.bmp',
-    read_func=read_texture,
+    read_func=read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -375,7 +376,7 @@ def download_usa_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_usa_texture, load=load)
 
 
-_dataset_usa_texture = _SingleFileDownloadableDatasetLoader('usa_image.jpg', read_func=read_texture)
+_dataset_usa_texture = _SingleFileDownloadableDatasetLoader('usa_image.jpg', read_func=read_texture)  # type: ignore[arg-type]
 
 
 def download_puppy_texture(load=True):  # pragma: no cover
@@ -412,7 +413,7 @@ def download_puppy_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_puppy_texture, load=load)
 
 
-_dataset_puppy_texture = _SingleFileDownloadableDatasetLoader('puppy.jpg', read_func=read_texture)
+_dataset_puppy_texture = _SingleFileDownloadableDatasetLoader('puppy.jpg', read_func=read_texture)  # type: ignore[arg-type]
 
 
 def download_puppy(load=True):  # pragma: no cover
@@ -1631,7 +1632,7 @@ def download_bird_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_bird_texture, load=load)
 
 
-_dataset_bird_texture = _SingleFileDownloadableDatasetLoader('Pileated.jpg', read_func=read_texture)
+_dataset_bird_texture = _SingleFileDownloadableDatasetLoader('Pileated.jpg', read_func=read_texture)  # type: ignore[arg-type]
 
 
 def download_office(load=True):  # pragma: no cover
@@ -1807,7 +1808,7 @@ def download_cake_easy_texture(load=True):  # pragma: no cover
 
 _dataset_cake_easy_texture = _SingleFileDownloadableDatasetLoader(
     'cake_easy.jpg',
-    read_func=read_texture,
+    read_func=read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -1932,8 +1933,8 @@ def download_gourds_texture(zoom=False, load=True):  # pragma: no cover
 # Two loadable files, but only one example
 # Name variables such that non-zoomed version is the 'representative' example
 # Use '__' on the zoomed version to label it as private
-_dataset_gourds_texture = _SingleFileDownloadableDatasetLoader('Gourds.png', read_func=read_texture)
-__gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_func=read_texture)
+_dataset_gourds_texture = _SingleFileDownloadableDatasetLoader('Gourds.png', read_func=read_texture)  # type: ignore[arg-type]
+__gourds2_texture = _SingleFileDownloadableDatasetLoader('Gourds2.jpg', read_func=read_texture)  # type: ignore[arg-type]
 
 
 def download_gourds_pnm(load=True):  # pragma: no cover
@@ -2203,7 +2204,7 @@ def download_frog_tissue(load=True):  # pragma: no cover
     .. deprecated:: 0.44.0
 
         This example does not load correctly on some systems and has been deprecated.
-        Use :func:`~pyvista.examples.load_frog_tissues` instead.
+        Use :func:`~pyvista.examples.examples.load_frog_tissues` instead.
 
     Parameters
     ----------
@@ -2583,7 +2584,7 @@ def download_emoji_texture(load=True):  # pragma: no cover
     return _download_dataset(_dataset_emoji_texture, load=load)
 
 
-_dataset_emoji_texture = _SingleFileDownloadableDatasetLoader('emote.jpg', read_func=read_texture)
+_dataset_emoji_texture = _SingleFileDownloadableDatasetLoader('emote.jpg', read_func=read_texture)  # type: ignore[arg-type]
 
 
 def download_teapot(load=True):  # pragma: no cover
@@ -2879,7 +2880,7 @@ def download_sky_box_nz_texture(load=True):  # pragma: no cover
 
 _dataset_sky_box_nz_texture = _SingleFileDownloadableDatasetLoader(
     'skybox-nz.jpg',
-    read_func=read_texture,
+    read_func=read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -3536,7 +3537,8 @@ def download_kitchen(split=False, load=True):  # pragma: no cover
     >>> point_a = (0.08, 2.50, 0.71)
     >>> point_b = (0.08, 4.50, 0.71)
     >>> line = pv.Line(point_a, point_b, resolution=39)
-    >>> dataset.streamlines_from_source(line).plot(show_grid=True)
+    >>> streamlines = dataset.streamlines_from_source(line, max_length=200)
+    >>> streamlines.plot(show_grid=True)
 
     .. seealso::
 
@@ -3579,7 +3581,7 @@ def _kitchen_split_load_func(mesh):  # pragma: no cover
     for key, extent in extents.items():  # pragma: no cover
         alg = _vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
-        alg.SetExtent(extent)
+        alg.SetExtent(extent)  # type: ignore[call-overload]
         alg.Update()
         result = pyvista.core.filters._get_output(alg)
         kitchen[key] = result
@@ -3901,7 +3903,7 @@ def download_crater_imagery(load=True):  # pragma: no cover
 
 _dataset_crater_imagery = _SingleFileDownloadableDatasetLoader(
     'BJ34_GeoTifv1-04_crater_clip.tif',
-    read_func=read_texture,
+    read_func=read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -3936,7 +3938,7 @@ def download_dolfin(load=True):  # pragma: no cover
 
 _dataset_dolfin = _SingleFileDownloadableDatasetLoader(
     'dolfin_fine.xml',
-    read_func=functools.partial(read, file_format='dolfin-xml'),
+    read_func=functools.partial(read, file_format='dolfin-xml'),  # type: ignore[arg-type]
 )
 
 
@@ -3980,7 +3982,7 @@ def download_damavand_volcano(load=True):  # pragma: no cover
 
 
 def _damavand_volcano_load_func(volume):  # pragma: no cover
-    volume.rename_array("None", "data")
+    volume.rename_array('None', 'data')
     return volume
 
 
@@ -4213,7 +4215,7 @@ def download_rgba_texture(load=True):  # pragma: no cover
 
 _dataset_rgba_texture = _SingleFileDownloadableDatasetLoader(
     'alphachannel.png',
-    read_func=read_texture,
+    read_func=read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -4248,7 +4250,7 @@ def download_vtk_logo(load=True):  # pragma: no cover
     return _download_dataset(_dataset_vtk_logo, load=load)
 
 
-_dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=read_texture)
+_dataset_vtk_logo = _SingleFileDownloadableDatasetLoader('vtk.png', read_func=read_texture)  # type: ignore[arg-type]
 
 
 def download_sky_box_cube_map(load=True):  # pragma: no cover
@@ -4364,7 +4366,7 @@ def download_cubemap_park(load=True):  # pragma: no cover
 _dataset_cubemap_park = _SingleFileDownloadableDatasetLoader(
     'cubemap_park/cubemap_park.zip',
     target_file='',
-    read_func=_load_as_cubemap,
+    read_func=_load_as_cubemap,  # type: ignore[arg-type]
 )
 
 
@@ -4424,7 +4426,7 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
 _dataset_cubemap_space_4k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/4k.zip',
     target_file='',
-    read_func=_load_as_cubemap,
+    read_func=_load_as_cubemap,  # type: ignore[arg-type]
 )
 
 
@@ -4490,7 +4492,7 @@ def download_cubemap_space_16k(load=True):  # pragma: no cover
 _dataset_cubemap_space_16k = _SingleFileDownloadableDatasetLoader(
     'cubemap_space/16k.zip',
     target_file='',
-    read_func=_load_as_cubemap,
+    read_func=_load_as_cubemap,  # type: ignore[arg-type]
 )
 
 
@@ -4613,7 +4615,7 @@ def download_gpr_path(load=True):  # pragma: no cover
 _dataset_gpr_path = _SingleFileDownloadableDatasetLoader(
     'gpr-example/path.txt',
     read_func=functools.partial(np.loadtxt, skiprows=1),  # type: ignore[arg-type]
-    load_func=pyvista.PolyData,
+    load_func=pyvista.PolyData,  # type: ignore[arg-type]
 )
 
 
@@ -5356,9 +5358,7 @@ def download_osmnx_graph(load=True):  # pragma: no cover
     )
     if pyvista._version.version_info >= (0, 47):
         raise RuntimeError('Remove this deprecated function')
-    try:
-        import osmnx  # noqa: F401
-    except ImportError:
+    if not importlib.util.find_spec('osmnx'):
         raise ImportError('Install `osmnx` to use this example')
     return _download_dataset(_dataset_osmnx_graph, load=load)
 
@@ -5728,7 +5728,7 @@ def download_can(partial=False, load=True):  # pragma: no cover
 
     Returns
     -------
-    pyvista.PolyData, str, or list[str]
+    pyvista.PolyData | str | list[str]
         The example ParaView can DataSet or file path(s).
 
     Examples
@@ -6106,7 +6106,7 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
 
 _dataset_parched_canal_4k = _SingleFileDownloadableDatasetLoader(
     'parched_canal_4k.hdr',
-    read_func=read_texture,
+    read_func=read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -6422,7 +6422,7 @@ def download_cloud_dark_matter(load=True):  # pragma: no cover
 _dataset_cloud_dark_matter = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_low_res.npy',
     read_func=np.load,
-    load_func=pyvista.PointSet,
+    load_func=pyvista.PointSet,  # type: ignore[arg-type]
 )
 
 
@@ -6487,7 +6487,7 @@ def download_cloud_dark_matter_dense(load=True):  # pragma: no cover
 _dataset_cloud_dark_matter_dense = _SingleFileDownloadableDatasetLoader(
     'point-clouds/findus23/halo_high_res.npy',
     read_func=np.load,
-    load_func=pyvista.PointSet,
+    load_func=pyvista.PointSet,  # type: ignore[arg-type]
 )
 
 
@@ -7086,7 +7086,7 @@ def _dikhololo_night_load_func(texture):  # pragma: no cover
 
 _dataset_dikhololo_night = _SingleFileDownloadableDatasetLoader(
     'dikhololo_night_4k.hdr',
-    read_func=read_texture,
+    read_func=read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -7265,7 +7265,7 @@ def download_coil_magnetic_field(load=True):  # pragma: no cover
     >>> strl = grid.streamlines_from_source(
     ...     seed,
     ...     vectors='B',
-    ...     max_time=180,
+    ...     max_length=180,
     ...     initial_step_length=0.1,
     ...     integration_direction='both',
     ... )
@@ -7491,7 +7491,7 @@ def _reservoir_load_func(grid):  # pragma: no cover
 _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
     'reservoir/UNISIM-II-D.zip',
     target_file='UNISIM-II-D.vtu',
-    read_func=pyvista.ExplicitStructuredGrid,
+    read_func=pyvista.ExplicitStructuredGrid,  # type: ignore[arg-type]
     load_func=_reservoir_load_func,
 )
 
@@ -8030,6 +8030,7 @@ def download_e07733s002i009(load=True):  # paragma: no cover
 
         :ref:`E07733s002i009 Dataset <e07733s002i009_dataset>`
             See this dataset in the Dataset Gallery for more info.
+
     """
     return _download_dataset(_dataset_e07733s002i009, load=load)
 
@@ -8149,3 +8150,38 @@ def download_3gqp(load=True):  # pragma: no cover
 
 
 _dataset_3gqp = _SingleFileDownloadableDatasetLoader('3GQP.pdb')
+
+
+def download_full_head(load=True):  # pragma: no cover
+    """Download the full head image.
+
+    .. versionadded:: 0.45.0
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.ImageData | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_full_head()
+    >>> dataset.plot(volume=True)
+
+    """
+    return _download_dataset(_dataset_full_head, load=load)
+
+
+def _full_head_files_func():  # pragma: no cover
+    full_head_raw = _DownloadableFile('FullHead.raw.gz')
+    full_head_mha = _SingleFileDownloadableDatasetLoader('FullHead.mhd')
+    return full_head_mha, full_head_raw
+
+
+_dataset_full_head = _MultiFileDownloadableDatasetLoader(_full_head_files_func)

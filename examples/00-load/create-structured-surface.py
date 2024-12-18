@@ -70,8 +70,10 @@ rng = np.random.default_rng(seed=0)
 
 
 def make_point_set():
-    """Ignore the contents of this function. Just know that it returns an
-    n by 3 numpy array of structured coordinates."""
+    """Return an n by 3 numpy array of structured coordinates.
+
+    The contents of this function can be ignored.
+    """
     n, m = 29, 32
     x = np.linspace(-200, 200, num=n) + rng.uniform(-5, 5, size=n)
     y = np.linspace(-200, 200, num=m) + rng.uniform(-5, 5, size=m)
@@ -100,9 +102,9 @@ import matplotlib.pyplot as plt
 
 plt.figure(figsize=(10, 10))
 plt.scatter(points[:, 0], points[:, 1], c=points[:, 2])
-plt.axis("image")
-plt.xlabel("X Coordinate")
-plt.ylabel("Y Coordinate")
+plt.axis('image')
+plt.xlabel('X Coordinate')
+plt.ylabel('Y Coordinate')
 plt.show()
 
 # %%
@@ -126,7 +128,7 @@ mesh.points = points
 mesh.dimensions = [29, 32, 1]
 
 # and then inspect it
-mesh.plot(show_edges=True, show_grid=True, cpos="xy")
+mesh.plot(show_edges=True, show_grid=True, cpos='xy')
 
 
 # %%

@@ -49,10 +49,17 @@ File IO
 .. autosummary::
    :toctree: _autosummary
 
+   from_meshio
+   get_ext
+   is_meshio_mesh
    read
    read_exodus
+   read_grdecl
+   read_meshio
    read_texture
    save_meshio
+   set_pickle_format
+   set_vtkwriter_mode
 
 
 Mesh Creation
@@ -61,6 +68,7 @@ Mesh Creation
    :toctree: _autosummary
 
    CellType
+   fit_line_to_points
    fit_plane_to_points
    lines_from_points
    vector_poly_data
@@ -94,22 +102,28 @@ Image Comparison and Regression
    compare_images
 
 
-Miscellaneous
-~~~~~~~~~~~~~
+Colors
+~~~~~~
 .. autosummary::
    :toctree: _autosummary
 
    Color
-
-.. autosummary::
-   :toctree: _autosummary
-
    ColorLike
-   start_xvfb
+
+Named colors supported by the :class:`~pyvista.Color` class:
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/utilities/named_colors
+
+Miscellaneous
+~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: _autosummary
 
+   start_xvfb
    Report
 
 PyVista Version Information

@@ -6,15 +6,15 @@ import pyvista as pv
 from pyvista.plotting._property import _check_range
 
 
-@pytest.fixture()
+@pytest.fixture
 def prop():
     return pv.Property()
 
 
 def test_check_range():
-    with pytest.raises(ValueError, match="outside the acceptable"):
+    with pytest.raises(ValueError, match='outside the acceptable'):
         _check_range(-1, (0, 1), 'parm')
-    with pytest.raises(ValueError, match="outside the acceptable"):
+    with pytest.raises(ValueError, match='outside the acceptable'):
         _check_range(2, (0, 1), 'parm')
     assert _check_range(0, (0, 1), 'parm') is None
 
@@ -46,7 +46,7 @@ def test_property_opacity(prop):
         prop.opacity = 2
 
 
-@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason="Functions not implemented before 9.3.X")
+@pytest.mark.skipif(pv.vtk_version_info < (9, 3), reason='Functions not implemented before 9.3.X')
 def test_property_edge_opacity(prop):
     edge_opacity = 0.5
     prop.edge_opacity = edge_opacity
@@ -147,7 +147,7 @@ def test_property_line_width(prop):
     assert prop.line_width == value
 
 
-@pytest.mark.parametrize("value", ['back', 'front', 'none'])
+@pytest.mark.parametrize('value', ['back', 'front', 'none'])
 def test_property_culling(prop, value):
     prop.culling = value
     assert prop.culling == value

@@ -125,7 +125,7 @@ conn.plot(
 # First, create a dataset with salient features. Here, we create hills
 # and use curvature to define its peaks and valleys.
 mesh = pv.ParametricRandomHills()
-mesh["Curvature"] = mesh.curvature()
+mesh['Curvature'] = mesh.curvature()
 
 # %%
 # Visualize the peaks and valleys.

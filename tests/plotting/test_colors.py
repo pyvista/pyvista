@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import colorsys
+import importlib.util
 import itertools
 
 import matplotlib as mpl
+from matplotlib.colors import CSS4_COLORS
+from matplotlib.colors import TABLEAU_COLORS
 import numpy as np
 import pytest
 
@@ -11,46 +15,38 @@ from pyvista.plotting.colors import get_cmap_safe
 
 COLORMAPS = ['Greys']
 
-try:
-    import cmocean  # noqa: F401
-
+if importlib.util.find_spec('cmocean'):
     COLORMAPS.append('algae')
-except ImportError:
-    pass
 
 
-try:
-    import colorcet  # noqa: F401
-
+if importlib.util.find_spec('colorcet'):
     COLORMAPS.append('fire')
-except:
-    pass
 
 
-@pytest.mark.parametrize("cmap", COLORMAPS)
+@pytest.mark.parametrize('cmap', COLORMAPS)
 def test_get_cmap_safe(cmap):
     assert isinstance(get_cmap_safe(cmap), mpl.colors.LinearSegmentedColormap)
 
 
 def test_color():
-    name, name2 = "blue", "b"
+    name, name2 = 'blue', 'b'
     i_rgba, f_rgba = (0, 0, 255, 255), (0.0, 0.0, 1.0, 1.0)
-    h = "0000ffff"
-    i_opacity, f_opacity, h_opacity = 153, 0.6, "99"
+    h = '0000ffff'
+    i_opacity, f_opacity, h_opacity = 153, 0.6, '99'
     invalid_colors = (
         (300, 0, 0),
         (0, -10, 0),
         (0, 0, 1.5),
         (-0.5, 0, 0),
         (0, 0),
-        "#hh0000",
-        "invalid_name",
-        {"invalid_name": 100},
+        '#hh0000',
+        'invalid_name',
+        {'invalid_name': 100},
     )
-    invalid_opacities = (275, -50, 2.4, -1.2, "#zz")
+    invalid_opacities = (275, -50, 2.4, -1.2, '#zz')
     i_types = (int, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
     f_types = (float, np.float16, np.float32, np.float64)
-    h_prefixes = ("", "0x", "#")
+    h_prefixes = ('', '0x', '#')
     assert pv.Color(name) == i_rgba
     assert pv.Color(name2) == i_rgba
     # Check integer types
@@ -113,11 +109,77 @@ def test_color():
     with pytest.raises(TypeError):
         c[None]  # Invalid index type
     with pytest.raises(ValueError):  # noqa: PT011
-        c["invalid_name"]  # Invalid string index
+        c['invalid_name']  # Invalid string index
     with pytest.raises(IndexError):
         c[4]  # Invalid integer index
+
+
+@pytest.mark.parametrize('delimiter', ['-', '_', ' '])
+def test_color_name_delimiter(delimiter):
+    name = f'medium{delimiter}spring{delimiter}green'
+    c = pv.Color(name)
+    assert c.name == name.replace(delimiter, '')
+
+
+def test_color_hls():
+    lime = pv.Color('lime')
+    actual_hls = lime._float_hls
+    expected_hls = colorsys.rgb_to_hls(*lime.float_rgb)
+    assert actual_hls == expected_hls
 
 
 def test_color_opacity():
     color = pv.Color(opacity=0.5)
     assert color.opacity == 128
+
+
+def pytest_generate_tests(metafunc):
+    """Generate parametrized tests."""
+    if 'css4_color' in metafunc.fixturenames:
+        color_names = list(CSS4_COLORS.keys())
+        color_values = list(CSS4_COLORS.values())
+
+        test_cases = zip(color_names, color_values)
+        metafunc.parametrize('css4_color', test_cases, ids=color_names)
+
+    if 'tab_color' in metafunc.fixturenames:
+        color_names = list(TABLEAU_COLORS.keys())
+        color_values = list(TABLEAU_COLORS.values())
+
+        test_cases = zip(color_names, color_values)
+        metafunc.parametrize('tab_color', test_cases, ids=color_names)
+
+    if 'color_synonym' in metafunc.fixturenames:
+        synonyms = list(pv.colors.color_synonyms.keys())
+        metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
+
+
+def test_css4_colors(css4_color):
+    # Test value
+    name, value = css4_color
+    assert pv.Color(name).hex_rgb.lower() == value.lower()
+
+    # Test name
+    if name not in pv.plotting.colors._CSS_COLORS:
+        alt_name = pv.plotting.colors.color_synonyms[name]
+        assert alt_name in pv.plotting.colors._CSS_COLORS
+
+
+def test_tab_colors(tab_color):
+    # Test value
+    name, value = tab_color
+    assert pv.Color(name).hex_rgb.lower() == value.lower()
+
+    # Test name
+    assert name in pv.plotting.colors._TABLEAU_COLORS
+
+
+def test_color_synonyms(color_synonym):
+    color = pv.Color(color_synonym)
+    assert isinstance(color, pv.Color)
+
+
+def test_unique_colors():
+    duplicates = np.rec.find_duplicate(pv.hexcolors.values())
+    if len(duplicates) > 0:
+        pytest.fail(f'The following colors have duplicate definitions: {duplicates}.')

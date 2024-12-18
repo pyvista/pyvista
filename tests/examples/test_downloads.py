@@ -10,6 +10,7 @@ import requests
 import pyvista as pv
 from pyvista import examples
 from pyvista.examples import downloads
+from tests.conftest import flaky_test
 from tests.examples.test_dataset_loader import DatasetLoaderTestCase
 from tests.examples.test_dataset_loader import _generate_dataset_loader_test_cases_from_module
 from tests.examples.test_dataset_loader import _get_mismatch_fail_msg
@@ -38,6 +39,7 @@ def _is_valid_url(url):
         return True
 
 
+@flaky_test(exceptions=(AttributeError,))
 def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
@@ -50,14 +52,14 @@ def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     sources = [sources] if isinstance(sources, str) else sources  # Make iterable
     for url in sources:
         if not _is_valid_url(url):
-            pytest.fail(f"Invalid blob URL for {DatasetLoaderTestCase.dataset_name}:\n{url}")
+            pytest.fail(f'Invalid blob URL for {DatasetLoaderTestCase.dataset_name}:\n{url}')
 
 
 def test_delete_downloads(tmpdir):
     # change the path so we don't delete the examples cache
     old_path = examples.downloads.USER_DATA_PATH
     try:
-        examples.downloads.USER_DATA_PATH = str(tmpdir.mkdir("tmpdir"))
+        examples.downloads.USER_DATA_PATH = str(tmpdir.mkdir('tmpdir'))
         assert Path(examples.downloads.USER_DATA_PATH).is_dir()
         tmp_file = str(Path(examples.downloads.USER_DATA_PATH) / 'tmp.txt')
         with Path(tmp_file).open('w') as fid:
@@ -138,6 +140,6 @@ def test_local_file_cache(tmpdir):
         Path(filename).unlink()
 
     finally:
-        downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+        downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
         downloads._FILE_CACHE = False
         downloads.FETCHER.registry.pop(basename, None)

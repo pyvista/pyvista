@@ -40,7 +40,7 @@ axes.origin = (3.0, 3.0, 3.0)
 
 p = pv.Plotter()
 
-p.add_text("Mesh", font_size=24)
+p.add_text('Mesh', font_size=24)
 p.add_actor(axes.actor)
 p.camera = camera
 p.add_mesh(mesh)
@@ -56,7 +56,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("X-Axis Rotation", font_size=24)
+p.add_text('X-Axis Rotation', font_size=24)
 p.add_actor(axes.actor)
 p.camera = camera
 
@@ -75,7 +75,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Y-Axis Rotation", font_size=24)
+p.add_text('Y-Axis Rotation', font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 
@@ -94,7 +94,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Z-Axis Rotation", font_size=24)
+p.add_text('Z-Axis Rotation', font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 
@@ -113,7 +113,7 @@ p.show()
 
 p = pv.Plotter()
 
-p.add_text("Custom Vector Rotation", font_size=24)
+p.add_text('Custom Vector Rotation', font_size=24)
 p.camera = camera
 p.add_actor(axes.actor)
 for i in range(6):

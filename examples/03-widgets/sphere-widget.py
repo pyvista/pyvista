@@ -118,7 +118,7 @@ import pyvista as pv
 
 
 def get_colors(n):
-    """A helper function to get n colors"""
+    """Get n colors."""
     from itertools import cycle
 
     import matplotlib as mpl
