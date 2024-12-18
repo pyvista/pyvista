@@ -1437,10 +1437,10 @@ class _SliderStyleConfig(_ThemeConfig):
                 Slider length    : 0.05
                 Slider width     : 0.05
                 Slider color     : Color(name='black', hex='#000000ff', opacity=255)
-                Tube width       : 0.04
+                Tube width       : 0.025
                 Tube color       : Color(name='black', hex='#000000ff', opacity=255)
                 Cap opacity      : 1.0
-                Cap length       : 0.01
+                Cap length       : 0.025
                 Cap width        : 0.05
 
         """
