@@ -10,7 +10,13 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import PyVistaDeprecationWarning
 
-VTK93 = pv.vtk_version_info >= (9, 3)
+BOUNDARY_LABELS = 'boundary_labels'
+
+
+def test_contour_labeled_deprecated():
+    match = 'This filter produces unexpected results and is deprecated.'
+    with pytest.raises(PyVistaDeprecationWarning, match=match):
+        pv.ImageData().contour_labeled()
 
 
 @pytest.fixture
@@ -46,124 +52,222 @@ def three_dimensionality_image():
     return variable_dimensionality_image(dimensions=(2, 2, 2))
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
-    # Extract surface for each label
-    mesh = label_map.contour_labeled()
-
-    assert label_map.point_data.active_scalars.max() == 29
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
+@pytest.fixture
+def channels():
+    # ImageData will cell data
+    return examples.load_channels()
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_smoothing():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
+@pytest.fixture
+def labeled_image():
+    # Create 4x3x3 image with two adjacent labels
 
-    # Extract smooth surface for each label
-    mesh = label_map.contour_labeled(smoothing=True)
-    # this somehow mutates the object... also the n_labels is likely not correct
+    # First label:
+    #   has a single point near center of image,
+    #   is adjacent to second label,
+    #   is otherwise surrounded by background,
 
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
+    # Second label:
+    #   has two points near center of image,
+    #   is adjacent to first label,
+    #   has one side touching image boundary,
+    #   is otherwise surrounded by background
 
+    dim = (4, 3, 3)
+    labels = np.zeros(np.prod(dim))
+    labels[17] = 2  # First label
+    labels[[18, 19]] = 5  # Second label
+    image = pv.ImageData(dimensions=dim)
+    image.point_data['labels'] = labels
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_reduced_labels_count():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
-    # Extract surface for each label
-    mesh = label_map.contour_labeled(n_labels=2)
-    # this somehow mutates the object... also the n_labels is likely not correct
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 2
-
-
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_triangle_output_mesh():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
-    # Extract surface for each label
-    mesh = label_map.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
+    label_ids = np.unique(image.point_data.active_scalars).tolist()
+    assert label_ids == [0, 2, 5]
+    return image
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_boundary_output_style():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
-    # Extract surface for each label
-    mesh = label_map.contour_labeled(output_style='boundary')
-
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
+def _get_label_ids(array):
+    """Get unique foreground label ids."""
+    ids = np.unique(array).tolist()
+    ids.remove(0) if 0 in ids else None
+    return ids
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_invalid_output_mesh_type():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
-    # Extract surface for each label
-    with pytest.raises(ValueError):  # noqa: PT011
-        label_map.contour_labeled(output_mesh_type='invalid')
+def _get_ids_with_background_boundary(mesh):
+    """Return region ids from the boundary_labels array which share a boundary with the background."""
+    extracted = mesh.extract_values(0, component_mode=1)
+    external_polygons = extracted[BOUNDARY_LABELS] if BOUNDARY_LABELS in extracted.cell_data else []
+    return _get_label_ids(external_polygons)
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_invalid_output_style():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
-    # Extract surface for each label
-    with pytest.raises(NotImplementedError):
-        label_map.contour_labeled(output_style='selected')
-
-    with pytest.raises(ValueError):  # noqa: PT011
-        label_map.contour_labeled(output_style='invalid')
+def _get_ids_with_internal_boundary(mesh):
+    """Return region ids from the boundary_labels array which share internal boundaries."""
+    extracted = mesh.extract_values(0, invert=True, component_mode=1)
+    internal_polygons = extracted[BOUNDARY_LABELS] if BOUNDARY_LABELS in extracted.cell_data else []
+    return _get_label_ids(internal_polygons)
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_scalars():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    # and create a new array with reduced number of labels
-    label_map = examples.load_frog_tissues()
-    label_map['labels'] = label_map['MetaImage'] // 2
+@pytest.mark.parametrize('output_mesh_type', ['triangles', 'quads'])
+@pytest.mark.parametrize('scalars', ['labels', None])
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_scalars_output_mesh_type(
+    labeled_image,
+    output_mesh_type,
+    scalars,
+):
+    # Determine expected output
+    if output_mesh_type == 'triangles' or output_mesh_type is None:
+        expected_celltype = pv.CellType.TRIANGLE
+    else:
+        assert output_mesh_type == 'quads'
+        expected_celltype = pv.CellType.QUAD
 
-    # Extract surface for each label
-    mesh = label_map.contour_labeled(scalars='labels')
+    # Do test
+    mesh = labeled_image.contour_labels(
+        scalars=scalars,
+        output_mesh_type=output_mesh_type,
+    )
+    assert BOUNDARY_LABELS in mesh.cell_data
+    assert mesh.active_scalars_name == BOUNDARY_LABELS
+    assert all(cell.type == expected_celltype for cell in mesh.cell)
+    label_ids = _get_ids_with_background_boundary(mesh)
+    assert label_ids == [2, 5]
 
-    assert 'BoundaryLabels' in mesh.cell_data
-    assert np.max(mesh['BoundaryLabels'][:, 0]) == 14
+
+def _remove_duplicate_points(polydata):
+    return polydata.clean(
+        point_merging=False,
+        lines_to_points=False,
+        polys_to_lines=False,
+        strips_to_polys=False,
+        inplace=False,
+    )
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_invalid_scalars():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
+@pytest.mark.parametrize(
+    'select_inputs',
+    [None, 2, 5, [2, 5]],
+    ids=['in_None', 'in_2', 'in_5', 'in_2_5'],
+)
+@pytest.mark.parametrize(
+    'select_outputs',
+    [None, 2, 5, [2, 5]],
+    ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
+)
+@pytest.mark.parametrize('boundary_style', ['all', 'external'])  # , 'internal'],
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_boundary_style(
+    labeled_image,
+    select_inputs,
+    select_outputs,
+    boundary_style,
+):
+    # Test correct boundary_labels output
+    ALL_LABEL_IDS = np.array([2, 5])
 
+    mesh = labeled_image.pad_image().contour_labels(
+        select_inputs=select_inputs,
+        select_outputs=select_outputs,
+        boundary_style=boundary_style,
+    )
+    cleaned = _remove_duplicate_points(mesh)
+    assert mesh.n_cells == cleaned.n_cells
+    assert mesh.n_points == cleaned.n_points
+
+    if mesh.n_cells > 0:
+        assert BOUNDARY_LABELS in mesh.cell_data
+        actual_output_ids = _get_ids_with_background_boundary(mesh)
+    else:
+        actual_output_ids = []
+
+    # Make sure param values are iterable
+    select_inputs_iter = np.atleast_1d(select_inputs) if select_inputs else ALL_LABEL_IDS
+    select_outputs_iter = np.atleast_1d(select_outputs) if select_outputs else ALL_LABEL_IDS
+
+    # All selected outputs are expected if it's also selected at the input
+    expected_output_ids = [id_ for id_ in select_outputs_iter if id_ in select_inputs_iter]
+
+    assert actual_output_ids == expected_output_ids
+
+    if boundary_style == 'all' and len(select_inputs_iter) == 2:
+        # The two labels share a boundary by default
+        # Boundary exists if no labels removed from input
+        expected_shared_region_ids = ALL_LABEL_IDS
+        shared_cells = mesh.extract_values([[2, 5], [5, 2]], component_mode='multi')
+        assert shared_cells.n_cells == 2
+    else:
+        expected_shared_region_ids = []
+
+    actual_shared_region_ids = _get_ids_with_internal_boundary(mesh)
+    assert np.array_equal(actual_shared_region_ids, expected_shared_region_ids)
+
+    # Make sure temp array created for select_inputs is removed
+    assert labeled_image.array_names == ['labels']
+    assert np.unique(labeled_image.active_scalars).tolist() == [0, 2, 5]
+
+
+# @pytest.mark.needs_vtk_version(9, 3, 0)
+# def test_contour_labels_closed_surface(labeled_image):
+#     mesh_closed = labeled_image.contour_labels(closed_surface=True, output_mesh_type='quads')
+#     mesh_open = labeled_image.contour_labels(closed_surface=False, output_mesh_type='quads')
+#     assert mesh_closed.n_cells - mesh_open.n_cells == 1
+#
+#
+# @pytest.mark.needs_vtk_version(9, 3, 0)
+# def test_contour_labels_cell_data(channels):
+#     # Extract voxelized surface from image with cell voxels in two ways
+#     # Both should have an equal number of quad cells
+#
+#     voxel_surface_contoured = channels.contour_labels(
+#         smoothing=False,
+#         boundary_style='external',
+#     )
+#     vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
+#
+#     assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
+
+
+# @pytest.mark.needs_vtk_version(9, 3, 0)
+# def test_contour_labels_multi_component_output(labeled_image):
+#     # Test `None` (implicit behavior)
+#     poly = labeled_image.contour_labels('external')
+#     assert poly['boundary_labels'].ndim == 1
+#     poly = labeled_image.contour_labels('internal')
+#     assert poly['boundary_labels'].ndim == 2
+#     poly = labeled_image.contour_labels('all')
+#     assert poly['boundary_labels'].ndim == 2
+#
+#     # Test `True`
+#     poly = labeled_image.contour_labels('external', multi_component_output=True)
+#     assert poly['boundary_labels'].ndim == 2
+#     poly = labeled_image.contour_labels('internal', multi_component_output=True)
+#     assert poly['boundary_labels'].ndim == 2
+#
+#     # Test `False`
+#     poly = labeled_image.contour_labels('external', multi_component_output=False)
+#     assert poly['boundary_labels'].ndim == 1
+#     poly = labeled_image.contour_labels('internal', multi_component_output=False)
+#     assert poly['boundary_labels'].ndim == 1
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
     with pytest.raises(KeyError):
-        label_map.contour_labeled(scalars='nonexistent_key')
+        labeled_image.contour_labels(scalars='nonexistent_key')
 
-    # Using cell data
-    label_map.cell_data['cell_data'] = np.zeros(label_map.n_cells)
-    with pytest.raises(ValueError, match='Can only process point data'):
-        label_map.contour_labeled(scalars='cell_data')
+    # Empty inputs
+    with pytest.raises(pv.MissingDataError, match='No data available'):
+        pv.ImageData().contour_labels()
 
-    # When no scalas are given and active scalars are not point data
-    label_map.set_active_scalars('cell_data', preference='cell')
-    with pytest.raises(ValueError, match='active scalars must be point array'):
-        label_map.contour_labeled()
+
+@pytest.mark.skipif(
+    pv.vtk_version_info >= (9, 3, 0),
+    reason='Requires VTK<9.3.0',
+)
+def test_contour_labels_raises_vtkversionerror():
+    match = 'Surface nets 3D require VTK 9.3.0 or newer.'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        pv.ImageData().contour_labels()
 
 
 @pytest.fixture
