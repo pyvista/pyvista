@@ -1501,10 +1501,10 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
         _validation.check_contains(
-            container=['all', 'internal', 'external'], item=boundary_style, name='boundary_style'
+            ['all', 'internal', 'external'], must_contain=boundary_style, name='boundary_style'
         )
         _validation.check_contains(
-            container=[None, 'quads', 'triangles'], item=output_mesh_type, name='output_mesh_type'
+            [None, 'quads', 'triangles'], must_contain=output_mesh_type, name='output_mesh_type'
         )
 
         alg_input = _get_alg_input(self, scalars)
