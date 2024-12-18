@@ -75,13 +75,12 @@ def foo(x: {arg_type.__name__}): ...
 foo(y)
 """
     mypy_output = _run_mypy_code(code, use_plugin=use_plugin)
+    stdout = str(mypy_output.stdout)
+    code = mypy_output.returncode
     if expected_output == '':
-        assert mypy_output.returncode == 0, 'Mypy did not return success status.'
+        assert code == 0, f'Mypy did not return success status:\n{stdout}'
     else:
-        assert (
-            mypy_output.returncode != 0
-        ), 'Mypy returned success status, but an error was expected.'
-        stdout = str(mypy_output.stdout)
+        assert code != 0, f'Mypy returned success status, but an error was expected:\n{stdout}'
         assert expected_output in stdout
 
 
@@ -92,7 +91,9 @@ def _run_mypy_code(code, use_plugin):
         os.chdir(ROOT_DIR)
 
         config = MYPY_CONFIG_FILE_USE_PLUGIN if use_plugin else MYPY_CONFIG_FILE_NO_PLUGIN
-        args = ['mypy', '-c', code]
+        # Use follow-imports=silent, otherwise mypy will analyze the entire code base
+        # when importing the plugin
+        args = ['mypy', '--follow-imports=silent', '-c', code]
 
         args.extend(['--config-file', config])
         return subprocess.run(args, capture_output=True)
