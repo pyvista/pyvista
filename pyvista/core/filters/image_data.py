@@ -858,7 +858,7 @@ class ImageDataFilters(DataSetFilters):
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: str | None = None,
         progress_bar: bool = False,
-    ) -> PolyData:
+    ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 
         SurfaceNets algorithm is used to extract contours preserving sharp
@@ -871,21 +871,6 @@ class ImageDataFilters(DataSetFilters):
 
         .. note::
            Requires ``vtk>=9.3.0``.
-
-        .. deprecated:: 0.45
-            This filter produces unexpected results and is deprecated.
-            Use :meth:`~pyvista.ImageDataFilters.contour_labels` instead.
-            See https://github.com/pyvista/pyvista/issues/5981 for details.
-
-            To replicate the default behavior from this filter, call `contour_labels`
-            with the following arguments:
-
-            .. code::
-
-                image.contour_labels(
-                    smoothing=False,  # old filter does not apply smoothing
-                    output_mesh_type='quads',  # old filter generates quads
-                )
 
         Parameters
         ----------
@@ -946,13 +931,6 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         """
-        warnings.warn(
-            'This filter produces unexpected results and is deprecated. Use `contour_labels` instead.'
-            '\nRefer to the documentation for `contour_labeled` for details on how to transition to the new filter.'
-            '\nSee https://github.com/pyvista/pyvista/issues/5981 for details.',
-            PyVistaDeprecationWarning,
-        )
-
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
