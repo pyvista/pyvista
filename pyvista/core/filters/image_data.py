@@ -2084,10 +2084,7 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
         else:
-            field = self.get_array_association(  # type: ignore[attr-defined]
-                scalars,
-                preference='point',
-            )
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
         if field != FieldAssociation.POINT:
             raise ValueError(
                 f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
@@ -2158,9 +2155,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(error_msg)
         else:
             val = np.atleast_1d(pad_value)
-            num_input_components = _get_num_components(
-                self.active_scalars,  # type: ignore[attr-defined]
-            )
+            num_input_components = _get_num_components(self.active_scalars)  # type: ignore[attr-defined]
             if not (
                 val.ndim == 1
                 and (np.issubdtype(val.dtype, np.floating) or np.issubdtype(val.dtype, np.integer))
