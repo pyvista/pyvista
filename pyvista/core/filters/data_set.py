@@ -1141,14 +1141,17 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
+                data = self[i]
                 output.append(
-                    self[i].slice_orthogonal(
+                    data.slice_orthogonal(
                         x=x,
                         y=y,
                         z=z,
                         generate_triangles=generate_triangles,
                         contour=contour,
-                    ),
+                    )
+                    if data is not None
+                    else data
                 )
             return output
         output.append(
@@ -1283,8 +1286,9 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
+                data = self[i]
                 output.append(
-                    self[i].slice_along_axis(
+                    data.slice_along_axis(
                         n=n,
                         axis=ax_label,
                         tolerance=tolerance,
@@ -1292,7 +1296,9 @@ class DataSetFilters:
                         contour=contour,
                         bounds=bounds,
                         center=center,
-                    ),
+                    )
+                    if data is not None
+                    else data
                 )
             return output
         for i in range(n):
