@@ -1,0 +1,99 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import subprocess
+
+from ducktype_mypy_plugin import promote_type
+import pytest
+
+TEST_DIR = str(Path(__file__).parent)
+ROOT_DIR = str(Path(TEST_DIR).parent.parent.parent)
+MYPY_CONFIG_FILE_NO_PLUGIN = str(Path(TEST_DIR) / 'mypy_no_plugin.ini')
+MYPY_CONFIG_FILE_USE_PLUGIN = str(Path(TEST_DIR) / 'mypy_use_plugin.ini')
+
+
+@pytest.fixture
+def decorated_single():
+    @promote_type(float)
+    class Foo: ...
+
+    return Foo
+
+
+@pytest.fixture
+def decorated_double():
+    @promote_type(float, str)
+    class Foo: ...
+
+    return Foo
+
+
+def test_promote_type_runtime(decorated_single, decorated_double):
+    klass = decorated_single()
+    assert isinstance(klass, decorated_single)
+
+    klass = decorated_double()
+    assert isinstance(klass, decorated_double)
+
+
+cases = [
+    dict(  # Test that the duck type is not a float by default
+        use_plugin=False,
+        promote_type=float,
+        arg_type=float,
+        expected_output='<string>:9: error: Argument 1 to "foo" has incompatible type "DuckType"; expected "float"  [arg-type]',
+    ),
+    dict(  # Same as above, but use the plugin.
+        use_plugin=True, promote_type=float, arg_type=float, expected_output=''
+    ),
+    dict(  # Test promotion as a subclass.
+        use_plugin=True, promote_type=int, arg_type=float, expected_output=''
+    ),
+    dict(  # Test promotion is one-way.
+        use_plugin=True,
+        promote_type=float,
+        arg_type=int,
+        expected_output='<string>:9: error: Argument 1 to "foo" has incompatible type "DuckType"; expected "int"  [arg-type]',
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ('use_plugin', 'promote_type', 'arg_type', 'expected_output'), [case.values() for case in cases]
+)
+def test_promote_type_static(use_plugin, promote_type, arg_type, expected_output):
+    code = f"""
+from pyvista.typing.mypy_plugin import promote_type
+
+@promote_type({promote_type.__name__})
+class DuckType: ...
+y: DuckType
+
+def foo(x: {arg_type.__name__}): ...
+foo(y)
+"""
+    mypy_output = _run_mypy_code(code, use_plugin=use_plugin)
+    if expected_output == '':
+        assert mypy_output.returncode == 0, 'Mypy did not return success status.'
+    else:
+        assert (
+            mypy_output.returncode != 0
+        ), 'Mypy returned success status, but an error was expected.'
+        stdout = str(mypy_output.stdout)
+        assert expected_output in stdout
+
+
+def _run_mypy_code(code, use_plugin):
+    # Call mypy from the project root dir with or without the plugin enabled
+    cwd = Path.cwd()
+    try:
+        os.chdir(ROOT_DIR)
+
+        config = MYPY_CONFIG_FILE_USE_PLUGIN if use_plugin else MYPY_CONFIG_FILE_NO_PLUGIN
+        args = ['mypy', '-c', code]
+
+        args.extend(['--config-file', config])
+        return subprocess.run(args, capture_output=True)
+    finally:
+        os.chdir(cwd)
