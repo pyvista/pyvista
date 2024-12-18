@@ -251,9 +251,9 @@ def convert_array(
 @overload
 def convert_array(
     arr: None,
-    name: str | None = None,
-    deep: bool = False,
-    array_type: int | None = None,
+    name: str | None = ...,
+    deep: bool = ...,
+    array_type: int | None = ...,
 ) -> None: ...
 def convert_array(
     arr: npt.ArrayLike | _vtk.vtkAbstractArray | None,
