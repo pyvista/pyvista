@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import importlib.util
 import locale
 import os
 from pathlib import Path
@@ -194,6 +195,7 @@ autodoc_type_aliases = {
     'CellArrayLike': 'pyvista.CellArrayLike',
     'TransformLike': 'pyvista.TransformLike',
     'RotationLike': 'pyvista.RotationLike',
+    'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
@@ -222,6 +224,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*MatrixLike'),
     (r'py:.*', '.*VectorLike'),
     (r'py:.*', '.*TransformLike'),
+    (r'py:.*', '.*InteractionEventType'),
     (r'py:.*', '.*BoundsLike'),
     (r'py:.*', '.*RotationLike'),
     (r'py:.*', '.*CellsLike'),
@@ -232,6 +235,8 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*Concrete.*Type'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
+    (r'py:.*', '.*NormalsLiteral'),
+    (r'py:.*', '.*T'),
     #
     # Dataset-related types
     (r'py:.*', '.*DataSet'),
@@ -282,6 +287,7 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*UserDict'),
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', '.*NoneType'),
+    (r'py:.*', 'collections.*'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),
@@ -432,14 +438,7 @@ reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed
-has_osmnx = False
-try:
-    import fiona  # noqa: F401
-    import osmnx  # noqa: F401
-
-    has_osmnx = True
-except:
-    pass
+has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmnx')
 
 
 sphinx_gallery_conf = {

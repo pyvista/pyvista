@@ -22,7 +22,7 @@ from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
-from .dataset import DataObject
+from .dataobject import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
@@ -170,7 +170,7 @@ class MultiBlock(
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
-                self.SetBlock(i, wrap(block))  # type: ignore[call-overload]
+                self.SetBlock(i, wrap(block))
 
     @property
     def bounds(self: MultiBlock) -> BoundsTuple:
@@ -415,7 +415,7 @@ class MultiBlock(
         if index < 0:
             index = self.n_blocks + index
 
-        return wrap(self.GetBlock(index))  # type: ignore[call-overload]
+        return wrap(self.GetBlock(index))
 
     def append(self: MultiBlock, dataset: _TypeMultiBlockLeaf, name: str | None = None) -> None:
         """Add a data set to the next block index.

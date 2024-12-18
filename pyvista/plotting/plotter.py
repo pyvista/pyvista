@@ -50,6 +50,7 @@ from ._plotting import prepare_smooth_shading
 from ._plotting import process_opacity
 from ._property import Property
 from .actor import Actor
+from .camera import Camera
 from .colors import Color
 from .colors import get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
@@ -63,7 +64,6 @@ from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
-from .renderer import Camera
 from .renderer import Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
@@ -72,9 +72,6 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import normalize  # noqa: F401
-from .tools import opacity_transfer_function  # noqa: F401
-from .tools import parse_font_family  # noqa: F401
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import decimation_algorithm
@@ -4236,7 +4233,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     raise ValueError('Invalid resolution dimensions.')
                 volume.spacing = resolution
             else:
-                volume = wrap(volume)  # type: ignore[assignment]
+                volume = wrap(volume)
                 if not is_pyvista_dataset(volume):
                     raise TypeError(
                         f'Object type ({type(volume)}) not supported for plotting in PyVista.',
@@ -5238,7 +5235,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         kwargs['loop'] = loop
         kwargs['palettesize'] = palettesize
         kwargs['subrectangles'] = subrectangles
-        if scooby.meets_version(__version__, '2.28.1'):
+        if scooby.knowledge.meets_version(__version__, '2.28.1'):
             kwargs['duration'] = 1000 * 1 / fps
         else:  # pragma: no cover
             kwargs['fps'] = fps

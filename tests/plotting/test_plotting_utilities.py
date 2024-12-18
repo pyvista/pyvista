@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -12,11 +13,7 @@ from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
 
-HAS_IMAGEIO = True
-try:
-    import imageio  # noqa: F401
-except ModuleNotFoundError:
-    HAS_IMAGEIO = False
+HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 
 
 @pytest.mark.skip_plotting

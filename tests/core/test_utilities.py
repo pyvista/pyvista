@@ -42,6 +42,7 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
+from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
 
 
@@ -1815,3 +1816,37 @@ def test_transform_decompose_dtype(dtype, homogeneous):
     assert np.issubdtype(N.dtype, dtype)
     assert np.issubdtype(S.dtype, dtype)
     assert np.issubdtype(K.dtype, dtype)
+
+
+@pytest.mark.parametrize(
+    ('event', 'expected'),
+    [
+        ('end', vtk.vtkCommand.EndInteractionEvent),
+        ('start', vtk.vtkCommand.StartInteractionEvent),
+        ('always', vtk.vtkCommand.InteractionEvent),
+        (vtk.vtkCommand.InteractionEvent,) * 2,
+        (vtk.vtkCommand.EndInteractionEvent,) * 2,
+        (vtk.vtkCommand.StartInteractionEvent,) * 2,
+    ],
+)
+def test_parse_interaction_event(
+    event: str | vtk.vtkCommand.EventIds,
+    expected: vtk.vtkCommand.EventIds,
+):
+    assert _parse_interaction_event(event) == expected
+
+
+def test_parse_interaction_event_raises_str():
+    with pytest.raises(
+        ValueError,
+        match='Expected.*start.*end.*always.*foo was given',
+    ):
+        _parse_interaction_event('foo')
+
+
+def test_parse_interaction_event_raises_wrong_type():
+    with pytest.raises(
+        TypeError,
+        match='.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
+    ):
+        _parse_interaction_event(1)
