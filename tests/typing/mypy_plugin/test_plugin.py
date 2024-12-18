@@ -93,7 +93,7 @@ def _run_mypy_code(code, use_plugin):
         config = MYPY_CONFIG_FILE_USE_PLUGIN if use_plugin else MYPY_CONFIG_FILE_NO_PLUGIN
         # Use follow-imports=silent, otherwise mypy will analyze the entire code base
         # when importing the plugin
-        args = ['mypy', '--follow-imports=silent', '-c', code]
+        args = ['mypy', '--follow-imports=silent', '--show-traceback', '-c', code]
 
         args.extend(['--config-file', config])
         return subprocess.run(args, capture_output=True)
