@@ -114,7 +114,7 @@ def close_all() -> bool:
 
     """
     for pl in list(_ALL_PLOTTERS.values()):
-        if not pl._closed:
+        if not pl._closed:  # type: ignore[has-type]
             pl.close()
     _ALL_PLOTTERS.clear()
     return True
@@ -4947,7 +4947,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.iren = None
 
         if hasattr(self, 'text'):
-            del self.text
+            del self.text  # type: ignore[has-type]
 
         # end movie
         if hasattr(self, 'mwriter'):
