@@ -1802,7 +1802,7 @@ class Theme(_ThemeConfig):
 
     Parameters
     ----------
-    **kwargs : keyword args
+    **kwargs : dict
         Keyword args that set attributes.
 
     Examples
