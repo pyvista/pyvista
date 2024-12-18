@@ -1260,10 +1260,10 @@ class _SliderStyleConfig(_ThemeConfig):
         self.slider_length = 0.05
         self.slider_width = 0.05
         self.slider_color = Color((0, 0, 0))
-        self.tube_width = 0.04
+        self.tube_width = 0.025
         self.tube_color = Color((0, 0, 0))
         self.cap_opacity = 1.0
-        self.cap_length = 0.01
+        self.cap_length = 0.025
         self.cap_width = 0.05
 
         self._handle_kwargs(**kwargs)
