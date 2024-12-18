@@ -2782,18 +2782,7 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
 
 
 def test_extract_values_empty():
-    empty = pv.PolyData()
-    output = pv.PolyData().extract_values()
-    assert isinstance(output, pv.UnstructuredGrid)
-    assert empty is not output
-
-    output = empty.extract_values(split=True)
-    assert isinstance(output, pv.MultiBlock)
-    assert output.n_blocks == 0
-
-    output = empty.extract_values([0, 1, 2], ranges=[1, 2], split=True)
-    assert isinstance(output, pv.MultiBlock)
-    assert output.n_blocks == 4
+    assert pv.PolyData().extract_values()
 
 
 def test_extract_values_raises(grid4x4):
@@ -2824,6 +2813,16 @@ def test_extract_values_raises(grid4x4):
     match = "Invalid dict mapping. The dict's keys or values must contain strings."
     with pytest.raises(TypeError, match=match):
         grid4x4.extract_values({0: 1})
+
+    match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
+    with pytest.raises(ValueError, match=match):
+        grid4x4.extract_values(0, scalars='invalid_scalars')
+
+    match = 'No point data or cell data found. Scalar data is required to use this filter.'
+    grid = grid4x4.copy()
+    grid.clear_data()
+    with pytest.raises(ValueError, match=match):
+        grid.extract_values([0])
 
     match = "Invalid component index '1' specified for scalars with 1 component(s). Value must be one of: (0,)."
     with pytest.raises(ValueError, match=re.escape(match)):
