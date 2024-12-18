@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 import subprocess
 
@@ -59,7 +60,9 @@ cases = [
     ),
 ]
 
-
+# Skip linux tests - suspect issue getting the mypy config and paths set correctly
+# There is still indirect coverage for 'linux' through the `mypy` CI
+@pytest.mark.skipif(sys.platform == 'linux', reason="Cannot configure test paths correctly.")
 @pytest.mark.parametrize(
     ('use_plugin', 'promote_type', 'arg_type', 'expected_output'), [case.values() for case in cases]
 )
@@ -71,7 +74,7 @@ from pyvista.typing.mypy_plugin import promote_type
 class DuckType: ...
 y: DuckType
 
-def foo(x: {arg_type.__name__}): ...
+def foo(x: {arg_type.__name__}) -> None: ...
 foo(y)
 """
     mypy_output = _run_mypy_code(code, use_plugin=use_plugin)
