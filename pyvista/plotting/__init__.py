@@ -62,7 +62,7 @@ from .text import TextProperty as TextProperty
 from .texture import Texture as Texture
 from .texture import image_to_texture as image_to_texture
 from .texture import numpy_to_texture as numpy_to_texture
-from .themes import DocumentTheme as _GlobalTheme
+from .themes import Theme as _Theme
 from .themes import _set_plot_theme_from_env
 from .themes import load_theme as load_theme
 from .themes import set_plot_theme as set_plot_theme
@@ -113,7 +113,7 @@ class QtInteractor:  # numpydoc ignore=PR01
         raise QtDeprecationError('QtInteractor')
 
 
-global_theme: _GlobalTheme = _GlobalTheme()
+global_theme = _Theme.document_theme()
 
 # Set preferred plot theme
 _set_plot_theme_from_env()
