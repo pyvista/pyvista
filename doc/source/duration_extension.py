@@ -72,7 +72,7 @@ def on_doctree_read(app: Sphinx, doctree: nodes.document) -> None:
     domain.note_reading_duration(duration)
 
 
-def on_build_finished(app: Sphinx, error: Exception, n_durations: int) -> None:
+def on_build_finished(app: Sphinx, error: Exception) -> None:
     """Display duration ranking on the current build."""
     domain = app.env.domains['duration']
     if not domain.reading_durations:
