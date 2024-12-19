@@ -175,7 +175,6 @@ pyvista = ['py.typed']
 # reading the docstrings in text terminals.
 line-length = 75
 
-
 [tool.build_sphinx]
 all_files = 1
 build-dir = './doc/_build'
