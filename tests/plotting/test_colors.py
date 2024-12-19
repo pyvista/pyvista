@@ -9,6 +9,7 @@ from matplotlib.colors import CSS4_COLORS
 from matplotlib.colors import TABLEAU_COLORS
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista.plotting.colors import get_cmap_safe
@@ -149,6 +150,13 @@ def pytest_generate_tests(metafunc):
         test_cases = zip(color_names, color_values)
         metafunc.parametrize('tab_color', test_cases, ids=color_names)
 
+    if 'vtk_color' in metafunc.fixturenames:
+        color_names = list(pv.plotting.colors._VTK_COLORS.keys())
+        color_values = list(pv.plotting.colors._VTK_COLORS.values())
+
+        test_cases = zip(color_names, color_values)
+        metafunc.parametrize('vtk_color', test_cases, ids=color_names)
+
     if 'color_synonym' in metafunc.fixturenames:
         synonyms = list(pv.colors.color_synonyms.keys())
         metafunc.parametrize('color_synonym', synonyms, ids=synonyms)
@@ -172,6 +180,32 @@ def test_tab_colors(tab_color):
 
     # Test name
     assert name in pv.plotting.colors._TABLEAU_COLORS
+
+
+def test_vtk_colors(vtk_color):
+    name, value = vtk_color
+
+    # Some pyvista colors are technically not valid VTK colors. We need to map their
+    # synonym manually for the tests
+    vtk_synonyms = {  # pyvista_color : vtk_color
+        'light_slate_blue': 'slate_blue_light',
+        'deep_cadmium_red': 'cadmium_red_deep',
+        'light_cadmium_red': 'cadmium_red_light',
+        'light_cadmium_yellow': 'cadmium_yellow_light',
+        'deep_cobalt_violet': 'cobalt_violet_deep',
+        'deep_naples_yellow': 'naples_yellow_deep',
+        'light_viridian': 'viridian_light',
+    }
+    name = vtk_synonyms.get(name, name)
+
+    # Get expected hex value from vtkNamedColors
+    color3ub = vtk.vtkNamedColors().GetColor3ub(name)
+    int_rgb = (color3ub.GetRed(), color3ub.GetGreen(), color3ub.GetBlue())
+    if int_rgb == (0.0, 0.0, 0.0) and name != 'black':
+        pytest.fail(f"Color '{name}' is not a valid VTK color.")
+    expected_hex = pv.Color(int_rgb).hex_rgb
+
+    assert value.lower() == expected_hex
 
 
 def test_color_synonyms(color_synonym):
