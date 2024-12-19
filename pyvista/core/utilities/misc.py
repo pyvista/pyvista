@@ -321,7 +321,7 @@ def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
     return x
 
 
-class classproperty(property):
+class _classproperty(property):
     """Read-only class property decorator.
 
     Use this decaorator as an alternative to chaining `@classmethod`
@@ -329,13 +329,13 @@ class classproperty(property):
 
     See:
     - https://docs.python.org/library/functions.html#classmethod
-    - https://stackoverflow.com/a/13624858.
+    - https://stackoverflow.com/a/13624858
 
     Examples
     --------
-    >>> from pyvista.core.utilities.misc import classproperty
+    >>> from pyvista.core.utilities.misc import _classproperty
     >>> class Foo:
-    ...     @classproperty
+    ...     @_classproperty
     ...     def bar(cls): ...
     ...
 

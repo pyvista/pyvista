@@ -39,7 +39,7 @@ import numpy as np
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
-from pyvista.core.utilities.misc import classproperty
+from pyvista.core.utilities.misc import _classproperty
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
@@ -1886,7 +1886,7 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
 
     name = 'all_datasets_carousel'
 
-    @classproperty
+    @_classproperty
     def doc(cls):
         return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
 
