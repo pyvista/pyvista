@@ -709,7 +709,7 @@ def _load_as_multiblock(
 
     for file, name in zip(files, names):
         if not isinstance(file, _DatasetLoader):
-            continue
+            continue  # type: ignore[unreachable]
         loaded = file.load()
         assert isinstance(
             loaded,

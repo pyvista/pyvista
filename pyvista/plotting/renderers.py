@@ -219,7 +219,9 @@ class Renderers:
                     ]
 
         # each render will also have an associated background renderer
-        self._background_renderers = [None for _ in range(len(self))]
+        self._background_renderers: list[None | BackgroundRenderer] = [
+            None for _ in range(len(self))
+        ]
 
         # create a shadow renderer that lives on top of all others
         self._shadow_renderer = Renderer(self._plotter, border, border_color, border_width)

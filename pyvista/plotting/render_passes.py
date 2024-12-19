@@ -110,7 +110,7 @@ class RenderPasses:
         """Return the renderer."""
         if self._renderer_ref is not None:
             return self._renderer_ref()
-        return None
+        return None  # type: ignore[unreachable]
 
     def deep_clean(self):
         """Delete all render passes."""

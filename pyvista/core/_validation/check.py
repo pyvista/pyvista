@@ -234,9 +234,9 @@ def check_sorted(
         except ValueError:
             raise ValueError(f'Axis {axis} is out of bounds for ndim {ndim}.')
 
-    if axis is None and ndim >= 1:
+    if axis is None and ndim >= 1:  # type: ignore[unreachable]
         # Emulate np.sort(), which flattens array when axis is None
-        array = array.ravel(order='A')
+        array = array.ravel(order='A')  # type: ignore[unreachable]
         ndim = 1
         axis = 0
 

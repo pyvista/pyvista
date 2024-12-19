@@ -1655,7 +1655,7 @@ class DataSet(DataSetFilters, DataObject):
                 f'The Input DataSet type {type(mesh)} must be '
                 f'compatible with the one being overwritten {type(self)}',
             )
-        if deep:
+        if deep:  # type: ignore[unreachable]
             self.deep_copy(mesh)
         else:
             self.shallow_copy(mesh)

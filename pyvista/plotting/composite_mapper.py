@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from itertools import cycle
 import sys
+from typing import TYPE_CHECKING
 import weakref
 
 import numpy as np
@@ -18,6 +19,13 @@ from . import _vtk
 from .colors import Color
 from .colors import get_cycler
 from .mapper import _BaseMapper
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Sequence
+
+    import cycler
+
+    from ._typing import ColorLike
 
 
 class BlockAttributes:
@@ -162,7 +170,7 @@ class BlockAttributes:
         return self._attr.GetBlockVisibility(self._block)
 
     @visible.setter
-    def visible(self, new_visible: bool):
+    def visible(self, new_visible: bool | None):
         if new_visible is None:
             self._attr.RemoveBlockVisibility(self._block)
             self._attr.Modified()
@@ -202,7 +210,7 @@ class BlockAttributes:
         return self._attr.GetBlockOpacity(self._block)
 
     @opacity.setter
-    def opacity(self, new_opacity: float):
+    def opacity(self, new_opacity: float | None):
         if new_opacity is None:
             self._attr.RemoveBlockOpacity(self._block)
             self._attr.Modified()
@@ -241,7 +249,7 @@ class BlockAttributes:
         return self._attr.GetBlockPickability(self._block)
 
     @pickable.setter
-    def pickable(self, new_pickable: bool):
+    def pickable(self, new_pickable: bool | None):
         if new_pickable is None:
             self._attr.RemoveBlockPickability(self._block)
             self._attr.Modified()
@@ -668,7 +676,10 @@ class CompositePolyDataMapper(
     def color_missing_with_nan(self, value: bool):
         self.SetColorMissingArraysWithNanColor(value)
 
-    def set_unique_colors(self, color_cycler: bool = True):
+    def set_unique_colors(
+        self,
+        color_cycler: bool | str | cycler.Cycler[str, ColorLike] | Sequence[ColorLike] = True,
+    ):
         """Set each block of the dataset to a unique color.
 
         This uses ``matplotlib``'s color cycler by default.

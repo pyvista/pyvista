@@ -176,8 +176,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                     if name == self.active_vectors_name:
                         arr_type = 'VECTORS'
                 # special treatment for string field data
-                if self.association == FieldAssociation.NONE and isinstance(array, str):
-                    dtype = 'str'
+                if self.association == FieldAssociation.NONE and isinstance(array, str):  # type: ignore[unreachable]
+                    dtype = 'str'  # type: ignore[unreachable]
                     # Show the string value itself with a max of 20 characters, 18 for string and 2 for quotes
                     val = f'{array[:15]}...' if len(array) > 18 else array
                     line = f'{name[:23]:<24}{dtype!s:<11}"{val}"'
@@ -1152,7 +1152,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_scalars_name.setter
-    def active_scalars_name(self: Self, name: str) -> None:
+    def active_scalars_name(self: Self, name: str | None) -> None:
         """Set name of the active scalars.
 
         Parameters
@@ -1202,7 +1202,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @_active_normals_name.setter
-    def _active_normals_name(self: Self, name: str) -> None:
+    def _active_normals_name(self: Self, name: str | None) -> None:
         """Set name of the active normals.
 
         Parameters
@@ -1251,7 +1251,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_vectors_name.setter
-    def active_vectors_name(self: Self, name: str) -> None:
+    def active_vectors_name(self: Self, name: str | None) -> None:
         """Set name of the active vectors.
 
         Parameters
@@ -1406,7 +1406,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_normals_name.setter
-    def active_normals_name(self: Self, name: str) -> None:
+    def active_normals_name(self: Self, name: str | None) -> None:
         """Set the name of the normals array.
 
         Parameters
@@ -1520,7 +1520,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         return None
 
     @active_texture_coordinates_name.setter
-    def active_texture_coordinates_name(self: Self, name: str) -> None:
+    def active_texture_coordinates_name(self: Self, name: str | None) -> None:
         """Set the name of the active texture coordinates array.
 
         Parameters

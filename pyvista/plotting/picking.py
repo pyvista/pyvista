@@ -1848,7 +1848,7 @@ class PickingHelper(PickingMethods):
         kwargs.setdefault('pickable', False)
 
         self.picked_geodesic = pyvista.PolyData()
-        self._last_picked_idx = None
+        self._last_picked_idx: int | None = None
 
         def _the_callback(picked_point, picker):
             if picker.GetDataSet() is None:

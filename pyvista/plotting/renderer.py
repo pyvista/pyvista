@@ -289,7 +289,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._actors: dict[str, _vtk.vtkActor] = {}
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
-        self.bounding_box_actor = None
+        self.bounding_box_actor: Actor | None = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
         self._labels: dict[
@@ -303,7 +303,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self._lights: list[Light] = []
         self._camera: Camera | None = Camera(self)
         self.SetActiveCamera(self._camera)
-        self._empty_str = None  # used to track reference to a vtkStringArray
+        self._empty_str: _vtk.vtkStringArray | None = (
+            None  # used to track reference to a vtkStringArray
+        )
         self._shadow_pass = None
         self._render_passes = RenderPasses(self)
         self.cube_axes_actor: CubeAxesActor | None = None
@@ -705,7 +707,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if _vtk.vtkRenderingContextOpenGL2 is None:  # pragma: no cover
-            from pyvista.core.errors import VTKVersionError
+            from pyvista.core.errors import VTKVersionError  # type: ignore[unreachable]
 
             raise VTKVersionError(
                 'VTK is missing vtkRenderingContextOpenGL2. Try installing VTK v9.1.0 or newer.',
@@ -2070,7 +2072,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._bounding_box = _vtk.vtkCubeSource()  # type: ignore[assignment]
         self._bounding_box.SetBounds(self.bounds)
         self._bounding_box.Update()
-        self._box_object = wrap(self._bounding_box.GetOutput())
+        _output: _vtk.vtkPolyData = self._bounding_box.GetOutput()
+        self._box_object = wrap(_output)
         name = f'BoundingBox({hex(id(self._box_object))})'
 
         mapper = _vtk.vtkDataSetMapper()
@@ -3529,7 +3532,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if hasattr(self, '_box_object'):
             self.remove_bounding_box(render=render)
         if hasattr(self, '_shadow_pass') and self._shadow_pass is not None:
-            self.disable_shadows()
+            self.disable_shadows()  # type: ignore[unreachable]
         try:
             if self._charts is not None:
                 self._charts.deep_clean()

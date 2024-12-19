@@ -517,9 +517,9 @@ class Property(_vtk.vtkProperty):
         return self.GetLighting()
 
     @lighting.setter
-    def lighting(self, value: bool):
+    def lighting(self, value: bool | None):
         if value is None:
-            value = self._theme.lighting
+            value = self._theme.lighting  # type: ignore[union-attr]
         self.SetLighting(value)
 
     @property
