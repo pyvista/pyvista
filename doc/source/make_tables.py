@@ -71,6 +71,9 @@ DATASET_GALLERY_IMAGE_DIR = '../_build/plot_directive/api/examples/_autosummary'
 # Generated docstring images are assumed to have '.png' extension
 # Define special cases for specific datasets here. Use `None` if no image is generated.
 DATASET_GALLERY_IMAGE_EXT_DICT = {
+    'cubemap_space_4k': None,
+    'cubemap_space_16k': None,
+    'sky_box_cube_map': None,
     'can': None,
     'cavity': None,
     'osmnx_graph': None,
