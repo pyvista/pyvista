@@ -107,6 +107,8 @@ def get_reader(filename, force_ext=None):
     +----------------+---------------------------------------------+
     | ``.mhd``       | :class:`pyvista.MetaImageReader`            |
     +----------------+---------------------------------------------+
+    | ``.nek5000``   | :class:`pyvista.Nek5000Reader`              |
+    +----------------+---------------------------------------------+
     | ``.nii``       | :class:`pyvista.NIFTIReader`                |
     +----------------+---------------------------------------------+
     | ``.nii.gz``    | :class:`pyvista.NIFTIReader`                |
@@ -2085,6 +2087,167 @@ class PVDReader(BaseReader, TimeReader):
         self.set_active_time_value(self.time_values[time_point])
 
 
+class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
+    """Class for reading .nek5000 files produced by Nek5000 and NekRS.
+
+    .. versionadded:: 0.45.0
+
+    This reader requires vtk version >=9.3.0.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> filename = examples.download_nek5000(load=False)
+    >>> reader = pv.get_reader(filename)
+    >>> mesh = reader.read()
+    >>> mesh.plot(scalars='Velocity', cpos='xy')
+
+    """
+
+    _vtk_module_name = 'vtkIOParallel'
+    _vtk_class_name = 'vtkNek5000Reader'
+
+    def __init__(self, path):
+        # nek5000 reader requires vtk >= 9.3
+        if pyvista.vtk_version_info < (9, 3):
+            raise pyvista.VTKVersionError('Nek5000Reader is only available for vtk>=9.3')
+
+        super().__init__(path)
+
+    def _set_defaults_post(self) -> None:
+        self.set_active_time_point(0)
+
+    @property
+    def number_time_points(self):
+        """Return number of time points or iterations available to read.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.reader.GetNumberOfTimeSteps()
+
+    @property
+    def time_values(self):
+        """All time or iteration values.
+
+        Returns
+        -------
+        list[float]
+
+        """
+        vtkStreaming = _lazy_vtk_instantiation(
+            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
+        )
+        key = vtkStreaming.TIME_STEPS()
+
+        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
+
+    def time_point_value(self, time_point):
+        """Value of time point or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time point index.
+
+        Returns
+        -------
+        float
+
+        """
+        return self.time_values[time_point]
+
+    @property
+    def active_time_value(self):
+        """Active time or iteration value.
+
+        Returns
+        -------
+        float
+
+        """
+        vtkStreaming = _lazy_vtk_instantiation(
+            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
+        )
+        key = vtkStreaming.UPDATE_TIME_STEP()
+        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        return vtkinfo.Get(key)
+
+    @property
+    def active_time_point(self):
+        """Active time point.
+
+        Returns
+        -------
+        int
+
+        """
+        return self.time_values.index(self.active_time_value)
+
+    def set_active_time_value(self, time_value):
+        """Set active time or iteration value.
+
+        Parameters
+        ----------
+        time_value : float
+            Time or iteration value to set as active.
+
+        """
+        vtkStreaming = _lazy_vtk_instantiation(
+            'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
+        )
+        key = vtkStreaming.UPDATE_TIME_STEP()
+        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo.Set(key, time_value)
+
+        self.reader.Update()
+
+    def set_active_time_point(self, time_point):
+        """Set active time or iteration by index.
+
+        Parameters
+        ----------
+        time_point : int
+            Time or iteration point index for setting active time.
+
+        """
+        if time_point < 0 or time_point >= self.number_time_points:
+            raise ValueError(
+                f'Time point ({time_point}) out of range [0, {self.number_time_points-1}]'
+            )
+
+        self.set_active_time_value(self.time_values[time_point])
+
+    _cell_attr_err_msg = 'Nek5000 data does not contain cell arrays, this method cannot be used'
+
+    @property
+    def number_cell_arrays(self):  # noqa: D102
+        raise AttributeError(self._cell_attr_err_msg)
+
+    @property
+    def cell_array_names(self):  # noqa: D102
+        raise AttributeError(self._cell_attr_err_msg)
+
+    def enable_cell_array(self, name) -> None:  # noqa: D102
+        raise AttributeError(self._cell_attr_err_msg)
+
+    def disable_cell_array(self, name) -> None:  # noqa: D102
+        raise AttributeError(self._cell_attr_err_msg)
+
+    def cell_array_status(self, name):  # noqa: D102
+        raise AttributeError(self._cell_attr_err_msg)
+
+    def enable_all_cell_arrays(self) -> None:  # noqa: D102
+        raise AttributeError(self._cell_attr_err_msg)
+
+    def disable_all_cell_arrays(self) -> None:  # noqa: D102
+        raise AttributeError(self._cell_attr_err_msg)
+
+
 class DICOMReader(BaseReader):
     """DICOM Reader for reading ``.dcm`` files.
 
@@ -3123,6 +3286,7 @@ CLASS_READERS = {
     '.mhd': MetaImageReader,
     '.mnc': MINCImageReader,
     '.mr': GESignaReader,
+    '.nek5000': Nek5000Reader,
     '.neu': GambitReader,
     '.nhdr': NRRDReader,
     '.nii': NIFTIReader,
