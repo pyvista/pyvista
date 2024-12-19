@@ -207,12 +207,12 @@ def create_axes_marker(
     >>> marker = pv.create_axes_marker(
     ...     line_width=4,
     ...     ambient=0.0,
-    ...     x_color="#378df0",
-    ...     y_color="#ab2e5d",
-    ...     z_color="#f7fb9a",
-    ...     xlabel="X Axis",
-    ...     ylabel="Y Axis",
-    ...     zlabel="Z Axis",
+    ...     x_color='#378df0',
+    ...     y_color='#ab2e5d',
+    ...     z_color='#f7fb9a',
+    ...     xlabel='X Axis',
+    ...     ylabel='Y Axis',
+    ...     zlabel='Z Axis',
     ...     label_size=(0.1, 0.1),
     ... )
     >>> pl = pv.Plotter()
@@ -596,12 +596,9 @@ def opacity_transfer_function(mapping, n_colors, interpolate: bool = True, kind=
     --------
     >>> import pyvista as pv
     >>> # Fetch the `sigmoid` mapping between 0 and 255
-    >>> tf = pv.opacity_transfer_function("sigmoid", 256)
+    >>> tf = pv.opacity_transfer_function('sigmoid', 256)
     >>> # Fetch the `geom_r` mapping between 0 and 1
-    >>> tf = (
-    ...     pv.opacity_transfer_function("geom_r", 256).astype(float)
-    ...     / 255.0
-    ... )
+    >>> tf = pv.opacity_transfer_function('geom_r', 256).astype(float) / 255.0
     >>> # Interpolate a user defined opacity mapping
     >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
     >>> tf = pv.opacity_transfer_function(opacity, 256)

@@ -119,7 +119,7 @@ def KochanekSpline(
     >>> y = r * np.cos(theta)
     >>> points = np.column_stack((x, y, z))
     >>> kochanek_spline = pv.KochanekSpline(points, n_points=6)
-    >>> kochanek_spline.plot(line_width=4, color="k")
+    >>> kochanek_spline.plot(line_width=4, color='k')
 
     See :ref:`create_kochanek_spline_example` for an additional example.
 
