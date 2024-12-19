@@ -242,7 +242,8 @@ def read(
     if isinstance(filename, Sequence) and not isinstance(filename, str):
         multi = pyvista.MultiBlock()
         for each in filename:
-            multi.append(read(each, file_format=file_format), Path(each).name)  # type: ignore[arg-type]
+            name = Path(each).name if isinstance(each, (str, Path)) else None  # type: ignore[redundant-expr]
+            multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
         return multi
 
     filename = Path(filename).expanduser().resolve()
