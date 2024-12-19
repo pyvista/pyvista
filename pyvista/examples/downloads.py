@@ -7573,7 +7573,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     Create a surface mesh of the segmentation labels
 
-    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+    >>> labels_mesh = label_map.contour_labels(smoothing=True)
 
     Plot the CT image and segmentation labels together.
 
@@ -7717,7 +7717,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
     Create a surface mesh of the segmentation labels
 
-    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+    >>> labels_mesh = label_map.contour_labels(smoothing=True)
 
     Plot the CT image and segmentation labels together.
 
