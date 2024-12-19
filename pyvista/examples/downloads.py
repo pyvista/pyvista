@@ -8155,3 +8155,44 @@ def _full_head_files_func():  # pragma: no cover
 
 
 _dataset_full_head = _MultiFileDownloadableDatasetLoader(_full_head_files_func)
+
+
+def download_nek5000(load=True):
+    """Download 2D nek5000 data example.
+
+    .. versionadded:: 0.45.0
+
+    Parameters
+    ----------
+    load : bool, optional
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned. True requires
+        vtk >= 9.3.
+
+    Returns
+    -------
+    pyvista.UnstructuredGrid | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_nek5000()
+    >>> dataset.plot(scalars='Velocity', cpos='xy')
+
+    .. seealso::
+
+        :ref:`Nek5000 Dataset <nek5000_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_nek5000, load=load)
+
+
+def _nek_5000_download():  # pragma: no cover
+    nek5000 = _SingleFileDownloadableDatasetLoader('nek5000/eddy_uv.nek5000')
+    data_files = [_DownloadableFile(f'nek5000/eddy_uv0.f{str(i).zfill(5)}') for i in range(1, 12)]
+    return (nek5000, *data_files)
+
+
+_dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
