@@ -16,7 +16,7 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 faulthandler.enable()
 
 sys.path.insert(0, str(Path().resolve()))
-import duration
+import duration_extension
 import make_external_gallery
 import make_tables
 
@@ -698,8 +698,8 @@ def setup(app):  # noqa: D103
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
 
-    app.add_domain(duration.DurationDomain)
-    app.connect('builder-inited', duration.on_builder_inited)
-    app.connect('source-read', duration.on_source_read)
-    app.connect('doctree-read', duration.on_doctree_read)
-    app.connect('build-finished', duration.on_build_finished)
+    app.add_domain(duration_extension.DurationDomain)
+    app.connect('builder-inited', duration_extension.on_builder_inited)
+    app.connect('source-read', duration_extension.on_source_read)
+    app.connect('doctree-read', duration_extension.on_doctree_read)
+    app.connect('build-finished', duration_extension.on_build_finished)
