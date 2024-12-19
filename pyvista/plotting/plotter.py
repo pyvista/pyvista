@@ -4218,7 +4218,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # HACK: Make a copy so the original object is not altered.
             #       Also, place all data on the nodes as issues arise when
             #       volume rendering on the cells.
-            volume = volume.cell_data_to_point_data()
+            volume = volume.cell_data_to_point_data()  # type: ignore[unreachable]
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'

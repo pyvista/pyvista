@@ -5,6 +5,13 @@ ci:
   autoupdate_schedule: monthly
 
 repos:
+  - repo: https://github.com/keewis/blackdoc
+    rev: v0.3.9
+    hooks:
+      - id: blackdoc
+        args: ["--skip-string-normalization"]
+        types_or: [rst]
+
   - repo: https://github.com/codespell-project/codespell
     rev: v2.3.0
     hooks:

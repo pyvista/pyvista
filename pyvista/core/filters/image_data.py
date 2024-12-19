@@ -963,7 +963,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetOutputStyleToDefault()
         elif output_style == 'boundary':
             alg.SetOutputStyleToBoundary()
-        elif output_style == 'selected':
+        elif output_style == 'selected':  # type: ignore[unreachable]
             raise NotImplementedError(f'Output style "{output_style}" is not implemented')
         else:
             raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')

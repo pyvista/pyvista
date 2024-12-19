@@ -668,7 +668,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._decimate  # type: ignore[return-value]
 
     @decimate.setter
-    def decimate(self, decimate: float):
+    def decimate(self, decimate: float | None):
         if decimate is None:
             self._decimate = None
         else:
@@ -1072,7 +1072,7 @@ class _Font(_ThemeConfig):
         return self._title_size  # type: ignore[return-value]
 
     @title_size.setter
-    def title_size(self, title_size: int):
+    def title_size(self, title_size: int | None):
         if title_size is None:
             self._title_size = None
         else:
@@ -1093,7 +1093,7 @@ class _Font(_ThemeConfig):
         return self._label_size  # type: ignore[return-value]
 
     @label_size.setter
-    def label_size(self, label_size: int):
+    def label_size(self, label_size: int | None):
         if label_size is None:
             self._label_size = None
         else:
