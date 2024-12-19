@@ -3,7 +3,6 @@
 
 Load data using a Reader
 ~~~~~~~~~~~~~~~~~~~~~~~~
-
 """
 
 # sphinx_gallery_start_ignore

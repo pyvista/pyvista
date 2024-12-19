@@ -775,7 +775,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...     _ = chart_right.line([0, 1, 2], [3, 1, 2])
         ...     pl.add_chart(chart_right)
         ...     return pl, chart_left, chart_right
-        ...
         >>> pl, *_ = plotter_with_charts()
         >>> pl.show()
 
@@ -1698,9 +1697,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> mesh = examples.load_random_hills()
 
         >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(
-        ...     mesh, cmap='terrain', show_scalar_bar=False
-        ... )
+        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = plotter.show_bounds(
         ...     grid='back',
         ...     location='outer',
@@ -1717,9 +1714,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Hide labels, but still show axis titles.
 
         >>> plotter = pv.Plotter()
-        >>> actor = plotter.add_mesh(
-        ...     mesh, cmap='terrain', show_scalar_bar=False
-        ... )
+        >>> actor = plotter.add_mesh(mesh, cmap='terrain', show_scalar_bar=False)
         >>> actor = plotter.show_bounds(
         ...     grid='back',
         ...     location='outer',
@@ -2420,7 +2415,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> mesh = pv.Cube()
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh, show_edges=True)
-        >>> _ = pl.add_point_labels([mesh.points[1]], ["Focus"])
+        >>> _ = pl.add_point_labels([mesh.points[1]], ['Focus'])
         >>> _ = pl.camera  # this initializes the camera
         >>> pl.set_focus(mesh.points[1])
         >>> pl.show()
@@ -3160,8 +3155,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> pl = pv.Plotter(lighting="three lights")
-        >>> pl.background_color = "w"
+        >>> pl = pv.Plotter(lighting='three lights')
+        >>> pl.background_color = 'w'
         >>> for i in range(5):
         ...     mesh = pv.Sphere(center=(-i * 4, 0, 0))
         ...     color = [0, 255 - i * 20, 30 + i * 50]
@@ -3172,7 +3167,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...         metallic=1.0,
         ...         color=color,
         ...     )
-        ...
         >>> pl.camera.zoom(1.8)
         >>> pl.camera_position = [
         ...     (4.74, 0.959, 0.525),
@@ -3193,7 +3187,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pl = pv.Plotter(lighting="three lights")
+        >>> pl = pv.Plotter(lighting='three lights')
         >>> pl.enable_depth_of_field()
         >>> pl.disable_depth_of_field()
 
@@ -3454,9 +3448,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting=None)
         >>> cubemap = examples.download_sky_box_cube_map()
-        >>> _ = pl.add_mesh(
-        ...     pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4
-        ... )
+        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
         >>> pl.set_environment_texture(cubemap)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
@@ -3482,9 +3474,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> import pyvista as pv
         >>> pl = pv.Plotter(lighting=None)
         >>> cubemap = examples.download_sky_box_cube_map()
-        >>> _ = pl.add_mesh(
-        ...     pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4
-        ... )
+        >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, metallic=0.9, roughness=0.4)
         >>> pl.set_environment_texture(cubemap)
         >>> pl.remove_environment_texture()
         >>> pl.camera_position = 'xy'
@@ -3740,9 +3730,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> sphere = pv.Sphere(center=(0, 0, 1))
         >>> cube = pv.Cube()
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     sphere, 'grey', smooth_shading=True, label='Sphere'
-        ... )
+        >>> _ = plotter.add_mesh(sphere, 'grey', smooth_shading=True, label='Sphere')
         >>> _ = plotter.add_mesh(cube, 'r', label='Cube')
         >>> _ = plotter.add_legend(bcolor='w', face=None)
         >>> plotter.show()
@@ -3988,7 +3976,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> _ = plotter.add_ruler(
         ...     pointa=[cone.bounds.x_min, cone.bounds.y_min - 0.1, 0.0],
         ...     pointb=[cone.bounds.x_max, cone.bounds.y_min - 0.1, 0.0],
-        ...     title="X Distance",
+        ...     title='X Distance',
         ... )
 
         Measure y direction of cone and place ruler slightly to left.
@@ -3999,7 +3987,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         ...     pointa=[cone.bounds.x_min - 0.1, cone.bounds.y_max, 0.0],
         ...     pointb=[cone.bounds.x_min - 0.1, cone.bounds.y_min, 0.0],
         ...     flip_range=True,
-        ...     title="Y Distance",
+        ...     title='Y Distance',
         ... )
         >>> plotter.enable_parallel_projection()
         >>> plotter.view_xy()

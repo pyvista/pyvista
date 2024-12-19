@@ -567,13 +567,13 @@ class Color:
     integer RGBA sequence and RGBA hexadecimal string.
 
     >>> import pyvista as pv
-    >>> pv.Color("green", opacity=0.5)
+    >>> pv.Color('green', opacity=0.5)
     Color(name='green', hex='#00800080', opacity=128)
     >>> pv.Color([0.0, 0.5, 0.0, 0.5])
     Color(name='green', hex='#00800080', opacity=128)
     >>> pv.Color([0, 128, 0, 128])
     Color(name='green', hex='#00800080', opacity=128)
-    >>> pv.Color("#00800080")
+    >>> pv.Color('#00800080')
     Color(name='green', hex='#00800080', opacity=128)
 
     """
@@ -764,7 +764,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", opacity=128)
+        >>> c = pv.Color('blue', opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgba
@@ -790,7 +790,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", opacity=128)
+        >>> c = pv.Color('blue', opacity=128)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.int_rgb
@@ -816,7 +816,7 @@ class Color:
         Create a blue color with custom opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", opacity=0.6)
+        >>> c = pv.Color('blue', opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgba
@@ -842,7 +842,7 @@ class Color:
         Create a blue color with custom opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity=0.6)
+        >>> c = pv.Color('blue', default_opacity=0.6)
         >>> c
         Color(name='blue', hex='#0000ff99', opacity=153)
         >>> c.float_rgb
@@ -873,7 +873,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity="#80")
+        >>> c = pv.Color('blue', default_opacity='#80')
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgba
@@ -881,7 +881,7 @@ class Color:
 
         Create a transparent red color using an RGBA hexadecimal value.
 
-        >>> c = pv.Color("0xff000040")
+        >>> c = pv.Color('0xff000040')
         >>> c
         Color(name='red', hex='#ff000040', opacity=64)
         >>> c.hex_rgba
@@ -901,7 +901,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity="#80")
+        >>> c = pv.Color('blue', default_opacity='#80')
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.hex_rgb
@@ -909,7 +909,7 @@ class Color:
 
         Create a red color using an RGB hexadecimal value.
 
-        >>> c = pv.Color("0xff0000")
+        >>> c = pv.Color('0xff0000')
         >>> c
         Color(name='red', hex='#ff0000ff', opacity=255)
         >>> c.hex_rgb
@@ -937,18 +937,18 @@ class Color:
         Create a dark blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("darkblue", default_opacity=0.5)
+        >>> c = pv.Color('darkblue', default_opacity=0.5)
         >>> c
         Color(name='darkblue', hex='#00008b80', opacity=128)
 
         When creating a new ``Color``, the name may be delimited with a space,
         hyphen, underscore, or written as a single word.
 
-        >>> c = pv.Color("dark blue", default_opacity=0.5)
+        >>> c = pv.Color('dark blue', default_opacity=0.5)
 
         Upper-case letters are also supported.
 
-        >>> c = pv.Color("DarkBlue", default_opacity=0.5)
+        >>> c = pv.Color('DarkBlue', default_opacity=0.5)
 
         However, the name is always standardized as a single lower-case word.
 
@@ -967,7 +967,7 @@ class Color:
         Create a blue color with half opacity.
 
         >>> import pyvista as pv
-        >>> c = pv.Color("blue", default_opacity=0.5)
+        >>> c = pv.Color('blue', default_opacity=0.5)
         >>> c
         Color(name='blue', hex='#0000ff80', opacity=128)
         >>> c.vtk_c3ub
