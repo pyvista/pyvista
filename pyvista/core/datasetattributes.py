@@ -800,7 +800,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 if data.flags.c_contiguous:
                     # no reason to return a shallow copy if the array and name
                     # are identical, just return the underlying array name
-                    if not deep_copy and isinstance(name, str) and data.VTKObject.GetName() == name:
+                    if not deep_copy and data.VTKObject.GetName() == name:
                         return data.VTKObject
 
                     vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)
