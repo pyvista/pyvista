@@ -4269,13 +4269,6 @@ def download_sky_box_cube_map(load=True):  # pragma: no cover
 
     Examples
     --------
-    # >>> from pyvista import examples
-    # >>> import pyvista as pv
-    # >>> pl = pv.Plotter()
-    # >>> dataset = examples.download_sky_box_cube_map()
-    # >>> _ = pl.add_actor(dataset.to_skybox())
-    # >>> pl.set_environment_texture(dataset)
-    # >>> pl.show()
 
     .. seealso::
 
@@ -4337,16 +4330,6 @@ def download_cubemap_park(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> pl = pv.Plotter(lighting=None)
-    >>> dataset = examples.download_cubemap_park()
-    >>> _ = pl.add_actor(dataset.to_skybox())
-    >>> pl.set_environment_texture(dataset, True)
-    >>> pl.camera_position = 'xy'
-    >>> pl.camera.zoom(0.4)
-    >>> _ = pl.add_mesh(pv.Sphere(), pbr=True, roughness=0.1, metallic=0.5)
-    >>> pl.show()
 
     .. seealso::
 
@@ -4394,19 +4377,6 @@ def download_cubemap_space_4k(load=True):  # pragma: no cover
 
     Examples
     --------
-    Display the cubemap as both an environment texture and an actor.
-
-    # >>> import pyvista as pv
-    # >>> from pyvista import examples
-    # >>> cubemap = examples.download_cubemap_space_4k()
-    # >>> pl = pv.Plotter(lighting=None)
-    # >>> _ = pl.add_actor(cubemap.to_skybox())
-    # >>> pl.set_environment_texture(cubemap, True)
-    # >>> pl.camera.zoom(0.4)
-    # >>> _ = pl.add_mesh(
-    # ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
-    # ... )
-    # >>> pl.show()
 
     .. seealso::
 
@@ -4458,21 +4428,6 @@ def download_cubemap_space_16k(load=True):  # pragma: no cover
 
     Examples
     --------
-    Display the cubemap as both an environment texture and an actor. Note that
-    here we're displaying the 4k as the 16k is a bit too expensive to display
-    in the documentation.
-
-    # >>> import pyvista as pv
-    # >>> from pyvista import examples
-    # >>> cubemap = examples.download_cubemap_space_4k()
-    # >>> pl = pv.Plotter(lighting=None)
-    # >>> _ = pl.add_actor(cubemap.to_skybox())
-    # >>> pl.set_environment_texture(cubemap, True)
-    # >>> pl.camera.zoom(0.4)
-    # >>> _ = pl.add_mesh(
-    # ...     pv.Sphere(), pbr=True, roughness=0.24, metallic=1.0
-    # ... )
-    # >>> pl.show()
 
     .. seealso::
 
