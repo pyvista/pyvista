@@ -1005,7 +1005,7 @@ class Text3DSource(vtkVectorText):
         return self.GetText()
 
     @string.setter
-    def string(self: Text3DSource, string: str) -> None:
+    def string(self: Text3DSource, string: str | None) -> None:
         self.SetText('' if string is None else string)
 
     @property
@@ -1059,7 +1059,7 @@ class Text3DSource(vtkVectorText):
         return self._width
 
     @width.setter
-    def width(self: Text3DSource, width: float) -> None:
+    def width(self: Text3DSource, width: float | None) -> None:
         _check_range(width, rng=(0, float('inf')), parm_name='width') if width is not None else None
         self._width = width
 
@@ -1069,7 +1069,7 @@ class Text3DSource(vtkVectorText):
         return self._height
 
     @height.setter
-    def height(self: Text3DSource, height: float) -> None:
+    def height(self: Text3DSource, height: float | None) -> None:
         (
             _check_range(height, rng=(0, float('inf')), parm_name='height')
             if height is not None
@@ -1083,7 +1083,7 @@ class Text3DSource(vtkVectorText):
         return self._depth
 
     @depth.setter
-    def depth(self: Text3DSource, depth: float) -> None:
+    def depth(self: Text3DSource, depth: float | None) -> None:
         _check_range(depth, rng=(0, float('inf')), parm_name='depth') if depth is not None else None
         self._depth = depth
 
@@ -2297,9 +2297,9 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
             if kind not in self._kinds:
                 raise ValueError(f'Invalid Platonic solid kind "{kind}".')
             kind = self._kinds[kind]
-        elif isinstance(kind, int) and kind not in range(5):
+        elif kind not in range(5):
             raise ValueError(f'Invalid Platonic solid index "{kind}".')
-        elif not isinstance(kind, int):
+        else:
             raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
         self.SetSolidType(kind)
 
