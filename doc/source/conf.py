@@ -19,8 +19,6 @@ sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
 import make_tables
 import duration
-  
-N_DURATIONS = 100
 
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables()
@@ -703,4 +701,4 @@ def setup(app):  # noqa: D103
     app.connect('builder-inited', duration.on_builder_inited)
     app.connect('source-read', duration.on_source_read)
     app.connect('doctree-read', duration.on_doctree_read)
-    app.connect('build-finished', duration.on_build_finished, N_DURATIONS)
+    app.connect('build-finished', duration.on_build_finished)
