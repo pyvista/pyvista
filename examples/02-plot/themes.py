@@ -179,18 +179,10 @@ pl = pv.Plotter(theme=my_theme)
 pl.add_mesh(pv.Cube())
 cpos = pl.show()
 
-###############################################################################
-# An alternative to setting theme configurations via attributes is to use
-# dictionaries.
 
-my_theme = Theme.from_dict(
-    {'color': 'red', 'lighting': False, 'show_edges': True, 'axes': {'box': True}}
-)
-
-pv.global_theme.load_theme(my_theme)
-cpos = pv.Sphere().plot()
-
-###############################################################################
+# %%
+# Additional ways to create a custom Theme
+# ----------------------------------------
 # An alternative to setting theme configurations via attributes is to use
 # dictionaries.  This example uses the base
 # :func:`pyvista.plotting.themes.Theme` like ``Theme()`` and modifies using the
@@ -203,7 +195,7 @@ my_theme = Theme.from_dict(
 pv.global_theme.load_theme(my_theme)
 cpos = pv.Sphere().plot()
 
-###############################################################################
+# %%
 # An another alternative is setting the values via keyword args.
 
 my_theme = Theme(color='blue', show_edges=True)
@@ -211,8 +203,8 @@ my_theme = Theme(color='blue', show_edges=True)
 pv.global_theme.load_theme(my_theme)
 cpos = pv.Sphere().plot()
 
-###############################################################################
-# A theme can also be updated using a dictionary.  Here the global theme is
+# %%
+# # A theme can also be updated using a dictionary.  Here the global theme is
 # directly updated.
 
 pv.global_theme.update_from_dict({'show_edges': False})
