@@ -33,14 +33,14 @@ def promote_type(*types: type) -> Callable[[Any], Any]:
 
     Returns
     -------
-    type
+    Callable
         Decorated class.
 
     """
     return lambda obj: obj
 
 
-if importlib.util.find_spec('mypy'):
+if importlib.util.find_spec('mypy'):  # pragma: no cover
     from mypy.nodes import CallExpr
     from mypy.nodes import NameExpr
     from mypy.nodes import RefExpr

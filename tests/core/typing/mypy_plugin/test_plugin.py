@@ -10,7 +10,8 @@ import pytest
 from pyvista.typing.mypy_plugin import promote_type
 
 TEST_DIR = str(Path(__file__).parent)
-ROOT_DIR = str(Path(TEST_DIR).parent.parent.parent)
+ROOT_DIR = str(Path(TEST_DIR).parent.parent.parent.parent)
+assert 'tests' in os.listdir(ROOT_DIR)
 MYPY_CONFIG_FILE_NO_PLUGIN = str(Path(TEST_DIR) / 'mypy_no_plugin.ini')
 MYPY_CONFIG_FILE_USE_PLUGIN = str(Path(TEST_DIR) / 'mypy_use_plugin.ini')
 
@@ -60,7 +61,7 @@ cases = [
     ),
 ]
 
-# Skip linux tests - suspect issue getting the mypy config and paths set correctly
+# Skip linux tests - mypy doggedly insists on analyzing the entire pyvista repo and fails
 # There is still indirect coverage for 'linux' through the `mypy` CI
 @pytest.mark.skipif(sys.platform == 'linux', reason="Cannot configure test paths correctly.")
 @pytest.mark.parametrize(
@@ -94,8 +95,6 @@ def _run_mypy_code(code, use_plugin):
         os.chdir(ROOT_DIR)
 
         config = MYPY_CONFIG_FILE_USE_PLUGIN if use_plugin else MYPY_CONFIG_FILE_NO_PLUGIN
-        # Use follow-imports=silent, otherwise mypy will analyze the entire code base
-        # when importing the plugin
         args = ['mypy', '--show-traceback', '-c', code]
 
         args.extend(['--config-file', config])
