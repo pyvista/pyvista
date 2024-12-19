@@ -1184,6 +1184,98 @@ def test_grdecl_reader(tmp_path):
         _ = read(content, include_content_copy)
 
 
+def test_nek5000_reader():
+    # load nek5000 file
+    filename = examples.download_nek5000(load=False)
+
+    # this class only available for vtk versions >= 9.3
+    if pv.vtk_version_info < (9, 3):
+        with pytest.raises(pv.VTKVersionError):
+            _ = pv.get_reader(filename)
+        return
+
+    # test get_reader
+    nek_reader = pv.get_reader(filename)
+
+    # test time routines
+    ## Check correct number of time points
+    ntimes = 11
+    dt = 0.01
+    assert nek_reader.number_time_points == ntimes, 'Checks number of time points'
+    assert nek_reader.active_time_point == 0, 'Checks the first time set'
+
+    assert nek_reader.time_values == [dt * i for i in range(ntimes)]
+
+    ## check setting and getting of time points and times
+    for i in range(ntimes):
+        nek_reader.set_active_time_point(i)
+        assert nek_reader.active_time_point == i, 'check time point set'
+
+        t = i * dt
+        assert nek_reader.time_point_value(i) == t, 'Check correct times'
+
+        assert nek_reader.active_time_value == t, 'Check correct time set'
+
+    # check time setting based on time
+    for i in range(ntimes):
+        nek_reader.set_active_time_value(i * dt)
+        assert nek_reader.active_time_point == i, 'check time point set'
+
+    assert all(
+        array in nek_reader.point_array_names
+        for array in ['Pressure', 'Velocity', 'Velocity Magnitude']
+    )
+
+    match = re.escape('Time point (-1) out of range [0, 10]')
+    with pytest.raises(ValueError, match=match):
+        nek_reader.set_active_time_point(-1)
+
+    match = re.escape('Time point (11) out of range [0, 10]')
+    with pytest.raises(ValueError, match=match):
+        nek_reader.set_active_time_point(11)
+
+    # check deactivation of cell array routines
+    with pytest.raises(AttributeError):
+        _ = nek_reader.number_cell_arrays
+
+    with pytest.raises(AttributeError):
+        _ = nek_reader.cell_array_names
+
+    name = 'test'
+    with pytest.raises(AttributeError):
+        nek_reader.enable_cell_array(name)
+
+    with pytest.raises(AttributeError):
+        nek_reader.disable_cell_array(name)
+
+    with pytest.raises(AttributeError):
+        nek_reader.cell_array_status(name)
+
+    with pytest.raises(AttributeError):
+        nek_reader.enable_all_cell_arrays()
+
+    with pytest.raises(AttributeError):
+        nek_reader.disable_all_cell_arrays()
+
+    ## check enabling and disabling of point arrays
+    for name in nek_reader.point_array_names:
+        # Should be enabled by default
+        assert nek_reader.point_array_status(name)
+
+        nek_reader.disable_point_array(name)
+        assert not nek_reader.point_array_status(name)
+
+        nek_reader.enable_point_array(name)
+        assert nek_reader.point_array_status(name)
+
+    # check read() method produces the correct dataset
+    nek_data = nek_reader.read()
+    assert isinstance(nek_data, pv.UnstructuredGrid), 'Check read type is valid'
+    assert all(
+        key in nek_data.point_data.keys() for key in ['Pressure', 'Velocity', 'Velocity Magnitude']
+    )
+
+
 @pytest.mark.parametrize(
     ('data_object', 'ext'),
     [(pv.MultiBlock([examples.load_ant()]), '.pkl'), (examples.load_ant(), '.pickle')],
