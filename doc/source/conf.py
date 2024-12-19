@@ -695,3 +695,17 @@ def setup(app):  # noqa: D103
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+
+    from .duration import DurationDomain
+    from .duration import on_build_finished
+    from .duration import on_builder_inited
+    from .duration import on_doctree_read
+    from .duration import on_source_read
+
+    N_DURATIONS = 100
+
+    app.add_domain(DurationDomain)
+    app.connect('builder-inited', on_builder_inited)
+    app.connect('source-read', on_source_read)
+    app.connect('doctree-read', on_doctree_read)
+    app.connect('build-finished', on_build_finished, N_DURATIONS)
