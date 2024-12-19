@@ -94,10 +94,12 @@ def _run_mypy_code(code, use_plugin, tmp_path):
 
     cwd = Path.cwd()
     try:
-        os.chdir(ROOT_DIR)
+        #os.chdir(ROOT_DIR)
 
         config = MYPY_CONFIG_FILE_USE_PLUGIN if use_plugin else MYPY_CONFIG_FILE_NO_PLUGIN
-        args = ['mypy', '--show-traceback']
+        # Use '--follow-imports=skip' to only analyze the files passed to mypy
+        # otherwise it will analyze the entire pyvista library
+        args = ['mypy', '--show-traceback', '--follow-imports=skip']
 
         args.extend(['--config-file', config])
 
