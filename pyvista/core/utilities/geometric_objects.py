@@ -326,7 +326,7 @@ def Arrow(
     tip_resolution: int = 20,
     shaft_radius: float = 0.05,
     shaft_resolution: int = 20,
-    scale: float | Literal['auto'] = 1.0,
+    scale: float | Literal['auto'] | None = 1.0,
 ) -> PolyData:
     """Create an arrow.
 
