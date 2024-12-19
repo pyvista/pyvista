@@ -490,10 +490,7 @@ class AxesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the axes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
@@ -1552,10 +1549,7 @@ class PlanesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the planes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         attr = [
