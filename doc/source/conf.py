@@ -16,6 +16,7 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 faulthandler.enable()
 
 sys.path.insert(0, str(Path().resolve()))
+import duration_extension
 import make_external_gallery
 import make_tables
 
@@ -87,7 +88,6 @@ extensions = [
     'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.duration',
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
@@ -697,3 +697,9 @@ def setup(app):  # noqa: D103
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+
+    app.add_domain(duration_extension.DurationDomain)
+    app.connect('builder-inited', duration_extension.on_builder_inited)
+    app.connect('source-read', duration_extension.on_source_read)
+    app.connect('doctree-read', duration_extension.on_doctree_read)
+    app.connect('build-finished', duration_extension.on_build_finished)
