@@ -40,7 +40,7 @@ def _is_vtk(obj):
 
 
 @pytest.fixture
-def skip_check_gc(check_gc):  # noqa: PT004
+def skip_check_gc(check_gc):
     """Skip check_gc fixture."""
     check_gc.skip = True
 

@@ -69,10 +69,8 @@ def _generate_dataset_loader_test_cases_from_module(
 
     # Collect all `download_<name> or `load_<name>` functions
     def _is_dataset_function(name, item):
-        return (
-            isinstance(item, FunctionType)
-            and name.startswith('download_')
-            or name.startswith('load_')
+        return (isinstance(item, FunctionType) and name.startswith('download_')) or name.startswith(
+            'load_'
         )
 
     dataset_functions = {
