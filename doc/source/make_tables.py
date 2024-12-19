@@ -156,12 +156,14 @@ class DocTable:
     @classmethod
     def fetch_data(cls):
         """Get a list of row_data used to generate the table."""
-        raise NotImplementedError('Subclasses should specify a fetch_data method.')
+        msg = 'Subclasses should specify a fetch_data method.'
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_header(cls, data):
         """Get the table's header rst."""
-        raise NotImplementedError('Subclasses should specify a table header.')
+        msg = 'Subclasses should specify a table header.'
+        raise NotImplementedError(msg)
 
     @classmethod
     def get_row(cls, i, row_data):
@@ -170,7 +172,8 @@ class DocTable:
         Can return ``None`` if no row should be generated for the provided ``row_data``.
 
         """
-        raise NotImplementedError('Subclasses should specify a get_row method.')
+        msg = 'Subclasses should specify a get_row method.'
+        raise NotImplementedError(msg)
 
 
 class LineStyleTable(DocTable):
@@ -450,7 +453,8 @@ def _get_color_source_badge(name: str) -> str:
     elif name in _format_color_dict(_PARAVIEW_COLORS):
         return ':bdg-danger:`PV`'
     else:
-        raise KeyError(f'Invalid color name "{name}".')
+        msg = f'Invalid color name "{name}".'
+        raise KeyError(msg)
 
 
 def _sort_colors_by_hls(colors: Sequence[Color]):
@@ -532,10 +536,11 @@ def classify_color(color: Color) -> ColorClassification:
     elif VIOLET_UPPER_BOUND <= hue < MAGENTA_UPPER_BOUND:
         return ColorClassification.MAGENTA
     else:
-        raise RuntimeError(
+        msg = (
             f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, was not categorized. \n'
             f'Double-check classifier logic.'
         )
+        raise RuntimeError(msg)
 
 
 class ColorClassificationTable(ColorTable):
@@ -1144,7 +1149,8 @@ class DatasetCard:
             elif isinstance(badge, CellTypeBadge):
                 pass  # process these separately
             elif isinstance(badge, _BaseDatasetBadge):
-                raise NotImplementedError(f'No implementation for badge type {type(badge)}.')
+                msg = f'No implementation for badge type {type(badge)}.'
+                raise NotImplementedError(msg)
         all_badges = module_badges + datatype_badges + special_badges + category_badges
         return ' '.join([badge.generate() for badge in all_badges])
 

@@ -162,12 +162,14 @@ def _option_boolean(arg) -> bool:
     elif arg.strip().lower() in ('yes', '1', 'true'):
         return True
     else:  # pragma: no cover
-        raise ValueError(f'"{arg}" unknown boolean')
+        msg = f'"{arg}" unknown boolean'
+        raise ValueError(msg)
 
 
 def _option_context(arg):
     if arg is not None:  # pragma: no cover
-        raise ValueError('No arguments allowed for ``:context:``')
+        msg = 'No arguments allowed for ``:context:``'
+        raise ValueError(msg)
 
 
 def _option_format(arg):
@@ -517,9 +519,8 @@ def run(arguments, content, options, state_machine, state, lineno):
         # Enforce unambiguous use of captions.
         if 'caption' in options:
             if caption:  # pragma: no cover
-                raise ValueError(
-                    'Caption specified in both content and options. Please remove ambiguity.',
-                )
+                msg = 'Caption specified in both content and options. Please remove ambiguity.'
+                raise ValueError(msg)
             # Use caption option
             caption = options['caption']
 
