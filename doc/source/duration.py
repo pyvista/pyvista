@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-
 class DurationDomain(Domain):
     """A domain for durations of Sphinx processing."""
 
@@ -80,10 +79,11 @@ def on_build_finished(app: Sphinx, error: Exception, n_durations: int) -> None:
     if not domain.reading_durations:
         return
     durations = sorted(domain.reading_durations.items(), key=itemgetter(1), reverse=True)
-
+    n_durations = 100
+    
     logger.info('')
-    logger.info(__('====================== slowest reading durations ======================='))
+    logger.info(__(f'====================== slowest {n_durations} reading durations (seconds) ======================='))
     for docname, d in islice(durations, n_durations):
-        logger.info(f'{d:.3f} {docname}')  # NoQA: G004
+        logger.info(f'{int(d)} {docname}')
 
 
