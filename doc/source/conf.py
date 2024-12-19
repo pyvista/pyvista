@@ -18,6 +18,9 @@ faulthandler.enable()
 sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
 import make_tables
+import duration
+  
+N_DURATIONS = 100
 
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables()
@@ -695,10 +698,6 @@ def setup(app):  # noqa: D103
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
-
-    import duration
-
-    N_DURATIONS = 100
 
     app.add_domain(duration.DurationDomain)
     app.connect('builder-inited', duration.on_builder_inited)
