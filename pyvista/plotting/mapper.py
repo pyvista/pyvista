@@ -499,7 +499,7 @@ class _DataSetMapper(_BaseMapper):
         cmap=None,
         flip_scalars: bool = False,
         opacity=None,
-        categories: bool = False,
+        categories: bool | int = False,
         clim=None,
     ):
         """Set the scalars on this mapper.

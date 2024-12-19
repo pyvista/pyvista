@@ -902,12 +902,13 @@ class MultiBlock(
         """
         null_blocks = []
         for i in range(self.n_blocks):
-            if isinstance(self[i], MultiBlock):
+            data = self[i]
+            if isinstance(data, MultiBlock):
                 # Recursively move through nested structures
-                self[i].clean()  # type: ignore[union-attr]
-                if self[i].n_blocks < 1:  # type: ignore[union-attr]
+                data.clean()
+                if data.n_blocks < 1:
                     null_blocks.append(i)
-            elif self[i] is None or empty and self[i].n_points < 1:  # type: ignore[union-attr]
+            elif data is None or empty and data.n_points < 1:
                 null_blocks.append(i)
         # Now remove the null/empty meshes
         null_blocks = np.array(null_blocks, dtype=int)  # type: ignore[assignment]

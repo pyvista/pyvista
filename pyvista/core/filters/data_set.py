@@ -1080,8 +1080,8 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def slice_orthogonal(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+    def slice_orthogonal(
+        self: ConcreteDataSetType | MultiBlock,
         x: float | None = None,
         y: float | None = None,
         z: float | None = None,
@@ -1141,14 +1141,17 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
+                data = self[i]
                 output.append(
-                    self[i].slice_orthogonal(
+                    data.slice_orthogonal(
                         x=x,
                         y=y,
                         z=z,
                         generate_triangles=generate_triangles,
                         contour=contour,
-                    ),
+                    )
+                    if data is not None
+                    else data
                 )
             return output
         output.append(
@@ -1180,8 +1183,8 @@ class DataSetFilters:
         )
         return output
 
-    def slice_along_axis(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+    def slice_along_axis(
+        self: ConcreteDataSetType | MultiBlock,
         n: int = 5,
         axis: Literal['x', 'y', 'z', 0, 1, 2] = 'x',
         tolerance: float | None = None,
@@ -1283,8 +1286,9 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
+                data = self[i]
                 output.append(
-                    self[i].slice_along_axis(
+                    data.slice_along_axis(
                         n=n,
                         axis=ax_label,
                         tolerance=tolerance,
@@ -1292,7 +1296,9 @@ class DataSetFilters:
                         contour=contour,
                         bounds=bounds,
                         center=center,
-                    ),
+                    )
+                    if data is not None
+                    else data
                 )
             return output
         for i in range(n):
