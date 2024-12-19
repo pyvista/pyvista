@@ -19,6 +19,7 @@ within Jupyter:
 .. code-block:: python
 
     import pyvista as pv
+
     sphere = pv.Sphere()
 
     # short example
@@ -34,6 +35,7 @@ For convenience, you can enable ``trame`` by default with:
 .. code-block:: python
 
     import pyvista as pv
+
     pv.set_jupyter_backend('trame')
 
 
@@ -53,6 +55,7 @@ or passing ``jupyter_backend`` on the :func:`show() <pyvista.Plotter.show>` call
 .. code-block:: python
 
     import pyvista as pv
+
     pv.set_jupyter_backend('client')
 
     pv.Cone().plot()
@@ -61,6 +64,7 @@ or passing ``jupyter_backend`` on the :func:`show() <pyvista.Plotter.show>` call
 .. code-block:: python
 
     import pyvista as pv
+
     pv.set_jupyter_backend('trame')
 
     pl = pv.Plotter()

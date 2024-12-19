@@ -8,11 +8,11 @@ You can generate static and interactive scenes of pyvista plots using the
 
 .. code:: python
 
-   extensions = [
-       "pyvista.ext.plot_directive",
-       "pyvista.ext.viewer_directive",
-       "sphinx_design",
-   ]
+    extensions = [
+        "pyvista.ext.plot_directive",
+        "pyvista.ext.viewer_directive",
+        "sphinx_design",
+    ]
 
 You can then issue the plotting directive within your sphinx
 documentation files::

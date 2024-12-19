@@ -221,7 +221,7 @@ Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
 
 .. code:: python
 
-   import this
+    import this
 
 PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
@@ -243,14 +243,14 @@ and partially enforced for Python source files.
 These rules are enforced through the use of `Vale <https://vale.sh/>`_ via our
 GitHub Actions, and you can run Vale locally with:
 
-.. code::
+.. code:: bash
 
    pip install vale
    vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
 
 If you are on Linux or macOS, you can run:
 
-.. code::
+.. code:: bash
 
    make docstyle
 
@@ -387,6 +387,7 @@ directive.
     import warnings
     from pyvista.core.errors import PyVistaDeprecationWarning
 
+
     def addition(a, b):
         """Add two numbers.
 
@@ -410,7 +411,7 @@ directive.
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
         warnings.warn(
             '`addition` has been deprecated. Use pyvista.add instead',
-            PyVistaDeprecationWarning
+            PyVistaDeprecationWarning,
         )
         add(a, b)
 
@@ -621,15 +622,14 @@ the ``verify_image_cache`` fixture can be utilized:
 
 .. code:: python
 
-
-       def test_add_background_image_not_global(verify_image_cache):
-           verify_image_cache.skip = True  # Turn off caching
-           plotter = pyvista.Plotter()
-           plotter.add_mesh(sphere)
-           plotter.show()
-           # Turn on caching for further plotting
-           verify_image_cache.skip = False
-           ...
+    def test_add_background_image_not_global(verify_image_cache):
+        verify_image_cache.skip = True  # Turn off caching
+        plotter = pyvista.Plotter()
+        plotter.add_mesh(sphere)
+        plotter.show()
+        # Turn on caching for further plotting
+        verify_image_cache.skip = False
+        ...
 
 This ensures that immediately before the plotter is closed, the current
 render window will be verified against the image in CI. If no image
@@ -720,7 +720,7 @@ included in a single ``.py`` file. The test cases are all stored in
 
 The tests can be executed with:
 
-.. code:: python
+.. code:: bash
 
     pytest tests/core/typing
 
@@ -965,11 +965,14 @@ download the dataset in ``pyvista/examples/downloads.py``. This might be as easy
 
 .. code:: python
 
-   def download_my_new_mesh(load=True):
-       """Download my new mesh."""
-       return _download_dataset(_dataset_my_new_mesh, load=load)
+    def download_my_new_mesh(load=True):
+        """Download my new mesh."""
+        return _download_dataset(_dataset_my_new_mesh, load=load)
 
-    _dataset_my_new_mesh = _SingleFileDownloadableDatasetLoader('mydata/my_new_mesh.vtk')
+
+    _dataset_my_new_mesh = _SingleFileDownloadableDatasetLoader(
+        'mydata/my_new_mesh.vtk'
+    )
 
 Note that a separate dataset loading object, ``_dataset_my_new_mesh``, should
 first be defined outside of the function (with module scope), and the new
@@ -1004,21 +1007,21 @@ For example:
 
 .. code:: python
 
-   def download_my_new_mesh(load=True):
-      """Download my new mesh.
+    def download_my_new_mesh(load=True):
+        """Download my new mesh.
 
-      Examples
-      --------
-      >>> from pyvista import examples
-      >>> dataset = examples.download_my_new_mesh()
-      >>> dataset.plot()
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> dataset = examples.download_my_new_mesh()
+        >>> dataset.plot()
 
-      .. seealso::
+        .. seealso::
 
-         :ref:`My New Mesh Dataset <my_new_mesh_dataset>`
-             See this dataset in the Dataset Gallery for more info.
+           :ref:`My New Mesh Dataset <my_new_mesh_dataset>`
+               See this dataset in the Dataset Gallery for more info.
 
-      """
+        """
 
 .. note::
 

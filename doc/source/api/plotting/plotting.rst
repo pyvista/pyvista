@@ -127,8 +127,15 @@ values change through time:
 
 
     plotter = pvqt.BackgroundPlotter()
-    plotter.add_mesh(globe, lighting=False, show_edges=True, texture=texture, scalars='scalars')
+    plotter.add_mesh(
+        globe,
+        lighting=False,
+        show_edges=True,
+        texture=texture,
+        scalars='scalars',
+    )
     plotter.view_isometric()
+
 
     # shrink globe in the background
     def shrink():
@@ -137,6 +144,7 @@ values change through time:
             # Update scalars
             globe.point_data['scalars'] = np.random.rand(globe.n_points)
             time.sleep(0.5)
+
 
     thread = Thread(target=shrink)
     thread.start()

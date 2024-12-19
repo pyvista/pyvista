@@ -53,7 +53,9 @@ This is identical to plotting the mesh with the following parameters:
 .. pyvista-plot::
    :context:
 
-   >>> dragon.plot(cpos='xy', color='red', background='white', show_axes=False)
+   >>> dragon.plot(
+   ...     cpos='xy', color='red', background='white', show_axes=False
+   ... )
 
 
 Creating A Custom Theme
@@ -63,27 +65,27 @@ apply it globally with:
 
 .. code:: python
 
-   Create a theme based off the DocumentTheme
+    # Create a theme based off the DocumentTheme
 
-   >>> my_theme = pyvista.plotting.themes.DocumentTheme()
-   >>> my_theme.cmap = 'jet'
-   >>> my_theme.show_edges = True
+    my_theme = pyvista.plotting.themes.DocumentTheme()
+    my_theme.cmap = 'jet'
+    my_theme.show_edges = True
 
-   Apply it globally
+    # Apply it globally
 
-   >>> pyvista.global_theme.load_theme(my_theme)
+    pyvista.global_theme.load_theme(my_theme)
 
 Alternatively, you can save the theme to disk to be used later with:
 
 .. code:: python
 
-   >>> my_theme.save('my_theme.json')
+    my_theme.save('my_theme.json')
 
 And then subsequently loaded in a new session of pyvista with:
 
 .. code:: python
 
-   >>> pyvista.global_theme.load_theme('my_theme.json')
+    pyvista.global_theme.load_theme('my_theme.json')
 
 
 Theme API
