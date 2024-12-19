@@ -16,9 +16,9 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 faulthandler.enable()
 
 sys.path.insert(0, str(Path().resolve()))
+import duration
 import make_external_gallery
 import make_tables
-import duration
 
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables()

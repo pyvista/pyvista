@@ -2,28 +2,27 @@
 
 from __future__ import annotations
 
-import time
 from itertools import islice
 from operator import itemgetter
+import time
 from typing import TYPE_CHECKING
 
-import sphinx
 from sphinx.domains import Domain
 from sphinx.locale import __
 from sphinx.util import logging
 
 if TYPE_CHECKING:
-    from collections.abc import Set
     from typing import TypedDict
 
     from docutils import nodes
-
     from sphinx.application import Sphinx
 
     class _DurationDomainData(TypedDict):
         reading_durations: dict[str, float]
 
+
 logger = logging.getLogger(__name__)
+
 
 class DurationDomain(Domain):
     """A domain for durations of Sphinx processing."""
@@ -43,7 +42,7 @@ class DurationDomain(Domain):
     def clear_doc(self, docname: str) -> None:
         self.reading_durations.pop(docname, None)
 
-    def merge_domaindata(self, docnames: Set[str], otherdata: _DurationDomainData) -> None:  # type: ignore[override]
+    def merge_domaindata(self, docnames: set[str], otherdata: _DurationDomainData) -> None:  # type: ignore[override]
         other_reading_durations = otherdata.get('reading_durations', {})
         docnames_set = frozenset(docnames)
         for docname, duration in other_reading_durations.items():
@@ -80,10 +79,12 @@ def on_build_finished(app: Sphinx, error: Exception, n_durations: int) -> None:
         return
     durations = sorted(domain.reading_durations.items(), key=itemgetter(1), reverse=True)
     n_durations = 100
-    
+
     logger.info('')
-    logger.info(__(f'====================== slowest {n_durations} reading durations (seconds) ======================='))
+    logger.info(
+        __(
+            f'====================== slowest {n_durations} reading durations (seconds) ======================='
+        )
+    )
     for docname, d in islice(durations, n_durations):
         logger.info(f'{int(d)} {docname}')
-
-
