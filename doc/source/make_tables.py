@@ -39,6 +39,7 @@ import numpy as np
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.utilities.misc import classproperty
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
@@ -80,18 +81,6 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
-
-
-class classproperty(property):
-    """Read-only class property decorator.
-
-    Used as an alternative to chaining @classmethod and @property which is deprecated.
-
-    See https://stackoverflow.com/a/13624858
-    """
-
-    def __get__(self, owner_self, owner_cls):
-        return self.fget(owner_cls)
 
 
 def _aligned_dedent(txt):
