@@ -39,6 +39,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista import pyvista_ndarray
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._dataset_types import ConcreteDataObjectAlias
+    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
 
     from ..wrappers import _WrappableVTKDataObjectType
 
@@ -72,9 +74,13 @@ def wrap(dataset: _vtk.vtkPartitionedDataSet) -> PartitionedDataSet: ...
 
 # General catch-all cases
 @overload
-def wrap(dataset: _vtk.vtkDataSet) -> DataSet: ...
+def wrap(dataset: _vtk.vtkDataSet) -> ConcreteDataSetAlias: ...
 @overload
-def wrap(dataset: _vtk.vtkDataObject) -> DataObject: ...
+def wrap(dataset: DataSet) -> ConcreteDataSetAlias: ...
+@overload
+def wrap(dataset: _vtk.vtkDataObject) -> ConcreteDataObjectAlias: ...
+@overload
+def wrap(dataset: DataObject) -> ConcreteDataObjectAlias: ...
 
 
 # Misc overloads

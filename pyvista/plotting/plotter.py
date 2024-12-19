@@ -20,7 +20,6 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
-from typing import Union
 from typing import cast
 import uuid
 import warnings
@@ -4234,9 +4233,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     raise ValueError('Invalid resolution dimensions.')
                 volume.spacing = resolution
             else:
-                # TODO: implement `is_pyvista_dataset` with `typing_extensions.TypeIs`
-                #   to remove the need to cast the type here
-                volume = cast(Union[pyvista.MultiBlock, pyvista.DataSet], wrap(volume))
+                volume = wrap(volume)
                 if not is_pyvista_dataset(volume):
                     raise TypeError(
                         f'Object type ({type(volume)}) not supported for plotting in PyVista.',

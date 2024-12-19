@@ -83,41 +83,41 @@ pyvista.InteractionEventType
 .. autodata:: InteractionEventType
 
 
-Data Object Types
------------------
+Concrete Data Object Types
+--------------------------
 
-pyvista._GridType
-~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: _GridType
-
-pyvista._PointGridType
-~~~~~~~~~~~~~~~~~~~~~~
+pyvista.ConcreteGridType
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
-.. autotypevar:: _PointGridType
+.. autotypevar:: ConcreteGridType
 
-pyvista._PointSetType
-~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: pyvista
-
-.. autotypevar:: _PointSetType
-
-
-pyvista._DataSetType
-~~~~~~~~~~~~~~~~~~~~
+pyvista.ConcretePointGridType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
-.. autotypevar:: _DataSetType
+.. autotypevar:: ConcretePointGridType
 
-pyvista._DataObjectType
-~~~~~~~~~~~~~~~~~~~~~~~
+pyvista.ConcretePointSetType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: pyvista
 
-.. autotypevar:: _DataObjectType
+.. autotypevar:: ConcretePointSetType
+
+
+pyvista.ConcreteDataSetType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcreteDataSetType
+
+pyvista.ConcreteDataObjectType
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: pyvista
+
+.. autotypevar:: ConcreteDataObjectType

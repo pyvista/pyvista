@@ -17,7 +17,6 @@ import warnings
 import numpy as np
 
 import pyvista
-from pyvista.typing.mypy_plugin import promote_type
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
@@ -48,6 +47,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from typing_extensions import Self
 
+    from ._typing_core import ConcreteDataSetType
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
@@ -170,7 +170,6 @@ class ActiveArrayInfo:
         return False
 
 
-@promote_type(_vtk.vtkDataSet)
 @abstract_class
 class DataSet(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects.
@@ -582,8 +581,8 @@ class DataSet(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(
-        self: Self,
+    def arrows(  # type: ignore[misc]
+        self: ConcreteDataSetType,
     ) -> pyvista.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
@@ -1259,8 +1258,8 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetCenter()
 
     @property
-    def volume(
-        self: Self,
+    def volume(  # type: ignore[misc]
+        self: ConcreteDataSetType,
     ) -> float:
         """Return the mesh volume.
 
@@ -1300,8 +1299,8 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Volume'].sum().item()
 
     @property
-    def area(
-        self: Self,
+    def area(  # type: ignore[misc]
+        self: ConcreteDataSetType,
     ) -> float:
         """Return the mesh area if 2D.
 
@@ -1690,7 +1689,9 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self: Self, pass_cell_data: bool = False) -> pyvista.PointSet:
+    def cast_to_pointset(  # type: ignore[misc]
+        self: ConcreteDataSetType, pass_cell_data: bool = False
+    ) -> pyvista.PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1720,14 +1721,16 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         pset = pyvista.PointSet()
-        pset.points = self.points.copy()
+        pset.points = self.points.copy()  # type: ignore[assignment]
         if pass_cell_data:
             self = self.cell_data_to_point_data()
         pset.GetPointData().DeepCopy(self.GetPointData())
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def cast_to_poly_points(self: Self, pass_cell_data: bool = False) -> pyvista.PolyData:
+    def cast_to_poly_points(  # type: ignore[misc]
+        self: ConcreteDataSetType, pass_cell_data: bool = False
+    ) -> pyvista.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1843,7 +1846,7 @@ class DataSet(DataSetFilters, DataObject):
             raise ValueError('`n` must be a positive integer.')
 
         locator = _vtk.vtkPointLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
         if n > 1:
             id_list = _vtk.vtkIdList()
@@ -1957,7 +1960,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
 
         cell = _vtk.vtkGenericCell()
@@ -2042,7 +2045,7 @@ class DataSet(DataSetFilters, DataObject):
         point, singular = _coerce_pointslike_arg(point, copy=False)
 
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
 
         containing_cells = [locator.FindCell(node) for node in point]
@@ -2103,7 +2106,7 @@ class DataSet(DataSetFilters, DataObject):
         if np.array(pointb).size != 3:
             raise TypeError('Point B must be a length three tuple of floats.')
         locator = _vtk.vtkCellLocator()
-        locator.SetDataSet(self)
+        locator.SetDataSet(self)  # type: ignore[arg-type]
         locator.BuildLocator()
         id_list = _vtk.vtkIdList()
         locator.FindCellsAlongLine(
