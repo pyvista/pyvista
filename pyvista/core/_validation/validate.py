@@ -1052,9 +1052,7 @@ def validate_arrayN_unsigned(
 
     Add additional constraints if needed.
 
-    >>> _validation.validate_arrayN_unsigned(
-    ...     (1, 2, 3), must_be_in_range=[1, 3]
-    ... )
+    >>> _validation.validate_arrayN_unsigned((1, 2, 3), must_be_in_range=[1, 3])
     array([1, 2, 3])
 
     """
