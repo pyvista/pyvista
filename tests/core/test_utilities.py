@@ -1854,10 +1854,18 @@ def test_parse_interaction_event_raises_wrong_type():
 
 
 def test_classproperty():
+    magic_number = 42
+
+    @no_new_attr
     class Foo:
         @_classproperty
         def prop(cls):
-            return 42
+            return magic_number
 
-    assert Foo.prop == 42
-    assert Foo().prop == 42
+    assert Foo.prop == magic_number
+    assert Foo().prop == magic_number
+
+    with pytest.raises(TypeError, match='object is not callable'):
+        Foo.prop()
+    with pytest.raises(TypeError, match='object is not callable'):
+        Foo().prop()
