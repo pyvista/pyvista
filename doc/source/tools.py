@@ -10,7 +10,7 @@ from pathlib import Path
 def disable_doctest_in_file(file_path: str | Path):
     """Convert doctest syntax into rst literals for all docstrings in a file."""
     # Read the source code from the file
-    with Path.open(file_path) as source_file:
+    with Path.open(file_path, encoding='utf-8') as source_file:
         source_code = source_file.read()
 
     # Parse the source code into an AST
@@ -82,7 +82,7 @@ def disable_doctest_in_file(file_path: str | Path):
         source_lines[start_line:end_line] = new_doc_lines
 
     # Write the updated source code back to the file
-    with Path.open(file_path, 'w') as output_file:
+    with Path.open(file_path, 'w', encoding='utf-8') as output_file:
         output_file.write('\n'.join(source_lines))
 
 
