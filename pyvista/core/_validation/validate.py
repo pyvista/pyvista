@@ -69,7 +69,7 @@ def validate_array(
     must_be_finite: bool = False,
     must_be_real: bool = True,
     must_be_integer: bool = False,
-    must_be_sorted: bool = False,
+    must_be_sorted: bool | dict[str, Any] = False,
     must_be_in_range: VectorLike[float] | None = None,
     strict_lower_bound: bool = False,
     strict_upper_bound: bool = False,
@@ -1052,9 +1052,7 @@ def validate_arrayN_unsigned(
 
     Add additional constraints if needed.
 
-    >>> _validation.validate_arrayN_unsigned(
-    ...     (1, 2, 3), must_be_in_range=[1, 3]
-    ... )
+    >>> _validation.validate_arrayN_unsigned((1, 2, 3), must_be_in_range=[1, 3])
     array([1, 2, 3])
 
     """

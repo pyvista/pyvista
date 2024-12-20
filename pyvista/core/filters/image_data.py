@@ -80,9 +80,7 @@ class ImageDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pv.sample_function(
-        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
-        ... )
+        >>> grid = pv.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -179,9 +177,7 @@ class ImageDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> noise = pv.perlin_noise(0.1, (2, 5, 8), (0, 0, 0))
-        >>> grid = pv.sample_function(
-        ...     noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20)
-        ... )
+        >>> grid = pv.sample_function(noise, [0, 1, 0, 1, 0, 1], dim=(20, 20, 20))
         >>> grid.plot(show_scalar_bar=False)
 
         Next, smooth the sample data.
@@ -970,7 +966,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetOutputStyleToDefault()
         elif output_style == 'boundary':
             alg.SetOutputStyleToBoundary()
-        elif output_style == 'selected':
+        elif output_style == 'selected':  # type: ignore[unreachable]
             raise NotImplementedError(f'Output style "{output_style}" is not implemented')
         else:
             raise ValueError(f'Invalid output style "{output_style}", use "default" or "boundary"')
@@ -1547,9 +1543,7 @@ class ImageDataFilters(DataSetFilters):
         >>> image2D.dimensions
         (1920, 718, 1)
 
-        >>> pixel_cells_image = image2D.points_to_cells(
-        ...     dimensionality='preserve'
-        ... )
+        >>> pixel_cells_image = image2D.points_to_cells(dimensionality='preserve')
         >>> pixel_cells_image.dimensions
         (1921, 719, 1)
         >>> pixel_cells_image.get_cell(0).type
@@ -1557,9 +1551,7 @@ class ImageDataFilters(DataSetFilters):
 
         This is equivalent as requesting a 2D output.
 
-        >>> pixel_cells_image = image2D.points_to_cells(
-        ...     dimensionality='2D'
-        ... )
+        >>> pixel_cells_image = image2D.points_to_cells(dimensionality='2D')
         >>> pixel_cells_image.dimensions
         (1921, 719, 1)
         >>> pixel_cells_image.get_cell(0).type
@@ -1577,9 +1569,7 @@ class ImageDataFilters(DataSetFilters):
 
         Or request a 3D output.
 
-        >>> voxel_cells_image = image2D.points_to_cells(
-        ...     dimensionality='3D'
-        ... )
+        >>> voxel_cells_image = image2D.points_to_cells(dimensionality='3D')
         >>> voxel_cells_image.dimensions
         (1921, 719, 2)
         >>> voxel_cells_image.get_cell(0).type
@@ -2006,7 +1996,6 @@ class ImageDataFilters(DataSetFilters):
         ...     plot.view_xy()
         ...     plot.camera.tight()
         ...     return plot
-        ...
         >>>
         >>> plot = grayscale_image_plotter(padded)
         >>> plot.show()
@@ -2036,9 +2025,7 @@ class ImageDataFilters(DataSetFilters):
         >>> red = (255, 0, 0, 255)  # RGBA
         >>> padded = color_image.pad_image(pad_value=red, pad_size=200)
         >>>
-        >>> plot_kwargs = dict(
-        ...     cpos='xy', zoom='tight', rgb=True, show_axes=False
-        ... )
+        >>> plot_kwargs = dict(cpos='xy', zoom='tight', rgb=True, show_axes=False)
         >>> padded.plot(**plot_kwargs)
 
         Pad each edge of the image separately with a different color.
@@ -2342,7 +2329,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> segmented_grid = pv.ImageData(dimensions=(4, 3, 3))
-        >>> segmented_grid.cell_data["Data"] = [
+        >>> segmented_grid.cell_data['Data'] = [
         ...     0,
         ...     0,
         ...     0,
