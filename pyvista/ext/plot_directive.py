@@ -11,9 +11,9 @@ The source code for the plot may be included in one of two ways:
 
     .. pyvista-plot::
 
-       >>> import pyvista as pv
-       >>> sphere = pv.Sphere()
-       >>> out = sphere.plot()
+       ``>>> import pyvista as pv``
+       ``>>> sphere = pv.Sphere()``
+       ``>>> out = sphere.plot()``
 
 2. **A path to a source file** as the argument to the directive::
 
@@ -117,7 +117,6 @@ The plot directive has the following configuration options:
 
 These options can be set by defining global variables of the same name in
 :file:`conf.py`.
-
 """
 
 from __future__ import annotations
@@ -260,10 +259,10 @@ def _split_code_at_show(text):
 
     Includes logic to deal with edge cases like:
 
-    >>> import pyvista as pv
-    >>> pv.Sphere().plot(color='blue', cpos='xy')
+    ``>>> import pyvista as pv``
+    ``>>> pv.Sphere().plot(color='blue', cpos='xy')``
 
-    >>> pv.Sphere().plot(color='red', cpos='xy')
+    ``>>> pv.Sphere().plot(color='red', cpos='xy')``
 
     """
     parts = []
@@ -276,18 +275,19 @@ def _split_code_at_show(text):
 
         # check if show(...) or plot(...) is within the line
         line = _strip_comments(line)
-        if within_plot:  # allow for multi-line plot(...
-            if _strip_comments(line).endswith(')'):
-                parts.append('\n'.join(part))
-                part = []
-                within_plot = False
+        if not line.startswith('``'):
+            if within_plot:  # allow for multi-line plot(...
+                if _strip_comments(line).endswith(')'):
+                    parts.append('\n'.join(part))
+                    part = []
+                    within_plot = False
 
-        elif '.show(' in line or '.plot(' in line:
-            if _strip_comments(line).endswith(')'):
-                parts.append('\n'.join(part))
-                part = []
-            else:  # allow for multi-line plot(...
-                within_plot = True
+            elif '.show(' in line or '.plot(' in line:
+                if _strip_comments(line).endswith(')'):
+                    parts.append('\n'.join(part))
+                    part = []
+                else:  # allow for multi-line plot(...
+                    within_plot = True
 
     if '\n'.join(part).strip():
         parts.append('\n'.join(part))
