@@ -1,3 +1,5 @@
+"""Add ifconfig directive to doctests in docstrings."""
+
 from __future__ import annotations
 
 import ast
@@ -5,7 +7,7 @@ import doctest
 from pathlib import Path
 
 
-def replace_snippets_with_ifconfig(file_path: str):
+def _add_ifconfig_to_file(file_path: str | Path):
     # Read the source code from the file
     with Path.open(file_path) as source_file:
         source_code = source_file.read()
@@ -35,8 +37,13 @@ def replace_snippets_with_ifconfig(file_path: str):
                     if isinstance(doc_part, doctest.Example):
                         # Replace doctest code examples with the :ifconfig: directive
                         # Add a placehold so it can be replaced with indentation later
-                        code_line = doc_part.source
-                        directive = f'\n{placeholder}:ifconfig: show\n\n{placeholder}    # >>> {code_line.strip()}\n'
+                        directive = (
+                            f'\n'
+                            f'{placeholder}:ifconfig: enable_doctest\n\n'
+                            f'{placeholder}    >>> {doc_part.source}'
+                        )
+                        if doc_part.want is not None:
+                            directive += f'{placeholder}    {doc_part.want}'
                         transformed_docstring_parts.append(directive)
                     else:
                         # Append non-example parts unchanged
@@ -76,4 +83,10 @@ def replace_snippets_with_ifconfig(file_path: str):
     with Path.open(file_path, 'w') as output_file:
         output_file.write('\n'.join(source_lines))
 
-    print(f'Updated file: {file_path}')
+
+def _add_ifconfig_to_files_recursively(dirname: Path | str):
+    def get_python_files(dir_: str):
+        return [str(file) for file in Path(dir_).rglob('*.py')]
+
+    for file in get_python_files(dirname):
+        _add_ifconfig_to_file(file)

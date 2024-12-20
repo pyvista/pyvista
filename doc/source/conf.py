@@ -23,8 +23,13 @@ import make_tables
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables()
 
-# -- pyvista configuration ---------------------------------------------------
+import ifconfig
+
 import pyvista
+
+ifconfig._add_ifconfig_to_files_recursively(Path(pyvista.__file__).parent)
+
+# -- pyvista configuration ---------------------------------------------------
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
@@ -696,6 +701,8 @@ def setup(app):  # noqa: D103
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
+
+    app.add_config_value('enable_doctest', False, 'env')
 
     app.add_domain(duration_extension.DurationDomain)
     app.connect('builder-inited', duration_extension.on_builder_inited)
