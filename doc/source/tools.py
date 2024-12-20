@@ -26,8 +26,14 @@ def disable_doctest_in_file(file_path: str | Path):
     for ast_node in ast.walk(parsed_tree):
         if isinstance(ast_node, (ast.FunctionDef, ast.ClassDef, ast.Module)):
             original_docstring = ast.get_docstring(ast_node, clean=False)
-
+            # Store the start and end line numbers for the docstring replacement
+            start_line_number = ast_node.body[0].lineno - 1
+            end_line_number = ast_node.body[0].end_lineno
             if original_docstring:
+                # Check if the docstring is raw (check for 'r' or 'R' prefix)
+                is_raw = source_lines[start_line_number].strip().startswith(('r"""', 'R"""'))
+                prefix = 'r' if is_raw else ''
+
                 # Parse the docstring using doctest to extract code examples
                 parsed_examples = doctest.DocTestParser().parse(original_docstring)
                 transformed_docstring_parts = []
@@ -54,15 +60,12 @@ def disable_doctest_in_file(file_path: str | Path):
                 # Reassemble the transformed docstring
                 transformed_docstring = ''.join(transformed_docstring_parts)
 
-                # Store the start and end line numbers for the docstring replacement
-                start_line_number = ast_node.body[0].lineno - 1
-                end_line_number = ast_node.body[0].end_lineno
                 docstring_replacements.append(
-                    (start_line_number, end_line_number, transformed_docstring)
+                    (prefix, start_line_number, end_line_number, transformed_docstring)
                 )
 
     # Apply the replacements to the original source code lines
-    for start_line, end_line, new_docstring in sorted(docstring_replacements, reverse=True):
+    for prefix, start_line, end_line, new_docstring in sorted(docstring_replacements, reverse=True):
         # Calculate the indentation of the docstring
         docstring_indent = ' ' * (
             len(source_lines[start_line]) - len(source_lines[start_line].lstrip())
@@ -72,7 +75,7 @@ def disable_doctest_in_file(file_path: str | Path):
         new_doc_lines = new_docstring.splitlines()
 
         # Add triple quotes to docstring
-        new_doc_lines[0] = f'{docstring_indent}"""' + new_doc_lines[0].lstrip()
+        new_doc_lines[0] = f'{docstring_indent}{prefix}"""' + new_doc_lines[0].lstrip()
         new_doc_lines[-1] = new_doc_lines[-1].rstrip() + f'{docstring_indent}"""'
 
         # Replace the original docstring lines with the new ones
