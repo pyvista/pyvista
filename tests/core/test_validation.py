@@ -124,6 +124,9 @@ def test_check_subdtype():
         check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
 
+@pytest.mark.filterwarnings(
+    'ignore:Converting `np.inexact` or `np.floating` to a dtype is deprecated. The current result is `float64` which is not strictly correct.:DeprecationWarning'
+)
 def test_check_subdtype_changes_type():
     # test coercing some types (e.g. np.number) can lead to unexpected
     # failed `np.issubtype` checks due to an implicit change of type
