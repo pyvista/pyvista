@@ -71,10 +71,6 @@ DATASET_GALLERY_IMAGE_DIR = '../_build/plot_directive/api/examples/_autosummary'
 # Generated docstring images are assumed to have '.png' extension
 # Define special cases for specific datasets here. Use `None` if no image is generated.
 DATASET_GALLERY_IMAGE_EXT_DICT = {
-    'cubemap_park': None,
-    'cubemap_space_4k': None,
-    'cubemap_space_16k': None,
-    'sky_box_cube_map': None,
     'can': None,
     'cavity': None,
     'osmnx_graph': None,
@@ -1002,7 +998,9 @@ class DatasetCard:
             dimensions,
             spacing,
             n_arrays,
-        ) = DatasetCard._generate_dataset_properties(self.loader)
+        ) = DatasetCard._generate_dataset_properties(
+            self.loader, force_none=self.loader.dataset is None
+        )
 
         # Generate rst for badges
         carousel_badges = self._generate_carousel_badges(self._badges)
@@ -1058,31 +1056,35 @@ class DatasetCard:
         return card_no_ref, card_with_ref
 
     @staticmethod
-    def _generate_dataset_properties(loader):
-        try:
-            # Get data from loader
-            if isinstance(loader, _Downloadable):
-                loader.download()
+    def _generate_dataset_properties(loader, force_none=False):
+        if not force_none:
+            try:
+                # # Get data from loader
+                # if isinstance(loader, _Downloadable):
+                #     loader.download()
 
-            # properties collected by the loader
-            file_size = DatasetPropsGenerator.generate_file_size(loader)
-            num_files = DatasetPropsGenerator.generate_num_files(loader)
-            file_ext = DatasetPropsGenerator.generate_file_ext(loader)
-            reader_type = DatasetPropsGenerator.generate_reader_type(loader)
-            dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
-            datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
+                # properties collected by the loader
+                file_size = DatasetPropsGenerator.generate_file_size(loader)
+                num_files = DatasetPropsGenerator.generate_num_files(loader)
+                file_ext = DatasetPropsGenerator.generate_file_ext(loader)
+                reader_type = DatasetPropsGenerator.generate_reader_type(loader)
+                dataset_type = DatasetPropsGenerator.generate_dataset_type(loader)
+                datasource_links = DatasetPropsGenerator.generate_datasource_links(loader)
 
-            # properties collected directly from the dataset
-            n_cells = DatasetPropsGenerator.generate_n_cells(loader)
-            n_points = DatasetPropsGenerator.generate_n_points(loader)
-            length = DatasetPropsGenerator.generate_length(loader)
-            dimensions = DatasetPropsGenerator.generate_dimensions(loader)
-            spacing = DatasetPropsGenerator.generate_spacing(loader)
-            n_arrays = DatasetPropsGenerator.generate_n_arrays(loader)
+                # properties collected directly from the dataset
+                n_cells = DatasetPropsGenerator.generate_n_cells(loader)
+                n_points = DatasetPropsGenerator.generate_n_points(loader)
+                length = DatasetPropsGenerator.generate_length(loader)
+                dimensions = DatasetPropsGenerator.generate_dimensions(loader)
+                spacing = DatasetPropsGenerator.generate_spacing(loader)
+                n_arrays = DatasetPropsGenerator.generate_n_arrays(loader)
 
-        except VTKVersionError:
-            # Exception is caused by 'download_can'
-            # Set default values
+            except VTKVersionError:
+                # Exception is caused by 'download_can'
+                # Set default values
+                force_none = True
+
+        if force_none:
             NOT_AVAILABLE = '``Not available``'
             file_size = NOT_AVAILABLE
             num_files = NOT_AVAILABLE
@@ -1493,6 +1495,8 @@ class DatasetPropsGenerator:
 class DatasetCardFetcher:
     """Class for storing and retrieving dataset card info."""
 
+    LOAD_DATASETS = True  # Set to False to disable loading datasets
+
     # Dict of all card objects
     DATASET_CARDS_OBJ: ClassVar[dict[str, DatasetCard]] = {}
 
@@ -1534,16 +1538,17 @@ class DatasetCardFetcher:
 
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
-                # Load data
-                try:
-                    if isinstance(dataset_loader, _Downloadable):
-                        dataset_loader.download()
-                except pyvista.VTKVersionError:
-                    # caused by 'download_can', this error is handled later
-                    pass
-                else:
-                    dataset_loader.load_and_store_dataset()
-                    assert dataset_loader.dataset is not None
+                if cls.LOAD_DATASETS:
+                    # Load data
+                    try:
+                        if isinstance(dataset_loader, _Downloadable):
+                            dataset_loader.download()
+                    except pyvista.VTKVersionError:
+                        # caused by 'download_can', this error is handled later
+                        pass
+                    else:
+                        dataset_loader.load_and_store_dataset()
+                        assert dataset_loader.dataset is not None
 
     @classmethod
     def generate_rst_all_cards(cls):
@@ -1657,7 +1662,8 @@ class DatasetCardFetcher:
                 if keep:
                     names_dict[name] = None
         names_list = list(names_dict.keys())
-        assert len(names_list) > 0, f'No datasets were matched by the filter {filter_func}.'
+        if cls.LOAD_DATASETS:
+            assert len(names_list) > 0, f'No datasets were matched by the filter {filter_func}.'
         return names_list
 
     @classmethod
@@ -1875,7 +1881,8 @@ class DatasetGalleryCarousel(DocTable):
 
         badge_info = f':Section Badge: {cls.badge.generate()}' if cls.badge else ''
         num_datasets = len(data)
-        assert num_datasets > 0, f'No datasets were found for carousel {cls}.'
+        if DatasetCardFetcher.LOAD_DATASETS:
+            assert num_datasets > 0, f'No datasets were found for carousel {cls}.'
         return cls.header_template.format(cls.doc, badge_info, num_datasets)
 
     @classmethod
@@ -2216,8 +2223,9 @@ class MedicalCarousel(DatasetGalleryCarousel):
         )
 
 
-def make_all_carousels(carousels: list[DatasetGalleryCarousel]):  # noqa: D103
+def make_all_carousels(carousels: list[DatasetGalleryCarousel], load_datasets=True):  # noqa: D103
     # Load datasets and create card objects
+    DatasetCardFetcher.LOAD_DATASETS = load_datasets
     DatasetCardFetcher.init_cards()
 
     # Create lists of dataset names for each carousel
@@ -2267,7 +2275,7 @@ CAROUSEL_LIST = [
 ]
 
 
-def make_all_tables():  # noqa: D103
+def make_all_tables(load_datasets=True):  # noqa: D103
     # Make color and chart tables
     os.makedirs(CHARTS_IMAGE_DIR, exist_ok=True)
     os.makedirs(COLORS_TABLE_DIR, exist_ok=True)
@@ -2290,7 +2298,7 @@ def make_all_tables():  # noqa: D103
 
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
-    make_all_carousels(CAROUSEL_LIST)
+    make_all_carousels(CAROUSEL_LIST, load_datasets=load_datasets)
 
 
 if __name__ == '__main__':

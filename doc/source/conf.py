@@ -23,11 +23,12 @@ from tools import disable_doctest_in_package
 
 import pyvista
 
-make_external_gallery.make_example_gallery()
-make_tables.make_all_tables()
-
-disable_doctest_in_package(pyvista)
 os.environ['DISABLE_DOCTEST'] = 'True'
+DISABLE_DOCTEST = os.environ['DISABLE_DOCTEST']
+
+make_external_gallery.make_example_gallery()
+make_tables.make_all_tables(load_datasets=not DISABLE_DOCTEST)
+disable_doctest_in_package(pyvista)
 
 # -- pyvista configuration ---------------------------------------------------
 from pyvista.core.errors import PyVistaDeprecationWarning
