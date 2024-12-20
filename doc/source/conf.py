@@ -17,16 +17,16 @@ faulthandler.enable()
 
 sys.path.insert(0, str(Path().resolve()))
 import duration_extension
-import ifconfig
 import make_external_gallery
 import make_tables
+from tools import disable_doctest_in_package
 
 import pyvista
 
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables()
 
-ifconfig._add_ifconfig_to_files_recursively(pyvista.core)
+disable_doctest_in_package(pyvista)
 
 # -- pyvista configuration ---------------------------------------------------
 from pyvista.core.errors import PyVistaDeprecationWarning

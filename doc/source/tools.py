@@ -7,7 +7,8 @@ import doctest
 from pathlib import Path
 
 
-def _add_ifconfig_to_file(file_path: str | Path):
+def disable_doctest_in_file(file_path: str | Path):
+    """Convert doctest syntax into rst literals for all docstrings in a file."""
     # Read the source code from the file
     with Path.open(file_path) as source_file:
         source_code = source_file.read()
@@ -82,9 +83,11 @@ def _add_ifconfig_to_file(file_path: str | Path):
         output_file.write('\n'.join(source_lines))
 
 
-def _add_ifconfig_to_files_recursively(package):
+def disable_doctest_in_package(package):
+    """Convert doctest syntax into rst literals for all docstrings in a package."""
+
     def get_python_files(dir_: str):
         return [str(file) for file in Path(dir_).rglob('*.py')]
 
     for file in get_python_files(Path(package.__file__).parent):
-        _add_ifconfig_to_file(file)
+        disable_doctest_in_file(file)
