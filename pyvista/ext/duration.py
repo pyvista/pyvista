@@ -87,4 +87,12 @@ def on_build_finished(app: Sphinx, error: Exception) -> None:
         )
     )
     for docname, d in islice(durations, n_durations):
-        logger.info(f'{int(d)} {docname}')
+        logger.info(f'{d:.3f} {docname}')
+
+
+def setup(app):
+    app.add_domain(DurationDomain)
+    app.connect('builder-inited', on_builder_inited)
+    app.connect('source-read', on_source_read)
+    app.connect('doctree-read', on_doctree_read)
+    app.connect('build-finished', on_build_finished)
