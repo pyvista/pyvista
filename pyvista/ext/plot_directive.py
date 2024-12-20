@@ -484,6 +484,8 @@ def render_figures(
 
 def run(arguments, content, options, state_machine, state, lineno):
     """Run the plot directive."""
+    if os.environ.get('DISABLE_DOCTEST'):
+        return None
     document = state_machine.document
     config = document.settings.env.config
     nofigs = 'nofigs' in options
