@@ -438,7 +438,7 @@ def validate_axes(
             must_contain=must_have_orientation,
             name=f'{name} orientation',
         )
-    elif must_have_orientation is None and len(axes) == 2:
+    elif len(axes) == 2:
         raise ValueError(f'{name} orientation must be specified when only two vectors are given.')
 
     # Validate axes array
