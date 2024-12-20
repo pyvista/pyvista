@@ -630,7 +630,7 @@ def test_save(sphere, extension, binary, tmpdir):
     if extension == '.vtkhdf' and not binary:
         with pytest.raises(ValueError, match='.vtkhdf files can only be written in binary format'):
             sphere.save(filename, binary)
-        pytest.exit(returncode=0)
+        return
 
     sphere.save(filename, binary)
     if binary:
