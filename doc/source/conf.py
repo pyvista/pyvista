@@ -26,7 +26,7 @@ import pyvista
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables()
 
-disable_doctest_in_package(pyvista.core)
+disable_doctest_in_package(pyvista.core.utilities.misc)
 
 # -- pyvista configuration ---------------------------------------------------
 from pyvista.core.errors import PyVistaDeprecationWarning
