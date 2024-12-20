@@ -17,17 +17,16 @@ faulthandler.enable()
 
 sys.path.insert(0, str(Path().resolve()))
 import duration_extension
+import ifconfig
 import make_external_gallery
 import make_tables
+
+import pyvista
 
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables()
 
-import ifconfig
-
-import pyvista
-
-ifconfig._add_ifconfig_to_files_recursively(Path(pyvista.__file__).parent)
+ifconfig._add_ifconfig_to_files_recursively(pyvista.core)
 
 # -- pyvista configuration ---------------------------------------------------
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -701,8 +700,6 @@ def setup(app):  # noqa: D103
     app.connect('html-page-context', pv_html_page_context)
     app.add_css_file('copybutton.css')
     app.add_css_file('no_search_highlight.css')
-
-    app.add_config_value('enable_doctest', False, 'env')
 
     app.add_domain(duration_extension.DurationDomain)
     app.connect('builder-inited', duration_extension.on_builder_inited)

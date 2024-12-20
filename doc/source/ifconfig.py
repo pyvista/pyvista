@@ -21,7 +21,6 @@ def _add_ifconfig_to_file(file_path: str | Path):
     # List to store docstring replacements
     docstring_replacements = []
 
-    placeholder = '???'  # unique characters we can easily find and replace
     # Traverse the AST and find docstrings to replace code snippets
     for ast_node in ast.walk(parsed_tree):
         if isinstance(ast_node, (ast.FunctionDef, ast.ClassDef, ast.Module)):
@@ -37,14 +36,16 @@ def _add_ifconfig_to_file(file_path: str | Path):
                     if isinstance(doc_part, doctest.Example):
                         # Replace doctest code examples with the :ifconfig: directive
                         # Add a placehold so it can be replaced with indentation later
-                        directive = (
-                            f'\n'
-                            f'{placeholder}:ifconfig: enable_doctest\n\n'
-                            f'{placeholder}    >>> {doc_part.source}'
+                        indent = doc_part.indent * ' '
+
+                        code = ''.join(
+                            [f'{indent}``>>> {line}``\n' for line in doc_part.source.splitlines()]
                         )
-                        if doc_part.want is not None:
-                            directive += f'{placeholder}    {doc_part.want}'
-                        transformed_docstring_parts.append(directive)
+                        want = ''.join(
+                            [f'{indent}``{line}``\n' for line in doc_part.want.splitlines()]
+                        )
+
+                        transformed_docstring_parts.append(code + want)
                     else:
                         # Append non-example parts unchanged
                         transformed_docstring_parts.append(str(doc_part))
@@ -67,10 +68,7 @@ def _add_ifconfig_to_file(file_path: str | Path):
         )
 
         # Add indentation to new directive lines using the placeholder
-        new_doc_lines = [
-            line.replace(placeholder, docstring_indent) if line.startswith(placeholder) else line
-            for line in new_docstring.splitlines()
-        ]
+        new_doc_lines = new_docstring.splitlines()
 
         # Add triple quotes to docstring
         new_doc_lines[0] = f'{docstring_indent}"""' + new_doc_lines[0].lstrip()
@@ -84,9 +82,9 @@ def _add_ifconfig_to_file(file_path: str | Path):
         output_file.write('\n'.join(source_lines))
 
 
-def _add_ifconfig_to_files_recursively(dirname: Path | str):
+def _add_ifconfig_to_files_recursively(package):
     def get_python_files(dir_: str):
         return [str(file) for file in Path(dir_).rglob('*.py')]
 
-    for file in get_python_files(dirname):
+    for file in get_python_files(Path(package.__file__).parent):
         _add_ifconfig_to_file(file)
