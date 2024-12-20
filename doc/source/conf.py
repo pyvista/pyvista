@@ -16,10 +16,10 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 faulthandler.enable()
 
 sys.path.insert(0, str(Path().resolve()))
+import disable_doctest
 import duration_extension
 import make_external_gallery
 import make_tables
-from tools import disable_doctest_in_package
 
 import pyvista
 
@@ -28,7 +28,8 @@ DISABLE_DOCTEST = os.environ['DISABLE_DOCTEST']
 
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables(load_datasets=not DISABLE_DOCTEST)
-disable_doctest_in_package(pyvista)
+if DISABLE_DOCTEST:
+    disable_doctest.disable_doctest_in_package(pyvista)
 
 # -- pyvista configuration ---------------------------------------------------
 from pyvista.core.errors import PyVistaDeprecationWarning
