@@ -1057,6 +1057,8 @@ def test_principal_axes_return_std():
     assert np.allclose(ratios_in, ratios_out, atol=0.02)
 
 
+@pytest.mark.filterwarnings('ignore:Mean of empty slice:RuntimeWarning')
+@pytest.mark.filterwarnings('ignore:invalid value encountered in divide:RuntimeWarning')
 def test_principal_axes_empty():
     axes = principal_axes(np.empty((0, 3)))
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
