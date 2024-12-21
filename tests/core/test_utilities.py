@@ -34,6 +34,7 @@ from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
+from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
@@ -1850,3 +1851,21 @@ def test_parse_interaction_event_raises_wrong_type():
         match='.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
     ):
         _parse_interaction_event(1)
+
+
+def test_classproperty():
+    magic_number = 42
+
+    @no_new_attr
+    class Foo:
+        @_classproperty
+        def prop(cls):
+            return magic_number
+
+    assert Foo.prop == magic_number
+    assert Foo().prop == magic_number
+
+    with pytest.raises(TypeError, match='object is not callable'):
+        Foo.prop()
+    with pytest.raises(TypeError, match='object is not callable'):
+        Foo().prop()
