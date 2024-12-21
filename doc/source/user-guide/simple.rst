@@ -35,6 +35,7 @@ passing the filename:
 .. code-block:: python
 
     import pyvista as pv
+
     mesh = pv.read('my_strange_vtk_file.vtk')
 
 

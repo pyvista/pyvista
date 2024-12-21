@@ -87,6 +87,7 @@ extensions = [
     'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.duration',
     'sphinx.ext.mathjax',
     'sphinx_copybutton',
     'sphinx_design',
@@ -279,6 +280,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'axes_enabled'),  # Valid ref, but is not linked correctly in some wrapped cases
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'colors.Colormap'),
+    (r'py:.*', 'colors.ListedColormap'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
     #

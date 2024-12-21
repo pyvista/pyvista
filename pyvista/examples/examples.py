@@ -727,9 +727,7 @@ def load_frog_tissues():
     >>> clim = data.get_data_range()  # Set color bar limits to match data
     >>> cmap = 'glasbey'  # Use a categorical colormap
     >>> categories = True  # Ensure n_colors matches number of labels
-    >>> opacity = (
-    ...     'foreground'  # Make foreground opaque, background transparent
-    ... )
+    >>> opacity = 'foreground'  # Make foreground opaque, background transparent
     >>> opacity_unit_distance = 1
 
     Set plotting resolution to half the image's spacing
