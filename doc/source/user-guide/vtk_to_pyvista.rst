@@ -22,11 +22,15 @@ structure using VTK Python's bindings, one would write the following:
    >>> points = vtk.vtkDoubleArray()
    >>> points.SetName("points")
    >>> points.SetNumberOfComponents(1)
-   >>> points.SetNumberOfTuples(300*300)
+   >>> points.SetNumberOfTuples(300 * 300)
 
    >>> for x in range(300):
    ...     for y in range(300):
-   ...         points.SetValue(x*300 + y, 127.5 + (1.0 + sin(x/25.0)*cos(y/25.0)))
+   ...         points.SetValue(
+   ...             x * 300 + y,
+   ...             127.5 + (1.0 + sin(x / 25.0) * cos(y / 25.0)),
+   ...         )
+   ...
 
    Create the image structure
 
@@ -55,7 +59,7 @@ PyVista is:
 
    >>> xi = np.arange(300)
    >>> x, y = np.meshgrid(xi, xi)
-   >>> values = 127.5 + (1.0 + np.sin(x/25.0)*np.cos(y/25.0))
+   >>> values = 127.5 + (1.0 + np.sin(x / 25.0) * np.cos(y / 25.0))
 
    Create the grid. Note how the values must use Fortran ordering.
 
@@ -125,7 +129,7 @@ However, with PyVista you only need:
 
 .. code:: python
 
-   grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
+    grid.plot(cpos='xy', show_scalar_bar=False, cmap='coolwarm')
 
 ..
    This is here so we can generate a plot. We used to have to repeat
@@ -182,9 +186,7 @@ To do the same within PyVista, you simply need to create a NumPy array:
 .. jupyter-execute::
 
    >>> import numpy as np
-   >>> np_points = np.array([[0, 0, 0],
-   ...                       [1, 0, 0],
-   ...                       [0.5, 0.667, 0]])
+   >>> np_points = np.array([[0, 0, 0], [1, 0, 0], [0.5, 0.667, 0]])
 
 .. note::
    You can use :func:`pyvista.vtk_points` to construct a `vtkPoints`_
