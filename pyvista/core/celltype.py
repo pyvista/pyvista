@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
+import os
 import textwrap
 from typing import Literal
 from typing import NamedTuple
@@ -268,9 +269,10 @@ class CellType(IntEnum):
             if _short_doc and _long_doc:
                 _short_doc += '\n\n'
 
+            has_no_image = _example is None or 'DISABLE_DOCTEST' in os.environ
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
-                if _example is None
+                if has_no_image
                 else _GRID_TEMPLATE_WITH_IMAGE.format(
                     _example, _example, badges, _short_doc, _long_doc
                 )
