@@ -698,7 +698,7 @@ def test_contour_errors(uniform, airplane):
         airplane.contour(method='invalid method')
     with pytest.raises(TypeError, match='Invalid type for `scalars`'):
         airplane.contour(scalars=1)
-    match = 'Input dataset for the contour filter must have scalar.'
+    match = 'No data available.'
     with pytest.raises(ValueError, match=match):
         airplane.contour(rng={})
 
@@ -2782,7 +2782,18 @@ def test_extract_values_pass_ids(grid4x4, pass_point_ids, pass_cell_ids):
 
 
 def test_extract_values_empty():
-    assert pv.PolyData().extract_values()
+    empty = pv.PolyData()
+    output = pv.PolyData().extract_values()
+    assert isinstance(output, pv.UnstructuredGrid)
+    assert empty is not output
+
+    output = empty.extract_values(split=True)
+    assert isinstance(output, pv.MultiBlock)
+    assert output.n_blocks == 0
+
+    output = empty.extract_values([0, 1, 2], ranges=[1, 2], split=True)
+    assert isinstance(output, pv.MultiBlock)
+    assert output.n_blocks == 4
 
 
 def test_extract_values_raises(grid4x4):
@@ -2813,16 +2824,6 @@ def test_extract_values_raises(grid4x4):
     match = "Invalid dict mapping. The dict's keys or values must contain strings."
     with pytest.raises(TypeError, match=match):
         grid4x4.extract_values({0: 1})
-
-    match = "Array name 'invalid_scalars' is not valid and does not exist with this dataset."
-    with pytest.raises(ValueError, match=match):
-        grid4x4.extract_values(0, scalars='invalid_scalars')
-
-    match = 'No point data or cell data found. Scalar data is required to use this filter.'
-    grid = grid4x4.copy()
-    grid.clear_data()
-    with pytest.raises(ValueError, match=match):
-        grid.extract_values([0])
 
     match = "Invalid component index '1' specified for scalars with 1 component(s). Value must be one of: (0,)."
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -3633,21 +3634,55 @@ def test_transform_int_vectors_warning(datasets, num_cell_arrays, num_point_data
                 _ = dataset.transform(tf, transform_all_input_vectors=True, inplace=False)
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types(dataset):
-    # assert that transformations of these types throw the correct error
+def test_transform_inplace_rectilinear(rectilinear):
+    # assert that transformations of this type raises the correct error
     tf = pv.core.utilities.transformations.axis_angle_rotation(
         (1, 0, 0),
         90,
     )  # rotate about x-axis by 90 degrees
     with pytest.raises(TypeError):
-        dataset.transform(tf, inplace=True)
+        rectilinear.transform(tf, inplace=True)
+
+
+@pytest.mark.parametrize('spacing', [(1, 1, 1), (0.5, 0.6, 0.7)])
+def test_transform_imagedata(uniform, spacing):
+    # Transformations affect origin, spacing, and direction, so test these here
+    uniform.spacing = spacing
+
+    # Test scaling
+    vector123 = np.array((1, 2, 3))
+    uniform.scale(vector123, inplace=True)
+    expected_spacing = spacing * vector123
+    assert np.allclose(uniform.spacing, expected_spacing)
+
+    # Test direction
+    rotation = pv.Transform().rotate_vector(vector123, 30).matrix[:3, :3]
+    uniform.rotate(rotation, inplace=True)
+    assert np.allclose(uniform.direction_matrix, rotation)
+
+    # Test translation by centering data
+    vector = np.array(uniform.center) * -1
+    translation = pv.Transform().translate(vector)
+    uniform.transform(translation, inplace=True)
+    assert isinstance(uniform, pv.ImageData)
+    assert np.array_equal(uniform.origin, vector)
+
+    # Test applying a second translation
+    translated = uniform.transform(translation, inplace=False)
+    assert np.allclose(translated.origin, vector * 2)
+    assert np.allclose(translated.center, uniform.origin)
+
+
+def test_transform_imagedata_warns_with_shear(uniform):
+    shear = np.eye(4)
+    shear[0, 1] = 0.1
+
+    with pytest.warns(
+        Warning,
+        match='The transformation matrix has a shear component which has been removed. \n'
+        'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
+    ):
+        uniform.transform(shear)
 
 
 def test_reflect_mesh_about_point(datasets):
@@ -3731,17 +3766,10 @@ def test_reflect_inplace(dataset):
     assert np.allclose(dataset.points[:, 1:], orig.points[:, 1:])
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        examples.load_uniform(),  # ImageData
-        examples.load_rectilinear(),  # RectilinearGrid
-    ],
-)
-def test_transform_inplace_bad_types_2(dataset):
+def test_transform_inplace_bad_types_2(rectilinear):
     # assert that transformations of these types throw the correct error
     with pytest.raises(TypeError):
-        dataset.reflect((1, 0, 0), inplace=True)
+        rectilinear.reflect((1, 0, 0), inplace=True)
 
 
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
@@ -3912,7 +3940,7 @@ def test_rotate_x():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_x(30)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_x(30, point=5)
@@ -3924,7 +3952,7 @@ def test_rotate_y():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_y(30)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_y(30, point=5)
@@ -3936,7 +3964,7 @@ def test_rotate_z():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_z(30)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_z(30, point=5)
@@ -3948,7 +3976,7 @@ def test_rotate_vector():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate_vector([1, 1, 1], 33)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
     match = 'Shape must be one of [(3,), (1, 3), (3, 1)]'
     with pytest.raises(ValueError, match=re.escape(match)):
         out = mesh.rotate_vector([1, 1], 33)
@@ -3960,7 +3988,7 @@ def test_rotate():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.rotate([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_transform_integers():
@@ -4052,7 +4080,7 @@ def test_scale():
     # test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.scale(xyz)
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_flip_x():
@@ -4065,7 +4093,7 @@ def test_flip_x():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_x()
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_flip_y():
@@ -4078,7 +4106,7 @@ def test_flip_y():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_y()
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_flip_z():
@@ -4091,7 +4119,7 @@ def test_flip_z():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_z()
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_flip_normal():
@@ -4117,7 +4145,7 @@ def test_flip_normal():
     # Test non-point-based mesh doesn't fail
     mesh = examples.load_uniform()
     out = mesh.flip_normal(normal=[1.0, 0.0, 0.5])
-    assert isinstance(out, pv.StructuredGrid)
+    assert isinstance(out, pv.ImageData)
 
 
 def test_extrude_rotate():
@@ -4596,11 +4624,18 @@ def test_extract_cells_by_type(tetbeam, hexbeam):
     tet_cells = combined.extract_cells_by_type(pv.CellType.TETRA)
     assert np.all(tet_cells.celltypes == pv.CellType.TETRA)
 
+    int_array = np.array([int(pv.CellType.TETRA), int(pv.CellType.HEXAHEDRON)])
+    tet_hex_cells = combined.extract_cells_by_type(int_array)
+    assert pv.CellType.TETRA in tet_hex_cells.celltypes
+    assert pv.CellType.HEXAHEDRON in tet_hex_cells.celltypes
+
     should_be_empty = combined.extract_cells_by_type(pv.CellType.BEZIER_CURVE)
     assert should_be_empty.n_cells == 0
 
-    with pytest.raises(TypeError, match='Invalid type'):
-        combined.extract_cells_by_type(1.0)
+    combined.extract_cells_by_type(1.0)
+    match = 'cell_types must have integer-like values.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        combined.extract_cells_by_type(1.1)
 
 
 def test_merge_points():

@@ -47,6 +47,8 @@ if TYPE_CHECKING:  # pragma: no cover
     from ._typing_core import ArrayLike
     from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike
+    from ._typing_core import ConcretePointGridType
+    from ._typing_core import ConcretePointSetType
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
@@ -190,14 +192,17 @@ class _PointSet(DataSet):
         return self
 
     # todo: `transform_all_input_vectors` is not handled when modifying inplace
-    def translate(
-        self, xyz: VectorLike[float], transform_all_input_vectors: bool = False, inplace=None
+    def translate(  # type: ignore[misc]
+        self: ConcretePointSetType,
+        xyz: VectorLike[float],
+        transform_all_input_vectors: bool = False,
+        inplace=None,
     ):
         """Translate the mesh.
 
         Parameters
         ----------
-        xyz : Vector
+        xyz : VectorLike[float]
             A vector of three floats of cartesian values to translate the mesh with.
 
         transform_all_input_vectors : bool, default: False
@@ -229,7 +234,8 @@ class _PointSet(DataSet):
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore[misc]
             return self
-        return super().translate(
+        return pyvista.DataSetFilters.translate(
+            self,
             xyz,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
@@ -249,7 +255,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
 
     Parameters
     ----------
-    var_inp : vtk.vtkPointSet, Matrix, optional
+    var_inp : vtk.vtkPointSet, MatrixLike[float], optional
         Flexible input type.  Can be a ``vtk.vtkPointSet``, in which case
         this PointSet object will be copied if ``deep=True`` and will
         be a shallow copy if ``deep=False``.
@@ -534,7 +540,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ``None``, then the ``PolyData`` object will be created with
         vertex cells with ``n_verts`` equal to the number of ``points``.
 
-    faces : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+    faces : sequence[int], vtk.vtkCellArray, CellArray, optional
         Polygonal faces of the mesh. Can be either a padded connectivity
         array or an explicit cell array object.
 
@@ -551,7 +557,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_faces : int, optional
         Deprecated. Not used.
 
-    lines : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+    lines : sequence[int], vtk.vtkCellArray, CellArray, optional
         Line connectivity. Like ``faces``, this can be either a padded
         connectivity array or an explicit cell array object. The padded
         array format requires padding indicating the number of points in
@@ -562,7 +568,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     n_lines : int, optional
         Deprecated. Not used.
 
-    strips : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+    strips : sequence[int], vtk.vtkCellArray, CellArray, optional
         Triangle strips connectivity.  Triangle strips require an
         initial triangle, and the following points of the strip. Each
         triangle is built with the new point and the two previous
@@ -596,7 +602,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         non-float types, though this may lead to truncation of
         intermediate floats when transforming datasets.
 
-    verts : sequence[int], vtk.vtkCellArray, pv.CellArray, optional
+    verts : sequence[int], vtk.vtkCellArray, CellArray, optional
         The verts connectivity.  Like ``faces``, ``lines``, and
         ``strips`` this can be supplied as either a padded array or an
         explicit cell array object. In the padded array format,
@@ -673,9 +679,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> n_lines = n_points // 2
     >>> points = rng.random((n_points, 3))
     >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
-    >>> mesh = pv.PolyData(
-    ...     points, lines=pv.CellArray.from_regular_cells(lines)
-    ... )
+    >>> mesh = pv.PolyData(points, lines=pv.CellArray.from_regular_cells(lines))
     >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
     >>> mesh.plot(scalars='line_idx')
 
@@ -689,8 +693,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> n_points = 10 * sum(n_verts_per_strip)
     >>> points = rng.random((n_points, 3))
     >>> strips = [
-    ...     rng.integers(low=0, high=n_points, size=nv)
-    ...     for nv in n_verts_per_strip
+    ...     rng.integers(low=0, high=n_points, size=nv) for nv in n_verts_per_strip
     ... ]
     >>> mesh = pv.PolyData(
     ...     points, strips=pv.CellArray.from_irregular_cells(strips)
@@ -709,9 +712,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> inflated_points = (
     ...     small_sphere.points + 0.1 * small_sphere.point_data['Normals']
     ... )
-    >>> larger_sphere = pv.PolyData(
-    ...     inflated_points, faces=small_sphere.GetPolys()
-    ... )
+    >>> larger_sphere = pv.PolyData(inflated_points, faces=small_sphere.GetPolys())
     >>> plotter = pv.Plotter()
     >>> _ = plotter.add_mesh(small_sphere, color='red', show_edges=True)
     >>> _ = plotter.add_mesh(
@@ -910,7 +911,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         ...     point_size=60,
         ... )
 
-        Vertex cells can also be set to a ``pyvista.CellArray``. The following
+        Vertex cells can also be set to a ``CellArray``. The following
         ``verts`` assignment is equivalent to the one above.
 
         >>> mesh.verts = pv.CellArray.from_regular_cells(
@@ -931,7 +932,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     def lines(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Return the connectivity array of the lines of this PolyData.
 
-        Lines can also be set by assigning a ``pyvista.CellArray``.
+        Lines can also be set by assigning a :class:`~pyvista.CellArray`.
 
         Examples
         --------
@@ -971,7 +972,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         Where the two individual faces would be ``[3, 0, 1, 2]`` and ``[4, 0, 1, 3, 4]``.
 
-        Faces can also be set by assigning a ``pyvista.CellArray`` object instead of an array.
+        Faces can also be set by assigning a :class:`~pyvista.CellArray` object instead of an array.
 
         Returns
         -------
@@ -1146,7 +1147,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         Parameters
         ----------
-        points : Matrix
+        points : MatrixLike[float]
             A (n_points, 3) array of points.
 
         faces : Sequence[VectorLike[int]]
@@ -1314,9 +1315,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         If any other cells are specified, these vertices are not created.
 
         >>> import pyvista as pv
-        >>> mesh = pv.PolyData(
-        ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1]
-        ... )
+        >>> mesh = pv.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1])
         >>> mesh.n_points, mesh.n_verts
         (2, 0)
 
@@ -1334,9 +1333,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> vertices = np.array(
-        ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]
-        ... )
+        >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
         >>> strip = np.array([3, 0, 1, 2])
         >>> mesh = pv.PolyData(vertices, strips=strip)
         >>> mesh.n_strips
@@ -1486,9 +1483,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> # decreasing value
         >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]
         >>> sphere.point_data['my_texture'] = texture
-        >>> sphere.save(
-        ...     'my_mesh.ply', texture='my_texture'
-        ... )  # doctest:+SKIP
+        >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest:+SKIP
 
         Alternatively, provide just the texture array.  This will be
         written to the file as ``'RGB'`` since it does not contain an
@@ -1725,7 +1720,9 @@ class PointGrid(_PointSet):
         """Initialize the point grid."""
         super().__init__()
 
-    def plot_curvature(self, curv_type='mean', **kwargs):
+    def plot_curvature(  # type: ignore[misc]
+        self: ConcretePointGridType, curv_type='mean', **kwargs
+    ):
         """Plot the curvature of the external surface of the grid.
 
         Parameters
@@ -1922,9 +1919,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
         >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
         >>> cells = np.hstack((cell0_ids, cell1_ids))
-        >>> cell_type = np.array(
-        ...     [CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8
-        ... )
+        >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
 
         >>> cell1 = np.array(
         ...     [
@@ -2785,7 +2780,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     >>> # repeat array along each Cartesian axis for connectivity
     >>> for axis in range(1, 4):
     ...     grid_ijk = grid_ijk.repeat(2, axis=axis)
-    ...
     >>>
     >>> # slice off unnecessarily doubled edge coordinates
     >>> grid_ijk = grid_ijk[:, 1:-1, 1:-1, 1:-1]
@@ -3104,14 +3098,10 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         >>> grid.save('grid.vtu')  # doctest:+SKIP
 
         >>> grid = pv.ExplicitStructuredGrid('grid.vtu')  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
         >>> grid.show_cells()  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
         """
         if texture is not None:
@@ -3296,7 +3286,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        int, numpy.ndarray, or None
+        int | numpy.ndarray | None
             Cell IDs. ``None`` if ``coords`` is outside the grid extent.
 
         See Also
@@ -3345,7 +3335,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
 
         Returns
         -------
-        numpy.ndarray, or None
+        numpy.ndarray | None
             Cell structured coordinates. ``None`` if ``ind`` is
             outside the grid extent.
 
@@ -3375,7 +3365,7 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         else:
             if isinstance(coords[0], np.ndarray):
                 return np.stack(coords, axis=1)
-            return np.asanyarray(coords)
+            return np.asanyarray(coords)  # type: ignore[unreachable]
 
     def neighbors(self, ind: int | VectorLike[int], rel: str = 'connectivity') -> list[int]:
         """Return the indices of neighboring cells.

@@ -126,10 +126,8 @@ def voxelize(
     >>> mesh = pv.Cube(x_length=0.25)
     >>> vox = pv.voxelize(mesh=mesh, density=0.2)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
     Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
@@ -138,10 +136,8 @@ def voxelize(
 
     >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
     """
@@ -397,7 +393,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     ----------
     dataset : DataSet
         Input dataset used as a reference for the grid creation.
-    dimensions : tuple of int, default: (101, 101, 101)
+    dimensions : tuple[int, int, int], default: (101, 101, 101)
         The dimensions of the grid to be created. Each value in the tuple
         represents the number of grid points along the corresponding axis.
 
@@ -580,8 +576,8 @@ def merge(
 
     Parameters
     ----------
-    datasets : sequence[:class:`pyvista.Dataset`]
-        Sequence of datasets. Can be of any :class:`pyvista.Dataset`.
+    datasets : sequence[:class:`pyvista.DataSet`]
+        Sequence of datasets. Can be of any :class:`pyvista.DataSet`.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
@@ -781,9 +777,7 @@ def sample_function(
     >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
-    >>> grid.plot(
-    ...     cmap='gist_earth_r', show_scalar_bar=False, show_edges=True
-    ... )
+    >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
     Sample Perlin noise in 2D and plot it.
 

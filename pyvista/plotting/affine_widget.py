@@ -143,7 +143,7 @@ class AffineWidget3D:
     Notes
     -----
     After interacting with the actor, the transform will be stored within
-    :attr:`pyvista.Actor.user_matrix` but will not be applied to the
+    :attr:`pyvista.Prop3D.user_matrix` but will not be applied to the
     dataset. Use this matrix in conjunction with
     :func:`pyvista.DataSetFilters.transform` to transform the dataset.
 
@@ -192,7 +192,7 @@ class AffineWidget3D:
         self._axes_inv = np.eye(4)
         self._pl = plotter
         self._main_actor = actor
-        self._selected_actor = None
+        self._selected_actor: pyvista.Actor | None = None
         self._init_position = None
         self._mouse_move_observer = None
         self._left_press_observer = None

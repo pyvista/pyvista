@@ -13,6 +13,7 @@ from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -342,11 +343,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
         ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
+        ...     color='r',
+        ...     style='wireframe',
         ...     line_width=5,
         ...     lighting=False,
         ... )
@@ -441,12 +442,7 @@ def _rotation_matrix_as_orientation(
         Tuple with x-y-z axis rotation angles in degrees.
 
     """
-    array_3x3 = _validation.validate_transform3x3(array, name='rotation')
-    array_4x4 = np.eye(4)
-    array_4x4[:3, :3] = array_3x3
-    transform = _vtk.vtkTransform()
-    transform.SetMatrix(array_4x4.ravel())
-    return transform.GetOrientation()
+    return Transform().rotate(array).GetOrientation()
 
 
 def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray[float]:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import itertools
 from pathlib import Path
 import pickle
@@ -25,13 +26,13 @@ from .observers import Observer
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
-    from collections.abc import Sequence
 
     import imageio
     import meshio
 
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core.composite import MultiBlock
+    from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import ExplicitStructuredGrid
     from pyvista.core.pointset import UnstructuredGrid
@@ -126,7 +127,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
     Parameters
     ----------
-    vtk_writer : vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+    vtk_writer : vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
         The vtk writer instance to be configured.
     use_binary : bool, default: True
         If ``True``, the writer is set to write files in binary format. If
@@ -134,7 +135,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
     Returns
     -------
-    vtkDataWriter, vtkPLYWriter, vtkSTLWriter, or _vtk.vtkXMLWriter
+    vtkDataWriter | vtkPLYWriter | vtkSTLWriter | _vtk.vtkXMLWriter
         The configured vtk writer instance.
 
     """
@@ -156,11 +157,11 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
 
 def read(
-    filename: str | Path,
+    filename: str | Path | Sequence[str | Path],
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,
-) -> DataSet | MultiBlock:
+) -> DataObject:
     """Read any file type supported by ``vtk`` or ``meshio``.
 
     Automatically determines the correct reader to use then wraps the
@@ -192,7 +193,7 @@ def read(
 
     Parameters
     ----------
-    filename : str, Path
+    filename : str, Path, Sequence[str | Path]
         The string path to the file to read. If a list of files is
         given, a :class:`pyvista.MultiBlock` dataset is returned with
         each file being a separate block in the dataset.
@@ -228,22 +229,23 @@ def read(
 
     Load a meshio file.
 
-    >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
+    >>> mesh = pv.read('mesh.obj')  # doctest:+SKIP
 
     Load a pickled mesh file.
 
-    >>> mesh = pv.read("mesh.pkl")  # doctest:+SKIP
+    >>> mesh = pv.read('mesh.pkl')  # doctest:+SKIP
 
     """
     if file_format is not None and force_ext is not None:
         raise ValueError('Only one of `file_format` and `force_ext` may be specified.')
 
-    if isinstance(filename, (list, tuple)):
+    if isinstance(filename, Sequence) and not isinstance(filename, str):
         multi = pyvista.MultiBlock()
         for each in filename:
             name = Path(each).name if isinstance(each, (str, Path)) else None
-            multi.append(read(each, file_format=file_format), name)
+            multi.append(read(each, file_format=file_format), name)  # type: ignore[arg-type]
         return multi
+
     filename = Path(filename).expanduser().resolve()
     if not filename.is_file() and not filename.is_dir():
         raise FileNotFoundError(f'File ({filename}) not found')
@@ -483,7 +485,7 @@ def read_grdecl(
     >>> import pyvista as pv
     >>> grid = pv.read('file.GRDECL')  # doctest:+SKIP
 
-    Unused keywords contained in the file are stored in :attr:`pyvista.ExplicitStructuredGrid.user_dict`:
+    Unused keywords contained in the file are stored in :attr:`pyvista.DataObject.user_dict`:
 
     >>> grid.user_dict  # doctest:+SKIP
     {"MAPUNITS": ..., "GRIDUNIT": ..., ...}
@@ -779,7 +781,7 @@ def read_grdecl(
     return grid
 
 
-def read_pickle(filename):
+def read_pickle(filename: str | Path) -> DataObject:
     """Load a pickled mesh from file.
 
     Parameters
@@ -835,7 +837,7 @@ def read_pickle(filename):
     )
 
 
-def save_pickle(filename, mesh):
+def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     """Pickle a mesh and save it to file.
 
     Parameters
@@ -1004,7 +1006,7 @@ def read_meshio(filename: str | Path, file_format: str | None = None) -> meshio.
 
     Returns
     -------
-    pyvista.Dataset
+    pyvista.DataSet
         The mesh read from the file.
 
     Raises

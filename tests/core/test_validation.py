@@ -43,6 +43,7 @@ from pyvista.core._validation import validate_axes
 from pyvista.core._validation import validate_data_range
 from pyvista.core._validation import validate_dimensionality
 from pyvista.core._validation import validate_number
+from pyvista.core._validation import validate_rotation
 from pyvista.core._validation import validate_transform3x3
 from pyvista.core._validation import validate_transform4x4
 from pyvista.core._validation._cast_array import _cast_to_list
@@ -877,13 +878,13 @@ def test_check_number():
 
 
 def test_check_contains():
-    check_contains(item='foo', container=['foo', 'bar'])
+    check_contains(['foo', 'bar'], must_contain='foo')
     match = "Input 'foo' is not valid. Input must be one of: \n\t['cat', 'bar']"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item='foo', container=['cat', 'bar'])
+        check_contains(['cat', 'bar'], must_contain='foo')
     match = "_input '5' is not valid. _input must be in: \n\trange(0, 4)"
     with pytest.raises(ValueError, match=escape(match)):
-        check_contains(item=5, container=range(4), name='_input')
+        check_contains(range(4), must_contain=5, name='_input')
 
 
 @pytest.mark.parametrize('name', ['_input', 'Axes'])
@@ -970,6 +971,29 @@ def test_validate_axes_orthogonal(bias_index):
     assert np.array_equal(axes, axes_left)
     with pytest.raises(ValueError, match=match):
         validate_axes(axes_left, must_be_orthogonal=True)
+
+
+def test_validate_rotation():
+    I3 = np.eye(3)
+    validated = validate_rotation(I3)
+    assert np.array_equal(validated, I3)
+    validated = validate_rotation(I3, must_have_handedness='right')
+    assert np.array_equal(validated, I3)
+    match = 'Rotation has incorrect handedness. Expected a left-handed rotation, but got a right-handed rotation instead.'
+    with pytest.raises(ValueError, match=match):
+        validate_rotation(I3, must_have_handedness='left')
+
+    validated = validate_rotation(-I3)
+    assert np.array_equal(validated, -I3)
+    validated = validate_rotation(-I3, must_have_handedness='left')
+    assert np.array_equal(validated, -I3)
+    match = 'Rotation has incorrect handedness. Expected a right-handed rotation, but got a left-handed rotation instead.'
+    with pytest.raises(ValueError, match=match):
+        validate_rotation(-I3, must_have_handedness='right')
+
+    match = 'Rotation is not valid. Its inverse must equal its transpose.'
+    with pytest.raises(ValueError, match=match):
+        validate_rotation(I3 * 2)
 
 
 @pytest.mark.parametrize('as_any', [True, False])

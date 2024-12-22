@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime
 import faulthandler
+import importlib.util
 import locale
 import os
 from pathlib import Path
@@ -86,6 +87,7 @@ extensions = [
     'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.duration',
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
@@ -194,6 +196,7 @@ autodoc_type_aliases = {
     'CellArrayLike': 'pyvista.CellArrayLike',
     'TransformLike': 'pyvista.TransformLike',
     'RotationLike': 'pyvista.RotationLike',
+    'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
@@ -208,26 +211,105 @@ numpydoc_use_plots = True
 numpydoc_show_class_members = False
 numpydoc_xref_param_type = True
 
-# linkcheck ignore entries
+# Warn if target links or references cannot be found
+nitpicky = True
+# Except ignore these entries
 nitpick_ignore_regex = [
+    # NOTE: We need to ignore any/all pyvista objects which are used as type hints
+    # in function signatures since these are not linked by sphinx (bug).
+    # See https://github.com/pyvista/pyvista/pull/6206#issuecomment-2149138086
+    #
+    # PyVista TypeVars and TypeAliases
     (r'py:.*', '.*ColorLike'),
-    (r'py:.*', '.*lookup_table_ndarray'),
+    (r'py:.*', '.*ArrayLike'),
+    (r'py:.*', '.*MatrixLike'),
+    (r'py:.*', '.*VectorLike'),
+    (r'py:.*', '.*TransformLike'),
+    (r'py:.*', '.*InteractionEventType'),
+    (r'py:.*', '.*BoundsLike'),
+    (r'py:.*', '.*RotationLike'),
+    (r'py:.*', '.*CellsLike'),
+    (r'py:.*', '.*ShapeLike'),
+    (r'py:.*', '.*NumpyArray'),
+    (r'py:.*', '.*_ArrayLikeOrScalar'),
+    (r'py:.*', '.*NumberType'),
+    (r'py:.*', '.*Concrete.*Type'),
+    (r'py:.*', '.*_WrappableVTKDataObjectType'),
+    (r'py:.*', '.*_VTKWriterType'),
+    (r'py:.*', '.*NormalsLiteral'),
+    (r'py:.*', '.*T'),
+    #
+    # Dataset-related types
+    (r'py:.*', '.*DataSet'),
+    (r'py:.*', '.*DataObject'),
+    (r'py:.*', '.*PolyData'),
+    (r'py:.*', '.*UnstructuredGrid'),
+    (r'py:.*', '.*_TypeMultiBlockLeaf'),
+    #
+    # PyVista array-related types
     (r'py:.*', 'ActiveArrayInfo'),
     (r'py:.*', 'FieldAssociation'),
-    (r'py:.*', 'VTK'),
+    (r'py:.*', '.*CellLiteral'),
+    (r'py:.*', '.*PointLiteral'),
+    (r'py:.*', '.*FieldLiteral'),
+    (r'py:.*', '.*RowLiteral'),
+    (r'py:.*', '.*_SerializedDictArray'),
+    #
+    # PyVista AxesAssembly-related types
+    (r'py:.*', '.*GeometryTypes'),
+    (r'py:.*', '.*ShaftType'),
+    (r'py:.*', '.*TipType'),
+    (r'py:.*', '.*_AxesGeometryKwargs'),
+    (r'py:.*', '.*_OrthogonalPlanesKwargs'),
+    #
+    # PyVista Widget enums
+    (r'py:.*', '.*PickerType'),
+    (r'py:.*', '.*ElementType'),
+    #
+    # PyVista Texture enum
+    (r'py:.*', '.*WrapType'),
+    #
+    # PyVista plotting-related classes
+    (r'py:.*', '.*BasePlotter'),
+    (r'py:.*', '.*ScalarBars'),
+    (r'py:.*', '.*Theme'),
+    #
+    # Misc pyvista ignores
+    (r'py:.*', 'principal_axes'),  # Valid ref, but is not linked correctly in some wrapped cases
+    (r'py:.*', 'axes_enabled'),  # Valid ref, but is not linked correctly in some wrapped cases
+    (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'colors.Colormap'),
+    (r'py:.*', 'colors.ListedColormap'),
     (r'py:.*', 'cycler.Cycler'),
+    (r'py:.*', 'pyvista.PVDDataSet'),
+    #
+    # Built-in python types. TODO: Fix links (intersphinx?)
+    (r'py:.*', '.*StringIO'),
+    (r'py:.*', '.*Path'),
+    (r'py:.*', '.*UserDict'),
+    (r'py:.*', 'sys.float_info.max'),
+    (r'py:.*', '.*NoneType'),
+    (r'py:.*', 'collections.*'),
+    #
+    # NumPy types. TODO: Fix links (intersphinx?)
+    (r'py:.*', '.*DTypeLike'),
+    (r'py:.*', 'np.*'),
+    (r'py:.*', 'npt.*'),
+    (r'py:.*', 'numpy.*'),
+    (r'py:.*', '.*NDArray'),
+    #
+    # Third party ignores. TODO: Can these be linked with intersphinx?
     (r'py:.*', 'ipywidgets.Widget'),
     (r'py:.*', 'meshio.*'),
+    (r'py:.*', '.*Mesh'),
+    (r'py:.*', '.*Trimesh'),
     (r'py:.*', 'networkx.*'),
-    (r'py:.*', 'of'),
-    (r'py:.*', 'optional'),
-    (r'py:.*', 'or'),
-    (r'py:.*', 'pyvista.LookupTable.n_values'),
-    (r'py:.*', 'pyvista.PVDDataSet'),
-    (r'py:.*', 'sys.float_info.max'),
-    (r'py:.*', 'various'),
     (r'py:.*', 'vtk.*'),
+    (r'py:.*', '_vtk.*'),
+    (r'py:.*', 'VTK'),
+    #
+    # Misc general ignores
+    (r'py:.*', 'optional'),
 ]
 
 
@@ -358,14 +440,7 @@ reset_pyvista = ResetPyVista()
 
 
 # skip building the osmnx example if osmnx is not installed
-has_osmnx = False
-try:
-    import fiona  # noqa: F401
-    import osmnx  # noqa: F401
-
-    has_osmnx = True
-except:
-    pass
+has_osmnx = importlib.util.find_spec('fiona') and importlib.util.find_spec('osmnx')
 
 
 sphinx_gallery_conf = {

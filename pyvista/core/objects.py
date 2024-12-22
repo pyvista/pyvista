@@ -11,9 +11,11 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject
+from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
+from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
 
@@ -299,8 +301,9 @@ class Table(DataObject, _vtk.vtkTable):
                 dl, dh = self.get_data_range(key)
                 dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
                 dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
-                ncomp = arr.shape[1] if arr.ndim > 1 else 1
-                return row.format(key, arr.dtype, ncomp, dl, dh)
+                ncomp = 0 if arr is None else arr.shape[1] if arr.ndim > 1 else 1
+                dtype = None if arr is None else arr.dtype
+                return row.format(key, dtype, ncomp, dl, dh)
 
             for i in range(self.n_arrays):
                 key = self.GetRowData().GetArrayName(i)
@@ -346,7 +349,7 @@ class Table(DataObject, _vtk.vtkTable):
     def get_data_range(
         self,
         arr: str | None = None,
-        preference: str = 'row',
+        preference: FieldLiteral | RowLiteral = 'row',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
@@ -371,9 +374,9 @@ class Table(DataObject, _vtk.vtkTable):
             # use the first array in the row data
             arr = self.GetRowData().GetArrayName(0)
         if isinstance(arr, str):
-            arr = get_array(self, arr, preference=preference)
+            arr = get_array(self, arr, preference=preference)  # type: ignore[assignment]
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)

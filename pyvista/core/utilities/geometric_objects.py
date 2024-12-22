@@ -54,6 +54,7 @@ NORMALS = {
     '-y': [0, -1, 0],
     '-z': [0, 0, -1],
 }
+NormalsLiteral = Literal['x', 'y', 'z', '-x', '-y', '-z']
 
 
 def Capsule(
@@ -66,14 +67,14 @@ def Capsule(
     """Create the surface of a capsule.
 
     .. warning::
-       :func:`pyvista.Capsule` function rotates the :class:`pyvista.CapsuleSource` 's :class:`pyvista.PolyData` in its own way.
-       It rotates the :attr:`pyvista.CapsuleSource.output` 90 degrees in z-axis, translates and
+       :func:`pyvista.Capsule` function rotates the capsule :class:`pyvista.PolyData`
+       in its own way. It rotates the output 90 degrees in z-axis, translates and
        orients the mesh to a new ``center`` and ``direction``.
 
     .. note::
-       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk versions
-       below 9.3, a class:`pyvista.CapsuleSource` is used instead. The mesh geometries are similar but
-       not identical.
+       A class:`pyvista.CylinderSource` is used to generate the capsule mesh. For vtk
+       versions below 9.3, a separate ``pyvista.CapsuleSource`` class is used instead.
+       The mesh geometries are similar but not identical.
 
     .. versionadded:: 0.44.0
 
@@ -131,7 +132,7 @@ def Capsule(
             theta_resolution=resolution,
             phi_resolution=resolution,
         )
-    output = cast(pyvista.PolyData, wrap(algo.output))
+    output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
     translate(output, center, direction)
     return output
@@ -189,13 +190,11 @@ def Cylinder(
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(
-    ...     pv.Cylinder(
-    ...         center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2
-    ...     ),
+    ...     pv.Cylinder(center=[1, 2, 3], direction=[1, 1, 1], radius=1, height=2),
     ...     show_edges=True,
     ...     line_width=5,
     ... )
-    >>> pl.camera_position = "xy"
+    >>> pl.camera_position = 'xy'
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
@@ -209,7 +208,7 @@ def Cylinder(
         capping=capping,
         resolution=resolution,
     )
-    output = cast(pyvista.PolyData, wrap(algo.output))
+    output = wrap(algo.output)
     output.rotate_z(90, inplace=True)
     translate(output, center, direction)
     return output
@@ -325,7 +324,7 @@ def Arrow(
     tip_resolution: int = 20,
     shaft_radius: float = 0.05,
     shaft_resolution: int = 20,
-    scale: float | Literal['auto'] = 1.0,
+    scale: float | Literal['auto'] | None = 1.0,
 ) -> PolyData:
     """Create an arrow.
 
@@ -413,6 +412,9 @@ def Sphere(
     ``phi`` is 0 degrees at the North Pole and 180 degrees at the South
     Pole. ``phi=0`` is on the positive z-axis by default.
     ``theta=0`` is on the positive x-axis by default.
+
+    See :ref:`create_sphere_example` for examples on creating spheres in
+    other ways.
 
     Parameters
     ----------
@@ -607,9 +609,7 @@ def SolidSphere(
 
     >>> isinstance(solid_sphere, pv.UnstructuredGrid)
     True
-    >>> partial_solid_sphere = pv.SolidSphere(
-    ...     start_theta=180, end_theta=360
-    ... )
+    >>> partial_solid_sphere = pv.SolidSphere(start_theta=180, end_theta=360)
     >>> partial_solid_sphere.plot(show_edges=True)
 
     To see the cell structure inside the solid sphere,
@@ -625,7 +625,7 @@ def SolidSphere(
     ...     theta_resolution=8,
     ...     phi_resolution=8,
     ... )
-    >>> partial_solid_sphere["cell_radial_pos"] = np.linalg.norm(
+    >>> partial_solid_sphere['cell_radial_pos'] = np.linalg.norm(
     ...     partial_solid_sphere.cell_centers().points, axis=-1
     ... )
     >>> partial_solid_sphere.explode(1).plot()
@@ -739,9 +739,7 @@ def SolidSphereGeneric(
     ...     phi=np.linspace(0, 180, 30),
     ... )
     >>> solid_sphere = solid_sphere.compute_cell_sizes()
-    >>> solid_sphere.plot(
-    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
-    ... )
+    >>> solid_sphere.plot(scalars='Volume', show_edges=True, clim=[3e-5, 5e-4])
 
     Sampling the polar angle in a nonlinear manner allows for consistent cell volumes.  See
     `Sphere Point Picking <https://mathworld.wolfram.com/SpherePointPicking.html>`_.
@@ -753,9 +751,7 @@ def SolidSphereGeneric(
     ...     phi=phi,
     ... )
     >>> solid_sphere = solid_sphere.compute_cell_sizes()
-    >>> solid_sphere.plot(
-    ...     scalars="Volume", show_edges=True, clim=[3e-5, 5e-4]
-    ... )
+    >>> solid_sphere.plot(scalars='Volume', show_edges=True, clim=[3e-5, 5e-4])
 
     """
     if radius is None:
@@ -1498,11 +1494,11 @@ def Text3D(
     ----------
     string : str
         String to generate 3D text from. If ``None`` or an empty string,
-        the output mesh will have a single point at :attr:`center`.
+        the output mesh will have a single point at ``center``.
 
     depth : float, optional
         Depth of the text. If ``None``, the depth is set to half
-        the :attr:`height` by default. Set to ``0.0`` for planar
+        the ``height`` by default. Set to ``0.0`` for planar
         text.
 
         .. versionchanged:: 0.43
@@ -1513,13 +1509,13 @@ def Text3D(
 
     width : float, optional
         Width of the text. If ``None``, the width is scaled
-        proportional to :attr:`height`.
+        proportional to ``height``.
 
         .. versionadded:: 0.43
 
     height : float, optional
         Height of the text. If ``None``, the height is scaled
-        proportional to :attr:`width`.
+        proportional to ``width``.
 
         .. versionadded:: 0.43
 
@@ -1531,7 +1527,7 @@ def Text3D(
 
     normal : Sequence[float], default: (0.0, 0.0, 1.0)
         Normal direction of the text. The direction is parallel to the
-        :attr:`depth` of the text and points away from the front surface
+        ``depth`` of the text and points away from the front surface
         of the text.
 
         .. versionadded:: 0.43
@@ -1792,9 +1788,7 @@ def CircularArcFromNormal(
     >>> import pyvista as pv
     >>> normal = [0, 0, 1]
     >>> polar = [-1, 0, 0]
-    >>> arc = pv.CircularArcFromNormal(
-    ...     [0, 0, 0], normal=normal, polar=polar
-    ... )
+    >>> arc = pv.CircularArcFromNormal([0, 0, 0], normal=normal, polar=polar)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(arc, color='k', line_width=10)
     >>> _ = pl.show_bounds(location='all', font_size=30, use_2d=True)
@@ -1887,7 +1881,7 @@ def Pyramid(points: MatrixLike[float] | None = None) -> UnstructuredGrid:
     ug.SetPoints(pyvista.vtk_points(np.array(points), False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
-    return cast(pyvista.UnstructuredGrid, wrap(ug))
+    return wrap(ug)
 
 
 def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -1925,7 +1919,7 @@ def Triangle(points: MatrixLike[float] | None = None) -> PolyData:
     check_valid_vector(points[2], 'points[2]')
 
     cells = np.array([[3, 0, 1, 2]])
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
@@ -1975,9 +1969,9 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
     if np.isclose(mag_01, 0) or np.isclose(mag_02, 0) or np.isclose(mag_12, 0):
         raise ValueError('Unable to build a rectangle with less than three different points')
 
-    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2  # type: ignore[call-overload]
-    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2  # type: ignore[call-overload]
-    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2  # type: ignore[call-overload]
+    scalar_pdct_01_02 = np.dot(vec_01, vec_02) / min(mag_01, mag_02) ** 2
+    scalar_pdct_01_12 = np.dot(vec_01, vec_12) / min(mag_01, mag_12) ** 2
+    scalar_pdct_02_12 = np.dot(vec_02, vec_12) / min(mag_02, mag_12) ** 2
 
     null_scalar_products = [
         val
@@ -1998,7 +1992,7 @@ def Rectangle(points: MatrixLike[float] | None = None) -> PolyData:
         points[3] = point_2 - vec_02 - vec_12
         cells = np.array([[4, 0, 2, 1, 3]])
 
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
@@ -2033,7 +2027,7 @@ def Quadrilateral(points: MatrixLike[float] | None = None) -> PolyData:
     points, _ = _coerce_pointslike_arg(points)
 
     cells = np.array([[4, 0, 1, 2, 3]])
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
@@ -2071,7 +2065,7 @@ def Circle(radius: float = 0.5, resolution: int = 100) -> PolyData:
     points[:, 0] = radius * np.cos(theta)
     points[:, 1] = radius * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Ellipse(
@@ -2113,7 +2107,7 @@ def Ellipse(
     points[:, 0] = semi_major_axis * np.cos(theta)
     points[:, 1] = semi_minor_axis * np.sin(theta)
     cells = np.array([np.append(np.array([resolution]), np.arange(resolution))])
-    return cast(pyvista.PolyData, wrap(pyvista.PolyData(points, cells)))
+    return wrap(pyvista.PolyData(points, cells))
 
 
 def Superquadric(

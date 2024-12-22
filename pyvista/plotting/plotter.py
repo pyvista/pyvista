@@ -20,6 +20,7 @@ import textwrap
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
+from typing import cast
 import uuid
 import warnings
 import weakref
@@ -29,6 +30,7 @@ import numpy as np
 import scooby
 
 import pyvista
+from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.arrays import FieldAssociation
@@ -48,6 +50,7 @@ from ._plotting import prepare_smooth_shading
 from ._plotting import process_opacity
 from ._property import Property
 from .actor import Actor
+from .camera import Camera
 from .colors import Color
 from .colors import get_cmap_safe
 from .composite_mapper import CompositePolyDataMapper
@@ -61,7 +64,6 @@ from .mapper import SmartVolumeMapper
 from .mapper import UnstructuredGridVolumeRayCastMapper
 from .picking import PickingHelper
 from .render_window_interactor import RenderWindowInteractor
-from .renderer import Camera
 from .renderer import Renderer
 from .renderers import Renderers
 from .scalar_bars import ScalarBars
@@ -70,9 +72,6 @@ from .text import Text
 from .text import TextProperty
 from .texture import numpy_to_texture
 from .themes import Theme
-from .tools import normalize  # noqa: F401
-from .tools import opacity_transfer_function  # noqa: F401
-from .tools import parse_font_family  # noqa: F401
 from .utilities.algorithms import active_scalars_algorithm
 from .utilities.algorithms import algorithm_to_mesh_handler
 from .utilities.algorithms import decimation_algorithm
@@ -440,12 +439,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> helmet_file = (
-        ...     examples.gltf.download_damaged_helmet()
-        ... )  # doctest:+SKIP
-        >>> texture = (
-        ...     examples.hdr.download_dikhololo_night()
-        ... )  # doctest:+SKIP
+        >>> helmet_file = examples.gltf.download_damaged_helmet()  # doctest:+SKIP
+        >>> texture = examples.hdr.download_dikhololo_night()  # doctest:+SKIP
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_gltf(helmet_file)  # doctest:+SKIP
         >>> pl.set_environment_texture(cubemap)  # doctest:+SKIP
@@ -491,9 +486,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> sextant_file = (
-        ...     examples.vrml.download_sextant()
-        ... )  # doctest:+SKIP
+        >>> sextant_file = examples.vrml.download_sextant()  # doctest:+SKIP
         >>> pl = pv.Plotter()  # doctest:+SKIP
         >>> pl.import_vrml(sextant_file)  # doctest:+SKIP
         >>> pl.show()  # doctest:+SKIP
@@ -568,9 +561,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> download_obj_file = examples.download_room_surface_mesh(
-        ...     load=False
-        ... )
+        >>> download_obj_file = examples.download_room_surface_mesh(load=False)
         >>> pl = pv.Plotter()
         >>> pl.import_obj(download_obj_file)
         >>> pl.show()
@@ -581,7 +572,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> filename = examples.download_doorman(load=False)
         >>> pl = pv.Plotter()
         >>> pl.import_obj(filename)
-        >>> pl.show(cpos="xy")
+        >>> pl.show(cpos='xy')
 
         """
         from vtkmodules.vtkIOImport import vtkOBJImporter
@@ -623,13 +614,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> mesh = examples.load_uniform()
         >>> pl = pv.Plotter(shape=(1, 2))
-        >>> _ = pl.add_mesh(
-        ...     mesh, scalars='Spatial Point Data', show_edges=True
-        ... )
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
         >>> pl.subplot(0, 1)
-        >>> _ = pl.add_mesh(
-        ...     mesh, scalars='Spatial Cell Data', show_edges=True
-        ... )
+        >>> _ = pl.add_mesh(mesh, scalars='Spatial Cell Data', show_edges=True)
         >>> pl.export_html('pv.html')  # doctest:+SKIP
 
         """
@@ -848,7 +835,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> from pyvista import examples
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(examples.load_hexbeam())
-        >>> pl.export_vrml("sample")  # doctest:+SKIP
+        >>> pl.export_vrml('sample')  # doctest:+SKIP
 
         """
         from vtkmodules.vtkIOExport import vtkVRMLExporter
@@ -886,12 +873,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pv.Sphere(theta_resolution=20, phi_resolution=20)
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
-        >>> _ = pl.add_text("With hidden line removal")
+        >>> _ = pl.add_text('With hidden line removal')
         >>> pl.enable_hidden_line_removal(all_renderers=False)
         >>> pl.subplot(0, 1)
         >>> pl.disable_hidden_line_removal(all_renderers=False)
         >>> _ = pl.add_mesh(sphere, line_width=3, style='wireframe')
-        >>> _ = pl.add_text("Without hidden line removal")
+        >>> _ = pl.add_text('Without hidden line removal')
         >>> pl.show()
 
         """
@@ -1785,7 +1772,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(pv.Cube(), show_edges=True)
-        >>> pl.background_color = "pink"
+        >>> pl.background_color = 'pink'
         >>> pl.background_color
         Color(name='pink', hex='#ffc0cbff', opacity=255)
         >>> pl.show()
@@ -1840,10 +1827,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> _ = pl.add_mesh(pv.Cube())
         >>> with pl.window_size_context((400, 400)):
         ...     pl.screenshot('/tmp/small_screenshot.png')  # doctest:+SKIP
-        ...
         >>> with pl.window_size_context((1000, 1000)):
         ...     pl.screenshot('/tmp/big_screenshot.png')  # doctest:+SKIP
-        ...
 
         """
         # No op if not set
@@ -2108,9 +2093,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> sphere_actor = pl.add_mesh(pv.Sphere())
-        >>> cube_actor = pl.add_mesh(
-        ...     pv.Cube(), pickable=False, style='wireframe'
-        ... )
+        >>> cube_actor = pl.add_mesh(pv.Cube(), pickable=False, style='wireframe')
         >>> len(pl.pickable_actors)
         1
 
@@ -2762,9 +2745,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         case of multiple nested composite datasets.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.block_attr[1].color = 'b'
@@ -3363,9 +3344,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> sphere = pv.Sphere()
         >>> sphere['Data'] = sphere.points[:, 2]
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     sphere, scalar_bar_args={'title': 'Z Position'}
-        ... )
+        >>> _ = plotter.add_mesh(sphere, scalar_bar_args={'title': 'Z Position'})
         >>> plotter.show()
 
         Plot using RGB on a single cell.  Note that since the number of
@@ -3382,9 +3361,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ...         [0.5, 0.33, 0.667],
         ...     ]
         ... )
-        >>> faces = np.hstack(
-        ...     [[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]]
-        ... )
+        >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2], [3, 0, 1, 3], [3, 1, 2, 3]])
         >>> mesh = pv.PolyData(vertices, faces)
         >>> mesh.cell_data['colors'] = [
         ...     [255, 255, 255],
@@ -3851,7 +3828,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return actor
 
-    def _add_legend_label(self, actor, label, scalars, color):
+    def _add_legend_label(self, actor, label, scalars, color: Color):
         """Add a legend label based on an actor and its scalars."""
         if not isinstance(label, str):
             raise TypeError('Label must be a string')
@@ -3871,11 +3848,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         geom.points -= geom.center  # type: ignore[misc]
 
         addr = actor.GetAddressAsString('')
-        self.renderer._labels[addr] = [geom, label, color]
+        self.renderer._labels[addr] = (geom, label, color)
 
     def add_volume(
         self,
-        volume,
+        volume: pyvista.DataSet | pyvista.MultiBlock | NumpyArray[float],
         scalars=None,
         clim=None,
         resolution=None,
@@ -4150,7 +4127,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import pyvista as pv
         >>> bolt_nut = examples.download_bolt_nut()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_volume(bolt_nut, cmap="coolwarm")
+        >>> _ = pl.add_volume(bolt_nut, cmap='coolwarm')
         >>> pl.show()
 
         Create a volume from scratch and plot it using single vector of
@@ -4170,9 +4147,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> grid = pv.ImageData(dimensions=(5, 20, 20))
         >>> scalars = grid.points - (grid.origin)
         >>> scalars /= scalars.max()
-        >>> opacity = np.linalg.norm(
-        ...     grid.points - grid.center, axis=1
-        ... ).reshape(-1, 1)
+        >>> opacity = np.linalg.norm(grid.points - grid.center, axis=1).reshape(-1, 1)
         >>> opacity /= opacity.max()
         >>> scalars = np.hstack((scalars, opacity**3))
         >>> scalars *= 255
@@ -4227,7 +4202,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
-                volume = wrap(volume)
+                volume = cast(pyvista.ImageData, wrap(cast(NumpyArray[float], volume)))
                 if resolution is None:
                     resolution = [1, 1, 1]
                 elif len(resolution) != 3:
@@ -4243,7 +4218,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # HACK: Make a copy so the original object is not altered.
             #       Also, place all data on the nodes as issues arise when
             #       volume rendering on the cells.
-            volume = volume.cell_data_to_point_data()
+            volume = volume.cell_data_to_point_data()  # type: ignore[unreachable]
 
         if name is None:
             name = f'{type(volume).__name__}({volume.memory_address})'
@@ -4254,16 +4229,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
-            for idx in range(volume.GetNumberOfBlocks()):
-                if volume[idx] is None:
+            for idx, block in enumerate(volume):
+                if block is None:
                     continue
                 # Get a good name to use
                 next_name = f'{name}-{idx}'
                 # Get the data object
-                block = wrap(volume.GetBlock(idx))
+                block = wrap(block)
                 if resolution is None:
                     try:
-                        block_resolution = block.GetSpacing()  # type: ignore[union-attr]
+                        block_resolution = block.GetSpacing()
                     except AttributeError:
                         block_resolution = resolution
                 else:
@@ -4328,6 +4303,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f'Type {type(volume)} not supported for volume rendering with the `{mapper}` mapper. Use the "ugrid" mapper or simply leave as None.',
             )
 
+        volume = cast(pyvista.DataSet, volume)
         if opacity_unit_distance is None and not isinstance(volume, pyvista.UnstructuredGrid):
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
@@ -4450,7 +4426,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(annotations, dict):
                 self.mapper.lookup_table.annotations = annotations
 
-        self.mapper.dataset = volume
+        self.mapper.dataset = volume  # type: ignore[assignment]
         self.mapper.blend_mode = blending
         self.mapper.update()
 
@@ -5209,9 +5185,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.open_gif(
-        ...     'movie.gif', fps=8, palettesize=64
-        ... )  # doctest:+SKIP
+        >>> pl.open_gif('movie.gif', fps=8, palettesize=64)  # doctest:+SKIP
 
         See :ref:`gif_movie_example` for a full example using this method.
 
@@ -5235,7 +5209,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         kwargs['loop'] = loop
         kwargs['palettesize'] = palettesize
         kwargs['subrectangles'] = subrectangles
-        if scooby.meets_version(__version__, '2.28.1'):
+        if scooby.knowledge.meets_version(__version__, '2.28.1'):
             kwargs['duration'] = 1000 * 1 / fps
         else:  # pragma: no cover
             kwargs['fps'] = fps
@@ -5400,9 +5374,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         >>> pl = pv.Plotter()
         >>> points = np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]])
-        >>> actor = pl.add_lines(
-        ...     points, color='purple', width=3, connected=True
-        ... )
+        >>> actor = pl.add_lines(points, color='purple', width=3, connected=True)
         >>> pl.camera_position = 'xy'
         >>> pl.show()
 
@@ -5428,7 +5400,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(label, str):
                 raise TypeError('Label must be a string')
             addr = actor.GetAddressAsString('')
-            self.renderer._labels[addr] = [lines, label, Color(color)]
+            self.renderer._labels[addr] = (lines, label, Color(color))
 
         # Add to renderer
         self.add_actor(actor, reset_camera=False, name=name, pickable=False)  # type: ignore[arg-type]
@@ -5607,9 +5579,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> import numpy as np
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> points = np.array(
-        ...     [[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [2.0, 0.0, 0.0]]
-        ... )
+        >>> points = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 0.0], [2.0, 0.0, 0.0]])
         >>> labels = ['Point A', 'Point B', 'Point C']
         >>> actor = pl.add_point_labels(
         ...     points,
@@ -5975,7 +5945,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(examples.load_airplane(), smooth_shading=True)
         >>> _ = pl.add_background_image(examples.mapfile)
-        >>> pl.save_graphic("img.svg")  # doctest:+SKIP
+        >>> pl.save_graphic('img.svg')  # doctest:+SKIP
 
         """
         from vtkmodules.vtkIOExportGL2PS import vtkGL2PSExporter
@@ -6234,17 +6204,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> texture = examples.load_globe_texture()
         >>> filename = Path(mkdtemp()) / 'orbit.gif'
         >>> plotter = pv.Plotter(window_size=[300, 300])
-        >>> _ = plotter.add_mesh(
-        ...     mesh, texture=texture, smooth_shading=True
-        ... )
+        >>> _ = plotter.add_mesh(mesh, texture=texture, smooth_shading=True)
         >>> plotter.open_gif(filename)
         >>> viewup = [0, 0, 1]
         >>> orbit = plotter.generate_orbital_path(
         ...     factor=2.0, n_points=24, shift=0.0, viewup=viewup
         ... )
-        >>> plotter.orbit_on_path(
-        ...     orbit, write_frames=True, viewup=viewup, step=0.02
-        ... )
+        >>> plotter.orbit_on_path(orbit, write_frames=True, viewup=viewup, step=0.02)
 
         See :ref:`orbiting_example` for a full example using this method.
 
@@ -6605,9 +6571,7 @@ class Plotter(BasePlotter):
     >>> mesh = pv.Cube()
     >>> another_mesh = pv.Sphere()
     >>> pl = pv.Plotter()
-    >>> actor = pl.add_mesh(
-    ...     mesh, color='red', style='wireframe', line_width=4
-    ... )
+    >>> actor = pl.add_mesh(mesh, color='red', style='wireframe', line_width=4)
     >>> actor = pl.add_mesh(another_mesh, color='blue')
     >>> pl.show()
 
@@ -7110,9 +7074,7 @@ class Plotter(BasePlotter):
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
         >>> pl.background_color = 'grey'
-        >>> actor = pl.add_title(
-        ...     'Plot Title', font='courier', color='k', font_size=40
-        ... )
+        >>> actor = pl.add_title('Plot Title', font='courier', color='k', font_size=40)
         >>> pl.show()
 
         """

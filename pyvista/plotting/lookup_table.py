@@ -19,6 +19,8 @@ from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
 if TYPE_CHECKING:  # pragma: no cover
+    from matplotlib import colors
+
     from ._typing import ColorLike
 
 RAMP_MAP = {0: 'linear', 1: 's-curve', 2: 'sqrt'}
@@ -199,7 +201,7 @@ class LookupTable(_vtk.vtkLookupTable):
     """
 
     _nan_color_set = False
-    _cmap = None
+    _cmap: colors.Colormap | colors.ListedColormap | None = None
     _values_manual = False
     _opacity_parm: tuple[Any, bool, str] = (None, False, 'quadratic')
 
@@ -327,7 +329,7 @@ class LookupTable(_vtk.vtkLookupTable):
         self.rebuild()
 
     @property
-    def cmap(self) -> str | None:  # numpydoc ignore=RT01
+    def cmap(self) -> colors.Colormap | colors.ListedColormap | None:  # numpydoc ignore=RT01
         """Return or set the color map used by this lookup table.
 
         Examples
@@ -565,7 +567,7 @@ class LookupTable(_vtk.vtkLookupTable):
         * The default is S-curve, which tails off gradually at either end.
         * The equation used for ``"s-curve"`` is ``y = (sin((x - 1/2)*pi) +
           1)/2``, For an S-curve greyscale ramp, you should set
-          :attr:`pyvista.LookupTable.n_values`` to 402 (which is ``256*pi/2``) to provide
+          :attr:`pyvista.LookupTable.n_values` to 402 (which is ``256*pi/2``) to provide
           room for the tails of the ramp.
 
         * The equation for the ``"linear"`` is simply ``y = x``.
@@ -937,7 +939,7 @@ class LookupTable(_vtk.vtkLookupTable):
         """
         vtk_values = self.GetAnnotatedValues()
         if vtk_values is None:
-            return {}
+            return {}  # type: ignore[unreachable]
         n_items = vtk_values.GetSize()
         keys = [vtk_values.GetValue(ii).ToFloat() for ii in range(n_items)]  # type: ignore[attr-defined]
 

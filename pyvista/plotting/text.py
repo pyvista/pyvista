@@ -250,10 +250,10 @@ class Label(_Prop3DMixin, Text):
     :class:`~pyvista.Actor`.
 
     In addition, this class supports an additional :attr:`relative_position` attribute.
-    In general, it is recommended to simply use :attr:`position` when positioning a
+    In general, it is recommended to simply use :attr:`~pyvista.Prop3D.position` when positioning a
     :class:`Label` by itself. However, if the position of the label depends on the
-    positioning of another actor, both :attr:`position` and :attr:`relative_position`
-    may be used together. In these cases, the :attr:`position` of the label and actor
+    positioning of another actor, both :attr:`~pyvista.Prop3D.position` and :attr:`relative_position`
+    may be used together. In these cases, the :attr:`~pyvista.Prop3D.position` of the label and actor
     should be kept in-sync. See the examples below.
 
     Parameters
@@ -265,7 +265,7 @@ class Label(_Prop3DMixin, Text):
         Position of the text in XYZ coordinates.
 
     relative_position : VectorLike[float]
-        Position of the text in XYZ coordinates relative to its :attr:`position`.
+        Position of the text in XYZ coordinates relative to its :attr:`~pyvista.Prop3D.position`.
 
     size : int
         Size of the text label.
@@ -386,7 +386,7 @@ class Label(_Prop3DMixin, Text):
         """Position of the label in xyz space.
 
         This is the "true" position of the label. Internally this is loosely
-        equal to :attr:`position` + :attr:`relative_position`.
+        equal to :attr:`~pyvista.Prop3D.position` + :attr:`relative_position`.
         """
         return self.GetPositionCoordinate().GetValue()
 
@@ -412,7 +412,7 @@ class Label(_Prop3DMixin, Text):
 
     @property
     def relative_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
-        """Position of the label relative to its :attr:`position`."""
+        """Position of the label relative to its :attr:`~pyvista.Prop3D.position`."""
         return tuple(self._relative_position.tolist())
 
     @relative_position.setter
@@ -490,10 +490,10 @@ class TextProperty(_vtk.vtkTextProperty):
     >>> from pyvista import TextProperty
     >>> prop = TextProperty()
     >>> prop.opacity = 0.5
-    >>> prop.background_color = "b"
+    >>> prop.background_color = 'b'
     >>> prop.background_opacity = 0.5
     >>> prop.show_frame = True
-    >>> prop.frame_color = "b"
+    >>> prop.frame_color = 'b'
     >>> prop.frame_width = 10
     >>> prop.frame_color
     Color(name='blue', hex='#0000ffff', opacity=255)
