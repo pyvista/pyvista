@@ -337,7 +337,6 @@ class _classproperty(property):
     >>> class Foo:
     ...     @_classproperty
     ...     def bar(cls): ...
-    ...
 
     """
 
