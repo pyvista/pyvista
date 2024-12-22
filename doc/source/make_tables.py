@@ -1898,8 +1898,8 @@ class DatasetGalleryCarousel(DocTable):
         should override this method to customize the card.
         """
         if dataset_name is None:
-            # Return minimum formatted text so that there is content for the directive
-            return '\n    None'
+            # Return empty card
+            return '\n    .. card::\n' '\n       None'
         assert isinstance(
             dataset_name,
             str,
