@@ -22,7 +22,6 @@ import make_tables
 
 import pyvista
 
-os.environ['DISABLE_DOCTEST'] = 'True'
 DISABLE_DOCTEST = os.environ['DISABLE_DOCTEST']
 
 make_external_gallery.make_example_gallery()
