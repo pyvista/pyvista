@@ -25,8 +25,6 @@ env:
   PYDEVD_DISABLE_FILE_VALIDATION: "1"
   PYTEST_ADDOPTS: "--color=yes"
   FORCE_COLOR: "True"
-  if: ${{ contains(github.event.pull_request.labels.*.name, 'no-doctest') }}
-  DISABLE_DOCTEST: true
 
 jobs:
   doc:
@@ -84,6 +82,10 @@ jobs:
         with:
           path: doc/_build/
           key: doc-examples-${{ hashFiles('pyvista/_version.py') }}
+          
+      - name: Set Doctest Environment Variable
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'no-doctest') }}
+        run: echo "DISABLE_DOCTEST=true" >> $GITHUB_ENV
 
       - name: Build Documentation
         run: make -C doc html
