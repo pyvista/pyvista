@@ -45,6 +45,7 @@ import warnings
 import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _classproperty
 
 from .colors import Color
 from .colors import get_cmap_safe
@@ -69,7 +70,7 @@ def _set_plot_theme_from_env() -> None:
             theme = os.environ['PYVISTA_PLOT_THEME']
             set_plot_theme(theme.lower())
         except ValueError:
-            allowed = ', '.join(Theme.defaults())
+            allowed = ', '.join(Theme.defaults)
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}',
@@ -138,7 +139,7 @@ def set_plot_theme(theme):
             new_theme_type = Theme.from_default(theme)
         except KeyError:
             raise ValueError(
-                f"Theme '{theme}' not found in PyVista's default themes: {Theme.defaults()}"
+                f"Theme '{theme}' not found in PyVista's default themes: {Theme.defaults}"
             )
         pyvista.global_theme.load_theme(new_theme_type)
     elif isinstance(theme, Theme):
@@ -305,14 +306,14 @@ class _ThemeConfig(metaclass=_ForceSlots):
         theme = getattr(cls, cls._defaults[name])
         return theme()
 
-    @classmethod
+    @_classproperty
     def defaults(self):
         """Return list of default themes.
 
         Examples
         --------
         >>> from pyvista.plotting.themes import Theme
-        >>> theme = Theme.defaults()
+        >>> theme = Theme.defaults
 
         """
         return list(self._defaults.keys())

@@ -16,7 +16,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista.plotting.themes import Theme
 
-Theme.defaults()
+Theme.defaults
 
 ###############################################################################
 # Make a plot for comparison later.

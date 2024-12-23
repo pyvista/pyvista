@@ -255,7 +255,7 @@ def test_colorbar_position_y(default_theme):
     assert default_theme.colorbar_horizontal.position_y == position_y
 
 
-@pytest.mark.parametrize('theme_name', pv.plotting.themes.Theme.defaults())
+@pytest.mark.parametrize('theme_name', pv.plotting.themes.Theme.defaults)
 def test_themes(theme_name):
     try:
         pv.set_plot_theme(theme_name)
@@ -701,8 +701,8 @@ def test_trame_config():
 
 
 def test_theme_defaults():
-    assert isinstance(Theme.defaults(), list)
-    for name in Theme.defaults():
+    assert isinstance(Theme.defaults, list)
+    for name in Theme.defaults:
         assert isinstance(name, str)
         theme = getattr(Theme, Theme._defaults[name])
         assert Theme.from_default(name) == theme()
@@ -717,8 +717,8 @@ def test_theme_defaults():
 
 
 def test_slider_style_defaults():
-    assert isinstance(_SliderStyleConfig.defaults(), list)
-    for name in _SliderStyleConfig.defaults():
+    assert isinstance(_SliderStyleConfig.defaults, list)
+    for name in _SliderStyleConfig.defaults:
         assert isinstance(name, str)
         theme = getattr(_SliderStyleConfig, _SliderStyleConfig._defaults[name])
         assert _SliderStyleConfig.from_default(name) == theme()

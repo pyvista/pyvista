@@ -1359,7 +1359,7 @@ class WidgetHelper:
 
         style : str, optional
             The name of the slider style. The list of available styles
-            are in ``pyvista.global_theme.slider_style.defaults()``.
+            are in ``pyvista.global_theme.slider_style.defaults``.
             Defaults to ``None``.
 
 
@@ -1485,7 +1485,7 @@ class WidgetHelper:
 
         style : str, optional
             The name of the slider style. The list of available styles
-            are in ``pyvista.global_theme.slider_style.defaults()``.
+            are in ``pyvista.global_theme.slider_style.defaults``.
             Defaults to ``None``.
 
         title_height : float, optional

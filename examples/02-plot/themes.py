@@ -64,7 +64,7 @@ plot_example()
 
 from pyvista.plotting.themes import Theme
 
-Theme.defaults()
+Theme.defaults
 
 
 # %%
