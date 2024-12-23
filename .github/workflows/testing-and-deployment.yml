@@ -19,9 +19,11 @@ env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
   PYTEST_ADDOPTS: "--color=yes"
+  SKIP_UNIT_TESTS: ${{ !contains(github.event.pull_request.labels.*.name, 'no-unit-tests') }}
 
 jobs:
   macOS:
+    if: ${{ !env.SKIP_UNIT_TESTS }}
     name: Mac OS Unit Testing
     strategy:
       fail-fast: false
@@ -33,7 +35,6 @@ jobs:
           - { os: macos-latest, python-version: "3.12" }
     runs-on: ${{ matrix.config.os }}
 
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-unit-tests') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -141,6 +142,7 @@ jobs:
           path: debug_images
 
   Linux:
+    if: ${{ !env.SKIP_UNIT_TESTS }}
     name: Linux Unit Testing
     runs-on: ubuntu-20.04
     strategy:
@@ -264,6 +266,7 @@ jobs:
           TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
   windows:
+    if: ${{ !env.SKIP_UNIT_TESTS }}
     name: Windows Unit Testing
     runs-on: windows-latest
     env:
