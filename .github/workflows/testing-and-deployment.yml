@@ -33,6 +33,7 @@ jobs:
           - { os: macos-latest, python-version: "3.12" }
     runs-on: ${{ matrix.config.os }}
 
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-unit-tests') }}
     steps:
       - uses: actions/checkout@v4
 
