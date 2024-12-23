@@ -394,9 +394,7 @@ class AxesAssembly(_XYZAssembly):
 
     Position and orient the axes in space.
 
-    >>> axes = pv.AxesAssembly(
-    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
-    ... )
+    >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
@@ -778,9 +776,7 @@ class AxesAssembly(_XYZAssembly):
 
         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
 
-        >>> axes_assembly.set_actor_prop(
-        ...     'style', 'wireframe', axis='x', part='shaft'
-        ... )
+        >>> axes_assembly.set_actor_prop('style', 'wireframe', axis='x', part='shaft')
         >>> axes_assembly.get_actor_prop('style')
         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
 
@@ -1050,7 +1046,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     only show text for the positive axes.
 
     >>> axes_assembly = pv.AxesAssemblySymmetric(
-    ...     x_label=('X', ""), y_label=('Y', ""), z_label=('Z', "")
+    ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
