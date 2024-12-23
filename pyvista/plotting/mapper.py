@@ -104,9 +104,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         set to its default value of ``(0.0, 1.0)``.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.scalar_range
@@ -131,9 +129,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         >>> import pyvista as pv
         >>> mesh = pv.Sphere()
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(
-        ...     mesh, scalars=mesh.points[:, 2], cmap='bwr'
-        ... )
+        >>> actor = pl.add_mesh(mesh, scalars=mesh.points[:, 2], cmap='bwr')
         >>> actor.mapper.lookup_table
         LookupTable (...)
           Table Range:                (-0.5, 0.5)
@@ -147,9 +143,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         Return the lookup table of a composite dataset mapper.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> pl = pv.Plotter()
         >>> actor, mapper = pl.add_composite(dataset)
         >>> mapper.lookup_table  # doctest:+SKIP
@@ -201,9 +195,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         Disable interpolation before mapping.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
@@ -273,9 +265,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         active scalars to point data.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
@@ -340,9 +330,7 @@ class _BaseMapper(_vtk.vtkAbstractMapper):
         Show that scalar visibility is ``True``.
 
         >>> import pyvista as pv
-        >>> dataset = pv.MultiBlock(
-        ...     [pv.Cube(), pv.Sphere(center=(0, 0, 1))]
-        ... )
+        >>> dataset = pv.MultiBlock([pv.Cube(), pv.Sphere(center=(0, 0, 1))])
         >>> dataset[0].point_data['data'] = dataset[0].points[:, 2]
         >>> dataset[1].point_data['data'] = dataset[1].points[:, 2]
         >>> pl = pv.Plotter()
@@ -499,7 +487,7 @@ class _DataSetMapper(_BaseMapper):
         cmap=None,
         flip_scalars: bool = False,
         opacity=None,
-        categories: bool = False,
+        categories: bool | int = False,
         clim=None,
     ):
         """Set the scalars on this mapper.
@@ -777,11 +765,9 @@ class _DataSetMapper(_BaseMapper):
         >>> surface = mesh.extract_surface(nonlinear_subdivision=4)
 
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     surface, smooth_shading=True, split_sharp_edges=True
-        ... )
+        >>> _ = plotter.add_mesh(surface, smooth_shading=True, split_sharp_edges=True)
         >>> actor = plotter.add_mesh(edges, color='k', line_width=3)
-        >>> actor.mapper.resolve = "polygon_offset"
+        >>> actor.mapper.resolve = 'polygon_offset'
         >>> plotter.show()
 
         """

@@ -161,8 +161,8 @@ class DataObject:
             set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
             writer.SetFileName(str(file_path))
             writer.SetInputData(mesh_)
-            if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:
-                mesh_ = cast(pyvista.DataSet, mesh_)
+            if isinstance(writer, _vtk.vtkPLYWriter) and texture is not None:  # type: ignore[unreachable]
+                mesh_ = cast(pyvista.DataSet, mesh_)  # type: ignore[unreachable]
                 if isinstance(texture, str):
                     writer.SetArrayName(texture)
                     array_name = texture
@@ -428,9 +428,7 @@ class DataObject:
         Add field data to a ImageData dataset.
 
         >>> mesh = pv.ImageData(dimensions=(2, 2, 1))
-        >>> mesh.add_field_data(
-        ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
-        ... )
+        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'], 'my-field-data')
         >>> mesh['my-field-data']
         pyvista_ndarray(['I could', 'write', 'notes', 'here'], dtype='<U7')
 
@@ -438,7 +436,7 @@ class DataObject:
 
         >>> blocks = pv.MultiBlock()
         >>> blocks.append(pv.Sphere())
-        >>> blocks["cube"] = pv.Cube(center=(0, 0, -1))
+        >>> blocks['cube'] = pv.Cube(center=(0, 0, -1))
         >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
         >>> blocks.field_data['my-field-data']
         pyvista_ndarray([1, 2, 3])
@@ -597,7 +595,8 @@ class DataObject:
 
     @user_dict.setter
     def user_dict(
-        self: Self, dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType]
+        self: Self,
+        dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None,
     ) -> None:
         # Setting None removes the field data array
         if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
@@ -628,7 +627,7 @@ class DataObject:
                 # When loaded from file, field will be cast as pyvista ndarray
                 # Convert to string and initialize new user dict object from it
                 self._user_dict = _SerializedDictArray(''.join(array))
-            elif isinstance(array, str) and repr(self._user_dict) != array:
+            elif isinstance(array, str) and repr(self._user_dict) != array:  # type: ignore[unreachable]
                 # Filters may update the field data block separately, e.g.
                 # when copying field data, so we need to capture the new
                 # string and re-init
@@ -783,12 +782,12 @@ class DataObject:
 
             for parent_type, writer_type in writers.items():
                 if isinstance(self, parent_type):
-                    writer = writer_type()
+                    writer = writer_type()  # type: ignore[unreachable]
                     break
             else:
                 raise TypeError(f'Cannot pickle dataset of type {self.GetDataObjectType()}')
 
-            writer.SetInputDataObject(self)
+            writer.SetInputDataObject(self)  # type: ignore[unreachable]
             writer.SetWriteToOutputString(True)
             writer.SetDataModeToBinary()
             writer.SetCompressorTypeToNone()
@@ -877,12 +876,12 @@ class DataObject:
 
             for parent_type, reader_type in readers.items():
                 if isinstance(self, parent_type):
-                    reader = reader_type()
+                    reader = reader_type()  # type: ignore[unreachable]
                     break
             else:
                 raise TypeError(f'Cannot unpickle dataset of type {self.GetDataObjectType()}')
 
-            reader.ReadFromInputStringOn()
+            reader.ReadFromInputStringOn()  # type: ignore[unreachable]
             reader.SetInputString(vtk_serialized)
             reader.Update()
 
