@@ -269,7 +269,7 @@ class CellType(IntEnum):
             if _short_doc and _long_doc:
                 _short_doc += '\n\n'
 
-            has_no_image = _example is None or 'DISABLE_DOCTEST' in os.environ
+            has_no_image = _example is None or os.environ.get('DISABLE_DOCTEST')
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
                 if has_no_image

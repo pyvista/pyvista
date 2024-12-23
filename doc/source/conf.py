@@ -22,7 +22,7 @@ import make_tables
 
 import pyvista
 
-DISABLE_DOCTEST = os.environ['DISABLE_DOCTEST']
+DISABLE_DOCTEST = os.environ.get('DISABLE_DOCTEST')
 
 make_external_gallery.make_example_gallery()
 make_tables.make_all_tables(load_datasets=not DISABLE_DOCTEST)
