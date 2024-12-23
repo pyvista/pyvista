@@ -99,6 +99,7 @@ jobs:
         run: if [ -e doc/errors.txt ]; then cat doc/errors.txt; fi
 
       - name: Test Documentation Images
+        if: env.DISABLE_DOCTEST
         run: pytest tests/doc/tst_doc_images.py
 
       - name: Upload Images for Failed Tests
