@@ -268,7 +268,7 @@ def _remove_duplicate_points(polydata):
     [None, 2, 5, [2, 5]],
     ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
 )
-@pytest.mark.parametrize('boundary_style', ['all', 'external'])  # , 'internal'],
+@pytest.mark.parametrize('boundary_style', ['all', 'external', 'internal'])
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundary_style(
     labeled_image,
