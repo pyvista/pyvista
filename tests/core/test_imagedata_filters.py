@@ -169,7 +169,7 @@ def test_contour_labeled_with_invalid_scalars():
 
 @pytest.fixture
 def channels():
-    # ImageData will cell data
+    # ImageData with cell data
     return examples.load_channels()
 
 
