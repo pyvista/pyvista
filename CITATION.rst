@@ -14,7 +14,7 @@ visibility by citing our work.
 
 BibTex:
 
-.. code::
+.. code:: latex
 
     @article{sullivan2019pyvista,
       doi = {10.21105/joss.01450},
