@@ -69,7 +69,7 @@ def validate_array(
     must_be_finite: bool = False,
     must_be_real: bool = True,
     must_be_integer: bool = False,
-    must_be_sorted: bool = False,
+    must_be_sorted: bool | dict[str, Any] = False,
     must_be_in_range: VectorLike[float] | None = None,
     strict_lower_bound: bool = False,
     strict_upper_bound: bool = False,
@@ -434,8 +434,8 @@ def validate_axes(
     check_length(axes, exact_length=[1, 2, 3], name=f'{name} arguments')
     if must_have_orientation is not None:
         check_contains(
-            item=must_have_orientation,
-            container=['right', 'left'],
+            ['right', 'left'],
+            must_contain=must_have_orientation,
             name=f'{name} orientation',
         )
     elif must_have_orientation is None and len(axes) == 2:
@@ -542,7 +542,7 @@ def validate_rotation(
 
     """
     check_contains(
-        item=must_have_handedness, container=['right', 'left', None], name='must_have_handedness'
+        ['right', 'left', None], must_contain=must_have_handedness, name='must_have_handedness'
     )
     rotation_matrix = validate_transform3x3(rotation, name=name)
     if not np.allclose(np.linalg.inv(rotation_matrix), rotation_matrix.T):
@@ -1052,9 +1052,7 @@ def validate_arrayN_unsigned(
 
     Add additional constraints if needed.
 
-    >>> _validation.validate_arrayN_unsigned(
-    ...     (1, 2, 3), must_be_in_range=[1, 3]
-    ... )
+    >>> _validation.validate_arrayN_unsigned((1, 2, 3), must_be_in_range=[1, 3])
     array([1, 2, 3])
 
     """

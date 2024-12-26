@@ -178,12 +178,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a | sphere_b
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere_a, color='r', style='wireframe', line_width=3
-        ... )
-        >>> _ = pl.add_mesh(
-        ...     sphere_b, color='b', style='wireframe', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
@@ -254,12 +250,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a & sphere_b
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere_a, color='r', style='wireframe', line_width=3
-        ... )
-        >>> _ = pl.add_mesh(
-        ...     sphere_b, color='b', style='wireframe', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
@@ -331,12 +323,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a - sphere_b
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere_a, color='r', style='wireframe', line_width=3
-        ... )
-        >>> _ = pl.add_mesh(
-        ...     sphere_b, color='b', style='wireframe', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
@@ -1097,6 +1085,13 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Decimated mesh.
 
+        See Also
+        --------
+        decimate
+            Another option for triangular meshes.
+        decimate_polyline
+            For use with polylines.
+
         Examples
         --------
         Decimate a sphere.  First plot the sphere.
@@ -1128,6 +1123,122 @@ class PolyDataFilters(DataSetFilters):
 
         if max_degree is not None:
             alg.SetDegree(max_degree)
+
+        _update_alg(alg, progress_bar, 'Decimating Mesh')
+
+        mesh = _get_output(alg)
+        if inplace:
+            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
+            return self
+
+        return mesh
+
+    def decimate_polyline(
+        self,
+        reduction: float,
+        *,
+        maximum_error: float = 10.0,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        """Reduce the number of lines in a polyline mesh.
+
+        This filter uses ``vtkDecimatePolylineFilter``.
+
+        .. versionadded:: 0.45.0
+
+        Parameters
+        ----------
+        reduction : float
+            Reduction factor. A value of 0.9 will leave 10% of the
+            original number of vertices.
+
+        maximum_error : float, default: 10.
+            Fraction of the maximum length of the input data bounding box
+            to limit reduction.  This might prevent the full reduction from
+            being achieved. Default of ``10.`` should not limit reduction.
+
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Decimated mesh.
+
+        Warnings
+        --------
+        From ``vtkDecimatePolylineFilter`` documentation: this algorithm is a very
+        simple implementation that overlooks some potential complexities.
+        For example, if a vertex is multiply connected, meaning that it is
+        used by multiple distinct polylines, then the extra topological
+        constraints are ignored. This can produce less than optimal results.
+
+        See Also
+        --------
+        decimate
+            For use with triangular meshes.
+        decimate_pro
+            Another option for triangular meshes.
+
+        Examples
+        --------
+        Generate a circle, builtin function returns a Polygon cell.
+
+        >>> import pyvista as pv
+        >>> circle = pv.Circle(resolution=30)
+
+        Convert to a Polyline. A polyline requires duplicating reference
+        to initial point to close the circle.
+
+        >>> circle_polyline = pv.PolyData(
+        ...     circle.points, lines=[31] + list(range(30)) + [0]
+        ... )
+        >>> circle_polyline.n_points
+        30
+
+        Decimate ~50% of points.
+
+        >>> decimate_some = circle_polyline.decimate_polyline(0.5)
+        >>> decimate_some.n_points
+        14
+
+        Decimate more points.
+
+        >>> decimate_more = circle_polyline.decimate_polyline(0.75)
+        >>> decimate_more.n_points
+        6
+
+        Compare decimated polylines.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(circle_polyline, label='Circle', color='red', line_width=5)
+        >>> _ = pl.add_mesh(
+        ...     decimate_some,
+        ...     label='Decimated some',
+        ...     color='blue',
+        ...     line_width=5,
+        ... )
+        >>> _ = pl.add_mesh(
+        ...     decimate_more,
+        ...     label='Decimated more',
+        ...     color='black',
+        ...     line_width=5,
+        ... )
+        >>> pl.view_xy()
+        >>> _ = pl.add_legend(face='line', size=(0.25, 0.25))
+        >>> pl.show()
+
+        See :ref:`decimate_example` for more examples using this filter.
+
+        """
+        alg = _vtk.vtkDecimatePolylineFilter()
+        alg.SetInputData(self)
+        alg.SetTargetReduction(reduction)
+        alg.SetMaximumError(maximum_error)
 
         _update_alg(alg, progress_bar, 'Decimating Mesh')
 
@@ -1534,6 +1645,13 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Decimated mesh.
 
+        See Also
+        --------
+        decimate_pro
+            Another option for triangular meshes.
+        decimate_polyline
+            For use with polylines.
+
         Notes
         -----
         If you encounter a segmentation fault or other error, consider using
@@ -1714,7 +1832,7 @@ class PolyDataFilters(DataSetFilters):
         # track original point indices
         if split_vertices:
             self.point_data.set_array(  # type: ignore[attr-defined]
-                np.arange(self.n_points, dtype=pyvista.ID_TYPE),  # type: ignore[attr-defined]
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE),  # type: ignore[attr-defined, arg-type]
                 'pyvistaOriginalPointIds',
             )
 
@@ -1821,9 +1939,7 @@ class PolyDataFilters(DataSetFilters):
         sphere in the positive Z direction.  Shift the clip upwards to
         leave a smaller mesh behind.
 
-        >>> clipped_mesh = sphere.clip_closed_surface(
-        ...     'z', origin=[0, 0, 0.3]
-        ... )
+        >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
         """
@@ -1978,9 +2094,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> points = np.array(
-        ...     [[0, 0, 0], [0, 1, 0], [1, 0, 0]], dtype=np.float32
-        ... )
+        >>> points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]], dtype=np.float32)
         >>> faces = np.array([3, 0, 1, 2, 3, 0, 2, 2])
         >>> mesh = pv.PolyData(points, faces)
         >>> mout = mesh.clean()
@@ -2208,9 +2322,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> point, cell = sphere.ray_trace(
-        ...     [0, 0, 0], [1, 0, 0], first_point=True
-        ... )
+        >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], first_point=True)
         >>> f'Intersected at {point[0]:.3f} {point[1]:.3f} {point[2]:.3f}'
         'Intersected at 0.499 0.000 0.000'
 
@@ -2310,9 +2422,9 @@ class PolyDataFilters(DataSetFilters):
         ...     [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
         ...     first_point=True,
         ... )  # doctest:+SKIP
-        >>> string = ", ".join(
+        >>> string = ', '.join(
         ...     [
-        ...         f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})"
+        ...         f'({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})'
         ...         for point in points
         ...     ]
         ... )  # doctest:+SKIP
@@ -2787,7 +2899,7 @@ class PolyDataFilters(DataSetFilters):
         You can also plot the arc_length.
 
         >>> arc = path.compute_arc_length()
-        >>> arc.plot(scalars="arc_length")
+        >>> arc.plot(scalars='arc_length')
 
         """
         alg = _vtk.vtkAppendArcLength()
@@ -2847,7 +2959,7 @@ class PolyDataFilters(DataSetFilters):
         angle=0.0,
         factor=2.0,
         normal=None,
-        tcoords: bool = False,
+        tcoords: bool | str = False,
         preference='points',
         progress_bar: bool = False,
     ):
@@ -4113,7 +4225,6 @@ class PolyDataFilters(DataSetFilters):
         ...     _ = plot.add_mesh(poly, color='lime')
         ...     plot.camera_position = 'xy'
         ...     return plot
-        ...
 
         >>> plot = mask_and_polydata_plotter(mask, poly)
         >>> plot.show()
@@ -4178,7 +4289,7 @@ class PolyDataFilters(DataSetFilters):
         >>> plot = pv.Plotter()
         >>> _ = plot.add_mesh(binary_mask)
         >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos="yz")
+        >>> plot.show(cpos='yz')
 
         Note how the intersection is excluded from the mask.
         To include the voxels delimited by internal surfaces in the foreground, the internal
@@ -4204,29 +4315,25 @@ class PolyDataFilters(DataSetFilters):
         ...     reference_volume=reference_volume
         ... ).points_to_cells()
 
-        >>> binary_mask_1["mask"] = (
-        ...     binary_mask_1["mask"] | binary_mask_2["mask"]
-        ... )
+        >>> binary_mask_1['mask'] = binary_mask_1['mask'] | binary_mask_2['mask']
 
         >>> plot = pv.Plotter()
         >>> _ = plot.add_mesh(binary_mask_1)
         >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
         >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
-        >>> plot.show(cpos="yz")
+        >>> plot.show(cpos='yz')
 
         When multiple internal surfaces are nested, they are successively treated as
         interfaces between background and foreground.
 
-        >>> mesh = (
-        ...     pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
-        ... )
+        >>> mesh = pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
         >>> binary_mask = mesh.voxelize_binary_mask(
         ...     dimensions=(1, 50, 50)
         ... ).points_to_cells()
         >>> plot = pv.Plotter()
         >>> _ = plot.add_mesh(binary_mask)
         >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos="yz")
+        >>> plot.show(cpos='yz')
 
         """
         _validation.check_greater_than(self.n_points, 1, name='n_points')

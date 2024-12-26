@@ -112,9 +112,7 @@ class Transform(_vtk.vtkTransform):
 
     Using ``*`` performs the same concatenation as calling :meth:`scale`.
 
-    >>> np.array_equal(
-    ...     scaling_T.matrix, pv.Transform().scale(scale_factor).matrix
-    ... )
+    >>> np.array_equal(scaling_T.matrix, pv.Transform().scale(scale_factor).matrix)
     True
 
     Concatenate the two transformations using addition. This will concatenate with
@@ -457,7 +455,7 @@ class Transform(_vtk.vtkTransform):
     @multiply_mode.setter
     def multiply_mode(self: Transform, multiply_mode: Literal['pre', 'post']) -> None:
         _validation.check_contains(
-            item=multiply_mode, container=['pre', 'post'], name='multiply mode'
+            ['pre', 'post'], must_contain=multiply_mode, name='multiply mode'
         )
         self.pre_multiply() if multiply_mode == 'pre' else self.post_multiply()
 
@@ -979,9 +977,7 @@ class Transform(_vtk.vtkTransform):
         Rotate about a point. Check the :attr:`matrix_list` to see that a translation
         is added before and after the rotation.
 
-        >>> transform = pv.Transform().rotate(
-        ...     rotation_z_90, point=(1, 2, 3)
-        ... )
+        >>> transform = pv.Transform().rotate(rotation_z_90, point=(1, 2, 3))
         >>> translation_to_origin = transform.matrix_list[0]
         >>> translation_to_origin
         array([[ 1.,  0.,  0., -1.],

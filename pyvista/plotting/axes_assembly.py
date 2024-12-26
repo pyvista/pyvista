@@ -394,9 +394,7 @@ class AxesAssembly(_XYZAssembly):
 
     Position and orient the axes in space.
 
-    >>> axes = pv.AxesAssembly(
-    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
-    ... )
+    >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
@@ -778,9 +776,7 @@ class AxesAssembly(_XYZAssembly):
 
         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
 
-        >>> axes_assembly.set_actor_prop(
-        ...     'style', 'wireframe', axis='x', part='shaft'
-        ... )
+        >>> axes_assembly.set_actor_prop('style', 'wireframe', axis='x', part='shaft')
         >>> axes_assembly.get_actor_prop('style')
         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
 
@@ -1050,7 +1046,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     only show text for the positive axes.
 
     >>> axes_assembly = pv.AxesAssemblySymmetric(
-    ...     x_label=('X', ""), y_label=('Y', ""), z_label=('Z', "")
+    ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
@@ -1805,7 +1801,9 @@ class PlanesAssembly(_XYZAssembly):
             else _validate_label_sequence(edge, n_labels=3, name='label edge')
         )
         for edge_ in valid_edge:
-            _validation.check_contains(container=['top', 'bottom', 'right', 'left'], item=edge_)
+            _validation.check_contains(
+                ['top', 'bottom', 'right', 'left'], must_contain=edge_, name='label_edge'
+            )
         self._label_edge = tuple(valid_edge)
         self._update_label_positions()
 
@@ -1838,7 +1836,7 @@ class PlanesAssembly(_XYZAssembly):
 
     @label_mode.setter
     def label_mode(self, mode: Literal['2D', '3D']):
-        _validation.check_contains(item=mode, container=['2D', '3D'])
+        _validation.check_contains(['2D', '3D'], must_contain=mode, name='label_mode')
         self._label_mode = mode
         use_2D = mode == '2D'
         for axis in self._axis_actors:

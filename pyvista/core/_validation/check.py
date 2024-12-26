@@ -234,9 +234,9 @@ def check_sorted(
         except ValueError:
             raise ValueError(f'Axis {axis} is out of bounds for ndim {ndim}.')
 
-    if axis is None and ndim >= 1:
+    if axis is None and ndim >= 1:  # type: ignore[unreachable]
         # Emulate np.sort(), which flattens array when axis is None
-        array = array.ravel(order='A')
+        array = array.ravel(order='A')  # type: ignore[unreachable]
         ndim = 1
         axis = 0
 
@@ -770,7 +770,7 @@ def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Objec
     Check if an object is a string.
 
     >>> from pyvista import _validation
-    >>> _validation.check_string("eggs")
+    >>> _validation.check_string('eggs')
 
     """
     check_instance(obj, str, allow_subclass=allow_subclass, name=name)
@@ -804,7 +804,7 @@ def check_sequence(obj: Sequence[Any], /, *, name: str = 'Object') -> None:
     >>> import numpy as np
     >>> from pyvista import _validation
     >>> _validation.check_sequence([1, 2, 3])
-    >>> _validation.check_sequence("A")
+    >>> _validation.check_sequence('A')
 
     """
     check_instance(obj, Sequence, allow_subclass=True, name=name)
@@ -893,7 +893,7 @@ def check_instance(
 
     Check if an object is an instance of one of several types.
 
-    >>> _validation.check_instance("eggs", (int, str))
+    >>> _validation.check_instance('eggs', (int, str))
 
     """
     if not isinstance(name, str):
@@ -967,7 +967,7 @@ def check_type(obj: object, /, classinfo: type | tuple[type, ...], *, name: str 
     Check if an object is type ``dict`` or ``set``.
 
     >>> from pyvista import _validation
-    >>> _validation.check_type({'spam': "eggs"}, (dict, set))
+    >>> _validation.check_type({'spam': 'eggs'}, (dict, set))
 
     """
     check_instance(obj, classinfo, allow_subclass=False, name=name)
@@ -1036,16 +1036,16 @@ def check_iterable_items(
     )
 
 
-def check_contains(*, item: Any, container: Container[Any], name: str = 'Input') -> None:
+def check_contains(container: Container[Any], /, must_contain: Any, *, name: str = 'Input') -> None:
     """Check if an item is in a container.
 
     Parameters
     ----------
-    item : Any
-        Item to check.
-
     container : Any
-        Container the item is expected to be in.
+        Container to check.
+
+    must_contain : Any
+        Item which must be in the container.
 
     name : str, default: "Input"
         Variable name to use in the error messages if any are raised.
@@ -1053,7 +1053,7 @@ def check_contains(*, item: Any, container: Container[Any], name: str = 'Input')
     Raises
     ------
     ValueError
-        If the string is not in the iterable.
+        If the item is not in the container.
 
     See Also
     --------
@@ -1065,12 +1065,12 @@ def check_contains(*, item: Any, container: Container[Any], name: str = 'Input')
     Check if ``"A"`` is in a list of strings.
 
     >>> from pyvista import _validation
-    >>> _validation.check_contains(item="A", container=["A", "B", "C"])
+    >>> _validation.check_contains(['A', 'B', 'C'], must_contain='A')
 
     """
-    if item not in container:
+    if must_contain not in container:
         qualifier = 'one of' if isinstance(container, (list, tuple)) else 'in'
-        msg = f"{name} '{item}' is not valid. {name} must be {qualifier}: \n\t{container}"
+        msg = f"{name} '{must_contain}' is not valid. {name} must be {qualifier}: \n\t{container}"
         raise ValueError(msg)
 
 
