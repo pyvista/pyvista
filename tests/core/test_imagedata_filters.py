@@ -8,6 +8,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core._validation._cast_array import _cast_to_tuple
 from pyvista.core.errors import PyVistaDeprecationWarning
 
 BOUNDARY_LABELS = 'boundary_labels'
@@ -85,27 +86,6 @@ def labeled_image():
     return image
 
 
-def _get_label_ids(array):
-    """Get unique foreground label ids."""
-    ids = np.unique(array).tolist()
-    ids.remove(0) if 0 in ids else None
-    return ids
-
-
-def _get_ids_with_background_boundary(mesh):
-    """Return region ids from the boundary_labels array which share a boundary with the background."""
-    extracted = mesh.extract_values(0, component_mode=1)
-    external_polygons = extracted[BOUNDARY_LABELS] if BOUNDARY_LABELS in extracted.cell_data else []
-    return _get_label_ids(external_polygons)
-
-
-def _get_ids_with_internal_boundary(mesh):
-    """Return region ids from the boundary_labels array which share internal boundaries."""
-    extracted = mesh.extract_values(0, invert=True, component_mode=1)
-    internal_polygons = extracted[BOUNDARY_LABELS] if BOUNDARY_LABELS in extracted.cell_data else []
-    return _get_label_ids(internal_polygons)
-
-
 @pytest.mark.parametrize('smoothing', [True, False, None])
 @pytest.mark.parametrize('output_mesh_type', ['triangles', 'quads'])
 @pytest.mark.parametrize('scalars', ['labels', None])
@@ -135,8 +115,6 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     assert BOUNDARY_LABELS in mesh.cell_data
     assert mesh.active_scalars_name == BOUNDARY_LABELS
     assert all(cell.type == expected_celltype for cell in mesh.cell)
-    label_ids = _get_ids_with_background_boundary(mesh)
-    assert label_ids == [2, 5]
 
     assert mesh.area < 0.01 if smoothing else mesh.n_cells / multiplier
 
@@ -161,7 +139,7 @@ def _remove_duplicate_points(polydata):
     [None, 2, 5, [2, 5]],
     ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
 )
-@pytest.mark.parametrize('boundary_style', ['all', 'external'])  # , 'internal'],
+@pytest.mark.parametrize('boundary_style', ['all', 'external', 'internal'])
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_boundary_style(
     labeled_image,
@@ -169,8 +147,21 @@ def test_contour_labels_boundary_style(
     select_outputs,
     boundary_style,
 ):
-    # Test correct boundary_labels output
-    ALL_LABEL_IDS = np.array([2, 5])
+    ALL_LABEL_IDS = {2, 5}
+
+    # Make sure param values are iterable
+    select_inputs_iter = set(np.atleast_1d(select_inputs)) if select_inputs else ALL_LABEL_IDS
+    select_outputs_iter = set(np.atleast_1d(select_outputs)) if select_outputs else ALL_LABEL_IDS
+
+    # Compute expected boundary values
+    expected_internal_ids = set()
+    expected_external_ids = set()
+    if 2 in select_inputs_iter and 2 in select_outputs_iter:
+        expected_external_ids.add((2, 0))  # external boundary between id 2 and background id 0
+    if 5 in select_inputs_iter and 5 in select_outputs_iter:
+        expected_external_ids.add((5, 0))  # external boundary between id 5 and background id 0
+    if select_inputs_iter == ALL_LABEL_IDS:
+        expected_internal_ids.add((2, 5))  # internal boundary between ids 2 and 5
 
     mesh = labeled_image.contour_labels(
         select_inputs=select_inputs,
@@ -178,40 +169,47 @@ def test_contour_labels_boundary_style(
         boundary_style=boundary_style,
         multi_component_output=True,
     )
+    # Test no duplicate points
     cleaned = _remove_duplicate_points(mesh)
     assert mesh.n_cells == cleaned.n_cells
     assert mesh.n_points == cleaned.n_points
 
-    if mesh.n_cells > 0:
-        assert BOUNDARY_LABELS in mesh.cell_data
-        actual_output_ids = _get_ids_with_background_boundary(mesh)
-    else:
-        actual_output_ids = []
-
-    # Make sure param values are iterable
-    select_inputs_iter = np.atleast_1d(select_inputs) if select_inputs else ALL_LABEL_IDS
-    select_outputs_iter = np.atleast_1d(select_outputs) if select_outputs else ALL_LABEL_IDS
-
-    # All selected outputs are expected if it's also selected at the input
-    expected_output_ids = [id_ for id_ in select_outputs_iter if id_ in select_inputs_iter]
-
-    assert actual_output_ids == expected_output_ids
-
-    if boundary_style == 'all' and len(select_inputs_iter) == 2:
-        # The two labels share a boundary by default
-        # Boundary exists if no labels removed from input
-        expected_shared_region_ids = ALL_LABEL_IDS
-        shared_cells = mesh.extract_values([[2, 5], [5, 2]], component_mode='multi')
-        assert shared_cells.n_cells == 2
-    else:
-        expected_shared_region_ids = []
-
-    actual_shared_region_ids = _get_ids_with_internal_boundary(mesh)
-    assert np.array_equal(actual_shared_region_ids, expected_shared_region_ids)
-
-    # Make sure temp array created for select_inputs is removed
+    # Test that temp array created for select_inputs is removed
     assert labeled_image.array_names == ['labels']
     assert np.unique(labeled_image.active_scalars).tolist() == [0, 2, 5]
+
+    # Test output values
+    actual_output_values = set()
+    expected_output_values = set()
+    if mesh.n_cells > 0:
+        assert BOUNDARY_LABELS in mesh.cell_data
+        # Extract internal and external boundary meshes
+        internal_mesh = mesh.extract_values(0, component_mode='any', invert=True)
+        external_mesh = mesh.extract_values(0, component_mode='any')
+        # Get unique boundary values
+        actual_internal_values = (
+            set()
+            if internal_mesh.n_cells == 0
+            else set(_cast_to_tuple(internal_mesh[BOUNDARY_LABELS]))
+        )
+        actual_external_values = (
+            set()
+            if external_mesh.n_cells == 0
+            else set(_cast_to_tuple(external_mesh[BOUNDARY_LABELS]))
+        )
+
+        # Determine actual and expected values
+        if boundary_style == 'all':
+            actual_output_values = actual_internal_values | actual_external_values
+            expected_output_values = expected_internal_ids | expected_external_ids
+        if boundary_style == 'internal':
+            actual_output_values = actual_internal_values
+            expected_output_values = expected_internal_ids
+        if boundary_style == 'external':
+            actual_output_values = actual_external_values
+            expected_output_values = expected_external_ids
+
+    assert actual_output_values == expected_output_values
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
