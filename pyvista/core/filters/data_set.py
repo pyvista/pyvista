@@ -12,7 +12,6 @@ from typing import Literal
 from typing import cast
 import warnings
 
-import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -9049,6 +9048,7 @@ class DataSetFilters:
         """
         # Lazy import since these are from plotting module
         from cycler import cycler
+        import matplotlib.colors
 
         from pyvista.plotting.axes_assembly import _validate_color_sequence
         from pyvista.plotting.colors import get_cmap_safe
