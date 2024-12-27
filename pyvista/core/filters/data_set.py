@@ -9032,7 +9032,11 @@ class DataSetFilters:
                     return True
             return False
 
-        field, name = set_default_active_scalars(self)
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = get_array_association(self, name, preference=preference, err=True)
         output_mesh = self if inplace else self.copy()
         data = output_mesh.point_data if field == FieldAssociation.POINT else output_mesh.cell_data
         array = data[name]

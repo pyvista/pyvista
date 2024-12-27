@@ -4794,3 +4794,26 @@ def test_color_labels_inputs(labeled_image, color_input, expected_rgba):
     color_scalars = colored.active_scalars
     for id_ in np.unique(label_scalars):
         assert np.allclose(color_scalars[label_scalars == id_], expected_rgba[id_])
+
+
+def test_color_labels_scalars(uniform):
+    # Test active scalars
+    active_before = uniform.active_scalars_name
+    for name in uniform.array_names:
+        colored = uniform.color_labels(scalars=name)
+        assert name in colored.active_scalars_name
+    assert uniform.active_scalars_name == active_before
+
+    # Give cell data and point data the same name
+    GENERIC = 'generic'
+    for name in uniform.array_names:
+        uniform.rename_array(name, GENERIC)
+    assert all(name == GENERIC for name in uniform.array_names)
+
+    # Test preference
+    for name in uniform.array_names:
+        colored = uniform.color_labels(scalars=name, preference='point')
+        assert GENERIC + '_rgba' in colored.point_data
+
+        colored = uniform.color_labels(scalars=name, preference='cell')
+        assert GENERIC + '_rgba' in colored.cell_data
