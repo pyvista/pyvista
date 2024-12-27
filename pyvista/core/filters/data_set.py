@@ -9067,7 +9067,10 @@ class DataSetFilters:
 
             if use_index_mapping is True:
                 if not _is_index_like(array, max_value=n_colors):
-                    raise ValueError('Contiguous cannot be `False` for')
+                    raise ValueError(
+                        f"Index mapping cannot be used with scalars '{name}'. Scalars must be positive integers \n"
+                        f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
+                    )
                 keys = range(n_colors + 1)
                 values = colors
             else:

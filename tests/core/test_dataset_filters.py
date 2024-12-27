@@ -4737,10 +4737,23 @@ def test_pack_labels_preference(uniform):
     assert np.array_equal(actual_shape, expected_shape)
 
 
-@pytest.mark.parametrize('use_index_mapping', [False, None])
+@pytest.mark.parametrize('use_index_mapping', [False, None, True])
 def test_color_labels(uniform, use_index_mapping):
     default_cmap = pv.get_cmap_safe('glasbey_category10')
     original_scalars_name = uniform.active_scalars_name
+
+    if use_index_mapping is True:
+        # Test invalid input
+        match = (
+            "Index mapping cannot be used with scalars 'Spatial Point Data'. Scalars must be positive integers \n"
+            'and the max value (729.0) must be less than the number of colors (256).'
+        )
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.color_labels(use_index_mapping=True)
+
+        # Use pack labels so that index mapping can be used
+        uniform = uniform.pack_labels(output_scalars=original_scalars_name)
+
     colored_mesh = uniform.color_labels(use_index_mapping=use_index_mapping)
     assert colored_mesh is not uniform
     assert uniform.active_scalars_name == original_scalars_name
@@ -4755,3 +4768,7 @@ def test_color_labels(uniform, use_index_mapping):
         for data_id in data_ids:
             actual_rgba = colored_mesh[colors_name][data_id]
             assert np.allclose(actual_rgba, expected_color_rgba)
+
+    # Test in place
+    colored_mesh = uniform.color_labels(use_index_mapping=use_index_mapping, inplace=True)
+    assert colored_mesh is uniform
