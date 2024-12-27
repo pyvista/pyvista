@@ -214,11 +214,11 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     # Determine expected output
     if output_mesh_type == 'triangles' or output_mesh_type is None and smoothing:
         expected_celltype = pv.CellType.TRIANGLE
-        multiplier = 2  # quads are subdivided into 2 triangles
+        cell_multiplier = 2  # quads are subdivided into 2 triangles
     else:
         assert output_mesh_type == 'quads' or not smoothing
         expected_celltype = pv.CellType.QUAD
-        multiplier = 1
+        cell_multiplier = 1
 
     # Do test
     mesh = labeled_image.contour_labels(
@@ -230,7 +230,10 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     assert mesh.active_scalars_name == BOUNDARY_LABELS
     assert all(cell.type == expected_celltype for cell in mesh.cell)
 
-    assert mesh.area < 0.01 if smoothing else mesh.n_cells / multiplier
+    if smoothing:
+        assert mesh.area < 0.01
+    else:
+        assert mesh.area == (mesh.n_cells / cell_multiplier)
 
 
 def _remove_duplicate_points(polydata):
