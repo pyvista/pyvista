@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 import functools
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 import warnings
@@ -9021,8 +9022,9 @@ class DataSetFilters:
 
         """
         # Lazy import since these are from plotting module
+        from cycler import cycler
+
         from pyvista.plotting.axes_assembly import _validate_color_sequence
-        from pyvista.plotting.colors import cycler
         from pyvista.plotting.colors import get_cmap_safe
 
         def _is_index_like(array_, max_value):
@@ -9042,11 +9044,9 @@ class DataSetFilters:
         array = data[name]
 
         if isinstance(colors, dict):
-            values = list(colors.values())
-            colors_ = _validate_color_sequence(values)
+            colors_ = _validate_color_sequence(list(colors.values()))
             colors_float_rgba = [c.float_rgba for c in colors_]
-            keys = list(colors.keys())
-            items = zip(keys, colors_float_rgba)
+            items = zip(colors.keys(), colors_float_rgba)
 
         else:
             _is_rgba_sequence = False
@@ -9056,7 +9056,7 @@ class DataSetFilters:
                     raise ValueError(
                         f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
                     )
-                colors = [(*c, 1.0) for c in cmap.colors]
+                colors = [(*c, 1.0) for c in cast(list[list[float]], cmap.colors)]
                 _is_rgba_sequence = True
             if not _is_rgba_sequence:
                 colors = [c.float_rgba for c in _validate_color_sequence(colors)]
@@ -9072,8 +9072,8 @@ class DataSetFilters:
                         f"Index mapping cannot be used with scalars '{name}'. Scalars must be positive integers \n"
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
-                keys = range(n_colors + 1)
-                values = colors
+                keys: Iterable[float] = range(n_colors + 1)
+                values: Iterable[Any] = colors
             else:
                 keys = np.unique(array)
                 values = cycler('color', colors)
@@ -9083,7 +9083,7 @@ class DataSetFilters:
         colors_out = np.full((len(array), 4), np.nan, dtype=float)
         for label, color in items:
             if isinstance(color, dict):
-                color = color['color']
+                color = color['color']  # type: ignore[unreachable]
             colors_out[array == label, :] = color
 
         colors_name = name + '_rgba' if output_scalars is None else output_scalars
