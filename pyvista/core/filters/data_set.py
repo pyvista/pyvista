@@ -8949,7 +8949,7 @@ class DataSetFilters:
         output_scalars: str | None = None,
         inplace: bool = False,
     ):
-        """Add RGB scalars to labeled data.
+        """Add RGBA scalars to labeled data.
 
         The output array ``'packed_labels'`` is added to the output by default,
         and is automatically set as the active scalars.
@@ -8976,8 +8976,8 @@ class DataSetFilters:
             ``'point'`` or ``'cell'``.
 
         output_scalars : str, None
-            Name of the packed output scalars. By default, the output is
-            saved to ``'packed_labels'``.
+            Name of the color scalars array. By default, the output array
+            is the same as ``scalars`` with ``_rgba`` appended.
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
@@ -8985,7 +8985,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.DataSet
-            Dataset with packed labels.
+            Dataset with RGBA scalars. Output type matches input type.
 
         Examples
         --------
@@ -9043,7 +9043,7 @@ class DataSetFilters:
 
         if isinstance(colors, dict):
             values = list(colors.values())
-            colors_ = _validate_color_sequence(values, len(values))
+            colors_ = _validate_color_sequence(values)
             colors_float_rgba = [c.float_rgba for c in colors_]
             keys = list(colors.keys())
             items = zip(keys, colors_float_rgba)
@@ -9054,12 +9054,12 @@ class DataSetFilters:
                 cmap = get_cmap_safe(colors)
                 if not isinstance(cmap, matplotlib.colors.ListedColormap):
                     raise ValueError(
-                        f"'{colors}' must correspond to a ListedColormap, got {cmap.__class__.__name__} instead."
+                        f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
                     )
                 colors = [(*c, 1.0) for c in cmap.colors]
                 _is_rgba_sequence = True
             if not _is_rgba_sequence:
-                colors = [c.float_rgba for c in _validate_color_sequence(colors, len(colors))]
+                colors = [c.float_rgba for c in _validate_color_sequence(colors)]
 
             n_colors = len(colors)
             if use_index_mapping is None:
@@ -9086,7 +9086,7 @@ class DataSetFilters:
                 color = color['color']
             colors_out[array == label, :] = color
 
-        colors_name = name + '_rgba'
+        colors_name = name + '_rgba' if output_scalars is None else output_scalars
         data[colors_name] = colors_out
         output_mesh.set_active_scalars(colors_name)
 

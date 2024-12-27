@@ -4817,3 +4817,18 @@ def test_color_labels_scalars(uniform):
 
         colored = uniform.color_labels(scalars=name, preference='cell')
         assert GENERIC + '_rgba' in colored.cell_data
+
+    # Test output scalars
+    CUSTOM = 'custom'
+    colored = uniform.color_labels(output_scalars=CUSTOM)
+    assert CUSTOM in colored.array_names
+
+
+def test_color_labels_invalid_input(uniform):
+    match = "Colormap 'bwr' must be a ListedColormap, got LinearSegmentedColormap instead."
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels('bwr')
+
+    match = 'Invalid color(s):\n\t[[1]]\nInput must be a single ColorLike color or a sequence of ColorLike colors.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.color_labels([[1]])
