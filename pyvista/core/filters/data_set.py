@@ -9070,7 +9070,7 @@ class DataSetFilters:
         array = data[name]
 
         if isinstance(colors, dict):
-            colors_ = _validate_color_sequence(list(colors.values()))
+            colors_ = _validate_color_sequence(list(colors.values()), len(colors.values()))
             colors_float_rgba = [c.float_rgba for c in colors_]
             items = zip(colors.keys(), colors_float_rgba)
 
@@ -9085,7 +9085,7 @@ class DataSetFilters:
                 colors = [(*c, 1.0) for c in cast(list[list[float]], cmap.colors)]
                 _is_rgba_sequence = True
             if not _is_rgba_sequence:
-                colors = [c.float_rgba for c in _validate_color_sequence(colors)]
+                colors = [c.float_rgba for c in _validate_color_sequence(colors, len(colors))]
 
             n_colors = len(colors)
             if coloring_mode is None:

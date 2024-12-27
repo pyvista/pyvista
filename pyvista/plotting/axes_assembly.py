@@ -927,16 +927,15 @@ def _validate_color_sequence(
                     color_list = color_list * n_colors
 
                 # Only return if we have the correct number of colors
-                if n_colors is None or len(color_list) == n_colors:
+                if n_colors is not None and len(color_list) == n_colors:
                     return tuple(color_list)
             except ValueError:
                 pass
-    n_colors_str = '' if n_colors is None else f'{n_colors} '
     raise ValueError(
         f'Invalid color(s):\n'
         f'\t{color}\n'
         f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors_str}ColorLike colors.',
+        f'or a sequence of {n_colors} ColorLike colors.',
     )
 
 

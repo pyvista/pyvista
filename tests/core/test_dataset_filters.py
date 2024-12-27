@@ -4829,6 +4829,6 @@ def test_color_labels_invalid_input(uniform):
     with pytest.raises(ValueError, match=match):
         uniform.color_labels('bwr')
 
-    match = 'Invalid color(s):\n\t[[1]]\nInput must be a single ColorLike color or a sequence of ColorLike colors.'
+    match = 'Invalid color(s):\n\t[[1]]\nInput must be a single ColorLike color or a sequence of 1 ColorLike colors.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.color_labels([[1]])
