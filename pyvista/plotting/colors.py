@@ -250,18 +250,7 @@ color_synonyms = {
     _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
 }
 
-matplotlib_default_colors = [
-    '#1f77b4',
-    '#ff7f0e',
-    '#2ca02c',
-    '#d62728',
-    '#9467bd',
-    '#8c564b',
-    '#e377c2',
-    '#7f7f7f',
-    '#bcbd22',
-    '#17becf',
-]
+matplotlib_default_colors = _TABLEAU_COLORS.values()
 
 COLOR_SCHEMES = {
     'spectrum': {

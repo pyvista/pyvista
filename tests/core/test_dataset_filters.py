@@ -4735,3 +4735,23 @@ def test_pack_labels_preference(uniform):
     expected_shape = mesh.cell_data['labels_in'].shape
     actual_shape = packed.cell_data['packed_labels'].shape
     assert np.array_equal(actual_shape, expected_shape)
+
+
+@pytest.mark.parametrize('use_index_mapping', [False, None])
+def test_color_labels(uniform, use_index_mapping):
+    default_cmap = pv.get_cmap_safe('glasbey_category10')
+    original_scalars_name = uniform.active_scalars_name
+    colored_mesh = uniform.color_labels(use_index_mapping=use_index_mapping)
+    assert colored_mesh is not uniform
+    assert uniform.active_scalars_name == original_scalars_name
+    colors_name = original_scalars_name + '_rgba'
+    assert colored_mesh.active_scalars_name == colors_name
+    assert not np.any(np.isnan(colored_mesh[colors_name]))
+
+    label_ids = np.unique(uniform.active_scalars)
+    for i, label_id in enumerate(label_ids):
+        data_ids = np.where(uniform[original_scalars_name] == label_id)[0]
+        expected_color_rgba = (*default_cmap.colors[i], 1.0)
+        for data_id in data_ids:
+            actual_rgba = colored_mesh[colors_name][data_id]
+            assert np.allclose(actual_rgba, expected_color_rgba)

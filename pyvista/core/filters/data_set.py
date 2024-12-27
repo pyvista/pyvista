@@ -11,6 +11,7 @@ from typing import Literal
 from typing import cast
 import warnings
 
+import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -49,6 +50,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
+    from pyvista.plotting._typing import ColorLike
 
 
 @abstract_class
@@ -8936,6 +8938,155 @@ class DataSetFilters:
             result.set_active_scalars(output_scalars, preference=field)
 
             return result
+
+    def color_labels(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        colors: Sequence[ColorLike] | dict[float, ColorLike] | str = 'glasbey_category10',
+        *,
+        use_index_mapping: bool | None = None,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        output_scalars: str | None = None,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        """Add RGB scalars to labeled data.
+
+        The output array ``'packed_labels'`` is added to the output by default,
+        and is automatically set as the active scalars.
+
+        See Also
+        --------
+        sort_labels
+            Similar function with ``sort=True`` by default.
+
+        Parameters
+        ----------
+        colors : Sequence[ColorLike] | dict[float, ColorLike] | str
+            Colors to use.
+
+        use_index_mapping : bool, optional
+            Use label values as indices for mapping labels to colors.
+
+        scalars : str, optional
+            Name of scalars with labels. Defaults to currently active scalars.
+
+        preference : str, default: "point"
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        output_scalars : str, None
+            Name of the packed output scalars. By default, the output is
+            saved to ``'packed_labels'``.
+
+        inplace : bool, default: False
+            If ``True``, the mesh is updated in-place.
+
+        progress_bar : bool, default: False
+            If ``True``, display a progress bar. Has no effect if VTK
+            version is lower than 9.3.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with packed labels.
+
+        Examples
+        --------
+        Pack segmented image labels.
+
+        Load non-contiguous image labels
+
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> image_labels = examples.load_frog_tissues()
+
+        Show range of labels
+
+        >>> image_labels.get_data_range()
+        (np.uint8(0), np.uint8(29))
+
+        Find 'gaps' in the labels
+
+        >>> label_numbers = np.unique(image_labels.active_scalars)
+        >>> label_max = np.max(label_numbers)
+        >>> missing_labels = set(range(label_max)) - set(label_numbers)
+        >>> len(missing_labels)
+        4
+
+        Pack labels to remove gaps
+
+        >>> packed_labels = image_labels.pack_labels()
+
+        Show range of packed labels
+
+        >>> packed_labels.get_data_range()
+        (np.uint8(0), np.uint8(25))
+
+        """
+        from pyvista.plotting.axes_assembly import _validate_color_sequence
+        from pyvista.plotting.colors import cycler
+        from pyvista.plotting.colors import get_cmap_safe
+
+        def _is_index_like(array_, max_value):
+            if np.issubdtype(array_.dtype, np.integer) or np.array_equal(array, np.floor(array_)):
+                min_, max_ = output_mesh.get_data_range(name)
+                if min_ >= 0 and max_ <= max_value:
+                    return True
+            return False
+
+        field, name = set_default_active_scalars(self)
+        output_mesh = self if inplace else self.copy()
+        data = output_mesh.point_data if field == FieldAssociation.POINT else output_mesh.cell_data
+        array = data[name]
+
+        if isinstance(colors, dict):
+            colors_ = _validate_color_sequence(list(colors.values()))
+            colors_float_rgba = [c.float_rgba for c in colors_]
+            keys = list(colors.keys())
+            items = zip(keys, colors_float_rgba)
+
+        else:
+            _is_rgba_sequence = False
+            if isinstance(colors, str):
+                cmap = get_cmap_safe(colors)
+                if not isinstance(cmap, matplotlib.colors.ListedColormap):
+                    raise ValueError(
+                        f"'{colors}' must correspond to a ListedColormap, got {cmap.__class__.__name__} instead."
+                    )
+                colors = [(*c, 1.0) for c in cmap.colors]
+                _is_rgba_sequence = True
+            if not _is_rgba_sequence:
+                colors = [c.float_rgba for c in _validate_color_sequence(colors)]
+
+            n_colors = len(colors)
+            if use_index_mapping is None:
+                # Non-contiguous if uint-like, contiguous otherwise
+                use_index_mapping = _is_index_like(array, max_value=n_colors)
+
+            if use_index_mapping is True:
+                if not _is_index_like(array, max_value=n_colors):
+                    raise ValueError('Contiguous cannot be `False` for')
+                keys = range(n_colors + 1)
+                values = colors
+            else:
+                keys = np.unique(array)
+                values = cycler('color', colors)
+
+            items = zip(keys, values)
+
+        colors_out = np.full((len(array), 4), np.nan, dtype=float)
+        for label, color in items:
+            if isinstance(color, dict):
+                color = color['color']
+            colors_out[array == label, :] = color
+
+        colors_name = name + '_rgba'
+        data[colors_name] = colors_out
+        output_mesh.set_active_scalars(colors_name)
+
+        return output_mesh
 
 
 def _set_threshold_limit(alg, value, method, invert):
