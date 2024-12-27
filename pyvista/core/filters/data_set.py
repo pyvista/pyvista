@@ -8948,7 +8948,6 @@ class DataSetFilters:
         preference: Literal['point', 'cell'] = 'point',
         output_scalars: str | None = None,
         inplace: bool = False,
-        progress_bar: bool = False,
     ):
         """Add RGB scalars to labeled data.
 
@@ -8982,10 +8981,6 @@ class DataSetFilters:
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
-
-        progress_bar : bool, default: False
-            If ``True``, display a progress bar. Has no effect if VTK
-            version is lower than 9.3.
 
         Returns
         -------
