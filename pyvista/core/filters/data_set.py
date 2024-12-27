@@ -8944,7 +8944,7 @@ class DataSetFilters:
         self: ConcreteDataSetType,
         colors: Sequence[ColorLike] | dict[float, ColorLike] | str = 'glasbey_category10',
         *,
-        use_index_mapping: bool | None = None,
+        coloring_mode: Literal['index', 'cycler'] | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         output_scalars: str | None = None,
@@ -8952,8 +8952,28 @@ class DataSetFilters:
     ):
         """Add RGBA scalars to labeled data.
 
-        The output array ``'packed_labels'`` is added to the output by default,
-        and is automatically set as the active scalars.
+        This filter is primarily intended for coloring integer-labeled data, though
+        it can also be used with floating-point data. It features two coloring modes:
+
+        - ``'index'``: The input scalar values (label ids) are used as index
+            values for indexing the specified ``colors``. This creates a direct
+            and explicit relationship between labels and colors such that
+            a given label will always have the same color, regardless of the
+            number of labels present in the dataset.
+
+            This option is used by default for unsigned 8-bit integer inputs, i.e.
+            scalars with whole numbers and a maximum range of ``[0, 255]``.
+
+        - ``'cycler'``: The specified ``'colors'`` are cycled through sequentially,
+            and each unique value in the input scalars is assigned a color in increasing
+            order. Unlike with ``'index'`` mode, the colors are not directly mapped to
+            the labels, but instead depends on the number of labels at the input.
+
+            This option is used by default for floating-point inputs or for inputs
+            with values out of the range ``[0, 255]``.
+
+        By default, a new RGBA array is added with the same name as the
+        specified ``scalars`` but with ``_rgba`` appended.
 
         See Also
         --------
@@ -8965,8 +8985,14 @@ class DataSetFilters:
         colors : Sequence[ColorLike] | dict[float, ColorLike] | str
             Colors to use.
 
-        use_index_mapping : bool, optional
-            Use label values as indices for mapping labels to colors.
+        coloring_mode : 'index' | 'cycler', optional
+            Control how colors are applied to the labels.
+
+            - ``'index'``: The input scalar values (label ids) are used as index
+              values for indexing the specified ``colors``.
+            - `'cycler'``: The specified ``'colors'`` are cycled through sequentially,
+              and each unique value in the input scalars is assigned a color in increasing
+              order.
 
         scalars : str, optional
             Name of scalars with labels. Defaults to currently active scalars.
@@ -9062,14 +9088,13 @@ class DataSetFilters:
                 colors = [c.float_rgba for c in _validate_color_sequence(colors)]
 
             n_colors = len(colors)
-            if use_index_mapping is None:
-                # Non-contiguous if uint-like, contiguous otherwise
-                use_index_mapping = _is_index_like(array, max_value=n_colors)
+            if coloring_mode is None:
+                coloring_mode = 'index' if _is_index_like(array, max_value=n_colors) else 'cycler'
 
-            if use_index_mapping is True:
+            if coloring_mode == 'index':
                 if not _is_index_like(array, max_value=n_colors):
                     raise ValueError(
-                        f"Index mapping cannot be used with scalars '{name}'. Scalars must be positive integers \n"
+                        f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
                 keys: Iterable[float] = range(n_colors + 1)
