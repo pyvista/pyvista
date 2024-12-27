@@ -9025,6 +9025,7 @@ class DataSetFilters:
         (np.uint8(0), np.uint8(25))
 
         """
+        # Lazy import since these are from plotting module
         from pyvista.plotting.axes_assembly import _validate_color_sequence
         from pyvista.plotting.colors import cycler
         from pyvista.plotting.colors import get_cmap_safe
@@ -9042,7 +9043,8 @@ class DataSetFilters:
         array = data[name]
 
         if isinstance(colors, dict):
-            colors_ = _validate_color_sequence(list(colors.values()))
+            values = list(colors.values())
+            colors_ = _validate_color_sequence(values, len(values))
             colors_float_rgba = [c.float_rgba for c in colors_]
             keys = list(colors.keys())
             items = zip(keys, colors_float_rgba)
@@ -9058,7 +9060,7 @@ class DataSetFilters:
                 colors = [(*c, 1.0) for c in cmap.colors]
                 _is_rgba_sequence = True
             if not _is_rgba_sequence:
-                colors = [c.float_rgba for c in _validate_color_sequence(colors)]
+                colors = [c.float_rgba for c in _validate_color_sequence(colors, len(colors))]
 
             n_colors = len(colors)
             if use_index_mapping is None:

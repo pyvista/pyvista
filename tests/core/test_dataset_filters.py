@@ -4772,3 +4772,25 @@ def test_color_labels(uniform, use_index_mapping):
     # Test in place
     colored_mesh = uniform.color_labels(use_index_mapping=use_index_mapping, inplace=True)
     assert colored_mesh is uniform
+
+
+VIRIDIS_RGBA = [(*c, 1.0) for c in pv.get_cmap_safe('viridis').colors]
+COLORS_DICT = {0: 'red', 1: (0, 0, 0), 2: 'blue', 3: (1.0, 1.0, 1.0), 4: 'orange', 5: 'green'}
+COLORS_DICT_RGBA = [pv.Color(c).float_rgba for c in COLORS_DICT.values()]
+
+
+@pytest.mark.parametrize(
+    ('color_input', 'expected_rgba'),
+    [
+        ('viridis', VIRIDIS_RGBA),
+        (COLORS_DICT, COLORS_DICT_RGBA),
+        (COLORS_DICT_RGBA, COLORS_DICT_RGBA),
+    ],
+    ids=['str', 'dict', 'sequence'],
+)
+def test_color_labels_inputs(labeled_image, color_input, expected_rgba):
+    label_scalars = labeled_image.active_scalars
+    colored = labeled_image.color_labels(color_input)
+    color_scalars = colored.active_scalars
+    for id_ in np.unique(label_scalars):
+        assert np.allclose(color_scalars[label_scalars == id_], expected_rgba[id_])
