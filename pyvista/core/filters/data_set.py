@@ -8942,7 +8942,7 @@ class DataSetFilters:
 
     def color_labels(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        colors: Sequence[ColorLike] | dict[float, ColorLike] | str = 'glasbey_category10',
+        colors: str | Sequence[ColorLike] | dict[float, ColorLike] = 'glasbey_category10',
         *,
         coloring_mode: Literal['index', 'cycler'] | None = None,
         scalars: str | None = None,
@@ -8953,9 +8953,9 @@ class DataSetFilters:
         """Add RGBA scalars to labeled data.
 
         This filter adds a color array to map label values to specific colors.
-        The mapping can be specified explicitly with a dictionary. If a colormap
-        or sequence of colors is specified, the mapping from label values to
-        colors is implicit. The implicit mapping is controlled with two coloring modes:
+        The mapping can be specified explicitly with a dictionary or implicitly
+        with a colormap or sequence of colors. The implicit mapping is controlled
+        with two coloring modes:
 
         - ``'index'``: The input scalar values (label ids) are used as index values for
             indexing the specified ``colors``. This creates a direct relationship
@@ -8978,21 +8978,30 @@ class DataSetFilters:
 
         See Also
         --------
-        sort_labels
-            Similar function with ``sort=True`` by default.
+        contour_labels
+            Generate contours from labeled data. The contours may be colored with this filter.
+
+        pack_labels
+            Make labeled data contiguous. May be used as a pre-processing step before
+            coloring.
 
         Parameters
         ----------
-        colors : Sequence[ColorLike] | dict[float, ColorLike] | str
+        colors : str | Sequence[ColorLike] | dict[float, ColorLike]
             Colors to use. Specify a dictionary to explicitly control the mapping
             from label values to colors. Alternatively, specify colors only using a
             colormap or a sequence of colors and use ``coloring_mode`` to implicitly
             control the mapping.
 
+            By default, a variation of the ``'glasbey'`` categorical colormap is used
+            where the first 10 colors are the same default colors used by ``matplotlib``.
+            See `colorcet categorical colormaps <https://colorcet.holoviz.org/user_guide/Categorical.html#>`_
+            for more information.
+
             .. note::
                 When a dictionary is specified, any scalar values for which a key is
-                not provided is assigned a color and opacity of ``nan``. To ensure
-                the color array has no  ``nan`` values, be sure to provide a mapping
+                not provided is assigned RGBA values of``nan``. To ensure the color
+                array has no  ``nan`` values, be sure to provide a mapping
                 for any and all possible input label values.
 
         coloring_mode : 'index' | 'cycler', optional
