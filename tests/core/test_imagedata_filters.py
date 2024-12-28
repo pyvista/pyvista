@@ -318,6 +318,19 @@ def test_contour_labels_boundary_style(
     assert actual_output_values == expected_output_values
 
 
+ALL_LABEL_IDS = {0, 2, 5}
+
+
+@pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_background_value(labeled_image, background_value):
+    assert background_value in labeled_image.active_scalars
+
+    mesh = labeled_image.contour_labels('all', background_value=background_value)
+    first_component = mesh.cell_data[BOUNDARY_LABELS][:, 0]
+    assert background_value not in first_component
+
+
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
