@@ -8952,14 +8952,15 @@ class DataSetFilters:
     ):
         """Add RGBA scalars to labeled data.
 
-        This filter is primarily intended for coloring integer-labeled data, though
-        it can also be used with floating-point data. It features two coloring modes:
+        This filter adds a color array to map label values to specific colors.
+        The mapping can be specified explicitly with a dictionary. If a colormap
+        or sequence of colors is specified, the mapping from label values to
+        colors is implicit. The implicit mapping is controlled with two coloring modes:
 
-        - ``'index'``: The input scalar values (label ids) are used as index
-            values for indexing the specified ``colors``. This creates a direct
-            and explicit relationship between labels and colors such that
-            a given label will always have the same color, regardless of the
-            number of labels present in the dataset.
+        - ``'index'``: The input scalar values (label ids) are used as index values for
+            indexing the specified ``colors``. This creates a direct relationship
+            between labels and colors such that a given label will always have the same
+            color, regardless of the number of labels present in the dataset.
 
             This option is used by default for unsigned 8-bit integer inputs, i.e.
             scalars with whole numbers and a maximum range of ``[0, 255]``.
@@ -8986,7 +8987,8 @@ class DataSetFilters:
             Colors to use.
 
         coloring_mode : 'index' | 'cycler', optional
-            Control how colors are applied to the labels.
+            Control how colors are mapped to label values. Has no effect if ``colors``
+            is a dictionary. Specify one of:
 
             - ``'index'``: The input scalar values (label ids) are used as index
               values for indexing the specified ``colors``.
@@ -9082,6 +9084,8 @@ class DataSetFilters:
         array = data[name]
 
         if isinstance(colors, dict):
+            if coloring_mode is not None:
+                raise TypeError('Coloring mode cannot be set when a color dictionary is specified.')
             colors_ = _local_validate_color_sequence(list(colors.values()))
             colors_float_rgba = [c.float_rgba for c in colors_]
             items = zip(colors.keys(), colors_float_rgba)

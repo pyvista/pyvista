@@ -4825,6 +4825,10 @@ def test_color_labels_scalars(uniform):
 
 
 def test_color_labels_invalid_input(uniform):
+    match = 'Coloring mode cannot be set when a color dictionaru is specified.'
+    with pytest.raises(TypeError, match=match):
+        uniform.color_labels({}, coloring_mode='index')
+
     match = "Colormap 'bwr' must be a ListedColormap, got LinearSegmentedColormap instead."
     with pytest.raises(ValueError, match=match):
         uniform.color_labels('bwr')
