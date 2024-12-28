@@ -7063,7 +7063,7 @@ class DataSetFilters:
             transformed. Otherwise, only the normals and vectors are
             transformed.  See the warning for more details.
 
-        inplace : bool, default: False
+        inplace : bool, default: True
             When ``True``, modifies the dataset inplace.
 
         progress_bar : bool, default: False
