@@ -989,6 +989,7 @@ class ImageDataFilters(DataSetFilters):
         self: ImageData,
         boundary_style: Literal['external', 'internal', 'all'] = 'external',
         *,
+        background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
         select_outputs: int | VectorLike[int] | None = None,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
@@ -1042,6 +1043,10 @@ class ImageDataFilters(DataSetFilters):
             between two connected foreground regions. ``'external'`` polygons are
             generated between foreground background. ``'all'``  includes both internal
             and external boundary polygons.
+
+        background_value : int, default: 0
+            Background value of the input image. All other values are considered
+            as foreground.
 
         select_inputs : int | VectorLike[int], default: None
             Specify label ids to include as inputs to the filter. Labels that are not
@@ -1261,7 +1266,6 @@ class ImageDataFilters(DataSetFilters):
 
         """
         temp_scalars_name = '_PYVISTA_TEMP'
-        background_value = 0
 
         def _get_unique_labels_no_background(
             array: NumpyArray[int], background: int
@@ -1412,6 +1416,7 @@ class ImageDataFilters(DataSetFilters):
         alg_input = _get_alg_input(self, scalars)
 
         alg = _vtk.vtkSurfaceNets3D()
+        alg.SetBackgroundLabel(background_value)
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
