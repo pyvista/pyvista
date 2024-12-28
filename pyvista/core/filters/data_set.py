@@ -9027,35 +9027,61 @@ class DataSetFilters:
 
         Examples
         --------
-        Pack segmented image labels.
-
-        Load non-contiguous image labels
+        Load labeled data and crop it to simplify the data.
 
         >>> from pyvista import examples
         >>> import numpy as np
-        >>> image_labels = examples.load_frog_tissues()
+        >>> image_labels = examples.load_channels()
+        >>> image_labels = image_labels.extract_subset(voi=(75, 109, 75, 109, 85, 100))
 
-        Show range of labels
+        Show label ids of the dataset.
 
-        >>> image_labels.get_data_range()
-        (np.uint8(0), np.uint8(29))
+        >>> label_ids = np.unique(image_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([0, 1, 2, 3, 4])
 
-        Find 'gaps' in the labels
+        Color the labels and plot them.
 
-        >>> label_numbers = np.unique(image_labels.active_scalars)
-        >>> label_max = np.max(label_numbers)
-        >>> missing_labels = set(range(label_max)) - set(label_numbers)
-        >>> len(missing_labels)
-        4
+        >>> colored_labels = image_labels.color_labels()
+        >>> colored_labels.plot()
 
-        Pack labels to remove gaps
+        Since the labels are unsigned integers, the ``'index'`` coloring mode is used
+        by default. This mode ensures that labels have a consistent coloring regardless
+        of the input. For example, we can crop the dataset further.
 
-        >>> packed_labels = image_labels.pack_labels()
+        >>> subset_labels = image_labels.extract_subset(voi=(15, 34, 28, 34, 12, 15))
 
-        Show range of packed labels
+        And show that only three labels remain.
 
-        >>> packed_labels.get_data_range()
-        (np.uint8(0), np.uint8(25))
+        >>> label_ids = np.unique(subset_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([1, 2, 3])
+
+        Despite the changes to the dataset, the regions have the same coloring
+        as before.
+
+        >>> colored_labels = subset_labels.color_labels()
+        >>> colored_labels.plot()
+
+        Use the ``'cycler'`` coloring mode instead to map label values to colors
+        sequentially.
+
+        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycler')
+        >>> colored_labels.plot()
+
+        Map the colors explicitly using a dictionary.
+
+        >>> colors = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'yellow'}
+        >>> colored_labels = image_labels.color_labels(colors)
+        >>> colored_labels.plot()
+
+        Omit the background value from the mapping. Values without a mapping
+        are assigned ``nan`` RGBA values and are not plotted by default.
+
+        >>> colors.pop(0)
+        'black'
+        >>> colored_labels = image_labels.color_labels(colors)
+        >>> colored_labels.plot()
 
         """
         # Lazy import since these are from plotting module
