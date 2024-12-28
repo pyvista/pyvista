@@ -4798,6 +4798,15 @@ def test_color_labels_inputs(labeled_image, color_input, expected_rgba):
         assert np.allclose(color_scalars[label_scalars == id_], expected_rgba[id_])
 
 
+def test_color_labels_partial_dict(labeled_image):
+    colored = labeled_image.color_labels({0: RED})
+    color_scalars = colored.active_scalars
+    unique = np.unique(color_scalars, axis=0)
+
+    assert np.array_equal(RED, unique[0])
+    assert np.array_equal([np.nan] * 4, unique[1], equal_nan=True)
+
+
 def test_color_labels_scalars(uniform):
     # Test active scalars
     active_before = uniform.active_scalars_name

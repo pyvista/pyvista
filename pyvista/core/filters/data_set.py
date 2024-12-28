@@ -8984,7 +8984,16 @@ class DataSetFilters:
         Parameters
         ----------
         colors : Sequence[ColorLike] | dict[float, ColorLike] | str
-            Colors to use.
+            Colors to use. Specify a dictionary to explicitly control the mapping
+            from label values to colors. Alternatively, specify colors only using a
+            colormap or a sequence of colors and use ``coloring_mode`` to implicitly
+            control the mapping.
+
+            .. note::
+                When a dictionary is specified, any scalar values for which a key is
+                not provided is assigned a color and opacity of ``nan``. To ensure
+                the color array has no  ``nan`` values, be sure to provide a mapping
+                for any and all possible input label values.
 
         coloring_mode : 'index' | 'cycler', optional
             Control how colors are mapped to label values. Has no effect if ``colors``
