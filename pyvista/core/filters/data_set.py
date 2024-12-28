@@ -1,4 +1,4 @@
-"""Filters module with a class of common filters that can be applied to any vtkDataSet."""
+##"""Filters module with a class of common filters that can be applied to any vtkDataSet."""
 
 from __future__ import annotations
 
@@ -8978,8 +8978,8 @@ class DataSetFilters:
 
         See Also
         --------
-        contour_labels
-            Generate contours from labeled data. The contours may be colored with this filter.
+        pyvista.ImageDataFilters.contour_labels
+            Generate contours from labeled image data. The contours may be colored with this filter.
 
         pack_labels
             Make labeled data contiguous. May be used as a pre-processing step before
