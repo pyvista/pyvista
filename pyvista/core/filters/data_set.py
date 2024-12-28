@@ -40,6 +40,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import Color
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -9053,7 +9054,7 @@ class DataSetFilters:
         from pyvista.core._validation.validate import _validate_color_sequence
         from pyvista.plotting.colors import get_cmap_safe
 
-        def _local_validate_color_sequence(seq: Sequence[ColorLike]) -> object:
+        def _local_validate_color_sequence(seq: Sequence[ColorLike]) -> Sequence[Color]:
             try:
                 return _validate_color_sequence(seq, len(seq))
             except ValueError:
