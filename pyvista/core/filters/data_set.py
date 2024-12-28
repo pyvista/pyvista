@@ -9053,6 +9053,17 @@ class DataSetFilters:
         from pyvista.plotting.axes_assembly import _validate_color_sequence
         from pyvista.plotting.colors import get_cmap_safe
 
+        def _local_validate_color_sequence(seq: Sequence[ColorLike]):
+            try:
+                return _validate_color_sequence(seq, len(seq))
+            except ValueError:
+                raise ValueError(
+                    'Invalid colors. Colors must be one of:\n'
+                    '  - sequence of color-like values,\n'
+                    '  - dict with color-like values,\n'
+                    '  - named colormap string.'
+                )
+
         def _is_index_like(array_, max_value):
             if np.issubdtype(array_.dtype, np.integer) or np.array_equal(array, np.floor(array_)):
                 min_, max_ = output_mesh.get_data_range(name)
@@ -9070,7 +9081,7 @@ class DataSetFilters:
         array = data[name]
 
         if isinstance(colors, dict):
-            colors_ = _validate_color_sequence(list(colors.values()), len(colors.values()))
+            colors_ = _local_validate_color_sequence(list(colors.values()))
             colors_float_rgba = [c.float_rgba for c in colors_]
             items = zip(colors.keys(), colors_float_rgba)
 
@@ -9085,7 +9096,7 @@ class DataSetFilters:
                 colors = [(*c, 1.0) for c in cast(list[list[float]], cmap.colors)]
                 _is_rgba_sequence = True
             if not _is_rgba_sequence:
-                colors = [c.float_rgba for c in _validate_color_sequence(colors, len(colors))]
+                colors = [c.float_rgba for c in _local_validate_color_sequence(colors)]
 
             n_colors = len(colors)
             if coloring_mode is None:
