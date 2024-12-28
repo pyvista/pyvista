@@ -9050,10 +9050,10 @@ class DataSetFilters:
         from cycler import cycler
         import matplotlib.colors
 
-        from pyvista.plotting.axes_assembly import _validate_color_sequence
+        from pyvista.core._validation.validate import _validate_color_sequence
         from pyvista.plotting.colors import get_cmap_safe
 
-        def _local_validate_color_sequence(seq: Sequence[ColorLike]):
+        def _local_validate_color_sequence(seq: Sequence[ColorLike]) -> object:
             try:
                 return _validate_color_sequence(seq, len(seq))
             except ValueError:
