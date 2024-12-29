@@ -1191,7 +1191,8 @@ class ImageDataFilters(DataSetFilters):
         Note that all four foreground regions share a boundary with the background.
 
         >>> np.unique(contours['boundary_labels'], axis=0)
-        array([[2, 0],
+        array([[1, 0],
+               [2, 0],
                [3, 0],
                [4, 0]])
 
