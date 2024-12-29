@@ -42,7 +42,6 @@ IPYGANY_MAP = {
     'spectral': 'Spectral',
 }
 
-
 _ALLOWED_COLOR_NAME_DELIMITERS = '_' + '-' + ' '
 _REMOVE_DELIMITER_LOOKUP = str.maketrans('', '', _ALLOWED_COLOR_NAME_DELIMITERS)
 
@@ -171,7 +170,6 @@ _CSS_COLORS = {
     'plum': '#DDA0DD',
     'powderblue': '#B0E0E6',
     'purple': '#800080',
-    'raw_sienna': '#965434',
     'rebeccapurple': '#663399',
     'red': '#FF0000',
     'rosybrown': '#BC8F8F',
@@ -217,7 +215,82 @@ _TABLEAU_COLORS = {
 }
 _PARAVIEW_COLORS = {'paraview_background': '#52576e'}
 
-hexcolors = _format_color_dict(_CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS)
+# Colors from https://htmlpreview.github.io/?https://github.com/Kitware/vtk-examples/blob/gh-pages/VTKNamedColorPatches.html
+# The vtk colors are only partially supported:
+# - VTK colors with the same name as CSS colors but different values are excluded
+#   (i.e. the CSS colors take precedent)
+# - Not all VTK synonyms are supported.
+# - Colors with adjective suffixes are renamed to use a prefix instead
+#   (e.g. 'green_pale' is renamed to 'pale_green'). This is done to keep VTK color
+#   names consistent with CSS names. In most cases this altered color name is
+#   supported directly by vtkNamedColors, but in some cases this technically is no
+#   longer a valid named vtk color. See tests.
+_VTK_COLORS = {
+    'alizarin_crimson': '#e32636',
+    'aureoline_yellow': '#ffa824',
+    'banana': '#e3cf57',
+    'brick': '#9c661f',
+    'brown_madder': '#db2929',
+    'brown_ochre': '#87421f',
+    'burnt_sienna': '#8a360f',
+    'burnt_umber': '#8a3324',
+    'cadmium_lemon': '#ffe303',
+    'cadmium_orange': '#ff6103',
+    'cadmium_yellow': '#ff9912',
+    'carrot': '#ed9121',
+    'cerulean': '#05b8cc',
+    'chrome_oxide_green': '#668014',
+    'cinnabar_green': '#61b329',
+    'cobalt': '#3d59ab',
+    'cobalt_green': '#3d9140',
+    'cold_grey': '#808a87',
+    'deep_cadmium_red': '#e3170d',
+    'deep_cobalt_violet': '#91219e',
+    'deep_naples_yellow': '#ffa812',
+    'deep_ochre': '#733d1a',
+    'eggshell': '#fce6c9',
+    'emerald_green': '#00c957',
+    'english_red': '#d43d1a',
+    'flesh': '#ff7d40',
+    'flesh_ochre': '#ff5721',
+    'geranium_lake': '#e31230',
+    'gold_ochre': '#c77826',
+    'greenish_umber': '#ff3d0d',
+    'ivory_black': '#292421',
+    'lamp_black': '#2e473b',
+    'light_cadmium_red': '#ff030d',
+    'light_cadmium_yellow': '#ffb00f',
+    'light_slate_blue': '#8470ff',
+    'light_viridian': '#6eff70',
+    'madder_lake_deep': '#e32e30',
+    'manganese_blue': '#03a89e',
+    'mars_orange': '#964514',
+    'mars_yellow': '#e3701a',
+    'melon': '#e3a869',
+    'mint': '#bdfcc9',
+    'peacock': '#33a1c9',
+    'permanent_green': '#0ac92b',
+    'permanent_red_violet': '#db2645',
+    'raspberry': '#872657',
+    'raw_sienna': '#C76114',
+    'raw_umber': '#734a12',
+    'rose_madder': '#e33638',
+    'sap_green': '#308014',
+    'sepia': '#5e2612',
+    'terre_verte': '#385e0f',
+    'titanium_white': '#fcfff0',
+    'turquoise_blue': '#00c78c',
+    'ultramarine': '#120a8f',
+    'ultramarine_violet': '#5c246e',
+    'van_dyke_brown': '#5e2605',
+    'venetian_red': '#d41a1f',
+    'violet_red': '#d02090',
+    'warm_grey': '#808069',
+    'yellow_ochre': '#e38217',
+    'zinc_white': '#fcf7ff',
+}
+
+hexcolors = _format_color_dict(_CSS_COLORS | _PARAVIEW_COLORS | _TABLEAU_COLORS | _VTK_COLORS)
 
 color_names = {h: n for n, h in hexcolors.items()}
 
@@ -245,7 +318,9 @@ _color_synonyms = {
     'pv': 'paraview_background',
     'paraview': 'paraview_background',
     'slategrey': 'slategray',
+    'lightgoldenrod': 'lightgoldenrodyellow',
 }
+
 color_synonyms = {
     _format_color_name(syn): _format_color_name(name) for syn, name in _color_synonyms.items()
 }
