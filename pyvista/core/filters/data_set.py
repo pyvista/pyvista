@@ -8965,7 +8965,7 @@ class DataSetFilters:
             This option is used by default for unsigned 8-bit integer inputs, i.e.
             scalars with whole numbers and a maximum range of ``[0, 255]``.
 
-        -   ``'cycler'`` : The specified ``'colors'`` are cycled through sequentially,
+        -   ``'cycler'`` : The specified ``colors`` are cycled through sequentially,
             and each unique value in the input scalars is assigned a color in increasing
             order. Unlike with ``'index'`` mode, the colors are not directly mapped to
             the labels, but instead depends on the number of labels at the input.
@@ -8987,7 +8987,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        colors : str | Sequence[ColorLike] | dict[float, ColorLike]
+        colors : str | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
             Colors to use. Specify a dictionary to explicitly control the mapping
             from label values to colors. Alternatively, specify colors only using a
             colormap or a sequence of colors and use ``coloring_mode`` to implicitly
@@ -9022,7 +9022,7 @@ class DataSetFilters:
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
 
-        output_scalars : str, None
+        output_scalars : str, optional
             Name of the color scalars array. By default, the output array
             is the same as ``scalars`` with ``_rgba`` appended.
 
