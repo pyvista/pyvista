@@ -992,6 +992,7 @@ class ImageDataFilters(DataSetFilters):
         background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
         select_outputs: int | VectorLike[int] | None = None,
+        closed_surface: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
         progress_bar: bool = False,
@@ -1078,6 +1079,13 @@ class ImageDataFilters(DataSetFilters):
                 considered to be ``internal`` or ``external``. That is, an internal
                 boundary remains internal even if only one of the two foreground regions
                 on the boundary is selected.
+
+        closed_surface : bool, default: True
+            Generate polygons to "close" the surface at the boundaries of the image.
+            This option is only relevant when there are foreground regions on the border
+            of the image. Setting this value to ``False`` is useful if processing multiple
+            volumes separately so that the generated surfaces fit together without
+            creating surface overlap.
 
         output_mesh_type : str, default: None
             Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``. By
@@ -1226,6 +1234,14 @@ class ImageDataFilters(DataSetFilters):
         using ``select_inputs`` converts previously-internal boundaries into external
         ones.
 
+        Disable the generation of a closed surface. Since the input image has
+        foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
+        setting ``closed_surface=False`` in this example causes the top and sides of
+        the mesh to be "open".
+
+        >>> surf = image.contour_labels(closed_surface=False)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
         """
         temp_scalars_name = '_PYVISTA_TEMP'
 
@@ -1344,6 +1360,9 @@ class ImageDataFilters(DataSetFilters):
         )
 
         alg_input = _get_alg_input(self, scalars)
+
+        # Pad with background values to close surfaces at image boundaries
+        alg_input = alg_input.pad_image(background_value) if closed_surface else alg_input
 
         alg = _vtk.vtkSurfaceNets3D()
         alg.SetBackgroundLabel(background_value)
