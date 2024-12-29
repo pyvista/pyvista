@@ -1264,6 +1264,12 @@ class ImageDataFilters(DataSetFilters):
         >>> surf = image.contour_labels(smoothing=False)
         >>> surf.plot(zoom=1.5, **plot_kwargs)
 
+        Keep smoothing enabled but reduce the smoothing scale. A smoothing scale
+        less than one may help preserve sharp features (e.g. corners).
+
+        >>> surf = image.contour_labels(smoothing_scale=0.5)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
         """
         temp_scalars_name = '_PYVISTA_TEMP'
 
