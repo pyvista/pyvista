@@ -8957,7 +8957,7 @@ class DataSetFilters:
         with a colormap or sequence of colors. The implicit mapping is controlled
         with two coloring modes:
 
-        - ``'index'``: The input scalar values (label ids) are used as index values for
+        -   ``'index'`` : The input scalar values (label ids) are used as index values for
             indexing the specified ``colors``. This creates a direct relationship
             between labels and colors such that a given label will always have the same
             color, regardless of the number of labels present in the dataset.
@@ -8965,7 +8965,7 @@ class DataSetFilters:
             This option is used by default for unsigned 8-bit integer inputs, i.e.
             scalars with whole numbers and a maximum range of ``[0, 255]``.
 
-        - ``'cycler'``: The specified ``'colors'`` are cycled through sequentially,
+        -   ``'cycler'`` : The specified ``'colors'`` are cycled through sequentially,
             and each unique value in the input scalars is assigned a color in increasing
             order. Unlike with ``'index'`` mode, the colors are not directly mapped to
             the labels, but instead depends on the number of labels at the input.
@@ -9000,7 +9000,7 @@ class DataSetFilters:
 
             .. note::
                 When a dictionary is specified, any scalar values for which a key is
-                not provided is assigned RGBA values of``nan``. To ensure the color
+                not provided is assigned RGBA values of ``nan``. To ensure the color
                 array has no  ``nan`` values, be sure to provide a mapping
                 for any and all possible input label values.
 
@@ -9010,7 +9010,7 @@ class DataSetFilters:
 
             - ``'index'``: The input scalar values (label ids) are used as index
               values for indexing the specified ``colors``.
-            - `'cycler'``: The specified ``'colors'`` are cycled through sequentially,
+            - ``'cycler'``: The specified ``'colors'`` are cycled through sequentially,
               and each unique value in the input scalars is assigned a color in increasing
               order.
 
