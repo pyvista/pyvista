@@ -275,6 +275,7 @@ def test_contour_labels_boundary_style(
         select_inputs=select_inputs,
         select_outputs=select_outputs,
         boundary_style=boundary_style,
+        multi_component_output=True,
     )
     # Test no duplicate points
     cleaned = _remove_duplicate_points(mesh)
@@ -336,6 +337,29 @@ def test_contour_labels_pad_background(labeled_image):
     mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
     mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
     assert mesh_closed.n_cells - mesh_open.n_cells == 1
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_multi_component_output(labeled_image):
+    # Test `None` (implicit behavior)
+    poly = labeled_image.contour_labels('external')
+    assert poly['boundary_labels'].ndim == 1
+    poly = labeled_image.contour_labels('internal')
+    assert poly['boundary_labels'].ndim == 2
+    poly = labeled_image.contour_labels('all')
+    assert poly['boundary_labels'].ndim == 2
+
+    # Test `True`
+    poly = labeled_image.contour_labels('external', multi_component_output=True)
+    assert poly['boundary_labels'].ndim == 2
+    poly = labeled_image.contour_labels('internal', multi_component_output=True)
+    assert poly['boundary_labels'].ndim == 2
+
+    # Test `False`
+    poly = labeled_image.contour_labels('external', multi_component_output=False)
+    assert poly['boundary_labels'].ndim == 1
+    poly = labeled_image.contour_labels('internal', multi_component_output=False)
+    assert poly['boundary_labels'].ndim == 1
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
