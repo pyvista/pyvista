@@ -332,6 +332,13 @@ def test_contour_labels_background_value(labeled_image, background_value):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_pad_background(labeled_image):
+    mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
+    mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
+    assert mesh_closed.n_cells - mesh_open.n_cells == 1
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_raises(labeled_image):
     # Nonexistent scalar key
     with pytest.raises(KeyError):
