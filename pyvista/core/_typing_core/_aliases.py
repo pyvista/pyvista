@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
@@ -14,7 +15,9 @@ from ._array_like import _ArrayLike
 from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING or os.environ.get(
+    'PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
+):  # pragma: no cover
     import contextlib
 
     with contextlib.suppress(ImportError):
