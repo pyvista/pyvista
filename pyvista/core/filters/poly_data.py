@@ -4339,6 +4339,10 @@ class PolyDataFilters(DataSetFilters):
         _validation.check_greater_than(self.n_points, 1, name='n_points')
         _validation.check_greater_than(self.n_cells, 1, name='n_cells')
 
+        if not self.faces.size:
+            # we have a point cloud or an empty mesh
+            raise ValueError('Input mesh must have faces for voxelization.')
+
         def _preprocess_polydata(poly_in):
             return poly_in.compute_normals().triangulate()
 

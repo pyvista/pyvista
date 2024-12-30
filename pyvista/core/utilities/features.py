@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Sequence
 import os
 import sys
+from typing import TYPE_CHECKING
+import warnings
 
 import numpy as np
 
 import pyvista
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
+from pyvista.core.utilities.helpers import wrap
 
-from .helpers import wrap
+if TYPE_CHECKING:
+    from pyvista import DataSet
+    from pyvista import MultiBlock
+    from pyvista import UnstructuredGrid
+    from pyvista.core._typing_core import VectorLike
 
 
 def _padded_bins(mesh, density):
@@ -43,6 +52,323 @@ def _padded_bins(mesh, density):
         np.arange(bounds[i, 0] - pad[i], bounds[i, 1] + pad[i] + density[i] / 2, density[i])
         for i in range(3)
     ]
+
+
+def voxelize_unstructured_grid(  # type: ignore[misc]
+    mesh: DataSet | MultiBlock | _vtk.vtkDataSet | _vtk.vtkMultiBlockDataSet,
+    *,
+    dimensions: VectorLike[int] | None = None,
+    spacing: float | VectorLike[float] | None = None,
+    rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+    cell_length_percentile: float | None = None,
+    cell_length_sample_size: int | None = None,
+    mesh_length_fraction: float | None = None,
+    progress_bar: bool = False,
+) -> UnstructuredGrid:
+    """Voxelize :class:`~pyvista.PolyData` as a binary :class:`~pyvista.ImageData` mask.
+
+    The binary mask is a point data array where points inside and outside of the
+    input surface are labelled with ``foreground_value`` and ``background_value``,
+    respectively.
+
+    This filter implements `vtkPolyDataToImageStencil
+    <https://vtk.org/doc/nightly/html/classvtkPolyDataToImageStencil.html>`_. This
+    algorithm operates as follows:
+
+    * The algorithm iterates through the z-slice of the ``reference_volume``.
+    * For each slice, it cuts the input :class:`~pyvista.PolyData` surface to create
+      2D polylines at that z position. It attempts to close any open polylines.
+    * For each x position along the polylines, the corresponding y positions are
+      determined.
+    * For each slice, the grid points are labelled as foreground or background based
+      on their xy coordinates.
+
+    The voxelization can be controlled in several ways:
+
+    #. Specify the output geometry using a ``reference_volume``.
+
+    #. Specify the ``spacing`` explicitly.
+
+    #. Specify the ``dimensions`` explicitly.
+
+    #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+       surface's cells using the specified percentile.
+
+    #. Specify ``mesh_length_fraction``. The spacing is computed as a fraction of
+       the mesh's diagonal length.
+
+    Use ``reference_volume`` for full control of the output mask's geometry. For
+    all other options, the geometry is implicitly defined such that the generated
+    mask fits the bounds of the input surface.
+
+    If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+    used by default to estimate the spacing. On systems with VTK < 9.2, the default
+    spacing is set to ``mesh_length_fraction=1/100``.
+
+    .. versionadded:: 0.45.0
+
+    .. note::
+        For best results, ensure the input surface is a closed surface. The
+        surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
+
+    .. note::
+        This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
+        This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
+        which return meshes with voxel cells. See :ref:`image_representations_example`
+        for examples demonstrating the difference.
+
+    .. note::
+        This filter does not discard internal surfaces, due, for instance, to
+        intersecting meshes. Instead, the intersection will be considered as
+        background which may produce unexpected results. See `Examples`.
+
+    Parameters
+    ----------
+    mesh : DataSet | MultiBlock
+        Mesh to voxelize.
+
+    dimensions : VectorLike[int], optional
+        Dimensions of the generated mask image. Set this value to control the
+        dimensions explicitly. If unset, the dimensions are defined implicitly
+        through other parameter. See summary and examples for details.
+
+    spacing : VectorLike[float], optional
+        Approximate spacing to use for the generated mask image. Set this value
+        to control the spacing explicitly. If unset, the spacing is defined
+        implicitly through other parameters. See summary and examples for details.
+
+    rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+        Control how the dimensions are rounded to integers based on the provided or
+        calculated ``spacing``. Should accept a length-3 vector containing the
+        dimension values along the three directions and return a length-3 vector.
+        :func:`numpy.round` is used by default.
+
+        Rounding the dimensions implies rounding the actual spacing.
+
+        Has no effect if ``reference_volume`` or ``dimensions`` are specified.
+
+    cell_length_percentile : float, optional
+        Cell length percentage ``p`` to use for computing the default ``spacing``.
+        Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+        The ``p``-th percentile is computed from the cumulative distribution function
+        (CDF) of lengths which are representative of the cell length scales present
+        in the input. The CDF is computed by:
+
+        #. Triangulating the input cells.
+        #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+        #. Computing the distance between two random points in each cell.
+        #. Inserting the distance into an ordered set to create the CDF.
+
+        Has no effect if ``dimension`` or ``reference_volume`` are specified.
+
+        .. note::
+            This option is only available for VTK 9.2 or greater.
+
+    cell_length_sample_size : int, optional
+        Number of samples to use for the cumulative distribution function (CDF)
+        when using the ``cell_length_percentile`` option. ``100 000`` samples are
+        used by default.
+
+    mesh_length_fraction : float, optional
+        Fraction of the surface mesh's length to use for computing the default
+        ``spacing``. Set this to any fractional value (e.g. ``1/100``) to enable
+        this option. This is used as an alternative to using ``cell_length_percentile``.
+
+    progress_bar : bool, default: False
+        Display a progress bar to indicate progress.
+
+    Returns
+    -------
+    pyvista.ImageData
+        Generated binary mask with a ``'mask'``  point data array. The data array
+        has dtype :class:`numpy.uint8` if the foreground and background values are
+        unsigned and less than 256.
+
+    See Also
+    --------
+    pyvista.voxelize
+        Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
+        :attr:`~pyvista.CellType.VOXEL` cells.
+
+    pyvista.voxelize_volume
+        Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
+
+    pyvista.ImageDataFilters.contour_labeled
+        Filter that generates surface contours from labeled image data. Can be
+        loosely considered as an inverse of this filter.
+
+    pyvista.ImageDataFilters.points_to_cells
+        Convert voxels represented as points to :attr:`~pyvista.CellType.VOXEL`
+        cells.
+
+    pyvista.ImageData
+        Class used to build custom ``reference_volume``.
+
+    Examples
+    --------
+    Generate a binary mask from a coarse mesh.
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> from pyvista import examples
+    >>> poly = examples.download_bunny_coarse()
+    >>> mask = poly.voxelize_binary_mask()
+
+    The mask is stored as :class:`~pyvista.ImageData` with point data scalars
+    (zeros for background, ones for foreground).
+
+    >>> mask
+    ImageData (...)
+      N Cells:      7056
+      N Points:     8228
+      X Bounds:     -1.245e-01, 1.731e-01
+      Y Bounds:     -1.135e-01, 1.807e-01
+      Z Bounds:     -1.359e-01, 9.140e-02
+      Dimensions:   22, 22, 17
+      Spacing:      1.417e-02, 1.401e-02, 1.421e-02
+      N Arrays:     1
+
+    >>> np.unique(mask.point_data['mask'])
+    pyvista_ndarray([0, 1], dtype=uint8)
+
+    To visualize it as voxel cells, use :meth:`~pyvista.ImageDataFilters.points_to_cells`,
+    then use :meth:`~pyvista.DataSetFilters.threshold` to extract the foreground.
+
+    We also plot the voxel cells in blue and the input poly data in green for
+    comparison.
+
+    >>> def mask_and_polydata_plotter(mask, poly):
+    ...     voxel_cells = mask.points_to_cells().threshold(0.5)
+    ...
+    ...     plot = pv.Plotter()
+    ...     _ = plot.add_mesh(voxel_cells, color='blue')
+    ...     _ = plot.add_mesh(poly, color='lime')
+    ...     plot.camera_position = 'xy'
+    ...     return plot
+
+    >>> plot = mask_and_polydata_plotter(mask, poly)
+    >>> plot.show()
+
+    The spacing of the mask image is automatically adjusted to match the
+    density of the input.
+
+    Repeat the previous example with a finer mesh.
+
+    >>> poly = examples.download_bunny()
+    >>> mask = poly.voxelize_binary_mask()
+    >>> plot = mask_and_polydata_plotter(mask, poly)
+    >>> plot.show()
+
+    Control the spacing manually instead. Here, a very coarse spacing is used.
+
+    >>> mask = poly.voxelize_binary_mask(spacing=(0.01, 0.04, 0.02))
+    >>> plot = mask_and_polydata_plotter(mask, poly)
+    >>> plot.show()
+
+    Note that the spacing is only approximate. Check the mask's actual spacing.
+
+    >>> mask.spacing
+    (0.009731187485158443, 0.03858340159058571, 0.020112216472625732)
+
+    The actual values may be greater or less than the specified values. Use
+    ``rounding_func=np.floor`` to force all values to be greater.
+
+    >>> mask = poly.voxelize_binary_mask(
+    ...     spacing=(0.01, 0.04, 0.02), rounding_func=np.floor
+    ... )
+    >>> mask.spacing
+    (0.01037993331750234, 0.05144453545411428, 0.020112216472625732)
+
+    Set the dimensions instead of the spacing.
+
+    >>> mask = poly.voxelize_binary_mask(dimensions=(10, 20, 30))
+    >>> plot = mask_and_polydata_plotter(mask, poly)
+    >>> plot.show()
+
+    >>> mask.dimensions
+    (10, 20, 30)
+
+    Create a mask using a reference volume. First generate polydata from
+    an existing mask.
+
+    >>> volume = examples.load_frog_tissues()
+    >>> poly = volume.contour_labeled(smoothing=True)
+
+    Now create the mask from the polydata using the volume as a reference.
+
+    >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
+    >>> plot = mask_and_polydata_plotter(mask, poly)
+    >>> plot.show()
+
+    Visualize the effect of internal surfaces.
+
+    >>> mesh = pv.Cylinder() + pv.Cylinder((0, 0.75, 0))
+    >>> binary_mask = mesh.voxelize_binary_mask(
+    ...     dimensions=(1, 100, 50)
+    ... ).points_to_cells()
+    >>> plot = pv.Plotter()
+    >>> _ = plot.add_mesh(binary_mask)
+    >>> _ = plot.add_mesh(mesh.slice(), color='red')
+    >>> plot.show(cpos='yz')
+
+    Note how the intersection is excluded from the mask.
+    To include the voxels delimited by internal surfaces in the foreground, the internal
+    surfaces should be removed, for instance by applying a boolean union. Note that
+    this operation in unreliable in VTK but may be performed with external tools such
+    as `vtkbool <https://github.com/zippy84/vtkbool>`_.
+
+    Alternatively, the intersecting parts of the mesh can be processed sequentially.
+
+    >>> cylinder_1 = pv.Cylinder()
+    >>> cylinder_2 = pv.Cylinder((0, 0.75, 0))
+
+    >>> reference_volume = pv.ImageData(
+    ...     dimensions=(1, 100, 50),
+    ...     spacing=(1, 0.0175, 0.02),
+    ...     origin=(0, -0.5 + 0.0175 / 2, -0.5 + 0.02 / 2),
+    ... )
+
+    >>> binary_mask_1 = cylinder_1.voxelize_binary_mask(
+    ...     reference_volume=reference_volume
+    ... ).points_to_cells()
+    >>> binary_mask_2 = cylinder_2.voxelize_binary_mask(
+    ...     reference_volume=reference_volume
+    ... ).points_to_cells()
+
+    >>> binary_mask_1['mask'] = binary_mask_1['mask'] | binary_mask_2['mask']
+
+    >>> plot = pv.Plotter()
+    >>> _ = plot.add_mesh(binary_mask_1)
+    >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
+    >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
+    >>> plot.show(cpos='yz')
+
+    When multiple internal surfaces are nested, they are successively treated as
+    interfaces between background and foreground.
+
+    >>> mesh = pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
+    >>> binary_mask = mesh.voxelize_binary_mask(
+    ...     dimensions=(1, 50, 50)
+    ... ).points_to_cells()
+    >>> plot = pv.Plotter()
+    >>> _ = plot.add_mesh(binary_mask)
+    >>> _ = plot.add_mesh(mesh.slice(), color='red')
+    >>> plot.show(cpos='yz')
+
+    """
+    surface = wrap(mesh).extract_geometry()
+    binary_mask = surface.voxelize_binary_mask(
+        dimensions=dimensions,
+        spacing=spacing,
+        rounding_func=rounding_func,
+        cell_length_percentile=cell_length_percentile,
+        cell_length_sample_size=cell_length_sample_size,
+        mesh_length_fraction=mesh_length_fraction,
+        progress_bar=progress_bar,
+    )
+    voxel_cells = binary_mask.points_to_cells(copy=False).threshold(0.5)
+    del voxel_cells.cell_data['mask']
+    return voxel_cells
 
 
 def voxelize(
@@ -100,33 +426,35 @@ def voxelize(
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> mesh = examples.download_bunny_coarse().clean()
-    >>> vox = pv.voxelize(mesh, density=0.01)
-    >>> vox.plot(show_edges=True)
+    >>> vox = pv.voxelize(mesh, density=0.01)  # doctest: +SKIP
+    >>> vox.plot(show_edges=True)  # doctest: +SKIP
 
     Create a voxelized mesh using unequal density dimensions.
 
-    >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])
-    >>> vox.plot(show_edges=True)
+    >>> vox = pv.voxelize(mesh, density=[0.01, 0.005, 0.002])  # doctest: +SKIP
+    >>> vox.plot(show_edges=True)  # doctest: +SKIP
 
     Create an equal density voxel volume without enclosing input mesh.
 
-    >>> vox = pv.voxelize(mesh, density=0.01)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
+    >>> vox = pv.voxelize(mesh, density=0.01)  # doctest: +SKIP
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)  # doctest: +SKIP
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)  # doctest: +SKIP
 
     Create an equal density voxel volume enclosing input mesh.
 
-    >>> vox = pv.voxelize(mesh, density=0.01, enclosed=True)
-    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)
-    >>> vox.plot(scalars='SelectedPoints', show_edges=True)
+    >>> vox = pv.voxelize(mesh, density=0.01, enclosed=True)  # doctest: +SKIP
+    >>> vox = vox.select_enclosed_points(mesh, tolerance=0.0)  # doctest: +SKIP
+    >>> vox.plot(scalars='SelectedPoints', show_edges=True)  # doctest: +SKIP
 
     Create a voxelized mesh that does not fit the input mesh's bounds. Notice the
     cropped rectangular box.
 
     >>> mesh = pv.Cube(x_length=0.25)
-    >>> vox = pv.voxelize(mesh=mesh, density=0.2)
+    >>> vox = pv.voxelize(mesh=mesh, density=0.2)  # doctest: +SKIP
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(
+    ...     mesh=vox, show_edges=True, color='yellow'
+    ... )  # doctest: +SKIP
     >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
@@ -134,13 +462,18 @@ def voxelize(
     now complete. Notice that the voxel size was updated to fit the bounds in the first
     direction.
 
-    >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
+    >>> vox = pv.voxelize(
+    ...     mesh=mesh, density=0.2, fit_bounds=True
+    ... )  # doctest: +SKIP
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(
+    ...     mesh=vox, show_edges=True, color='yellow'
+    ... )  # doctest: +SKIP
     >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
     """
+    warnings.warn('deprecated', PyVistaDeprecationWarning)
     if not pyvista.is_pyvista_dataset(mesh):
         mesh = wrap(mesh)
     if density is None:
