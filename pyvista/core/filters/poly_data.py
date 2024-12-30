@@ -4431,7 +4431,10 @@ class PolyDataFilters(DataSetFilters):
 
             if dimensions is None:
                 rounding_func = np.round if rounding_func is None else rounding_func
-                dimensions = np.array(rounding_func(sizes / initial_spacing), dtype=int)
+                initial_dimensions = sizes / initial_spacing
+                # Make sure we don't round dimensions to zero, make it one instead
+                initial_dimensions[initial_dimensions < 1] = 1
+                dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
             elif rounding_func is not None:
                 raise TypeError(
                     'Rounding func cannot be set when dimensions is specified. Set one or the other.'

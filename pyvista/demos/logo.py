@@ -146,7 +146,7 @@ def logo_voxel(density=0.03):
         Voxelized PyVista logo as an unstructured grid.
 
     """
-    return pyvista.voxelize(text_3d(LOGO_TITLE, depth=0.3), density)
+    return pyvista.voxelize_unstructured_grid(text_3d(LOGO_TITLE, depth=0.3), spacing=density)
 
 
 def logo_basic():
@@ -348,7 +348,7 @@ def logo_atomized(density=0.05, scale=0.6, depth=0.05):
     mesh_letters = logo_letters(depth=depth)
     grids = []
     for letter in mesh_letters.values():
-        grid = pyvista.voxelize(letter, density=density)
+        grid = pyvista.voxelize_unstructured_grid(letter, spacing=density)
         grids.append(atomize(grid, scale=scale))
 
     return grids[0].merge(grids[1:])
