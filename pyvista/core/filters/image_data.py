@@ -1082,7 +1082,7 @@ class ImageDataFilters(DataSetFilters):
 
         pad_background : bool, default: True
             :meth:`Pad <pyvista.ImageDataFilters.pad_image>` the image
-            with ``background`` values prior to contouring. This will 
+            with ``background`` values prior to contouring. This will
             generate polygons to "close" the surface at the boundaries of the image.
             This option is only relevant when there are foreground regions on the border
             of the image. Setting this value to ``False`` is useful if processing multiple
@@ -1237,7 +1237,7 @@ class ImageDataFilters(DataSetFilters):
         using ``select_inputs`` converts previously-internal boundaries into external
         ones.
 
-        Do not pad the image with background values before contouring. Since the input image 
+        Do not pad the image with background values before contouring. Since the input image
         has foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
         setting ``pad_background=False`` in this example causes the top and sides of
         the mesh to be "open".
