@@ -4658,6 +4658,7 @@ def test_contour_labels_smoothing_constraint(
         'all',
         smoothing_distance=smoothing_distance,
         smoothing_scale=smoothing_scale,
+        pad_background=False,
     )
 
     # Translate so origin is in bottom left corner
