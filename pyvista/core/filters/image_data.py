@@ -1110,10 +1110,9 @@ class ImageDataFilters(DataSetFilters):
             single-component 1D array. The simplification is as follows:
 
             - When ``boundary_type`` is ``'external'``, only the first component is
-              returned. In this case, all external polygons share a boundary with the
-              background and the second component is equal to ``background_value`` for
-              all values. The second component is therefore be dropped without loss of
-              information.
+              returned. Since external polygons may only share a boundary with the
+              background, the second component is always ``background_value`` in this
+              case and can therefore be dropped without loss of information.
 
             - When ``boundary_type`` is ``'internal'`` or ``'all'``, the array is
               simplified by computing the vector norm of the values.
