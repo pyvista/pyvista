@@ -54,7 +54,7 @@ def _padded_bins(mesh, density):
     ]
 
 
-def voxelize_unstructured_grid(  # type: ignore[misc]
+def voxelize_unstructured_grid(
     mesh: DataSet | MultiBlock | _vtk.vtkDataSet | _vtk.vtkMultiBlockDataSet,
     *,
     dimensions: VectorLike[int] | None = None,
