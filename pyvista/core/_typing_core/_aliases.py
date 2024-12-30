@@ -14,7 +14,7 @@ from ._array_like import _ArrayLike
 from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     import contextlib
 
     with contextlib.suppress(ImportError):
