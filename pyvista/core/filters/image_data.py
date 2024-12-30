@@ -1269,6 +1269,14 @@ class ImageDataFilters(DataSetFilters):
         using ``select_inputs`` converts previously-internal boundaries into external
         ones.
 
+        Do not pad the image with background values before contouring. Since the input image
+        has foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
+        setting ``pad_background=False`` in this example causes the top and sides of
+        the mesh to be "open".
+
+        >>> surf = image.contour_labels(pad_background=False)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
         Disable smoothing to generate staircase-like surface. Without smoothing, the
         surface has quadrilateral cells by default.
 
@@ -1279,14 +1287,6 @@ class ImageDataFilters(DataSetFilters):
         less than one may help preserve sharp features (e.g. corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
-        >>> surf.plot(zoom=1.5, **plot_kwargs)
-
-        Do not pad the image with background values before contouring. Since the input image
-        has foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
-        setting ``pad_background=False`` in this example causes the top and sides of
-        the mesh to be "open".
-
-        >>> surf = image.contour_labels(pad_background=False)
         >>> surf.plot(zoom=1.5, **plot_kwargs)
 
         """
