@@ -1362,13 +1362,6 @@ class ImageDataFilters(DataSetFilters):
         >>> surf = image.contour_labels(smoothing_scale=0.5)
         >>> surf.plot(zoom=1.5, **plot_kwargs)
 
-        Disable the generation of a closed surface. Since the input image has
-        foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
-        setting ``closed_surface=False`` in this example causes the top and sides of
-        the mesh to be "open".
-
-        >>> surf = image.contour_labels(closed_surface=False)
-
         """
         temp_scalars_name = '_PYVISTA_TEMP'
 
