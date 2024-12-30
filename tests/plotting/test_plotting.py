@@ -4660,7 +4660,7 @@ def test_contour_labels_smoothing_constraint(
         'all',
         smoothing_distance=smoothing_distance,
         smoothing_scale=smoothing_scale,
-        closed_surface=False,
+        pad_background=False,
         compute_normals=False,
     )
 
