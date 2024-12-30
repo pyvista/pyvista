@@ -357,6 +357,10 @@ def voxelize_unstructured_grid(
 
     """
     surface = wrap(mesh).extract_geometry()
+    if not surface.faces.size:
+        # we have a point cloud or an empty mesh
+        raise ValueError('Input mesh must have faces for voxelization.')
+
     binary_mask = surface.voxelize_binary_mask(
         dimensions=dimensions,
         spacing=spacing,
