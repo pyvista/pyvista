@@ -1017,7 +1017,7 @@ class ImageDataFilters(DataSetFilters):
         background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
         select_outputs: int | VectorLike[int] | None = None,
-        closed_surface: bool = True,
+        pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
         compute_normals: bool = True,
@@ -1117,8 +1117,10 @@ class ImageDataFilters(DataSetFilters):
                 boundary remains internal even if only one of the two foreground regions
                 on the boundary is selected.
 
-        closed_surface : bool, default: True
-            Generate polygons to "close" the surface at the boundaries of the image.
+        pad_background : bool, default: True
+            :meth:`Pad <pyvista.ImageDataFilters.pad_image>` the image
+            with ``background_value`` prior to contouring. This will
+            generate polygons to "close" the surface at the boundaries of the image.
             This option is only relevant when there are foreground regions on the border
             of the image. Setting this value to ``False`` is useful if processing multiple
             volumes separately so that the generated surfaces fit together without
@@ -1340,6 +1342,14 @@ class ImageDataFilters(DataSetFilters):
         using ``select_inputs`` converts previously-internal boundaries into external
         ones.
 
+        Do not pad the image with background values before contouring. Since the input image
+        has foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
+        setting ``pad_background=False`` in this example causes the top and sides of
+        the mesh to be "open".
+
+        >>> surf = image.contour_labels(pad_background=False)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
         Disable smoothing to generate staircase-like surface. Without smoothing, the
         surface has quadrilateral cells by default.
 
@@ -1358,7 +1368,6 @@ class ImageDataFilters(DataSetFilters):
         the mesh to be "open".
 
         >>> surf = image.contour_labels(closed_surface=False)
-        >>> surf.plot(zoom=1.5, **plot_kwargs)
 
         """
         temp_scalars_name = '_PYVISTA_TEMP'
@@ -1512,7 +1521,7 @@ class ImageDataFilters(DataSetFilters):
         alg_input = _get_alg_input(self, scalars)
 
         # Pad with background values to close surfaces at image boundaries
-        alg_input = alg_input.pad_image(background_value) if closed_surface else alg_input
+        alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
 
         alg = _vtk.vtkSurfaceNets3D()
         alg.SetBackgroundLabel(background_value)
