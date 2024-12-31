@@ -1021,7 +1021,6 @@ class ImageDataFilters(DataSetFilters):
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
         compute_normals: bool = True,
-        multi_component_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
         smoothing_relaxation: float = 0.5,
@@ -1156,23 +1155,6 @@ class ImageDataFilters(DataSetFilters):
                 boundaries are generated. Do not assume the normals will point outward
                 in all cases.
 
-        multi_component_output : bool, optional
-            If ``True``, the returned ``'boundary_labels'`` array is a two-component
-            2D array. If ``False``, the ``'boundary_labels'`` array is simplified as a
-            single-component 1D array. The simplification is as follows:
-
-            - When ``boundary_type`` is ``'external'``, only the first component is
-              returned. In this case, all external polygons share a boundary with the
-              background and the second component is equal to ``background_value`` for
-              all values. The second component is therefore be dropped without loss of
-              information.
-
-            - When ``boundary_type`` is ``'internal'`` or ``'all'``, the array is
-              simplified by computing the vector norm of the values.
-
-            By default, ``multi_component_output`` is ``False`` when ``boundary_type``
-            is ``'external'``, and ``True`` otherwise.
-
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
             point in the surface is smoothed as follows:
@@ -1280,15 +1262,8 @@ class ImageDataFilters(DataSetFilters):
         >>> contours.plot(zoom=1.5, **plot_kwargs)
 
         By default, only external boundary polygons are generated and the returned
-        ``'boundary_labels'`` array is a single-component array.
+        ``'boundary_labels'`` array is a two-component array.
 
-        >>> contours['boundary_labels'].ndim
-        1
-
-        Set ``multi_component_output`` to ``True`` to generate a two-component
-        array instead showing the two boundary regions associated with each polygon.
-
-        >>> contours = image.contour_labels(multi_component_output=True)
         >>> contours['boundary_labels'].ndim
         2
 
@@ -1302,8 +1277,7 @@ class ImageDataFilters(DataSetFilters):
                [3, 0],
                [4, 0]])
 
-        Repeat the example but this time generate internal contours only. By default,
-        generating internal polygons will output a two-component array. Note that
+        Repeat the example but this time generate internal contours only. Note that
         when plotting multi-component scalars, each component is normalized (vector norm)
         for visualization.
 
@@ -1561,19 +1535,6 @@ class ImageDataFilters(DataSetFilters):
                 is_external = np.any(labels_array == background_value, axis=1)
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
-
-            if multi_component_output is None:
-                multi_component_output = boundary_style != 'external'
-            if not multi_component_output:
-                # Simplify scalars to a single component
-                if boundary_style == 'external':
-                    # Keep first component only
-                    output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
-                else:
-                    # Compute norm
-                    output.cell_data[PV_NAME] = np.linalg.norm(
-                        output.cell_data['boundary_labels'], axis=1
-                    )
 
         if select_outputs is not None:
             # This option generates unused points
