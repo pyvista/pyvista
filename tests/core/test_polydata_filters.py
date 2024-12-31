@@ -114,7 +114,7 @@ def frog_tissues_image():
 
 @pytest.fixture
 def frog_tissues_contour(frog_tissues_image):
-    return frog_tissues_image.contour_labels(smoothing=False, boundary_style='external')
+    return frog_tissues_image.contour_labels(smoothing=False)
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)

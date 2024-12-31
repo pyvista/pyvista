@@ -55,7 +55,7 @@ def three_dimensionality_image():
 
 @pytest.fixture
 def channels():
-    # ImageData will cell data
+    # ImageData with cell data
     return examples.load_channels()
 
 
@@ -150,6 +150,7 @@ def test_contour_labels_boundary_style(
     select_outputs,
     boundary_style,
 ):
+    assert labeled_image.active_scalars_name == 'labels'
     ALL_LABEL_IDS = {2, 5}
 
     # Make sure param values are iterable

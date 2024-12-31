@@ -854,7 +854,7 @@ class ImageDataFilters(DataSetFilters):
         output_style: Literal['default', 'boundary'] = 'default',
         scalars: str | None = None,
         progress_bar: bool = False,
-    ) -> PolyData:
+    ) -> pyvista.PolyData:
         """Generate labeled contours from 3D label maps.
 
         SurfaceNets algorithm is used to extract contours preserving sharp
@@ -881,7 +881,7 @@ class ImageDataFilters(DataSetFilters):
                 image.contour_labels(
                     smoothing=False,  # old filter does not apply smoothing
                     output_mesh_type='quads',  # old filter generates quads
-                    closed_surface=False,  # old filter generates open surfaces at input edges
+                    pad_background=False,  # old filter generates open surfaces at input edges
                     compute_normals=False,  # old filter does not compute normals
                     multi_component_output=True,  # old filter returns multi-component scalars
                 )
@@ -1150,7 +1150,7 @@ class ImageDataFilters(DataSetFilters):
             .. warning::
 
                 Enabling this option is likely to generate surfaces with normals
-                pointing outward when ``closed_surface`` is ``True`` and
+                pointing outward when ``pad_background`` is ``True`` and
                 ``boundary_style`` is ``True`` (the default). However, this is
                 not guaranteed if the generated surface is not closed or if internal
                 boundaries are generated. Do not assume the normals will point outward
@@ -2265,10 +2265,7 @@ class ImageDataFilters(DataSetFilters):
             set_default_active_scalars(self)  # type: ignore[arg-type]
             field, scalars = self.active_scalars_info  # type: ignore[attr-defined]
         else:
-            field = self.get_array_association(  # type: ignore[attr-defined]
-                scalars,
-                preference='point',
-            )
+            field = self.get_array_association(scalars, preference='point')  # type: ignore[attr-defined]
         if field != FieldAssociation.POINT:
             raise ValueError(
                 f"Scalars '{scalars}' must be associated with point data. Got {field.name.lower()} data instead.",
@@ -2339,9 +2336,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(error_msg)
         else:
             val = np.atleast_1d(pad_value)
-            num_input_components = _get_num_components(
-                self.active_scalars,  # type: ignore[attr-defined]
-            )
+            num_input_components = _get_num_components(self.active_scalars)  # type: ignore[attr-defined]
             if not (
                 val.ndim == 1
                 and (np.issubdtype(val.dtype, np.floating) or np.issubdtype(val.dtype, np.integer))

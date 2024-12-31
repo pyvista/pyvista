@@ -4549,6 +4549,14 @@ def test_direction_objects(direction_obj_test_case):
     plot.show()
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
+@pytest.mark.parametrize('compute_normals', [True, False])
+def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa: F811
+    contour = labeled_image.contour_labels(background_value=5, compute_normals=compute_normals)
+    contour.clear_data()
+    contour.plot_normals()
+
+
 @pytest.fixture
 def _allow_empty_mesh():
     # setup
@@ -4705,14 +4713,6 @@ def test_contour_labels_compare_select_inputs_select_outputs(
     plot.add_mesh(mesh_select_outputs, color='blue', opacity=0.7)
     plot.view_xy()
     plot.show()
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-@pytest.mark.parametrize('compute_normals', [True, False])
-def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa: F811
-    contour = labeled_image.contour_labels(background_value=5, compute_normals=compute_normals)
-    contour.clear_data()
-    contour.plot_normals()
 
 
 @skip_windows  # Windows colors all plane cells red (bug?)
