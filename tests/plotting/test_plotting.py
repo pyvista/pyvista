@@ -4556,7 +4556,7 @@ def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa
     contour.clear_data()
     contour.plot_normals()
 
-    
+
 @pytest.fixture
 def _allow_empty_mesh():
     # setup
