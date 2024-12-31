@@ -16,7 +16,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.helpers import wrap
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import UnstructuredGrid
