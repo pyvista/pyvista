@@ -9112,6 +9112,7 @@ class DataSetFilters:
         import matplotlib.colors
 
         from pyvista.core._validation.validate import _validate_color_sequence
+        from pyvista.plotting._typing import ColorLike
         from pyvista.plotting.colors import get_cmap_safe
 
         def _local_validate_color_sequence(seq: ColorLike | Sequence[ColorLike]) -> Sequence[Color]:
@@ -9145,7 +9146,7 @@ class DataSetFilters:
         if isinstance(colors, dict):
             if coloring_mode is not None:
                 raise TypeError('Coloring mode cannot be set when a color dictionary is specified.')
-            colors_ = _local_validate_color_sequence(list(colors.values()))
+            colors_ = _local_validate_color_sequence(cast(list[ColorLike], list(colors.values())))
             colors_float_rgba = [c.float_rgba for c in colors_]
             items = zip(colors.keys(), colors_float_rgba)
 
@@ -9161,14 +9162,14 @@ class DataSetFilters:
                         raise ValueError(
                             f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
                         )
-                    colors = [(*c, 1.0) for c in cast(list[list[float]], cmap.colors)]
+                    color_sequence = [(*c, 1.0) for c in cast(list[list[float]], cmap.colors)]
                     _is_rgba_sequence = True
             if not _is_rgba_sequence:
-                colors = [c.float_rgba for c in _local_validate_color_sequence(colors)]
-                if len(colors) == 1:
-                    colors = colors * len(array)
+                color_sequence = [c.float_rgba for c in _local_validate_color_sequence(colors)]
+                if len(color_sequence) == 1:
+                    color_sequence = color_sequence * len(array)
 
-            n_colors = len(colors)
+            n_colors = len(color_sequence)
             if coloring_mode is None:
                 coloring_mode = 'index' if _is_index_like(array, max_value=n_colors) else 'cycler'
 
@@ -9179,10 +9180,10 @@ class DataSetFilters:
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
                 keys: Iterable[float] = range(n_colors + 1)
-                values: Iterable[Any] = colors
+                values: Iterable[Any] = color_sequence
             else:
                 keys = np.unique(array)
-                values = cycler('color', colors)
+                values = cycler('color', color_sequence)
 
             items = zip(keys, values)
 
