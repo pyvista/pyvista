@@ -8942,7 +8942,10 @@ class DataSetFilters:
 
     def color_labels(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        colors: str | Sequence[ColorLike] | dict[float, ColorLike] = 'glasbey_category10',
+        colors: str
+        | ColorLike
+        | Sequence[ColorLike]
+        | dict[float, ColorLike] = 'glasbey_category10',
         *,
         coloring_mode: Literal['index', 'cycler'] | None = None,
         scalars: str | None = None,
@@ -8987,11 +8990,12 @@ class DataSetFilters:
 
         Parameters
         ----------
-        colors : str | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
-            Colors to use. Specify a dictionary to explicitly control the mapping
+        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
+            Color(s) to use. Specify a dictionary to explicitly control the mapping
             from label values to colors. Alternatively, specify colors only using a
             colormap or a sequence of colors and use ``coloring_mode`` to implicitly
-            control the mapping.
+            control the mapping. A single color is also supported to color the entire
+            mesh with one color.
 
             By default, a variation of the ``'glasbey'`` categorical colormap is used
             where the first 10 colors are the same default colors used by ``matplotlib``.
@@ -9092,6 +9096,11 @@ class DataSetFilters:
         >>> colored_labels = image_labels.color_labels(colors)
         >>> colored_labels.plot()
 
+        Color all labels with a single color.
+
+        >>> colored_labels = image_labels.color_labels('red')
+        >>> colored_labels.plot()
+
         """
         # Lazy import since these are from plotting module
         from cycler import cycler
@@ -9100,15 +9109,16 @@ class DataSetFilters:
         from pyvista.core._validation.validate import _validate_color_sequence
         from pyvista.plotting.colors import get_cmap_safe
 
-        def _local_validate_color_sequence(seq: Sequence[ColorLike]) -> Sequence[Color]:
+        def _local_validate_color_sequence(seq: ColorLike | Sequence[ColorLike]) -> Sequence[Color]:
             try:
-                return _validate_color_sequence(seq, len(seq))
+                return _validate_color_sequence(seq)
             except ValueError:
                 raise ValueError(
                     'Invalid colors. Colors must be one of:\n'
                     '  - sequence of color-like values,\n'
                     '  - dict with color-like values,\n'
-                    '  - named colormap string.'
+                    '  - named colormap string.\n'
+                    f'Got: {seq}'
                 )
 
         def _is_index_like(array_, max_value):
@@ -9137,15 +9147,21 @@ class DataSetFilters:
         else:
             _is_rgba_sequence = False
             if isinstance(colors, str):
-                cmap = get_cmap_safe(colors)
-                if not isinstance(cmap, matplotlib.colors.ListedColormap):
-                    raise ValueError(
-                        f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
-                    )
-                colors = [(*c, 1.0) for c in cast(list[list[float]], cmap.colors)]
-                _is_rgba_sequence = True
+                try:
+                    cmap = get_cmap_safe(colors)
+                except ValueError:
+                    pass
+                else:
+                    if not isinstance(cmap, matplotlib.colors.ListedColormap):
+                        raise ValueError(
+                            f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
+                        )
+                    colors = [(*c, 1.0) for c in cast(list[list[float]], cmap.colors)]
+                    _is_rgba_sequence = True
             if not _is_rgba_sequence:
                 colors = [c.float_rgba for c in _local_validate_color_sequence(colors)]
+                if len(colors) == 1:
+                    colors = colors * len(array)
 
             n_colors = len(colors)
             if coloring_mode is None:

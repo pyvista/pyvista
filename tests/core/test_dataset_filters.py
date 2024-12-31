@@ -4777,7 +4777,7 @@ def test_color_labels(uniform, coloring_mode):
 VIRIDIS_RGBA = [(*c, 1.0) for c in pv.get_cmap_safe('viridis').colors]
 COLORS_DICT = {0: 'red', 1: (0, 0, 0), 2: 'blue', 3: (1.0, 1.0, 1.0), 4: 'orange', 5: 'green'}
 COLORS_DICT_RGBA = [pv.Color(c).float_rgba for c in COLORS_DICT.values()]
-RED = (1.0, 0.0, 0.0, 1.0)
+RED_RGBA = (1.0, 0.0, 0.0, 1.0)
 
 
 @pytest.mark.parametrize(
@@ -4786,9 +4786,9 @@ RED = (1.0, 0.0, 0.0, 1.0)
         ('viridis', VIRIDIS_RGBA),
         (COLORS_DICT, COLORS_DICT_RGBA),
         (COLORS_DICT_RGBA, COLORS_DICT_RGBA),
-        (RED, [RED, RED, RED, RED]),
+        ('red', [RED_RGBA, RED_RGBA, RED_RGBA, RED_RGBA]),
     ],
-    ids=['str', 'dict', 'sequence', 'color'],
+    ids=['cmap', 'dict', 'sequence', 'named_color'],
 )
 def test_color_labels_inputs(labeled_image, color_input, expected_rgba):
     label_scalars = labeled_image.active_scalars
@@ -4840,10 +4840,6 @@ def test_color_labels_invalid_input(uniform):
     with pytest.raises(TypeError, match=match):
         uniform.color_labels({}, coloring_mode='index')
 
-    match = 'Invalid colormap "red"'
-    with pytest.raises(ValueError, match=match):
-        uniform.color_labels('red')
-
     match = "Colormap 'bwr' must be a ListedColormap, got LinearSegmentedColormap instead."
     with pytest.raises(ValueError, match=match):
         uniform.color_labels('bwr')
@@ -4856,3 +4852,5 @@ def test_color_labels_invalid_input(uniform):
     )
     with pytest.raises(ValueError, match=match):
         uniform.color_labels([[1]])
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels('fake')
