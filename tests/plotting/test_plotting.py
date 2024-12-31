@@ -38,6 +38,7 @@ import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
+from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -4548,6 +4549,14 @@ def test_direction_objects(direction_obj_test_case):
     plot.add_axes(**axes_kwargs)
 
     plot.show()
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+@pytest.mark.parametrize('compute_normals', [True, False])
+def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa: F811
+    contour = labeled_image.contour_labels(background_value=5, compute_normals=compute_normals)
+    contour.clear_data()
+    contour.plot_normals()
 
 
 @skip_windows  # Windows colors all plane cells red (bug?)
