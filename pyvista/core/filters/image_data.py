@@ -989,10 +989,13 @@ class ImageDataFilters(DataSetFilters):
         self: ImageData,
         boundary_style: Literal['external', 'internal', 'all'] = 'external',
         *,
+        background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
         select_outputs: int | VectorLike[int] | None = None,
+        pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
+        compute_normals: bool = True,
         progress_bar: bool = False,
     ) -> PolyData:
         """Generate surface contours from 3D image label maps.
@@ -1038,6 +1041,10 @@ class ImageDataFilters(DataSetFilters):
             generated between foreground background. ``'all'``  includes both internal
             and external boundary polygons.
 
+        background_value : int, default: 0
+            Background value of the input image. All other values are considered
+            as foreground.
+
         select_inputs : int | VectorLike[int], default: None
             Specify label ids to include as inputs to the filter. Labels that are not
             selected are removed from the input *before* generating the surface. By
@@ -1074,6 +1081,15 @@ class ImageDataFilters(DataSetFilters):
                 boundary remains internal even if only one of the two foreground regions
                 on the boundary is selected.
 
+        pad_background : bool, default: True
+            :meth:`Pad <pyvista.ImageDataFilters.pad_image>` the image
+            with ``background_value`` prior to contouring. This will
+            generate polygons to "close" the surface at the boundaries of the image.
+            This option is only relevant when there are foreground regions on the border
+            of the image. Setting this value to ``False`` is useful if processing multiple
+            volumes separately so that the generated surfaces fit together without
+            creating surface overlap.
+
         output_mesh_type : str, default: None
             Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``. By
             default, the output mesh has :attr:`~pyvista.CellType.TRIANGLE` cells when
@@ -1087,6 +1103,22 @@ class ImageDataFilters(DataSetFilters):
             scalars are specified, the input image is first re-meshed with
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
+
+        compute_normals : bool, default: True
+            Compute point and cell normals for the contoured output using
+            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
+            enabled by default. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation (and may negatively impact
+            the shading used for rendering).
+
+            .. warning::
+
+                Enabling this option is likely to generate surfaces with normals
+                pointing outward when ``closed_surface`` is ``True`` and
+                ``boundary_style`` is ``True`` (the default). However, this is
+                not guaranteed if the generated surface is not closed or if internal
+                boundaries are generated. Do not assume the normals will point outward
+                in all cases.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1178,7 +1210,8 @@ class ImageDataFilters(DataSetFilters):
         Note that all four foreground regions share a boundary with the background.
 
         >>> np.unique(contours['boundary_labels'], axis=0)
-        array([[2, 0],
+        array([[1, 0],
+               [2, 0],
                [3, 0],
                [4, 0]])
 
@@ -1221,9 +1254,16 @@ class ImageDataFilters(DataSetFilters):
         using ``select_inputs`` converts previously-internal boundaries into external
         ones.
 
+        Do not pad the image with background values before contouring. Since the input image
+        has foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
+        setting ``pad_background=False`` in this example causes the top and sides of
+        the mesh to be "open".
+
+        >>> surf = image.contour_labels(pad_background=False)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
         """
         temp_scalars_name = '_PYVISTA_TEMP'
-        background_value = 0
 
         def _get_unique_labels_no_background(
             array: NumpyArray[int], background: int
@@ -1341,7 +1381,11 @@ class ImageDataFilters(DataSetFilters):
 
         alg_input = _get_alg_input(self, scalars)
 
+        # Pad with background values to close surfaces at image boundaries
+        alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
+
         alg = _vtk.vtkSurfaceNets3D()
+        alg.SetBackgroundLabel(background_value)
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
@@ -1389,6 +1433,8 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
+        if compute_normals and output.n_cells > 0:
+            output.compute_normals(auto_orient_normals=True, inplace=True)
         return output
 
     def points_to_cells(  # type: ignore[misc]
