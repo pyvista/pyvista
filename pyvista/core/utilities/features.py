@@ -370,7 +370,7 @@ def voxelize_unstructured_grid(
         mesh_length_fraction=mesh_length_fraction,
         progress_bar=progress_bar,
     )
-    voxel_cells = binary_mask.points_to_cells(copy=False).threshold(0.5)
+    voxel_cells = binary_mask.points_to_cells(dimensionality='3D', copy=False).threshold(0.5)
     del voxel_cells.cell_data['mask']
     return voxel_cells
 
