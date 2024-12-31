@@ -995,6 +995,7 @@ class ImageDataFilters(DataSetFilters):
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
+        compute_normals: bool = True,
         multi_component_output: bool | None = None,
         progress_bar: bool = False,
     ) -> PolyData:
@@ -1103,6 +1104,22 @@ class ImageDataFilters(DataSetFilters):
             scalars are specified, the input image is first re-meshed with
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
+
+        compute_normals : bool, default: True
+            Compute point and cell normals for the contoured output using
+            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
+            enabled by default. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation (and may negatively impact
+            the shading used for rendering).
+
+            .. warning::
+
+                Enabling this option is likely to generate surfaces with normals
+                pointing outward when ``closed_surface`` is ``True`` and
+                ``boundary_style`` is ``True`` (the default). However, this is
+                not guaranteed if the generated surface is not closed or if internal
+                boundaries are generated. Do not assume the normals will point outward
+                in all cases.
 
         multi_component_output : bool, optional
             If ``True``, the returned ``'boundary_labels'`` array is a two-component
@@ -1454,6 +1471,8 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
+        if compute_normals and output.n_cells > 0:
+            output.compute_normals(auto_orient_normals=True, inplace=True)
         return output
 
     def points_to_cells(  # type: ignore[misc]
