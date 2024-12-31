@@ -287,7 +287,7 @@ def test_voxelize(uniform):
     assert vox.n_cells
 
 
-def test_voxelize_unstructured(uniform):
+def test_voxelize_unstructured_grid(uniform):
     vox = pv.voxelize_unstructured_grid(uniform, spacing=0.5)
     assert vox.n_cells
 
@@ -301,7 +301,7 @@ def test_voxelize_non_uniform_density(uniform):
     assert vox.n_cells
 
 
-def test_voxelize_unstructured_non_uniform_spacing(uniform):
+def test_voxelize_unstructured_grid_non_uniform_spacing(uniform):
     vox = pv.voxelize_unstructured_grid(uniform, spacing=[0.5, 0.3, 0.2])
     assert vox.n_cells
     vox = pv.voxelize_unstructured_grid(uniform, spacing=np.array([0.5, 0.3, 0.2]))
@@ -319,7 +319,7 @@ def test_voxelize_invalid_density(rectilinear):
             pv.voxelize(rectilinear, {0.5, 0.3})
 
 
-def test_voxelize_unstructured_invalid_density(rectilinear):
+def test_voxelize_unstructured_grid_invalid_density(rectilinear):
     # test error when density is not length-3
     match = 'Array has shape (2,) which is not allowed.'
     with pytest.raises(ValueError, match=re.escape(match)):
@@ -337,34 +337,40 @@ def test_voxelize_throws_point_cloud(hexbeam):
             pv.voxelize(mesh)
 
 
-def test_voxelize_unstructured_throws_point_cloud(hexbeam):
+def test_voxelize_unstructured_grid_throws_point_cloud(hexbeam):
     mesh = pv.PolyData(hexbeam.points)
     with pytest.raises(ValueError, match='must have faces'):
         pv.voxelize_unstructured_grid(mesh)
 
 
 def test_voxelize_volume_default_density(uniform):
-    expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
-    actual = pv.voxelize_volume(uniform).n_cells
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        expected = pv.voxelize_volume(uniform, density=uniform.length / 100).n_cells
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        actual = pv.voxelize_volume(uniform).n_cells
     assert actual == expected
 
 
 def test_voxelize_volume_invalid_density(rectilinear):
-    with pytest.raises(TypeError, match='expected number or array-like'):
-        pv.voxelize_volume(rectilinear, {0.5, 0.3})
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(TypeError, match='expected number or array-like'):
+            pv.voxelize_volume(rectilinear, {0.5, 0.3})
+
+
+def test_voxelize_rectilinear_grid_invalid_density(rectilinear):
+    with pytest.raises(TypeError, match='Object arrays are not supported'):
+        pv.voxelize_rectilinear_grid(rectilinear, spacing={0.5, 0.3})
 
 
 def test_voxelize_volume_no_face_mesh(rectilinear):
-    with pytest.raises(ValueError, match='must have faces'):
-        pv.voxelize_volume(pv.PolyData())
+    with pytest.warns(pv.PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='must have faces'):
+            pv.voxelize_volume(pv.PolyData())
 
 
 @pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_enclosed_bounds(function, ant):
-    if function is pv.voxelize:
-        with pytest.warns(pv.PyVistaDeprecationWarning):
-            vox = function(ant, density=0.9, enclosed=True)
-    else:
+    with pytest.warns(pv.PyVistaDeprecationWarning):
         vox = function(ant, density=0.9, enclosed=True)
 
     assert vox.bounds.x_min <= ant.bounds.x_min
@@ -378,10 +384,7 @@ def test_voxelize_enclosed_bounds(function, ant):
 
 @pytest.mark.parametrize('function', [pv.voxelize_volume, pv.voxelize])
 def test_voxelize_fit_bounds(function, uniform):
-    if function is pv.voxelize:
-        with pytest.warns(pv.PyVistaDeprecationWarning):
-            vox = function(uniform, density=0.9, fit_bounds=True)
-    else:
+    with pytest.warns(pv.PyVistaDeprecationWarning):
         vox = function(uniform, density=0.9, fit_bounds=True)
 
     assert np.isclose(vox.bounds.x_min, uniform.bounds.x_min)
