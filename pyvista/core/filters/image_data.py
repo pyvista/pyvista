@@ -992,8 +992,15 @@ class ImageDataFilters(DataSetFilters):
         background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
         select_outputs: int | VectorLike[int] | None = None,
+        pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
+        compute_normals: bool = True,
+        smoothing: bool = True,
+        smoothing_iterations: int = 16,
+        smoothing_relaxation: float = 0.5,
+        smoothing_distance: float | None = None,
+        smoothing_scale: float = 1.0,
         progress_bar: bool = False,
     ) -> PolyData:
         """Generate surface contours from 3D image label maps.
@@ -1079,6 +1086,15 @@ class ImageDataFilters(DataSetFilters):
                 boundary remains internal even if only one of the two foreground regions
                 on the boundary is selected.
 
+        pad_background : bool, default: True
+            :meth:`Pad <pyvista.ImageDataFilters.pad_image>` the image
+            with ``background_value`` prior to contouring. This will
+            generate polygons to "close" the surface at the boundaries of the image.
+            This option is only relevant when there are foreground regions on the border
+            of the image. Setting this value to ``False`` is useful if processing multiple
+            volumes separately so that the generated surfaces fit together without
+            creating surface overlap.
+
         output_mesh_type : str, default: None
             Type of the output mesh. Can be either ``'quads'``, or ``'triangles'``. By
             default, the output mesh has :attr:`~pyvista.CellType.TRIANGLE` cells when
@@ -1092,6 +1108,49 @@ class ImageDataFilters(DataSetFilters):
             scalars are specified, the input image is first re-meshed with
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
+
+        compute_normals : bool, default: True
+            Compute point and cell normals for the contoured output using
+            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
+            enabled by default. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation (and may negatively impact
+            the shading used for rendering).
+
+            .. warning::
+
+                Enabling this option is likely to generate surfaces with normals
+                pointing outward when ``closed_surface`` is ``True`` and
+                ``boundary_style`` is ``True`` (the default). However, this is
+                not guaranteed if the generated surface is not closed or if internal
+                boundaries are generated. Do not assume the normals will point outward
+                in all cases.
+
+        smoothing : bool, default: True
+            Smooth the generated surface using a constrained smoothing filter. Each
+            point in the surface is smoothed as follows:
+
+                For a point ``pi`` connected to a list of points ``pj`` via an edge, ``pi``
+                is moved towards the average position of ``pj`` multiplied by the
+                ``smoothing_relaxation`` factor, and limited by the ``smoothing_distance``
+                constraint. This process is repeated either until convergence occurs, or
+                the maximum number of ``smoothing_iterations`` is reached.
+
+        smoothing_iterations : int, default: 16
+            Maximum number of smoothing iterations to use.
+
+        smoothing_relaxation : float, default: 0.5
+            Relaxation factor used at each smoothing iteration.
+
+        smoothing_distance : float, default: None
+            Maximum distance each point is allowed to move (in any direction) during
+            smoothing. This distance may be scaled with ``smoothing_scale``. By default,
+            the distance is computed dynamically from the image spacing as:
+
+                ``distance = norm(image_spacing) * smoothing_scale``.
+
+        smoothing_scale : float, default: 1.0
+            Relative scaling factor applied to ``smoothing_distance``. See that
+            parameter for details.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1183,7 +1242,8 @@ class ImageDataFilters(DataSetFilters):
         Note that all four foreground regions share a boundary with the background.
 
         >>> np.unique(contours['boundary_labels'], axis=0)
-        array([[2, 0],
+        array([[1, 0],
+               [2, 0],
                [3, 0],
                [4, 0]])
 
@@ -1225,6 +1285,26 @@ class ImageDataFilters(DataSetFilters):
         as external boundaries. Note that using ``'all'`` here is optional since
         using ``select_inputs`` converts previously-internal boundaries into external
         ones.
+
+        Do not pad the image with background values before contouring. Since the input image
+        has foreground regions visible at the edges of the image (e.g. the ``+Z`` bound),
+        setting ``pad_background=False`` in this example causes the top and sides of
+        the mesh to be "open".
+
+        >>> surf = image.contour_labels(pad_background=False)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
+        Disable smoothing to generate staircase-like surface. Without smoothing, the
+        surface has quadrilateral cells by default.
+
+        >>> surf = image.contour_labels(smoothing=False)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
+        Keep smoothing enabled but reduce the smoothing scale. A smoothing scale
+        less than one may help preserve sharp features (e.g. corners).
+
+        >>> surf = image.contour_labels(smoothing_scale=0.5)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
 
         """
         temp_scalars_name = '_PYVISTA_TEMP'
@@ -1331,6 +1411,38 @@ class ImageDataFilters(DataSetFilters):
 
             [alg.SetLabel(int(val), val) for val in internal_ids]  # type: ignore[func-returns-value]
 
+        def _configure_smoothing(
+            alg_: _vtk.vtkSurfaceNets3D,
+            spacing_: tuple[float, float, float],
+            iterations_: int,
+            relaxation_: float,
+            scale_: float,
+            distance_: float | None,
+        ):
+            def _is_small_number(num) -> bool | np.bool_:
+                return isinstance(num, (float, int, np.floating, np.integer)) and num < 1e-8
+
+            if smoothing and not _is_small_number(scale_) and not _is_small_number(distance_):
+                # Only enable smoothing if distance is not very small, since a small
+                # distance will actually result in large smoothing (suspected division
+                # by zero error in vtk code)
+                alg_.SmoothingOn()
+                alg_.GetSmoother().SetNumberOfIterations(iterations_)
+                alg_.GetSmoother().SetRelaxationFactor(relaxation_)
+
+                # Auto-constraints are On by default which only allows you to scale
+                # relative distance (with SetConstraintScale) but not set its value
+                # directly. Here, we turn this off so that we can both set its value
+                # and/or scale it independently
+                alg_.AutomaticSmoothingConstraintsOff()
+
+                # Dynamically calculate distance if not specified.
+                # This emulates the auto-constraint calc from vtkSurfaceNets3D
+                distance_ = distance_ if distance_ else np.linalg.norm(spacing_)
+                alg_.GetSmoother().SetConstraintDistance(distance_ * scale_)
+            else:
+                alg_.SmoothingOff()
+
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
@@ -1345,6 +1457,9 @@ class ImageDataFilters(DataSetFilters):
 
         alg_input = _get_alg_input(self, scalars)
 
+        # Pad with background values to close surfaces at image boundaries
+        alg_input = alg_input.pad_image(background_value) if pad_background else alg_input
+
         alg = _vtk.vtkSurfaceNets3D()
         alg.SetBackgroundLabel(background_value)
         alg.SetInputData(alg_input)
@@ -1355,6 +1470,14 @@ class ImageDataFilters(DataSetFilters):
             cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
             select_inputs,
             select_outputs,
+        )
+        _configure_smoothing(
+            alg,
+            alg_input.spacing,
+            smoothing_iterations,
+            smoothing_relaxation,
+            smoothing_scale,
+            smoothing_distance,
         )
 
         # Get output
@@ -1394,6 +1517,8 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
+        if compute_normals and output.n_cells > 0:
+            output.compute_normals(auto_orient_normals=True, inplace=True)
         return output
 
     def points_to_cells(  # type: ignore[misc]

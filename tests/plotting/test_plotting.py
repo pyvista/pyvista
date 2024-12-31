@@ -38,6 +38,7 @@ import pyvista.plotting.text
 from pyvista.plotting.texture import numpy_to_texture
 from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
+from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
@@ -4545,6 +4546,170 @@ def test_direction_objects(direction_obj_test_case):
     plot.view_xy()
     plot.add_axes(**axes_kwargs)
 
+    plot.show()
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+@pytest.mark.parametrize('compute_normals', [True, False])
+def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa: F811
+    contour = labeled_image.contour_labels(background_value=5, compute_normals=compute_normals)
+    contour.clear_data()
+    contour.plot_normals()
+
+
+@pytest.fixture
+def _allow_empty_mesh():
+    # setup
+    flag = pv.global_theme.allow_empty_mesh
+    pv.global_theme.allow_empty_mesh = True
+    yield
+    # teardown
+    pv.global_theme.allow_empty_mesh = flag
+
+
+@pytest.fixture
+def _show_edges():
+    # setup
+    flag = pv.global_theme.show_edges
+    pv.global_theme.show_edges = True
+    yield
+    # teardown
+    pv.global_theme.show_edges = flag
+
+
+@pytest.mark.usefixtures('_allow_empty_mesh', '_show_edges')
+@pytest.mark.parametrize(
+    ('select_inputs', 'select_outputs'),
+    [(None, None), (None, 2), (2, 2)],
+    ids=['in_None-out_None', 'in_None-out_2', 'in_2-out_2'],
+)
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_boundary_style(
+    labeled_image,  # noqa: F811
+    select_inputs,
+    select_outputs,
+):
+    def plot_boundary_labels(mesh_):
+        # Split labeled boundaries for regions 2 and 5
+        values = [[2, 0], [2, 5], [5, 0]]
+        label_meshes = mesh_.split_values(
+            values,
+            component_mode='multi',
+        )
+        assert label_meshes.n_blocks <= len(values)
+        plot.add_mesh(label_meshes[0], color='red', label=str(values[0]))
+        plot.add_mesh(label_meshes[1], color='lime', label=str(values[1]))
+        plot.add_mesh(label_meshes[2], color='blue', label=str(values[2]))
+
+    def _generate_mesh(style):
+        mesh = labeled_image.contour_labels(
+            boundary_style=style,
+            **test_kwargs,
+            **fixed_kwargs,
+        )
+        # Shrink mesh to help reveal cells hidden behind other cells
+        return mesh.shrink(0.7)
+
+    # Remove one foreground point from the fixture to simplify plots
+    labeled_image.active_scalars[19] = 0
+
+    fixed_kwargs = dict(
+        smoothing_distance=0.3,
+        output_mesh_type='quads',
+        compute_normals=False,
+    )
+
+    test_kwargs = dict(
+        select_inputs=select_inputs,
+        select_outputs=select_outputs,
+    )
+
+    # Create meshes to plot
+    EXTERNAL, ALL, INTERNAL = 'external', 'all', 'internal'
+    external_mesh = _generate_mesh(EXTERNAL)
+    all_mesh = _generate_mesh(ALL)
+    internal_mesh = _generate_mesh(INTERNAL)
+
+    # Offset to fit in a single frame
+    external_mesh.points += (0, 0, 1)
+    internal_mesh.points += (0, 0, -1)
+
+    plot = pv.Plotter()
+
+    plot_boundary_labels(external_mesh)
+    plot.add_text(EXTERNAL, position='upper_left')
+
+    plot_boundary_labels(all_mesh)
+    plot.add_text(ALL, position='left_edge')
+
+    plot_boundary_labels(internal_mesh)
+    plot.add_text(INTERNAL, position='lower_left')
+
+    plot.camera_position = [(5, 4, 3.5), (1, 1, 1), (0.0, 0.0, 1.0)]
+    plot.show(return_cpos=True)
+
+
+@pytest.mark.parametrize(
+    ('smoothing_distance', 'smoothing_scale'),
+    [(0, None), (None, 0), (5, 0.5), (5, 1)],
+    ids=['dist_0-scale_None', 'dist_None-scale_0', 'dist_5-scale_0.5', 'dist_5-scale_1'],
+)
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_smoothing_constraint(
+    labeled_image,  # noqa: F811
+    smoothing_distance,
+    smoothing_scale,
+):
+    # Scale spacing for visualization
+    labeled_image.spacing = (10, 10, 10)
+
+    mesh = labeled_image.contour_labels(
+        'all',
+        smoothing_distance=smoothing_distance,
+        smoothing_scale=smoothing_scale,
+        pad_background=False,
+        compute_normals=False,
+    )
+
+    # Translate so origin is in bottom left corner
+    mesh.points -= np.array(mesh.bounds)[[0, 2, 4]]
+
+    # Add box of fixed size for scale
+    box = pv.Box(bounds=(0, 10, 0, 10, 0, 10)).extract_all_edges()
+    plot = pv.Plotter()
+    plot.add_mesh(mesh, show_scalar_bar=False)
+    plot.add_mesh(box)
+
+    # Configure plot to enable showing one side of the mesh to visualize
+    # the scale of the smoothing applied by the smoothing constraints
+    plot.enable_parallel_projection()
+    plot.view_yz()
+    plot.show_grid()
+    plot.reset_camera()
+    plot.camera.zoom(1.5)
+    plot.show()
+
+
+@pytest.mark.usefixtures('_show_edges')
+@pytest.mark.parametrize('smoothing', [True, False])
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_compare_select_inputs_select_outputs(
+    labeled_image,  # noqa: F811
+    smoothing,
+):
+    common_kwargs = dict(
+        smoothing=smoothing,
+        smoothing_distance=0.8,
+        output_mesh_type='quads',
+        compute_normals=False,
+    )
+    mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
+    mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
+
+    plot = pv.Plotter()
+    plot.add_mesh(mesh_select_inputs, color='red', opacity=0.7)
+    plot.add_mesh(mesh_select_outputs, color='blue', opacity=0.7)
+    plot.view_xy()
     plot.show()
 
 

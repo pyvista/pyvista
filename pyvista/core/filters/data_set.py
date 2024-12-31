@@ -12,7 +12,6 @@ from typing import Literal
 from typing import cast
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
@@ -4847,6 +4846,8 @@ class DataSetFilters:
         See the :ref:`plot_over_line_example` example.
 
         """
+        from matplotlib import pyplot as plt
+
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
             self,
@@ -5190,6 +5191,8 @@ class DataSetFilters:
         ... )  # doctest:+SKIP
 
         """
+        from matplotlib import pyplot as plt
+
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
             self,
@@ -5324,6 +5327,8 @@ class DataSetFilters:
         ... )  # doctest:+SKIP
 
         """
+        from matplotlib import pyplot as plt
+
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
             self,

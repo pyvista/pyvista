@@ -201,29 +201,39 @@ def labeled_image():
     return image
 
 
+@pytest.mark.parametrize('smoothing', [True, False, None])
 @pytest.mark.parametrize('output_mesh_type', ['triangles', 'quads'])
 @pytest.mark.parametrize('scalars', ['labels', None])
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_scalars_output_mesh_type(
+def test_contour_labels_scalars_smoothing_output_mesh_type(
     labeled_image,
+    smoothing,
     output_mesh_type,
     scalars,
 ):
     # Determine expected output
-    if output_mesh_type == 'triangles' or output_mesh_type is None:
+    if output_mesh_type == 'triangles' or output_mesh_type is None and smoothing:
         expected_celltype = pv.CellType.TRIANGLE
+        cell_multiplier = 2  # quads are subdivided into 2 triangles
     else:
-        assert output_mesh_type == 'quads'
+        assert output_mesh_type == 'quads' or not smoothing
         expected_celltype = pv.CellType.QUAD
+        cell_multiplier = 1
 
     # Do test
     mesh = labeled_image.contour_labels(
         scalars=scalars,
+        smoothing=smoothing,
         output_mesh_type=output_mesh_type,
     )
     assert BOUNDARY_LABELS in mesh.cell_data
     assert mesh.active_scalars_name == BOUNDARY_LABELS
     assert all(cell.type == expected_celltype for cell in mesh.cell)
+
+    if smoothing:
+        assert mesh.area < 0.01
+    else:
+        assert mesh.area == (mesh.n_cells / cell_multiplier)
 
 
 def _remove_duplicate_points(polydata):
@@ -329,6 +339,13 @@ def test_contour_labels_background_value(labeled_image, background_value):
     mesh = labeled_image.contour_labels('all', background_value=background_value)
     first_component = mesh.cell_data[BOUNDARY_LABELS][:, 0]
     assert background_value not in first_component
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_pad_background(labeled_image):
+    mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
+    mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
+    assert mesh_closed.n_cells - mesh_open.n_cells == 1
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)

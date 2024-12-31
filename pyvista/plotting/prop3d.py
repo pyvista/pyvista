@@ -394,6 +394,8 @@ class Prop3D(_vtk.vtkProp3D):
 
         This method may be used as an alternative for setting the :attr:`orientation`.
 
+        .. versionadded:: 0.45
+
         Parameters
         ----------
         rotation : RotationLike
