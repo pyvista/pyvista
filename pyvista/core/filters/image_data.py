@@ -1007,8 +1007,13 @@ class ImageDataFilters(DataSetFilters):
 
         This filter uses `vtkSurfaceNets <https://vtk.org/doc/nightly/html/classvtkSurfaceNets3D.html#details>`__
         to extract polygonal surface contours from non-continuous label maps, which
-        corresponds to discrete regions in an input 3D image (i.e., volume).
-        The generated surface is smoothed using a constrained smoothing filter.
+        corresponds to discrete regions in an input 3D image (i.e., volume). It is
+        designed to generate surfaces from image point data, e.g. voxel point
+        samples from 3D medical images, though images with cell data are also supported.
+
+        The generated surface is smoothed using a constrained smoothing filter, which
+        may be fine-tuned to control the smoothing process. Optionally, smoothing may
+        be disabled to generate a staircase-like surface.
 
         The output surface includes a two-component cell data array ``'boundary_labels'``.
         The array indicates the labels/regions on either side of the polygons composing
@@ -1119,7 +1124,7 @@ class ImageDataFilters(DataSetFilters):
             .. warning::
 
                 Enabling this option is likely to generate surfaces with normals
-                pointing outward when ``closed_surface`` is ``True`` and
+                pointing outward when ``pad_background`` is ``True`` and
                 ``boundary_style`` is ``True`` (the default). However, this is
                 not guaranteed if the generated surface is not closed or if internal
                 boundaries are generated. Do not assume the normals will point outward

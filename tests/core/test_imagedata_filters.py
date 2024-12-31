@@ -293,6 +293,7 @@ def test_contour_labels_boundary_style(
 
     # Test that temp array created for select_inputs is removed
     assert labeled_image.array_names == ['labels']
+    assert np.unique(labeled_image.active_scalars).tolist() == [0, 2, 5]
 
     # Test output values
     actual_output_values = set()
@@ -346,6 +347,20 @@ def test_contour_labels_pad_background(labeled_image):
     mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
     mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
     assert mesh_closed.n_cells - mesh_open.n_cells == 1
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_cell_data(channels):
+    # Extract voxelized surface from image with cell voxels in two ways
+    # Both should have an equal number of quad cells
+
+    voxel_surface_contoured = channels.contour_labels(
+        smoothing=False,
+        boundary_style='external',
+    )
+    vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
+
+    assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
