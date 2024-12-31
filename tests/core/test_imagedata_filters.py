@@ -14,12 +14,6 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 BOUNDARY_LABELS = 'boundary_labels'
 
 
-def test_contour_labeled_deprecated():
-    match = 'This filter produces unexpected results and is deprecated.'
-    with pytest.raises(PyVistaDeprecationWarning, match=match):
-        pv.ImageData().contour_labeled()
-
-
 @pytest.fixture
 def logo():
     return examples.load_logo()
@@ -51,6 +45,123 @@ def two_dimensionality_image():
 @pytest.fixture
 def three_dimensionality_image():
     return variable_dimensionality_image(dimensions=(2, 2, 2))
+
+
+@pytest.fixture
+def frog_tissues():
+    return examples.load_frog_tissues()
+
+
+def test_contour_labeled_deprecated():
+    match = 'This filter produces unexpected results and is deprecated.'
+    with pytest.raises(PyVistaDeprecationWarning, match=match):
+        pv.ImageData().contour_labeled()
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled(frog_tissues):
+    # Extract surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled()
+
+    assert frog_tissues.point_data.active_scalars.max() == 29
+    assert 'BoundaryLabels' in mesh.cell_data
+    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_smoothing(frog_tissues):
+    # Extract smooth surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(smoothing=True)
+    # this somehow mutates the object... also the n_labels is likely not correct
+
+    assert 'BoundaryLabels' in mesh.cell_data
+    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_reduced_labels_count(frog_tissues):
+    # Extract surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(n_labels=2)
+    # this somehow mutates the object... also the n_labels is likely not correct
+
+    assert 'BoundaryLabels' in mesh.cell_data
+    assert np.max(mesh['BoundaryLabels'][:, 0]) == 2
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
+    # Extract surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
+
+    assert 'BoundaryLabels' in mesh.cell_data
+    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_boundary_output_style(frog_tissues):
+    # Extract surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(output_style='boundary')
+
+    assert 'BoundaryLabels' in mesh.cell_data
+    assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
+    # Extract surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(ValueError):  # noqa: PT011
+            frog_tissues.contour_labeled(output_mesh_type='invalid')
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_invalid_output_style(frog_tissues):
+    # Extract surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(NotImplementedError):
+            frog_tissues.contour_labeled(output_style='selected')
+
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(ValueError):  # noqa: PT011
+            frog_tissues.contour_labeled(output_style='invalid')
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_scalars(frog_tissues):
+    # Create a new array with reduced number of labels
+    frog_tissues['labels'] = frog_tissues['MetaImage'] // 2
+
+    # Extract surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(scalars='labels')
+
+    assert 'BoundaryLabels' in mesh.cell_data
+    assert np.max(mesh['BoundaryLabels'][:, 0]) == 14
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_invalid_scalars(frog_tissues):
+    # Nonexistent scalar key
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(KeyError):
+            frog_tissues.contour_labeled(scalars='nonexistent_key')
+
+    # Using cell data
+    frog_tissues.cell_data['cell_data'] = np.zeros(frog_tissues.n_cells)
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='Can only process point data'):
+            frog_tissues.contour_labeled(scalars='cell_data')
+
+    # When no scalas are given and active scalars are not point data
+    frog_tissues.set_active_scalars('cell_data', preference='cell')
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='active scalars must be point array'):
+            frog_tissues.contour_labeled()
 
 
 @pytest.fixture
@@ -110,7 +221,6 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
         scalars=scalars,
         smoothing=smoothing,
         output_mesh_type=output_mesh_type,
-        multi_component_output=True,
     )
     assert BOUNDARY_LABELS in mesh.cell_data
     assert mesh.active_scalars_name == BOUNDARY_LABELS
@@ -171,7 +281,6 @@ def test_contour_labels_boundary_style(
         select_inputs=select_inputs,
         select_outputs=select_outputs,
         boundary_style=boundary_style,
-        multi_component_output=True,
     )
     # Test no duplicate points
     cleaned = _remove_duplicate_points(mesh)
@@ -248,29 +357,6 @@ def test_contour_labels_cell_data(channels):
     vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
 
     assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_multi_component_output(labeled_image):
-    # Test `None` (implicit behavior)
-    poly = labeled_image.contour_labels('external')
-    assert poly['boundary_labels'].ndim == 1
-    poly = labeled_image.contour_labels('internal')
-    assert poly['boundary_labels'].ndim == 2
-    poly = labeled_image.contour_labels('all')
-    assert poly['boundary_labels'].ndim == 2
-
-    # Test `True`
-    poly = labeled_image.contour_labels('external', multi_component_output=True)
-    assert poly['boundary_labels'].ndim == 2
-    poly = labeled_image.contour_labels('internal', multi_component_output=True)
-    assert poly['boundary_labels'].ndim == 2
-
-    # Test `False`
-    poly = labeled_image.contour_labels('external', multi_component_output=False)
-    assert poly['boundary_labels'].ndim == 1
-    poly = labeled_image.contour_labels('internal', multi_component_output=False)
-    assert poly['boundary_labels'].ndim == 1
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
