@@ -4735,3 +4735,122 @@ def test_pack_labels_preference(uniform):
     expected_shape = mesh.cell_data['labels_in'].shape
     actual_shape = packed.cell_data['packed_labels'].shape
     assert np.array_equal(actual_shape, expected_shape)
+
+
+@pytest.mark.parametrize('coloring_mode', ['index', 'cycler', None])
+def test_color_labels(uniform, coloring_mode):
+    default_cmap = pv.get_cmap_safe('glasbey_category10')
+    original_scalars_name = uniform.active_scalars_name
+
+    if coloring_mode == 'index':
+        # Test invalid input
+        match = (
+            "Index coloring mode cannot be used with scalars 'Spatial Point Data'. Scalars must be positive integers \n"
+            'and the max value (729.0) must be less than the number of colors (256).'
+        )
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.color_labels(coloring_mode=coloring_mode)
+
+        # Use pack labels so that index mapping can be used
+        uniform = uniform.pack_labels(output_scalars=original_scalars_name)
+
+    colored_mesh = uniform.color_labels(coloring_mode=coloring_mode)
+    assert colored_mesh is not uniform
+    assert uniform.active_scalars_name == original_scalars_name
+    colors_name = original_scalars_name + '_rgba'
+    assert colored_mesh.active_scalars_name == colors_name
+    assert not np.any(np.isnan(colored_mesh[colors_name]))
+
+    label_ids = np.unique(uniform.active_scalars)
+    for i, label_id in enumerate(label_ids):
+        data_ids = np.where(uniform[original_scalars_name] == label_id)[0]
+        expected_color_rgba = (*default_cmap.colors[i], 1.0)
+        for data_id in data_ids:
+            actual_rgba = colored_mesh[colors_name][data_id]
+            assert np.allclose(actual_rgba, expected_color_rgba)
+
+    # Test in place
+    colored_mesh = uniform.color_labels(coloring_mode=coloring_mode, inplace=True)
+    assert colored_mesh is uniform
+
+
+VIRIDIS_RGBA = [(*c, 1.0) for c in pv.get_cmap_safe('viridis').colors]
+COLORS_DICT = {0: 'red', 1: (0, 0, 0), 2: 'blue', 3: (1.0, 1.0, 1.0), 4: 'orange', 5: 'green'}
+COLORS_DICT_RGBA = [pv.Color(c).float_rgba for c in COLORS_DICT.values()]
+RED_RGBA = pv.Color('red').float_rgba
+
+
+@pytest.mark.parametrize(
+    ('color_input', 'expected_rgba'),
+    [
+        ('viridis', VIRIDIS_RGBA),
+        (COLORS_DICT, COLORS_DICT_RGBA),
+        (COLORS_DICT_RGBA, COLORS_DICT_RGBA),
+        ('red', [RED_RGBA, RED_RGBA, RED_RGBA, RED_RGBA]),
+    ],
+    ids=['cmap', 'dict', 'sequence', 'named_color'],
+)
+def test_color_labels_inputs(labeled_image, color_input, expected_rgba):
+    label_scalars = labeled_image.active_scalars
+    colored = labeled_image.color_labels(color_input)
+    color_scalars = colored.active_scalars
+    for id_ in np.unique(label_scalars):
+        assert np.allclose(color_scalars[label_scalars == id_], expected_rgba[id_])
+
+
+def test_color_labels_partial_dict(labeled_image):
+    colored = labeled_image.color_labels({0: RED_RGBA})
+    color_scalars = colored.active_scalars
+    unique = np.unique(color_scalars, axis=0)
+
+    assert np.array_equal(RED_RGBA, unique[0])
+    assert np.array_equal([np.nan] * 4, unique[1], equal_nan=True)
+
+
+def test_color_labels_scalars(uniform):
+    # Test active scalars
+    active_before = uniform.active_scalars_name
+    for name in uniform.array_names:
+        colored = uniform.color_labels(scalars=name)
+        assert name in colored.active_scalars_name
+    assert uniform.active_scalars_name == active_before
+
+    # Give cell data and point data the same name
+    GENERIC = 'generic'
+    for name in uniform.array_names:
+        uniform.rename_array(name, GENERIC)
+    assert all(name == GENERIC for name in uniform.array_names)
+
+    # Test preference
+    for name in uniform.array_names:
+        colored = uniform.color_labels(scalars=name, preference='point')
+        assert GENERIC + '_rgba' in colored.point_data
+
+        colored = uniform.color_labels(scalars=name, preference='cell')
+        assert GENERIC + '_rgba' in colored.cell_data
+
+    # Test output scalars
+    CUSTOM = 'custom'
+    colored = uniform.color_labels(output_scalars=CUSTOM)
+    assert CUSTOM in colored.array_names
+
+
+def test_color_labels_invalid_input(uniform):
+    match = 'Coloring mode cannot be set when a color dictionary is specified.'
+    with pytest.raises(TypeError, match=match):
+        uniform.color_labels({}, coloring_mode='index')
+
+    match = "Colormap 'bwr' must be a ListedColormap, got LinearSegmentedColormap instead."
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels('bwr')
+
+    match = (
+        'Invalid colors. Colors must be one of:\n'
+        '  - sequence of color-like values,\n'
+        '  - dict with color-like values,\n'
+        '  - named colormap string.'
+    )
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels([[1]])
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels('fake')
