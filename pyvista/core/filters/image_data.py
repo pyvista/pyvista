@@ -997,6 +997,11 @@ class ImageDataFilters(DataSetFilters):
         scalars: str | None = None,
         compute_normals: bool = True,
         multi_component_output: bool | None = None,
+        smoothing: bool = True,
+        smoothing_iterations: int = 16,
+        smoothing_relaxation: float = 0.5,
+        smoothing_distance: float | None = None,
+        smoothing_scale: float = 1.0,
         progress_bar: bool = False,
     ) -> PolyData:
         """Generate surface contours from 3D image label maps.
@@ -1136,6 +1141,33 @@ class ImageDataFilters(DataSetFilters):
 
             By default, ``multi_component_output`` is ``False`` when ``boundary_type``
             is ``'external'``, and ``True`` otherwise.
+
+        smoothing : bool, default: True
+            Smooth the generated surface using a constrained smoothing filter. Each
+            point in the surface is smoothed as follows:
+
+                For a point ``pi`` connected to a list of points ``pj`` via an edge, ``pi``
+                is moved towards the average position of ``pj`` multiplied by the
+                ``smoothing_relaxation`` factor, and limited by the ``smoothing_distance``
+                constraint. This process is repeated either until convergence occurs, or
+                the maximum number of ``smoothing_iterations`` is reached.
+
+        smoothing_iterations : int, default: 16
+            Maximum number of smoothing iterations to use.
+
+        smoothing_relaxation : float, default: 0.5
+            Relaxation factor used at each smoothing iteration.
+
+        smoothing_distance : float, default: None
+            Maximum distance each point is allowed to move (in any direction) during
+            smoothing. This distance may be scaled with ``smoothing_scale``. By default,
+            the distance is computed dynamically from the image spacing as:
+
+                ``distance = norm(image_spacing) * smoothing_scale``.
+
+        smoothing_scale : float, default: 1.0
+            Relative scaling factor applied to ``smoothing_distance``. See that
+            parameter for details.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -1287,6 +1319,18 @@ class ImageDataFilters(DataSetFilters):
         >>> surf = image.contour_labels(pad_background=False)
         >>> surf.plot(zoom=1.5, **plot_kwargs)
 
+        Disable smoothing to generate staircase-like surface. Without smoothing, the
+        surface has quadrilateral cells by default.
+
+        >>> surf = image.contour_labels(smoothing=False)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
+        Keep smoothing enabled but reduce the smoothing scale. A smoothing scale
+        less than one may help preserve sharp features (e.g. corners).
+
+        >>> surf = image.contour_labels(smoothing_scale=0.5)
+        >>> surf.plot(zoom=1.5, **plot_kwargs)
+
         """
         temp_scalars_name = '_PYVISTA_TEMP'
 
@@ -1392,6 +1436,38 @@ class ImageDataFilters(DataSetFilters):
 
             [alg.SetLabel(int(val), val) for val in internal_ids]  # type: ignore[func-returns-value]
 
+        def _configure_smoothing(
+            alg_: _vtk.vtkSurfaceNets3D,
+            spacing_: tuple[float, float, float],
+            iterations_: int,
+            relaxation_: float,
+            scale_: float,
+            distance_: float | None,
+        ):
+            def _is_small_number(num) -> bool | np.bool_:
+                return isinstance(num, (float, int, np.floating, np.integer)) and num < 1e-8
+
+            if smoothing and not _is_small_number(scale_) and not _is_small_number(distance_):
+                # Only enable smoothing if distance is not very small, since a small
+                # distance will actually result in large smoothing (suspected division
+                # by zero error in vtk code)
+                alg_.SmoothingOn()
+                alg_.GetSmoother().SetNumberOfIterations(iterations_)
+                alg_.GetSmoother().SetRelaxationFactor(relaxation_)
+
+                # Auto-constraints are On by default which only allows you to scale
+                # relative distance (with SetConstraintScale) but not set its value
+                # directly. Here, we turn this off so that we can both set its value
+                # and/or scale it independently
+                alg_.AutomaticSmoothingConstraintsOff()
+
+                # Dynamically calculate distance if not specified.
+                # This emulates the auto-constraint calc from vtkSurfaceNets3D
+                distance_ = distance_ if distance_ else np.linalg.norm(spacing_)
+                alg_.GetSmoother().SetConstraintDistance(distance_ * scale_)
+            else:
+                alg_.SmoothingOff()
+
         if not hasattr(_vtk, 'vtkSurfaceNets3D'):  # pragma: no cover
             from pyvista.core.errors import VTKVersionError
 
@@ -1419,6 +1495,14 @@ class ImageDataFilters(DataSetFilters):
             cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
             select_inputs,
             select_outputs,
+        )
+        _configure_smoothing(
+            alg,
+            alg_input.spacing,
+            smoothing_iterations,
+            smoothing_relaxation,
+            smoothing_scale,
+            smoothing_distance,
         )
 
         # Get output
