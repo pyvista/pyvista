@@ -4777,7 +4777,7 @@ def test_color_labels(uniform, coloring_mode):
 VIRIDIS_RGBA = [(*c, 1.0) for c in pv.get_cmap_safe('viridis').colors]
 COLORS_DICT = {0: 'red', 1: (0, 0, 0), 2: 'blue', 3: (1.0, 1.0, 1.0), 4: 'orange', 5: 'green'}
 COLORS_DICT_RGBA = [pv.Color(c).float_rgba for c in COLORS_DICT.values()]
-RED_RGBA = (1.0, 0.0, 0.0, 1.0)
+RED_RGBA = pv.Color('red').float_rgba
 
 
 @pytest.mark.parametrize(
@@ -4799,11 +4799,11 @@ def test_color_labels_inputs(labeled_image, color_input, expected_rgba):
 
 
 def test_color_labels_partial_dict(labeled_image):
-    colored = labeled_image.color_labels({0: RED})
+    colored = labeled_image.color_labels({0: RED_RGBA})
     color_scalars = colored.active_scalars
     unique = np.unique(color_scalars, axis=0)
 
-    assert np.array_equal(RED, unique[0])
+    assert np.array_equal(RED_RGBA, unique[0])
     assert np.array_equal([np.nan] * 4, unique[1], equal_nan=True)
 
 
