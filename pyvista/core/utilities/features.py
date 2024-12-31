@@ -23,37 +23,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
 
 
-def _padded_bins(mesh, density):
-    """Construct bin edges for voxelization.
-
-    Parameters
-    ----------
-    mesh : pyvista.DataSet
-        Mesh to voxelize.
-
-    density : array_like[float]
-        A list of densities along x,y,z directions.
-
-    Returns
-    -------
-    list[np.ndarray]
-        List of bin edges for each axis.
-
-    Notes
-    -----
-    Ensures limits of voxelization are padded to ensure the mesh is fully enclosed.
-
-    """
-    bounds = np.array(mesh.bounds).reshape(3, 2)
-    bin_count = np.ceil(1e-10 + (bounds[:, 1] - bounds[:, 0]) / density)
-    pad = (bin_count * density - (bounds[:, 1] - bounds[:, 0])) / 2
-
-    return [
-        np.arange(bounds[i, 0] - pad[i], bounds[i, 1] + pad[i] + density[i] / 2, density[i])
-        for i in range(3)
-    ]
-
-
 def voxelize_unstructured_grid(
     mesh: DataSet | MultiBlock | _vtk.vtkDataSet | _vtk.vtkMultiBlockDataSet,
     *,
@@ -356,6 +325,32 @@ def voxelize_unstructured_grid(
     >>> plot.show(cpos='yz')
 
     """
+    image_data = _voxelize_image_data(
+        mesh,
+        dimensions=dimensions,
+        spacing=spacing,
+        rounding_func=rounding_func,
+        cell_length_percentile=cell_length_percentile,
+        cell_length_sample_size=cell_length_sample_size,
+        mesh_length_fraction=mesh_length_fraction,
+        progress_bar=progress_bar,
+    )
+    ugrid = image_data.threshold(0.5)
+    del ugrid.cell_data['mask']
+    return ugrid
+
+
+def _voxelize_image_data(
+    mesh,
+    *,
+    dimensions,
+    spacing,
+    rounding_func,
+    cell_length_percentile,
+    cell_length_sample_size,
+    mesh_length_fraction,
+    progress_bar,
+):
     surface = wrap(mesh).extract_geometry()
     if not surface.faces.size:
         # we have a point cloud or an empty mesh
@@ -370,9 +365,38 @@ def voxelize_unstructured_grid(
         mesh_length_fraction=mesh_length_fraction,
         progress_bar=progress_bar,
     )
-    voxel_cells = binary_mask.points_to_cells(dimensionality='3D', copy=False).threshold(0.5)
-    del voxel_cells.cell_data['mask']
-    return voxel_cells
+    return binary_mask.points_to_cells(dimensionality='3D', copy=False)
+
+
+def _padded_bins(mesh, density):
+    """Construct bin edges for voxelization.
+
+    Parameters
+    ----------
+    mesh : pyvista.DataSet
+        Mesh to voxelize.
+
+    density : array_like[float]
+        A list of densities along x,y,z directions.
+
+    Returns
+    -------
+    list[np.ndarray]
+        List of bin edges for each axis.
+
+    Notes
+    -----
+    Ensures limits of voxelization are padded to ensure the mesh is fully enclosed.
+
+    """
+    bounds = np.array(mesh.bounds).reshape(3, 2)
+    bin_count = np.ceil(1e-10 + (bounds[:, 1] - bounds[:, 0]) / density)
+    pad = (bin_count * density - (bounds[:, 1] - bounds[:, 0])) / 2
+
+    return [
+        np.arange(bounds[i, 0] - pad[i], bounds[i, 1] + pad[i] + density[i] / 2, density[i])
+        for i in range(3)
+    ]
 
 
 def voxelize(
