@@ -369,6 +369,7 @@ def test_contour_labels_multi_component_output(labeled_image):
     assert poly['boundary_labels'].ndim == 1
 
 
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_cell_data(channels):
     # Extract voxelized surface from image with cell voxels in two ways
     # Both should have an equal number of quad cells
