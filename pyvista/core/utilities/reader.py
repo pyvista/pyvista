@@ -3037,8 +3037,6 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         self.enable_all_cell_arrays()
         self.enable_all_point_arrays()
 
-        self.set_active_time_point(0)
-
     def read_global(self) -> pyvista.Table:
         """Read enabled global data.
 
