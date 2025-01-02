@@ -1366,6 +1366,8 @@ def test_exodus_reader_core():
         assert e_reader.cell_array_status(name)
 
     ## check global arrays handling
+    assert e_reader.number_global_arrays == 1
+
     for name in e_reader.global_array_names:
         # Should not be enabled by default
         assert not e_reader.global_array_status(name)
@@ -1479,8 +1481,16 @@ def _test_block_arrays(block, array_names):
 
 
 def test_exodus_blocks():
+
     fname_e = examples.download_mug(load=False)
     e_reader = pv.get_reader(fname_e)
+
+    # test instantiation with invalid object type
+    match =re.escape('object_type is invalid')
+    with pytest.raises(ValueError, match=match):
+        # 15 is not associated with ObjectType enum in the
+        # vtkExodusIIReader
+        pv.ExodusIIBlockSet(e_reader, 15)
 
     # tests all core routines for each block and set that contains
     # blocks and sets in the examples
