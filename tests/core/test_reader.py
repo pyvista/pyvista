@@ -1481,12 +1481,11 @@ def _test_block_arrays(block, array_names):
 
 
 def test_exodus_blocks():
-
     fname_e = examples.download_mug(load=False)
     e_reader = pv.get_reader(fname_e)
 
     # test instantiation with invalid object type
-    match =re.escape('object_type is invalid')
+    match = re.escape('object_type is invalid')
     with pytest.raises(ValueError, match=match):
         # 15 is not associated with ObjectType enum in the
         # vtkExodusIIReader
