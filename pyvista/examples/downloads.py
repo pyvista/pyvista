@@ -8216,7 +8216,7 @@ def download_biplane(load=True):  # pragma: no cover
     --------
     >>> from pyvista import examples
     >>> dataset = examples.download_biplane()
-    >>> dataset.plot()
+    >>> dataset.plot(cpos='zy', zoom=1.5)
 
     .. seealso::
 
