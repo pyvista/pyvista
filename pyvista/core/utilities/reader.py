@@ -3039,7 +3039,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
 
         self.set_active_time_point(0)
 
-    def read_global(self)->pyvista.Table:
+    def read_global(self) -> pyvista.Table:
         """Read enabled global data.
 
         Returns
@@ -3048,15 +3048,14 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
             Global data from Exodus II file
 
         """
-        global_extractor = _lazy_vtk_instantiation("vtkFiltersExtraction",
-                                                "vtkExtractExodusGlobalTemporalVariables")
+        global_extractor = _lazy_vtk_instantiation(
+            'vtkFiltersExtraction', 'vtkExtractExodusGlobalTemporalVariables'
+        )
 
         global_extractor.SetInputConnection(self.reader.GetOutputPort())
         global_extractor.Update()
 
-
         return wrap(global_extractor.GetOutputDataObject(0))
-
 
     @property
     def element_blocks(self):
@@ -3555,7 +3554,7 @@ class ExodusIIBlockSet:
             List of all names of block/set arrays in object.
 
         """
-        name_method = self._construct_result_method("Get","Name")
+        name_method = self._construct_result_method('Get', 'Name')
         return [name_method(i) for i in range(self.number_arrays)]
 
     def enable_array(self, name):
@@ -3568,7 +3567,7 @@ class ExodusIIBlockSet:
 
         """
         enable_method = self._construct_result_method('Set', 'Status')
-        return enable_method(name, 1)
+        enable_method(name, 1)
 
     def enable_all_arrays(self):
         """Enable all arrays in block/set."""
@@ -3585,7 +3584,7 @@ class ExodusIIBlockSet:
 
         """
         disable_method = self._construct_result_method('Set', 'Status')
-        return disable_method(name, 0)
+        disable_method(name, 0)
 
     def disable_all_arrays(self):
         """Disable all arrays in block/set."""
