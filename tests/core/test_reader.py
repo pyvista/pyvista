@@ -1415,30 +1415,79 @@ def test_exodus_reader():
     for key in e_reader.cell_array_names:
         assert key in unstruct.cell_data.keys()
 
+def _test_block_names(block, names):
+    assert block.number == len(names)
+    assert block.names == names
+
+    block.enable_all()
+
+    for name in names:
+        assert block.status(name)
+
+    block.disable_all()
+    for name in names:
+        assert not block.status(name)
+
+    for name in names:
+        block.enable(name)
+        assert block.status(name)
+
+    for name in names:
+        block.disable(name)
+        assert not block.status(name)
+
+def _test_block_arrays(block, array_names):
+    assert block.number_arrays == len(array_names)
+    assert block.array_names == array_names
+    block.enable_all_arrays()
+
+    for array_name in array_names:
+        assert block.array_status(array_name)
+
+    block.disable_all_arrays()
+    for array_name in array_names:
+        assert not block.array_status(array_name)
+
+    for array_name in array_names:
+        block.enable_array(array_name)
+        assert block.array_status(array_name)
+
+    for array_name in array_names:
+        block.disable_array(array_name)
+        assert not block.array_status(array_name)
+
 def test_exodus_blocks():
     fname_e = examples.download_mug(load=False)
     e_reader = pv.get_reader(fname_e)
 
-    assert e_reader.element_blocks.names == ["Unnamed block ID: 1","Unnamed block ID: 76"]
-    assert e_reader.element_blocks.status("Unnamed block ID: 1")
-    assert e_reader.element_blocks.status("Unnamed block ID: 76")
+    # tests all core routines for each block and set that contains
+    # blocks and sets in the examples
+    _test_block_names(e_reader.element_blocks,
+                      ["Unnamed block ID: 1","Unnamed block ID: 76"])
 
-    e_reader.element_blocks.disable("Unnamed block ID: 1")
-    assert not e_reader.element_blocks.status("Unnamed block ID: 1")
+    _test_block_names(e_reader.side_sets,
+                      ["bottom","top"])
 
-    e_reader.element_blocks.enable("Unnamed block ID: 1")
-    assert e_reader.element_blocks.status("Unnamed block ID: 1")
+    _test_block_names(e_reader.node_sets,
+                      ["Unnamed set ID: 1","Unnamed set ID: 2"])
 
-    #check construct_result_array method for all cases
+    _test_block_arrays(e_reader.element_blocks, ["aux_elem"])
 
-    number_method = e_reader.element_blocks._construct_result_method("GetNumberOf", "s")
-    assert number_method == e_reader._reader.GetNumberOfElementResultArrays
+    # Test example with set arrays
+    fname_e = examples.download_biplane(load=False)
+    e_reader = pv.get_reader(fname_e)
+    _test_block_arrays(e_reader.side_sets, ["PressureRMS"])
 
+    #check construct_result_array for those that do not have blocks
+    # in the example
     number_method = e_reader.face_blocks._construct_result_method("GetNumberOf", "s")
     assert number_method == e_reader._reader.GetNumberOfFaceResultArrays
 
     number_method = e_reader.edge_blocks._construct_result_method("GetNumberOf", "s")
     assert number_method == e_reader._reader.GetNumberOfEdgeResultArrays
 
-    assert e_reader.side_sets.names == ["bottom","top"]
-    assert e_reader.node_sets.names == ["Unnamed set ID: 1","Unnamed set ID: 2"]
+    number_method = e_reader.element_sets._construct_result_method("GetNumberOf", "s")
+    assert number_method == e_reader._reader.GetNumberOfElementSetResultArrays
+
+    number_method = e_reader.face_sets._construct_result_method("GetNumberOf", "s")
+    assert number_method == e_reader._reader.GetNumberOfFaceSetResultArrays
