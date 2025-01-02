@@ -3039,6 +3039,25 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
 
         self.set_active_time_point(0)
 
+    def read_global(self)->pyvista.Table:
+        """Read enabled global data.
+
+        Returns
+        -------
+        Table
+            Global data from Exodus II file
+
+        """
+        global_extractor = _lazy_vtk_instantiation("vtkFiltersExtraction",
+                                                "vtkExtractExodusGlobalTemporalVariables")
+
+        global_extractor.SetInputConnection(self.reader.GetOutputPort())
+        global_extractor.Update()
+
+
+        return wrap(global_extractor.GetOutputDataObject(0))
+
+
     @property
     def element_blocks(self):
         """Returns an ExodusIIBlockSet object for the element blocks.
@@ -3465,6 +3484,11 @@ class ExodusIIBlockSet:
         """
         self._reader.SetObjectStatus(self._object_type, name, 1)
 
+    def enable_all(self):
+        """Enable all names in block/set."""
+        for name in self.names:
+            self.enable(name)
+
     def disable(self, name):
         """Disable the block/set with name.
 
@@ -3475,6 +3499,11 @@ class ExodusIIBlockSet:
 
         """
         self._reader.SetObjectStatus(self._object_type, name, 0)
+
+    def disable_all(self):
+        """Disable all names in block/set."""
+        for name in self.names:
+            self.disable(name)
 
     def status(self, name):
         """Get the status of the block/set with name.
@@ -3541,6 +3570,11 @@ class ExodusIIBlockSet:
         enable_method = self._construct_result_method('Set', 'Status')
         return enable_method(name, 1)
 
+    def enable_all_arrays(self):
+        """Enable all arrays in block/set."""
+        for name in self.array_names:
+            self.enable_array(name)
+
     def disable_array(self, name):
         """Disable the block/set array with name.
 
@@ -3552,6 +3586,11 @@ class ExodusIIBlockSet:
         """
         disable_method = self._construct_result_method('Set', 'Status')
         return disable_method(name, 0)
+
+    def disable_all_arrays(self):
+        """Disable all arrays in block/set."""
+        for name in self.array_names:
+            self.disable_array(name)
 
     def array_status(self, name):
         """Get the status of the block/set array with name.
