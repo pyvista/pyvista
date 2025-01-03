@@ -1277,7 +1277,7 @@ def _validate_color_sequence(
                     color_list = color_list * n_colors
 
                 # Only return if we have the correct number of colors
-                if n_colors is None or len(color_list) == n_colors:
+                if n_colors is not None and len(color_list) == n_colors:
                     return tuple(color_list)
             except ValueError:
                 pass

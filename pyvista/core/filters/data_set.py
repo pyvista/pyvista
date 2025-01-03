@@ -8952,7 +8952,8 @@ class DataSetFilters:
         | Sequence[ColorLike]
         | dict[float, ColorLike] = 'glasbey_category10',
         *,
-        coloring_mode: Literal['index', 'cycler'] | None = None,
+        coloring_mode: Literal['index', 'cycler', 'mixed'] | None = None,
+        negative_indexing: bool = False,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         output_scalars: str | None = None,
@@ -9022,6 +9023,10 @@ class DataSetFilters:
             - ``'cycler'``: The specified ``'colors'`` are cycled through sequentially,
               and each unique value in the input scalars is assigned a color in increasing
               order.
+
+        negative_indexing : bool, default: True
+            Allow indexing ``colors`` with negative values. Only valid when
+            ``coloring_mode`` is ``'index'``.
 
         scalars : str, optional
             Name of scalars with labels. Defaults to currently active scalars.
@@ -9128,11 +9133,8 @@ class DataSetFilters:
                 )
 
         def _is_index_like(array_, max_value):
-            if np.issubdtype(array_.dtype, np.integer) or np.array_equal(array, np.floor(array_)):
-                min_, max_ = output_mesh.get_data_range(name)
-                if min_ >= 0 and max_ <= max_value:
-                    return True
-            return False
+            min_value = -max_value if negative_indexing else 0
+            return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ <= max_value)
 
         if scalars is None:
             field, name = set_default_active_scalars(self)
@@ -9151,6 +9153,15 @@ class DataSetFilters:
             items = zip(colors.keys(), colors_float_rgba)
 
         else:
+            # Handle multi-component arrays
+            if array.ndim > 1:
+                # len_before = len(array)
+                # array = np.linalg.norm(array, axis=1) * -1
+                # if (not array.ndim == 1) or (len_before != len(array)):
+                raise ValueError(
+                    f'Multi-component scalars are not supported for coloring. Scalar array {scalars} must be one-dimensional.'
+                )
+
             _is_rgba_sequence = False
             if isinstance(colors, str):
                 try:
@@ -9171,19 +9182,36 @@ class DataSetFilters:
 
             n_colors = len(color_sequence)
             if coloring_mode is None:
-                coloring_mode = 'index' if _is_index_like(array, max_value=n_colors) else 'cycler'
+                coloring_mode = (
+                    'index' if np.all(_is_index_like(array, max_value=n_colors)) else 'cycler'
+                )
 
             if coloring_mode == 'index':
-                if not _is_index_like(array, max_value=n_colors):
+                if not np.all(_is_index_like(array, max_value=n_colors)):
                     raise ValueError(
                         f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
-                keys: Iterable[float] = range(n_colors + 1)
+                keys: Iterable[float] = np.arange(n_colors)
                 values: Iterable[Any] = color_sequence
-            else:
+                if negative_indexing:
+                    keys = np.append(keys, keys[::-1] - len(keys))
+                    values.extend(values[::-1])
+            elif coloring_mode == 'cycler':
                 keys = np.unique(array)
                 values = cycler('color', color_sequence)
+            # elif coloring_mode == 'mixed':
+            #     all_keys = np.unique(array)
+            #
+            #     # Get keys/values for integers
+            #     is_index_like = _is_index_like(all_keys, max_value=n_colors)
+            #     unique_index = np.unique(all_keys[is_index_like])
+            #     int_keys = np.arange(unique_index.max()+1) if unique_index.size else unique_index
+            #     float_keys = np.unique(all_keys[~is_index_like])
+            #     keys = np.concatenate((int_keys, float_keys))
+            #     int_values = color_sequence[:len(int_keys)]
+            #     float_values = color_sequence[:-1][:len(float_keys)]
+            #     values = [*int_values, *float_values]
 
             items = zip(keys, values)
 

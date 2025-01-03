@@ -996,6 +996,7 @@ class ImageDataFilters(DataSetFilters):
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
         compute_normals: bool = True,
+        multi_component_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
         smoothing_relaxation: float = 0.5,
@@ -1125,6 +1126,22 @@ class ImageDataFilters(DataSetFilters):
                 boundaries are generated. Do not assume the normals will point outward
                 in all cases.
 
+        multi_component_output : bool, optional
+            If ``True``, the returned ``'boundary_labels'`` array is a two-component
+            2D array. If ``False``, the ``'boundary_labels'`` array is simplified as a
+            single-component 1D array. The simplification is as follows:
+
+            - When ``boundary_type`` is ``'external'``, only the first component is
+              returned. Since external polygons may only share a boundary with the
+              background, the second component is always ``background_value`` in this
+              case and can therefore be dropped without loss of information.
+
+            - When ``boundary_type`` is ``'internal'`` or ``'all'``, the array is
+              simplified by computing the vector norm of the values.
+
+            By default, ``multi_component_output`` is ``False`` when ``boundary_type``
+            is ``'external'``, and ``True`` otherwise.
+
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
             point in the surface is smoothed as follows:
@@ -1217,23 +1234,31 @@ class ImageDataFilters(DataSetFilters):
         Plot the cropped image for context. Configure the color map to generate
         consistent coloring of the regions for all plots.
 
-        >>> plot_kwargs = dict(
-        ...     cmap='glasbey',
-        ...     clim=[0, 77],
-        ...     show_edges=True,
-        ...     show_scalar_bar=False,
-        ... )
-        >>> image.plot(**plot_kwargs)
+        >>> def plot_contours(mesh, **kwargs):
+        ...     colored_mesh = mesh.color_labels(negative_indexing=True)
+        ...     colored_mesh.plot(**kwargs)
+        >>>
+        >>> plot_contours(image, show_edges=True)
 
         Generate surface contours of the foreground regions and plot it. Note that
         the ``background_value`` is ``0`` by default.
 
         >>> contours = image.contour_labels()
-        >>> contours.plot(zoom=1.5, **plot_kwargs)
+        >>> plot_contours(contours, zoom=1.5, show_edges=True)
 
         By default, only external boundary polygons are generated and the returned
-        ``'boundary_labels'`` array is a two-component array.
+        ``'boundary_labels'`` array is a single-component array. The output values
+        match the input label values.
 
+        >>> contours['boundary_labels'].ndim
+        1
+        >>> np.unique(contours['boundary_labels'])
+        pyvista_ndarray([1, 2, 3, 4])
+
+        Set ``multi_component_output`` to ``True`` to generate a two-component
+        array instead showing the two boundary regions associated with each polygon.
+
+        >>> contours = image.contour_labels(multi_component_output=True)
         >>> contours['boundary_labels'].ndim
         2
 
@@ -1247,14 +1272,12 @@ class ImageDataFilters(DataSetFilters):
                [3, 0],
                [4, 0]])
 
-        Repeat the example but this time generate internal contours only. Note that
-        when plotting multi-component scalars, each component is normalized (vector norm)
-        for visualization.
+        Repeat the example but this time generate internal contours only. Since
+        internal contours bound two foreground regions, the array is 2D by default.
 
         >>> contours = image.contour_labels('internal')
         >>> contours['boundary_labels'].ndim
         2
-        >>> contours.plot(zoom=1.5, **plot_kwargs)
 
         Show the unique two-component boundary labels again. From these values we can
         determine that all foreground regions share an internal boundary with each
@@ -1268,18 +1291,33 @@ class ImageDataFilters(DataSetFilters):
                [2, 4],
                [3, 4]])
 
+        For plotting, however, we need to simplify the output so that array is a 1D
+        categorical array which can be colored. When simplified, each internal
+        multi-component boundary value is assigned a unique negative integer value
+        instead.
+
+        >>> contours = image.contour_labels('internal', multi_component_output=False)
+        >>> contours['boundary_labels'].ndim
+        1
+        >>> np.unique(contours['boundary_labels'])
+        pyvista_ndarray([-5, -4, -3, -2, -1])
+
+        >>> plot_contours(contours, zoom=1.5, show_edges=True)
+
         Generate contours for all boundaries, and use ``select_outputs`` to filter
         the output to only include polygons which share a boundary with region ``3``.
 
-        >>> region_3 = image.contour_labels('all', select_outputs=3)
-        >>> region_3.plot(zoom=3, **plot_kwargs)
+        >>> region_3 = image.contour_labels(
+        ...     'all', select_outputs=3, multi_component_output=False
+        ... )
+        >>> plot_contours(region_3, zoom=3, show_edges=True)
 
         Note how using ``select_outputs`` preserves the sharp features and boundary
         labels for non-selected regions. If desired, use ``select_inputs`` instead to
         completely "ignore" non-selected regions.
 
         >>> region_3 = image.contour_labels(select_inputs=3)
-        >>> region_3.plot(zoom=3, **plot_kwargs)
+        >>> plot_contours(region_3, zoom=3, show_edges=True)
 
         The sharp features are now smoothed and the internal boundaries are now labeled
         as external boundaries. Note that using ``'all'`` here is optional since
@@ -1292,19 +1330,19 @@ class ImageDataFilters(DataSetFilters):
         the mesh to be "open".
 
         >>> surf = image.contour_labels(pad_background=False)
-        >>> surf.plot(zoom=1.5, **plot_kwargs)
+        >>> plot_contours(surf, zoom=1.5, show_edges=True)
 
         Disable smoothing to generate staircase-like surface. Without smoothing, the
         surface has quadrilateral cells by default.
 
         >>> surf = image.contour_labels(smoothing=False)
-        >>> surf.plot(zoom=1.5, **plot_kwargs)
+        >>> plot_contours(surf, zoom=1.5, show_edges=True)
 
         Keep smoothing enabled but reduce the smoothing scale. A smoothing scale
         less than one may help preserve sharp features (e.g. corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
-        >>> surf.plot(zoom=1.5, **plot_kwargs)
+        >>> plot_contours(surf, zoom=1.5, show_edges=True)
 
         """
         temp_scalars_name = '_PYVISTA_TEMP'
@@ -1505,6 +1543,26 @@ class ImageDataFilters(DataSetFilters):
                 is_external = np.any(labels_array == background_value, axis=1)
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
+
+        if multi_component_output is None:
+            multi_component_output = boundary_style != 'external'
+        if not multi_component_output:
+            # Simplify scalars to a single component
+            if boundary_style != 'external':
+                # Replace internal boundary values with negative integers
+                labels_array = output.cell_data[PV_NAME]
+                if boundary_style == 'internal':
+                    is_internal = np.full((output.n_cells,), True)
+                else:
+                    is_internal = np.all(labels_array != background_value, axis=1)
+                internal_values = labels_array[is_internal, :]
+                unique_values = np.unique(internal_values, axis=0)
+                for i, value in enumerate(unique_values):
+                    is_value = np.all(labels_array == value, axis=1)
+                    labels_array[is_value, 0] = -(i + 1)
+
+            # Keep first component only
+            output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
 
         if select_outputs is not None:
             # This option generates unused points
