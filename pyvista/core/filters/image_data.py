@@ -1269,17 +1269,21 @@ class ImageDataFilters(DataSetFilters):
         Plot the cropped image for context. Configure the color map to generate
         consistent coloring of the regions for all plots.
 
-        >>> def plot_contours(mesh, **kwargs):
+        >>> def labels_plotter(mesh, zoom=None):
         ...     colored_mesh = mesh.color_labels(negative_indexing=True)
-        ...     colored_mesh.plot(**kwargs)
+        ...     plotter = pv.Plotter()
+        ...     plotter.add_mesh(colored_mesh, show_edges=True)
+        ...     if zoom:
+        ...         plotter.camera.zoom(zoom)
+        ...     return plotter
         >>>
-        >>> plot_contours(image, show_edges=True)
+        >>> labels_plotter(image).show()
 
         Generate surface contours of the foreground regions and plot it. Note that
         the ``background_value`` is ``0`` by default.
 
         >>> contours = image.contour_labels()
-        >>> plot_contours(contours, zoom=1.5, show_edges=True)
+        >>> labels_plotter(contours, zoom=1.5).show()
 
         By default, only external boundary polygons are generated and the returned
         ``'boundary_labels'`` array is a single-component array. The output values
@@ -1337,7 +1341,7 @@ class ImageDataFilters(DataSetFilters):
         >>> np.unique(contours['boundary_labels'])
         pyvista_ndarray([-5, -4, -3, -2, -1])
 
-        >>> plot_contours(contours, zoom=1.5, show_edges=True)
+        >>> labels_plotter(contours, zoom=1.5).show()
 
         Generate contours for all boundaries, and use ``select_outputs`` to filter
         the output to only include polygons which share a boundary with region ``3``.
@@ -1345,14 +1349,14 @@ class ImageDataFilters(DataSetFilters):
         >>> region_3 = image.contour_labels(
         ...     'all', select_outputs=3, simplify_output=True
         ... )
-        >>> plot_contours(region_3, zoom=3, show_edges=True)
+        >>> labels_plotter(region_3, zoom=3).show()
 
         Note how using ``select_outputs`` preserves the sharp features and boundary
         labels for non-selected regions. If desired, use ``select_inputs`` instead to
         completely "ignore" non-selected regions.
 
         >>> region_3 = image.contour_labels(select_inputs=3)
-        >>> plot_contours(region_3, zoom=3, show_edges=True)
+        >>> labels_plotter(region_3, zoom=3).show()
 
         The sharp features are now smoothed and the internal boundaries are now labeled
         as external boundaries. Note that using ``'all'`` here is optional since
@@ -1365,19 +1369,19 @@ class ImageDataFilters(DataSetFilters):
         the mesh to be "open".
 
         >>> surf = image.contour_labels(pad_background=False)
-        >>> plot_contours(surf, zoom=1.5, show_edges=True)
+        >>> labels_plotter(surf, zoom=1.5).show()
 
         Disable smoothing to generate staircase-like surface. Without smoothing, the
         surface has quadrilateral cells by default.
 
         >>> surf = image.contour_labels(smoothing=False)
-        >>> plot_contours(surf, zoom=1.5, show_edges=True)
+        >>> labels_plotter(surf, zoom=1.5).show()
 
         Keep smoothing enabled but reduce the smoothing scale. A smoothing scale
         less than one may help preserve sharp features (e.g. corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
-        >>> plot_contours(surf, zoom=1.5, show_edges=True)
+        >>> labels_plotter(surf, zoom=1.5).show()
 
         """
         temp_scalars_name = '_PYVISTA_TEMP'
