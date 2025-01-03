@@ -996,7 +996,7 @@ class ImageDataFilters(DataSetFilters):
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
         compute_normals: bool = True,
-        multi_component_output: bool | None = None,
+        simplify_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
         smoothing_relaxation: float = 0.5,
@@ -1126,21 +1126,26 @@ class ImageDataFilters(DataSetFilters):
                 boundaries are generated. Do not assume the normals will point outward
                 in all cases.
 
-        multi_component_output : bool, optional
-            If ``True``, the returned ``'boundary_labels'`` array is a two-component
-            2D array. If ``False``, the ``'boundary_labels'`` array is simplified as a
-            single-component 1D array. The simplification is as follows:
+        simplify_output : bool, optional
+            Simplify the ``'boundary_labels'`` array as a single-component 1D array.
+            If ``False``, the returned ``'boundary_labels'`` array is a two-component
+            2D array. This simplification useful when only external boundaries
+            are generated and/or when visuallizing internal boundaries.The
+            simplification is as follows:
 
-            - When ``boundary_type`` is ``'external'``, only the first component is
-              returned. Since external polygons may only share a boundary with the
-              background, the second component is always ``background_value`` in this
-              case and can therefore be dropped without loss of information.
+            - External boundaries are simplified by keeping the first component and
+              removing the second. Since external polygons may only share a boundary
+              with the background, the second component is always ``background_value``
+              and therefore can be dropped without loss of information. The values
+              of external boundaries always match the foreground values of the input.
 
-            - When ``boundary_type`` is ``'internal'`` or ``'all'``, the array is
-              simplified by computing the vector norm of the values.
+            - Internal boundaries are simplified by assigning them unique negative
+              values sequentially. E.g. the boundary label ``[1, 2]`` is replaced with
+              ``-1``, ``[1, 3]`` is replaced with ``-2``, etc. The mapping to negative
+              values is not fixed, and can change depending on the input.
 
-            By default, ``multi_component_output`` is ``False`` when ``boundary_type``
-            is ``'external'``, and ``True`` otherwise.
+            By default, the output is simplified when ``boundary_type`` is
+            ``'external'``, and is not simplified otherwise.
 
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
@@ -1255,10 +1260,10 @@ class ImageDataFilters(DataSetFilters):
         >>> np.unique(contours['boundary_labels'])
         pyvista_ndarray([1, 2, 3, 4])
 
-        Set ``multi_component_output`` to ``True`` to generate a two-component
+        Set ``simplify_output`` to ``False`` to generate a two-component
         array instead showing the two boundary regions associated with each polygon.
 
-        >>> contours = image.contour_labels(multi_component_output=True)
+        >>> contours = image.contour_labels(simplify_output=True)
         >>> contours['boundary_labels'].ndim
         2
 
@@ -1296,7 +1301,7 @@ class ImageDataFilters(DataSetFilters):
         multi-component boundary value is assigned a unique negative integer value
         instead.
 
-        >>> contours = image.contour_labels('internal', multi_component_output=False)
+        >>> contours = image.contour_labels('internal', simplify_output=False)
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
@@ -1308,7 +1313,7 @@ class ImageDataFilters(DataSetFilters):
         the output to only include polygons which share a boundary with region ``3``.
 
         >>> region_3 = image.contour_labels(
-        ...     'all', select_outputs=3, multi_component_output=False
+        ...     'all', select_outputs=3, simplify_output=False
         ... )
         >>> plot_contours(region_3, zoom=3, show_edges=True)
 
@@ -1544,9 +1549,9 @@ class ImageDataFilters(DataSetFilters):
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
-        if multi_component_output is None:
-            multi_component_output = boundary_style != 'external'
-        if not multi_component_output:
+        if simplify_output is None:
+            simplify_output = boundary_style == 'external'
+        if simplify_output:
             # Simplify scalars to a single component
             if boundary_style != 'external':
                 # Replace internal boundary values with negative integers
