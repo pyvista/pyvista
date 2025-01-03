@@ -1293,7 +1293,7 @@ class ImageDataFilters(DataSetFilters):
         Set ``simplify_output`` to ``False`` to generate a two-component
         array instead showing the two boundary regions associated with each polygon.
 
-        >>> contours = image.contour_labels(simplify_output=True)
+        >>> contours = image.contour_labels(simplify_output=False)
         >>> contours['boundary_labels'].ndim
         2
 
@@ -1331,7 +1331,7 @@ class ImageDataFilters(DataSetFilters):
         multi-component boundary value is assigned a unique negative integer value
         instead.
 
-        >>> contours = image.contour_labels('internal', simplify_output=False)
+        >>> contours = image.contour_labels('internal', simplify_output=True)
         >>> contours['boundary_labels'].ndim
         1
         >>> np.unique(contours['boundary_labels'])
@@ -1343,7 +1343,7 @@ class ImageDataFilters(DataSetFilters):
         the output to only include polygons which share a boundary with region ``3``.
 
         >>> region_3 = image.contour_labels(
-        ...     'all', select_outputs=3, simplify_output=False
+        ...     'all', select_outputs=3, simplify_output=True
         ... )
         >>> plot_contours(region_3, zoom=3, show_edges=True)
 
