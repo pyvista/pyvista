@@ -386,9 +386,9 @@ def test_contour_labels_cell_data(channels):
         smoothing=False,
         boundary_style='external',
     )
-    vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
+    voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
 
-    assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
+    assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)

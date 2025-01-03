@@ -1159,8 +1159,8 @@ class ImageDataFilters(DataSetFilters):
         simplify_output : bool, optional
             Simplify the ``'boundary_labels'`` array as a single-component 1D array.
             If ``False``, the returned ``'boundary_labels'`` array is a two-component
-            2D array. This simplification useful when only external boundaries
-            are generated and/or when visuallizing internal boundaries.The
+            2D array. This simplification is useful when only external boundaries
+            are generated and/or when visuallizing internal boundaries. The
             simplification is as follows:
 
             - External boundaries are simplified by keeping the first component and
@@ -1309,8 +1309,8 @@ class ImageDataFilters(DataSetFilters):
                [3, 0],
                [4, 0]])
 
-        Repeat the example but this time generate internal contours only. Since
-        internal contours bound two foreground regions, the array is 2D by default.
+        Repeat the example but this time generate internal contours only. The generated
+        array is 2D by default.
 
         >>> contours = image.contour_labels('internal')
         >>> contours['boundary_labels'].ndim
