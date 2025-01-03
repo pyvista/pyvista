@@ -9192,11 +9192,16 @@ class DataSetFilters:
                         f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
-                keys: Iterable[float] = np.arange(n_colors)
-                values: Iterable[Any] = color_sequence
+                keys: Iterable[float]
+                values: Iterable[Any]
+
+                keys_ = np.arange(n_colors)
+                values_ = color_sequence
                 if negative_indexing:
-                    keys = np.append(keys, keys[::-1] - len(keys))
-                    values.extend(values[::-1])
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
+                    values_.extend(values_[::-1])
+                keys = keys_
+                values = values_
             elif coloring_mode == 'cycler':
                 keys = np.unique(array)
                 values = cycler('color', color_sequence)
