@@ -1446,6 +1446,38 @@ def test_connectivity_closest_point(foot_bones):
     assert counts == [598]
 
 
+def test_connectivity_specific_case():
+    # Dataset extent
+    xmin = -55213.82
+    xmax = 37514.74
+    ymin = -165885.97
+    ymax = -85496.65
+    zmin = 0.3048
+    zmax = 121.92
+
+    # Example grid
+    xres = (xmax - xmin) / 250
+    yres = (ymax - ymin) / 250
+    zres = (zmax - zmin) / 26
+    xx, yy, zz = np.mgrid[xmin:xmax:xres, ymin:ymax:yres, zmin:zmax:zres]
+
+    grid = pv.StructuredGrid(xx, yy, zz)
+
+    # Fake dataset for grid
+    grid_vals = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
+    grid_vals = (grid_vals - np.min(grid_vals)) / (np.max(grid_vals) - np.min(grid_vals))
+
+    grid['value'] = grid_vals.ravel(order='F').astype(float)
+
+    # Filtering out values below user specific threshold
+    filter_grid = grid.ptc().threshold([0.7, 1.1], 'value')
+
+    # Find connected bodies
+    filter_grid['Volume'] = np.ones((filter_grid.points.shape[0], 0))
+    filter_grid = filter_grid.connectivity()
+    assert isinstance(filter_grid, pv.UnstructuredGrid)
+
+
 def test_split_bodies():
     # Load a simple example mesh
     dataset = examples.load_uniform()
