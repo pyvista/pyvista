@@ -1365,7 +1365,7 @@ def test_exodus_reader_core():
         e_reader.enable_cell_array(name)
         assert e_reader.cell_array_status(name)
 
-    ## check global arrays handling
+    # check global arrays handling
     assert e_reader.number_global_arrays == 1
 
     for name in e_reader.global_array_names:
@@ -1447,6 +1447,7 @@ def _test_block_names(block, names):
         assert block.status(name)
 
     block.disable_all()
+
     for name in names:
         assert not block.status(name)
 
@@ -1506,8 +1507,7 @@ def test_exodus_blocks():
     e_reader = pv.get_reader(fname_e)
     _test_block_arrays(e_reader.side_sets, ['PressureRMS'])
 
-    # check construct_result_array for those that do not have blocks
-    # in the example
+    # check construct_result_array for those that do not have blocks in the example
     number_method = e_reader.face_blocks._construct_result_method('GetNumberOf', 's')
     assert number_method == e_reader._reader.GetNumberOfFaceResultArrays
 
