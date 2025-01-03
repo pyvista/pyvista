@@ -3044,7 +3044,7 @@ class DataSetFilters:
         alg.ColorRegionsOn()  # This will create 'RegionId' scalars
 
         # Sort region ids
-        alg.SetRegionIdAssignmentMode(alg.CELL_COUNT_DESCENDING)
+        #alg.SetRegionIdAssignmentMode(alg.CELL_COUNT_DESCENDING)
 
         if scalar_range is not None:
             alg.ScalarConnectivityOn()
