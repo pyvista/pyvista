@@ -1174,6 +1174,10 @@ class ImageDataFilters(DataSetFilters):
               ``-1``, ``[1, 3]`` is replaced with ``-2``, etc. The mapping to negative
               values is not fixed, and can change depending on the input.
 
+              This simplification is particularly useful for unsigned integer labels
+              (e.g. scalars with ``'uint8'`` dtype) since external boundaries
+              will be positive and internal boundaries will be negative in this case.
+
             By default, the output is simplified when ``boundary_type`` is
             ``'external'``, and is not simplified otherwise.
 
@@ -1590,7 +1594,11 @@ class ImageDataFilters(DataSetFilters):
             if boundary_style != 'external':
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
-                is_internal = np.full((output.n_cells,), True) if boundary_style == 'internal' else np.all(labels_array != background_value, axis=1)
+                is_internal = (
+                    np.full((output.n_cells,), True)
+                    if boundary_style == 'internal'
+                    else np.all(labels_array != background_value, axis=1)
+                )
                 internal_values = labels_array[is_internal, :]
                 unique_values = np.unique(internal_values, axis=0)
                 for i, value in enumerate(unique_values):
