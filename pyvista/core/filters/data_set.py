@@ -9043,7 +9043,8 @@ class DataSetFilters:
 
         output_scalars : str, optional
             Name of the color scalars array. By default, the output array
-            is the same as ``scalars`` with ``_rgba`` appended.
+            is the same as ``scalars`` with `_rgb`` or ``_rgba`` appended
+            depending on ``color_type``.
 
         inplace : bool, default: False
             If ``True``, the mesh is updated in-place.
@@ -9150,7 +9151,13 @@ class DataSetFilters:
             must_contain=color_type,
             name='color_type',
         )
-        num_components = 4 if 'rgba' in color_type else 3
+
+        if 'rgba' in color_type:
+            num_components = 4
+            scalars_suffix = '_rgba'
+        else:
+            num_components = 3
+            scalars_suffix = '_rgb'
         if 'float' in color_type:
             default_channel_value = np.nan
             color_dtype = 'float'
@@ -9228,7 +9235,7 @@ class DataSetFilters:
                 color = color['color']
             colors_out[array == label, :] = color
 
-        colors_name = name + '_rgba' if output_scalars is None else output_scalars
+        colors_name = name + scalars_suffix if output_scalars is None else output_scalars
         data[colors_name] = colors_out
         output_mesh.set_active_scalars(colors_name)
 

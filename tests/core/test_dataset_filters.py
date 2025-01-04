@@ -4757,9 +4757,8 @@ def test_color_labels(uniform, coloring_mode):
     colored_mesh = uniform.color_labels(coloring_mode=coloring_mode)
     assert colored_mesh is not uniform
     assert uniform.active_scalars_name == original_scalars_name
-    colors_name = original_scalars_name + '_rgba'
-    assert colored_mesh.active_scalars_name == colors_name
-    assert not np.any(np.isnan(colored_mesh[colors_name]))
+    colors_name = original_scalars_name + '_rgb'
+    assert [0, 0, 0] not in np.unique(colored_mesh[colors_name], axis=0).tolist()
 
     label_ids = np.unique(uniform.active_scalars)
     for i, label_id in enumerate(label_ids):
@@ -4800,8 +4799,10 @@ def test_color_labels_inputs(labeled_image, color_input, expected_rgba):
 
 @pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba', 'float_rgb', 'float_rgba'])
 def test_color_labels_color_type_partial_dict(labeled_image, color_type):
+    input_scalars_name = labeled_image.active_scalars_name
     colored = labeled_image.color_labels({0: RED_RGB}, color_type=color_type)
     color_scalars = colored.active_scalars
+    color_scalars_name = colored.active_scalars_name
     unique = np.unique(color_scalars, axis=0)
 
     expected_color = getattr(pv.Color(RED_RGB), color_type)
@@ -4813,6 +4814,10 @@ def test_color_labels_color_type_partial_dict(labeled_image, color_type):
         assert np.array_equal(expected_color, unique[1])
         assert np.array_equal([0] * len(expected_color), unique[0])
         assert color_scalars.dtype == np.uint8
+    if 'rgba' in color_type:
+        assert color_scalars_name == input_scalars_name + '_rgba'
+    else:
+        assert color_scalars_name == input_scalars_name + '_rgb'
 
 
 def test_color_labels_scalars(uniform):
@@ -4832,10 +4837,10 @@ def test_color_labels_scalars(uniform):
     # Test preference
     for name in uniform.array_names:
         colored = uniform.color_labels(scalars=name, preference='point')
-        assert GENERIC + '_rgba' in colored.point_data
+        assert GENERIC + '_rgb' in colored.point_data
 
         colored = uniform.color_labels(scalars=name, preference='cell')
-        assert GENERIC + '_rgba' in colored.cell_data
+        assert GENERIC + '_rgb' in colored.cell_data
 
     # Test output scalars
     CUSTOM = 'custom'
