@@ -281,6 +281,7 @@ def test_contour_labels_boundary_style(
         select_inputs=select_inputs,
         select_outputs=select_outputs,
         boundary_style=boundary_style,
+        simplify_output=False,
     )
     # Test no duplicate points
     cleaned = _remove_duplicate_points(mesh)
@@ -346,6 +347,37 @@ def test_contour_labels_pad_background(labeled_image):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_simplify_output(labeled_image):
+    # Test `None` (implicit behavior)
+    poly = labeled_image.contour_labels('external')
+    labels = poly[BOUNDARY_LABELS]
+    assert labels.ndim == 1
+    assert np.array_equal(np.unique(labels), [2, 5])
+
+    poly = labeled_image.contour_labels('internal')
+    labels = poly[BOUNDARY_LABELS]
+    assert labels.ndim == 2
+    assert np.array_equal(np.unique(labels, axis=0), [[2, 5]])
+
+    poly = labeled_image.contour_labels('all')
+    labels = poly[BOUNDARY_LABELS]
+    assert labels.ndim == 2
+    assert np.array_equal(np.unique(labels, axis=0), [[2, 0], [2, 5], [5, 0]])
+
+    # Test `True`
+    poly = labeled_image.contour_labels('external', simplify_output=True)
+    assert poly[BOUNDARY_LABELS].ndim == 1
+    poly = labeled_image.contour_labels('internal', simplify_output=True)
+    assert poly[BOUNDARY_LABELS].ndim == 1
+
+    # Test `False`
+    poly = labeled_image.contour_labels('external', simplify_output=False)
+    assert poly[BOUNDARY_LABELS].ndim == 2
+    poly = labeled_image.contour_labels('internal', simplify_output=False)
+    assert poly[BOUNDARY_LABELS].ndim == 2
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_cell_data(channels):
     # Extract voxelized surface from image with cell voxels in two ways
     # Both should have an equal number of quad cells
@@ -354,9 +386,9 @@ def test_contour_labels_cell_data(channels):
         smoothing=False,
         boundary_style='external',
     )
-    vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
+    voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
 
-    assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
+    assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
