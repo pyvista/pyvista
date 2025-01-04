@@ -1160,7 +1160,7 @@ class ImageDataFilters(DataSetFilters):
             Simplify the ``'boundary_labels'`` array as a single-component 1D array.
             If ``False``, the returned ``'boundary_labels'`` array is a two-component
             2D array. This simplification is useful when only external boundaries
-            are generated and/or when visuallizing internal boundaries. The
+            are generated and/or when visualizing internal boundaries. The
             simplification is as follows:
 
             - External boundaries are simplified by keeping the first component and
@@ -1590,10 +1590,7 @@ class ImageDataFilters(DataSetFilters):
             if boundary_style != 'external':
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
-                if boundary_style == 'internal':
-                    is_internal = np.full((output.n_cells,), True)
-                else:
-                    is_internal = np.all(labels_array != background_value, axis=1)
+                is_internal = np.full((output.n_cells,), True) if boundary_style == 'internal' else np.all(labels_array != background_value, axis=1)
                 internal_values = labels_array[is_internal, :]
                 unique_values = np.unique(internal_values, axis=0)
                 for i, value in enumerate(unique_values):
