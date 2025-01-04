@@ -3176,6 +3176,23 @@ class DataSetFilters:
                 return self
         return output
 
+    def connectivity_simple(self):  # numpydoc ignore=RT01
+        """Filter."""
+        alg = _vtk.vtkConnectivityFilter()
+        alg.SetInputDataObject(self)
+
+        # Due to inconsistent/buggy output, always keep this on and
+        # remove scalars later as needed
+        alg.ColorRegionsOn()  # This will create 'RegionId' scalars
+
+        # Sort region ids
+        alg.SetRegionIdAssignmentMode(alg.CELL_COUNT_DESCENDING)
+
+        alg.SetExtractionModeToAllRegions()
+
+        _update_alg(alg)
+        return _get_output(alg)
+
     def extract_largest(  # type: ignore[misc]
         self: ConcreteDataSetType, inplace: bool = False, progress_bar: bool = False
     ):
