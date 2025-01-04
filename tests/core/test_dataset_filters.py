@@ -4820,6 +4820,19 @@ def test_color_labels_color_type_partial_dict(labeled_image, color_type):
         assert color_scalars_name == input_scalars_name + '_rgb'
 
 
+@pytest.mark.parametrize('color_type', ['float_rgb', 'float_rgba'])
+def test_color_labels_color_type_cmap(labeled_image, color_type):
+    labels = pv.ImageData(dimensions=(256, 1, 1))
+    labels['256'] = range(256)
+    colored = labels.color_labels('viridis', color_type=color_type)
+    cmap_colors = pv.get_cmap_safe('viridis').colors
+    for i, color in enumerate(colored.active_scalars):
+        expected_color = cmap_colors[i]
+        if 'rgba' in color_type:
+            expected_color.append(1.0)
+        assert np.array_equal(color, expected_color)
+
+
 def test_color_labels_scalars(uniform):
     # Test active scalars
     active_before = uniform.active_scalars_name
