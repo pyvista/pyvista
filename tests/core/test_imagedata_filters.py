@@ -348,6 +348,7 @@ def test_contour_labels_pad_background(labeled_image):
 
 @pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
 @pytest.mark.parametrize('simplify_output', [True, False, None])
+@pytest.mark.needs_vtk_version(9, 3, 0)
 def test_simplify_output(labeled_image, boundary_type, simplify_output):
     poly = labeled_image.contour_labels(boundary_type, simplify_output=simplify_output)
     expected_ndim = (
