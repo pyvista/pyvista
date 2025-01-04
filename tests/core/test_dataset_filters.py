@@ -4757,36 +4757,35 @@ def test_color_labels(uniform, coloring_mode):
     colored_mesh = uniform.color_labels(coloring_mode=coloring_mode)
     assert colored_mesh is not uniform
     assert uniform.active_scalars_name == original_scalars_name
-    colors_name = original_scalars_name + '_rgba'
-    assert colored_mesh.active_scalars_name == colors_name
-    assert not np.any(np.isnan(colored_mesh[colors_name]))
+    colors_name = original_scalars_name + '_rgb'
+    assert [0, 0, 0] not in np.unique(colored_mesh[colors_name], axis=0).tolist()
 
     label_ids = np.unique(uniform.active_scalars)
     for i, label_id in enumerate(label_ids):
         data_ids = np.where(uniform[original_scalars_name] == label_id)[0]
-        expected_color_rgba = (*default_cmap.colors[i], 1.0)
+        expected_color_rgb = pv.Color(default_cmap.colors[i]).int_rgb
         for data_id in data_ids:
             actual_rgba = colored_mesh[colors_name][data_id]
-            assert np.allclose(actual_rgba, expected_color_rgba)
+            assert np.allclose(actual_rgba, expected_color_rgb)
 
     # Test in place
     colored_mesh = uniform.color_labels(coloring_mode=coloring_mode, inplace=True)
     assert colored_mesh is uniform
 
 
-VIRIDIS_RGBA = [(*c, 1.0) for c in pv.get_cmap_safe('viridis').colors]
+VIRIDIS_RGB = [pv.Color(c).int_rgb for c in pv.get_cmap_safe('viridis').colors]
 COLORS_DICT = {0: 'red', 1: (0, 0, 0), 2: 'blue', 3: (1.0, 1.0, 1.0), 4: 'orange', 5: 'green'}
-COLORS_DICT_RGBA = [pv.Color(c).float_rgba for c in COLORS_DICT.values()]
-RED_RGBA = pv.Color('red').float_rgba
+COLORS_DICT_RGB = [pv.Color(c).int_rgb for c in COLORS_DICT.values()]
+RED_RGB = pv.Color('red').int_rgb
 
 
 @pytest.mark.parametrize(
     ('color_input', 'expected_rgba'),
     [
-        ('viridis', VIRIDIS_RGBA),
-        (COLORS_DICT, COLORS_DICT_RGBA),
-        (COLORS_DICT_RGBA, COLORS_DICT_RGBA),
-        ('red', [RED_RGBA, RED_RGBA, RED_RGBA, RED_RGBA]),
+        ('viridis', VIRIDIS_RGB),
+        (COLORS_DICT, COLORS_DICT_RGB),
+        (COLORS_DICT_RGB, COLORS_DICT_RGB),
+        ('red', [RED_RGB, RED_RGB, RED_RGB, RED_RGB]),
     ],
     ids=['cmap', 'dict', 'sequence', 'named_color'],
 )
@@ -4798,13 +4797,27 @@ def test_color_labels_inputs(labeled_image, color_input, expected_rgba):
         assert np.allclose(color_scalars[label_scalars == id_], expected_rgba[id_])
 
 
-def test_color_labels_partial_dict(labeled_image):
-    colored = labeled_image.color_labels({0: RED_RGBA})
+@pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba', 'float_rgb', 'float_rgba'])
+def test_color_labels_color_type_partial_dict(labeled_image, color_type):
+    input_scalars_name = labeled_image.active_scalars_name
+    colored = labeled_image.color_labels({0: RED_RGB}, color_type=color_type)
     color_scalars = colored.active_scalars
+    color_scalars_name = colored.active_scalars_name
     unique = np.unique(color_scalars, axis=0)
 
-    assert np.array_equal(RED_RGBA, unique[0])
-    assert np.array_equal([np.nan] * 4, unique[1], equal_nan=True)
+    expected_color = getattr(pv.Color(RED_RGB), color_type)
+    if 'float' in color_type:
+        assert np.array_equal(expected_color, unique[0])
+        assert np.array_equal([np.nan] * len(expected_color), unique[1], equal_nan=True)
+        assert color_scalars.dtype == float
+    else:
+        assert np.array_equal(expected_color, unique[1])
+        assert np.array_equal([0] * len(expected_color), unique[0])
+        assert color_scalars.dtype == np.uint8
+    if 'rgba' in color_type:
+        assert color_scalars_name == input_scalars_name + '_rgba'
+    else:
+        assert color_scalars_name == input_scalars_name + '_rgb'
 
 
 def test_color_labels_scalars(uniform):
@@ -4824,10 +4837,10 @@ def test_color_labels_scalars(uniform):
     # Test preference
     for name in uniform.array_names:
         colored = uniform.color_labels(scalars=name, preference='point')
-        assert GENERIC + '_rgba' in colored.point_data
+        assert GENERIC + '_rgb' in colored.point_data
 
         colored = uniform.color_labels(scalars=name, preference='cell')
-        assert GENERIC + '_rgba' in colored.cell_data
+        assert GENERIC + '_rgb' in colored.cell_data
 
     # Test output scalars
     CUSTOM = 'custom'
