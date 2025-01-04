@@ -227,7 +227,7 @@ class CompositeFilters:
         self,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
-        inplace: bool = True,  # TODO also needs deprecation warning
+        inplace: bool = False,
         progress_bar: bool = False,
     ):
         """Transform all blocks in this composite dataset.
