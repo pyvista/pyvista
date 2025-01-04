@@ -346,6 +346,17 @@ def test_contour_labels_pad_background(labeled_image):
     assert mesh_closed.n_cells - mesh_open.n_cells == 1
 
 
+@pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
+@pytest.mark.parametrize('simplify_output', [True, False, None])
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_simplify_output(labeled_image, boundary_type, simplify_output):
+    poly = labeled_image.contour_labels(boundary_type, simplify_output=simplify_output)
+    expected_ndim = (
+        1 if simplify_output or (simplify_output is None and boundary_type == 'external') else 2
+    )
+    assert poly[BOUNDARY_LABELS].ndim == expected_ndim
+
+
 @pytest.mark.needs_vtk_version(9, 3, 0)
 def test_contour_labels_simplify_output(labeled_image):
     # Test `None` (implicit behavior)
@@ -386,9 +397,9 @@ def test_contour_labels_cell_data(channels):
         smoothing=False,
         boundary_style='external',
     )
-    vaxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
+    voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
 
-    assert voxel_surface_contoured.n_cells == vaxel_surface_extracted.n_cells
+    assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
