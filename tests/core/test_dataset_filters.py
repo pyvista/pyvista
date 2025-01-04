@@ -1474,7 +1474,7 @@ def test_connectivity_specific_case():
 
     # Find connected bodies
     filter_grid['Volume'] = np.ones((filter_grid.points.shape[0], 0))
-    filter_grid = filter_grid.extract_surface().connectivity_simple()
+    filter_grid = filter_grid.cast_to_unstructured_grid().connectivity_simple()
     assert isinstance(filter_grid, pv.UnstructuredGrid)
 
 
