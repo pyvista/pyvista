@@ -8982,8 +8982,8 @@ class DataSetFilters:
             This option is used by default for floating-point inputs or for inputs
             with values out of the range ``[0, 255]``.
 
-        By default, a new RGB(A) array is added with the same name as the
-        specified ``scalars`` but with ``_rgba`` appended.
+        By default, a new ``'int_rgb'`` array is added with the same name as the
+        specified ``scalars`` but with ``_rgb`` appended.
 
         See Also
         --------
