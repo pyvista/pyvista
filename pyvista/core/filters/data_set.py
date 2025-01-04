@@ -9026,7 +9026,7 @@ class DataSetFilters:
               and each unique value in the input scalars is assigned a color in increasing
               order.
 
-        negative_indexing : bool, default: True
+        negative_indexing : bool, default: False
             Allow indexing ``colors`` with negative values. Only valid when
             ``coloring_mode`` is ``'index'``.
 
