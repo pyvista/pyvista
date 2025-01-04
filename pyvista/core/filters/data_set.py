@@ -9187,16 +9187,15 @@ class DataSetFilters:
                             f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
                         )
                     # Avoid unnecessary conversion and set color sequence directly in float cases
+                    cmap_colors = cast(list[list[float]], cmap.colors)
                     if color_type == 'float_rgb':
-                        color_rgb_sequence = cmap.colors
+                        color_rgb_sequence = cmap_colors
                         _is_rgb_sequence = True
                     elif color_type == 'float_rgba':
-                        color_rgb_sequence = [
-                            (*c, 1.0) for c in cast(list[list[float]], cmap.colors)
-                        ]
+                        color_rgb_sequence = [(*c, 1.0) for c in cmap_colors]
                         _is_rgb_sequence = True
                     else:
-                        colors = cmap.colors
+                        colors = cmap_colors
 
             if not _is_rgb_sequence:
                 color_rgb_sequence = [
@@ -9226,7 +9225,7 @@ class DataSetFilters:
         colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
         for label, color in items:
             if isinstance(color, dict):
-                color = color['color']  # type: ignore[unreachable]
+                color = color['color']
             colors_out[array == label, :] = color
 
         colors_name = name + '_rgba' if output_scalars is None else output_scalars
