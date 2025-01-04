@@ -35,6 +35,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python ${{ matrix.config.python-version }}
         uses: actions/setup-python@v5
@@ -72,6 +74,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v2
@@ -171,6 +175,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+          persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -273,6 +278,8 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
