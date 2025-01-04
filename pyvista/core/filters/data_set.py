@@ -7024,7 +7024,7 @@ class DataSetFilters:
         self: ConcreteDataSetType,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
-        inplace: bool = True,
+        inplace: bool | None = None,
         progress_bar: bool = False,
     ):
         """Transform this mesh with a 4x4 transform.
@@ -7068,8 +7068,12 @@ class DataSetFilters:
             transformed. Otherwise, only the normals and vectors are
             transformed.  See the warning for more details.
 
-        inplace : bool, default: False
+        inplace : bool, default: True
             When ``True``, modifies the dataset inplace.
+
+            .. deprecated:: 0.45.0
+            `inplace` was previously defaulted to `True`. For API consistency this will be
+            changed to `False`.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -7105,10 +7109,20 @@ class DataSetFilters:
         ...         [0, 0, 0, 1],
         ...     ]
         ... )
-        >>> transformed = mesh.transform(transform_matrix)
+        >>> transformed = mesh.transform(transform_matrix, inplace=False)
         >>> transformed.plot(show_edges=True)
 
         """
+        if inplace is None:
+            warnings.warn(
+                """
+The default value of `inplace` for the `dataset.transform` filter will change in the future.
+ Previously it defaulted to `True`, but will change to `False`.
+ Explictly set `inplace` to `True` or `False` to silence this warning. """,
+                PyVistaDeprecationWarning,
+            )
+            inplace = True  # The old default behavior
+
         if inplace and isinstance(self, pyvista.RectilinearGrid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
@@ -8492,7 +8506,7 @@ class DataSetFilters:
             if box_style == 'outline':
                 face.copy_from(pyvista.lines_from_points(face.points))
             if oriented:
-                face.transform(inverse_matrix)
+                face.transform(inverse_matrix, inplace=True)
 
         # Get output
         alg_output = box if as_composite else _multiblock_to_polydata(box)

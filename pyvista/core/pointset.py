@@ -196,7 +196,7 @@ class _PointSet(DataSet):
         self: ConcretePointSetType,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
-        inplace=None,
+        inplace=False,
     ):
         """Translate the mesh.
 

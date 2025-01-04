@@ -227,7 +227,7 @@ class CompositeFilters:
         self,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
-        inplace: bool = True,
+        inplace: bool = True,  # TODO also needs deprecation warning
         progress_bar: bool = False,
     ):
         """Transform all blocks in this composite dataset.
@@ -272,7 +272,7 @@ class CompositeFilters:
         >>> import pyvista as pv
         >>> mesh = pv.MultiBlock([pv.Sphere(), pv.Plane()])
         >>> transform = pv.Transform().translate(50, 100, 200)
-        >>> transformed = mesh.transform(transform)
+        >>> transformed = mesh.transform(transform, inplace=False)
         >>> transformed.plot(show_edges=True)
 
         """
