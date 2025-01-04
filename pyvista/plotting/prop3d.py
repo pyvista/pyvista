@@ -343,11 +343,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
         ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
+        ...     color='r',
+        ...     style='wireframe',
         ...     line_width=5,
         ...     lighting=False,
         ... )
@@ -393,6 +393,8 @@ class Prop3D(_vtk.vtkProp3D):
         NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
 
         This method may be used as an alternative for setting the :attr:`orientation`.
+
+        .. versionadded:: 0.45
 
         Parameters
         ----------

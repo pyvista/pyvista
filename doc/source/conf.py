@@ -15,6 +15,12 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 faulthandler.enable()
 
+# This flag is set *before* any pyvista import. It allows `pyvista.core._typing_core._aliases` to
+# import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
+# during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
+# Note that `import make_tables` below imports pyvista.
+os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
+
 sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
 import make_tables
@@ -279,6 +285,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'axes_enabled'),  # Valid ref, but is not linked correctly in some wrapped cases
     (r'py:.*', '.*lookup_table_ndarray'),
     (r'py:.*', 'colors.Colormap'),
+    (r'py:.*', 'colors.ListedColormap'),
     (r'py:.*', 'cycler.Cycler'),
     (r'py:.*', 'pyvista.PVDDataSet'),
     #

@@ -114,7 +114,7 @@ def frog_tissues_image():
 
 @pytest.fixture
 def frog_tissues_contour(frog_tissues_image):
-    return frog_tissues_image.contour_labeled(smoothing=False)
+    return frog_tissues_image.contour_labels(smoothing=False)
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
@@ -244,7 +244,7 @@ def oriented_image():
 
 @pytest.fixture
 def oriented_polydata(oriented_image):
-    oriented_poly = oriented_image.pad_image().contour_labeled(smoothing=False)
+    oriented_poly = oriented_image.pad_image().contour_labels(smoothing=False)
     assert np.allclose(oriented_poly.bounds, oriented_image.points_to_cells().bounds, atol=0.1)
     return oriented_poly
 
@@ -253,7 +253,7 @@ def oriented_polydata(oriented_image):
 def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
     mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
     assert mask.bounds == oriented_image.bounds
-    mask_as_surface = mask.pad_image().contour_labeled(smoothing=False)
+    mask_as_surface = mask.pad_image().contour_labels(smoothing=False)
     assert mask_as_surface.bounds == oriented_polydata.bounds
 
 
