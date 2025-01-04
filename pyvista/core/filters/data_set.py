@@ -9248,7 +9248,7 @@ class DataSetFilters:
         colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
         for label, color in items:
             if isinstance(color, dict):
-                color = color['color']  # type: ignore[unreachable]
+                color = color['color']
             colors_out[array == label, :] = color
 
         colors_name = name + scalars_suffix if output_scalars is None else output_scalars
