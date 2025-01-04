@@ -1021,6 +1021,7 @@ class ImageDataFilters(DataSetFilters):
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
         compute_normals: bool = True,
+        simplify_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
         smoothing_relaxation: float = 0.5,
@@ -1155,6 +1156,31 @@ class ImageDataFilters(DataSetFilters):
                 boundaries are generated. Do not assume the normals will point outward
                 in all cases.
 
+        simplify_output : bool, optional
+            Simplify the ``'boundary_labels'`` array as a single-component 1D array.
+            If ``False``, the returned ``'boundary_labels'`` array is a two-component
+            2D array. This simplification is useful when only external boundaries
+            are generated and/or when visualizing internal boundaries. The
+            simplification is as follows:
+
+            - External boundaries are simplified by keeping the first component and
+              removing the second. Since external polygons may only share a boundary
+              with the background, the second component is always ``background_value``
+              and therefore can be dropped without loss of information. The values
+              of external boundaries always match the foreground values of the input.
+
+            - Internal boundaries are simplified by assigning them unique negative
+              values sequentially. E.g. the boundary label ``[1, 2]`` is replaced with
+              ``-1``, ``[1, 3]`` is replaced with ``-2``, etc. The mapping to negative
+              values is not fixed, and can change depending on the input.
+
+              This simplification is particularly useful for unsigned integer labels
+              (e.g. scalars with ``'uint8'`` dtype) since external boundaries
+              will be positive and internal boundaries will be negative in this case.
+
+            By default, the output is simplified when ``boundary_type`` is
+            ``'external'``, and is not simplified otherwise.
+
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
             point in the surface is smoothed as follows:
@@ -1262,8 +1288,18 @@ class ImageDataFilters(DataSetFilters):
         >>> contours.plot(zoom=1.5, **plot_kwargs)
 
         By default, only external boundary polygons are generated and the returned
-        ``'boundary_labels'`` array is a two-component array.
+        ``'boundary_labels'`` array is a single-component array. The output values
+        match the input label values.
 
+        >>> contours['boundary_labels'].ndim
+        1
+        >>> np.unique(contours['boundary_labels'])
+        pyvista_ndarray([1, 2, 3, 4])
+
+        Set ``simplify_output`` to ``False`` to generate a two-component
+        array instead showing the two boundary regions associated with each polygon.
+
+        >>> contours = image.contour_labels(simplify_output=False)
         >>> contours['boundary_labels'].ndim
         2
 
@@ -1277,14 +1313,12 @@ class ImageDataFilters(DataSetFilters):
                [3, 0],
                [4, 0]])
 
-        Repeat the example but this time generate internal contours only. Note that
-        when plotting multi-component scalars, each component is normalized (vector norm)
-        for visualization.
+        Repeat the example but this time generate internal contours only. The generated
+        array is 2D by default.
 
         >>> contours = image.contour_labels('internal')
         >>> contours['boundary_labels'].ndim
         2
-        >>> contours.plot(zoom=1.5, **plot_kwargs)
 
         Show the unique two-component boundary labels again. From these values we can
         determine that all foreground regions share an internal boundary with each
@@ -1298,10 +1332,27 @@ class ImageDataFilters(DataSetFilters):
                [2, 4],
                [3, 4]])
 
+        Simplify the output so that each internal multi-component boundary value is
+        assigned a unique negative integer value instead.
+
+        >>> contours = image.contour_labels('internal', simplify_output=True)
+        >>> contours['boundary_labels'].ndim
+        1
+        >>> np.unique(contours['boundary_labels'])
+        pyvista_ndarray([-5, -4, -3, -2, -1])
+
+        Make the values positive for plotting.
+
+        >>> contours['boundary_labels'] += 20
+
+        >>> contours.plot(zoom=1.5, **plot_kwargs)
+
         Generate contours for all boundaries, and use ``select_outputs`` to filter
         the output to only include polygons which share a boundary with region ``3``.
 
-        >>> region_3 = image.contour_labels('all', select_outputs=3)
+        >>> region_3 = image.contour_labels(
+        ...     'all', select_outputs=3, simplify_output=False
+        ... )
         >>> region_3.plot(zoom=3, **plot_kwargs)
 
         Note how using ``select_outputs`` preserves the sharp features and boundary
@@ -1535,6 +1586,27 @@ class ImageDataFilters(DataSetFilters):
                 is_external = np.any(labels_array == background_value, axis=1)
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
+
+        if simplify_output is None:
+            simplify_output = boundary_style == 'external'
+        if simplify_output:
+            # Simplify scalars to a single component
+            if boundary_style != 'external':
+                # Replace internal boundary values with negative integers
+                labels_array = output.cell_data[PV_NAME]
+                is_internal = (
+                    np.full((output.n_cells,), True)
+                    if boundary_style == 'internal'
+                    else np.all(labels_array != background_value, axis=1)
+                )
+                internal_values = labels_array[is_internal, :]
+                unique_values = np.unique(internal_values, axis=0)
+                for i, value in enumerate(unique_values):
+                    is_value = np.all(labels_array == value, axis=1)
+                    labels_array[is_value, 0] = -(i + 1)  # type: ignore[index]
+
+            # Keep first component only
+            output.cell_data[PV_NAME] = output.cell_data[PV_NAME][:, 0]
 
         if select_outputs is not None:
             # This option generates unused points
