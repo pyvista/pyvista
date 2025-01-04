@@ -137,11 +137,9 @@ lines, even in two sections:
 .. pyvista-plot::
 
     >>> import pyvista
-    >>> pyvista.Sphere().plot(color='blue',
-    ...                       cpos='xy')
+    >>> pyvista.Sphere().plot(color='blue', cpos='xy')
 
-    >>> pyvista.Sphere().plot(color='red',
-    ...                       cpos='xy')
+    >>> pyvista.Sphere().plot(color='red', cpos='xy')
 
 
 **Plot 14** Forces two static images instead of interactive scenes:
@@ -150,11 +148,9 @@ lines, even in two sections:
    :force_static:
 
    >>> import pyvista
-   >>> pyvista.Sphere().plot(color='blue',
-   ...                       cpos='xy')
+   >>> pyvista.Sphere().plot(color='blue', cpos='xy')
 
-   >>> pyvista.Sphere().plot(color='red',
-   ...                       cpos='xy')
+   >>> pyvista.Sphere().plot(color='red', cpos='xy')
 
 
 **Plot 15** Uses caption with tabbed UI:

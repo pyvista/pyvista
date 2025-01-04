@@ -50,7 +50,7 @@ jupyter = [
 ]
 
 pinned = [ # Pinned versions of core dependencies
-  'matplotlib<3.9.4',
+  'matplotlib<3.10.1',
   'numpy<2.2.0',
   'pillow<11.1.0',
   'pooch<1.9.0',
@@ -70,7 +70,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.122.1',
+  'hypothesis<6.123.3',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
   'ipython<9.0.0',
@@ -84,7 +84,7 @@ test = [
   'pytest-pyvista==0.1.8',
   'pytest-xdist<3.7.0',
   'pytest<8.4.0',
-  'pytest_mock<3.14.0',
+  'pytest_mock<3.15.0',
   'pyvista[pinned]',
   'scipy<1.14.2',
   'sphinx-book-theme<1.2.0',
@@ -107,11 +107,11 @@ docs = [
   'imageio-ffmpeg==0.5.1',
   'imageio==2.36.1',
   'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.3.1',
+  'jupyterlab==4.3.4',
   'lxml==5.3.0',
   'meshio==5.3.5',
   'mypy-extensions==1.0.0',
-  'mypy==1.13.0',
+  'mypy==1.14.1',
   'numpydoc==1.8.0',
   'osmnx==2.0.0',
   'pypandoc==1.14',
@@ -133,8 +133,8 @@ docs = [
   'sphinxext-opengraph==0.9.1',
   'sympy==1.13.3',
   'trame-vtk==2.8.12',
-  'trame-vuetify==2.7.2',
-  'trame==3.7.0',
+  'trame-vuetify==2.8.0',
+  'trame==3.7.6',
   'trimesh==4.5.3',
 ]
 
@@ -219,7 +219,7 @@ testpaths = 'tests'
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_subclassing_any = true
-enable_error_code = ['ignore-without-code']
+enable_error_code = ['ignore-without-code', 'truthy-bool']
 exclude = ['pyvista/ext/']
 extra_checks = true
 ignore_missing_imports = true
@@ -234,6 +234,7 @@ pretty = true
 show_error_context = true
 strict_equality = true
 warn_redundant_casts = true
+warn_unreachable = true
 warn_unused_configs = true
 warn_unused_ignores = true
 
@@ -279,7 +280,13 @@ indent-width = 4
 line-length = 100
 
 [tool.ruff.format]
-docstring-code-format = false
+docstring-code-format = true
+# From https://numpydoc.readthedocs.io/en/latest/format.html
+# Extended discussion: https://github.com/pyvista/pyvista/pull/4129
+# The length of docstring lines should be kept to 75 characters to facilitate
+# reading the docstrings in text terminals.
+docstring-code-line-length = 75
+
 quote-style = 'single'
 
 [tool.ruff.lint]

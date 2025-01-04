@@ -617,9 +617,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     Visualize the output of :class:`CylinderSource` in a 3D plot.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     pv.CylinderSource().output, show_edges=True, line_width=5
-    ... )
+    >>> _ = pl.add_mesh(pv.CylinderSource().output, show_edges=True, line_width=5)
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
@@ -3319,9 +3317,7 @@ class AxesGeometrySource:
         Get the symmetric bounds of the axes.
 
         >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource(
-        ...     symmetric_bounds=True
-        ... )
+        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric_bounds=True)
         >>> axes_geometry_source.output.bounds
         BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
@@ -3342,21 +3338,17 @@ class AxesGeometrySource:
 
         Create actors.
 
-        >>> axes_sym = pv.AxesAssembly(
-        ...     orientation=(90, 0, 0), symmetric_bounds=True
-        ... )
-        >>> axes_asym = pv.AxesAssembly(
-        ...     orientation=(90, 0, 0), symmetric_bounds=False
-        ... )
+        >>> axes_sym = pv.AxesAssembly(orientation=(90, 0, 0), symmetric_bounds=True)
+        >>> axes_asym = pv.AxesAssembly(orientation=(90, 0, 0), symmetric_bounds=False)
 
         Show multi-window plot.
 
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> _ = pl.add_text("Symmetric bounds")
+        >>> _ = pl.add_text('Symmetric bounds')
         >>> _ = pl.add_actor(axes_sym)
         >>> pl.subplot(0, 1)
-        >>> _ = pl.add_text("Asymmetric bounds")
+        >>> _ = pl.add_text('Asymmetric bounds')
         >>> _ = pl.add_actor(axes_asym)
         >>> pl.show()
 
@@ -3793,9 +3785,7 @@ class OrthogonalPlanesSource:
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
-    >>> _ = pl.add_mesh(
-    ...     output, opacity=0.3, show_edges=True, line_width=10
-    ... )
+    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True, line_width=10)
     >>> pl.view_yz()
     >>> pl.show()
 
@@ -4103,9 +4093,7 @@ class CubeFacesSource(CubeSource):
     Generate a frame instead of full faces.
 
     >>> mesh = pv.ParametricEllipsoid(5, 4, 3)
-    >>> cube_faces_source = pv.CubeFacesSource(
-    ...     bounds=mesh.bounds, frame_width=0.1
-    ... )
+    >>> cube_faces_source = pv.CubeFacesSource(bounds=mesh.bounds, frame_width=0.1)
     >>> output = cube_faces_source.output
 
     >>> pl = pv.Plotter()
