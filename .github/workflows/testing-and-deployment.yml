@@ -68,7 +68,6 @@ jobs:
     if: false
     env:
       CONDA_ALWAYS_YES: 1
-      conda_env: pyvista-vtk
       DISPLAY: ":99.0"
       PYVISTA_OFF_SCREEN: True
 
@@ -110,14 +109,14 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
-          conda env create --quiet -n ${{ env.conda_env }} --file environment.yml --experimental-solver=libmamba
-          conda activate ${{ env.conda_env }}
+          conda env create --quiet -n pyvista-vtk --file environment.yml --experimental-solver=libmamba
+          conda activate pyvista-vtk
           conda list
 
       - name: Install PyVista
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
+          conda activate pyvista-vtk
           pip install -e .
           which python
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
@@ -126,14 +125,14 @@ jobs:
       - name: Test Core API
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
+          conda activate pyvista-vtk
           pip install .[test]
           pytest -v --ignore=tests/plotting
 
       - name: Test Core Plotting
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
+          conda activate pyvista-vtk
           pytest -v tests/plotting --cov-report html --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
