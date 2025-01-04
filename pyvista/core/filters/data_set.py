@@ -8953,12 +8953,13 @@ class DataSetFilters:
         | dict[float, ColorLike] = 'glasbey_category10',
         *,
         coloring_mode: Literal['index', 'cycler'] | None = None,
+        color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         output_scalars: str | None = None,
         inplace: bool = False,
     ):
-        """Add RGBA scalars to labeled data.
+        """Add RGB(A) scalars to labeled data.
 
         This filter adds a color array to map label values to specific colors.
         The mapping can be specified explicitly with a dictionary or implicitly
@@ -8981,7 +8982,7 @@ class DataSetFilters:
             This option is used by default for floating-point inputs or for inputs
             with values out of the range ``[0, 255]``.
 
-        By default, a new RGBA array is added with the same name as the
+        By default, a new RGB(A) array is added with the same name as the
         specified ``scalars`` but with ``_rgba`` appended.
 
         See Also
@@ -9009,9 +9010,10 @@ class DataSetFilters:
 
             .. note::
                 When a dictionary is specified, any scalar values for which a key is
-                not provided is assigned RGBA values of ``nan``. To ensure the color
-                array has no  ``nan`` values, be sure to provide a mapping
-                for any and all possible input label values.
+                not provided is assigned default RGB(A) values of ``nan`` for float colors
+                or ``0``  for integer colors (see ``color_type``). To ensure the color
+                array has no default values, be sure to provide a mapping for any and
+                all possible input label values.
 
         coloring_mode : 'index' | 'cycler', optional
             Control how colors are mapped to label values. Has no effect if ``colors``
@@ -9022,6 +9024,14 @@ class DataSetFilters:
             - ``'cycler'``: The specified ``'colors'`` are cycled through sequentially,
               and each unique value in the input scalars is assigned a color in increasing
               order.
+
+        color_type : 'int_rgb' | 'float_rgb' | 'int_rgba' | 'float_rgba', default: 'int_rgb'
+            Type of the color array to store. By default, the colors are stored as
+            RGB integers to reduce memory usage.
+
+            .. note::
+                The color type affects the default value for unspecified colors when
+                a dictionary is used. See ``colors`` for details.
 
         scalars : str, optional
             Name of scalars with labels. Defaults to currently active scalars.
@@ -9041,7 +9051,7 @@ class DataSetFilters:
         Returns
         -------
         pyvista.DataSet
-            Dataset with RGBA scalars. Output type matches input type.
+            Dataset with RGB(A) scalars. Output type matches input type.
 
         Examples
         --------
@@ -9093,12 +9103,13 @@ class DataSetFilters:
         >>> colored_labels = image_labels.color_labels(colors)
         >>> colored_labels.plot()
 
-        Omit the background value from the mapping. Values without a mapping
-        are assigned ``nan`` RGBA values and are not plotted by default.
+        Omit the background value from the mapping and specify float colors. When
+        floats are specified, values without a mapping are assigned ``nan`` values
+        and are not plotted by default.
 
         >>> colors.pop(0)
         'black'
-        >>> colored_labels = image_labels.color_labels(colors)
+        >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
         >>> colored_labels.plot()
 
         Color all labels with a single color.
@@ -9134,6 +9145,19 @@ class DataSetFilters:
                     return True
             return False
 
+        _validation.check_contains(
+            ['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'],
+            must_contain=color_type,
+            name='color_type',
+        )
+        num_components = 4 if 'rgba' in color_type else 3
+        if 'float' in color_type:
+            default_channel_value = np.nan
+            color_dtype = 'float'
+        else:
+            default_channel_value = 0
+            color_dtype = 'uint8'
+
         if scalars is None:
             field, name = set_default_active_scalars(self)
         else:
@@ -9147,11 +9171,11 @@ class DataSetFilters:
             if coloring_mode is not None:
                 raise TypeError('Coloring mode cannot be set when a color dictionary is specified.')
             colors_ = _local_validate_color_sequence(cast(list[ColorLike], list(colors.values())))
-            colors_float_rgba = [c.float_rgba for c in colors_]
-            items = zip(colors.keys(), colors_float_rgba)
+            color_rgb_sequence = [getattr(c, color_type) for c in colors_]
+            items = zip(colors.keys(), color_rgb_sequence)
 
         else:
-            _is_rgba_sequence = False
+            _is_rgb_sequence = False
             if isinstance(colors, str):
                 try:
                     cmap = get_cmap_safe(colors)
@@ -9162,14 +9186,26 @@ class DataSetFilters:
                         raise ValueError(
                             f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
                         )
-                    color_sequence = [(*c, 1.0) for c in cast(list[list[float]], cmap.colors)]
-                    _is_rgba_sequence = True
-            if not _is_rgba_sequence:
-                color_sequence = [c.float_rgba for c in _local_validate_color_sequence(colors)]
-                if len(color_sequence) == 1:
-                    color_sequence = color_sequence * len(array)
+                    # Avoid unnecessary conversion and set color sequence directly in float cases
+                    if color_type == 'float_rgb':
+                        color_rgb_sequence = cmap.colors
+                        _is_rgb_sequence = True
+                    elif color_type == 'float_rgba':
+                        color_rgb_sequence = [
+                            (*c, 1.0) for c in cast(list[list[float]], cmap.colors)
+                        ]
+                        _is_rgb_sequence = True
+                    else:
+                        colors = cmap.colors
 
-            n_colors = len(color_sequence)
+            if not _is_rgb_sequence:
+                color_rgb_sequence = [
+                    getattr(c, color_type) for c in _local_validate_color_sequence(colors)
+                ]
+                if len(color_rgb_sequence) == 1:
+                    color_rgb_sequence = color_rgb_sequence * len(array)
+
+            n_colors = len(color_rgb_sequence)
             if coloring_mode is None:
                 coloring_mode = 'index' if _is_index_like(array, max_value=n_colors) else 'cycler'
 
@@ -9179,15 +9215,15 @@ class DataSetFilters:
                         f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
-                keys: Iterable[float] = range(n_colors + 1)
-                values: Iterable[Any] = color_sequence
+                keys: Iterable[float] = range(n_colors)
+                values: Iterable[Any] = color_rgb_sequence
             else:
                 keys = np.unique(array)
-                values = cycler('color', color_sequence)
+                values = cycler('color', color_rgb_sequence)
 
             items = zip(keys, values)
 
-        colors_out = np.full((len(array), 4), np.nan, dtype=float)
+        colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
         for label, color in items:
             if isinstance(color, dict):
                 color = color['color']  # type: ignore[unreachable]
