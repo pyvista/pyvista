@@ -883,7 +883,7 @@ class ImageDataFilters(DataSetFilters):
                     output_mesh_type='quads',  # old filter generates quads
                     pad_background=False,  # old filter generates open surfaces at input edges
                     compute_normals=False,  # old filter does not compute normals
-                    multi_component_output=True,  # old filter returns multi-component scalars
+                    simplify_output=False,  # old filter returns multi-component scalars
                 )
 
         Parameters
