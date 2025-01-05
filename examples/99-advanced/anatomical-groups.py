@@ -37,12 +37,16 @@ label_map = dataset['label_map']
 # Get metadata associated with the dataset
 
 # Get the dict which maps the label names to the integer ids in the label map
-label_ids_dict = dataset.user_dict['ids']
-label_names = label_ids_dict.keys()
-label_ids = label_ids_dict.values()
+names_to_ids = dataset.user_dict['ids']
+label_names = names_to_ids.keys()
+label_ids = names_to_ids.values()
 
 # Get the RGB color mapping
-colors_dict = dataset.user_dict['colors']
+names_to_colors = dataset.user_dict['colors']
+
+# Create a mapping from ids to colors. This will be used to color the contours
+# with :meth:`~pyvista.DataSetFilters.contour_labels`.
+ids_to_colors = {names_to_ids[name]: names_to_colors[name] for name in label_names}
 
 ###############################################################################
 # Color Mapping
@@ -59,7 +63,7 @@ print(
     '{\n'
     + '\n'.join(
         f'    {"'" + name + "':":<32} ({R:>3}, {G:>3}, {B:>3})'
-        for name, (R, G, B) in colors_dict.items()
+        for name, (R, G, B) in names_to_colors.items()
     )
     + '\n}',
 )
@@ -81,19 +85,6 @@ def filter_labels(label_names: list[str], search_terms: list[str]):
 
 
 ###############################################################################
-# We also define a look-up function to return the colors for a subset of the
-# labels.
-def lookup_colors(colors_dict: dict[str, tuple[int, int, int]], label_names: list[str]):
-    return [colors_dict[name] for name in label_names]
-
-
-###############################################################################
-# Define a similar look-up for the label ids.
-def lookup_ids(label_ids_dict: dict[str, int], label_names: list[str]):
-    return [label_ids_dict[name] for name in label_names]
-
-
-###############################################################################
 # Plotting Function
 # -----------------
 # Define a function which, given a list of terms, will lookup labels associated
@@ -103,22 +94,20 @@ def plot_anatomy(search_terms: list[str]):
     group_names = filter_labels(label_names, search_terms)
 
     # Get the label ids corresponding to the matched labels.
-    group_ids = lookup_ids(label_ids_dict, group_names)
+    group_ids = [names_to_ids[name] for name in group_names]
 
-    # Get the label colors to use for plotting.
-    group_colors = lookup_colors(colors_dict, group_names)
-
-    # Selectively generate surfaces for the specified labels.
+    # Selectively generate surfaces for the specified labels using
+    # :meth:`pyvista.ImageDataFilters.contour_labels`.
     group_surface = dataset['label_map'].contour_labels(select_inputs=group_ids)
 
-    # Split the labeled surface into separate meshes, one for each label
-    split_surfaces = group_surface.extract_values(group_ids, split=True)
+    # Color the labels with :meth:`~pyvista.DataSetFilters.color_labels`.
+    colored_surface = group_surface.color_labels(colors=ids_to_colors)
 
     # Plot the label map.
     # Allow empty meshes since some of the labels may not exist.
     pv.global_theme.allow_empty_mesh = True
     pl = pv.Plotter()
-    [pl.add_mesh(surf, color) for surf, color in zip(split_surfaces, group_colors)]
+    pl.add_mesh(colored_surface)
     pl.view_zx()
     pl.camera.up = (0, 0, 1)
     pl.show()
