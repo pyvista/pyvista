@@ -8955,7 +8955,7 @@ class DataSetFilters:
         coloring_mode: Literal['index', 'cycler'] | None = None,
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: Literal['point', 'cell'] = 'cell',
         output_scalars: str | None = None,
         inplace: bool = False,
     ):
@@ -9036,7 +9036,7 @@ class DataSetFilters:
         scalars : str, optional
             Name of scalars with labels. Defaults to currently active scalars.
 
-        preference : str, default: "point"
+        preference : str, default: "cell"
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
