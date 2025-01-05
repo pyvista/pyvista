@@ -7603,12 +7603,13 @@ def _whole_body_ct_load_func(files):  # pragma: no cover
         MODULE_PATH = files[1].path
         MODULE_NAME = 'colors'
         spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[spec.name] = module
-        spec.loader.exec_module(module)
-        from colors import colors
+        if spec is not None:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = module
+            spec.loader.exec_module(module)  # type:ignore[union-attr]
+            from colors import colors
 
-        return colors
+            return colors
 
     # Process the dataset to create a label map from the segmentation masks
     dataset = files[0].load()
