@@ -41,13 +41,12 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import PolyData
-    from pyvista.core._typing_core import ConcreteDataObjectType
-    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
-    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
+    from pyvista.core._typing_core import _DataObjectType
+    from pyvista.core._typing_core import _DataSetType
 
 
 @abstract_class
@@ -55,7 +54,7 @@ class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
     def _clip_with_function(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         function: _vtk.vtkImplicitFunction,
         invert: bool = True,
         value: float = 0.0,
@@ -97,7 +96,7 @@ class DataSetFilters:
         return clipped
 
     def align(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         target: DataSet | _vtk.vtkDataSet,
         max_landmarks: int = 100,
         max_mean_distance: float = 1e-5,
@@ -205,7 +204,7 @@ class DataSetFilters:
         return self.transform(matrix, inplace=False)
 
     def align_xyz(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         *,
         centered: bool = True,
         axis_0_direction: VectorLike[float] | str | None = None,
@@ -440,7 +439,7 @@ class DataSetFilters:
         return aligned
 
     def clip(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
         invert: bool = True,
@@ -540,7 +539,7 @@ class DataSetFilters:
         return result
 
     def clip_box(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         bounds: float | VectorLike[float] | pyvista.PolyData | None = None,
         invert: bool = True,
         factor: float = 0.35,
@@ -662,7 +661,7 @@ class DataSetFilters:
         return clipped
 
     def compute_implicit_distance(  # type: ignore[misc]
-        self: ConcreteDataSetType, surface: DataSet | _vtk.vtkDataSet, inplace: bool = False
+        self: _DataSetType, surface: DataSet | _vtk.vtkDataSet, inplace: bool = False
     ):
         """Compute the implicit distance from the points to a surface.
 
@@ -750,7 +749,7 @@ class DataSetFilters:
         return result
 
     def clip_scalar(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         scalars: str | None = None,
         invert: bool = True,
         value: float = 0.0,
@@ -849,7 +848,7 @@ class DataSetFilters:
         return result0
 
     def clip_surface(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         surface: DataSet | _vtk.vtkDataSet,
         invert: bool = True,
         value: float = 0.0,
@@ -931,7 +930,7 @@ class DataSetFilters:
         )
 
     def slice_implicit(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         implicit_function: _vtk.vtkImplicitFunction,
         generate_triangles: bool = False,
         contour: bool = False,
@@ -992,7 +991,7 @@ class DataSetFilters:
         return output
 
     def slice(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         normal: VectorLike[float] | NormalsLiteral = 'x',
         origin: VectorLike[float] | None = None,
         generate_triangles: bool = False,
@@ -1060,7 +1059,7 @@ class DataSetFilters:
         )
 
     def slice_orthogonal(
-        self: ConcreteDataSetType | MultiBlock,
+        self: _DataSetType | MultiBlock,
         x: float | None = None,
         y: float | None = None,
         z: float | None = None,
@@ -1163,7 +1162,7 @@ class DataSetFilters:
         return output
 
     def slice_along_axis(
-        self: ConcreteDataSetType | MultiBlock,
+        self: _DataSetType | MultiBlock,
         n: int = 5,
         axis: Literal['x', 'y', 'z', 0, 1, 2] = 'x',
         tolerance: float | None = None,
@@ -1294,7 +1293,7 @@ class DataSetFilters:
         return output
 
     def slice_along_line(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         line: pyvista.PolyData,
         generate_triangles: bool = False,
         contour: bool = False,
@@ -1376,7 +1375,7 @@ class DataSetFilters:
         return output
 
     def threshold(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         value: float | VectorLike[float] | None = None,
         scalars: str | None = None,
         invert: bool = False,
@@ -1580,7 +1579,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def threshold_percent(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         percent: float = 0.50,
         scalars: str | None = None,
         invert: bool = False,
@@ -1710,7 +1709,7 @@ class DataSetFilters:
         )
 
     def outline(  # type: ignore[misc]
-        self: ConcreteDataObjectType,
+        self: _DataObjectType,
         generate_faces: bool = False,
         progress_bar: bool = False,
     ):
@@ -1754,7 +1753,7 @@ class DataSetFilters:
         return wrap(alg.GetOutputDataObject(0))
 
     def outline_corners(  # type: ignore[misc]
-        self: ConcreteDataObjectType, factor: float = 0.2, progress_bar: bool = False
+        self: _DataObjectType, factor: float = 0.2, progress_bar: bool = False
     ):
         """Produce an outline of the corners for the input dataset.
 
@@ -1790,7 +1789,7 @@ class DataSetFilters:
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         extent: VectorLike[float] | None = None,
         progress_bar: bool = False,
     ):
@@ -1846,7 +1845,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def extract_all_edges(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         use_all_points: bool = False,
         clear_data: bool = False,
         progress_bar: bool = False,
@@ -1916,7 +1915,7 @@ class DataSetFilters:
         return output
 
     def elevation(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         low_point: VectorLike[float] | None = None,
         high_point: VectorLike[float] | None = None,
         scalar_range: str | VectorLike[float] | None = None,
@@ -2028,7 +2027,7 @@ class DataSetFilters:
         return output
 
     def contour(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         isosurfaces: int | Sequence[float] = 10,
         scalars: str | NumpyArray[float] | None = None,
         compute_normals: bool = False,
@@ -2210,7 +2209,7 @@ class DataSetFilters:
         return output
 
     def texture_map_to_plane(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         origin: VectorLike[float] | None = None,
         point_u: VectorLike[float] | None = None,
         point_v: VectorLike[float] | None = None,
@@ -2296,7 +2295,7 @@ class DataSetFilters:
         return self
 
     def texture_map_to_sphere(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         center: VectorLike[float] | None = None,
         prevent_seam: bool = True,
         inplace: bool = False,
@@ -2370,7 +2369,7 @@ class DataSetFilters:
         return self
 
     def compute_cell_sizes(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         length: bool = True,
         area: bool = True,
         volume: bool = True,
@@ -2429,7 +2428,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def cell_centers(  # type: ignore[misc]
-        self: ConcreteDataSetType, vertex: bool = True, progress_bar: bool = False
+        self: _DataSetType, vertex: bool = True, progress_bar: bool = False
     ):
         """Generate points at the center of the cells in this dataset.
 
@@ -2476,7 +2475,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def glyph(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         orient: bool | str = True,
         scale: bool | str = True,
         factor: float = 1.0,
@@ -2749,7 +2748,7 @@ class DataSetFilters:
         return output
 
     def connectivity(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         extraction_mode: Literal[
             'all',
             'largest',
@@ -3177,7 +3176,7 @@ class DataSetFilters:
         return output
 
     def extract_largest(  # type: ignore[misc]
-        self: ConcreteDataSetType, inplace: bool = False, progress_bar: bool = False
+        self: _DataSetType, inplace: bool = False, progress_bar: bool = False
     ):
         """Extract largest connected set in mesh.
 
@@ -3223,7 +3222,7 @@ class DataSetFilters:
         )
 
     def split_bodies(  # type: ignore[misc]
-        self: ConcreteDataSetType, label: bool = False, progress_bar: bool = False
+        self: _DataSetType, label: bool = False, progress_bar: bool = False
     ):
         """Find, label, and split connected bodies/volumes.
 
@@ -3285,7 +3284,7 @@ class DataSetFilters:
         return bodies
 
     def warp_by_scalar(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         scalars: str | None = None,
         factor: float = 1.0,
         normal: VectorLike[float] | None = None,
@@ -3374,7 +3373,7 @@ class DataSetFilters:
         return output
 
     def warp_by_vector(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         vectors: str | None = None,
         factor: float = 1.0,
         inplace: bool = False,
@@ -3454,7 +3453,7 @@ class DataSetFilters:
             return warped_mesh
 
     def cell_data_to_point_data(  # type: ignore[misc]
-        self: ConcreteDataSetType, pass_cell_data: bool = False, progress_bar: bool = False
+        self: _DataSetType, pass_cell_data: bool = False, progress_bar: bool = False
     ):
         """Transform cell data into point data.
 
@@ -3517,7 +3516,7 @@ class DataSetFilters:
         return _get_output(alg, active_scalars=active_scalars)
 
     def ctp(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         pass_cell_data: bool = False,
         progress_bar: bool = False,
         **kwargs,
@@ -3557,7 +3556,7 @@ class DataSetFilters:
         )
 
     def point_data_to_cell_data(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         pass_point_data: bool = False,
         categorical: bool = False,
         progress_bar: bool = False,
@@ -3636,7 +3635,7 @@ class DataSetFilters:
         return _get_output(alg, active_scalars=active_scalars)
 
     def ptc(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         pass_point_data: bool = False,
         progress_bar: bool = False,
         **kwargs,
@@ -3676,7 +3675,7 @@ class DataSetFilters:
         )
 
     def triangulate(  # type: ignore[misc]
-        self: ConcreteDataSetType, inplace: bool = False, progress_bar: bool = False
+        self: _DataSetType, inplace: bool = False, progress_bar: bool = False
     ):
         """Return an all triangle mesh.
 
@@ -3721,7 +3720,7 @@ class DataSetFilters:
         return mesh
 
     def delaunay_3d(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         alpha: float = 0.0,
         tol: float = 0.001,
         offset: float = 2.5,
@@ -3781,7 +3780,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def select_enclosed_points(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         surface: PolyData,
         tolerance: float = 0.001,
         inside_out: bool = False,
@@ -3878,7 +3877,7 @@ class DataSetFilters:
         return out
 
     def sample(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         target: DataSet | _vtk.vtkDataSet,
         tolerance: float | None = None,
         pass_cell_data: bool = True,
@@ -4027,7 +4026,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def interpolate(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         target: DataSet | _vtk.vtkDataSet,
         sharpness: float = 2.0,
         radius: float = 1.0,
@@ -4171,7 +4170,7 @@ class DataSetFilters:
         return _get_output(interpolator)
 
     def streamlines(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         vectors: str | None = None,
         source_center: VectorLike[float] | None = None,
         source_radius: float | None = None,
@@ -4291,8 +4290,8 @@ class DataSetFilters:
         return output
 
     def streamlines_from_source(  # type: ignore[misc]
-        self: ConcreteDataSetType,
-        source: DataSet | _vtk.vtkDataSet,
+        self: _DataSetType,
+        source: _vtk.vtkDataSet,
         vectors: str | None = None,
         integrator_type: Literal[45, 2, 4] = 45,
         integration_direction: Literal['both', 'backward', 'forward'] = 'both',
@@ -4504,7 +4503,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def streamlines_evenly_spaced_2D(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         vectors: str | None = None,
         start_position: VectorLike[float] | None = None,
         integrator_type: Literal[2, 4] = 2,
@@ -4680,7 +4679,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def decimate_boundary(  # type: ignore[misc]
-        self: ConcreteDataSetType, target_reduction: float = 0.5, progress_bar: bool = False
+        self: _DataSetType, target_reduction: float = 0.5, progress_bar: bool = False
     ):
         """Return a decimated version of a triangulation of the boundary.
 
@@ -4714,7 +4713,7 @@ class DataSetFilters:
         )
 
     def sample_over_line(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         resolution: int | None = None,
@@ -4777,7 +4776,7 @@ class DataSetFilters:
         return line.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def plot_over_line(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         resolution: int | None = None,
@@ -4885,7 +4884,7 @@ class DataSetFilters:
             plt.show()
 
     def sample_over_multiple_lines(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         points: MatrixLike[float],
         tolerance: float | None = None,
         progress_bar: bool = False,
@@ -4939,7 +4938,7 @@ class DataSetFilters:
         return multiple_lines.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         center: VectorLike[float],
@@ -5016,7 +5015,7 @@ class DataSetFilters:
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def sample_over_circular_arc_normal(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         center: VectorLike[float],
         resolution: int | None = None,
         normal: VectorLike[float] | None = None,
@@ -5103,7 +5102,7 @@ class DataSetFilters:
         return circular_arc.sample(self, tolerance=tolerance, progress_bar=progress_bar)
 
     def plot_over_circular_arc(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         center: VectorLike[float],
@@ -5231,7 +5230,7 @@ class DataSetFilters:
             plt.show()
 
     def plot_over_circular_arc_normal(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         center: VectorLike[float],
         resolution: int | None = None,
         normal: VectorLike[float] | None = None,
@@ -5368,7 +5367,7 @@ class DataSetFilters:
             plt.show()
 
     def extract_cells(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         ind: int | VectorLike[int],
         invert: bool = False,
         progress_bar: bool = False,
@@ -5441,7 +5440,7 @@ class DataSetFilters:
         return subgrid
 
     def extract_points(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         ind: int | VectorLike[int] | VectorLike[bool],
         adjacent_cells: bool = True,
         include_cells: bool = True,
@@ -5517,7 +5516,7 @@ class DataSetFilters:
         return _get_output(extract_sel)
 
     def split_values(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         values: None
         | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
@@ -5679,7 +5678,7 @@ class DataSetFilters:
         )
 
     def extract_values(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         values: None
         | (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
@@ -6136,7 +6135,7 @@ class DataSetFilters:
         )
 
     def _extract_values(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         values=None,
         ranges=None,
         *,
@@ -6207,7 +6206,7 @@ class DataSetFilters:
         return output
 
     def extract_surface(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         pass_pointid: bool = True,
         pass_cellid: bool = True,
         nonlinear_subdivision: int = 1,
@@ -6306,7 +6305,7 @@ class DataSetFilters:
         return _get_output(surf_filter)
 
     def surface_indices(  # type: ignore[misc]
-        self: ConcreteDataSetType, progress_bar: bool = False
+        self: _DataSetType, progress_bar: bool = False
     ):
         """Return the surface indices of a grid.
 
@@ -6335,7 +6334,7 @@ class DataSetFilters:
         return surf.point_data['vtkOriginalPointIds']
 
     def extract_feature_edges(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         feature_angle: float = 30.0,
         boundary_edges: bool = True,
         non_manifold_edges: bool = True,
@@ -6419,7 +6418,7 @@ class DataSetFilters:
         return output
 
     def merge_points(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         tolerance: float = 0.0,
         inplace: bool = False,
         progress_bar: bool = False,
@@ -6473,7 +6472,7 @@ class DataSetFilters:
         )
 
     def merge(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         grid: DataSet
         | _vtk.vtkDataSet
         | MultiBlock
@@ -6574,13 +6573,13 @@ class DataSetFilters:
         return merged
 
     def __add__(  # type: ignore[misc]
-        self: ConcreteDataSetType, dataset
+        self: _DataSetType, dataset
     ):
         """Combine this mesh with another into a :class:`pyvista.UnstructuredGrid`."""
         return DataSetFilters.merge(self, dataset)
 
     def __iadd__(  # type: ignore[misc]
-        self: ConcreteDataSetType, dataset
+        self: _DataSetType, dataset
     ):
         """Merge another mesh into this one if possible.
 
@@ -6600,7 +6599,7 @@ class DataSetFilters:
         return merged
 
     def compute_cell_quality(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         quality_measure: str = 'scaled_jacobian',
         null_value: float = -1.0,
         progress_bar: bool = False,
@@ -6737,7 +6736,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def compute_boundary_mesh_quality(  # type: ignore[misc]
-        self: ConcreteDataSetType, *, progress_bar: bool = False
+        self: _DataSetType, *, progress_bar: bool = False
     ):
         """Compute metrics on the boundary faces of a mesh.
 
@@ -6788,7 +6787,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def compute_derivative(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         scalars: str | None = None,
         gradient: bool | str = True,
         divergence: bool | str = False,
@@ -6901,7 +6900,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def shrink(  # type: ignore[misc]
-        self: ConcreteDataSetType, shrink_factor: float = 1.0, progress_bar: bool = False
+        self: _DataSetType, shrink_factor: float = 1.0, progress_bar: bool = False
     ):
         """Shrink the individual faces of a mesh.
 
@@ -6952,7 +6951,7 @@ class DataSetFilters:
         return output
 
     def tessellate(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         max_n_subdivide: int = 3,
         merge_points: bool = True,
         progress_bar: bool = False,
@@ -7021,7 +7020,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def transform(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: DataSet,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool = True,
@@ -7176,7 +7175,7 @@ class DataSetFilters:
         _update_alg(f, progress_bar, 'Transforming')
         res = pyvista.core.filters._get_output(f)
 
-        def _restore_active_scalars(input_: ConcreteDataSetAlias, output_: ConcreteDataSetAlias):
+        def _restore_active_scalars(input_: DataSet, output_: DataSet):
             # make the previously active scalars active again
             input_.point_data.active_scalars_name = active_point_scalars_name
             input_.cell_data.active_scalars_name = active_cell_scalars_name
@@ -7187,7 +7186,7 @@ class DataSetFilters:
                 output_.cell_data.active_scalars_name = active_cell_scalars_name
 
         if isinstance(self, pyvista.RectilinearGrid):
-            output: ConcreteDataSetAlias = pyvista.StructuredGrid()
+            output: DataSet = pyvista.StructuredGrid()
         elif inplace:
             output = self
         else:
@@ -7221,7 +7220,7 @@ class DataSetFilters:
         return output
 
     def reflect(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
         inplace: bool = False,
@@ -7278,7 +7277,7 @@ class DataSetFilters:
         )
 
     def rotate_x(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -7342,7 +7341,7 @@ class DataSetFilters:
         )
 
     def rotate_y(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         angle: float,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -7405,7 +7404,7 @@ class DataSetFilters:
         )
 
     def rotate_z(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         angle: float,
         point: VectorLike[float] = (0.0, 0.0, 0.0),
         transform_all_input_vectors: bool = False,
@@ -7469,7 +7468,7 @@ class DataSetFilters:
         )
 
     def rotate_vector(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         vector: VectorLike[float],
         angle: float,
         point: VectorLike[float] | None = None,
@@ -7537,7 +7536,7 @@ class DataSetFilters:
         )
 
     def rotate(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -7611,7 +7610,7 @@ class DataSetFilters:
         )
 
     def translate(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -7667,7 +7666,7 @@ class DataSetFilters:
         )
 
     def scale(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -7732,7 +7731,7 @@ class DataSetFilters:
         )
 
     def flip_x(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -7794,7 +7793,7 @@ class DataSetFilters:
         )
 
     def flip_y(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -7856,7 +7855,7 @@ class DataSetFilters:
         )
 
     def flip_z(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
         inplace: bool = False,
@@ -7918,7 +7917,7 @@ class DataSetFilters:
         )
 
     def flip_normal(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -7984,7 +7983,7 @@ class DataSetFilters:
         )
 
     def integrate_data(  # type: ignore[misc]
-        self: ConcreteDataSetType, progress_bar: bool = False
+        self: _DataSetType, progress_bar: bool = False
     ):
         """Integrate point and cell data.
 
@@ -8035,7 +8034,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def partition(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         n_partitions: int,
         generate_global_id: bool = False,
         as_composite: bool = True,
@@ -8128,7 +8127,7 @@ class DataSetFilters:
         return output
 
     def oriented_bounding_box(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         box_style: Literal['frame', 'outline', 'face'] = 'face',
         *,
         axis_0_direction: VectorLike[float] | str | None = None,
@@ -8307,7 +8306,7 @@ class DataSetFilters:
         )
 
     def bounding_box(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         box_style: Literal['frame', 'outline', 'face'] = 'face',
         *,
         oriented: bool = False,
@@ -8464,7 +8463,7 @@ class DataSetFilters:
             )
 
     def _bounding_box(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         *,
         matrix: NumpyArray[float] | None,
         inverse_matrix: NumpyArray[float] | None,
@@ -8542,7 +8541,7 @@ class DataSetFilters:
         return alg_output
 
     def explode(  # type: ignore[misc]
-        self: ConcreteDataSetType, factor: float = 0.1
+        self: _DataSetType, factor: float = 0.1
     ):
         """Push each individual cell away from the center of the dataset.
 
@@ -8584,7 +8583,7 @@ class DataSetFilters:
         return split
 
     def separate_cells(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
     ):
         """Return a copy of the dataset with separated cells with no shared points.
 
@@ -8618,7 +8617,7 @@ class DataSetFilters:
         return self.shrink(1.0)
 
     def extract_cells_by_type(  # type: ignore[misc]
-        self: ConcreteDataSetType, cell_types: int | VectorLike[int], progress_bar: bool = False
+        self: _DataSetType, cell_types: int | VectorLike[int], progress_bar: bool = False
     ):
         """Extract cells of a specified type.
 
@@ -8691,7 +8690,7 @@ class DataSetFilters:
         return _get_output(alg)
 
     def sort_labels(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         output_scalars: str | None = None,
@@ -8781,7 +8780,7 @@ class DataSetFilters:
         )
 
     def pack_labels(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+        self: _DataSetType,
         sort: bool = False,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
