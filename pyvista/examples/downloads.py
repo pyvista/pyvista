@@ -22,12 +22,14 @@ Examples
 from __future__ import annotations
 
 import functools
+import importlib
 import importlib.util
 import logging
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
 import shutil
+import sys
 import warnings
 
 import numpy as np
@@ -7577,9 +7579,24 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     return _download_dataset(_dataset_whole_body_ct_male, load=load)
 
 
-def _whole_body_ct_load_func(dataset):  # pragma: no cover
-    # Process the dataset to create a label map from the segmentation masks
+def _whole_body_ct_load_func(files):  # pragma: no cover
+    def _import_colors_dict():
+        # Import `colors` dict from downloaded `colors.py` module
+        MODULE_PATH = files[1].path
+        MODULE_NAME = 'colors'
+        spec = importlib.util.spec_from_file_location(MODULE_NAME, MODULE_PATH)
+        if spec is not None:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = module
+            spec.loader.exec_module(module)  # type:ignore[union-attr]
+            from colors import colors
 
+            return dict(sorted(colors.items()))
+        else:
+            raise RuntimeError('Unable to load colors.')
+
+    # Process the dataset to create a label map from the segmentation masks
+    dataset = files[0].load()
     segmentations = dataset['segmentations']
 
     # Create label map array from segmentation masks
@@ -7597,13 +7614,28 @@ def _whole_body_ct_load_func(dataset):  # pragma: no cover
     # Add label map to dataset
     dataset['label_map'] = label_map_image
 
+    # Add color and id mappings to dataset
+    dataset.user_dict['colors'] = _import_colors_dict()
+    dataset.user_dict['ids'] = {key: i + 1 for i, key in enumerate(label_names)}
+
     return dataset
 
 
-_dataset_whole_body_ct_male = _SingleFileDownloadableDatasetLoader(
-    'whole_body_ct/s1397.zip',
-    target_file='s1397',
-    load_func=_whole_body_ct_load_func,
+def _whole_body_ct_files_func(name):  # pragma: no cover
+    def func():
+        # Multiple files needed for read, but only one gets loaded
+        dataset = _SingleFileDownloadableDatasetLoader(
+            f'whole_body_ct/{name}.zip',
+            target_file=name,
+        )
+        colors = _DownloadableFile('whole_body_ct/colors.py')
+        return dataset, colors
+
+    return func
+
+
+_dataset_whole_body_ct_male = _MultiFileDownloadableDatasetLoader(
+    _whole_body_ct_files_func('s1397'), load_func=_whole_body_ct_load_func
 )
 
 
@@ -7721,10 +7753,8 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     return _download_dataset(_dataset_whole_body_ct_female, load=load)
 
 
-_dataset_whole_body_ct_female = _SingleFileDownloadableDatasetLoader(
-    'whole_body_ct/s1380.zip',
-    target_file='s1380',
-    load_func=_whole_body_ct_load_func,
+_dataset_whole_body_ct_female = _MultiFileDownloadableDatasetLoader(
+    _whole_body_ct_files_func('s1380'), load_func=_whole_body_ct_load_func
 )
 
 
