@@ -37,7 +37,6 @@ requires-python = '>=3.9'
 [project.optional-dependencies]
 all = ['pyvista[colormaps,io,jupyter]']
 colormaps = ['cmocean', 'colorcet']
-image = ['itk']
 io = ['imageio', 'meshio>=5.2']
 jupyter = [
   'ipywidgets',
