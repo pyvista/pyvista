@@ -2916,3 +2916,62 @@ class ImageDataFilters(DataSetFilters):
             )
 
         return dimensions_mask, dimensions_result
+
+    def threshold_otsu(
+        self,
+        *,
+        scalars: str | None = None,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ) -> pyvista.ImageData:
+        """Threshold the image using Otsu's method.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            The scalars array to threshold. If ``None``, the active scalars are used.
+
+        inplace : bool, default: False
+            If ``True``, the thresholded image is added to the input image in place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            The thresholded image.
+
+        Examples
+        --------
+        Threshold a grayscale image using Otsu's method.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>>
+        >>> image = examples.download_moonlanding_image()
+        >>> thresholded = image.threshold_otsu()
+        >>> thresholded.plot(cmap='viridis')
+
+        """
+        try:
+            import itk
+        except ImportError:  # pragma: no cover
+            raise ImportError('Please install `itk` to use this filter: pip install itk')
+        # Get a copy of input to not overwrite data
+        input_mesh = self.copy()  # type: ignore[attr-defined]
+        if scalars is None:
+            set_default_active_scalars(input_mesh)
+        image_scalars = input_mesh.active_scalars  # type: ignore[attr-defined]
+        dims = input_mesh.dimensions
+        itk_image = itk.image_view_from_array(image_scalars.reshape(dims), is_vector=False)
+        thresholded = itk.otsu_threshold_image_filter(itk_image)
+        thresholded = itk.array_from_image(thresholded).ravel()
+        if inplace:
+            input_mesh.point_data['Thresholded'] = thresholded
+            input_mesh.set_active_scalars('Thresholded', preference='point')
+            return input_mesh
+        output = input_mesh.copy()
+        output.point_data['Thresholded'] = thresholded
+        output.set_active_scalars('Thresholded', preference='point')
+        return output
