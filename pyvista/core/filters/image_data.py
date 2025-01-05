@@ -1237,7 +1237,7 @@ class ImageDataFilters(DataSetFilters):
             Function used internally by SurfaceNets to generate contiguous label data.
 
         :ref:`contouring_example`, :ref:`anatomical_groups_example`
-            Additional examples.
+            Additional examples using this filter.
 
         References
         ----------
