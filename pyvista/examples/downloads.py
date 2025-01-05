@@ -7507,7 +7507,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
         - ``'names_to_colors'`` : maps segment names to 8-bit RGB colors.
         - ``'names_to_ids'`` : maps segment names to integer ids used by the label map.
-         ``'ids_to_colors'`` : maps label ids to colors.
+        - ``'ids_to_colors'`` : maps label ids to colors.
 
         The label ids are the ids used by the included label map.
 
@@ -7710,7 +7710,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
         - ``'names_to_colors'`` : maps segment names to 8-bit RGB colors.
         - ``'names_to_ids'`` : maps segment names to integer ids used by the label map.
-         ``'ids_to_colors'`` : maps label ids to colors.
+        - ``'ids_to_colors'`` : maps label ids to colors.
 
         The label ids are the ids used by the included label map.
 
