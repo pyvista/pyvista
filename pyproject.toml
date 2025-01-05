@@ -76,6 +76,7 @@ test = [
   'imageio<2.37.0',
   'ipython<9.0.0',
   'ipywidgets<9.0.0',
+  'itk<5.4.1',
   'meshio<5.4.0',
   'nest_asyncio<1.6.1',
   'numpydoc==1.8.0',
