@@ -11,9 +11,10 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import ImageData, PyVistaDeprecationWarning
+from pyvista import ImageData
 from pyvista import MultiBlock
 from pyvista import PolyData
+from pyvista import PyVistaDeprecationWarning
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
