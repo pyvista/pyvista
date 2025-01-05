@@ -89,12 +89,14 @@ ct_blank = np.ones_like(ct_array) * ct_background_value
 #    mode:
 #
 #    .. code:: python
+#
 #       import statistics
 #       ct_background_value = statistics.mode(ct_array)
 #
 #    Or may be retrieved from the image metadata (if the metadata is correct):
 #
 #    .. code:: python
+#
 #        nifti_header = pv.get_reader(ct_path).reader.GetNIFTIHeader()
 #        ct_background_value = nifti_header.GetSclInter()
 
