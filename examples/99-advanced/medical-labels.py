@@ -146,7 +146,7 @@ pl.show()
 ###############################################################################
 # Generate Segment Surfaces
 # -------------------------
-# In this section, :func:`~pyvista.ImageDataFilters.contour_labeled` is used
+# In this section, :func:`~pyvista.ImageDataFilters.contour_labels` is used
 # to generate surfaces from segmentation masks. Surfaces can be generated
 # from each mask independently or all at once from a label map.
 
@@ -156,8 +156,8 @@ pl.show()
 # Generate separate surfaces for the skull and the brain.
 skull_mask = seg_multiblock['skull']
 brain_mask = seg_multiblock['brain']
-skull_surf = skull_mask.contour_labeled(smoothing=True)
-brain_surf = brain_mask.contour_labeled(smoothing=True)
+skull_surf = skull_mask.contour_labels()
+brain_surf = brain_mask.contour_labels()
 
 ###############################################################################
 # Plot the surfaces. The skull is clipped for visualization.
@@ -180,7 +180,7 @@ pl.show()
 ###############################################################################
 # Surfaces From Label Map
 # =======================
-# In the previous section, a call to :func:`~pyvista.ImageDataFilters.contour_labeled`
+# In the previous section, a call to :func:`~pyvista.ImageDataFilters.contour_labels`
 # was made to generate each surface separately. This is inefficient, since
 # the underlying `vtkSurfaceNets3D <https://vtk.org/doc/nightly/html/classvtkSurfaceNets3D.html>`_,
 # filter can process multiple labels at once without requiring any additional
@@ -217,7 +217,7 @@ label_map_image['label_map'] = label_map_array
 
 ###############################################################################
 # Generate surfaces for all segments.
-labels_mesh = label_map_image.contour_labeled(smoothing=True)
+labels_mesh = label_map_image.contour_labels()
 
 ###############################################################################
 # Plot the label map. Use a categorical colormap.
