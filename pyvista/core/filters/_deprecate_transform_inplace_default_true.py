@@ -12,7 +12,7 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista._version import version_info
 
 
-def check_inplace(cls: type, inplace: bool | None = None) -> bool:
+def check_inplace(cls: type, inplace: bool | None = None) -> bool:  # numpydoc ignore=RT01
     """Check if user explicitly opted into inplace behavior."""
     # Deprecated v0.45, convert to error in v0.48, remove v0.51
     if inplace is None:
