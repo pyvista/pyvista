@@ -210,7 +210,7 @@ class Transform(_vtk.vtkTransform):
     Note how the meshes have different positions since post- and pre-multiplication
     produce different transformations.
 
-    >>> mesh_post = pv.Sphere().transform(transform_post)
+    >>> mesh_post = pv.Sphere().transform(transform_post, inplace=False)
     >>> mesh_pre = pv.Cone().transform(transform_pre, inplace=False)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_post, color='goldenrod')
