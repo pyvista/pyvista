@@ -4820,6 +4820,36 @@ def test_color_labels_color_type_partial_dict(labeled_image, color_type):
         assert color_scalars_name == input_scalars_name + '_rgb'
 
 
+@pytest.mark.parametrize('color_type', ['float_rgb', 'float_rgba'])
+def test_color_labels_color_type_cmap(labeled_image, color_type):
+    labels = pv.ImageData(dimensions=(256, 1, 1))
+    labels['256'] = range(256)
+    colored = labels.color_labels('viridis', color_type=color_type)
+    cmap_colors = pv.get_cmap_safe('viridis').colors
+    for i, color in enumerate(colored.active_scalars):
+        expected_color = cmap_colors[i]
+        if 'rgba' in color_type:
+            expected_color.append(1.0)
+        assert np.array_equal(color, expected_color)
+
+
+LABEL_DATA = [-1, -2, 1]
+
+
+@pytest.mark.parametrize(
+    ('negative_indexing', 'cmap_index'), [(True, LABEL_DATA), (False, np.argsort(LABEL_DATA))]
+)
+def test_color_labels_negative_index(labeled_image, negative_indexing, cmap_index):
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = LABEL_DATA
+    colored = labels.color_labels('viridis', negative_indexing=negative_indexing)
+    color_array = colored.active_scalars
+
+    assert np.array_equal(color_array[0], VIRIDIS_RGB[cmap_index[0]])
+    assert np.array_equal(color_array[1], VIRIDIS_RGB[cmap_index[1]])
+    assert np.array_equal(color_array[2], VIRIDIS_RGB[cmap_index[2]])
+
+
 def test_color_labels_scalars(uniform):
     # Test active scalars
     active_before = uniform.active_scalars_name
@@ -4867,3 +4897,7 @@ def test_color_labels_invalid_input(uniform):
         uniform.color_labels([[1]])
     with pytest.raises(ValueError, match=match):
         uniform.color_labels('fake')
+
+    match = 'Multi-component scalars are not supported for coloring. Scalar array Normals must be one-dimensional.'
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().color_labels(scalars='Normals')
