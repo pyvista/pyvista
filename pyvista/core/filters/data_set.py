@@ -7072,8 +7072,8 @@ class DataSetFilters:
             When ``True``, modifies the dataset inplace.
 
             .. deprecated:: 0.45.0
-            `inplace` was previously defaulted to `True`. For API consistency this will be
-            changed to `False`.
+                `inplace` was previously defaulted to `True`. For API consistency this will be
+                changed to `False`.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
