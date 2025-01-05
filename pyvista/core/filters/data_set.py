@@ -7057,6 +7057,9 @@ class DataSetFilters:
             :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
             properties.
 
+        .. deprecated:: 0.45.0
+            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
+
         Parameters
         ----------
         trans : TransformLike
@@ -7070,10 +7073,6 @@ class DataSetFilters:
 
         inplace : bool, default: True
             When ``True``, modifies the dataset inplace.
-
-            .. deprecated:: 0.45.0
-                `inplace` was previously defaulted to `True`. For API consistency this will be
-                changed to `False`.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.

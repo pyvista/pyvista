@@ -236,6 +236,9 @@ class CompositeFilters:
             See also the notes at :func:`pyvista.DataSetFilters.transform` which is
             used by this filter under the hood.
 
+        .. deprecated:: 0.45.0
+            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
+
         Parameters
         ----------
         trans : TransformLike
@@ -248,10 +251,6 @@ class CompositeFilters:
 
         inplace : bool, default: True
             When ``True``, modifies the dataset inplace.
-
-            .. deprecated:: 0.45.0
-            `inplace` was previously defaulted to `True`. For API consistency this will be
-            changed to `False`.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
