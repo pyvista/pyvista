@@ -104,8 +104,6 @@ def plot_anatomy(search_terms: list[str]):
     colored_surface = group_surface.color_labels(colors=ids_to_colors)
 
     # Plot the label map.
-    # Allow empty meshes since some of the labels may not exist.
-    pv.global_theme.allow_empty_mesh = True
     pl = pv.Plotter()
     pl.add_mesh(colored_surface)
     pl.view_zx()
