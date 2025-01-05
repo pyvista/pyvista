@@ -30,8 +30,7 @@ from pyvista import examples
 dataset = examples.download_whole_body_ct_female()
 
 ###############################################################################
-# Load the label map used for plotting different anatomical groups. See the
-# <TODO ADD _medical_labels ref> for details on how to create a label map.
+# Load the label map used for plotting different anatomical groups.
 label_map = dataset['label_map']
 
 ###############################################################################
@@ -48,19 +47,14 @@ colors_dict = dataset.user_dict['colors']
 ###############################################################################
 # Color Mapping
 # =============
-# Show the color mapping included with the dataset.
+# Show the color mapping included with the dataset. Print the dictionary and format
+# it to visually align the RGB values.
 #
-# .. raw:: html
+# .. note
 #
-#    <details><summary>Click show the full list of labels and colors.</summary>
-#
-#   .. note::
-#       This mapping is included with the PyVista
-#       :func:`male <pyvista.examples.downloads.download_whole_body_ct_male>` and
-#       :func:`female <pyvista.examples.downloads.download_whole_body_ct_female>`
-#       whole body datasets.
-#
-# Print the dictionary and format it to visually align the RGB values.
+#     This mapping is specific to the PyVista datasets and is not part of the
+#     TotalSegmentator data.
+
 print(
     '{\n'
     + '\n'.join(
@@ -69,10 +63,6 @@ print(
     )
     + '\n}',
 )
-
-# .. raw:: html
-#
-#    </details>
 
 
 ###############################################################################
