@@ -1,5 +1,5 @@
 """
-.. _anatomical_groups:
+.. _anatomical_groups_example:
 
 Visualize Anatomical Groups
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,7 +45,7 @@ label_ids = names_to_ids.values()
 names_to_colors = dataset.user_dict['colors']
 
 # Create a mapping from ids to colors. This will be used to color the contours
-# with :meth:`~pyvista.DataSetFilters.contour_labels`.
+# with :meth:`~pyvista.DataSetFilters.color_labels`.
 ids_to_colors = {names_to_ids[name]: names_to_colors[name] for name in label_names}
 
 ###############################################################################

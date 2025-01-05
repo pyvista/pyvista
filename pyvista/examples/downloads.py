@@ -7566,6 +7566,9 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     .. seealso::
 
+        :ref:`anatomical_groups_example`
+            Additional examples using this dataset.
+
         :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
@@ -7739,6 +7742,9 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     >>> pl.show()
 
     .. seealso::
+
+        :ref:`anatomical_groups_example`
+            Additional examples using this dataset.
 
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
             See this dataset in the Dataset Gallery for more info.
