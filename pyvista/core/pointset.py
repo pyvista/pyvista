@@ -210,7 +210,7 @@ class _PointSet(DataSet):
             the points, normals and active vectors are transformed. This is
             only valid when not updating in place.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
