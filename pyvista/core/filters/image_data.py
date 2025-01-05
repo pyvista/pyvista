@@ -2962,7 +2962,7 @@ class ImageDataFilters(DataSetFilters):
         input_mesh = self.copy()  # type: ignore[attr-defined]
         if scalars is None:
             set_default_active_scalars(input_mesh)
-        image_scalars = input_mesh.active_scalars  # type: ignore[attr-defined]
+        image_scalars = input_mesh.active_scalars
         dims = input_mesh.dimensions
         itk_image = itk.image_view_from_array(image_scalars.reshape(dims), is_vector=False)
         thresholded = itk.otsu_threshold_image_filter(itk_image)
