@@ -11,7 +11,7 @@ import pytest
 import vtk
 
 import pyvista as pv
-from pyvista import ImageData
+from pyvista import ImageData, PyVistaDeprecationWarning
 from pyvista import MultiBlock
 from pyvista import PolyData
 from pyvista import RectilinearGrid
@@ -891,3 +891,9 @@ def test_multiblock_partitioned_zip(container):
     assert len(zipped_container[0]) == len(zipped_list[0])
     for i, j in itertools.product(range(2), repeat=2):
         assert zipped_container[i][j] is zipped_list[i][j] is None
+
+
+def test_transform_filter_inplace_default_warns(multiblock_poly):
+    expected_msg = 'The default value of `inplace` for the filter `MultiBlock.transform` will change in the future.'
+    with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
+        _ = multiblock_poly.transform(np.eye(4))

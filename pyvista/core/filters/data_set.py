@@ -7113,15 +7113,9 @@ class DataSetFilters:
         >>> transformed.plot(show_edges=True)
 
         """
-        if inplace is None:
-            warnings.warn(
-                """
-The default value of `inplace` for the `dataset.transform` filter will change in the future.
- Previously it defaulted to `True`, but will change to `False`.
- Explictly set `inplace` to `True` or `False` to silence this warning. """,
-                PyVistaDeprecationWarning,
-            )
-            inplace = True  # The old default behavior
+        from ._deprecate_transform_inplace_default_true import check_inplace
+
+        inplace = check_inplace(cls=type(self), inplace=inplace)
 
         if inplace and isinstance(self, pyvista.RectilinearGrid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')

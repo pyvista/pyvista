@@ -227,7 +227,7 @@ class CompositeFilters:
         self,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
-        inplace: bool = False,
+        inplace: bool | None = None,
         progress_bar: bool = False,
     ):
         """Transform all blocks in this composite dataset.
@@ -246,8 +246,12 @@ class CompositeFilters:
             When ``True``, all arrays with three components are transformed.
             Otherwise, only the normals and vectors are transformed.
 
-        inplace : bool, default: False
+        inplace : bool, default: True
             When ``True``, modifies the dataset inplace.
+
+            .. deprecated:: 0.45.0
+            `inplace` was previously defaulted to `True`. For API consistency this will be
+            changed to `False`.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -276,6 +280,10 @@ class CompositeFilters:
         >>> transformed.plot(show_edges=True)
 
         """
+        from ._deprecate_transform_inplace_default_true import check_inplace
+
+        inplace = check_inplace(cls=type(self), inplace=inplace)
+
         trans = pyvista.Transform(trans)
         output = self if inplace else self.copy()  # type: ignore[attr-defined]
         for name in self.keys():  # type: ignore[attr-defined]
