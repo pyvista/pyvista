@@ -73,7 +73,7 @@ print(
 # To visual a particular group of anatomic regions, we first define a function
 # to filter the labels by name. Given a list of terms, the function returns
 # any label which contains any of the search terms.
-def filter_labels(search_terms: list[str]):
+def filter_labels(label_names: list[str], search_terms: list[str]):
     def include_label(label_name: str):
         return any(target in label_name for target in search_terms)
 
@@ -83,14 +83,14 @@ def filter_labels(search_terms: list[str]):
 ###############################################################################
 # We also define a look-up function to return the colors for a subset of the
 # labels.
-def lookup_colors(labels: list[str]):
-    return [colors_dict[label] for label in labels]
+def lookup_colors(colors_dict: dict[str, tuple[int, int, int]], label_names: list[str]):
+    return [colors_dict[name] for name in label_names]
 
 
 ###############################################################################
 # Define a similar look-up for the label ids.
-def lookup_ids(labels: list[str]):
-    return [label_ids_dict[label] for label in labels]
+def lookup_ids(label_ids_dict: dict[str, int], label_names: list[str]):
+    return [label_ids_dict[name] for name in label_names]
 
 
 ###############################################################################
@@ -100,13 +100,13 @@ def lookup_ids(labels: list[str]):
 # with those terms, generate contours for the labels, and plot the result.
 def plot_anatomy(search_terms: list[str]):
     # Get a list of labels which contain any of the listed terms.
-    group_names = filter_labels(search_terms)
+    group_names = filter_labels(label_names, search_terms)
 
     # Get the label ids corresponding to the matched labels.
-    group_ids = lookup_ids(group_names)
+    group_ids = lookup_ids(label_ids_dict, group_names)
 
     # Get the label colors to use for plotting.
-    group_colors = lookup_colors(group_names)
+    group_colors = lookup_colors(colors_dict, group_names)
 
     # Selectively generate surfaces for the specified labels.
     group_surface = dataset['label_map'].contour_labels(select_inputs=group_ids)
