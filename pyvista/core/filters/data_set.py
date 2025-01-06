@@ -8953,8 +8953,8 @@ class DataSetFilters:
         | dict[float, ColorLike] = 'glasbey_category10',
         *,
         coloring_mode: Literal['index', 'cycler'] | None = None,
-        negative_indexing: bool = False,
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
+        negative_indexing: bool = False,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'cell',
         output_scalars: str | None = None,
@@ -9026,10 +9026,6 @@ class DataSetFilters:
               and each unique value in the input scalars is assigned a color in increasing
               order.
 
-        negative_indexing : bool, default: False
-            Allow indexing ``colors`` with negative values. Only valid when
-            ``coloring_mode`` is ``'index'``.
-
         color_type : 'int_rgb' | 'float_rgb' | 'int_rgba' | 'float_rgba', default: 'int_rgb'
             Type of the color array to store. By default, the colors are stored as
             RGB integers to reduce memory usage.
@@ -9037,6 +9033,10 @@ class DataSetFilters:
             .. note::
                 The color type affects the default value for unspecified colors when
                 a dictionary is used. See ``colors`` for details.
+
+        negative_indexing : bool, default: False
+            Allow indexing ``colors`` with negative values. Only valid when
+            ``coloring_mode`` is ``'index'``.
 
         scalars : str, optional
             Name of scalars with labels. Defaults to currently active scalars.
