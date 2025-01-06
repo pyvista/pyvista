@@ -16,6 +16,8 @@ import warnings
 import numpy as np
 
 if TYPE_CHECKING:  # pragma: no cover
+    from typing import Any
+
     from .._typing_core import ArrayLike
     from .._typing_core import NumpyArray
     from .._typing_core import VectorLike
@@ -317,3 +319,26 @@ def _reciprocal(x: ArrayLike[float], tol: float = 1e-8) -> NumpyArray[float]:
     x[~zero] = np.reciprocal(x[~zero])
     x[zero] = 0
     return x
+
+
+class _classproperty(property):
+    """Read-only class property decorator.
+
+    Use this decaorator as an alternative to chaining `@classmethod`
+    and `@property` which is deprecated.
+
+    See:
+    - https://docs.python.org/library/functions.html#classmethod
+    - https://stackoverflow.com/a/13624858
+
+    Examples
+    --------
+    >>> from pyvista.core.utilities.misc import _classproperty
+    >>> class Foo:
+    ...     @_classproperty
+    ...     def bar(cls): ...
+
+    """
+
+    def __get__(self: property, owner_self: Any, owner_cls: type | None = None) -> Any:
+        return self.fget(owner_cls)  # type: ignore[misc]

@@ -229,11 +229,11 @@ def read(
 
     Load a meshio file.
 
-    >>> mesh = pv.read("mesh.obj")  # doctest:+SKIP
+    >>> mesh = pv.read('mesh.obj')  # doctest:+SKIP
 
     Load a pickled mesh file.
 
-    >>> mesh = pv.read("mesh.pkl")  # doctest:+SKIP
+    >>> mesh = pv.read('mesh.pkl')  # doctest:+SKIP
 
     """
     if file_format is not None and force_ext is not None:
