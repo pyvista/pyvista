@@ -788,7 +788,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 raise ValueError(
                     f'data length of ({data.shape[0]}) != required length ({array_len})',
                 )
-
+            if array_len > 0 and data.size == 0:
+                raise ValueError(
+                    f"Empty arrays are not allowed. Array '{name}' cannot have a size of 0."
+                )
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
             # pyvista_ndarray already contains the reference to the vtk object

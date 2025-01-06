@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -106,6 +107,30 @@ def test_cell_data_bad_value(grid):
 
     with pytest.raises(ValueError):  # noqa: PT011
         grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
+
+
+@pytest.mark.parametrize('attribute', ['point_data', 'cell_data'])
+def test_point_cell_data_empty_array_raises_error(uniform, attribute):
+    # Define empty array
+    length = uniform.n_points if attribute == 'point_data' else uniform.n_cells
+    shape = (length, 0)
+    empty_array = np.ones(shape)
+    assert empty_array.size == 0
+    assert empty_array.shape == shape
+
+    data = getattr(uniform, attribute)
+    match = "Empty arrays are not allowed. Array 'new_array' cannot have a size of 0."
+    with pytest.raises(ValueError, match=re.escape(match)):
+        data['new_array'] = empty_array
+
+
+@pytest.mark.parametrize('attribute', ['point_data', 'cell_data'])
+def test_point_cell_data_empty_mesh_empty_array(attribute):
+    poly = pv.PolyData()
+    data = getattr(poly, attribute)
+    data['new_array'] = []
+    assert 'new_array' in data
+    assert data['new_array'].size == 0
 
 
 def test_point_cell_data_single_scalar_no_exception_raised():
