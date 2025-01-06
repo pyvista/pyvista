@@ -16,6 +16,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import BoundsTuple
 from pyvista.core import _validation
+from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
@@ -394,9 +395,7 @@ class AxesAssembly(_XYZAssembly):
 
     Position and orient the axes in space.
 
-    >>> axes = pv.AxesAssembly(
-    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
-    ... )
+    >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
@@ -778,9 +777,7 @@ class AxesAssembly(_XYZAssembly):
 
         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
 
-        >>> axes_assembly.set_actor_prop(
-        ...     'style', 'wireframe', axis='x', part='shaft'
-        ... )
+        >>> axes_assembly.set_actor_prop('style', 'wireframe', axis='x', part='shaft')
         >>> axes_assembly.get_actor_prop('style')
         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
 
@@ -904,45 +901,6 @@ def _validate_label_sequence(labels: Sequence[str], n_labels: int | Sequence[int
     return labels
 
 
-def _validate_color_sequence(
-    color: ColorLike | Sequence[ColorLike],
-    n_colors: int | None = None,
-) -> tuple[Color, ...]:
-    """Validate a color sequence.
-
-    If `n_colors` is specified, the output will have `n` colors. For single-color
-    inputs, the color is copied and a sequence of `n` identical colors is returned.
-    For inputs with multiple colors, the number of colors in the input must
-    match `n_colors`.
-
-    If `n_colors` is None, no broadcasting or length-checking is performed.
-    """
-    try:
-        # Assume we have one color
-        color_list = [Color(color)]  # type: ignore[arg-type]
-        n_colors = 1 if n_colors is None else n_colors
-        return tuple(color_list * n_colors)
-    except ValueError:
-        if isinstance(color, (tuple, list)):
-            try:
-                color_list = [_validate_color_sequence(c, n_colors=1)[0] for c in color]
-                if len(color_list) == 1:
-                    n_colors = 1 if n_colors is None else n_colors
-                    color_list = color_list * n_colors
-
-                # Only return if we have the correct number of colors
-                if n_colors is not None and len(color_list) == n_colors:
-                    return tuple(color_list)
-            except ValueError:
-                pass
-    raise ValueError(
-        f'Invalid color(s):\n'
-        f'\t{color}\n'
-        f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.',
-    )
-
-
 class AxesAssemblySymmetric(AxesAssembly):
     """Symmetric assembly of arrow-style axes parts.
 
@@ -1050,7 +1008,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     only show text for the positive axes.
 
     >>> axes_assembly = pv.AxesAssemblySymmetric(
-    ...     x_label=('X', ""), y_label=('Y', ""), z_label=('Z', "")
+    ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
