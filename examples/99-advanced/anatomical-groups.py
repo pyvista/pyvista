@@ -30,23 +30,20 @@ from pyvista import examples
 dataset = examples.download_whole_body_ct_female()
 
 ###############################################################################
-# Load the label map used for plotting different anatomical groups.
+# Get the label map used for plotting different anatomical groups.
 label_map = dataset['label_map']
 
 ###############################################################################
 # Get metadata associated with the dataset
 
-# Get the dict which maps the label names to the integer ids in the label map
-names_to_ids = dataset.user_dict['ids']
-label_names = names_to_ids.keys()
-label_ids = names_to_ids.values()
+# Get a list of all label names. This list will be filtered by group.
+label_names = dataset['segmentations'].keys()
 
-# Get the RGB color mapping
-names_to_colors = dataset.user_dict['colors']
-
-# Create a mapping from ids to colors. This will be used to color the contours
-# with :meth:`~pyvista.DataSetFilters.color_labels`.
-ids_to_colors = {names_to_ids[name]: names_to_colors[name] for name in label_names}
+# Get color and id mappings included with the dataset. These are used to filter and
+# color the contours.
+names_to_colors = dataset.user_dict['names_to_colors']
+names_to_ids = dataset.user_dict['names_to_ids']
+ids_to_colors = dataset.user_dict['ids_to_colors']
 
 ###############################################################################
 # Color Mapping
