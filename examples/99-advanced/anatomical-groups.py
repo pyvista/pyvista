@@ -69,9 +69,13 @@ print(
 ###############################################################################
 # Utility Functions
 # -----------------
-# Define a few helper functions to visualize the data.
-#
-# To visual a particular group of anatomic regions, we first define a function
+# Define helper functions to visualize the data.
+
+
+###############################################################################
+# filter_labels
+# =============
+# To visualize a particular group of anatomic regions, we first define a function
 # to filter the labels by name. Given a list of terms, the function returns
 # any label which contains any of the search terms.
 def filter_labels(label_names: list[str], search_terms: list[str]):
@@ -82,8 +86,8 @@ def filter_labels(label_names: list[str], search_terms: list[str]):
 
 
 ###############################################################################
-# Plotting Function
-# -----------------
+# plot_anatomy
+# ============
 # Define a function which, given a list of terms, will lookup labels associated
 # with those terms, generate contours for the labels, and plot the result.
 def plot_anatomy(search_terms: list[str]):
@@ -109,8 +113,13 @@ def plot_anatomy(search_terms: list[str]):
 
 
 ###############################################################################
+# Anatomical Groups
+# -----------------
+# Group the labels and visualize the result.
+
+###############################################################################
 # Cardiovascular System
-# ---------------------
+# =====================
 # Show segments of the cardiovascular system.
 
 # Define terms which describe all relevant segments.
@@ -129,7 +138,7 @@ plot_anatomy(cardio)
 
 ###############################################################################
 # Gastrointestinal System
-# -----------------------
+# =======================
 # Show segments of the gastrointestinal system.
 
 # Define terms which describe all relevant segments.
@@ -148,7 +157,7 @@ plot_anatomy(gastro)
 
 ###############################################################################
 # Spine
-# -----
+# =====
 # Show segments of the spinal.
 
 # Define terms which describe all relevant segments.
@@ -164,7 +173,7 @@ plot_anatomy(spine)
 
 ###############################################################################
 # Other Organs
-# ------------
+# ============
 # Show other organs not included in the cardiovascular or gastrointestinal
 # systems.
 
@@ -189,7 +198,7 @@ plot_anatomy(other_organs)
 
 ###############################################################################
 # Muscles
-# -------
+# =======
 # Show the muscles.
 
 # Define terms which describe all relevant segments.
@@ -204,7 +213,7 @@ plot_anatomy(muscles)
 
 ###############################################################################
 # Ribs
-# ----
+# ====
 # Show the ribs.
 
 # Define terms which describe all relevant segments.
@@ -220,7 +229,7 @@ plot_anatomy(ribs)
 
 ###############################################################################
 # Skeleton
-# --------
+# ========
 # Show the skeleton.
 
 # Define terms which describe all relevant segments.
