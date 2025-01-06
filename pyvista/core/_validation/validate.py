@@ -1288,9 +1288,10 @@ def _validate_color_sequence(
                     return tuple(color_list)
             except ValueError:
                 pass
-    raise ValueError(
+    msg = (
         f'Invalid color(s):\n'
         f'\t{color}\n'
         f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.',
+        f'or a sequence of {n_colors} ColorLike colors.'
     )
+    raise ValueError(msg)

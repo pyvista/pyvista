@@ -9166,13 +9166,14 @@ class DataSetFilters:
             try:
                 return _validate_color_sequence(seq)
             except ValueError:
-                raise ValueError(
+                msg = (
                     'Invalid colors. Colors must be one of:\n'
                     '  - sequence of color-like values,\n'
                     '  - dict with color-like values,\n'
                     '  - named colormap string.\n'
                     f'Got: {seq}'
                 )
+                raise ValueError(msg)
 
         def _is_index_like(array_, max_value):
             if np.issubdtype(array_.dtype, np.integer) or np.array_equal(array, np.floor(array_)):
@@ -9211,7 +9212,8 @@ class DataSetFilters:
 
         if isinstance(colors, dict):
             if coloring_mode is not None:
-                raise TypeError('Coloring mode cannot be set when a color dictionary is specified.')
+                msg = 'Coloring mode cannot be set when a color dictionary is specified.'
+                raise TypeError(msg)
             colors_ = _local_validate_color_sequence(cast(list[ColorLike], list(colors.values())))
             color_rgb_sequence = [getattr(c, color_type) for c in colors_]
             items = zip(colors.keys(), color_rgb_sequence)
@@ -9225,9 +9227,8 @@ class DataSetFilters:
                     pass
                 else:
                     if not isinstance(cmap, matplotlib.colors.ListedColormap):
-                        raise ValueError(
-                            f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
-                        )
+                        msg = f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
+                        raise ValueError(msg)
                     # Avoid unnecessary conversion and set color sequence directly in float cases
                     cmap_colors = cast(list[list[float]], cmap.colors)
                     if color_type == 'float_rgb':
@@ -9252,10 +9253,11 @@ class DataSetFilters:
 
             if coloring_mode == 'index':
                 if not _is_index_like(array, max_value=n_colors):
-                    raise ValueError(
+                    msg = (
                         f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
+                    raise ValueError(msg)
                 keys: Iterable[float] = range(n_colors)
                 values: Iterable[Any] = color_rgb_sequence
             else:
