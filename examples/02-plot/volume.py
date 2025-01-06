@@ -198,7 +198,7 @@ dataset = examples.download_whole_body_ct_male()
 ct_image = dataset['ct']
 heart_mask = dataset['segmentations']['heart']
 
-###############################################################################
+# %%
 # Use the segmentation mask to isolate the heart in the CT image.
 #
 # Initialize a new array and image with CT background values. Here, we set the scalar
