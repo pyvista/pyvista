@@ -19,7 +19,7 @@ from __future__ import annotations
 import pyvista as pv
 from pyvista import examples
 
-###############################################################################
+# %%
 # Load Dataset
 # ------------
 # Load a TotalSegmentator dataset. Can be the
@@ -29,11 +29,11 @@ from pyvista import examples
 # `TotalSegmentator dataset <https://zenodo.org/records/10047292>`_.
 dataset = examples.download_whole_body_ct_female()
 
-###############################################################################
+# %%
 # Get the label map used for plotting different anatomical groups.
 label_map = dataset['label_map']
 
-###############################################################################
+# %%
 # Get metadata associated with the dataset
 
 # Get a list of all label names. This list will be filtered by group.
@@ -45,7 +45,7 @@ names_to_colors = dataset.user_dict['names_to_colors']
 names_to_ids = dataset.user_dict['names_to_ids']
 ids_to_colors = dataset.user_dict['ids_to_colors']
 
-###############################################################################
+# %%
 # Color Mapping
 # =============
 # Show the color mapping included with the dataset. Print the dictionary and format
@@ -65,14 +65,13 @@ print(
     + '\n}',
 )
 
-
-###############################################################################
+# %%
 # Utility Functions
 # -----------------
 # Define helper functions to visualize the data.
 
 
-###############################################################################
+# %%
 # filter_labels
 # =============
 # To visualize a particular group of anatomic regions, we first define a function
@@ -85,7 +84,7 @@ def filter_labels(label_names: list[str], search_terms: list[str]):
     return [label for label in label_names if include_label(label)]
 
 
-###############################################################################
+# %%
 # plot_anatomy
 # ============
 # Define a function which, given a list of terms, will lookup labels associated
@@ -112,12 +111,12 @@ def plot_anatomy(search_terms: list[str]):
     pl.show()
 
 
-###############################################################################
+# %%
 # Anatomical Groups
 # -----------------
 # Group the labels and visualize the result.
 
-###############################################################################
+# %%
 # Cardiovascular System
 # =====================
 # Show segments of the cardiovascular system.
@@ -136,7 +135,7 @@ cardio = [
 # Plot the labels associated with these terms.
 plot_anatomy(cardio)
 
-###############################################################################
+# %%
 # Gastrointestinal System
 # =======================
 # Show segments of the gastrointestinal system.
@@ -154,8 +153,7 @@ gastro = [
 # Plot the labels associated with these terms.
 plot_anatomy(gastro)
 
-
-###############################################################################
+# %%
 # Spine
 # =====
 # Show segments of the spinal.
@@ -170,8 +168,7 @@ spine = [
 # Plot the labels associated with these terms.
 plot_anatomy(spine)
 
-
-###############################################################################
+# %%
 # Other Organs
 # ============
 # Show other organs not included in the cardiovascular or gastrointestinal
@@ -195,8 +192,7 @@ other_organs = [
 # Plot the labels associated with these terms.
 plot_anatomy(other_organs)
 
-
-###############################################################################
+# %%
 # Muscles
 # =======
 # Show the muscles.
@@ -211,7 +207,7 @@ muscles = [
 # Plot the labels associated with these terms.
 plot_anatomy(muscles)
 
-###############################################################################
+# %%
 # Ribs
 # ====
 # Show the ribs.
@@ -226,8 +222,7 @@ ribs = [
 # Plot the labels associated with these terms.
 plot_anatomy(ribs)
 
-
-###############################################################################
+# %%
 # Skeleton
 # ========
 # Show the skeleton.
