@@ -119,7 +119,7 @@ def test_point_cell_data_empty_array_raises_error(uniform, attribute):
     assert empty_array.shape == shape
 
     data = getattr(uniform, attribute)
-    match = "Empty arrays are not allowed. Array 'new_array' cannot have a size of 0."
+    match = "Empty arrays are not allowed. Array 'new_array' cannot have shape ("
     with pytest.raises(ValueError, match=re.escape(match)):
         data['new_array'] = empty_array
 
