@@ -183,6 +183,8 @@ pl.show()
 
 
 # %%
+# .. _volume_with_mask_example:
+#
 # Volume With Segmentation Mask
 # -----------------------------
 # Visualize a medical image with a corresponding binary segmentation mask.
