@@ -9076,7 +9076,7 @@ class DataSetFilters:
         pyvista_ndarray([0, 1, 2, 3, 4])
 
         Color the labels with the filter then plot them. Note that the
-        ``'glasbey_category10'`` is used by default.
+        ``'glasbey_category10'`` color map is used by default.
 
         >>> colored_labels = image_labels.color_labels()
         >>> colored_labels.plot()
