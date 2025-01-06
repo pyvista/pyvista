@@ -9063,20 +9063,27 @@ class DataSetFilters:
         >>> image_labels = examples.load_channels()
         >>> image_labels = image_labels.extract_subset(voi=(75, 109, 75, 109, 85, 100))
 
+        Plot the dataset with default coloring. The plotter by default uniformly samples
+        from all 256 colors in the color map based on the data's range.
+
+        >>> image_labels.plot(cmap='glasbey_category10')
+
         Show label ids of the dataset.
 
         >>> label_ids = np.unique(image_labels.active_scalars)
         >>> label_ids
         pyvista_ndarray([0, 1, 2, 3, 4])
 
-        Color the labels and plot them.
+        Color the labels with the filter then plot them.
 
         >>> colored_labels = image_labels.color_labels()
         >>> colored_labels.plot()
 
         Since the labels are unsigned integers, the ``'index'`` coloring mode is used
-        by default. This mode ensures that labels have a consistent coloring regardless
-        of the input. For example, we can crop the dataset further.
+        by default. Unlike the uniform sampling used by the plotter in the previous
+        plot, the colormap is instead indexed using the label values. This ensures
+        that labels have a consistent coloring regardless of the input. For example,
+        we can crop the dataset further.
 
         >>> subset_labels = image_labels.extract_subset(voi=(15, 34, 28, 34, 12, 15))
 
