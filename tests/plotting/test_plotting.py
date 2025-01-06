@@ -1398,7 +1398,7 @@ def test_plot_texture():
 def test_plot_numpy_texture():
     """Text adding a np.ndarray texture to a plot"""
     globe = examples.load_globe()
-    texture_np = np.asarray(imageio.imread(examples.mapfile))
+    texture_np = np.asarray(imageio.v2.imread(examples.mapfile))
     plotter = pv.Plotter()
     plotter.add_mesh(globe, texture=texture_np)
 
@@ -1407,7 +1407,7 @@ def test_plot_numpy_texture():
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
-    texture = numpy_to_texture(imageio.imread(examples.mapfile))
+    texture = numpy_to_texture(imageio.v2.imread(examples.mapfile))
     plotter = pv.Plotter()
     plotter.add_mesh(globe, texture=texture)
     plotter.show()
