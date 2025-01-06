@@ -4898,6 +4898,10 @@ def test_color_labels_invalid_input(uniform):
     with pytest.raises(ValueError, match=match):
         uniform.color_labels('fake')
 
+    match = "Negative indexing is not supported with 'cycler' mode enabled."
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels(coloring_mode='cycler', negative_indexing=True)
+
     match = 'Multi-component scalars are not supported for coloring. Scalar array Normals must be one-dimensional.'
     with pytest.raises(ValueError, match=match):
         pv.Sphere().color_labels(scalars='Normals')

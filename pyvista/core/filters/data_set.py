@@ -9256,6 +9256,9 @@ class DataSetFilters:
                     'index' if np.all(_is_index_like(array, max_value=n_colors)) else 'cycler'
                 )
 
+            _validation.check_contains(
+                ['index', 'cycler'], must_contain=coloring_mode, name='coloring_mode'
+            )
             if coloring_mode == 'index':
                 if not np.all(_is_index_like(array, max_value=n_colors)):
                     raise ValueError(
@@ -9273,6 +9276,10 @@ class DataSetFilters:
                 keys = keys_
                 values = values_
             elif coloring_mode == 'cycler':
+                if negative_indexing:
+                    raise ValueError(
+                        "Negative indexing is not supported with 'cycler' mode enabled."
+                    )
                 keys = np.unique(array)
                 values = cycler('color', color_rgb_sequence)
 
