@@ -39,6 +39,7 @@ import numpy as np
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.utilities.misc import _classproperty
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
@@ -47,6 +48,7 @@ from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
 from pyvista.plotting.colors import _CSS_COLORS
 from pyvista.plotting.colors import _PARAVIEW_COLORS
 from pyvista.plotting.colors import _TABLEAU_COLORS
+from pyvista.plotting.colors import _VTK_COLORS
 from pyvista.plotting.colors import _format_color_dict
 
 if TYPE_CHECKING:
@@ -80,18 +82,6 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
-
-
-class classproperty(property):
-    """Read-only class property decorator.
-
-    Used as an alternative to chaining @classmethod and @property which is deprecated.
-
-    See https://stackoverflow.com/a/13624858
-    """
-
-    def __get__(self, owner_self, owner_cls):
-        return self.fget(owner_cls)
 
 
 def _aligned_dedent(txt):
@@ -452,6 +442,8 @@ def _get_color_source_badge(name: str) -> str:
         return ':bdg-success:`TAB`'
     elif name in _format_color_dict(_PARAVIEW_COLORS):
         return ':bdg-danger:`PV`'
+    elif name in _format_color_dict(_VTK_COLORS):
+        return ':bdg-secondary:`VTK`'
     else:
         msg = f'Invalid color name "{name}".'
         raise KeyError(msg)
@@ -467,21 +459,21 @@ ALL_COLORS: tuple[Color] = tuple(pv.Color(c) for c in pv.hexcolors.keys())
 GRAYS_SATURATION_THRESHOLD = 0.15
 
 # Lightness constants
-LOWER_LIGHTNESS_THRESHOLD = 0.1
+LOWER_LIGHTNESS_THRESHOLD = 0.15
 UPPER_LIGHTNESS_THRESHOLD = 0.9
 
 BROWN_SATURATION_LIGHTNESS_THRESHOLD = 1.2
 
 # Hue constants in range [0, 1]
 _360 = 360.0
-RED_UPPER_BOUND = 10 / _360
+RED_UPPER_BOUND = 8 / _360
 ORANGE_UPPER_BOUND = 39 / _360
 YELLOW_UPPER_BOUND = 61 / _360
 GREEN_UPPER_BOUND = 157 / _360
 CYAN_UPPER_BOUND = 187 / _360
 BLUE_UPPER_BOUND = 248 / _360
 VIOLET_UPPER_BOUND = 290 / _360
-MAGENTA_UPPER_BOUND = 348 / _360
+MAGENTA_UPPER_BOUND = 351 / _360
 
 
 class ColorClassification(StrEnum):
@@ -1903,7 +1895,7 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
 
     name = 'all_datasets_carousel'
 
-    @classproperty
+    @_classproperty
     def doc(cls):
         return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
 

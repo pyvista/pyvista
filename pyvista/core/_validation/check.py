@@ -236,9 +236,9 @@ def check_sorted(
             msg = f'Axis {axis} is out of bounds for ndim {ndim}.'
             raise ValueError(msg)
 
-    if axis is None and ndim >= 1:
+    if axis is None and ndim >= 1:  # type: ignore[unreachable]
         # Emulate np.sort(), which flattens array when axis is None
-        array = array.ravel(order='A')
+        array = array.ravel(order='A')  # type: ignore[unreachable]
         ndim = 1
         axis = 0
 
@@ -779,7 +779,7 @@ def check_string(obj: str, /, *, allow_subclass: bool = True, name: str = 'Objec
     Check if an object is a string.
 
     >>> from pyvista import _validation
-    >>> _validation.check_string("eggs")
+    >>> _validation.check_string('eggs')
 
     """
     check_instance(obj, str, allow_subclass=allow_subclass, name=name)
@@ -813,7 +813,7 @@ def check_sequence(obj: Sequence[Any], /, *, name: str = 'Object') -> None:
     >>> import numpy as np
     >>> from pyvista import _validation
     >>> _validation.check_sequence([1, 2, 3])
-    >>> _validation.check_sequence("A")
+    >>> _validation.check_sequence('A')
 
     """
     check_instance(obj, Sequence, allow_subclass=True, name=name)
@@ -902,7 +902,7 @@ def check_instance(
 
     Check if an object is an instance of one of several types.
 
-    >>> _validation.check_instance("eggs", (int, str))
+    >>> _validation.check_instance('eggs', (int, str))
 
     """
     if not isinstance(name, str):
@@ -977,7 +977,7 @@ def check_type(obj: object, /, classinfo: type | tuple[type, ...], *, name: str 
     Check if an object is type ``dict`` or ``set``.
 
     >>> from pyvista import _validation
-    >>> _validation.check_type({'spam': "eggs"}, (dict, set))
+    >>> _validation.check_type({'spam': 'eggs'}, (dict, set))
 
     """
     check_instance(obj, classinfo, allow_subclass=False, name=name)
@@ -1075,7 +1075,7 @@ def check_contains(container: Container[Any], /, must_contain: Any, *, name: str
     Check if ``"A"`` is in a list of strings.
 
     >>> from pyvista import _validation
-    >>> _validation.check_contains(["A", "B", "C"], must_contain="A")
+    >>> _validation.check_contains(['A', 'B', 'C'], must_contain='A')
 
     """
     if must_contain not in container:

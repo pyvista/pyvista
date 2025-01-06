@@ -501,7 +501,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
            >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-           >>> chart.x_axis.label = "Axis Label"
+           >>> chart.x_axis.label = 'Axis Label'
            >>> chart.show()
 
         """
@@ -623,7 +623,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
            Revert to automatic axis scaling.
 
-           >>> chart.x_axis.behavior = "auto"
+           >>> chart.x_axis.behavior = 'auto'
            >>> chart.show()
            >>> chart.x_axis.range
            [0.0, 2.0]
@@ -834,9 +834,15 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
            >>> chart = pv.Chart2D()
            >>> _ = chart.line([0, 1, 2], [2, 1, 3])
            >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
-           >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
-           ...                             "Small?", "Not large", "Large?",
-           ...                             "Very large"]
+           >>> chart.y_axis.tick_labels = [
+           ...     'Very small',
+           ...     'Small',
+           ...     'Still small',
+           ...     'Small?',
+           ...     'Not large',
+           ...     'Large?',
+           ...     'Very large',
+           ... ]
            >>> chart.show()
 
            Revert back to automatic tick placement.
@@ -884,9 +890,15 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
            >>> chart = pv.Chart2D()
            >>> _ = chart.line([0, 1, 2], [2, 1, 3])
            >>> chart.y_axis.tick_locations = (0.2, 0.4, 0.6, 1, 1.5, 2, 3)
-           >>> chart.y_axis.tick_labels = ["Very small", "Small", "Still small",
-           ...                             "Small?", "Not large", "Large?",
-           ...                             "Very large"]
+           >>> chart.y_axis.tick_labels = [
+           ...     'Very small',
+           ...     'Small',
+           ...     'Still small',
+           ...     'Small?',
+           ...     'Not large',
+           ...     'Large?',
+           ...     'Very large',
+           ... ]
            >>> chart.show()
 
            Revert back to automatic tick placement.
@@ -897,7 +909,7 @@ class Axis(_vtkWrapper, _vtk.vtkAxis):
 
            Specify a custom label format to use (fixed notation with precision 2).
 
-           >>> chart.y_axis.tick_labels = "2f"
+           >>> chart.y_axis.tick_labels = '2f'
            >>> chart.show()
 
         """
@@ -1812,7 +1824,7 @@ class _Plot(DocSubs):
            >>> import pyvista as pv
            >>> chart = {chart_init}
            >>> plot = {plot_init}
-           >>> plot.label = "My awesome plot"
+           >>> plot.label = 'My awesome plot'
            >>> chart.show()
 
         """
@@ -1924,7 +1936,7 @@ class _MultiCompPlot(_Plot):
            >>> import pyvista as pv
            >>> chart = {multichart_init}
            >>> plot = {multiplot_init}
-           >>> plot.color_scheme = "warm"
+           >>> plot.color_scheme = 'warm'
            >>> chart.show()
 
         """
@@ -1954,7 +1966,7 @@ class _MultiCompPlot(_Plot):
            >>> import pyvista as pv
            >>> chart = {multichart_init}
            >>> plot = {multiplot_init}
-           >>> plot.colors = ["b", "g", "r", "c"]
+           >>> plot.colors = ['b', 'g', 'r', 'c']
            >>> chart.show()
 
         """
@@ -2035,7 +2047,7 @@ class _MultiCompPlot(_Plot):
 
            Modify the labels.
 
-           >>> plot.labels = ["A", "B", "C", "D"]
+           >>> plot.labels = ['A', 'B', 'C', 'D']
            >>> chart.show()
 
         """
@@ -2074,7 +2086,7 @@ class _MultiCompPlot(_Plot):
 
            Modify the label.
 
-           >>> plot.label = "My awesome plot"
+           >>> plot.label = 'My awesome plot'
            >>> chart.show()
 
         """
@@ -2130,8 +2142,8 @@ class LinePlot2D(_Plot, _vtk.vtkPlotLine):
        >>> import numpy as np
        >>> chart = pv.Chart2D()
        >>> x = np.linspace(0, 1, 100)
-       >>> y = np.sin(6.5*x-1)
-       >>> _ = chart.line(x, y, "y", 4)
+       >>> y = np.sin(6.5 * x - 1)
+       >>> _ = chart.line(x, y, 'y', 4)
        >>> chart.background_texture = examples.load_globe_texture()
        >>> chart.hide_axes()
        >>> chart.show()
@@ -2290,7 +2302,7 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
 
        >>> import pyvista as pv
        >>> import numpy as np
-       >>> x = np.linspace(0, 2*np.pi, 20)
+       >>> x = np.linspace(0, 2 * np.pi, 20)
        >>> y = np.sin(x)
        >>> chart = pv.Chart2D()
        >>> _ = chart.scatter(x, y)
@@ -2457,7 +2469,7 @@ class ScatterPlot2D(_Plot, _vtk.vtkPlotPoints):
 
            Change the marker style.
 
-           >>> plot.marker_style = "d"
+           >>> plot.marker_style = 'd'
            >>> chart.show()
 
         """
@@ -2517,11 +2529,22 @@ class AreaPlot(_Plot, _vtk.vtkPlotArea):
        >>> chart = pv.Chart2D()
        >>> _ = chart.area(x, p_min, p_max)
        >>> chart.x_axis.tick_locations = x
-       >>> chart.x_axis.tick_labels = ["Jan", "Feb", "Mar", "Apr", "May",
-       ...                             "Jun", "Jul", "Aug", "Sep", "Oct",
-       ...                             "Nov", "Dec"]
-       >>> chart.x_axis.label = "Month"
-       >>> chart.y_axis.label = "Precipitation [mm]"
+       >>> chart.x_axis.tick_labels = [
+       ...     'Jan',
+       ...     'Feb',
+       ...     'Mar',
+       ...     'Apr',
+       ...     'May',
+       ...     'Jun',
+       ...     'Jul',
+       ...     'Aug',
+       ...     'Sep',
+       ...     'Oct',
+       ...     'Nov',
+       ...     'Dec',
+       ... ]
+       >>> chart.x_axis.label = 'Month'
+       >>> chart.y_axis.label = 'Precipitation [mm]'
        >>> chart.show()
 
     """
@@ -2704,13 +2727,21 @@ class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
        >>> y_w = [8, 8, 7, 8, 7, 0, 0]
        >>> y_r = [5, 2.5, 4.5, 3.5, 6, 9, 6.5]
        >>> y_t = [2, 2.5, 3, 2, 2, 2, 1]
-       >>> labels = ["Sleep", "Household", "Work", "Relax", "Transport"]
+       >>> labels = ['Sleep', 'Household', 'Work', 'Relax', 'Transport']
        >>> chart = pv.Chart2D()
        >>> _ = chart.bar(x, [y_s, y_h, y_w, y_r, y_t], label=labels)
        >>> chart.x_axis.tick_locations = x
-       >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-       >>> chart.x_label = "Day of week"
-       >>> chart.y_label = "Average time spent"
+       >>> chart.x_axis.tick_labels = [
+       ...     'Mon',
+       ...     'Tue',
+       ...     'Wed',
+       ...     'Thu',
+       ...     'Fri',
+       ...     'Sat',
+       ...     'Sun',
+       ... ]
+       >>> chart.x_label = 'Day of week'
+       >>> chart.y_label = 'Average time spent'
        >>> chart.grid = False  # Disable the grid lines
        >>> chart.show()
 
@@ -2856,7 +2887,7 @@ class BarPlot(_MultiCompPlot, _vtk.vtkPlotBar):
 
            Change the orientation to horizontal.
 
-           >>> plot.orientation = "H"
+           >>> plot.orientation = 'H'
            >>> chart.show()
 
         """
@@ -2908,21 +2939,29 @@ class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
 
        >>> import pyvista as pv
        >>> import numpy as np
-       >>> year = [f"{y}" for y in np.arange(2011, 2021)]
+       >>> year = [f'{y}' for y in np.arange(2011, 2021)]
        >>> x = np.arange(len(year))
-       >>> n_e = [1739, 4925, 9515, 21727, 31452, 29926, 40648,
-       ...        57761, 76370, 93702]
-       >>> n_h = [5563, 7642, 11937, 13905, 22807, 46700, 60875,
-       ...        53689, 46650, 50321]
-       >>> n_f = [166556, 157249, 151552, 138183, 129669,
-       ...        113985, 92965, 73683, 57097, 29499]
+       >>> n_e = [1739, 4925, 9515, 21727, 31452, 29926, 40648, 57761, 76370, 93702]
+       >>> n_h = [5563, 7642, 11937, 13905, 22807, 46700, 60875, 53689, 46650, 50321]
+       >>> n_f = [
+       ...     166556,
+       ...     157249,
+       ...     151552,
+       ...     138183,
+       ...     129669,
+       ...     113985,
+       ...     92965,
+       ...     73683,
+       ...     57097,
+       ...     29499,
+       ... ]
        >>> chart = pv.Chart2D()
        >>> plot = chart.stack(x, [n_e, n_h, n_f])
-       >>> plot.labels = ["Electric", "Hybrid", "Fossil"]
-       >>> chart.x_axis.label = "Year"
+       >>> plot.labels = ['Electric', 'Hybrid', 'Fossil']
+       >>> chart.x_axis.label = 'Year'
        >>> chart.x_axis.tick_locations = x
        >>> chart.x_axis.tick_labels = year
-       >>> chart.y_axis.label = "New car sales"
+       >>> chart.y_axis.label = 'New car sales'
        >>> chart.show()
 
     """
@@ -3018,7 +3057,7 @@ class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
+           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 1]])
            >>> chart.show()
 
            Update the stack sizes.
@@ -3071,7 +3110,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
        >>> import pyvista as pv
        >>> import numpy as np
-       >>> x = np.linspace(0, 2*np.pi, 20)
+       >>> x = np.linspace(0, 2 * np.pi, 20)
        >>> y = np.sin(x)
        >>> chart = pv.Chart2D()
        >>> _ = chart.scatter(x, y)
@@ -3086,14 +3125,21 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
        >>> e = np.abs(rng.normal(scale=2, size=7))
        >>> z = rng.integers(0, 5, 7)
        >>> chart = pv.Chart2D()
-       >>> _ = chart.area(x, y-e, y+e, color=(0.12, 0.46, 0.71, 0.2))
-       >>> _ = chart.line(x, y, color="tab:blue", style="--", label="Scores")
-       >>> _ = chart.scatter(x, y, color="tab:blue", style="d")
-       >>> _ = chart.bar(x, z, color="tab:orange", label="Violations")
+       >>> _ = chart.area(x, y - e, y + e, color=(0.12, 0.46, 0.71, 0.2))
+       >>> _ = chart.line(x, y, color='tab:blue', style='--', label='Scores')
+       >>> _ = chart.scatter(x, y, color='tab:blue', style='d')
+       >>> _ = chart.bar(x, z, color='tab:orange', label='Violations')
        >>> chart.x_axis.tick_locations = x
-       >>> chart.x_axis.tick_labels = ["Mon", "Tue", "Wed", "Thu", "Fri",
-       ...                             "Sat", "Sun"]
-       >>> chart.x_label = "Day of week"
+       >>> chart.x_axis.tick_labels = [
+       ...     'Mon',
+       ...     'Tue',
+       ...     'Wed',
+       ...     'Thu',
+       ...     'Fri',
+       ...     'Sat',
+       ...     'Sun',
+       ... ]
+       >>> chart.x_label = 'Day of week'
        >>> chart.show()
 
     """
@@ -3197,7 +3243,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
         Examples
         --------
         >>> import pyvista as pv
-        >>> m, l, c = pv.Chart2D._parse_format("x--b")
+        >>> m, l, c = pv.Chart2D._parse_format('x--b')
 
         """
         marker_style = ''
@@ -3527,7 +3573,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3],[1, 2, 1]])
+           >>> plot = chart.stack([0, 1, 2], [[2, 1, 3], [1, 2, 1]])
            >>> chart.show()
 
         """
@@ -3559,7 +3605,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+           >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], 'o-')
            >>> chart.show()
 
            Retrieve all plots in the chart.
@@ -3570,7 +3616,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
            Retrieve all line plots in the chart.
 
-           >>> line_plots = [*chart.plots("line")]
+           >>> line_plots = [*chart.plots('line')]
            >>> line_plot == line_plots[0]
            True
 
@@ -3596,7 +3642,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], "o-")
+           >>> scatter_plot, line_plot = chart.plot([0, 1, 2], [2, 1, 3], 'o-')
            >>> chart.show()
 
            Remove the scatter plot from the chart.
@@ -3635,13 +3681,13 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
-           >>> _ = chart.plot([0, 1, 2], [2, 1, 3], "o-b")
-           >>> _ = chart.plot([-2, -1, 0], [3, 1, 2], "d-r")
+           >>> _ = chart.plot([0, 1, 2], [2, 1, 3], 'o-b')
+           >>> _ = chart.plot([-2, -1, 0], [3, 1, 2], 'd-r')
            >>> chart.show()
 
            Remove all scatter plots from the chart.
 
-           >>> chart.clear("scatter")
+           >>> chart.clear('scatter')
            >>> chart.show()
 
         """
@@ -3706,8 +3752,8 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
            >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-           >>> chart.x_label = "Horizontal axis"
-           >>> chart.y_label = "Vertical axis"
+           >>> chart.x_label = 'Horizontal axis'
+           >>> chart.y_label = 'Vertical axis'
            >>> chart.show()
 
         """
@@ -3731,8 +3777,8 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
            >>> import pyvista as pv
            >>> chart = pv.Chart2D()
            >>> _ = chart.line([0, 1, 2], [2, 1, 3])
-           >>> chart.x_label = "Horizontal axis"
-           >>> chart.y_label = "Vertical axis"
+           >>> chart.x_label = 'Horizontal axis'
+           >>> chart.y_label = 'Vertical axis'
            >>> chart.show()
 
         """
@@ -3805,7 +3851,7 @@ class Chart2D(_Chart, _vtk.vtkChartXY):
 
            >>> import pyvista as pv
            >>> import numpy as np
-           >>> x = np.linspace(0, 2*np.pi, 20)
+           >>> x = np.linspace(0, 2 * np.pi, 20)
            >>> y = np.sin(x)
            >>> chart = pv.Chart2D()
            >>> _ = chart.line(x, y, 'r')
@@ -3885,9 +3931,13 @@ class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
 
        >>> import pyvista as pv
        >>> import numpy as np
-       >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
+       >>> rng = np.random.default_rng(
+       ...     1
+       ... )  # Seeded random number generator used for data generation
        >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
-       >>> chart = pv.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
+       >>> chart = pv.ChartBox(
+       ...     normal_data, labels=[f'x ~ N({i},1)' for i in range(5)]
+       ... )
        >>> chart.show()
 
     """
@@ -3972,7 +4022,9 @@ class BoxPlot(_MultiCompPlot, _vtk.vtkPlotBox):
 
            >>> import pyvista as pv
            >>> import numpy as np
-           >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
+           >>> rng = np.random.default_rng(
+           ...     1
+           ... )  # Seeded random number generator for data generation
            >>> chart = pv.ChartBox([rng.normal(size=100)])
            >>> chart.show()
 
@@ -4023,9 +4075,13 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
 
        >>> import pyvista as pv
        >>> import numpy as np
-       >>> rng = np.random.default_rng(1)  # Seeded random number generator used for data generation
+       >>> rng = np.random.default_rng(
+       ...     1
+       ... )  # Seeded random number generator used for data generation
        >>> normal_data = [rng.normal(i, size=50) for i in range(5)]
-       >>> chart = pv.ChartBox(normal_data, labels=[f"x ~ N({i},1)" for i in range(5)])
+       >>> chart = pv.ChartBox(
+       ...     normal_data, labels=[f'x ~ N({i},1)' for i in range(5)]
+       ... )
        >>> chart.show()
 
     """
@@ -4094,7 +4150,9 @@ class ChartBox(_Chart, _vtk.vtkChartBox):
 
            >>> import pyvista as pv
            >>> import numpy as np
-           >>> rng = np.random.default_rng(1)  # Seeded random number generator for data generation
+           >>> rng = np.random.default_rng(
+           ...     1
+           ... )  # Seeded random number generator for data generation
            >>> chart = pv.ChartBox([rng.normal(size=100)])
            >>> chart.show()
 
@@ -4225,7 +4283,13 @@ class PiePlot(_MultiCompPlot, _vtkWrapper, _vtk.vtkPlotPie):
 
        >>> import pyvista as pv
        >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
-       >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
+       >>> l = [
+       ...     'Social benefits',
+       ...     'Governance',
+       ...     'Economic policy',
+       ...     'Education',
+       ...     'Other',
+       ... ]
        >>> chart = pv.ChartPie(x, labels=l)
        >>> chart.show()
 
@@ -4336,7 +4400,13 @@ class ChartPie(_Chart, _vtk.vtkChartPie):
 
        >>> import pyvista as pv
        >>> x = [128.3, 32.9, 31.8, 29.3, 21.2]
-       >>> l = ["Social benefits", "Governance", "Economic policy", "Education", "Other"]
+       >>> l = [
+       ...     'Social benefits',
+       ...     'Governance',
+       ...     'Economic policy',
+       ...     'Education',
+       ...     'Other',
+       ... ]
        >>> chart = pv.ChartPie(x, labels=l)
        >>> chart.show()
 
@@ -4773,8 +4843,8 @@ class ChartMPL(_Chart, _vtk.vtkImageItem):
            >>> import pyvista as pv
            >>> import matplotlib.pyplot as plt
            >>> f, ax = plt.subplots()
-           >>> _ = ax.plot([0, 1, 2], [2, 1, 3], label="Line")
-           >>> _ = ax.scatter([0, 1, 2], [3, 2, 1], label="Points")
+           >>> _ = ax.plot([0, 1, 2], [2, 1, 3], label='Line')
+           >>> _ = ax.scatter([0, 1, 2], [3, 2, 1], label='Points')
            >>> chart = pv.ChartMPL(f)
            >>> chart.legend_visible = True
            >>> chart.show()

@@ -7,11 +7,11 @@ from collections.abc import Sequence
 import contextlib
 import functools
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
@@ -39,6 +39,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import Color
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -49,6 +50,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
+    from pyvista.plotting._typing import ColorLike
 
 
 @abstract_class
@@ -168,15 +170,11 @@ class DataSetFilters:
 
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> _ = pl.add_text('Before Alignment')
-        >>> _ = pl.add_mesh(
-        ...     source, style='wireframe', opacity=0.5, line_width=2
-        ... )
+        >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
         >>> _ = pl.add_mesh(transformed)
         >>> pl.subplot(0, 1)
         >>> _ = pl.add_text('After Alignment')
-        >>> _ = pl.add_mesh(
-        ...     source, style='wireframe', opacity=0.5, line_width=2
-        ... )
+        >>> _ = pl.add_mesh(source, style='wireframe', opacity=0.5, line_width=2)
         >>> _ = pl.add_mesh(
         ...     aligned,
         ...     scalars=dist,
@@ -293,9 +291,7 @@ class DataSetFilters:
         >>> axes = pv.AxesAssembly(scale=aligned.length)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(aligned)
-        >>> _ = pl.add_mesh(
-        ...     mesh, style='wireframe', color='black', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(mesh, style='wireframe', color='black', line_width=3)
         >>> _ = pl.add_actor(axes)
         >>> pl.show()
 
@@ -305,14 +301,10 @@ class DataSetFilters:
 
         Plot the result again. The aligned mesh has the same position as the input.
 
-        >>> axes = pv.AxesAssembly(
-        ...     position=mesh.center, scale=aligned.length
-        ... )
+        >>> axes = pv.AxesAssembly(position=mesh.center, scale=aligned.length)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(aligned)
-        >>> _ = pl.add_mesh(
-        ...     mesh, style='wireframe', color='black', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(mesh, style='wireframe', color='black', line_width=3)
         >>> _ = pl.add_actor(axes)
         >>> pl.show()
 
@@ -340,9 +332,7 @@ class DataSetFilters:
         same result by specifying the ``'y'`` direction as the mesh's original "up"
         direction.
 
-        >>> aligned, matrix = mesh.align_xyz(
-        ...     axis_2_direction='y', return_matrix=True
-        ... )
+        >>> aligned, matrix = mesh.align_xyz(axis_2_direction='y', return_matrix=True)
         >>> axes = pv.AxesAssembly(scale=aligned.length)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(aligned)
@@ -351,9 +341,7 @@ class DataSetFilters:
 
         We can optionally return the transformation matrix.
 
-        >>> aligned, matrix = mesh.align_xyz(
-        ...     axis_2_direction='y', return_matrix=True
-        ... )
+        >>> aligned, matrix = mesh.align_xyz(axis_2_direction='y', return_matrix=True)
 
         The matrix can be inverted, for example, to transform objects from the world
         axes back to the original mesh's local coordinate system.
@@ -378,9 +366,7 @@ class DataSetFilters:
         >>> _ = pl.add_mesh(aligned)
         >>> _ = pl.add_actor(axes_aligned)
         >>> # Add original mesh with axes
-        >>> _ = pl.add_mesh(
-        ...     mesh, style='wireframe', color='black', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(mesh, style='wireframe', color='black', line_width=3)
         >>> _ = pl.add_actor(axes_local)
         >>> pl.show()
 
@@ -726,9 +712,7 @@ class DataSetFilters:
         plane are positive, and distances below the plane are negative.
 
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere, scalars='implicit_distance', cmap='bwr'
-        ... )
+        >>> _ = pl.add_mesh(sphere, scalars='implicit_distance', cmap='bwr')
         >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
         >>> pl.show()
 
@@ -814,9 +798,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
-        >>> clipped = dataset.clip_scalar(
-        ...     scalars="sample_point_scalars", value=100
-        ... )
+        >>> clipped = dataset.clip_scalar(scalars='sample_point_scalars', value=100)
         >>> clipped.plot()
 
         Get clipped meshes corresponding to the portions of the mesh above and below 100.
@@ -825,7 +807,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
         >>> _below, _above = dataset.clip_scalar(
-        ...     scalars="sample_point_scalars", value=100, both=True
+        ...     scalars='sample_point_scalars', value=100, both=True
         ... )
 
         Remove the part of the mesh with "sample_point_scalars" below 100.
@@ -834,7 +816,7 @@ class DataSetFilters:
         >>> from pyvista import examples
         >>> dataset = examples.load_hexbeam()
         >>> clipped = dataset.clip_scalar(
-        ...     scalars="sample_point_scalars", value=100, invert=False
+        ...     scalars='sample_point_scalars', value=100, invert=False
         ... )
         >>> clipped.plot()
 
@@ -1080,8 +1062,8 @@ class DataSetFilters:
             progress_bar=progress_bar,
         )
 
-    def slice_orthogonal(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+    def slice_orthogonal(
+        self: ConcreteDataSetType | MultiBlock,
         x: float | None = None,
         y: float | None = None,
         z: float | None = None,
@@ -1141,14 +1123,17 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
+                data = self[i]
                 output.append(
-                    self[i].slice_orthogonal(
+                    data.slice_orthogonal(
                         x=x,
                         y=y,
                         z=z,
                         generate_triangles=generate_triangles,
                         contour=contour,
-                    ),
+                    )
+                    if data is not None
+                    else data
                 )
             return output
         output.append(
@@ -1180,8 +1165,8 @@ class DataSetFilters:
         )
         return output
 
-    def slice_along_axis(  # type: ignore[misc]
-        self: ConcreteDataSetType,
+    def slice_along_axis(
+        self: ConcreteDataSetType | MultiBlock,
         n: int = 5,
         axis: Literal['x', 'y', 'z', 0, 1, 2] = 'x',
         tolerance: float | None = None,
@@ -1282,8 +1267,9 @@ class DataSetFilters:
         output = pyvista.MultiBlock()
         if isinstance(self, pyvista.MultiBlock):
             for i in range(self.n_blocks):
+                data = self[i]
                 output.append(
-                    self[i].slice_along_axis(
+                    data.slice_along_axis(
                         n=n,
                         axis=ax_label,
                         tolerance=tolerance,
@@ -1291,7 +1277,9 @@ class DataSetFilters:
                         contour=contour,
                         bounds=bounds,
                         center=center,
-                    ),
+                    )
+                    if data is not None
+                    else data
                 )
             return output
         for i in range(n):
@@ -2136,7 +2124,6 @@ class DataSetFilters:
         ...         - 2 * (a - b) * xyz
         ...         - a * b * xx_yy
         ...     ) ** 2 - 4 * (xx + yy) * (a_xx + b_yy - xyz * (a - b)) ** 2
-        ...
         >>> n = 100
         >>> x_min, y_min, z_min = -1.35, -1.7, -0.65
         >>> grid = pv.ImageData(
@@ -2599,15 +2586,13 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.load_random_hills()
-        >>> arrows = mesh.glyph(
-        ...     scale="Normals", orient="Normals", tolerance=0.05
-        ... )
+        >>> arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(arrows, color="black")
+        >>> actor = pl.add_mesh(arrows, color='black')
         >>> actor = pl.add_mesh(
         ...     mesh,
-        ...     scalars="Elevation",
-        ...     cmap="terrain",
+        ...     scalars='Elevation',
+        ...     cmap='terrain',
         ...     show_scalar_bar=False,
         ... )
         >>> pl.show()
@@ -2928,9 +2913,7 @@ class DataSetFilters:
         >>> medium = pv.Sphere(
         ...     center=(-2, 0, 0), phi_resolution=15, theta_resolution=15
         ... )
-        >>> small = pv.Sphere(
-        ...     center=(0, 0, 0), phi_resolution=7, theta_resolution=7
-        ... )
+        >>> small = pv.Sphere(center=(0, 0, 0), phi_resolution=7, theta_resolution=7)
         >>> mesh = large + medium + small
 
         Plot their connectivity.
@@ -3450,10 +3433,10 @@ class DataSetFilters:
         >>> warped = sphere.warp_by_vector()
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> actor = pl.add_text("Before warp")
+        >>> actor = pl.add_text('Before warp')
         >>> actor = pl.add_mesh(sphere, color='white')
         >>> pl.subplot(0, 1)
-        >>> actor = pl.add_text("After warp")
+        >>> actor = pl.add_text('After warp')
         >>> actor = pl.add_mesh(warped, color='white')
         >>> pl.show()
 
@@ -4008,7 +3991,7 @@ class DataSetFilters:
         >>> mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
         >>> data_to_probe = examples.load_uniform()
         >>> result = mesh.sample(data_to_probe)
-        >>> result.plot(scalars="Spatial Point Data")
+        >>> result.plot(scalars='Spatial Point Data')
 
         If sampling from a set of points represented by a ``(n, 3)``
         shaped ``numpy.ndarray``, they need to be converted to a
@@ -4018,7 +4001,7 @@ class DataSetFilters:
         >>> points = np.array([[1.5, 5.0, 6.2], [6.7, 4.2, 8.0]])
         >>> mesh = pv.PolyData(points)
         >>> result = mesh.sample(data_to_probe)
-        >>> result["Spatial Point Data"]
+        >>> result['Spatial Point Data']
         pyvista_ndarray([ 46.5 , 225.12])
 
         See :ref:`resampling_example` for more examples using this filter.
@@ -4159,9 +4142,7 @@ class DataSetFilters:
         >>> plane.clear_data()
         >>> plane = plane.interpolate(pdata, sharpness=3)
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     pdata, render_points_as_spheres=True, point_size=50
-        ... )
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(plane, style='wireframe', line_width=5)
         >>> pl.show()
 
@@ -4657,9 +4638,7 @@ class DataSetFilters:
         ...     separating_distance_ratio=0.2,
         ... )
         >>> plotter = pv.Plotter()
-        >>> _ = plotter.add_mesh(
-        ...     streams.tube(radius=0.02), scalars="vorticity_mag"
-        ... )
+        >>> _ = plotter.add_mesh(streams.tube(radius=0.02), scalars='vorticity_mag')
         >>> plotter.view_xy()
         >>> plotter.show()
 
@@ -4813,9 +4792,7 @@ class DataSetFilters:
         >>> plane = plane.interpolate(pdata, sharpness=3.5)
         >>> sample = plane.sample_over_line((-0.5, -0.5, 0), (0.5, 0.5, 0))
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     pdata, render_points_as_spheres=True, point_size=50
-        ... )
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
         >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
         >>> pl.show()
@@ -4894,6 +4871,8 @@ class DataSetFilters:
         See the :ref:`plot_over_line_example` example.
 
         """
+        from matplotlib import pyplot as plt
+
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
             self,
@@ -4977,9 +4956,7 @@ class DataSetFilters:
         ...     [[-0.5, -0.5, 0], [0.5, -0.5, 0], [0.5, 0.5, 0]]
         ... )
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     pdata, render_points_as_spheres=True, point_size=50
-        ... )
+        >>> _ = pl.add_mesh(pdata, render_points_as_spheres=True, point_size=50)
         >>> _ = pl.add_mesh(sample, scalars='values', line_width=10)
         >>> _ = pl.add_mesh(plane, scalars='values', style='wireframe')
         >>> pl.show()
@@ -5036,7 +5013,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
-        >>> uniform["height"] = uniform.points[:, 2]
+        >>> uniform['height'] = uniform.points[:, 2]
         >>> pointa = [
         ...     uniform.bounds.x_max,
         ...     uniform.bounds.y_min,
@@ -5052,9 +5029,7 @@ class DataSetFilters:
         ...     uniform.bounds.y_min,
         ...     uniform.bounds.z_min,
         ... ]
-        >>> sampled_arc = uniform.sample_over_circular_arc(
-        ...     pointa, pointb, center
-        ... )
+        >>> sampled_arc = uniform.sample_over_circular_arc(pointa, pointb, center)
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(uniform, style='wireframe')
         >>> _ = pl.add_mesh(sampled_arc, line_width=10)
@@ -5125,7 +5100,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> uniform = examples.load_uniform()
-        >>> uniform["height"] = uniform.points[:, 2]
+        >>> uniform['height'] = uniform.points[:, 2]
         >>> normal = [0, 0, 1]
         >>> polar = [0, 9, 0]
         >>> center = [
@@ -5241,6 +5216,8 @@ class DataSetFilters:
         ... )  # doctest:+SKIP
 
         """
+        from matplotlib import pyplot as plt
+
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
             self,
@@ -5375,6 +5352,8 @@ class DataSetFilters:
         ... )  # doctest:+SKIP
 
         """
+        from matplotlib import pyplot as plt
+
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
             self,
@@ -5453,9 +5432,7 @@ class DataSetFilters:
         >>> subset.n_cells
         20
         >>> pl = pv.Plotter()
-        >>> actor = pl.add_mesh(
-        ...     grid, style='wireframe', line_width=5, color='black'
-        ... )
+        >>> actor = pl.add_mesh(grid, style='wireframe', line_width=5, color='black')
         >>> actor = pl.add_mesh(subset, color='grey')
         >>> pl.show()
 
@@ -5966,18 +5943,14 @@ class DataSetFilters:
         >>> colors = rng.random((30, 3))
         >>> point_cloud = pv.PointSet(points)
         >>> point_cloud['colors'] = colors
-        >>> plot_kwargs = dict(
-        ...     render_points_as_spheres=True, point_size=50, rgb=True
-        ... )
+        >>> plot_kwargs = dict(render_points_as_spheres=True, point_size=50, rgb=True)
         >>> point_cloud.plot(**plot_kwargs)
 
         Extract values from a single component.
 
         E.g. extract points with a strong red component (i.e. > 0.8).
 
-        >>> extracted = point_cloud.extract_values(
-        ...     ranges=[0.8, 1.0], component_mode=0
-        ... )
+        >>> extracted = point_cloud.extract_values(ranges=[0.8, 1.0], component_mode=0)
         >>> extracted.plot(**plot_kwargs)
 
         Extract values from all components.
@@ -6018,17 +5991,8 @@ class DataSetFilters:
 
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
-            try:
-                scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
-                array_ = get_array(self, scalars_, preference=preference_, err=True)
-            except MissingDataError:
-                msg = (
-                    'No point data or cell data found. Scalar data is required to use this filter.'
-                )
-                raise ValueError(msg)
-            except KeyError:
-                msg = f"Array name '{scalars_}' is not valid and does not exist with this dataset."
-                raise ValueError(msg)
+            scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
+            array_ = get_array(self, scalars_, preference=preference_, err=True)
             association_ = get_array_association(self, scalars_, preference=preference_)
             return array_, association_
 
@@ -6127,9 +6091,17 @@ class DataSetFilters:
                     raise ValueError(msg)
             return values_, ranges_
 
-        # Return empty mesh if input is empty mesh
         if self.n_points == 0:
-            return self.copy()
+            # Empty input, return empty output
+            out = pyvista.UnstructuredGrid()
+            if split:
+                # Do basic validation just to get num blocks for multiblock
+                _, values_ = _get_inputs_from_dict(values)
+                _, ranges_ = _get_inputs_from_dict(ranges)
+                n_values = len(np.atleast_1d(values_)) if values_ is not None else 0
+                n_ranges = len(np.atleast_2d(ranges_)) if ranges_ is not None else 0
+                return pyvista.MultiBlock([out.copy() for _ in range(n_values + n_ranges)])
+            return out
 
         array, association = _validate_scalar_array(scalars, preference)
         array, num_components, component_logic = _validate_component_mode(array, component_mode)
@@ -6317,7 +6289,7 @@ class DataSetFilters:
         >>> surf = grid.extract_surface()
         >>> type(surf)
         <class 'pyvista.core.pointset.PolyData'>
-        >>> surf["vtkOriginalPointIds"]
+        >>> surf['vtkOriginalPointIds']
         pyvista_ndarray([ 0,  2, 36, 27,  7,  8, 81,  1, 18,  4, 54,  3,  6, 45,
                          72,  5, 63,  9, 35, 44, 11, 16, 89, 17, 10, 26, 62, 13,
                          12, 53, 80, 15, 14, 71, 19, 37, 55, 20, 38, 56, 21, 39,
@@ -6325,7 +6297,7 @@ class DataSetFilters:
                          82, 29, 83, 30, 84, 31, 85, 32, 86, 33, 87, 34, 88, 46,
                          73, 47, 74, 48, 75, 49, 76, 50, 77, 51, 78, 52, 79, 64,
                          65, 66, 67, 68, 69, 70])
-        >>> surf["vtkOriginalCellIds"]
+        >>> surf['vtkOriginalCellIds']
         pyvista_ndarray([ 0,  0,  0,  1,  1,  1,  3,  3,  3,  2,  2,  2, 36, 36,
                          36, 37, 37, 37, 39, 39, 39, 38, 38, 38,  5,  5,  9,  9,
                          13, 13, 17, 17, 21, 21, 25, 25, 29, 29, 33, 33,  4,  4,
@@ -6818,17 +6790,13 @@ class DataSetFilters:
         >>> plotter = pv.Plotter(shape=(2, 2))
         >>> _ = plotter.add_mesh(mesh, show_edges=True)
         >>> plotter.subplot(1, 0)
-        >>> _ = plotter.add_mesh(
-        ...     cqual, scalars="DistanceFromCellCenterToFaceCenter"
-        ... )
+        >>> _ = plotter.add_mesh(cqual, scalars='DistanceFromCellCenterToFaceCenter')
         >>> plotter.subplot(0, 1)
-        >>> _ = plotter.add_mesh(
-        ...     cqual, scalars="DistanceFromCellCenterToFacePlane"
-        ... )
+        >>> _ = plotter.add_mesh(cqual, scalars='DistanceFromCellCenterToFacePlane')
         >>> plotter.subplot(1, 1)
         >>> _ = plotter.add_mesh(
         ...     cqual,
-        ...     scalars="AngleFaceNormalAndCellCenterToFaceCenterVector",
+        ...     scalars='AngleFaceNormalAndCellCenterToFaceCenterVector',
         ... )
         >>> plotter.show()
 
@@ -7778,7 +7746,7 @@ class DataSetFilters:
         >>> _ = pl.show_grid()
         >>> mesh2 = mesh1.scale([10.0, 10.0, 10.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
+        >>> pl.show(cpos='xy')
 
         """
         transform = Transform().scale(xyz, point=point)
@@ -7838,7 +7806,7 @@ class DataSetFilters:
         >>> pl.show_axes()
         >>> mesh2 = mesh1.flip_x(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
+        >>> pl.show(cpos='xy')
 
         """
         if point is None:
@@ -7900,7 +7868,7 @@ class DataSetFilters:
         >>> pl.show_axes()
         >>> mesh2 = mesh1.flip_y(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
+        >>> pl.show(cpos='xy')
 
         """
         if point is None:
@@ -7962,7 +7930,7 @@ class DataSetFilters:
         >>> pl.show_axes()
         >>> mesh2 = mesh1.flip_z(inplace=False)
         >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xz")
+        >>> pl.show(cpos='xz')
 
         """
         if point is None:
@@ -8028,7 +7996,7 @@ class DataSetFilters:
         >>> pl.show_axes()
         >>> mesh2 = mesh1.flip_normal([1.0, 1.0, 1.0], inplace=False)
         >>> _ = pl.add_mesh(mesh2)
-        >>> pl.show(cpos="xy")
+        >>> pl.show(cpos='xy')
 
         """
         if point is None:
@@ -8069,14 +8037,14 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> import numpy as np
         >>> sphere = pv.Sphere(theta_resolution=100, phi_resolution=100)
-        >>> sphere.point_data["data"] = 2 * np.ones(sphere.n_points)
+        >>> sphere.point_data['data'] = 2 * np.ones(sphere.n_points)
         >>> integrated = sphere.integrate_data()
 
         There is only 1 point and cell, so access the only value.
 
-        >>> integrated["Area"][0]
+        >>> integrated['Area'][0]
         np.float64(3.14)
-        >>> integrated["data"][0]
+        >>> integrated['data'][0]
         np.float64(6.28)
 
         See the :ref:`integrate_example` for more examples using this filter.
@@ -8304,9 +8272,7 @@ class DataSetFilters:
 
         Return the metadata for the box.
 
-        >>> box, point, axes = mesh.oriented_bounding_box(
-        ...     'outline', return_meta=True
-        ... )
+        >>> box, point, axes = mesh.oriented_bounding_box('outline', return_meta=True)
 
         Use the metadata to plot the box's axes using :class:`~pyvista.AxesAssembly`.
         The assembly is aligned with the x-y-z axes and positioned at the origin by
@@ -8315,9 +8281,7 @@ class DataSetFilters:
         as an inverted rotation matrix.
 
         >>> scale = box.length / 4
-        >>> transform = (
-        ...     pv.Transform().scale(scale).rotate(axes.T).translate(point)
-        ... )
+        >>> transform = pv.Transform().scale(scale).rotate(axes.T).translate(point)
         >>> axes_assembly = pv.AxesAssembly(user_matrix=transform.matrix)
 
         Plot the box and the axes.
@@ -8341,15 +8305,8 @@ class DataSetFilters:
 
         >>> center = pv.merge(box).points.mean(axis=0)
         >>> scale = box.length / 2
-        >>> transform = (
-        ...     pv.Transform()
-        ...     .scale(scale)
-        ...     .rotate(axes.T)
-        ...     .translate(center)
-        ... )
-        >>> axes_assembly = pv.AxesAssemblySymmetric(
-        ...     user_matrix=transform.matrix
-        ... )
+        >>> transform = pv.Transform().scale(scale).rotate(axes.T).translate(center)
+        >>> axes_assembly = pv.AxesAssemblySymmetric(user_matrix=transform.matrix)
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_mesh(mesh)
@@ -8493,9 +8450,7 @@ class DataSetFilters:
 
         Return the metadata for the box.
 
-        >>> box, point, axes = mesh.bounding_box(
-        ...     'outline', return_meta=True
-        ... )
+        >>> box, point, axes = mesh.bounding_box('outline', return_meta=True)
 
         Use the metadata to plot the box's axes using :class:`~pyvista.AxesAssembly`.
         Create the assembly and position it at the box's corner. Scale it to a fraction
@@ -8836,7 +8791,7 @@ class DataSetFilters:
         the difference in label size after sorting.
 
         >>> sorted_label_number, sorted_label_size = np.unique(
-        ...     sorted_labels["packed_labels"], return_counts=True
+        ...     sorted_labels['packed_labels'], return_counts=True
         ... )
         >>> sorted_label_number[:4]
         pyvista_ndarray([0, 1, 2, 3], dtype=uint8)
@@ -9015,6 +8970,311 @@ class DataSetFilters:
             result.set_active_scalars(output_scalars, preference=field)
 
             return result
+
+    def color_labels(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        colors: str
+        | ColorLike
+        | Sequence[ColorLike]
+        | dict[float, ColorLike] = 'glasbey_category10',
+        *,
+        coloring_mode: Literal['index', 'cycler'] | None = None,
+        color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'cell',
+        output_scalars: str | None = None,
+        inplace: bool = False,
+    ):
+        """Add RGB(A) scalars to labeled data.
+
+        This filter adds a color array to map label values to specific colors.
+        The mapping can be specified explicitly with a dictionary or implicitly
+        with a colormap or sequence of colors. The implicit mapping is controlled
+        with two coloring modes:
+
+        -   ``'index'`` : The input scalar values (label ids) are used as index values for
+            indexing the specified ``colors``. This creates a direct relationship
+            between labels and colors such that a given label will always have the same
+            color, regardless of the number of labels present in the dataset.
+
+            This option is used by default for unsigned 8-bit integer inputs, i.e.
+            scalars with whole numbers and a maximum range of ``[0, 255]``.
+
+        -   ``'cycler'`` : The specified ``colors`` are cycled through sequentially,
+            and each unique value in the input scalars is assigned a color in increasing
+            order. Unlike with ``'index'`` mode, the colors are not directly mapped to
+            the labels, but instead depends on the number of labels at the input.
+
+            This option is used by default for floating-point inputs or for inputs
+            with values out of the range ``[0, 255]``.
+
+        By default, a new ``'int_rgb'`` array is added with the same name as the
+        specified ``scalars`` but with ``_rgb`` appended.
+
+        See Also
+        --------
+        pyvista.ImageDataFilters.contour_labels
+            Generate contours from labeled image data. The contours may be colored with this filter.
+
+        pack_labels
+            Make labeled data contiguous. May be used as a pre-processing step before
+            coloring.
+
+        Parameters
+        ----------
+        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
+            Color(s) to use. Specify a dictionary to explicitly control the mapping
+            from label values to colors. Alternatively, specify colors only using a
+            colormap or a sequence of colors and use ``coloring_mode`` to implicitly
+            control the mapping. A single color is also supported to color the entire
+            mesh with one color.
+
+            By default, a variation of the ``'glasbey'`` categorical colormap is used
+            where the first 10 colors are the same default colors used by ``matplotlib``.
+            See `colorcet categorical colormaps <https://colorcet.holoviz.org/user_guide/Categorical.html#>`_
+            for more information.
+
+            .. note::
+                When a dictionary is specified, any scalar values for which a key is
+                not provided is assigned default RGB(A) values of ``nan`` for float colors
+                or ``0``  for integer colors (see ``color_type``). To ensure the color
+                array has no default values, be sure to provide a mapping for any and
+                all possible input label values.
+
+        coloring_mode : 'index' | 'cycler', optional
+            Control how colors are mapped to label values. Has no effect if ``colors``
+            is a dictionary. Specify one of:
+
+            - ``'index'``: The input scalar values (label ids) are used as index
+              values for indexing the specified ``colors``.
+            - ``'cycler'``: The specified ``'colors'`` are cycled through sequentially,
+              and each unique value in the input scalars is assigned a color in increasing
+              order.
+
+        color_type : 'int_rgb' | 'float_rgb' | 'int_rgba' | 'float_rgba', default: 'int_rgb'
+            Type of the color array to store. By default, the colors are stored as
+            RGB integers to reduce memory usage.
+
+            .. note::
+                The color type affects the default value for unspecified colors when
+                a dictionary is used. See ``colors`` for details.
+
+        scalars : str, optional
+            Name of scalars with labels. Defaults to currently active scalars.
+
+        preference : str, default: "cell"
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        output_scalars : str, optional
+            Name of the color scalars array. By default, the output array
+            is the same as ``scalars`` with `_rgb`` or ``_rgba`` appended
+            depending on ``color_type``.
+
+        inplace : bool, default: False
+            If ``True``, the mesh is updated in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with RGB(A) scalars. Output type matches input type.
+
+        Examples
+        --------
+        Load labeled data and crop it to simplify the data.
+
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> image_labels = examples.load_channels()
+        >>> image_labels = image_labels.extract_subset(voi=(75, 109, 75, 109, 85, 100))
+
+        Plot the dataset with default coloring using a categorical color map. The
+        plotter by default uniformly samples from all 256 colors in the color map based
+        on the data's range.
+
+        >>> image_labels.plot(cmap='glasbey_category10')
+
+        Show label ids of the dataset.
+
+        >>> label_ids = np.unique(image_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([0, 1, 2, 3, 4])
+
+        Color the labels with the filter then plot them. Note that the
+        ``'glasbey_category10'`` color map is used by default.
+
+        >>> colored_labels = image_labels.color_labels()
+        >>> colored_labels.plot()
+
+        Since the labels are unsigned integers, the ``'index'`` coloring mode is used
+        by default. Unlike the uniform sampling used by the plotter in the previous
+        plot, the colormap is instead indexed using the label values. This ensures
+        that labels have a consistent coloring regardless of the input. For example,
+        we can crop the dataset further.
+
+        >>> subset_labels = image_labels.extract_subset(voi=(15, 34, 28, 34, 12, 15))
+
+        And show that only three labels remain.
+
+        >>> label_ids = np.unique(subset_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([1, 2, 3])
+
+        Despite the changes to the dataset, the regions have the same coloring
+        as before.
+
+        >>> colored_labels = subset_labels.color_labels()
+        >>> colored_labels.plot()
+
+        Use the ``'cycler'`` coloring mode instead to map label values to colors
+        sequentially.
+
+        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycler')
+        >>> colored_labels.plot()
+
+        Map the colors explicitly using a dictionary.
+
+        >>> colors = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'yellow'}
+        >>> colored_labels = image_labels.color_labels(colors)
+        >>> colored_labels.plot()
+
+        Omit the background value from the mapping and specify float colors. When
+        floats are specified, values without a mapping are assigned ``nan`` values
+        and are not plotted by default.
+
+        >>> colors.pop(0)
+        'black'
+        >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
+        >>> colored_labels.plot()
+
+        Color all labels with a single color.
+
+        >>> colored_labels = image_labels.color_labels('red')
+        >>> colored_labels.plot()
+
+        """
+        # Lazy import since these are from plotting module
+        from cycler import cycler
+        import matplotlib.colors
+
+        from pyvista.core._validation.validate import _validate_color_sequence
+        from pyvista.plotting._typing import ColorLike
+        from pyvista.plotting.colors import get_cmap_safe
+
+        def _local_validate_color_sequence(seq: ColorLike | Sequence[ColorLike]) -> Sequence[Color]:
+            try:
+                return _validate_color_sequence(seq)
+            except ValueError:
+                raise ValueError(
+                    'Invalid colors. Colors must be one of:\n'
+                    '  - sequence of color-like values,\n'
+                    '  - dict with color-like values,\n'
+                    '  - named colormap string.\n'
+                    f'Got: {seq}'
+                )
+
+        def _is_index_like(array_, max_value):
+            if np.issubdtype(array_.dtype, np.integer) or np.array_equal(array, np.floor(array_)):
+                min_, max_ = output_mesh.get_data_range(name)
+                if min_ >= 0 and max_ <= max_value:
+                    return True
+            return False
+
+        _validation.check_contains(
+            ['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'],
+            must_contain=color_type,
+            name='color_type',
+        )
+
+        if 'rgba' in color_type:
+            num_components = 4
+            scalars_suffix = '_rgba'
+        else:
+            num_components = 3
+            scalars_suffix = '_rgb'
+        if 'float' in color_type:
+            default_channel_value = np.nan
+            color_dtype = 'float'
+        else:
+            default_channel_value = 0
+            color_dtype = 'uint8'
+
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = get_array_association(self, name, preference=preference, err=True)
+        output_mesh = self if inplace else self.copy()
+        data = output_mesh.point_data if field == FieldAssociation.POINT else output_mesh.cell_data
+        array = data[name]
+
+        if isinstance(colors, dict):
+            if coloring_mode is not None:
+                raise TypeError('Coloring mode cannot be set when a color dictionary is specified.')
+            colors_ = _local_validate_color_sequence(cast(list[ColorLike], list(colors.values())))
+            color_rgb_sequence = [getattr(c, color_type) for c in colors_]
+            items = zip(colors.keys(), color_rgb_sequence)
+
+        else:
+            _is_rgb_sequence = False
+            if isinstance(colors, str):
+                try:
+                    cmap = get_cmap_safe(colors)
+                except ValueError:
+                    pass
+                else:
+                    if not isinstance(cmap, matplotlib.colors.ListedColormap):
+                        raise ValueError(
+                            f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
+                        )
+                    # Avoid unnecessary conversion and set color sequence directly in float cases
+                    cmap_colors = cast(list[list[float]], cmap.colors)
+                    if color_type == 'float_rgb':
+                        color_rgb_sequence = cmap_colors
+                        _is_rgb_sequence = True
+                    elif color_type == 'float_rgba':
+                        color_rgb_sequence = [(*c, 1.0) for c in cmap_colors]
+                        _is_rgb_sequence = True
+                    else:
+                        colors = cmap_colors
+
+            if not _is_rgb_sequence:
+                color_rgb_sequence = [
+                    getattr(c, color_type) for c in _local_validate_color_sequence(colors)
+                ]
+                if len(color_rgb_sequence) == 1:
+                    color_rgb_sequence = color_rgb_sequence * len(array)
+
+            n_colors = len(color_rgb_sequence)
+            if coloring_mode is None:
+                coloring_mode = 'index' if _is_index_like(array, max_value=n_colors) else 'cycler'
+
+            if coloring_mode == 'index':
+                if not _is_index_like(array, max_value=n_colors):
+                    raise ValueError(
+                        f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
+                        f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
+                    )
+                keys: Iterable[float] = range(n_colors)
+                values: Iterable[Any] = color_rgb_sequence
+            else:
+                keys = np.unique(array)
+                values = cycler('color', color_rgb_sequence)
+
+            items = zip(keys, values)
+
+        colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
+        for label, color in items:
+            if isinstance(color, dict):
+                color = color['color']
+            colors_out[array == label, :] = color
+
+        colors_name = name + scalars_suffix if output_scalars is None else output_scalars
+        data[colors_name] = colors_out
+        output_mesh.set_active_scalars(colors_name)
+
+        return output_mesh
 
 
 def _set_threshold_limit(alg, value, method, invert):

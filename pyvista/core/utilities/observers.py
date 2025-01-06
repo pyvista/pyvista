@@ -62,7 +62,6 @@ class VtkErrorCatcher:
     >>> import pyvista as pv
     >>> with pv.VtkErrorCatcher() as error_catcher:
     ...     sphere = pv.Sphere()
-    ...
 
     """
 

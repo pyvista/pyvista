@@ -668,7 +668,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._decimate  # type: ignore[return-value]
 
     @decimate.setter
-    def decimate(self, decimate: float):
+    def decimate(self, decimate: float | None):
         if decimate is None:
             self._decimate = None
         else:
@@ -1072,7 +1072,7 @@ class _Font(_ThemeConfig):
         return self._title_size  # type: ignore[return-value]
 
     @title_size.setter
-    def title_size(self, title_size: int):
+    def title_size(self, title_size: int | None):
         if title_size is None:
             self._title_size = None
         else:
@@ -1093,7 +1093,7 @@ class _Font(_ThemeConfig):
         return self._label_size  # type: ignore[return-value]
 
     @label_size.setter
-    def label_size(self, label_size: int):
+    def label_size(self, label_size: int | None):
         if label_size is None:
             self._label_size = None
         else:
@@ -1912,23 +1912,21 @@ class Theme(_ThemeConfig):
 
         Common display argument to make sure all else is constant
 
-        >>> dargs = dict(
-        ...     scalars='Elevation', cmap='rainbow', show_edges=True
-        ... )
+        >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
         >>> p = pv.Plotter(shape=(1, 2))
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=False,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     **dargs,
         ... )
         >>> p.subplot(0, 1)
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=True,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     **dargs,
         ... )
         >>> p.link_views()
         >>> p.camera_position = [
