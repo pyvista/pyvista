@@ -8955,7 +8955,7 @@ class DataSetFilters:
         coloring_mode: Literal['index', 'cycler'] | None = None,
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
         scalars: str | None = None,
-        preference: Literal['point', 'cell'] = 'point',
+        preference: Literal['point', 'cell'] = 'cell',
         output_scalars: str | None = None,
         inplace: bool = False,
     ):
@@ -9039,7 +9039,7 @@ class DataSetFilters:
         scalars : str, optional
             Name of scalars with labels. Defaults to currently active scalars.
 
-        preference : str, default: "point"
+        preference : str, default: "cell"
             When ``scalars`` is specified, this is the preferred array
             type to search for in the dataset.  Must be either
             ``'point'`` or ``'cell'``.
@@ -9066,20 +9066,29 @@ class DataSetFilters:
         >>> image_labels = examples.load_channels()
         >>> image_labels = image_labels.extract_subset(voi=(75, 109, 75, 109, 85, 100))
 
+        Plot the dataset with default coloring using a categorical color map. The
+        plotter by default uniformly samples from all 256 colors in the color map based
+        on the data's range.
+
+        >>> image_labels.plot(cmap='glasbey_category10')
+
         Show label ids of the dataset.
 
         >>> label_ids = np.unique(image_labels.active_scalars)
         >>> label_ids
         pyvista_ndarray([0, 1, 2, 3, 4])
 
-        Color the labels and plot them.
+        Color the labels with the filter then plot them. Note that the
+        ``'glasbey_category10'`` color map is used by default.
 
         >>> colored_labels = image_labels.color_labels()
         >>> colored_labels.plot()
 
         Since the labels are unsigned integers, the ``'index'`` coloring mode is used
-        by default. This mode ensures that labels have a consistent coloring regardless
-        of the input. For example, we can crop the dataset further.
+        by default. Unlike the uniform sampling used by the plotter in the previous
+        plot, the colormap is instead indexed using the label values. This ensures
+        that labels have a consistent coloring regardless of the input. For example,
+        we can crop the dataset further.
 
         >>> subset_labels = image_labels.extract_subset(voi=(15, 34, 28, 34, 12, 15))
 
