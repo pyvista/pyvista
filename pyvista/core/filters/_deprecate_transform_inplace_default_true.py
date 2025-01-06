@@ -19,20 +19,21 @@ def check_inplace(cls: type, inplace: bool | None = None) -> bool:  # numpydoc i
         # if inplace is None user has not explicitly opted into inplace behavior
 
         if version_info >= (0, 48):
-            raise RuntimeError("""
-Convert this deprecation warning into an error.
-Also update docstrs for `DataSetFilters.transform` and `CompositeFilters.transform`
-""")
+            raise RuntimeError(
+                'Convert this deprecation warning into an error. '
+                'Also update docstrs for `DataSetFilters.transform` and `CompositeFilters.transform`.'
+            )
         if version_info >= (0, 51):
-            raise RuntimeError("""
-Delete this horrid package.
-Also update docstrs for `DataSetFilters.transform` and `CompositeFilters.transform`
-""")
+            raise RuntimeError(
+                'Delete this horrid package. '
+                'Also update docstrs for `DataSetFilters.transform` and `CompositeFilters.transform`'
+            )
 
-        msg = f"""
-The default value of `inplace` for the filter `{cls.__name__}.transform` will change in the future.
-Previously it defaulted to `True`, but will change to `False`.
-Explicitly set `inplace` to `True` or `False` to silence this warning. """
+        msg = (
+            f'The default value of `inplace` for the filter `{cls.__name__}.transform` will change in the future. '
+            'Previously it defaulted to `True`, but will change to `False`. '
+            'Explicitly set `inplace` to `True` or `False` to silence this warning.'
+        )
         warnings.warn(msg, PyVistaDeprecationWarning)
         inplace = True  # The old default behavior
 
