@@ -4780,7 +4780,7 @@ RED_RGB = pv.Color('red').int_rgb
 
 
 @pytest.mark.parametrize(
-    ('color_input', 'expected_rgba'),
+    ('color_input', 'expected_rgb'),
     [
         ('viridis', VIRIDIS_RGB),
         (COLORS_DICT, COLORS_DICT_RGB),
@@ -4789,12 +4789,12 @@ RED_RGB = pv.Color('red').int_rgb
     ],
     ids=['cmap', 'dict', 'sequence', 'named_color'],
 )
-def test_color_labels_inputs(labeled_image, color_input, expected_rgba):
+def test_color_labels_inputs(labeled_image, color_input, expected_rgb):
     label_scalars = labeled_image.active_scalars
     colored = labeled_image.color_labels(color_input)
     color_scalars = colored.active_scalars
     for id_ in np.unique(label_scalars):
-        assert np.allclose(color_scalars[label_scalars == id_], expected_rgba[id_])
+        assert np.allclose(color_scalars[label_scalars == id_], expected_rgb[id_])
 
 
 @pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba', 'float_rgb', 'float_rgba'])
