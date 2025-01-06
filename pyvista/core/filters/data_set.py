@@ -9063,8 +9063,9 @@ class DataSetFilters:
         >>> image_labels = examples.load_channels()
         >>> image_labels = image_labels.extract_subset(voi=(75, 109, 75, 109, 85, 100))
 
-        Plot the dataset with default coloring. The plotter by default uniformly samples
-        from all 256 colors in the color map based on the data's range.
+        Plot the dataset with default coloring using a categorical color map. The
+        plotter by default uniformly samples from all 256 colors in the color map based
+        on the data's range.
 
         >>> image_labels.plot(cmap='glasbey_category10')
 
@@ -9074,7 +9075,8 @@ class DataSetFilters:
         >>> label_ids
         pyvista_ndarray([0, 1, 2, 3, 4])
 
-        Color the labels with the filter then plot them.
+        Color the labels with the filter then plot them. Note that the
+        ``'glasbey_category10'`` is used by default.
 
         >>> colored_labels = image_labels.color_labels()
         >>> colored_labels.plot()
