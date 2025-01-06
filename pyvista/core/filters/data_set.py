@@ -9036,7 +9036,9 @@ class DataSetFilters:
 
         negative_indexing : bool, default: False
             Allow indexing ``colors`` with negative values. Only valid when
-            ``coloring_mode`` is ``'index'``.
+            ``coloring_mode`` is ``'index'``. This option is useful for coloring data
+            with two independent categories since positive values will be colored
+            differently than negative values.
 
         scalars : str, optional
             Name of scalars with labels. Defaults to currently active scalars.
@@ -9130,6 +9132,28 @@ class DataSetFilters:
         Color all labels with a single color.
 
         >>> colored_labels = image_labels.color_labels('red')
+        >>> colored_labels.plot()
+
+        Modify the scalars and make two of the labels negative.
+
+        >>> scalars = image_labels.active_scalars
+        >>> scalars[scalars > 2] *= -1
+        >>> np.unique(scalars)
+        pyvista_ndarray([-4, -3,  0,  1,  2])
+
+        Color the mesh and enable ``'negative_indexing'``. With this option enabled,
+        the ``'index'`` coloring mode is used by default, and therefore the positive
+        values ``0``, ``1``, and ``2`` are colored with the first, second, and third
+        color in the colormap, respectively. Negative values ``-3`` and ``-4`` are
+        colored with the third-last and fourth-last color in the colormap, respectively.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=True)
+        >>> colored_labels.plot()
+
+        If ``'negative_indexing'`` is disabled, the coloring defaults to the
+        ``'cycler'`` coloring mode instead.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=False)
         >>> colored_labels.plot()
 
         """
