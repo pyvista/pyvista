@@ -9026,7 +9026,11 @@ class DataSetFilters:
               values for indexing the specified ``colors``.
             - ``'cycle'``: The specified ``'colors'`` are cycled through sequentially,
               and each unique value in the input scalars is assigned a color in increasing
-              order.
+              order. Colors are repeated if there are fewer colors than unique values
+              in the input ``scalars``.
+
+            By default, ``'index'`` mode is used if the values can be used to index
+            the input ``colors``, and ``cycle`` mode is used otherwise.
 
         color_type : 'int_rgb' | 'float_rgb' | 'int_rgba' | 'float_rgba', default: 'int_rgb'
             Type of the color array to store. By default, the colors are stored as
