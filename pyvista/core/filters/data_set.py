@@ -9030,7 +9030,7 @@ class DataSetFilters:
               in the input ``scalars``.
 
             By default, ``'index'`` mode is used if the values can be used to index
-            the input ``colors``, and ``cycle`` mode is used otherwise.
+            the input ``colors``, and ``'cycle'`` mode is used otherwise.
 
         color_type : 'int_rgb' | 'float_rgb' | 'int_rgba' | 'float_rgba', default: 'int_rgb'
             Type of the color array to store. By default, the colors are stored as
