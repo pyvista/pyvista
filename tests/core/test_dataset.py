@@ -109,7 +109,7 @@ def test_cell_data_bad_value(grid):
         grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
 
 
-@pytest.mark.parametrize('attribute', ['point_data', 'cell_data'])
+@pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
 def test_point_cell_data_empty_array_raises_error(uniform, attribute):
     # Define empty array
     length = uniform.n_points if attribute == 'point_data' else uniform.n_cells
@@ -124,7 +124,7 @@ def test_point_cell_data_empty_array_raises_error(uniform, attribute):
         data['new_array'] = empty_array
 
 
-@pytest.mark.parametrize('attribute', ['point_data', 'cell_data'])
+@pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
 def test_point_cell_data_empty_mesh_empty_array(attribute):
     poly = pv.PolyData()
     data = getattr(poly, attribute)
