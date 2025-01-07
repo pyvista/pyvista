@@ -788,7 +788,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 raise ValueError(
                     f'data length of ({data.shape[0]}) != required length ({array_len})',
                 )
-            if not all(data.shape):
+            if any(data.shape) and data.size == 0:
                 raise ValueError(
                     f"Empty arrays are not allowed. Array '{name}' cannot have shape {data.shape}."
                 )
