@@ -160,9 +160,9 @@ plot_anatomy(gastro)
 
 # Define terms which describe all relevant segments.
 spine = [
-    'sacrum',
-    'vertebrae',
     'spinal_cord',
+    'vertebrae',
+    'sacrum',
 ]
 
 # Plot the labels associated with these terms.
@@ -176,16 +176,17 @@ plot_anatomy(spine)
 
 # Define terms which describe all relevant segments.
 other_organs = [
-    'spleen',
-    'kidney',
     'brain',
-    'gallbladder',
-    'liver',
-    'pancreas',
-    'adrenal_gland',
-    'lung',
-    'trachea',
+    'spinal_cord',
     'thyroid_gland',
+    'trachea',
+    'lung',
+    'adrenal_gland',
+    'spleen',
+    'liver',
+    'gallbladder',
+    'kidney',
+    'pancreas',
     'prostate',
 ]
 
@@ -233,12 +234,12 @@ skeleton = [
     'clavicula',
     'scapula',
     'humerus',
-    'sacrum',
     'vertebrae',
-    'rib',
     'sternum',
+    'rib',
     'costal_cartilages',
     'hip',
+    'sacrum',
     'femur',
 ]
 
