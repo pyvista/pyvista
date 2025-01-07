@@ -76,7 +76,7 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
             # internal VTK array
             self.table.Get().values = self
 
-    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):  # type: ignore[override]
+    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
