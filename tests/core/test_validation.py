@@ -998,6 +998,8 @@ def test_validate_rotation():
 
 def test_validate_rotation_tolerance():
     # Define valid rotation matrix which fails the check if the tolerance is too low
+    # Matrix values come directly from a CI test failure
+    # See https://github.com/pyvista/pyvista/pull/7053#issuecomment-2571663768
     rotation = np.array(
         [
             [6.1753786e-01, 4.8325321e-01, -6.2057501e-01],
