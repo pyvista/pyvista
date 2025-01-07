@@ -9129,7 +9129,7 @@ class DataSetFilters:
         >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
         >>> colored_labels.plot()
 
-        Load the :func:`~pyvista.examples.download_foot_bones` dataset.
+        Load the :func:`~pyvista.examples.downloads.download_foot_bones` dataset.
 
         >>> dataset = examples.download_foot_bones()
 
