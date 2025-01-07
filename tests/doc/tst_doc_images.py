@@ -25,6 +25,10 @@ FLAKY_TEST_CASES = [
     path for path in os.listdir(FLAKY_IMAGE_DIR) if Path(FLAKY_IMAGE_DIR, path).is_dir()
 ]
 
+pytestmark = pytest.mark.filterwarnings(
+    'ignore:Unknown config option: image_cache_dir:PytestConfigWarning'
+)
+
 
 class _TestCaseTuple(NamedTuple):
     test_name: str
