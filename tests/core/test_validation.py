@@ -991,9 +991,20 @@ def test_validate_rotation():
     with pytest.raises(ValueError, match=match):
         validate_rotation(-I3, must_have_handedness='right')
 
-    match = 'Rotation is not valid. Its inverse must equal its transpose.'
+    match = 'Rotation is not valid. Rotation must be orthogonal.'
     with pytest.raises(ValueError, match=match):
         validate_rotation(I3 * 2)
+
+
+def test_validate_rotation_tolerance():
+    rotation = np.array(
+        [
+            [6.1753786e-01, 4.8325321e-01, -6.2057501e-01],
+            [-2.1952267e-04, 7.8909826e-01, 6.1426693e-01],
+            [7.8654110e-01, -3.7919688e-01, 4.8740414e-01],
+        ]
+    )
+    validate_rotation(rotation)
 
 
 @pytest.mark.parametrize('as_any', [True, False])

@@ -548,9 +548,11 @@ def validate_rotation(
     check_contains(
         ['right', 'left', None], must_contain=must_have_handedness, name='must_have_handedness'
     )
+
     rotation_matrix = validate_transform3x3(rotation, name=name)
-    if not np.allclose(np.linalg.inv(rotation_matrix), rotation_matrix.T):
-        raise ValueError(f'{name} is not valid. Its inverse must equal its transpose.')
+    norm_diff = np.linalg.norm(rotation_matrix @ rotation_matrix.T - np.eye(3), ord='fro')
+    if not np.allclose(norm_diff, 0.0, atol=1e-6):
+        raise ValueError(f'{name} is not valid. Rotation must be orthogonal.')
 
     if must_have_handedness is not None:
         det = np.linalg.det(rotation_matrix)
