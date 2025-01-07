@@ -997,6 +997,7 @@ def test_validate_rotation():
 
 
 def test_validate_rotation_tolerance():
+    # Define valid rotation matrix which fails the check if the tolerance is too low
     rotation = np.array(
         [
             [6.1753786e-01, 4.8325321e-01, -6.2057501e-01],
