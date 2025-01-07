@@ -4737,7 +4737,7 @@ def test_pack_labels_preference(uniform):
     assert np.array_equal(actual_shape, expected_shape)
 
 
-@pytest.mark.parametrize('coloring_mode', ['index', 'cycler', None])
+@pytest.mark.parametrize('coloring_mode', ['index', 'cycle', None])
 def test_color_labels(uniform, coloring_mode):
     default_cmap = pv.get_cmap_safe('glasbey_category10')
     original_scalars_name = uniform.active_scalars_name
