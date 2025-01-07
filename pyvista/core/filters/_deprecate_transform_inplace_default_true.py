@@ -18,12 +18,12 @@ def check_inplace(cls: type, inplace: bool | None = None) -> bool:  # numpydoc i
     if inplace is None:
         # if inplace is None user has not explicitly opted into inplace behavior
 
-        if version_info >= (0, 48):
+        if version_info >= (0, 48):  # pragma: no cover
             raise RuntimeError(
                 'Convert this deprecation warning into an error. '
                 'Also update docstrs for `DataSetFilters.transform` and `CompositeFilters.transform`.'
             )
-        if version_info >= (0, 51):
+        if version_info >= (0, 51):  # pragma: no cover
             raise RuntimeError(
                 'Delete this horrid package. '
                 'Also update docstrs for `DataSetFilters.transform` and `CompositeFilters.transform`'
