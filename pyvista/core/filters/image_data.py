@@ -1579,13 +1579,17 @@ class ImageDataFilters(DataSetFilters):
         VTK_NAME = 'BoundaryLabels'
         PV_NAME = 'boundary_labels'
         if VTK_NAME in output.cell_data.keys():
-            output.rename_array(VTK_NAME, PV_NAME)
-            if boundary_style in ['external', 'internal']:
-                # Output contains all boundary cells, need to remove cells we don't want
-                labels_array = output.cell_data[PV_NAME]
-                is_external = np.any(labels_array == background_value, axis=1)
-                remove = is_external if boundary_style == 'internal' else ~is_external
-                output.remove_cells(remove, inplace=True)
+            labels_array = output.cell_data[VTK_NAME]
+            if not all(labels_array.shape):
+                # Array is empty
+                del labels_array
+            else:
+                output.rename_array(VTK_NAME, PV_NAME)
+                if boundary_style in ['external', 'internal']:
+                    # Output contains all boundary cells, need to remove cells we don't want
+                    is_external = np.any(labels_array == background_value, axis=1)
+                    remove = is_external if boundary_style == 'internal' else ~is_external
+                    output.remove_cells(remove, inplace=True)
 
         if simplify_output is None:
             simplify_output = boundary_style == 'external'
