@@ -7573,8 +7573,8 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
-        :ref:`_volume_with_mask_example`
-            See :ref:`volume_with_mask` for additional examples using this dataset.
+        :ref:`volume_with_mask_example`
+            See additional examples using this dataset.
 
     """
     return _download_dataset(_dataset_whole_body_ct_male, load=load)
@@ -7720,8 +7720,8 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
-        :ref:`_volume_with_mask_example`
-            See :ref:`volume_with_mask` for additional examples using this dataset.
+        :ref:`volume_with_mask_example`
+            See additional examples using this dataset.
 
     """
     return _download_dataset(_dataset_whole_body_ct_female, load=load)
