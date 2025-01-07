@@ -9024,7 +9024,7 @@ class DataSetFilters:
 
             - ``'index'``: The input scalar values (label ids) are used as index
               values for indexing the specified ``colors``.
-            - ``'cycle'``: The specified ``'colors'`` are cycled through sequentially,
+            - ``'cycle'``: The specified ``colors`` are cycled through sequentially,
               and each unique value in the input scalars is assigned a color in increasing
               order. Colors are repeated if there are fewer colors than unique values
               in the input ``scalars``.
