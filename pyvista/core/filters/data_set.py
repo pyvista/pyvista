@@ -7,6 +7,7 @@ from collections.abc import Sequence
 import contextlib
 import functools
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 import warnings
@@ -38,6 +39,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import Color
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -48,6 +50,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
+    from pyvista.plotting._typing import ColorLike
 
 
 @abstract_class
@@ -8948,6 +8951,311 @@ class DataSetFilters:
             result.set_active_scalars(output_scalars, preference=field)
 
             return result
+
+    def color_labels(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        colors: str
+        | ColorLike
+        | Sequence[ColorLike]
+        | dict[float, ColorLike] = 'glasbey_category10',
+        *,
+        coloring_mode: Literal['index', 'cycler'] | None = None,
+        color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'cell',
+        output_scalars: str | None = None,
+        inplace: bool = False,
+    ):
+        """Add RGB(A) scalars to labeled data.
+
+        This filter adds a color array to map label values to specific colors.
+        The mapping can be specified explicitly with a dictionary or implicitly
+        with a colormap or sequence of colors. The implicit mapping is controlled
+        with two coloring modes:
+
+        -   ``'index'`` : The input scalar values (label ids) are used as index values for
+            indexing the specified ``colors``. This creates a direct relationship
+            between labels and colors such that a given label will always have the same
+            color, regardless of the number of labels present in the dataset.
+
+            This option is used by default for unsigned 8-bit integer inputs, i.e.
+            scalars with whole numbers and a maximum range of ``[0, 255]``.
+
+        -   ``'cycler'`` : The specified ``colors`` are cycled through sequentially,
+            and each unique value in the input scalars is assigned a color in increasing
+            order. Unlike with ``'index'`` mode, the colors are not directly mapped to
+            the labels, but instead depends on the number of labels at the input.
+
+            This option is used by default for floating-point inputs or for inputs
+            with values out of the range ``[0, 255]``.
+
+        By default, a new ``'int_rgb'`` array is added with the same name as the
+        specified ``scalars`` but with ``_rgb`` appended.
+
+        See Also
+        --------
+        pyvista.ImageDataFilters.contour_labels
+            Generate contours from labeled image data. The contours may be colored with this filter.
+
+        pack_labels
+            Make labeled data contiguous. May be used as a pre-processing step before
+            coloring.
+
+        Parameters
+        ----------
+        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
+            Color(s) to use. Specify a dictionary to explicitly control the mapping
+            from label values to colors. Alternatively, specify colors only using a
+            colormap or a sequence of colors and use ``coloring_mode`` to implicitly
+            control the mapping. A single color is also supported to color the entire
+            mesh with one color.
+
+            By default, a variation of the ``'glasbey'`` categorical colormap is used
+            where the first 10 colors are the same default colors used by ``matplotlib``.
+            See `colorcet categorical colormaps <https://colorcet.holoviz.org/user_guide/Categorical.html#>`_
+            for more information.
+
+            .. note::
+                When a dictionary is specified, any scalar values for which a key is
+                not provided is assigned default RGB(A) values of ``nan`` for float colors
+                or ``0``  for integer colors (see ``color_type``). To ensure the color
+                array has no default values, be sure to provide a mapping for any and
+                all possible input label values.
+
+        coloring_mode : 'index' | 'cycler', optional
+            Control how colors are mapped to label values. Has no effect if ``colors``
+            is a dictionary. Specify one of:
+
+            - ``'index'``: The input scalar values (label ids) are used as index
+              values for indexing the specified ``colors``.
+            - ``'cycler'``: The specified ``'colors'`` are cycled through sequentially,
+              and each unique value in the input scalars is assigned a color in increasing
+              order.
+
+        color_type : 'int_rgb' | 'float_rgb' | 'int_rgba' | 'float_rgba', default: 'int_rgb'
+            Type of the color array to store. By default, the colors are stored as
+            RGB integers to reduce memory usage.
+
+            .. note::
+                The color type affects the default value for unspecified colors when
+                a dictionary is used. See ``colors`` for details.
+
+        scalars : str, optional
+            Name of scalars with labels. Defaults to currently active scalars.
+
+        preference : str, default: "cell"
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        output_scalars : str, optional
+            Name of the color scalars array. By default, the output array
+            is the same as ``scalars`` with `_rgb`` or ``_rgba`` appended
+            depending on ``color_type``.
+
+        inplace : bool, default: False
+            If ``True``, the mesh is updated in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with RGB(A) scalars. Output type matches input type.
+
+        Examples
+        --------
+        Load labeled data and crop it to simplify the data.
+
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> image_labels = examples.load_channels()
+        >>> image_labels = image_labels.extract_subset(voi=(75, 109, 75, 109, 85, 100))
+
+        Plot the dataset with default coloring using a categorical color map. The
+        plotter by default uniformly samples from all 256 colors in the color map based
+        on the data's range.
+
+        >>> image_labels.plot(cmap='glasbey_category10')
+
+        Show label ids of the dataset.
+
+        >>> label_ids = np.unique(image_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([0, 1, 2, 3, 4])
+
+        Color the labels with the filter then plot them. Note that the
+        ``'glasbey_category10'`` color map is used by default.
+
+        >>> colored_labels = image_labels.color_labels()
+        >>> colored_labels.plot()
+
+        Since the labels are unsigned integers, the ``'index'`` coloring mode is used
+        by default. Unlike the uniform sampling used by the plotter in the previous
+        plot, the colormap is instead indexed using the label values. This ensures
+        that labels have a consistent coloring regardless of the input. For example,
+        we can crop the dataset further.
+
+        >>> subset_labels = image_labels.extract_subset(voi=(15, 34, 28, 34, 12, 15))
+
+        And show that only three labels remain.
+
+        >>> label_ids = np.unique(subset_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([1, 2, 3])
+
+        Despite the changes to the dataset, the regions have the same coloring
+        as before.
+
+        >>> colored_labels = subset_labels.color_labels()
+        >>> colored_labels.plot()
+
+        Use the ``'cycler'`` coloring mode instead to map label values to colors
+        sequentially.
+
+        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycler')
+        >>> colored_labels.plot()
+
+        Map the colors explicitly using a dictionary.
+
+        >>> colors = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'yellow'}
+        >>> colored_labels = image_labels.color_labels(colors)
+        >>> colored_labels.plot()
+
+        Omit the background value from the mapping and specify float colors. When
+        floats are specified, values without a mapping are assigned ``nan`` values
+        and are not plotted by default.
+
+        >>> colors.pop(0)
+        'black'
+        >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
+        >>> colored_labels.plot()
+
+        Color all labels with a single color.
+
+        >>> colored_labels = image_labels.color_labels('red')
+        >>> colored_labels.plot()
+
+        """
+        # Lazy import since these are from plotting module
+        from cycler import cycler
+        import matplotlib.colors
+
+        from pyvista.core._validation.validate import _validate_color_sequence
+        from pyvista.plotting._typing import ColorLike
+        from pyvista.plotting.colors import get_cmap_safe
+
+        def _local_validate_color_sequence(seq: ColorLike | Sequence[ColorLike]) -> Sequence[Color]:
+            try:
+                return _validate_color_sequence(seq)
+            except ValueError:
+                raise ValueError(
+                    'Invalid colors. Colors must be one of:\n'
+                    '  - sequence of color-like values,\n'
+                    '  - dict with color-like values,\n'
+                    '  - named colormap string.\n'
+                    f'Got: {seq}'
+                )
+
+        def _is_index_like(array_, max_value):
+            if np.issubdtype(array_.dtype, np.integer) or np.array_equal(array, np.floor(array_)):
+                min_, max_ = output_mesh.get_data_range(name)
+                if min_ >= 0 and max_ <= max_value:
+                    return True
+            return False
+
+        _validation.check_contains(
+            ['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'],
+            must_contain=color_type,
+            name='color_type',
+        )
+
+        if 'rgba' in color_type:
+            num_components = 4
+            scalars_suffix = '_rgba'
+        else:
+            num_components = 3
+            scalars_suffix = '_rgb'
+        if 'float' in color_type:
+            default_channel_value = np.nan
+            color_dtype = 'float'
+        else:
+            default_channel_value = 0
+            color_dtype = 'uint8'
+
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = get_array_association(self, name, preference=preference, err=True)
+        output_mesh = self if inplace else self.copy()
+        data = output_mesh.point_data if field == FieldAssociation.POINT else output_mesh.cell_data
+        array = data[name]
+
+        if isinstance(colors, dict):
+            if coloring_mode is not None:
+                raise TypeError('Coloring mode cannot be set when a color dictionary is specified.')
+            colors_ = _local_validate_color_sequence(cast(list[ColorLike], list(colors.values())))
+            color_rgb_sequence = [getattr(c, color_type) for c in colors_]
+            items = zip(colors.keys(), color_rgb_sequence)
+
+        else:
+            _is_rgb_sequence = False
+            if isinstance(colors, str):
+                try:
+                    cmap = get_cmap_safe(colors)
+                except ValueError:
+                    pass
+                else:
+                    if not isinstance(cmap, matplotlib.colors.ListedColormap):
+                        raise ValueError(
+                            f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
+                        )
+                    # Avoid unnecessary conversion and set color sequence directly in float cases
+                    cmap_colors = cast(list[list[float]], cmap.colors)
+                    if color_type == 'float_rgb':
+                        color_rgb_sequence = cmap_colors
+                        _is_rgb_sequence = True
+                    elif color_type == 'float_rgba':
+                        color_rgb_sequence = [(*c, 1.0) for c in cmap_colors]
+                        _is_rgb_sequence = True
+                    else:
+                        colors = cmap_colors
+
+            if not _is_rgb_sequence:
+                color_rgb_sequence = [
+                    getattr(c, color_type) for c in _local_validate_color_sequence(colors)
+                ]
+                if len(color_rgb_sequence) == 1:
+                    color_rgb_sequence = color_rgb_sequence * len(array)
+
+            n_colors = len(color_rgb_sequence)
+            if coloring_mode is None:
+                coloring_mode = 'index' if _is_index_like(array, max_value=n_colors) else 'cycler'
+
+            if coloring_mode == 'index':
+                if not _is_index_like(array, max_value=n_colors):
+                    raise ValueError(
+                        f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
+                        f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
+                    )
+                keys: Iterable[float] = range(n_colors)
+                values: Iterable[Any] = color_rgb_sequence
+            else:
+                keys = np.unique(array)
+                values = cycler('color', color_rgb_sequence)
+
+            items = zip(keys, values)
+
+        colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
+        for label, color in items:
+            if isinstance(color, dict):
+                color = color['color']
+            colors_out[array == label, :] = color
+
+        colors_name = name + scalars_suffix if output_scalars is None else output_scalars
+        data[colors_name] = colors_out
+        output_mesh.set_active_scalars(colors_name)
+
+        return output_mesh
 
 
 def _set_threshold_limit(alg, value, method, invert):
