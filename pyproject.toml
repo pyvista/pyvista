@@ -113,7 +113,7 @@ docs = [
   'mypy-extensions==1.0.0',
   'mypy==1.14.1',
   'numpydoc==1.8.0',
-  'osmnx==2.0.0',
+  'osmnx==2.0.1',
   'pypandoc==1.14',
   'pytest-sphinx==0.6.3',
   'pyvista[pinned]',
