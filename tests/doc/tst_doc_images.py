@@ -26,7 +26,7 @@ FLAKY_TEST_CASES = [
 ]
 
 pytestmark = pytest.mark.filterwarnings(
-    'ignore:Unknown config option: image_cache_dir:PytestConfigWarning'
+    'ignore:Unknown config option.*image_cache_dir.*:pytest.PytestConfigWarning'
 )
 
 
