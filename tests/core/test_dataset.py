@@ -65,7 +65,10 @@ def test_point_data_bad_value(grid):
     with pytest.raises(TypeError):
         grid.point_data['new_array'] = None
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    match = (
+        "Invalid array shape. Array 'new_array' has length (98) but a length of (99) was expected."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
         grid.point_data['new_array'] = np.arange(grid.n_points - 1)
 
 
@@ -105,23 +108,41 @@ def test_cell_data_bad_value(grid):
     with pytest.raises(TypeError):
         grid.cell_data['new_array'] = None
 
-    with pytest.raises(ValueError):  # noqa: PT011
+    match = (
+        "Invalid array shape. Array 'new_array' has length (39) but a length of (40) was expected."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
         grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
 
 
+@pytest.mark.parametrize('empty_shape', [(0,), (-1, 0), (0, -1)])
 @pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
-def test_point_cell_data_empty_array_raises_error(uniform, attribute):
+def test_point_cell_data_empty_array_raises_error(uniform, attribute, empty_shape):
     # Define empty array
-    length = uniform.n_points if attribute == 'point_data' else uniform.n_cells
-    shape = (length, 0)
-    empty_array = np.ones(shape)
+    mesh_data_length = (
+        uniform.n_points
+        if attribute == 'point_data'
+        else uniform.n_cells
+        if attribute == 'cell_data'
+        else 10
+    )
+    assert mesh_data_length > 0
+    empty_shape = np.array(empty_shape)
+    empty_shape[empty_shape == -1] = mesh_data_length
+    empty_shape = tuple(empty_shape.tolist())
+
+    empty_array = np.ones(empty_shape)
     assert empty_array.size == 0
-    assert empty_array.shape == shape
+    assert empty_array.shape == empty_shape
 
     data = getattr(uniform, attribute)
-    match = "Empty arrays are not allowed. Array 'new_array' cannot have shape ("
-    with pytest.raises(ValueError, match=re.escape(match)):
+    if attribute == 'field_data' and empty_shape == (0,):
+        # Special case, no error raised
         data['new_array'] = empty_array
+    else:
+        # Expect error for all other cases
+        with pytest.raises(ValueError, match='Invalid array shape.'):
+            data['new_array'] = empty_array
 
 
 @pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
