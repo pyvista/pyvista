@@ -199,11 +199,12 @@ omit = [
 doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
   'error',
-  'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*The NumPy module was reloaded*:UserWarning',    # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*numpy.dtype size changed.*:RuntimeWarning',     # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',     # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*Given trait value dtype "float64":UserWarning',                                   # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*The NumPy module was reloaded*:UserWarning',                                      # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.dtype size changed.*:RuntimeWarning',                                       # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                       # bogus numpy ABI warning (see numpy/#432)
   'ignore:Points is not a float type.*:UserWarning',
+  'ignore:pyvista test generated image dir.* does not yet exist.  Creating dir.:UserWarning',
 ]
 image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
