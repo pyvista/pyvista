@@ -131,7 +131,7 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
     elif attribute == 'cell_data':
         mesh_data_length = mesh.n_cells
     else:
-        # Use an arbitrary non-zero positive value for field data
+        # Use an arbitrary non-zero positive value for field data in the non-empty case
         mesh_data_length = 0 if mesh_is_empty else 10
     if mesh_is_empty:
         assert mesh_data_length == 0
@@ -154,7 +154,7 @@ def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh
         data['new_array'] = empty_array
         assert 'new_array' in data
         assert data['new_array'].size == 0
-        # Note: the output shape is always (0,) and may not match the input shape
+        # Note: the output shape is always (0,) and may not match the input shape (bug?)
         assert data['new_array'].shape == (0,)
     else:
         # Expect error for all other cases
