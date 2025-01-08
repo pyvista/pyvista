@@ -117,7 +117,7 @@ docs = [
   'pypandoc==1.14',
   'pytest-sphinx==0.6.3',
   'pyvista[pinned]',
-  'scipy==1.14.1',
+  'scipy==1.15.0',
   'sphinx-autobuild==2024.10.3',
   'sphinx-book-theme==1.1.3',
   'sphinx-copybutton==0.5.2',
