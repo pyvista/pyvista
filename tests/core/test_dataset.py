@@ -117,16 +117,26 @@ def test_cell_data_bad_value(grid):
 
 @pytest.mark.parametrize('empty_shape', [(0,), (-1, 0), (0, -1), (0, 0)])
 @pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
-def test_point_cell_field_data_empty_array_raises_error(uniform, attribute, empty_shape):
-    # Define empty array
-    mesh_data_length = (
-        uniform.n_points
-        if attribute == 'point_data'
-        else uniform.n_cells
-        if attribute == 'cell_data'
-        else 10  # Use an arbitrary non-zero value for field data
-    )
-    assert mesh_data_length > 0
+@pytest.mark.parametrize('mesh_is_empty', [True, False])
+def test_point_cell_field_data_empty_array(uniform, attribute, empty_shape, mesh_is_empty):
+    # Test that setting empty arrays is only allowed when the mesh is
+    # empty OR when setting field data.
+    # Empty arrays with non-zero shape values are never allowed.
+
+    mesh = pv.PolyData() if mesh_is_empty else uniform
+
+    # Define empty array with a shape that matches the dataset
+    if attribute == 'point_data':
+        mesh_data_length = mesh.n_points
+    elif attribute == 'cell_data':
+        mesh_data_length = mesh.n_cells
+    else:
+        # Use an arbitrary non-zero positive value for field data
+        mesh_data_length = 0 if mesh_is_empty else 10
+    if mesh_is_empty:
+        assert mesh_data_length == 0
+    else:
+        assert mesh_data_length > 0
 
     # Replace `-1` in empty shape with the actual length of the mesh data
     empty_shape = np.array(empty_shape)
@@ -137,28 +147,15 @@ def test_point_cell_field_data_empty_array_raises_error(uniform, attribute, empt
     assert empty_array.size == 0
     assert empty_array.shape == empty_shape
 
-    data = getattr(uniform, attribute)
-    if attribute == 'field_data' and empty_shape in [(0,), (0, 0)]:
-        # Special case, no error raised
-        data['new_array'] = empty_array
-    else:
-        # Expect error for all other cases
-        with pytest.raises(ValueError, match='Invalid array shape.'):
-            data['new_array'] = empty_array
-
-
-@pytest.mark.parametrize('empty_shape', [(0,), (1, 0), (0, 1), (0, 0)])
-@pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
-def test_point_cell_field_data_empty_mesh_empty_array(attribute, empty_shape):
-    poly = pv.PolyData()
-    empty_array = np.ones(empty_shape)
-    data = getattr(poly, attribute)
-
-    if empty_shape in [(0,), (0, 0)]:
+    # Test setting the array
+    data = getattr(mesh, attribute)
+    if empty_shape in [(0,), (0, 0)] and (attribute == 'field_data' or mesh_is_empty):
         # Special case, no error raised
         data['new_array'] = empty_array
         assert 'new_array' in data
         assert data['new_array'].size == 0
+        # Note: the output shape is always (0,) and may not match the input shape
+        assert data['new_array'].shape == (0,)
     else:
         # Expect error for all other cases
         with pytest.raises(ValueError, match='Invalid array shape.'):
