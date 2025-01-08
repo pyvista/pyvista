@@ -115,7 +115,7 @@ def test_cell_data_bad_value(grid):
         grid.cell_data['new_array'] = np.arange(grid.n_cells - 1)
 
 
-@pytest.mark.parametrize('empty_shape', [(0,), (-1, 0), (0, -1)])
+@pytest.mark.parametrize('empty_shape', [(0,), (-1, 0), (0, -1), (0, 0)])
 @pytest.mark.parametrize('attribute', ['point_data', 'cell_data', 'field_data'])
 def test_point_cell_data_empty_array_raises_error(uniform, attribute, empty_shape):
     # Define empty array
@@ -124,9 +124,11 @@ def test_point_cell_data_empty_array_raises_error(uniform, attribute, empty_shap
         if attribute == 'point_data'
         else uniform.n_cells
         if attribute == 'cell_data'
-        else 10
+        else 10  # Use an arbitrary non-zero value for field data
     )
     assert mesh_data_length > 0
+
+    # Replace `-1` in empty shape with the actual length of the mesh data
     empty_shape = np.array(empty_shape)
     empty_shape[empty_shape == -1] = mesh_data_length
     empty_shape = tuple(empty_shape.tolist())
@@ -136,7 +138,7 @@ def test_point_cell_data_empty_array_raises_error(uniform, attribute, empty_shap
     assert empty_array.shape == empty_shape
 
     data = getattr(uniform, attribute)
-    if attribute == 'field_data' and empty_shape == (0,):
+    if attribute == 'field_data' and empty_shape in [(0,), (0, 0)]:
         # Special case, no error raised
         data['new_array'] = empty_array
     else:
