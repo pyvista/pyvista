@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections.abc import Sequence
 import operator
 from typing import TYPE_CHECKING
 from typing import Callable
@@ -25,6 +26,7 @@ from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
+from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from numpy.typing import NDArray
@@ -2916,3 +2918,215 @@ class ImageDataFilters(DataSetFilters):
             )
 
         return dimensions_mask, dimensions_result
+
+    def resample(  # type: ignore[misc] # noqa: D102
+        self: ImageData,
+        reference_volume: ImageData,
+        linear_interpolation: bool = False,
+        pad_image: bool = False,
+        background_value: int = 0,
+    ):
+        output_image = pyvista.ImageData()
+        reference_index_to_physical_matrix = reference_volume.index_to_physical_matrix
+        input_extent = self.extent
+        if (
+            input_extent[0] > input_extent[1]
+            or input_extent[2] > input_extent[3]
+            or input_extent[4] > input_extent[5]
+        ):
+            # empty input image, fill with background value
+            output_image.extent = reference_volume.extent
+
+            # if data is not allocated then GetScalarType() would always return VTK_DOUBLE,
+            #  which is not a good default image type
+            if background_value >= 0 and background_value <= 255:
+                output_image.AllocateScalars(_vtk.VTK_UNSIGNED_CHAR, 1)
+            elif background_value >= -32768 and background_value <= 32767:
+                output_image.AllocateScalars(_vtk.VTK_SHORT, 1)
+            elif background_value >= 0 and background_value <= 65535:
+                output_image.AllocateScalars(_vtk.VTK_UNSIGNED_SHORT, 1)
+            else:
+                output_image.AllocateScalars(_vtk.VTK_DOUBLE, 1)
+
+            output_image.GetPointData().GetScalars().Fill(background_value)
+            output_image.index_to_physical_matrix = reference_index_to_physical_matrix
+            return output_image
+
+        # Simply copy input into output if the reference has the same geometry as the input, so no resampling is necessary
+        input_index_to_physical_matrix = self.index_to_physical_matrix
+        if np.allclose(input_index_to_physical_matrix, reference_index_to_physical_matrix):
+            reference_extent = reference_volume.extent
+            if np.array_equal(input_extent, reference_extent):
+                # Input and output are exactly the same
+                output_image = self.copy()
+            else:
+                # Only extent is different
+                union_extent = [0, -1, 0, -1, 0, -1]
+                if pad_image:
+                    reference_extent_valid = True
+                    for i in range(3):
+                        if reference_extent[i * 2 + 1] < reference_extent[i * 2]:
+                            reference_extent_valid = False
+
+                    # Make sure input image data fits into the extent.
+                    for i in range(3):
+                        if reference_extent_valid:
+                            union_extent[i * 2] = min(input_extent[i * 2], reference_extent[i * 2])
+                            union_extent[i * 2 + 1] = max(
+                                input_extent[i * 2 + 1], reference_extent[i * 2 + 1]
+                            )
+                        else:
+                            # Output extent is empty
+                            union_extent[i * 2] = input_extent[i * 2]
+                            union_extent[i * 2 + 1] = input_extent[i * 2 + 1]
+                else:
+                    reference_volume.extent = tuple(union_extent)
+
+                padder = _vtk.vtkImageConstantPad()
+                padder.SetInputData(self)
+                padder.SetConstant(background_value)
+                padder.SetOutputWholeExtent(union_extent)
+                padder.Update()
+                output_image.ShallowCopy(padder.GetOutput())
+                output_image.index_to_physical_matrix = reference_index_to_physical_matrix
+            return output_image
+
+        # Get transform between input and reference
+        # input IJK to RAS
+        input_to_reference_transform = Transform(input_index_to_physical_matrix)
+        # output RAS to IJK
+        input_to_reference_transform.concatenate(
+            Transform(reference_index_to_physical_matrix).inverse_matrix
+        )
+
+        # Calculate output extent in reference frame for padding if requested. Use all bounding box corners
+        input_extent_in_reference_frame = _transform_extent(
+            self.extent, input_to_reference_transform
+        )
+        reference_extent: Sequence[int] = [0, -1, 0, -1, 0, -1]
+        reference_volume.extent = reference_extent
+        union_extent = [0, -1, 0, -1, 0, -1]
+        if pad_image:
+            reference_extent_valid = True
+            for i in range(3):
+                if reference_extent[i * 2 + 1] < reference_extent[i * 2]:
+                    reference_extent_valid = False
+
+            # Make sure input image data fits into the extent.
+            for i in range(3):
+                if reference_extent_valid:
+                    union_extent[i * 2] = min(
+                        input_extent_in_reference_frame[i * 2], reference_extent[i * 2]
+                    )
+                    union_extent[i * 2 + 1] = max(
+                        input_extent_in_reference_frame[i * 2 + 1], reference_extent[i * 2 + 1]
+                    )
+                else:
+                    # Output extent is empty
+                    union_extent[i * 2] = input_extent_in_reference_frame[i * 2]
+                    union_extent[i * 2 + 1] = input_extent_in_reference_frame[i * 2 + 1]
+        else:
+            reference_volume.extent = union_extent
+
+        # Return with failure if output extent is empty
+        if (
+            union_extent[0]
+            > union_extent[1] | union_extent[2]
+            > union_extent[3] | union_extent[4]
+            > union_extent[5]
+        ):
+            raise RuntimeError('Output extent is empty')
+
+        # Invert transform for the resampling
+        reference_to_input_transform = input_to_reference_transform.copy().invert()
+
+        identity_input_image = self.copy(deep=False)
+
+        # Perform resampling
+        resliceFilter = _vtk.vtkImageReslice()
+        resliceFilter.SetInputData(identity_input_image)
+        resliceFilter.SetOutputOrigin(0, 0, 0)
+        resliceFilter.SetOutputSpacing(1, 1, 1)
+        resliceFilter.SetOutputExtent(union_extent)
+        resliceFilter.SetOutputScalarType(self.GetScalarType())
+        resliceFilter.SetBackgroundLevel(background_value)
+        resliceFilter.SetResliceTransform(reference_to_input_transform)
+
+        # Set interpolation mode
+        if linear_interpolation:
+            resliceFilter.SetInterpolationModeToLinear()
+        else:
+            resliceFilter.SetInterpolationModeToNearestNeighbor()
+        _update_alg(resliceFilter)
+
+        # Set output
+        output_image = _get_output(resliceFilter).copy(deep=False)
+        output_image.index_to_physical_matrix = reference_index_to_physical_matrix
+
+        return output_image
+
+
+def _transform_extent(
+    inputExtent: tuple[int, int, int, int, int, int], inputToOutputTransform: Transform | None
+):
+    if (
+        (inputToOutputTransform is None)
+        | (inputExtent[0] > inputExtent[1])
+        | (inputExtent[2] > inputExtent[3])
+        | (inputExtent[4] > inputExtent[5])
+    ):
+        return [0, -1, 0, -1, 0, -1]
+
+    inputCorners = [
+        inputExtent[0] - 0.5,
+        inputExtent[1] + 0.5,
+        inputExtent[2] - 0.5,
+        inputExtent[3] + 0.5,
+        inputExtent[4] - 0.5,
+        inputExtent[5] + 0.5,
+    ]
+
+    # Apply transform on all eight corners and determine output extent based on these transformed corners
+    outputIjkExtentCorner = [0.0, 0.0, 0.0]
+    outputExtentDouble = [
+        _vtk.VTK_DOUBLE_MAX,
+        _vtk.VTK_DOUBLE_MIN,
+        _vtk.VTK_DOUBLE_MAX,
+        _vtk.VTK_DOUBLE_MIN,
+        _vtk.VTK_DOUBLE_MAX,
+        _vtk.VTK_DOUBLE_MIN,
+    ]
+    for i in range(2):
+        for j in range(2):
+            for k in range(2):
+                inputBoxCorner = [inputCorners[i], inputCorners[2 + j], inputCorners[4 + k]]
+                inputToOutputTransform.TransformPoint(inputBoxCorner, outputIjkExtentCorner)
+                if outputIjkExtentCorner[0] + 0.5 < outputExtentDouble[0]:
+                    outputExtentDouble[0] = outputIjkExtentCorner[0] + 0.5
+                if outputIjkExtentCorner[0] - 0.5 > outputExtentDouble[1]:
+                    outputExtentDouble[1] = outputIjkExtentCorner[0] - 0.5
+                if outputIjkExtentCorner[1] + 0.5 < outputExtentDouble[2]:
+                    outputExtentDouble[2] = outputIjkExtentCorner[1] + 0.5
+                if outputIjkExtentCorner[1] - 0.5 > outputExtentDouble[3]:
+                    outputExtentDouble[3] = outputIjkExtentCorner[1] - 0.5
+                if outputIjkExtentCorner[2] + 0.5 < outputExtentDouble[4]:
+                    outputExtentDouble[4] = outputIjkExtentCorner[2] + 0.5
+                if outputIjkExtentCorner[2] - 0.5 > outputExtentDouble[5]:
+                    outputExtentDouble[5] = outputIjkExtentCorner[2] - 0.5
+
+    # Round to the 6th decimal so that these small values do not shift
+    # the extent by a whole voxel (especially in case of zeroes)
+    for index in range(6):
+        multiplier = 1000000
+        roundedExtentElement = outputExtentDouble[index] * multiplier + 0.5
+        outputExtentDouble[index] = roundedExtentElement / multiplier
+
+    # Extend precise extent to integer numbers
+    return (
+        np.floor(outputExtentDouble[0]),
+        np.ceil(outputExtentDouble[1]),
+        np.floor(outputExtentDouble[2]),
+        np.ceil(outputExtentDouble[3]),
+        np.floor(outputExtentDouble[4]),
+        np.ceil(outputExtentDouble[5]),
+    )

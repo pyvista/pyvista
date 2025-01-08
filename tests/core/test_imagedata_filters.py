@@ -1079,3 +1079,16 @@ def test_validate_dim_operation_invalid_parameters(
         image._validate_dimensional_operation(
             operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
         )
+
+
+@pytest.mark.parametrize('spacing', [None, [3, 4, 5]])
+def test_resample(uniform, spacing):
+    reference = uniform.copy()
+    if spacing:
+        reference.spacing = spacing
+    resampled = uniform.resample(reference)
+    assert isinstance(resampled, pv.ImageData)
+    assert resampled is not uniform
+    assert resampled is not reference
+    assert np.array_equal(resampled.extent, reference.extent)
+    assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
