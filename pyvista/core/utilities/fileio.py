@@ -1000,6 +1000,8 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
 def to_meshio(mesh: DataSet) -> meshio.Mesh:
     """Convert a PyVista mesh to a ``meshio`` mesh instance.
 
+    .. versionadded:: 0.45
+
     Parameters
     ----------
     mesh : pyvista.DataSet
