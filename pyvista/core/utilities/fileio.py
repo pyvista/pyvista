@@ -1070,15 +1070,13 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
             polyhedral_cell_faces.append(faces)
 
     # Single cell type (except POLYGON and POLYHEDRON)
-    if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {7, 42}:
+    if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {pv.CellType.POLYGON, pv.CellType.POLYHEDRON}:
         vtk_celltype = vtk_celltypes[0]
         cells = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
 
-        if vtk_celltype == 8:
-            cells = cells[:, [0, 1, 3, 2]]
-            celltype = 'quad'
+        if vtk_celltype == pv.CellType.PIXEL:
 
-        elif vtk_celltype == 11:
+        elif vtk_celltype == pv.CellType.VOXEL:
             cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
             celltype = 'hexahedron'
 
@@ -1096,14 +1094,14 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         for i1, i2, vtk_celltype in zip(offset[:-1], offset[1:], vtk_celltypes):
             cell = connectivity[i1:i2]
 
-            if vtk_celltype == 42:
+            if vtk_celltype == pv.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
                 cell = polyhedral_cell_faces[polyhedron_count]
                 polyhedron_count += 1
 
             else:
                 celltype = (
-                    f'polygon{len(cell)}' if vtk_celltype == 7 else vtk_to_meshio_type[vtk_celltype]
+                    f'polygon{len(cell)}' if vtk_celltype == pv.CellType.POLYGON else vtk_to_meshio_type[vtk_celltype]
                 )
 
             if len(cells) > 0 and cells[-1][0] == celltype:
