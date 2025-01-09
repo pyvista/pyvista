@@ -1128,8 +1128,8 @@ def test_enable_picking_gc():
 def test_left_button_down():
     plotter = pv.Plotter()
     if (
-        hasattr(plotter.ren_win, 'GetOffScreenFramebuffer')
-        and not plotter.ren_win.GetOffScreenFramebuffer().GetFBOIndex()
+        hasattr(plotter.ren_win, 'GetRenderFramebuffer')
+        and not plotter.ren_win.GetRenderFramebuffer().GetFBOIndex()
     ):
         # This only fails for VTK<9.2.3
         with pytest.raises(ValueError):  # noqa: PT011

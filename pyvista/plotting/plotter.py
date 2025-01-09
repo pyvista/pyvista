@@ -2207,8 +2207,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def left_button_down(self, *args):
         """Register the event for a left button down click."""
         if (
-            hasattr(self.render_window, 'GetOffScreenFramebuffer')
-            and not self.render_window.GetOffScreenFramebuffer().GetFBOIndex()  # type: ignore[union-attr]
+            hasattr(self.render_window, 'GetRenderFramebuffer')
+            and not self.render_window.GetRenderFramebuffer().GetFBOIndex()  # type: ignore[union-attr]
         ):
             # must raise a runtime error as this causes a segfault on VTK9
             raise ValueError('Invoking helper with no framebuffer')
