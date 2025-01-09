@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from typing import Any
 import weakref
 
+from defusedxml import ElementTree as ET
 import numpy as np
 
 import pyvista
@@ -1971,8 +1972,6 @@ class _PVDReader(BaseVTKReader):
 
     def UpdateInformation(self):
         """Parse PVD file."""
-        from defusedxml import ElementTree as ET
-
         if self._filename is None:
             raise ValueError('Filename must be set')
         tree = ET.parse(self._filename)

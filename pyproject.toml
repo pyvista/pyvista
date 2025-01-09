@@ -18,6 +18,7 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
+  'defusedxml',
   'matplotlib>=3.0.1',
   'numpy>=1.21.0',     # minimum typing support
   'pillow',
@@ -50,6 +51,7 @@ jupyter = [
 ]
 
 pinned = [ # Pinned versions of core dependencies
+  'defusedxml<0.8.0',
   'matplotlib<3.10.1',
   'numpy<2.2.0',
   'pillow<11.2.0',
@@ -69,7 +71,6 @@ typing = [
 test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
-  'defusedxml<0.8.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
   'hypothesis<6.123.10',
   'imageio-ffmpeg<0.6.0',
