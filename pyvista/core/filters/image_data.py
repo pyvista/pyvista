@@ -2069,7 +2069,15 @@ class ImageDataFilters(DataSetFilters):
             self.origin,
             (np.array(self.spacing) / 2) * dims_mask,
         )
-        new_image.dimensions = dims_result  # type: ignore[assignment]
+        extent_min = self.extent[::2]
+        new_image.extent = (  # type: ignore[assignment]
+            extent_min[0],
+            extent_min[0] + dims_result[0] - 1,
+            extent_min[1],
+            extent_min[1] + dims_result[1] - 1,
+            extent_min[2],
+            extent_min[2] + dims_result[2] - 1,
+        )
         new_image.spacing = self.spacing
         new_image.direction_matrix = self.direction_matrix
 
