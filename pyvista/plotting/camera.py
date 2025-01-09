@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from weakref import proxy
-import xml.dom.minidom as md
 from xml.etree import ElementTree as ET
 
 from defusedxml import ElementTree as defusedET
+from defusedxml import minidom as md
 import numpy as np
 
 import pyvista
@@ -243,9 +243,8 @@ class Camera(_vtk.vtkCamera):
                 e.append(tmp)
                 e.append(ET.Element('Domain', dict(name='bool', id=f'0.{name}.bool')))
 
-        # Assuming the rest of your XML handling remains the same
         xmlstr = ET.tostring(root).decode()
-        newxml = md.parseString(xmlstr)  # noqa: S318
+        newxml = md.parseString(xmlstr)
         with Path(filename).open('w') as outfile:
             outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
