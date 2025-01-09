@@ -5,6 +5,7 @@ from __future__ import annotations
 from enum import Enum
 import os
 import platform
+import shutil
 import subprocess
 from subprocess import PIPE
 from subprocess import Popen
@@ -49,9 +50,6 @@ def supports_open_gl():
         ren_win = _vtk.vtkRenderWindow()
         SUPPORTS_OPENGL = bool(ren_win.SupportsOpenGL())
     return SUPPORTS_OPENGL
-
-
-import shutil
 
 
 def _system_supports_plotting():

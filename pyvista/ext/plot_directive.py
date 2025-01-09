@@ -395,18 +395,7 @@ def _run_code(code, code_path, ns=None, function_name=None):
     try:
         if pyvista.PLOT_DIRECTIVE_THEME is not None:
             pyvista.set_plot_theme(pyvista.PLOT_DIRECTIVE_THEME)  # pragma: no cover
-
-        if function_name:
-            # Dynamically call the function if function_name is provided
-            function = getattr(ns, function_name, None)
-            if function and callable(function):
-                function()  # Call the function dynamically
-            else:
-                raise ValueError(f'Function {function_name} not found or is not callable.')
-        else:
-            # Safely evaluate the code as an expression
-            eval(code, ns)
-
+        exec(code, ns)
     except (Exception, SystemExit) as err:  # pragma: no cover
         raise PlotError(traceback.format_exc()) from err
 

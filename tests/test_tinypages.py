@@ -56,7 +56,7 @@ def test_tinypages(tmp_path, ename, evalue):
         str(Path(__file__).parent / 'tinypages'),
         str(html_dir),
     ]
-    proc = Popen(  # noqa: S603
+    proc = Popen(
         cmd,
         stdout=PIPE,
         stderr=PIPE,
