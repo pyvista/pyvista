@@ -7545,7 +7545,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     Create a surface mesh of the segmentation labels
 
-    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+    >>> labels_mesh = label_map.contour_labels(smoothing=True)
 
     Plot the CT image and segmentation labels together.
 
@@ -7689,7 +7689,7 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
     Create a surface mesh of the segmentation labels
 
-    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+    >>> labels_mesh = label_map.contour_labels(smoothing=True)
 
     Plot the CT image and segmentation labels together.
 
@@ -8196,3 +8196,35 @@ def _nek_5000_download():  # pragma: no cover
 
 
 _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
+
+
+def download_biplane(load=True):  # pragma: no cover
+    """Download biplane dataset.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_biplane()
+    >>> dataset.plot(cpos='zy', zoom=1.5)
+
+    .. seealso::
+
+        :ref:`Biplane Dataset <biplane_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_biplane, load=load)
+
+
+_dataset_biplane = _SingleFileDownloadableDatasetLoader('biplane_rms_pressure_bs.exo')

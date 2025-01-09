@@ -1139,7 +1139,7 @@ def test_imagedata_direction_matrix():
 
     # Test bounds using a transformed reference box
     box = pv.Box(bounds=initial_bounds)
-    box.transform(image.index_to_physical_matrix)
+    box.transform(image.index_to_physical_matrix, inplace=True)
     expected_bounds = box.bounds
     assert np.allclose(image.bounds, expected_bounds)
 
