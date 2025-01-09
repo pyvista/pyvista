@@ -260,19 +260,26 @@ def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
 
 
-def marker_names(item):
+def marker_names(item: pytest.Item):
     return [marker.name for marker in item.iter_markers()]
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
     test_downloads = config.getoption('--test_downloads')
+    skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
 
-    # skip all tests that need downloads
-    if not test_downloads:
-        skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
-        for item in items:
+    for item in items:
+        # skip all tests that need downloads
+        if not test_downloads:
             if 'needs_download' in marker_names(item):
                 item.add_marker(skip_downloads)
+
+        # add filterwarnings for vtk < 9.1 and numpy bool deprecation
+        if pyvista.vtk_version_info < (9, 1):
+            filterw = pytest.mark.filterwarnings(
+                r'ignore:`np\.bool` is a deprecated alias for the builtin `bool`:DeprecationWarning'
+            )
+            item.add_marker(filterw)
 
 
 def pytest_runtest_setup(item):
