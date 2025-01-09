@@ -69,6 +69,7 @@ typing = [
 test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
+  'defusedxml<0.8.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
   'hypothesis<6.123.10',
   'imageio-ffmpeg<0.6.0',
@@ -364,6 +365,7 @@ ignore = [
   'RET505',  # https://github.com/pyvista/pyvista/pull/5911
   'RET506',  # https://github.com/pyvista/pyvista/pull/5911
   'RET507',  # https://github.com/pyvista/pyvista/pull/5911
+  'S110',
   'SIM102',  # https://github.com/pyvista/pyvista/pull/5877
   'SIM117',  # https://github.com/pyvista/pyvista/pull/5888
   'SIM118',  # https://github.com/pyvista/pyvista/pull/5837
@@ -382,7 +384,7 @@ allow-dict-calls-with-keyword-arguments = true
   'B018', # https://github.com/pyvista/pyvista/pull/6019
 ]
 'examples_trame/*' = ['D100', 'D103']
-'examples_trame/tests*' = ['D']
+'examples_trame/tests*' = ['D', 'S101']
 'pyvista/core/_vtk_core*' = ['PLC0414']
 'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
 'pyvista/plotting/_typing.py' = ['PLC0414']

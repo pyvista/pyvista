@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 import weakref
-from xml.etree import ElementTree as ET
 
+from defusedxml import ElementTree as ET
 import numpy as np
 
 import pyvista
