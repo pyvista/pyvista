@@ -541,12 +541,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         Whether to deep copy a ``vtk.vtkImageData`` object.  Keyword only.
 
     direction_matrix : RotationLike, optional
-        The direction matrix is a 3x3 matrix which controls the orientation of the
-        image data.
+        The :attr:`direction_matrix` is a 3x3 matrix which controls the orientation of
+        the image data.
 
         .. versionadded:: 0.45
 
-    offset : int | VectorLike[int], optional
+    offset : int | VectorLike[int], default: (0, 0, 0)
         The offset defines the minimum :attr:`extent` of the image. Offset values
         can be positive or negative. In physical space, the offset is relative
         to the image's :attr:`origin`.
