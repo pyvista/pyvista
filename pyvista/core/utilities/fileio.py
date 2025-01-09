@@ -30,7 +30,6 @@ if TYPE_CHECKING:  # pragma: no cover
     import imageio
     import meshio
 
-    from pyvista.core._typing_core import MatrixLike
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
@@ -1038,10 +1037,12 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     # Cast to unstructured grid
     mesh = mesh.cast_to_unstructured_grid()
+    mesh = (
+        mesh.extract_cells(mesh.cell_data['vtkGhostType'] == 0)
+        if 'vtkGhostType' in mesh.cell_data
+        else mesh
+    )
 
-    if "vtkGhostType" in mesh.cell_data:
-        mesh = mesh.extract_cells(grid.cell_data["vtkGhostType"] == 0)
-    
     vtk_celltypes = mesh.celltypes
     connectivity = mesh.cell_connectivity
 
@@ -1073,11 +1074,11 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
         if vtk_celltype == 8:
             cells = cells[:, [0, 1, 3, 2]]
-            celltype = "quad"
+            celltype = 'quad'
 
         elif vtk_celltype == 11:
             cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
-            celltype = "hexahedron"
+            celltype = 'hexahedron'
 
         else:
             celltype = vtk_to_meshio_type[vtk_celltype]
@@ -1091,15 +1092,17 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         polyhedron_count = 0
 
         for i1, i2, vtk_celltype in zip(offset[:-1], offset[1:], vtk_celltypes):
-            cell = connectivity[i1 : i2]
+            cell = connectivity[i1:i2]
 
             if vtk_celltype == 42:
-                celltype = f"polyhedron{len(cell)}"
+                celltype = f'polyhedron{len(cell)}'
                 cell = polyhedral_cell_faces[polyhedron_count]
                 polyhedron_count += 1
 
             else:
-                celltype = f"polygon{len(cell)}" if vtk_celltype == 7 else vtk_to_meshio_type[vtk_celltype]
+                celltype = (
+                    f'polygon{len(cell)}' if vtk_celltype == 7 else vtk_to_meshio_type[vtk_celltype]
+                )
 
             if len(cells) > 0 and cells[-1][0] == celltype:
                 cells[-1][1].append(cell)
@@ -1108,7 +1111,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
                 cells.append((celltype, [cell]))
 
         cells = [
-            (celltype if not celltype.startswith("polygon") else "polygon", celldata)
+            (celltype if not celltype.startswith('polygon') else 'polygon', celldata)
             for celltype, celldata in cells
         ]
 
@@ -1119,7 +1122,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     vtk_cell_data = mesh.cell_data
     indices = np.insert(np.cumsum([len(c[1]) for c in cells]), 0, 0)
     cell_data = {
-        k.replace(' ', '_'): [v[i1 : i2] for i1, i2 in zip(indices[:-1], indices[1:])]
+        k.replace(' ', '_'): [v[i1:i2] for i1, i2 in zip(indices[:-1], indices[1:])]
         for k, v in vtk_cell_data.items()
     }
 
