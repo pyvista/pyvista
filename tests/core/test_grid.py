@@ -880,6 +880,9 @@ def test_image_data_init_kwargs():
     image = pv.ImageData(direction_matrix=matrix)
     assert np.allclose(image.direction_matrix, matrix)
 
+    image = pv.ImageData(offset=vector)
+    assert np.allclose(image.offset, vector)
+
 
 @pytest.mark.parametrize('dims', [None, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)])
 def test_image_data_empty_init(dims):
