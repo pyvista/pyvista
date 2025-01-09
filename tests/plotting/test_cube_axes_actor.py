@@ -122,14 +122,14 @@ def test_title_offset(cube_axes_actor):
 
     with pytest.warns(
         UserWarning,
-        match=rf'Setting title_offset with a tuple is only supported from vtk >= 9\.3. Considering only the second value \(ie\. y-offset\) of {(y:=0.02)}',
+        match=rf'Setting title_offset with a sequence is only supported from vtk >= 9\.3. Considering only the second value \(ie\. y-offset\) of {(y:=0.02)}',
     ):
-        cube_axes_actor.title_offset = (0.01, y)
+        cube_axes_actor.title_offset = [0.01, y]
     assert cube_axes_actor.title_offset == y
 
 
 @pytest.mark.needs_vtk_version(9, 3)
-def test_title_offset_tuple(cube_axes_actor):
+def test_title_offset_sequence(cube_axes_actor):
     assert isinstance(cube_axes_actor.title_offset, tuple)
     cube_axes_actor.title_offset = (t := (0.01, 0.02))
     assert cube_axes_actor.title_offset == t
