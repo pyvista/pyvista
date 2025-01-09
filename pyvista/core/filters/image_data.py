@@ -2070,7 +2070,7 @@ class ImageDataFilters(DataSetFilters):
             (np.array(self.spacing) / 2) * dims_mask,
         )
         extent_min = self.extent[::2]
-        new_image.extent = (  # type: ignore[assignment]
+        new_image.extent = (
             extent_min[0],
             extent_min[0] + dims_result[0] - 1,
             extent_min[1],
