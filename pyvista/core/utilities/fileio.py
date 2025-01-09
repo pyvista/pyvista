@@ -825,7 +825,7 @@ def read_pickle(filename: str | Path) -> DataObject:
     filename_str = str(filename)
     if filename_str.endswith(PICKLE_EXT):
         with open(filename_str, 'rb') as f:  # noqa: PTH123
-            mesh = pickle.load(f)
+            mesh = pickle.load(f)  # noqa: S301
 
         if not isinstance(mesh, pyvista.DataObject):
             raise TypeError(

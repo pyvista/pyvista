@@ -61,7 +61,7 @@ plt.ylabel('Easting')
 
 # %%
 
-assert len(path) in data.shape, 'Make sure coordinates are present for every trace.'
+assert len(path) in data.shape, 'Make sure coordinates are present for every trace.'  # noqa: S101
 # If not, you'll need to interpolate the path
 
 # Grab the number of samples (in Z dir) and number of traces/soundings

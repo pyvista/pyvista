@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from weakref import proxy
+import xml.dom.minidom as md
+from xml.etree import ElementTree as ET
 
-import defusedxml.ElementTree as ET
-import defusedxml.minidom as md
+from defusedxml import ElementTree as defusedET
 import numpy as np
 
 import pyvista
@@ -150,7 +151,7 @@ class Camera(_vtk.vtkCamera):
         }
         camera = cls()
 
-        tree = ET.parse(filename)
+        tree = defusedET.parse(filename)
         root = tree.getroot()[0]
         for element in root:
             attrib = element.attrib
@@ -244,7 +245,7 @@ class Camera(_vtk.vtkCamera):
 
         # Assuming the rest of your XML handling remains the same
         xmlstr = ET.tostring(root).decode()
-        newxml = md.parseString(xmlstr)
+        newxml = md.parseString(xmlstr)  # noqa: S318
         with Path(filename).open('w') as outfile:
             outfile.write(newxml.toprettyxml(indent='\t', newl='\n'))
 
