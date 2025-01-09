@@ -30,6 +30,7 @@ if TYPE_CHECKING:  # pragma: no cover
     import imageio
     import meshio
 
+    from pyvista.core._typing_core import MatrixLike
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
@@ -1058,7 +1059,8 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
                 continue
 
             n_faces = polyhedral_cells[location]
-            i, faces = location + 1, []
+            i = location + 1
+            faces: list[MatrixLike] = []
 
             while len(faces) < n_faces:
                 n_vertices = polyhedral_cells[i]
