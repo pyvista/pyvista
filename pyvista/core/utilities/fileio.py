@@ -964,6 +964,10 @@ def from_meshio(mesh: meshio.Mesh) -> UnstructuredGrid:
 
         cell_type += [vtk_type] * len(c.data)
 
+    # Convert cell sets to cell data
+    if mesh.cell_sets:
+        mesh.cell_sets_to_data()
+
     # Extract cell data from meshio.Mesh object
     cell_data = {k: np.concatenate(v) for k, v in mesh.cell_data.items()}
 
