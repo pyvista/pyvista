@@ -544,10 +544,14 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         The direction matrix is a 3x3 matrix which controls the orientation of the
         image data.
 
+        .. versionadded:: 0.45
+
     offset : int | VectorLike[int], optional
         The offset defines the minimum :attr:`extent` of the image. Offset values
         can be positive or negative. In physical space, the offset is relative
         to the image's :attr:`origin`.
+
+        .. versionadded:: 0.45
 
     Examples
     --------
