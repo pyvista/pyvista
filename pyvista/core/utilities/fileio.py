@@ -1060,7 +1060,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
             n_faces = polyhedral_cells[location]
             i = location + 1
-            faces: list[MatrixLike] = []
+            faces: MatrixLike[int] = []
 
             while len(faces) < n_faces:
                 n_vertices = polyhedral_cells[i]
