@@ -1075,6 +1075,8 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         cells = connectivity.reshape((mesh.n_cells, connectivity.size // mesh.n_cells))
 
         if vtk_celltype == pv.CellType.PIXEL:
+            cells = cells[:, [0, 1, 3, 2]]
+            celltype = 'quad'
 
         elif vtk_celltype == pv.CellType.VOXEL:
             cells = cells[:, [0, 1, 3, 2, 4, 5, 7, 6]]
