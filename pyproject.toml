@@ -84,6 +84,7 @@ test = [
   'pytest-pyvista==0.1.8',
   'pytest-xdist<3.7.0',
   'pytest<8.4.0',
+  'pytest_cases<3.8.6',
   'pytest_mock<3.15.0',
   'pyvista[pinned]',
   'scipy<1.14.2',
@@ -198,13 +199,11 @@ omit = [
 [tool.pytest.ini_options]
 doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
-  'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
   'error',
   'ignore:.*Given trait value dtype "float64":UserWarning',                                   # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning',                                      # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.dtype size changed.*:RuntimeWarning',                                       # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                       # bogus numpy ABI warning (see numpy/#432)
-  'ignore:Points is not a float type.*:UserWarning',
   'ignore:pyvista test generated image dir.* does not yet exist.  Creating dir.:UserWarning',
 ]
 image_cache_dir = 'tests/plotting/image_cache'
