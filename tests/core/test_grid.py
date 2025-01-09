@@ -1277,6 +1277,17 @@ def test_set_extent_width_spacing():
     assert np.allclose(grid.x[:5], [0.0, 0.1, 0.2, 0.3, 0.4])
 
 
+def test_imagedata_offset():
+    grid = pv.ImageData()
+    offset = (1, 2, 3)
+    grid.extent = (offset[0], 9, offset[1], 9, offset[2], 9)
+    actual_dimensions = grid.dimensions
+    actual_offset = grid.offset
+    assert isinstance(actual_offset, tuple)
+    assert grid.offset == offset
+    assert grid.dimensions == actual_dimensions
+
+
 def test_UnstructuredGrid_cast_to_explicit_structured_grid():
     grid = examples.load_explicit_structured()
     grid = grid.hide_cells(range(80, 120))
