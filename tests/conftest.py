@@ -277,7 +277,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         # add filterwarnings for vtk < 9.1 and numpy bool deprecation
         if pyvista.vtk_version_info < (9, 1):
             filterw = pytest.mark.filterwarnings(
-                r'ignore:`np\.bool` is a deprecated alias for the builtin `bool`:DeprecationWarning'
+                r'ignore:`.*np\.bool` is a deprecated alias for the builtin `bool`.*:DeprecationWarning'
             )
             item.add_marker(filterw)
 
