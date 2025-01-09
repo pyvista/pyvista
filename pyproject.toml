@@ -198,6 +198,7 @@ omit = [
 [tool.pytest.ini_options]
 doctest_optionflags = 'NUMBER ELLIPSIS'
 filterwarnings = [
+  'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
   'error',
   'ignore:.*Given trait value dtype "float64":UserWarning',                                   # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning',                                      # bogus numpy ABI warning (see numpy/#432)
