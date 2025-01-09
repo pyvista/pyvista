@@ -22,7 +22,7 @@ plotter.close()\
 def get_gpu_info():  # numpydoc ignore=RT01
     """Get all information about the GPU."""
     # an OpenGL context MUST be opened before trying to do this.
-    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)  # noqa: S603
     return '' if proc.returncode else proc.stdout.decode()
 
 

@@ -323,6 +323,7 @@ extend-select = [
   'RET',
   'RSE',
   'RUF',
+  'S',
   'SIM',
   'T10',
   'TCH',
@@ -388,7 +389,7 @@ allow-dict-calls-with-keyword-arguments = true
 'pyvista/plotting/_vtk.py' = ['PLC0414']
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
 'pyvista/utilities/*' = ['F401'] # deprecated modules
-'tests/*' = ['D']
+'tests/*' = ['D', 'S101']
 
 # ANN ignores for `pyvista/core`
 # TODO: Add annotations to any files listed below and remove it from this list

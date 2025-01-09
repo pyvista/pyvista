@@ -730,7 +730,7 @@ def test_convert_array():
 
     # https://github.com/pyvista/pyvista/issues/2370
     arr3 = pv.core.utilities.arrays.convert_array(
-        pickle.loads(pickle.dumps(np.arange(4).astype('O'))),
+        pickle.loads(pickle.dumps(np.arange(4).astype('O'))),  # noqa: S301
         array_type=np.dtype('O'),
     )
     assert arr3.GetNumberOfValues() == 4

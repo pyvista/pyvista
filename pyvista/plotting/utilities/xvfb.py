@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
 import time
 import warnings
 
@@ -56,15 +58,28 @@ def start_xvfb(wait=3, window_size=None):
     if os.name != 'posix':
         raise OSError('`start_xvfb` is only supported on Linux')
 
-    if os.system('which Xvfb > /dev/null'):
+    # Ensure Xvfb is installed and get the full path
+    xvfb_path = shutil.which('Xvfb')
+    if not xvfb_path:
         raise OSError(XVFB_INSTALL_NOTES)
 
     # use current default window size
     if window_size is None:
         window_size = global_theme.window_size
-    window_size_parm = f'{window_size[0]:d}x{window_size[1]:d}x24'
+    window_size_param = f'{window_size[0]:d}x{window_size[1]:d}x24'
     display_num = ':99'
-    os.system(f'Xvfb {display_num} -screen 0 {window_size_parm} > /dev/null 2>&1 &')
+
+    try:
+        # Start Xvfb using subprocess.run with the full path
+        subprocess.run(  # noqa: S603
+            [xvfb_path, display_num, '-screen', '0', window_size_param],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f'Failed to start Xvfb: {e}') from e
+
     os.environ['DISPLAY'] = display_num
     if wait:
         time.sleep(wait)

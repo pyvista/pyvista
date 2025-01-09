@@ -966,7 +966,7 @@ def test_actual_memory_size(grid):
 
 def test_copy_structure(grid):
     classname = grid.__class__.__name__
-    copy = eval(f'pv.{classname}')()
+    copy = getattr(pv, classname)()
     copy.copy_structure(grid)
     assert copy.n_cells == grid.n_cells
     assert copy.n_points == grid.n_points
@@ -988,7 +988,7 @@ def test_copy_structure_self(datasets):
 
 def test_copy_attributes(grid):
     classname = grid.__class__.__name__
-    copy = eval(f'pv.{classname}')()
+    copy = getattr(pv, classname)()
     copy.copy_attributes(grid)
     assert copy.n_cells == 0
     assert copy.n_points == 0
