@@ -645,7 +645,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             if direction_matrix is not None:
                 self.direction_matrix = direction_matrix  # type: ignore[assignment]
             if offset is not None:
-                self.offset = offset
+                self.offset = offset  # type: ignore[assignment]
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -985,17 +985,17 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
     @offset.setter
     def offset(self: Self, offset: int | VectorLike[int]) -> None:
-        offset = _validation.validate_array3(
+        offset_ = _validation.validate_array3(
             offset, broadcast=True, must_be_integer=True, dtype_out=int
         )
         dims = self.dimensions
         self.extent = (
-            offset[0],
-            offset[0] + dims[0] - 1,
-            offset[1],
-            offset[1] + dims[1] - 1,
-            offset[2],
-            offset[2] + dims[2] - 1,
+            offset_[0],
+            offset_[0] + dims[0] - 1,
+            offset_[1],
+            offset_[1] + dims[1] - 1,
+            offset_[2],
+            offset_[2] + dims[2] - 1,
         )
 
     @wraps(RectilinearGridFilters.to_tetrahedra)
