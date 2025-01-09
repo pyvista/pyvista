@@ -1058,14 +1058,14 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
                 continue
 
             n_faces = polyhedral_cells[location]
-            i, cell = location + 1, []
+            i, faces = location + 1, []
 
-            while len(cell) < n_faces:
+            while len(faces) < n_faces:
                 n_vertices = polyhedral_cells[i]
-                cell.append(polyhedral_cells[i + 1 : i + 1 + n_vertices])
+                faces.append(polyhedral_cells[i + 1 : i + 1 + n_vertices])
                 i += n_vertices + 1
 
-            polyhedral_cell_faces.append(cell)
+            polyhedral_cell_faces.append(faces)
 
     # Single cell type (except POLYGON and POLYHEDRON)
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {7, 42}:
