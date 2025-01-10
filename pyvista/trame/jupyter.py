@@ -75,7 +75,8 @@ class Widget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
     def __init__(self, viewer, src, width=None, height=None, iframe_attrs=None, **kwargs):
         """Initialize."""
         if HTML is object:
-            raise ImportError('Please install `ipywidgets`.')
+            msg = 'Please install `ipywidgets`.'
+            raise ImportError(msg)
         # eventually we could maybe expose this, but for now make sure we're at least
         # consistent with matplotlib's color (light gray)
 
@@ -116,7 +117,8 @@ class EmbeddableWidget(HTML):  # type: ignore[misc]  # numpydoc ignore=PR01
     def __init__(self, plotter, width, height, **kwargs):
         """Initialize."""
         if HTML is object:
-            raise ImportError('Please install `ipywidgets`.')
+            msg = 'Please install `ipywidgets`.'
+            raise ImportError(msg)
         scene = plotter.export_html(filename=None)
         src = scene.getvalue().replace('"', '&quot;')
         # eventually we could maybe expose this, but for now make sure we're at least
@@ -448,13 +450,12 @@ def elegantly_launch(*args, **kwargs):  # numpydoc ignore=PR01
     try:
         import nest_asyncio
     except ImportError:
-        raise ImportError(
-            """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
+        msg = """Please install `nest_asyncio` to automagically launch the trame server without await. Or, to avoid `nest_asynctio` run:
 
     from pyvista.trame.jupyter import launch_server
     await launch_server().ready
-""",
-        )
+"""
+        raise ImportError(msg)
 
     async def launch_it():
         await launch_server(*args, **kwargs).ready

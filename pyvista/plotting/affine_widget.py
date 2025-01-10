@@ -35,11 +35,13 @@ def _validate_axes(axes):
     """
     axes = np.array(axes)
     if axes.shape != (3, 3):
-        raise ValueError('`axes` must be a (3, 3) array.')
+        msg = '`axes` must be a (3, 3) array.'
+        raise ValueError(msg)
 
     axes = axes / np.linalg.norm(axes, axis=1, keepdims=True)
     if not np.allclose(np.cross(axes[0], axes[1]), axes[2]):
-        raise ValueError('`axes` do not follow the right hand rule.')
+        msg = '`axes` do not follow the right hand rule.'
+        raise ValueError(msg)
 
     return axes
 
@@ -47,7 +49,8 @@ def _validate_axes(axes):
 def _check_callable(func, name='callback'):
     """Check if a variable is callable."""
     if func and not callable(func):
-        raise TypeError(f'`{name}` must be a callable, not {type(func)}.')
+        msg = f'`{name}` must be a callable, not {type(func)}.'
+        raise TypeError(msg)
     return func
 
 
@@ -186,7 +189,8 @@ class AffineWidget3D:
         """Initialize the widget."""
         # needs VTK v9.2.0 due to the hardware picker
         if pyvista.vtk_version_info < (9, 2):
-            raise VTKVersionError('AfflineWidget3D requires VTK v9.2.0 or newer.')
+            msg = 'AfflineWidget3D requires VTK v9.2.0 or newer.'
+            raise VTKVersionError(msg)
 
         self._axes = np.eye(4)
         self._axes_inv = np.eye(4)
