@@ -1020,9 +1020,7 @@ def test_cast_to_numpy(as_any, copy, dtype):
         assert array_out.dtype.type is np.dtype(dtype).type
 
 
-@pytest.mark.filterwarnings(
-    'ignore:Creating an ndarray from ragged nested sequences:DeprecationWarning'
-)
+@pytest.mark.filterwarnings('ignore:Creating an ndarray from ragged nested sequences:UserWarning')
 def test_cast_to_numpy_raises():
     if NUMPY_VERSION_INFO < (1, 26) and sys.platform == 'linux':
         err = TypeError
