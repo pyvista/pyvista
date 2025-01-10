@@ -260,6 +260,15 @@ def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
 
 
+def pytest_configure(config: pytest.Config):
+    """Add filterwarnings for vtk < 9.1 and numpy bool deprecation"""
+    if pyvista.vtk_version_info < (9, 1):
+        warnings = config.getini('filterwarnings')
+        warnings.append(
+            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
+        )
+
+
 def marker_names(item: pytest.Item):
     return [marker.name for marker in item.iter_markers()]
 
@@ -273,13 +282,6 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         if not test_downloads:
             if 'needs_download' in marker_names(item):
                 item.add_marker(skip_downloads)
-
-        # add filterwarnings for vtk < 9.1 and numpy bool deprecation
-        if pyvista.vtk_version_info < (9, 1):
-            filterw = pytest.mark.filterwarnings(
-                r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
-            )
-            item.add_marker(filterw)
 
 
 def pytest_runtest_setup(item):
