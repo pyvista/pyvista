@@ -139,7 +139,7 @@ def test_title_offset_sequence(cube_axes_actor):
 def test_title_offset_float(cube_axes_actor):
     with pytest.warns(
         UserWarning,
-        match=r'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a tuple of \(x,y\) offsets. Setting the x offset to 0\.0',
+        match=r'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a sequence of \(x,y\) offsets. Setting the x offset to 0\.0',
     ):
         cube_axes_actor.title_offset = (t := 0.01)
     assert cube_axes_actor.title_offset == (0.0, t)
