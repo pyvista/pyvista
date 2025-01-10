@@ -1021,7 +1021,7 @@ def test_cast_to_numpy(as_any, copy, dtype):
 
 
 @pytest.mark.filterwarnings(
-    'ignore:Creating an ndarray from ragged nested sequences:numpy.VisibleDeprecationWarning'
+    'ignore:Creating an ndarray from ragged nested sequences:DeprecationWarning'
 )
 def test_cast_to_numpy_raises():
     if NUMPY_VERSION_INFO < (1, 26) and sys.platform == 'linux':
