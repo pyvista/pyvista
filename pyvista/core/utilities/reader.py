@@ -1985,7 +1985,7 @@ class _PVDReader(BaseVTKReader):
                     float(element_attrib.get('timestep', 0)),
                     int(element_attrib.get('part', 0)),
                     element_attrib['file'],
-                    element_attrib.get('group'),  # type: ignore[arg-type]
+                    element_attrib.get('group'),
                 ),
             )
 
