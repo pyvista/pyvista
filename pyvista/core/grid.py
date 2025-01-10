@@ -916,7 +916,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         >>> grid.extent
         (2, 5, 2, 5, 2, 5)
 
-        Note how this also modifies the grid's :attr:`offset`,:attr:`dimensions`,
+        Note how this also modifies the grid's :attr:`offset`, :attr:`dimensions`,
         and :attr:`bounds`. Since we use default spacing of 1 here, the bounds
         match the extent exactly.
 

@@ -1288,7 +1288,7 @@ def test_imagedata_offset():
     actual_offset = grid.offset
     assert isinstance(actual_offset, tuple)
     assert actual_offset == offset
-    # Test to make sure dimensions are unchanged since setting offset 
+    # Test to make sure dimensions are unchanged since setting offset
     # modifies the extent which could modify dimensions.
     assert grid.dimensions == actual_dimensions
 
