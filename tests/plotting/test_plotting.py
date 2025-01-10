@@ -2977,6 +2977,9 @@ def test_add_text():
     not check_math_text_support(),
     reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, MathText requires matplotlib<3.6',
 )
+@pytest.mark.filterwarnings(
+    r'ignore:Passing individual properties to FontProperties\(\):matplotlib.MatplotlibDeprecationWarning'
+)
 def test_add_text_latex():
     """Test LaTeX symbols.
 
