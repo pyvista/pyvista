@@ -1082,10 +1082,20 @@ def test_validate_dim_operation_invalid_parameters(
 
 
 @pytest.mark.parametrize('spacing', [None, [3, 4, 5]])
-def test_resample(uniform, spacing):
+@pytest.mark.parametrize('direction_matrix', [None, np.diag((-1, 1, 1))])
+@pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
+@pytest.mark.parametrize('dimensions', [None, (11, 12, 13)])
+def test_resample(uniform, spacing, direction_matrix, origin, dimensions):
     reference = uniform.copy()
-    if spacing:
+    if spacing is not None:
         reference.spacing = spacing
+    if direction_matrix is not None:
+        reference.direction_matrix = direction_matrix
+    if origin is not None:
+        reference.origin = origin
+    if dimensions is not None:
+        reference.dimensions = dimensions
+
     resampled = uniform.resample(reference)
     assert isinstance(resampled, pv.ImageData)
     assert resampled is not uniform
