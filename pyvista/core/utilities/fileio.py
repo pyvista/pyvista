@@ -1196,7 +1196,7 @@ def save_meshio(
 
     **kwargs : dict, optional
         Additional keyword arguments.  See
-        ``meshio.write_points_cells`` for more details.
+        ``meshio.Mesh.write`` for more details.
 
     Examples
     --------
