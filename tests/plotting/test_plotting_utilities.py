@@ -11,6 +11,7 @@ import pytest
 import pyvista as pv
 from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
+from pyvista.plotting.tools import _system_supports_plotting
 from pyvista.report import GPUInfo
 
 HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
@@ -31,6 +32,11 @@ def test_gpuinfo():
     for func_name in ['renderer', 'version', 'vendor']:
         with pytest.raises(RuntimeError, match=func_name):
             getattr(gpuinfo, func_name)()
+
+
+@pytest.mark.skip_plotting
+def test_system_supports_plotting():
+    assert _system_supports_plotting()
 
 
 @pytest.mark.skip_plotting
