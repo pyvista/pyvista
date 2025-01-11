@@ -1202,7 +1202,7 @@ def get_cmap_safe(cmap):
                 try:
                     cmap = colormaps[cmap]
                 except KeyError:
-                    if not has_colorcet or not has_cmocean:
+                    if not has_colorcet or not has_cmocean:  # pragma: no cover
                         if not has_colorcet and not has_cmocean:
                             missing = '`colorcet` or `cmocean`'
                         else:
