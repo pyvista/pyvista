@@ -1111,9 +1111,38 @@ def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset
     if offset is not None:
         reference.offset = offset
 
-    resampled = uniform.resample(reference_volume=reference)
+    resampled = uniform.resample(reference_image=reference)
     assert isinstance(resampled, pv.ImageData)
     assert resampled is not uniform
     assert resampled is not reference
     assert np.array_equal(resampled.extent, reference.extent)
     assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
+
+
+@pytest.mark.parametrize('reference', [None, True])
+@pytest.mark.parametrize('spacing', [None, [3, 4, 5]])
+@pytest.mark.parametrize('dimensions', [None, (11, 12, 13)])
+def test_resample_reference(uniform, spacing, dimensions, reference):
+    if reference is not None:
+        reference = uniform.copy()
+    input_spacing = uniform.spacing
+    input_dimensions = uniform.dimensions
+
+    kwargs = {}
+    if spacing is not None:
+        kwargs['spacing'] = spacing
+        expected_spacing = spacing
+    else:
+        expected_spacing = input_spacing
+    if dimensions is not None:
+        kwargs['dimensions'] = dimensions
+        expected_dimensions = dimensions
+    else:
+        expected_dimensions = input_dimensions
+
+    resampled = uniform.resample(reference_image=reference, spacing=spacing, dimensions=dimensions)
+    assert isinstance(resampled, pv.ImageData)
+    assert resampled is not uniform
+    assert resampled is not reference
+    assert np.array_equal(resampled.spacing, expected_spacing)
+    assert np.array_equal(resampled.dimensions, expected_dimensions)

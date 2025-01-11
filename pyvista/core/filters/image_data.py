@@ -2930,14 +2930,24 @@ class ImageDataFilters(DataSetFilters):
         self: ImageData,
         interpolation: Literal['linear', 'nearest'] = 'linear',
         *,
-        reference_volume: ImageData,
+        reference_image: ImageData = None,
+        dimensions=None,
+        spacing=None,
         background_value: int = 0,
     ):
+        if reference_image is None:
+            reference_image = pyvista.ImageData()
+            reference_image.copy_structure(self)
+        if dimensions is not None:
+            reference_image.dimensions = dimensions
+        if spacing is not None:
+            reference_image.spacing = spacing
+
         input_index_to_physical_matrix = self.index_to_physical_matrix
-        reference_index_to_physical_matrix = reference_volume.index_to_physical_matrix
+        reference_index_to_physical_matrix = reference_image.index_to_physical_matrix
 
         input_extent = self.extent
-        reference_extent = reference_volume.extent
+        reference_extent = reference_image.extent
 
         # Return early without resampling if geometry and extent matches reference
         same_geometry = np.allclose(

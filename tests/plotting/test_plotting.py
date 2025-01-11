@@ -4897,3 +4897,8 @@ def test_bitwise_and_or_of_polydata(operator):
     pl.add_mesh(result, color='lightblue')
     pl.camera_position = 'xz'
     pl.show()
+
+
+# def test_resample_imagedata(uniform):
+#
+#     uniform.resample
