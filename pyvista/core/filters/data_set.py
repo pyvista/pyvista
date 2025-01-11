@@ -9001,6 +9001,9 @@ class DataSetFilters:
             Make labeled data contiguous. May be used as a pre-processing step before
             coloring.
 
+        :ref:`anatomical_groups_example`
+            Additional examples using this filter.
+
         Parameters
         ----------
         colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
