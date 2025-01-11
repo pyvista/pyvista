@@ -1183,7 +1183,7 @@ def get_cmap_safe(cmap):
                 pass
 
         # Try cmocean second
-        has_cmocean = has_module('colorcet')
+        has_cmocean = has_module('cmocean')
         if has_cmocean:
             import cmocean
 
