@@ -103,6 +103,7 @@ from vtkmodules.vtkCommonCore import VTK_ARIAL as VTK_ARIAL
 from vtkmodules.vtkCommonCore import VTK_COURIER as VTK_COURIER
 from vtkmodules.vtkCommonCore import VTK_FONT_FILE as VTK_FONT_FILE
 from vtkmodules.vtkCommonCore import VTK_TIMES as VTK_TIMES
+from vtkmodules.vtkCommonCore import VTK_UNSIGNED_CHAR as VTK_UNSIGNED_CHAR
 from vtkmodules.vtkCommonCore import buffer_shared as buffer_shared  # type: ignore[attr-defined]
 from vtkmodules.vtkCommonCore import mutable as mutable
 from vtkmodules.vtkCommonCore import reference as reference
@@ -281,12 +282,6 @@ with contextlib.suppress(ImportError):  # Introduced prior to VTK 9.2
     from vtkmodules.vtkCommonDataModel import VTK_TRIQUADRATIC_PYRAMID as VTK_TRIQUADRATIC_PYRAMID
     from vtkmodules.vtkCommonDataModel import vtkTriQuadraticPyramid as vtkTriQuadraticPyramid
 
-from vtkmodules.util.vtkConstants import VTK_DOUBLE as VTK_DOUBLE
-from vtkmodules.util.vtkConstants import VTK_DOUBLE_MAX as VTK_DOUBLE_MAX
-from vtkmodules.util.vtkConstants import VTK_DOUBLE_MIN as VTK_DOUBLE_MIN
-from vtkmodules.util.vtkConstants import VTK_SHORT as VTK_SHORT
-from vtkmodules.util.vtkConstants import VTK_UNSIGNED_CHAR as VTK_UNSIGNED_CHAR
-from vtkmodules.util.vtkConstants import VTK_UNSIGNED_SHORT as VTK_UNSIGNED_SHORT
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithm as vtkAlgorithm
 from vtkmodules.vtkCommonExecutionModel import vtkAlgorithmOutput as vtkAlgorithmOutput
 from vtkmodules.vtkCommonExecutionModel import vtkCompositeDataPipeline as vtkCompositeDataPipeline
