@@ -8961,6 +8961,7 @@ class DataSetFilters:
         *,
         coloring_mode: Literal['index', 'cycler'] | None = None,
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
+        negative_indexing: bool = False,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'cell',
         output_scalars: str | None = None,
@@ -9042,6 +9043,12 @@ class DataSetFilters:
             .. note::
                 The color type affects the default value for unspecified colors when
                 a dictionary is used. See ``colors`` for details.
+
+        negative_indexing : bool, default: False
+            Allow indexing ``colors`` with negative values. Only valid when
+            ``coloring_mode`` is ``'index'``. This option is useful for coloring data
+            with two independent categories since positive values will be colored
+            differently than negative values.
 
         scalars : str, optional
             Name of scalars with labels. Defaults to currently active scalars.
@@ -9137,6 +9144,28 @@ class DataSetFilters:
         >>> colored_labels = image_labels.color_labels('red')
         >>> colored_labels.plot()
 
+        Modify the scalars and make two of the labels negative.
+
+        >>> scalars = image_labels.active_scalars
+        >>> scalars[scalars > 2] *= -1
+        >>> np.unique(scalars)
+        pyvista_ndarray([-4, -3,  0,  1,  2])
+
+        Color the mesh and enable ``'negative_indexing'``. With this option enabled,
+        the ``'index'`` coloring mode is used by default, and therefore the positive
+        values ``0``, ``1``, and ``2`` are colored with the first, second, and third
+        color in the colormap, respectively. Negative values ``-3`` and ``-4`` are
+        colored with the third-last and fourth-last color in the colormap, respectively.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=True)
+        >>> colored_labels.plot()
+
+        If ``'negative_indexing'`` is disabled, the coloring defaults to the
+        ``'cycler'`` coloring mode instead.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=False)
+        >>> colored_labels.plot()
+
         """
         # Lazy import since these are from plotting module
         from cycler import cycler
@@ -9159,11 +9188,8 @@ class DataSetFilters:
                 )
 
         def _is_index_like(array_, max_value):
-            if np.issubdtype(array_.dtype, np.integer) or np.array_equal(array, np.floor(array_)):
-                min_, max_ = output_mesh.get_data_range(name)
-                if min_ >= 0 and max_ <= max_value:
-                    return True
-            return False
+            min_value = -max_value if negative_indexing else 0
+            return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ <= max_value)
 
         _validation.check_contains(
             ['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'],
@@ -9201,6 +9227,10 @@ class DataSetFilters:
             items = zip(colors.keys(), color_rgb_sequence)
 
         else:
+            if array.ndim > 1:
+                raise ValueError(
+                    f'Multi-component scalars are not supported for coloring. Scalar array {scalars} must be one-dimensional.'
+                )
             _is_rgb_sequence = False
             if isinstance(colors, str):
                 try:
@@ -9232,17 +9262,34 @@ class DataSetFilters:
 
             n_colors = len(color_rgb_sequence)
             if coloring_mode is None:
-                coloring_mode = 'index' if _is_index_like(array, max_value=n_colors) else 'cycler'
+                coloring_mode = (
+                    'index' if np.all(_is_index_like(array, max_value=n_colors)) else 'cycler'
+                )
 
+            _validation.check_contains(
+                ['index', 'cycler'], must_contain=coloring_mode, name='coloring_mode'
+            )
             if coloring_mode == 'index':
-                if not _is_index_like(array, max_value=n_colors):
+                if not np.all(_is_index_like(array, max_value=n_colors)):
                     raise ValueError(
                         f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
-                keys: Iterable[float] = range(n_colors)
-                values: Iterable[Any] = color_rgb_sequence
-            else:
+                keys: Iterable[float]
+                values: Iterable[Any]
+
+                keys_ = np.arange(n_colors)
+                values_ = color_rgb_sequence
+                if negative_indexing:
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
+                    values_.extend(values_[::-1])
+                keys = keys_
+                values = values_
+            elif coloring_mode == 'cycler':
+                if negative_indexing:
+                    raise ValueError(
+                        "Negative indexing is not supported with 'cycler' mode enabled."
+                    )
                 keys = np.unique(array)
                 values = cycler('color', color_rgb_sequence)
 
