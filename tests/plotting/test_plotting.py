@@ -2211,6 +2211,17 @@ def test_user_matrix_mesh(sphere):
         p.add_mesh(sphere, user_matrix='invalid')
 
 
+def test_user_matrix_silhouette(airplane):
+    matrix = [[-1, 0, 0, 1], [0, 1, 0, 2], [0, 0, -1, 3], [0, 0, 0, 1]]
+    pl = pv.Plotter()
+    pl.add_mesh(
+        airplane,
+        silhouette=dict(line_width=10),
+        user_matrix=matrix,
+    )
+    pl.show()
+
+
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {'vertical': True}
     sargs_copy = sargs.copy()
