@@ -542,6 +542,18 @@ def test_points_to_cells_and_cells_to_points_dimensions(
     ).dimensions == (2, 2, 2)
 
 
+@pytest.mark.parametrize(
+    'extent', [(-25, -19, -14, -10, -7, -5), (1, 2, 3, 4, 5, 6), (0, 2, 0, 4, 0, 6)]
+)
+def test_points_to_cells_and_cells_to_points_round_trip_equal(extent):
+    before = pv.ImageData()
+    before.index_to_physical_matrix = np.diag((-1, 2, 3, 1))
+    before.extent = extent
+    before.point_data['data'] = range(before.n_points)
+    after = before.points_to_cells().cells_to_points()
+    assert before == after
+
+
 def test_points_to_cells_and_cells_to_points_dimensions_incorrect_number_data():
     image = pv.ImageData(dimensions=(1, 2, 2))
     with pytest.raises(

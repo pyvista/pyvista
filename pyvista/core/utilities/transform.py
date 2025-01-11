@@ -210,8 +210,8 @@ class Transform(_vtk.vtkTransform):
     Note how the meshes have different positions since post- and pre-multiplication
     produce different transformations.
 
-    >>> mesh_post = pv.Sphere().transform(transform_post)
-    >>> mesh_pre = pv.Cone().transform(transform_pre)
+    >>> mesh_post = pv.Sphere().transform(transform_post, inplace=False)
+    >>> mesh_pre = pv.Cone().transform(transform_pre, inplace=False)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_post, color='goldenrod')
     >>> _ = pl.add_mesh(mesh_pre, color='teal')
@@ -245,7 +245,7 @@ class Transform(_vtk.vtkTransform):
     Transform the mesh by its inverse to restore it to its original un-scaled state
     and positioning at the origin.
 
-    >>> mesh_pre_inverted = mesh_pre.transform(inverse_matrix)
+    >>> mesh_pre_inverted = mesh_pre.transform(inverse_matrix, inplace=False)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_pre_inverted, color='teal')
     >>> _ = pl.add_axes_at_origin()
