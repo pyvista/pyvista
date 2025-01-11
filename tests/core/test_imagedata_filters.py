@@ -1120,7 +1120,7 @@ def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset
 
 
 @pytest.mark.parametrize('reference', [None, True])
-@pytest.mark.parametrize('spacing', [None, [3, 4, 5]])
+@pytest.mark.parametrize('spacing', [None, (3, 4, 5)])
 @pytest.mark.parametrize('dimensions', [None, (11, 12, 13)])
 def test_resample_reference(uniform, spacing, dimensions, reference):
     if reference is not None:
@@ -1128,17 +1128,8 @@ def test_resample_reference(uniform, spacing, dimensions, reference):
     input_spacing = uniform.spacing
     input_dimensions = uniform.dimensions
 
-    kwargs = {}
-    if spacing is not None:
-        kwargs['spacing'] = spacing
-        expected_spacing = spacing
-    else:
-        expected_spacing = input_spacing
-    if dimensions is not None:
-        kwargs['dimensions'] = dimensions
-        expected_dimensions = dimensions
-    else:
-        expected_dimensions = input_dimensions
+    expected_spacing = spacing if spacing else input_spacing
+    expected_dimensions = dimensions if dimensions else input_dimensions
 
     resampled = uniform.resample(reference_image=reference, spacing=spacing, dimensions=dimensions)
     assert isinstance(resampled, pv.ImageData)
