@@ -1173,7 +1173,8 @@ def get_cmap_safe(cmap):
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        if has_module('colorcet'):
+        has_colorcet = has_module('colorcet')
+        if has_colorcet:
             import colorcet
 
             try:
@@ -1182,7 +1183,8 @@ def get_cmap_safe(cmap):
                 pass
 
         # Try cmocean second
-        if has_module('cmocean'):
+        has_cmocean = has_module('colorcet')
+        if has_cmocean:
             import cmocean
 
             try:
@@ -1200,7 +1202,18 @@ def get_cmap_safe(cmap):
                 try:
                     cmap = colormaps[cmap]
                 except KeyError:
-                    raise ValueError(f'Invalid colormap "{cmap}"') from None
+                    if not has_colorcet or not has_cmocean:
+                        if not has_colorcet and not has_cmocean:
+                            missing = '`colorcet` or `cmocean`'
+                        else:
+                            missing = '`colorcet`' if not has_colorcet else '`cmocean`'
+                        msg = (
+                            f"Colormap '{cmap}' is not recognized but may be a valid {missing} colormap.\n"
+                            f'Install {missing} and try again.'
+                        )
+                    else:
+                        msg = f"Invalid colormap '{cmap}'"
+                    raise ValueError(msg) from None
 
     elif isinstance(cmap, list):
         for item in cmap:
