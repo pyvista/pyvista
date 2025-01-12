@@ -1173,8 +1173,7 @@ def get_cmap_safe(cmap):
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        has_colorcet = has_module('colorcet')
-        if has_colorcet:
+        if has_colorcet := has_module('colorcet'):
             import colorcet
 
             try:
@@ -1183,8 +1182,7 @@ def get_cmap_safe(cmap):
                 pass
 
         # Try cmocean second
-        has_cmocean = has_module('cmocean')
-        if has_cmocean:
+        if has_cmocean := has_module('cmocean'):
             import cmocean
 
             try:
