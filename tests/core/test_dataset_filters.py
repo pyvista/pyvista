@@ -4744,7 +4744,7 @@ def test_pack_labels_preference(uniform):
     assert np.array_equal(actual_shape, expected_shape)
 
 
-@pytest.mark.parametrize('coloring_mode', ['index', 'cycler', None])
+@pytest.mark.parametrize('coloring_mode', ['index', 'cycle', None])
 def test_color_labels(uniform, coloring_mode):
     default_cmap = pv.get_cmap_safe('glasbey_category10')
     original_scalars_name = uniform.active_scalars_name
@@ -4905,9 +4905,9 @@ def test_color_labels_invalid_input(uniform):
     with pytest.raises(ValueError, match=match):
         uniform.color_labels('fake')
 
-    match = "Negative indexing is not supported with 'cycler' mode enabled."
+    match = "Negative indexing is not supported with 'cycle' mode enabled."
     with pytest.raises(ValueError, match=match):
-        uniform.color_labels(coloring_mode='cycler', negative_indexing=True)
+        uniform.color_labels(coloring_mode='cycle', negative_indexing=True)
 
     match = 'Multi-component scalars are not supported for coloring. Scalar array Normals must be one-dimensional.'
     with pytest.raises(ValueError, match=match):
