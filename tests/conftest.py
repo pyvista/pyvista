@@ -263,10 +263,15 @@ def pytest_addoption(parser):
 
 def pytest_configure(config: pytest.Config):
     """Add filterwarnings for vtk < 9.1 and numpy bool deprecation"""
+    warnings = config.getini('filterwarnings')
+
     if pyvista.vtk_version_info < (9, 1):
-        warnings = config.getini('filterwarnings')
         warnings.append(
             r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
+        )
+    if any(Path(a).stem == 'tst_doc_images' for a in config.args):
+        warnings.append(
+            'ignore:Unknown config option.*image_cache_dir.*:pytest.PytestConfigWarning'
         )
 
 
