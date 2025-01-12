@@ -8998,6 +8998,9 @@ class DataSetFilters:
 
         See Also
         --------
+        pyvista.DataSetFilters.connectivity
+            Label data based on its connectivity.
+
         pyvista.ImageDataFilters.contour_labels
             Generate contours from labeled image data. The contours may be colored with this filter.
 
@@ -9080,7 +9083,8 @@ class DataSetFilters:
 
         Examples
         --------
-        Load labeled data and crop it to simplify the data.
+        Load labeled data and crop it with :meth:`~pyvista.ImageDataFilters.extract_subset`
+        to simplify the data.
 
         >>> from pyvista import examples
         >>> import numpy as np
@@ -9146,7 +9150,6 @@ class DataSetFilters:
         >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
         >>> colored_labels.plot()
 
-
         Modify the scalars and make two of the labels negative.
 
         >>> scalars = image_labels.active_scalars
@@ -9154,7 +9157,7 @@ class DataSetFilters:
         >>> np.unique(scalars)
         pyvista_ndarray([-4, -3,  0,  1,  2])
 
-        Color the mesh and enable ``'negative_indexing'``. With this option enabled,
+        Color the mesh and enable ``negative_indexing``. With this option enabled,
         the ``'index'`` coloring mode is used by default, and therefore the positive
         values ``0``, ``1``, and ``2`` are colored with the first, second, and third
         color in the colormap, respectively. Negative values ``-3`` and ``-4`` are
@@ -9163,8 +9166,8 @@ class DataSetFilters:
         >>> colored_labels = image_labels.color_labels(negative_indexing=True)
         >>> colored_labels.plot()
 
-        If ``'negative_indexing'`` is disabled, the coloring defaults to the
-        ``'cycler'`` coloring mode instead.
+        If ``negative_indexing`` is disabled, the coloring defaults to the
+        ``'cycle'`` coloring mode instead.
 
         >>> colored_labels = image_labels.color_labels(negative_indexing=False)
         >>> colored_labels.plot()
@@ -9173,7 +9176,7 @@ class DataSetFilters:
 
         >>> dataset = examples.download_foot_bones()
 
-        Label the bones using :meth:`pyvista.DataSetFilters.connectivity` and show
+        Label the bones using :meth:`~pyvista.DataSetFilters.connectivity` and show
         the label values.
 
         >>> labeled_data = dataset.connectivity()
@@ -9189,7 +9192,7 @@ class DataSetFilters:
         >>> colored_labels.plot()
 
         Color the mesh with fewer colors than there are label values. In this case
-        the `'cycle'`` mode is used by default and the colors are re-used.
+        the ``'cycle'`` mode is used by default and the colors are re-used.
 
         >>> colored_labels = labeled_data.color_labels(['red', 'lime', 'blue'])
         >>> colored_labels.plot()
