@@ -2206,12 +2206,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def left_button_down(self, *args):
         """Register the event for a left button down click."""
-        if (
-            hasattr(self.render_window, 'GetRenderFramebuffer')
-            and not self.render_window.GetRenderFramebuffer().GetFBOIndex()  # type: ignore[union-attr]
-        ):
-            # must raise a runtime error as this causes a segfault on VTK9
-            raise ValueError('Invoking helper with no framebuffer')
+        attr = (
+            'GetOffScreenFramebuffer'
+            if pyvista.vtk_version_info < (9, 1)
+            else 'GetRenderFramebuffer'
+        )
+        if hasattr(renwin := self.render_window, attr):
+            if not getattr(renwin, attr)().GetFBOIndex():
+                # must raise a runtime error as this causes a segfault on VTK9
+                raise ValueError('Invoking helper with no framebuffer')
+
         # Get 2D click location on window
         click_pos = self.iren.get_event_position()  # type: ignore[has-type]
 

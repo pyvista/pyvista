@@ -1128,13 +1128,15 @@ def test_enable_picking_gc():
 
 def test_left_button_down():
     plotter = pv.Plotter()
-    if (
-        hasattr(plotter.ren_win, 'GetRenderFramebuffer')
-        and not plotter.ren_win.GetRenderFramebuffer().GetFBOIndex()
-    ):
-        # This only fails for VTK<9.2.3
-        with pytest.raises(ValueError):  # noqa: PT011
-            plotter.left_button_down(None, None)
+
+    attr = (
+        'GetOffScreenFramebuffer' if pyvista.vtk_version_info < (9, 1) else 'GetRenderFramebuffer'
+    )
+    if hasattr(renwin := plotter.render_window, attr):
+        if not getattr(renwin, attr)().GetFBOIndex():
+            # This only fails for VTK<9.2.3
+            with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
+                plotter.left_button_down(None, None)
     else:
         plotter.left_button_down(None, None)
     plotter.close()
