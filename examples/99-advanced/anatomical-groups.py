@@ -49,7 +49,7 @@ ids_to_colors = dataset.user_dict['ids_to_colors']
 # Color Mapping
 # =============
 # Show the color mapping included with the dataset. Print the dictionary and format
-# it to visually align the RGB values.
+# it to visually align the RGB values. The formatted dictionary is valid python code.
 #
 # .. note
 #
@@ -59,7 +59,7 @@ ids_to_colors = dataset.user_dict['ids_to_colors']
 print(
     '{\n'
     + '\n'.join(
-        f'    {"'" + name + "':":<32} ({R:>3}, {G:>3}, {B:>3})'
+        f'    {"'" + name + "':":<32} ({R:>3}, {G:>3}, {B:>3}),'
         for name, (R, G, B) in names_to_colors.items()
     )
     + '\n}',
@@ -87,8 +87,10 @@ def filter_labels(label_names: list[str], search_terms: list[str]):
 # %%
 # plot_anatomy
 # ============
-# Define a function which, given a list of terms, will lookup labels associated
-# with those terms, generate contours for the labels, and plot the result.
+# Define a function which, given a list of terms, will look up labels associated
+# with those terms, generate contours for the labels, and plot the result. The function
+# uses :meth:`~pyvista.ImageDataFilters.contour_labels` for generating contours and
+# :meth:`~pyvista.DataSetFilters.color_labels` for coloring them.
 def plot_anatomy(search_terms: list[str]):
     # Get a list of labels which contain any of the listed terms.
     group_names = filter_labels(label_names, search_terms)
@@ -96,11 +98,10 @@ def plot_anatomy(search_terms: list[str]):
     # Get the label ids corresponding to the matched labels.
     group_ids = [names_to_ids[name] for name in group_names]
 
-    # Selectively generate surfaces for the specified labels using
-    # :meth:`pyvista.ImageDataFilters.contour_labels`.
+    # Selectively generate surfaces for the specified labels
     group_surface = dataset['label_map'].contour_labels(select_inputs=group_ids)
 
-    # Color the labels with :meth:`~pyvista.DataSetFilters.color_labels`.
+    # Color the labels with the color mapping
     colored_surface = group_surface.color_labels(colors=ids_to_colors)
 
     # Plot the label map.
