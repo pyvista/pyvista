@@ -132,7 +132,7 @@ class _BaseFilePropsProtocol(Generic[_FilePropStrType_co, _FilePropIntType_co]):
         self,
     ) -> type[pv.BaseReader] | tuple[type[pv.BaseReader], ...] | None:
         """Return unique reader type(s) from all file readers."""
-        return _get_unique_reader_type(self._reader)
+        return _get_unique_reader_type(self.path)
 
 
 class _SingleFilePropsProtocol(_BaseFilePropsProtocol[str, int]):
@@ -778,6 +778,30 @@ def _get_file_or_folder_ext(path: str):
     return ext
 
 
+def _get_file_or_folder_reader_type(
+    path: str | None,
+) -> type[pv.BaseReader] | list[type[pv.BaseReader] | None] | None:
+    """Extract reader type(s) used to read a file or file(s) in a folder."""
+    if path is None:
+        return None
+    if os.path.isfile(path):
+        try:
+            return type(pv.get_reader(path))
+        except ValueError:
+            return None
+    assert os.path.isdir(path), 'Expected a file or folder path.'
+    types: list[type[pv.BaseReader] | None] = []
+    all_paths = _get_all_nested_filepaths(path)
+    for file in all_paths:
+        try:
+            reader = pv.get_reader(file)
+        except ValueError:
+            types.append(None)
+        else:
+            types.append(type(reader))
+    return types
+
+
 def _get_all_nested_filepaths(filepath, exclude_readme=True):
     """Walk through directory and get all file paths.
 
@@ -807,23 +831,21 @@ def _get_unique_extension(path: str | Sequence[str]):
 
 
 def _get_unique_reader_type(
-    reader: pv.BaseReader | tuple[pv.BaseReader | None, ...] | None,
+    path: str | tuple[str | None, ...] | None,
 ) -> type[pv.BaseReader] | tuple[type[pv.BaseReader], ...] | None:
     """Return a reader type or tuple of unique reader types."""
-    if reader is None or (isinstance(reader, Sequence) and all(r is None for r in reader)):
+    if path is None:
         return None
-    reader_set: set[type[pv.BaseReader]] = set()
-    reader_type = (
-        [type(reader)]
-        if not isinstance(reader, Sequence)
-        else [type(r) for r in reader if r is not None]
-    )
+    elif isinstance(path, str):
+        # Get reader from a single path as a sequence
+        readers = set(_flatten_nested_sequence([_get_file_or_folder_reader_type(path)]))  # type:ignore[type-var]
+    else:
+        # Get reader from many paths
+        readers = set(_flatten_nested_sequence([_get_file_or_folder_reader_type(p) for p in path]))  # type:ignore[type-var]
 
-    # Add all reader types to the set
-    reader_set.update(reader_type)
-
+    readers.discard(None)
     # Format output
-    reader_output = tuple(reader_set)
+    reader_output = tuple(readers)
     return reader_output[0] if len(reader_output) == 1 else tuple(reader_output)
 
 
