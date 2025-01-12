@@ -1574,14 +1574,14 @@ class Transform(_vtk.vtkTransform):
         >>> transformed_dataset = transform.apply(dataset)
         >>> transformed_dataset.points
         pyvista_ndarray([[ 2.,  4.,  6.],
-                         [ 8., 10., 12.]], dtype=float32)
+                         [ 8., 10., 12.]])
 
         Apply the inverse.
 
         >>> inverted_dataset = transform.apply(dataset, inverse=True)
         >>> inverted_dataset.points
         pyvista_ndarray([[0.5, 1. , 1.5],
-                         [2. , 2.5, 3. ]], dtype=float32)
+                         [2. , 2.5, 3. ]])
 
         """
         inplace = not copy
