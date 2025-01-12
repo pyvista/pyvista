@@ -314,42 +314,40 @@ def plot_ants_plane(notebook=None):
 
     This example plots the following:
 
-    .. code:: python
+    >>> import pyvista as pv
+    >>> from pyvista import examples
 
-       >>> import pyvista as pv
-       >>> from pyvista import examples
+    Load and shrink airplane
 
-       Load and shrink airplane
+    >>> airplane = examples.load_airplane()
+    >>> airplane.points /= 10
 
-       >>> airplane = examples.load_airplane()
-       >>> airplane.points /= 10
+    Rotate and translate ant so it is on the plane.
 
-       Rotate and translate ant so it is on the plane.
+    >>> ant = examples.load_ant()
+    >>> _ = ant.rotate_x(90, inplace=True)
+    >>> _ = ant.translate([90, 60, 15], inplace=True)
 
-       >>> ant = examples.load_ant()
-       >>> _ = ant.rotate_x(90, inplace=True)
-       >>> _ = ant.translate([90, 60, 15], inplace=True)
+    Make a copy and add another ant.
 
-       Make a copy and add another ant.
+    >>> ant_copy = ant.translate([30, 0, -10], inplace=False)
 
-       >>> ant_copy = ant.translate([30, 0, -10], inplace=False)
+    Create plotting object.
 
-       Create plotting object.
+    >>> plotter = pv.Plotter()
+    >>> _ = plotter.add_mesh(ant, 'r')
+    >>> _ = plotter.add_mesh(ant_copy, 'b')
 
-       >>> plotter = pv.Plotter()
-       >>> _ = plotter.add_mesh(ant, 'r')
-       >>> _ = plotter.add_mesh(ant_copy, 'b')
+    Add airplane mesh and make the color equal to the Y position.
 
-       Add airplane mesh and make the color equal to the Y position.
-
-       >>> plane_scalars = airplane.points[:, 1]
-       >>> _ = plotter.add_mesh(
-       ...     airplane,
-       ...     scalars=plane_scalars,
-       ...     scalar_bar_args={'title': 'Plane Y Location'},
-       ... )
-       >>> _ = plotter.add_text('Ants and Plane Example')
-       >>> plotter.show()
+    >>> plane_scalars = airplane.points[:, 1]
+    >>> _ = plotter.add_mesh(
+    ...     airplane,
+    ...     scalars=plane_scalars,
+    ...     scalar_bar_args={'title': 'Plane Y Location'},
+    ... )
+    >>> _ = plotter.add_text('Ants and Plane Example')
+    >>> plotter.show()
 
     Parameters
     ----------

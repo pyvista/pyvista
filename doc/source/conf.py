@@ -22,14 +22,20 @@ faulthandler.enable()
 os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
 
 sys.path.insert(0, str(Path().resolve()))
+import disable_doctest
 import make_external_gallery
 import make_tables
 
+import pyvista
+
+DISABLE_DOCTEST = os.environ.get('DISABLE_DOCTEST')
+
 make_external_gallery.make_example_gallery()
-make_tables.make_all_tables()
+make_tables.make_all_tables(load_datasets=not DISABLE_DOCTEST)
+if DISABLE_DOCTEST:
+    disable_doctest.disable_doctest_in_package(pyvista)
 
 # -- pyvista configuration ---------------------------------------------------
-import pyvista
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.docs import linkcode_resolve  # noqa: F401
 from pyvista.core.utilities.docs import pv_html_page_context
@@ -88,12 +94,12 @@ extensions = [
     'pyvista.ext.coverage',
     'pyvista.ext.plot_directive',
     'pyvista.ext.viewer_directive',
+    'pyvista.ext.duration',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.linkcode',  # This adds the button ``[Source]`` to each Python API site by calling ``linkcode_resolve``
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.duration',
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_gallery.gen_gallery',
