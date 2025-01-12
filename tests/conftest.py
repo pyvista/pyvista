@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 from importlib import metadata
+from pathlib import Path
 import re
 
 import numpy as np
@@ -275,13 +276,20 @@ def marker_names(item: pytest.Item):
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
     test_downloads = config.getoption('--test_downloads')
-    skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
 
     for item in items:
         # skip all tests that need downloads
         if not test_downloads:
             if 'needs_download' in marker_names(item):
+                skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
                 item.add_marker(skip_downloads)
+
+        path = Path(item.location[0])
+        if path.parent.name == 'plotting':
+            filter_w = pytest.mark.filterwarnings(
+                'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning'
+            )
+            item.add_marker(filter_w)
 
 
 def pytest_runtest_setup(item):

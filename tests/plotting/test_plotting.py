@@ -45,12 +45,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import ItemsView
 
 # skip all tests if unable to render
-pytestmark = [
-    pytest.mark.skip_plotting,
-    pytest.mark.filterwarnings(
-        'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning'
-    ),
-]
+pytestmark = pytest.mark.skip_plotting
 
 
 HAS_IMAGEIO = True
