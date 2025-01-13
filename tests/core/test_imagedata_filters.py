@@ -1118,6 +1118,7 @@ def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset
     assert isinstance(resampled, pv.ImageData)
     assert resampled is not uniform
     assert resampled is not reference
+    assert np.array_equal(resampled.spacing, reference.spacing)
     assert np.array_equal(resampled.dimensions, reference.dimensions)
     assert np.array_equal(resampled.offset, reference.offset)
     assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
@@ -1128,18 +1129,28 @@ def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset
 
 def test_resample_dimensions(uniform):
     dimensions = (5, 6, 7)
+    sample_rate = np.array(dimensions) / uniform.dimensions
+    expected_spacing = uniform.spacing / sample_rate
+
     resampled = uniform.resample(dimensions=dimensions)
+    assert np.array_equal(resampled.spacing, expected_spacing)
     assert np.array_equal(resampled.dimensions, dimensions)
     assert len(resampled.active_scalars) == resampled.n_points
     assert resampled.active_scalars_name == uniform.active_scalars_name
 
+    assert not np.allclose(resampled.bounds, uniform.bounds)
+    # assert np.allclose(resampled.points_to_cells().bounds, uniform.points_to_cells().bounds)
 
-@pytest.mark.parametrize(
-    ('sample_rate', 'expected_dimensions'),
-    [(1.5, (15, 15, 15)), (2.0, (20, 20, 20)), (0.5, (5, 5, 5))],
-)
-def test_resample_sample_rate(uniform, sample_rate, expected_dimensions):
+
+@pytest.mark.parametrize('sample_rate', [1.5, 2.0, 0.5])
+def test_resample_sample_rate(uniform, sample_rate):
     resampled = uniform.resample(sample_rate=sample_rate)
+    expected_dimensions = uniform.dimensions * np.array(sample_rate)
+    expected_spacing = uniform.spacing / np.array(sample_rate)
+
     assert np.array_equal(resampled.dimensions, expected_dimensions)
+    assert np.array_equal(resampled.spacing, expected_spacing)
     assert len(resampled.active_scalars) == resampled.n_points
     assert resampled.active_scalars_name == uniform.active_scalars_name
+    assert not np.allclose(resampled.bounds, uniform.bounds)
+    # assert np.allclose(resampled.points_to_cells().bounds, uniform.points_to_cells().bounds)

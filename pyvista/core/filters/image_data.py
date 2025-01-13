@@ -2964,17 +2964,69 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load an image and plot it for context.
+        Create a small 2D grayscale image with dimensions 3x2 for demonstration.
 
-        # >>> import pyvista as pv
-        # >>> from pyvista import examples
-        # >>> image = examples.load_uniform()
-        # >>> image.plot()
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> image = pv.ImageData(dimensions=(3, 2, 1))
+        >>> image['data'] = np.linspace(0, 255, 6, dtype=np.uint8)
 
-        Resample image.
+        Define a custom plotter and show the image.
 
-        # >>> resampled = image.resample(sample_rate=2)
-        # >>> resampled.plot()
+        >>> def image_plotter(image: pv.ImageData) -> pv.Plotter:
+        ...     pl = pv.Plotter()
+        ...     image = image.points_to_cells()
+        ...     pl.add_mesh(
+        ...         image,
+        ...         lighting=False,
+        ...         show_edges=True,
+        ...         cmap='grey',
+        ...         show_scalar_bar=False,
+        ...     )
+        ...     pl.view_xy()
+        ...     pl.camera.tight()
+        ...     return pl
+
+        >>> plot = image_plotter(image)
+        >>> plot.show()
+
+        Show the image's original :attr:`~pyvista.ImageData.dimensions`,
+        :attr:`~pyvista.ImageData.spacing`, and :attr:`~pyvista.ImageData.bounds`
+
+        >>> image.dimensions
+        (3, 2, 1)
+        >>> image.spacing
+        (1.0, 1.0, 1.0)
+        >>> image.bounds
+        BoundsTuple(x_min=0.0, x_max=2.0, y_min=0.0, y_max=1.0, z_min=0.0, z_max=0.0)
+        >>> image.points_to_cells().bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+
+        >>> upsampled = image.resample(sample_rate=2)
+        >>> upsampled.dimensions
+        (6, 4, 1)
+        >>> upsampled.spacing
+        (0.5, 0.5, 1.0)
+        >>> upsampled.bounds
+        BoundsTuple(x_min=0.0, x_max=2.5, y_min=0.0, y_max=1.5, z_min=0.0, z_max=0.0)
+        >>> upsampled.points_to_cells().bounds
+        BoundsTuple(x_min=-0.25, x_max=2.75, y_min=-0.25, y_max=1.75, z_min=0.0, z_max=0.0)
+
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Since the image has an integer dtype, ``'nearest'`` interpolation is used
+        by default. Use ``'linear'`` interpolation instead.
+
+        >>> upsampled = image.resample(sample_rate=2, interpolation='linear')
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        # >>> downsampled = image.resample(sample_rate=0.5)
+        # >>> plot = image_plotter(downsampled)
+
+
 
         """
         # TODO: Make sure we have float inputs for linear interp
@@ -2989,9 +3041,13 @@ class ImageDataFilters(DataSetFilters):
                 ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
             )
 
+        output_spacing = None
         if reference_image is None:
             reference_image = pyvista.ImageData()
             reference_image.copy_structure(self)
+        else:
+            _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
+            output_spacing = reference_image.spacing
 
         # Set reference dimensions and spacing from the sample rate
         if sample_rate is not None:
@@ -3042,7 +3098,10 @@ class ImageDataFilters(DataSetFilters):
 
         # The filter resamples dimensions only, so we set all other
         # geometry from the reference
-        output_image.spacing = reference_image.spacing
+        if not output_spacing:
+            actual_sample_rate = np.array(output_image.dimensions) / np.array(self.dimensions)
+            output_spacing = self.spacing / actual_sample_rate
+        output_image.spacing = output_spacing
         output_image.direction_matrix = reference_image.direction_matrix
         output_image.origin = reference_image.origin
         output_image.offset = reference_image.offset
