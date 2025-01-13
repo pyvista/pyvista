@@ -84,7 +84,7 @@ def translate(
     trans[:3, 2] = normz
     trans[3, 3] = 1
 
-    surf.transform(trans)
+    surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
         surf.points += np.array(center, dtype=surf.points.dtype)
 

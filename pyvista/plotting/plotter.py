@@ -3576,9 +3576,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             silhouette = self._theme.silhouette.enabled
         if silhouette:
             if isinstance(silhouette, dict):
-                self.add_silhouette(algo or mesh, **silhouette)
+                silhouette_actor = self.add_silhouette(algo or mesh, **silhouette)
             else:
-                self.add_silhouette(algo or mesh)
+                silhouette_actor = self.add_silhouette(algo or mesh)
+            silhouette_actor.user_matrix = user_matrix
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
