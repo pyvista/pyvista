@@ -245,7 +245,7 @@ def test_pickle_serialize_deserialize(datasets, pickle_format, file_ext, tmp_pat
                 filepath_read = filepath_save
             dataset_2 = pv.read(filepath_read)
         else:
-            dataset_2 = pickle.loads(pickle.dumps(dataset))
+            dataset_2 = pickle.loads(pickle.dumps(dataset))  # noqa: S301
 
         # check python attributes are the same
         for attr in dataset.__dict__:
@@ -313,7 +313,7 @@ def test_pickle_multiblock(multiblock_all_with_nested_and_none, pickle_format):
     else:
         pickled = pickle.dumps(multiblock)
         assert isinstance(pickled, bytes)
-        unpickled = pickle.loads(pickled)
+        unpickled = pickle.loads(pickled)  # noqa: S301
         assert unpickled == multiblock
 
 
@@ -328,7 +328,7 @@ def test_pickle_user_dict(sphere, pickle_format):
     sphere.user_dict = user_dict
 
     pickled = pickle.dumps(sphere)
-    unpickled = pickle.loads(pickled)
+    unpickled = pickle.loads(pickled)  # noqa: S301
 
     assert unpickled.user_dict == user_dict
 

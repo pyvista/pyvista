@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from weakref import proxy
-import xml.dom.minidom as md
 from xml.etree import ElementTree as ET
 
+from defusedxml import ElementTree as defusedET
+from defusedxml import minidom as md
 import numpy as np
 
 import pyvista
@@ -150,7 +151,7 @@ class Camera(_vtk.vtkCamera):
         }
         camera = cls()
 
-        tree = ET.parse(filename)
+        tree = defusedET.parse(filename)
         root = tree.getroot()[0]
         for element in root:
             attrib = element.attrib

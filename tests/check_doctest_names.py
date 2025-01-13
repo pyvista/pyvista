@@ -161,7 +161,9 @@ def check_doctests(modules=None, respect_skips=True, verbose=True):
             ):
                 continue
             try:
-                exec(example.source, globs)
+                # Compile the source as exec-mode code to make `exec` call safer
+                compiled_code = compile(example.source, '<doctest>', 'exec')
+                exec(compiled_code, globs)  # noqa: S102
             except Exception as exc:
                 if verbose:
                     print(f'FAILED: {dt.name} -- {exc!r}')

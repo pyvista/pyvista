@@ -18,6 +18,7 @@ classifiers = [
   'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 dependencies = [
+  'defusedxml',
   'matplotlib>=3.0.1',
   'numpy>=1.21.0',     # minimum typing support
   'pillow',
@@ -50,6 +51,7 @@ jupyter = [
 ]
 
 pinned = [ # Pinned versions of core dependencies
+  'defusedxml<0.8.0',
   'matplotlib<3.10.1',
   'numpy<2.2.0',
   'pillow<11.2.0',
@@ -323,6 +325,7 @@ extend-select = [
   'RET',
   'RSE',
   'RUF',
+  'S',
   'SIM',
   'T10',
   'TCH',
@@ -363,6 +366,7 @@ ignore = [
   'RET505',  # https://github.com/pyvista/pyvista/pull/5911
   'RET506',  # https://github.com/pyvista/pyvista/pull/5911
   'RET507',  # https://github.com/pyvista/pyvista/pull/5911
+  'S110',
   'SIM102',  # https://github.com/pyvista/pyvista/pull/5877
   'SIM117',  # https://github.com/pyvista/pyvista/pull/5888
   'SIM118',  # https://github.com/pyvista/pyvista/pull/5837
@@ -374,21 +378,22 @@ allow-dict-calls-with-keyword-arguments = true
 
 [tool.ruff.lint.per-file-ignores]
 '__init__.py' = ['PLC0414']
-'doc/source/make_tables.py' = ['D101', 'D102']
+'doc/source/make_tables.py' = ['D101', 'D102', 'S101']
 'examples/*' = ['D102', 'D103', 'D205', 'D212', 'D400', 'D415', 'SIM115']
 'examples/**' = [
   'B015', # https://github.com/pyvista/pyvista/pull/6014
   'B018', # https://github.com/pyvista/pyvista/pull/6019
 ]
 'examples_trame/*' = ['D100', 'D103']
-'examples_trame/tests*' = ['D']
+'examples_trame/tests*' = ['D', 'S101']
 'pyvista/core/_vtk_core*' = ['PLC0414']
 'pyvista/ext/*' = ['D100', 'D101', 'D102', 'D103']
 'pyvista/plotting/_typing.py' = ['PLC0414']
 'pyvista/plotting/_vtk.py' = ['PLC0414']
 'pyvista/plotting/_vtk_gl.py' = ['PLC0414']
+'pyvista/plotting/utilities/xvfb.py' = ['S'] # deprecated module
 'pyvista/utilities/*' = ['F401'] # deprecated modules
-'tests/*' = ['D']
+'tests/*' = ['D', 'S101']
 
 # ANN ignores for `pyvista/core`
 # TODO: Add annotations to any files listed below and remove it from this list

@@ -5,6 +5,7 @@ from __future__ import annotations
 from enum import Enum
 import os
 import platform
+import shutil
 import subprocess
 from subprocess import PIPE
 from subprocess import Popen
@@ -68,10 +69,13 @@ def _system_supports_plotting():
         # actually have to check here.  Somewhat expensive.
         return supports_open_gl()
 
-    # mac case
+    # macOS case
     if platform.system() == 'Darwin':
         # check if finder available
-        proc = Popen(['pgrep', '-qx', 'Finder'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+        finder_path = shutil.which('pgrep')
+        if finder_path is None:
+            return False
+        proc = Popen([finder_path, '-qx', 'Finder'], stdout=PIPE, stderr=PIPE, encoding='utf8')  # noqa: S603
         try:
             proc.communicate(timeout=10)
         except TimeoutExpired:
@@ -83,8 +87,11 @@ def _system_supports_plotting():
         return 'DISPLAY' in os.environ
 
     # Linux case
+    xset_path = shutil.which('xset')
+    if xset_path is None:
+        return False
     try:
-        proc = Popen(['xset', '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')
+        proc = Popen([xset_path, '-q'], stdout=PIPE, stderr=PIPE, encoding='utf8')  # noqa: S603
         proc.communicate(timeout=10)
     except (OSError, TimeoutExpired):
         return False
@@ -756,6 +763,6 @@ def check_math_text_support():
     # and capturing the output:
     # _vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported()
     _cmd = 'import vtk;print(vtk.vtkMathTextFreeTypeTextRenderer().MathTextIsSupported());'
-    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)
+    proc = subprocess.run([sys.executable, '-c', _cmd], check=False, capture_output=True)  # noqa: S603
     math_text_support = False if proc.returncode else proc.stdout.decode().strip() == 'True'
     return math_text_support and check_matplotlib_vtk_compatibility()

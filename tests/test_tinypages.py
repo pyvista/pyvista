@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from subprocess import PIPE
-from subprocess import Popen
+import subprocess
 import sys
 
 import pytest
@@ -56,21 +55,22 @@ def test_tinypages(tmp_path, ename, evalue):
         str(Path(__file__).parent / 'tinypages'),
         str(html_dir),
     ]
-    proc = Popen(
-        cmd,
-        stdout=PIPE,
-        stderr=PIPE,
-        universal_newlines=True,
-        env={**os.environ, 'MPLBACKEND': ''},
-        encoding='utf8',
-    )
-    out, err = proc.communicate()
 
-    assert proc.returncode == 0, f'sphinx build failed with stdout:\n{out}\nstderr:\n{err}\n'
+    try:
+        result = subprocess.run(  # noqa: S603
+            cmd,
+            capture_output=True,  # Simplifies capturing stdout and stderr
+            env={**os.environ, 'MPLBACKEND': ''},
+            encoding='utf8',
+            check=True,  # Raise error on non-zero exit
+        )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(
+            f'sphinx build failed with return code {e.returncode}\nstdout:\n{e.stdout}\nstderr:\n{e.stderr}'
+        )
 
-    if err:
-        if err.strip() != 'vtkDebugLeaks has found no leaks.':
-            pytest.fail(f'sphinx build emitted the following warnings:\n{err}')
+    if result.stderr and result.stderr.strip() != 'vtkDebugLeaks has found no leaks.':
+        pytest.fail(f'sphinx build emitted the following warnings:\n{result.stderr}')
 
     assert html_dir.is_dir()
 

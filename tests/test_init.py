@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import subprocess
 import sys
 
 import pytest
@@ -14,8 +14,11 @@ def _module_is_loaded(module: str) -> bool:
     """
     exe_str = f"import pyvista; import sys; assert '{module}' not in sys.modules"
 
-    # anything other than 0 indicates the assertion raised
-    return os.system(f'{sys.executable} -c "{exe_str}"') != 0
+    # Run the Python command in a subprocess
+    result = subprocess.run([sys.executable, '-c', exe_str], capture_output=True, text=True)  # noqa: S603
+
+    # Return True if the assertion failed (non-zero return code)
+    return result.returncode != 0
 
 
 def test_vtk_not_loaded():

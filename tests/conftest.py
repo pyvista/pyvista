@@ -22,7 +22,10 @@ NUMPY_VERSION_INFO = VersionInfo(
 
 
 def flaky_test(
-    test_function=None, *, times: int = 3, exceptions: tuple[Exception, ...] = (AssertionError,)
+    test_function=None,
+    *,
+    times: int = 3,
+    exceptions: tuple[type[Exception], ...] = (AssertionError,),
 ):
     """Decorator for re-trying flaky tests.
 

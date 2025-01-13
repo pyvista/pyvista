@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 import weakref
-from xml.etree import ElementTree as ET
 
+from defusedxml import ElementTree as ET
 import numpy as np
 
 import pyvista
@@ -1985,7 +1985,7 @@ class _PVDReader(BaseVTKReader):
                     float(element_attrib.get('timestep', 0)),
                     int(element_attrib.get('part', 0)),
                     element_attrib['file'],
-                    element_attrib.get('group'),  # type: ignore[arg-type]
+                    element_attrib.get('group'),
                 ),
             )
 

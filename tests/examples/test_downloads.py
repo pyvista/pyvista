@@ -5,12 +5,10 @@ from pathlib import Path
 from pathlib import PureWindowsPath
 
 import pytest
-import requests
 
 import pyvista as pv
 from pyvista import examples
 from pyvista.examples import downloads
-from tests.conftest import flaky_test
 from tests.examples.test_dataset_loader import DatasetLoaderTestCase
 from tests.examples.test_dataset_loader import _generate_dataset_loader_test_cases_from_module
 from tests.examples.test_dataset_loader import _get_mismatch_fail_msg
@@ -30,16 +28,18 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
         pytest.fail(msg)
 
 
+from urllib.parse import urlparse
+
+
 def _is_valid_url(url):
+    """Check if a URL has a valid format."""
     try:
-        requests.get(url)
-    except requests.RequestException:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
         return False
-    else:
-        return True
 
 
-@flaky_test(exceptions=(AttributeError,))
 def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
