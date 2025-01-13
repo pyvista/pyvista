@@ -25,7 +25,6 @@ from pyvista.core.utilities.arrays import FieldAssociation
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
-from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
     from numpy.typing import NDArray
@@ -2926,66 +2925,128 @@ class ImageDataFilters(DataSetFilters):
 
         return dimensions_mask, dimensions_result
 
-    def resample(  # type: ignore[misc] # noqa: D102
+    def resample(  # type: ignore[misc]
         self: ImageData,
-        interpolation: Literal['linear', 'nearest'] = 'linear',
+        interpolation: Literal['linear', 'nearest', 'cubic'] | None = None,
         *,
         reference_image: ImageData = None,
-        dimensions=None,
-        spacing=None,
-        background_value: int = 0,
+        dimensions: VectorLike[int] | None = None,
+        sample_rate: float | None = None,
     ):
+        """Resample the image to modify its dimensions or spacing.
+
+        Parameters
+        ----------
+        interpolation
+            Interpolation mode to use.
+
+        reference_image
+            Reference image to use. If specified, the input is resampled
+            to match the :attr:`~pyvista.ImageData.extent`.
+
+        dimensions
+            Set the :attr:`~pyvista.ImageData.dimensions` of the resampled image.
+
+            .. note::
+
+                This value overrides the dimensions of the ``reference_image``
+                (if specified).
+
+        sample_rate
+            Sampling rate to use. A value greater than ``1.0`` will up-sample the
+            image and a value less than ``1.0`` will downsample it.
+            Value must be greater than ``0``. The sample rate
+
+        Returns
+        -------
+        ImageData
+            Resampled image.
+
+        Examples
+        --------
+        Load an image and plot it for context.
+
+        # >>> import pyvista as pv
+        # >>> from pyvista import examples
+        # >>> image = examples.load_uniform()
+        # >>> image.plot()
+
+        Resample image.
+
+        # >>> resampled = image.resample(sample_rate=2)
+        # >>> resampled.plot()
+
+        """
+        # TODO: Make sure we have float inputs for linear interp
+        # TODO: Make sure input len(active_scalars) == n_points
+        if interpolation is None:
+            interpolation = 'linear'
+            active_scalars = self.active_scalars
+            if active_scalars is not None and np.issubdtype(active_scalars.dtype, np.integer):
+                interpolation = 'nearest'
+        else:
+            _validation.check_contains(
+                ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
+            )
+
         if reference_image is None:
             reference_image = pyvista.ImageData()
             reference_image.copy_structure(self)
-        if dimensions is not None:
-            reference_image.dimensions = dimensions
-        if spacing is not None:
-            reference_image.spacing = spacing
 
-        input_index_to_physical_matrix = self.index_to_physical_matrix
-        reference_index_to_physical_matrix = reference_image.index_to_physical_matrix
+        # Set reference dimensions and spacing from the sample rate
+        if sample_rate is not None:
+            sample_rate_ = _validation.validate_array3(
+                sample_rate,
+                broadcast=True,
+                must_be_in_range=[0, np.inf],
+                name='sample_rate',
+            )
+            old_dimensions = self.dimensions
+            new_dimensions = old_dimensions * sample_rate_
 
-        input_extent = self.extent
-        reference_extent = reference_image.extent
+        else:
+            if dimensions is not None:
+                reference_image.dimensions = dimensions
+
+            new_dimensions = np.array(reference_image.dimensions)
+
+        # vtkImageResample will multiply sample rate by the extent but we want to
+        # multiply the dimensions. These values are off by one.
+        old_dimensions = np.array(self.dimensions)
+        sample_rate_ = (new_dimensions - 1) / (old_dimensions - 1)
 
         # Return early without resampling if geometry and extent matches reference
+        unity_sample_rate = np.array_equal(sample_rate_, 1.0)
         same_geometry = np.allclose(
-            input_index_to_physical_matrix, reference_index_to_physical_matrix
+            self.index_to_physical_matrix, reference_image.index_to_physical_matrix
         )
-        same_extent = np.array_equal(input_extent, reference_extent)
-        if same_geometry and same_extent:
+        same_extent = np.array_equal(self.extent, reference_image.extent)
+        if unity_sample_rate or (sample_rate is None and same_geometry and same_extent):
             return self.copy()
 
-        # Get transform between input and reference
-        input_to_physical_transform = Transform(input_index_to_physical_matrix)
-        physical_to_reference_transform = Transform(
-            reference_index_to_physical_matrix
-        ).inverse_matrix
-        input_to_reference_transform = input_to_physical_transform + physical_to_reference_transform
-
-        # Invert transform for the resampling
-        reference_to_input_transform = input_to_reference_transform.copy().invert()
-
-        # Perform resampling
-        resliceFilter = _vtk.vtkImageReslice()
-        resliceFilter.SetInputData(self)
-        resliceFilter.SetOutputOrigin(0, 0, 0)
-        resliceFilter.SetOutputSpacing(1, 1, 1)
-        resliceFilter.SetOutputExtent(reference_extent)
-        resliceFilter.SetOutputScalarType(self.GetScalarType())
-        resliceFilter.SetBackgroundLevel(background_value)
-        resliceFilter.SetResliceTransform(reference_to_input_transform)
+        resample = _vtk.vtkImageResample()
+        resample.SetInputData(self)
+        resample.SetMagnificationFactors(*sample_rate_)
 
         # Set interpolation mode
         if interpolation == 'linear':
-            resliceFilter.SetInterpolationModeToLinear()
-        else:
-            resliceFilter.SetInterpolationModeToNearestNeighbor()
-        _update_alg(resliceFilter)
+            resample.SetInterpolationModeToLinear()
+        elif interpolation == 'cubic':
+            resample.SetInterpolationModeToCubic()
+        else:  # nearest
+            resample.SetInterpolationModeToNearestNeighbor()
 
-        # Set output
-        output_image = _get_output(resliceFilter).copy(deep=False)
-        output_image.index_to_physical_matrix = reference_index_to_physical_matrix
+        # Get output
+        _update_alg(resample)
+        output_image = _get_output(resample).copy(deep=False)
 
+        # The filter resamples dimensions only, so we set all other
+        # geometry from the reference
+        output_image.spacing = reference_image.spacing
+        output_image.direction_matrix = reference_image.direction_matrix
+        output_image.origin = reference_image.origin
+        output_image.offset = reference_image.offset
+
+        if output_image.active_scalars_name == 'ImageScalars':
+            output_image.rename_array('ImageScalars', self.active_scalars_name)
         return output_image

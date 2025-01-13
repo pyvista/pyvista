@@ -1093,12 +1093,14 @@ def test_validate_dim_operation_invalid_parameters(
         )
 
 
-@pytest.mark.parametrize('spacing', [None, [3, 4, 5]])
+@pytest.mark.parametrize('spacing', [None, [0.3, 0.4, 0.5]])
 @pytest.mark.parametrize('direction_matrix', [None, np.diag((-1, 1, 1))])
 @pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
-@pytest.mark.parametrize('dimensions', [None, (11, 12, 13)])
+@pytest.mark.parametrize('dimensions', [None, (5, 6, 7)])
 @pytest.mark.parametrize('offset', [None, (-100, -101, -102)])
 def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset):
+    uniform = pv.ImageData(dimensions=(4, 4, 4))
+    uniform['data'] = np.arange(uniform.n_points, dtype=float)
     reference = uniform.copy()
     if spacing is not None:
         reference.spacing = spacing
@@ -1110,30 +1112,34 @@ def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset
         reference.dimensions = dimensions
     if offset is not None:
         reference.offset = offset
+    reference['data'] = range(reference.n_points)
 
     resampled = uniform.resample(reference_image=reference)
     assert isinstance(resampled, pv.ImageData)
     assert resampled is not uniform
     assert resampled is not reference
-    assert np.array_equal(resampled.extent, reference.extent)
+    assert np.array_equal(resampled.dimensions, reference.dimensions)
+    assert np.array_equal(resampled.offset, reference.offset)
     assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
+    assert len(resampled.active_scalars) == resampled.n_points
+    assert resampled.active_scalars_name == uniform.active_scalars_name
+    assert np.allclose(resampled.bounds, reference.bounds)
 
 
-@pytest.mark.parametrize('reference', [None, True])
-@pytest.mark.parametrize('spacing', [None, (3, 4, 5)])
-@pytest.mark.parametrize('dimensions', [None, (11, 12, 13)])
-def test_resample_reference(uniform, spacing, dimensions, reference):
-    if reference is not None:
-        reference = uniform.copy()
-    input_spacing = uniform.spacing
-    input_dimensions = uniform.dimensions
+def test_resample_dimensions(uniform):
+    dimensions = (5, 6, 7)
+    resampled = uniform.resample(dimensions=dimensions)
+    assert np.array_equal(resampled.dimensions, dimensions)
+    assert len(resampled.active_scalars) == resampled.n_points
+    assert resampled.active_scalars_name == uniform.active_scalars_name
 
-    expected_spacing = spacing if spacing else input_spacing
-    expected_dimensions = dimensions if dimensions else input_dimensions
 
-    resampled = uniform.resample(reference_image=reference, spacing=spacing, dimensions=dimensions)
-    assert isinstance(resampled, pv.ImageData)
-    assert resampled is not uniform
-    assert resampled is not reference
-    assert np.array_equal(resampled.spacing, expected_spacing)
+@pytest.mark.parametrize(
+    ('sample_rate', 'expected_dimensions'),
+    [(1.5, (15, 15, 15)), (2.0, (20, 20, 20)), (0.5, (5, 5, 5))],
+)
+def test_resample_sample_rate(uniform, sample_rate, expected_dimensions):
+    resampled = uniform.resample(sample_rate=sample_rate)
     assert np.array_equal(resampled.dimensions, expected_dimensions)
+    assert len(resampled.active_scalars) == resampled.n_points
+    assert resampled.active_scalars_name == uniform.active_scalars_name
