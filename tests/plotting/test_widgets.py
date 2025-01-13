@@ -164,7 +164,7 @@ def test_widget_text_slider(uniform):
         p.add_text_slider_widget(callback=func, data='foo')
     with pytest.raises(ValueError, match='list of values is empty'):
         p.add_text_slider_widget(callback=func, data=[])
-    for style in pv.global_theme.slider_styles:
+    for style in pv.global_theme.slider_style.defaults:
         p.add_text_slider_widget(callback=func, data=['foo', 'bar'], style=style)
     p.close()
 
@@ -181,7 +181,7 @@ def test_widget_slider(uniform):
         p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=interaction_event)
     with pytest.raises(TypeError, match='type for ``style``'):
         p.add_slider_widget(callback=func, rng=[0, 10], style=0)
-    with pytest.raises(AttributeError):
+    with pytest.raises(KeyError):
         p.add_slider_widget(callback=func, rng=[0, 10], style='foo')
     with pytest.raises(TypeError, match='Expected type for `interaction_event`'):
         p.add_slider_widget(callback=func, rng=[0, 10], interaction_event=0)
