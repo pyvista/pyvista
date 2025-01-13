@@ -289,13 +289,6 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                 skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
                 item.add_marker(skip_downloads)
 
-        path = Path(item.location[0])
-        if path.parent.name == 'plotting':
-            filter_w = pytest.mark.filterwarnings(
-                'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning'
-            )
-            item.add_marker(filter_w)
-
 
 def pytest_runtest_setup(item):
     """Custom setup to handle skips based on VTK version.
