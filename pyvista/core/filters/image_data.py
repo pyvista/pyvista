@@ -3154,13 +3154,11 @@ class ImageDataFilters(DataSetFilters):
 
                 # This will enlarge the image, so we need to shift the origin accordingly
                 # Shift the origin by 1/2 of the old and new spacing, but keep the spacing
-                # unchanged for singleton dimensions. We also compute the sign of the
-                # shift (-ve for down-sampling, +ve up-sampling)
-                sign = np.sign(actual_sample_rate - 1.0)[~singleton_dims]
+                # unchanged for singleton dimensions.
                 shift_old = old_spacing[~singleton_dims] / 2
                 shift_new = new_spacing[~singleton_dims] / 2
                 new_origin = np.array(self.origin)
-                new_origin[~singleton_dims] += (shift_new + -shift_old) * sign
+                new_origin[~singleton_dims] += shift_new + -shift_old
 
                 output_image.origin = new_origin
             else:
