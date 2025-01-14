@@ -2932,6 +2932,7 @@ class ImageDataFilters(DataSetFilters):
         reference_image: ImageData = None,
         dimensions: VectorLike[int] | None = None,
         sample_rate: float | None = None,
+        extend_border: bool = True,
     ):
         """Resample the image to modify its dimensions or spacing.
 
@@ -2956,6 +2957,9 @@ class ImageDataFilters(DataSetFilters):
             Sampling rate to use. A value greater than ``1.0`` will up-sample the
             image and a value less than ``1.0`` will downsample it.
             Value must be greater than ``0``. The sample rate
+
+        extend_border
+            Extend the apparent input border by a half voxel.
 
         Returns
         -------
@@ -2994,6 +2998,8 @@ class ImageDataFilters(DataSetFilters):
         Show the image's original :attr:`~pyvista.ImageData.dimensions`,
         :attr:`~pyvista.ImageData.spacing`, and :attr:`~pyvista.ImageData.bounds`
 
+        >>> image.origin
+        (0.0, 0.0, 0.0)
         >>> image.dimensions
         (3, 2, 1)
         >>> image.spacing
@@ -3004,14 +3010,16 @@ class ImageDataFilters(DataSetFilters):
         BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
 
         >>> upsampled = image.resample(sample_rate=2)
+        >>> upsampled.origin
+        (-0.25, -0.25, 0.0)
         >>> upsampled.dimensions
         (6, 4, 1)
         >>> upsampled.spacing
         (0.5, 0.5, 1.0)
         >>> upsampled.bounds
-        BoundsTuple(x_min=0.0, x_max=2.5, y_min=0.0, y_max=1.5, z_min=0.0, z_max=0.0)
+        BoundsTuple(x_min=-0.25, x_max=2.25, y_min=-0.25, y_max=1.25, z_min=0.0, z_max=0.0)
         >>> upsampled.points_to_cells().bounds
-        BoundsTuple(x_min=-0.25, x_max=2.75, y_min=-0.25, y_max=1.75, z_min=0.0, z_max=0.0)
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
 
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
@@ -3023,10 +3031,14 @@ class ImageDataFilters(DataSetFilters):
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        # >>> downsampled = image.resample(sample_rate=0.5)
-        # >>> plot = image_plotter(downsampled)
+        Compare the relative physical size of the images.
 
-
+        >>> plt = pv.Plotter()
+        >>> plt.add_mesh(
+        ...     image.points_to_cells(), style='wireframe', color='red', line_width=10
+        ... )
+        >>> plt.add_mesh(upsampled.points_to_cells(), style='wireframe', color='black')
+        >>> plt.show()
 
         """
         # TODO: Make sure we have float inputs for linear interp
@@ -3041,24 +3053,24 @@ class ImageDataFilters(DataSetFilters):
                 ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
             )
 
-        output_spacing = None
         if reference_image is None:
             reference_image = pyvista.ImageData()
             reference_image.copy_structure(self)
+            reference_image_provided = False
         else:
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
-            output_spacing = reference_image.spacing
+            reference_image_provided = True
 
         # Set reference dimensions and spacing from the sample rate
         if sample_rate is not None:
-            sample_rate_ = _validation.validate_array3(
+            adjusted_sample_rate = _validation.validate_array3(
                 sample_rate,
                 broadcast=True,
                 must_be_in_range=[0, np.inf],
                 name='sample_rate',
             )
             old_dimensions = self.dimensions
-            new_dimensions = old_dimensions * sample_rate_
+            new_dimensions = old_dimensions * adjusted_sample_rate
 
         else:
             if dimensions is not None:
@@ -3069,42 +3081,66 @@ class ImageDataFilters(DataSetFilters):
         # vtkImageResample will multiply sample rate by the extent but we want to
         # multiply the dimensions. These values are off by one.
         old_dimensions = np.array(self.dimensions)
-        sample_rate_ = (new_dimensions - 1) / (old_dimensions - 1)
+        adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
 
         # Return early without resampling if geometry and extent matches reference
-        unity_sample_rate = np.array_equal(sample_rate_, 1.0)
+        has_unity_sample_rate = np.array_equal(adjusted_sample_rate, 1.0)
         same_geometry = np.allclose(
             self.index_to_physical_matrix, reference_image.index_to_physical_matrix
         )
         same_extent = np.array_equal(self.extent, reference_image.extent)
-        if unity_sample_rate or (sample_rate is None and same_geometry and same_extent):
+        if has_unity_sample_rate or (sample_rate is None and same_geometry and same_extent):
             return self.copy()
 
         resample = _vtk.vtkImageResample()
         resample.SetInputData(self)
-        resample.SetMagnificationFactors(*sample_rate_)
+        resample.SetMagnificationFactors(*adjusted_sample_rate)
 
         # Set interpolation mode
         if interpolation == 'linear':
             resample.SetInterpolationModeToLinear()
         elif interpolation == 'cubic':
             resample.SetInterpolationModeToCubic()
-        else:  # nearest
+        else:  # 'nearest'
             resample.SetInterpolationModeToNearestNeighbor()
 
         # Get output
         _update_alg(resample)
         output_image = _get_output(resample).copy(deep=False)
 
-        # The filter resamples dimensions only, so we set all other
-        # geometry from the reference
-        if not output_spacing:
-            actual_sample_rate = np.array(output_image.dimensions) / np.array(self.dimensions)
-            output_spacing = self.spacing / actual_sample_rate
-        output_image.spacing = output_spacing
+        # Set geometry from the reference
         output_image.direction_matrix = reference_image.direction_matrix
         output_image.origin = reference_image.origin
         output_image.offset = reference_image.offset
+        output_image.spacing = reference_image.spacing
+
+        if not reference_image_provided:
+            # Need to fixup the spacing
+            old_spacing = np.array(self.spacing)
+            output_dimensions = np.array(output_image.dimensions)
+            singleton = old_dimensions == 1
+
+            if extend_border:
+                # Compute spacing to have the same effective sample rate as the dimensions
+                actual_sample_rate = output_dimensions / old_dimensions
+                new_spacing = old_spacing / actual_sample_rate
+                # This will enlarge the image, so we need to shift the origin accordingly
+                new_origin = np.array(self.origin)
+                # Shift origin by 1/2 spaching, but keep unchanged for singleton dimensions
+                new_origin[~singleton] -= new_spacing[~singleton] / actual_sample_rate[~singleton]
+                output_image.origin = new_origin
+            else:
+                # Compute spacing to match bounds of input and dimensions of output
+                bnds = self.bounds
+                size = np.array(
+                    (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+                )
+                new_spacing = size / (output_dimensions - 1)
+
+            # For singleton dimensions, keep the original spacing value
+            new_spacing[singleton] = old_spacing[singleton]
+
+            output_image.spacing = new_spacing
 
         if output_image.active_scalars_name == 'ImageScalars':
             output_image.rename_array('ImageScalars', self.active_scalars_name)
