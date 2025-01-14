@@ -2934,7 +2934,11 @@ class ImageDataFilters(DataSetFilters):
         sample_rate: float | None = None,
         extend_border: bool = True,
     ):
-        """Resample the image to modify its dimensions or spacing.
+        """Resample the image to modify its dimensions.
+
+        .. note::
+
+            Singleton dimensions are not resampled by this filter.
 
         Parameters
         ----------
@@ -2974,9 +2978,12 @@ class ImageDataFilters(DataSetFilters):
         >>> import numpy as np
         >>> from pyvista import examples
         >>> image = pv.ImageData(dimensions=(3, 2, 1))
-        >>> image['data'] = np.linspace(0, 255, 6, dtype=np.uint8)
+        >>> image.point_data['data'] = np.linspace(0, 255, 6, dtype=np.uint8)
 
-        Define a custom plotter and show the image.
+        Define a custom plotter to show the image. Although the image data is defined
+        as point data, the plotter uses :meth:`points_to_cells` to display the image as
+        :attr:`~pyvista.CellType.PIXEL` cells instead. Grayscale coloring is used and
+        the camera is adjusted to fit the image.
 
         >>> def image_plotter(image: pv.ImageData) -> pv.Plotter:
         ...     pl = pv.Plotter()
@@ -2992,35 +2999,14 @@ class ImageDataFilters(DataSetFilters):
         ...     pl.camera.tight()
         ...     return pl
 
+        Show the image.
+
         >>> plot = image_plotter(image)
         >>> plot.show()
 
-        Show the image's original :attr:`~pyvista.ImageData.dimensions`,
-        :attr:`~pyvista.ImageData.spacing`, and :attr:`~pyvista.ImageData.bounds`
-
-        >>> image.origin
-        (0.0, 0.0, 0.0)
-        >>> image.dimensions
-        (3, 2, 1)
-        >>> image.spacing
-        (1.0, 1.0, 1.0)
-        >>> image.bounds
-        BoundsTuple(x_min=0.0, x_max=2.0, y_min=0.0, y_max=1.0, z_min=0.0, z_max=0.0)
-        >>> image.points_to_cells().bounds
-        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+        Use ``sample_rate`` to up-sample the image.
 
         >>> upsampled = image.resample(sample_rate=2)
-        >>> upsampled.origin
-        (-0.25, -0.25, 0.0)
-        >>> upsampled.dimensions
-        (6, 4, 1)
-        >>> upsampled.spacing
-        (0.5, 0.5, 1.0)
-        >>> upsampled.bounds
-        BoundsTuple(x_min=-0.25, x_max=2.25, y_min=-0.25, y_max=1.25, z_min=0.0, z_max=0.0)
-        >>> upsampled.points_to_cells().bounds
-        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
-
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
@@ -3031,30 +3017,113 @@ class ImageDataFilters(DataSetFilters):
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        Compare the relative physical size of the images.
+        Use ``'cubic'`` interpolation instead. Here we also specify the output
+        ``dimensions`` explicitly instead of using ``sample_rate``.
 
-        >>> plt = pv.Plotter()
-        >>> plt.add_mesh(
-        ...     image.points_to_cells(), style='wireframe', color='red', line_width=10
-        ... )
-        >>> plt.add_mesh(upsampled.points_to_cells(), style='wireframe', color='black')
-        >>> plt.show()
-
-
-        >>> downsampled = image.resample(dimensions=(20, 20, 20))
-        >>> plot = image_plotter(downsampled)
+        >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='cubic')
+        >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        Compare the relative physical size of the images.
+        Compare the relative physical size of the image before and after resampling.
+
+        >>> image
+        ImageData (...)
+          N Cells:      2
+          N Points:     6
+          X Bounds:     0.000e+00, 2.000e+00
+          Y Bounds:     0.000e+00, 1.000e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   3, 2, 1
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     1
+
+        >>> upsampled
+        ImageData (...)
+          N Cells:      15
+          N Points:     24
+          X Bounds:     -2.500e-01, 2.250e+00
+          Y Bounds:     -2.500e-01, 1.250e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   6, 4, 1
+          Spacing:      5.000e-01, 5.000e-01, 1.000e+00
+          N Arrays:     1
+
+        Note that the upsampled :attr:`~pyvista.ImageData.dimensions` are doubled and
+        the :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note,
+        however, that the physical bounds of the input differ from the output.
+        The upsampled :attr:`~pyvista.ImageData.origin` also differs:
+
+        >>> image.origin
+        (0.0, 0.0, 0.0)
+        >>> upsampled.origin
+        (-0.25, -0.25, 0.0)
+
+        This is because the resampling is done with ``extend_border`` enabled by default
+        which adds a half cell-width border to the image and adjusts the origin and
+        spacing such that the bounds match when the image is represented as
+        :attr:`~pyvista.CellType.PIXEL` cells.
+
+        Apply :meth:`points_to_cells` to the input and resampled images and show that
+        the bounds match.
+
+        >>> image_as_cells = image.points_to_cells()
+        >>> image_as_cells.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+
+        >>> upsampled_as_cells = upsampled.points_to_cells()
+        >>> upsampled_as_cells.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+
+        Plot the two images together as wireframe to visualize them. The original is in
+        red, and the resampled image is in black.
 
         >>> plt = pv.Plotter()
-        >>> plt.add_mesh(
-        ...     image.points_to_cells(), style='wireframe', color='red', line_width=10
+        >>> _ = plt.add_mesh(
+        ...     image_as_cells, style='wireframe', color='red', line_width=10
         ... )
-        >>> plt.add_mesh(
-        ...     downsampled.points_to_cells(), style='wireframe', color='black'
-        ... )
+        >>> _ = plt.add_mesh(upsampled_as_cells, style='wireframe', color='black')
+        >>> plt.view_xy()
+        >>> plt.camera.tight()
         >>> plt.show()
+
+        Disable ``extend_border`` to force the input and output bounds to be the
+        same `without` the need to use :meth:`points_to_cells`.
+
+        >>> upsampled = image.resample(sample_rate=2, extend_border=False)
+
+        Compare the two images again.
+
+        >>> image
+        ImageData (...)
+          N Cells:      2
+          N Points:     6
+          X Bounds:     0.000e+00, 2.000e+00
+          Y Bounds:     0.000e+00, 1.000e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   3, 2, 1
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     1
+
+        >>> upsampled
+        ImageData (...)
+          N Cells:      15
+          N Points:     24
+          X Bounds:     0.000e+00, 2.000e+00
+          Y Bounds:     0.000e+00, 1.000e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   6, 4, 1
+          Spacing:      4.000e-01, 3.333e-01, 1.000e+00
+          N Arrays:     1
+
+        This time the input and output bounds match without any further processing.
+        Like before, the dimensions have doubled; unlike before, however, the spacing
+        not halved, but is instead smaller than half which is necessaru to ensure the
+        bounds remain the same. Also unlike before, the origin is unchanged:
+
+        >>> image.origin
+        (0.0, 0.0, 0.0)
+        >>> upsampled.origin
+        (0.0, 0.0, 0.0)
 
         """
 
