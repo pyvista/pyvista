@@ -39,7 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core.utilities.reader import BaseReader
     from pyvista.plotting.texture import Texture
 
-PathOrStr = Union[str, Path, Sequence['PathOrStr']]
+PathStrSeq = Union[str, Path, Sequence['PathStrSeq']]
 
 _VTKWriterAlias = Union[_vtk.vtkXMLWriter, _vtk.vtkDataWriter]
 _VTKWriterType = TypeVar('_VTKWriterType', bound=_VTKWriterAlias)
@@ -159,7 +159,7 @@ def set_vtkwriter_mode(vtk_writer: _VTKWriterType, use_binary: bool = True) -> _
 
 
 def read(
-    filename: PathOrStr,
+    filename: PathStrSeq,
     force_ext: str | None = None,
     file_format: str | None = None,
     progress_bar: bool = False,
