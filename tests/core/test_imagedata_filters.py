@@ -1169,3 +1169,8 @@ def test_resample_sample_rate(uniform, sample_rate, extend_border):
         assert np.allclose(actual_cell_bounds, expected_cell_bounds)
     else:
         assert np.allclose(resampled.bounds, uniform.bounds)
+
+
+@pytest.mark.parametrize('interpolation', ['linear', 'nearest', 'cubic'])
+def test_resample_interpolation(uniform, interpolation):
+    uniform.resample(interpolation=interpolation)
