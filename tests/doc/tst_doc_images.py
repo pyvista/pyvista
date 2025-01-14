@@ -25,7 +25,7 @@ FLAKY_TEST_CASES = [
     path for path in os.listdir(FLAKY_IMAGE_DIR) if Path(FLAKY_IMAGE_DIR, path).is_dir()
 ]
 
-pytestmark = [pytest.mark.filterwarnings('always:.*THIS IS A FLAKY TEST.*:UserWarning')]
+pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
 
 
 class _TestCaseTuple(NamedTuple):
