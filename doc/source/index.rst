@@ -174,8 +174,7 @@ Subtract a sphere from a cube mesh.
     def make_cube():
         x = np.linspace(-0.5, 0.5, 25)
         grid = pyvista.StructuredGrid(*np.meshgrid(x, x, x))
-        surf = grid.extract_surface().triangulate()
-        surf.flip_normals()
+        surf = grid.extract_surface().triangulate().flip_faces()
         return surf
 
     # Create example PolyData meshes for boolean operations

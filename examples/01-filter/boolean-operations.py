@@ -118,12 +118,15 @@ pl.show()
 
 
 # %%
-# Behavior due to flipped normals
+# Behavior due to flipped faces
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Note that these boolean filters behave differently depending on the
-# orientation of the normals.
+# orientation of the faces. This is because the orientation determines
+# which parts are considered to be the "outside" or the "inside" portion
+# of the mesh. This example uses :meth:`~pyvista.PolyDataFilters.flip_faces`
+# to flip the faces.
 #
-# Boolean difference with both cube and sphere normals pointed
+# Boolean difference with both cube and sphere faces oriented
 # outward.  This is the "normal" behavior.
 
 cube = pv.Cube().triangulate().subdivide(3)
@@ -133,32 +136,28 @@ result.plot(color='lightblue')
 
 
 # %%
-# Boolean difference with cube normals outward, sphere inward.
+# Boolean difference with cube faces outward, sphere faces inward.
 
 cube = pv.Cube().triangulate().subdivide(3)
-sphere = pv.Sphere(radius=0.6)
-sphere.flip_normals()
+sphere = pv.Sphere(radius=0.6).flip_faces()
 result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
 # %%
-# Boolean difference with cube normals inward, sphere outward.
+# Boolean difference with cube faces inward, sphere faces outward.
 
-cube = pv.Cube().triangulate().subdivide(3)
-cube.flip_normals()
+cube = pv.Cube().triangulate().subdivide(3).flip_faces()
 sphere = pv.Sphere(radius=0.6)
 result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
 # %%
-# Both cube and sphere normals inward.
+# Both cube and sphere faces inward.
 
-cube = pv.Cube().triangulate().subdivide(3)
-cube.flip_normals()
-sphere = pv.Sphere(radius=0.6)
-sphere.flip_normals()
+cube = pv.Cube().triangulate().subdivide(3).flip_faces()
+sphere = pv.Sphere(radius=0.6).flip_faces()
 result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 # %%
