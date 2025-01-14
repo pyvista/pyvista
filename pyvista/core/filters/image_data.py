@@ -3040,7 +3040,31 @@ class ImageDataFilters(DataSetFilters):
         >>> plt.add_mesh(upsampled.points_to_cells(), style='wireframe', color='black')
         >>> plt.show()
 
+
+        >>> downsampled = image.resample(dimensions=(20, 20, 20))
+        >>> plot = image_plotter(downsampled)
+        >>> plot.show()
+
+        Compare the relative physical size of the images.
+
+        >>> plt = pv.Plotter()
+        >>> plt.add_mesh(
+        ...     image.points_to_cells(), style='wireframe', color='red', line_width=10
+        ... )
+        >>> plt.add_mesh(
+        ...     downsampled.points_to_cells(), style='wireframe', color='black'
+        ... )
+        >>> plt.show()
+
         """
+
+        def _compute_size():
+            # Compute spacing to match bounds of input and dimensions of output
+            bnds = self.bounds
+            return np.array(
+                (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+            )
+
         # TODO: Make sure we have float inputs for linear interp
         # TODO: Make sure input len(active_scalars) == n_points
         if interpolation is None:
@@ -3063,14 +3087,14 @@ class ImageDataFilters(DataSetFilters):
 
         # Set reference dimensions and spacing from the sample rate
         if sample_rate is not None:
-            adjusted_sample_rate = _validation.validate_array3(
+            sample_rate_ = _validation.validate_array3(
                 sample_rate,
                 broadcast=True,
                 must_be_in_range=[0, np.inf],
                 name='sample_rate',
             )
             old_dimensions = self.dimensions
-            new_dimensions = old_dimensions * adjusted_sample_rate
+            new_dimensions = old_dimensions * sample_rate_
 
         else:
             if dimensions is not None:
@@ -3081,7 +3105,9 @@ class ImageDataFilters(DataSetFilters):
         # vtkImageResample will multiply sample rate by the extent but we want to
         # multiply the dimensions. These values are off by one.
         old_dimensions = np.array(self.dimensions)
+        singleton_dims = old_dimensions == 1
         adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
+        adjusted_sample_rate[singleton_dims] = 1
 
         # Return early without resampling if geometry and extent matches reference
         has_unity_sample_rate = np.array_equal(adjusted_sample_rate, 1.0)
@@ -3112,33 +3138,36 @@ class ImageDataFilters(DataSetFilters):
         output_image.direction_matrix = reference_image.direction_matrix
         output_image.origin = reference_image.origin
         output_image.offset = reference_image.offset
-        output_image.spacing = reference_image.spacing
 
-        if not reference_image_provided:
+        if reference_image_provided:
+            output_image.spacing = reference_image.spacing
+
+        else:
             # Need to fixup the spacing
             old_spacing = np.array(self.spacing)
             output_dimensions = np.array(output_image.dimensions)
-            singleton = old_dimensions == 1
 
             if extend_border:
                 # Compute spacing to have the same effective sample rate as the dimensions
                 actual_sample_rate = output_dimensions / old_dimensions
                 new_spacing = old_spacing / actual_sample_rate
+
                 # This will enlarge the image, so we need to shift the origin accordingly
+                # Shift the origin by 1/2 of the old and new spacing, but keep the spacing
+                # unchanged for singleton dimensions. We also compute the sign of the
+                # shift (-ve for down-sampling, +ve up-sampling)
+                sign = np.sign(actual_sample_rate - 1.0)[~singleton_dims]
+                shift_old = old_spacing[~singleton_dims] / 2
+                shift_new = new_spacing[~singleton_dims] / 2
                 new_origin = np.array(self.origin)
-                # Shift origin by 1/2 spaching, but keep unchanged for singleton dimensions
-                new_origin[~singleton] -= new_spacing[~singleton] / actual_sample_rate[~singleton]
+                new_origin[~singleton_dims] += (shift_new + -shift_old) * sign
+
                 output_image.origin = new_origin
             else:
-                # Compute spacing to match bounds of input and dimensions of output
-                bnds = self.bounds
-                size = np.array(
-                    (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
-                )
-                new_spacing = size / (output_dimensions - 1)
+                new_spacing = _compute_size() / (output_dimensions - 1)
 
             # For singleton dimensions, keep the original spacing value
-            new_spacing[singleton] = old_spacing[singleton]
+            new_spacing[singleton_dims] = old_spacing[singleton_dims]
 
             output_image.spacing = new_spacing
 

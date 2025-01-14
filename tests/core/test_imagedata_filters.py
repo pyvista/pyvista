@@ -1128,7 +1128,7 @@ def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset
 
 @pytest.mark.parametrize('extend_border', [True, False])
 def test_resample_dimensions(uniform, extend_border):
-    output_dimensions = (5, 15, 20)
+    output_dimensions = (15, 15, 15)
     resampled = uniform.resample(dimensions=output_dimensions, extend_border=extend_border)
 
     assert np.array_equal(resampled.dimensions, output_dimensions)
@@ -1162,6 +1162,10 @@ def test_resample_sample_rate(uniform, sample_rate, extend_border):
         expected_spacing = uniform.spacing / sample_rate
         assert np.array_equal(resampled.spacing, expected_spacing)
         assert not np.allclose(resampled.bounds, uniform.bounds)
+
+        # Test bounds are the same when represented as cells
+        expected_cell_bounds = uniform.points_to_cells().bounds
+        actual_cell_bounds = resampled.points_to_cells().bounds
+        assert np.allclose(actual_cell_bounds, expected_cell_bounds)
     else:
         assert np.allclose(resampled.bounds, uniform.bounds)
-    # assert np.allclose(resampled.points_to_cells().bounds, uniform.points_to_cells().bounds)
