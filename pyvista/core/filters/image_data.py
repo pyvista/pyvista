@@ -2929,16 +2929,17 @@ class ImageDataFilters(DataSetFilters):
         self: ImageData,
         interpolation: Literal['linear', 'nearest', 'cubic'] | None = None,
         *,
-        reference_image: ImageData = None,
+        reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         sample_rate: float | None = None,
         extend_border: bool = True,
     ):
-        """Resample the image to modify its dimensions.
+        """Resample the image to modify its dimensions and spacing.
 
         .. note::
 
-            Singleton dimensions are not resampled by this filter.
+            Singleton dimensions are not resampled by this filter, e.g. 2D images
+            will remain 2D.
 
         Parameters
         ----------
@@ -2947,7 +2948,10 @@ class ImageDataFilters(DataSetFilters):
 
         reference_image
             Reference image to use. If specified, the input is resampled
-            to match the :attr:`~pyvista.ImageData.extent`.
+            to match the geometry of the reference. The :attr:`~pyvista.ImageData.extent`,
+            :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin` and
+            :attr:`~pyvista.ImageData.direction_matrix` of the input will all match
+            the reference image.
 
         dimensions
             Set the :attr:`~pyvista.ImageData.dimensions` of the resampled image.
@@ -3125,15 +3129,33 @@ class ImageDataFilters(DataSetFilters):
         >>> upsampled.origin
         (0.0, 0.0, 0.0)
 
+        Load two images with different dimensions. Here we use
+        :func:`~pyvista.examples.downloads.download_puppy` and
+        :func:`~pyvista.examples.downloads.download_gourds`.
+
+        >>> puppy = examples.download_puppy()
+        >>> puppy.dimensions
+        (1600, 1200, 1)
+
+        >>> gourds = examples.download_gourds()
+        >>> gourds.dimensions
+        (640, 480, 1)
+
+        Use ``reference_image`` to resample puppy to match the gourds geometry or
+        vice-versa.
+
+        >>> puppy_resampled = puppy.resample(reference_image=gourds)
+        >>> puppy_resampled.dimensions
+        (640, 480, 1)
+        >>> puppy_resampled.plot(zoom='tight', rgb=True)
+
+        >>> gourds_resampled = gourds.resample(reference_image=puppy)
+        >>> gourds_resampled.dimensions
+        (1600, 1200, 1)
+        >>> gourds_resampled.plot(zoom='tight', rgb=True)
+
+
         """
-
-        def _compute_size():
-            # Compute spacing to match bounds of input and dimensions of output
-            bnds = self.bounds
-            return np.array(
-                (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
-            )
-
         # TODO: Make sure we have float inputs for linear interp
         # TODO: Make sure input len(active_scalars) == n_points
         if interpolation is None:
@@ -3162,12 +3184,12 @@ class ImageDataFilters(DataSetFilters):
                 must_be_in_range=[0, np.inf],
                 name='sample_rate',
             )
-            old_dimensions = self.dimensions
+            old_dimensions: NumpyArray[int] = np.array(self.dimensions)
             new_dimensions = old_dimensions * sample_rate_
 
         else:
             if dimensions is not None:
-                reference_image.dimensions = dimensions
+                reference_image.dimensions = dimensions  # type: ignore[assignment]
 
             new_dimensions = np.array(reference_image.dimensions)
 
@@ -3227,11 +3249,16 @@ class ImageDataFilters(DataSetFilters):
                 shift_old = old_spacing[~singleton_dims] / 2
                 shift_new = new_spacing[~singleton_dims] / 2
                 new_origin = np.array(self.origin)
-                new_origin[~singleton_dims] += shift_new + -shift_old
+                new_origin[~singleton_dims] += shift_new - shift_old
 
                 output_image.origin = new_origin
             else:
-                new_spacing = _compute_size() / (output_dimensions - 1)
+                # Compute spacing to match bounds of input and dimensions of output
+                bnds = self.bounds
+                size = np.array(
+                    (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+                )
+                new_spacing = size / (output_dimensions - 1)
 
             # For singleton dimensions, keep the original spacing value
             new_spacing[singleton_dims] = old_spacing[singleton_dims]
