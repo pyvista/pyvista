@@ -2146,7 +2146,7 @@ class DataSetFilters:
         filter.
 
         """
-        if method is None or method == 'contour':
+        if method == 'contour':
             alg = _vtk.vtkContourFilter()
         elif method == 'marching_cubes':
             alg = _vtk.vtkMarchingCubes()  # type: ignore[assignment]
