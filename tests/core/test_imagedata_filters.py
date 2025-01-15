@@ -1098,10 +1098,12 @@ def test_validate_dim_operation_invalid_parameters(
 @pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
 @pytest.mark.parametrize('dimensions', [None, (5, 6, 7)])
 @pytest.mark.parametrize('offset', [None, (-100, -101, -102)])
-def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset):
-    uniform = pv.ImageData(dimensions=(4, 4, 4))
-    uniform['data'] = np.arange(uniform.n_points, dtype=float)
-    reference = uniform.copy()
+@pytest.mark.parametrize('field', ['n_cells', 'n_points'])
+def test_resample(spacing, direction_matrix, origin, dimensions, offset, field):
+    input_image = pv.ImageData(dimensions=(4, 4, 4))
+    data_len = getattr(input_image, field)
+    input_image['data'] = np.arange(data_len, dtype=float)
+    reference = input_image.copy()
     if spacing is not None:
         reference.spacing = spacing
     if direction_matrix is not None:
@@ -1114,15 +1116,17 @@ def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset
         reference.offset = offset
     reference['data'] = range(reference.n_points)
 
-    resampled = uniform.resample(reference_image=reference)
+    resampled = input_image.resample(reference_image=reference)
     assert isinstance(resampled, pv.ImageData)
-    assert resampled is not uniform
+    assert resampled is not input_image
     assert resampled is not reference
     assert np.array_equal(resampled.dimensions, reference.dimensions)
     assert np.array_equal(resampled.offset, reference.offset)
-    assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
-    assert len(resampled.active_scalars) == resampled.n_points
-    assert resampled.active_scalars_name == uniform.active_scalars_name
+    assert np.array_equal(resampled.origin, reference.origin)
+    assert np.array_equal(resampled.spacing, reference.spacing)
+    assert np.array_equal(resampled.direction_matrix, reference.direction_matrix)
+    assert len(resampled.active_scalars) == getattr(resampled, field)
+    assert resampled.active_scalars_name == input_image.active_scalars_name
     assert np.allclose(resampled.bounds, reference.bounds)
 
 
