@@ -2211,10 +2211,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if pyvista.vtk_version_info < (9, 1)
             else 'GetRenderFramebuffer'
         )
-        if hasattr(renwin := self.render_window, attr):
-            if not getattr(renwin, attr)().GetFBOIndex():
-                # must raise a runtime error as this causes a segfault on VTK9
-                raise ValueError('Invoking helper with no framebuffer')
+        if hasattr(renwin := self.render_window, attr) and not getattr(renwin, attr)().GetFBOIndex():
+            # must raise a runtime error as this causes a segfault on VTK9
+            raise ValueError('Invoking helper with no framebuffer')
 
         # Get 2D click location on window
         click_pos = self.iren.get_event_position()  # type: ignore[has-type]
