@@ -2943,7 +2943,8 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         interpolation
-            Interpolation mode to use.
+            Interpolation mode to use. If ``'linear'`` or ``'cubic'``, the resampled
+            array will have ``float`` dtype.
 
         reference_image
             Reference image to use. If specified, the input is resampled
@@ -3155,35 +3156,40 @@ class ImageDataFilters(DataSetFilters):
 
 
         """
-        # TODO: Make sure we have float inputs for linear interp
-        # TODO: Make sure input len(active_scalars) == n_points
+        active_scalars = self.active_scalars
+        has_int_scalars = np.issubdtype(active_scalars.dtype, np.integer)
         if interpolation is None:
             interpolation = 'linear'
-            active_scalars = self.active_scalars
-            if active_scalars is not None and np.issubdtype(active_scalars.dtype, np.integer):
+            if active_scalars is not None and has_int_scalars:
                 interpolation = 'nearest'
         else:
             _validation.check_contains(
                 ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
             )
+        if has_int_scalars and interpolation != 'nearest':
+            # Cast scalars to float
+            input_image = self.copy(deep=False)
+            input_image[self.active_scalars_name] = input_image.active_scalars.astype(float)
+        else:
+            input_image = self
 
         if reference_image is None:
             reference_image = pyvista.ImageData()
-            reference_image.copy_structure(self)
+            reference_image.copy_structure(input_image)
             reference_image_provided = False
         else:
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
-        # Set reference dimensions and spacing from the sample rate
         if sample_rate is not None:
+            # Set reference dimensions from the sample rate
             sample_rate_ = _validation.validate_array3(
                 sample_rate,
                 broadcast=True,
                 must_be_in_range=[0, np.inf],
                 name='sample_rate',
             )
-            old_dimensions: NumpyArray[int] = np.array(self.dimensions)
+            old_dimensions: NumpyArray[int] = np.array(input_image.dimensions)
             new_dimensions = old_dimensions * sample_rate_
 
         else:
@@ -3194,7 +3200,7 @@ class ImageDataFilters(DataSetFilters):
 
         # vtkImageResample will multiply sample rate by the extent but we want to
         # multiply the dimensions. These values are off by one.
-        old_dimensions = np.array(self.dimensions)
+        old_dimensions = np.array(input_image.dimensions)
         singleton_dims = old_dimensions == 1
         adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
         adjusted_sample_rate[singleton_dims] = 1
@@ -3202,14 +3208,14 @@ class ImageDataFilters(DataSetFilters):
         # Return early without resampling if geometry and extent matches reference
         has_unity_sample_rate = np.array_equal(adjusted_sample_rate, 1.0)
         same_geometry = np.allclose(
-            self.index_to_physical_matrix, reference_image.index_to_physical_matrix
+            input_image.index_to_physical_matrix, reference_image.index_to_physical_matrix
         )
-        same_extent = np.array_equal(self.extent, reference_image.extent)
+        same_extent = np.array_equal(input_image.extent, reference_image.extent)
         if has_unity_sample_rate or (sample_rate is None and same_geometry and same_extent):
-            return self.copy()
+            return input_image.copy()
 
         resample = _vtk.vtkImageResample()
-        resample.SetInputData(self)
+        resample.SetInputData(input_image)
         resample.SetMagnificationFactors(*adjusted_sample_rate)
 
         # Set interpolation mode
@@ -3234,7 +3240,7 @@ class ImageDataFilters(DataSetFilters):
 
         else:
             # Need to fixup the spacing
-            old_spacing = np.array(self.spacing)
+            old_spacing = np.array(input_image.spacing)
             output_dimensions = np.array(output_image.dimensions)
 
             if extend_border:
@@ -3247,13 +3253,13 @@ class ImageDataFilters(DataSetFilters):
                 # unchanged for singleton dimensions.
                 shift_old = old_spacing[~singleton_dims] / 2
                 shift_new = new_spacing[~singleton_dims] / 2
-                new_origin = np.array(self.origin)
+                new_origin = np.array(input_image.origin)
                 new_origin[~singleton_dims] += shift_new - shift_old
 
                 output_image.origin = new_origin
             else:
                 # Compute spacing to match bounds of input and dimensions of output
-                bnds = self.bounds
+                bnds = input_image.bounds
                 size = np.array(
                     (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
                 )
@@ -3265,5 +3271,5 @@ class ImageDataFilters(DataSetFilters):
             output_image.spacing = new_spacing
 
         if output_image.active_scalars_name == 'ImageScalars':
-            output_image.rename_array('ImageScalars', self.active_scalars_name)
+            output_image.rename_array('ImageScalars', input_image.active_scalars_name)
         return output_image

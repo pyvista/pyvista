@@ -1171,6 +1171,13 @@ def test_resample_sample_rate(uniform, sample_rate, extend_border):
         assert np.allclose(resampled.bounds, uniform.bounds)
 
 
-@pytest.mark.parametrize('interpolation', ['linear', 'nearest', 'cubic'])
-def test_resample_interpolation(uniform, interpolation):
-    uniform.resample(interpolation=interpolation)
+@pytest.mark.parametrize('dtype', ['uint8', 'int', 'float'])
+@pytest.mark.parametrize('interpolation', ['linear', 'nearest', 'cubic', None])
+def test_resample_interpolation(uniform, interpolation, dtype):
+    array = uniform.active_scalars
+    uniform[uniform.active_scalars_name] = array.astype(dtype)
+    resampled = uniform.resample(interpolation=interpolation)
+
+    expected_dtype = float if interpolation in ['linear', 'cubic'] else dtype
+    actual_dtype = resampled.active_scalars.dtype
+    assert actual_dtype == expected_dtype
