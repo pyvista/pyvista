@@ -1144,6 +1144,9 @@ def test_resample(spacing, direction_matrix, origin, dimensions, offset, length_
 def test_resample_extend_border(uniform, extend_border, name, value, length_attribute):
     kwarg = {name: value}
     if length_attribute == 'n_cells':
+        if extend_border:
+            pytest.skip('Invalid option.')
+        # Clear point data so that setting default scalars will set cell data
         uniform.point_data.clear()
 
     resampled = uniform.resample(**kwarg, extend_border=extend_border)
@@ -1199,7 +1202,6 @@ def test_resample_raises(uniform):
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(sample_rate=2, reference_image=uniform)
-
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
 
@@ -1209,3 +1211,7 @@ def test_resample_raises(uniform):
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(sample_rate=2, dimensions=(2, 2, 2))
+
+    match = '`extend_border` cannot be set when resampling cell data.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(scalars='Spatial Cell Data', extend_border=True)

@@ -2931,7 +2931,7 @@ class ImageDataFilters(DataSetFilters):
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         sample_rate: float | VectorLike[float] | None = None,
-        extend_border: bool = True,
+        extend_border: bool | None = None,
         scalars: str | None = None,
         progress_bar: bool = False,
     ):
@@ -2969,13 +2969,16 @@ class ImageDataFilters(DataSetFilters):
             value less than ``1.0`` will downsample it. Values must be greater than
             ``0`` and cannot be negative.
 
-        extend_border : bool, default: True
+        extend_border : bool, optional
             Extend the apparent input border by approximately half the
             :attr:`~pyvista.ImageData.spacing`. If enabled, the bounds of the
             resampled points will be larger than the input image bounds.
             Enabling this option also has the effect that the re-sampled spacing
             will directly correlate with the resampled dimensions, e.g. if
             the dimensions are double the spacing will be halved. See examples.
+
+            This option is enabled by default when resampling point data. Has no effect
+            when resampling cell data.
 
         scalars : str, optional
             Name of scalars to resample. Defaults to currently active scalars.
@@ -3238,10 +3241,14 @@ class ImageDataFilters(DataSetFilters):
         # Compute the sampling rate to use with vtkImageResample
         singleton_dims = old_dimensions == 1
         if processing_cell_scalars:
+            if extend_border:
+                raise ValueError('`extend_border` cannot be set when resampling cell data.')
             # vtkImageResample only supports point data, so we need to convert
             input_image = input_image.cells_to_points(scalars=scalars, copy=False)
             adjusted_sample_rate = (new_dimensions - 2) / (old_dimensions - 2)
         else:
+            if extend_border is None:
+                extend_border = True
             adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
         adjusted_sample_rate[singleton_dims] = 1
 
