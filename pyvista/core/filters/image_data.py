@@ -2937,6 +2937,26 @@ class ImageDataFilters(DataSetFilters):
     ):
         """Resample the image to modify its dimensions and spacing.
 
+        The resampling can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_image``.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``sample_rate`` explicitly.
+
+        Use ``reference_image`` for full control of the resampled geometry. For
+        all other options, the geometry is implicitly defined such that the resampled
+        image fits the bounds of the input.
+
+        This filter operates on point data with the assumption that these
+        points are discrete samples in space which represent pixels or voxels.
+        Therefore, the resampled bounds are extended by 1/2 voxel spacing by default,
+        though this may be disabled.
+
+        Images with cell data are also supported by this filter. In this case, the image
+        is first converted to points using :meth:`cells_to_points`.
+
         .. note::
 
             Singleton dimensions are not resampled by this filter, e.g. 2D images
@@ -2960,15 +2980,23 @@ class ImageDataFilters(DataSetFilters):
             :attr:`~pyvista.ImageData.direction_matrix` and :attr:`~pyvista.ImageData.offset`
             of the resampled image will all match the reference image.
 
-        dimensions
+        dimensions : VectorLike[int]
             Set the output :attr:`~pyvista.ImageData.dimensions` of the resampled image.
 
-        sample_rate : float | VectorLike[float], optional
-            Sampling rate to use. A value greater than ``1.0`` will up-sample the
-            image and a value less than ``1.0`` will downsample it.
-            Value must be greater than ``0``. The sample rate cannot be negative.
+            .. note::
 
-        extend_border : bool, default: True
+                Dimensions is the number of `points` along each axis. If resampling
+                `cell` data, each dimension should be one more than the number of
+                desired output cells (since there is ``N+1`` points for ``N`` cells
+                along each axis). See examples.
+
+        sample_rate : float | VectorLike[float], optional
+            Sampling rate(s) to use. Can be a single value or vector of three values
+            for each axis. Values greater than ``1.0`` will up-sample the axis and a
+            value less than ``1.0`` will down-sample it. Values must be greater than
+            ``0`` and cannot be negative.
+
+        extend_border : bool, optional
             Extend the apparent input border by approximately half the
             :attr:`~pyvista.ImageData.spacing`. If enabled, the bounds of the
             resampled points will be larger than the input image bounds.
@@ -3194,7 +3222,8 @@ class ImageDataFilters(DataSetFilters):
             input_image = self
 
         # Make sure we have point scalars
-        if field == FieldAssociation.CELL:
+        processing_cell_scalars = field == FieldAssociation.CELL
+        if processing_cell_scalars:
             input_image = input_image.cells_to_points(scalars=scalars, copy=False)
 
         if reference_image is None:
@@ -3267,7 +3296,7 @@ class ImageDataFilters(DataSetFilters):
             old_spacing = np.array(input_image.spacing)
             output_dimensions = np.array(output_image.dimensions)
 
-            if extend_border:
+            if extend_border and not processing_cell_scalars:
                 # Compute spacing to have the same effective sample rate as the dimensions
                 actual_sample_rate = output_dimensions / old_dimensions
                 new_spacing = old_spacing / actual_sample_rate
@@ -3302,5 +3331,7 @@ class ImageDataFilters(DataSetFilters):
             output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
 
         if field == FieldAssociation.CELL:
-            return output_image.points_to_cells(scalars=name, copy=False)
+            # Convert back to cells. This modifies origin so we need to reset it.
+            output_image = output_image.points_to_cells(scalars=name, copy=False)
+            output_image.origin = reference_image.origin
         return output_image

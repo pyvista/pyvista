@@ -1148,7 +1148,7 @@ def test_resample_extend_border(uniform, extend_border, name, value):
     if extend_border:
         sample_rate = np.array(resampled.dimensions) / uniform.dimensions
         expected_spacing = uniform.spacing / sample_rate
-        assert np.array_equal(resampled.spacing, expected_spacing)
+        assert np.allclose(resampled.spacing, expected_spacing)
         assert not np.allclose(resampled.bounds, uniform.bounds)
 
         # Test bounds are the same when represented as cells
@@ -1184,10 +1184,15 @@ def test_resample_scalars(uniform, field):
         assert scalars in resampled.point_data
 
 
-# def test_resample_cell_data(channels):
-#     assert channels.active_scalars_name in channels.cell_data
-#     sample_rate = 0.5
-#     resampled = channels.resample(sample_rate = 0.5)
+def test_resample_cell_data(uniform):
+    uniform.point_data.clear()
+    input_cell_dimensions = np.array(uniform.dimensions) - 1
+    sample_rate = np.array((2, 3, 4))
+
+    resampled = uniform.resample(sample_rate=sample_rate)
+    resample_cell_dimensions = np.array(resampled.dimensions) - 1
+    expected_cell_dimensions = input_cell_dimensions * sample_rate
+    assert np.array_equal(resample_cell_dimensions, expected_cell_dimensions)
 
 
 def test_resample_raises(uniform):
@@ -1197,7 +1202,6 @@ def test_resample_raises(uniform):
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(sample_rate=2, reference_image=uniform)
-
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
 
