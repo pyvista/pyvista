@@ -1181,3 +1181,22 @@ def test_resample_interpolation(uniform, interpolation, dtype):
     expected_dtype = float if interpolation in ['linear', 'cubic'] else dtype
     actual_dtype = resampled.active_scalars.dtype
     assert actual_dtype == expected_dtype
+
+
+def test_resample_raises(uniform):
+    match = (
+        'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
+        '`reference_image` must define the geometry exclusively.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, reference_image=uniform)
+
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
+
+    match = (
+        'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
+        '`sample_rate` must define the sampling geometry exclusively.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, dimensions=(2, 2, 2))

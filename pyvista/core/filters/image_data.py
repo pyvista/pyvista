@@ -2930,7 +2930,7 @@ class ImageDataFilters(DataSetFilters):
         *,
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
-        sample_rate: float | None = None,
+        sample_rate: float | VectorLike[float] | None = None,
         extend_border: bool = True,
     ):
         """Resample the image to modify its dimensions and spacing.
@@ -2942,32 +2942,37 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        interpolation
-            Interpolation mode to use. If ``'linear'`` or ``'cubic'``, the resampled
-            array will have ``float`` dtype.
+        interpolation : 'linear' | 'nearest' | 'cubic', optional
+            Interpolation mode to use. By default, ``'linear'`` is used for float
+            scalars and ``'nearest'`` is used for integer scalars.
 
-        reference_image
+            .. note:
+
+                Integer scalars are converted to floats if ``'linear'`` or
+                ``'cubic'`` interpolation is used.
+
+        reference_image : ImageData, optional
             Reference image to use. If specified, the input is resampled
-            to match the geometry of the reference. The :attr:`~pyvista.ImageData.extent`,
+            to match the geometry of the reference. The :attr:`~pyvista.ImageData.dimensions`,
             :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin` and
-            :attr:`~pyvista.ImageData.direction_matrix` of the input will all match
-            the reference image.
+            :attr:`~pyvista.ImageData.direction_matrix` and :attr:`~pyvista.ImageData.offset`
+            of the resampled image will all match the reference image.
 
         dimensions
-            Set the :attr:`~pyvista.ImageData.dimensions` of the resampled image.
+            Set the output :attr:`~pyvista.ImageData.dimensions` of the resampled image.
 
-            .. note::
-
-                This value overrides the dimensions of the ``reference_image``
-                (if specified).
-
-        sample_rate
+        sample_rate : float | VectorLike[float], optional
             Sampling rate to use. A value greater than ``1.0`` will up-sample the
             image and a value less than ``1.0`` will downsample it.
-            Value must be greater than ``0``. The sample rate
+            Value must be greater than ``0``. The sample rate cannot be negative.
 
-        extend_border
-            Extend the apparent input border by a half voxel.
+        extend_border : bool, default: True
+            Extend the apparent input border by approximately half the
+            :attr:`~pyvista.ImageData.spacing`. If enabled, the bounds of the
+            resampled points will be larger than the input image bounds.
+            Enabling this option also has the effect that the re-sampled spacing
+            will directly correlate with the resampled dimensions, e.g. if
+            the dimensions are double the spacing will be halved. See examples.
 
         Returns
         -------
@@ -3154,7 +3159,6 @@ class ImageDataFilters(DataSetFilters):
         (1600, 1200, 1)
         >>> gourds_resampled.plot(zoom='tight', rgb=True)
 
-
         """
         active_scalars = self.active_scalars
         has_int_scalars = np.issubdtype(active_scalars.dtype, np.integer)
@@ -3178,10 +3182,20 @@ class ImageDataFilters(DataSetFilters):
             reference_image.copy_structure(input_image)
             reference_image_provided = False
         else:
+            if dimensions is not None or sample_rate is not None:
+                raise ValueError(
+                    'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
+                    '`reference_image` must define the geometry exclusively.'
+                )
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
         if sample_rate is not None:
+            if reference_image_provided or dimensions is not None:
+                raise ValueError(
+                    'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
+                    '`sample_rate` must define the sampling geometry exclusively.'
+                )
             # Set reference dimensions from the sample rate
             sample_rate_ = _validation.validate_array3(
                 sample_rate,
@@ -3191,11 +3205,7 @@ class ImageDataFilters(DataSetFilters):
             )
             old_dimensions: NumpyArray[int] = np.array(input_image.dimensions)
             new_dimensions = old_dimensions * sample_rate_
-
         else:
-            if dimensions is not None:
-                reference_image.dimensions = dimensions  # type: ignore[assignment]
-
             new_dimensions = np.array(reference_image.dimensions)
 
         # vtkImageResample will multiply sample rate by the extent but we want to
