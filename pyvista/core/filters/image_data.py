@@ -3175,7 +3175,7 @@ class ImageDataFilters(DataSetFilters):
             name = scalars
             field = self.get_array_association(scalars, preference='point')
 
-        active_scalars = self.get_array(name, preference=field.name.lower())
+        active_scalars = self.get_array(name, preference=field.name.lower())  # type: ignore[arg-type]
         has_int_scalars = np.issubdtype(active_scalars.dtype, np.integer)
         if interpolation is None:
             interpolation = 'linear'
@@ -3188,7 +3188,7 @@ class ImageDataFilters(DataSetFilters):
         if has_int_scalars and interpolation != 'nearest':
             # Cast scalars to float
             input_image = self.copy(deep=False)
-            input_image[self.active_scalars_name] = input_image.active_scalars.astype(float)
+            input_image[name] = active_scalars.astype(float)
         else:
             input_image = self
 
