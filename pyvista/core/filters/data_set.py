@@ -6,6 +6,7 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
 import functools
+import itertools
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
@@ -8959,8 +8960,9 @@ class DataSetFilters:
         | Sequence[ColorLike]
         | dict[float, ColorLike] = 'glasbey_category10',
         *,
-        coloring_mode: Literal['index', 'cycler'] | None = None,
+        coloring_mode: Literal['index', 'cycle'] | None = None,
         color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
+        negative_indexing: bool = False,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'cell',
         output_scalars: str | None = None,
@@ -8981,7 +8983,7 @@ class DataSetFilters:
             This option is used by default for unsigned 8-bit integer inputs, i.e.
             scalars with whole numbers and a maximum range of ``[0, 255]``.
 
-        -   ``'cycler'`` : The specified ``colors`` are cycled through sequentially,
+        -   ``'cycle'`` : The specified ``colors`` are cycled through sequentially,
             and each unique value in the input scalars is assigned a color in increasing
             order. Unlike with ``'index'`` mode, the colors are not directly mapped to
             the labels, but instead depends on the number of labels at the input.
@@ -8992,14 +8994,22 @@ class DataSetFilters:
         By default, a new ``'int_rgb'`` array is added with the same name as the
         specified ``scalars`` but with ``_rgb`` appended.
 
+        .. versionadded:: 0.45
+
         See Also
         --------
+        pyvista.DataSetFilters.connectivity
+            Label data based on its connectivity.
+
         pyvista.ImageDataFilters.contour_labels
             Generate contours from labeled image data. The contours may be colored with this filter.
 
         pack_labels
             Make labeled data contiguous. May be used as a pre-processing step before
             coloring.
+
+        :ref:`anatomical_groups_example`
+            Additional examples using this filter.
 
         Parameters
         ----------
@@ -9022,15 +9032,19 @@ class DataSetFilters:
                 array has no default values, be sure to provide a mapping for any and
                 all possible input label values.
 
-        coloring_mode : 'index' | 'cycler', optional
+        coloring_mode : 'index' | 'cycle', optional
             Control how colors are mapped to label values. Has no effect if ``colors``
             is a dictionary. Specify one of:
 
             - ``'index'``: The input scalar values (label ids) are used as index
               values for indexing the specified ``colors``.
-            - ``'cycler'``: The specified ``'colors'`` are cycled through sequentially,
+            - ``'cycle'``: The specified ``colors`` are cycled through sequentially,
               and each unique value in the input scalars is assigned a color in increasing
-              order.
+              order. Colors are repeated if there are fewer colors than unique values
+              in the input ``scalars``.
+
+            By default, ``'index'`` mode is used if the values can be used to index
+            the input ``colors``, and ``'cycle'`` mode is used otherwise.
 
         color_type : 'int_rgb' | 'float_rgb' | 'int_rgba' | 'float_rgba', default: 'int_rgb'
             Type of the color array to store. By default, the colors are stored as
@@ -9039,6 +9053,12 @@ class DataSetFilters:
             .. note::
                 The color type affects the default value for unspecified colors when
                 a dictionary is used. See ``colors`` for details.
+
+        negative_indexing : bool, default: False
+            Allow indexing ``colors`` with negative values. Only valid when
+            ``coloring_mode`` is ``'index'``. This option is useful for coloring data
+            with two independent categories since positive values will be colored
+            differently than negative values.
 
         scalars : str, optional
             Name of scalars with labels. Defaults to currently active scalars.
@@ -9063,7 +9083,8 @@ class DataSetFilters:
 
         Examples
         --------
-        Load labeled data and crop it to simplify the data.
+        Load labeled data and crop it with :meth:`~pyvista.ImageDataFilters.extract_subset`
+        to simplify the data.
 
         >>> from pyvista import examples
         >>> import numpy as np
@@ -9108,10 +9129,10 @@ class DataSetFilters:
         >>> colored_labels = subset_labels.color_labels()
         >>> colored_labels.plot()
 
-        Use the ``'cycler'`` coloring mode instead to map label values to colors
+        Use the ``'cycle'`` coloring mode instead to map label values to colors
         sequentially.
 
-        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycler')
+        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycle')
         >>> colored_labels.plot()
 
         Map the colors explicitly using a dictionary.
@@ -9129,14 +9150,61 @@ class DataSetFilters:
         >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
         >>> colored_labels.plot()
 
+        Modify the scalars and make two of the labels negative.
+
+        >>> scalars = image_labels.active_scalars
+        >>> scalars[scalars > 2] *= -1
+        >>> np.unique(scalars)
+        pyvista_ndarray([-4, -3,  0,  1,  2])
+
+        Color the mesh and enable ``negative_indexing``. With this option enabled,
+        the ``'index'`` coloring mode is used by default, and therefore the positive
+        values ``0``, ``1``, and ``2`` are colored with the first, second, and third
+        color in the colormap, respectively. Negative values ``-3`` and ``-4`` are
+        colored with the third-last and fourth-last color in the colormap, respectively.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=True)
+        >>> colored_labels.plot()
+
+        If ``negative_indexing`` is disabled, the coloring defaults to the
+        ``'cycle'`` coloring mode instead.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=False)
+        >>> colored_labels.plot()
+
+        Load the :func:`~pyvista.examples.downloads.download_foot_bones` dataset.
+
+        >>> dataset = examples.download_foot_bones()
+
+        Label the bones using :meth:`~pyvista.DataSetFilters.connectivity` and show
+        the label values.
+
+        >>> labeled_data = dataset.connectivity()
+        >>> np.unique(labeled_data.active_scalars)
+        pyvista_ndarray([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+
+        Color the dataset with default arguments. Despite having 26 separately colored
+        regions, the colors from the default glasbey-style colormap are all relatively
+        distinct.
+
+        >>> colored_labels = labeled_data.color_labels()
+        >>> colored_labels.plot()
+
+        Color the mesh with fewer colors than there are label values. In this case
+        the ``'cycle'`` mode is used by default and the colors are re-used.
+
+        >>> colored_labels = labeled_data.color_labels(['red', 'lime', 'blue'])
+        >>> colored_labels.plot()
+
         Color all labels with a single color.
 
-        >>> colored_labels = image_labels.color_labels('red')
+        >>> colored_labels = labeled_data.color_labels('red')
         >>> colored_labels.plot()
+
 
         """
         # Lazy import since these are from plotting module
-        from cycler import cycler
         import matplotlib.colors
 
         from pyvista.core._validation.validate import _validate_color_sequence
@@ -9156,11 +9224,8 @@ class DataSetFilters:
                 )
 
         def _is_index_like(array_, max_value):
-            if np.issubdtype(array_.dtype, np.integer) or np.array_equal(array, np.floor(array_)):
-                min_, max_ = output_mesh.get_data_range(name)
-                if min_ >= 0 and max_ <= max_value:
-                    return True
-            return False
+            min_value = -max_value if negative_indexing else 0
+            return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ <= max_value)
 
         _validation.check_contains(
             ['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'],
@@ -9198,6 +9263,10 @@ class DataSetFilters:
             items = zip(colors.keys(), color_rgb_sequence)
 
         else:
+            if array.ndim > 1:
+                raise ValueError(
+                    f'Multi-component scalars are not supported for coloring. Scalar array {scalars} must be one-dimensional.'
+                )
             _is_rgb_sequence = False
             if isinstance(colors, str):
                 try:
@@ -9229,26 +9298,41 @@ class DataSetFilters:
 
             n_colors = len(color_rgb_sequence)
             if coloring_mode is None:
-                coloring_mode = 'index' if _is_index_like(array, max_value=n_colors) else 'cycler'
+                coloring_mode = (
+                    'index' if np.all(_is_index_like(array, max_value=n_colors)) else 'cycle'
+                )
 
+            _validation.check_contains(
+                ['index', 'cycle'], must_contain=coloring_mode, name='coloring_mode'
+            )
             if coloring_mode == 'index':
-                if not _is_index_like(array, max_value=n_colors):
+                if not np.all(_is_index_like(array, max_value=n_colors)):
                     raise ValueError(
                         f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
-                keys: Iterable[float] = range(n_colors)
-                values: Iterable[Any] = color_rgb_sequence
-            else:
+                keys: Iterable[float]
+                values: Iterable[Any]
+
+                keys_ = np.arange(n_colors)
+                values_ = color_rgb_sequence
+                if negative_indexing:
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
+                    values_.extend(values_[::-1])
+                keys = keys_
+                values = values_
+            elif coloring_mode == 'cycle':
+                if negative_indexing:
+                    raise ValueError(
+                        "Negative indexing is not supported with 'cycle' mode enabled."
+                    )
                 keys = np.unique(array)
-                values = cycler('color', color_rgb_sequence)
+                values = itertools.cycle(color_rgb_sequence)
 
             items = zip(keys, values)
 
         colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
         for label, color in items:
-            if isinstance(color, dict):
-                color = color['color']
             colors_out[array == label, :] = color
 
         colors_name = name + scalars_suffix if output_scalars is None else output_scalars
