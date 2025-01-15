@@ -2211,7 +2211,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if pyvista.vtk_version_info < (9, 1)
             else 'GetRenderFramebuffer'
         )
-        if hasattr(renwin := self.render_window, attr) and not getattr(renwin, attr)().GetFBOIndex():
+        if (
+            hasattr(renwin := self.render_window, attr)
+            and not getattr(renwin, attr)().GetFBOIndex()
+        ):
             # must raise a runtime error as this causes a segfault on VTK9
             raise ValueError('Invoking helper with no framebuffer')
 
