@@ -3226,6 +3226,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             if dimensions is not None:
                 reference_image.dimensions = dimensions  # type: ignore[assignment]
+
             new_dimensions = np.array(reference_image.dimensions)
 
         # Ideally vtkImageResample would directly support setting output dimensions
@@ -3274,18 +3275,7 @@ class ImageDataFilters(DataSetFilters):
             old_spacing = np.array(input_image.spacing)
             output_dimensions = np.array(output_image.dimensions)
 
-            if processing_cell_scalars or not extend_border:
-                # Compute spacing to match bounds of input and dimensions of output
-                bnds = input_image.bounds
-                size = np.array(
-                    (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
-                )
-                if processing_cell_scalars:
-                    new_spacing = (size + input_image.spacing) / (output_dimensions)
-                else:
-                    new_spacing = size / (output_dimensions - 1)
-            else:
-                # Adjust the spacing to extend_border
+            if extend_border and not processing_cell_scalars:
                 # Compute spacing to have the same effective sample rate as the dimensions
                 actual_sample_rate = output_dimensions / old_dimensions
                 new_spacing = old_spacing / actual_sample_rate
@@ -3299,9 +3289,20 @@ class ImageDataFilters(DataSetFilters):
                 new_origin[~singleton_dims] += shift_new - shift_old
 
                 output_image.origin = new_origin
+            else:
+                # Compute spacing to match bounds of input and dimensions of output
+                bnds = input_image.bounds
+                size = np.array(
+                    (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+                )
+                if processing_cell_scalars:
+                    new_spacing = (size + input_image.spacing) / (output_dimensions)
+                else:
+                    new_spacing = size / (output_dimensions - 1)
 
             # For singleton dimensions, keep the original spacing value
             new_spacing[singleton_dims] = old_spacing[singleton_dims]
+
             output_image.spacing = new_spacing
 
         if output_image.active_scalars_name == 'ImageScalars':
@@ -3315,5 +3316,4 @@ class ImageDataFilters(DataSetFilters):
             # Convert back to cells. This will modify the origin so we need to reset it.
             output_image = output_image.points_to_cells(scalars=name, copy=False)
             output_image.origin = reference_image.origin
-
         return output_image
