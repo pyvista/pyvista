@@ -82,7 +82,11 @@ def _load_current_config(
 
 
 @pytest.mark.parametrize('cml', [True, False])
-def test_downloads_mark(cml, pytester: pytest.Pytester, results_parser: PytesterStdoutParser):
+def test_downloads_mark(
+    cml,
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
     tests = """
     import pytest
 
