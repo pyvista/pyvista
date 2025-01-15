@@ -1183,6 +1183,25 @@ def test_resample_interpolation(uniform, interpolation, dtype):
     assert actual_dtype == expected_dtype
 
 
+@pytest.mark.parametrize('field', ['cell', 'point'])
+def test_resample_scalars(uniform, field):
+    data = uniform.cell_data if field == 'cell' else uniform.point_data
+    scalars = data.keys()[0]
+
+    resampled = uniform.resample(scalars=scalars)
+
+    if field == 'cell':
+        assert scalars in resampled.cell_data
+    else:
+        assert scalars in resampled.point_data
+
+
+# def test_resample_cell_data(channels):
+#     assert channels.active_scalars_name in channels.cell_data
+#     sample_rate = 0.5
+#     resampled = channels.resample(sample_rate = 0.5)
+
+
 def test_resample_raises(uniform):
     match = (
         'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'

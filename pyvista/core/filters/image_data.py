@@ -2932,6 +2932,8 @@ class ImageDataFilters(DataSetFilters):
         dimensions: VectorLike[int] | None = None,
         sample_rate: float | VectorLike[float] | None = None,
         extend_border: bool = True,
+        scalars: str | None = None,
+        progress_bar: bool = False,
     ):
         """Resample the image to modify its dimensions and spacing.
 
@@ -2973,6 +2975,12 @@ class ImageDataFilters(DataSetFilters):
             Enabling this option also has the effect that the re-sampled spacing
             will directly correlate with the resampled dimensions, e.g. if
             the dimensions are double the spacing will be halved. See examples.
+
+        scalars : str, optional
+            Name of scalars to resample. Defaults to currently active scalars.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -3160,7 +3168,14 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds_resampled.plot(zoom='tight', rgb=True)
 
         """
-        active_scalars = self.active_scalars
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+
+        else:
+            name = scalars
+            field = self.get_array_association(scalars, preference='point')
+
+        active_scalars = self.get_array(name, preference=field.name.lower())
         has_int_scalars = np.issubdtype(active_scalars.dtype, np.integer)
         if interpolation is None:
             interpolation = 'linear'
@@ -3176,6 +3191,10 @@ class ImageDataFilters(DataSetFilters):
             input_image[self.active_scalars_name] = input_image.active_scalars.astype(float)
         else:
             input_image = self
+
+        # Make sure we have point scalars
+        if field == FieldAssociation.CELL:
+            input_image = input_image.cells_to_points(scalars=scalars, copy=False)
 
         if reference_image is None:
             reference_image = pyvista.ImageData()
@@ -3218,15 +3237,6 @@ class ImageDataFilters(DataSetFilters):
         adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
         adjusted_sample_rate[singleton_dims] = 1
 
-        # Return early without resampling if geometry and extent matches reference
-        has_unity_sample_rate = np.array_equal(adjusted_sample_rate, 1.0)
-        same_geometry = np.allclose(
-            input_image.index_to_physical_matrix, reference_image.index_to_physical_matrix
-        )
-        same_extent = np.array_equal(input_image.extent, reference_image.extent)
-        if has_unity_sample_rate or (sample_rate is None and same_geometry and same_extent):
-            return input_image.copy()
-
         resample = _vtk.vtkImageResample()
         resample.SetInputData(input_image)
         resample.SetMagnificationFactors(*adjusted_sample_rate)
@@ -3240,7 +3250,7 @@ class ImageDataFilters(DataSetFilters):
             resample.SetInterpolationModeToNearestNeighbor()
 
         # Get output
-        _update_alg(resample)
+        _update_alg(resample, progress_bar=progress_bar)
         output_image = _get_output(resample).copy(deep=False)
 
         # Set geometry from the reference
@@ -3285,4 +3295,7 @@ class ImageDataFilters(DataSetFilters):
 
         if output_image.active_scalars_name == 'ImageScalars':
             output_image.rename_array('ImageScalars', input_image.active_scalars_name)
+
+        if field == FieldAssociation.CELL:
+            return output_image.points_to_cells(scalars=name, copy=False)
         return output_image
