@@ -4570,6 +4570,7 @@ def test_align_xyz_three_axis_directions(planar_mesh):
         )
 
 
+@pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
 def test_align_xyz_swap_axes():
     # create planar data with equal variance in x and z
     points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])

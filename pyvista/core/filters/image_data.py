@@ -2632,7 +2632,7 @@ class ImageDataFilters(DataSetFilters):
 
         Label only the regions that include seed points, by seed order.
 
-        >>> points = [(2, 1, 0), (0, 0, 1)]
+        >>> points = [(2.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
         >>> connected, labels, sizes = segmented_grid.label_connectivity(
         ...     scalar_range='foreground',
         ...     extraction_mode='seeded',
