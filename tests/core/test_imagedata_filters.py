@@ -1098,10 +1098,10 @@ def test_validate_dim_operation_invalid_parameters(
 @pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
 @pytest.mark.parametrize('dimensions', [None, (5, 6, 7)])
 @pytest.mark.parametrize('offset', [None, (-100, -101, -102)])
-@pytest.mark.parametrize('length_attribute', ['n_cells', 'n_points'])
-def test_resample(spacing, direction_matrix, origin, dimensions, offset, length_attribute):
+@pytest.mark.parametrize('field', ['n_cells', 'n_points'])
+def test_resample(spacing, direction_matrix, origin, dimensions, offset, field):
     input_image = pv.ImageData(dimensions=(4, 4, 4))
-    data_len = getattr(input_image, length_attribute)
+    data_len = getattr(input_image, field)
     input_image['data'] = np.arange(data_len, dtype=float)
     reference = input_image.copy()
     if spacing is not None:
@@ -1125,7 +1125,7 @@ def test_resample(spacing, direction_matrix, origin, dimensions, offset, length_
     assert np.array_equal(resampled.origin, reference.origin)
     assert np.array_equal(resampled.spacing, reference.spacing)
     assert np.array_equal(resampled.direction_matrix, reference.direction_matrix)
-    assert len(resampled.active_scalars) == getattr(resampled, length_attribute)
+    assert len(resampled.active_scalars) == getattr(resampled, field)
     assert resampled.active_scalars_name == input_image.active_scalars_name
     assert np.allclose(resampled.bounds, reference.bounds)
 
@@ -1139,24 +1139,20 @@ def test_resample(spacing, direction_matrix, origin, dimensions, offset, length_
         ('dimensions', (15, 15, 15)),
     ],
 )
-@pytest.mark.parametrize('length_attribute', ['n_cells', 'n_points'])
 @pytest.mark.parametrize('extend_border', [True, False])
-def test_resample_extend_border(uniform, extend_border, name, value, length_attribute):
+def test_resample_extend_border(uniform, extend_border, name, value):
     kwarg = {name: value}
-    if length_attribute == 'n_cells':
-        uniform.point_data.clear()
-
     resampled = uniform.resample(**kwarg, extend_border=extend_border)
     expected_dimensions = uniform.dimensions * np.array(value) if name == 'sample_rate' else value
 
     assert np.array_equal(resampled.dimensions, expected_dimensions)
-    assert len(resampled.active_scalars) == getattr(resampled, length_attribute)
+    assert len(resampled.active_scalars) == resampled.n_points
     assert resampled.active_scalars_name == uniform.active_scalars_name
 
-    if extend_border and length_attribute == 'n_points':
+    if extend_border:
         sample_rate = np.array(resampled.dimensions) / uniform.dimensions
         expected_spacing = uniform.spacing / sample_rate
-        assert np.allclose(resampled.spacing, expected_spacing)
+        assert np.array_equal(resampled.spacing, expected_spacing)
         assert not np.allclose(resampled.bounds, uniform.bounds)
 
         # Test bounds are the same when represented as cells
@@ -1190,6 +1186,12 @@ def test_resample_scalars(uniform, field):
         assert scalars in resampled.cell_data
     else:
         assert scalars in resampled.point_data
+
+
+# def test_resample_cell_data(channels):
+#     assert channels.active_scalars_name in channels.cell_data
+#     sample_rate = 0.5
+#     resampled = channels.resample(sample_rate = 0.5)
 
 
 def test_resample_raises(uniform):

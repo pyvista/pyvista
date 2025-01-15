@@ -2964,10 +2964,9 @@ class ImageDataFilters(DataSetFilters):
             Set the output :attr:`~pyvista.ImageData.dimensions` of the resampled image.
 
         sample_rate : float | VectorLike[float], optional
-            Sampling rate(s) to use. Can be a single value of vector of three values
-            for each axis. Values greater than ``1.0`` will up-sample the axis and a
-            value less than ``1.0`` will downsample it. Values must be greater than
-            ``0`` and cannot be negative.
+            Sampling rate to use. A value greater than ``1.0`` will up-sample the
+            image and a value less than ``1.0`` will downsample it.
+            Value must be greater than ``0``. The sample rate cannot be negative.
 
         extend_border : bool, default: True
             Extend the apparent input border by approximately half the
@@ -3176,7 +3175,6 @@ class ImageDataFilters(DataSetFilters):
             name = scalars
             field = self.get_array_association(scalars, preference='point')
 
-        processing_cell_scalars = field == FieldAssociation.CELL
         active_scalars = self.get_array(name, preference=field.name.lower())  # type: ignore[arg-type]
         input_dtype = active_scalars.dtype
         has_int_scalars = np.issubdtype(input_dtype, np.integer)
@@ -3208,7 +3206,6 @@ class ImageDataFilters(DataSetFilters):
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
-        old_dimensions = np.array(input_image.dimensions)
         if sample_rate is not None:
             if reference_image_provided or dimensions is not None:
                 raise ValueError(
@@ -3222,6 +3219,7 @@ class ImageDataFilters(DataSetFilters):
                 must_be_in_range=[0, np.inf],
                 name='sample_rate',
             )
+            old_dimensions: NumpyArray[int] = np.array(input_image.dimensions)
             new_dimensions = old_dimensions * sample_rate_
         else:
             if dimensions is not None:
@@ -3237,7 +3235,9 @@ class ImageDataFilters(DataSetFilters):
         # data and off by two for cell data.
 
         # Compute the sampling rate to use with vtkImageResample
+        old_dimensions = np.array(input_image.dimensions)
         singleton_dims = old_dimensions == 1
+        processing_cell_scalars = field == FieldAssociation.CELL
         if processing_cell_scalars:
             # vtkImageResample only supports point data, so we need to convert
             input_image = input_image.cells_to_points(scalars=scalars, copy=False)
@@ -3295,10 +3295,7 @@ class ImageDataFilters(DataSetFilters):
                 size = np.array(
                     (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
                 )
-                if processing_cell_scalars:
-                    new_spacing = (size + input_image.spacing) / (output_dimensions)
-                else:
-                    new_spacing = size / (output_dimensions - 1)
+                new_spacing = size / (output_dimensions - 1)
 
             # For singleton dimensions, keep the original spacing value
             new_spacing[singleton_dims] = old_spacing[singleton_dims]
