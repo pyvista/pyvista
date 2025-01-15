@@ -3176,7 +3176,8 @@ class ImageDataFilters(DataSetFilters):
             field = self.get_array_association(scalars, preference='point')
 
         active_scalars = self.get_array(name, preference=field.name.lower())  # type: ignore[arg-type]
-        has_int_scalars = np.issubdtype(active_scalars.dtype, np.integer)
+        input_dtype = active_scalars.dtype
+        has_int_scalars = np.issubdtype(input_dtype, np.integer)
         if interpolation is None:
             interpolation = 'linear'
             if active_scalars is not None and has_int_scalars:
@@ -3185,8 +3186,8 @@ class ImageDataFilters(DataSetFilters):
             _validation.check_contains(
                 ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
             )
-        if has_int_scalars and interpolation != 'nearest':
-            # Cast scalars to float
+        if has_int_scalars:
+            # Need floats for interpolation but also to avoid crashing in some cases
             input_image = self.copy(deep=False)
             input_image[name] = active_scalars.astype(float)
         else:
@@ -3294,7 +3295,11 @@ class ImageDataFilters(DataSetFilters):
             output_image.spacing = new_spacing
 
         if output_image.active_scalars_name == 'ImageScalars':
-            output_image.rename_array('ImageScalars', input_image.active_scalars_name)
+            output_image.rename_array('ImageScalars', name)
+
+        if has_int_scalars and interpolation == 'nearest':
+            # Can safely cast to int to match input
+            output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
 
         if field == FieldAssociation.CELL:
             return output_image.points_to_cells(scalars=name, copy=False)
