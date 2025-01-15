@@ -3193,6 +3193,10 @@ class ImageDataFilters(DataSetFilters):
         else:
             input_image = self
 
+        # Make sure we have point scalars
+        if field == FieldAssociation.CELL:
+            input_image = input_image.cells_to_points(scalars=scalars, copy=False)
+
         if reference_image is None:
             reference_image = pyvista.ImageData()
             reference_image.copy_structure(input_image)
@@ -3227,26 +3231,13 @@ class ImageDataFilters(DataSetFilters):
 
             new_dimensions = np.array(reference_image.dimensions)
 
-        # Ideally vtkImageResample would directly support setting output dimensions
-        # (e.g. via SetOutputExtent) but this doesn't work, so instead we are
-        # stuck using SetMagnificationFactors to indirectly set the dimensions.
-        # Note that SetMagnificationFactors will multiply the sample rate by the extent
-        # but we want to multiply the dimensions. These values are off by one for point
-        # data and off by two for cell data.
-
-        # Compute the sampling rate to use with vtkImageResample
+        # vtkImageResample will multiply sample rate by the extent but we want to
+        # multiply the dimensions. These values are off by one.
         old_dimensions = np.array(input_image.dimensions)
         singleton_dims = old_dimensions == 1
-        processing_cell_scalars = field == FieldAssociation.CELL
-        if processing_cell_scalars:
-            # vtkImageResample only supports point data, so we need to convert
-            input_image = input_image.cells_to_points(scalars=scalars, copy=False)
-            adjusted_sample_rate = (new_dimensions - 2) / (old_dimensions - 2)
-        else:
-            adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
+        adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
         adjusted_sample_rate[singleton_dims] = 1
 
-        # Apply filter
         resample = _vtk.vtkImageResample()
         resample.SetInputData(input_image)
         resample.SetMagnificationFactors(*adjusted_sample_rate)
@@ -3270,12 +3261,13 @@ class ImageDataFilters(DataSetFilters):
 
         if reference_image_provided:
             output_image.spacing = reference_image.spacing
+
         else:
             # Need to fixup the spacing
             old_spacing = np.array(input_image.spacing)
             output_dimensions = np.array(output_image.dimensions)
 
-            if extend_border and not processing_cell_scalars:
+            if extend_border:
                 # Compute spacing to have the same effective sample rate as the dimensions
                 actual_sample_rate = output_dimensions / old_dimensions
                 new_spacing = old_spacing / actual_sample_rate
@@ -3309,8 +3301,6 @@ class ImageDataFilters(DataSetFilters):
             # Can safely cast to int to match input
             output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
 
-        if processing_cell_scalars:
-            # Convert back to cells. This will modify the origin so we need to reset it.
-            output_image = output_image.points_to_cells(scalars=name, copy=False)
-            output_image.origin = reference_image.origin
+        if field == FieldAssociation.CELL:
+            return output_image.points_to_cells(scalars=name, copy=False)
         return output_image
