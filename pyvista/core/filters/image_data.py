@@ -3206,6 +3206,9 @@ class ImageDataFilters(DataSetFilters):
             old_dimensions: NumpyArray[int] = np.array(input_image.dimensions)
             new_dimensions = old_dimensions * sample_rate_
         else:
+            if dimensions is not None:
+                reference_image.dimensions = dimensions  # type: ignore[assignment]
+
             new_dimensions = np.array(reference_image.dimensions)
 
         # vtkImageResample will multiply sample rate by the extent but we want to
