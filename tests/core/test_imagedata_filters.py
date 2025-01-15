@@ -1126,32 +1126,20 @@ def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset
     assert np.allclose(resampled.bounds, reference.bounds)
 
 
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('sample_rate', 1.5),
+        ('sample_rate', 2.0),
+        ('sample_rate', 0.5),
+        ('dimensions', (15, 15, 15)),
+    ],
+)
 @pytest.mark.parametrize('extend_border', [True, False])
-def test_resample_dimensions(uniform, extend_border):
-    output_dimensions = (15, 15, 15)
-    resampled = uniform.resample(dimensions=output_dimensions, extend_border=extend_border)
-
-    assert np.array_equal(resampled.dimensions, output_dimensions)
-    assert len(resampled.active_scalars) == resampled.n_points
-    assert resampled.active_scalars_name == uniform.active_scalars_name
-
-    if extend_border:
-        sample_rate = np.array(output_dimensions) / uniform.dimensions
-        expected_spacing = uniform.spacing / sample_rate
-        assert np.array_equal(resampled.spacing, expected_spacing)
-        assert not np.allclose(resampled.bounds, uniform.bounds)
-        expected_cell_bounds = uniform.points_to_cells().bounds
-        actual_cell_bounds = resampled.points_to_cells().bounds
-        assert np.allclose(actual_cell_bounds, expected_cell_bounds)
-    else:
-        assert np.allclose(resampled.bounds, uniform.bounds)
-
-
-@pytest.mark.parametrize('sample_rate', [1.5, 2.0, 0.5])
-@pytest.mark.parametrize('extend_border', [True, False])
-def test_resample_sample_rate(uniform, sample_rate, extend_border):
-    resampled = uniform.resample(sample_rate=sample_rate, extend_border=extend_border)
-    expected_dimensions = uniform.dimensions * np.array(sample_rate)
+def test_resample_extend_border(uniform, extend_border, name, value):
+    kwarg = {name: value}
+    resampled = uniform.resample(**kwarg, extend_border=extend_border)
+    expected_dimensions = uniform.dimensions * np.array(value) if name == 'sample_rate' else value
 
     assert np.array_equal(resampled.dimensions, expected_dimensions)
     assert len(resampled.active_scalars) == resampled.n_points
