@@ -395,7 +395,7 @@ class Label(_Prop3DMixin, Text):
         valid_position = _validation.validate_array3(position)
         self.GetPositionCoordinate().SetValue(valid_position)
 
-    @property
+    @property # type: ignore[override]
     def size(self) -> int:  # numpydoc ignore=RT01
         """Size of the text label.
 
