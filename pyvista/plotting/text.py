@@ -424,12 +424,12 @@ class Label(_Prop3DMixin, Text):
     def size(self, size: int):
         self.prop.font_size = size
 
-    @property  # type: ignore[override]
+    @property
     def font_size(self) -> int:  # numpydoc ignore=RT01
         """Font size of the text label."""
         return self.prop.font_size
 
-    @font_size.setter  # type: ignore[override]
+    @font_size.setter
     def font_size(self, size: int) -> None:  # numpydoc ignore=RT01
         """Font size of the text label."""
         self.prop.font_size = size
