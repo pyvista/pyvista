@@ -3303,7 +3303,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         # `coords` is outside the grid extent.
         if isinstance(coords, Sequence):
             coords = np.asarray(coords)
-        if isinstance(coords, np.ndarray) and coords.ndim == 2:
+
+        if coords.ndim == 2:
             ncol = coords.shape[1]
             coords = [coords[:, c] for c in range(ncol)]
             coords = tuple(coords)

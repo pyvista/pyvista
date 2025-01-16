@@ -456,7 +456,7 @@ class RenderWindowInteractor:
         # Loop over all renderers to see whether any charts need to be made interactive
         interactive_scene = None
         for renderer in self._plotter.renderers:
-            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):  # type: ignore[redundant-expr]
                 # No interactive charts yet and mouse is within this renderer's viewport,
                 # so collect all charts indicated by the mouse (typically only one, except
                 # when there are overlapping charts).

@@ -639,7 +639,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @above_range_color.setter
-    def above_range_color(self, value: bool | ColorLike):
+    def above_range_color(self, value: bool | ColorLike | None):
         if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
@@ -703,7 +703,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @below_range_color.setter
-    def below_range_color(self, value: bool | ColorLike):
+    def below_range_color(self, value: bool | ColorLike | None):
         if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:
