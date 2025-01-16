@@ -3002,7 +3002,7 @@ class ImageDataFilters(DataSetFilters):
             resampled points will be larger than the input image bounds.
             Enabling this option also has the effect that the re-sampled spacing
             will directly correlate with the resampled dimensions, e.g. if
-            the dimensions are double the spacing will be halved. See examples.
+            the dimensions are doubled the spacing will be halved. See examples.
 
             This option is enabled by default when resampling point data. Has no effect
             when resampling cell data.
