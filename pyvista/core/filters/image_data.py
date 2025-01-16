@@ -3024,7 +3024,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        :ref:`~pyvista.DataSetFilters.sample`
+        :meth:`~pyvista.DataSetFilters.sample`
             Resample array data from one mesh onto another.
 
         :ref:`image_representations_example`

@@ -3967,7 +3967,7 @@ class DataSetFilters:
         --------
         pyvista.DataSetFilters.interpolate
 
-        :ref:`pyvista.ImageDataFilters.resample`
+        :meth:`pyvista.ImageDataFilters.resample`
             Resample image data to modify its dimensions or spacing.
 
         Examples
