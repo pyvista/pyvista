@@ -1114,7 +1114,7 @@ def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset
         reference.offset = offset
     reference['data'] = range(reference.n_points)
 
-    resampled = uniform.resample(reference_image=reference)
+    resampled = uniform.resample(reference_image=reference, progress_bar=True)
     assert isinstance(resampled, pv.ImageData)
     assert resampled is not uniform
     assert resampled is not reference

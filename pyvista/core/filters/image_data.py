@@ -2865,7 +2865,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             # Validate that the target dimensionality is valid
             try:
-                target_dimensionality = _validation.validate_dimensionality(operation_mask)
+                target_dimensionality = _validation.validate_dimensionality(operation_mask)  # type: ignore[arg-type]
             except ValueError:
                 raise ValueError(
                     f'`{operation_mask}` is not a valid `operation_mask`.'
@@ -2949,18 +2949,17 @@ class ImageDataFilters(DataSetFilters):
         all other options, the geometry is implicitly defined such that the resampled
         image fits the bounds of the input.
 
-        This filter operates on point data with the assumption that these
-        points are discrete samples in space which represent pixels or voxels.
-        Therefore, the resampled bounds are extended by 1/2 voxel spacing by default,
-        though this may be disabled.
-
-        Images with cell data are also supported by this filter. In this case, the image
-        is first converted to points using :meth:`cells_to_points`.
+        This filter may be used to resample either point or cell data. For point data,
+        this filter assumes the data is from discrete samples in space which represent
+        pixels or voxels; the resampled bounds are therefore extended by 1/2 voxel
+        spacing by default though this may be disabled.
 
         .. note::
 
             Singleton dimensions are not resampled by this filter, e.g. 2D images
             will remain 2D.
+
+        .. versionadded:: 0.45
 
         Parameters
         ----------
@@ -2987,7 +2986,7 @@ class ImageDataFilters(DataSetFilters):
 
                 Dimensions is the number of `points` along each axis. If resampling
                 `cell` data, each dimension should be one more than the number of
-                desired output cells (since there is ``N+1`` points for ``N`` cells
+                desired output cells (since there are ``N`` cells and ``N+1`` points
                 along each axis). See examples.
 
         sample_rate : float | VectorLike[float], optional
@@ -3004,6 +3003,9 @@ class ImageDataFilters(DataSetFilters):
             will directly correlate with the resampled dimensions, e.g. if
             the dimensions are double the spacing will be halved. See examples.
 
+            This option is enabled by default when resampling point data. Has no effect
+            when resampling cell data.
+
         scalars : str, optional
             Name of scalars to resample. Defaults to currently active scalars.
 
@@ -3015,9 +3017,17 @@ class ImageDataFilters(DataSetFilters):
         ImageData
             Resampled image.
 
+        See Also
+        --------
+        :ref:`~pyvista.DataSetFilters.sample`
+            Resample array data from one mesh onto another.
+
+        :ref:`image_representations_example`
+            Compare images represented as points vs. cells.
+
         Examples
         --------
-        Create a small 2D grayscale image with dimensions 3x2 for demonstration.
+        Create a small 2D grayscale image with dimensions 3 x 2 for demonstration.
 
         >>> import pyvista as pv
         >>> import numpy as np
@@ -3161,9 +3171,9 @@ class ImageDataFilters(DataSetFilters):
           N Arrays:     1
 
         This time the input and output bounds match without any further processing.
-        Like before, the dimensions have doubled; unlike before, however, the spacing
+        Like before, the dimensions have doubled; unlike before, however, the spacing is
         not halved, but is instead smaller than half which is necessaru to ensure the
-        bounds remain the same. Also unlike before, the origin is unchanged:
+        bounds remain the same. Also unlike before, the origin is the same:
 
         >>> image.origin
         (0.0, 0.0, 0.0)
@@ -3192,7 +3202,7 @@ class ImageDataFilters(DataSetFilters):
         >>> resampled.plot(show_edges=True, cmap='grey')
 
         Compare the bounds before and after resampling. Unlike with point data, the
-        bounds are not
+        bounds are not (and cannot be) extended.
 
         >>> volume.bounds
         BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
@@ -3200,7 +3210,7 @@ class ImageDataFilters(DataSetFilters):
         BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
 
         Use a reference image to control the resampling instead. Here we load two
-        images with different dimensions. Here we use
+        images with different dimensions:
         :func:`~pyvista.examples.downloads.download_puppy` and
         :func:`~pyvista.examples.downloads.download_gourds`.
 
@@ -3212,7 +3222,7 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds.dimensions
         (640, 480, 1)
 
-        Use ``reference_image`` to resample puppy to match the gourds geometry or
+        Use ``reference_image`` to resample the puppy to match the gourds geometry or
         vice-versa.
 
         >>> puppy_resampled = puppy.resample(reference_image=gourds)
@@ -3300,8 +3310,7 @@ class ImageDataFilters(DataSetFilters):
         # (e.g. via SetOutputExtent) but this doesn't work, so instead we are
         # stuck using SetMagnificationFactors to indirectly set the dimensions.
         # Note that SetMagnificationFactors will multiply the sample rate by the extent
-        # but we want to multiply the dimensions. These values are off by one for point
-        # data and off by two for cell data.
+        # but we want to multiply the dimensions. These values are off by one.
 
         # Compute the sampling rate to use with vtkImageResample
         singleton_dims = old_dimensions == 1
