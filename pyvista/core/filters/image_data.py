@@ -2848,7 +2848,7 @@ class ImageDataFilters(DataSetFilters):
         # Build an array of the operation size
         operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
 
-        if not isinstance(operation_mask, str):
+        if not isinstance(operation_mask, str) and operation_mask not in [0, 1, 2, 3]:
             # Build a bool array of the mask
             dimensions_mask = _validation.validate_array3(
                 operation_mask,
@@ -2865,7 +2865,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             # Validate that the target dimensionality is valid
             try:
-                target_dimensionality = _validation.validate_dimensionality(operation_mask)
+                target_dimensionality = _validation.validate_dimensionality(operation_mask)  # type: ignore[arg-type]
             except ValueError:
                 raise ValueError(
                     f'`{operation_mask}` is not a valid `operation_mask`.'
@@ -2923,3 +2923,485 @@ class ImageDataFilters(DataSetFilters):
             )
 
         return dimensions_mask, dimensions_result
+
+    def resample(  # type: ignore[misc]
+        self: ImageData,
+        interpolation: Literal['linear', 'nearest', 'cubic'] | None = None,
+        *,
+        reference_image: ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        sample_rate: float | VectorLike[float] | None = None,
+        extend_border: bool | None = None,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
+        progress_bar: bool = False,
+    ):
+        """Resample the image to modify its dimensions and spacing.
+
+        The resampling can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_image``.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``sample_rate`` explicitly.
+
+        Use ``reference_image`` for full control of the resampled geometry. For
+        all other options, the geometry is implicitly defined such that the resampled
+        image fits the bounds of the input.
+
+        This filter may be used to resample either point or cell data. For point data,
+        this filter assumes the data is from discrete samples in space which represent
+        pixels or voxels; the resampled bounds are therefore extended by 1/2 voxel
+        spacing by default though this may be disabled.
+
+        .. note::
+
+            Singleton dimensions are not resampled by this filter, e.g. 2D images
+            will remain 2D.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        interpolation : 'linear' | 'nearest' | 'cubic', optional
+            Interpolation mode to use. By default, ``'linear'`` is used for float
+            scalars and ``'nearest'`` is used for integer scalars.
+
+            .. note:
+
+                Integer scalars are converted to floats if ``'linear'`` or
+                ``'cubic'`` interpolation is used.
+
+        reference_image : ImageData, optional
+            Reference image to use. If specified, the input is resampled
+            to match the geometry of the reference. The :attr:`~pyvista.ImageData.dimensions`,
+            :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin` and
+            :attr:`~pyvista.ImageData.direction_matrix` and :attr:`~pyvista.ImageData.offset`
+            of the resampled image will all match the reference image.
+
+        dimensions : VectorLike[int]
+            Set the output :attr:`~pyvista.ImageData.dimensions` of the resampled image.
+
+            .. note::
+
+                Dimensions is the number of `points` along each axis. If resampling
+                `cell` data, each dimension should be one more than the number of
+                desired output cells (since there are ``N`` cells and ``N+1`` points
+                along each axis). See examples.
+
+        sample_rate : float | VectorLike[float], optional
+            Sampling rate(s) to use. Can be a single value or vector of three values
+            for each axis. Values greater than ``1.0`` will up-sample the axis and a
+            value less than ``1.0`` will down-sample it. Values must be greater than
+            ``0`` and cannot be negative.
+
+        extend_border : bool, optional
+            Extend the apparent input border by approximately half the
+            :attr:`~pyvista.ImageData.spacing`. If enabled, the bounds of the
+            resampled points will be larger than the input image bounds.
+            Enabling this option also has the effect that the re-sampled spacing
+            will directly correlate with the resampled dimensions, e.g. if
+            the dimensions are double the spacing will be halved. See examples.
+
+            This option is enabled by default when resampling point data. Has no effect
+            when resampling cell data.
+
+        scalars : str, optional
+            Name of scalars to resample. Defaults to currently active scalars.
+
+        preference : str, default: 'point'
+            When scalars is specified, this is the preferred array type to search
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        ImageData
+            Resampled image.
+
+        See Also
+        --------
+        :meth:`~pyvista.DataSetFilters.sample`
+            Resample array data from one mesh onto another.
+
+        :ref:`image_representations_example`
+            Compare images represented as points vs. cells.
+
+        Examples
+        --------
+        Create a small 2D grayscale image with dimensions 3 x 2 for demonstration.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> from pyvista import examples
+        >>> image = pv.ImageData(dimensions=(3, 2, 1))
+        >>> image.point_data['data'] = np.linspace(0, 255, 6, dtype=np.uint8)
+
+        Define a custom plotter to show the image. Although the image data is defined
+        as point data, the plotter uses :meth:`points_to_cells` to display the image as
+        :attr:`~pyvista.CellType.PIXEL` cells instead. Grayscale coloring is used and
+        the camera is adjusted to fit the image.
+
+        >>> def image_plotter(image: pv.ImageData) -> pv.Plotter:
+        ...     pl = pv.Plotter()
+        ...     image = image.points_to_cells()
+        ...     pl.add_mesh(
+        ...         image,
+        ...         lighting=False,
+        ...         show_edges=True,
+        ...         cmap='grey',
+        ...         show_scalar_bar=False,
+        ...     )
+        ...     pl.view_xy()
+        ...     pl.camera.tight()
+        ...     return pl
+
+        Show the image.
+
+        >>> plot = image_plotter(image)
+        >>> plot.show()
+
+        Use ``sample_rate`` to up-sample the image.
+
+        >>> upsampled = image.resample(sample_rate=2)
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Since the image has an integer dtype, ``'nearest'`` interpolation is used
+        by default. Use ``'linear'`` interpolation instead.
+
+        >>> upsampled = image.resample(sample_rate=2, interpolation='linear')
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Use ``'cubic'`` interpolation instead. Here we also specify the output
+        ``dimensions`` explicitly instead of using ``sample_rate``.
+
+        >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='cubic')
+        >>> plot = image_plotter(upsampled)
+        >>> plot.show()
+
+        Compare the relative physical size of the image before and after resampling.
+
+        >>> image
+        ImageData (...)
+          N Cells:      2
+          N Points:     6
+          X Bounds:     0.000e+00, 2.000e+00
+          Y Bounds:     0.000e+00, 1.000e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   3, 2, 1
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     1
+
+        >>> upsampled
+        ImageData (...)
+          N Cells:      15
+          N Points:     24
+          X Bounds:     -2.500e-01, 2.250e+00
+          Y Bounds:     -2.500e-01, 1.250e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   6, 4, 1
+          Spacing:      5.000e-01, 5.000e-01, 1.000e+00
+          N Arrays:     1
+
+        Note that the upsampled :attr:`~pyvista.ImageData.dimensions` are doubled and
+        the :attr:`~pyvista.ImageData.spacing` is halved (as expected). Also note,
+        however, that the physical bounds of the input differ from the output.
+        The upsampled :attr:`~pyvista.ImageData.origin` also differs:
+
+        >>> image.origin
+        (0.0, 0.0, 0.0)
+        >>> upsampled.origin
+        (-0.25, -0.25, 0.0)
+
+        This is because the resampling is done with ``extend_border`` enabled by default
+        which adds a half cell-width border to the image and adjusts the origin and
+        spacing such that the bounds match when the image is represented as
+        :attr:`~pyvista.CellType.PIXEL` cells.
+
+        Apply :meth:`points_to_cells` to the input and resampled images and show that
+        the bounds match.
+
+        >>> image_as_cells = image.points_to_cells()
+        >>> image_as_cells.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+
+        >>> upsampled_as_cells = upsampled.points_to_cells()
+        >>> upsampled_as_cells.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=0.0, z_max=0.0)
+
+        Plot the two images together as wireframe to visualize them. The original is in
+        red, and the resampled image is in black.
+
+        >>> plt = pv.Plotter()
+        >>> _ = plt.add_mesh(
+        ...     image_as_cells, style='wireframe', color='red', line_width=10
+        ... )
+        >>> _ = plt.add_mesh(upsampled_as_cells, style='wireframe', color='black')
+        >>> plt.view_xy()
+        >>> plt.camera.tight()
+        >>> plt.show()
+
+        Disable ``extend_border`` to force the input and output bounds to be the
+        same `without` the need to use :meth:`points_to_cells`.
+
+        >>> upsampled = image.resample(sample_rate=2, extend_border=False)
+
+        Compare the two images again.
+
+        >>> image
+        ImageData (...)
+          N Cells:      2
+          N Points:     6
+          X Bounds:     0.000e+00, 2.000e+00
+          Y Bounds:     0.000e+00, 1.000e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   3, 2, 1
+          Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+          N Arrays:     1
+
+        >>> upsampled
+        ImageData (...)
+          N Cells:      15
+          N Points:     24
+          X Bounds:     0.000e+00, 2.000e+00
+          Y Bounds:     0.000e+00, 1.000e+00
+          Z Bounds:     0.000e+00, 0.000e+00
+          Dimensions:   6, 4, 1
+          Spacing:      4.000e-01, 3.333e-01, 1.000e+00
+          N Arrays:     1
+
+        This time the input and output bounds match without any further processing.
+        Like before, the dimensions have doubled; unlike before, however, the spacing is
+        not halved, but is instead smaller than half which is necessaru to ensure the
+        bounds remain the same. Also unlike before, the origin is the same:
+
+        >>> image.origin
+        (0.0, 0.0, 0.0)
+        >>> upsampled.origin
+        (0.0, 0.0, 0.0)
+
+        All the above examples are with 2D images with point data. However, the filter
+        also works with 3D volumes and will also work with cell data.
+
+        Convert the 2D image with point data into a 3D volume with cell data and plot
+        it for context.
+
+        >>> volume = image.points_to_cells(dimensionality='3D')
+        >>> volume.plot(show_edges=True, cmap='grey')
+
+        Up-sample the volume. Set the sampling rate for each axis separately.
+
+        >>> resampled = volume.resample(sample_rate=(3.0, 2.0, 1.0))
+        >>> resampled.plot(show_edges=True, cmap='grey')
+
+        Alternatively, we could have set the dimensions explicitly. Since we want
+        9 x 4 x 1 cells along the x-y-z axes (respectively), we set the dimensions to
+        ``(10, 5, 2)``, i.e. one more than the desired number of cells.
+
+        >>> resampled = volume.resample(dimensions=(10, 5, 2))
+        >>> resampled.plot(show_edges=True, cmap='grey')
+
+        Compare the bounds before and after resampling. Unlike with point data, the
+        bounds are not (and cannot be) extended.
+
+        >>> volume.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
+        >>> resampled.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
+
+        Use a reference image to control the resampling instead. Here we load two
+        images with different dimensions:
+        :func:`~pyvista.examples.downloads.download_puppy` and
+        :func:`~pyvista.examples.downloads.download_gourds`.
+
+        >>> puppy = examples.download_puppy()
+        >>> puppy.dimensions
+        (1600, 1200, 1)
+
+        >>> gourds = examples.download_gourds()
+        >>> gourds.dimensions
+        (640, 480, 1)
+
+        Use ``reference_image`` to resample the puppy to match the gourds geometry or
+        vice-versa.
+
+        >>> puppy_resampled = puppy.resample(reference_image=gourds)
+        >>> puppy_resampled.dimensions
+        (640, 480, 1)
+
+        >>> gourds_resampled = gourds.resample(reference_image=puppy)
+        >>> gourds_resampled.dimensions
+        (1600, 1200, 1)
+
+        """
+        # Process scalars
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = self.get_array_association(scalars, preference=preference)
+
+        active_scalars = self.get_array(name, preference=field.name.lower())  # type: ignore[arg-type]
+
+        # Validate interpolation and modify scalars as needed
+        input_dtype = active_scalars.dtype
+        has_int_scalars = np.issubdtype(input_dtype, np.integer)
+        if interpolation is None:
+            interpolation = 'linear'
+            if active_scalars is not None and has_int_scalars:
+                interpolation = 'nearest'
+        else:
+            _validation.check_contains(
+                ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
+            )
+        if has_int_scalars:
+            # Need floats for interpolation but also to avoid crashing in some cases
+            input_image = self.copy(deep=False)
+            input_image[name] = active_scalars.astype(float)
+        else:
+            input_image = self
+
+        # Make sure we have point scalars
+        processing_cell_scalars = field == FieldAssociation.CELL
+        if processing_cell_scalars:
+            if extend_border:
+                raise ValueError('`extend_border` cannot be set when resampling cell data.')
+            dimensionality = input_image.dimensionality
+            input_image = input_image.cells_to_points(scalars=scalars, copy=False)
+
+        # Set default extend_border value
+        if extend_border is None:
+            # Only extend border with point data
+            extend_border = not processing_cell_scalars
+
+        # Setup reference image
+        if reference_image is None:
+            # Use the input as a reference
+            reference_image = pyvista.ImageData()
+            reference_image.copy_structure(input_image)
+            reference_image_provided = False
+        else:
+            if dimensions is not None or sample_rate is not None:
+                raise ValueError(
+                    'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
+                    '`reference_image` must define the geometry exclusively.'
+                )
+            _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
+            reference_image_provided = True
+
+        # Ideally vtkImageResample would directly support setting output dimensions
+        # (e.g. via SetOutputExtent) but this doesn't work, so instead we are
+        # stuck using SetMagnificationFactors to indirectly set the dimensions.
+        # To compute the magnification factors we first define input (old) and output
+        # (new) dimensions.
+        old_dimensions = np.array(input_image.dimensions)
+        if sample_rate is not None:
+            if reference_image_provided or dimensions is not None:
+                raise ValueError(
+                    'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
+                    '`sample_rate` must define the sampling geometry exclusively.'
+                )
+            # Set reference dimensions from the sample rate
+            sample_rate_ = _validation.validate_array3(
+                sample_rate,
+                broadcast=True,
+                must_be_in_range=[0, np.inf],
+                name='sample_rate',
+            )
+            new_dimensions = old_dimensions * sample_rate_
+        else:
+            if dimensions is not None:
+                dimensions_ = np.array(dimensions)
+                if processing_cell_scalars:
+                    dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
+                reference_image.dimensions = dimensions_  # type: ignore[assignment]
+            new_dimensions = np.array(reference_image.dimensions)
+
+        # Compute the magnification factors to use with vtkImageResample
+        # Note that SetMagnificationFactors will multiply the factors by the extent
+        # but we want to multiply the dimensions. These values are off by one.
+        singleton_dims = old_dimensions == 1
+        magnification_factors = (new_dimensions - 1) / (old_dimensions - 1)
+        magnification_factors[singleton_dims] = 1
+
+        resample = _vtk.vtkImageResample()
+        resample.SetInputData(input_image)
+        resample.SetMagnificationFactors(*magnification_factors)
+
+        # Set interpolation mode
+        if interpolation == 'linear':
+            resample.SetInterpolationModeToLinear()
+        elif interpolation == 'cubic':
+            resample.SetInterpolationModeToCubic()
+        else:  # 'nearest'
+            resample.SetInterpolationModeToNearestNeighbor()
+
+        # Get output
+        _update_alg(resample, progress_bar=progress_bar)
+        output_image = _get_output(resample).copy(deep=False)
+
+        # Set geometry from the reference
+        output_image.direction_matrix = reference_image.direction_matrix
+        output_image.origin = reference_image.origin
+        output_image.offset = reference_image.offset
+
+        if reference_image_provided:
+            output_image.spacing = reference_image.spacing
+        else:
+            # Need to fixup the spacing
+            old_spacing = np.array(input_image.spacing)
+            output_dimensions = np.array(output_image.dimensions)
+
+            if extend_border and not processing_cell_scalars:
+                # Compute spacing to have the same effective sample rate as the dimensions
+                actual_sample_rate = output_dimensions / old_dimensions
+                new_spacing = old_spacing / actual_sample_rate
+
+                # This will enlarge the image, so we need to shift the origin accordingly
+                # Shift the origin by 1/2 of the old and new spacing, but keep the spacing
+                # unchanged for singleton dimensions.
+                shift_old = old_spacing[~singleton_dims] / 2
+                shift_new = new_spacing[~singleton_dims] / 2
+                new_origin = np.array(input_image.origin)
+                new_origin[~singleton_dims] += shift_new - shift_old
+
+                output_image.origin = new_origin
+            else:
+                # Compute spacing to match bounds of input and dimensions of output
+                bnds = input_image.bounds
+                size = np.array(
+                    (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+                )
+                if processing_cell_scalars:
+                    new_spacing = (size + input_image.spacing) / (output_dimensions)
+                else:
+                    new_spacing = size / (output_dimensions - 1)
+
+            # For singleton dimensions, keep the original spacing value
+            new_spacing[singleton_dims] = old_spacing[singleton_dims]
+            output_image.spacing = new_spacing
+
+        if output_image.active_scalars_name == 'ImageScalars':
+            output_image.rename_array('ImageScalars', name)
+
+        if has_int_scalars and interpolation == 'nearest':
+            # Can safely cast to int to match input
+            output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
+
+        if processing_cell_scalars:
+            # Convert back to cells. This modifies origin so we need to reset it.
+            output_image = output_image.points_to_cells(
+                scalars=name, copy=False, dimensionality=dimensionality
+            )
+            output_image.origin = (
+                reference_image.origin if reference_image_provided else self.origin
+            )
+            output_image.point_data.clear()
+        else:
+            output_image.cell_data.clear()
+        return output_image
