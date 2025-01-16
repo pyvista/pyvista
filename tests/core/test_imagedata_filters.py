@@ -1218,6 +1218,13 @@ def test_resample_cell_data(uniform):
     assert np.allclose(uniform.bounds, resampled.bounds)
 
 
+def test_resample_inplace(uniform):
+    resampled = uniform.resample()
+    assert resampled is not uniform
+    resampled = uniform.resample(inplace=True)
+    assert resampled is uniform
+
+
 def test_resample_raises(uniform):
     match = (
         'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'

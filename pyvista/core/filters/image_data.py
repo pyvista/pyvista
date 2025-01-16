@@ -2934,6 +2934,7 @@ class ImageDataFilters(DataSetFilters):
         extend_border: bool | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
+        inplace: bool = False,
         progress_bar: bool = False,
     ):
         """Resample the image to modify its dimensions and spacing.
@@ -3013,6 +3014,10 @@ class ImageDataFilters(DataSetFilters):
         preference : str, default: 'point'
             When scalars is specified, this is the preferred array type to search
             for in the dataset.  Must be either ``'point'`` or ``'cell'``.
+
+        inplace : bool, default: False
+            If ``True``, resample the image inplace. By default, a new
+            :class:`pyvista.ImageData` instance is returned.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3423,4 +3428,8 @@ class ImageDataFilters(DataSetFilters):
             output_image.point_data.clear()
         else:
             output_image.cell_data.clear()
+
+        if inplace:
+            self.copy_from(output_image)
+            return self
         return output_image
