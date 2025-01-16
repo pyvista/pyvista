@@ -4423,15 +4423,11 @@ class PolyDataFilters(DataSetFilters):
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
-            bnds = self.bounds
-            x_size = bnds.x_max - bnds.x_min
-            y_size = bnds.y_max - bnds.y_min
-            z_size = bnds.z_max - bnds.z_min
-            sizes = np.array((x_size, y_size, z_size))
+            size = np.array(self.size)
 
             if dimensions is None:
                 rounding_func = np.round if rounding_func is None else rounding_func
-                dimensions = np.array(rounding_func(sizes / initial_spacing), dtype=int)
+                dimensions = np.array(rounding_func(size / initial_spacing), dtype=int)
             elif rounding_func is not None:
                 raise TypeError(
                     'Rounding func cannot be set when dimensions is specified. Set one or the other.'
@@ -4442,7 +4438,7 @@ class PolyDataFilters(DataSetFilters):
             # Dimensions are now fixed, now adjust spacing to match poly data bounds
             # Since we are dealing with voxels as points, we want the bounds of the
             # points to be 1/2 spacing width smaller than the polydata bounds
-            final_spacing = sizes / np.array(reference_volume.dimensions)
+            final_spacing = size / np.array(reference_volume.dimensions)
             reference_volume.spacing = final_spacing
             reference_volume.origin = np.array(self.bounds[::2]) + final_spacing / 2
 

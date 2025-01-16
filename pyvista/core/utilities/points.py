@@ -358,9 +358,7 @@ def fit_plane_to_points(
     )
 
     # Fit plane to xyz-aligned mesh
-    aligned_bnds = aligned.bounds
-    i_size = aligned_bnds.x_max - aligned_bnds.x_min
-    j_size = aligned_bnds.y_max - aligned_bnds.y_min
+    i_size, j_size = aligned.size[0:2]
     plane = pyvista.Plane(
         i_size=i_size,
         j_size=j_size,

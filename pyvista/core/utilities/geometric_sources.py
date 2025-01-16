@@ -1136,12 +1136,7 @@ class Text3DSource(vtkVectorText):
         width_set, height_set, depth_set = width is not None, height is not None, depth is not None
 
         # Scale mesh
-        bnds = out.bounds
-        size_w, size_h, size_d = (
-            bnds.x_max - bnds.x_min,
-            bnds.y_max - bnds.y_min,
-            bnds.z_max - bnds.z_min,
-        )
+        size_w, size_h, size_d = out.size
         scale_w, scale_h, scale_d = _reciprocal((size_w, size_h, size_d))
 
         # Scale width and height first
@@ -3711,13 +3706,10 @@ class AxesGeometrySource:
         part.points -= part.center  # type: ignore[misc]
 
         # Scale so bounding box edges have length one
-        bnds = part.bounds
-        axis_length = np.array(
-            (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
-        )
-        if np.any(axis_length < 1e-8):
-            raise ValueError(f'Custom axes part must be 3D. Got bounds: {bnds}.')
-        part.scale(np.reciprocal(axis_length), inplace=True)
+        size = np.array(part.size)
+        if np.any(size < 1e-8):
+            raise ValueError(f'Custom axes part must be 3D. Got bounds: {part.bounds}.')
+        part.scale(np.reciprocal(size), inplace=True)
         return part
 
     @staticmethod
