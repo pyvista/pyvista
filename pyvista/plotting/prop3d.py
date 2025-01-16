@@ -387,7 +387,7 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetLength()
 
     @property
-    def size(self) -> (float, float, float):
+    def size(self) -> tuple[float, float, float]:
         """Return the size of each axis of the prop's bounding box.
 
         .. versionadded:: 0.45
@@ -618,7 +618,7 @@ class _Prop3DMixin(ABC):
 
     @property
     @wraps(Prop3D.size.fget)  # type: ignore[attr-defined]
-    def size(self) -> (float, float, float):  # numpydoc ignore=RT01
+    def size(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.size."""
         bnds = self.bounds
         return bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min

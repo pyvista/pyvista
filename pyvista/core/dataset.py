@@ -1233,7 +1233,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def size(self: Self) -> (float, float, float):
+    def size(self: Self) -> tuple[float, float, float]:
         """Return the size of each axis of the dataset's bounding box.
 
         .. versionadded:: 0.45
