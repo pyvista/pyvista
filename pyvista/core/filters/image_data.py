@@ -2933,6 +2933,7 @@ class ImageDataFilters(DataSetFilters):
         sample_rate: float | VectorLike[float] | None = None,
         extend_border: bool | None = None,
         scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'point',
         progress_bar: bool = False,
     ):
         """Resample the image to modify its dimensions and spacing.
@@ -3008,6 +3009,10 @@ class ImageDataFilters(DataSetFilters):
 
         scalars : str, optional
             Name of scalars to resample. Defaults to currently active scalars.
+
+        preference : str, default: 'point'
+            When scalars is specified, this is the preferred array type to search
+            for in the dataset.  Must be either ``'point'`` or ``'cell'``.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3238,7 +3243,7 @@ class ImageDataFilters(DataSetFilters):
             field, name = set_default_active_scalars(self)
         else:
             name = scalars
-            field = self.get_array_association(scalars, preference='point')
+            field = self.get_array_association(scalars, preference=preference)
 
         active_scalars = self.get_array(name, preference=field.name.lower())  # type: ignore[arg-type]
         input_dtype = active_scalars.dtype
@@ -3389,4 +3394,7 @@ class ImageDataFilters(DataSetFilters):
             output_image.origin = (
                 reference_image.origin if reference_image_provided else self.origin
             )
+            output_image.point_data.clear()
+        else:
+            output_image.cell_data.clear()
         return output_image

@@ -1171,17 +1171,32 @@ def test_resample_interpolation(uniform, interpolation, dtype):
     assert actual_dtype == expected_dtype
 
 
-@pytest.mark.parametrize('field', ['cell', 'point'])
-def test_resample_scalars(uniform, field):
-    data = uniform.cell_data if field == 'cell' else uniform.point_data
-    scalars = data.keys()[0]
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('scalars', 'Spatial Point Data'),
+        ('scalars', 'Spatial Cell Data'),
+        ('preference', 'point'),
+        ('preference', 'cell'),
+    ],
+)
+def test_resample_scalars(uniform, name, value):
+    kwargs = {name: value}
+    if name == 'preference':
+        # Make array names ambiguous
+        scalars = 'data'
+        uniform.rename_array('Spatial Point Data', scalars)
+        uniform.rename_array('Spatial Cell Data', scalars)
+        kwargs['scalars'] = scalars
 
-    resampled = uniform.resample(scalars=scalars)
+    resampled = uniform.resample(**kwargs)
 
-    if field == 'cell':
-        assert scalars in resampled.cell_data
+    if 'cell' in value.lower():
+        assert len(resampled.cell_data) == 1
+        assert len(resampled.point_data) == 0
     else:
-        assert scalars in resampled.point_data
+        assert len(resampled.cell_data) == 0
+        assert len(resampled.point_data) == 1
 
 
 def test_resample_cell_data(uniform):
