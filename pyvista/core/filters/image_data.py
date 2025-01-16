@@ -2848,7 +2848,7 @@ class ImageDataFilters(DataSetFilters):
         # Build an array of the operation size
         operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
 
-        if not isinstance(operation_mask, str):
+        if not isinstance(operation_mask, str) and operation_mask not in [0, 1, 2, 3]:
             # Build a bool array of the mask
             dimensions_mask = _validation.validate_array3(
                 operation_mask,
@@ -2931,7 +2931,7 @@ class ImageDataFilters(DataSetFilters):
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         sample_rate: float | VectorLike[float] | None = None,
-        extend_border: bool = True,
+        extend_border: bool | None = None,
         scalars: str | None = None,
         progress_bar: bool = False,
     ):
@@ -3170,7 +3170,37 @@ class ImageDataFilters(DataSetFilters):
         >>> upsampled.origin
         (0.0, 0.0, 0.0)
 
-        Load two images with different dimensions. Here we use
+        All the above examples are with 2D images with point data. However, the filter
+        also works with 3D volumes and will also work with cell data.
+
+        Convert the 2D image with point data into a 3D volume with cell data and plot
+        it for context.
+
+        >>> volume = image.points_to_cells(dimensionality='3D')
+        >>> volume.plot(show_edges=True, cmap='grey')
+
+        Up-sample the volume. Set the sampling rate for each axis separately.
+
+        >>> resampled = volume.resample(sample_rate=(3.0, 2.0, 1.0))
+        >>> resampled.plot(show_edges=True, cmap='grey')
+
+        Alternatively, we could have set the dimensions explicitly. Since we want
+        9 x 4 x 1 cells along the x-y-z axes (respectively), we set the dimensions to
+        ``(10, 5, 2)``, i.e. one more than the desired number of cells.
+
+        >>> resampled = volume.resample(dimensions=(10, 5, 2))
+        >>> resampled.plot(show_edges=True, cmap='grey')
+
+        Compare the bounds before and after resampling. Unlike with point data, the
+        bounds are not
+
+        >>> volume.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
+        >>> resampled.bounds
+        BoundsTuple(x_min=-0.5, x_max=2.5, y_min=-0.5, y_max=1.5, z_min=-0.5, z_max=0.5)
+
+        Use a reference image to control the resampling instead. Here we load two
+        images with different dimensions. Here we use
         :func:`~pyvista.examples.downloads.download_puppy` and
         :func:`~pyvista.examples.downloads.download_gourds`.
 
@@ -3188,17 +3218,14 @@ class ImageDataFilters(DataSetFilters):
         >>> puppy_resampled = puppy.resample(reference_image=gourds)
         >>> puppy_resampled.dimensions
         (640, 480, 1)
-        >>> puppy_resampled.plot(zoom='tight', rgb=True)
 
         >>> gourds_resampled = gourds.resample(reference_image=puppy)
         >>> gourds_resampled.dimensions
         (1600, 1200, 1)
-        >>> gourds_resampled.plot(zoom='tight', rgb=True)
 
         """
         if scalars is None:
             field, name = set_default_active_scalars(self)
-
         else:
             name = scalars
             field = self.get_array_association(scalars, preference='point')
@@ -3224,7 +3251,9 @@ class ImageDataFilters(DataSetFilters):
         # Make sure we have point scalars
         processing_cell_scalars = field == FieldAssociation.CELL
         if processing_cell_scalars:
+            dimensionality = input_image.dimensionality
             input_image = input_image.cells_to_points(scalars=scalars, copy=False)
+            extend_border = False
 
         if reference_image is None:
             reference_image = pyvista.ImageData()
@@ -3239,6 +3268,7 @@ class ImageDataFilters(DataSetFilters):
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
+        old_dimensions = np.array(input_image.dimensions)
         if sample_rate is not None:
             if reference_image_provided or dimensions is not None:
                 raise ValueError(
@@ -3252,18 +3282,27 @@ class ImageDataFilters(DataSetFilters):
                 must_be_in_range=[0, np.inf],
                 name='sample_rate',
             )
-            old_dimensions: NumpyArray[int] = np.array(input_image.dimensions)
             new_dimensions = old_dimensions * sample_rate_
         else:
             if dimensions is not None:
-                reference_image.dimensions = dimensions  # type: ignore[assignment]
-
+                dimensions_ = np.array(dimensions)
+                if processing_cell_scalars:
+                    dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
+                reference_image.dimensions = dimensions_  # type: ignore[assignment]
             new_dimensions = np.array(reference_image.dimensions)
 
-        # vtkImageResample will multiply sample rate by the extent but we want to
-        # multiply the dimensions. These values are off by one.
-        old_dimensions = np.array(input_image.dimensions)
+        # Ideally vtkImageResample would directly support setting output dimensions
+        # (e.g. via SetOutputExtent) but this doesn't work, so instead we are
+        # stuck using SetMagnificationFactors to indirectly set the dimensions.
+        # Note that SetMagnificationFactors will multiply the sample rate by the extent
+        # but we want to multiply the dimensions. These values are off by one for point
+        # data and off by two for cell data.
+
+        # Compute the sampling rate to use with vtkImageResample
         singleton_dims = old_dimensions == 1
+        if extend_border is None:
+            # Only extend border with point data
+            extend_border = not processing_cell_scalars
         adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
         adjusted_sample_rate[singleton_dims] = 1
 
@@ -3290,7 +3329,6 @@ class ImageDataFilters(DataSetFilters):
 
         if reference_image_provided:
             output_image.spacing = reference_image.spacing
-
         else:
             # Need to fixup the spacing
             old_spacing = np.array(input_image.spacing)
@@ -3316,11 +3354,13 @@ class ImageDataFilters(DataSetFilters):
                 size = np.array(
                     (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
                 )
-                new_spacing = size / (output_dimensions - 1)
+                if processing_cell_scalars:
+                    new_spacing = (size + input_image.spacing) / (output_dimensions)
+                else:
+                    new_spacing = size / (output_dimensions - 1)
 
             # For singleton dimensions, keep the original spacing value
             new_spacing[singleton_dims] = old_spacing[singleton_dims]
-
             output_image.spacing = new_spacing
 
         if output_image.active_scalars_name == 'ImageScalars':
@@ -3330,8 +3370,12 @@ class ImageDataFilters(DataSetFilters):
             # Can safely cast to int to match input
             output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
 
-        if field == FieldAssociation.CELL:
+        if processing_cell_scalars:
             # Convert back to cells. This modifies origin so we need to reset it.
-            output_image = output_image.points_to_cells(scalars=name, copy=False)
-            output_image.origin = reference_image.origin
+            output_image = output_image.points_to_cells(
+                scalars=name, copy=False, dimensionality=dimensionality
+            )
+            output_image.origin = (
+                reference_image.origin if reference_image_provided else self.origin
+            )
         return output_image

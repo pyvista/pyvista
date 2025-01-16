@@ -1055,10 +1055,10 @@ def test_validate_dim_operation(
         ),
         (
             (1, 1, 1),
-            True,
+            4,
             operator.add,
-            ValueError,
-            'Array has shape () which is not allowed. Shape must be one of [(3,), (1, 3), (3, 1)]',
+            TypeError,
+            "Array has incorrect dtype of 'int64'. The dtype must be a subtype of <class 'bool'>.",
         ),
         (
             (2, 2, 2),
