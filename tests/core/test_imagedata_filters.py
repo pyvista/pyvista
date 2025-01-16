@@ -1098,7 +1098,7 @@ def test_validate_dim_operation_invalid_parameters(
 @pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
 @pytest.mark.parametrize('dimensions', [None, (5, 6, 7)])
 @pytest.mark.parametrize('offset', [None, (-100, -101, -102)])
-def test_resample(uniform, spacing, direction_matrix, origin, dimensions, offset):
+def test_resample_reference_image(uniform, spacing, direction_matrix, origin, dimensions, offset):
     uniform = pv.ImageData(dimensions=(4, 4, 4))
     uniform['data'] = np.arange(uniform.n_points, dtype=float)
     reference = uniform.copy()
@@ -1205,7 +1205,7 @@ def test_resample_cell_data(uniform):
     sample_rate = np.array((2, 3, 4))
 
     # Test sample rate
-    resampled = uniform.resample(sample_rate=sample_rate)
+    resampled = uniform.resample(sample_rate)
     resample_cell_dimensions = np.array(resampled.dimensions) - 1
     expected_cell_dimensions = input_cell_dimensions * sample_rate
     assert np.array_equal(resample_cell_dimensions, expected_cell_dimensions)

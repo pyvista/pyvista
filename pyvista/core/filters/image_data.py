@@ -2926,11 +2926,11 @@ class ImageDataFilters(DataSetFilters):
 
     def resample(  # type: ignore[misc]
         self: ImageData,
+        sample_rate: float | VectorLike[float] | None = None,
         interpolation: Literal['linear', 'nearest', 'cubic'] | None = None,
         *,
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
-        sample_rate: float | VectorLike[float] | None = None,
         extend_border: bool | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
@@ -2964,6 +2964,12 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
+        sample_rate : float | VectorLike[float], optional
+            Sampling rate(s) to use. Can be a single value or vector of three values
+            for each axis. Values greater than ``1.0`` will up-sample the axis and
+            values less than ``1.0`` will down-sample it. Values must be greater than
+            ``0`` and cannot be negative.
+
         interpolation : 'linear' | 'nearest' | 'cubic', optional
             Interpolation mode to use. By default, ``'linear'`` is used for float
             scalars and ``'nearest'`` is used for integer scalars.
@@ -2989,12 +2995,6 @@ class ImageDataFilters(DataSetFilters):
                 `cell` data, each dimension should be one more than the number of
                 desired output cells (since there are ``N`` cells and ``N+1`` points
                 along each axis). See examples.
-
-        sample_rate : float | VectorLike[float], optional
-            Sampling rate(s) to use. Can be a single value or vector of three values
-            for each axis. Values greater than ``1.0`` will up-sample the axis and a
-            value less than ``1.0`` will down-sample it. Values must be greater than
-            ``0`` and cannot be negative.
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
