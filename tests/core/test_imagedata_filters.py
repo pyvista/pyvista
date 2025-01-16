@@ -1204,10 +1204,18 @@ def test_resample_cell_data(uniform):
     input_cell_dimensions = np.array(uniform.dimensions) - 1
     sample_rate = np.array((2, 3, 4))
 
+    # Test sample rate
     resampled = uniform.resample(sample_rate=sample_rate)
     resample_cell_dimensions = np.array(resampled.dimensions) - 1
     expected_cell_dimensions = input_cell_dimensions * sample_rate
     assert np.array_equal(resample_cell_dimensions, expected_cell_dimensions)
+    assert np.allclose(uniform.bounds, resampled.bounds)
+
+    # Test dimensions
+    output_dimensions = (12, 13, 14)
+    resampled = uniform.resample(dimensions=output_dimensions)
+    assert np.array_equal(resampled.dimensions, output_dimensions)
+    assert np.allclose(uniform.bounds, resampled.bounds)
 
 
 def test_resample_raises(uniform):
