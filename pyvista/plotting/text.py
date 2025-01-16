@@ -5,10 +5,13 @@ from __future__ import annotations
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
+import warnings
 
 import pyvista
+from pyvista._version import version_info
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -404,10 +407,31 @@ class Label(_Prop3DMixin, Text):
         The text property's font size used to control the size of the label.
 
         """
+        if version_info >= (0, 48):  # pragma: no cover
+            raise RuntimeError('Convert this deprecation warning into an error.')
+        if version_info >= (0, 49):  # pragma: no cover
+            raise RuntimeError('Remove this property.')
+
+        msg = (
+            'The behavior of `size` will change in a future version. It currently returns a float with\n'
+            "the label's font size, but will return a tuple with its physical geometric size in the future.\n"
+            'Use `font_size` instead.'
+        )
+        warnings.warn(msg, PyVistaFutureWarning)
         return self.prop.font_size
 
     @size.setter
     def size(self, size: int):
+        self.prop.font_size = size
+
+    @property  # type: ignore[override]
+    def font_size(self) -> int:  # numpydoc ignore=RT01
+        """Font size of the text label."""
+        return self.prop.font_size
+
+    @font_size.setter  # type: ignore[override]
+    def font_size(self, size: int) -> None:  # numpydoc ignore=RT01
+        """Font size of the text label."""
         self.prop.font_size = size
 
     @property
