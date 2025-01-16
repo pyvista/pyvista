@@ -3141,7 +3141,9 @@ class ImageDataFilters(DataSetFilters):
         >>> _ = plt.add_mesh(
         ...     image_as_cells, style='wireframe', color='red', line_width=10
         ... )
-        >>> _ = plt.add_mesh(upsampled_as_cells, style='wireframe', color='black')
+        >>> _ = plt.add_mesh(
+        ...     upsampled_as_cells, style='wireframe', color='black', line_width=2
+        ... )
         >>> plt.view_xy()
         >>> plt.camera.tight()
         >>> plt.show()
@@ -3237,6 +3239,23 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds_resampled = gourds.resample(reference_image=puppy)
         >>> gourds_resampled.dimensions
         (1600, 1200, 1)
+
+        Downsample the puppy image to 1/10th its original resolution.
+
+        >>> downsampled = puppy.resample(0.1)
+        >>> downsampled.dimensions
+        (160, 120, 1)
+
+        Compare the downsampled image to the original and zoom in to show detail.
+
+        >>> plt = pv.Plotter(shape=(1, 2))
+        >>> _ = plt.add_mesh(puppy, rgba=True, show_edges=False, lighting=False)
+        >>> plt.subplot(0, 1)
+        >>> _ = plt.add_mesh(downsampled, rgba=True, show_edges=False, lighting=False)
+        >>> plt.link_views()
+        >>> plt.view_xy()
+        >>> plt.camera.zoom(3.0)
+        >>> plt.show()
 
         """
         # Process scalars
