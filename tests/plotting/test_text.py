@@ -69,6 +69,7 @@ def test_label_prop3d():
     assert label.bounds == bounds
     assert label.center == position
     assert label.length == 0.0
+    assert label.size == 50.0
 
     # Test correct bounds with more complex transformations
     # Add offset along x-axis

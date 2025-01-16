@@ -614,7 +614,10 @@ class _Prop3DMixin(ABC):
     @wraps(Prop3D.length.fget)  # type: ignore[attr-defined]
     def length(self) -> float:  # numpydoc ignore=RT01
         """Wrap :class:`pyvista.Prop3D.length."""
-        return np.linalg.norm(self.size).tolist()
+        bnds = self.bounds
+        return np.linalg.norm(
+            (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
+        ).tolist()
 
     @property
     @wraps(Prop3D.size.fget)  # type: ignore[attr-defined]
