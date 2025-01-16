@@ -1236,6 +1236,8 @@ class DataSet(DataSetFilters, DataObject):
     def size(self: Self) -> (float, float, float):
         """Return the size of each axis of the dataset's bounding box.
 
+        .. versionadded:: 0.45
+
         Returns
         -------
         tuple[float, float, float]
