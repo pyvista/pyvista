@@ -3251,9 +3251,14 @@ class ImageDataFilters(DataSetFilters):
         # Make sure we have point scalars
         processing_cell_scalars = field == FieldAssociation.CELL
         if processing_cell_scalars:
+            if extend_border:
+                raise ValueError('`extend_border` cannot be set when resampling cell data.')
             dimensionality = input_image.dimensionality
             input_image = input_image.cells_to_points(scalars=scalars, copy=False)
-            extend_border = False
+
+        if extend_border is None:
+            # Only extend border with point data
+            extend_border = not processing_cell_scalars
 
         if reference_image is None:
             reference_image = pyvista.ImageData()
@@ -3300,9 +3305,6 @@ class ImageDataFilters(DataSetFilters):
 
         # Compute the sampling rate to use with vtkImageResample
         singleton_dims = old_dimensions == 1
-        if extend_border is None:
-            # Only extend border with point data
-            extend_border = not processing_cell_scalars
         adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
         adjusted_sample_rate[singleton_dims] = 1
 

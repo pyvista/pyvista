@@ -1211,3 +1211,7 @@ def test_resample_raises(uniform):
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(sample_rate=2, dimensions=(2, 2, 2))
+
+    match = '`extend_border` cannot be set when resampling cell data.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(scalars='Spatial Cell Data', extend_border=True)
