@@ -3239,6 +3239,7 @@ class ImageDataFilters(DataSetFilters):
         (1600, 1200, 1)
 
         """
+        # Process scalars
         if scalars is None:
             field, name = set_default_active_scalars(self)
         else:
@@ -3246,6 +3247,8 @@ class ImageDataFilters(DataSetFilters):
             field = self.get_array_association(scalars, preference=preference)
 
         active_scalars = self.get_array(name, preference=field.name.lower())  # type: ignore[arg-type]
+
+        # Validate interpolation and modify scalars as needed
         input_dtype = active_scalars.dtype
         has_int_scalars = np.issubdtype(input_dtype, np.integer)
         if interpolation is None:
@@ -3271,11 +3274,14 @@ class ImageDataFilters(DataSetFilters):
             dimensionality = input_image.dimensionality
             input_image = input_image.cells_to_points(scalars=scalars, copy=False)
 
+        # Set default extend_border value
         if extend_border is None:
             # Only extend border with point data
             extend_border = not processing_cell_scalars
 
+        # Setup reference image
         if reference_image is None:
+            # Use the input as a reference
             reference_image = pyvista.ImageData()
             reference_image.copy_structure(input_image)
             reference_image_provided = False
@@ -3288,6 +3294,11 @@ class ImageDataFilters(DataSetFilters):
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
+        # Ideally vtkImageResample would directly support setting output dimensions
+        # (e.g. via SetOutputExtent) but this doesn't work, so instead we are
+        # stuck using SetMagnificationFactors to indirectly set the dimensions.
+        # To compute the magnification factors we first define input (old) and output
+        # (new) dimensions.
         old_dimensions = np.array(input_image.dimensions)
         if sample_rate is not None:
             if reference_image_provided or dimensions is not None:
@@ -3311,20 +3322,16 @@ class ImageDataFilters(DataSetFilters):
                 reference_image.dimensions = dimensions_  # type: ignore[assignment]
             new_dimensions = np.array(reference_image.dimensions)
 
-        # Ideally vtkImageResample would directly support setting output dimensions
-        # (e.g. via SetOutputExtent) but this doesn't work, so instead we are
-        # stuck using SetMagnificationFactors to indirectly set the dimensions.
-        # Note that SetMagnificationFactors will multiply the sample rate by the extent
+        # Compute the magnification factors to use with vtkImageResample
+        # Note that SetMagnificationFactors will multiply the factors by the extent
         # but we want to multiply the dimensions. These values are off by one.
-
-        # Compute the sampling rate to use with vtkImageResample
         singleton_dims = old_dimensions == 1
-        adjusted_sample_rate = (new_dimensions - 1) / (old_dimensions - 1)
-        adjusted_sample_rate[singleton_dims] = 1
+        magnification_factors = (new_dimensions - 1) / (old_dimensions - 1)
+        magnification_factors[singleton_dims] = 1
 
         resample = _vtk.vtkImageResample()
         resample.SetInputData(input_image)
-        resample.SetMagnificationFactors(*adjusted_sample_rate)
+        resample.SetMagnificationFactors(*magnification_factors)
 
         # Set interpolation mode
         if interpolation == 'linear':
