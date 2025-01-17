@@ -11,8 +11,7 @@ repos:
     hooks:
       - id: blackdoc
         args: ["--skip-string-normalization"]
-        files: '\.py$'
-        exclude: pyvista/plotting/charts.py
+        types_or: [rst]
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.3.0

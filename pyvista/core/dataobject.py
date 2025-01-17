@@ -373,14 +373,17 @@ class DataObject:
             return True
 
         # these attrs use numpy.array_equal
-        equal_attrs = [
-            'verts',  # DataObject
-            'points',  # DataObject
-            'lines',  # DataObject
-            'faces',  # DataObject
-            'cells',  # UnstructuredGrid
-            'celltypes',
-        ]  # UnstructuredGrid
+        if isinstance(self, pyvista.ImageData):
+            equal_attrs = ['extent', 'index_to_physical_matrix']
+        else:
+            equal_attrs = [
+                'verts',  # DataObject
+                'points',  # DataObject
+                'lines',  # DataObject
+                'faces',  # DataObject
+                'cells',  # UnstructuredGrid
+                'celltypes',
+            ]  # UnstructuredGrid
         for attr in equal_attrs:
             if hasattr(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr)):
@@ -428,9 +431,7 @@ class DataObject:
         Add field data to a ImageData dataset.
 
         >>> mesh = pv.ImageData(dimensions=(2, 2, 1))
-        >>> mesh.add_field_data(
-        ...     ['I could', 'write', 'notes', 'here'], 'my-field-data'
-        ... )
+        >>> mesh.add_field_data(['I could', 'write', 'notes', 'here'], 'my-field-data')
         >>> mesh['my-field-data']
         pyvista_ndarray(['I could', 'write', 'notes', 'here'], dtype='<U7')
 
@@ -438,7 +439,7 @@ class DataObject:
 
         >>> blocks = pv.MultiBlock()
         >>> blocks.append(pv.Sphere())
-        >>> blocks["cube"] = pv.Cube(center=(0, 0, -1))
+        >>> blocks['cube'] = pv.Cube(center=(0, 0, -1))
         >>> blocks.add_field_data([1, 2, 3], 'my-field-data')
         >>> blocks.field_data['my-field-data']
         pyvista_ndarray([1, 2, 3])

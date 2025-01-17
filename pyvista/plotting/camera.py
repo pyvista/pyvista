@@ -135,9 +135,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera = pv.Camera.from_paraview_pvcc(
-        ...     "camera.pvcc"
-        ... )  # doctest:+SKIP
+        >>> pl.camera = pv.Camera.from_paraview_pvcc('camera.pvcc')  # doctest:+SKIP
         >>> pl.camera.position
         (1.0, 1.0, 1.0)
 
@@ -190,7 +188,7 @@ class Camera(_vtk.vtkCamera):
         --------
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> pl.camera.to_paraview_pvcc("camera.pvcc")  # doctest:+SKIP
+        >>> pl.camera.to_paraview_pvcc('camera.pvcc')  # doctest:+SKIP
 
         """
         root = ET.Element('PVCameraConfiguration')

@@ -67,9 +67,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_sun()
     >>> texture = examples.planets.download_sun_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -105,9 +103,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_moon()
     >>> texture = examples.planets.download_moon_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -143,9 +139,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_mercury()
     >>> texture = examples.planets.download_mercury_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -181,9 +175,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_venus()
     >>> texture = examples.planets.download_venus_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -219,9 +211,7 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_earth()
     >>> texture = examples.load_globe_texture()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -257,9 +247,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_mars()
     >>> texture = examples.planets.download_mars_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -295,9 +283,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_jupiter()
     >>> texture = examples.planets.download_jupiter_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -333,9 +319,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_saturn()
     >>> texture = examples.planets.download_saturn_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -373,16 +357,14 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_saturn_rings()
     >>> texture = examples.planets.download_saturn_rings(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
     disc = pyvista.Disc(inner=inner, outer=outer, c_res=c_res)
     texture_coordinates = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
-    texture_coordinates[:, 0] = radius / np.max(radius)
+    texture_coordinates[:, 0] = (radius - inner) / (outer - inner)
     texture_coordinates[:, 1] = 0.0
     disc.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
     return disc
@@ -413,9 +395,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_uranus()
     >>> texture = examples.planets.download_uranus_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -451,9 +431,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_neptune()
     >>> texture = examples.planets.download_neptune_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -489,9 +467,7 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_pluto()
     >>> texture = examples.planets.download_pluto_surface(texture=True)
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
@@ -864,9 +840,7 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_stars_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> pl.show()
 
@@ -903,9 +877,7 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> pl = pv.Plotter()
-    >>> image_path = examples.planets.download_milkyway_sky_background(
-    ...     load=False
-    ... )
+    >>> image_path = examples.planets.download_milkyway_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> pl.show()
 

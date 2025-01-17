@@ -153,7 +153,7 @@ articles = dict(
     ),
     magpylib=Example(
         title='Coil Field Lines example in Magpylib',
-        link='https://magpylib.readthedocs.io/en/latest/examples/examples_30_coil_field_lines.html#pyvista-streamlines',
+        link='https://magpylib.readthedocs.io/en/latest/_pages/user_guide/examples/examples_vis_pv_streamlines.html',
         image='coil_field_lines.png',
     ),
     pyfbs=Example(

@@ -196,7 +196,7 @@ class _PointSet(DataSet):
         self: ConcretePointSetType,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
-        inplace=None,
+        inplace: bool = False,
     ):
         """Translate the mesh.
 
@@ -210,7 +210,7 @@ class _PointSet(DataSet):
             the points, normals and active vectors are transformed. This is
             only valid when not updating in place.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -679,9 +679,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> n_lines = n_points // 2
     >>> points = rng.random((n_points, 3))
     >>> lines = rng.integers(low=0, high=n_points, size=(n_lines, 2))
-    >>> mesh = pv.PolyData(
-    ...     points, lines=pv.CellArray.from_regular_cells(lines)
-    ... )
+    >>> mesh = pv.PolyData(points, lines=pv.CellArray.from_regular_cells(lines))
     >>> mesh.cell_data['line_idx'] = np.arange(n_lines)
     >>> mesh.plot(scalars='line_idx')
 
@@ -695,8 +693,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> n_points = 10 * sum(n_verts_per_strip)
     >>> points = rng.random((n_points, 3))
     >>> strips = [
-    ...     rng.integers(low=0, high=n_points, size=nv)
-    ...     for nv in n_verts_per_strip
+    ...     rng.integers(low=0, high=n_points, size=nv) for nv in n_verts_per_strip
     ... ]
     >>> mesh = pv.PolyData(
     ...     points, strips=pv.CellArray.from_irregular_cells(strips)
@@ -715,9 +712,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
     >>> inflated_points = (
     ...     small_sphere.points + 0.1 * small_sphere.point_data['Normals']
     ... )
-    >>> larger_sphere = pv.PolyData(
-    ...     inflated_points, faces=small_sphere.GetPolys()
-    ... )
+    >>> larger_sphere = pv.PolyData(inflated_points, faces=small_sphere.GetPolys())
     >>> plotter = pv.Plotter()
     >>> _ = plotter.add_mesh(small_sphere, color='red', show_edges=True)
     >>> _ = plotter.add_mesh(
@@ -1320,9 +1315,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         If any other cells are specified, these vertices are not created.
 
         >>> import pyvista as pv
-        >>> mesh = pv.PolyData(
-        ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1]
-        ... )
+        >>> mesh = pv.PolyData([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0]], lines=[2, 0, 1])
         >>> mesh.n_points, mesh.n_verts
         (2, 0)
 
@@ -1340,9 +1333,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> vertices = np.array(
-        ...     [[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]
-        ... )
+        >>> vertices = np.array([[1.0, 0.0, 0.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
         >>> strip = np.array([3, 0, 1, 2])
         >>> mesh = pv.PolyData(vertices, strips=strip)
         >>> mesh.n_strips
@@ -1492,9 +1483,7 @@ class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
         >>> # decreasing value
         >>> texture[:, 1] = np.arange(sphere.n_points)[::-1]
         >>> sphere.point_data['my_texture'] = texture
-        >>> sphere.save(
-        ...     'my_mesh.ply', texture='my_texture'
-        ... )  # doctest:+SKIP
+        >>> sphere.save('my_mesh.ply', texture='my_texture')  # doctest:+SKIP
 
         Alternatively, provide just the texture array.  This will be
         written to the file as ``'RGB'`` since it does not contain an
@@ -1930,9 +1919,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         >>> cell0_ids = [8, 0, 1, 2, 3, 4, 5, 6, 7]
         >>> cell1_ids = [8, 8, 9, 10, 11, 12, 13, 14, 15]
         >>> cells = np.hstack((cell0_ids, cell1_ids))
-        >>> cell_type = np.array(
-        ...     [CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8
-        ... )
+        >>> cell_type = np.array([CellType.HEXAHEDRON, CellType.HEXAHEDRON], np.int8)
 
         >>> cell1 = np.array(
         ...     [
@@ -2784,7 +2771,6 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
     >>> # repeat array along each Cartesian axis for connectivity
     >>> for axis in range(1, 4):
     ...     grid_ijk = grid_ijk.repeat(2, axis=axis)
-    ...
     >>>
     >>> # slice off unnecessarily doubled edge coordinates
     >>> grid_ijk = grid_ijk[:, 1:-1, 1:-1, 1:-1]
@@ -3103,14 +3089,10 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         >>> grid.save('grid.vtu')  # doctest:+SKIP
 
         >>> grid = pv.ExplicitStructuredGrid('grid.vtu')  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
         >>> grid.show_cells()  # doctest:+SKIP
-        >>> grid.plot(
-        ...     color='w', show_edges=True, show_bounds=True
-        ... )  # doctest:+SKIP
+        >>> grid.plot(color='w', show_edges=True, show_bounds=True)  # doctest:+SKIP
 
         """
         if texture is not None:
@@ -3319,7 +3301,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         # `coords` is outside the grid extent.
         if isinstance(coords, Sequence):
             coords = np.asarray(coords)
-        if isinstance(coords, np.ndarray) and coords.ndim == 2:
+
+        if coords.ndim == 2:
             ncol = coords.shape[1]
             coords = [coords[:, c] for c in range(ncol)]
             coords = tuple(coords)
