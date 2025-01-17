@@ -271,7 +271,7 @@ class Label(_Prop3DMixin, Text):
         Position of the text in XYZ coordinates relative to its :attr:`~pyvista.Prop3D.position`.
 
     size : int
-        Size of the text label.
+        Font size of the text label.
 
     prop : pyvista.TextProperty, optional
         The property of this actor.
@@ -382,7 +382,7 @@ class Label(_Prop3DMixin, Text):
         _Prop3DMixin.__init__(self)
         self.relative_position = relative_position  # type: ignore[assignment]
         self.position = position  # type: ignore[assignment]
-        self.size = size
+        self.font_size = size
 
     @property
     def _label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -401,6 +401,12 @@ class Label(_Prop3DMixin, Text):
     @property  # type: ignore[override]
     def size(self) -> int:  # numpydoc ignore=RT01
         """Size of the text label.
+
+        .. warning::
+
+            The behavior of `size` will change in a future version. It currently
+            returns a float with the label's font size, but will return a tuple with
+            its physical geometric size in the future. Use :attr:`font_size` instead.
 
         Notes
         -----
