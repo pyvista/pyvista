@@ -2927,7 +2927,7 @@ class ImageDataFilters(DataSetFilters):
     def resample(  # type: ignore[misc]
         self: ImageData,
         sample_rate: float | VectorLike[float] | None = None,
-        interpolation: Literal['linear', 'nearest', 'cubic'] | None = None,
+        interpolation: Literal['nearest', 'linear', 'cubic'] = 'nearest',
         *,
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
@@ -2971,9 +2971,11 @@ class ImageDataFilters(DataSetFilters):
             values less than ``1.0`` will down-sample it. Values must be greater than
             ``0`` and cannot be negative.
 
-        interpolation : 'linear' | 'nearest' | 'cubic', optional
-            Interpolation mode to use. By default, ``'linear'`` is used for float
-            scalars and ``'nearest'`` is used for integer scalars.
+        interpolation : 'nearest' | 'linear' | 'cubic', optional
+            Interpolation mode to use. By default, ``'nearest'`` is used which
+            duplicates (if upsampling) or removes (if downsample) values but
+            does not modify them. The ``'linear'`` and ``'cubic'`` use linear and
+            cubic interpolation, respectively, and may modify the values.
 
             .. note:
 
@@ -3069,14 +3071,14 @@ class ImageDataFilters(DataSetFilters):
         >>> plot = image_plotter(image)
         >>> plot.show()
 
-        Use ``sample_rate`` to up-sample the image.
+        Use ``sample_rate`` to up-sample the image. ``'nearest'`` interpolation is
+        used by default.
 
         >>> upsampled = image.resample(sample_rate=2)
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        Since the image has an integer dtype, ``'nearest'`` interpolation is used
-        by default. Use ``'linear'`` interpolation instead.
+        Use ``'linear'`` interpolation instead.
 
         >>> upsampled = image.resample(sample_rate=2, interpolation='linear')
         >>> plot = image_plotter(upsampled)
@@ -3275,14 +3277,9 @@ class ImageDataFilters(DataSetFilters):
         # Validate interpolation and modify scalars as needed
         input_dtype = active_scalars.dtype
         has_int_scalars = np.issubdtype(input_dtype, np.integer)
-        if interpolation is None:
-            interpolation = 'linear'
-            if has_int_scalars:
-                interpolation = 'nearest'
-        else:
-            _validation.check_contains(
-                ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
-            )
+        _validation.check_contains(
+            ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
+        )
         if has_int_scalars:
             # Need floats for interpolation but also to avoid crashing in some cases
             input_image = self.copy(deep=False)
