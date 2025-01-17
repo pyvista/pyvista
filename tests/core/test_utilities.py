@@ -1374,7 +1374,7 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
-class Cases_transform_apply:
+class CasesTransformApply:
     def case_list_int(self):
         return list(VECTOR), False, np.ndarray, float
 
@@ -1415,7 +1415,7 @@ class Cases_transform_apply:
 
 @parametrize(copy=[True, False])
 @parametrize_with_cases(
-    ('obj', 'return_self', 'return_type', 'return_dtype'), cases=Cases_transform_apply
+    ('obj', 'return_self', 'return_type', 'return_dtype'), cases=CasesTransformApply
 )
 def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
     def _get_points_from_object(obj_):
