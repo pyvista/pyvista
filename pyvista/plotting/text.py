@@ -360,7 +360,7 @@ class Label(_Prop3DMixin, Text):
     """
 
     _new_attr_exceptions: ClassVar[tuple[str, ...]] = (
-        'size',
+        'font_size',
         'relative_position',
         '_relative_position',
         '_prop3d',
