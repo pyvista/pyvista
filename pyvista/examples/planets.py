@@ -364,7 +364,7 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     disc = pyvista.Disc(inner=inner, outer=outer, c_res=c_res)
     texture_coordinates = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
-    texture_coordinates[:, 0] = radius / np.max(radius)
+    texture_coordinates[:, 0] = (radius - inner) / (outer - inner)
     texture_coordinates[:, 1] = 0.0
     disc.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
     return disc
