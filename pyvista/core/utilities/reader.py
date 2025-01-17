@@ -236,7 +236,7 @@ class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
     def __init__(self: BaseVTKReader) -> None:
-        self._data_object = None
+        self._data_object: pyvista.DataObject | None = None
         self._observers: list[int | Callable[[Any], Any]] = []
 
     def SetFileName(self, filename) -> None:
@@ -1998,7 +1998,7 @@ class _PVDReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read data and store it."""
-        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])  # type: ignore[assignment]
+        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
 
     def _SetActiveTime(self, time_value) -> None:
         """Set active time."""
@@ -2609,18 +2609,18 @@ class _GIFReader(BaseVTKReader):
         from PIL import ImageSequence
 
         img = Image.open(self._filename)
-        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))  # type: ignore[assignment]
+        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames  # type: ignore[attr-defined]
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[attr-defined]
+            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[arg-type]
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:  # type: ignore[attr-defined]
-            self._data_object.point_data.active_scalars_name = 'frame0'  # type: ignore[attr-defined]
+        if 'frame0' in self._data_object.point_data:
+            self._data_object.point_data.active_scalars_name = 'frame0'
 
         img.close()
 
