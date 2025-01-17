@@ -2971,9 +2971,9 @@ class ImageDataFilters(DataSetFilters):
             values less than ``1.0`` will down-sample it. Values must be greater than
             ``0`` and cannot be negative.
 
-        interpolation : 'nearest' | 'linear' | 'cubic', optional
+        interpolation : 'nearest' | 'linear' | 'cubic', default: 'nearest'
             Interpolation mode to use. By default, ``'nearest'`` is used which
-            duplicates (if upsampling) or removes (if downsample) values but
+            duplicates (if upsampling) or removes (if downsampling) values but
             does not modify them. The ``'linear'`` and ``'cubic'`` use linear and
             cubic interpolation, respectively, and may modify the values.
 

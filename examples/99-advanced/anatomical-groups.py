@@ -28,6 +28,7 @@ from pyvista import examples
 # subjects included with `PyVista`, or any other subject from the
 # `TotalSegmentator dataset <https://zenodo.org/records/10047292>`_.
 dataset = examples.download_whole_body_ct_female()
+dataset = dataset.resample(0.25)
 
 # %%
 # Get the label map used for plotting different anatomical groups.
