@@ -79,7 +79,6 @@ test = [
   'nest_asyncio<1.6.1',
   'numpydoc==1.8.0',
   'pyanalyze<=0.13.1',
-  'pydata-sphinx-theme<0.16',
   'pytest-cov<6.1.0',
   'pytest-memprof<0.3.0',
   'pytest-pyvista==0.1.8',
