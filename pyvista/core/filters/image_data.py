@@ -3277,7 +3277,7 @@ class ImageDataFilters(DataSetFilters):
         has_int_scalars = np.issubdtype(input_dtype, np.integer)
         if interpolation is None:
             interpolation = 'linear'
-            if active_scalars is not None and has_int_scalars:
+            if has_int_scalars:
                 interpolation = 'nearest'
         else:
             _validation.check_contains(
@@ -3341,8 +3341,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             if dimensions is not None:
                 dimensions_ = np.array(dimensions)
-                if processing_cell_scalars:
-                    dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
+                dimensions_ = dimensions_ - 1 if processing_cell_scalars else dimensions_
                 reference_image.dimensions = dimensions_  # type: ignore[assignment]
             new_dimensions = np.array(reference_image.dimensions)
 
