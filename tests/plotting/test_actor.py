@@ -218,7 +218,7 @@ def test_actor_length(klass, actor, dummy_actor):
     initial_length = 2**0.5  # sqrt(2)
     scale_factor = 2
 
-    assert np.allclose(actor.length, initial_length)
+    assert np.isclose(actor.length, initial_length)
     actor.scale = scale_factor
     assert np.allclose(actor.length, initial_length * scale_factor)
 

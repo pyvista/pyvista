@@ -191,7 +191,7 @@ def test_text3d_source_parameters(string, center, height, width, depth, normal):
         # For width and height, create an unscaled version for reference
         src_not_scaled = pv.Text3DSource(string=string, center=center)
         out_not_scaled = src_not_scaled.output
-        unscaled_width, unscaled_height = out_not_scaled.size[0:2]
+        unscaled_width, unscaled_height, _ = out_not_scaled.size
         if width is None and height is not None:
             expected_width = unscaled_width * actual_height / unscaled_height
         elif width is not None and height is None:
