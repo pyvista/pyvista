@@ -511,11 +511,11 @@ def test_points_to_cells_and_cells_to_points_dimensions(
     assert zero_dimensionality_image.points_to_cells(
         dimensionality=(False, False, False)
     ).dimensions == (1, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='0D').dimensions == (1, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (2, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (2, 2, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (2, 2, 2)
-    assert zero_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=0).dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=1).dimensions == (2, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=2).dimensions == (2, 2, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=3).dimensions == (2, 2, 2)
+    assert zero_dimensionality_image.cells_to_points(dimensionality=0).dimensions == (1, 1, 1)
 
     assert one_dimensionality_image.dimensions == (1, 2, 1)
     assert one_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (1, 3, 1)
