@@ -196,7 +196,7 @@ class _PointSet(DataSet):
         self: ConcretePointSetType,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
-        inplace=None,
+        inplace: bool = False,
     ):
         """Translate the mesh.
 
@@ -210,7 +210,7 @@ class _PointSet(DataSet):
             the points, normals and active vectors are transformed. This is
             only valid when not updating in place.
 
-        inplace : bool, optional
+        inplace : bool, default: False
             Updates mesh in-place.
 
         Returns
@@ -3301,7 +3301,8 @@ class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
         # `coords` is outside the grid extent.
         if isinstance(coords, Sequence):
             coords = np.asarray(coords)
-        if isinstance(coords, np.ndarray) and coords.ndim == 2:
+
+        if coords.ndim == 2:
             ncol = coords.shape[1]
             coords = [coords[:, c] for c in range(ncol)]
             coords = tuple(coords)

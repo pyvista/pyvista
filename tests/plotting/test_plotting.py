@@ -26,6 +26,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista import demos
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -2203,6 +2204,17 @@ def test_user_matrix_mesh(sphere):
 
     with pytest.raises(TypeError):
         p.add_mesh(sphere, user_matrix='invalid')
+
+
+def test_user_matrix_silhouette(airplane):
+    matrix = [[-1, 0, 0, 1], [0, 1, 0, 2], [0, 0, -1, 3], [0, 0, 0, 1]]
+    pl = pv.Plotter()
+    pl.add_mesh(
+        airplane,
+        silhouette=dict(line_width=10),
+        user_matrix=matrix,
+    )
+    pl.show()
 
 
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
@@ -4886,3 +4898,8 @@ def test_bitwise_and_or_of_polydata(operator):
     pl.add_mesh(result, color='lightblue')
     pl.camera_position = 'xz'
     pl.show()
+
+
+def test_plot_logo():
+    logo_plotter = demos.plot_logo(window_size=(400, 300), just_return_plotter=True)
+    logo_plotter.show()
