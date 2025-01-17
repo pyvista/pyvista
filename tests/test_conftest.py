@@ -19,33 +19,27 @@ class PytesterStdoutParser:
         ]
 
 
+class _ReportDescriptor:
+    def __init__(self):
+        self._status = None
+
+    def __set_name__(self, owner, name: str):
+        self._status = name
+
+    def __get__(self, obj: RunResultsReport, objtype=None):
+        return [t['name'] for t in obj.results if t['status'] == self._status.upper()]
+
+
 class RunResultsReport:
+    passed = _ReportDescriptor()
+    skipped = _ReportDescriptor()
+    failed = _ReportDescriptor()
+    errors = _ReportDescriptor()
+    xpassed = _ReportDescriptor()
+    xfailed = _ReportDescriptor()
+
     def __init__(self, results: list[dict[str, str]]):
         self.results = results
-
-    @property
-    def passed(self):
-        return [t['name'] for t in self.results if t['status'] == 'PASSED']
-
-    @property
-    def skipped(self):
-        return [t['name'] for t in self.results if t['status'] == 'SKIPPED']
-
-    @property
-    def failed(self):
-        return [t['name'] for t in self.results if t['status'] == 'FAILED']
-
-    @property
-    def errors(self):
-        return [t['name'] for t in self.results if t['status'] == 'ERROR']
-
-    @property
-    def xpassed(self):
-        return [t['name'] for t in self.results if t['status'] == 'XPASS']
-
-    @property
-    def xfailed(self):
-        return [t['name'] for t in self.results if t['status'] == 'XFAIL']
 
 
 @pytest.fixture
