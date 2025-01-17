@@ -26,6 +26,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista import demos
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -4906,3 +4907,8 @@ def test_bitwise_and_or_of_polydata(operator):
     pl.add_mesh(result, color='lightblue')
     pl.camera_position = 'xz'
     pl.show()
+
+
+def test_plot_logo():
+    logo_plotter = demos.plot_logo(window_size=(400, 300), just_return_plotter=True)
+    logo_plotter.show()
