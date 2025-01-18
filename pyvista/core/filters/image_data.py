@@ -2632,7 +2632,7 @@ class ImageDataFilters(DataSetFilters):
 
         Label only the regions that include seed points, by seed order.
 
-        >>> points = [(2, 1, 0), (0, 0, 1)]
+        >>> points = [(2.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
         >>> connected, labels, sizes = segmented_grid.label_connectivity(
         ...     scalar_range='foreground',
         ...     extraction_mode='seeded',
@@ -2848,7 +2848,7 @@ class ImageDataFilters(DataSetFilters):
         # Build an array of the operation size
         operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
 
-        if not isinstance(operation_mask, str):
+        if not isinstance(operation_mask, str) and operation_mask not in [0, 1, 2, 3]:
             # Build a bool array of the mask
             dimensions_mask = _validation.validate_array3(
                 operation_mask,
@@ -2865,7 +2865,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             # Validate that the target dimensionality is valid
             try:
-                target_dimensionality = _validation.validate_dimensionality(operation_mask)
+                target_dimensionality = _validation.validate_dimensionality(operation_mask)  # type: ignore[arg-type]
             except ValueError:
                 raise ValueError(
                     f'`{operation_mask}` is not a valid `operation_mask`.'
