@@ -22,6 +22,7 @@ from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .datasetattributes import _ReshapedDataSetAttributes
 from .errors import PyVistaDeprecationWarning
 from .errors import VTKVersionError
 from .filters import DataSetFilters
@@ -1018,6 +1019,53 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return DataSetAttributes(
+            self.GetPointData(),
+            dataset=self,
+            association=FieldAssociation.POINT,
+        )
+
+    @property
+    def reshaped_point_data(self: Self) -> _ReshapedDataSetAttributes:
+        """Return point data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Point data as DataSetAttributes.
+
+        Examples
+        --------
+        Add point arrays to a mesh and list the available ``point_data``.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.point_data['my_array'] = np.random.default_rng().random(mesh.n_points)
+        >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
+        >>> mesh.point_data
+        pyvista DataSetAttributes
+        Association     : POINT
+        Active Scalars  : my_array
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+            my_array                float64    (8,)                 SCALARS
+            my_other_array          int64      (8,)
+
+        Access an array from ``point_data``.
+
+        >>> mesh.point_data['my_other_array']
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
+
+        Or access it directly from the mesh.
+
+        >>> mesh['my_array'].shape
+        (8,)
+
+        """
+        return _ReshapedDataSetAttributes(
             self.GetPointData(),
             dataset=self,
             association=FieldAssociation.POINT,

@@ -741,3 +741,15 @@ def test_update(uniform, copy):
             assert not shares_memory
         else:
             assert shares_memory
+
+
+def test_reshaped_datasetattributes():
+    shape = (3, 4, 5)
+    data_in = np.reshape(range(np.prod(shape)), shape)
+    image = pv.ImageData(dimensions=shape)
+
+    image.reshaped_point_data['data'] = data_in
+    data_out = image.reshaped_point_data['data']
+
+    assert np.shares_memory(data_in, data_out)
+    assert np.array_equal(data_in, data_out)
