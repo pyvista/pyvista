@@ -1961,7 +1961,8 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.SetUseBounds(False)
 
         # Format title positioning
-        self.SetTitleOffset(0)
+        offset = (0,) if pv.vtk_version_info < (9, 3) else (0, 0)
+        self.SetTitleOffset(*offset)
         self.SetLabelOffset(0)
 
         # For 2D mode only
