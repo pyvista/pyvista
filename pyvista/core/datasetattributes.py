@@ -1545,7 +1545,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
 class _ReshapedDataSetAttributes(DataSetAttributes):
     def _reshape_array(self: Self, array: pyvista_ndarray) -> pyvista_ndarray:
-        if (method := self.dataset.reshape_method) is None:
+        if (method := self.dataset.data_reshaping_method) is None:
             raise TypeError('Cannot reshape data. No reshaping method specified.')
         elif method == 'dimensions':
             if hasattr(self.dataset, 'dimensions'):
@@ -1562,7 +1562,7 @@ class _ReshapedDataSetAttributes(DataSetAttributes):
             raise RuntimeError('Unable to reshape data. Invalid reshape method.')
 
     def _flatten_array(self: Self, array: NumpyArray[Any]) -> NumpyArray[Any]:
-        if (method := self.dataset.flatten_method) is None:
+        if (method := self.dataset.data_flattening_method) is None:
             raise TypeError('Cannot reshape data. No flattening method specified.')
         elif method == 'ravel_c':
             return np.ravel(array, order='C')  # type: ignore[return-value]

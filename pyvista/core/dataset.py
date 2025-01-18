@@ -1072,7 +1072,7 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     @property
-    def reshape_method(self: Self) -> Any:
+    def data_reshaping_method(self: Self) -> Any:
         """Reshaping method used when getting reshaped point or cell data.
 
         Returns
@@ -1085,12 +1085,12 @@ class DataSet(DataSetFilters, DataObject):
             return self._reshape_method
         return None
 
-    @reshape_method.setter
-    def reshape_method(self: Self, method: Any) -> None:
+    @data_reshaping_method.setter
+    def data_reshaping_method(self: Self, method: Any) -> None:
         self._reshape_method = method
 
     @property
-    def flatten_method(self: Self) -> Any:
+    def data_flattening_method(self: Self) -> Any:
         """Flattening method used when setting reshaped point or cell data.
 
         Returns
@@ -1103,8 +1103,8 @@ class DataSet(DataSetFilters, DataObject):
             return self._flatten_method
         return None
 
-    @flatten_method.setter
-    def flatten_method(self: Self, method: Any) -> None:
+    @data_flattening_method.setter
+    def data_flattening_method(self: Self, method: Any) -> None:
         self._flatten_method = method
 
     def clear_point_data(self: Self) -> None:
