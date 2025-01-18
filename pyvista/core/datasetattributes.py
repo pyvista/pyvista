@@ -20,12 +20,13 @@ from .utilities.arrays import convert_array
 from .utilities.arrays import copy_vtk_array
 
 T = TypeVar('T')
-from pyvista import DataSet
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterator
 
     from typing_extensions import Self
+
+    from pyvista import DataSet
 
     from ._typing_core import ArrayLike
     from ._typing_core import MatrixLike
@@ -1544,7 +1545,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
 class _ReshapedDataSetAttributes(DataSetAttributes):
     def _reshape_array(self: Self, array: pyvista_ndarray) -> pyvista_ndarray:
-        if isinstance(self.dataset, DataSet):
+        if hasattr(self.dataset, 'data_reshaping_method'):
             if (method := self.dataset.data_reshaping_method) is None:
                 raise TypeError('Cannot reshape data. No reshaping method specified.')
             elif method == 'dimensions':
@@ -1563,7 +1564,7 @@ class _ReshapedDataSetAttributes(DataSetAttributes):
         raise TypeError('Reshaping data is only support with PyVista datasets.')
 
     def _flatten_array(self: Self, array: NumpyArray[Any]) -> NumpyArray[Any]:
-        if isinstance(self.dataset, DataSet):
+        if hasattr(self.dataset, 'data_reshaping_method'):
             if (method := self.dataset.data_flattening_method) is None:
                 raise TypeError('Cannot reshape data. No flattening method specified.')
             elif method == 'ravel_c':
