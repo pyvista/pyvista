@@ -4,6 +4,8 @@ import re
 
 import pytest
 
+import pyvista
+
 pytest_plugins = 'pytester'
 
 
@@ -75,6 +77,63 @@ def _load_current_config(
     conftest.unlink()
 
 
+def test_warnings_turned_to_errors(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+):
+    tests = """
+    import pytest, warnings
+
+    def test_warning():
+        warnings.warn("foo",Warning)
+
+    def test_no_warnings():
+        ...
+    """
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(
+        passed=1,
+        failed=1,
+    )
+
+    results = results_parser.parse(results=results)
+    report = RunResultsReport(results)
+    assert 'test_warning' in report.failed
+    assert 'test_no_warnings' in report.passed
+
+
+@pytest.mark.parametrize('greater', [True, False])
+def test_warning_vtk(
+    pytester: pytest.Pytester,
+    results_parser: PytesterStdoutParser,
+    monkeypatch: pytest.MonkeyPatch,
+    greater: bool,
+):
+    tests = """
+    import pytest, warnings
+
+    def test_warning():
+        msg = "`np.bool` is a deprecated alias for the builtin `bool`. To silence this warning, use `bool` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.bool_` here."
+        warnings.warn(msg, DeprecationWarning)
+
+    """
+    monkeypatch.setattr(pyvista, 'vtk_version_info', (9, 0) if not greater else (9, 1))
+
+    p = pytester.makepyfile(tests)
+    results = pytester.runpytest(p)
+
+    results.assert_outcomes(
+        passed=1 if not greater else 0,
+        failed=0 if not greater else 1,
+    )
+
+    results = results_parser.parse(results=results)
+    report = RunResultsReport(results)
+    assert 'test_warning' in (report.failed if greater else report.passed)
+
+
 @pytest.mark.parametrize('cml', [True, False])
 def test_downloads_mark(
     cml,
@@ -103,12 +162,8 @@ def test_downloads_mark(
     results = results_parser.parse(results=results)
     report = RunResultsReport(results)
 
-    if cml:
-        assert 'test_downloads' in report.passed
-        assert 'test_no_downloads' in report.passed
-    else:
-        assert 'test_downloads' in report.skipped
-        assert 'test_no_downloads' in report.passed
+    assert 'test_no_downloads' in report.passed
+    assert 'test_downloads' in (report.passed if cml else report.skipped)
 
 
 @pytest.mark.parametrize('greater', [True, False])
@@ -129,7 +184,6 @@ def test_needs_vtk_version_tuple(
         ...
 
     """
-    import pyvista
 
     value = (8, 2) if greater else (9, 2)
     monkeypatch.setattr(pyvista, 'vtk_version_info', value)
@@ -157,7 +211,6 @@ def test_needs_vtk_version(
         ...
 
     """
-    import pyvista
 
     monkeypatch.setattr(pyvista, 'vtk_version_info', version)
 
