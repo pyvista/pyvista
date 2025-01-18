@@ -2622,6 +2622,8 @@ class _GIFReader(BaseVTKReader):
         if 'frame0' in self._data_object.point_data:
             self._data_object.point_data.active_scalars_name = 'frame0'
 
+        img.close()
+
 
 class GIFReader(BaseReader):
     """GIFReader for .gif files.

@@ -2488,7 +2488,9 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         (20, 10, 4)
 
         """
-        return tuple(self.GetDimensions())
+        dims = [0, 0, 0]
+        self.GetDimensions(dims)
+        return tuple(dims)
 
     @dimensions.setter
     def dimensions(self, dims) -> None:

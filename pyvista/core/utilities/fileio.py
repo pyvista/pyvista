@@ -1241,7 +1241,7 @@ def _try_imageio_imread(filename: str | Path) -> imageio.core.util.Array:
 
     """
     try:
-        from imageio import imread
+        from imageio.v2 import imread
     except ModuleNotFoundError:  # pragma: no cover
         raise ModuleNotFoundError(
             'Problem reading the image with VTK. Install imageio to try to read the '
