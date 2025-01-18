@@ -1231,7 +1231,7 @@ def validate_dimensionality(
         dimensionality_as_array = np.char.replace(dimensionality_as_array, 'D', '')
 
     try:
-        dimensionality_as_array = dimensionality_as_array.astype(np.integer)
+        dimensionality_as_array = dimensionality_as_array.astype(np.int64)
     except ValueError:
         raise ValueError(
             f'`{dimensionality}` is not a valid dimensionality.'

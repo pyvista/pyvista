@@ -2903,7 +2903,7 @@ class DataSet(DataSetFilters, DataObject):
         ... )
         >>> _ = pl.add_mesh(others, show_edges=True)
         >>>
-        >>> pl.camera_position = 'yx'
+        >>> pl.camera_position = 'xy'
         >>> pl.camera.zoom(7.0)
         >>> pl.show()
 
