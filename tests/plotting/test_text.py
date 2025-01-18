@@ -47,7 +47,7 @@ def test_text_position(text):
 
 
 def test_label():
-    label = pv.Label('text', (1, 2, 3), size=42, prop=pv.Property())
+    label = pv.Label('text', (1, 2, 3), font_size=42, prop=pv.Property())
 
     assert label.input == 'text'
     label.input = 'new'
@@ -58,8 +58,8 @@ def test_label():
     assert label.position == (4, 5, 6)
 
     assert label.font_size == 42
-    label.size = 99
-    assert label.size == 99
+    label.font_size = 99
+    assert label.font_size == 99
 
 
 def test_label_prop3d():
