@@ -748,7 +748,25 @@ def test_reshaped_datasetattributes():
     data_in = np.reshape(range(np.prod(shape)), shape)
     image = pv.ImageData(dimensions=shape)
 
+    match = 'Cannot reshape data. No flattening method specified.'
+    with pytest.raises(TypeError, match=match):
+        image.reshaped_point_data['data'] = data_in
+
+    # Setting the flatten method alone should be sufficient to set an array.
+    # But the internal implementation will also get the data, which requires
+    # a reshaping method which has not yet been set, so an error is expected
+    image.flatten_method = 'ravel_c'
+    match = 'Cannot reshape data. No reshaping method specified.'
+    with pytest.raises(TypeError, match=match):
+        image.reshaped_point_data['data'] = data_in
+
+    # Now set the reshape method for getting data
+    image.reshape_method = 'dimensions'
     image.reshaped_point_data['data'] = data_in
+    assert 'data' in image.point_data
+    assert image.point_data['data'].ndim == 1
+
+    image.reshape_method = 'dimensions'
     data_out = image.reshaped_point_data['data']
 
     assert np.shares_memory(data_in, data_out)

@@ -786,7 +786,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 data = tmparray
             if data.shape[0] != array_len:
                 if isinstance(self, _ReshapedDataSetAttributes):
-                    data = _ReshapedDataSetAttributes._flatten_array(self, data)
+                    data = self._flatten_array(data)
                 else:
                     raise ValueError(
                         f'data length of ({data.shape[0]}) != required length ({array_len})',
@@ -1544,27 +1544,10 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
 
 class _ReshapedDataSetAttributes(DataSetAttributes):
-    def __init__(
-        self: Self,
-        vtkobject: _vtk.vtkFieldData,
-        dataset: _vtk.vtkDataSet | DataSet,
-        association: FieldAssociation,
-        reshape_method: Any = None,
-        flatten_method: Any = None,
-    ) -> None:  # numpydoc ignore=PR01,RT01
-        """Initialize DataSetAttributes."""
-        super().__init__(vtkobject=vtkobject, dataset=dataset, association=association)
-        if reshape_method is None:
-            if hasattr(self.dataset, 'dimensions'):
-                reshape_method = 'dimensions'
-        if flatten_method is None:
-            flatten_method = 'ravel_c'
-
-        self._reshape_method = reshape_method
-        self._flatten_method = flatten_method
-
     def _reshape_array(self: Self, array: pyvista_ndarray) -> pyvista_ndarray:
-        if self._reshape_method == 'dimensions':
+        if (method := self.dataset.reshape_method) is None:
+            raise TypeError('Cannot reshape data. No reshaping method specified.')
+        elif method == 'dimensions':
             if hasattr(self.dataset, 'dimensions'):
                 dims = self.dataset.dimensions
                 newshape = dims
@@ -1579,9 +1562,11 @@ class _ReshapedDataSetAttributes(DataSetAttributes):
             raise RuntimeError('Unable to reshape data. Invalid reshape method.')
 
     def _flatten_array(self: Self, array: NumpyArray[Any]) -> NumpyArray[Any]:
-        if self._flatten_method == 'ravel_c':
+        if (method := self.dataset.flatten_method) is None:
+            raise TypeError('Cannot reshape data. No flattening method specified.')
+        elif method == 'ravel_c':
             return np.ravel(array, order='C')  # type: ignore[return-value]
-        elif self._flatten_method == 'ravel_f':
+        elif method == 'ravel_f':
             return np.ravel(array, order='F')  # type: ignore[return-value]
         else:
             raise RuntimeError('Unable to flatten data. Invalid flatten method.')

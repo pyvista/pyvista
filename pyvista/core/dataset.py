@@ -1071,6 +1071,42 @@ class DataSet(DataSetFilters, DataObject):
             association=FieldAssociation.POINT,
         )
 
+    @property
+    def reshape_method(self: Self) -> Any:
+        """Reshaping method used when getting reshaped point or cell data.
+
+        Returns
+        -------
+        Any
+            Reshaping method.
+
+        """
+        if hasattr(self, '_reshape_method'):
+            return self._reshape_method
+        return None
+
+    @reshape_method.setter
+    def reshape_method(self: Self, method: Any) -> None:
+        self._reshape_method = method
+
+    @property
+    def flatten_method(self: Self) -> Any:
+        """Flattening method used when setting reshaped point or cell data.
+
+        Returns
+        -------
+        Any
+            Flattening method.
+
+        """
+        if hasattr(self, '_flatten_method'):
+            return self._flatten_method
+        return None
+
+    @flatten_method.setter
+    def flatten_method(self: Self, method: Any) -> None:
+        self._flatten_method = method
+
     def clear_point_data(self: Self) -> None:
         """Remove all point arrays.
 
