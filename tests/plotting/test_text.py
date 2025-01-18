@@ -57,7 +57,7 @@ def test_label():
     label.position = (4, 5, 6)
     assert label.position == (4, 5, 6)
 
-    assert label.size == 42
+    assert label.font_size == 42
     label.size = 99
     assert label.size == 99
 
@@ -75,6 +75,9 @@ def test_label_prop3d():
         # Size will return a tuple in a future version and this test will fail
         assert label.size == 50.0
 
+    with pytest.warns(pv.PyVistaFutureWarning):
+        # Size will return a tuple in a future version and this test will fail
+        assert pv.Label(size=10)
     # Test correct bounds with more complex transformations
     # Add offset along x-axis
     offset = 100
