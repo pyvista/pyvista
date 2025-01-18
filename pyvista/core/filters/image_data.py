@@ -3346,7 +3346,9 @@ class ImageDataFilters(DataSetFilters):
         # Note that SetMagnificationFactors will multiply the factors by the extent
         # but we want to multiply the dimensions. These values are off by one.
         singleton_dims = old_dimensions == 1
-        magnification_factors = (new_dimensions - 1) / (old_dimensions - 1)
+        with np.errstate(divide='ignore'):
+            # Ignore division by zero, this is fixed with singleton_dims on the next line
+            magnification_factors = (new_dimensions - 1) / (old_dimensions - 1)
         magnification_factors[singleton_dims] = 1
 
         resample = _vtk.vtkImageResample()
