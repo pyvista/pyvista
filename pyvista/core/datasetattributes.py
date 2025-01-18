@@ -1574,9 +1574,3 @@ class _ReshapedDataSetAttributes(DataSetAttributes):
     def get_array(self: Self, key: str | int) -> pyvista_ndarray:
         array = super().get_array(key=key)
         return self._reshape_array(array)
-
-    # def set_array(self: Self, data: ArrayLike[float], name: str, deep_copy: bool = False) -> None:
-    #     reshape_strategy = self.reshape_strategy
-    #     if reshape_strategy is None:
-    #         array = data.ravel()
-    #         super().set_array(array, name, deep_copy)
