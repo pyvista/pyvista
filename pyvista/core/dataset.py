@@ -1199,6 +1199,53 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     @property
+    def reshaped_cell_data(self: Self) -> _ReshapedDataSetAttributes:
+        """Return cell data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Cell data as DataSetAttributes.
+
+        Examples
+        --------
+        Add cell arrays to a mesh and list the available ``cell_data``.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.cell_data['my_array'] = np.random.default_rng().random(mesh.n_cells)
+        >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
+        >>> mesh.cell_data
+        pyvista DataSetAttributes
+        Association     : CELL
+        Active Scalars  : my_array
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+            my_array                float64    (6,)                 SCALARS
+            my_other_array          int64      (6,)
+
+        Access an array from ``cell_data``.
+
+        >>> mesh.cell_data['my_other_array']
+        pyvista_ndarray([0, 1, 2, 3, 4, 5])
+
+        Or access it directly from the mesh.
+
+        >>> mesh['my_array'].shape
+        (6,)
+
+        """
+        return _ReshapedDataSetAttributes(
+            self.GetCellData(),
+            dataset=self,
+            association=FieldAssociation.CELL,
+        )
+
+    @property
     def n_points(self: Self) -> int:
         """Return the number of points in the entire dataset.
 

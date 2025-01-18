@@ -743,31 +743,36 @@ def test_update(uniform, copy):
             assert shares_memory
 
 
-def test_reshaped_datasetattributes():
-    shape = (3, 4, 5)
-    data_in = np.reshape(range(np.prod(shape)), shape)
-    image = pv.ImageData(dimensions=shape)
+@pytest.mark.parametrize('attr', ['point_data', 'cell_data'])
+def test_reshaped_datasetattributes(attr):
+    data_shape = np.array((3, 4, 5))
+    dimensions = data_shape.copy()
+    if 'cell' in attr:
+        data_shape -= 1
+    data_in = np.reshape(range(np.prod(data_shape)), data_shape)
+    image = pv.ImageData(dimensions=dimensions)
 
     match = 'Cannot reshape data. No flattening method specified.'
     with pytest.raises(TypeError, match=match):
-        image.reshaped_point_data['data'] = data_in
+        getattr(image, 'reshaped_' + attr)['data'] = data_in
 
-    # Setting the flatten method alone should be sufficient to set an array.
+    # Setting the flattening method alone should be sufficient to set an array.
     # But the internal implementation will also get the data, which requires
     # a reshaping method which has not yet been set, so an error is expected
     image.data_flattening_method = 'ravel_c'
     match = 'Cannot reshape data. No reshaping method specified.'
     with pytest.raises(TypeError, match=match):
-        image.reshaped_point_data['data'] = data_in
+        getattr(image, 'reshaped_' + attr)['data'] = data_in
 
     # Now set the reshape method for getting data
     image.data_reshaping_method = 'dimensions'
-    image.reshaped_point_data['data'] = data_in
-    assert 'data' in image.point_data
-    assert image.point_data['data'].ndim == 1
+    reshaped_data = getattr(image, 'reshaped_' + attr)
+    reshaped_data['data'] = data_in
+    assert 'data' in getattr(image, attr)
+    assert getattr(image, attr)['data'].ndim == 1
 
     image.data_reshaping_method = 'dimensions'
-    data_out = image.reshaped_point_data['data']
+    data_out = getattr(image, 'reshaped_' + attr)['data']
 
     assert np.shares_memory(data_in, data_out)
     assert np.array_equal(data_in, data_out)

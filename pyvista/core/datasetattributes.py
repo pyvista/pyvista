@@ -1551,7 +1551,7 @@ class _ReshapedDataSetAttributes(DataSetAttributes):
             elif method == 'dimensions':
                 if hasattr(self.dataset, 'dimensions'):
                     dims = self.dataset.dimensions
-                    newshape = dims
+                    newshape = np.array(dims)
                     if self.association == FieldAssociation.CELL:
                         newshape -= 1
                     return pyvista_ndarray(np.reshape(array, newshape))
@@ -1564,7 +1564,7 @@ class _ReshapedDataSetAttributes(DataSetAttributes):
         raise TypeError('Reshaping data is only support with PyVista datasets.')
 
     def _flatten_array(self: Self, array: NumpyArray[Any]) -> NumpyArray[Any]:
-        if hasattr(self.dataset, 'data_reshaping_method'):
+        if hasattr(self.dataset, 'data_flattening_method'):
             if (method := self.dataset.data_flattening_method) is None:
                 raise TypeError('Cannot reshape data. No flattening method specified.')
             elif method == 'ravel_c':
