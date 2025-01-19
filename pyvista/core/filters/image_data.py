@@ -3346,7 +3346,7 @@ class ImageDataFilters(DataSetFilters):
         # Note that SetMagnificationFactors will multiply the factors by the extent
         # but we want to multiply the dimensions. These values are off by one.
         singleton_dims = old_dimensions == 1
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide='ignore', invalid='ignore'):
             # Ignore division by zero, this is fixed with singleton_dims on the next line
             magnification_factors = (new_dimensions - 1) / (old_dimensions - 1)
         magnification_factors[singleton_dims] = 1
@@ -3402,7 +3402,9 @@ class ImageDataFilters(DataSetFilters):
                 if processing_cell_scalars:
                     new_spacing = (size + input_image.spacing) / (output_dimensions)
                 else:
-                    new_spacing = size / (output_dimensions - 1)
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        # Ignore division by zero, this is fixed with singleton_dims on the next line
+                        new_spacing = size / (output_dimensions - 1)
 
             # For singleton dimensions, keep the original spacing value
             new_spacing[singleton_dims] = old_spacing[singleton_dims]
