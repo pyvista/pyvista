@@ -62,6 +62,15 @@ jobs:
           echo PYVISTA_EXAMPLE_DATA_PATH=$(python -c "from pyvista import examples; print(examples.USER_DATA_PATH)") >> $GITHUB_ENV
           pip list
 
+      - name: Upload non-interactive HTML documentation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-build-light
+          path: |
+            doc/
+            !doc/**.png
+
       - name: Cache Sphinx-Gallery Examples
         uses: actions/cache@v4
         if: env.USE_CACHE == 'true' && !startsWith(github.ref, 'refs/heads/release/') && !startsWith(github.ref, 'refs/tags/v') && (! github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'no-gallery-cache'))
