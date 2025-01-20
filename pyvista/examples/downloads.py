@@ -100,7 +100,7 @@ else:
             # Warn, don't raise just in case there's an environment issue.
             warnings.warn(
                 f'Unable to access {USER_DATA_PATH}. Manually specify the PyVista'
-                'examples cache with the PYVISTA_USERDATA_PATH environment variable.',
+                ' examples cache with the PYVISTA_USERDATA_PATH environment variable.',
             )
 
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
