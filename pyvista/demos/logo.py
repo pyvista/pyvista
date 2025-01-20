@@ -228,11 +228,11 @@ def plot_logo(
     mesh_letters = logo_letters()
 
     # letter 'P'
-    p_mesh = mesh_letters['P'].compute_normals(split_vertices=True).flip_faces()
+    p_mesh = mesh_letters['P'].compute_normals(split_vertices=True)
     plotter.add_mesh(p_mesh, color='#376fa0', smooth_shading=True)
 
     # letter 'y'
-    y_mesh = mesh_letters['y'].compute_normals(split_vertices=True).flip_faces()
+    y_mesh = mesh_letters['y'].compute_normals(split_vertices=True)
     plotter.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
 
     # letter 'V'

@@ -18,10 +18,10 @@ from ._array_like import _ArrayLike2D
 if TYPE_CHECKING or os.environ.get(
     'PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
 ):  # pragma: no cover
-    import contextlib
-
-    with contextlib.suppress(ImportError):
+    try:
         from scipy.spatial.transform import Rotation
+    except ImportError:
+        Rotation = None
 else:
     Rotation = None
 

@@ -442,7 +442,7 @@ def validate_axes(
             must_contain=must_have_orientation,
             name=f'{name} orientation',
         )
-    elif must_have_orientation is None and len(axes) == 2:
+    elif len(axes) == 2:
         raise ValueError(f'{name} orientation must be specified when only two vectors are given.')
 
     # Validate axes array
@@ -1231,7 +1231,7 @@ def validate_dimensionality(
         dimensionality_as_array = np.char.replace(dimensionality_as_array, 'D', '')
 
     try:
-        dimensionality_as_array = dimensionality_as_array.astype(np.integer)
+        dimensionality_as_array = dimensionality_as_array.astype(np.int64)
     except ValueError:
         raise ValueError(
             f'`{dimensionality}` is not a valid dimensionality.'
@@ -1277,7 +1277,7 @@ def _validate_color_sequence(
                     color_list = color_list * n_colors
 
                 # Only return if we have the correct number of colors
-                if n_colors is not None and len(color_list) == n_colors:
+                if n_colors is None or len(color_list) == n_colors:
                     return tuple(color_list)
             except ValueError:
                 pass
