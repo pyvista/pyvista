@@ -883,7 +883,7 @@ class ImageDataFilters(DataSetFilters):
                     output_mesh_type='quads',  # old filter generates quads
                     pad_background=False,  # old filter generates open surfaces at input edges
                     compute_normals=False,  # old filter does not compute normals
-                    multi_component_output=True,  # old filter returns multi-component scalars
+                    simplify_output=False,  # old filter returns multi-component scalars
                 )
 
         Parameters
@@ -1236,8 +1236,8 @@ class ImageDataFilters(DataSetFilters):
         :meth:`~pyvista.DataSetFilters.pack_labels`
             Function used internally by SurfaceNets to generate contiguous label data.
 
-        :ref:`contouring_example`
-            Additional contouring examples.
+        :ref:`contouring_example`, :ref:`anatomical_groups_example`
+            Additional examples using this filter.
 
         References
         ----------
@@ -1273,19 +1273,21 @@ class ImageDataFilters(DataSetFilters):
         Plot the cropped image for context. Configure the color map to generate
         consistent coloring of the regions for all plots.
 
-        >>> plot_kwargs = dict(
-        ...     cmap='glasbey',
-        ...     clim=[0, 77],
-        ...     show_edges=True,
-        ...     show_scalar_bar=False,
-        ... )
-        >>> image.plot(**plot_kwargs)
+        >>> def labels_plotter(mesh, zoom=None):
+        ...     colored_mesh = mesh.color_labels(negative_indexing=True)
+        ...     plotter = pv.Plotter()
+        ...     plotter.add_mesh(colored_mesh, show_edges=True)
+        ...     if zoom:
+        ...         plotter.camera.zoom(zoom)
+        ...     return plotter
+        >>>
+        >>> labels_plotter(image).show()
 
         Generate surface contours of the foreground regions and plot it. Note that
         the ``background_value`` is ``0`` by default.
 
         >>> contours = image.contour_labels()
-        >>> contours.plot(zoom=1.5, **plot_kwargs)
+        >>> labels_plotter(contours, zoom=1.5).show()
 
         By default, only external boundary polygons are generated and the returned
         ``'boundary_labels'`` array is a single-component array. The output values
@@ -1333,7 +1335,8 @@ class ImageDataFilters(DataSetFilters):
                [3, 4]])
 
         Simplify the output so that each internal multi-component boundary value is
-        assigned a unique negative integer value instead.
+        assigned a unique negative integer value instead. This makes it easier to
+        visualize the result.
 
         >>> contours = image.contour_labels('internal', simplify_output=True)
         >>> contours['boundary_labels'].ndim
@@ -1341,26 +1344,22 @@ class ImageDataFilters(DataSetFilters):
         >>> np.unique(contours['boundary_labels'])
         pyvista_ndarray([-5, -4, -3, -2, -1])
 
-        Make the values positive for plotting.
-
-        >>> contours['boundary_labels'] += 20
-
-        >>> contours.plot(zoom=1.5, **plot_kwargs)
+        >>> labels_plotter(contours, zoom=1.5).show()
 
         Generate contours for all boundaries, and use ``select_outputs`` to filter
         the output to only include polygons which share a boundary with region ``3``.
 
         >>> region_3 = image.contour_labels(
-        ...     'all', select_outputs=3, simplify_output=False
+        ...     'all', select_outputs=3, simplify_output=True
         ... )
-        >>> region_3.plot(zoom=3, **plot_kwargs)
+        >>> labels_plotter(region_3, zoom=3).show()
 
         Note how using ``select_outputs`` preserves the sharp features and boundary
         labels for non-selected regions. If desired, use ``select_inputs`` instead to
         completely "ignore" non-selected regions.
 
         >>> region_3 = image.contour_labels(select_inputs=3)
-        >>> region_3.plot(zoom=3, **plot_kwargs)
+        >>> labels_plotter(region_3, zoom=3).show()
 
         The sharp features are now smoothed and the internal boundaries are now labeled
         as external boundaries. Note that using ``'all'`` here is optional since
@@ -1373,19 +1372,19 @@ class ImageDataFilters(DataSetFilters):
         the mesh to be "open".
 
         >>> surf = image.contour_labels(pad_background=False)
-        >>> surf.plot(zoom=1.5, **plot_kwargs)
+        >>> labels_plotter(surf, zoom=1.5).show()
 
         Disable smoothing to generate staircase-like surface. Without smoothing, the
         surface has quadrilateral cells by default.
 
         >>> surf = image.contour_labels(smoothing=False)
-        >>> surf.plot(zoom=1.5, **plot_kwargs)
+        >>> labels_plotter(surf, zoom=1.5).show()
 
         Keep smoothing enabled but reduce the smoothing scale. A smoothing scale
         less than one may help preserve sharp features (e.g. corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
-        >>> surf.plot(zoom=1.5, **plot_kwargs)
+        >>> labels_plotter(surf, zoom=1.5).show()
 
         """
         temp_scalars_name = '_PYVISTA_TEMP'
@@ -2073,7 +2072,15 @@ class ImageDataFilters(DataSetFilters):
             self.origin,
             (np.array(self.spacing) / 2) * dims_mask,
         )
-        new_image.dimensions = dims_result  # type: ignore[assignment]
+        extent_min = self.extent[::2]
+        new_image.extent = (
+            extent_min[0],
+            extent_min[0] + dims_result[0] - 1,
+            extent_min[1],
+            extent_min[1] + dims_result[1] - 1,
+            extent_min[2],
+            extent_min[2] + dims_result[2] - 1,
+        )
         new_image.spacing = self.spacing
         new_image.direction_matrix = self.direction_matrix
 
@@ -2629,7 +2636,7 @@ class ImageDataFilters(DataSetFilters):
 
         Label only the regions that include seed points, by seed order.
 
-        >>> points = [(2, 1, 0), (0, 0, 1)]
+        >>> points = [(2.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
         >>> connected, labels, sizes = segmented_grid.label_connectivity(
         ...     scalar_range='foreground',
         ...     extraction_mode='seeded',
@@ -2845,7 +2852,7 @@ class ImageDataFilters(DataSetFilters):
         # Build an array of the operation size
         operation_size = _validation.validate_array3(operation_size, reshape=True, broadcast=True)
 
-        if not isinstance(operation_mask, str):
+        if not isinstance(operation_mask, str) and operation_mask not in [0, 1, 2, 3]:
             # Build a bool array of the mask
             dimensions_mask = _validation.validate_array3(
                 operation_mask,
@@ -2862,7 +2869,7 @@ class ImageDataFilters(DataSetFilters):
         else:
             # Validate that the target dimensionality is valid
             try:
-                target_dimensionality = _validation.validate_dimensionality(operation_mask)
+                target_dimensionality = _validation.validate_dimensionality(operation_mask)  # type: ignore[arg-type]
             except ValueError:
                 raise ValueError(
                     f'`{operation_mask}` is not a valid `operation_mask`.'
