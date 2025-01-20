@@ -349,7 +349,7 @@ def test_contour_labels_pad_background(labeled_image):
 @pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
 @pytest.mark.parametrize('simplify_output', [True, False, None])
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_simplify_output(labeled_image, boundary_type, simplify_output):
+def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_output):
     poly = labeled_image.contour_labels(boundary_type, simplify_output=simplify_output)
     expected_ndim = (
         1 if simplify_output or (simplify_output is None and boundary_type == 'external') else 2
@@ -511,11 +511,11 @@ def test_points_to_cells_and_cells_to_points_dimensions(
     assert zero_dimensionality_image.points_to_cells(
         dimensionality=(False, False, False)
     ).dimensions == (1, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='0D').dimensions == (1, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (2, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (2, 2, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (2, 2, 2)
-    assert zero_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=0).dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=1).dimensions == (2, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=2).dimensions == (2, 2, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=3).dimensions == (2, 2, 2)
+    assert zero_dimensionality_image.cells_to_points(dimensionality=0).dimensions == (1, 1, 1)
 
     assert one_dimensionality_image.dimensions == (1, 2, 1)
     assert one_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (1, 3, 1)
@@ -540,6 +540,18 @@ def test_points_to_cells_and_cells_to_points_dimensions(
     assert three_dimensionality_image.points_to_cells(dimensionality='3D').cells_to_points(
         dimensionality='3D'
     ).dimensions == (2, 2, 2)
+
+
+@pytest.mark.parametrize(
+    'extent', [(-25, -19, -14, -10, -7, -5), (1, 2, 3, 4, 5, 6), (0, 2, 0, 4, 0, 6)]
+)
+def test_points_to_cells_and_cells_to_points_round_trip_equal(extent):
+    before = pv.ImageData()
+    before.index_to_physical_matrix = np.diag((-1, 2, 3, 1))
+    before.extent = extent
+    before.point_data['data'] = range(before.n_points)
+    after = before.points_to_cells().cells_to_points()
+    assert before == after
 
 
 def test_points_to_cells_and_cells_to_points_dimensions_incorrect_number_data():
@@ -1043,10 +1055,10 @@ def test_validate_dim_operation(
         ),
         (
             (1, 1, 1),
-            True,
+            4,
             operator.add,
-            ValueError,
-            'Array has shape () which is not allowed. Shape must be one of [(3,), (1, 3), (3, 1)]',
+            TypeError,
+            "Array has incorrect dtype of 'int64'. The dtype must be a subtype of <class 'bool'>.",
         ),
         (
             (2, 2, 2),
