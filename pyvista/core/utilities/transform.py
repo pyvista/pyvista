@@ -1812,6 +1812,95 @@ class Transform(_vtk.vtkTransform):
             homogeneous=homogeneous,
         )
 
+    @property
+    def translation(self: Transform) -> NumpyArray[float]:
+        """Get the translation component of the current transformation :attr:`matrix`.
+
+        .. note::
+
+            Use :meth:`decompose` instead to get `all` components of the transformation
+            or to get the component as a 4x4 matrix.
+
+        Returns
+        -------
+        numpy.ndarray
+            Translation component ``T`` as a 3-element vector.
+
+        """
+        return self.matrix[:3, 3]
+
+    @property
+    def rotation(self: Transform) -> NumpyArray[float]:
+        """Get the rotation component of the current transformation :attr:`matrix`.
+
+        .. note::
+
+            Use :meth:`decompose` instead to get `all` components of the transformation
+            or to get the component as a 4x4 matrix.
+
+        Returns
+        -------
+        numpy.ndarray
+            Rotation component ``R`` as a 3x3 orthonormal rotation matrix of row vectors.
+
+        """
+        return self.decompose()[1]
+
+    @property
+    def reflection(self: Transform) -> NumpyArray[float]:
+        """Get the reflection component of the current transformation :attr:`matrix`.
+
+        The returned value is ``1`` if there are no reflections and ``-1`` if there
+        are reflections.
+
+        .. note::
+
+            Use :meth:`decompose` instead to get `all` components of the transformation
+            or to get the component as a 4x4 matrix.
+
+        Returns
+        -------
+        numpy.ndarray
+            Reflection component ``N`` as a NumPy scalar.
+
+        """
+        return self.decompose()[2]
+
+    @property
+    def scaling(self: Transform) -> NumpyArray[float]:
+        """Get the scaling component of the current transformation :attr:`matrix`.
+
+        .. note::
+
+            Use :meth:`decompose` instead to get `all` components of the transformation
+            or to get the component as a 4x4 matrix.
+
+        Returns
+        -------
+        numpy.ndarray
+            Scaling component ``S`` as a 3-element vector.
+
+        """
+        return self.decompose()[3]
+
+    @property
+    def shearing(self: Transform) -> NumpyArray[float]:
+        """Get the shearing component of the current transformation :attr:`matrix`.
+
+        .. note::
+
+            Use :meth:`decompose` instead to get `all` components of the transformation
+            or to get the component as a 4x4 matrix.
+
+        Returns
+        -------
+        numpy.ndarray
+            Shear component ``K`` as a 3x3 matrix with ones on the diagonal and
+            shear values in the off-diagonals.
+
+        """
+        return self.decompose()[4]
+
     def invert(self: Transform) -> Transform:  # numpydoc ignore: RT01
         """Invert the current transformation.
 

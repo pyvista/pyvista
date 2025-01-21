@@ -1833,6 +1833,20 @@ def test_transform_decompose_dtype(dtype, homogeneous):
     assert np.issubdtype(K.dtype, dtype)
 
 
+def test_transform_decompose_properties():
+    matrix = np.eye(4)
+    matrix[:3, :] = np.arange(12).reshape((3, 4))
+
+    transform = pv.Transform(matrix)
+    T, R, N, S, K = transform.decompose()
+
+    assert np.allclose(T, transform.translation)
+    assert np.allclose(R, transform.rotation)
+    assert np.allclose(N, transform.reflection)
+    assert np.allclose(S, transform.scaling)
+    assert np.allclose(K, transform.shearing)
+
+
 @pytest.mark.parametrize(
     ('event', 'expected'),
     [
