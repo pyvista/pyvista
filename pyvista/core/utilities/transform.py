@@ -1824,7 +1824,7 @@ class Transform(_vtk.vtkTransform):
         Returns
         -------
         numpy.ndarray
-            Translation component ``T`` as a 3-element vector.
+            Translation component as a 3-element vector.
 
         """
         return self.matrix[:3, 3]
@@ -1841,7 +1841,7 @@ class Transform(_vtk.vtkTransform):
         Returns
         -------
         numpy.ndarray
-            Rotation component ``R`` as a 3x3 orthonormal rotation matrix of row vectors.
+            Rotation component as a 3x3 orthonormal rotation matrix of row vectors.
 
         """
         return self.decompose()[1]
@@ -1861,7 +1861,7 @@ class Transform(_vtk.vtkTransform):
         Returns
         -------
         numpy.ndarray
-            Reflection component ``N`` as a NumPy scalar.
+            Reflection component as a NumPy scalar.
 
         """
         return self.decompose()[2]
@@ -1878,7 +1878,7 @@ class Transform(_vtk.vtkTransform):
         Returns
         -------
         numpy.ndarray
-            Scaling component ``S`` as a 3-element vector.
+            Scaling component as a 3-element vector.
 
         """
         return self.decompose()[3]
@@ -1895,7 +1895,7 @@ class Transform(_vtk.vtkTransform):
         Returns
         -------
         numpy.ndarray
-            Shear component ``K`` as a 3x3 matrix with ones on the diagonal and
+            Shear component as a 3x3 matrix with ones on the diagonal and
             shear values in the off-diagonals.
 
         """
