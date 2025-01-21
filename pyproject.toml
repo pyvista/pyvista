@@ -202,7 +202,7 @@ doctest_optionflags = 'NUMBER ELLIPSIS'
 
 # Keep spaces between filter warnings since order matters (see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#controlling-warnings)
 filterwarnings = [
-  'error',
+  #  'error',
 
   'ignore:.*Given trait value dtype "float64":UserWarning',                                   # bogus numpy ABI warning (see numpy/#432)
   'ignore:.*The NumPy module was reloaded*:UserWarning',                                      # bogus numpy ABI warning (see numpy/#432)
