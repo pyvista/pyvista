@@ -296,6 +296,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', '.*NoneType'),
     (r'py:.*', 'collections.*'),
+    (r'py:.*', '.*PathStrSeq'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),

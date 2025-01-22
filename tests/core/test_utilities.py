@@ -14,6 +14,8 @@ import warnings
 
 import numpy as np
 import pytest
+from pytest_cases import parametrize
+from pytest_cases import parametrize_with_cases
 import vtk
 
 import pyvista as pv
@@ -1058,6 +1060,8 @@ def test_principal_axes_return_std():
     assert np.allclose(ratios_in, ratios_out, atol=0.02)
 
 
+@pytest.mark.filterwarnings('ignore:Mean of empty slice:RuntimeWarning')
+@pytest.mark.filterwarnings('ignore:invalid value encountered in divide:RuntimeWarning')
 def test_principal_axes_empty():
     axes = principal_axes(np.empty((0, 3)))
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
@@ -1370,38 +1374,48 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
-@pytest.mark.parametrize('copy', [True, False])
-@pytest.mark.parametrize(
-    ('obj', 'return_self', 'return_type', 'return_dtype'),
-    [
-        (list(VECTOR), False, np.ndarray, float),
-        (VECTOR, False, np.ndarray, float),
-        (np.array(VECTOR), False, np.ndarray, float),
-        (np.array([VECTOR]), False, np.ndarray, float),
-        (np.array(VECTOR, dtype=float), True, np.ndarray, float),
-        (np.array([VECTOR], dtype=float), True, np.ndarray, float),
-        (pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32),
-        (pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32),
-        (pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float),
-        (
+class CasesTransformApply:
+    def case_list_int(self):
+        return list(VECTOR), False, np.ndarray, float
+
+    def case_tuple_int(self):
+        return VECTOR, False, np.ndarray, float
+
+    def case_array1d_int(self):
+        return np.array(VECTOR), False, np.ndarray, float
+
+    def case_array2d_int(self):
+        return np.array([VECTOR]), False, np.ndarray, float
+
+    def case_array1d_float(self):
+        return np.array(VECTOR, dtype=float), True, np.ndarray, float
+
+    def case_array2d_float(self):
+        return np.array([VECTOR], dtype=float), True, np.ndarray, float
+
+    @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
+    def case_polydata_float32(self):
+        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
+
+    @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
+    def case_polydata_int(self):
+        return pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32
+
+    def case_polydata_float(self):
+        return pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float
+
+    def case_multiblock_float(self):
+        return (
             pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
             True,
             pv.MultiBlock,
             float,
-        ),
-    ],
-    ids=[
-        'list-int',
-        'tuple-int',
-        'array1d-int',
-        'array2d-int',
-        'array1d-float',
-        'array2d-float',
-        'polydata-float32',
-        'polydata-int',
-        'polydata-float',
-        'multiblock-float',
-    ],
+        )
+
+
+@parametrize(copy=[True, False])
+@parametrize_with_cases(
+    ('obj', 'return_self', 'return_type', 'return_dtype'), cases=CasesTransformApply
 )
 def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
     def _get_points_from_object(obj_):
