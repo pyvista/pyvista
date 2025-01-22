@@ -1661,7 +1661,11 @@ class DatasetCardFetcher:
                 is_single = num_datasets == 1
                 is_homo = num_datasets >= 2 and num_types == 1
                 is_hetero = num_datasets >= 2 and num_types > 1
-                if (is_single and kind == 'single') or (is_homo and kind == 'homo') or (is_hetero and kind == 'hetero'):
+                if (
+                    (is_single and kind == 'single')
+                    or (is_homo and kind == 'homo')
+                    or (is_hetero and kind == 'hetero')
+                ):
                     dataset_names.append(name)
         return dataset_names
 

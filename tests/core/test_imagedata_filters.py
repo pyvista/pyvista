@@ -208,7 +208,7 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     scalars,
 ):
     # Determine expected output
-    if output_mesh_type == 'triangles' or output_mesh_type is None and smoothing:
+    if output_mesh_type == 'triangles' or (output_mesh_type is None and smoothing):
         expected_celltype = pv.CellType.TRIANGLE
         cell_multiplier = 2  # quads are subdivided into 2 triangles
     else:
