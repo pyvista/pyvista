@@ -54,7 +54,6 @@ from .tools import parse_font_family
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
 
-    from pyvista.core._typing_core import Number
     from pyvista.core._typing_core import VectorLike
 
     from ._typing import ColorLike
@@ -667,7 +666,7 @@ class _SilhouetteConfig(_ThemeConfig):
         return self._decimate  # type: ignore[return-value]
 
     @decimate.setter
-    def decimate(self, decimate: float):
+    def decimate(self, decimate: float | None):
         if decimate is None:
             self._decimate = None
         else:
@@ -1071,7 +1070,7 @@ class _Font(_ThemeConfig):
         return self._title_size  # type: ignore[return-value]
 
     @title_size.setter
-    def title_size(self, title_size: int):
+    def title_size(self, title_size: int | None):
         if title_size is None:
             self._title_size = None
         else:
@@ -1092,7 +1091,7 @@ class _Font(_ThemeConfig):
         return self._label_size  # type: ignore[return-value]
 
     @label_size.setter
-    def label_size(self, label_size: int):
+    def label_size(self, label_size: int | None):
         if label_size is None:
             self._label_size = None
         else:
@@ -1467,7 +1466,7 @@ class _TrameConfig(_ThemeConfig):
         self._default_mode = 'trame'
 
     @property
-    def interactive_ratio(self) -> Number:  # numpydoc ignore=RT01
+    def interactive_ratio(self) -> float:  # numpydoc ignore=RT01
         """Return or set the interactive ratio for PyVista Trame views.
 
         Examples
@@ -1479,11 +1478,11 @@ class _TrameConfig(_ThemeConfig):
         return self._interactive_ratio
 
     @interactive_ratio.setter
-    def interactive_ratio(self, interactive_ratio: Number):
+    def interactive_ratio(self, interactive_ratio: float):
         self._interactive_ratio = interactive_ratio  # type: ignore[assignment]
 
     @property
-    def still_ratio(self) -> Number:  # numpydoc ignore=RT01
+    def still_ratio(self) -> float:  # numpydoc ignore=RT01
         """Return or set the still ratio for PyVista Trame views.
 
         Examples
@@ -1495,7 +1494,7 @@ class _TrameConfig(_ThemeConfig):
         return self._still_ratio
 
     @still_ratio.setter
-    def still_ratio(self, still_ratio: Number):
+    def still_ratio(self, still_ratio: float):
         self._still_ratio = still_ratio  # type: ignore[assignment]
 
     @property
@@ -1908,23 +1907,21 @@ class Theme(_ThemeConfig):
 
         Common display argument to make sure all else is constant
 
-        >>> dargs = dict(
-        ...     scalars='Elevation', cmap='rainbow', show_edges=True
-        ... )
+        >>> dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
         >>> p = pv.Plotter(shape=(1, 2))
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=False,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     **dargs,
         ... )
         >>> p.subplot(0, 1)
         >>> _ = p.add_mesh(
         ...     cyl,
         ...     interpolate_before_map=True,
         ...     scalar_bar_args={'title': 'Elevation - interpolated'},
-        ...     **dargs
+        ...     **dargs,
         ... )
         >>> p.link_views()
         >>> p.camera_position = [

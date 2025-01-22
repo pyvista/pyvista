@@ -31,9 +31,11 @@ from pyvista.core.utilities.misc import no_new_attr
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Sequence
 
+    from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
+    from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
     from pyvista.core.dataset import DataSet
     from pyvista.core.pointset import PolyData
 
@@ -43,7 +45,7 @@ DOUBLE_PRECISION = _vtk.vtkAlgorithm.DOUBLE_PRECISION
 
 
 def translate(
-    surf: DataSet,
+    surf: ConcreteDataSetType,
     center: VectorLike[float] = (0.0, 0.0, 0.0),
     direction: VectorLike[float] = (1.0, 0.0, 0.0),
 ) -> None:
@@ -82,9 +84,9 @@ def translate(
     trans[:3, 2] = normz
     trans[3, 3] = 1
 
-    surf.transform(trans)  # type: ignore[misc]
+    surf.transform(trans, inplace=True)
     if not np.allclose(center, [0.0, 0.0, 0.0]):
-        surf.points += np.array(center, dtype=surf.points.dtype)  # type: ignore[misc]
+        surf.points += np.array(center, dtype=surf.points.dtype)
 
 
 if _vtk.vtk_version_info < (9, 3):
@@ -617,9 +619,7 @@ class CylinderSource(_vtk.vtkCylinderSource):
     Visualize the output of :class:`CylinderSource` in a 3D plot.
 
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(
-    ...     pv.CylinderSource().output, show_edges=True, line_width=5
-    ... )
+    >>> _ = pl.add_mesh(pv.CylinderSource().output, show_edges=True, line_width=5)
     >>> pl.show()
 
     The above examples are similar in terms of their behavior.
@@ -1003,7 +1003,7 @@ class Text3DSource(vtkVectorText):
         return self.GetText()
 
     @string.setter
-    def string(self: Text3DSource, string: str) -> None:
+    def string(self: Text3DSource, string: str | None) -> None:
         self.SetText('' if string is None else string)
 
     @property
@@ -1057,7 +1057,7 @@ class Text3DSource(vtkVectorText):
         return self._width
 
     @width.setter
-    def width(self: Text3DSource, width: float) -> None:
+    def width(self: Text3DSource, width: float | None) -> None:
         _check_range(width, rng=(0, float('inf')), parm_name='width') if width is not None else None
         self._width = width
 
@@ -1067,7 +1067,7 @@ class Text3DSource(vtkVectorText):
         return self._height
 
     @height.setter
-    def height(self: Text3DSource, height: float) -> None:
+    def height(self: Text3DSource, height: float | None) -> None:
         (
             _check_range(height, rng=(0, float('inf')), parm_name='height')
             if height is not None
@@ -1081,7 +1081,7 @@ class Text3DSource(vtkVectorText):
         return self._depth
 
     @depth.setter
-    def depth(self: Text3DSource, depth: float) -> None:
+    def depth(self: Text3DSource, depth: float | None) -> None:
         _check_range(depth, rng=(0, float('inf')), parm_name='depth') if depth is not None else None
         self._depth = depth
 
@@ -2291,15 +2291,19 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
                 * ``'dodecahedron'`` or ``4``
 
         """
+        if isinstance(kind, int):
+            if kind not in range(5):
+                raise ValueError(f'Invalid Platonic solid index "{kind}".')
+            self.SetSolidType(kind)
+            return
+
         if isinstance(kind, str):
             if kind not in self._kinds:
                 raise ValueError(f'Invalid Platonic solid kind "{kind}".')
-            kind = self._kinds[kind]
-        elif isinstance(kind, int) and kind not in range(5):
-            raise ValueError(f'Invalid Platonic solid index "{kind}".')
-        elif not isinstance(kind, int):
-            raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
-        self.SetSolidType(kind)
+            self.SetSolidType(self._kinds[kind])
+            return
+
+        raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
 
     @property
     def output(self: PlatonicSolidSource) -> PolyData:
@@ -3319,9 +3323,7 @@ class AxesGeometrySource:
         Get the symmetric bounds of the axes.
 
         >>> import pyvista as pv
-        >>> axes_geometry_source = pv.AxesGeometrySource(
-        ...     symmetric_bounds=True
-        ... )
+        >>> axes_geometry_source = pv.AxesGeometrySource(symmetric_bounds=True)
         >>> axes_geometry_source.output.bounds
         BoundsTuple(x_min=-1.0, x_max=1.0, y_min=-1.0, y_max=1.0, z_min=-1.0, z_max=1.0)
 
@@ -3342,21 +3344,17 @@ class AxesGeometrySource:
 
         Create actors.
 
-        >>> axes_sym = pv.AxesAssembly(
-        ...     orientation=(90, 0, 0), symmetric_bounds=True
-        ... )
-        >>> axes_asym = pv.AxesAssembly(
-        ...     orientation=(90, 0, 0), symmetric_bounds=False
-        ... )
+        >>> axes_sym = pv.AxesAssembly(orientation=(90, 0, 0), symmetric_bounds=True)
+        >>> axes_asym = pv.AxesAssembly(orientation=(90, 0, 0), symmetric_bounds=False)
 
         Show multi-window plot.
 
         >>> pl = pv.Plotter(shape=(1, 2))
         >>> pl.subplot(0, 0)
-        >>> _ = pl.add_text("Symmetric bounds")
+        >>> _ = pl.add_text('Symmetric bounds')
         >>> _ = pl.add_actor(axes_sym)
         >>> pl.subplot(0, 1)
-        >>> _ = pl.add_text("Asymmetric bounds")
+        >>> _ = pl.add_text('Asymmetric bounds')
         >>> _ = pl.add_actor(axes_asym)
         >>> pl.show()
 
@@ -3515,7 +3513,9 @@ class AxesGeometrySource:
         return self._shaft_type
 
     @shaft_type.setter
-    def shaft_type(self: AxesGeometrySource, shaft_type: GeometryTypes | DataSet) -> None:
+    def shaft_type(
+        self: AxesGeometrySource, shaft_type: GeometryTypes | ConcreteDataSetAlias
+    ) -> None:
         self._shaft_type = self._set_normalized_datasets(part=_PartEnum.shaft, geometry=shaft_type)
 
     @property
@@ -3556,11 +3556,11 @@ class AxesGeometrySource:
         return self._tip_type
 
     @tip_type.setter
-    def tip_type(self: AxesGeometrySource, tip_type: str | DataSet) -> None:
+    def tip_type(self: AxesGeometrySource, tip_type: str | ConcreteDataSetAlias) -> None:
         self._tip_type = self._set_normalized_datasets(part=_PartEnum.tip, geometry=tip_type)
 
     def _set_normalized_datasets(
-        self: AxesGeometrySource, part: _PartEnum, geometry: str | DataSet
+        self: AxesGeometrySource, part: _PartEnum, geometry: str | ConcreteDataSetAlias
     ) -> str:
         geometry_name, new_datasets = AxesGeometrySource._make_axes_parts(geometry)
         datasets = (
@@ -3679,8 +3679,8 @@ class AxesGeometrySource:
             return mesh
         else:
             _validation.check_contains(
-                item=geometry,
-                container=AxesGeometrySource.GEOMETRY_TYPES,
+                AxesGeometrySource.GEOMETRY_TYPES,
+                must_contain=geometry,
                 name='Geometry',
             )
             raise NotImplementedError(
@@ -3688,8 +3688,8 @@ class AxesGeometrySource:
             )  # pragma: no cover
 
     @staticmethod
-    def _make_any_part(geometry: str | DataSet) -> tuple[str, PolyData]:
-        part: DataSet
+    def _make_any_part(geometry: str | ConcreteDataSetType) -> tuple[str, PolyData]:
+        part: ConcreteDataSetAlias
         part_poly: PolyData
         if isinstance(geometry, str):
             name = geometry
@@ -3726,7 +3726,7 @@ class AxesGeometrySource:
 
     @staticmethod
     def _make_axes_parts(
-        geometry: str | DataSet,
+        geometry: str | ConcreteDataSetAlias,
     ) -> tuple[str, tuple[PolyData, PolyData, PolyData]]:
         """Return three axis-aligned normalized parts centered at the origin."""
         name, part_z = AxesGeometrySource._make_any_part(geometry)
@@ -3793,9 +3793,7 @@ class OrthogonalPlanesSource:
 
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(human, scalars='Color', rgb=True)
-    >>> _ = pl.add_mesh(
-    ...     output, opacity=0.3, show_edges=True, line_width=10
-    ... )
+    >>> _ = pl.add_mesh(output, opacity=0.3, show_edges=True, line_width=10)
     >>> pl.view_yz()
     >>> pl.show()
 
@@ -3830,7 +3828,7 @@ class OrthogonalPlanesSource:
     ) -> None:
         def _check_sign(sign_: str) -> None:
             allowed = ['+', '-']
-            _validation.check_contains(item=sign_, container=allowed, name='normal sign')
+            _validation.check_contains(allowed, must_contain=sign_, name='normal sign')
 
         valid_sign: Sequence[str]
         _validation.check_instance(sign, (tuple, list, str), name='normal sign')
@@ -3938,7 +3936,10 @@ class OrthogonalPlanesSource:
 
         """
         valid_distance = _validation.validate_array3(
-            distance, broadcast=True, dtype_out=float, to_tuple=True
+            distance,  # type: ignore[arg-type]
+            broadcast=True,
+            dtype_out=float,
+            to_tuple=True,
         )
         for source, dist in zip(self.sources, valid_distance):
             source.push(dist)
@@ -4100,9 +4101,7 @@ class CubeFacesSource(CubeSource):
     Generate a frame instead of full faces.
 
     >>> mesh = pv.ParametricEllipsoid(5, 4, 3)
-    >>> cube_faces_source = pv.CubeFacesSource(
-    ...     bounds=mesh.bounds, frame_width=0.1
-    ... )
+    >>> cube_faces_source = pv.CubeFacesSource(bounds=mesh.bounds, frame_width=0.1)
     >>> output = cube_faces_source.output
 
     >>> pl = pv.Plotter()

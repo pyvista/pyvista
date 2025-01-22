@@ -5,10 +5,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Literal
+from typing import Union
+from typing import cast
 from typing import overload
 
 import numpy as np
 
+import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
@@ -109,9 +112,7 @@ class Transform(_vtk.vtkTransform):
 
     Using ``*`` performs the same concatenation as calling :meth:`scale`.
 
-    >>> np.array_equal(
-    ...     scaling_T.matrix, pv.Transform().scale(scale_factor).matrix
-    ... )
+    >>> np.array_equal(scaling_T.matrix, pv.Transform().scale(scale_factor).matrix)
     True
 
     Concatenate the two transformations using addition. This will concatenate with
@@ -209,8 +210,8 @@ class Transform(_vtk.vtkTransform):
     Note how the meshes have different positions since post- and pre-multiplication
     produce different transformations.
 
-    >>> mesh_post = pv.Sphere().transform(transform_post)
-    >>> mesh_pre = pv.Cone().transform(transform_pre)
+    >>> mesh_post = pv.Sphere().transform(transform_post, inplace=False)
+    >>> mesh_pre = pv.Cone().transform(transform_pre, inplace=False)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_post, color='goldenrod')
     >>> _ = pl.add_mesh(mesh_pre, color='teal')
@@ -244,7 +245,7 @@ class Transform(_vtk.vtkTransform):
     Transform the mesh by its inverse to restore it to its original un-scaled state
     and positioning at the origin.
 
-    >>> mesh_pre_inverted = mesh_pre.transform(inverse_matrix)
+    >>> mesh_pre_inverted = mesh_pre.transform(inverse_matrix, inplace=False)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_pre_inverted, color='teal')
     >>> _ = pl.add_axes_at_origin()
@@ -454,7 +455,7 @@ class Transform(_vtk.vtkTransform):
     @multiply_mode.setter
     def multiply_mode(self: Transform, multiply_mode: Literal['pre', 'post']) -> None:
         _validation.check_contains(
-            item=multiply_mode, container=['pre', 'post'], name='multiply mode'
+            ['pre', 'post'], must_contain=multiply_mode, name='multiply mode'
         )
         self.pre_multiply() if multiply_mode == 'pre' else self.post_multiply()
 
@@ -533,7 +534,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.scale`
+        :meth:`pyvista.DataSetFilters.scale`
             Scale a mesh.
 
         Examples
@@ -584,7 +585,10 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_factor = _validation.validate_array3(
-            factor, broadcast=True, dtype_out=float, name='scale factor'
+            factor,  # type: ignore[arg-type]
+            broadcast=True,
+            dtype_out=float,
+            name='scale factor',
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
@@ -628,7 +632,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.reflect`
+        :meth:`pyvista.DataSetFilters.reflect`
             Reflect a mesh.
 
         Examples
@@ -655,7 +659,9 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_normal = _validation.validate_array3(
-            normal, dtype_out=float, name='reflection normal'
+            normal,  # type: ignore[arg-type]
+            dtype_out=float,
+            name='reflection normal',
         )
         transform = reflection(valid_normal)
         return self._concatenate_with_translations(
@@ -694,7 +700,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_x
+        pyvista.DataSetFilters.flip_x
             Flip a mesh about the x-axis.
 
         Examples
@@ -754,7 +760,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_y
+        pyvista.DataSetFilters.flip_y
             Flip a mesh about the y-axis.
 
         Examples
@@ -814,7 +820,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.flip_z
+        pyvista.DataSetFilters.flip_z
             Flip a mesh about the z-axis.
 
         Examples
@@ -868,7 +874,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        :meth:`pyvista.DataSet.translate`
+        :meth:`pyvista.DataSetFilters.translate`
             Translate a mesh.
 
         Examples
@@ -894,7 +900,9 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_vector = _validation.validate_array3(
-            vector, dtype_out=float, name='translation vector'
+            vector,  # type: ignore[arg-type]
+            dtype_out=float,
+            name='translation vector',
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)
@@ -911,7 +919,7 @@ class Transform(_vtk.vtkTransform):
 
         Create a rotation matrix and :meth:`concatenate` it with the current
         transformation :attr:`matrix` according to pre-multiply or post-multiply
-        semantics.
+        semantics. The rotation may be right-handed or left-handed.
 
         Internally, the matrix is stored in the :attr:`matrix_list`.
 
@@ -936,7 +944,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate
+        pyvista.DataSetFilters.rotate
             Rotate a mesh.
 
         Examples
@@ -969,9 +977,7 @@ class Transform(_vtk.vtkTransform):
         Rotate about a point. Check the :attr:`matrix_list` to see that a translation
         is added before and after the rotation.
 
-        >>> transform = pv.Transform().rotate(
-        ...     rotation_z_90, point=(1, 2, 3)
-        ... )
+        >>> transform = pv.Transform().rotate(rotation_z_90, point=(1, 2, 3))
         >>> translation_to_origin = transform.matrix_list[0]
         >>> translation_to_origin
         array([[ 1.,  0.,  0., -1.],
@@ -994,9 +1000,7 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 0., 1.]])
 
         """
-        valid_rotation = _validation.validate_transform3x3(
-            rotation, must_be_finite=self.check_finite, name='rotation'
-        )
+        valid_rotation = _validation.validate_rotation(rotation)
         return self._concatenate_with_translations(
             valid_rotation, point=point, multiply_mode=multiply_mode
         )
@@ -1037,7 +1041,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_x
+        pyvista.DataSetFilters.rotate_x
             Rotate a mesh about the x-axis.
 
         Examples
@@ -1106,7 +1110,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_y
+        pyvista.DataSetFilters.rotate_y
             Rotate a mesh about the y-axis.
 
         Examples
@@ -1175,7 +1179,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_z
+        pyvista.DataSetFilters.rotate_z
             Rotate a mesh about the z-axis.
 
         Examples
@@ -1248,7 +1252,7 @@ class Transform(_vtk.vtkTransform):
 
         See Also
         --------
-        pyvista.DataSet.rotate_vector
+        pyvista.DataSetFilters.rotate_vector
             Rotate a mesh about a vector.
 
         Examples
@@ -1558,7 +1562,7 @@ class Transform(_vtk.vtkTransform):
 
         Apply a transformation to a points array.
 
-        >>> points = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> points = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
         >>> transformed_points = transform.apply(points)
         >>> transformed_points
         array([[ 2.,  4.,  6.],
@@ -1570,23 +1574,20 @@ class Transform(_vtk.vtkTransform):
         >>> transformed_dataset = transform.apply(dataset)
         >>> transformed_dataset.points
         pyvista_ndarray([[ 2.,  4.,  6.],
-                         [ 8., 10., 12.]], dtype=float32)
+                         [ 8., 10., 12.]])
 
         Apply the inverse.
 
         >>> inverted_dataset = transform.apply(dataset, inverse=True)
         >>> inverted_dataset.points
         pyvista_ndarray([[0.5, 1. , 1.5],
-                         [2. , 2.5, 3. ]], dtype=float32)
+                         [2. , 2.5, 3. ]])
 
         """
-        # avoid circular import
-        from pyvista.core.composite import MultiBlock
-        from pyvista.core.dataset import DataSet
-
         inplace = not copy
         # Transform dataset
-        if isinstance(obj, (DataSet, MultiBlock)):
+        if isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock)):
+            obj = cast(Union[pyvista.ConcreteDataSetType, pyvista.MultiBlock], obj)
             return obj.transform(
                 self.copy().invert() if inverse else self,
                 inplace=inplace,

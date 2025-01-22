@@ -16,6 +16,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import BoundsTuple
 from pyvista.core import _validation
+from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
@@ -342,7 +343,7 @@ class AxesAssembly(_XYZAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the axes. This is the point about which all rotations take place. The
-        rotations are defined by the :attr:`orientation`.
+        rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the axes.
@@ -394,9 +395,7 @@ class AxesAssembly(_XYZAssembly):
 
     Position and orient the axes in space.
 
-    >>> axes = pv.AxesAssembly(
-    ...     position=(1.0, 2.0, 3.0), orientation=(10, 20, 30)
-    ... )
+    >>> axes = pv.AxesAssembly(position=(1.0, 2.0, 3.0), orientation=(10, 20, 30))
     >>> pl = pv.Plotter()
     >>> _ = pl.add_actor(axes)
     >>> pl.show()
@@ -490,10 +489,7 @@ class AxesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the axes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
@@ -778,9 +774,7 @@ class AxesAssembly(_XYZAssembly):
 
         Set :attr:`~pyvista.Property.style` for a single axis and specific part.
 
-        >>> axes_assembly.set_actor_prop(
-        ...     'style', 'wireframe', axis='x', part='shaft'
-        ... )
+        >>> axes_assembly.set_actor_prop('style', 'wireframe', axis='x', part='shaft')
         >>> axes_assembly.get_actor_prop('style')
         _AxesPropTuple(x_shaft='Wireframe', y_shaft='Surface', z_shaft='Surface', x_tip='Surface', y_tip='Surface', z_tip='Surface')
 
@@ -904,45 +898,6 @@ def _validate_label_sequence(labels: Sequence[str], n_labels: int | Sequence[int
     return labels
 
 
-def _validate_color_sequence(
-    color: ColorLike | Sequence[ColorLike],
-    n_colors: int | None = None,
-) -> tuple[Color, ...]:
-    """Validate a color sequence.
-
-    If `n_colors` is specified, the output will have `n` colors. For single-color
-    inputs, the color is copied and a sequence of `n` identical colors is returned.
-    For inputs with multiple colors, the number of colors in the input must
-    match `n_colors`.
-
-    If `n_colors` is None, no broadcasting or length-checking is performed.
-    """
-    try:
-        # Assume we have one color
-        color_list = [Color(color)]  # type: ignore[arg-type]
-        n_colors = 1 if n_colors is None else n_colors
-        return tuple(color_list * n_colors)
-    except ValueError:
-        if isinstance(color, (tuple, list)):
-            try:
-                color_list = [_validate_color_sequence(c, n_colors=1)[0] for c in color]
-                if len(color_list) == 1:
-                    n_colors = 1 if n_colors is None else n_colors
-                    color_list = color_list * n_colors
-
-                # Only return if we have the correct number of colors
-                if n_colors is not None and len(color_list) == n_colors:
-                    return tuple(color_list)
-            except ValueError:
-                pass
-    raise ValueError(
-        f'Invalid color(s):\n'
-        f'\t{color}\n'
-        f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.',
-    )
-
-
 class AxesAssemblySymmetric(AxesAssembly):
     """Symmetric assembly of arrow-style axes parts.
 
@@ -1007,7 +962,7 @@ class AxesAssemblySymmetric(AxesAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the axes. This is the point about which all rotations take place. The
-        rotations are defined by the :attr:`orientation`.
+        rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the axes.
@@ -1050,7 +1005,7 @@ class AxesAssemblySymmetric(AxesAssembly):
     only show text for the positive axes.
 
     >>> axes_assembly = pv.AxesAssemblySymmetric(
-    ...     x_label=('X', ""), y_label=('Y', ""), z_label=('Z', "")
+    ...     x_label=('X', ''), y_label=('Y', ''), z_label=('Z', '')
     ... )
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(pv.Cone())
@@ -1341,13 +1296,13 @@ class PlanesAssembly(_XYZAssembly):
 
     label_offset : float | VectorLike[float], optional
         Vertical offset of the text labels. The offset is proportional to
-        the :attr:`length` of the assembly. Positive values move the labels away
+        the :attr:`~pyvista.Prop3D.length` of the assembly. Positive values move the labels away
         from the center; negative values move them towards it.
 
     label_size : int, default: 50
         Size of the text labels. If :attr:`label_mode` is ``'2D'``, this is the
         font size. If :attr:`label_mode` is ``'3D'``, the labels are scaled
-        proportional to the :attr:`length` of the assembly.
+        proportional to the :attr:`~pyvista.Prop3D.length` of the assembly.
 
     label_mode : '2D' | '3D', default: '2D'
         Mode to use for text labels. In 2D mode, the label actors are always visible
@@ -1379,7 +1334,7 @@ class PlanesAssembly(_XYZAssembly):
 
     origin : VectorLike[float], default: (0.0, 0.0, 0.0)
         Origin of the assembly. This is the point about which all rotations take place.
-        The rotations are defined by the :attr:`orientation`.
+        The rotations are defined by the :attr:`~pyvista.Prop3D.orientation`.
 
     scale : VectorLike[float], default: (1.0, 1.0, 1.0)
         Scaling factor applied to the assembly.
@@ -1552,10 +1507,7 @@ class PlanesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the planes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         attr = [
@@ -1745,7 +1697,7 @@ class PlanesAssembly(_XYZAssembly):
         return self._label_position
 
     @label_position.setter
-    def label_position(self, position: int | VectorLike[int] | None):
+    def label_position(self, position: int | VectorLike[int]):
         self._label_position = _validation.validate_array3(
             position,
             broadcast=True,
@@ -1805,7 +1757,9 @@ class PlanesAssembly(_XYZAssembly):
             else _validate_label_sequence(edge, n_labels=3, name='label edge')
         )
         for edge_ in valid_edge:
-            _validation.check_contains(container=['top', 'bottom', 'right', 'left'], item=edge_)
+            _validation.check_contains(
+                ['top', 'bottom', 'right', 'left'], must_contain=edge_, name='label_edge'
+            )
         self._label_edge = tuple(valid_edge)
         self._update_label_positions()
 
@@ -1813,7 +1767,7 @@ class PlanesAssembly(_XYZAssembly):
     def label_offset(self) -> float:  # numpydoc ignore=RT01
         """Vertical offset of the text labels.
 
-        The offset is proportional to the :attr:`length` of the assembly. Positive
+        The offset is proportional to the :attr:`~pyvista.Prop3D.length` of the assembly. Positive
         values move the labels away from the center; negative values move them
         towards it.
         """
@@ -1838,7 +1792,7 @@ class PlanesAssembly(_XYZAssembly):
 
     @label_mode.setter
     def label_mode(self, mode: Literal['2D', '3D']):
-        _validation.check_contains(item=mode, container=['2D', '3D'])
+        _validation.check_contains(['2D', '3D'], must_contain=mode, name='label_mode')
         self._label_mode = mode
         use_2D = mode == '2D'
         for axis in self._axis_actors:
@@ -2007,7 +1961,8 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.SetUseBounds(False)
 
         # Format title positioning
-        self.SetTitleOffset(0)
+        offset = (0,) if pv.vtk_version_info < (9, 3) else (0, 0)
+        self.SetTitleOffset(*offset)
         self.SetLabelOffset(0)
 
         # For 2D mode only

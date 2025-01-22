@@ -23,6 +23,8 @@ concurrency:
 env:
   USE_CACHE: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.cache == 'true') || (github.event_name == 'pull_request') || (github.event_name == 'push') }}
   PYDEVD_DISABLE_FILE_VALIDATION: "1"
+  PYTEST_ADDOPTS: "--color=yes"
+  FORCE_COLOR: "True"
 
 jobs:
   doc:
@@ -115,6 +117,15 @@ jobs:
         with:
           name: docs-build
           path: doc/_build/html/
+
+      - name: Upload non-interactive HTML documentation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-build-light
+          path: |
+            doc/_build/html/
+            !doc/_build/html/**/*.vtksz
 
       - uses: actions/upload-artifact@v4
         with:

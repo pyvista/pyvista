@@ -30,6 +30,8 @@ Reader Classes
     DEMReader
     DICOMReader
     EnSightReader
+    ExodusIIBlockSet
+    ExodusIIReader
     FacetReader
     FLUENTCFFReader
     FluentReader
@@ -45,6 +47,7 @@ Reader Classes
     MetaImageReader
     MINCImageReader
     MultiBlockPlot3DReader
+    Nek5000Reader
     NIFTIReader
     NRRDReader
     OBJReader

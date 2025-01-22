@@ -45,6 +45,9 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Generator
     from collections.abc import Iterator
 
+    from typing_extensions import Self
+
+    from ._typing_core import ConcreteDataSetType
     from ._typing_core import MatrixLike
     from ._typing_core import NumpyArray
     from ._typing_core import VectorLike
@@ -54,14 +57,50 @@ DEFAULT_VECTOR_KEY = '_vectors'
 
 
 class ActiveArrayInfoTuple(NamedTuple):
-    """Active array info tuple to provide legacy support."""
+    """Active array info tuple.
+
+    Parameters
+    ----------
+    association : pyvista.core.utilities.arrays.FieldAssociation
+        Association of the array.
+
+    name : str
+        The name of the array.
+
+    """
 
     association: FieldAssociation
     name: str | None
 
+    def copy(self: ActiveArrayInfoTuple) -> ActiveArrayInfoTuple:
+        """Return a copy of this object.
+
+        Returns
+        -------
+        ActiveArrayInfo
+            A copy of this object.
+
+        """
+        return ActiveArrayInfoTuple(self.association, self.name)
+
+
+class _ActiveArrayExistsInfoTuple(NamedTuple):
+    """Active array info tuple for arrays that exist.
+
+    This named tuple is similar to ActiveArrayInfoTuple except the
+    `name` attribute cannot be `None`.
+    """
+
+    association: FieldAssociation
+    name: str
+
 
 class ActiveArrayInfo:
     """Active array info class with support for pickling.
+
+    .. deprecated:: 0.45
+
+        Use :class:`pyvista.core.dataset.ActiveArrayInfoTuple` instead.
 
     Parameters
     ----------
@@ -78,6 +117,11 @@ class ActiveArrayInfo:
         """Initialize."""
         self.association = association
         self.name = name
+        # Deprecated on v0.45.0, estimated removal on v0.48.0
+        warnings.warn(
+            'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.',
+            PyVistaDeprecationWarning,
+        )
 
     def copy(self: ActiveArrayInfo) -> ActiveArrayInfo:
         """Return a copy of this object.
@@ -142,20 +186,20 @@ class DataSet(DataSetFilters, DataObject):
 
     plot = pyvista._plot.plot
 
-    def __init__(self: DataSet, *args, **kwargs) -> None:
+    def __init__(self: Self, *args, **kwargs) -> None:
         """Initialize the common object."""
         super().__init__(*args, **kwargs)
         self._last_active_scalars_name: str | None = None
-        self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
-        self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
+        self._active_scalars_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
+        self._active_vectors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
+        self._active_tensors_info = ActiveArrayInfoTuple(FieldAssociation.POINT, name=None)
 
-    def __getattr__(self: DataSet, item: str) -> Any:
+    def __getattr__(self: Self, item: str) -> Any:
         """Get attribute from base class if not found."""
         return super().__getattribute__(item)
 
     @property
-    def active_scalars_info(self: DataSet) -> ActiveArrayInfo:
+    def active_scalars_info(self: Self) -> ActiveArrayInfoTuple:
         """Return the active scalar's association and name.
 
         Association refers to the data association (e.g. point, cell, or
@@ -186,8 +230,7 @@ class DataSet(DataSetFilters, DataObject):
         ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Z Height')
 
         """
-        field: FieldAssociation = self._active_scalars_info.association
-        name: str | None = self._active_scalars_info.name
+        field, name = self._active_scalars_info
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
         if name in exclude:
             name = self._last_active_scalars_name
@@ -203,10 +246,10 @@ class DataSet(DataSetFilters, DataObject):
 
         if name is None:
             # check for the active scalars in point or cell arrays
-            self._active_scalars_info = ActiveArrayInfo(field, None)
+            self._active_scalars_info = ActiveArrayInfoTuple(field, None)
             for attr in [self.point_data, self.cell_data]:
                 if attr.active_scalars_name is not None:
-                    self._active_scalars_info = ActiveArrayInfo(
+                    self._active_scalars_info = ActiveArrayInfoTuple(
                         attr.association,
                         attr.active_scalars_name,
                     )
@@ -215,7 +258,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_scalars_info
 
     @property
-    def active_vectors_info(self: DataSet) -> ActiveArrayInfo:
+    def active_vectors_info(self: Self) -> ActiveArrayInfoTuple:
         """Return the active vector's association and name.
 
         Association refers to the data association (e.g. point, cell, or
@@ -247,8 +290,7 @@ class DataSet(DataSetFilters, DataObject):
         ActiveArrayInfoTuple(association=<FieldAssociation.POINT: 0>, name='Normals')
 
         """
-        field: FieldAssociation = self._active_vectors_info.association
-        name: str | None = self._active_vectors_info.name
+        field, name = self._active_vectors_info
 
         # verify this field is still valid
         if name is not None:
@@ -261,17 +303,17 @@ class DataSet(DataSetFilters, DataObject):
 
         if name is None:
             # check for the active vectors in point or cell arrays
-            self._active_vectors_info = ActiveArrayInfo(field, None)
+            self._active_vectors_info = ActiveArrayInfoTuple(field, None)
             for attr in [self.point_data, self.cell_data]:
                 name = attr.active_vectors_name
                 if name is not None:
-                    self._active_vectors_info = ActiveArrayInfo(attr.association, name)
+                    self._active_vectors_info = ActiveArrayInfoTuple(attr.association, name)
                     break
 
         return self._active_vectors_info
 
     @property
-    def active_tensors_info(self: DataSet) -> ActiveArrayInfo:
+    def active_tensors_info(self: Self) -> ActiveArrayInfoTuple:
         """Return the active tensor's field and name: [field, name].
 
         Returns
@@ -283,7 +325,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._active_tensors_info
 
     @property
-    def active_vectors(self: DataSet) -> pyvista_ndarray | None:
+    def active_vectors(self: Self) -> pyvista_ndarray | None:
         """Return the active vectors array.
 
         Returns
@@ -310,8 +352,7 @@ class DataSet(DataSetFilters, DataObject):
                         dtype=float32)
 
         """
-        field: FieldAssociation = self.active_vectors_info.association
-        name: str | None = self.active_vectors_info.name
+        field, name = self.active_vectors_info
         if name is not None:
             try:
                 if field is FieldAssociation.POINT:
@@ -323,7 +364,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors(self: DataSet) -> NumpyArray[float] | None:
+    def active_tensors(self: Self) -> NumpyArray[float] | None:
         """Return the active tensors array.
 
         Returns
@@ -345,7 +386,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_tensors_name(self: DataSet) -> str | None:
+    def active_tensors_name(self: Self) -> str | None:
         """Return the name of the active tensor array.
 
         Returns
@@ -357,7 +398,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_tensors_info.name
 
     @active_tensors_name.setter
-    def active_tensors_name(self: DataSet, name: str | None) -> None:
+    def active_tensors_name(self: Self, name: str | None) -> None:
         """Set the name of the active tensor array.
 
         Parameters
@@ -369,7 +410,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_tensors(name)
 
     @property
-    def active_vectors_name(self: DataSet) -> str | None:
+    def active_vectors_name(self: Self) -> str | None:
         """Return the name of the active vectors array.
 
         Returns
@@ -393,7 +434,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_vectors_info.name
 
     @active_vectors_name.setter
-    def active_vectors_name(self: DataSet, name: str | None) -> None:
+    def active_vectors_name(self: Self, name: str | None) -> None:
         """Set the name of the active vectors array.
 
         Parameters
@@ -405,7 +446,7 @@ class DataSet(DataSetFilters, DataObject):
         self.set_active_vectors(name)
 
     @property  # type: ignore[explicit-override, override]
-    def active_scalars_name(self: DataSet) -> str | None:
+    def active_scalars_name(self: Self) -> str | None:
         """Return the name of the active scalars.
 
         Returns
@@ -428,7 +469,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_scalars_info.name
 
     @active_scalars_name.setter
-    def active_scalars_name(self: DataSet, name: str | None) -> None:
+    def active_scalars_name(self: Self, name: str | None) -> None:
         """Set the name of the active scalars.
 
         Parameters
@@ -439,8 +480,8 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.set_active_scalars(name)
 
-    @property
-    def points(self: DataSet) -> pyvista_ndarray:
+    @property  # type: ignore[override]
+    def points(self: Self) -> pyvista_ndarray:
         """Return a reference to the points as a numpy object.
 
         Returns
@@ -505,7 +546,7 @@ class DataSet(DataSetFilters, DataObject):
         return pyvista_ndarray(_points, dataset=self)
 
     @points.setter
-    def points(self: DataSet, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
+    def points(self: Self, points: MatrixLike[float] | _vtk.vtkPoints) -> None:
         """Set a reference to the points as a numpy object.
 
         Parameters
@@ -540,7 +581,9 @@ class DataSet(DataSetFilters, DataObject):
         self.Modified()
 
     @property
-    def arrows(self: DataSet) -> pyvista.PolyData | None:
+    def arrows(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+    ) -> pyvista.PolyData | None:
         """Return a glyph representation of the active vector data as arrows.
 
         Arrows will be located at the points of the mesh and
@@ -578,7 +621,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.glyph(orient=vectors_name, scale=scale_name)
 
     @property
-    def active_t_coords(self: DataSet) -> pyvista_ndarray | None:
+    def active_t_coords(self: Self) -> pyvista_ndarray | None:
         """Return the active texture coordinates on the points.
 
         Returns
@@ -594,7 +637,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.active_texture_coordinates
 
     @active_t_coords.setter
-    def active_t_coords(self: DataSet, t_coords: NumpyArray[float]) -> None:
+    def active_t_coords(self: Self, t_coords: NumpyArray[float]) -> None:
         """Set the active texture coordinates on the points.
 
         Parameters
@@ -610,7 +653,7 @@ class DataSet(DataSetFilters, DataObject):
         self.active_texture_coordinates = t_coords  # type: ignore[assignment]
 
     def set_active_scalars(
-        self: DataSet,
+        self: Self,
         name: str | None,
         preference: PointLiteral | CellLiteral = 'cell',
     ) -> tuple[FieldAssociation, NumpyArray[float] | None]:
@@ -664,7 +707,7 @@ class DataSet(DataSetFilters, DataObject):
                 f'Data field "{name}" with type ({field}) could not be set as the active scalars',
             )
 
-        self._active_scalars_info = ActiveArrayInfo(field, name)
+        self._active_scalars_info = ActiveArrayInfoTuple(field, name)
 
         if field == FieldAssociation.POINT:
             return field, self.point_data.active_scalars
@@ -672,7 +715,7 @@ class DataSet(DataSetFilters, DataObject):
             return field, self.cell_data.active_scalars
 
     def set_active_vectors(
-        self: DataSet, name: str | None, preference: PointLiteral | CellLiteral = 'point'
+        self: Self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
     ) -> None:
         """Find the vectors by name and appropriately sets it as active.
 
@@ -708,10 +751,10 @@ class DataSet(DataSetFilters, DataObject):
                     f'Data field ({name}) with type ({field}) could not be set as the active vectors',
                 )
 
-        self._active_vectors_info = ActiveArrayInfo(field, name)
+        self._active_vectors_info = ActiveArrayInfoTuple(field, name)
 
     def set_active_tensors(
-        self: DataSet, name: str | None, preference: PointLiteral | CellLiteral = 'point'
+        self: Self, name: str | None, preference: PointLiteral | CellLiteral = 'point'
     ) -> None:
         """Find the tensors by name and appropriately sets it as active.
 
@@ -747,10 +790,10 @@ class DataSet(DataSetFilters, DataObject):
                     f'Data field ({name}) with type ({field}) could not be set as the active tensors',
                 )
 
-        self._active_tensors_info = ActiveArrayInfo(field, name)
+        self._active_tensors_info = ActiveArrayInfoTuple(field, name)
 
     def rename_array(
-        self: DataSet,
+        self: Self,
         old_name: str,
         new_name: str,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
@@ -810,7 +853,7 @@ class DataSet(DataSetFilters, DataObject):
             self.set_active_scalars(new_name, preference=field)
 
     @property
-    def active_scalars(self: DataSet) -> pyvista_ndarray | None:
+    def active_scalars(self: Self) -> pyvista_ndarray | None:
         """Return the active scalars as an array.
 
         Returns
@@ -819,8 +862,7 @@ class DataSet(DataSetFilters, DataObject):
             Active scalars as an array.
 
         """
-        field: FieldAssociation = self.active_scalars_info.association
-        name: str | None = self.active_scalars_info.name
+        field, name = self.active_scalars_info
         if name is not None:
             try:
                 if field == FieldAssociation.POINT:
@@ -832,7 +874,7 @@ class DataSet(DataSetFilters, DataObject):
         return None
 
     @property
-    def active_normals(self: DataSet) -> pyvista_ndarray | None:
+    def active_normals(self: Self) -> pyvista_ndarray | None:
         """Return the active normals as an array.
 
         Returns
@@ -866,7 +908,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.cell_data.active_normals
 
     def get_data_range(
-        self: DataSet,
+        self: Self,
         arr_var: str | NumpyArray[float] | None = None,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
@@ -908,7 +950,7 @@ class DataSet(DataSetFilters, DataObject):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
-    def copy_meta_from(self: DataSet, ido: DataSet, deep: bool = True) -> None:
+    def copy_meta_from(self: Self, ido: DataSet, deep: bool = True) -> None:
         """Copy pyvista meta data onto this object from another object.
 
         Parameters
@@ -935,7 +977,7 @@ class DataSet(DataSetFilters, DataObject):
             self._active_tensors_info = ido.active_tensors_info
 
     @property
-    def point_data(self: DataSet) -> DataSetAttributes:
+    def point_data(self: Self) -> DataSetAttributes:
         """Return point data as DataSetAttributes.
 
         Returns
@@ -951,9 +993,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> mesh.point_data['my_array'] = np.random.default_rng().random(
-        ...     mesh.n_points
-        ... )
+        >>> mesh.point_data['my_array'] = np.random.default_rng().random(mesh.n_points)
         >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
         >>> mesh.point_data
         pyvista DataSetAttributes
@@ -983,7 +1023,7 @@ class DataSet(DataSetFilters, DataObject):
             association=FieldAssociation.POINT,
         )
 
-    def clear_point_data(self: DataSet) -> None:
+    def clear_point_data(self: Self) -> None:
         """Remove all point arrays.
 
         Examples
@@ -1002,11 +1042,11 @@ class DataSet(DataSetFilters, DataObject):
         """
         self.point_data.clear()
 
-    def clear_cell_data(self: DataSet) -> None:
+    def clear_cell_data(self: Self) -> None:
         """Remove all cell arrays."""
         self.cell_data.clear()
 
-    def clear_data(self: DataSet) -> None:
+    def clear_data(self: Self) -> None:
         """Remove all arrays from point/cell/field data.
 
         Examples
@@ -1028,7 +1068,7 @@ class DataSet(DataSetFilters, DataObject):
         self.clear_field_data()
 
     @property
-    def cell_data(self: DataSet) -> DataSetAttributes:
+    def cell_data(self: Self) -> DataSetAttributes:
         """Return cell data as DataSetAttributes.
 
         Returns
@@ -1044,9 +1084,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> import numpy as np
         >>> mesh = pv.Cube()
         >>> mesh.clear_data()
-        >>> mesh.cell_data['my_array'] = np.random.default_rng().random(
-        ...     mesh.n_cells
-        ... )
+        >>> mesh.cell_data['my_array'] = np.random.default_rng().random(mesh.n_cells)
         >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
         >>> mesh.cell_data
         pyvista DataSetAttributes
@@ -1077,7 +1115,7 @@ class DataSet(DataSetFilters, DataObject):
         )
 
     @property
-    def n_points(self: DataSet) -> int:
+    def n_points(self: Self) -> int:
         """Return the number of points in the entire dataset.
 
         Returns
@@ -1099,7 +1137,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfPoints()
 
     @property
-    def n_cells(self: DataSet) -> int:
+    def n_cells(self: Self) -> int:
         """Return the number of cells in the entire dataset.
 
         Returns
@@ -1126,7 +1164,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def number_of_points(self: DataSet) -> int:  # pragma: no cover
+    def number_of_points(self: Self) -> int:  # pragma: no cover
         """Return the number of points.
 
         Returns
@@ -1138,7 +1176,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfPoints()
 
     @property
-    def number_of_cells(self: DataSet) -> int:  # pragma: no cover
+    def number_of_cells(self: Self) -> int:  # pragma: no cover
         """Return the number of cells.
 
         Returns
@@ -1150,7 +1188,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetNumberOfCells()
 
     @property
-    def bounds(self: DataSet) -> BoundsTuple:
+    def bounds(self: Self) -> BoundsTuple:
         """Return the bounding box of this dataset.
 
         Returns
@@ -1172,7 +1210,7 @@ class DataSet(DataSetFilters, DataObject):
         return BoundsTuple(*self.GetBounds())
 
     @property
-    def length(self: DataSet) -> float:
+    def length(self: Self) -> float:
         """Return the length of the diagonal of the bounding box.
 
         Returns
@@ -1195,7 +1233,7 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
-    def center(self: DataSet) -> tuple[float, float, float]:
+    def center(self: Self) -> tuple[float, float, float]:
         """Return the center of the bounding box.
 
         Returns
@@ -1216,7 +1254,9 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetCenter()
 
     @property
-    def volume(self: DataSet) -> float:
+    def volume(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+    ) -> float:
         """Return the mesh volume.
 
         This will return 0 for meshes with 2D cells.
@@ -1255,7 +1295,9 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Volume'].sum().item()
 
     @property
-    def area(self: DataSet) -> float:
+    def area(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+    ) -> float:
         """Return the mesh area if 2D.
 
         This will return 0 for meshes with 3D cells.
@@ -1295,7 +1337,7 @@ class DataSet(DataSetFilters, DataObject):
         return sizes.cell_data['Area'].sum().item()
 
     def get_array(
-        self: DataSet,
+        self: Self,
         name: str,
         preference: Literal['cell', 'point', 'field'] = 'cell',
     ) -> pyvista.pyvista_ndarray:
@@ -1351,7 +1393,7 @@ class DataSet(DataSetFilters, DataObject):
         return arr
 
     def get_array_association(
-        self: DataSet,
+        self: Self,
         name: str,
         preference: Literal['cell', 'point', 'field'] = 'cell',
     ) -> FieldAssociation:
@@ -1403,10 +1445,13 @@ class DataSet(DataSetFilters, DataObject):
         """
         return get_array_association(self, name, preference=preference, err=True)
 
-    def __getitem__(self: DataSet, index: Iterable[Any] | str) -> NumpyArray[float]:
+    def __getitem__(
+        self: Self,
+        index: tuple[str, Literal['cell', 'point', 'field']] | str,
+    ) -> NumpyArray[float]:
         """Search both point, cell, and field data for an array."""
-        if isinstance(index, Iterable) and not isinstance(index, str):
-            name, preference = tuple(index)
+        if isinstance(index, tuple):
+            name, preference = index
         elif isinstance(index, str):
             name = index
             preference = 'cell'
@@ -1417,12 +1462,12 @@ class DataSet(DataSetFilters, DataObject):
             )
         return self.get_array(name, preference=preference)
 
-    def _ipython_key_completions_(self: DataSet) -> list[str]:
+    def _ipython_key_completions_(self: Self) -> list[str]:
         """Tab completion of IPython."""
         return self.array_names
 
     def __setitem__(
-        self: DataSet,
+        self: Self,
         name: str,
         scalars: NumpyArray[float] | Sequence[float] | float,
     ) -> None:  # numpydoc ignore=PR01,RT01
@@ -1459,7 +1504,7 @@ class DataSet(DataSetFilters, DataObject):
         return
 
     @property
-    def n_arrays(self: DataSet) -> int:
+    def n_arrays(self: Self) -> int:
         """Return the number of arrays present in the dataset.
 
         Returns
@@ -1474,7 +1519,7 @@ class DataSet(DataSetFilters, DataObject):
         return n
 
     @property
-    def array_names(self: DataSet) -> list[str]:
+    def array_names(self: Self) -> list[str]:
         """Return a list of array names for the dataset.
 
         This makes sure to put the active scalars' name first in the list.
@@ -1504,7 +1549,7 @@ class DataSet(DataSetFilters, DataObject):
             names.insert(0, self.active_scalars_name)
         return names
 
-    def _get_attrs(self: DataSet) -> list[tuple[str, Any, str]]:
+    def _get_attrs(self: Self) -> list[tuple[str, Any, str]]:
         """Return the representation methods (internal helper)."""
         attrs: list[tuple[str, Any, str]] = []
         attrs.append(('N Cells', self.GetNumberOfCells(), '{}'))
@@ -1520,7 +1565,7 @@ class DataSet(DataSetFilters, DataObject):
         #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
 
-    def _repr_html_(self: DataSet) -> str:
+    def _repr_html_(self: Self) -> str:
         """Return a pretty representation for Jupyter notebooks.
 
         It includes header details and information about all arrays.
@@ -1571,15 +1616,15 @@ class DataSet(DataSetFilters, DataObject):
             fmt += '</td></tr> </table>'
         return fmt
 
-    def __repr__(self: DataSet) -> str:
+    def __repr__(self: Self) -> str:
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-    def __str__(self: DataSet) -> str:
+    def __str__(self: Self) -> str:
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def copy_from(self: DataSet, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:
+    def copy_from(self: Self, mesh: _vtk.vtkDataSet, deep: bool = True) -> None:
         """Overwrite this dataset inplace with the new dataset's geometries and data.
 
         Parameters
@@ -1609,14 +1654,14 @@ class DataSet(DataSetFilters, DataObject):
                 f'The Input DataSet type {type(mesh)} must be '
                 f'compatible with the one being overwritten {type(self)}',
             )
-        if deep:
+        if deep:  # type: ignore[unreachable]
             self.deep_copy(mesh)
         else:
             self.shallow_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh, deep=deep)
 
-    def cast_to_unstructured_grid(self: DataSet) -> pyvista.UnstructuredGrid:
+    def cast_to_unstructured_grid(self: Self) -> pyvista.UnstructuredGrid:
         """Get a new representation of this object as a :class:`pyvista.UnstructuredGrid`.
 
         Returns
@@ -1643,7 +1688,9 @@ class DataSet(DataSetFilters, DataObject):
         alg.Update()
         return _get_output(alg)
 
-    def cast_to_pointset(self: DataSet, pass_cell_data: bool = False) -> pyvista.PointSet:
+    def cast_to_pointset(  # type: ignore[misc]
+        self: ConcreteDataSetType, pass_cell_data: bool = False
+    ) -> pyvista.PointSet:
         """Extract the points of this dataset and return a :class:`pyvista.PointSet`.
 
         Parameters
@@ -1673,14 +1720,16 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         pset = pyvista.PointSet()
-        pset.points = self.points.copy()
+        pset.points = self.points.copy()  # type: ignore[assignment]
         if pass_cell_data:
             self = self.cell_data_to_point_data()
         pset.GetPointData().DeepCopy(self.GetPointData())
         pset.active_scalars_name = self.active_scalars_name
         return pset
 
-    def cast_to_poly_points(self: DataSet, pass_cell_data: bool = False) -> pyvista.PolyData:
+    def cast_to_poly_points(  # type: ignore[misc]
+        self: ConcreteDataSetType, pass_cell_data: bool = False
+    ) -> pyvista.PolyData:
         """Extract the points of this dataset and return a :class:`pyvista.PolyData`.
 
         Parameters
@@ -1740,14 +1789,10 @@ class DataSet(DataSetFilters, DataObject):
         return pset
 
     @overload
-    def find_closest_point(self: DataSet, point: Iterable[float], n: Literal[1] = 1) -> int: ...
+    def find_closest_point(self: Self, point: Iterable[float], n: Literal[1] = 1) -> int: ...
     @overload
-    def find_closest_point(
-        self: DataSet, point: Iterable[float], n: int = ...
-    ) -> VectorLike[int]: ...
-    def find_closest_point(
-        self: DataSet, point: Iterable[float], n: int = 1
-    ) -> int | VectorLike[int]:
+    def find_closest_point(self: Self, point: Iterable[float], n: int = ...) -> VectorLike[int]: ...
+    def find_closest_point(self: Self, point: Iterable[float], n: int = 1) -> int | VectorLike[int]:
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -1809,7 +1854,7 @@ class DataSet(DataSetFilters, DataObject):
         return locator.FindClosestPoint(point)  # type: ignore[arg-type]
 
     def find_closest_cell(
-        self: DataSet,
+        self: Self,
         point: VectorLike[float] | MatrixLike[float],
         return_closest_point: bool = False,
     ) -> int | NumpyArray[int] | tuple[int | NumpyArray[int], NumpyArray[int]]:
@@ -1940,7 +1985,7 @@ class DataSet(DataSetFilters, DataObject):
         return out_cells
 
     def find_containing_cell(
-        self: DataSet,
+        self: Self,
         point: VectorLike[float] | MatrixLike[float],
     ) -> int | NumpyArray[int]:
         """Find index of a cell that contains the given point.
@@ -1974,9 +2019,7 @@ class DataSet(DataSetFilters, DataObject):
         containing the point ``[0.3, 0.3, 0.0]`` is found.
 
         >>> import pyvista as pv
-        >>> mesh = pv.ImageData(
-        ...     dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0]
-        ... )
+        >>> mesh = pv.ImageData(dimensions=[5, 5, 1], spacing=[1 / 4, 1 / 4, 0])
         >>> mesh
         ImageData...
         >>> mesh.find_containing_cell([0.3, 0.3, 0.0])
@@ -2006,7 +2049,7 @@ class DataSet(DataSetFilters, DataObject):
         return containing_cells[0] if singular else np.array(containing_cells)
 
     def find_cells_along_line(
-        self: DataSet,
+        self: Self,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         tolerance: float = 0.0,
@@ -2072,7 +2115,7 @@ class DataSet(DataSetFilters, DataObject):
         return vtk_id_list_to_array(id_list)
 
     def find_cells_intersecting_line(
-        self: DataSet,
+        self: Self,
         pointa: VectorLike[float],
         pointb: VectorLike[float],
         tolerance: float = 0.0,
@@ -2138,7 +2181,7 @@ class DataSet(DataSetFilters, DataObject):
         )
         return vtk_id_list_to_array(id_list)
 
-    def find_cells_within_bounds(self: DataSet, bounds: BoundsTuple) -> NumpyArray[int]:
+    def find_cells_within_bounds(self: Self, bounds: BoundsTuple) -> NumpyArray[int]:
         """Find the index of cells in this mesh within bounds.
 
         Parameters
@@ -2163,9 +2206,7 @@ class DataSet(DataSetFilters, DataObject):
         --------
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
-        >>> index = mesh.find_cells_within_bounds(
-        ...     [-2.0, 2.0, -2.0, 2.0, -2.0, 2.0]
-        ... )
+        >>> index = mesh.find_cells_within_bounds([-2.0, 2.0, -2.0, 2.0, -2.0, 2.0])
 
         """
         if np.array(bounds).size != 6:
@@ -2177,7 +2218,7 @@ class DataSet(DataSetFilters, DataObject):
         locator.FindCellsWithinBounds(list(bounds), id_list)
         return vtk_id_list_to_array(id_list)
 
-    def get_cell(self: DataSet, index: int) -> pyvista.Cell:
+    def get_cell(self: Self, index: int) -> pyvista.Cell:
         """Return a :class:`pyvista.Cell` object.
 
         Parameters
@@ -2244,7 +2285,7 @@ class DataSet(DataSetFilters, DataObject):
         return cell
 
     @property
-    def cell(self: DataSet) -> Iterator[pyvista.Cell]:
+    def cell(self: Self) -> Iterator[pyvista.Cell]:
         """A generator that provides an easy way to loop over all cells.
 
         To access a single cell, use :func:`pyvista.DataSet.get_cell`.
@@ -2270,13 +2311,12 @@ class DataSet(DataSetFilters, DataObject):
         >>> mesh = pv.ImageData(dimensions=(3, 3, 1))
         >>> for cell in mesh.cell:  # doctest: +SKIP
         ...     cell
-        ...
 
         """
         for i in range(self.n_cells):
             yield self.get_cell(i)
 
-    def cell_neighbors(self: DataSet, ind: int, connections: str = 'points') -> list[int]:
+    def cell_neighbors(self: Self, ind: int, connections: str = 'points') -> list[int]:
         """Get the cell neighbors of the ind-th cell.
 
         Concrete implementation of vtkDataSet's `GetCellNeighbors
@@ -2313,20 +2353,20 @@ class DataSet(DataSetFilters, DataObject):
         Get the neighbor cell ids that have at least one point in common with
         the 0-th cell.
 
-        >>> mesh.cell_neighbors(0, "points")
+        >>> mesh.cell_neighbors(0, 'points')
         [1, 2, 3, 388, 389, 11, 12, 395, 14, 209, 211, 212]
 
         Get the neighbor cell ids that have at least one edge in common with
         the 0-th cell.
 
-        >>> mesh.cell_neighbors(0, "edges")
+        >>> mesh.cell_neighbors(0, 'edges')
         [1, 3, 12]
 
         For unstructured grids with cells of dimension 3 (Tetrahedron for example),
         cell neighbors can be defined using faces.
 
         >>> mesh = examples.download_tetrahedron()
-        >>> mesh.cell_neighbors(0, "faces")
+        >>> mesh.cell_neighbors(0, 'faces')
         [1, 5, 7]
 
         Show a visual example.
@@ -2339,18 +2379,18 @@ class DataSet(DataSetFilters, DataObject):
         >>> pl.link_views()
         >>> add_point_labels = partial(
         ...     pl.add_point_labels,
-        ...     text_color="white",
+        ...     text_color='white',
         ...     font_size=20,
         ...     shape=None,
         ...     show_points=False,
         ... )
         >>>
-        >>> for i, connection in enumerate(["points", "edges"]):
+        >>> for i, connection in enumerate(['points', 'edges']):
         ...     pl.subplot(0, i)
         ...     pl.view_xy()
         ...     _ = pl.add_title(
-        ...         f"{connection.capitalize()} neighbors",
-        ...         color="red",
+        ...         f'{connection.capitalize()} neighbors',
+        ...         color='red',
         ...         shadow=True,
         ...         font_size=8,
         ...     )
@@ -2358,28 +2398,25 @@ class DataSet(DataSetFilters, DataObject):
         ...     # Add current cell
         ...     i_cell = 0
         ...     current_cell = mesh.extract_cells(i_cell)
-        ...     _ = pl.add_mesh(
-        ...         current_cell, show_edges=True, color="blue"
-        ...     )
+        ...     _ = pl.add_mesh(current_cell, show_edges=True, color='blue')
         ...     _ = add_point_labels(
         ...         current_cell.cell_centers().points,
-        ...         labels=[f"{i_cell}"],
+        ...         labels=[f'{i_cell}'],
         ...     )
         ...
         ...     # Add neighbors
         ...     ids = mesh.cell_neighbors(i_cell, connection)
         ...     cells = mesh.extract_cells(ids)
-        ...     _ = pl.add_mesh(cells, color="red", show_edges=True)
+        ...     _ = pl.add_mesh(cells, color='red', show_edges=True)
         ...     _ = add_point_labels(
         ...         cells.cell_centers().points,
-        ...         labels=[f"{i}" for i in ids],
+        ...         labels=[f'{i}' for i in ids],
         ...     )
         ...
         ...     # Add other cells
         ...     ids.append(i_cell)
         ...     others = mesh.extract_cells(ids, invert=True)
         ...     _ = pl.add_mesh(others, show_edges=True)
-        ...
         >>> pl.show()
 
         """
@@ -2424,7 +2461,7 @@ class DataSet(DataSetFilters, DataObject):
 
         return list(neighbors)
 
-    def point_neighbors(self: DataSet, ind: int) -> list[int]:
+    def point_neighbors(self: Self, ind: int) -> list[int]:
         """Get the point neighbors of the ind-th point.
 
         Parameters
@@ -2457,18 +2494,18 @@ class DataSet(DataSetFilters, DataObject):
         >>>
         >>> # Label the 0-th point
         >>> _ = pl.add_point_labels(
-        ...     mesh.points[0], ["0"], text_color="blue", font_size=40
+        ...     mesh.points[0], ['0'], text_color='blue', font_size=40
         ... )
         >>>
         >>> # Get the point neighbors and plot them
         >>> neighbors = mesh.point_neighbors(0)
         >>> _ = pl.add_point_labels(
         ...     mesh.points[neighbors],
-        ...     labels=[f"{i}" for i in neighbors],
-        ...     text_color="red",
+        ...     labels=[f'{i}' for i in neighbors],
+        ...     text_color='red',
         ...     font_size=40,
         ... )
-        >>> pl.camera_position = "xy"
+        >>> pl.camera_position = 'xy'
         >>> pl.camera.zoom(7.0)
         >>> pl.show()
 
@@ -2482,7 +2519,7 @@ class DataSet(DataSetFilters, DataObject):
         return list(set(out))
 
     def point_neighbors_levels(
-        self: DataSet,
+        self: Self,
         ind: int,
         n_levels: int = 1,
     ) -> Generator[list[int], None, None]:
@@ -2531,25 +2568,22 @@ class DataSet(DataSetFilters, DataObject):
         >>> # Define partial function to add point labels
         >>> add_point_labels = partial(
         ...     pl.add_point_labels,
-        ...     text_color="white",
+        ...     text_color='white',
         ...     font_size=40,
         ...     point_size=10,
         ... )
         >>>
         >>> # Add the first point label
-        >>> _ = add_point_labels(
-        ...     mesh.points[0], labels=["0"], text_color="blue"
-        ... )
+        >>> _ = add_point_labels(mesh.points[0], labels=['0'], text_color='blue')
         >>>
         >>> # Add the neighbors to the plot
         >>> neighbors = mesh.point_neighbors_levels(0, n_levels=3)
         >>> for i, ids in enumerate(neighbors, start=1):
         ...     _ = add_point_labels(
         ...         mesh.points[ids],
-        ...         labels=[f"{i}"] * len(ids),
-        ...         text_color="red",
+        ...         labels=[f'{i}'] * len(ids),
+        ...         text_color='red',
         ...     )
-        ...
         >>>
         >>> pl.view_xy()
         >>> pl.camera.zoom(4.0)
@@ -2560,7 +2594,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._get_levels_neihgbors(ind, n_levels, method)
 
     def cell_neighbors_levels(
-        self: DataSet,
+        self: Self,
         ind: int,
         connections: str = 'points',
         n_levels: int = 1,
@@ -2601,9 +2635,7 @@ class DataSet(DataSetFilters, DataObject):
 
         >>> import pyvista as pv
         >>> mesh = pv.Sphere(theta_resolution=10)
-        >>> nbr_levels = mesh.cell_neighbors_levels(
-        ...     0, connections="edges", n_levels=3
-        ... )
+        >>> nbr_levels = mesh.cell_neighbors_levels(0, connections='edges', n_levels=3)
         >>> nbr_levels = list(nbr_levels)
         >>> nbr_levels[0]
         [1, 21, 9]
@@ -2626,7 +2658,7 @@ class DataSet(DataSetFilters, DataObject):
         >>> # Define partial function to add point labels
         >>> add_point_labels = partial(
         ...     pl.add_point_labels,
-        ...     text_color="white",
+        ...     text_color='white',
         ...     font_size=40,
         ...     shape=None,
         ...     show_points=False,
@@ -2635,25 +2667,22 @@ class DataSet(DataSetFilters, DataObject):
         >>> # Add the 0-th cell to the plotter
         >>> cell = mesh.extract_cells(0)
         >>> _ = pl.add_mesh(cell, show_edges=True)
-        >>> _ = add_point_labels(cell.cell_centers().points, labels=["0"])
+        >>> _ = add_point_labels(cell.cell_centers().points, labels=['0'])
         >>> other_ids = [0]
         >>>
         >>> # Add the neighbors to the plot
-        >>> neighbors = mesh.cell_neighbors_levels(
-        ...     0, connections="edges", n_levels=3
-        ... )
+        >>> neighbors = mesh.cell_neighbors_levels(0, connections='edges', n_levels=3)
         >>> for i, ids in enumerate(neighbors, start=1):
         ...     cells = mesh.extract_cells(ids)
         ...     _ = pl.add_mesh(cells, show_edges=True)
         ...     _ = add_point_labels(
-        ...         cells.cell_centers().points, labels=[f"{i}"] * len(ids)
+        ...         cells.cell_centers().points, labels=[f'{i}'] * len(ids)
         ...     )
         ...     other_ids.extend(ids)
-        ...
         >>>
         >>> # Add the cell IDs that are not neighbors (ie. the rest of the sphere)
         >>> cells = mesh.extract_cells(other_ids, invert=True)
-        >>> _ = pl.add_mesh(cells, color="white", show_edges=True)
+        >>> _ = pl.add_mesh(cells, color='white', show_edges=True)
         >>>
         >>> pl.view_xy()
         >>> pl.camera.zoom(6.0)
@@ -2664,7 +2693,7 @@ class DataSet(DataSetFilters, DataObject):
         return self._get_levels_neihgbors(ind, n_levels, method)
 
     def _get_levels_neihgbors(
-        self: DataSet,
+        self: Self,
         ind: int,
         n_levels: int,
         method: Callable[[Any], Any],
@@ -2689,7 +2718,7 @@ class DataSet(DataSetFilters, DataObject):
             yield list(neighbors.difference(all_visited))
             all_visited.update(neighbors)
 
-    def point_cell_ids(self: DataSet, ind: int) -> list[int]:
+    def point_cell_ids(self: Self, ind: int) -> list[int]:
         """Get the cell IDs that use the ind-th point.
 
         Implements vtkDataSet's `GetPointCells <https://vtk.org/doc/nightly/html/classvtkDataSet.html#a36d1d8f67ad67adf4d1a9cfb30dade49>`_.
@@ -2720,18 +2749,18 @@ class DataSet(DataSetFilters, DataObject):
         >>>
         >>> # Label the 0-th point
         >>> _ = pl.add_point_labels(
-        ...     mesh.points[0], ["0"], text_color="blue", font_size=20
+        ...     mesh.points[0], ['0'], text_color='blue', font_size=20
         ... )
         >>>
         >>> # Get the cells ids using the 0-th point
         >>> ids = mesh.point_cell_ids(0)
         >>> cells = mesh.extract_cells(ids)
-        >>> _ = pl.add_mesh(cells, color="red", show_edges=True)
+        >>> _ = pl.add_mesh(cells, color='red', show_edges=True)
         >>> centers = cells.cell_centers().points
         >>> _ = pl.add_point_labels(
         ...     centers,
-        ...     labels=[f"{i}" for i in ids],
-        ...     text_color="white",
+        ...     labels=[f'{i}' for i in ids],
+        ...     text_color='white',
         ...     font_size=20,
         ...     shape=None,
         ...     show_points=False,
@@ -2743,7 +2772,7 @@ class DataSet(DataSetFilters, DataObject):
         ... )
         >>> _ = pl.add_mesh(others, show_edges=True)
         >>>
-        >>> pl.camera_position = "yx"
+        >>> pl.camera_position = 'xy'
         >>> pl.camera.zoom(7.0)
         >>> pl.show()
 
@@ -2758,7 +2787,7 @@ class DataSet(DataSetFilters, DataObject):
         return [ids.GetId(i) for i in range(ids.GetNumberOfIds())]
 
     def point_is_inside_cell(
-        self: DataSet,
+        self: Self,
         ind: int,
         point: VectorLike[float] | MatrixLike[float],
     ) -> bool | NumpyArray[np.bool_]:
@@ -2771,7 +2800,7 @@ class DataSet(DataSetFilters, DataObject):
         ind : int
             Cell ID.
 
-        point : Matrix
+        point : VectorLike[float] | MatrixLike[float]
             Point or points to query if are inside a cell.
 
         Returns
@@ -2821,7 +2850,7 @@ class DataSet(DataSetFilters, DataObject):
         return in_cell
 
     @property
-    def active_texture_coordinates(self: DataSet) -> pyvista_ndarray | None:
+    def active_texture_coordinates(self: Self) -> pyvista_ndarray | None:
         """Return the active texture coordinates on the points.
 
         Returns
@@ -2849,7 +2878,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @active_texture_coordinates.setter
     def active_texture_coordinates(
-        self: DataSet,
+        self: Self,
         texture_coordinates: NumpyArray[float],
     ) -> None:
         """Set the active texture coordinates on the points.

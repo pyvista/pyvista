@@ -176,10 +176,7 @@ class RenderWindowInteractor:
         >>> actor = pl.add_mesh(sphere)
         >>> def callback(step):
         ...     actor.position = [step / 100.0, step / 100.0, 0]
-        ...
-        >>> pl.add_timer_event(
-        ...     max_steps=200, duration=500, callback=callback
-        ... )
+        >>> pl.add_timer_event(max_steps=200, duration=500, callback=callback)
 
         """
         self._timer = Timer(max_steps, callback)
@@ -221,9 +218,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
 
         """
         call = partial(try_callback, call)
@@ -255,9 +250,7 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
         >>> pl.iren.remove_observer(obs_enter)
 
         """
@@ -280,12 +273,8 @@ class RenderWindowInteractor:
 
         >>> import pyvista as pv
         >>> pl = pv.Plotter()
-        >>> obs_enter = pl.iren.add_observer(
-        ...     "EnterEvent", lambda *_: print('Enter!')
-        ... )
-        >>> obs_leave = pl.iren.add_observer(
-        ...     "LeaveEvent", lambda *_: print('Leave!')
-        ... )
+        >>> obs_enter = pl.iren.add_observer('EnterEvent', lambda *_: print('Enter!'))
+        >>> obs_leave = pl.iren.add_observer('LeaveEvent', lambda *_: print('Leave!'))
         >>> pl.iren.remove_observers()
 
         """
@@ -467,7 +456,7 @@ class RenderWindowInteractor:
         # Loop over all renderers to see whether any charts need to be made interactive
         interactive_scene = None
         for renderer in self._plotter.renderers:
-            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):
+            if interactive_scene is None and renderer.IsInViewport(*mouse_pos):  # type: ignore[redundant-expr]
                 # No interactive charts yet and mouse is within this renderer's viewport,
                 # so collect all charts indicated by the mouse (typically only one, except
                 # when there are overlapping charts).
@@ -635,7 +624,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_custom_trackball_style(left="dolly")
+        >>> plotter.enable_custom_trackball_style(left='dolly')
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -1015,9 +1004,7 @@ class RenderWindowInteractor:
         >>> _ = plotter.add_mesh(pv.Cube(center=(1, 0, 0)))
         >>> _ = plotter.add_mesh(pv.Cube(center=(0, 1, 0)))
         >>> plotter.show_axes()
-        >>> plotter.enable_terrain_style(
-        ...     mouse_wheel_zooms=True, shift_pans=True
-        ... )
+        >>> plotter.enable_terrain_style(mouse_wheel_zooms=True, shift_pans=True)
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -1446,7 +1433,7 @@ class RenderWindowInteractor:
         """Add an observer to call back when pick events end.
 
         .. deprecated:: 0.42.2
-            This function is deprecated. Use :func:`pyvista.plotting.RenderWindowInteractor.add_pick_observer` instead.
+            This function is deprecated. Use :func:`pyvista.RenderWindowInteractor.add_pick_observer` instead.
 
         Parameters
         ----------

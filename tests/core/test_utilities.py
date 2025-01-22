@@ -14,6 +14,8 @@ import warnings
 
 import numpy as np
 import pytest
+from pytest_cases import parametrize
+from pytest_cases import parametrize_with_cases
 import vtk
 
 import pyvista as pv
@@ -34,6 +36,7 @@ from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
+from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
@@ -42,6 +45,7 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
+from pyvista.plotting.widgets import _parse_interaction_event
 from tests.conftest import NUMPY_VERSION_INFO
 
 
@@ -1056,6 +1060,8 @@ def test_principal_axes_return_std():
     assert np.allclose(ratios_in, ratios_out, atol=0.02)
 
 
+@pytest.mark.filterwarnings('ignore:Mean of empty slice:RuntimeWarning')
+@pytest.mark.filterwarnings('ignore:invalid value encountered in divide:RuntimeWarning')
 def test_principal_axes_empty():
     axes = principal_axes(np.empty((0, 3)))
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
@@ -1368,38 +1374,48 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
-@pytest.mark.parametrize('copy', [True, False])
-@pytest.mark.parametrize(
-    ('obj', 'return_self', 'return_type', 'return_dtype'),
-    [
-        (list(VECTOR), False, np.ndarray, float),
-        (VECTOR, False, np.ndarray, float),
-        (np.array(VECTOR), False, np.ndarray, float),
-        (np.array([VECTOR]), False, np.ndarray, float),
-        (np.array(VECTOR, dtype=float), True, np.ndarray, float),
-        (np.array([VECTOR], dtype=float), True, np.ndarray, float),
-        (pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32),
-        (pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32),
-        (pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float),
-        (
+class CasesTransformApply:
+    def case_list_int(self):
+        return list(VECTOR), False, np.ndarray, float
+
+    def case_tuple_int(self):
+        return VECTOR, False, np.ndarray, float
+
+    def case_array1d_int(self):
+        return np.array(VECTOR), False, np.ndarray, float
+
+    def case_array2d_int(self):
+        return np.array([VECTOR]), False, np.ndarray, float
+
+    def case_array1d_float(self):
+        return np.array(VECTOR, dtype=float), True, np.ndarray, float
+
+    def case_array2d_float(self):
+        return np.array([VECTOR], dtype=float), True, np.ndarray, float
+
+    @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
+    def case_polydata_float32(self):
+        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
+
+    @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
+    def case_polydata_int(self):
+        return pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32
+
+    def case_polydata_float(self):
+        return pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float
+
+    def case_multiblock_float(self):
+        return (
             pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
             True,
             pv.MultiBlock,
             float,
-        ),
-    ],
-    ids=[
-        'list-int',
-        'tuple-int',
-        'array1d-int',
-        'array2d-int',
-        'array1d-float',
-        'array2d-float',
-        'polydata-float32',
-        'polydata-int',
-        'polydata-float',
-        'multiblock-float',
-    ],
+        )
+
+
+@parametrize(copy=[True, False])
+@parametrize_with_cases(
+    ('obj', 'return_self', 'return_type', 'return_dtype'), cases=CasesTransformApply
 )
 def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
     def _get_points_from_object(obj_):
@@ -1815,3 +1831,55 @@ def test_transform_decompose_dtype(dtype, homogeneous):
     assert np.issubdtype(N.dtype, dtype)
     assert np.issubdtype(S.dtype, dtype)
     assert np.issubdtype(K.dtype, dtype)
+
+
+@pytest.mark.parametrize(
+    ('event', 'expected'),
+    [
+        ('end', vtk.vtkCommand.EndInteractionEvent),
+        ('start', vtk.vtkCommand.StartInteractionEvent),
+        ('always', vtk.vtkCommand.InteractionEvent),
+        (vtk.vtkCommand.InteractionEvent,) * 2,
+        (vtk.vtkCommand.EndInteractionEvent,) * 2,
+        (vtk.vtkCommand.StartInteractionEvent,) * 2,
+    ],
+)
+def test_parse_interaction_event(
+    event: str | vtk.vtkCommand.EventIds,
+    expected: vtk.vtkCommand.EventIds,
+):
+    assert _parse_interaction_event(event) == expected
+
+
+def test_parse_interaction_event_raises_str():
+    with pytest.raises(
+        ValueError,
+        match='Expected.*start.*end.*always.*foo was given',
+    ):
+        _parse_interaction_event('foo')
+
+
+def test_parse_interaction_event_raises_wrong_type():
+    with pytest.raises(
+        TypeError,
+        match='.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
+    ):
+        _parse_interaction_event(1)
+
+
+def test_classproperty():
+    magic_number = 42
+
+    @no_new_attr
+    class Foo:
+        @_classproperty
+        def prop(cls):
+            return magic_number
+
+    assert Foo.prop == magic_number
+    assert Foo().prop == magic_number
+
+    with pytest.raises(TypeError, match='object is not callable'):
+        Foo.prop()
+    with pytest.raises(TypeError, match='object is not callable'):
+        Foo().prop()

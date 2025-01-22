@@ -7,7 +7,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
-import colorsys
+from collections.abc import Sequence
 from dataclasses import dataclass
 import sys
 
@@ -39,17 +39,23 @@ import numpy as np
 import pyvista
 import pyvista as pv
 from pyvista.core.errors import VTKVersionError
+from pyvista.core.utilities.misc import _classproperty
 from pyvista.examples._dataset_loader import DatasetObject
 from pyvista.examples._dataset_loader import _DatasetLoader
 from pyvista.examples._dataset_loader import _Downloadable
 from pyvista.examples._dataset_loader import _MultiFilePropsProtocol
 from pyvista.examples._dataset_loader import _SingleFilePropsProtocol
+from pyvista.plotting.colors import _CSS_COLORS
+from pyvista.plotting.colors import _PARAVIEW_COLORS
+from pyvista.plotting.colors import _TABLEAU_COLORS
+from pyvista.plotting.colors import _VTK_COLORS
+from pyvista.plotting.colors import _format_color_dict
 
 if TYPE_CHECKING:
     from types import FunctionType
     from types import ModuleType
 
-    from pyvista.plotting.colors import ColorLike
+    from pyvista.plotting.colors import Color
 
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = 'api/plotting/charts'
@@ -76,18 +82,6 @@ DATASET_GALLERY_IMAGE_EXT_DICT = {
     'single_sphere_animation': '.gif',
     'dual_sphere_animation': '.gif',
 }
-
-
-class classproperty(property):
-    """Read-only class property decorator.
-
-    Used as an alternative to chaining @classmethod and @property which is deprecated.
-
-    See https://stackoverflow.com/a/13624858
-    """
-
-    def __get__(self, owner_self, owner_cls):
-        return self.fget(owner_cls)
 
 
 def _aligned_dedent(txt):
@@ -382,13 +376,16 @@ class ColorTable(DocTable):
     """Class to generate colors table."""
 
     path = f'{COLORS_TABLE_DIR}/color_table.rst'
+    title = ''
     header = _aligned_dedent(
         """
-        |.. list-table::
-        |   :widths: 50 20 30
+        |.. list-table:: {}
+        |   :widths: 8 48 18 26
         |   :header-rows: 1
+        |   :stub-columns: 1
         |
-        |   * - Name
+        |   * - Source
+        |     - Name
         |     - Hex value
         |     - Example
         """,
@@ -396,6 +393,7 @@ class ColorTable(DocTable):
     row_template = _aligned_dedent(
         """
         |   * - {}
+        |     - {}
         |     - ``{}``
         |     - .. raw:: html
         |
@@ -406,49 +404,219 @@ class ColorTable(DocTable):
     @classmethod
     def fetch_data(cls):
         # Fetch table data from ``hexcolors`` dictionary.
-        return ColorTable._table_data_from_color_sequence(pv.hexcolors.keys())
+        return ColorTable._table_data_from_color_sequence(ALL_COLORS)
 
     @staticmethod
-    def _table_data_from_color_sequence(colors: Iterable[ColorLike]):
-        colors_obj: list[pv.Color] = [pv.Color(c) for c in colors]
+    def _table_data_from_color_sequence(colors: Sequence[Color]):
+        assert len(colors) > 0, 'No colors were provided.'
         colors_dict: dict[str | None, dict[str, Any]] = {
-            c.name: {'name': c.name, 'hex': c.hex_rgb, 'synonyms': []} for c in colors_obj
+            c.name: {'name': c.name, 'hex': c.hex_rgb, 'synonyms': []} for c in colors
         }
         assert all(name is not None for name in colors_dict.keys()), 'Colors must be named.'
         # Add synonyms defined in ``color_synonyms`` dictionary.
         for s, name in pv.colors.color_synonyms.items():
-            colors_dict[name]['synonyms'].append(s)
+            if name in colors_dict:
+                colors_dict[name]['synonyms'].append(s)
         return colors_dict.values()
 
     @classmethod
     def get_header(cls, data):
-        return cls.header
+        return cls.header.format(cls.title)
 
     @classmethod
     def get_row(cls, i, row_data):
-        name_template = '``"{}"``'
+        name_template = "``'{}'``"
         names = [row_data['name']] + row_data['synonyms']
         name = ' or '.join(name_template.format(n) for n in names)
-        return cls.row_template.format(name, row_data['hex'], row_data['hex'])
+        source_badge = _get_color_source_badge(row_data['name'])
+        return cls.row_template.format(source_badge, name, row_data['hex'], row_data['hex'])
 
 
-def _sort_colors():
-    colors_rgb = [pv.Color(c).float_rgb for c in pv.hexcolors.values()]
-    # Sort colors by hue, saturation, and value (HSV)
-    return sorted(colors_rgb, key=lambda c: tuple(colorsys.rgb_to_hsv(*pv.Color(c).float_rgb)))
+def _get_color_source_badge(name: str) -> str:
+    if name in _format_color_dict(_CSS_COLORS):
+        return ':bdg-primary:`CSS`'
+    elif name in _format_color_dict(_TABLEAU_COLORS):
+        return ':bdg-success:`TAB`'
+    elif name in _format_color_dict(_PARAVIEW_COLORS):
+        return ':bdg-danger:`PV`'
+    elif name in _format_color_dict(_VTK_COLORS):
+        return ':bdg-secondary:`VTK`'
+    else:
+        raise KeyError(f'Invalid color name "{name}".')
 
 
-SORTED_COLORS_AS_RGB_FLOAT = _sort_colors()
+def _sort_colors_by_hls(colors: Sequence[Color]):
+    return sorted(colors, key=lambda c: c._float_hls)
 
 
-class SortedColorTable(ColorTable):
+ALL_COLORS: tuple[Color] = tuple(pv.Color(c) for c in pv.hexcolors.keys())
+
+# Saturation constants
+GRAYS_SATURATION_THRESHOLD = 0.15
+
+# Lightness constants
+LOWER_LIGHTNESS_THRESHOLD = 0.15
+UPPER_LIGHTNESS_THRESHOLD = 0.9
+
+BROWN_SATURATION_LIGHTNESS_THRESHOLD = 1.2
+
+# Hue constants in range [0, 1]
+_360 = 360.0
+RED_UPPER_BOUND = 8 / _360
+ORANGE_UPPER_BOUND = 39 / _360
+YELLOW_UPPER_BOUND = 61 / _360
+GREEN_UPPER_BOUND = 157 / _360
+CYAN_UPPER_BOUND = 187 / _360
+BLUE_UPPER_BOUND = 248 / _360
+VIOLET_UPPER_BOUND = 290 / _360
+MAGENTA_UPPER_BOUND = 351 / _360
+
+
+class ColorClassification(StrEnum):
+    WHITE = auto()
+    BLACK = auto()
+    GRAY = auto()
+    RED = auto()
+    YELLOW = auto()
+    ORANGE = auto()
+    BROWN = auto()
+    GREEN = auto()
+    CYAN = auto()
+    BLUE = auto()
+    VIOLET = auto()
+    MAGENTA = auto()
+
+
+def classify_color(color: Color) -> ColorClassification:
+    """Classify color based on its Hue, Lightness, and Saturation (HLS)."""
+    hue, lightness, saturation = color._float_hls
+
+    # Classify by lightness
+    if lightness > UPPER_LIGHTNESS_THRESHOLD:
+        return ColorClassification.WHITE
+    elif lightness < LOWER_LIGHTNESS_THRESHOLD:
+        return ColorClassification.BLACK
+
+    # Classify by saturation
+    elif saturation < GRAYS_SATURATION_THRESHOLD:
+        return ColorClassification.GRAY
+
+    # Classify by hue
+    elif hue >= MAGENTA_UPPER_BOUND or hue < RED_UPPER_BOUND:
+        return ColorClassification.RED
+    elif RED_UPPER_BOUND <= hue < ORANGE_UPPER_BOUND:
+        # Split oranges into oranges and browns
+        # Browns have a relatively low lightness and/or saturation
+        if (lightness + saturation) < BROWN_SATURATION_LIGHTNESS_THRESHOLD:
+            return ColorClassification.BROWN
+        else:
+            return ColorClassification.ORANGE
+    elif ORANGE_UPPER_BOUND <= hue < YELLOW_UPPER_BOUND:
+        return ColorClassification.YELLOW
+    elif YELLOW_UPPER_BOUND <= hue < GREEN_UPPER_BOUND:
+        return ColorClassification.GREEN
+    elif GREEN_UPPER_BOUND <= hue < CYAN_UPPER_BOUND:
+        return ColorClassification.CYAN
+    elif CYAN_UPPER_BOUND <= hue < BLUE_UPPER_BOUND:
+        return ColorClassification.BLUE
+    elif BLUE_UPPER_BOUND <= hue < VIOLET_UPPER_BOUND:
+        return ColorClassification.VIOLET
+    elif VIOLET_UPPER_BOUND <= hue < MAGENTA_UPPER_BOUND:
+        return ColorClassification.MAGENTA
+    else:
+        raise RuntimeError(
+            f'Color with Hue {hue}, Lightness {lightness}, and Saturation {saturation}, was not categorized. \n'
+            f'Double-check classifier logic.'
+        )
+
+
+class ColorClassificationTable(ColorTable):
     """Class to generate sorted colors table."""
 
-    path = f'{COLORS_TABLE_DIR}/color_table_sorted.rst'
+    classification: ColorClassification
+
+    @property
+    @final
+    def path(cls):
+        return f'{COLORS_TABLE_DIR}/color_table_{cls.classification.name}.rst'
 
     @classmethod
     def fetch_data(cls):
-        return cls._table_data_from_color_sequence(SORTED_COLORS_AS_RGB_FLOAT)
+        colors = [color for color in ALL_COLORS if classify_color(color) == cls.classification]
+        colors = _sort_colors_by_hls(colors)
+        return cls._table_data_from_color_sequence(colors)
+
+
+class ColorTableWHITE(ColorClassificationTable):
+    """Class to generate WHITE colors table."""
+
+    classification = ColorClassification.WHITE
+
+
+class ColorTableBLACK(ColorClassificationTable):
+    """Class to generate BLACK colors table."""
+
+    classification = ColorClassification.BLACK
+
+
+class ColorTableGRAY(ColorClassificationTable):
+    """Class to generate GRAY colors table."""
+
+    classification = ColorClassification.GRAY
+
+
+class ColorTableRED(ColorClassificationTable):
+    """Class to generate RED colors table."""
+
+    classification = ColorClassification.RED
+
+
+class ColorTableORANGE(ColorClassificationTable):
+    """Class to generate ORANGE colors table."""
+
+    classification = ColorClassification.ORANGE
+
+
+class ColorTableBROWN(ColorClassificationTable):
+    """Class to generate BROWN colors table."""
+
+    classification = ColorClassification.BROWN
+
+
+class ColorTableYELLOW(ColorClassificationTable):
+    """Class to generate YELLOW colors table."""
+
+    classification = ColorClassification.YELLOW
+
+
+class ColorTableGREEN(ColorClassificationTable):
+    """Class to generate GREEN colors table."""
+
+    classification = ColorClassification.GREEN
+
+
+class ColorTableCYAN(ColorClassificationTable):
+    """Class to generate CYAN colors table."""
+
+    classification = ColorClassification.CYAN
+
+
+class ColorTableBLUE(ColorClassificationTable):
+    """Class to generate BLUE colors table."""
+
+    classification = ColorClassification.BLUE
+
+
+class ColorTableVIOLET(ColorClassificationTable):
+    """Class to generate VIOLET colors table."""
+
+    classification = ColorClassification.VIOLET
+
+
+class ColorTableMAGENTA(ColorClassificationTable):
+    """Class to generate MAGENTA colors table."""
+
+    classification = ColorClassification.MAGENTA
 
 
 def _get_doc(func: Callable[[], Any]) -> str | None:
@@ -1714,7 +1882,7 @@ class AllDatasetsCarousel(DatasetGalleryCarousel):
 
     name = 'all_datasets_carousel'
 
-    @classproperty
+    @_classproperty
     def doc(cls):
         return DatasetCardFetcher.generate_alphabet_index(cls.dataset_names)
 
@@ -2088,8 +2256,23 @@ def make_all_tables():  # noqa: D103
     MarkerStyleTable.generate()
     ColorSchemeTable.generate()
     ColorTable.generate()
-    SortedColorTable.generate()
+    ColorTableGRAY.generate()
+    ColorTableWHITE.generate()
+    ColorTableBLACK.generate()
+    ColorTableRED.generate()
+    ColorTableORANGE.generate()
+    ColorTableBROWN.generate()
+    ColorTableYELLOW.generate()
+    ColorTableGREEN.generate()
+    ColorTableCYAN.generate()
+    ColorTableBLUE.generate()
+    ColorTableVIOLET.generate()
+    ColorTableMAGENTA.generate()
 
     # Make dataset gallery carousels
     os.makedirs(DATASET_GALLERY_DIR, exist_ok=True)
     make_all_carousels(CAROUSEL_LIST)
+
+
+if __name__ == '__main__':
+    make_all_tables()

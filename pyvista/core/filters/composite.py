@@ -15,6 +15,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import MultiBlock
     from pyvista.core._typing_core import TransformLike
 
 
@@ -121,8 +122,11 @@ class CompositeFilters:
 
     triangulate = DataSetFilters.triangulate
 
-    def outline(
-        self, generate_faces: bool = False, nested: bool = False, progress_bar: bool = False
+    def outline(  # type: ignore[misc]
+        self: MultiBlock,
+        generate_faces: bool = False,
+        nested: bool = False,
+        progress_bar: bool = False,
     ):
         """Produce an outline of the full extent for the all blocks in this composite dataset.
 
@@ -145,14 +149,16 @@ class CompositeFilters:
         """
         if nested:
             return DataSetFilters.outline(
-                self,  # type: ignore[arg-type]
+                self,
                 generate_faces=generate_faces,
                 progress_bar=progress_bar,
             )
-        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
+        box = pyvista.Box(bounds=self.bounds)
         return box.outline(generate_faces=generate_faces, progress_bar=progress_bar)
 
-    def outline_corners(self, factor=0.2, nested: bool = False, progress_bar: bool = False):
+    def outline_corners(  # type: ignore[misc]
+        self: MultiBlock, factor=0.2, nested: bool = False, progress_bar: bool = False
+    ):
         """Produce an outline of the corners for the all blocks in this composite dataset.
 
         Parameters
@@ -174,8 +180,8 @@ class CompositeFilters:
 
         """
         if nested:
-            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)  # type: ignore[arg-type]
-        box = pyvista.Box(bounds=self.bounds)  # type: ignore[attr-defined]
+            return DataSetFilters.outline_corners(self, factor=factor, progress_bar=progress_bar)
+        box = pyvista.Box(bounds=self.bounds)
         return box.outline_corners(factor=factor, progress_bar=progress_bar)
 
     def _compute_normals(
@@ -221,7 +227,7 @@ class CompositeFilters:
         self,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
-        inplace: bool = True,
+        inplace: bool | None = None,
         progress_bar: bool = False,
     ):
         """Transform all blocks in this composite dataset.
@@ -229,6 +235,9 @@ class CompositeFilters:
         .. note::
             See also the notes at :func:`pyvista.DataSetFilters.transform` which is
             used by this filter under the hood.
+
+        .. deprecated:: 0.45.0
+            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
 
         Parameters
         ----------
@@ -240,7 +249,7 @@ class CompositeFilters:
             When ``True``, all arrays with three components are transformed.
             Otherwise, only the normals and vectors are transformed.
 
-        inplace : bool, default: False
+        inplace : bool, default: True
             When ``True``, modifies the dataset inplace.
 
         progress_bar : bool, default: False
@@ -266,10 +275,14 @@ class CompositeFilters:
         >>> import pyvista as pv
         >>> mesh = pv.MultiBlock([pv.Sphere(), pv.Plane()])
         >>> transform = pv.Transform().translate(50, 100, 200)
-        >>> transformed = mesh.transform(transform)
+        >>> transformed = mesh.transform(transform, inplace=False)
         >>> transformed.plot(show_edges=True)
 
         """
+        from ._deprecate_transform_inplace_default_true import check_inplace
+
+        inplace = check_inplace(cls=type(self), inplace=inplace)
+
         trans = pyvista.Transform(trans)
         output = self if inplace else self.copy()  # type: ignore[attr-defined]
         for name in self.keys():  # type: ignore[attr-defined]

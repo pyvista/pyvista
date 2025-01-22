@@ -33,6 +33,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import PolyData
     from pyvista.core._typing_core import VectorLike
 
 
@@ -90,7 +91,7 @@ class PolyDataFilters(DataSetFilters):
 
     def _boolean(self, btype, other_mesh, tolerance, progress_bar: bool = False):
         """Perform boolean operation."""
-        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined]
+        if self.n_points == other_mesh.n_points and np.allclose(self.points, other_mesh.points):  # type: ignore[attr-defined, has-type]
             raise ValueError(
                 'The input mesh contains identical points to the surface being operated on. Unable to perform boolean operations on an identical surface.',
             )
@@ -177,12 +178,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a | sphere_b
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere_a, color='r', style='wireframe', line_width=3
-        ... )
-        >>> _ = pl.add_mesh(
-        ...     sphere_b, color='b', style='wireframe', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
@@ -253,12 +250,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a & sphere_b
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere_a, color='r', style='wireframe', line_width=3
-        ... )
-        >>> _ = pl.add_mesh(
-        ...     sphere_b, color='b', style='wireframe', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
@@ -330,12 +323,8 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere_b = pv.Sphere(center=(0.5, 0, 0))
         >>> result = sphere_a - sphere_b
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(
-        ...     sphere_a, color='r', style='wireframe', line_width=3
-        ... )
-        >>> _ = pl.add_mesh(
-        ...     sphere_b, color='b', style='wireframe', line_width=3
-        ... )
+        >>> _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
+        >>> _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
         >>> _ = pl.add_mesh(result, color='lightblue')
         >>> pl.camera_position = 'xz'
         >>> pl.show()
@@ -345,11 +334,11 @@ class PolyDataFilters(DataSetFilters):
         """
         return self._boolean('difference', other_mesh, tolerance, progress_bar=progress_bar)
 
-    def __add__(self, dataset):
+    def __add__(self: PolyData, dataset):  # type: ignore[misc]
         """Merge these two meshes."""
         return self.merge(dataset)
 
-    def __iadd__(self, dataset):
+    def __iadd__(self: PolyData, dataset):  # type: ignore[misc]
         """Merge another mesh into this one if possible.
 
         "If possible" means that ``dataset`` is also a :class:`PolyData`.
@@ -430,8 +419,8 @@ class PolyDataFilters(DataSetFilters):
 
         return merged
 
-    def merge(  # type: ignore[override]
-        self,
+    def merge(  # type: ignore[override, misc]
+        self: PolyData,
         dataset,
         merge_points: bool = True,
         tolerance=0.0,
@@ -543,7 +532,7 @@ class PolyDataFilters(DataSetFilters):
             else:
                 dataset_has_lines_strips = dataset.n_lines or dataset.n_strips or dataset.n_verts
 
-            if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:  # type: ignore[attr-defined]
+            if self.n_lines or self.n_strips or self.n_verts or dataset_has_lines_strips:
                 merged = merged.extract_geometry()
             else:
                 polydata_merged = pyvista.PolyData(
@@ -571,7 +560,7 @@ class PolyDataFilters(DataSetFilters):
                 merged = polydata_merged
 
         if inplace:
-            self.deep_copy(merged)  # type: ignore[attr-defined]
+            self.deep_copy(merged)
             return self
 
         return merged
@@ -1096,6 +1085,13 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Decimated mesh.
 
+        See Also
+        --------
+        decimate
+            Another option for triangular meshes.
+        decimate_polyline
+            For use with polylines.
+
         Examples
         --------
         Decimate a sphere.  First plot the sphere.
@@ -1127,6 +1123,122 @@ class PolyDataFilters(DataSetFilters):
 
         if max_degree is not None:
             alg.SetDegree(max_degree)
+
+        _update_alg(alg, progress_bar, 'Decimating Mesh')
+
+        mesh = _get_output(alg)
+        if inplace:
+            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
+            return self
+
+        return mesh
+
+    def decimate_polyline(
+        self,
+        reduction: float,
+        *,
+        maximum_error: float = 10.0,
+        inplace: bool = False,
+        progress_bar: bool = False,
+    ):
+        """Reduce the number of lines in a polyline mesh.
+
+        This filter uses ``vtkDecimatePolylineFilter``.
+
+        .. versionadded:: 0.45.0
+
+        Parameters
+        ----------
+        reduction : float
+            Reduction factor. A value of 0.9 will leave 10% of the
+            original number of vertices.
+
+        maximum_error : float, default: 10.
+            Fraction of the maximum length of the input data bounding box
+            to limit reduction.  This might prevent the full reduction from
+            being achieved. Default of ``10.`` should not limit reduction.
+
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.PolyData
+            Decimated mesh.
+
+        Warnings
+        --------
+        From ``vtkDecimatePolylineFilter`` documentation: this algorithm is a very
+        simple implementation that overlooks some potential complexities.
+        For example, if a vertex is multiply connected, meaning that it is
+        used by multiple distinct polylines, then the extra topological
+        constraints are ignored. This can produce less than optimal results.
+
+        See Also
+        --------
+        decimate
+            For use with triangular meshes.
+        decimate_pro
+            Another option for triangular meshes.
+
+        Examples
+        --------
+        Generate a circle, builtin function returns a Polygon cell.
+
+        >>> import pyvista as pv
+        >>> circle = pv.Circle(resolution=30)
+
+        Convert to a Polyline. A polyline requires duplicating reference
+        to initial point to close the circle.
+
+        >>> circle_polyline = pv.PolyData(
+        ...     circle.points, lines=[31] + list(range(30)) + [0]
+        ... )
+        >>> circle_polyline.n_points
+        30
+
+        Decimate ~50% of points.
+
+        >>> decimate_some = circle_polyline.decimate_polyline(0.5)
+        >>> decimate_some.n_points
+        14
+
+        Decimate more points.
+
+        >>> decimate_more = circle_polyline.decimate_polyline(0.75)
+        >>> decimate_more.n_points
+        6
+
+        Compare decimated polylines.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(circle_polyline, label='Circle', color='red', line_width=5)
+        >>> _ = pl.add_mesh(
+        ...     decimate_some,
+        ...     label='Decimated some',
+        ...     color='blue',
+        ...     line_width=5,
+        ... )
+        >>> _ = pl.add_mesh(
+        ...     decimate_more,
+        ...     label='Decimated more',
+        ...     color='black',
+        ...     line_width=5,
+        ... )
+        >>> pl.view_xy()
+        >>> _ = pl.add_legend(face='line', size=(0.25, 0.25))
+        >>> pl.show()
+
+        See :ref:`decimate_example` for more examples using this filter.
+
+        """
+        alg = _vtk.vtkDecimatePolylineFilter()
+        alg.SetInputData(self)
+        alg.SetTargetReduction(reduction)
+        alg.SetMaximumError(maximum_error)
 
         _update_alg(alg, progress_bar, 'Decimating Mesh')
 
@@ -1533,6 +1645,13 @@ class PolyDataFilters(DataSetFilters):
         pyvista.PolyData
             Decimated mesh.
 
+        See Also
+        --------
+        decimate_pro
+            Another option for triangular meshes.
+        decimate_polyline
+            For use with polylines.
+
         Notes
         -----
         If you encounter a segmentation fault or other error, consider using
@@ -1680,9 +1799,9 @@ class PolyDataFilters(DataSetFilters):
 
         See Also
         --------
-        point_normals
+        pyvista.PolyData.point_normals
             Returns the array of point normals.
-        cell_normals
+        pyvista.PolyData.cell_normals
             Returns the array of cell normals.
 
         Examples
@@ -1713,7 +1832,7 @@ class PolyDataFilters(DataSetFilters):
         # track original point indices
         if split_vertices:
             self.point_data.set_array(  # type: ignore[attr-defined]
-                np.arange(self.n_points, dtype=pyvista.ID_TYPE),  # type: ignore[attr-defined]
+                np.arange(self.n_points, dtype=pyvista.ID_TYPE),  # type: ignore[attr-defined, arg-type]
                 'pyvistaOriginalPointIds',
             )
 
@@ -1820,9 +1939,7 @@ class PolyDataFilters(DataSetFilters):
         sphere in the positive Z direction.  Shift the clip upwards to
         leave a smaller mesh behind.
 
-        >>> clipped_mesh = sphere.clip_closed_surface(
-        ...     'z', origin=[0, 0, 0.3]
-        ... )
+        >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
         >>> clipped_mesh.plot(show_edges=True, line_width=3)
 
         """
@@ -1977,9 +2094,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> import numpy as np
-        >>> points = np.array(
-        ...     [[0, 0, 0], [0, 1, 0], [1, 0, 0]], dtype=np.float32
-        ... )
+        >>> points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]], dtype=np.float32)
         >>> faces = np.array([3, 0, 1, 2, 3, 0, 2, 2])
         >>> mesh = pv.PolyData(points, faces)
         >>> mout = mesh.clean()
@@ -2207,9 +2322,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
-        >>> point, cell = sphere.ray_trace(
-        ...     [0, 0, 0], [1, 0, 0], first_point=True
-        ... )
+        >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], first_point=True)
         >>> f'Intersected at {point[0]:.3f} {point[1]:.3f} {point[2]:.3f}'
         'Intersected at 0.499 0.000 0.000'
 
@@ -2309,9 +2422,9 @@ class PolyDataFilters(DataSetFilters):
         ...     [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
         ...     first_point=True,
         ... )  # doctest:+SKIP
-        >>> string = ", ".join(
+        >>> string = ', '.join(
         ...     [
-        ...         f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})"
+        ...         f'({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})'
         ...         for point in points
         ...     ]
         ... )  # doctest:+SKIP
@@ -2336,7 +2449,7 @@ class PolyDataFilters(DataSetFilters):
 
         origins = np.asarray(origins)
         directions = np.asarray(directions)
-        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined]
+        tmesh = trimesh.Trimesh(self.points, self.regular_faces)  # type: ignore[attr-defined, has-type]
         locations, index_ray, index_tri = tmesh.ray.intersects_location(
             origins,
             directions,
@@ -2389,8 +2502,8 @@ class PolyDataFilters(DataSetFilters):
 
         return locations, index_ray, index_tri
 
-    def plot_boundaries(
-        self, edge_color='red', line_width=None, progress_bar: bool = False, **kwargs
+    def plot_boundaries(  # type: ignore[misc]
+        self: PolyData, edge_color='red', line_width=None, progress_bar: bool = False, **kwargs
     ):
         """Plot boundaries of a mesh.
 
@@ -2439,8 +2552,8 @@ class PolyDataFilters(DataSetFilters):
         plotter.add_legend()  # type: ignore[call-arg]
         return plotter.show()
 
-    def plot_normals(
-        self,
+    def plot_normals(  # type: ignore[misc]
+        self: PolyData,
         show_mesh: bool = True,
         mag=1.0,
         flip: bool = False,
@@ -2510,13 +2623,13 @@ class PolyDataFilters(DataSetFilters):
 
         if faces:
             centers = self.cell_centers().points[::use_every]
-            normals = self.cell_normals  # type: ignore[attr-defined]
+            normals = self.cell_normals
         else:
             centers = self.points[::use_every]
-            normals = self.point_normals  # type: ignore[attr-defined]
+            normals = self.point_normals
 
         if flip:
-            normals *= -1
+            normals *= -1  # type: ignore[misc]
 
         plotter.add_arrows(
             centers,
@@ -2592,7 +2705,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Regenerate face and point arrays
         uni = np.unique(f.compress(fmask, 0), return_inverse=True)
-        new_points = self.points.take(uni[0], 0)
+        new_points = self.points.take(uni[0], 0)  # type: ignore[has-type]
 
         nfaces = fmask.sum()
         faces = np.empty((nfaces, 4), dtype=pyvista.ID_TYPE)
@@ -2786,7 +2899,7 @@ class PolyDataFilters(DataSetFilters):
         You can also plot the arc_length.
 
         >>> arc = path.compute_arc_length()
-        >>> arc.plot(scalars="arc_length")
+        >>> arc.plot(scalars='arc_length')
 
         """
         alg = _vtk.vtkAppendArcLength()
@@ -2836,7 +2949,7 @@ class PolyDataFilters(DataSetFilters):
         plane = generate_plane(normal, origin)
         # Perform projection in place on the copied mesh
         f = lambda p: plane.ProjectPoint(p, p)
-        np.apply_along_axis(f, 1, mesh.points)
+        np.apply_along_axis(f, 1, mesh.points)  # type: ignore[call-overload, has-type]
         return mesh
 
     def ribbon(
@@ -2846,7 +2959,7 @@ class PolyDataFilters(DataSetFilters):
         angle=0.0,
         factor=2.0,
         normal=None,
-        tcoords: bool = False,
+        tcoords: bool | str = False,
         preference='points',
         progress_bar: bool = False,
     ):
@@ -3564,8 +3677,8 @@ class PolyDataFilters(DataSetFilters):
 
         return output, alg.GetNumberOfContacts()
 
-    def contour_banded(
-        self,
+    def contour_banded(  # type: ignore[misc]
+        self: PolyData,
         n_contours,
         rng=None,
         scalars=None,
@@ -3679,19 +3792,19 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if scalars is None:
-            set_default_active_scalars(self)  # type: ignore[arg-type]
-            if self.point_data.active_scalars_name is None:  # type: ignore[attr-defined]
+            set_default_active_scalars(self)
+            if self.point_data.active_scalars_name is None:
                 raise MissingDataError('No point scalars to contour.')
             scalars = self.active_scalars_name
-        arr = get_array(self, scalars, preference='point', err=False)  # type: ignore[arg-type]
+        arr = get_array(self, scalars, preference='point', err=False)
         if arr is None:
             raise ValueError('No arrays present to contour.')
-        field = get_array_association(self, scalars, preference='point')  # type: ignore[arg-type]
+        field = get_array_association(self, scalars, preference='point')
         if field != FieldAssociation.POINT:
             raise ValueError('Only point data can be contoured.')
 
         if rng is None:
-            rng = (self.active_scalars.min(), self.active_scalars.max())  # type: ignore[attr-defined]
+            rng = self.get_data_range(self.active_scalars)
 
         alg = _vtk.vtkBandedPolyDataContourFilter()
         alg.SetInputArrayToProcess(
@@ -3724,12 +3837,12 @@ class PolyDataFilters(DataSetFilters):
             array = mesh.GetPointData().GetAbstractArray(i)
             name = array.GetName()
             if name is None:
-                array.SetName(self.point_data.active_scalars_name)  # type: ignore[attr-defined]
+                array.SetName(self.point_data.active_scalars_name)
         for i in range(mesh.GetCellData().GetNumberOfArrays()):
             array = mesh.GetCellData().GetAbstractArray(i)
             name = array.GetName()
             if name is None:
-                array.SetName(self.cell_data.active_scalars_name)  # type: ignore[attr-defined]
+                array.SetName(self.cell_data.active_scalars_name)
 
         if generate_contour_edges:
             return mesh, wrap(alg.GetContourEdgesOutput())
@@ -3911,11 +4024,11 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(alg, progress_bar, 'Generating Protein Ribbons')
         return _get_output(alg)
 
-    def voxelize_binary_mask(
-        self,
+    def voxelize_binary_mask(  # type: ignore[misc]
+        self: PolyData,
         *,
-        background_value: int = 0,
-        foreground_value: int = 1,
+        background_value: int | float = 0,  # noqa: PYI041
+        foreground_value: int | float = 1,  # noqa: PYI041
         reference_volume: pyvista.ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
@@ -4060,7 +4173,7 @@ class PolyDataFilters(DataSetFilters):
         pyvista.voxelize_volume
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
-        pyvista.ImageDataFilters.contour_labeled
+        pyvista.ImageDataFilters.contour_labels
             Filter that generates surface contours from labeled image data. Can be
             loosely considered as an inverse of this filter.
 
@@ -4112,7 +4225,6 @@ class PolyDataFilters(DataSetFilters):
         ...     _ = plot.add_mesh(poly, color='lime')
         ...     plot.camera_position = 'xy'
         ...     return plot
-        ...
 
         >>> plot = mask_and_polydata_plotter(mask, poly)
         >>> plot.show()
@@ -4160,7 +4272,7 @@ class PolyDataFilters(DataSetFilters):
         an existing mask.
 
         >>> volume = examples.load_frog_tissues()
-        >>> poly = volume.contour_labeled(smoothing=True)
+        >>> poly = volume.contour_labels()
 
         Now create the mask from the polydata using the volume as a reference.
 
@@ -4177,7 +4289,7 @@ class PolyDataFilters(DataSetFilters):
         >>> plot = pv.Plotter()
         >>> _ = plot.add_mesh(binary_mask)
         >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos="yz")
+        >>> plot.show(cpos='yz')
 
         Note how the intersection is excluded from the mask.
         To include the voxels delimited by internal surfaces in the foreground, the internal
@@ -4203,33 +4315,29 @@ class PolyDataFilters(DataSetFilters):
         ...     reference_volume=reference_volume
         ... ).points_to_cells()
 
-        >>> binary_mask_1["mask"] = (
-        ...     binary_mask_1["mask"] | binary_mask_2["mask"]
-        ... )
+        >>> binary_mask_1['mask'] = binary_mask_1['mask'] | binary_mask_2['mask']
 
         >>> plot = pv.Plotter()
         >>> _ = plot.add_mesh(binary_mask_1)
         >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
         >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
-        >>> plot.show(cpos="yz")
+        >>> plot.show(cpos='yz')
 
         When multiple internal surfaces are nested, they are successively treated as
         interfaces between background and foreground.
 
-        >>> mesh = (
-        ...     pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
-        ... )
+        >>> mesh = pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
         >>> binary_mask = mesh.voxelize_binary_mask(
         ...     dimensions=(1, 50, 50)
         ... ).points_to_cells()
         >>> plot = pv.Plotter()
         >>> _ = plot.add_mesh(binary_mask)
         >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos="yz")
+        >>> plot.show(cpos='yz')
 
         """
-        _validation.check_greater_than(self.n_points, 1, name='n_points')  # type: ignore[attr-defined]
-        _validation.check_greater_than(self.n_cells, 1, name='n_cells')  # type: ignore[attr-defined]
+        _validation.check_greater_than(self.n_points, 1, name='n_points')
+        _validation.check_greater_than(self.n_cells, 1, name='n_cells')
 
         def _preprocess_polydata(poly_in):
             return poly_in.compute_normals().triangulate()
@@ -4249,7 +4357,7 @@ class PolyDataFilters(DataSetFilters):
             _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
-            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)  # type: ignore[misc]
+            poly_ijk = self.transform(reference_volume.direction_matrix.T, inplace=False)
             poly_ijk = _preprocess_polydata(poly_ijk)
         else:
             # Compute reference volume geometry
@@ -4285,7 +4393,7 @@ class PolyDataFilters(DataSetFilters):
                             must_be_in_range=[0.0, 1.0],
                         )
                     )
-                    spacing = self.length * mesh_length_fraction  # type: ignore[attr-defined]
+                    spacing = self.length * mesh_length_fraction
                 else:
                     # Estimate spacing from cell length percentile
                     cell_length_percentile = (
@@ -4315,7 +4423,7 @@ class PolyDataFilters(DataSetFilters):
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
-            bnds = self.bounds  # type: ignore[attr-defined]
+            bnds = self.bounds
             x_size = bnds.x_max - bnds.x_min
             y_size = bnds.y_max - bnds.y_min
             z_size = bnds.z_max - bnds.z_min
@@ -4336,7 +4444,7 @@ class PolyDataFilters(DataSetFilters):
             # points to be 1/2 spacing width smaller than the polydata bounds
             final_spacing = sizes / np.array(reference_volume.dimensions)
             reference_volume.spacing = final_spacing
-            reference_volume.origin = np.array(self.bounds[::2]) + final_spacing / 2  # type: ignore[attr-defined]
+            reference_volume.origin = np.array(self.bounds[::2]) + final_spacing / 2
 
         # Init output structure. The image stencil filters do not support
         # orientation, so we do not set the direction matrix
@@ -4353,10 +4461,7 @@ class PolyDataFilters(DataSetFilters):
             for val in (background_value, foreground_value)
         ):
             scalars_dtype = np.uint8
-        elif all(
-            isinstance(val, (float, int)) and round(val) == val
-            for val in (background_value, foreground_value)
-        ):
+        elif all(round(val) == val for val in (background_value, foreground_value)):
             scalars_dtype = np.int_
         else:
             scalars_dtype = np.float64

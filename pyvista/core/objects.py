@@ -11,7 +11,7 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject
+from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import FieldLiteral
@@ -376,7 +376,7 @@ class Table(DataObject, _vtk.vtkTable):
         if isinstance(arr, str):
             arr = get_array(self, arr, preference=preference)  # type: ignore[assignment]
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
+        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)

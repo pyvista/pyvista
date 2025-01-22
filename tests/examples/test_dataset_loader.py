@@ -615,8 +615,8 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     assert loader._total_size_bytes == 69732
     assert loader.total_size == '69.7 KB'
     assert loader.unique_extension == '.exo'
-    assert loader._reader is None
-    assert loader.unique_reader_type is None
+    assert isinstance(loader._reader, pv.ExodusIIReader)
+    assert loader.unique_reader_type is pv.ExodusIIReader
     assert type(loader.dataset) is pv.MultiBlock
     assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
     assert len(loader.dataset_iterable) == 12

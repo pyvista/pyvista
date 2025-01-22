@@ -61,6 +61,35 @@ def test_identical_boolean(sphere):
         sphere.boolean_intersection(sphere.copy())
 
 
+@pytest.fixture
+def poly_circle():
+    circle = pv.Circle(resolution=30)
+    return pv.PolyData(circle.points, lines=[31, *list(range(30)), 0])
+
+
+def test_decimate_polyline(poly_circle):
+    assert poly_circle.n_points == 30
+    decimated = poly_circle.decimate_polyline(0.5)
+    # Allow some leeway for approximtely 50%
+    assert decimated.n_points >= 14
+    assert decimated.n_points <= 16
+
+
+def test_decimate_polyline_maximum_error(poly_circle):
+    assert poly_circle.n_points == 30
+    # low maximum error will prevent decimation.
+    # Since this is a regular shape, no decimation occurs at all with suitable choice
+    decimated = poly_circle.decimate_polyline(0.5, maximum_error=0.0001)
+    assert decimated.n_points == 30
+
+
+def test_decimate_polyline_inplace(poly_circle):
+    poly_circle.decimate_polyline(0.5, inplace=True)
+    # Allow some leeway for approximtely 50%
+    assert poly_circle.n_points >= 14
+    assert poly_circle.n_points <= 16
+
+
 def test_triangulate_contours():
     poly = pv.Polygon(n_sides=4, fill=False)
     filled = poly.triangulate_contours()
@@ -85,7 +114,7 @@ def frog_tissues_image():
 
 @pytest.fixture
 def frog_tissues_contour(frog_tissues_image):
-    return frog_tissues_image.contour_labeled(smoothing=False)
+    return frog_tissues_image.contour_labels(smoothing=False)
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
@@ -215,7 +244,7 @@ def oriented_image():
 
 @pytest.fixture
 def oriented_polydata(oriented_image):
-    oriented_poly = oriented_image.pad_image().contour_labeled(smoothing=False)
+    oriented_poly = oriented_image.pad_image().contour_labels(smoothing=False)
     assert np.allclose(oriented_poly.bounds, oriented_image.points_to_cells().bounds, atol=0.1)
     return oriented_poly
 
@@ -224,7 +253,7 @@ def oriented_polydata(oriented_image):
 def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
     mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
     assert mask.bounds == oriented_image.bounds
-    mask_as_surface = mask.pad_image().contour_labeled(smoothing=False)
+    mask_as_surface = mask.pad_image().contour_labels(smoothing=False)
     assert mask_as_surface.bounds == oriented_polydata.bounds
 
 

@@ -381,10 +381,11 @@ def test_print_repr(grid, display, html):
     representation method for DataSet.
     """
     result = grid.head(display=display, html=html)
+    assert isinstance(result, str)
     if display and html:
-        assert result is None
+        assert result == ''
     else:
-        assert result is not None
+        assert result != ''
 
 
 def test_invalid_vector(grid):
@@ -1393,3 +1394,11 @@ def test_active_t_coords_deprecated(mesh):
         mesh.active_t_coords = t_coords
         if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
+
+
+def test_active_array_info_deprecated(mesh):
+    match = 'ActiveArrayInfo is deprecated. Use ActiveArrayInfoTuple instead.'
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
+        if pv._version.version_info[:2] > (0, 48):
+            raise RuntimeError('Remove this deprecated class')
