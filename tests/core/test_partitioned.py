@@ -32,7 +32,7 @@ def test_insert(sphere):
 def test_pop():
     spheres = [pv.Sphere(phi_resolution=i + 3) for i in range(10)]
     partitions = PartitionedDataSet(spheres)
-    match = "The requested operation is not supported for PartitionedDataSetss."
+    match = 'The requested operation is not supported for PartitionedDataSetss.'
     with pytest.raises(PartitionedDataSetsNotSupported, match=match):
         partitions.pop()
 
@@ -75,7 +75,7 @@ def test_partitioned_dataset_deep_copy(ant, sphere, uniform, airplane, tetbeam):
 
 def test_partitioned_dataset_shallow_copy(ant, sphere, uniform, airplane, tetbeam):
     partitions = partitions_from_datasets(ant, sphere, uniform, airplane, tetbeam)
-    match = "The requested operation is not supported for PartitionedDataSetss."
+    match = 'The requested operation is not supported for PartitionedDataSetss.'
     with pytest.raises(PartitionedDataSetsNotSupported, match=match):
         _ = partitions.copy(deep=False)
 
@@ -101,7 +101,7 @@ def test_partitioned_dataset_negative_index(ant, sphere, uniform, airplane, tetb
 
 def test_del_slice(sphere):
     partitions = PartitionedDataSet([sphere for i in range(10)])
-    match = "The requested operation is not supported for PartitionedDataSetss."
+    match = 'The requested operation is not supported for PartitionedDataSetss.'
     with pytest.raises(PartitionedDataSetsNotSupported, match=match):
         del partitions[0:10:2]
 

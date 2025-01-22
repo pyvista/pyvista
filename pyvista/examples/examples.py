@@ -58,7 +58,7 @@ def load_ant():
     return _dataset_ant.load()
 
 
-_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pyvista.PolyData)
+_dataset_ant = _SingleFileDownloadableDatasetLoader(antfile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_airplane():
@@ -84,7 +84,7 @@ def load_airplane():
     return _dataset_airplane.load()
 
 
-_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pyvista.PolyData)
+_dataset_airplane = _SingleFileDownloadableDatasetLoader(planefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_sphere():
@@ -110,7 +110,7 @@ def load_sphere():
     return _dataset_sphere.load()
 
 
-_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pyvista.PolyData)
+_dataset_sphere = _SingleFileDownloadableDatasetLoader(spherefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_uniform():
@@ -136,7 +136,7 @@ def load_uniform():
     return _dataset_uniform.load()
 
 
-_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pyvista.ImageData)
+_dataset_uniform = _SingleFileDownloadableDatasetLoader(uniformfile, read_func=pyvista.ImageData)  # type: ignore[arg-type]
 
 
 def load_rectilinear():
@@ -164,7 +164,7 @@ def load_rectilinear():
 
 _dataset_rectilinear = _SingleFileDownloadableDatasetLoader(
     rectfile,
-    read_func=pyvista.RectilinearGrid,
+    read_func=pyvista.RectilinearGrid,  # type: ignore[arg-type]
 )
 
 
@@ -193,7 +193,7 @@ def load_hexbeam():
 
 _dataset_hexbeam = _SingleFileDownloadableDatasetLoader(
     hexbeamfile,
-    read_func=pyvista.UnstructuredGrid,
+    read_func=pyvista.UnstructuredGrid,  # type: ignore[arg-type]
 )
 
 
@@ -291,7 +291,7 @@ def load_globe():
     return _dataset_globe.load()
 
 
-_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pyvista.PolyData)
+_dataset_globe = _SingleFileDownloadableDatasetLoader(globefile, read_func=pyvista.PolyData)  # type: ignore[arg-type]
 
 
 def load_globe_texture():
@@ -319,7 +319,7 @@ def load_globe_texture():
 
 _dataset_globe_texture = _SingleFileDownloadableDatasetLoader(
     mapfile,
-    read_func=pyvista.read_texture,
+    read_func=pyvista.read_texture,  # type: ignore[arg-type]
 )
 
 
@@ -485,8 +485,8 @@ def _sphere_vectors_load_func() -> pyvista.PolyData:
     ).T
 
     # add and scale
-    sphere["vectors"] = vectors * 0.3
-    sphere.set_active_vectors("vectors")
+    sphere['vectors'] = vectors * 0.3
+    sphere.set_active_vectors('vectors')
     return sphere
 
 
@@ -526,28 +526,13 @@ def load_explicit_structured(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
 def _explicit_structured_load_func(dimensions=(5, 6, 7), spacing=(20, 10, 1)):
     ni, nj, nk = np.asarray(dimensions) - 1
     si, sj, sk = spacing
+    xi = np.arange(0.0, (ni + 1) * si, si)
+    yi = np.arange(0.0, (nj + 1) * sj, sj)
+    zi = np.arange(0.0, (nk + 1) * sk, sk)
 
-    xcorn = np.arange(0, (ni + 1) * si, si)
-    xcorn = np.repeat(xcorn, 2)
-    xcorn = xcorn[1:-1]
-    xcorn = np.tile(xcorn, 4 * nj * nk)
-
-    ycorn = np.arange(0, (nj + 1) * sj, sj)
-    ycorn = np.repeat(ycorn, 2)
-    ycorn = ycorn[1:-1]
-    ycorn = np.tile(ycorn, (2 * ni, 2 * nk))
-    ycorn = np.transpose(ycorn)
-    ycorn = ycorn.flatten()
-
-    zcorn = np.arange(0, (nk + 1) * sk, sk)
-    zcorn = np.repeat(zcorn, 2)
-    zcorn = zcorn[1:-1]
-    zcorn = np.repeat(zcorn, (4 * ni * nj))
-
-    corners = np.stack((xcorn, ycorn, zcorn))
-    corners = corners.transpose()
-
-    return pyvista.ExplicitStructuredGrid(dimensions, corners)
+    return pyvista.StructuredGrid(
+        *np.meshgrid(xi, yi, zi, indexing='ij')
+    ).cast_to_explicit_structured_grid()
 
 
 _dataset_explicit_structured = _DatasetLoader(_explicit_structured_load_func)
@@ -742,9 +727,7 @@ def load_frog_tissues():
     >>> clim = data.get_data_range()  # Set color bar limits to match data
     >>> cmap = 'glasbey'  # Use a categorical colormap
     >>> categories = True  # Ensure n_colors matches number of labels
-    >>> opacity = (
-    ...     'foreground'  # Make foreground opaque, background transparent
-    ... )
+    >>> opacity = 'foreground'  # Make foreground opaque, background transparent
     >>> opacity_unit_distance = 1
 
     Set plotting resolution to half the image's spacing

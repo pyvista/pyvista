@@ -46,6 +46,7 @@ def atomize(grid, shift_fac=0.1, scale=0.9):
     -------
     pyvista.UnstructuredGrid
         The atomized mesh with individually shifted and scaled cells.
+
     """
     cent = grid.center
     cells = []
@@ -111,8 +112,9 @@ def logo_letters(merge=False, depth=0.3):
         If merge is ``True``, returns a single merged mesh containing all the
         letters in "PyVista". If merge is ``False``, returns a dictionary where
         the keys are the letters and the values are the respective meshes.
+
     """
-    mesh_letters = pyvista.PolyData() if merge else {}
+    mesh_letters = pyvista.PolyData() if merge else {}  # type: ignore[var-annotated]
 
     # spacing between letters
     space_factor = 0.9
@@ -142,6 +144,7 @@ def logo_voxel(density=0.03):
     -------
     pyvista.UnstructuredGrid
         Voxelized PyVista logo as an unstructured grid.
+
     """
     return pyvista.voxelize(text_3d(LOGO_TITLE, depth=0.3), density)
 
@@ -226,12 +229,10 @@ def plot_logo(
 
     # letter 'P'
     p_mesh = mesh_letters['P'].compute_normals(split_vertices=True)
-    p_mesh.flip_normals()
     plotter.add_mesh(p_mesh, color='#376fa0', smooth_shading=True)
 
     # letter 'y'
     y_mesh = mesh_letters['y'].compute_normals(split_vertices=True)
-    y_mesh.flip_normals()
     plotter.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
 
     # letter 'V'
@@ -297,7 +298,7 @@ def plot_logo(
     plotter.add_mesh(a_part, scalars=scalars, show_edges=True, cmap='Greens', show_scalar_bar=False)
 
     if show_note:
-        text = text_3d("You can move me!", depth=0.1)
+        text = text_3d('You can move me!', depth=0.1)
         text.points *= 0.1
         text.translate([4.0, -0.3, 0], inplace=True)
         plotter.add_mesh(text, color='black')

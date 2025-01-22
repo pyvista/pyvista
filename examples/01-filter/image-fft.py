@@ -68,7 +68,7 @@ fft_image.point_data
 
 fft_image.plot(
     scalars=np.abs(fft_image.point_data['PNGImage']),
-    cpos="xy",
+    cpos='xy',
     theme=grey_theme,
     log_scale=True,
     text='Moon Landing Image FFT',
@@ -100,7 +100,7 @@ data[:, int(width * ratio_to_keep) : -int(width * ratio_to_keep)] = 0
 
 fft_image.plot(
     scalars=np.abs(data),
-    cpos="xy",
+    cpos='xy',
     theme=grey_theme,
     log_scale=True,
     text='Moon Landing Image FFT with Noise Removed',
@@ -116,6 +116,6 @@ fft_image.plot(
 
 rfft = fft_image.rfft()
 rfft['PNGImage'] = np.real(rfft['PNGImage'])
-rfft.plot(cpos="xy", theme=grey_theme, text='Processed Moon Landing Image')
+rfft.plot(cpos='xy', theme=grey_theme, text='Processed Moon Landing Image')
 # %%
 # .. tags:: filter

@@ -49,10 +49,18 @@ File IO
 .. autosummary::
    :toctree: _autosummary
 
+   from_meshio
+   get_ext
+   is_meshio_mesh
    read
    read_exodus
+   read_grdecl
+   read_meshio
    read_texture
    save_meshio
+   set_pickle_format
+   set_vtkwriter_mode
+   to_meshio
 
 
 Mesh Creation
@@ -95,22 +103,28 @@ Image Comparison and Regression
    compare_images
 
 
-Miscellaneous
-~~~~~~~~~~~~~
+Colors
+~~~~~~
 .. autosummary::
    :toctree: _autosummary
 
    Color
-
-.. autosummary::
-   :toctree: _autosummary
-
    ColorLike
-   start_xvfb
+
+Named colors supported by the :class:`~pyvista.Color` class:
+
+.. toctree::
+   :maxdepth: 3
+
+   /api/utilities/named_colors
+
+Miscellaneous
+~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: _autosummary
 
+   start_xvfb
    Report
 
 PyVista Version Information
@@ -118,28 +132,21 @@ PyVista Version Information
 The PyVista library provides a way of getting the version installed in your
 environment.
 
-.. code:: python
-
-   Output the version of PyVista.
-
-   >>> import pyvista
-   >>> pyvista.version_info
-   (0, 44, 0)
+>>> # Output the version of PyVista.
+>>> import pyvista
+>>> pyvista.version_info
+(0, 44, 0)
 
 VTK Version Information
 ~~~~~~~~~~~~~~~~~~~~~~~
 The PyVista library is heavily dependent on VTK and provides an easy
 way of getting the version of VTK in your environment.
 
-.. code:: python
+>>> # Output the version of VTK.
+>>> import pyvista
+>>> pyvista.vtk_version_info
+VTKVersionInfo(major=9, minor=1, micro=0)
 
-   Output the version of VTK.
-
-   >>> import pyvista
-   >>> pyvista.vtk_version_info
-   VTKVersionInfo(major=9, minor=1, micro=0)
-
-   Get the major version of VTK
-
-   >>> pyvista.vtk_version_info.major
-   9
+>>> # Get the major version of VTK
+>>> pyvista.vtk_version_info.major
+9

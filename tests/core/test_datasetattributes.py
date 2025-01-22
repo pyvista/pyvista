@@ -30,17 +30,17 @@ skip_apple_silicon = pytest.mark.skipif(
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def hexbeam_point_attributes(hexbeam):
     return hexbeam.point_data
 
 
-@pytest.fixture()
+@pytest.fixture
 def hexbeam_field_attributes(hexbeam):
     return hexbeam.field_data
 
 
-@pytest.fixture()
+@pytest.fixture
 def insert_arange_narray(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.arange(n_points)
@@ -48,7 +48,7 @@ def insert_arange_narray(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
-@pytest.fixture()
+@pytest.fixture
 def insert_bool_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.ones(n_points, np.bool_)
@@ -56,10 +56,10 @@ def insert_bool_array(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
-@pytest.fixture()
+@pytest.fixture
 def insert_string_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
-    sample_array = np.repeat("A", n_points)
+    sample_array = np.repeat('A', n_points)
     hexbeam_point_attributes.set_array(sample_array, 'sample_array')
     return hexbeam_point_attributes, sample_array
 
@@ -550,18 +550,18 @@ def test_active_scalars_setter_no_override(hexbeam):
 def test_preserve_field_data_after_extract_cells(hexbeam, arr):
     if not ''.join(arr).isascii():
         with pytest.raises(ValueError, match='non-ASCII'):
-            hexbeam.field_data["foo"] = arr
+            hexbeam.field_data['foo'] = arr
         return
 
     # https://github.com/pyvista/pyvista/pull/934
-    hexbeam.field_data["foo"] = arr
+    hexbeam.field_data['foo'] = arr
     extracted = hexbeam.extract_cells([0, 1, 2, 3])
-    assert "foo" in extracted.field_data
+    assert 'foo' in extracted.field_data
 
 
 def test_assign_labels_to_points(hexbeam):
     hexbeam.point_data.clear()
-    labels = [f"Label {i}" for i in range(hexbeam.n_points)]
+    labels = [f'Label {i}' for i in range(hexbeam.n_points)]
     hexbeam['labels'] = labels
     assert (hexbeam['labels'] == labels).all()
 
@@ -696,11 +696,11 @@ def test_active_t_coords_deprecated():
     mesh = pv.Cube()
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.point_data.active_t_coords
-        if pv._version.version_info >= (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.point_data.active_t_coords = t_coords
-        if pv._version.version_info >= (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
 
 
@@ -708,9 +708,36 @@ def test_active_t_coords_name_deprecated():
     mesh = pv.Cube()
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         name = mesh.point_data.active_t_coords_name
-        if pv._version.version_info >= (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.point_data.active_t_coords_name = name
-        if pv._version.version_info >= (0, 46):
+        if pv._version.version_info[:2] > (0, 46):
             raise RuntimeError('Remove this deprecated property')
+
+
+@pytest.mark.parametrize('copy', [True, False])
+def test_update(uniform, copy):
+    new_mesh = pv.ImageData(dimensions=uniform.dimensions)
+
+    # Test point data
+    new_mesh.point_data.update(uniform.point_data, copy=copy)
+    for array_name in uniform.point_data.keys():
+        shares_memory = np.shares_memory(
+            new_mesh.point_data[array_name], uniform.point_data[array_name]
+        )
+        if copy:
+            assert not shares_memory
+        else:
+            assert shares_memory
+
+    # Test cell data
+    new_mesh.cell_data.update(uniform.cell_data, copy=copy)
+    for array_name in uniform.cell_data.keys():
+        shares_memory = np.shares_memory(
+            new_mesh.cell_data[array_name], uniform.cell_data[array_name]
+        )
+        if copy:
+            assert not shares_memory
+        else:
+            assert shares_memory

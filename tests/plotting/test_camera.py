@@ -21,15 +21,14 @@ configuration = [
 ]
 
 
-@pytest.fixture()
+@pytest.fixture
 def camera():
     return pv.Camera()
 
 
-@pytest.fixture()
+@pytest.fixture
 def paraview_pvcc():
     """Fixture returning a paraview camera file with values of the position"""
-
     tmp = """
     <PVCameraConfiguration description="ParaView camera configuration" version="1.0">
       <Proxy group="views" type="RenderView" id="6395" servers="21">
@@ -94,7 +93,7 @@ def test_camera_from_paraview_pvcc(paraview_pvcc):
 
 
 def test_camera_to_paraview_pvcc(camera, tmp_path):
-    fname = tmp_path / "test.pvcc"
+    fname = tmp_path / 'test.pvcc'
     camera.to_paraview_pvcc(fname)
     assert fname.exists()
     ocamera = pv.Camera.from_paraview_pvcc(fname)
@@ -135,13 +134,13 @@ def test_distance(camera):
 
 
 def test_thickness(camera):
-    thickness = np.random.default_rng().random(1)
+    thickness = np.random.default_rng().random()
     camera.thickness = thickness
     assert camera.thickness == thickness
 
 
 def test_parallel_scale(camera):
-    parallel_scale = np.random.default_rng().random(1)
+    parallel_scale = np.random.default_rng().random()
     camera.parallel_scale = parallel_scale
     assert camera.parallel_scale == parallel_scale
 
@@ -149,7 +148,7 @@ def test_parallel_scale(camera):
 def test_zoom(camera):
     camera.enable_parallel_projection()
     orig_scale = camera.parallel_scale
-    zoom = np.random.default_rng().random(1)
+    zoom = np.random.default_rng().random()
     camera.zoom(zoom)
     assert camera.parallel_scale == orig_scale / zoom
 
@@ -173,14 +172,14 @@ def test_disable_parallel_projection(camera):
 
 
 def test_clipping_range(camera):
-    near_point = np.random.default_rng().random(1)
-    far_point = near_point + np.random.default_rng().random(1)
+    near_point = np.random.default_rng().random()
+    far_point = near_point + np.random.default_rng().random()
     points = (near_point, far_point)
     camera.clipping_range = points
     assert camera.GetClippingRange() == points
     assert camera.clipping_range == points
 
-    far_point = near_point - np.random.default_rng().random(1)
+    far_point = near_point - np.random.default_rng().random()
     points = (near_point, far_point)
     with pytest.raises(ValueError):  # noqa: PT011
         camera.clipping_range = points
@@ -295,3 +294,29 @@ def test_copy():
 
     deep = camera.copy()
     assert deep == camera
+
+
+def test_repr(camera):
+    assert 'Camera' in repr(camera)
+    assert 'Position' in repr(camera)
+    assert 'Focal Point' in repr(camera)
+    assert 'Parallel Projection' in repr(camera)
+    assert 'Distance' in repr(camera)
+    assert 'Thickness' in repr(camera)
+    assert 'Parallel Scale' in repr(camera)
+    assert 'Clipping Range' in repr(camera)
+    assert 'View Angle' in repr(camera)
+    assert 'Roll' in repr(camera)
+
+
+def test_str(camera):
+    assert 'Camera' in str(camera)
+    assert 'Position' in str(camera)
+    assert 'Focal Point' in str(camera)
+    assert 'Parallel Projection' in str(camera)
+    assert 'Distance' in str(camera)
+    assert 'Thickness' in str(camera)
+    assert 'Parallel Scale' in str(camera)
+    assert 'Clipping Range' in str(camera)
+    assert 'View Angle' in str(camera)
+    assert 'Roll' in str(camera)

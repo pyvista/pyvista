@@ -8,19 +8,19 @@ from pyvista.plotting.composite_mapper import BlockAttributes
 from pyvista.plotting.composite_mapper import CompositePolyDataMapper
 
 
-@pytest.fixture()
+@pytest.fixture
 def composite_mapper(multiblock_poly):
     pl = pv.Plotter()
     actor, mapper = pl.add_composite(multiblock_poly)
     return mapper
 
 
-@pytest.fixture()
+@pytest.fixture
 def block_attributes(composite_mapper):
     return composite_mapper.block_attr
 
 
-@pytest.fixture()
+@pytest.fixture
 def block_attr(block_attributes):
     return block_attributes[0]
 

@@ -110,13 +110,13 @@ class RenderPasses:
         """Return the renderer."""
         if self._renderer_ref is not None:
             return self._renderer_ref()
-        return None
+        return None  # type: ignore[unreachable]
 
     def deep_clean(self):
         """Delete all render passes."""
         if self._renderer is not None:
             self._renderer.SetPass(None)
-        self._renderer_ref = None
+        self._renderer_ref = None  # type: ignore[assignment]
         if self.__seq_pass is not None:
             self.__seq_pass.SetPasses(None)
         self.__seq_pass = None
@@ -200,7 +200,7 @@ class RenderPasses:
         self._pass_collection.RemoveItem(self._shadow_map_pass)
         self._update_passes()
 
-    def enable_depth_of_field_pass(self, automatic_focal_distance=True):
+    def enable_depth_of_field_pass(self, automatic_focal_distance: bool = True):
         """Enable the depth of field pass.
 
         Parameters

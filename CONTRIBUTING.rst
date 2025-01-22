@@ -43,6 +43,11 @@ running:
    cd pyvista
    python -m pip install -e .
 
+.. note::
+
+   Use ``python -m pip install -e '.[dev]'`` to also install all of the
+   packages required for development.
+
 Quick Start Development with Codespaces
 ---------------------------------------
 
@@ -216,7 +221,7 @@ Python <https://www.python.org/dev/peps/pep-0020/>`_. When in doubt:
 
 .. code:: python
 
-   import this
+    import this
 
 PyVista uses `pre-commit`_ to enforce PEP8 and other styles
 automatically. Please see the `Style Checking section <#style-checking>`_ for
@@ -238,14 +243,14 @@ and partially enforced for Python source files.
 These rules are enforced through the use of `Vale <https://vale.sh/>`_ via our
 GitHub Actions, and you can run Vale locally with:
 
-.. code::
+.. code:: bash
 
    pip install vale
    vale --config doc/.vale.ini doc pyvista examples ./*.rst --glob='!*{_build,AUTHORS.rst}*'
 
 If you are on Linux or macOS, you can run:
 
-.. code::
+.. code:: bash
 
    make docstyle
 
@@ -343,17 +348,15 @@ These standards will be enforced using ``pre-commit`` using
 If for whatever reason you feel that your function should have an exception to
 any of the rules, add an exception to the function either in the
 ``[tool.numpydoc_validation]`` section in ``pyproject.toml`` or add an inline
-comment to exclude a certain check. For example, we do not enforce
-documentation strings for setters and skip the GL08 check.
+comment to exclude a certain check. For example, we can omit the ``Return``
+section from docstrings and skip the RT01 check for magic methods like ``__init__``.
 
 .. code:: python
 
-    @strips.setter
-    def strips(self, strips):  # numpydoc ignore=GL08
-        if isinstance(strips, CellArray):
-            self.SetStrips(strips)
-        else:
-            self.SetStrips(CellArray(strips))
+    def __init__(self, foo):  # numpydoc ignore=RT01
+        """Initialize A Class."""
+        super().__init__()
+        self.foo = foo
 
 See the available validation checks in `numpydoc Validation
 <https://numpydoc.readthedocs.io/en/latest/validation.html>`_.
@@ -384,6 +387,7 @@ directive.
     import warnings
     from pyvista.core.errors import PyVistaDeprecationWarning
 
+
     def addition(a, b):
         """Add two numbers.
 
@@ -407,7 +411,7 @@ directive.
         # deprecated 0.37.0, convert to error in 0.40.0, remove 0.41.0
         warnings.warn(
             '`addition` has been deprecated. Use pyvista.add instead',
-            PyVistaDeprecationWarning
+            PyVistaDeprecationWarning,
         )
         add(a, b)
 
@@ -428,13 +432,21 @@ Here's an example of adding error test codes that raise deprecation warning mess
 
     with pytest.warns(PyVistaDeprecationWarning):
         addition(a, b)
-        if pv._version.version_info >= (0, 40):
+        if pv._version.version_info[:2] > (0, 40):
             raise RuntimeError("Convert error this function")
-        if pv._version.version_info >= (0, 41):
+        if pv._version.version_info[:2] > (0, 41):
             raise RuntimeError("Remove this function")
 
 In the above code example, the old test code raises an error in v0.40 and v0.41.
 This will prevent us from forgetting to remove deprecations on version upgrades.
+
+.. note::
+
+    When releasing a new version, we need to update the version number to the next
+    development version. For example, if we are releasing version 0.37.0, the next
+    development version should be 0.38.0.dev0 which is greater than 0.37.0. This is
+    why we need to check if the version is greater than 0.40.0 and 0.41.0 in the
+    test code.
 
 When adding an additional parameter to an existing method or function, you are
 encouraged to use the ``.. versionadded`` sphinx directive. For example:
@@ -482,13 +494,12 @@ request. The following tests will be executed after any commit or pull
 request, so we ask that you perform the following sequence locally to
 track down any new issues from your changes.
 
-To run our comprehensive suite of unit tests, install all the
-dependencies listed in ``requirements_test.txt`` and ``requirements_docs.txt``:
+To run our comprehensive suite of unit tests, install PyVista with all
+developer dependencies:
 
 .. code:: bash
 
-   pip install -r requirements_test.txt
-   pip install -r requirements_docs.txt
+   pip install -e '.[dev]'
 
 Then, if you have everything installed, you can run the various test
 suites.
@@ -611,15 +622,14 @@ the ``verify_image_cache`` fixture can be utilized:
 
 .. code:: python
 
-
-       def test_add_background_image_not_global(verify_image_cache):
-           verify_image_cache.skip = True  # Turn off caching
-           plotter = pyvista.Plotter()
-           plotter.add_mesh(sphere)
-           plotter.show()
-           # Turn on caching for further plotting
-           verify_image_cache.skip = False
-           ...
+    def test_add_background_image_not_global(verify_image_cache):
+        verify_image_cache.skip = True  # Turn off caching
+        plotter = pyvista.Plotter()
+        plotter.add_mesh(sphere)
+        plotter.show()
+        # Turn on caching for further plotting
+        verify_image_cache.skip = False
+        ...
 
 This ensures that immediately before the plotter is closed, the current
 render window will be verified against the image in CI. If no image
@@ -710,7 +720,7 @@ included in a single ``.py`` file. The test cases are all stored in
 
 The tests can be executed with:
 
-.. code:: python
+.. code:: bash
 
     pytest tests/core/typing
 
@@ -955,11 +965,14 @@ download the dataset in ``pyvista/examples/downloads.py``. This might be as easy
 
 .. code:: python
 
-   def download_my_new_mesh(load=True):
-       """Download my new mesh."""
-       return _download_dataset(_dataset_my_new_mesh, load=load)
+    def download_my_new_mesh(load=True):
+        """Download my new mesh."""
+        return _download_dataset(_dataset_my_new_mesh, load=load)
 
-    _dataset_my_new_mesh = _SingleFileDownloadableDatasetLoader('mydata/my_new_mesh.vtk')
+
+    _dataset_my_new_mesh = _SingleFileDownloadableDatasetLoader(
+        'mydata/my_new_mesh.vtk'
+    )
 
 Note that a separate dataset loading object, ``_dataset_my_new_mesh``, should
 first be defined outside of the function (with module scope), and the new
@@ -994,21 +1007,21 @@ For example:
 
 .. code:: python
 
-   def download_my_new_mesh(load=True):
-      """Download my new mesh.
+    def download_my_new_mesh(load=True):
+        """Download my new mesh.
 
-      Examples
-      --------
-      >>> from pyvista import examples
-      >>> dataset = examples.download_my_new_mesh()
-      >>> dataset.plot()
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> dataset = examples.download_my_new_mesh()
+        >>> dataset.plot()
 
-      .. seealso::
+        .. seealso::
 
-         :ref:`My New Mesh Dataset <my_new_mesh_dataset>`
-             See this dataset in the Dataset Gallery for more info.
+           :ref:`My New Mesh Dataset <my_new_mesh_dataset>`
+               See this dataset in the Dataset Gallery for more info.
 
-      """
+        """
 
 .. note::
 
@@ -1026,8 +1039,8 @@ datasets in a new `card carousel <https://sphinx-design.readthedocs.io/en/latest
 For example, to add a new ``Instrument`` dataset category to :ref:`dataset_gallery_category`
 featuring two datasets of musical instruments, e.g.
 
-#.  :func:`pyvista.examples.download_guitar`
-#.  :func:`pyvista.examples.download_trumpet`
+#.  :func:`pyvista.examples.downloads.download_guitar`
+#.  :func:`pyvista.examples.downloads.download_trumpet`
 
 complete the following steps:
 
@@ -1112,6 +1125,15 @@ delete the PR branch.
 Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
+
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+For PRs of branches coming from the main pyvista repository, the documentation
+is automatically deployed using `Netifly GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
+However, new contributors that submit PRs from a fork can download a light-weight documentation CI artifact
+that contains a non-interactive subset of the documentation build. It typically weights
+500 Mb and is available from the ``Upload non-interactive HTML documentation`` step of the
+``Build Documentation`` CI job.
 
 Branching Model
 ~~~~~~~~~~~~~~~
