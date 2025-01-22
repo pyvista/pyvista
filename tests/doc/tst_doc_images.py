@@ -25,6 +25,8 @@ FLAKY_TEST_CASES = [
     path for path in os.listdir(FLAKY_IMAGE_DIR) if Path(FLAKY_IMAGE_DIR, path).is_dir()
 ]
 
+MAX_FILE_SIZE_MB = 50
+
 pytestmark = [pytest.mark.filterwarnings(r'always:.*\n.*THIS IS A FLAKY TEST.*:UserWarning')]
 
 
@@ -126,6 +128,12 @@ def pytest_generate_tests(metafunc):
         test_cases = _generate_test_cases()
         ids = [case.test_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
+
+    if 'vtksz_file' in metafunc.fixturenames:
+        # Generate a separate test case for each vtksz file
+        files = _get_file_paths(BUILD_DIR, ext='vtksz')
+        ids = [str(Path(file).relative_to(BUILD_DIR)) for file in files]
+        metafunc.parametrize('vtksz_file', files, ids=ids)
 
 
 def _save_failed_test_image(source_path):
@@ -246,3 +254,17 @@ def _is_false_positive(test_name, docs_image):
         if _check_compare_fail(test_name, error) is None:
             return path
     return None
+
+
+def test_interactive_plot_file_size(vtksz_file: str):
+    filepath = Path(vtksz_file)
+    assert filepath.is_file()
+    size_bytes = filepath.stat().st_size
+    size_megabytes = round(size_bytes / 1_000_000)
+    if size_megabytes > MAX_FILE_SIZE_MB:
+        msg = (
+            f"The generated interactive plot file: '{filepath.name}'\n"
+            f'is too large. The file size ({size_megabytes} MB) must be less than {MAX_FILE_SIZE_MB} MB.\n'
+            f'Consider disabling the interactive plot or down-sampling the meshes used in the plot.'
+        )
+        pytest.fail(msg)
