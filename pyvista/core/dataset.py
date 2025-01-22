@@ -22,6 +22,7 @@ from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
 from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
+from .datasetattributes import _ReshapedDataSetAttributes
 from .errors import PyVistaDeprecationWarning
 from .errors import VTKVersionError
 from .filters import DataSetFilters
@@ -1023,6 +1024,89 @@ class DataSet(DataSetFilters, DataObject):
             association=FieldAssociation.POINT,
         )
 
+    @property
+    def reshaped_point_data(self: Self) -> _ReshapedDataSetAttributes:
+        """Return point data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Point data as DataSetAttributes.
+
+        Examples
+        --------
+        Add point arrays to a mesh and list the available ``point_data``.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.point_data['my_array'] = np.random.default_rng().random(mesh.n_points)
+        >>> mesh.point_data['my_other_array'] = np.arange(mesh.n_points)
+        >>> mesh.point_data
+        pyvista DataSetAttributes
+        Association     : POINT
+        Active Scalars  : my_array
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+            my_array                float64    (8,)                 SCALARS
+            my_other_array          int64      (8,)
+
+        Access an array from ``point_data``.
+
+        >>> mesh.point_data['my_other_array']
+        pyvista_ndarray([0, 1, 2, 3, 4, 5, 6, 7])
+
+        Or access it directly from the mesh.
+
+        >>> mesh['my_array'].shape
+        (8,)
+
+        """
+        return _ReshapedDataSetAttributes(
+            self.GetPointData(),
+            dataset=self,
+            association=FieldAssociation.POINT,
+        )
+
+    @property
+    def data_reshaping_method(self: Self) -> Any:
+        """Reshaping method used when getting reshaped point or cell data.
+
+        Returns
+        -------
+        Any
+            Reshaping method.
+
+        """
+        if hasattr(self, '_reshape_method'):
+            return self._reshape_method
+        return None
+
+    @data_reshaping_method.setter
+    def data_reshaping_method(self: Self, method: Any) -> None:
+        self._reshape_method = method
+
+    @property
+    def data_flattening_method(self: Self) -> Any:
+        """Flattening method used when setting reshaped point or cell data.
+
+        Returns
+        -------
+        Any
+            Flattening method.
+
+        """
+        if hasattr(self, '_flatten_method'):
+            return self._flatten_method
+        return None
+
+    @data_flattening_method.setter
+    def data_flattening_method(self: Self, method: Any) -> None:
+        self._flatten_method = method
+
     def clear_point_data(self: Self) -> None:
         """Remove all point arrays.
 
@@ -1109,6 +1193,53 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         return DataSetAttributes(
+            self.GetCellData(),
+            dataset=self,
+            association=FieldAssociation.CELL,
+        )
+
+    @property
+    def reshaped_cell_data(self: Self) -> _ReshapedDataSetAttributes:
+        """Return cell data as DataSetAttributes.
+
+        Returns
+        -------
+        DataSetAttributes
+            Cell data as DataSetAttributes.
+
+        Examples
+        --------
+        Add cell arrays to a mesh and list the available ``cell_data``.
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> mesh = pv.Cube()
+        >>> mesh.clear_data()
+        >>> mesh.cell_data['my_array'] = np.random.default_rng().random(mesh.n_cells)
+        >>> mesh.cell_data['my_other_array'] = np.arange(mesh.n_cells)
+        >>> mesh.cell_data
+        pyvista DataSetAttributes
+        Association     : CELL
+        Active Scalars  : my_array
+        Active Vectors  : None
+        Active Texture  : None
+        Active Normals  : None
+        Contains arrays :
+            my_array                float64    (6,)                 SCALARS
+            my_other_array          int64      (6,)
+
+        Access an array from ``cell_data``.
+
+        >>> mesh.cell_data['my_other_array']
+        pyvista_ndarray([0, 1, 2, 3, 4, 5])
+
+        Or access it directly from the mesh.
+
+        >>> mesh['my_array'].shape
+        (6,)
+
+        """
+        return _ReshapedDataSetAttributes(
             self.GetCellData(),
             dataset=self,
             association=FieldAssociation.CELL,

@@ -785,9 +785,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 tmparray.fill(data)
                 data = tmparray
             if data.shape[0] != array_len:
-                raise ValueError(
-                    f'data length of ({data.shape[0]}) != required length ({array_len})',
-                )
+                if isinstance(self, _ReshapedDataSetAttributes):
+                    data = self._flatten_array(data)
+                else:
+                    raise ValueError(
+                        f'data length of ({data.shape[0]}) != required length ({array_len})',
+                    )
 
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
@@ -1538,3 +1541,40 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         # only vtkDataArray subclasses can be set as active attributes
         if np.issubdtype(dtype, np.number) or np.issubdtype(dtype, bool):
             self.SetActiveTCoords(name)
+
+
+class _ReshapedDataSetAttributes(DataSetAttributes):
+    def _reshape_array(self: Self, array: pyvista_ndarray) -> pyvista_ndarray:
+        if hasattr(self.dataset, 'data_reshaping_method'):
+            if (method := self.dataset.data_reshaping_method) is None:
+                raise TypeError('Cannot reshape data. No reshaping method specified.')
+            elif method == 'dimensions':
+                if hasattr(self.dataset, 'dimensions'):
+                    dims = self.dataset.dimensions
+                    newshape = np.array(dims)
+                    if self.association == FieldAssociation.CELL:
+                        newshape -= 1
+                    return pyvista_ndarray(np.reshape(array, newshape))
+                else:
+                    raise AttributeError(
+                        'Cannot use `dimensions` method for reshaping array, dataset has no dimensions.'
+                    )
+            else:
+                raise RuntimeError('Unable to reshape data. Invalid reshape method.')
+        raise TypeError('Reshaping data is only support with PyVista datasets.')
+
+    def _flatten_array(self: Self, array: NumpyArray[Any]) -> NumpyArray[Any]:
+        if hasattr(self.dataset, 'data_flattening_method'):
+            if (method := self.dataset.data_flattening_method) is None:
+                raise TypeError('Cannot reshape data. No flattening method specified.')
+            elif method == 'ravel_c':
+                return np.ravel(array, order='C')
+            elif method == 'ravel_f':
+                return np.ravel(array, order='F')
+            else:
+                raise RuntimeError('Unable to flatten data. Invalid flatten method.')
+        raise TypeError('Reshaping data is only support with PyVista datasets.')
+
+    def get_array(self: Self, key: str | int) -> pyvista_ndarray:
+        array = super().get_array(key=key)
+        return self._reshape_array(array)
