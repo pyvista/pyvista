@@ -115,11 +115,11 @@ class Transform(_vtk.vtkTransform):
     >>> np.array_equal(scaling_T.matrix, pv.Transform().scale(scale_factor).matrix)
     True
 
-    Concatenate the two transformations using addition. This will concatenate with
+    Concatenate the two transformations using ``*``. This will concatenate with
     post-multiplication such that the transformations are applied in order from left to
     right, i.e. translate first, then scale.
 
-    >>> transform_post = translation_T + scaling_T
+    >>> transform_post = translation_T * scaling_T
     >>> transform_post.matrix
     array([[ 2. ,  0. ,  0. , -1.2],
            [ 0. ,  2. ,  0. , -1.6],
@@ -270,29 +270,20 @@ class Transform(_vtk.vtkTransform):
             else:
                 self.matrix = trans  # type: ignore[assignment]
 
-    def __add__(self: Transform, other: VectorLike[float] | TransformLike) -> Transform:
-        """:meth:`concatenate` this transform using post-multiply semantics.
-
-        Use :meth:`translate` for length-3 vector inputs, and :meth:`concatenate`
-        otherwise for transform-like inputs.
-        """
-        copied = self.copy()
+    def __add__(self: Transform, other: VectorLike[float]) -> Transform:
+        """:meth:`translate` this transform using post-multiply semantics."""
         try:
-            transform = copied.translate(other, multiply_mode='post')  # type: ignore[arg-type]
-        except (ValueError, TypeError):
-            try:
-                transform = copied.concatenate(other, multiply_mode='post')
-            except TypeError:
-                raise TypeError(
-                    f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be transform-like.'
-                )
-            except ValueError:
-                raise ValueError(
-                    f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape.'
-                )
-        return transform
+            return self.copy().translate(other, multiply_mode='post')
+        except TypeError:
+            raise TypeError(
+                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f'The right-side argument must be a length-3 vector.'
+            )
+        except ValueError:
+            raise ValueError(
+                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f'The right-side argument must be a length-3 vector.'
+            )
 
     def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
@@ -309,21 +300,29 @@ class Transform(_vtk.vtkTransform):
                 f'The left-side argument must be a length-3 vector.'
             )
 
-    def __mul__(self: Transform, other: float | VectorLike[float]) -> Transform:
-        """:meth:`scale` this transform using post-multiply semantics."""
-        try:
-            return self.copy().scale(other, multiply_mode='post')
+    def __mul__(self: Transform, other: float | VectorLike[float] | TransformLike) -> Transform:
+        """:meth:`concatenate` this transform using post-multiply semantics.
 
-        except TypeError:
-            raise TypeError(
-                f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be a single number or a length-3 vector.'
-            )
-        except ValueError:
-            raise ValueError(
-                f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be a single number or a length-3 vector.'
-            )
+        Use :meth:`scale` for single numbers and length-3 vector inputs, and
+        :meth:`concatenate` otherwise for transform-like inputs.
+        """
+        copied = self.copy()
+        try:
+            transform = copied.scale(other, multiply_mode='post')  # type: ignore[arg-type]
+        except (ValueError, TypeError):
+            try:
+                transform = copied.concatenate(other, multiply_mode='post')
+            except TypeError:
+                raise TypeError(
+                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f'The right-side argument must be transform-like.'
+                )
+            except ValueError:
+                raise ValueError(
+                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+                )
+        return transform
 
     def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics."""
@@ -1327,7 +1326,7 @@ class Transform(_vtk.vtkTransform):
         Define a second transformation and use ``+`` to concatenate it.
 
         >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
-        >>> transform = transform + array
+        >>> transform = transform * array
         >>> transform.matrix
         array([[ 0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   , -1.   , -1.5  ],
