@@ -1564,12 +1564,12 @@ def test_transform_chain_methods():
     assert np.array_equal(matrix, eye4)
 
 
-def test_transform_add():
+def test_transform_mul():
     scale = Transform().scale(SCALE)
     translate = Transform().translate(VECTOR)
 
     transform = pv.Transform().post_multiply().translate(VECTOR).scale(SCALE)
-    transform_add = translate + scale
+    transform_add = translate * scale
     assert np.array_equal(transform_add.matrix, transform.matrix)
 
     # Validate with numpy matmul
@@ -1577,18 +1577,15 @@ def test_transform_add():
     assert np.array_equal(transform_add.matrix, matrix_numpy)
 
 
-@pytest.mark.parametrize(
-    'other', [VECTOR, Transform().translate(VECTOR), Transform().translate(VECTOR).matrix]
-)
-def test_transform_add_other(other):
+def test_transform_add():
     transform_base = pv.Transform().post_multiply().scale(SCALE)
     # Translate with `translate` and `+`
     transform_translate = transform_base.copy().translate(VECTOR)
-    transform_add = transform_base + other
+    transform_add = transform_base + VECTOR
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
     # Test multiply mode override to ensure post-multiply is always used
-    transform_add = transform_base.pre_multiply() + other
+    transform_add = transform_base.pre_multiply() + VECTOR
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
 
@@ -1604,16 +1601,19 @@ def test_transform_radd():
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
 
-@pytest.mark.parametrize('scale_factor', [SCALE, (SCALE, SCALE, SCALE)])
-def test_transform_mul(scale_factor):
+@pytest.mark.parametrize(
+    'other',
+    [SCALE, (SCALE, SCALE, SCALE), Transform().scale(SCALE), Transform().scale(SCALE).matrix],
+)
+def test_transform_mul_other(other):
     transform_base = pv.Transform().post_multiply().translate(VECTOR)
     # Scale with `scale` and `*`
-    transform_scale = transform_base.copy().scale(scale_factor)
-    transform_mul = transform_base * scale_factor
+    transform_scale = transform_base.copy().scale(SCALE)
+    transform_mul = transform_base * other
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
     # Test multiply mode override to ensure post-multiply is always used
-    transform_mul = transform_base.pre_multiply() * scale_factor
+    transform_mul = transform_base.pre_multiply() * other
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
 
@@ -1634,14 +1634,14 @@ def test_transform_rmul(scale_factor):
 def test_transform_add_raises():
     match = (
         "Unsupported operand value(s) for +: 'Transform' and 'int'\n"
-        'The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape.'
+        'The right-side argument must be a length-3 vector.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Transform() + 1
 
     match = (
         "Unsupported operand type(s) for +: 'Transform' and 'dict'\n"
-        'The right-side argument must be transform-like.'
+        'The right-side argument must be a length-3 vector.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.Transform() + {}
@@ -1682,14 +1682,14 @@ def test_transform_rmul_raises():
 def test_transform_mul_raises():
     match = (
         "Unsupported operand value(s) for *: 'Transform' and 'tuple'\n"
-        'The right-side argument must be a single number or a length-3 vector.'
+        'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Transform() * (1, 2, 3, 4)
 
     match = (
         "Unsupported operand type(s) for *: 'Transform' and 'dict'\n"
-        'The right-side argument must be a single number or a length-3 vector.'
+        'The right-side argument must be transform-like.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.Transform() * {}
