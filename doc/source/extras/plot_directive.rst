@@ -55,7 +55,7 @@ The command will:
 
 #. Create a new virtual environment and install dependencies
 #. Create files required for a simple documentation build:
-   #. Config file ``doc/src/conf.py`` with extensions
+   #. Configuration file ``doc/src/conf.py`` with extensions
    #. Source file ``doc/src/example.py`` with a simple plot directive example
    #. Index file ``doc/src/index.rst`` for navigation
 #. Build the documentation
