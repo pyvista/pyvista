@@ -7539,60 +7539,60 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     --------
     Load the dataset and get some of its properties.
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_whole_body_ct_male()
-
-    Get the CT image.
-
-    >>> ct_image = dataset['ct']
-    >>> ct_image
-    ImageData (...)
-      N Cells:      55561506
-      N Points:     56012800
-      X Bounds:     0.000e+00, 4.785e+02
-      Y Bounds:     0.000e+00, 4.785e+02
-      Z Bounds:     0.000e+00, 8.190e+02
-      Dimensions:   320, 320, 547
-      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
-      N Arrays:     1
-
-    Get the segmentation label names and show the first three.
-
-    >>> segmentations = dataset['segmentations']
-    >>> label_names = segmentations.keys()
-    >>> label_names[:3]
-    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
-
-    Get the label map and show its data range.
-
-    >>> label_map = dataset['label_map']
-    >>> label_map.get_data_range()
-    (np.uint8(0), np.uint8(117))
-
-    Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
-
-    >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
-
-    Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
-
-    >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
-
-    Create a surface mesh of the segmentation labels.
-
-    >>> labels_mesh = label_map.contour_labels()
-
-    Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
-    ``'ids_to_colors'`` dictionary that's included with the dataset to map the colors.
-
-    >>> colored_mesh = labels_mesh.color_labels(
-    ...     colors=dataset.user_dict['ids_to_colors']
-    ... )
-
-    Plot the CT image and segmentation labels together.
-
     .. pyvista-plot::
         :force_static:
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_whole_body_ct_male()
+
+        Get the CT image.
+
+        >>> ct_image = dataset['ct']
+        >>> ct_image
+        ImageData (...)
+          N Cells:      55561506
+          N Points:     56012800
+          X Bounds:     0.000e+00, 4.785e+02
+          Y Bounds:     0.000e+00, 4.785e+02
+          Z Bounds:     0.000e+00, 8.190e+02
+          Dimensions:   320, 320, 547
+          Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+          N Arrays:     1
+
+        Get the segmentation label names and show the first three.
+
+        >>> segmentations = dataset['segmentations']
+        >>> label_names = segmentations.keys()
+        >>> label_names[:3]
+        ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+
+        Get the label map and show its data range.
+
+        >>> label_map = dataset['label_map']
+        >>> label_map.get_data_range()
+        (np.uint8(0), np.uint8(117))
+
+        Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
+
+        >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
+
+        Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
+
+        >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
+
+        Create a surface mesh of the segmentation labels.
+
+        >>> labels_mesh = label_map.contour_labels()
+
+        Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
+        ``'ids_to_colors'`` dictionary that's included with the dataset to map the colors.
+
+        >>> colored_mesh = labels_mesh.color_labels(
+        ...     colors=dataset.user_dict['ids_to_colors']
+        ... )
+
+        Plot the CT image and segmentation labels together.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_volume(
@@ -7749,65 +7749,65 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     --------
     Load the dataset.
 
-    >>> from pyvista import examples
-    >>> import pyvista as pv
-    >>> dataset = examples.download_whole_body_ct_female()
-
-    Get the names of the dataset's blocks.
-
-    >>> dataset.keys()
-    ['ct', 'segmentations', 'label_map']
-
-    Get the CT image.
-
-    >>> ct_image = dataset['ct']
-    >>> ct_image
-    ImageData (...)
-      N Cells:      55154462
-      N Points:     55603200
-      X Bounds:     0.000e+00, 4.785e+02
-      Y Bounds:     0.000e+00, 4.785e+02
-      Z Bounds:     0.000e+00, 8.130e+02
-      Dimensions:   320, 320, 543
-      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
-      N Arrays:     1
-
-    Get the segmentation label names and show the first three.
-
-    >>> segmentations = dataset['segmentations']
-    >>> label_names = segmentations.keys()
-    >>> label_names[:3]
-    ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
-
-    Get the label map and show its data range.
-
-    >>> label_map = dataset['label_map']
-    >>> label_map.get_data_range()
-    (np.uint8(0), np.uint8(117))
-
-    Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
-
-    >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
-
-    Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
-
-    >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
-
-    Create a surface mesh of the segmentation labels.
-
-    >>> labels_mesh = label_map.contour_labels()
-
-    Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
-    ``'ids_to_colors'`` dictionary included with the dataset to map the colors.
-
-    >>> colored_mesh = labels_mesh.color_labels(
-    ...     colors=dataset.user_dict['ids_to_colors']
-    ... )
-
-    Plot the CT image and segmentation labels together.
-
     .. pyvista-plot::
         :force_static:
+
+        >>> from pyvista import examples
+        >>> import pyvista as pv
+        >>> dataset = examples.download_whole_body_ct_female()
+
+        Get the names of the dataset's blocks.
+
+        >>> dataset.keys()
+        ['ct', 'segmentations', 'label_map']
+
+        Get the CT image.
+
+        >>> ct_image = dataset['ct']
+        >>> ct_image
+        ImageData (...)
+          N Cells:      55154462
+          N Points:     55603200
+          X Bounds:     0.000e+00, 4.785e+02
+          Y Bounds:     0.000e+00, 4.785e+02
+          Z Bounds:     0.000e+00, 8.130e+02
+          Dimensions:   320, 320, 543
+          Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+          N Arrays:     1
+
+        Get the segmentation label names and show the first three.
+
+        >>> segmentations = dataset['segmentations']
+        >>> label_names = segmentations.keys()
+        >>> label_names[:3]
+        ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
+
+        Get the label map and show its data range.
+
+        >>> label_map = dataset['label_map']
+        >>> label_map.get_data_range()
+        (np.uint8(0), np.uint8(117))
+
+        Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
+
+        >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
+
+        Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
+
+        >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
+
+        Create a surface mesh of the segmentation labels.
+
+        >>> labels_mesh = label_map.contour_labels()
+
+        Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
+        ``'ids_to_colors'`` dictionary included with the dataset to map the colors.
+
+        >>> colored_mesh = labels_mesh.color_labels(
+        ...     colors=dataset.user_dict['ids_to_colors']
+        ... )
+
+        Plot the CT image and segmentation labels together.
 
         >>> pl = pv.Plotter()
         >>> _ = pl.add_volume(
