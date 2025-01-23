@@ -1126,6 +1126,15 @@ Since it may be necessary to merge your branch with the current release
 branch (see below), please do not delete your branch if it is a ``fix/``
 branch.
 
+Preview the Documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+For PRs of branches coming from the main pyvista repository, the documentation
+is automatically deployed using `Netifly GitHub actions <https://github.com/nwtgck/actions-netlify>`_.
+However, new contributors that submit PRs from a fork can download a light-weight documentation CI artifact
+that contains a non-interactive subset of the documentation build. It typically weights
+500 Mb and is available from the ``Upload non-interactive HTML documentation`` step of the
+``Build Documentation`` CI job.
+
 Branching Model
 ~~~~~~~~~~~~~~~
 
