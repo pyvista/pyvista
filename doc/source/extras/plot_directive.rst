@@ -47,5 +47,90 @@ Which will be rendered as:
 
       python -m http.server 11000 --directory _build/html
 
+Complete Example
+================
+
+The following is a complete example that can be fully executed as a single command.
+The command will:
+
+#. Create a new virtual environment and install dependencies
+#. Create files required for a simple documentation build:
+   #. Config file ``doc/src/conf.py`` with extensions
+   #. Source file ``doc/src/example.py`` with a simple plot directive example
+   #. Index file ``doc/src/index.rst`` for navigation
+#. Build the documentation
+#. Start a local server
+
+You can copy and paste the command directly into a terminal and execute it.
+Once the documentation is built, you should be able to view it using a web browser
+at the address ``http://localhost:11000``.
+
+.. code:: bash
+
+    # Setup new virtual environment and activate it
+    python -m venv .venv
+    emulate bash -c '. .venv/bin/activate'
+
+    # Install dependencies for the build
+    pip install sphinx pyvista trame-vtk sphinx_design ipywidgets jupyter-server-proxy nest_asyncio trame-client trame-server trame-vuetify trame
+
+    # Create new `doc/src` directory
+    mkdir doc
+    cd doc
+    mkdir src
+
+    # Create a simple python module and include an example
+    # in the docstring using the plot directive.
+    cat > src/example.py <<EOF
+
+    def foo() -> None:
+        """Does stuff.
+
+        .. pyvista-plot::
+
+            >>> import pyvista as pv
+            >>> mesh = pv.Sphere()
+            >>> mesh.plot()
+        """
+
+    EOF
+
+    # Create the sphinx configuration file and include the
+    # necessary extensions. Here we also include `autodoc`.
+    # for the example
+    cat > src/conf.py <<EOF
+    import os, sys
+    import pyvista
+
+    sys.path.insert(0, os.path.abspath("."))
+
+    extensions = [
+        "sphinx.ext.autodoc",
+        "pyvista.ext.plot_directive",
+        "pyvista.ext.viewer_directive",
+        "sphinx_design",
+    ]
+    EOF
+
+    # Create the index for the documentation
+    cat > src/index.rst <<EOF
+    API reference
+    =============
+
+    .. automodule:: example
+        :members:
+        :undoc-members:
+    EOF
+
+    # Build the documentation
+    sphinx-build -b html src _build/html
+
+    # Start a local server for the interactive scene
+    python -m http.server 11000 --directory _build/html
+
+
+API Reference
+=============
+
 .. automodule::
    pyvista.ext.plot_directive
