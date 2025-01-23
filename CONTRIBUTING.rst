@@ -905,9 +905,10 @@ If any of these tests fail, the example(s) which generated the plot should be
 modified, e.g.:
 
 #. Simplify any dataset(s) used, e.g. crop, clip, down-sample, decimate, or
-   otherwise reduce the complexity.
+   otherwise reduce the complexity of the plot.
 
-#. Force the plot to be static only, e.g.
+#. Force the plot to be static only using the plot directive with the ``force_static``
+   option, e.g.
 
     .. code:: rst
 
@@ -919,6 +920,9 @@ modified, e.g.:
            >>> # ...
            >>> mesh = pv.sphere()
            >>> mesh.plot()
+
+Reducing the complexity of the plot is preferred as this will also
+also likely reduce the processing times.
 
 .. seealso::
 
