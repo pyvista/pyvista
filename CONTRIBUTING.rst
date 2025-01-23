@@ -907,8 +907,9 @@ modified, e.g.:
 #. Simplify any dataset(s) used, e.g. crop, clip, down-sample, decimate, or
    otherwise reduce the complexity of the plot.
 
-#. Force the plot to be static only using the plot directive with the ``force_static``
-   option, e.g.
+#. Force the plot to be static only.
+
+   In docstrings, use the plot directive with the ``force_static`` option, e.g.:
 
     .. code:: rst
 
@@ -921,8 +922,22 @@ modified, e.g.:
            >>> mesh = pv.sphere()
            >>> mesh.plot()
 
-Reducing the complexity of the plot is preferred as this will also
-also likely reduce the processing times.
+   In sphinx gallery examples use:
+
+   .. code:: python
+
+      # sphinx_gallery_start_ignore
+      PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+      # sphinx_gallery_end_ignore
+
+   to disable all plots in the example or use ``PYVISTA_GALLERY_FORCE_STATIC``
+   before the call to ``plot()`` or ``show()`` to force static for a single
+   plot. See :ref:`add_example_example` for more information.
+
+.. note::
+
+    Reducing the complexity of the plot is preferred as this will also
+    also likely reduce the processing times.
 
 .. seealso::
 

@@ -3951,14 +3951,18 @@ def download_damavand_volcano(load=True):  # pragma: no cover
 
     Examples
     --------
-    >>> from pyvista import examples
-    >>> cpos = [
-    ...     [4.66316700e04, 4.32796241e06, -3.82467050e05],
-    ...     [5.52532740e05, 3.98017300e06, -2.47450000e04],
-    ...     [4.10000000e-01, -2.90000000e-01, -8.60000000e-01],
-    ... ]
-    >>> dataset = examples.download_damavand_volcano()
-    >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
+
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> cpos = [
+        ...     [4.66316700e04, 4.32796241e06, -3.82467050e05],
+        ...     [5.52532740e05, 3.98017300e06, -2.47450000e04],
+        ...     [4.10000000e-01, -2.90000000e-01, -8.60000000e-01],
+        ... ]
+        >>> dataset = examples.download_damavand_volcano()
+        >>> dataset.plot(cpos=cpos, cmap='reds', show_scalar_bar=False, volume=True)
 
     .. seealso::
 
@@ -6813,9 +6817,12 @@ def download_bird_bath(load=True):  # pragma: no cover
     --------
     Download and plot the dataset.
 
-    >>> from pyvista import examples
-    >>> mesh = examples.download_bird_bath()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bird_bath()
+        >>> mesh.plot()
 
     Return the statistics of the dataset.
 
@@ -6931,9 +6938,12 @@ def download_plastic_vase(load=True):  # pragma: no cover
     --------
     Download and plot the dataset.
 
-    >>> from pyvista import examples
-    >>> mesh = examples.download_plastic_vase()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> mesh = examples.download_plastic_vase()
+        >>> mesh.plot()
 
     Return the statistics of the dataset.
 
@@ -6989,9 +6999,12 @@ def download_sea_vase(load=True):  # pragma: no cover
     --------
     Download and plot the dataset.
 
-    >>> from pyvista import examples
-    >>> mesh = examples.download_sea_vase()
-    >>> mesh.plot()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> from pyvista import examples
+        >>> mesh = examples.download_sea_vase()
+        >>> mesh.plot()
 
     Return the statistics of the dataset.
 
@@ -7578,18 +7591,21 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     Plot the CT image and segmentation labels together.
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(
-    ...     ct_image,
-    ...     cmap='bone',
-    ...     opacity='sigmoid_9',
-    ...     show_scalar_bar=False,
-    ... )
-    >>> _ = pl.add_mesh(colored_mesh)
-    >>> pl.view_zx()
-    >>> pl.camera.up = (0, 0, 1)
-    >>> pl.camera.zoom(1.3)
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     ct_image,
+        ...     cmap='bone',
+        ...     opacity='sigmoid_9',
+        ...     show_scalar_bar=False,
+        ... )
+        >>> _ = pl.add_mesh(colored_mesh)
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.camera.zoom(1.3)
+        >>> pl.show()
 
     .. seealso::
 
@@ -7790,18 +7806,21 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
     Plot the CT image and segmentation labels together.
 
-    >>> pl = pv.Plotter()
-    >>> _ = pl.add_volume(
-    ...     ct_image,
-    ...     cmap='bone',
-    ...     opacity='sigmoid_7',
-    ...     show_scalar_bar=False,
-    ... )
-    >>> _ = pl.add_mesh(colored_mesh)
-    >>> pl.view_zx()
-    >>> pl.camera.up = (0, 0, 1)
-    >>> pl.camera.zoom(1.3)
-    >>> pl.show()
+    .. pyvista-plot::
+        :force_static:
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     ct_image,
+        ...     cmap='bone',
+        ...     opacity='sigmoid_7',
+        ...     show_scalar_bar=False,
+        ... )
+        >>> _ = pl.add_mesh(colored_mesh)
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.camera.zoom(1.3)
+        >>> pl.show()
 
     .. seealso::
 
