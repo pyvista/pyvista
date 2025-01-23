@@ -908,7 +908,6 @@ modified, e.g.:
    otherwise reduce the complexity of the plot.
 
 #. Force the plot to be static only.
-
    In docstrings, use the plot directive with the ``force_static`` option, e.g.:
 
     .. code:: rst
@@ -926,9 +925,9 @@ modified, e.g.:
 
    .. code:: python
 
-      # sphinx_gallery_start_ignore
-      PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
-      # sphinx_gallery_end_ignore
+       # sphinx_gallery_start_ignore
+       PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+       # sphinx_gallery_end_ignore
 
    to disable all plots in the example or use ``PYVISTA_GALLERY_FORCE_STATIC``
    before the call to ``plot()`` or ``show()`` to force static for a single
