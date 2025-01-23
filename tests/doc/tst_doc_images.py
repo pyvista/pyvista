@@ -149,7 +149,7 @@ def _save_failed_test_image(source_path):
     shutil.copy(source_path, dest_path)
 
 
-def test_docs(test_case: _TestCaseTuple):
+def test_static_images(test_case: _TestCaseTuple):
     fail_msg, fail_source = _test_both_images_exist(*test_case)
     if fail_msg:
         _save_failed_test_image(fail_source)
