@@ -73,7 +73,8 @@ warnings.filterwarnings(
 
 # -- General configuration ------------------------------------------------
 numfig = False
-html_logo = './_static/pyvista_logo_sm.png'
+html_logo = './_static/pyvista_logo.svg'
+html_favicon = './_static/pyvista_logo.svg'
 
 sys.path.append(str(Path('./_ext').resolve()))
 
