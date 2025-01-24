@@ -37,7 +37,7 @@ Which will be rendered as:
 
 .. note::
 
-   You need to install the packages to build the interactive scene.
+   You need to install the following packages to build the interactive scene:
 
    .. code-block:: bash
 
@@ -54,24 +54,26 @@ Which will be rendered as:
 Complete Example
 ================
 
-The following is a complete example that can be fully executed as a single command.
-The command will:
+The following is a script to build documentation with interactive plots
+from scratch. The script will:
 
 #. Create a new virtual environment and install dependencies
-#. Create files required for a simple documentation build:
-   #. Configuration file ``doc/src/conf.py`` with extensions
+#. Create the files required for a simple documentation build:
+
+   #. Sphinx configuration file ``doc/src/conf.py`` with extensions
    #. Source file ``doc/src/example.py`` with a simple plot directive example
-   #. Index file ``doc/src/index.rst`` for navigation
+   #. Index file ``doc/src/index.rst`` for site navigation
+
 #. Build the documentation
 #. Start a local server
 
-You can copy and paste the command directly into a terminal and execute it.
-Once the documentation is built, you should be able to view it using a web browser
-at the address ``http://localhost:11000``.
+You can copy and paste the script directly into a terminal and execute it.
+Once the documentation is built, you should be able to view it with a web
+browser by navigating to ``http://localhost:11000``.
 
 .. code-block:: bash
 
-    # Setup new virtual environment and activate it
+    # Setup a new virtual environment and activate it
     python -m venv .venv
     emulate bash -c '. .venv/bin/activate'
 
@@ -87,8 +89,8 @@ at the address ``http://localhost:11000``.
     # in the docstring using the plot directive.
     cat > src/example.py <<EOF
 
-    def foo() -> None:
-        """Does stuff.
+    def foo():
+        """Some function.
 
         .. pyvista-plot::
 
@@ -99,12 +101,10 @@ at the address ``http://localhost:11000``.
 
     EOF
 
-    # Create the sphinx configuration file and include the
-    # necessary extensions. Here we also include `autodoc`.
-    # for the example
+    # Create the configuration file with the required extensions.
+    # Here we also include `autodoc` for the example.
     cat > src/conf.py <<EOF
     import os, sys
-    import pyvista
 
     sys.path.insert(0, os.path.abspath("."))
 
