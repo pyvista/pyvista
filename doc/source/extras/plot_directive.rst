@@ -72,7 +72,7 @@ at the address ``http://localhost:11000``.
     emulate bash -c '. .venv/bin/activate'
 
     # Install dependencies for the build
-    pip install sphinx pyvista trame-vtk sphinx_design ipywidgets jupyter-server-proxy nest_asyncio trame-client trame-server trame-vuetify trame
+    pip install 'pyvista[jupyter]' sphinx sphinx_design
 
     # Create new `doc/src` directory
     mkdir doc
