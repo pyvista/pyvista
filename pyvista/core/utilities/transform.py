@@ -173,18 +173,6 @@ class Transform(_vtk.vtkTransform):
     >>> transform_pre = pv.Transform().pre_multiply()
     >>> _ = transform_pre.translate(position).scale(scale_factor)
 
-    Alternatively, create the transform using matrix multiplication. Matrix
-    multiplication concatenates the transformations using pre-multiply semantics such
-    that the transformations are applied in order from right to left, i.e. scale first,
-    then translate.
-
-    >>> transform_pre = translation_T @ scaling_T
-    >>> transform_pre.matrix
-    array([[ 2. ,  0. ,  0. , -0.6],
-           [ 0. ,  2. ,  0. , -0.8],
-           [ 0. ,  0. ,  2. ,  2.1],
-           [ 0. ,  0. ,  0. ,  1. ]])
-
     This is equivalent to using matrix multiplication directly on the arrays:
 
     >>> mat_mul = translation_T.matrix @ scaling_T.matrix
@@ -337,21 +325,6 @@ class Transform(_vtk.vtkTransform):
             raise ValueError(
                 f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
-            )
-
-    def __matmul__(self: Transform, other: TransformLike) -> Transform:
-        """:meth:`concatenate` this transform using pre-multiply semantics."""
-        try:
-            return self.copy().concatenate(other, multiply_mode='pre')
-        except TypeError:
-            raise TypeError(
-                f"Unsupported operand type(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be transform-like.'
-            )
-        except ValueError:
-            raise ValueError(
-                f"Unsupported operand value(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be transform-like.'
             )
 
     def copy(self: Transform) -> Transform:
