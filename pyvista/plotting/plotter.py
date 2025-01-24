@@ -4771,10 +4771,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             PyVista. It is functionally equivalent to directly modifying the
             scalars of a mesh in-place.
 
-            .. code:: python
+            .. code-block:: python
 
                 # Modify the points in place
-                mesh["my scalars"] = values
+                mesh['my scalars'] = values
                 # Explicitly call render if needed
                 plotter.render()
 
@@ -4848,7 +4848,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             PyVista. It is functionally equivalent to directly modifying the
             points of a mesh in-place.
 
-            .. code:: python
+            .. code-block:: python
 
                 # Modify the points in place
                 mesh.points = points
