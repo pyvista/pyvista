@@ -69,7 +69,7 @@ You can copy and paste the command directly into a terminal and execute it.
 Once the documentation is built, you should be able to view it using a web browser
 at the address ``http://localhost:11000``.
 
-.. code:: bash
+.. code-block:: bash
 
     # Setup new virtual environment and activate it
     python -m venv .venv
