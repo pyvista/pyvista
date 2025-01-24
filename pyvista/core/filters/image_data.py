@@ -2972,14 +2972,13 @@ class ImageDataFilters(DataSetFilters):
         sample_rate : float | VectorLike[float], optional
             Sampling rate(s) to use. Can be a single value or vector of three values
             for each axis. Values greater than ``1.0`` will up-sample the axis and
-            values less than ``1.0`` will down-sample it. Values must be greater than
-            ``0`` and cannot be negative.
+            values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
         interpolation : 'nearest' | 'linear' | 'cubic', default: 'nearest'
             Interpolation mode to use. By default, ``'nearest'`` is used which
             duplicates (if upsampling) or removes (if downsampling) values but
-            does not modify them. The ``'linear'`` and ``'cubic'`` use linear and
-            cubic interpolation, respectively, and may modify the values.
+            does not modify them. The ``'linear'`` and ``'cubic'`` options use linear
+            and cubic interpolation, respectively, and may modify the values.
 
             .. note:
 
@@ -2989,8 +2988,8 @@ class ImageDataFilters(DataSetFilters):
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resampled
             to match the geometry of the reference. The :attr:`~pyvista.ImageData.dimensions`,
-            :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin` and
-            :attr:`~pyvista.ImageData.direction_matrix` and :attr:`~pyvista.ImageData.offset`
+            :attr:`~pyvista.ImageData.spacing`, :attr:`~pyvista.ImageData.origin`,
+            :attr:`~pyvista.ImageData.offset`, and :attr:`~pyvista.ImageData.direction_matrix`
             of the resampled image will all match the reference image.
 
         dimensions : VectorLike[int]
@@ -3012,7 +3011,7 @@ class ImageDataFilters(DataSetFilters):
             the dimensions are doubled the spacing will be halved. See examples.
 
             This option is enabled by default when resampling point data. Has no effect
-            when resampling cell data.
+            when resampling cell data or when a ``reference_image`` is provided.
 
         scalars : str, optional
             Name of scalars to resample. Defaults to currently active scalars.
@@ -3023,7 +3022,7 @@ class ImageDataFilters(DataSetFilters):
 
         inplace : bool, default: False
             If ``True``, resample the image inplace. By default, a new
-            :class:`pyvista.ImageData` instance is returned.
+            :class:`~pyvista.ImageData` instance is returned.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -3046,7 +3045,7 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Create a small 2D grayscale image with dimensions 3 x 2 for demonstration.
+        Create a small 2D grayscale image with dimensions ``3 x 2`` for demonstration.
 
         >>> import pyvista as pv
         >>> import numpy as np
@@ -3055,9 +3054,9 @@ class ImageDataFilters(DataSetFilters):
         >>> image.point_data['data'] = np.linspace(0, 255, 6, dtype=np.uint8)
 
         Define a custom plotter to show the image. Although the image data is defined
-        as point data, the plotter uses :meth:`points_to_cells` to display the image as
-        :attr:`~pyvista.CellType.PIXEL` cells instead. Grayscale coloring is used and
-        the camera is adjusted to fit the image.
+        as point data, we use uses :meth:`points_to_cells` to display the image as
+        :attr:`~pyvista.CellType.PIXEL` (or :attr:`~pyvista.CellType.VOXEL`) cells
+        instead. Grayscale coloring is used and the camera is adjusted to fit the image.
 
         >>> def image_plotter(image: pv.ImageData) -> pv.Plotter:
         ...     pl = pv.Plotter()
@@ -3134,8 +3133,7 @@ class ImageDataFilters(DataSetFilters):
 
         This is because the resampling is done with ``extend_border`` enabled by default
         which adds a half cell-width border to the image and adjusts the origin and
-        spacing such that the bounds match when the image is represented as
-        :attr:`~pyvista.CellType.PIXEL` cells.
+        spacing such that the bounds match when the image is represented as cells.
 
         Apply :meth:`points_to_cells` to the input and resampled images and show that
         the bounds match.
@@ -3162,8 +3160,8 @@ class ImageDataFilters(DataSetFilters):
         >>> plt.camera.tight()
         >>> plt.show()
 
-        Disable ``extend_border`` to force the input and output bounds to be the
-        same `without` the need to use :meth:`points_to_cells`.
+        Disable ``extend_border`` to force the input and output bounds of the points
+        to be the same instead.
 
         >>> upsampled = image.resample(sample_rate=2, extend_border=False)
 
@@ -3194,7 +3192,7 @@ class ImageDataFilters(DataSetFilters):
         This time the input and output bounds match without any further processing.
         Like before, the dimensions have doubled; unlike before, however, the spacing is
         not halved, but is instead smaller than half which is necessaru to ensure the
-        bounds remain the same. Also unlike before, the origin is the same:
+        bounds remain the same. Also unlike before, the origin is unaffected:
 
         >>> image.origin
         (0.0, 0.0, 0.0)
@@ -3216,8 +3214,8 @@ class ImageDataFilters(DataSetFilters):
         >>> resampled.plot(show_edges=True, cmap='grey')
 
         Alternatively, we could have set the dimensions explicitly. Since we want
-        9 x 4 x 1 cells along the x-y-z axes (respectively), we set the dimensions to
-        ``(10, 5, 2)``, i.e. one more than the desired number of cells.
+        ``9 x 4 x 1`` cells along the x-y-z axes (respectively), we set the dimensions
+        to ``(10, 5, 2)``, i.e. one more than the desired number of cells.
 
         >>> resampled = volume.resample(dimensions=(10, 5, 2))
         >>> resampled.plot(show_edges=True, cmap='grey')
@@ -3306,6 +3304,8 @@ class ImageDataFilters(DataSetFilters):
         if extend_border is None:
             # Only extend border with point data
             extend_border = not processing_cell_scalars
+        elif extend_border and reference_image is not None:
+            raise ValueError('`extend_border` cannot be set when a `image_reference` is provided.')
 
         # Setup reference image
         if reference_image is None:
@@ -3339,6 +3339,7 @@ class ImageDataFilters(DataSetFilters):
                 sample_rate,
                 broadcast=True,
                 must_be_in_range=[0, np.inf],
+                strict_lower_bound=True,
                 name='sample_rate',
             )
             new_dimensions = old_dimensions * sample_rate_
