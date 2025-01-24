@@ -18,7 +18,7 @@ You can then issue the plotting directive within your sphinx
 documentation files::
 
    .. pyvista-plot::
-      :caption: A sphere
+      :caption: This is a default sphere
       :include-source: True
 
       >>> import pyvista
@@ -37,7 +37,11 @@ Which will be rendered as:
 
 .. note::
 
-   You need to install `the packages to build the interactive scene <https://github.com/pyvista/pyvista-docs-dynamic/blob/main/requirements.txt>`_.
+   You need to install the packages to build the interactive scene.
+
+   .. code-block:: bash
+
+      pip install 'pyvista[jupyter]' sphinx sphinx_design
 
 .. note::
 
@@ -114,7 +118,7 @@ at the address ``http://localhost:11000``.
 
     # Create the index for the documentation
     cat > src/index.rst <<EOF
-    API reference
+    API Reference
     =============
 
     .. automodule:: example
