@@ -876,7 +876,7 @@ class ImageDataFilters(DataSetFilters):
             To replicate the default behavior from this filter, call `contour_labels`
             with the following arguments:
 
-            .. code::
+            .. code-block:: python
 
                 image.contour_labels(
                     smoothing=False,  # old filter does not apply smoothing
