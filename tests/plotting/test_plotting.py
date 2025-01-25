@@ -103,6 +103,10 @@ skip_lesser_9_3_X = pytest.mark.skipif(
     pv.vtk_version_info < (9, 3),
     reason='Functions not implemented before 9.3.X',
 )
+skip_lesser_9_4_X = pytest.mark.skipif(
+    pv.vtk_version_info < (9, 4),
+    reason='Functions not implemented before 9.4.X or invalid results prior',
+)
 
 CI_WINDOWS = os.environ.get('CI_WINDOWS', 'false').lower() == 'true'
 
@@ -3180,7 +3184,8 @@ def test_plot_composite_preference_cell(multiblock_poly, verify_image_cache):
     multiblock_poly[:2].plot(preference='cell')
 
 
-@pytest.mark.skip_windows('Test fails on Windows because of opacity')
+@skip_windows  # because of opacity
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache):
     pl = pv.Plotter()
 
@@ -3204,6 +3209,7 @@ def test_plot_composite_poly_scalars_opacity(multiblock_poly, verify_image_cache
     pl.show()
 
 
+@skip_lesser_9_4_X
 def test_plot_composite_poly_scalars_cell(multiblock_poly, verify_image_cache):
     verify_image_cache.windows_skip_image_cache = True
     pl = pv.Plotter()
