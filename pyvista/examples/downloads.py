@@ -22,12 +22,14 @@ Examples
 from __future__ import annotations
 
 import functools
+import importlib
 import importlib.util
 import logging
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
 import shutil
+import sys
 import warnings
 
 import numpy as np
@@ -91,14 +93,14 @@ else:
     # provide helpful message if pooch path is inaccessible
     if not Path(USER_DATA_PATH).is_dir():  # pragma: no cover
         try:
-            Path(USER_DATA_PATH, exist_ok=True).mkdir()
+            Path(USER_DATA_PATH).mkdir(exist_ok=True)
             if not os.access(USER_DATA_PATH, os.W_OK):
                 raise OSError
         except (PermissionError, OSError):
             # Warn, don't raise just in case there's an environment issue.
             warnings.warn(
                 f'Unable to access {USER_DATA_PATH}. Manually specify the PyVista'
-                'examples cache with the PYVISTA_USERDATA_PATH environment variable.',
+                ' examples cache with the PYVISTA_USERDATA_PATH environment variable.',
             )
 
 # Note that our fetcher doesn't have a registry (or we have an empty registry)
@@ -5304,7 +5306,7 @@ def download_osmnx_graph(load=True):  # pragma: no cover
 
     Generated from:
 
-    .. code:: python
+    .. code-block:: python
 
         >>> import osmnx as ox  # doctest:+SKIP
         >>> address = 'Holzgerlingen DE'  # doctest:+SKIP
@@ -7497,6 +7499,18 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
     Licensed under Creative Commons Attribution 4.0 International.
 
+    .. versionadded:: 0.45
+
+        Three dictionaries are now included with the dataset's
+        :class:`~pyvista.DataObject.user_dict` to map label names to ids and
+        colors:
+
+        - ``'names_to_colors'`` : maps segment names to 8-bit RGB colors.
+        - ``'names_to_ids'`` : maps segment names to integer ids used by the label map.
+        - ``'ids_to_colors'`` : maps label ids to colors.
+
+        The label ids are the ids used by the included label map.
+
     Parameters
     ----------
     load : bool, default: True
@@ -7516,7 +7530,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     >>> import pyvista as pv
     >>> dataset = examples.download_whole_body_ct_male()
 
-    Get the CT image
+    Get the CT image.
 
     >>> ct_image = dataset['ct']
     >>> ct_image
@@ -7530,22 +7544,37 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
       Spacing:      1.500e+00, 1.500e+00, 1.500e+00
       N Arrays:     1
 
-    Get the segmentation label names and show the first three
+    Get the segmentation label names and show the first three.
 
     >>> segmentations = dataset['segmentations']
     >>> label_names = segmentations.keys()
     >>> label_names[:3]
     ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
 
-    Get the label map and show its data range
+    Get the label map and show its data range.
 
     >>> label_map = dataset['label_map']
     >>> label_map.get_data_range()
     (np.uint8(0), np.uint8(117))
 
-    Create a surface mesh of the segmentation labels
+    Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
 
-    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+    >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
+
+    Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
+
+    >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
+
+    Create a surface mesh of the segmentation labels.
+
+    >>> labels_mesh = label_map.contour_labels()
+
+    Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
+    ``'ids_to_colors'`` dictionary that's included with the dataset to map the colors.
+
+    >>> colored_mesh = labels_mesh.color_labels(
+    ...     colors=dataset.user_dict['ids_to_colors']
+    ... )
 
     Plot the CT image and segmentation labels together.
 
@@ -7556,13 +7585,16 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     ...     opacity='sigmoid_9',
     ...     show_scalar_bar=False,
     ... )
-    >>> _ = pl.add_mesh(labels_mesh, cmap='glasbey', show_scalar_bar=False)
+    >>> _ = pl.add_mesh(colored_mesh)
     >>> pl.view_zx()
     >>> pl.camera.up = (0, 0, 1)
     >>> pl.camera.zoom(1.3)
     >>> pl.show()
 
     .. seealso::
+
+        :ref:`anatomical_groups_example`
+            Additional examples using this dataset.
 
         :ref:`Whole Body Ct Male Dataset <whole_body_ct_male_dataset>`
             See this dataset in the Dataset Gallery for more info.
@@ -7573,13 +7605,31 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
+        :ref:`volume_with_mask_example`
+            See additional examples using this dataset.
+
     """
     return _download_dataset(_dataset_whole_body_ct_male, load=load)
 
 
-def _whole_body_ct_load_func(dataset):  # pragma: no cover
-    # Process the dataset to create a label map from the segmentation masks
+def _whole_body_ct_load_func(files):  # pragma: no cover
+    def _import_colors_dict():
+        # Import `colors` dict from downloaded `colors.py` module
+        module_path = files[1].path
+        module_name = 'colors'
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is not None:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = module
+            spec.loader.exec_module(module)  # type:ignore[union-attr]
+            from colors import colors
 
+            return dict(sorted(colors.items()))
+        else:
+            raise RuntimeError('Unable to load colors.')
+
+    # Process the dataset to create a label map from the segmentation masks
+    dataset = files[0].load()
     segmentations = dataset['segmentations']
 
     # Create label map array from segmentation masks
@@ -7597,13 +7647,33 @@ def _whole_body_ct_load_func(dataset):  # pragma: no cover
     # Add label map to dataset
     dataset['label_map'] = label_map_image
 
+    # Add color and id mappings to dataset
+    names_to_colors = _import_colors_dict()
+    names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
+    dataset.user_dict['names_to_colors'] = names_to_colors
+    dataset.user_dict['names_to_ids'] = names_to_ids
+    dataset.user_dict['ids_to_colors'] = dict(
+        sorted({names_to_ids[name]: names_to_colors[name] for name in label_names}.items())
+    )
+
     return dataset
 
 
-_dataset_whole_body_ct_male = _SingleFileDownloadableDatasetLoader(
-    'whole_body_ct/s1397.zip',
-    target_file='s1397',
-    load_func=_whole_body_ct_load_func,
+def _whole_body_ct_files_func(name):  # pragma: no cover
+    def func():
+        # Multiple files needed for read, but only one gets loaded
+        dataset = _SingleFileDownloadableDatasetLoader(
+            f'whole_body_ct/{name}.zip',
+            target_file=name,
+        )
+        colors = _DownloadableFile('whole_body_ct/colors.py')
+        return dataset, colors
+
+    return func
+
+
+_dataset_whole_body_ct_male = _MultiFileDownloadableDatasetLoader(
+    _whole_body_ct_files_func('s1397'), load_func=_whole_body_ct_load_func
 )
 
 
@@ -7636,6 +7706,18 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
     Licensed under Creative Commons Attribution 4.0 International.
 
+    .. versionadded:: 0.45
+
+        Three dictionaries are now included with the dataset's
+        :class:`~pyvista.DataObject.user_dict` to map label names to ids and
+        colors:
+
+        - ``'names_to_colors'`` : maps segment names to 8-bit RGB colors.
+        - ``'names_to_ids'`` : maps segment names to integer ids used by the label map.
+        - ``'ids_to_colors'`` : maps label ids to colors.
+
+        The label ids are the ids used by the included label map.
+
     Parameters
     ----------
     load : bool, default: True
@@ -7649,18 +7731,18 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
     Examples
     --------
-    Load the dataset
+    Load the dataset.
 
     >>> from pyvista import examples
     >>> import pyvista as pv
     >>> dataset = examples.download_whole_body_ct_female()
 
-    Get the names of the dataset's blocks
+    Get the names of the dataset's blocks.
 
     >>> dataset.keys()
     ['ct', 'segmentations', 'label_map']
 
-    Get the CT image
+    Get the CT image.
 
     >>> ct_image = dataset['ct']
     >>> ct_image
@@ -7674,22 +7756,37 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
       Spacing:      1.500e+00, 1.500e+00, 1.500e+00
       N Arrays:     1
 
-    Get the segmentation label names and show the first three
+    Get the segmentation label names and show the first three.
 
     >>> segmentations = dataset['segmentations']
     >>> label_names = segmentations.keys()
     >>> label_names[:3]
     ['adrenal_gland_left', 'adrenal_gland_right', 'aorta']
 
-    Get the label map and show its data range
+    Get the label map and show its data range.
 
     >>> label_map = dataset['label_map']
     >>> label_map.get_data_range()
     (np.uint8(0), np.uint8(117))
 
-    Create a surface mesh of the segmentation labels
+    Show the ``'names_to_colors'`` dictionary with RGB colors for each segment.
 
-    >>> labels_mesh = label_map.contour_labeled(smoothing=True)
+    >>> dataset.user_dict['names_to_colors']  # doctest: +SKIP
+
+    Show the ``'names_to_ids'`` dictionary with a mapping from segment names to segment ids.
+
+    >>> dataset.user_dict['names_to_ids']  # doctest: +SKIP
+
+    Create a surface mesh of the segmentation labels.
+
+    >>> labels_mesh = label_map.contour_labels()
+
+    Color the surface using :func:`~pyvista.DataSetFilters.color_labels`. Use the
+    ``'ids_to_colors'`` dictionary included with the dataset to map the colors.
+
+    >>> colored_mesh = labels_mesh.color_labels(
+    ...     colors=dataset.user_dict['ids_to_colors']
+    ... )
 
     Plot the CT image and segmentation labels together.
 
@@ -7700,13 +7797,16 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     ...     opacity='sigmoid_7',
     ...     show_scalar_bar=False,
     ... )
-    >>> _ = pl.add_mesh(labels_mesh, cmap='glasbey', show_scalar_bar=False)
+    >>> _ = pl.add_mesh(colored_mesh)
     >>> pl.view_zx()
     >>> pl.camera.up = (0, 0, 1)
     >>> pl.camera.zoom(1.3)
     >>> pl.show()
 
     .. seealso::
+
+        :ref:`anatomical_groups_example`
+            Additional examples using this dataset.
 
         :ref:`Whole Body Ct Female Dataset <whole_body_ct_female_dataset>`
             See this dataset in the Dataset Gallery for more info.
@@ -7717,14 +7817,15 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
         :ref:`medical_dataset_gallery`
             Browse other medical datasets.
 
+        :ref:`volume_with_mask_example`
+            See additional examples using this dataset.
+
     """
     return _download_dataset(_dataset_whole_body_ct_female, load=load)
 
 
-_dataset_whole_body_ct_female = _SingleFileDownloadableDatasetLoader(
-    'whole_body_ct/s1380.zip',
-    target_file='s1380',
-    load_func=_whole_body_ct_load_func,
+_dataset_whole_body_ct_female = _MultiFileDownloadableDatasetLoader(
+    _whole_body_ct_files_func('s1380'), load_func=_whole_body_ct_load_func
 )
 
 
@@ -8196,3 +8297,35 @@ def _nek_5000_download():  # pragma: no cover
 
 
 _dataset_nek5000 = _MultiFileDownloadableDatasetLoader(_nek_5000_download)
+
+
+def download_biplane(load=True):  # pragma: no cover
+    """Download biplane dataset.
+
+    Parameters
+    ----------
+    load : bool, default: True
+        Load the dataset after downloading it when ``True``.  Set this
+        to ``False`` and only the filename will be returned.
+
+    Returns
+    -------
+    pyvista.MultiBlock | str
+        DataSet or filename depending on ``load``.
+
+    Examples
+    --------
+    >>> from pyvista import examples
+    >>> dataset = examples.download_biplane()
+    >>> dataset.plot(cpos='zy', zoom=1.5)
+
+    .. seealso::
+
+        :ref:`Biplane Dataset <biplane_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+    """
+    return _download_dataset(_dataset_biplane, load=load)
+
+
+_dataset_biplane = _SingleFileDownloadableDatasetLoader('biplane_rms_pressure_bs.exo')

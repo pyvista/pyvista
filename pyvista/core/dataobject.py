@@ -373,14 +373,17 @@ class DataObject(_vtk.vtkPyVistaOverride):
             return True
 
         # these attrs use numpy.array_equal
-        equal_attrs = [
-            'verts',  # DataObject
-            'points',  # DataObject
-            'lines',  # DataObject
-            'faces',  # DataObject
-            'cells',  # UnstructuredGrid
-            'celltypes',
-        ]  # UnstructuredGrid
+        if isinstance(self, pyvista.ImageData):
+            equal_attrs = ['extent', 'index_to_physical_matrix']
+        else:
+            equal_attrs = [
+                'verts',  # DataObject
+                'points',  # DataObject
+                'lines',  # DataObject
+                'faces',  # DataObject
+                'cells',  # UnstructuredGrid
+                'celltypes',
+            ]  # UnstructuredGrid
         for attr in equal_attrs:
             if hasattr(self, attr):
                 if not np.array_equal(getattr(self, attr), getattr(other, attr)):

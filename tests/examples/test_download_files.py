@@ -1078,3 +1078,12 @@ def test_download_nek5000():
 
         nek_data = examples.download_nek5000(load=True)
         assert isinstance(nek_data, pv.UnstructuredGrid)
+
+
+def test_download_biplane():
+    filename = examples.download_biplane(load=False)
+    assert Path(filename).is_file()
+    assert filename.endswith('exo')
+
+    biplane = examples.download_biplane()
+    assert isinstance(biplane, pv.MultiBlock)

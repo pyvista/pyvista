@@ -50,6 +50,7 @@ from .fileio import save_meshio as save_meshio
 from .fileio import save_pickle as save_pickle
 from .fileio import set_pickle_format as set_pickle_format
 from .fileio import set_vtkwriter_mode as set_vtkwriter_mode
+from .fileio import to_meshio as to_meshio
 from .geometric_objects import NORMALS as NORMALS
 from .geometric_objects import Arrow as Arrow
 from .geometric_objects import Box as Box
@@ -172,6 +173,7 @@ from .reader import CGNSReader as CGNSReader
 from .reader import DEMReader as DEMReader
 from .reader import DICOMReader as DICOMReader
 from .reader import EnSightReader as EnSightReader
+from .reader import ExodusIIBlockSet as ExodusIIBlockSet
 from .reader import ExodusIIReader as ExodusIIReader
 from .reader import FacetReader as FacetReader
 from .reader import FLUENTCFFReader as FLUENTCFFReader

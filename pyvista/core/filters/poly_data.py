@@ -4027,8 +4027,8 @@ class PolyDataFilters(DataSetFilters):
     def voxelize_binary_mask(  # type: ignore[misc]
         self: PolyData,
         *,
-        background_value: int = 0,
-        foreground_value: int = 1,
+        background_value: int | float = 0,  # noqa: PYI041
+        foreground_value: int | float = 1,  # noqa: PYI041
         reference_volume: pyvista.ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
@@ -4173,7 +4173,7 @@ class PolyDataFilters(DataSetFilters):
         pyvista.voxelize_volume
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
-        pyvista.ImageDataFilters.contour_labeled
+        pyvista.ImageDataFilters.contour_labels
             Filter that generates surface contours from labeled image data. Can be
             loosely considered as an inverse of this filter.
 
@@ -4272,7 +4272,7 @@ class PolyDataFilters(DataSetFilters):
         an existing mask.
 
         >>> volume = examples.load_frog_tissues()
-        >>> poly = volume.contour_labeled(smoothing=True)
+        >>> poly = volume.contour_labels()
 
         Now create the mask from the polydata using the volume as a reference.
 
@@ -4461,10 +4461,7 @@ class PolyDataFilters(DataSetFilters):
             for val in (background_value, foreground_value)
         ):
             scalars_dtype = np.uint8
-        elif all(
-            isinstance(val, (float, int)) and round(val) == val
-            for val in (background_value, foreground_value)
-        ):
+        elif all(round(val) == val for val in (background_value, foreground_value)):
             scalars_dtype = np.int_
         else:
             scalars_dtype = np.float64

@@ -6,12 +6,13 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
 import functools
+import itertools
 from typing import TYPE_CHECKING
+from typing import Any
 from typing import Literal
 from typing import cast
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 import pyvista
@@ -39,6 +40,7 @@ from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
 if TYPE_CHECKING:  # pragma: no cover
+    from pyvista import Color
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -49,6 +51,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import TransformLike
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core._dataset_types import ConcreteDataSetAlias
+    from pyvista.plotting._typing import ColorLike
 
 
 @abstract_class
@@ -2143,7 +2146,7 @@ class DataSetFilters:
         filter.
 
         """
-        if method is None or method == 'contour':
+        if method == 'contour':
             alg = _vtk.vtkContourFilter()
         elif method == 'marching_cubes':
             alg = _vtk.vtkMarchingCubes()  # type: ignore[assignment]
@@ -3963,6 +3966,10 @@ class DataSetFilters:
         See Also
         --------
         pyvista.DataSetFilters.interpolate
+            Interpolate values from one mesh onto another.
+
+        :meth:`pyvista.ImageDataFilters.resample`
+            Resample image data to modify its dimensions and spacing.
 
         Examples
         --------
@@ -4107,6 +4114,10 @@ class DataSetFilters:
         See Also
         --------
         pyvista.DataSetFilters.sample
+            Resample array data from one mesh onto another.
+
+        :meth:`pyvista.ImageDataFilters.resample`
+            Resample image data to modify its dimensions and spacing.
 
         Examples
         --------
@@ -4844,6 +4855,8 @@ class DataSetFilters:
         See the :ref:`plot_over_line_example` example.
 
         """
+        from matplotlib import pyplot as plt
+
         # Sample on line
         sampled = DataSetFilters.sample_over_line(
             self,
@@ -5187,6 +5200,8 @@ class DataSetFilters:
         ... )  # doctest:+SKIP
 
         """
+        from matplotlib import pyplot as plt
+
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc(
             self,
@@ -5321,6 +5336,8 @@ class DataSetFilters:
         ... )  # doctest:+SKIP
 
         """
+        from matplotlib import pyplot as plt
+
         # Sample on circular arc
         sampled = DataSetFilters.sample_over_circular_arc_normal(
             self,
@@ -5407,8 +5424,9 @@ class DataSetFilters:
         if invert:
             ind_: VectorLike[int]
             _, ind_ = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
-            ind_ = [i for i in range(self.n_cells) if i not in ind_]
-            ids = numpy_to_idarr(ind_)
+            mask = np.ones(self.n_cells, bool)
+            mask[ind_] = False
+            ids = numpy_to_idarr(mask)
         else:
             ids = numpy_to_idarr(ind)
 
@@ -7019,7 +7037,7 @@ class DataSetFilters:
         self: ConcreteDataSetType,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
-        inplace: bool = True,
+        inplace: bool | None = None,
         progress_bar: bool = False,
     ):
         """Transform this mesh with a 4x4 transform.
@@ -7052,6 +7070,9 @@ class DataSetFilters:
             :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
             properties.
 
+        .. deprecated:: 0.45.0
+            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
+
         Parameters
         ----------
         trans : TransformLike
@@ -7063,7 +7084,7 @@ class DataSetFilters:
             transformed. Otherwise, only the normals and vectors are
             transformed.  See the warning for more details.
 
-        inplace : bool, default: False
+        inplace : bool, default: True
             When ``True``, modifies the dataset inplace.
 
         progress_bar : bool, default: False
@@ -7100,10 +7121,14 @@ class DataSetFilters:
         ...         [0, 0, 0, 1],
         ...     ]
         ... )
-        >>> transformed = mesh.transform(transform_matrix)
+        >>> transformed = mesh.transform(transform_matrix, inplace=False)
         >>> transformed.plot(show_edges=True)
 
         """
+        from ._deprecate_transform_inplace_default_true import check_inplace
+
+        inplace = check_inplace(cls=type(self), inplace=inplace)
+
         if inplace and isinstance(self, pyvista.RectilinearGrid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
@@ -8487,7 +8512,7 @@ class DataSetFilters:
             if box_style == 'outline':
                 face.copy_from(pyvista.lines_from_points(face.points))
             if oriented:
-                face.transform(inverse_matrix)
+                face.transform(inverse_matrix, inplace=True)
 
         # Get output
         alg_output = box if as_composite else _multiblock_to_polydata(box)
@@ -8936,6 +8961,394 @@ class DataSetFilters:
             result.set_active_scalars(output_scalars, preference=field)
 
             return result
+
+    def color_labels(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        colors: str
+        | ColorLike
+        | Sequence[ColorLike]
+        | dict[float, ColorLike] = 'glasbey_category10',
+        *,
+        coloring_mode: Literal['index', 'cycle'] | None = None,
+        color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
+        negative_indexing: bool = False,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'cell',
+        output_scalars: str | None = None,
+        inplace: bool = False,
+    ):
+        """Add RGB(A) scalars to labeled data.
+
+        This filter adds a color array to map label values to specific colors.
+        The mapping can be specified explicitly with a dictionary or implicitly
+        with a colormap or sequence of colors. The implicit mapping is controlled
+        with two coloring modes:
+
+        -   ``'index'`` : The input scalar values (label ids) are used as index values for
+            indexing the specified ``colors``. This creates a direct relationship
+            between labels and colors such that a given label will always have the same
+            color, regardless of the number of labels present in the dataset.
+
+            This option is used by default for unsigned 8-bit integer inputs, i.e.
+            scalars with whole numbers and a maximum range of ``[0, 255]``.
+
+        -   ``'cycle'`` : The specified ``colors`` are cycled through sequentially,
+            and each unique value in the input scalars is assigned a color in increasing
+            order. Unlike with ``'index'`` mode, the colors are not directly mapped to
+            the labels, but instead depends on the number of labels at the input.
+
+            This option is used by default for floating-point inputs or for inputs
+            with values out of the range ``[0, 255]``.
+
+        By default, a new ``'int_rgb'`` array is added with the same name as the
+        specified ``scalars`` but with ``_rgb`` appended.
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        pyvista.DataSetFilters.connectivity
+            Label data based on its connectivity.
+
+        pyvista.ImageDataFilters.contour_labels
+            Generate contours from labeled image data. The contours may be colored with this filter.
+
+        pack_labels
+            Make labeled data contiguous. May be used as a pre-processing step before
+            coloring.
+
+        :ref:`anatomical_groups_example`
+            Additional examples using this filter.
+
+        Parameters
+        ----------
+        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
+            Color(s) to use. Specify a dictionary to explicitly control the mapping
+            from label values to colors. Alternatively, specify colors only using a
+            colormap or a sequence of colors and use ``coloring_mode`` to implicitly
+            control the mapping. A single color is also supported to color the entire
+            mesh with one color.
+
+            By default, a variation of the ``'glasbey'`` categorical colormap is used
+            where the first 10 colors are the same default colors used by ``matplotlib``.
+            See `colorcet categorical colormaps <https://colorcet.holoviz.org/user_guide/Categorical.html#>`_
+            for more information.
+
+            .. note::
+                When a dictionary is specified, any scalar values for which a key is
+                not provided is assigned default RGB(A) values of ``nan`` for float colors
+                or ``0``  for integer colors (see ``color_type``). To ensure the color
+                array has no default values, be sure to provide a mapping for any and
+                all possible input label values.
+
+        coloring_mode : 'index' | 'cycle', optional
+            Control how colors are mapped to label values. Has no effect if ``colors``
+            is a dictionary. Specify one of:
+
+            - ``'index'``: The input scalar values (label ids) are used as index
+              values for indexing the specified ``colors``.
+            - ``'cycle'``: The specified ``colors`` are cycled through sequentially,
+              and each unique value in the input scalars is assigned a color in increasing
+              order. Colors are repeated if there are fewer colors than unique values
+              in the input ``scalars``.
+
+            By default, ``'index'`` mode is used if the values can be used to index
+            the input ``colors``, and ``'cycle'`` mode is used otherwise.
+
+        color_type : 'int_rgb' | 'float_rgb' | 'int_rgba' | 'float_rgba', default: 'int_rgb'
+            Type of the color array to store. By default, the colors are stored as
+            RGB integers to reduce memory usage.
+
+            .. note::
+                The color type affects the default value for unspecified colors when
+                a dictionary is used. See ``colors`` for details.
+
+        negative_indexing : bool, default: False
+            Allow indexing ``colors`` with negative values. Only valid when
+            ``coloring_mode`` is ``'index'``. This option is useful for coloring data
+            with two independent categories since positive values will be colored
+            differently than negative values.
+
+        scalars : str, optional
+            Name of scalars with labels. Defaults to currently active scalars.
+
+        preference : str, default: "cell"
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        output_scalars : str, optional
+            Name of the color scalars array. By default, the output array
+            is the same as ``scalars`` with `_rgb`` or ``_rgba`` appended
+            depending on ``color_type``.
+
+        inplace : bool, default: False
+            If ``True``, the mesh is updated in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with RGB(A) scalars. Output type matches input type.
+
+        Examples
+        --------
+        Load labeled data and crop it with :meth:`~pyvista.ImageDataFilters.extract_subset`
+        to simplify the data.
+
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> image_labels = examples.load_channels()
+        >>> image_labels = image_labels.extract_subset(voi=(75, 109, 75, 109, 85, 100))
+
+        Plot the dataset with default coloring using a categorical color map. The
+        plotter by default uniformly samples from all 256 colors in the color map based
+        on the data's range.
+
+        >>> image_labels.plot(cmap='glasbey_category10')
+
+        Show label ids of the dataset.
+
+        >>> label_ids = np.unique(image_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([0, 1, 2, 3, 4])
+
+        Color the labels with the filter then plot them. Note that the
+        ``'glasbey_category10'`` color map is used by default.
+
+        >>> colored_labels = image_labels.color_labels()
+        >>> colored_labels.plot()
+
+        Since the labels are unsigned integers, the ``'index'`` coloring mode is used
+        by default. Unlike the uniform sampling used by the plotter in the previous
+        plot, the colormap is instead indexed using the label values. This ensures
+        that labels have a consistent coloring regardless of the input. For example,
+        we can crop the dataset further.
+
+        >>> subset_labels = image_labels.extract_subset(voi=(15, 34, 28, 34, 12, 15))
+
+        And show that only three labels remain.
+
+        >>> label_ids = np.unique(subset_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([1, 2, 3])
+
+        Despite the changes to the dataset, the regions have the same coloring
+        as before.
+
+        >>> colored_labels = subset_labels.color_labels()
+        >>> colored_labels.plot()
+
+        Use the ``'cycle'`` coloring mode instead to map label values to colors
+        sequentially.
+
+        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycle')
+        >>> colored_labels.plot()
+
+        Map the colors explicitly using a dictionary.
+
+        >>> colors = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'yellow'}
+        >>> colored_labels = image_labels.color_labels(colors)
+        >>> colored_labels.plot()
+
+        Omit the background value from the mapping and specify float colors. When
+        floats are specified, values without a mapping are assigned ``nan`` values
+        and are not plotted by default.
+
+        >>> colors.pop(0)
+        'black'
+        >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
+        >>> colored_labels.plot()
+
+        Modify the scalars and make two of the labels negative.
+
+        >>> scalars = image_labels.active_scalars
+        >>> scalars[scalars > 2] *= -1
+        >>> np.unique(scalars)
+        pyvista_ndarray([-4, -3,  0,  1,  2])
+
+        Color the mesh and enable ``negative_indexing``. With this option enabled,
+        the ``'index'`` coloring mode is used by default, and therefore the positive
+        values ``0``, ``1``, and ``2`` are colored with the first, second, and third
+        color in the colormap, respectively. Negative values ``-3`` and ``-4`` are
+        colored with the third-last and fourth-last color in the colormap, respectively.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=True)
+        >>> colored_labels.plot()
+
+        If ``negative_indexing`` is disabled, the coloring defaults to the
+        ``'cycle'`` coloring mode instead.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=False)
+        >>> colored_labels.plot()
+
+        Load the :func:`~pyvista.examples.downloads.download_foot_bones` dataset.
+
+        >>> dataset = examples.download_foot_bones()
+
+        Label the bones using :meth:`~pyvista.DataSetFilters.connectivity` and show
+        the label values.
+
+        >>> labeled_data = dataset.connectivity()
+        >>> np.unique(labeled_data.active_scalars)
+        pyvista_ndarray([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+
+        Color the dataset with default arguments. Despite having 26 separately colored
+        regions, the colors from the default glasbey-style colormap are all relatively
+        distinct.
+
+        >>> colored_labels = labeled_data.color_labels()
+        >>> colored_labels.plot()
+
+        Color the mesh with fewer colors than there are label values. In this case
+        the ``'cycle'`` mode is used by default and the colors are re-used.
+
+        >>> colored_labels = labeled_data.color_labels(['red', 'lime', 'blue'])
+        >>> colored_labels.plot()
+
+        Color all labels with a single color.
+
+        >>> colored_labels = labeled_data.color_labels('red')
+        >>> colored_labels.plot()
+
+
+        """
+        # Lazy import since these are from plotting module
+        import matplotlib.colors
+
+        from pyvista.core._validation.validate import _validate_color_sequence
+        from pyvista.plotting._typing import ColorLike
+        from pyvista.plotting.colors import get_cmap_safe
+
+        def _local_validate_color_sequence(seq: ColorLike | Sequence[ColorLike]) -> Sequence[Color]:
+            try:
+                return _validate_color_sequence(seq)
+            except ValueError:
+                raise ValueError(
+                    'Invalid colors. Colors must be one of:\n'
+                    '  - sequence of color-like values,\n'
+                    '  - dict with color-like values,\n'
+                    '  - named colormap string.\n'
+                    f'Got: {seq}'
+                )
+
+        def _is_index_like(array_, max_value):
+            min_value = -max_value if negative_indexing else 0
+            return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ <= max_value)
+
+        _validation.check_contains(
+            ['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'],
+            must_contain=color_type,
+            name='color_type',
+        )
+
+        if 'rgba' in color_type:
+            num_components = 4
+            scalars_suffix = '_rgba'
+        else:
+            num_components = 3
+            scalars_suffix = '_rgb'
+        if 'float' in color_type:
+            default_channel_value = np.nan
+            color_dtype = 'float'
+        else:
+            default_channel_value = 0
+            color_dtype = 'uint8'
+
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = get_array_association(self, name, preference=preference, err=True)
+        output_mesh = self if inplace else self.copy()
+        data = output_mesh.point_data if field == FieldAssociation.POINT else output_mesh.cell_data
+        array = data[name]
+
+        if isinstance(colors, dict):
+            if coloring_mode is not None:
+                raise TypeError('Coloring mode cannot be set when a color dictionary is specified.')
+            colors_ = _local_validate_color_sequence(cast(list[ColorLike], list(colors.values())))
+            color_rgb_sequence = [getattr(c, color_type) for c in colors_]
+            items = zip(colors.keys(), color_rgb_sequence)
+
+        else:
+            if array.ndim > 1:
+                raise ValueError(
+                    f'Multi-component scalars are not supported for coloring. Scalar array {scalars} must be one-dimensional.'
+                )
+            _is_rgb_sequence = False
+            if isinstance(colors, str):
+                try:
+                    cmap = get_cmap_safe(colors)
+                except ValueError:
+                    pass
+                else:
+                    if not isinstance(cmap, matplotlib.colors.ListedColormap):
+                        raise ValueError(
+                            f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
+                        )
+                    # Avoid unnecessary conversion and set color sequence directly in float cases
+                    cmap_colors = cast(list[list[float]], cmap.colors)
+                    if color_type == 'float_rgb':
+                        color_rgb_sequence = cmap_colors
+                        _is_rgb_sequence = True
+                    elif color_type == 'float_rgba':
+                        color_rgb_sequence = [(*c, 1.0) for c in cmap_colors]
+                        _is_rgb_sequence = True
+                    else:
+                        colors = cmap_colors
+
+            if not _is_rgb_sequence:
+                color_rgb_sequence = [
+                    getattr(c, color_type) for c in _local_validate_color_sequence(colors)
+                ]
+                if len(color_rgb_sequence) == 1:
+                    color_rgb_sequence = color_rgb_sequence * len(array)
+
+            n_colors = len(color_rgb_sequence)
+            if coloring_mode is None:
+                coloring_mode = (
+                    'index' if np.all(_is_index_like(array, max_value=n_colors)) else 'cycle'
+                )
+
+            _validation.check_contains(
+                ['index', 'cycle'], must_contain=coloring_mode, name='coloring_mode'
+            )
+            if coloring_mode == 'index':
+                if not np.all(_is_index_like(array, max_value=n_colors)):
+                    raise ValueError(
+                        f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
+                        f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
+                    )
+                keys: Iterable[float]
+                values: Iterable[Any]
+
+                keys_ = np.arange(n_colors)
+                values_ = color_rgb_sequence
+                if negative_indexing:
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
+                    values_.extend(values_[::-1])
+                keys = keys_
+                values = values_
+            elif coloring_mode == 'cycle':
+                if negative_indexing:
+                    raise ValueError(
+                        "Negative indexing is not supported with 'cycle' mode enabled."
+                    )
+                keys = np.unique(array)
+                values = itertools.cycle(color_rgb_sequence)
+
+            items = zip(keys, values)
+
+        colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
+        for label, color in items:
+            colors_out[array == label, :] = color
+
+        colors_name = name + scalars_suffix if output_scalars is None else output_scalars
+        data[colors_name] = colors_out
+        output_mesh.set_active_scalars(colors_name)
+
+        return output_mesh
 
 
 def _set_threshold_limit(alg, value, method, invert):
