@@ -6073,8 +6073,13 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_parched_canal_4k()
-    >>> dataset.plot(cpos='xy')
+    >>> texture = examples.download_parched_canal_4k()
+
+    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+    underlying image before plotting.
+
+    >>> texture.to_image().resample(0.25, inplace=True)
+    >>> texture.plot(cpos='xy')
 
     .. seealso::
 

@@ -2490,7 +2490,11 @@ class HDRReader(BaseReader):
     'parched_canal_4k.hdr'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot()
+    >>> mesh
+    Texture (...)
+      Components:   3
+      Cube Map:     False
+      Dimensions:   4096, 2048
 
     """
 
