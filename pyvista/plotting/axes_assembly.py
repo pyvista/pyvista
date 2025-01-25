@@ -29,7 +29,7 @@ from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
 from pyvista.plotting.text import TextProperty
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
     import sys
 
