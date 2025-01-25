@@ -18,7 +18,7 @@ Visualize the wave functions (orbitals) of the hydrogen atom.
 #
 #    This example requires `sympy <https://www.sympy.org/>`_. Install it with:
 #
-#    .. code:: python
+#    .. code-block:: bash
 #
 #       pip install sympy
 from __future__ import annotations

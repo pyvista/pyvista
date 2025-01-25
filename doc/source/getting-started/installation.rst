@@ -135,14 +135,14 @@ Test Installation
 
 You can test your installation by running an example:
 
-.. code:: python
+.. code-block:: python
 
     >>> from pyvista import demos
     >>> demos.plot_wave()
 
 See other examples and demos:
 
-.. code:: python
+.. code-block:: python
 
     >>> from pyvista import examples
     >>> from pyvista import demos
