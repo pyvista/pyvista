@@ -174,6 +174,8 @@ class MultiBlock(
     def recursive_iterator(self: MultiBlock, *, skip_none: bool = True) -> Iterator[DataSet | None]:
         """Iterate over all nested datasets recursively.
 
+        .. versionadded:: 0.45
+
         Parameters
         ----------
         skip_none : bool, default: True
