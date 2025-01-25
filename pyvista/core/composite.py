@@ -36,6 +36,7 @@ from .utilities.helpers import wrap
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Iterable
+    from collections.abc import Iterator
 
     from ._typing_core import NumpyArray
 
@@ -169,6 +170,54 @@ class MultiBlock(
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
                 self.SetBlock(i, wrap(block))
+
+    def recursive_iterator(self: MultiBlock, *, skip_none: bool = True) -> Iterator[DataSet | None]:
+        """Iterate over all nested datasets recursively.
+
+        Parameters
+        ----------
+        skip_none : bool, default: True
+            Do not include ``None`` blocks in the iterator.
+
+        Examples
+        --------
+        Load a :class:`MultiBlock` with nested datasets.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_biplane()
+
+        The dataset has eight :class:`MultiBlock` blocks.
+
+        >>> dataset.n_blocks
+        8
+
+        >>> all(isinstance(block, pv.MultiBlock) for block in dataset)
+        True
+
+        Get the iterator and show the count of all recursively nested datasets.
+
+        >>> iterator = dataset.recursive_iterator()
+        >>> iterator
+         <generator object MultiBlock.recursive_iterator at ...>
+
+        >>> len(list(iterator))
+        59
+
+        By default, ``None`` blocks are excluded and all items are :class:`~pyvista.DataSet`
+        objects.
+
+        >>> all(isinstance(item, pv.DataSet) for item in dataset.recursive_iterator())
+        True
+
+        """
+        for block in self:
+            if skip_none and block is None:
+                continue
+            elif isinstance(block, MultiBlock):
+                yield from block.recursive_iterator(skip_none=skip_none)
+            else:
+                yield block
 
     @property
     def bounds(self: MultiBlock) -> BoundsTuple:
