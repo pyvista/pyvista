@@ -2048,6 +2048,20 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         self.GetCells().ImportLegacyFormat(vtk_idarr)
 
     @property
+    def faces(self):
+        """Invalid property.
+
+        Override the faces property to return nothing since VTK 9.4+ attempts
+        to map this to GetFaces which in previous versions was a method that
+        returns None for UnstructuredGrids. However, in VTK 9.4+ GetFaces for
+        UnstructuredGrids is a deprecated with preference for GetPolyhedronFaces.
+        For now, we just return None until we can figure out a better solution.
+
+        Issue reported in https://gitlab.kitware.com/vtk/vtk/-/issues/19591
+        """
+        return None
+
+    @property
     def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
         """Return a dictionary that contains all cells mapped from cell types.
 
