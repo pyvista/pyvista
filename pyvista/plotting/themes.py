@@ -12,15 +12,15 @@ Apply a built-in theme
 
 Load a theme into pyvista
 
->>> from pyvista.plotting.themes import DocumentTheme
->>> theme = DocumentTheme()
+>>> from pyvista.plotting.themes import Theme
+>>> theme = Theme.document_theme()
 >>> theme.save('my_theme.json')  # doctest:+SKIP
 >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
 Create a custom theme from the default theme and load it into
 pyvista.
 
->>> my_theme = DocumentTheme()
+>>> my_theme = Theme.document_theme()
 >>> my_theme.font.size = 20
 >>> my_theme.font.title_size = 40
 >>> my_theme.cmap = 'jet'
@@ -32,7 +32,7 @@ pyvista.
 
 from __future__ import annotations
 
-from enum import Enum
+from collections.abc import MutableMapping
 from itertools import chain
 import json
 import os
@@ -42,8 +42,10 @@ from typing import TYPE_CHECKING
 from typing import Any
 import warnings
 
-import pyvista  # noqa: TCH001
+import pyvista
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _classproperty
 
 from .colors import Color
 from .colors import get_cmap_safe
@@ -53,8 +55,10 @@ from .tools import parse_font_family
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Callable
+    from typing import ClassVar
 
     from pyvista.core._typing_core import VectorLike
+    from pyvista.plotting import Plotter
 
     from ._typing import ColorLike
 
@@ -66,7 +70,7 @@ def _set_plot_theme_from_env() -> None:
             theme = os.environ['PYVISTA_PLOT_THEME']
             set_plot_theme(theme.lower())
         except ValueError:
-            allowed = ', '.join([item.name for item in _NATIVE_THEMES])
+            allowed = ', '.join(Theme.defaults)
             warnings.warn(
                 f'\n\nInvalid PYVISTA_PLOT_THEME environment variable "{theme}". '
                 f'Should be one of the following: {allowed}',
@@ -89,8 +93,8 @@ def load_theme(filename):
     Examples
     --------
     >>> import pyvista as pv
-    >>> from pyvista.plotting.themes import DocumentTheme
-    >>> theme = DocumentTheme()
+    >>> from pyvista.plotting.themes import Theme
+    >>> theme = Theme.document_theme()
     >>> theme.save('my_theme.json')  # doctest:+SKIP
     >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
 
@@ -106,8 +110,8 @@ def set_plot_theme(theme):
     Parameters
     ----------
     theme : str
-        Theme name.  Either ``'default'``, ``'document'``, ``'dark'``,
-        or ``'paraview'``.
+        Theme name.  Either ``'default'``, ``'document'``, ``'document_pro'``,
+        ``'dark'``, ``'paraview'``, ``'vtk'``, or ``'testing'``.
 
     Examples
     --------
@@ -129,15 +133,15 @@ def set_plot_theme(theme):
     >>> pv.set_plot_theme('paraview')
 
     """
-    import pyvista
-
     if isinstance(theme, str):
         theme = theme.lower()
         try:
-            new_theme_type = _NATIVE_THEMES[theme].value
+            new_theme_type = Theme.from_default(theme)
         except KeyError:
-            raise ValueError(f"Theme {theme} not found in PyVista's native themes.")
-        pyvista.global_theme.load_theme(new_theme_type())
+            raise ValueError(
+                f"Theme '{theme}' not found in PyVista's default themes: {Theme.defaults}"
+            )
+        pyvista.global_theme.load_theme(new_theme_type)
     elif isinstance(theme, Theme):
         pyvista.global_theme.load_theme(theme)
     else:
@@ -162,6 +166,16 @@ class _ThemeConfig(metaclass=_ForceSlots):
 
     __slots__: list[str] = []
 
+    _defaults: ClassVar[dict[str, str]] = {}
+
+    def _handle_kwargs(self, **kwargs):
+        """Set config values from **kwargs."""
+        for key, value in kwargs.items():
+            if isinstance(value, MutableMapping):
+                self[key].update_from_dict(value)
+            else:
+                self[key] = value
+
     @classmethod
     def from_dict(cls, dict_):
         """Create from a dictionary."""
@@ -173,6 +187,15 @@ class _ThemeConfig(metaclass=_ForceSlots):
             else:
                 setattr(inst, key, value)
         return inst
+
+    def update_from_dict(self, dict_):
+        """Update theme in place with dictionary."""
+        for key, value in dict_.items():
+            attr = getattr(self, key)
+            if hasattr(attr, 'update_from_dict'):
+                attr.update_from_dict(value)
+            else:
+                setattr(self, key, value)
 
     def to_dict(self) -> dict[str, Any]:
         """Return theme config parameters as a dictionary.
@@ -198,7 +221,7 @@ class _ThemeConfig(metaclass=_ForceSlots):
         if not isinstance(other, _ThemeConfig):
             return False
 
-        for attr_name in other._all__slots__():
+        for attr_name in other.__slots__:
             attr = getattr(self, attr_name)
             other_attr = getattr(other, attr_name)
             if (
@@ -230,6 +253,71 @@ class _ThemeConfig(metaclass=_ForceSlots):
         mro = cls.mro()
         return tuple(chain.from_iterable(c.__slots__ for c in mro if c is not object))  # type: ignore[attr-defined]
 
+    @classmethod
+    def register_default(cls, name, dict_, doc=None):
+        """Register a default theme from a dictionary.
+
+        Parameters
+        ----------
+        name : str
+            Name of theme for attribute.
+        dict_ : dict
+            Theme dictionary
+        doc : str, optional
+            Docstring to add to attribute.
+
+        Examples
+        --------
+        Register a default theme for downstream use.
+
+        >>> from pyvista.plotting.themes import Theme
+        >>> Theme.register_default('my_theme', {'show_edges': True})
+        >>> my_theme = Theme.my_theme()
+        >>> my_theme.show_edges
+        True
+
+        """
+
+        def return_theme(cls):
+            return cls.from_dict(dict_)
+
+        setattr(cls, name, classmethod(return_theme))
+        attr = getattr(cls, name)
+        attr.__func__.__name__ = name
+        if doc is not None:
+            attr.__func__.__doc__ = doc
+
+        cls._defaults[name] = name
+
+    @classmethod
+    def from_default(cls, name):
+        """Return a default theme.
+
+        Examples
+        --------
+        >>> from pyvista.plotting.themes import Theme
+        >>> theme = Theme.from_default('vtk')
+
+        See Also
+        --------
+        Theme.defaults
+
+        """
+        theme = getattr(cls, cls._defaults[name])
+        return theme()
+
+    @_classproperty
+    def defaults(self):
+        """Return list of default themes.
+
+        Examples
+        --------
+        >>> from pyvista.plotting.themes import Theme
+        >>> theme = Theme.defaults
+
+        """
+        return list(self._defaults.keys())
+
 
 class _LightingConfig(_ThemeConfig):
     """PyVista lighting configuration.
@@ -259,7 +347,7 @@ class _LightingConfig(_ThemeConfig):
         '_emissive',
     ]
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._interpolation = InterpolationType.FLAT.value
         self._metallic = 0.0
         self._roughness = 0.5
@@ -268,6 +356,8 @@ class _LightingConfig(_ThemeConfig):
         self._specular = 0.0
         self._specular_power = 100.0
         self._emissive = False
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def interpolation(self) -> InterpolationType:  # numpydoc ignore=RT01
@@ -488,10 +578,12 @@ class _DepthPeelingConfig(_ThemeConfig):
 
     __slots__ = ['_number_of_peels', '_occlusion_ratio', '_enabled']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._number_of_peels = 4
         self._occlusion_ratio = 0.0
         self._enabled = False
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def number_of_peels(self) -> int:  # numpydoc ignore=RT01
@@ -571,13 +663,15 @@ class _SilhouetteConfig(_ThemeConfig):
 
     __slots__ = ['_color', '_line_width', '_opacity', '_feature_angle', '_decimate', '_enabled']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._color = Color('black')
         self._line_width = 2
         self._opacity = 1.0
         self._feature_angle = None
         self._decimate = None
         self._enabled = False
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def enabled(self) -> bool:  # numpydoc ignore=RT01
@@ -704,11 +798,13 @@ class _ColorbarConfig(_ThemeConfig):
 
     __slots__ = ['_width', '_height', '_position_x', '_position_y']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._width = None
         self._height = None
         self._position_x = None
         self._position_y = None
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def width(self) -> float:  # numpydoc ignore=RT01
@@ -828,12 +924,14 @@ class _AxesConfig(_ThemeConfig):
 
     __slots__ = ['_x_color', '_y_color', '_z_color', '_box', '_show']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._x_color = Color('tomato')
         self._y_color = Color('seagreen')
         self._z_color = Color('mediumblue')
         self._box = False
         self._show = True
+
+        self._handle_kwargs(**kwargs)
 
     def __repr__(self):
         txt = ['Axes configuration']
@@ -992,13 +1090,15 @@ class _Font(_ThemeConfig):
 
     __slots__ = ['_family', '_size', '_title_size', '_label_size', '_color', '_fmt']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._family = 'arial'
         self._size = 12
         self._title_size = None
         self._label_size = None
         self._color = Color('white')
         self._fmt = None
+
+        self._handle_kwargs(**kwargs)
 
     def __repr__(self):
         txt = ['']
@@ -1149,17 +1249,25 @@ class _SliderStyleConfig(_ThemeConfig):
         '_cap_width',
     ]
 
-    def __init__(self):
+    _defaults: ClassVar[dict[str, str]] = {
+        'default': 'default_theme',
+        'classic': 'classic_theme',
+        'modern': 'modern_theme',
+    }
+
+    def __init__(self, **kwargs):
         """Initialize the slider style configuration."""
         self._name = None
-        self._slider_length = None
-        self._slider_width = None
-        self._slider_color = None
-        self._tube_width = None
-        self._tube_color = None
-        self._cap_opacity = None
-        self._cap_length = None
-        self._cap_width = None
+        self.slider_length = 0.01
+        self.slider_width = 0.02
+        self.slider_color = Color((0, 0, 0))
+        self.tube_width = 0.01
+        self.tube_color = Color((0, 0, 0))
+        self.cap_opacity = 1.0
+        self.cap_length = 0.005
+        self.cap_width = 0.05
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
@@ -1177,10 +1285,10 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.cap_width = 0.02
+        >>> pv.global_theme.slider_style.cap_width = 0.02
 
         """
-        return self._cap_width  # type: ignore[return-value]
+        return self._cap_width
 
     @cap_width.setter
     def cap_width(self, cap_width: float):
@@ -1193,10 +1301,10 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.cap_length = 0.01
+        >>> pv.global_theme.slider_style.cap_length = 0.01
 
         """
-        return self._cap_length  # type: ignore[return-value]
+        return self._cap_length
 
     @cap_length.setter
     def cap_length(self, cap_length: float):
@@ -1209,10 +1317,10 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.cap_opacity = 1.0
+        >>> pv.global_theme.slider_style.cap_opacity = 1.0
 
         """
-        return self._cap_opacity  # type: ignore[return-value]
+        return self._cap_opacity
 
     @cap_opacity.setter
     def cap_opacity(self, cap_opacity: float):
@@ -1226,10 +1334,10 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.tube_color = 'black'
+        >>> pv.global_theme.slider_style.tube_color = 'black'
 
         """
-        return self._tube_color  # type: ignore[return-value]
+        return self._tube_color
 
     @tube_color.setter
     def tube_color(self, tube_color: ColorLike):
@@ -1242,10 +1350,10 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.tube_width = 0.005
+        >>> pv.global_theme.slider_style.tube_width = 0.005
 
         """
-        return self._tube_width  # type: ignore[return-value]
+        return self._tube_width
 
     @tube_width.setter
     def tube_width(self, tube_width: float):
@@ -1258,10 +1366,10 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.slider_color = 'grey'
+        >>> pv.global_theme.slider_style.slider_color = 'grey'
 
         """
-        return self._slider_color  # type: ignore[return-value]
+        return self._slider_color
 
     @slider_color.setter
     def slider_color(self, slider_color: ColorLike):
@@ -1274,10 +1382,10 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.slider_width = 0.04
+        >>> pv.global_theme.slider_style.slider_width = 0.04
 
         """
-        return self._slider_width  # type: ignore[return-value]
+        return self._slider_width
 
     @slider_width.setter
     def slider_width(self, slider_width: float):
@@ -1290,10 +1398,10 @@ class _SliderStyleConfig(_ThemeConfig):
         Examples
         --------
         >>> import pyvista as pv
-        >>> pv.global_theme.slider_styles.modern.slider_length = 0.02
+        >>> pv.global_theme.slider_style.slider_length = 0.02
 
         """
-        return self._slider_length  # type: ignore[return-value]
+        return self._slider_length
 
     @slider_length.setter
     def slider_length(self, slider_length: float):
@@ -1316,100 +1424,96 @@ class _SliderStyleConfig(_ThemeConfig):
             txt.append(f'        {name:<17}: {setting}')
         return '\n'.join(txt)
 
+    @classmethod
+    def default_theme(cls):
+        """Return the default slider theme.
 
-class _SliderConfig(_ThemeConfig):
-    """PyVista configuration encompassing all slider styles.
+        Examples
+        --------
+        The default slider configuration.
 
-    Examples
-    --------
-    Set the classic slider configuration.
+        >>> import pyvista as pv
+        >>> pv.global_theme.slider_style.default_theme()
+        <BLANKLINE>
+                Slider length    : 0.01
+                Slider width     : 0.02
+                Slider color     : Color(name='black', hex='#000000ff', opacity=255)
+                Tube width       : 0.01
+                Tube color       : Color(name='black', hex='#000000ff', opacity=255)
+                Cap opacity      : 1.0
+                Cap length       : 0.005
+                Cap width        : 0.05
 
-    >>> import pyvista as pv
-    >>> slider_styles = pv.global_theme.slider_styles
-    >>> slider_styles.classic.slider_length = 0.02
-    >>> slider_styles.classic.slider_width = 0.04
-    >>> slider_styles.classic.slider_color = (0.5, 0.5, 0.5)
-    >>> slider_styles.classic.tube_width = 0.005
-    >>> slider_styles.classic.tube_color = (1.0, 1.0, 1.0)
-    >>> slider_styles.classic.cap_opacity = 1
-    >>> slider_styles.classic.cap_length = 0.01
-    >>> slider_styles.classic.cap_width = 0.02
+        """
+        return cls()
 
-    Set the modern slider configuration.
+    @classmethod
+    def classic_theme(cls):
+        """Return a classic slider theme.
 
-    >>> slider_styles.modern.slider_length = 0.02
-    >>> slider_styles.modern.slider_width = 0.04
-    >>> slider_styles.modern.slider_color = (0.43, 0.44, 0.45)
-    >>> slider_styles.modern.tube_width = 0.04
-    >>> slider_styles.modern.tube_color = (0.69, 0.70, 0.709)
-    >>> slider_styles.modern.cap_opacity = 0
-    >>> slider_styles.modern.cap_length = 0.01
-    >>> slider_styles.modern.cap_width = 0.02
+        Examples
+        --------
+        The classic slider configuration.
 
-    """
+        >>> import pyvista as pv
+        >>> pv.global_theme.slider_style.classic_theme()
+        <BLANKLINE>
+                Slider length    : 0.02
+                Slider width     : 0.04
+                Slider color     : Color(name='gray', hex='#808080ff', opacity=255)
+                Tube width       : 0.005
+                Tube color       : Color(name='white', hex='#ffffffff', opacity=255)
+                Cap opacity      : 1.0
+                Cap length       : 0.01
+                Cap width        : 0.02
 
-    __slots__ = ['_classic', '_modern']
+        """
+        return cls.from_dict(
+            {
+                'slider_length': 0.02,
+                'slider_width': 0.04,
+                'slider_color': 'gray',
+                'tube_width': 0.005,
+                'tube_color': 'white',
+                'cap_opacity': 1,
+                'cap_length': 0.01,
+                'cap_width': 0.02,
+            }
+        )
 
-    def __init__(self):
-        """Initialize the slider configuration."""
-        self._classic = _SliderStyleConfig()
-        self._classic.name = 'classic'
-        self._classic.slider_length = 0.02
-        self._classic.slider_width = 0.04
-        self._classic.slider_color = 'gray'  # type: ignore[assignment]
-        self._classic.tube_width = 0.005
-        self._classic.tube_color = 'white'  # type: ignore[assignment]
-        self._classic.cap_opacity = 1
-        self._classic.cap_length = 0.01
-        self._classic.cap_width = 0.02
+    @classmethod
+    def modern_theme(cls):
+        """Return a modern slider theme.
 
-        self._modern = _SliderStyleConfig()
-        self._modern.name = 'modern'
-        self._modern.slider_length = 0.02
-        self._modern.slider_width = 0.04
-        self._modern.slider_color = (110, 113, 117)  # type: ignore[assignment]
-        self._modern.tube_width = 0.04
-        self._modern.tube_color = (178, 179, 181)  # type: ignore[assignment]
-        self._modern.cap_opacity = 0
-        self._modern.cap_length = 0.01
-        self._modern.cap_width = 0.02
+        Examples
+        --------
+        The modern slider configuration.
 
-    @property
-    def classic(self) -> _SliderStyleConfig:  # numpydoc ignore=RT01
-        """Return the Classic slider configuration."""
-        return self._classic
+        >>> import pyvista as pv
+        >>> pv.global_theme.slider_style.modern_theme()
+        <BLANKLINE>
+                Slider length    : 0.02
+                Slider width     : 0.04
+                Slider color     : Color(hex='#6e7175ff', opacity=255)
+                Tube width       : 0.04
+                Tube color       : Color(hex='#b2b3b5ff', opacity=255)
+                Cap opacity      : 0.0
+                Cap length       : 0.01
+                Cap width        : 0.02
 
-    @classic.setter
-    def classic(self, config: _SliderStyleConfig):
-        if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
-        self._classic = config
-
-    @property
-    def modern(self) -> _SliderStyleConfig:  # numpydoc ignore=RT01
-        """Return the Modern slider configuration."""
-        return self._modern
-
-    @modern.setter
-    def modern(self, config: _SliderStyleConfig):
-        if not isinstance(config, _SliderStyleConfig):
-            raise TypeError('Configuration type must be `_SliderStyleConfig`')
-        self._modern = config
-
-    def __repr__(self):
-        txt = ['']
-        parm = {
-            'Classic': 'classic',
-            'Modern': 'modern',
-        }
-        for name, attr in parm.items():
-            setting = getattr(self, attr)
-            txt.append(f'    {name:<21}: {setting}')
-        return '\n'.join(txt)
-
-    def __iter__(self):
-        for style in [self._classic, self._modern]:
-            yield style.name
+        """
+        return cls.from_dict(
+            {
+                'slider_length': 0.02,
+                'slider_width': 0.04,
+                'slider_color': (110, 113, 117),
+                'tube_width': 0.04,
+                'tube_color': (178, 179, 181),
+                'cap_opacity': 0,
+                'cap_length': 0.01,
+                'cap_width': 0.02,
+            }
+        )
 
 
 class _TrameConfig(_ThemeConfig):
@@ -1437,7 +1541,7 @@ class _TrameConfig(_ThemeConfig):
         '_jupyter_extension_enabled',
     ]
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self._interactive_ratio = 1
         self._still_ratio = 1
         self._jupyter_server_name = 'pyvista-jupyter'
@@ -1466,6 +1570,8 @@ class _TrameConfig(_ThemeConfig):
             self._jupyter_extension_enabled = False
             self._server_proxy_enabled = False
         self._default_mode = 'trame'
+
+        self._handle_kwargs(**kwargs)
 
     @property
     def interactive_ratio(self) -> float:  # numpydoc ignore=RT01
@@ -1695,6 +1801,11 @@ class _CameraConfig(_ThemeConfig):
 class Theme(_ThemeConfig):
     """Base VTK theme.
 
+    Parameters
+    ----------
+    **kwargs : dict
+        Keyword args that set attributes.
+
     Examples
     --------
     Change the global default background color to white.
@@ -1708,10 +1819,16 @@ class Theme(_ThemeConfig):
 
     Create a new theme from the default theme and apply it globally.
 
-    >>> from pyvista.plotting.themes import DocumentTheme
-    >>> my_theme = DocumentTheme()
+    >>> from pyvista.plotting.themes import Theme
+    >>> my_theme = Theme.document_theme()
     >>> my_theme.color = 'red'
     >>> my_theme.background = 'white'
+    >>> pv.global_theme.load_theme(my_theme)
+
+    Create a Theme through keyword args.
+
+    >>> from pyvista.plotting.themes import Theme
+    >>> my_theme = Theme(show_edges=True)
     >>> pv.global_theme.load_theme(my_theme)
 
     """
@@ -1758,7 +1875,7 @@ class Theme(_ThemeConfig):
         '_smooth_shading',
         '_depth_peeling',
         '_silhouette',
-        '_slider_styles',
+        '_slider_style',
         '_return_cpos',
         '_hidden_line_removal',
         '_anti_aliasing',
@@ -1775,7 +1892,17 @@ class Theme(_ThemeConfig):
         '_edge_opacity',
     ]
 
-    def __init__(self):
+    _defaults: ClassVar[dict[str, str]] = {
+        'dark': 'dark_theme',
+        'default': 'document_theme',
+        'document': 'document_theme',
+        'document_pro': 'document_pro_theme',
+        'paraview': 'paraview_theme',
+        'testing': 'testing_theme',
+        'vtk': 'vtk_theme',
+    }
+
+    def __init__(self, **kwargs):
         """Initialize the theme."""
         self._name = 'default'
         self._background = Color([0.3, 0.3, 0.3])
@@ -1844,7 +1971,7 @@ class Theme(_ThemeConfig):
         self._smooth_shading = False
         self._depth_peeling = _DepthPeelingConfig()
         self._silhouette = _SilhouetteConfig()
-        self._slider_styles = _SliderConfig()
+        self._slider_style = _SliderStyleConfig()
         self._return_cpos = True
         self._hidden_line_removal = False
         self._anti_aliasing = 'msaa'
@@ -1856,6 +1983,223 @@ class Theme(_ThemeConfig):
         self._edge_opacity = 1.0
 
         self._logo_file = None
+
+        self._handle_kwargs(**kwargs)
+
+    @classmethod
+    def dark_theme(cls):
+        """Dark mode theme.
+
+        Black background, "viridis" colormap, tan meshes, white (hidden) edges.
+
+        Returns
+        -------
+        Theme
+            Dark theme.
+
+        Examples
+        --------
+        Make the dark theme the global default.
+
+        >>> import pyvista as pv
+        >>> from pyvista import themes
+        >>> pv.set_plot_theme(themes.Theme.dark_theme())
+
+        Alternatively, set via a string.
+
+        >>> pv.set_plot_theme('dark')
+
+        """
+        return cls.from_dict(
+            {
+                'name': 'dark',
+                'background': 'black',
+                'cmap': 'viridis',
+                'font': {'color': 'white'},
+                'show_edges': False,
+                'color': 'lightblue',
+                'outline_color': 'white',
+                'edge_color': 'white',
+                'axes': {
+                    'x_color': 'tomato',
+                    'y_color': 'seagreen',
+                    'z_color': 'blue',
+                },
+            }
+        )
+
+    @classmethod
+    def paraview_theme(cls):
+        """ParaView-like theme.
+
+        Returns
+        -------
+        Theme
+            ParaView-like theme.
+
+        Examples
+        --------
+        Make the paraview-like theme the global default.
+
+        >>> import pyvista as pv
+        >>> from pyvista import themes
+        >>> pv.set_plot_theme(themes.Theme.paraview_theme())
+
+        Alternatively, set via a string.
+
+        >>> pv.set_plot_theme('paraview')
+
+        """
+        return cls.from_dict(
+            {
+                'name': 'paraview',
+                'background': 'paraview',
+                'cmap': 'coolwarm',
+                'font': {
+                    'family': 'arial',
+                    'label_size': 16,
+                    'color': 'white',
+                },
+                'show_edges': False,
+                'color': 'white',
+                'outline_color': 'white',
+                'edge_color': 'black',
+                'axes': {
+                    'x_color': 'tomato',
+                    'y_color': 'gold',
+                    'z_color': 'green',
+                },
+            }
+        )
+
+    @classmethod
+    def document_theme(cls):
+        """Document theme well suited for papers and presentations.
+
+        This theme uses:
+
+        * A white background
+        * Black fonts
+        * The "viridis" colormap
+        * disables edges for surface plots
+        * Hidden edge removal
+
+        Best used for presentations, papers, etc.
+
+        Returns
+        -------
+        Theme
+            Document theme.
+
+        Examples
+        --------
+        Make the document theme the global default.
+
+        >>> import pyvista as pv
+        >>> from pyvista import themes
+        >>> pv.set_plot_theme(themes.Theme.document_theme())
+
+        Alternatively, set via a string.
+
+        >>> pv.set_plot_theme('document')
+
+        """
+        return cls.from_dict(
+            {
+                'name': 'document',
+                'background': 'white',
+                'cmap': 'viridis',
+                'font': {
+                    'size': 18,
+                    'title_size': 18,
+                    'label_size': 18,
+                    'color': 'black',
+                },
+                'show_edges': False,
+                'color': 'lightblue',
+                'outline_color': 'black',
+                'edge_color': 'black',
+                'axes': {
+                    'x_color': 'tomato',
+                    'y_color': 'seagreen',
+                    'z_color': 'blue',
+                },
+            }
+        )
+
+    @classmethod
+    def document_pro_theme(cls):
+        """More professional document theme.
+
+        This theme extends :func:`Theme.document_theme` with:
+
+        * Default color cycling
+        * Rendering points as spheres
+        * MSAA anti aliassing
+        * Depth peeling
+
+        Returns
+        -------
+        Theme
+            Document pro theme.
+
+        """
+        theme = cls.document_theme()
+        theme.update_from_dict(
+            {
+                'anti_aliasing': 'ssaa',
+                'color_cycler': get_cycler('default'),
+                'render_points_as_spheres': True,
+                'multi_samples': 8,
+                'depth_peeling': {
+                    'number_of_peels': 4,
+                    'occlusion_ratio': 0.0,
+                    'enabled': True,
+                },
+            }
+        )
+        return theme
+
+    @classmethod
+    def testing_theme(cls):
+        """Low resolution testing theme, e.g. for ``pytest``.
+
+        Necessary for image regression.  Xvfb doesn't support
+        multi-sampling, it's disabled for consistency between desktops and
+        remote testing.
+
+        Also disables ``return_cpos`` to make it easier for us to write
+        examples without returning camera positions.
+
+        Returns
+        -------
+        Theme
+            Testing theme.
+
+        """
+        return cls.from_dict(
+            {
+                'name': 'testing',
+                'multi_samples': 1,
+                'window_size': [400, 400],
+                'axes': {'show': False},
+                'return_cpos': False,
+            }
+        )
+
+    @classmethod
+    def vtk_theme(cls):
+        """Theme with :class:`Theme` defaults similar to VTK.
+
+        Same as ``Theme()``.
+
+        Returns
+        -------
+        Theme
+            VTK theme.
+
+        """
+        return cls()
 
     @property
     def hidden_line_removal(self) -> bool:  # numpydoc ignore=RT01
@@ -2909,15 +3253,15 @@ class Theme(_ThemeConfig):
         self._silhouette = config
 
     @property
-    def slider_styles(self) -> _SliderConfig:  # numpydoc ignore=RT01
+    def slider_style(self) -> _SliderStyleConfig:  # numpydoc ignore=RT01
         """Return the default slider style configurations."""
-        return self._slider_styles
+        return self._slider_style
 
-    @slider_styles.setter
-    def slider_styles(self, config: _SliderConfig):
-        if not isinstance(config, _SliderConfig):
-            raise TypeError('Configuration type must be `_SliderConfig`.')
-        self._slider_styles = config
+    @slider_style.setter
+    def slider_style(self, config: _SliderStyleConfig):
+        if not isinstance(config, _SliderStyleConfig):
+            raise TypeError('Configuration type must be `_SliderStyleConfig`.')
+        self._slider_style = config
 
     @property
     def axes(self) -> _AxesConfig:  # numpydoc ignore=RT01
@@ -2948,14 +3292,14 @@ class Theme(_ThemeConfig):
         self._axes = config
 
     @property
-    def before_close_callback(self) -> Callable[[pyvista.Plotter], None]:  # numpydoc ignore=RT01
+    def before_close_callback(self) -> Callable[[Plotter], None]:  # numpydoc ignore=RT01
         """Return the default before_close_callback function for Plotter."""
         return self._before_close_callback  # type: ignore[return-value]
 
     @before_close_callback.setter
     def before_close_callback(
         self,
-        value: Callable[[pyvista.Plotter], None],
+        value: Callable[[Plotter], None],
     ):
         self._before_close_callback = value
 
@@ -2984,7 +3328,7 @@ class Theme(_ThemeConfig):
         self._allow_empty_mesh = bool(allow_empty_mesh)
 
     def restore_defaults(self):
-        """Restore the theme defaults.
+        """Restore the theme to PyVista default theme.
 
         Examples
         --------
@@ -2992,7 +3336,7 @@ class Theme(_ThemeConfig):
         >>> pv.global_theme.restore_defaults()
 
         """
-        self.__init__()  # type: ignore[misc]
+        self.load_theme(self.from_default('default'))
 
     def __repr__(self):
         """User friendly representation of the current theme."""
@@ -3031,7 +3375,7 @@ class Theme(_ThemeConfig):
             'Smooth shading': 'smooth_shading',
             'Depth peeling': 'depth_peeling',
             'Silhouette': 'silhouette',
-            'Slider Styles': 'slider_styles',
+            'Slider Style': 'slider_style',
             'Return Camera Position': 'return_cpos',
             'Hidden Line Removal': 'hidden_line_removal',
             'Anti-Aliasing': '_anti_aliasing',
@@ -3068,8 +3412,8 @@ class Theme(_ThemeConfig):
         the global theme of pyvista.
 
         >>> import pyvista as pv
-        >>> from pyvista.plotting.themes import DocumentTheme
-        >>> my_theme = DocumentTheme()
+        >>> from pyvista.plotting.themes import Theme
+        >>> my_theme = Theme.document_theme()
         >>> my_theme.font.size = 20
         >>> my_theme.font.title_size = 40
         >>> my_theme.cmap = 'jet'
@@ -3080,8 +3424,7 @@ class Theme(_ThemeConfig):
         Create a custom theme from the dark theme and load it into
         pyvista.
 
-        >>> from pyvista.plotting.themes import DarkTheme
-        >>> my_theme = DarkTheme()
+        >>> my_theme = Theme.dark_theme()
         >>> my_theme.show_edges = True
         >>> pv.global_theme.load_theme(my_theme)
         >>> pv.global_theme.show_edges
@@ -3114,7 +3457,7 @@ class Theme(_ThemeConfig):
         Export and then load back in a theme.
 
         >>> import pyvista as pv
-        >>> theme = pv.themes.DocumentTheme()
+        >>> theme = pv.themes.Theme.document_theme()
         >>> theme.background = 'white'
         >>> theme.save('my_theme.json')  # doctest:+SKIP
         >>> loaded_theme = pv.load_theme('my_theme.json')  # doctest:+SKIP
@@ -3227,6 +3570,13 @@ class Theme(_ThemeConfig):
         self._logo_file = path
 
 
+# deprecated v0.44.0, make error in v0.48.0, remove in v0.49.0
+def _deprecated_subtheme_msg(class_name, obj_name):
+    return f"""{class_name} is deprecated.
+    Use Theme.{obj_name}() instead of {class_name}()
+    """
+
+
 class DarkTheme(Theme):
     """Dark mode theme.
 
@@ -3238,7 +3588,7 @@ class DarkTheme(Theme):
 
     >>> import pyvista as pv
     >>> from pyvista import themes
-    >>> pv.set_plot_theme(themes.DarkTheme())
+    >>> pv.set_plot_theme(themes.DarkTheme())  # doctest:+SKIP
 
     Alternatively, set via a string.
 
@@ -3249,6 +3599,9 @@ class DarkTheme(Theme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
+        warnings.warn(
+            _deprecated_subtheme_msg('DarkTheme', 'dark_theme'), PyVistaDeprecationWarning
+        )
         self.name = 'dark'
         self.background = 'black'  # type: ignore[assignment]
         self.cmap = 'viridis'
@@ -3271,7 +3624,7 @@ class ParaViewTheme(Theme):
 
     >>> import pyvista as pv
     >>> from pyvista import themes
-    >>> pv.set_plot_theme(themes.ParaViewTheme())
+    >>> pv.set_plot_theme(themes.ParaViewTheme())  # doctest:+SKIP
 
     Alternatively, set via a string.
 
@@ -3282,6 +3635,9 @@ class ParaViewTheme(Theme):
     def __init__(self):
         """Initialize theme."""
         super().__init__()
+        warnings.warn(
+            _deprecated_subtheme_msg('ParaViewTheme', 'paraview_theme'), PyVistaDeprecationWarning
+        )
         self.name = 'paraview'
         self.background = 'paraview'  # type: ignore[assignment]
         self.cmap = 'coolwarm'
@@ -3316,7 +3672,7 @@ class DocumentTheme(Theme):
 
     >>> import pyvista as pv
     >>> from pyvista import themes
-    >>> pv.set_plot_theme(themes.DocumentTheme())
+    >>> pv.set_plot_theme(themes.DocumentTheme())  # doctest:+SKIP
 
     Alternatively, set via a string.
 
@@ -3327,6 +3683,9 @@ class DocumentTheme(Theme):
     def __init__(self):
         """Initialize the theme."""
         super().__init__()
+        warnings.warn(
+            _deprecated_subtheme_msg('DocumentTheme', 'document_theme'), PyVistaDeprecationWarning
+        )
         self.name = 'document'
         self.background = 'white'  # type: ignore[assignment]
         self.cmap = 'viridis'
@@ -3357,7 +3716,17 @@ class DocumentProTheme(DocumentTheme):
 
     def __init__(self):
         """Initialize the theme."""
-        super().__init__()
+        # This Theme subclasses from DocumentTheme, only give one warning
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', 'DocumentTheme is deprecated.', PyVistaDeprecationWarning
+            )
+            super().__init__()
+
+        warnings.warn(
+            _deprecated_subtheme_msg('DocumentProTheme', 'document_pro_theme'),
+            PyVistaDeprecationWarning,
+        )
         self.anti_aliasing = 'ssaa'
         self.color_cycler = get_cycler('default')
         self.render_points_as_spheres = True
@@ -3381,20 +3750,11 @@ class _TestingTheme(Theme):
 
     def __init__(self):
         super().__init__()
+        warnings.warn(
+            _deprecated_subtheme_msg('_TestingTheme', 'testing_theme'), PyVistaDeprecationWarning
+        )
         self.name = 'testing'
         self.multi_samples = 1
         self.window_size = [400, 400]
         self.axes.show = False
         self.return_cpos = False
-
-
-class _NATIVE_THEMES(Enum):
-    """Global built-in themes available to PyVista."""
-
-    paraview = ParaViewTheme
-    document = DocumentTheme
-    document_pro = DocumentProTheme
-    dark = DarkTheme
-    default = document
-    testing = _TestingTheme
-    vtk = Theme
