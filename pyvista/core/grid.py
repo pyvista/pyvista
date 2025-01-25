@@ -108,7 +108,7 @@ class Grid(DataSet):
         return int(3 - (dims == 1).sum())
 
     @property
-    def cells(self) -> NumpyArray[int]:  # numpydoc ignore=RT01
+    def cells(self: Self) -> NumpyArray[int]:  # numpydoc ignore=RT01
         """Do not use.
 
         VTK 9.4 is now returning the vtkStructuredCellArray but this
