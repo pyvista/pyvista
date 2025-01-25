@@ -1072,10 +1072,10 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    polyhedral_cells = pyvista.convert_array(mesh.GetFaces())
+    polyhedral_cells = mesh.faces
 
     if polyhedral_cells is not None:
-        locations = pyvista.convert_array(mesh.GetFaceLocations())
+        locations = mesh.face_locations
         polyhedral_cell_faces = []
 
         for location in locations:
