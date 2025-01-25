@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
 
 if TYPE_CHECKING:
@@ -25,10 +26,11 @@ def get_classes_with_attribute(attr: str) -> tuple[tuple[str], tuple[type]]:
             try:
                 issubclass(module_attr, object)
             except TypeError:
-                pass  # not a class
-            else:
-                if hasattr(module_attr, attr):
-                    class_types.append(module_attr)
+                continue  # not a class
+            if issubclass(module_attr, (_vtk.vtkAxesActor, _vtk.vtkTextActor)):
+                return  # Skip these classes
+            if hasattr(module_attr, attr):
+                class_types.append(module_attr)
 
     # Get from core and plotting separately since plotting module has a lazy importer
     _get_classes_from_module(pv.core)
