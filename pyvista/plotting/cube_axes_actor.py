@@ -254,6 +254,18 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
         self.z_axis_range = bnds.z_min, bnds.z_max
 
     @property
+    def center(self) -> tuple[float, float, float]:
+        """Return the center.
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Center of axes actor.
+
+        """
+        return self.GetCenter()
+
+    @property
     def x_axis_range(self) -> tuple[float, float]:  # numpydoc ignore=RT01
         """Return or set the x-axis range."""
         return self.GetXAxisRange()
