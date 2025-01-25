@@ -201,7 +201,7 @@ class MultiBlock(
 
         >>> iterator = dataset.recursive_iterator()
         >>> iterator
-         <generator object MultiBlock.recursive_iterator at ...>
+        <generator object MultiBlock.recursive_iterator at ...>
 
         >>> len(list(iterator))
         59
