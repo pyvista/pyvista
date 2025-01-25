@@ -36,6 +36,7 @@ from .filters import PolyDataFilters
 from .filters import StructuredGridFilters
 from .filters import UnstructuredGridFilters
 from .filters import _get_output
+from .utilities.arrays import convert_array
 from .utilities.cells import create_mixed_cells
 from .utilities.cells import get_mixed_cells
 from .utilities.cells import numpy_to_idarr
@@ -2058,17 +2059,25 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
 
     @property
     def faces(self):
-        """Invalid property.
+        """Return the polyhedron faces."""
+        if hasattr(self, 'GetPolyhedronFaces'):
+            faces = self.GetPolyhedronFaces()  # vtkCellArray
+            if faces is not None:
+                faces = faces.GetData()  # vtkCellArray -> vtkIdTypeArray
+        else:
+            faces = self.GetFaces()  # vtkCellArray
+        return convert_array(faces)
 
-        Override the faces property to return nothing since VTK 9.4+ attempts
-        to map this to GetFaces which in previous versions was a method that
-        returns None for UnstructuredGrids. However, in VTK 9.4+ GetFaces for
-        UnstructuredGrids is a deprecated with preference for GetPolyhedronFaces.
-        For now, we just return None until we can figure out a better solution.
-
-        Issue reported in https://gitlab.kitware.com/vtk/vtk/-/issues/19591
-        """
-        return None
+    @property
+    def face_locations(self):
+        """Return polyhedron face locations."""
+        if hasattr(self, 'GetPolyhedronFaceLocations'):
+            faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
+            if faces is not None:
+                faces = faces.GetData()  # vtkCellArray -> vtkIdTypeArray
+        else:
+            faces = self.GetFaceLocations()  # vtkCellArray
+        return convert_array(faces)
 
     @property
     def cells_dict(self) -> dict[int, NumpyArray[float]]:  # numpydoc ignore=RT01
