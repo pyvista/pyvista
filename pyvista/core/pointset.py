@@ -2049,7 +2049,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         self.GetCells().ImportLegacyFormat(vtk_idarr)
 
     @property
-    def faces(self):
+    def faces(self) -> NumpyArray[int]:
         """Return the polyhedron faces."""
         if hasattr(self, 'GetPolyhedronFaces'):
             faces = self.GetPolyhedronFaces()  # vtkCellArray
@@ -2060,7 +2060,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return convert_array(faces)
 
     @property
-    def face_locations(self):
+    def face_locations(self) -> NumpyArray[int]:
         """Return polyhedron face locations."""
         if hasattr(self, 'GetPolyhedronFaceLocations'):
             faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
