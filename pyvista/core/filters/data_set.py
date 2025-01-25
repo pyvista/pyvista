@@ -3966,6 +3966,10 @@ class DataSetFilters:
         See Also
         --------
         pyvista.DataSetFilters.interpolate
+            Interpolate values from one mesh onto another.
+
+        :meth:`pyvista.ImageDataFilters.resample`
+            Resample image data to modify its dimensions and spacing.
 
         Examples
         --------
@@ -4110,6 +4114,10 @@ class DataSetFilters:
         See Also
         --------
         pyvista.DataSetFilters.sample
+            Resample array data from one mesh onto another.
+
+        :meth:`pyvista.ImageDataFilters.resample`
+            Resample image data to modify its dimensions and spacing.
 
         Examples
         --------

@@ -1091,3 +1091,161 @@ def test_validate_dim_operation_invalid_parameters(
         image._validate_dimensional_operation(
             operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
         )
+
+
+@pytest.mark.parametrize('spacing', [None, [0.3, 0.4, 0.5]])
+@pytest.mark.parametrize('direction_matrix', [None, np.diag((-1, 1, 1))])
+@pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
+@pytest.mark.parametrize('dimensions', [None, (5, 6, 7)])
+@pytest.mark.parametrize('offset', [None, (-100, -101, -102)])
+def test_resample_reference_image(uniform, spacing, direction_matrix, origin, dimensions, offset):
+    uniform = pv.ImageData(dimensions=(4, 4, 4))
+    uniform['data'] = np.arange(uniform.n_points, dtype=float)
+    reference = uniform.copy()
+    if spacing is not None:
+        reference.spacing = spacing
+    if direction_matrix is not None:
+        reference.direction_matrix = direction_matrix
+    if origin is not None:
+        reference.origin = origin
+    if dimensions is not None:
+        reference.dimensions = dimensions
+    if offset is not None:
+        reference.offset = offset
+    reference['data'] = range(reference.n_points)
+
+    resampled = uniform.resample(reference_image=reference, progress_bar=True)
+    assert isinstance(resampled, pv.ImageData)
+    assert resampled is not uniform
+    assert resampled is not reference
+    assert np.array_equal(resampled.dimensions, reference.dimensions)
+    assert np.array_equal(resampled.offset, reference.offset)
+    assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
+    assert len(resampled.active_scalars) == resampled.n_points
+    assert resampled.active_scalars_name == uniform.active_scalars_name
+    assert np.allclose(resampled.bounds, reference.bounds)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('sample_rate', 1.5),
+        ('sample_rate', 2.0),
+        ('sample_rate', 0.5),
+        ('dimensions', (15, 15, 15)),
+    ],
+)
+@pytest.mark.parametrize('extend_border', [True, False])
+def test_resample_extend_border(uniform, extend_border, name, value):
+    kwarg = {name: value}
+    resampled = uniform.resample(**kwarg, extend_border=extend_border)
+    expected_dimensions = uniform.dimensions * np.array(value) if name == 'sample_rate' else value
+
+    assert np.array_equal(resampled.dimensions, expected_dimensions)
+    assert len(resampled.active_scalars) == resampled.n_points
+    assert resampled.active_scalars_name == uniform.active_scalars_name
+
+    if extend_border:
+        sample_rate = np.array(resampled.dimensions) / uniform.dimensions
+        expected_spacing = uniform.spacing / sample_rate
+        assert np.allclose(resampled.spacing, expected_spacing)
+        assert not np.allclose(resampled.bounds, uniform.bounds)
+
+        # Test bounds are the same when represented as cells
+        expected_cell_bounds = uniform.points_to_cells().bounds
+        actual_cell_bounds = resampled.points_to_cells().bounds
+        assert np.allclose(actual_cell_bounds, expected_cell_bounds)
+    else:
+        assert np.allclose(resampled.bounds, uniform.bounds)
+
+
+@pytest.mark.parametrize('dtype', ['uint8', 'int', 'float'])
+@pytest.mark.parametrize('interpolation', ['linear', 'nearest', 'cubic'])
+def test_resample_interpolation(uniform, interpolation, dtype):
+    array = uniform.active_scalars
+    uniform[uniform.active_scalars_name] = array.astype(dtype)
+    resampled = uniform.resample(interpolation=interpolation)
+
+    expected_dtype = float if interpolation in ['linear', 'cubic'] else dtype
+    actual_dtype = resampled.active_scalars.dtype
+    assert actual_dtype == expected_dtype
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('scalars', 'Spatial Point Data'),
+        ('scalars', 'Spatial Cell Data'),
+        ('preference', 'point'),
+        ('preference', 'cell'),
+    ],
+)
+def test_resample_scalars(uniform, name, value):
+    kwargs = {name: value}
+    if name == 'preference':
+        # Make array names ambiguous
+        scalars = 'data'
+        uniform.rename_array('Spatial Point Data', scalars)
+        uniform.rename_array('Spatial Cell Data', scalars)
+        kwargs['scalars'] = scalars
+
+    resampled = uniform.resample(**kwargs)
+
+    if 'cell' in value.lower():
+        assert len(resampled.cell_data) == 1
+        assert len(resampled.point_data) == 0
+    else:
+        assert len(resampled.cell_data) == 0
+        assert len(resampled.point_data) == 1
+
+
+def test_resample_cell_data(uniform):
+    uniform.point_data.clear()
+    input_cell_dimensions = np.array(uniform.dimensions) - 1
+    sample_rate = np.array((2, 3, 4))
+
+    # Test sample rate
+    resampled = uniform.resample(sample_rate)
+    resample_cell_dimensions = np.array(resampled.dimensions) - 1
+    expected_cell_dimensions = input_cell_dimensions * sample_rate
+    assert np.array_equal(resample_cell_dimensions, expected_cell_dimensions)
+    assert np.allclose(uniform.bounds, resampled.bounds)
+
+    # Test dimensions
+    output_dimensions = (12, 13, 14)
+    resampled = uniform.resample(dimensions=output_dimensions)
+    assert np.array_equal(resampled.dimensions, output_dimensions)
+    assert np.allclose(uniform.bounds, resampled.bounds)
+
+
+def test_resample_inplace(uniform):
+    resampled = uniform.resample()
+    assert resampled is not uniform
+    resampled = uniform.resample(inplace=True)
+    assert resampled is uniform
+
+
+def test_resample_raises(uniform):
+    match = (
+        'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
+        '`reference_image` must define the geometry exclusively.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, reference_image=uniform)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
+
+    match = (
+        'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
+        '`sample_rate` must define the sampling geometry exclusively.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, dimensions=(2, 2, 2))
+
+    match = '`extend_border` cannot be set when resampling cell data.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(scalars='Spatial Cell Data', extend_border=True)
+
+    match = '`extend_border` cannot be set when a `image_reference` is provided.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(reference_image=uniform, extend_border=True)
