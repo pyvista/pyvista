@@ -205,6 +205,9 @@ autodoc_type_aliases = {
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
+# Needed to address a code-block parsing error by sphinx for an example
+autodoc_mock_imports = ['example']
+
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
 overloads_location = ['bottom']
 
