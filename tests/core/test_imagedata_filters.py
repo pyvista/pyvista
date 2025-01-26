@@ -15,8 +15,8 @@ BOUNDARY_LABELS = 'boundary_labels'
 
 
 @pytest.fixture
-def logo():
-    return examples.load_logo()
+def beach():
+    return examples.download_beach()
 
 
 def variable_dimensionality_image(dimensions):
@@ -483,7 +483,7 @@ def test_cells_to_points_scalars(uniform):
 
 def test_points_to_cells_and_cells_to_points_dimensions(
     uniform,
-    logo,
+    beach,
     zero_dimensionality_image,
     one_dimensionality_image,
     two_dimensionality_image,
@@ -495,11 +495,11 @@ def test_points_to_cells_and_cells_to_points_dimensions(
     assert uniform.points_to_cells(dimensionality='preserve').dimensions == (11, 11, 11)
     assert uniform.cells_to_points(dimensionality='preserve').dimensions == (9, 9, 9)
 
-    assert logo.dimensions == (1920, 718, 1)
-    assert logo.points_to_cells().dimensions == (1921, 719, 1)
-    assert logo.cells_to_points().dimensions == (1919, 717, 1)
-    assert logo.points_to_cells(dimensionality='preserve').dimensions == (1921, 719, 1)
-    assert logo.cells_to_points(dimensionality='preserve').dimensions == (1919, 717, 1)
+    assert beach.dimensions == (100, 100, 1)
+    assert beach.points_to_cells().dimensions == (101, 101, 1)
+    assert beach.cells_to_points().dimensions == (99, 99, 1)
+    assert beach.points_to_cells(dimensionality='preserve').dimensions == (101, 101, 1)
+    assert beach.cells_to_points(dimensionality='preserve').dimensions == (99, 99, 1)
 
     assert zero_dimensionality_image.dimensions == (1, 1, 1)
     assert zero_dimensionality_image.points_to_cells(
@@ -752,7 +752,7 @@ def test_pad_image_multi_component(zero_dimensionality_image):
     assert np.all(padded['scalars2'] == new_value * 2)
 
 
-def test_pad_image_raises(zero_dimensionality_image, uniform, logo):
+def test_pad_image_raises(zero_dimensionality_image, uniform, beach):
     match = 'Pad size cannot be negative. Got -1.'
     with pytest.raises(ValueError, match=match):
         zero_dimensionality_image.pad_image(pad_size=-1)
@@ -773,32 +773,30 @@ def test_pad_image_raises(zero_dimensionality_image, uniform, logo):
     with pytest.raises(ValueError, match=match):
         uniform.pad_image(scalars='Spatial Cell Data')
 
-    match = (
-        "Pad value 0.1 with dtype 'float64' is not compatible with dtype 'uint8' of array PNGImage."
-    )
+    match = "Pad value 0.1 with dtype 'float64' is not compatible with dtype 'uint8' of array ImageFile."
     with pytest.raises(TypeError, match=re.escape(match)):
-        logo.pad_image(0.1)
+        beach.pad_image(0.1)
 
     match = "Invalid pad value foo. Must be 'mirror' or 'wrap', or a number/component vector for constant padding."
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image('foo')
+        beach.pad_image('foo')
 
     match = "Invalid pad value [[2]]. Must be 'mirror' or 'wrap', or a number/component vector for constant padding."
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image([[2]])
+        beach.pad_image([[2]])
 
-    match = "Number of components (2) in pad value (0, 0) must match the number components (4) in array 'PNGImage'."
+    match = "Number of components (2) in pad value (0, 0) must match the number components (3) in array 'ImageFile'."
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image((0, 0))
+        beach.pad_image((0, 0))
 
-    logo['single'] = range(logo.n_points)  # Create data with varying num array components
+    beach['single'] = range(beach.n_points)  # Create data with varying num array components
     match = (
-        "Cannot pad array 'single' with value (0, 0, 0, 0). Number of components (1) in 'single' must match the number of components (4) in value."
+        "Cannot pad array 'single' with value (0, 0, 0). Number of components (1) in 'single' must match the number of components (3) in value."
         '\nTry setting `pad_all_scalars=False` or update the array.'
     )
-    logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
+    beach.pad_image(pad_value=(0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=True)
+        beach.pad_image(pad_value=(0, 0, 0), pad_all_scalars=True)
 
 
 def test_pad_image_deprecation(zero_dimensionality_image):

@@ -1774,13 +1774,13 @@ class ImageDataFilters(DataSetFilters):
         output cells are 2D :attr:`~pyvista.CellType.PIXEL` cells when ``dimensions`` is
         set to ``'preserve'``.
 
-        >>> image2D = examples.load_logo()
+        >>> image2D = examples.download_beach()
         >>> image2D.dimensions
-        (1920, 718, 1)
+        (100, 100, 1)
 
         >>> pixel_cells_image = image2D.points_to_cells(dimensionality='preserve')
         >>> pixel_cells_image.dimensions
-        (1921, 719, 1)
+        (101, 101, 1)
         >>> pixel_cells_image.get_cell(0).type
         <CellType.PIXEL: 8>
 
@@ -1788,7 +1788,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> pixel_cells_image = image2D.points_to_cells(dimensionality='2D')
         >>> pixel_cells_image.dimensions
-        (1921, 719, 1)
+        (101, 101, 1)
         >>> pixel_cells_image.get_cell(0).type
         <CellType.PIXEL: 8>
 
@@ -1798,7 +1798,7 @@ class ImageDataFilters(DataSetFilters):
         ...     dimensionality=(True, True, True)
         ... )
         >>> voxel_cells_image.dimensions
-        (1921, 719, 2)
+        (101, 101, 2)
         >>> voxel_cells_image.get_cell(0).type
         <CellType.VOXEL: 11>
 
@@ -1806,7 +1806,7 @@ class ImageDataFilters(DataSetFilters):
 
         >>> voxel_cells_image = image2D.points_to_cells(dimensionality='3D')
         >>> voxel_cells_image.dimensions
-        (1921, 719, 2)
+        (101, 101, 2)
         >>> voxel_cells_image.get_cell(0).type
         <CellType.VOXEL: 11>
 
@@ -2264,24 +2264,24 @@ class ImageDataFilters(DataSetFilters):
         Pad a color image using multi-component color vectors. Here, RGBA values are
         used.
 
-        >>> color_image = examples.load_logo()
-        >>> red = (255, 0, 0, 255)  # RGBA
-        >>> padded = color_image.pad_image(pad_value=red, pad_size=200)
+        >>> color_image = examples.download_beach()
+        >>> red = (255, 0, 0)  # RGB
+        >>> padded = color_image.pad_image(pad_value=red, pad_size=50)
         >>>
         >>> plot_kwargs = dict(cpos='xy', zoom='tight', rgb=True, show_axes=False)
         >>> padded.plot(**plot_kwargs)
 
         Pad each edge of the image separately with a different color.
 
-        >>> orange = pv.Color('orange').int_rgba
-        >>> purple = pv.Color('purple').int_rgba
-        >>> blue = pv.Color('blue').int_rgba
-        >>> green = pv.Color('green').int_rgba
+        >>> orange = pv.Color('orange').int_rgb
+        >>> purple = pv.Color('purple').int_rgb
+        >>> blue = pv.Color('blue').int_rgb
+        >>> green = pv.Color('green').int_rgb
         >>>
-        >>> padded = color_image.pad_image(orange, pad_size=(100, 0, 0, 0))
-        >>> padded = padded.pad_image(purple, pad_size=(0, 100, 0, 0))
-        >>> padded = padded.pad_image(blue, pad_size=(0, 0, 100, 0))
-        >>> padded = padded.pad_image(green, pad_size=(0, 0, 0, 100))
+        >>> padded = color_image.pad_image(orange, pad_size=(25, 0, 0, 0))
+        >>> padded = padded.pad_image(purple, pad_size=(0, 25, 0, 0))
+        >>> padded = padded.pad_image(blue, pad_size=(0, 0, 25, 0))
+        >>> padded = padded.pad_image(green, pad_size=(0, 0, 0, 25))
         >>>
         >>> padded.plot(**plot_kwargs)
 
