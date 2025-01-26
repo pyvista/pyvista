@@ -323,7 +323,7 @@ def show_trame(
         Pass a callable that accptes the viewer instance, the string URL,
         and ``**kwargs`` to create custom HTML representations of the output.
 
-        .. code:: python
+        .. code-block:: python
 
             import pyvista as pv
             from IPython.display import IFrame
