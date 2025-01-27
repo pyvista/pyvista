@@ -20,7 +20,7 @@ from . import transformations
 from .fileio import from_meshio
 from .fileio import is_meshio_mesh
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from meshio import Mesh
     from trimesh import Trimesh
 

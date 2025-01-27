@@ -23,7 +23,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import Table
     from pyvista import pyvista_ndarray

@@ -17,7 +17,7 @@ from ._aliases import VectorLike as VectorLike
 from ._array_like import NumberType as NumberType
 from ._array_like import NumpyArray as NumpyArray
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     # Avoid circular imports
     from ._dataset_types import ConcreteDataObjectType as ConcreteDataObjectType
     from ._dataset_types import ConcreteDataSetType as ConcreteDataSetType
