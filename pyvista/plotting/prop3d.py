@@ -16,7 +16,7 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike

@@ -18,7 +18,7 @@ from .colors import Color
 from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from matplotlib import colors
 
     from ._typing import ColorLike

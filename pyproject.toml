@@ -117,6 +117,7 @@ docs = [
   'osmnx==2.0.1',
   'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.14',
+  'pytest-pyvista==0.1.8',
   'pytest-sphinx==0.6.3',
   'pyvista[pinned]',
   'scipy==1.15.0',
@@ -196,8 +197,12 @@ omit = [
   'pyvista/ext/coverage.py',
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
+[tool.coverage.report]
+exclude_also = ['if TYPE_CHECKING:']
+
 
 [tool.pytest.ini_options]
+addopts = ['--strict-config', '--strict-markers', '-ra']
 doctest_optionflags = 'NUMBER ELLIPSIS'
 
 # Keep spaces between filter warnings since order matters (see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#controlling-warnings)
@@ -217,11 +222,14 @@ filterwarnings = [
 ]
 image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
+log_cli_level = "INFO"
 markers = [
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
 ]
+minversion = "7"
 testpaths = 'tests'
+xfail_strict = true
 
 [tool.mypy]
 check_untyped_defs = true
@@ -446,3 +454,12 @@ required-imports = [
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true # Preserve types, even if a file imports `from __future__ import annotations`.
+
+[tool.repo-review]
+ignore = [
+  'MY101', # to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
+  'PC111', # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
+  'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
+  'PY007', # tox support
+  'RTD',   # RTD: the documentation is not hosted by ReadTheDocs
+]
