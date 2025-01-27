@@ -7688,15 +7688,13 @@ class _WholeBodyCTUtilities:  # pragma: no cover
     @staticmethod
     def load_func(files):  # pragma: no cover
         dataset_file, colors_module = files
-        # Process the dataset to create a label map from the segmentation masks
         dataset = dataset_file.load()
 
-        # Add label map to dataset
+        # Create label map and add to dataset
         dataset['label_map'] = _WholeBodyCTUtilities.label_map_from_masks(dataset['segmentations'])
 
         # Add metadata
         _WholeBodyCTUtilities.add_metadata(dataset, colors_module.path)
-
         return dataset
 
     @staticmethod
