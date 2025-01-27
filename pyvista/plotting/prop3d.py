@@ -16,7 +16,7 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -393,6 +393,8 @@ class Prop3D(_vtk.vtkProp3D):
         NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
 
         This method may be used as an alternative for setting the :attr:`orientation`.
+
+        .. versionadded:: 0.45
 
         Parameters
         ----------

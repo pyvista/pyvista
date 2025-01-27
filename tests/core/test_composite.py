@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 import itertools
 import pathlib
 import platform
@@ -14,6 +15,7 @@ import pyvista as pv
 from pyvista import ImageData
 from pyvista import MultiBlock
 from pyvista import PolyData
+from pyvista import PyVistaDeprecationWarning
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
@@ -891,3 +893,25 @@ def test_multiblock_partitioned_zip(container):
     assert len(zipped_container[0]) == len(zipped_list[0])
     for i, j in itertools.product(range(2), repeat=2):
         assert zipped_container[i][j] is zipped_list[i][j] is None
+
+
+def test_transform_filter_inplace_default_warns(multiblock_poly):
+    expected_msg = 'The default value of `inplace` for the filter `MultiBlock.transform` will change in the future.'
+    with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
+        _ = multiblock_poly.transform(np.eye(4))
+
+
+def test_recursive_iterator(multiblock_all_with_nested_and_none):
+    # Test default skips None blocks by default
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator()
+    assert isinstance(iterator, Generator)
+    iterator_list = list(iterator)
+    assert None not in iterator_list
+    assert all(isinstance(item, pv.DataSet) for item in iterator_list)
+
+    # Test do not skip None blocks
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(skip_none=False)
+    assert isinstance(iterator, Generator)
+    iterator_list = list(iterator)
+    assert None in iterator_list
+    assert all(isinstance(item, pv.DataSet) or item is None for item in iterator_list)

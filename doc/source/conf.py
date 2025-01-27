@@ -15,6 +15,12 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 faulthandler.enable()
 
+# This flag is set *before* any pyvista import. It allows `pyvista.core._typing_core._aliases` to
+# import things like `scipy` or `matplotlib` that would be unnecessarily bulky to import by default
+# during normal operation. See https://github.com/pyvista/pyvista/pull/7023.
+# Note that `import make_tables` below imports pyvista.
+os.environ['PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'] = 'true'
+
 sys.path.insert(0, str(Path().resolve()))
 import make_external_gallery
 import make_tables
@@ -199,6 +205,9 @@ autodoc_type_aliases = {
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
+# Needed to address a code-block parsing error by sphinx for an example
+autodoc_mock_imports = ['example']
+
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
 overloads_location = ['bottom']
 
@@ -290,6 +299,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', '.*NoneType'),
     (r'py:.*', 'collections.*'),
+    (r'py:.*', '.*PathStrSeq'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),

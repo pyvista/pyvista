@@ -16,6 +16,7 @@ import numpy as np
 import pyvista as pv
 from pyvista import BoundsTuple
 from pyvista.core import _validation
+from pyvista.core._validation.validate import _validate_color_sequence
 from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
@@ -28,7 +29,7 @@ from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
 from pyvista.plotting.text import TextProperty
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
     import sys
 
@@ -488,10 +489,7 @@ class AxesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the axes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
@@ -898,45 +896,6 @@ def _validate_label_sequence(labels: Sequence[str], n_labels: int | Sequence[int
     _validation.check_iterable_items(labels, str, name=name)
     _validation.check_length(labels, exact_length=n_labels, name=name)
     return labels
-
-
-def _validate_color_sequence(
-    color: ColorLike | Sequence[ColorLike],
-    n_colors: int | None = None,
-) -> tuple[Color, ...]:
-    """Validate a color sequence.
-
-    If `n_colors` is specified, the output will have `n` colors. For single-color
-    inputs, the color is copied and a sequence of `n` identical colors is returned.
-    For inputs with multiple colors, the number of colors in the input must
-    match `n_colors`.
-
-    If `n_colors` is None, no broadcasting or length-checking is performed.
-    """
-    try:
-        # Assume we have one color
-        color_list = [Color(color)]  # type: ignore[arg-type]
-        n_colors = 1 if n_colors is None else n_colors
-        return tuple(color_list * n_colors)
-    except ValueError:
-        if isinstance(color, (tuple, list)):
-            try:
-                color_list = [_validate_color_sequence(c, n_colors=1)[0] for c in color]
-                if len(color_list) == 1:
-                    n_colors = 1 if n_colors is None else n_colors
-                    color_list = color_list * n_colors
-
-                # Only return if we have the correct number of colors
-                if n_colors is not None and len(color_list) == n_colors:
-                    return tuple(color_list)
-            except ValueError:
-                pass
-    raise ValueError(
-        f'Invalid color(s):\n'
-        f'\t{color}\n'
-        f'Input must be a single ColorLike color '
-        f'or a sequence of {n_colors} ColorLike colors.',
-    )
 
 
 class AxesAssemblySymmetric(AxesAssembly):
@@ -1548,10 +1507,7 @@ class PlanesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the planes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         attr = [
@@ -2005,7 +1961,8 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.SetUseBounds(False)
 
         # Format title positioning
-        self.SetTitleOffset(0)
+        offset = (0,) if pv.vtk_version_info < (9, 3) else (0, 0)
+        self.SetTitleOffset(*offset)
         self.SetLabelOffset(0)
 
         # For 2D mode only

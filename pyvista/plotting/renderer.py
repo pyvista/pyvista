@@ -41,7 +41,7 @@ from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ..core.pointset import PolyData
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
@@ -2772,11 +2772,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     def update_bounds_axes(self) -> None:
         """Update the bounds axes of the render window."""
-        if (
-            hasattr(self, '_box_object')
-            and self._box_object is not None
-            and self.bounding_box_actor is not None
-        ):
+        if hasattr(self, '_box_object') and self.bounding_box_actor is not None:
             if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
