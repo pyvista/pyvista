@@ -1082,9 +1082,11 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     else:
         from ..cell import _get_irregular_cells
 
-        faces = _get_irregular_cells(mesh.GetPolyhedronFaces())
-        locations = _get_irregular_cells(mesh.GetPolyhedronFaceLocations())
-        polyhedral_cell_faces = [[faces[face] for face in cell] for cell in locations]
+        polyhedron_faces = _get_irregular_cells(mesh.GetPolyhedronFaces())
+        polyhedron_locations = _get_irregular_cells(mesh.GetPolyhedronFaceLocations())
+        polyhedral_cell_faces = [
+            [polyhedron_faces[face] for face in cell] for cell in polyhedron_locations
+        ]
 
     # Single cell type (except POLYGON and POLYHEDRON)
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
