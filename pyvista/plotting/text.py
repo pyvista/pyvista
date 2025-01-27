@@ -18,7 +18,7 @@ from .prop3d import _Prop3DMixin
 from .themes import Theme
 from .tools import FONTS
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import ClassVar
 

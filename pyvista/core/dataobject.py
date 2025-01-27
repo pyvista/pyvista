@@ -27,7 +27,7 @@ from .utilities.fileio import set_vtkwriter_mode
 from .utilities.helpers import wrap
 from .utilities.misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from types import FunctionType
     from typing import Any
     from typing import ClassVar

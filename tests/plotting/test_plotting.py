@@ -41,7 +41,7 @@ from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
 

@@ -196,6 +196,9 @@ omit = [
   'pyvista/ext/coverage.py',
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
+[tool.coverage.report]
+exclude_also = ['if TYPE_CHECKING:']
+
 
 [tool.pytest.ini_options]
 doctest_optionflags = 'NUMBER ELLIPSIS'
