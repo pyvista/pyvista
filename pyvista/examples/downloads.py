@@ -7687,7 +7687,7 @@ class _WholeBodyCTUtilities:
         # Process the dataset to create a label map from the segmentation masks
         dataset = dataset_file.load()
 
-        # # Add label map to dataset
+        # Add label map to dataset
         dataset['label_map'] = _WholeBodyCTUtilities.label_map_from_masks(dataset['segmentations'])
 
         # Add metadata
