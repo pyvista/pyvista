@@ -7559,13 +7559,13 @@ def download_whole_body_ct_male(load=True, *, high_resolution=False):  # pragma:
     >>> ct_image = dataset['ct']
     >>> ct_image
     ImageData (...)
-      N Cells:      55561506
-      N Points:     56012800
-      X Bounds:     0.000e+00, 4.785e+02
-      Y Bounds:     0.000e+00, 4.785e+02
-      Z Bounds:     0.000e+00, 8.190e+02
-      Dimensions:   320, 320, 547
-      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Cells:      6876432
+      N Points:     6988800
+      X Bounds:     7.500e-01, 4.778e+02
+      Y Bounds:     7.500e-01, 4.778e+02
+      Z Bounds:     7.527e-01, 8.182e+02
+      Dimensions:   160, 160, 273
+      Spacing:      3.000e+00, 3.000e+00, 3.005e+00
       N Arrays:     1
 
     Get the segmentation label names and show the first three.
@@ -7804,13 +7804,13 @@ def download_whole_body_ct_female(load=True, *, high_resolution=False):  # pragm
     >>> ct_image = dataset['ct']
     >>> ct_image
     ImageData (...)
-      N Cells:      55154462
-      N Points:     55603200
-      X Bounds:     0.000e+00, 4.785e+02
-      Y Bounds:     0.000e+00, 4.785e+02
-      Z Bounds:     0.000e+00, 8.130e+02
-      Dimensions:   320, 320, 543
-      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Cells:      6876432
+      N Points:     6988800
+      X Bounds:     7.500e-01, 4.778e+02
+      Y Bounds:     7.500e-01, 4.778e+02
+      Z Bounds:     7.527e-01, 8.182e+02
+      Dimensions:   160, 160, 273
+      Spacing:      3.000e+00, 3.000e+00, 3.005e+00
       N Arrays:     1
 
     Get the segmentation label names and show the first three.
