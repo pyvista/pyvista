@@ -7537,7 +7537,7 @@ def download_whole_body_ct_male(load=True, *, high_resolution=False):  # pragma:
 
     high_resolution : bool, default: False
         Set this to ``True`` to return a high-resolution version of this dataset.
-        By default, a :meth:`resampled <pyvista.ImageDataFilters.resample> version
+        By default, a :meth:`resampled <pyvista.ImageDataFilters.resample>` version
         with a ``0.5`` sampling rate is returned.
 
         .. versionadded:: 0.45
@@ -7778,7 +7778,7 @@ def download_whole_body_ct_female(load=True, *, high_resolution=False):  # pragm
 
     high_resolution : bool, default: False
         Set this to ``True`` to return a high-resolution version of this dataset.
-        By default, a :meth:`resampled <pyvista.ImageDataFilters.resample> version
+        By default, a :meth:`resampled <pyvista.ImageDataFilters.resample>` version
         with a ``0.5`` sampling rate is returned.
 
         .. versionadded:: 0.45
