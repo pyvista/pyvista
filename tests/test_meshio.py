@@ -159,13 +159,10 @@ polyhedron = meshio.Mesh(
     'mesh_in', [beam, airplane, uniform, uniform2d, hybrid, mesh2d, polyhedron, cow]
 )
 def test_meshio(mesh_in, tmpdir):
-    if isinstance(mesh_in, meshio.Mesh):
-        mesh_in = pv.from_meshio(mesh_in)
+    if not isinstance(mesh_in, meshio.Mesh):
+        mesh_in = pv.to_meshio(mesh_in)
 
-    # Save and read reference mesh using meshio
-    filename = tmpdir.mkdir('tmpdir').join('test_mesh.vtu')
-    pv.save_meshio(filename, mesh_in)
-    mesh = pv.read_meshio(filename)
+    mesh = pv.from_meshio(filename)
 
     # Assert mesh is still the same
     assert np.allclose(mesh_in.points, mesh.points)
