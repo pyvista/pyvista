@@ -7526,7 +7526,7 @@ def download_whole_body_ct_male(load=True, *, high_resolution=False):  # pragma:
         A downsampled version of this dataset with dimensions ``(160, 160, 273)``
         is now returned. Previously, a high-resolution version with dimensions
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
-        high-resolution versions.
+        high-resolution version.
 
     Parameters
     ----------
@@ -7697,7 +7697,7 @@ class _WholeBodyCTUtilities:
 
     @staticmethod
     def files_func(name):  # pragma: no cover
-        # Resampled versions are saved as a multiblock
+        # Resampled version is saved as a multiblock
         target_file = f'{name}.vtm' if 'resampled' in name else name
 
         def func():
@@ -7766,7 +7766,7 @@ def download_whole_body_ct_female(load=True, *, high_resolution=False):  # pragm
         A downsampled version of this dataset with dimensions ``(160, 160, 273)``
         is now returned. Previously, a high-resolution version with dimensions
         ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
-        high-resolution versions.
+        high-resolution version.
 
     Parameters
     ----------
