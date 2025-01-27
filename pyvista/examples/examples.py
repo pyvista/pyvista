@@ -681,6 +681,11 @@ def load_logo():
         directory at the root of the ``pyvista`` repository. This includes
         high-resolution ``.png`` files and a vectorized version ``.svg`` version.
 
+    .. versionchanged:: 0.45
+
+        The dimensions of the image is now ``1389 x 592``.
+        Previously, it was ``1920 x 718``.
+
     Returns
     -------
     pyvista.ImageData
@@ -690,6 +695,9 @@ def load_logo():
     --------
     >>> from pyvista import examples
     >>> image = examples.load_logo()
+    >>> image.dimensions
+    (1389, 592, 1)
+
     >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
 
     .. seealso::
