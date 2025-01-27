@@ -1056,26 +1056,35 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     connectivity = mesh.cell_connectivity
 
     # Generate polyhedral cell faces if any
-    polyhedral_cells = pyvista.convert_array(mesh.GetFaces())
+    if pyvista.vtk_version_info < (9, 4):
+        polyhedral_cells = pyvista.convert_array(mesh.GetFaces())
 
-    if polyhedral_cells is not None:
-        locations = pyvista.convert_array(mesh.GetFaceLocations())
-        polyhedral_cell_faces = []
+        if polyhedral_cells is not None:
+            locations = pyvista.convert_array(mesh.GetFaceLocations())
+            polyhedral_cell_faces = []
 
-        for location in locations:
-            if location == -1:
-                continue
+            for location in locations:
+                if location == -1:
+                    polyhedral_cell_faces.append([])
+                    continue
 
-            n_faces = polyhedral_cells[location]
-            i = location + 1
-            faces: list[MatrixLike[int]] = []
+                n_faces = polyhedral_cells[location]
+                i = location + 1
+                faces: list[MatrixLike[int]] = []
 
-            while len(faces) < n_faces:
-                n_vertices = polyhedral_cells[i]
-                faces.append(polyhedral_cells[i + 1 : i + 1 + n_vertices])
-                i += n_vertices + 1
+                while len(faces) < n_faces:
+                    n_vertices = polyhedral_cells[i]
+                    faces.append(polyhedral_cells[i + 1 : i + 1 + n_vertices])
+                    i += n_vertices + 1
 
-            polyhedral_cell_faces.append(faces)
+                polyhedral_cell_faces.append(faces)
+
+    else:
+        from ..cell import _get_irregular_cells
+
+        faces = _get_irregular_cells(mesh.GetPolyhedronFaces())
+        locations = _get_irregular_cells(mesh.GetPolyhedronFaceLocations())
+        polyhedral_cell_faces = [[faces[face] for face in cell] for cell in locations]
 
     # Single cell type (except POLYGON and POLYHEDRON)
     if vtk_celltypes.min() == vtk_celltypes.max() and vtk_celltypes[0] not in {
@@ -1102,15 +1111,13 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
     else:
         cells = []
         offset = mesh.offset
-        polyhedron_count = 0
 
-        for i1, i2, vtk_celltype in zip(offset[:-1], offset[1:], vtk_celltypes):
+        for i, (i1, i2, vtk_celltype) in enumerate(zip(offset[:-1], offset[1:], vtk_celltypes)):
             cell = connectivity[i1:i2]
 
             if vtk_celltype == pyvista.CellType.POLYHEDRON:
                 celltype = f'polyhedron{len(cell)}'
-                cell = polyhedral_cell_faces[polyhedron_count]
-                polyhedron_count += 1
+                cell = polyhedral_cell_faces[i]
 
             else:
                 celltype = (
