@@ -1061,7 +1061,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
         if polyhedral_cells is not None:
             locations = pyvista.convert_array(mesh.GetFaceLocations())
-            polyhedral_cell_faces = []
+            polyhedral_cell_faces: list[MatrixLike[int]] = []
 
             for location in locations:
                 if location == -1:
