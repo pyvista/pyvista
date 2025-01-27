@@ -25,7 +25,7 @@ from .colors import Color
 from .colors import color_synonyms
 from .colors import hexcolors
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ._typing import Chart
 
 

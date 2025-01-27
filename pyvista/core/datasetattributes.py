@@ -21,7 +21,7 @@ from .utilities.arrays import copy_vtk_array
 
 T = TypeVar('T')
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from typing_extensions import Self

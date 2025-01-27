@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from .opts import InterpolationType
 from .opts import RepresentationType
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from . import _vtk
 
 

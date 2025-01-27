@@ -14,7 +14,7 @@ from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista.core._typing_core import TransformLike
 
