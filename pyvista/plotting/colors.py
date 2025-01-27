@@ -34,7 +34,7 @@ from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ._typing import ColorLike
 
 IPYGANY_MAP = {

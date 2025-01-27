@@ -30,7 +30,7 @@ import numpy.typing as npt
 
 from pyvista.core._validation._cast_array import _cast_to_numpy
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumberType
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
