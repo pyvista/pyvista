@@ -7639,7 +7639,7 @@ def download_whole_body_ct_male(load=True, *, high_resolution=False):  # pragma:
     return _download_dataset(_dataset_whole_body_ct_male, load=load)
 
 
-class _WholeBodyCTUtilities:
+class _WholeBodyCTUtilities:  # pragma: no cover
     @staticmethod
     def import_colors_dict(module_path):
         # Import `colors` dict from downloaded `colors.py` module
