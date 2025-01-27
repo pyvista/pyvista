@@ -542,6 +542,8 @@ class DataObject:
             not guaranteed, as it's possible that some filters may modify or clear
             field data. Use with caution.
 
+        .. versionadded:: 0.44
+
         Returns
         -------
         UserDict
@@ -602,8 +604,11 @@ class DataObject:
         dict_: dict[str, _JSONValueType] | UserDict[str, _JSONValueType] | None,
     ) -> None:
         # Setting None removes the field data array
-        if dict_ is None and '_PYVISTA_USER_DICT' in self.field_data.keys():
-            del self.field_data['_PYVISTA_USER_DICT']
+        if dict_ is None:
+            if '_PYVISTA_USER_DICT' in self.field_data.keys():
+                del self.field_data['_PYVISTA_USER_DICT']
+            if hasattr(self, '_user_dict'):
+                del self._user_dict
             return
 
         self._config_user_dict()
