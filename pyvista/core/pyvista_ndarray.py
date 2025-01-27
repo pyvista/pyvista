@@ -12,7 +12,7 @@ from . import _vtk_core as _vtk
 from .utilities.arrays import FieldAssociation
 from .utilities.arrays import convert_array
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing import Any
 
     import numpy.typing as npt

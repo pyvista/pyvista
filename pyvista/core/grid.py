@@ -16,7 +16,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _validation
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing_extensions import Self
 
     from pyvista import StructuredGrid
@@ -308,7 +308,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         # We also know this is 3-length so make it so in typing
         out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
         # Python 3.8 does not allow subscripting tuple, but only used for type checking
-        if TYPE_CHECKING:  # pragma: no cover
+        if TYPE_CHECKING:
             out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
         return out
 

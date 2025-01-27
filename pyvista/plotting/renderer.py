@@ -41,7 +41,7 @@ from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ..core.pointset import PolyData
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light

@@ -131,6 +131,7 @@ def test_user_dict(data_object):
 
     data_object.user_dict = None
     assert field_name not in data_object.field_data.keys()
+    assert data_object.user_dict == {}
 
     match = (
         "User dict can only be set with type <class 'dict'> or <class 'collections.UserDict'>."

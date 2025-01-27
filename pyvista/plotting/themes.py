@@ -51,7 +51,7 @@ from .colors import get_cycler
 from .opts import InterpolationType
 from .tools import parse_font_family
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
     from pyvista.core._typing_core import VectorLike

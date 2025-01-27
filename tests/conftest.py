@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import functools
 from importlib import metadata
-from pathlib import Path
 import re
 
 import numpy as np
@@ -268,11 +267,6 @@ def pytest_configure(config: pytest.Config):
     if pyvista.vtk_version_info < (9, 1):
         warnings.append(
             r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
-        )
-    if any(Path(a).stem == 'tst_doc_images' for a in config.args):
-        # Warning is emitted because `pytest-pyvista` is not installed (and is not required for this test)
-        warnings.append(
-            'ignore:Unknown config option.*image_cache_dir.*:pytest.PytestConfigWarning'
         )
 
 

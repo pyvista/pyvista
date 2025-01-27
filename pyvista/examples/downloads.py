@@ -5306,7 +5306,7 @@ def download_osmnx_graph(load=True):  # pragma: no cover
 
     Generated from:
 
-    .. code:: python
+    .. code-block:: python
 
         >>> import osmnx as ox  # doctest:+SKIP
         >>> address = 'Holzgerlingen DE'  # doctest:+SKIP
@@ -6073,8 +6073,18 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_parched_canal_4k()
-    >>> dataset.plot(cpos='xy')
+    >>> texture = examples.download_parched_canal_4k()
+    >>> texture.dimensions
+    (4096, 2048)
+
+    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+    underlying image before plotting.
+
+    >>> _ = texture.to_image().resample(0.25, inplace=True)
+    >>> texture.dimensions
+    (1024, 512)
+
+    >>> texture.plot(cpos='xy')
 
     .. seealso::
 

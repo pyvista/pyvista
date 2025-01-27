@@ -15,7 +15,7 @@ import warnings
 
 import numpy as np
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing import Any
 
     from .._typing_core import ArrayLike

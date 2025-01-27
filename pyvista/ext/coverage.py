@@ -31,7 +31,7 @@ from sphinx.util import logging
 from sphinx.util.console import red
 from sphinx.util.inspect import safe_getattr
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from sphinx.application import Sphinx
 
 logger = logging.getLogger(__name__)
