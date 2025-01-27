@@ -677,9 +677,9 @@ def load_logo():
 
     .. note::
 
-        Alternative versions of the logo are also available in the ``logo``
-        directory at the root of the ``pyvista`` repository. This includes
-        high-resolution ``.png`` files and a vectorized version ``.svg`` version.
+        Alternative versions of the logo file are also available from the ``logo``
+        directory at https://github.com/pyvista/pyvista/. This includes
+        higher-resolution ``.png`` files and a vectorized ``.svg`` version.
 
     .. versionchanged:: 0.45
 
