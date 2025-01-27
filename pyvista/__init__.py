@@ -69,7 +69,7 @@ MAX_N_COLOR_BARS = 10
 
 
 # Import all modules for type checkers and linters
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import demos as demos
     from pyvista import examples as examples
     from pyvista import ext as ext
