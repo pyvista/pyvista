@@ -2985,14 +2985,14 @@ class ImageDataFilters(DataSetFilters):
             ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
             and may be used to preserve sharp details and/or reduce image artifacts.
 
-        .. note::
+            .. note::
 
-            - use ``'nearest'`` for pixel art or categorical data such as segmentation masks
-            - use ``'linear'`` for speed-critical tasks
-            - use ``'cubic'`` for upscaling or general-purpose resampling
-            - use ``'lanczos'`` for high-detail downsampling (at the cost of some ringing)
-            - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
-            - use ``'hamming'`` for a balance between detail and ringing
+                - use ``'nearest'`` for pixel art or categorical data such as segmentation masks
+                - use ``'linear'`` for speed-critical tasks
+                - use ``'cubic'`` for upscaling or general-purpose resampling
+                - use ``'lanczos'`` for high-detail downsampling (at the cost of some ringing)
+                - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
+                - use ``'hamming'`` for a balance between detail-preservation and reducing ringing
 
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resampled
@@ -3278,9 +3278,10 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds_resampled.dimensions
         (1600, 1200, 1)
 
-        Downsample the puppy image to 1/10th its original resolution.
+        Downsample the puppy image to 1/10th its original resolution using ``'lanczos'``
+        interpolation.
 
-        >>> downsampled = puppy.resample(0.1)
+        >>> downsampled = puppy.resample(0.1, 'lanczos')
         >>> downsampled.dimensions
         (160, 120, 1)
 
@@ -3302,7 +3303,7 @@ class ImageDataFilters(DataSetFilters):
         Note that downsampling can create image artifacts caused by aliasing. Enable
         anti-aliasing to smooth the image before resampling.
 
-        >>> downsampled2 = puppy.resample(0.1, anti_aliasing=True)
+        >>> downsampled2 = puppy.resample(0.1, 'lanczos', anti_aliasing=True)
 
         Compare down-sampling with aliasing (left) to without aliasing (right).
 
