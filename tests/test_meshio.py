@@ -161,7 +161,7 @@ polyhedron = meshio.Mesh(
 def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
         mesh_in = pv.from_meshio(mesh_in)
-        
+
     mesh = pv.from_meshio(pv.to_meshio(mesh_in))
 
     # Assert mesh is still the same
