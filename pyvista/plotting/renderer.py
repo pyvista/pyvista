@@ -4265,7 +4265,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         legend_scale.SetCornerOffsetFactor(corner_offset_factor)
         legend_scale.SetLegendVisibility(legend_visibility)
         if xy_label_mode:
-            legend_scale.SetLabelModeToXYCoordinates()
+            if pyvista.vtk_version_info >= (9, 4):
+                legend_scale.SetLabelModeToCoordinates()
+            else:
+                legend_scale.SetLabelModeToXYCoordinates()
         else:
             legend_scale.SetLabelModeToDistance()
         legend_scale.SetBottomAxisVisibility(bottom_axis_visibility)
