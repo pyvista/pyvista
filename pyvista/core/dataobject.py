@@ -293,7 +293,7 @@ class DataObject:
 
         # now make a call on the object to get its attributes as a list of len
         # 2 tuples
-        row = '  {:%ds}{}\n' % max_len
+        row = f'  {{:{max_len}s}}' + '{}\n'
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0] + ':', attr[2].format(*attr[1]))
