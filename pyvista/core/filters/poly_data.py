@@ -1249,11 +1249,13 @@ class PolyDataFilters(DataSetFilters):
 
         # point data
         alg.SetMapPointData(map_point_data)
-        use_attributes = use_scalars_attributes or \
-            use_vectors_attributes or \
-            use_tensors_attributes or \
-            use_normals_attributes or \
-            use_tcoords_attributes
+        use_attributes = (
+            use_scalars_attributes
+            or use_vectors_attributes
+            or use_tensors_attributes
+            or use_normals_attributes
+            or use_tcoords_attributes
+        )
         alg.SetAttributeErrorMetric(use_attributes)
         alg.SetScalarsAttribute(use_scalars_attributes)
         alg.SetScalarsWeight(scalars_weight)
