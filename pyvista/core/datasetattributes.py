@@ -21,7 +21,7 @@ from .utilities.arrays import copy_vtk_array
 
 T = TypeVar('T')
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from typing_extensions import Self
@@ -786,9 +786,12 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 data = tmparray
             if data.shape[0] != array_len:
                 raise ValueError(
-                    f'data length of ({data.shape[0]}) != required length ({array_len})',
+                    f"Invalid array shape. Array '{name}' has length ({data.shape[0]}) but a length of ({array_len}) was expected.",
                 )
-
+            if any(data.shape) and data.size == 0:
+                raise ValueError(
+                    f"Invalid array shape. Empty arrays are not allowed. Array '{name}' cannot have shape {data.shape}."
+                )
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
             # pyvista_ndarray already contains the reference to the vtk object
@@ -800,7 +803,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 if data.flags.c_contiguous:
                     # no reason to return a shallow copy if the array and name
                     # are identical, just return the underlying array name
-                    if not deep_copy and isinstance(name, str) and data.VTKObject.GetName() == name:
+                    if not deep_copy and data.VTKObject.GetName() == name:
                         return data.VTKObject
 
                     vtk_arr = copy_vtk_array(data.VTKObject, deep=deep_copy)

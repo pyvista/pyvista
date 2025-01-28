@@ -354,7 +354,7 @@ def load_spline():
 
     This example data was created with:
 
-    .. code:: python
+    .. code-block:: python
 
        >>> import numpy as np
        >>> import pyvista as pv
@@ -407,7 +407,7 @@ def load_random_hills():
 
     This example dataset was created with:
 
-    .. code:: python
+    .. code-block:: python
 
        >>> mesh = pv.ParametricRandomHills()  # doctest:+SKIP
        >>> mesh = mesh.elevation()  # doctest:+SKIP

@@ -205,6 +205,9 @@ autodoc_type_aliases = {
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
+# Needed to address a code-block parsing error by sphinx for an example
+autodoc_mock_imports = ['example']
+
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
 overloads_location = ['bottom']
 
@@ -296,6 +299,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', '.*NoneType'),
     (r'py:.*', 'collections.*'),
+    (r'py:.*', '.*PathStrSeq'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),

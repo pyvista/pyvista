@@ -9,7 +9,7 @@ and styles through one global configuration.
 
 The default theme parameters in PyVista can be accessed and displayed with:
 
-.. code:: python
+.. code-block:: python
 
    >>> import pyvista
    >>> pyvista.global_theme
@@ -17,7 +17,7 @@ The default theme parameters in PyVista can be accessed and displayed with:
 Default plotting parameters can be accessed individually by their
 attribute names:
 
-.. code:: python
+.. code-block:: python
 
    >>> pyvista.global_theme.color = 'lightblue'
 
@@ -63,7 +63,7 @@ Creating A Custom Theme
 You can customize a theme based on one of the built-in themes and then
 apply it globally with:
 
-.. code:: python
+.. code-block:: python
 
     # Create a theme based off the DocumentTheme
 
@@ -77,13 +77,13 @@ apply it globally with:
 
 Alternatively, you can save the theme to disk to be used later with:
 
-.. code:: python
+.. code-block:: python
 
     my_theme.save('my_theme.json')
 
 And then subsequently loaded in a new session of pyvista with:
 
-.. code:: python
+.. code-block:: python
 
     pyvista.global_theme.load_theme('my_theme.json')
 

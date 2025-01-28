@@ -32,7 +32,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import PolyData
     from pyvista.core._typing_core import VectorLike
 
@@ -4027,8 +4027,8 @@ class PolyDataFilters(DataSetFilters):
     def voxelize_binary_mask(  # type: ignore[misc]
         self: PolyData,
         *,
-        background_value: int = 0,
-        foreground_value: int = 1,
+        background_value: int | float = 0,  # noqa: PYI041
+        foreground_value: int | float = 1,  # noqa: PYI041
         reference_volume: pyvista.ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
@@ -4464,10 +4464,7 @@ class PolyDataFilters(DataSetFilters):
             for val in (background_value, foreground_value)
         ):
             scalars_dtype = np.uint8
-        elif all(
-            isinstance(val, (float, int)) and round(val) == val
-            for val in (background_value, foreground_value)
-        ):
+        elif all(round(val) == val for val in (background_value, foreground_value)):
             scalars_dtype = np.int_
         else:
             scalars_dtype = np.float64

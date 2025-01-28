@@ -84,6 +84,7 @@ test = [
   'pytest-pyvista==0.1.8',
   'pytest-xdist<3.7.0',
   'pytest<8.4.0',
+  'pytest_cases<3.8.6',
   'pytest_mock<3.15.0',
   'pyvista[pinned]',
   'scipy<1.14.2',
@@ -114,7 +115,9 @@ docs = [
   'mypy==1.14.1',
   'numpydoc==1.8.0',
   'osmnx==2.0.1',
+  'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.14',
+  'pytest-pyvista==0.1.8',
   'pytest-sphinx==0.6.3',
   'pyvista[pinned]',
   'scipy==1.15.0',
@@ -132,7 +135,7 @@ docs = [
   'sphinxcontrib-websupport==2.0.0',
   'sphinxext-opengraph==0.9.1',
   'sympy==1.13.3',
-  'trame-vtk==2.8.12',
+  'trame-vtk==2.8.14',
   'trame-vuetify==2.8.0',
   'trame==3.7.6',
   'trimesh==4.5.3',
@@ -194,32 +197,45 @@ omit = [
   'pyvista/ext/coverage.py',
   'pyvista/plotting/theme.py', # kept for backwards compatibility
 ]
+[tool.coverage.report]
+exclude_also = ['if TYPE_CHECKING:']
+
 
 [tool.pytest.ini_options]
+addopts = ['--strict-config', '--strict-markers', '-ra']
 doctest_optionflags = 'NUMBER ELLIPSIS'
+
+# Keep spaces between filter warnings since order matters (see https://docs.pytest.org/en/stable/how-to/capture-warnings.html#controlling-warnings)
 filterwarnings = [
-  'error::pyvista.PyVistaDeprecationWarning',
-  'ignore:.*Given trait value dtype "float64":UserWarning', # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*The NumPy module was reloaded*:UserWarning',    # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*numpy.dtype size changed.*:RuntimeWarning',     # bogus numpy ABI warning (see numpy/#432)
-  'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',     # bogus numpy ABI warning (see numpy/#432)
-  'ignore::DeprecationWarning',
-  'ignore::FutureWarning',
-  'ignore::PendingDeprecationWarning',
+  'error',
+
+  'ignore:.*Given trait value dtype "float64":UserWarning',                                                              # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*The NumPy module was reloaded*:UserWarning',                                                                 # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.dtype size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
+  'ignore:.*numpy.ufunc size changed.*:RuntimeWarning',                                                                  # bogus numpy ABI warning (see numpy/#432)
+  'ignore:Passing .{1}N.{1} to ListedColormap is deprecated since:DeprecationWarning',                                   # https://github.com/matplotlib/cmocean/pull/114
+  'ignore:The .*interactive_bk.* attribute was deprecated in Matplotlib 3\.9.*:matplotlib.MatplotlibDeprecationWarning', # https://github.com/microsoft/debugpy/issues/1623
+  'ignore:Unable to access.*Manually specify the PyVista examples cache.*:UserWarning',                                  # https://github.com/pyvista/pyvista/pull/7009#issuecomment-2599890364
+  'ignore:pyvista test generated image dir.* does not yet exist.  Creating dir.:UserWarning',
+
+  'always:.*Exceeded image regression warning of .* with an image error of .*:UserWarning',
 ]
 image_cache_dir = 'tests/plotting/image_cache'
 junit_family = 'legacy'
+log_cli_level = "INFO"
 markers = [
   'needs_download: this test downloads data during execution',
   'needs_vtk_version(version): skip test unless VTK version is at least as specified.',
 ]
+minversion = "7"
 testpaths = 'tests'
+xfail_strict = true
 
 [tool.mypy]
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_subclassing_any = true
-enable_error_code = ['ignore-without-code', 'truthy-bool']
+enable_error_code = ['ignore-without-code', 'redundant-expr', 'truthy-bool']
 exclude = ['pyvista/ext/']
 extra_checks = true
 ignore_missing_imports = true
@@ -438,3 +454,12 @@ required-imports = [
 
 [tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true # Preserve types, even if a file imports `from __future__ import annotations`.
+
+[tool.repo-review]
+ignore = [
+  'MY101', # to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
+  'PC111', # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
+  'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
+  'PY007', # tox support
+  'RTD',   # RTD: the documentation is not hosted by ReadTheDocs
+]

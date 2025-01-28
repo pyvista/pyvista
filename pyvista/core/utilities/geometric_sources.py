@@ -28,7 +28,7 @@ from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import _reciprocal
 from pyvista.core.utilities.misc import no_new_attr
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pyvista.core._typing_core import ConcreteDataSetType
@@ -1003,7 +1003,7 @@ class Text3DSource(vtkVectorText):
         return self.GetText()
 
     @string.setter
-    def string(self: Text3DSource, string: str) -> None:
+    def string(self: Text3DSource, string: str | None) -> None:
         self.SetText('' if string is None else string)
 
     @property
@@ -1057,7 +1057,7 @@ class Text3DSource(vtkVectorText):
         return self._width
 
     @width.setter
-    def width(self: Text3DSource, width: float) -> None:
+    def width(self: Text3DSource, width: float | None) -> None:
         _check_range(width, rng=(0, float('inf')), parm_name='width') if width is not None else None
         self._width = width
 
@@ -1067,7 +1067,7 @@ class Text3DSource(vtkVectorText):
         return self._height
 
     @height.setter
-    def height(self: Text3DSource, height: float) -> None:
+    def height(self: Text3DSource, height: float | None) -> None:
         (
             _check_range(height, rng=(0, float('inf')), parm_name='height')
             if height is not None
@@ -1081,7 +1081,7 @@ class Text3DSource(vtkVectorText):
         return self._depth
 
     @depth.setter
-    def depth(self: Text3DSource, depth: float) -> None:
+    def depth(self: Text3DSource, depth: float | None) -> None:
         _check_range(depth, rng=(0, float('inf')), parm_name='depth') if depth is not None else None
         self._depth = depth
 
@@ -2291,15 +2291,19 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
                 * ``'dodecahedron'`` or ``4``
 
         """
+        if isinstance(kind, int):
+            if kind not in range(5):
+                raise ValueError(f'Invalid Platonic solid index "{kind}".')
+            self.SetSolidType(kind)
+            return
+
         if isinstance(kind, str):
             if kind not in self._kinds:
                 raise ValueError(f'Invalid Platonic solid kind "{kind}".')
-            kind = self._kinds[kind]
-        elif isinstance(kind, int) and kind not in range(5):
-            raise ValueError(f'Invalid Platonic solid index "{kind}".')
-        elif not isinstance(kind, int):
-            raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
-        self.SetSolidType(kind)
+            self.SetSolidType(self._kinds[kind])
+            return
+
+        raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
 
     @property
     def output(self: PlatonicSolidSource) -> PolyData:

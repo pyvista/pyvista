@@ -40,7 +40,7 @@ from .utilities.helpers import is_pyvista_dataset
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import Generator
     from collections.abc import Iterator
@@ -1445,10 +1445,13 @@ class DataSet(DataSetFilters, DataObject):
         """
         return get_array_association(self, name, preference=preference, err=True)
 
-    def __getitem__(self: Self, index: Iterable[Any] | str) -> NumpyArray[float]:
+    def __getitem__(
+        self: Self,
+        index: tuple[str, Literal['cell', 'point', 'field']] | str,
+    ) -> NumpyArray[float]:
         """Search both point, cell, and field data for an array."""
-        if isinstance(index, Iterable) and not isinstance(index, str):
-            name, preference = tuple(index)
+        if isinstance(index, tuple):
+            name, preference = index
         elif isinstance(index, str):
             name = index
             preference = 'cell'
@@ -2769,7 +2772,7 @@ class DataSet(DataSetFilters, DataObject):
         ... )
         >>> _ = pl.add_mesh(others, show_edges=True)
         >>>
-        >>> pl.camera_position = 'yx'
+        >>> pl.camera_position = 'xy'
         >>> pl.camera.zoom(7.0)
         >>> pl.show()
 

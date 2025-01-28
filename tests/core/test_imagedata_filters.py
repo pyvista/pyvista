@@ -15,8 +15,8 @@ BOUNDARY_LABELS = 'boundary_labels'
 
 
 @pytest.fixture
-def logo():
-    return examples.load_logo()
+def beach():
+    return examples.download_beach()
 
 
 def variable_dimensionality_image(dimensions):
@@ -208,7 +208,7 @@ def test_contour_labels_scalars_smoothing_output_mesh_type(
     scalars,
 ):
     # Determine expected output
-    if output_mesh_type == 'triangles' or output_mesh_type is None and smoothing:
+    if output_mesh_type == 'triangles' or (output_mesh_type is None and smoothing):
         expected_celltype = pv.CellType.TRIANGLE
         cell_multiplier = 2  # quads are subdivided into 2 triangles
     else:
@@ -349,7 +349,7 @@ def test_contour_labels_pad_background(labeled_image):
 @pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
 @pytest.mark.parametrize('simplify_output', [True, False, None])
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_simplify_output(labeled_image, boundary_type, simplify_output):
+def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_output):
     poly = labeled_image.contour_labels(boundary_type, simplify_output=simplify_output)
     expected_ndim = (
         1 if simplify_output or (simplify_output is None and boundary_type == 'external') else 2
@@ -483,7 +483,7 @@ def test_cells_to_points_scalars(uniform):
 
 def test_points_to_cells_and_cells_to_points_dimensions(
     uniform,
-    logo,
+    beach,
     zero_dimensionality_image,
     one_dimensionality_image,
     two_dimensionality_image,
@@ -495,11 +495,11 @@ def test_points_to_cells_and_cells_to_points_dimensions(
     assert uniform.points_to_cells(dimensionality='preserve').dimensions == (11, 11, 11)
     assert uniform.cells_to_points(dimensionality='preserve').dimensions == (9, 9, 9)
 
-    assert logo.dimensions == (1920, 718, 1)
-    assert logo.points_to_cells().dimensions == (1921, 719, 1)
-    assert logo.cells_to_points().dimensions == (1919, 717, 1)
-    assert logo.points_to_cells(dimensionality='preserve').dimensions == (1921, 719, 1)
-    assert logo.cells_to_points(dimensionality='preserve').dimensions == (1919, 717, 1)
+    assert beach.dimensions == (100, 100, 1)
+    assert beach.points_to_cells().dimensions == (101, 101, 1)
+    assert beach.cells_to_points().dimensions == (99, 99, 1)
+    assert beach.points_to_cells(dimensionality='preserve').dimensions == (101, 101, 1)
+    assert beach.cells_to_points(dimensionality='preserve').dimensions == (99, 99, 1)
 
     assert zero_dimensionality_image.dimensions == (1, 1, 1)
     assert zero_dimensionality_image.points_to_cells(
@@ -511,11 +511,11 @@ def test_points_to_cells_and_cells_to_points_dimensions(
     assert zero_dimensionality_image.points_to_cells(
         dimensionality=(False, False, False)
     ).dimensions == (1, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='0D').dimensions == (1, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (2, 1, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (2, 2, 1)
-    assert zero_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (2, 2, 2)
-    assert zero_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=0).dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=1).dimensions == (2, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=2).dimensions == (2, 2, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=3).dimensions == (2, 2, 2)
+    assert zero_dimensionality_image.cells_to_points(dimensionality=0).dimensions == (1, 1, 1)
 
     assert one_dimensionality_image.dimensions == (1, 2, 1)
     assert one_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (1, 3, 1)
@@ -540,6 +540,18 @@ def test_points_to_cells_and_cells_to_points_dimensions(
     assert three_dimensionality_image.points_to_cells(dimensionality='3D').cells_to_points(
         dimensionality='3D'
     ).dimensions == (2, 2, 2)
+
+
+@pytest.mark.parametrize(
+    'extent', [(-25, -19, -14, -10, -7, -5), (1, 2, 3, 4, 5, 6), (0, 2, 0, 4, 0, 6)]
+)
+def test_points_to_cells_and_cells_to_points_round_trip_equal(extent):
+    before = pv.ImageData()
+    before.index_to_physical_matrix = np.diag((-1, 2, 3, 1))
+    before.extent = extent
+    before.point_data['data'] = range(before.n_points)
+    after = before.points_to_cells().cells_to_points()
+    assert before == after
 
 
 def test_points_to_cells_and_cells_to_points_dimensions_incorrect_number_data():
@@ -740,7 +752,7 @@ def test_pad_image_multi_component(zero_dimensionality_image):
     assert np.all(padded['scalars2'] == new_value * 2)
 
 
-def test_pad_image_raises(zero_dimensionality_image, uniform, logo):
+def test_pad_image_raises(zero_dimensionality_image, uniform, beach):
     match = 'Pad size cannot be negative. Got -1.'
     with pytest.raises(ValueError, match=match):
         zero_dimensionality_image.pad_image(pad_size=-1)
@@ -761,32 +773,30 @@ def test_pad_image_raises(zero_dimensionality_image, uniform, logo):
     with pytest.raises(ValueError, match=match):
         uniform.pad_image(scalars='Spatial Cell Data')
 
-    match = (
-        "Pad value 0.1 with dtype 'float64' is not compatible with dtype 'uint8' of array PNGImage."
-    )
+    match = "Pad value 0.1 with dtype 'float64' is not compatible with dtype 'uint8' of array ImageFile."
     with pytest.raises(TypeError, match=re.escape(match)):
-        logo.pad_image(0.1)
+        beach.pad_image(0.1)
 
     match = "Invalid pad value foo. Must be 'mirror' or 'wrap', or a number/component vector for constant padding."
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image('foo')
+        beach.pad_image('foo')
 
     match = "Invalid pad value [[2]]. Must be 'mirror' or 'wrap', or a number/component vector for constant padding."
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image([[2]])
+        beach.pad_image([[2]])
 
-    match = "Number of components (2) in pad value (0, 0) must match the number components (4) in array 'PNGImage'."
+    match = "Number of components (2) in pad value (0, 0) must match the number components (3) in array 'ImageFile'."
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image((0, 0))
+        beach.pad_image((0, 0))
 
-    logo['single'] = range(logo.n_points)  # Create data with varying num array components
+    beach['single'] = range(beach.n_points)  # Create data with varying num array components
     match = (
-        "Cannot pad array 'single' with value (0, 0, 0, 0). Number of components (1) in 'single' must match the number of components (4) in value."
+        "Cannot pad array 'single' with value (0, 0, 0). Number of components (1) in 'single' must match the number of components (3) in value."
         '\nTry setting `pad_all_scalars=False` or update the array.'
     )
-    logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
+    beach.pad_image(pad_value=(0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=True)
+        beach.pad_image(pad_value=(0, 0, 0), pad_all_scalars=True)
 
 
 def test_pad_image_deprecation(zero_dimensionality_image):
@@ -1043,10 +1053,10 @@ def test_validate_dim_operation(
         ),
         (
             (1, 1, 1),
-            True,
+            4,
             operator.add,
-            ValueError,
-            'Array has shape () which is not allowed. Shape must be one of [(3,), (1, 3), (3, 1)]',
+            TypeError,
+            "Array has incorrect dtype of 'int64'. The dtype must be a subtype of <class 'bool'>.",
         ),
         (
             (2, 2, 2),
@@ -1079,3 +1089,161 @@ def test_validate_dim_operation_invalid_parameters(
         image._validate_dimensional_operation(
             operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
         )
+
+
+@pytest.mark.parametrize('spacing', [None, [0.3, 0.4, 0.5]])
+@pytest.mark.parametrize('direction_matrix', [None, np.diag((-1, 1, 1))])
+@pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
+@pytest.mark.parametrize('dimensions', [None, (5, 6, 7)])
+@pytest.mark.parametrize('offset', [None, (-100, -101, -102)])
+def test_resample_reference_image(uniform, spacing, direction_matrix, origin, dimensions, offset):
+    uniform = pv.ImageData(dimensions=(4, 4, 4))
+    uniform['data'] = np.arange(uniform.n_points, dtype=float)
+    reference = uniform.copy()
+    if spacing is not None:
+        reference.spacing = spacing
+    if direction_matrix is not None:
+        reference.direction_matrix = direction_matrix
+    if origin is not None:
+        reference.origin = origin
+    if dimensions is not None:
+        reference.dimensions = dimensions
+    if offset is not None:
+        reference.offset = offset
+    reference['data'] = range(reference.n_points)
+
+    resampled = uniform.resample(reference_image=reference, progress_bar=True)
+    assert isinstance(resampled, pv.ImageData)
+    assert resampled is not uniform
+    assert resampled is not reference
+    assert np.array_equal(resampled.dimensions, reference.dimensions)
+    assert np.array_equal(resampled.offset, reference.offset)
+    assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
+    assert len(resampled.active_scalars) == resampled.n_points
+    assert resampled.active_scalars_name == uniform.active_scalars_name
+    assert np.allclose(resampled.bounds, reference.bounds)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('sample_rate', 1.5),
+        ('sample_rate', 2.0),
+        ('sample_rate', 0.5),
+        ('dimensions', (15, 15, 15)),
+    ],
+)
+@pytest.mark.parametrize('extend_border', [True, False])
+def test_resample_extend_border(uniform, extend_border, name, value):
+    kwarg = {name: value}
+    resampled = uniform.resample(**kwarg, extend_border=extend_border)
+    expected_dimensions = uniform.dimensions * np.array(value) if name == 'sample_rate' else value
+
+    assert np.array_equal(resampled.dimensions, expected_dimensions)
+    assert len(resampled.active_scalars) == resampled.n_points
+    assert resampled.active_scalars_name == uniform.active_scalars_name
+
+    if extend_border:
+        sample_rate = np.array(resampled.dimensions) / uniform.dimensions
+        expected_spacing = uniform.spacing / sample_rate
+        assert np.allclose(resampled.spacing, expected_spacing)
+        assert not np.allclose(resampled.bounds, uniform.bounds)
+
+        # Test bounds are the same when represented as cells
+        expected_cell_bounds = uniform.points_to_cells().bounds
+        actual_cell_bounds = resampled.points_to_cells().bounds
+        assert np.allclose(actual_cell_bounds, expected_cell_bounds)
+    else:
+        assert np.allclose(resampled.bounds, uniform.bounds)
+
+
+@pytest.mark.parametrize('dtype', ['uint8', 'int', 'float'])
+@pytest.mark.parametrize('interpolation', ['linear', 'nearest', 'cubic'])
+def test_resample_interpolation(uniform, interpolation, dtype):
+    array = uniform.active_scalars
+    uniform[uniform.active_scalars_name] = array.astype(dtype)
+    resampled = uniform.resample(interpolation=interpolation)
+
+    expected_dtype = float if interpolation in ['linear', 'cubic'] else dtype
+    actual_dtype = resampled.active_scalars.dtype
+    assert actual_dtype == expected_dtype
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('scalars', 'Spatial Point Data'),
+        ('scalars', 'Spatial Cell Data'),
+        ('preference', 'point'),
+        ('preference', 'cell'),
+    ],
+)
+def test_resample_scalars(uniform, name, value):
+    kwargs = {name: value}
+    if name == 'preference':
+        # Make array names ambiguous
+        scalars = 'data'
+        uniform.rename_array('Spatial Point Data', scalars)
+        uniform.rename_array('Spatial Cell Data', scalars)
+        kwargs['scalars'] = scalars
+
+    resampled = uniform.resample(**kwargs)
+
+    if 'cell' in value.lower():
+        assert len(resampled.cell_data) == 1
+        assert len(resampled.point_data) == 0
+    else:
+        assert len(resampled.cell_data) == 0
+        assert len(resampled.point_data) == 1
+
+
+def test_resample_cell_data(uniform):
+    uniform.point_data.clear()
+    input_cell_dimensions = np.array(uniform.dimensions) - 1
+    sample_rate = np.array((2, 3, 4))
+
+    # Test sample rate
+    resampled = uniform.resample(sample_rate)
+    resample_cell_dimensions = np.array(resampled.dimensions) - 1
+    expected_cell_dimensions = input_cell_dimensions * sample_rate
+    assert np.array_equal(resample_cell_dimensions, expected_cell_dimensions)
+    assert np.allclose(uniform.bounds, resampled.bounds)
+
+    # Test dimensions
+    output_dimensions = (12, 13, 14)
+    resampled = uniform.resample(dimensions=output_dimensions)
+    assert np.array_equal(resampled.dimensions, output_dimensions)
+    assert np.allclose(uniform.bounds, resampled.bounds)
+
+
+def test_resample_inplace(uniform):
+    resampled = uniform.resample()
+    assert resampled is not uniform
+    resampled = uniform.resample(inplace=True)
+    assert resampled is uniform
+
+
+def test_resample_raises(uniform):
+    match = (
+        'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
+        '`reference_image` must define the geometry exclusively.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, reference_image=uniform)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
+
+    match = (
+        'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
+        '`sample_rate` must define the sampling geometry exclusively.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, dimensions=(2, 2, 2))
+
+    match = '`extend_border` cannot be set when resampling cell data.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(scalars='Spatial Cell Data', extend_border=True)
+
+    match = '`extend_border` cannot be set when a `image_reference` is provided.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(reference_image=uniform, extend_border=True)

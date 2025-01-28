@@ -14,7 +14,7 @@ from . import _vtk
 from ._property import Property
 from .prop3d import Prop3D
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .mapper import _BaseMapper
 
 
@@ -326,10 +326,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     def __repr__(self):
         """Representation of the actor."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnd = self.bounds
         attr = [
             f'{type(self).__name__} ({hex(id(self))})',
