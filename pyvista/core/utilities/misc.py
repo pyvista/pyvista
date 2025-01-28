@@ -250,12 +250,12 @@ class conditional_decorator:
 
     """
 
-    def __init__(self, dec, condition) -> None:  # noqa: ANN001, ANN101
+    def __init__(self, dec, condition) -> None:  # noqa: ANN001
         """Initialize."""
         self.decorator = dec
         self.condition = condition
 
-    def __call__(self, func):  # noqa: ANN001, ANN101, ANN204
+    def __call__(self, func):  # noqa: ANN001, ANN204
         """Call the decorated function if condition is matched."""
         if not self.condition:
             # Return the function unchanged, not decorated.
