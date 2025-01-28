@@ -675,6 +675,17 @@ _dataset_hydrogen_orbital = _DatasetLoader(_hydrogen_orbital_load_func)
 def load_logo():
     """Load the PyVista logo as a :class:`pyvista.ImageData`.
 
+    .. note::
+
+        Alternative versions of the logo file are also available from the ``logo``
+        directory at https://github.com/pyvista/pyvista/. This includes
+        higher-resolution ``.png`` files and a vectorized ``.svg`` version.
+
+    .. versionchanged:: 0.45
+
+        The dimensions of the image is now ``1389 x 592``.
+        Previously, it was ``1920 x 718``.
+
     Returns
     -------
     pyvista.ImageData
@@ -684,6 +695,9 @@ def load_logo():
     --------
     >>> from pyvista import examples
     >>> image = examples.load_logo()
+    >>> image.dimensions
+    (1389, 592, 1)
+
     >>> image.plot(cpos='xy', zoom='tight', rgb=True, show_axes=False)
 
     .. seealso::
