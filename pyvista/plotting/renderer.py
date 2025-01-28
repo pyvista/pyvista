@@ -1541,7 +1541,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
-            self.delete_axes_widget()
+            self.axes_widget.EnabledOff()
+            self.Modified()
 
     def show_axes(self) -> None:
         """Show the axes orientation widget.
