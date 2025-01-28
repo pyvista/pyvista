@@ -34,8 +34,9 @@ from .utilities.geometric_objects import Box
 from .utilities.helpers import is_pyvista_dataset
 from .utilities.helpers import wrap
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Iterator
 
     from ._typing_core import NumpyArray
 
@@ -169,6 +170,56 @@ class MultiBlock(
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
                 self.SetBlock(i, wrap(block))
+
+    def recursive_iterator(self: MultiBlock, *, skip_none: bool = True) -> Iterator[DataSet | None]:
+        """Iterate over all nested datasets recursively.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        skip_none : bool, default: True
+            Do not include ``None`` blocks in the iterator.
+
+        Examples
+        --------
+        Load a :class:`MultiBlock` with nested datasets.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_biplane()
+
+        The dataset has eight :class:`MultiBlock` blocks.
+
+        >>> dataset.n_blocks
+        8
+
+        >>> all(isinstance(block, pv.MultiBlock) for block in dataset)
+        True
+
+        Get the iterator and show the count of all recursively nested datasets.
+
+        >>> iterator = dataset.recursive_iterator()
+        >>> iterator
+        <generator object MultiBlock.recursive_iterator at ...>
+
+        >>> len(list(iterator))
+        59
+
+        By default, ``None`` blocks are excluded and all items are :class:`~pyvista.DataSet`
+        objects.
+
+        >>> all(isinstance(item, pv.DataSet) for item in dataset.recursive_iterator())
+        True
+
+        """
+        for block in self:
+            if skip_none and block is None:
+                continue
+            elif isinstance(block, MultiBlock):
+                yield from block.recursive_iterator(skip_none=skip_none)
+            else:
+                yield block
 
     @property
     def bounds(self: MultiBlock) -> BoundsTuple:
@@ -904,7 +955,7 @@ class MultiBlock(
                 data.clean()
                 if data.n_blocks < 1:
                     null_blocks.append(i)
-            elif data is None or empty and data.n_points < 1:
+            elif data is None or (empty and data.n_points < 1):
                 null_blocks.append(i)
         # Now remove the null/empty meshes
         null_blocks = np.array(null_blocks, dtype=int)  # type: ignore[assignment]
@@ -964,7 +1015,7 @@ class MultiBlock(
         fmt = f'{type(self).__name__} ({hex(id(self))})\n'
         # now make a call on the object to get its attributes as a list of len 2 tuples
         max_len = max(len(attr[0]) for attr in self._get_attrs()) + 3
-        row = '  {:%ds}{}\n' % max_len
+        row = f'  {{:{max_len}s}}' + '{}\n'
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))

@@ -5347,7 +5347,7 @@ def download_osmnx_graph(load=True):  # pragma: no cover
 def _osmnx_graph_read_func(filename):  # pragma: no cover
     import pickle
 
-    return pickle.load(Path(filename).open('rb'))  # noqa: SIM115
+    return pickle.load(Path(filename).open('rb'))
 
 
 _dataset_osmnx_graph = _SingleFileDownloadableDatasetLoader(
@@ -6073,8 +6073,18 @@ def download_parched_canal_4k(load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> dataset = examples.download_parched_canal_4k()
-    >>> dataset.plot(cpos='xy')
+    >>> texture = examples.download_parched_canal_4k()
+    >>> texture.dimensions
+    (4096, 2048)
+
+    Use :meth:`~pyvista.ImageDataFilters.resample` to downsample the texture's
+    underlying image before plotting.
+
+    >>> _ = texture.to_image().resample(0.25, inplace=True)
+    >>> texture.dimensions
+    (1024, 512)
+
+    >>> texture.plot(cpos='xy')
 
     .. seealso::
 

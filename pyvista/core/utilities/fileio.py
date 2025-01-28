@@ -24,7 +24,7 @@ from pyvista.core.errors import PyVistaDeprecationWarning
 
 from .observers import Observer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterable
 
     import imageio
