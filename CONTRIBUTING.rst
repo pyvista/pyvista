@@ -528,7 +528,7 @@ values of an ``if`` clause must be tested to ensure full coverage. For more deta
 coverage, please refer to the `coverage documentation <https://coverage.readthedocs.io/en/latest/branch.html>`_.
 
 If needed, code coverage can be deactivated for specific lines by adding the ``# pragma: no cover`` or
-``# pragma: no branch`` comments. See the documentation `here <https://coverage.readthedocs.io/en/latest/branch.html#excluding-code>`__
+``# pragma: no branch`` comments. See the documentation `excluding code <https://coverage.readthedocs.io/en/latest/branch.html#excluding-code>`__
 and `here <https://coverage.readthedocs.io/en/latest/excluding.html#excluding>`__ for more details.
 However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
 if no simple alternative solution has been found.
