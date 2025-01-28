@@ -21,7 +21,7 @@ from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike

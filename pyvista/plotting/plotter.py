@@ -86,7 +86,7 @@ from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 

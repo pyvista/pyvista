@@ -43,7 +43,7 @@ from .utilities.fileio import get_ext
 from .utilities.misc import abstract_class
 from .utilities.points import vtk_points
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ._typing_core import ArrayLike
     from ._typing_core import BoundsTuple
     from ._typing_core import CellArrayLike

@@ -12,7 +12,7 @@ from pyvista.core._typing_core import NumpyArray
 
 from . import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .charts import Chart2D as Chart2D
     from .charts import ChartBox as ChartBox
     from .charts import ChartMPL as ChartMPL
