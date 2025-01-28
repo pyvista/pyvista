@@ -450,8 +450,10 @@ from vtkmodules.vtkImagingCore import vtkImageConstantPad as vtkImageConstantPad
 from vtkmodules.vtkImagingCore import vtkImageDifference as vtkImageDifference
 from vtkmodules.vtkImagingCore import vtkImageExtractComponents as vtkImageExtractComponents
 from vtkmodules.vtkImagingCore import vtkImageFlip as vtkImageFlip
+from vtkmodules.vtkImagingCore import vtkImageInterpolator as vtkImageInterpolator
 from vtkmodules.vtkImagingCore import vtkImageMirrorPad as vtkImageMirrorPad
-from vtkmodules.vtkImagingCore import vtkImageResample as vtkImageResample
+from vtkmodules.vtkImagingCore import vtkImageResize as vtkImageResize
+from vtkmodules.vtkImagingCore import vtkImageSincInterpolator as vtkImageSincInterpolator
 from vtkmodules.vtkImagingCore import vtkImageThreshold as vtkImageThreshold
 from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource

@@ -1157,16 +1157,17 @@ def test_resample_extend_border(uniform, extend_border, name, value):
         assert np.allclose(resampled.bounds, uniform.bounds)
 
 
-@pytest.mark.parametrize('dtype', ['uint8', 'int', 'float'])
-@pytest.mark.parametrize('interpolation', ['linear', 'nearest', 'cubic'])
+@pytest.mark.parametrize('dtype', ['uint8', 'int16', 'int', 'float'])
+@pytest.mark.parametrize(
+    'interpolation', ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman']
+)
 def test_resample_interpolation(uniform, interpolation, dtype):
     array = uniform.active_scalars
     uniform[uniform.active_scalars_name] = array.astype(dtype)
-    resampled = uniform.resample(interpolation=interpolation)
+    resampled = uniform.resample(0.1, interpolation=interpolation)
 
-    expected_dtype = float if interpolation in ['linear', 'cubic'] else dtype
     actual_dtype = resampled.active_scalars.dtype
-    assert actual_dtype == expected_dtype
+    assert actual_dtype == dtype
 
 
 @pytest.mark.parametrize(
