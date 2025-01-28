@@ -982,7 +982,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             # This is due to an issue with a blue box appearing after removal
             # Tracked in https://gitlab.kitware.com/vtk/vtk/-/issues/19592
             self.axes_widget.SetViewport(0.0, 0.0, 0.0001, 0.0001)
-            self.axes_widget.EnabledOff()
+            if self.axes_widget.GetEnabled():
+                self.axes_widget.EnabledOff()
             self.Modified()
             del self.axes_widget
 
@@ -1442,8 +1443,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.hide_axes()
 
         """
-        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
-            self.delete_axes_widget()
+        self.delete_axes_widget()
 
     def show_axes(self) -> None:
         """Show the axes orientation widget.
