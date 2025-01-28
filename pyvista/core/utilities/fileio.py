@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     import imageio
     import meshio
 
-    from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import VectorLike
     from pyvista.core.composite import MultiBlock
     from pyvista.core.dataobject import DataObject
     from pyvista.core.dataset import DataSet
@@ -1057,11 +1057,11 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
     # Generate polyhedral cell faces if any
     if pyvista.vtk_version_info < (9, 4):
-        polyhedral_cells = pyvista.convert_array(mesh.GetFaces())
+        polyhedral_cells: VectorLike[int] = pyvista.convert_array(mesh.GetFaces())
 
         if polyhedral_cells is not None:
             locations = pyvista.convert_array(mesh.GetFaceLocations())
-            polyhedral_cell_faces: list[MatrixLike[int]] = []
+            polyhedral_cell_faces: list[list[VectorLike[int]]] = []
 
             for location in locations:
                 if location == -1:
@@ -1070,7 +1070,7 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
 
                 n_faces = polyhedral_cells[location]
                 i = location + 1
-                faces: list[MatrixLike[int]] = []
+                faces: list[VectorLike[int]] = []
 
                 while len(faces) < n_faces:
                     n_vertices = polyhedral_cells[i]
