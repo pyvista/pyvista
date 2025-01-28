@@ -159,10 +159,8 @@ polyhedron = meshio.Mesh(
     'mesh_in', [beam, airplane, uniform, uniform2d, hybrid, mesh2d, polyhedron, cow]
 )
 def test_meshio(mesh_in, tmpdir):
-    if not isinstance(mesh_in, meshio.Mesh):
-        mesh_in = pv.to_meshio(mesh_in)
-
-    mesh = pv.from_meshio(filename)
+    mesh_ = pv.to_meshio(mesh_in) if not isinstance(mesh_in, meshio.Mesh) else mesh_in
+    mesh = pv.from_meshio(mesh_)
 
     # Assert mesh is still the same
     assert np.allclose(mesh_in.points, mesh.points)
