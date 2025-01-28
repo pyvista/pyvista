@@ -7806,13 +7806,13 @@ def download_whole_body_ct_female(load=True, *, high_resolution=False):  # pragm
     >>> ct_image = dataset['ct']
     >>> ct_image
     ImageData (...)
-      N Cells:      6876432
-      N Points:     6988800
+      N Cells:      6825870
+      N Points:     6937600
       X Bounds:     7.500e-01, 4.778e+02
       Y Bounds:     7.500e-01, 4.778e+02
-      Z Bounds:     7.527e-01, 8.182e+02
-      Dimensions:   160, 160, 273
-      Spacing:      3.000e+00, 3.000e+00, 3.005e+00
+      Z Bounds:     7.528e-01, 8.122e+02
+      Dimensions:   160, 160, 271
+      Spacing:      3.000e+00, 3.000e+00, 3.006e+00
       N Arrays:     1
 
     Get the segmentation label names and show the first three.
@@ -7881,8 +7881,8 @@ def download_whole_body_ct_female(load=True, *, high_resolution=False):  # pragm
 
     """
     if high_resolution:
-        return _download_dataset(__dataset_whole_body_ct_male_high_res, load=load)
-    return _download_dataset(_dataset_whole_body_ct_male, load=load)
+        return _download_dataset(__dataset_whole_body_ct_female_high_res, load=load)
+    return _download_dataset(_dataset_whole_body_ct_female, load=load)
 
 
 _dataset_whole_body_ct_female = _MultiFileDownloadableDatasetLoader(
