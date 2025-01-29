@@ -1456,3 +1456,8 @@ def test_active_array_info_deprecated(mesh):
         pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
         if pv._version.version_info[:2] > (0, 48):
             raise RuntimeError('Remove this deprecated class')
+
+
+def test_size():
+    cube = pv.Cube()
+    assert np.allclose(cube.size, (1.0, 1.0, 1.0))

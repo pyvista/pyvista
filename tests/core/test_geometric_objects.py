@@ -541,7 +541,7 @@ def test_text_3d():
     assert mesh.n_points
     assert mesh.n_cells
 
-    actual_width, actual_height, actual_depth = mesh.bounds.size
+    actual_width, actual_height, actual_depth = mesh.size
     assert np.isclose(actual_width, 2.0)
     assert np.isclose(actual_height, 3.0)
     assert np.isclose(actual_depth, 0.5)

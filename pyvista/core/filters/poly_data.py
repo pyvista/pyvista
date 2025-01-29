@@ -4614,7 +4614,7 @@ class PolyDataFilters(DataSetFilters):
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
 
             # Get size of poly data for computing dimensions
-            size = np.array(self.bounds.size)
+            size = np.array(self.size)
 
             if dimensions is None:
                 rounding_func = np.round if rounding_func is None else rounding_func

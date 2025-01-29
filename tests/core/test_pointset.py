@@ -252,8 +252,8 @@ def test_threshold_percent(pointset):
 def test_explode(pointset):
     out = pointset.explode(1)
     assert isinstance(out, pv.PointSet)
-    ori_xlen = pointset.bounds.size[0]
-    new_xlen = out.bounds.size[0]
+    ori_xlen = pointset.size[0]
+    new_xlen = out.size[0]
     assert np.isclose(2 * ori_xlen, new_xlen)
 
 

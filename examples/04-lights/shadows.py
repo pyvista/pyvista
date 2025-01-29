@@ -45,7 +45,7 @@ light2 = pyvista.Light(
 
 # Add a thin box below the mesh
 bnds = mesh.bounds
-x_size, y_size, z_size = bnds.size
+x_size, y_size, z_size = mesh.size
 
 expand = 1.0
 height = z_size * 0.05

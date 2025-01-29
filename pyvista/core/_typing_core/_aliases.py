@@ -6,7 +6,6 @@ import os
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
-from typing import Self
 from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
@@ -73,9 +72,6 @@ class BoundsTuple(NamedTuple):
     """Tuple of six values representing 3D bounds.
 
     Has the form ``(x_min, x_max, y_min, y_max, z_min, z_max)``.
-
-    .. versionadded:: 0.45
-
     """
 
     x_min: float
@@ -84,10 +80,6 @@ class BoundsTuple(NamedTuple):
     y_max: float
     z_min: float
     z_max: float
-
-    @property
-    def size(self: Self) -> tuple[float, float, float]:
-        return self.x_max - self.x_min, self.y_max - self.y_min, self.z_max - self.z_min
 
 
 CellsLike = Union[MatrixLike[int], VectorLike[int]]
