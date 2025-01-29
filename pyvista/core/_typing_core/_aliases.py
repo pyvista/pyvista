@@ -6,6 +6,7 @@ import os
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
+from typing import Self
 from typing import Union
 
 from pyvista.core import _vtk_core as _vtk
@@ -14,9 +15,6 @@ from ._array_like import NumberType
 from ._array_like import _ArrayLike
 from ._array_like import _ArrayLike1D
 from ._array_like import _ArrayLike2D
-
-if TYPE_CHECKING:
-    from typing_extensions import Self
 
 if TYPE_CHECKING or os.environ.get(
     'PYVISTA_DOCUMENTATION_BULKY_IMPORTS_ALLOWED'
@@ -89,24 +87,6 @@ class BoundsTuple(NamedTuple):
 
     @property
     def size(self: Self) -> tuple[float, float, float]:
-        """Return the size of each axis.
-
-        Returns
-        -------
-        tuple[float, float, float]
-            Size of each x-y-z axis.
-
-        Examples
-        --------
-        Get the size of a cube. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
-        by default.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.Cube()
-        >>> mesh.bounds.size
-        (1.0, 1.0, 1.0)
-
-        """
         return self.x_max - self.x_min, self.y_max - self.y_min, self.z_max - self.z_min
 
 
