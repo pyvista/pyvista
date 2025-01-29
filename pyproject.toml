@@ -105,7 +105,7 @@ docs = [
   'cmocean==4.0.3',
   'colorcet==3.1.0',
   'enum-tools==0.12.0',
-  'imageio-ffmpeg==0.5.1',
+  'imageio-ffmpeg==0.6.0',
   'imageio==2.36.1',
   'jupyter_sphinx==0.5.3',
   'jupyterlab==4.3.4',
@@ -136,7 +136,7 @@ docs = [
   'sphinxext-opengraph==0.9.1',
   'sympy==1.13.3',
   'trame-vtk==2.8.14',
-  'trame-vuetify==2.8.0',
+  'trame-vuetify==2.8.1',
   'trame==3.7.6',
   'trimesh==4.5.3',
 ]
