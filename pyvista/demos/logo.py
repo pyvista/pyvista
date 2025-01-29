@@ -236,7 +236,7 @@ def plot_logo(
     plotter.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
 
     # letter 'V'
-    v_grid = pyvista.voxelize_unstructured_grid(mesh_letters['V'], spacing=0.08)
+    v_grid = mesh_letters['V'].voxelize(spacing=0.08)
     v_grid_atom = atomize(v_grid)
     v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
     v_grid_atom_surf = v_grid_atom.extract_surface()
@@ -252,7 +252,7 @@ def plot_logo(
     )
 
     # letter 'i'
-    i_grid = pyvista.voxelize_unstructured_grid(mesh_letters['i'], spacing=0.1)
+    i_grid = mesh_letters['i'].voxelize(spacing=0.1)
 
     plotter.add_mesh(
         i_grid.extract_surface(),
@@ -346,7 +346,7 @@ def logo_atomized(density=0.05, scale=0.6, depth=0.05):
     mesh_letters = logo_letters(depth=depth)
     grids = []
     for letter in mesh_letters.values():
-        grid = pyvista.voxelize_unstructured_grid(letter, spacing=density)
+        grid = letter.voxelize(spacing=density)
         grids.append(atomize(grid, scale=scale))
 
     return grids[0].merge(grids[1:])
