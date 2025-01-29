@@ -41,7 +41,7 @@ from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
 
@@ -4508,7 +4508,7 @@ def test_direction_objects(direction_obj_test_case):
     # Test Capsule separately based on vtk version
     if 'Capsule' in name:
         legacy_vtk = pv.vtk_version_info < (9, 3)
-        if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
+        if (legacy_vtk and 'legacy' not in name) or (not legacy_vtk and 'legacy' in name):
             pytest.xfail(
                 'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.',
             )

@@ -39,7 +39,7 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import Color
     from pyvista import DataSet
     from pyvista import MultiBlock
@@ -3891,7 +3891,7 @@ class DataSetFilters:
         progress_bar: bool = False,
         locator: Literal['cell', 'cell_tree', 'obb_tree', 'static_cell']
         | _vtk.vtkAbstractCellLocator
-        | None = None,
+        | None = 'static_cell',
         pass_field_data: bool = True,
         mark_blank: bool = True,
         snap_to_closest_point: bool = False,
@@ -3936,9 +3936,9 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        locator : vtkAbstractCellLocator or str, optional
+        locator : vtkAbstractCellLocator or str or None, default: 'static_cell'
             Prototype cell locator to perform the ``FindCell()``
-            operation.  Default uses the DataSet ``FindCell`` method.
+            operation.  If ``None``, uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
 
                 * 'cell' - vtkCellLocator
@@ -3966,6 +3966,10 @@ class DataSetFilters:
         See Also
         --------
         pyvista.DataSetFilters.interpolate
+            Interpolate values from one mesh onto another.
+
+        :meth:`pyvista.ImageDataFilters.resample`
+            Resample image data to modify its dimensions and spacing.
 
         Examples
         --------
@@ -4110,6 +4114,10 @@ class DataSetFilters:
         See Also
         --------
         pyvista.DataSetFilters.sample
+            Resample array data from one mesh onto another.
+
+        :meth:`pyvista.ImageDataFilters.resample`
+            Resample image data to modify its dimensions and spacing.
 
         Examples
         --------
@@ -5416,8 +5424,9 @@ class DataSetFilters:
         if invert:
             ind_: VectorLike[int]
             _, ind_ = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
-            ind_ = [i for i in range(self.n_cells) if i not in ind_]
-            ids = numpy_to_idarr(ind_)
+            mask = np.ones(self.n_cells, bool)
+            mask[ind_] = False
+            ids = numpy_to_idarr(mask)
         else:
             ids = numpy_to_idarr(ind)
 

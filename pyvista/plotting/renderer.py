@@ -41,7 +41,7 @@ from .tools import parse_font_family
 from .utilities.gl_checks import check_depth_peeling
 from .utilities.gl_checks import uses_egl
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ..core.pointset import PolyData
     from .cube_axes_actor import CubeAxesActor
     from .lights import Light
@@ -875,7 +875,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.AddActor(actor)  # must add actor before resetting camera
         self._actors[name] = actor
 
-        if reset_camera or not self.camera_set and reset_camera is None and not rv:
+        if reset_camera or (not self.camera_set and reset_camera is None and not rv):
             self.reset_camera(render)
         elif render:
             self.parent.render()
@@ -2667,7 +2667,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if name is not None:
             self._actors.pop(name, None)
         self.update_bounds_axes()
-        if reset_camera or not self.camera_set and reset_camera is None:
+        if reset_camera or (not self.camera_set and reset_camera is None):
             self.reset_camera(render=render)
         elif render:
             self.parent.render()

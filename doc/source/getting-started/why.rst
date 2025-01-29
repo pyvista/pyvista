@@ -50,7 +50,7 @@ requires a few lines of code.
 +----------------------------------------------------+-------------------------------------+
 | Read and plot STL file using `vtk`_                | Read an STL file using PyVista      |
 +====================================================+=====================================+
-| .. code:: python                                   | .. code:: python                    |
+| .. code-block:: python                             | .. code-block:: python              |
 |                                                    |                                     |
 |    import vtk                                      |    import pyvista                   |
 |    reader = vtk.vtkSTLReader()                     |    mesh = pyvista.read('bunny.stl') |
