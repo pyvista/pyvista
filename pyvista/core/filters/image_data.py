@@ -3097,9 +3097,10 @@ class ImageDataFilters(DataSetFilters):
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        Use ``'linear'`` interpolation.
+        Use ``'linear'`` interpolation. Note that the argument names ``sample_rate``
+        and ``interpolation`` may be omitted.
 
-        >>> upsampled = image.resample(sample_rate=2.0, interpolation='linear')
+        >>> upsampled = image.resample(2.0, 'linear')
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
@@ -3107,19 +3108,6 @@ class ImageDataFilters(DataSetFilters):
         ``dimensions`` explicitly instead of using ``sample_rate``.
 
         >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='cubic')
-        >>> plot = image_plotter(upsampled)
-        >>> plot.show()
-
-        Use ``'hamming'`` interpolation. Note that the argument names ``sample_rate``
-        and ``interpolation`` may be omitted.
-
-        >>> upsampled = image.resample(2.0, 'hamming')
-        >>> plot = image_plotter(upsampled)
-        >>> plot.show()
-
-        Use ``'lanczos'`` interpolation.
-
-        >>> upsampled = image.resample(2.0, 'lanczos')
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
