@@ -3407,6 +3407,7 @@ class ImageDataFilters(DataSetFilters):
         resize_filter.SetMagnificationFactors(*magnification_factors)
         resize_filter.SetResizeMethodToMagnificationFactors()
         # Set interpolation mode
+        interpolator: _vtk.vtkAbstractImageInterpolator
         if interpolation == 'nearest':
             interpolator = _vtk.vtkImageInterpolator()
             interpolator.SetInterpolationModeToNearest()
