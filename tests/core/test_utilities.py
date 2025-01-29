@@ -289,8 +289,8 @@ def test_voxelize(uniform):
     assert vox.n_cells
 
 
-def test_voxelize_unstructured_grid(uniform):
-    vox = pv.voxelize_unstructured_grid(uniform, spacing=0.5)
+def test_voxelize_filter(uniform):
+    vox = uniform.voxelize(spacing=0.5)
     assert vox.n_cells
 
 
@@ -303,10 +303,10 @@ def test_voxelize_non_uniform_density(uniform):
     assert vox.n_cells
 
 
-def test_voxelize_unstructured_grid_non_uniform_spacing(uniform):
-    vox = pv.voxelize_unstructured_grid(uniform, spacing=[0.5, 0.3, 0.2])
+def test_voxelize_filter_non_uniform_spacing(uniform):
+    vox = uniform.voxelize(spacing=[0.5, 0.3, 0.2])
     assert vox.n_cells
-    vox = pv.voxelize_unstructured_grid(uniform, spacing=np.array([0.5, 0.3, 0.2]))
+    vox = uniform.voxelize(spacing=np.array([0.5, 0.3, 0.2]))
     assert vox.n_cells
 
 
@@ -321,15 +321,15 @@ def test_voxelize_invalid_density(rectilinear):
             pv.voxelize(rectilinear, {0.5, 0.3})
 
 
-def test_voxelize_unstructured_grid_invalid_density(rectilinear):
+def test_voxelize_filter_invalid_density(rectilinear):
     # test error when density is not length-3
     match = 'Array has shape (2,) which is not allowed.'
     with pytest.raises(ValueError, match=re.escape(match)):
-        pv.voxelize_unstructured_grid(rectilinear, spacing=[0.5, 0.3])
+        rectilinear.voxelize(spacing=[0.5, 0.3])
     # test error when density is not an array-like
     match = 'Object arrays are not supported.'
     with pytest.raises(TypeError, match=match):
-        pv.voxelize_unstructured_grid(rectilinear, spacing={0.5, 0.3})
+        rectilinear.voxelize(spacing={0.5, 0.3})
 
 
 def test_voxelize_throws_point_cloud(hexbeam):
@@ -339,10 +339,10 @@ def test_voxelize_throws_point_cloud(hexbeam):
             pv.voxelize(mesh)
 
 
-def test_voxelize_unstructured_grid_throws_point_cloud(hexbeam):
+def test_voxelize_filter_throws_point_cloud(hexbeam):
     mesh = pv.PolyData(hexbeam.points)
     with pytest.raises(ValueError, match='must have faces'):
-        pv.voxelize_unstructured_grid(mesh)
+        mesh.voxelize()
 
 
 def test_voxelize_volume_default_density(uniform):
@@ -359,9 +359,9 @@ def test_voxelize_volume_invalid_density(rectilinear):
             pv.voxelize_volume(rectilinear, {0.5, 0.3})
 
 
-def test_voxelize_rectilinear_grid_invalid_density(rectilinear):
+def test_voxelize_volume_filter_invalid_density(rectilinear):
     with pytest.raises(TypeError, match='Object arrays are not supported'):
-        pv.voxelize_rectilinear_grid(rectilinear, spacing={0.5, 0.3})
+        rectilinear.voxelize_volume(spacing={0.5, 0.3})
 
 
 def test_voxelize_volume_no_face_mesh(rectilinear):

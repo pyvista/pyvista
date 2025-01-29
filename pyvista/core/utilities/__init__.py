@@ -36,8 +36,6 @@ from .features import sample_function as sample_function
 from .features import spherical_to_cartesian as spherical_to_cartesian
 from .features import transform_vectors_sph_to_cart as transform_vectors_sph_to_cart
 from .features import voxelize as voxelize
-from .features import voxelize_rectilinear_grid as voxelize_rectilinear_grid
-from .features import voxelize_unstructured_grid as voxelize_unstructured_grid
 from .features import voxelize_volume as voxelize_volume
 from .fileio import from_meshio as from_meshio
 from .fileio import get_ext as get_ext

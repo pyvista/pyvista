@@ -146,7 +146,7 @@ def logo_voxel(density=0.03):
         Voxelized PyVista logo as an unstructured grid.
 
     """
-    return pyvista.voxelize_unstructured_grid(text_3d(LOGO_TITLE, depth=0.3), spacing=density)
+    return text_3d(LOGO_TITLE, depth=0.3).voxelize(spacing=density)
 
 
 def logo_basic():
