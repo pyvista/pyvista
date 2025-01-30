@@ -2742,7 +2742,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. deprecated:: 0.45
 
-            This filter is deprecated. Use `flip_faces(inplace=True)` instead.
+            This filter is deprecated. Use ``flip_faces(inplace=True)`` instead.
 
         Examples
         --------
