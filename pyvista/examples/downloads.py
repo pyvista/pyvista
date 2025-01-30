@@ -7618,7 +7618,7 @@ def download_whole_body_ct_male(load=True, *, high_resolution=False):  # pragma:
     >>> _ = pl.add_volume(
     ...     ct_image,
     ...     cmap='bone',
-    ...     opacity='sigmoid_9',
+    ...     opacity='sigmoid_8',
     ...     show_scalar_bar=False,
     ... )
     >>> _ = pl.add_mesh(colored_mesh)
