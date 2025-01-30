@@ -42,7 +42,7 @@ from pyvista.core._vtk_core import vtkMatrix3x3
 from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core._vtk_core import vtkTransform
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import numpy.typing as npt
@@ -442,7 +442,7 @@ def validate_axes(
             must_contain=must_have_orientation,
             name=f'{name} orientation',
         )
-    elif must_have_orientation is None and len(axes) == 2:
+    elif len(axes) == 2:
         raise ValueError(f'{name} orientation must be specified when only two vectors are given.')
 
     # Validate axes array
@@ -1231,7 +1231,7 @@ def validate_dimensionality(
         dimensionality_as_array = np.char.replace(dimensionality_as_array, 'D', '')
 
     try:
-        dimensionality_as_array = dimensionality_as_array.astype(np.integer)
+        dimensionality_as_array = dimensionality_as_array.astype(np.int64)
     except ValueError:
         raise ValueError(
             f'`{dimensionality}` is not a valid dimensionality.'

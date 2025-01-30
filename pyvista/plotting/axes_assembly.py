@@ -29,7 +29,7 @@ from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
 from pyvista.plotting.text import TextProperty
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
     import sys
 
@@ -489,10 +489,7 @@ class AxesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the axes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
@@ -1510,10 +1507,7 @@ class PlanesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the planes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         attr = [
@@ -1967,7 +1961,8 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.SetUseBounds(False)
 
         # Format title positioning
-        self.SetTitleOffset(0)
+        offset = (0,) if pv.vtk_version_info < (9, 3) else (0, 0)
+        self.SetTitleOffset(*offset)
         self.SetLabelOffset(0)
 
         # For 2D mode only

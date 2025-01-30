@@ -13,9 +13,11 @@ cow = examples.download_cow().cast_to_unstructured_grid()
 beam = pv.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
 uniform = examples.load_uniform().cast_to_unstructured_grid()
+uniform2d = pv.ImageData(dimensions=(10, 10, 1)).cast_to_unstructured_grid()
 mesh2d = meshio.Mesh(
     points=[[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]],
     cells=[('triangle', [[0, 1, 2], [1, 3, 2]])],
+    cell_sets={'tri1': [[0]], 'tri2': [[1]]},
 )
 polyhedron = meshio.Mesh(
     points=[
@@ -97,7 +99,7 @@ polyhedron = meshio.Mesh(
 )
 
 
-@pytest.mark.parametrize('mesh_in', [beam, airplane, uniform, mesh2d, polyhedron, cow])
+@pytest.mark.parametrize('mesh_in', [beam, airplane, uniform, uniform2d, mesh2d, polyhedron, cow])
 def test_meshio(mesh_in, tmpdir):
     if isinstance(mesh_in, meshio.Mesh):
         mesh_in = pv.from_meshio(mesh_in)
@@ -109,7 +111,10 @@ def test_meshio(mesh_in, tmpdir):
 
     # Assert mesh is still the same
     assert np.allclose(mesh_in.points, mesh.points)
-    if (mesh_in.celltypes == 11).all():
+    if (mesh_in.celltypes == pv.CellType.PIXEL).all():
+        cells = mesh_in.cells.reshape((mesh_in.n_cells, 5))[:, [0, 1, 2, 4, 3]].ravel()
+        assert np.allclose(cells, mesh.cells)
+    elif (mesh_in.celltypes == pv.CellType.VOXEL).all():
         cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[:, [0, 1, 2, 4, 3, 5, 6, 8, 7]].ravel()
         assert np.allclose(cells, mesh.cells)
     else:

@@ -14,7 +14,7 @@ PyVista supports three types of anti-aliasing:
 By default, MSAA anti-aliasing is enabled using 8 samples. This is the default
 for VTK.
 
-.. code:: python
+.. code-block:: python
 
    >>> import pyvista as pv
    >>> pv.global_theme.multi_samples

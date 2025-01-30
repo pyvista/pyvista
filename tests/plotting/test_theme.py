@@ -475,6 +475,9 @@ def test_plotter_set_theme():
     assert pl.theme == my_theme
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+)
 def test_load_theme(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     pv.plotting.themes.DarkTheme().save(filename)
@@ -485,6 +488,9 @@ def test_load_theme(tmpdir, default_theme):
     assert default_theme == pv.plotting.themes.DarkTheme()
 
 
+@pytest.mark.filterwarnings(
+    'ignore:The jupyter_extension_available flag is read only and is automatically detected:UserWarning'
+)
 def test_save_before_close_callback(tmpdir, default_theme):
     filename = str(tmpdir.mkdir('tmpdir').join('tmp.json'))
     dark_theme = pv.plotting.themes.DarkTheme()
@@ -652,11 +658,13 @@ def test_trame_config():
     assert trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
 
-    trame_config.server_proxy_enabled = True
+    with pytest.warns(UserWarning, match='Enabling server_proxy will disable jupyter_extension'):
+        trame_config.server_proxy_enabled = True
     assert not trame_config.jupyter_extension_enabled
     assert trame_config.server_proxy_enabled
 
-    trame_config.jupyter_extension_enabled = True
+    with pytest.warns(UserWarning, match='Enabling jupyter_extension will disable server_proxy'):
+        trame_config.jupyter_extension_enabled = True
     assert trame_config.jupyter_extension_enabled
     assert not trame_config.server_proxy_enabled
 

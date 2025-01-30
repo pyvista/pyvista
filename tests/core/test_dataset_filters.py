@@ -4570,6 +4570,7 @@ def test_align_xyz_three_axis_directions(planar_mesh):
         )
 
 
+@pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
 def test_align_xyz_swap_axes():
     # create planar data with equal variance in x and z
     points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
@@ -4743,7 +4744,7 @@ def test_pack_labels_preference(uniform):
     assert np.array_equal(actual_shape, expected_shape)
 
 
-@pytest.mark.parametrize('coloring_mode', ['index', 'cycler', None])
+@pytest.mark.parametrize('coloring_mode', ['index', 'cycle', None])
 def test_color_labels(uniform, coloring_mode):
     default_cmap = pv.get_cmap_safe('glasbey_category10')
     original_scalars_name = uniform.active_scalars_name
@@ -4839,6 +4840,23 @@ def test_color_labels_color_type_cmap(labeled_image, color_type):
         assert np.array_equal(color, expected_color)
 
 
+LABEL_DATA = [-1, -2, 1]
+
+
+@pytest.mark.parametrize(
+    ('negative_indexing', 'cmap_index'), [(True, LABEL_DATA), (False, np.argsort(LABEL_DATA))]
+)
+def test_color_labels_negative_index(labeled_image, negative_indexing, cmap_index):
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = LABEL_DATA
+    colored = labels.color_labels('viridis', negative_indexing=negative_indexing)
+    color_array = colored.active_scalars
+
+    assert np.array_equal(color_array[0], VIRIDIS_RGB[cmap_index[0]])
+    assert np.array_equal(color_array[1], VIRIDIS_RGB[cmap_index[1]])
+    assert np.array_equal(color_array[2], VIRIDIS_RGB[cmap_index[2]])
+
+
 def test_color_labels_scalars(uniform):
     # Test active scalars
     active_before = uniform.active_scalars_name
@@ -4886,3 +4904,11 @@ def test_color_labels_invalid_input(uniform):
         uniform.color_labels([[1]])
     with pytest.raises(ValueError, match=match):
         uniform.color_labels('fake')
+
+    match = "Negative indexing is not supported with 'cycle' mode enabled."
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels(coloring_mode='cycle', negative_indexing=True)
+
+    match = 'Multi-component scalars are not supported for coloring. Scalar array Normals must be one-dimensional.'
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().color_labels(scalars='Normals')

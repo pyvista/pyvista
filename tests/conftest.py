@@ -68,7 +68,7 @@ def flaky_test(
 
 
 @pytest.fixture
-def global_variables_reset():  # noqa: PT004
+def global_variables_reset():
     tmp_screenshots = pyvista.ON_SCREENSHOT
     tmp_figurepath = pyvista.FIGURE_PATH
     yield
@@ -77,7 +77,7 @@ def global_variables_reset():  # noqa: PT004
 
 
 @pytest.fixture(scope='session', autouse=True)
-def set_mpl():  # noqa: PT004
+def set_mpl():
     """Avoid matplotlib windows popping up."""
     try:
         import matplotlib as mpl
@@ -260,18 +260,28 @@ def pytest_addoption(parser):
     parser.addoption('--test_downloads', action='store_true', default=False)
 
 
-def marker_names(item):
+def pytest_configure(config: pytest.Config):
+    """Add filterwarnings for vtk < 9.1 and numpy bool deprecation"""
+    warnings = config.getini('filterwarnings')
+
+    if pyvista.vtk_version_info < (9, 1):
+        warnings.append(
+            r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
+        )
+
+
+def marker_names(item: pytest.Item):
     return [marker.name for marker in item.iter_markers()]
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]):
     test_downloads = config.getoption('--test_downloads')
 
-    # skip all tests that need downloads
-    if not test_downloads:
-        skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
-        for item in items:
+    for item in items:
+        # skip all tests that need downloads
+        if not test_downloads:
             if 'needs_download' in marker_names(item):
+                skip_downloads = pytest.mark.skip('Downloads not enabled with --test_downloads')
                 item.add_marker(skip_downloads)
 
 
@@ -319,7 +329,7 @@ def pytest_report_header(config):
     lines.append('required packages: ' + ', '.join(items))
 
     not_found = []
-    for pkg_extra in extra.keys():
+    for pkg_extra in extra.keys():  # noqa: PLC0206
         installed = []
         for name in extra[pkg_extra]:
             try:

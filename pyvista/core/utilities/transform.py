@@ -21,7 +21,7 @@ from pyvista.core.utilities.transformations import axis_angle_rotation
 from pyvista.core.utilities.transformations import decomposition
 from pyvista.core.utilities.transformations import reflection
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import MultiBlock
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
@@ -115,11 +115,11 @@ class Transform(_vtk.vtkTransform):
     >>> np.array_equal(scaling_T.matrix, pv.Transform().scale(scale_factor).matrix)
     True
 
-    Concatenate the two transformations using addition. This will concatenate with
+    Concatenate the two transformations using ``*``. This will concatenate with
     post-multiplication such that the transformations are applied in order from left to
     right, i.e. translate first, then scale.
 
-    >>> transform_post = translation_T + scaling_T
+    >>> transform_post = translation_T * scaling_T
     >>> transform_post.matrix
     array([[ 2. ,  0. ,  0. , -1.2],
            [ 0. ,  2. ,  0. , -1.6],
@@ -172,18 +172,6 @@ class Transform(_vtk.vtkTransform):
 
     >>> transform_pre = pv.Transform().pre_multiply()
     >>> _ = transform_pre.translate(position).scale(scale_factor)
-
-    Alternatively, create the transform using matrix multiplication. Matrix
-    multiplication concatenates the transformations using pre-multiply semantics such
-    that the transformations are applied in order from right to left, i.e. scale first,
-    then translate.
-
-    >>> transform_pre = translation_T @ scaling_T
-    >>> transform_pre.matrix
-    array([[ 2. ,  0. ,  0. , -0.6],
-           [ 0. ,  2. ,  0. , -0.8],
-           [ 0. ,  0. ,  2. ,  2.1],
-           [ 0. ,  0. ,  0. ,  1. ]])
 
     This is equivalent to using matrix multiplication directly on the arrays:
 
@@ -270,29 +258,20 @@ class Transform(_vtk.vtkTransform):
             else:
                 self.matrix = trans  # type: ignore[assignment]
 
-    def __add__(self: Transform, other: VectorLike[float] | TransformLike) -> Transform:
-        """:meth:`concatenate` this transform using post-multiply semantics.
-
-        Use :meth:`translate` for length-3 vector inputs, and :meth:`concatenate`
-        otherwise for transform-like inputs.
-        """
-        copied = self.copy()
+    def __add__(self: Transform, other: VectorLike[float]) -> Transform:
+        """:meth:`translate` this transform using post-multiply semantics."""
         try:
-            transform = copied.translate(other, multiply_mode='post')  # type: ignore[arg-type]
-        except (ValueError, TypeError):
-            try:
-                transform = copied.concatenate(other, multiply_mode='post')
-            except TypeError:
-                raise TypeError(
-                    f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be transform-like.'
-                )
-            except ValueError:
-                raise ValueError(
-                    f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape.'
-                )
-        return transform
+            return self.copy().translate(other, multiply_mode='post')
+        except TypeError:
+            raise TypeError(
+                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f'The right-side argument must be a length-3 vector.'
+            )
+        except ValueError:
+            raise ValueError(
+                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f'The right-side argument must be a length-3 vector.'
+            )
 
     def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
@@ -309,21 +288,29 @@ class Transform(_vtk.vtkTransform):
                 f'The left-side argument must be a length-3 vector.'
             )
 
-    def __mul__(self: Transform, other: float | VectorLike[float]) -> Transform:
-        """:meth:`scale` this transform using post-multiply semantics."""
-        try:
-            return self.copy().scale(other, multiply_mode='post')
+    def __mul__(self: Transform, other: float | VectorLike[float] | TransformLike) -> Transform:
+        """:meth:`concatenate` this transform using post-multiply semantics.
 
-        except TypeError:
-            raise TypeError(
-                f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be a single number or a length-3 vector.'
-            )
-        except ValueError:
-            raise ValueError(
-                f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be a single number or a length-3 vector.'
-            )
+        Use :meth:`scale` for single numbers and length-3 vector inputs, and
+        :meth:`concatenate` otherwise for transform-like inputs.
+        """
+        copied = self.copy()
+        try:
+            transform = copied.scale(other, multiply_mode='post')  # type: ignore[arg-type]
+        except (ValueError, TypeError):
+            try:
+                transform = copied.concatenate(other, multiply_mode='post')
+            except TypeError:
+                raise TypeError(
+                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f'The right-side argument must be transform-like.'
+                )
+            except ValueError:
+                raise ValueError(
+                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+                )
+        return transform
 
     def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics."""
@@ -338,21 +325,6 @@ class Transform(_vtk.vtkTransform):
             raise ValueError(
                 f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
-            )
-
-    def __matmul__(self: Transform, other: TransformLike) -> Transform:
-        """:meth:`concatenate` this transform using pre-multiply semantics."""
-        try:
-            return self.copy().concatenate(other, multiply_mode='pre')
-        except TypeError:
-            raise TypeError(
-                f"Unsupported operand type(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be transform-like.'
-            )
-        except ValueError:
-            raise ValueError(
-                f"Unsupported operand value(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be transform-like.'
             )
 
     def copy(self: Transform) -> Transform:
@@ -1327,7 +1299,7 @@ class Transform(_vtk.vtkTransform):
         Define a second transformation and use ``+`` to concatenate it.
 
         >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
-        >>> transform = transform + array
+        >>> transform = transform * array
         >>> transform.matrix
         array([[ 0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   , -1.   , -1.5  ],
@@ -1562,7 +1534,7 @@ class Transform(_vtk.vtkTransform):
 
         Apply a transformation to a points array.
 
-        >>> points = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> points = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
         >>> transformed_points = transform.apply(points)
         >>> transformed_points
         array([[ 2.,  4.,  6.],
@@ -1574,14 +1546,14 @@ class Transform(_vtk.vtkTransform):
         >>> transformed_dataset = transform.apply(dataset)
         >>> transformed_dataset.points
         pyvista_ndarray([[ 2.,  4.,  6.],
-                         [ 8., 10., 12.]], dtype=float32)
+                         [ 8., 10., 12.]])
 
         Apply the inverse.
 
         >>> inverted_dataset = transform.apply(dataset, inverse=True)
         >>> inverted_dataset.points
         pyvista_ndarray([[0.5, 1. , 1.5],
-                         [2. , 2.5, 3. ]], dtype=float32)
+                         [2. , 2.5, 3. ]])
 
         """
         inplace = not copy
