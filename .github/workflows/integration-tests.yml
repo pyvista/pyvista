@@ -29,6 +29,8 @@ jobs:
       MNE_LOGGING_LEVEL: "info"
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -62,6 +64,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -85,11 +89,13 @@ jobs:
       CARTOPY_SHARE_DIR: ~/.local/share/cartopy
       GEOVISTA_POOCH_MUTE: true
     steps:
-      - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
         with:
           packages: libgl1-mesa-glx xvfb
           version: 3.0
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -114,6 +120,8 @@ jobs:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
