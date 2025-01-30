@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import functools
 from importlib import metadata
-from pathlib import Path
 import re
 
 import numpy as np
@@ -69,7 +68,7 @@ def flaky_test(
 
 
 @pytest.fixture
-def global_variables_reset():  # noqa: PT004
+def global_variables_reset():
     tmp_screenshots = pyvista.ON_SCREENSHOT
     tmp_figurepath = pyvista.FIGURE_PATH
     yield
@@ -78,7 +77,7 @@ def global_variables_reset():  # noqa: PT004
 
 
 @pytest.fixture(scope='session', autouse=True)
-def set_mpl():  # noqa: PT004
+def set_mpl():
     """Avoid matplotlib windows popping up."""
     try:
         import matplotlib as mpl
@@ -269,11 +268,6 @@ def pytest_configure(config: pytest.Config):
         warnings.append(
             r'ignore:.*np\.bool.{1} is a deprecated alias for the builtin .{1}bool.*:DeprecationWarning'
         )
-    if any(Path(a).stem == 'tst_doc_images' for a in config.args):
-        # Warning is emitted because `pytest-pyvista` is not installed (and is not required for this test)
-        warnings.append(
-            'ignore:Unknown config option.*image_cache_dir.*:pytest.PytestConfigWarning'
-        )
 
 
 def marker_names(item: pytest.Item):
@@ -335,7 +329,7 @@ def pytest_report_header(config):
     lines.append('required packages: ' + ', '.join(items))
 
     not_found = []
-    for pkg_extra in extra.keys():
+    for pkg_extra in extra.keys():  # noqa: PLC0206
         installed = []
         for name in extra[pkg_extra]:
             try:

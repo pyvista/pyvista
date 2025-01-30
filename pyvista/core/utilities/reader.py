@@ -25,7 +25,7 @@ from .fileio import _process_filename
 from .helpers import wrap
 from .misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/design_documents/VTKFileFormats.html#vtkhdf-file-format'
@@ -2490,7 +2490,16 @@ class HDRReader(BaseReader):
     'parched_canal_4k.hdr'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot()
+    >>> mesh
+    ImageData (...)
+      N Cells:      8382465
+      N Points:     8388608
+      X Bounds:     0.000e+00, 4.095e+03
+      Y Bounds:     0.000e+00, 2.047e+03
+      Z Bounds:     0.000e+00, 0.000e+00
+      Dimensions:   4096, 2048, 1
+      Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+      N Arrays:     1
 
     """
 

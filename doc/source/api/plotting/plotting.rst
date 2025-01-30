@@ -89,7 +89,7 @@ scene as well as has some useful menu functions for common scene
 manipulation or export tasks. To get started, try instantiating the
 :class:`pyvistaqt.BackgroundPlotter`:
 
-.. code:: python
+.. code-block:: python
 
     import pyvista as pv
     import pyvistaqt as pvqt
