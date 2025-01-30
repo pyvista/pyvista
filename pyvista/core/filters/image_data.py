@@ -3308,7 +3308,8 @@ class ImageDataFilters(DataSetFilters):
         processing_cell_scalars = field == FieldAssociation.CELL
         if processing_cell_scalars:
             if extend_border:
-                raise ValueError('`extend_border` cannot be set when resampling cell data.')
+                msg = '`extend_border` cannot be set when resampling cell data.'
+                raise ValueError(msg)
             dimensionality = input_image.dimensionality
             input_image = input_image.cells_to_points(scalars=scalars, copy=False)
 
@@ -3317,7 +3318,8 @@ class ImageDataFilters(DataSetFilters):
             # Only extend border with point data
             extend_border = not processing_cell_scalars
         elif extend_border and reference_image is not None:
-            raise ValueError('`extend_border` cannot be set when a `image_reference` is provided.')
+            msg = '`extend_border` cannot be set when a `image_reference` is provided.'
+            raise ValueError(msg)
 
         # Setup reference image
         if reference_image is None:
@@ -3327,10 +3329,11 @@ class ImageDataFilters(DataSetFilters):
             reference_image_provided = False
         else:
             if dimensions is not None or sample_rate is not None:
-                raise ValueError(
+                msg = (
                     'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
                     '`reference_image` must define the geometry exclusively.'
                 )
+                raise ValueError(msg)
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
@@ -3342,10 +3345,11 @@ class ImageDataFilters(DataSetFilters):
         old_dimensions = np.array(input_image.dimensions)
         if sample_rate is not None:
             if reference_image_provided or dimensions is not None:
-                raise ValueError(
+                msg = (
                     'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
                     '`sample_rate` must define the sampling geometry exclusively.'
                 )
+                raise ValueError(msg)
             # Set reference dimensions from the sample rate
             sample_rate_ = _validation.validate_array3(
                 sample_rate,

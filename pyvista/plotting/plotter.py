@@ -2236,7 +2236,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             and not getattr(renwin, attr)().GetFBOIndex()
         ):
             # must raise a runtime error as this causes a segfault on VTK9
-            raise ValueError('Invoking helper with no framebuffer')
+            msg = 'Invoking helper with no framebuffer'
+            raise ValueError(msg)
 
         # Get 2D click location on window
         click_pos = self.iren.get_event_position()  # type: ignore[has-type]

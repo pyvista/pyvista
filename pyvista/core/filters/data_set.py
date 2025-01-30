@@ -9301,9 +9301,8 @@ class DataSetFilters:
 
         else:
             if array.ndim > 1:
-                raise ValueError(
-                    f'Multi-component scalars are not supported for coloring. Scalar array {scalars} must be one-dimensional.'
-                )
+                msg = f'Multi-component scalars are not supported for coloring. Scalar array {scalars} must be one-dimensional.'
+                raise ValueError(msg)
             _is_rgb_sequence = False
             if isinstance(colors, str):
                 try:
@@ -9359,9 +9358,8 @@ class DataSetFilters:
                 values = values_
             elif coloring_mode == 'cycle':
                 if negative_indexing:
-                    raise ValueError(
-                        "Negative indexing is not supported with 'cycle' mode enabled."
-                    )
+                    msg = "Negative indexing is not supported with 'cycle' mode enabled."
+                    raise ValueError(msg)
                 keys = np.unique(array)
                 values = itertools.cycle(color_rgb_sequence)
 

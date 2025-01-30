@@ -425,12 +425,12 @@ class AxesActor(_vtk.vtkAxesActor):
     @labels.setter
     def labels(self, labels: list[str] | tuple[str]):
         if not isinstance(labels, (list, tuple)):
-            raise ValueError(f'Labels must be a list or tuple. Got {labels} instead.')
+            msg = f'Labels must be a list or tuple. Got {labels} instead.'
+            raise ValueError(msg)
 
         if len(labels) != 3:
-            raise ValueError(
-                f'Labels must be a list or tuple with three items. Got {labels} instead.',
-            )
+            msg = f'Labels must be a list or tuple with three items. Got {labels} instead.'
+            raise ValueError(msg)
         self.x_label = labels[0]
         self.y_label = labels[1]
         self.z_label = labels[2]

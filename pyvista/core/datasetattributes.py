@@ -792,13 +792,11 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
                 tmparray.fill(data)
                 data = tmparray
             if data.shape[0] != array_len:
-                raise ValueError(
-                    f"Invalid array shape. Array '{name}' has length ({data.shape[0]}) but a length of ({array_len}) was expected.",
-                )
+                msg = f"Invalid array shape. Array '{name}' has length ({data.shape[0]}) but a length of ({array_len}) was expected."
+                raise ValueError(msg)
             if any(data.shape) and data.size == 0:
-                raise ValueError(
-                    f"Invalid array shape. Empty arrays are not allowed. Array '{name}' cannot have shape {data.shape}."
-                )
+                msg = f"Invalid array shape. Empty arrays are not allowed. Array '{name}' cannot have shape {data.shape}."
+                raise ValueError(msg)
         # attempt to reuse the existing pointer to underlying VTK data
         if isinstance(data, pyvista_ndarray):
             # pyvista_ndarray already contains the reference to the vtk object

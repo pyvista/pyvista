@@ -263,15 +263,17 @@ class Transform(_vtk.vtkTransform):
         try:
             return self.copy().translate(other, multiply_mode='post')
         except TypeError:
-            raise TypeError(
+            msg = (
                 f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
+            raise TypeError(msg)
         except ValueError:
-            raise ValueError(
+            msg = (
                 f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                 f'The right-side argument must be a length-3 vector.'
             )
+            raise ValueError(msg)
 
     def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
@@ -303,15 +305,17 @@ class Transform(_vtk.vtkTransform):
             try:
                 transform = copied.concatenate(other, multiply_mode='post')
             except TypeError:
-                raise TypeError(
+                msg = (
                     f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                     f'The right-side argument must be transform-like.'
                 )
+                raise TypeError(msg)
             except ValueError:
-                raise ValueError(
+                msg = (
                     f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
                     f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
                 )
+                raise ValueError(msg)
         return transform
 
     def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:

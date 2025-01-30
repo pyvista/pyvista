@@ -2295,17 +2295,20 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
         """
         if isinstance(kind, int):
             if kind not in range(5):
-                raise ValueError(f'Invalid Platonic solid index "{kind}".')
+                msg = f'Invalid Platonic solid index "{kind}".'
+                raise ValueError(msg)
             self.SetSolidType(kind)
             return
 
         if isinstance(kind, str):
             if kind not in self._kinds:
-                raise ValueError(f'Invalid Platonic solid kind "{kind}".')
+                msg = f'Invalid Platonic solid kind "{kind}".'
+                raise ValueError(msg)
             self.SetSolidType(self._kinds[kind])
             return
 
-        raise ValueError(f'Invalid Platonic solid index type "{type(kind).__name__}".')
+        msg = f'Invalid Platonic solid index type "{type(kind).__name__}".'
+        raise ValueError(msg)
 
     @property
     def output(self: PlatonicSolidSource) -> PolyData:

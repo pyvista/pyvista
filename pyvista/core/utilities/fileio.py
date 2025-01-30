@@ -1042,7 +1042,8 @@ def to_meshio(mesh: DataSet) -> meshio.Mesh:
         import meshio
 
     except ImportError:  # pragma: no cover
-        raise ImportError('To use this feature install meshio with:\n\npip install meshio')
+        msg = 'To use this feature install meshio with:\n\npip install meshio'
+        raise ImportError(msg)
 
     try:  # for meshio<5.0 compatibility
         from meshio.vtk._vtk import vtk_to_meshio_type

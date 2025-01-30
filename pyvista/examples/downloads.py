@@ -7655,7 +7655,8 @@ def _whole_body_ct_load_func(files):  # pragma: no cover
 
             return dict(sorted(colors.items()))
         else:
-            raise RuntimeError('Unable to load colors.')
+            msg = 'Unable to load colors.'
+            raise RuntimeError(msg)
 
     # Process the dataset to create a label map from the segmentation masks
     dataset = files[0].load()
