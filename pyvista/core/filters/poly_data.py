@@ -2229,11 +2229,11 @@ class PolyDataFilters(DataSetFilters):
 
         output = _get_output(dijkstra)
         if output.n_points == 0:
-            msg = f'There is no path between vertices {start_vertex} and {end_vertex}. '
-            raise ValueError(
-                msg,
-                'It is likely the vertices belong to disconnected regions.',
+            msg = (
+                f'There is no path between vertices {start_vertex} and {end_vertex}. '
+                'It is likely the vertices belong to disconnected regions.'
             )
+            raise ValueError(msg)
 
         output['vtkOriginalPointIds'] = original_ids
 

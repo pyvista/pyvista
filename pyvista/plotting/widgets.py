@@ -70,9 +70,7 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
             f'Expected value for `interaction_event` is {expected}.'
             f' {interaction_event} was given.'
         )
-        raise ValueError(
-            msg,
-        )
+        raise ValueError(msg)
 
     return event_map[interaction_event]
 

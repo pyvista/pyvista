@@ -693,13 +693,12 @@ class CellArray(_vtk.vtkCellArray):
 
         # https://github.com/pyvista/pyvista/pull/5404
         if imported_size != cells.size:
-            raise CellSizeError(
-                message=(
-                    f'Cell array size is invalid. Size ({cells.size}) does not'
-                    f' match expected size ({imported_size}). This is likely'
-                    ' due to invalid connectivity array.'
-                ),
+            msg = (
+                f'Cell array size is invalid. Size ({cells.size}) does not'
+                f' match expected size ({imported_size}). This is likely'
+                ' due to invalid connectivity array.'
             )
+            raise CellSizeError(msg)
         self.__offsets = self.__connectivity = None
 
     @property
