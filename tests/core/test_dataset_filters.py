@@ -33,6 +33,7 @@ from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_set import _swap_axes
+from tests.conftest import flaky_test
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -4912,3 +4913,134 @@ def test_color_labels_invalid_input(uniform):
     match = 'Multi-component scalars are not supported for coloring. Scalar array Normals must be one-dimensional.'
     with pytest.raises(ValueError, match=match):
         pv.Sphere().color_labels(scalars='Normals')
+
+
+@pytest.fixture
+def frog_tissues_image():
+    return examples.load_frog_tissues()
+
+
+@pytest.fixture
+def frog_tissues_contour(frog_tissues_image):
+    return frog_tissues_image.contour_labels(smoothing=False)
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
+    mask = frog_tissues_contour.voxelize_binary_mask(
+        reference_volume=frog_tissues_image, progress_bar=True
+    )
+
+    expected_voxels = frog_tissues_image.points_to_cells().threshold(0.5)
+    actual_voxels = mask.points_to_cells().threshold(0.5)
+
+    assert expected_voxels.bounds == actual_voxels.bounds
+    assert expected_voxels.n_cells == actual_voxels.n_cells
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_voxelize_binary_mask_no_reference(frog_tissues_image, frog_tissues_contour):
+    mask = frog_tissues_contour.voxelize_binary_mask()
+    assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
+
+
+def test_voxelize_binary_mask_dimensions(sphere):
+    dims = (10, 11, 12)
+    mask = sphere.voxelize_binary_mask(dimensions=dims)
+    assert np.allclose(mask.points_to_cells().bounds, sphere.bounds)
+    assert mask.dimensions == dims
+
+
+def test_voxelize_binary_mask_auto_spacing(ant):
+    # Test default
+    mask_no_input = ant.voxelize_binary_mask()
+    if pv.vtk_version_info < (9, 2):
+        expected_mask = ant.voxelize_binary_mask(mesh_length_fraction=1 / 100)
+    else:
+        expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
+    assert mask_no_input.spacing == expected_mask.spacing
+
+    # Test cell length
+    if pv.vtk_version_info < (9, 2):
+        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
+        with pytest.raises(TypeError, match=match):
+            ant.voxelize_binary_mask(cell_length_percentile=0.2)
+    else:
+        mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
+        mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
+        assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
+
+    # Test mesh length
+    mask_fraction_200 = ant.voxelize_binary_mask(mesh_length_fraction=1 / 200)
+    mask_fraction_500 = ant.voxelize_binary_mask(mesh_length_fraction=1 / 500)
+    assert np.all(np.array(mask_fraction_200.spacing) > mask_fraction_500.spacing)
+    # Check spacing matches mesh length. Use atol since spacing is approximate.
+    assert np.allclose(mask_fraction_500.spacing, ant.length / 500, atol=1e-3)
+
+
+# This test is flaky because of random sampling that cannot be controlled.
+# Sometimes the sampling produces the same output.
+# https://github.com/pyvista/pyvista/pull/6728
+@flaky_test(times=5)
+def test_voxelize_binary_mask_cell_length_sample_size(ant):
+    if pv.vtk_version_info < (9, 2):
+        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
+        with pytest.raises(TypeError, match=match):
+            ant.voxelize_binary_mask(cell_length_percentile=0.2)
+    else:
+        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
+        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
+        assert mask_samples_1.spacing != mask_samples_2.spacing
+
+        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+        assert mask_samples_1.spacing == mask_samples_2.spacing
+
+
+@pytest.mark.parametrize(
+    'rounding_func',
+    [np.round, np.ceil, np.floor, lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]],
+)
+def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
+    spacing = np.array((1.1, 1.2, 1.3))
+    mask = sphere.voxelize_binary_mask(spacing=spacing, rounding_func=rounding_func)
+    assert np.allclose(mask.points_to_cells().bounds, sphere.bounds)
+    if rounding_func == np.round:
+        assert np.any(mask.spacing > spacing)
+        assert np.any(mask.spacing < spacing)
+    elif rounding_func == np.ceil:
+        assert np.all(mask.spacing < spacing)
+    elif rounding_func == np.floor:
+        assert np.all(mask.spacing > spacing)
+    else:  # rounding_func == lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]]
+        assert mask.spacing[1] < spacing[1]
+        assert mask.spacing[2] > spacing[2]
+
+
+@pytest.mark.parametrize('foreground', [1, 2.1])
+@pytest.mark.parametrize('background', [-1, 0])
+def test_voxelize_binary_mask_foreground_background(sphere, foreground, background):
+    mask = sphere.voxelize_binary_mask(foreground_value=foreground, background_value=background)
+    unique, counts = np.unique(mask['mask'], return_counts=True)
+    assert np.array_equal(unique, [background, foreground])
+    # Test we have more foreground than background (not always true, but is true for a sphere mesh)
+    assert counts[1] > counts[0]
+
+    # Test dtype
+    if (
+        isinstance(foreground, int)
+        and isinstance(background, int)
+        and foreground >= 0
+        and background >= 0
+    ):
+        assert mask['mask'].dtype == np.uint8
+    elif isinstance(foreground, int) and isinstance(background, int):
+        assert mask['mask'].dtype == int
+    else:
+        assert mask['mask'].dtype == float
+
+
+def test_voxelize_invalid_input(hexbeam):
+    mesh = pv.PolyData(hexbeam.points)
+    with pytest.raises(ValueError, match='Input mesh must have faces for voxelization'):
+        mesh.voxelize_binary_mask()
