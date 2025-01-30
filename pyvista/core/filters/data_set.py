@@ -9495,11 +9495,11 @@ class DataSetFilters:
 
         See Also
         --------
-        pyvista.voxelize
+        voxelize
             Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
             :attr:`~pyvista.CellType.VOXEL` cells.
 
-        pyvista.voxelize_volume
+        voxelize_volume
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
         pyvista.ImageDataFilters.contour_labels
@@ -9903,14 +9903,12 @@ class DataSetFilters:
 
         See Also
         --------
-        pyvista.voxelize
+        voxelize
             Similar function that returns a :class:`pyvista.UnstructuredGrid` of
             :attr:`~pyvista.CellType.VOXEL` cells.
 
-        pyvista.PolyDataFilters.voxelize_binary_mask
+        voxelize_binary_mask
             Similar function that returns a :class:`pyvista.ImageData` with point data.
-
-        pyvista.DataSetFilters.select_enclosed_points
 
         """
         image_data = self._voxelize_image_data_cells(
@@ -9974,10 +9972,10 @@ class DataSetFilters:
 
         See Also
         --------
-        pyvista.voxelize_volume
+        voxelize_volume
             Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
 
-        pyvista.PolyDataFilters.voxelize_binary_mask
+        voxelize_binary_mask
             Similar function that returns a :class:`pyvista.ImageData` with point data.
 
         """
