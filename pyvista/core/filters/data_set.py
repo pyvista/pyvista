@@ -9441,7 +9441,7 @@ class DataSetFilters:
             dimensions explicitly. If unset, the dimensions are defined implicitly
             through other parameter. See summary and examples for details.
 
-        spacing : VectorLike[float], optional
+        spacing : float | VectorLike[float], optional
             Approximate spacing to use for the generated mask image. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
@@ -9468,7 +9468,7 @@ class DataSetFilters:
             #. Computing the distance between two random points in each cell.
             #. Inserting the distance into an ordered set to create the CDF.
 
-            Has no effect if ``dimension`` or ``reference_volume`` are specified.
+            Has no effect if ``dimensions`` or ``reference_volume`` are specified.
 
             .. note::
                 This option is only available for VTK 9.2 or greater.
@@ -9832,31 +9832,12 @@ class DataSetFilters:
 
         return pyvista.wrap(output_volume)
 
-    def _voxelize_image_data_cells(  # type: ignore[misc]
+    def voxelize_volume(  # type: ignore[misc]
         self: DataSet,
         *,
-        dimensions,
-        spacing,
-        rounding_func,
-        cell_length_percentile,
-        cell_length_sample_size,
-        mesh_length_fraction,
-        progress_bar,
-    ):
-        binary_mask = self.voxelize_binary_mask(
-            dimensions=dimensions,
-            spacing=spacing,
-            rounding_func=rounding_func,
-            cell_length_percentile=cell_length_percentile,
-            cell_length_sample_size=cell_length_sample_size,
-            mesh_length_fraction=mesh_length_fraction,
-            progress_bar=progress_bar,
-        )
-        return binary_mask.points_to_cells(dimensionality='3D', copy=False)
-
-    def voxelize_volume(  # type: ignore[misc] # noqa: D417
-        self: DataSet,
-        *,
+        background_value: int | float = 0,  # noqa: PYI041
+        foreground_value: int | float = 1,  # noqa: PYI041
+        reference_volume: pyvista.ImageData | pyvista.RectilinearGrid | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
@@ -9869,32 +9850,71 @@ class DataSetFilters:
 
         Creates a voxel volume that encloses the input mesh and discretizes the cells
         within the volume that intersect or are contained within the input mesh.
-        ``InsideMesh``, an array in ``cell_data``, is ``1`` for cells inside and ``0`` outside.
+
+        A ``'mask'`` cell data array is included with the output. Cells with a value
+        of ``1`` are inside the mesh and ``0`` are outside of it.
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            Mesh to voxelize.
+        background_value : int, default: 0
+            Background value of the generated mask.
 
-        density : float | array_like[float]
-            The uniform size of the voxels when single float passed.
-            Nonuniform voxel size if a list of values are passed along x,y,z directions.
-            Defaults to 1/100th of the mesh length.
+        foreground_value : int, default: 1
+            Foreground value of the generated mask.
 
-        check_surface : bool, default: True
-            Specify whether to check the surface for closure. If on, then the
-            algorithm first checks to see if the surface is closed and
-            manifold. If the surface is not closed and manifold, a runtime
-            error is raised.
+        reference_volume : pyvista.ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            ``origin``, and ``spacing`` as the reference.
 
-        enclosed : bool, default: False
-            If True, the voxel bounds will be outside the mesh.
-            If False, the voxel bounds will be at or inside the mesh bounds.
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated mask image. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameter. See summary and examples for details.
 
-        fit_bounds : bool, default: False
-            If enabled, the end bound of the input mesh is used as the end bound of the
-            voxel grid and the density is updated to the closest compatible one. Otherwise,
-            the end bound is excluded. Has no effect if `enclosed` is enabled.
+        spacing : float | VectorLike[float], optional
+            Approximate spacing to use for the generated mask image. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Has no effect if ``reference_volume`` or ``dimensions`` are specified.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
+
+            #. Triangulating the input cells.
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered set to create the CDF.
+
+            Has no effect if ``dimensions`` or ``reference_volume`` are specified.
+
+            .. note::
+                This option is only available for VTK 9.2 or greater.
+
+        cell_length_sample_size : int, optional
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
+
+        mesh_length_fraction : float, optional
+            Fraction of the surface mesh's length to use for computing the default
+            ``spacing``. Set this to any fractional value (e.g. ``1/100``) to enable
+            this option. This is used as an alternative to using ``cell_length_percentile``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
@@ -9910,8 +9930,40 @@ class DataSetFilters:
         voxelize_binary_mask
             Similar function that returns a :class:`pyvista.ImageData` with point data.
 
+        Examples
+        --------
+        Load a mesh.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_cow()
+
+        Create an equal density voxel volume and plot the result.
+
+        >>> vox = mesh.voxelize_volume(spacing=0.15)
+        >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
+        >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
+
+        Slice the voxel volume to view the ``mask`` scalars.
+
+        >>> slices = vox.slice_orthogonal()
+        >>> slices.plot(scalars='mask', show_edges=True)
+
+        Create a voxel volume from unequal density dimensions and plot result.
+
+        >>> vox = mesh.voxelize_volume(spacing=(0.15, 0.15, 0.5))
+        >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
+
+        Slice the unequal density voxel volume to view the ``mask`` scalars.
+
+        >>> slices = vox.slice_orthogonal()
+        >>> slices.plot(scalars='mask', show_edges=True, cpos=cpos)
+
         """
-        image_data = self._voxelize_image_data_cells(
+        binary_mask = self.voxelize_binary_mask(
+            background_value=background_value,
+            foreground_value=foreground_value,
+            reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
             rounding_func=rounding_func,
@@ -9920,9 +9972,10 @@ class DataSetFilters:
             mesh_length_fraction=mesh_length_fraction,
             progress_bar=progress_bar,
         )
-        return image_data.cast_to_rectilinear_grid()
+        voxel_cells = binary_mask.points_to_cells(dimensionality='3D', copy=False)
+        return voxel_cells.cast_to_rectilinear_grid()
 
-    def voxelize(  # type: ignore[misc]  # noqa: D417
+    def voxelize(  # type: ignore[misc]
         self: DataSet,
         *,
         dimensions: VectorLike[int] | None = None,
@@ -9937,38 +9990,60 @@ class DataSetFilters:
 
         Parameters
         ----------
-        mesh : pyvista.DataSet
-            Mesh to voxelize.
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated mask image. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameter. See summary and examples for details.
 
-        density : float | array_like[float]
-            The uniform size of the voxels when single float passed.
-            A list of densities along x,y,z directions.
-            Defaults to 1/100th of the mesh length.
+        spacing : float | VectorLike[float], optional
+            Approximate spacing to use for the generated mask image. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
 
-        check_surface : bool, default: True
-            Specify whether to check the surface for closure. If on, then the
-            algorithm first checks to see if the surface is closed and
-            manifold. If the surface is not closed and manifold, a runtime
-            error is raised.
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
 
-        enclosed : bool, default: False
-            If True, the voxel bounds will be outside the mesh.
-            If False, the voxel bounds will be at or inside the mesh bounds.
+            Rounding the dimensions implies rounding the actual spacing.
 
-        fit_bounds : bool, default: False
-            If enabled, the end bound of the input mesh is used as the end bound of the
-            voxel grid and the density is updated to the closest compatible one. Otherwise,
-            the end bound is excluded. Has no effect if `enclosed` is enabled.
+            Has no effect if ``dimensions`` is specified.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
+
+            #. Triangulating the input cells.
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered set to create the CDF.
+
+            Has no effect if ``dimensions`` is specified.
+
+            .. note::
+                This option is only available for VTK 9.2 or greater.
+
+        cell_length_sample_size : int, optional
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
+
+        mesh_length_fraction : float, optional
+            Fraction of the surface mesh's length to use for computing the default
+            ``spacing``. Set this to any fractional value (e.g. ``1/100``) to enable
+            this option. This is used as an alternative to using ``cell_length_percentile``.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
 
         Returns
         -------
         pyvista.UnstructuredGrid
             Voxelized unstructured grid of the original mesh.
-
-        Notes
-        -----
-        Prior to version 0.39.0, this method improperly handled the order of
-        structured coordinates.
 
         See Also
         --------
@@ -9978,8 +10053,37 @@ class DataSetFilters:
         voxelize_binary_mask
             Similar function that returns a :class:`pyvista.ImageData` with point data.
 
+        Examples
+        --------
+        Create a voxelized mesh with uniform spacing.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = examples.download_bunny_coarse()
+        >>> vox = mesh.voxelize(spacing=0.01)
+        >>> vox.plot(show_edges=True)
+
+        Create a voxelized mesh using non-uniform spacing.
+
+        >>> vox = mesh.voxelize(spacing=(0.01, 0.005, 0.002))
+        >>> vox.plot(show_edges=True)
+
+        The bounds of the voxelized mesh always match the bounds of the input.
+
+        >>> mesh.bounds
+        BoundsTuple(x_min=-0.13155962526798248, x_max=0.18016336858272552, y_min=-0.12048563361167908, y_max=0.18769524991512299, z_min=-0.14300920069217682, z_max=0.09850578755140305)
+
+        >>> vox.bounds
+        BoundsTuple(x_min=-0.13155962526798248, x_max=0.18016336858272552, y_min=-0.12048563361167908, y_max=0.18769524991512299, z_min=-0.14300920069217682, z_max=0.09650979936122894)
+
+        Create a voxelized mesh with specific dimensions.
+
+        >>> mesh = pv.Sphere()
+        >>> vox = mesh.voxelize(dimensions=(10, 20, 30))
+        >>> vox.plot(show_edges=True)
+
         """
-        image_data = self._voxelize_image_data_cells(
+        binary_mask = self.voxelize_binary_mask(
             dimensions=dimensions,
             spacing=spacing,
             rounding_func=rounding_func,
@@ -9988,7 +10092,8 @@ class DataSetFilters:
             mesh_length_fraction=mesh_length_fraction,
             progress_bar=progress_bar,
         )
-        ugrid = image_data.threshold(0.5)
+        voxel_cells = binary_mask.points_to_cells(dimensionality='3D', copy=False)
+        ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         return ugrid
 
