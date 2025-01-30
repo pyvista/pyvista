@@ -116,7 +116,7 @@ docs = [
   'numpydoc==1.8.0',
   'osmnx==2.0.1',
   'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
-  'pypandoc==1.14',
+  'pypandoc==1.15',
   'pytest-pyvista==0.1.8',
   'pytest-sphinx==0.6.3',
   'pyvista[pinned]',
@@ -126,7 +126,7 @@ docs = [
   'sphinx-copybutton==0.5.2',
   'sphinx-design==0.6.1',
   'sphinx-gallery==0.18.0',
-  'sphinx-notfound-page==1.0.4',
+  'sphinx-notfound-page==1.1.0',
   'sphinx-sitemap==2.6.0',
   'sphinx-tags==0.4.0',
   'sphinx-toolbox==3.8.1',
