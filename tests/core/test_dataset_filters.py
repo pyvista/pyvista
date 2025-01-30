@@ -5040,7 +5040,13 @@ def test_voxelize_binary_mask_foreground_background(sphere, foreground, backgrou
         assert mask['mask'].dtype == float
 
 
-def test_voxelize_invalid_input(hexbeam):
+def test_voxelize_binary_mask_input(hexbeam):
+    # Test unstructured grid works
+    assert isinstance(hexbeam, pv.UnstructuredGrid)
+    mask = hexbeam.voxelize_binary_mask()
+    assert mask.n_points
+
+    # Test point cloud does not
     mesh = pv.PolyData(hexbeam.points)
     with pytest.raises(ValueError, match='Input mesh must have faces for voxelization'):
         mesh.voxelize_binary_mask()
