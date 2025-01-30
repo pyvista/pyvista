@@ -9666,7 +9666,7 @@ class DataSetFilters:
 
         """
         surface = wrap(self).extract_geometry()
-        if not surface.faces.size:
+        if not (surface.faces.size or surface.strips.size):
             # we have a point cloud or an empty mesh
             raise ValueError('Input mesh must have faces for voxelization.')
 
