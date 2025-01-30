@@ -4893,13 +4893,13 @@ def download_action_figure(load=True, *, high_resolution=False):  # pragma: no c
             See this dataset in the Dataset Gallery for more info.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_action_figure_high_res, load=load)
     return _download_dataset(_dataset_action_figure, load=load)
 
 
-_dataset_action_figure = _SingleFileDownloadableDatasetLoader('tigerfighter.obj')
-__dataset_action_figure_high_res = _SingleFileDownloadableDatasetLoader(
-    'tigerfighter_decimated.obj'
-)
+_dataset_action_figure = _SingleFileDownloadableDatasetLoader('tigerfighter_decimated.obj')
+__dataset_action_figure_high_res = _SingleFileDownloadableDatasetLoader('tigerfighter.obj')
 
 
 def download_notch_stress(load=True):  # pragma: no cover
