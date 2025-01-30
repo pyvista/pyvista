@@ -18,7 +18,7 @@ from .colors import Color
 from .colors import get_cmap_safe
 from .tools import opacity_transfer_function
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from matplotlib import colors
 
     from ._typing import ColorLike
@@ -76,14 +76,14 @@ class lookup_table_ndarray(np.ndarray):  # type: ignore[type-arg]
             # internal VTK array
             self.table.Get().values = self
 
-    def __array_wrap__(self, out_arr, context=None):  # type: ignore[override]
+    def __array_wrap__(self, out_arr, context=None, return_scalar: bool = False):
         """Return a numpy scalar if array is 0d.
 
         See https://github.com/numpy/numpy/issues/5819
 
         """
         if out_arr.ndim:
-            return np.ndarray.__array_wrap__(self, out_arr, context)
+            return np.ndarray.__array_wrap__(self, out_arr, context, return_scalar)
 
         # Match numpy's behavior and return a numpy dtype scalar
         return out_arr[()]
@@ -641,7 +641,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @above_range_color.setter
-    def above_range_color(self, value: bool | ColorLike):
+    def above_range_color(self, value: bool | ColorLike | None):
         if value is None or value is False:
             self.SetUseAboveRangeColor(False)
         elif value is True:
@@ -705,7 +705,7 @@ class LookupTable(_vtk.vtkLookupTable):
         return None
 
     @below_range_color.setter
-    def below_range_color(self, value: bool | ColorLike):
+    def below_range_color(self, value: bool | ColorLike | None):
         if value is None or value is False:
             self.SetUseBelowRangeColor(False)
         elif value is True:

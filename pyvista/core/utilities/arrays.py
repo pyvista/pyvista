@@ -23,7 +23,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core.errors import AmbiguousDataError
 from pyvista.core.errors import MissingDataError
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista import DataSet
     from pyvista import Table
     from pyvista import pyvista_ndarray
@@ -1043,7 +1043,7 @@ class _SerializedDictArray(UserDict, _vtk.vtkStringArray):  # type: ignore[type-
         self._update_string()
         return item
 
-    def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]
+    def pop(self: _SerializedDictArray, __key: Any) -> Any:  # type: ignore[override]  # noqa: PYI063
         item = super().pop(__key)
         self._update_string()
         return item

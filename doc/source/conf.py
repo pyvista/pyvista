@@ -73,7 +73,8 @@ warnings.filterwarnings(
 
 # -- General configuration ------------------------------------------------
 numfig = False
-html_logo = './_static/pyvista_logo_sm.png'
+html_logo = './_static/pyvista_logo.svg'
+html_favicon = './_static/pyvista_logo.svg'
 
 sys.path.append(str(Path('./_ext').resolve()))
 
@@ -205,6 +206,9 @@ autodoc_type_aliases = {
     'InteractionEventType': 'pyvista.InteractionEventType',
 }
 
+# Needed to address a code-block parsing error by sphinx for an example
+autodoc_mock_imports = ['example']
+
 # Hide overload type signatures (from "sphinx_toolbox.more_autodoc.overload")
 overloads_location = ['bottom']
 
@@ -296,6 +300,7 @@ nitpick_ignore_regex = [
     (r'py:.*', 'sys.float_info.max'),
     (r'py:.*', '.*NoneType'),
     (r'py:.*', 'collections.*'),
+    (r'py:.*', '.*PathStrSeq'),
     #
     # NumPy types. TODO: Fix links (intersphinx?)
     (r'py:.*', '.*DTypeLike'),

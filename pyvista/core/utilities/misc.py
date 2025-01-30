@@ -15,7 +15,7 @@ import warnings
 
 import numpy as np
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing import Any
 
     from .._typing_core import ArrayLike
@@ -255,12 +255,12 @@ class conditional_decorator:
 
     """
 
-    def __init__(self, dec, condition) -> None:  # noqa: ANN001, ANN101
+    def __init__(self, dec, condition) -> None:  # noqa: ANN001
         """Initialize."""
         self.decorator = dec
         self.condition = condition
 
-    def __call__(self, func):  # noqa: ANN001, ANN101, ANN204
+    def __call__(self, func):  # noqa: ANN001, ANN204
         """Call the decorated function if condition is matched."""
         if not self.condition:
             # Return the function unchanged, not decorated.

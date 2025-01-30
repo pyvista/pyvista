@@ -27,7 +27,7 @@ from .utilities.algorithms import outline_algorithm
 from .utilities.algorithms import pointset_to_polydata_algorithm
 from .utilities.algorithms import set_algorithm_input
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import InteractionEventType
     from pyvista.core._typing_core import VectorLike
 

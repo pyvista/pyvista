@@ -880,6 +880,9 @@ def test_image_data_init_kwargs():
     image = pv.ImageData(direction_matrix=matrix)
     assert np.allclose(image.direction_matrix, matrix)
 
+    image = pv.ImageData(offset=vector)
+    assert np.allclose(image.offset, vector)
+
 
 @pytest.mark.parametrize('dims', [None, (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)])
 def test_image_data_empty_init(dims):
@@ -1139,7 +1142,7 @@ def test_imagedata_direction_matrix():
 
     # Test bounds using a transformed reference box
     box = pv.Box(bounds=initial_bounds)
-    box.transform(image.index_to_physical_matrix)
+    box.transform(image.index_to_physical_matrix, inplace=True)
     expected_bounds = box.bounds
     assert np.allclose(image.bounds, expected_bounds)
 
@@ -1275,6 +1278,19 @@ def test_set_extent_width_spacing():
     )
     grid.extent = (5, 9, 0, 9, 0, 9)
     assert np.allclose(grid.x[:5], [0.0, 0.1, 0.2, 0.3, 0.4])
+
+
+def test_imagedata_offset():
+    grid = pv.ImageData()
+    offset = (1, 2, 3)
+    grid.extent = (offset[0], 9, offset[1], 9, offset[2], 9)
+    actual_dimensions = grid.dimensions
+    actual_offset = grid.offset
+    assert isinstance(actual_offset, tuple)
+    assert actual_offset == offset
+    # Test to make sure dimensions are unchanged since setting offset
+    # modifies the extent which could modify dimensions.
+    assert grid.dimensions == actual_dimensions
 
 
 def test_UnstructuredGrid_cast_to_explicit_structured_grid():

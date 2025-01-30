@@ -3682,7 +3682,13 @@ def test_transform_imagedata_warns_with_shear(uniform):
         match='The transformation matrix has a shear component which has been removed. \n'
         'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
     ):
-        uniform.transform(shear)
+        uniform.transform(shear, inplace=True)
+
+
+def test_transform_filter_inplace_default_warns(cube):
+    expected_msg = 'The default value of `inplace` for the filter `PolyData.transform` will change in the future.'
+    with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
+        _ = cube.transform(np.eye(4))
 
 
 def test_reflect_mesh_about_point(datasets):
@@ -3783,7 +3789,7 @@ def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amo
 
     # Apply transform with pyvista filter
     grid_a = grid.copy()
-    grid_a.transform(trans)
+    grid_a.transform(trans, inplace=True)
 
     # Apply transform with vtk filter
     grid_b = grid.copy()
@@ -3808,7 +3814,7 @@ def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amount
     trans_rotate_only.Update()
 
     grid_copy = grid.copy()
-    grid_copy.transform(trans_rotate_only)
+    grid_copy.transform(trans_rotate_only, inplace=True)
 
     from pyvista.core.utilities.transformations import apply_transformation_to_points
 
@@ -3819,7 +3825,7 @@ def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amount
 
 def test_translate_should_not_fail_given_none(grid):
     bounds = grid.bounds
-    grid.transform(None)
+    grid.transform(None, inplace=True)
     assert grid.bounds == bounds
 
 
@@ -3844,7 +3850,7 @@ def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
     assume(array.shape not in [(3, 3), (4, 4)])
     match = 'Shape must be one of [(3, 3), (4, 4)]'
     with pytest.raises(ValueError, match=re.escape(match)):
-        grid.transform(array)
+        grid.transform(array, inplace=True)
 
 
 @pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
@@ -4437,7 +4443,7 @@ def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
 def test_oriented_bounding_box():
     rotation = pv.transformations.axis_angle_rotation((1, 2, 3), 30)
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
-    box_mesh.transform(rotation)
+    box_mesh.transform(rotation, inplace=True)
     obb = box_mesh.oriented_bounding_box()
     assert obb.bounds == box_mesh.bounds
 
@@ -4452,7 +4458,7 @@ def test_bounding_box_return_meta(oriented, as_composite):
 
     # Transform a box manually and get its OBB
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
-    box_mesh.transform(rotation)
+    box_mesh.transform(rotation, inplace=True)
     obb, point, axes = box_mesh.bounding_box(
         oriented=oriented, return_meta=True, as_composite=as_composite
     )
@@ -4565,6 +4571,7 @@ def test_align_xyz_three_axis_directions(planar_mesh):
         )
 
 
+@pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
 def test_align_xyz_swap_axes():
     # create planar data with equal variance in x and z
     points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
@@ -4738,7 +4745,7 @@ def test_pack_labels_preference(uniform):
     assert np.array_equal(actual_shape, expected_shape)
 
 
-@pytest.mark.parametrize('coloring_mode', ['index', 'cycler', None])
+@pytest.mark.parametrize('coloring_mode', ['index', 'cycle', None])
 def test_color_labels(uniform, coloring_mode):
     default_cmap = pv.get_cmap_safe('glasbey_category10')
     original_scalars_name = uniform.active_scalars_name
@@ -4834,6 +4841,23 @@ def test_color_labels_color_type_cmap(labeled_image, color_type):
         assert np.array_equal(color, expected_color)
 
 
+LABEL_DATA = [-1, -2, 1]
+
+
+@pytest.mark.parametrize(
+    ('negative_indexing', 'cmap_index'), [(True, LABEL_DATA), (False, np.argsort(LABEL_DATA))]
+)
+def test_color_labels_negative_index(labeled_image, negative_indexing, cmap_index):
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = LABEL_DATA
+    colored = labels.color_labels('viridis', negative_indexing=negative_indexing)
+    color_array = colored.active_scalars
+
+    assert np.array_equal(color_array[0], VIRIDIS_RGB[cmap_index[0]])
+    assert np.array_equal(color_array[1], VIRIDIS_RGB[cmap_index[1]])
+    assert np.array_equal(color_array[2], VIRIDIS_RGB[cmap_index[2]])
+
+
 def test_color_labels_scalars(uniform):
     # Test active scalars
     active_before = uniform.active_scalars_name
@@ -4881,3 +4905,11 @@ def test_color_labels_invalid_input(uniform):
         uniform.color_labels([[1]])
     with pytest.raises(ValueError, match=match):
         uniform.color_labels('fake')
+
+    match = "Negative indexing is not supported with 'cycle' mode enabled."
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels(coloring_mode='cycle', negative_indexing=True)
+
+    match = 'Multi-component scalars are not supported for coloring. Scalar array Normals must be one-dimensional.'
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().color_labels(scalars='Normals')

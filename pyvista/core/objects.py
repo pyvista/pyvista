@@ -379,7 +379,7 @@ class Table(DataObject, _vtk.vtkTable):
         if isinstance(arr, str):
             arr = get_array(self, arr, preference=preference)  # type: ignore[assignment]
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
+        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)

@@ -86,7 +86,7 @@ from .volume import Volume
 from .volume_property import VolumeProperty
 from .widgets import WidgetHelper
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import BoundsTuple
     from pyvista.plotting.cube_axes_actor import CubeAxesActor
 
@@ -2226,13 +2226,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def left_button_down(self, *args):
         """Register the event for a left button down click."""
+        attr = (
+            'GetOffScreenFramebuffer'
+            if pyvista.vtk_version_info < (9, 1)
+            else 'GetRenderFramebuffer'
+        )
         if (
-            hasattr(self.render_window, 'GetOffScreenFramebuffer')
-            and not self.render_window.GetOffScreenFramebuffer().GetFBOIndex()  # type: ignore[union-attr]
+            hasattr(renwin := self.render_window, attr)
+            and not getattr(renwin, attr)().GetFBOIndex()
         ):
             # must raise a runtime error as this causes a segfault on VTK9
-            msg = 'Invoking helper with no framebuffer'
-            raise ValueError(msg)
+            raise ValueError('Invoking helper with no framebuffer')
+
         # Get 2D click location on window
         click_pos = self.iren.get_event_position()  # type: ignore[has-type]
 
@@ -3595,9 +3600,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             silhouette = self._theme.silhouette.enabled
         if silhouette:
             if isinstance(silhouette, dict):
-                self.add_silhouette(algo or mesh, **silhouette)
+                silhouette_actor = self.add_silhouette(algo or mesh, **silhouette)
             else:
-                self.add_silhouette(algo or mesh)
+                silhouette_actor = self.add_silhouette(algo or mesh)
+            silhouette_actor.user_matrix = user_matrix
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
@@ -4791,10 +4797,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             PyVista. It is functionally equivalent to directly modifying the
             scalars of a mesh in-place.
 
-            .. code:: python
+            .. code-block:: python
 
                 # Modify the points in place
-                mesh["my scalars"] = values
+                mesh['my scalars'] = values
                 # Explicitly call render if needed
                 plotter.render()
 
@@ -4869,7 +4875,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             PyVista. It is functionally equivalent to directly modifying the
             points of a mesh in-place.
 
-            .. code:: python
+            .. code-block:: python
 
                 # Modify the points in place
                 mesh.points = points

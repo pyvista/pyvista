@@ -14,7 +14,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _vtk_core as _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
 

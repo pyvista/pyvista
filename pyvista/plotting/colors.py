@@ -34,7 +34,7 @@ from pyvista.core.utilities.misc import has_module
 
 from . import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ._typing import ColorLike
 
 IPYGANY_MAP = {
@@ -1183,7 +1183,7 @@ def get_cmap_safe(cmap):
             cmap = IPYGANY_MAP[cmap]
 
         # Try colorcet first
-        if has_module('colorcet'):
+        if has_colorcet := has_module('colorcet'):
             import colorcet
 
             try:
@@ -1192,7 +1192,7 @@ def get_cmap_safe(cmap):
                 pass
 
         # Try cmocean second
-        if has_module('cmocean'):
+        if has_cmocean := has_module('cmocean'):
             import cmocean
 
             try:
@@ -1211,7 +1211,17 @@ def get_cmap_safe(cmap):
                 try:
                     cmap = colormaps[cmap]
                 except KeyError:
-                    msg = f'Invalid colormap "{cmap}"'
+                    if not has_colorcet or not has_cmocean:  # pragma: no cover
+                        if not has_colorcet and not has_cmocean:
+                            missing = '`colorcet` or `cmocean`'
+                        else:
+                            missing = '`colorcet`' if not has_colorcet else '`cmocean`'
+                        msg = (
+                            f"Colormap '{cmap}' is not recognized but may be a valid {missing} colormap.\n"
+                            f'Install {missing} and try again.'
+                        )
+                    else:
+                        msg = f"Invalid colormap '{cmap}'"
                     raise ValueError(msg) from None
 
     elif isinstance(cmap, list):

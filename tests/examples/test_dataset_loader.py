@@ -28,7 +28,7 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 
@@ -70,11 +70,7 @@ def _generate_dataset_loader_test_cases_from_module(
 
     # Collect all `download_<name> or `load_<name>` functions
     def _is_dataset_function(name, item):
-        return (
-            isinstance(item, FunctionType)
-            and name.startswith('download_')
-            or name.startswith('load_')
-        )
+        return isinstance(item, FunctionType) and name.startswith(('download_', 'load_'))
 
     dataset_functions = {
         name: item for name, item in module_members.items() if _is_dataset_function(name, item)

@@ -320,6 +320,7 @@ from vtkmodules.vtkFiltersCore import vtkPointDataToCellData as vtkPointDataToCe
 from vtkmodules.vtkFiltersCore import vtkPolyDataNormals as vtkPolyDataNormals
 from vtkmodules.vtkFiltersCore import vtkQuadricDecimation as vtkQuadricDecimation
 from vtkmodules.vtkFiltersCore import vtkResampleWithDataSet as vtkResampleWithDataSet
+from vtkmodules.vtkFiltersCore import vtkReverseSense as vtkReverseSense
 from vtkmodules.vtkFiltersCore import vtkSmoothPolyDataFilter as vtkSmoothPolyDataFilter
 from vtkmodules.vtkFiltersCore import vtkStripper as vtkStripper
 from vtkmodules.vtkFiltersCore import vtkThreshold as vtkThreshold
@@ -451,6 +452,7 @@ from vtkmodules.vtkImagingCore import vtkImageDifference as vtkImageDifference
 from vtkmodules.vtkImagingCore import vtkImageExtractComponents as vtkImageExtractComponents
 from vtkmodules.vtkImagingCore import vtkImageFlip as vtkImageFlip
 from vtkmodules.vtkImagingCore import vtkImageMirrorPad as vtkImageMirrorPad
+from vtkmodules.vtkImagingCore import vtkImageResample as vtkImageResample
 from vtkmodules.vtkImagingCore import vtkImageThreshold as vtkImageThreshold
 from vtkmodules.vtkImagingCore import vtkImageWrapPad as vtkImageWrapPad
 from vtkmodules.vtkImagingCore import vtkRTAnalyticSource as vtkRTAnalyticSource

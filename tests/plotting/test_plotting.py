@@ -26,6 +26,7 @@ import pytest
 import vtk
 
 import pyvista as pv
+from pyvista import demos
 from pyvista import examples
 from pyvista.core.errors import DeprecationError
 from pyvista.core.errors import PyVistaDeprecationWarning
@@ -40,12 +41,13 @@ from pyvista.plotting.utilities import algorithms
 from pyvista.plotting.utilities.gl_checks import uses_egl
 from tests.core.test_imagedata_filters import labeled_image  # noqa: F401
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
     from collections.abc import ItemsView
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
+
 
 HAS_IMAGEIO = True
 try:
@@ -1131,13 +1133,15 @@ def test_enable_picking_gc():
 
 def test_left_button_down():
     plotter = pv.Plotter()
-    if (
-        hasattr(plotter.ren_win, 'GetOffScreenFramebuffer')
-        and not plotter.ren_win.GetOffScreenFramebuffer().GetFBOIndex()
-    ):
-        # This only fails for VTK<9.2.3
-        with pytest.raises(ValueError):  # noqa: PT011
-            plotter.left_button_down(None, None)
+
+    attr = (
+        'GetOffScreenFramebuffer' if pyvista.vtk_version_info < (9, 1) else 'GetRenderFramebuffer'
+    )
+    if hasattr(renwin := plotter.render_window, attr):
+        if not getattr(renwin, attr)().GetFBOIndex():
+            # This only fails for VTK<9.2.3
+            with pytest.raises(ValueError, match='Invoking helper with no framebuffer'):
+                plotter.left_button_down(None, None)
     else:
         plotter.left_button_down(None, None)
     plotter.close()
@@ -1407,7 +1411,7 @@ def test_plot_texture():
 def test_plot_numpy_texture():
     """Text adding a np.ndarray texture to a plot"""
     globe = examples.load_globe()
-    texture_np = np.asarray(imageio.imread(examples.mapfile))
+    texture_np = np.asarray(imageio.v2.imread(examples.mapfile))
     plotter = pv.Plotter()
     plotter.add_mesh(globe, texture=texture_np)
 
@@ -1416,7 +1420,7 @@ def test_plot_numpy_texture():
 def test_read_texture_from_numpy():
     """Test adding a texture to a plot"""
     globe = examples.load_globe()
-    texture = numpy_to_texture(imageio.imread(examples.mapfile))
+    texture = numpy_to_texture(imageio.v2.imread(examples.mapfile))
     plotter = pv.Plotter()
     plotter.add_mesh(globe, texture=texture)
     plotter.show()
@@ -2213,6 +2217,17 @@ def test_user_matrix_mesh(sphere):
         p.add_mesh(sphere, user_matrix='invalid')
 
 
+def test_user_matrix_silhouette(airplane):
+    matrix = [[-1, 0, 0, 1], [0, 1, 0, 2], [0, 0, -1, 3], [0, 0, 0, 1]]
+    pl = pv.Plotter()
+    pl.add_mesh(
+        airplane,
+        silhouette=dict(line_width=10),
+        user_matrix=matrix,
+    )
+    pl.show()
+
+
 def test_scalar_bar_args_unmodified_add_mesh(sphere):
     sargs = {'vertical': True}
     sargs_copy = sargs.copy()
@@ -2979,7 +2994,13 @@ def test_add_text():
     not check_math_text_support(),
     reason='VTK and Matplotlib version incompatibility. For VTK<=9.2.2, MathText requires matplotlib<3.6',
 )
-def test_add_text_latex():
+@pytest.mark.filterwarnings(
+    r'ignore:Passing individual properties to FontProperties\(\):matplotlib.MatplotlibDeprecationWarning',
+    r'ignore:.*MathtextBackendBitmap.*:matplotlib.MatplotlibDeprecationWarning'
+    if pv.vtk_version_info <= (9, 1)
+    else '',
+)
+def test_add_text_latex(recwarn: pytest.WarningsRecorder):
     """Test LaTeX symbols.
 
     For VTK<=9.2.2, this requires matplotlib<3.6
@@ -4495,7 +4516,7 @@ def test_direction_objects(direction_obj_test_case):
     # Test Capsule separately based on vtk version
     if 'Capsule' in name:
         legacy_vtk = pv.vtk_version_info < (9, 3)
-        if legacy_vtk and 'legacy' not in name or not legacy_vtk and 'legacy' in name:
+        if (legacy_vtk and 'legacy' not in name) or (not legacy_vtk and 'legacy' in name):
             pytest.xfail(
                 'Test capsule separately for different vtk versions. Expected to fail if testing with wrong version.',
             )
@@ -4894,3 +4915,8 @@ def test_bitwise_and_or_of_polydata(operator):
     pl.add_mesh(result, color='lightblue')
     pl.camera_position = 'xz'
     pl.show()
+
+
+def test_plot_logo():
+    logo_plotter = demos.plot_logo(window_size=(400, 300), just_return_plotter=True)
+    logo_plotter.show()
