@@ -3013,7 +3013,7 @@ class ImageDataFilters(DataSetFilters):
 
         anti_aliasing : bool, default: False
             Enable antialiasing. This will blur the image as part of the resampling
-            to reduce image artifacts when down-sampling.
+            to reduce image artifacts when down-sampling. Has no effect when up-sampling.
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
@@ -3417,7 +3417,7 @@ class ImageDataFilters(DataSetFilters):
         else:  # pragma: no cover
             raise RuntimeError(f"Unexpected interpolation mode '{interpolation}'.")
 
-        if anti_aliasing:
+        if anti_aliasing and np.any(magnification_factors < 1.0):
             if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
                 interpolator.AntialiasingOn()
             else:
