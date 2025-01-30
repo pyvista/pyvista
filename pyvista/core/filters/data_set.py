@@ -9837,7 +9837,7 @@ class DataSetFilters:
         *,
         background_value: int | float = 0,  # noqa: PYI041
         foreground_value: int | float = 1,  # noqa: PYI041
-        reference_volume: pyvista.ImageData | pyvista.RectilinearGrid | None = None,
+        reference_volume: pyvista.ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
