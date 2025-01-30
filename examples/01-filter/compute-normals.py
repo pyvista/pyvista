@@ -9,6 +9,10 @@ Compute normals on a surface.
 
 from __future__ import annotations
 
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC_IN_DOCUMENT = True
+# sphinx_gallery_end_ignore
+
 import numpy as np
 
 # sphinx_gallery_thumbnail_number = 2
@@ -60,9 +64,7 @@ cpos = [
     (11.03829376004883, -13.642289291587957, -35.91218884207208),
     (0.19212361465657216, 0.11401076390090074, 0.9747256344254143),
 ]
-# sphinx_gallery_start_ignore
-PYVISTA_GALLERY_FORCE_STATIC = True
-# sphinx_gallery_end_ignore
+
 top.plot(cpos=cpos, color=True)
 # %%
 # .. tags:: filter
