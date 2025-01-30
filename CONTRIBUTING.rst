@@ -520,6 +520,19 @@ leverage multiple processes. Example usage:
 
    python -m pytest -n <NUMCORE> --cov pyvista
 
+When submitting a PR, it is highly recommended that all modifications are thoroughly tested.
+This is further enforced in the CI by the `codecov GitHub action <https://app.codecov.io/gh/pyvista/pyvista>`_
+which has a 90% target, ie. it ensures that 90% of the code modified in the PR is tested.
+It should be mentioned that branch coverage is measured on the CI, meaning for examples that both
+values of an ``if`` clause must be tested to ensure full coverage. For more details on branch
+coverage, please refer to the `coverage documentation <https://coverage.readthedocs.io/en/latest/branch.html>`_.
+
+If needed, code coverage can be deactivated for specific lines by adding the ``# pragma: no cover`` or
+``# pragma: no branch`` comments. See the documentation `excluding code <https://coverage.readthedocs.io/en/latest/branch.html#excluding-code>`__
+for more details.
+However, code coverage exclusion should rarely be used and has to be carefully justified in the PR thread
+if no simple alternative solution has been found.
+
 Documentation Testing
 ~~~~~~~~~~~~~~~~~~~~~
 Run all code examples in the docstrings with:
