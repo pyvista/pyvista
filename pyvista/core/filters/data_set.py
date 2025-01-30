@@ -9932,10 +9932,23 @@ class DataSetFilters:
 
         Examples
         --------
-        Load a mesh.
+        Create a voxel volume of a nut. By default, the spacing is automatically
+        estimated.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
+        >>> mesh = pv.examples.load_nut()
+        >>> vox = mesh.voxelize_volume()
+
+        Plot the mesh together with its volume.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(mesh=vox, show_edges=True)
+        >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, opacity=1)
+        >>> pl.show()
+
+        Load a mesh of a cow.
+
         >>> mesh = examples.download_cow()
 
         Create an equal density voxel volume and plot the result.
