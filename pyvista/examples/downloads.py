@@ -4851,7 +4851,7 @@ def download_action_figure(load=True, *, high_resolution=False):  # pragma: no c
     high_resolution : bool, default: False
         Set this to ``True`` to return a high-resolution version of this dataset.
         By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
-        with is returned with 95% reduction.
+        is returned with 95% reduction.
 
         .. versionadded:: 0.45
 
@@ -6729,7 +6729,7 @@ def download_black_vase(load=True, *, high_resolution=False):  # pragma: no cove
     high_resolution : bool, default: False
         Set this to ``True`` to return a high-resolution version of this dataset.
         By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
-        with is returned with 99% reduction.
+        is returned with 99% reduction.
 
         .. versionadded:: 0.45
 
@@ -6805,7 +6805,7 @@ def download_ivan_angel(load=True, *, high_resolution=False):  # pragma: no cove
     high_resolution : bool, default: False
         Set this to ``True`` to return a high-resolution version of this dataset.
         By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
-        with is returned with 99% reduction.
+        is returned with 99% reduction.
 
         .. versionadded:: 0.45
 
@@ -6886,7 +6886,7 @@ def download_bird_bath(load=True, *, high_resolution=False):  # pragma: no cover
     high_resolution : bool, default: False
         Set this to ``True`` to return a high-resolution version of this dataset.
         By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
-        with is returned with 99% reduction.
+        is returned with 99% reduction.
 
         .. versionadded:: 0.45
 
@@ -6960,7 +6960,7 @@ def download_owl(load=True, *, high_resolution=False):  # pragma: no cover
     high_resolution : bool, default: False
         Set this to ``True`` to return a high-resolution version of this dataset.
         By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
-        with is returned with 99% reduction.
+        is returned with 99% reduction.
 
         .. versionadded:: 0.45
 
@@ -7038,7 +7038,7 @@ def download_plastic_vase(load=True, *, high_resolution=False):  # pragma: no co
     high_resolution : bool, default: False
         Set this to ``True`` to return a high-resolution version of this dataset.
         By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
-        with is returned with 99% reduction.
+        is returned with 99% reduction.
 
         .. versionadded:: 0.45
 
@@ -7114,7 +7114,7 @@ def download_sea_vase(load=True, *, high_resolution=False):  # pragma: no cover
     high_resolution : bool, default: False
         Set this to ``True`` to return a high-resolution version of this dataset.
         By default, a :meth:`decimated <pyvista.PolyDataFilters.decimate>` version
-        with is returned with 99% reduction.
+        is returned with 99% reduction.
 
         .. versionadded:: 0.45
 
