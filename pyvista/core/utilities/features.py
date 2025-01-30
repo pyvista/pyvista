@@ -88,7 +88,7 @@ def voxelize(
 
     See Also
     --------
-    pyvista.voxelize_volume
+    pyvista.DataSetFilters.voxelize_volume
         Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
 
     pyvista.DataSetFilters.voxelize_binary_mask
@@ -277,7 +277,7 @@ def voxelize_volume(
 
     See Also
     --------
-    pyvista.voxelize
+    pyvista.DataSetFilters.voxelize
         Similar function that returns a :class:`pyvista.UnstructuredGrid` of
         :attr:`~pyvista.CellType.VOXEL` cells.
 

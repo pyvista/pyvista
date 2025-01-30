@@ -9415,7 +9415,7 @@ class DataSetFilters:
 
         .. note::
             This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
-            This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
+            This differs from :func:`voxelize` and :func:`voxelize_volume`
             which return meshes with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
 
