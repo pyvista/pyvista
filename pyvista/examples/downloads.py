@@ -6750,12 +6750,12 @@ def download_black_vase(load=True, high_resolution=False):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    3136652
-      N Points:   1611789
+      N Cells:    31366
+      N Points:   17337
       N Strips:   0
-      X Bounds:   -1.092e+02, 1.533e+02
-      Y Bounds:   -1.200e+02, 1.415e+02
-      Z Bounds:   1.666e+01, 4.077e+02
+      X Bounds:   -1.091e+02, 1.533e+02
+      Y Bounds:   -1.200e+02, 1.416e+02
+      Z Bounds:   1.667e+01, 4.078e+02
       N Arrays:   0
 
     .. seealso::
@@ -6831,12 +6831,13 @@ def download_ivan_angel(load=True, *, high_resolution=False):  # pragma: no cove
 
     >>> mesh
     PolyData (...)
-      N Cells:    3580454
-      N Points:   1811531
+      N Cells:    35804
+      N Points:   18412
       N Strips:   0
-      X Bounds:   -1.147e+02, 8.468e+01
-      Y Bounds:   -6.996e+01, 9.247e+01
-      Z Bounds:   -1.171e+02, 2.052e+02
+      X Bounds:   -1.146e+02, 8.470e+01
+      Y Bounds:   -6.987e+01, 9.254e+01
+      Z Bounds:   -1.166e+02, 2.052e+02
+
       N Arrays:   0
 
     .. seealso::
@@ -6851,7 +6852,7 @@ def download_ivan_angel(load=True, *, high_resolution=False):  # pragma: no cove
 
 
 _dataset_ivan_angel = _SingleFileDownloadableDatasetLoader(
-    'ivan-nikolov/Angel_decimated.zip',
+    'ivan-nikolov/Angel_decimated.vtp',
 )
 __dataset_ivan_angel_high_res = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/Angel.zip',
@@ -6907,12 +6908,12 @@ def download_bird_bath(load=True, *, high_resolution=False):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    3507935
-      N Points:   1831383
+      N Cells:    35079
+      N Points:   18796
       N Strips:   0
-      X Bounds:   -1.601e+02, 1.483e+02
-      Y Bounds:   -1.521e+02, 1.547e+02
-      Z Bounds:   -4.241e+00, 1.409e+02
+      X Bounds:   -1.600e+02, 1.482e+02
+      Y Bounds:   -1.522e+02, 1.547e+02
+      Z Bounds:   -5.491e-01, 1.408e+02
       N Arrays:   0
 
     .. seealso::
@@ -6986,12 +6987,12 @@ def download_owl(load=True, *, high_resolution=False):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    2440707
-      N Points:   1221756
+      N Cells:    24407
+      N Points:   12442
       N Strips:   0
-      X Bounds:   -5.834e+01, 7.047e+01
-      Y Bounds:   -7.006e+01, 6.658e+01
-      Z Bounds:   1.676e+00, 2.013e+02
+      X Bounds:   -5.834e+01, 7.048e+01
+      Y Bounds:   -7.005e+01, 6.657e+01
+      Z Bounds:   1.814e+00, 2.013e+02
       N Arrays:   0
 
     .. seealso::
@@ -7005,7 +7006,7 @@ def download_owl(load=True, *, high_resolution=False):  # pragma: no cover
     return _download_dataset(_dataset_owl, load=load)
 
 
-_dataset_owl = _SingleFileDownloadableDatasetLoader('ivan-nikolov/owl_decimated')
+_dataset_owl = _SingleFileDownloadableDatasetLoader('ivan-nikolov/owl_decimated.vtp')
 __dataset_owl_high_res = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/owl.zip', target_file='owl.vtp'
 )
@@ -7059,11 +7060,11 @@ def download_plastic_vase(load=True, *, high_resolution=False):  # pragma: no co
 
     >>> mesh
     PolyData (...)
-      N Cells:    3570967
-      N Points:   1796805
+      N Cells:    35708
+      N Points:   18238
       N Strips:   0
-      X Bounds:   -1.364e+02, 1.929e+02
-      Y Bounds:   -1.677e+02, 1.603e+02
+      X Bounds:   -1.364e+02, 1.928e+02
+      Y Bounds:   -1.677e+02, 1.602e+02
       Z Bounds:   1.209e+02, 4.090e+02
       N Arrays:   0
 
@@ -7135,12 +7136,12 @@ def download_sea_vase(load=True, *, high_resolution=False):  # pragma: no cover
 
     >>> mesh
     PolyData (...)
-      N Cells:    3548473
-      N Points:   1810012
+      N Cells:    35483
+      N Points:   18063
       N Strips:   0
-      X Bounds:   -1.666e+02, 1.465e+02
-      Y Bounds:   -1.742e+02, 1.384e+02
-      Z Bounds:   -1.500e+02, 2.992e+02
+      X Bounds:   -1.664e+02, 1.463e+02
+      Y Bounds:   -1.741e+02, 1.382e+02
+      Z Bounds:   -1.497e+02, 2.992e+02
       N Arrays:   0
 
     .. seealso::
@@ -7154,7 +7155,7 @@ def download_sea_vase(load=True, *, high_resolution=False):  # pragma: no cover
     return _download_dataset(_dataset_sea_vase, load=load)
 
 
-_dataset_sea_vase = _SingleFileDownloadableDatasetLoader('ivan-nikolov/seaVase_decimated')
+_dataset_sea_vase = _SingleFileDownloadableDatasetLoader('ivan-nikolov/seaVase_decimated.vtp')
 __dataset_sea_vase_high_res = _SingleFileDownloadableDatasetLoader(
     'ivan-nikolov/seaVase.zip',
     target_file='seaVase.vtp',
