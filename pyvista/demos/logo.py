@@ -24,6 +24,7 @@ import numpy as np
 import pyvista
 from pyvista import examples
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.utilities.features import _voxelize_legacy
 
 THIS_PATH = str(Path(os.path.realpath(__file__)).parent)
 
@@ -146,7 +147,7 @@ def logo_voxel(density=0.03):
         Voxelized PyVista logo as an unstructured grid.
 
     """
-    return text_3d(LOGO_TITLE, depth=0.3).voxelize(spacing=density)
+    return _voxelize_legacy(text_3d(LOGO_TITLE, depth=0.3), density)
 
 
 def logo_basic():
@@ -236,7 +237,7 @@ def plot_logo(
     plotter.add_mesh(y_mesh, color='#ffd040', smooth_shading=True)
 
     # letter 'V'
-    v_grid = mesh_letters['V'].voxelize(spacing=0.08)
+    v_grid = _voxelize_legacy(mesh_letters['V'], density=0.08)
     v_grid_atom = atomize(v_grid)
     v_grid_atom['scalars'] = v_grid_atom.points[:, 0]
     v_grid_atom_surf = v_grid_atom.extract_surface()
@@ -252,7 +253,7 @@ def plot_logo(
     )
 
     # letter 'i'
-    i_grid = mesh_letters['i'].voxelize(spacing=0.1)
+    i_grid = _voxelize_legacy(mesh_letters['i'], density=0.1)
 
     plotter.add_mesh(
         i_grid.extract_surface(),
@@ -346,7 +347,7 @@ def logo_atomized(density=0.05, scale=0.6, depth=0.05):
     mesh_letters = logo_letters(depth=depth)
     grids = []
     for letter in mesh_letters.values():
-        grid = letter.voxelize(spacing=density)
+        grid = _voxelize_legacy(letter, density=density)
         grids.append(atomize(grid, scale=scale))
 
     return grids[0].merge(grids[1:])

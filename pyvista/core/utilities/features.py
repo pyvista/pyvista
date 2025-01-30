@@ -147,6 +147,24 @@ def voxelize(
 
     """
     warnings.warn('deprecated', PyVistaDeprecationWarning)
+    return _voxelize_legacy(
+        mesh=mesh,
+        density=density,
+        check_surface=check_surface,
+        enclosed=enclosed,
+        fit_bounds=fit_bounds,
+    )
+
+
+def _voxelize_legacy(
+    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+):
+    """Voxelize mesh to UnstructuredGrid.
+
+    The public `voxelize` function is deprecated but we need to keep it for
+    generating the PyVista logo.
+
+    """
     if not pyvista.is_pyvista_dataset(mesh):
         mesh = wrap(mesh)
     if density is None:
