@@ -4838,8 +4838,8 @@ def download_action_figure(load=True, *, high_resolution=False):  # pragma: no c
 
     .. versionchanged:: 0.45
 
-        A decimated version of this dataset with # points is now returned.
-        Previously, a high-resolution version with 1.8 million points was returned.
+        A decimated version of this dataset with 31 thousand cells is now returned.
+        Previously, a high-resolution version with 630 thousand cells was returned.
         Use ``high_resolution=True`` for the high-resolution version.
 
     Parameters
@@ -6702,7 +6702,7 @@ _dataset_fea_hertzian_contact_cylinder = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_black_vase(load=True, high_resolution=False):  # pragma: no cover
+def download_black_vase(load=True, *, high_resolution=False):  # pragma: no cover
     """Download a black vase scan created by Ivan Nikolov.
 
     The dataset was downloaded from `GGG-BenchmarkSfM: Dataset for Benchmarking
@@ -6716,8 +6716,8 @@ def download_black_vase(load=True, high_resolution=False):  # pragma: no cover
 
     .. versionchanged:: 0.45
 
-        A decimated version of this dataset with # points is now returned.
-        Previously, a high-resolution version with 1.6 million points was returned.
+        A decimated version of this dataset with 31 thousand cells is now returned.
+        Previously, a high-resolution version with 3.1 million cells was returned.
         Use ``high_resolution=True`` for the high-resolution version.
 
     Parameters
@@ -6792,8 +6792,8 @@ def download_ivan_angel(load=True, *, high_resolution=False):  # pragma: no cove
 
     .. versionchanged:: 0.45
 
-        A decimated version of this dataset with # points is now returned.
-        Previously, a high-resolution version with 1.8 million points was returned.
+        A decimated version of this dataset with 36 thousand cells is now returned.
+        Previously, a high-resolution version with 3.6 million cells was returned.
         Use ``high_resolution=True`` for the high-resolution version.
 
     Parameters
@@ -6837,7 +6837,6 @@ def download_ivan_angel(load=True, *, high_resolution=False):  # pragma: no cove
       X Bounds:   -1.146e+02, 8.470e+01
       Y Bounds:   -6.987e+01, 9.254e+01
       Z Bounds:   -1.166e+02, 2.052e+02
-
       N Arrays:   0
 
     .. seealso::
@@ -6874,8 +6873,8 @@ def download_bird_bath(load=True, *, high_resolution=False):  # pragma: no cover
 
     .. versionchanged:: 0.45
 
-        A decimated version of this dataset with # points is now returned.
-        Previously, a high-resolution version with 1.8 million points was returned.
+        A decimated version of this dataset with 35 thousand cells is now returned.
+        Previously, a high-resolution version with 3.5 million cells was returned.
         Use ``high_resolution=True`` for the high-resolution version.
 
     Parameters
@@ -6948,8 +6947,8 @@ def download_owl(load=True, *, high_resolution=False):  # pragma: no cover
 
     .. versionchanged:: 0.45
 
-        A decimated version of this dataset with # points is now returned.
-        Previously, a high-resolution version with 1.2 million points was returned.
+        A decimated version of this dataset with 24 thousand cells is now returned.
+        Previously, a high-resolution version with 2.4 million cells was returned.
         Use ``high_resolution=True`` for the high-resolution version.
 
     Parameters
@@ -7026,8 +7025,8 @@ def download_plastic_vase(load=True, *, high_resolution=False):  # pragma: no co
 
     .. versionchanged:: 0.45
 
-        A decimated version of this dataset with # points is now returned.
-        Previously, a high-resolution version with 1.8 million points was returned.
+        A decimated version of this dataset with 36 thousand cells is now returned.
+        Previously, a high-resolution version with 3.6 million cells was returned.
         Use ``high_resolution=True`` for the high-resolution version.
 
     Parameters
@@ -7102,8 +7101,8 @@ def download_sea_vase(load=True, *, high_resolution=False):  # pragma: no cover
 
     .. versionchanged:: 0.45
 
-        A decimated version of this dataset with # points is now returned.
-        Previously, a high-resolution version with 1.8 million points was returned.
+        A decimated version of this dataset with 35 thousand cells is now returned.
+        Previously, a high-resolution version with 3.5 million cells was returned.
         Use ``high_resolution=True`` for the high-resolution version.
 
     Parameters
