@@ -3353,9 +3353,7 @@ class ImageDataFilters(DataSetFilters):
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
-        # Ideally vtkImageResample would directly support setting output dimensions
-        # (e.g. via SetOutputExtent) but this doesn't work, so instead we are
-        # stuck using SetMagnificationFactors to indirectly set the dimensions.
+        # Use SetMagnificationFactors to indirectly set the dimensions.
         # To compute the magnification factors we first define input (old) and output
         # (new) dimensions.
         old_dimensions = np.array(input_image.dimensions)
@@ -3381,7 +3379,7 @@ class ImageDataFilters(DataSetFilters):
                 reference_image.dimensions = dimensions_  # type: ignore[assignment]
             new_dimensions = np.array(reference_image.dimensions)
 
-        # Compute the magnification factors to use with vtkImageResample
+        # Compute the magnification factors to use with the filter
         # Note that SetMagnificationFactors will multiply the factors by the extent
         # but we want to multiply the dimensions. These values are off by one.
         singleton_dims = old_dimensions == 1
@@ -3392,8 +3390,9 @@ class ImageDataFilters(DataSetFilters):
 
         resize_filter = _vtk.vtkImageResize()
         resize_filter.SetInputData(input_image)
-        resize_filter.SetMagnificationFactors(*magnification_factors)
         resize_filter.SetResizeMethodToMagnificationFactors()
+        resize_filter.SetMagnificationFactors(*magnification_factors)
+
         # Set interpolation mode
         interpolator: _vtk.vtkAbstractImageInterpolator
         if interpolation == 'nearest':
@@ -3462,7 +3461,7 @@ class ImageDataFilters(DataSetFilters):
                     (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
                 )
                 if processing_cell_scalars:
-                    new_spacing = (size + input_image.spacing) / (output_dimensions)
+                    new_spacing = (size + input_image.spacing) / output_dimensions
                 else:
                     with np.errstate(divide='ignore', invalid='ignore'):
                         # Ignore division by zero, this is fixed with singleton_dims on the next line
