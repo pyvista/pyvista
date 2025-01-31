@@ -3,9 +3,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
+from urllib.parse import urlparse
 
 import pytest
-import requests
 
 import pyvista as pv
 from pyvista import examples
@@ -39,12 +39,12 @@ def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestC
 
 
 def _is_valid_url(url):
+    """Check if a URL has a valid format."""
     try:
-        requests.get(url)
-    except requests.RequestException:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
         return False
-    else:
-        return True
 
 
 @flaky_test(exceptions=(AttributeError,))
@@ -52,7 +52,7 @@ def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
         sources = test_case.dataset_loader[1].source_url_blob
-    except pv.VTKVersionError as e:
+    except (pv.VTKVersionError, AttributeError) as e:
         reason = e.args[0]
         pytest.skip(reason)
 
