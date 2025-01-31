@@ -119,7 +119,7 @@ jobs:
         with:
           name: docs-build
           path:
-            | # Only vtksz files in 'doc/_build/_images/' are used. Exclude all others since these files may be large.
+            | # Only vtksz files in 'doc/_build/html/_images/' are used. Exclude all others since these files may be large.
             doc/_build/html/
             !doc/_build/html/index-*.vtksz
             !doc/_build/html/api/**/*.vtksz
