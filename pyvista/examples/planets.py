@@ -5,8 +5,20 @@ from __future__ import annotations
 import numpy as np
 
 import pyvista
+from pyvista.examples._dataset_loader import _DatasetLoader
+from pyvista.examples._dataset_loader import _download_dataset
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
-from .downloads import _download_and_read
+
+def _download_dataset_texture(
+    loader: _SingleFileDownloadableDatasetLoader, load: bool, texture: bool
+):
+    dataset = _download_dataset(loader, load=load)
+    if texture:
+        from pyvista.plotting.texture import Texture
+
+        return Texture(dataset)
+    return dataset
 
 
 def _sphere_with_texture_map(radius=1.0, lat_resolution=50, lon_resolution=100):
@@ -71,11 +83,14 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_sun.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_sun = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -107,11 +122,14 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_moon.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_moon = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -143,11 +161,14 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_mercury.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_mercury = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -179,11 +200,14 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_venus.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_venus = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
@@ -215,11 +239,14 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_earth.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_earth = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -251,11 +278,14 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_mars.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_mars = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -287,11 +317,14 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_jupiter.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_jupiter = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -323,11 +356,14 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_saturn.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_saturn = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
@@ -361,6 +397,14 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
+    return _dataset_saturn_rings_disc.load(
+        inner=inner,
+        outer=outer,
+        c_res=c_res,
+    )
+
+
+def _load_saturn_rings_func(inner=0.25, outer=0.5, c_res=6):
     disc = pyvista.Disc(inner=inner, outer=outer, c_res=c_res)
     texture_coordinates = np.zeros((disc.points.shape[0], 2))
     radius = np.sqrt(disc.points[:, 0] ** 2 + disc.points[:, 1] ** 2)
@@ -368,6 +412,9 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     texture_coordinates[:, 1] = 0.0
     disc.active_texture_coordinates = texture_coordinates  # type: ignore[assignment]
     return disc
+
+
+_dataset_saturn_rings_disc = _DatasetLoader(_load_saturn_rings_func)
 
 
 def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -399,11 +446,14 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_uranus.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_uranus = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -435,11 +485,14 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_neptune.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_neptune = _DatasetLoader(_sphere_with_texture_map)
 
 
 def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -471,11 +524,14 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _sphere_with_texture_map(
+    return _dataset_pluto.load(
         radius=radius,
         lat_resolution=lat_resolution,
         lon_resolution=lon_resolution,
     )
+
+
+_dataset_pluto = _DatasetLoader(_sphere_with_texture_map)
 
 
 def download_sun_surface(texture=False, load=True):  # pragma: no cover
@@ -505,7 +561,12 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('solar_textures/sun.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_moon_surface, load=load, texture=texture)
+
+
+_dataset_sun_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/sun.jpg',
+)
 
 
 def download_moon_surface(texture=False, load=True):  # pragma: no cover
@@ -535,7 +596,12 @@ def download_moon_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('solar_textures/moon.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_moon_surface, load=load, texture=texture)
+
+
+_dataset_moon_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/moon.jpg',
+)
 
 
 def download_mercury_surface(texture=False, load=True):  # pragma: no cover
@@ -565,7 +631,12 @@ def download_mercury_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('solar_textures/mercury.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_mercury_surface, load=load, texture=texture)
+
+
+_dataset_mercury_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/mercury.jpg',
+)
 
 
 def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma: no cover
@@ -599,9 +670,18 @@ def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma
 
     """
     if atmosphere:
-        return _download_and_read('solar_textures/venus_atmosphere.jpg', load=load, texture=texture)
-    else:
-        return _download_and_read('solar_textures/venus_surface.jpg', load=load, texture=texture)
+        return _download_dataset_texture(_dataset_venus_surface, load=load, texture=texture)
+    return _download_dataset_texture(
+        __dataset_venus_surface_no_atmosphere, load=load, texture=texture
+    )
+
+
+_dataset_venus_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/venus_atmosphere.jpg',
+)
+__dataset_venus_surface_no_atmosphere = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/venus_surface.jpg',
+)
 
 
 def download_mars_surface(texture=False, load=True):  # pragma: no cover
@@ -631,7 +711,12 @@ def download_mars_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('solar_textures/mars.jpg', load=load, texture=texture)
+    return _download_dataset_texture(_dataset_mars_surface, load=load, texture=texture)
+
+
+_dataset_mars_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/mars.jpg',
+)
 
 
 def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
@@ -661,7 +746,12 @@ def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('solar_textures/jupiter.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_jupiter_surface, load=load, texture=texture)
+
+
+_dataset_jupiter_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/jupiter.jpg',
+)
 
 
 def download_saturn_surface(texture=False, load=True):  # pragma: no cover
@@ -691,7 +781,12 @@ def download_saturn_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('solar_textures/saturn.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_saturn_surface, load=load, texture=texture)
+
+
+_dataset_saturn_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/saturn.jpg',
+)
 
 
 def download_saturn_rings(texture=False, load=True):  # pragma: no cover
@@ -720,7 +815,12 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(cpos='xy')
 
     """
-    return _download_and_read('solar_textures/saturn_ring_alpha.png', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_saturn_rings, load=load, texture=texture)
+
+
+_dataset_saturn_rings = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/saturn_ring_alpha.png',
+)
 
 
 def download_uranus_surface(texture=False, load=True):  # pragma: no cover
@@ -750,7 +850,12 @@ def download_uranus_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('solar_textures/uranus.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_uranus_surface, load=load, texture=texture)
+
+
+_dataset_uranus_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/uranus.jpg',
+)
 
 
 def download_neptune_surface(texture=False, load=True):  # pragma: no cover
@@ -780,7 +885,12 @@ def download_neptune_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('solar_textures/neptune.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_neptune_surface, load=load, texture=texture)
+
+
+_dataset_neptune_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/neptune.jpg',
+)
 
 
 def download_pluto_surface(texture=False, load=True):  # pragma: no cover
@@ -810,7 +920,12 @@ def download_pluto_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_and_read('solar_textures/pluto.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_pluto_surface, load=load, texture=texture)
+
+
+_dataset_pluto_surface = _SingleFileDownloadableDatasetLoader(
+    'solar_textures/pluto.jpg',
+)
 
 
 def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
@@ -847,7 +962,12 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
     See :func:`load_mars` for another example using this dataset.
 
     """
-    return _download_and_read('planet3d-matlab/stars.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_stars_sky_background, load=load, texture=texture)
+
+
+_dataset_stars_sky_background = _SingleFileDownloadableDatasetLoader(
+    'planet3d-matlab/stars.jpg',
+)
 
 
 def download_milkyway_sky_background(texture=False, load=True):  # pragma: no cover
@@ -882,4 +1002,9 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
     >>> pl.show()
 
     """
-    return _download_and_read('planet3d-matlab/milkyway.jpg', texture=texture, load=load)
+    return _download_dataset_texture(_dataset_milkyway_sky_background, load=load, texture=texture)
+
+
+_dataset_milkyway_sky_background = _SingleFileDownloadableDatasetLoader(
+    'planet3d-matlab/milkyway.jpg',
+)

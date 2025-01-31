@@ -20,12 +20,20 @@ def pytest_generate_tests(metafunc):
     """Generate parametrized tests."""
     if 'test_case' in metafunc.fixturenames:
         # Generate a separate test case for each downloadable dataset
-        test_cases = _generate_dataset_loader_test_cases_from_module(pv.examples.downloads)
+        test_cases_downloads = _generate_dataset_loader_test_cases_from_module(
+            pv.examples.downloads
+        )
+        test_cases_planets = _generate_dataset_loader_test_cases_from_module(pv.examples.planets)
+        test_cases = [*test_cases_downloads, *test_cases_planets]
         ids = [case.dataset_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
 
 
 def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestCase):
+    if test_case.dataset_name == 'saturn_rings_disc':
+        # Special case since we have both `load_saturn_rings` and `download_saturn_rings`
+        test_case.dataset_function = ('load_saturn_rings', pv.examples.planets.load_saturn_rings)
+
     if (msg := _get_mismatch_fail_msg(test_case)) is not None:
         pytest.fail(msg)
 

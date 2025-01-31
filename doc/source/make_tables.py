@@ -1108,12 +1108,32 @@ class DatasetCard:
         header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
         # Get the corresponding function of the loader
-        try:
-            func_name = 'download_' + dataset_name
-            func = getattr(pyvista.examples.downloads, func_name)
-        except AttributeError:
+        func_name = 'download_' + dataset_name
+        func = None
+
+        # Special case
+        if 'saturn_rings' in dataset_name:
+            # Dataset names *should* be unique, regardless if `load` or `download`,
+            # but saturn rings breaks this as we have separate load and download versions
+            if dataset_name == 'load_saturn_rings_disc':
+                func = pyvista.examples.planets.load_saturn_rings
+            else:
+                func = pyvista.examples.planets.download_saturn_rings
+        else:
+            # General case - lookup the dataset function
+            if hasattr(pyvista.examples.downloads, func_name):
+                func = getattr(pyvista.examples.downloads, func_name)
+            elif hasattr(pyvista.examples.planets, func_name):
+                func = getattr(pyvista.examples.planets, func_name)
+
             func_name = 'load_' + dataset_name
-            func = getattr(pyvista.examples.examples, func_name)
+            if hasattr(pyvista.examples.examples, func_name):
+                func = getattr(pyvista.examples.examples, func_name)
+            elif hasattr(pyvista.examples.planets, func_name):
+                func = getattr(pyvista.examples.planets, func_name)
+
+        if func is None:
+            raise RuntimeError(f'Dataset function {func_name} does not exist.')
 
         # Get the card's header info
         func_ref = f':func:`~{_get_fullname(func)}`'
@@ -1498,6 +1518,7 @@ class DatasetCardFetcher:
         """Download and load all datasets and initialize a card object for each dataset."""
         cls._init_cards_from_module(pv.examples.examples)
         cls._init_cards_from_module(pv.examples.downloads)
+        cls._init_cards_from_module(pv.examples.planets)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
@@ -1929,10 +1950,13 @@ class DownloadsCarousel(DatasetGalleryCarousel):
 class PlanetsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the planets module."""
 
-    # TODO: add planets datasets
     name = 'planets_carousel'
     doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
     badge = ModuleBadge('Planets', ref='planets_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.planets)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
@@ -2232,6 +2256,7 @@ CAROUSEL_LIST = [
     AllDatasetsCarousel,
     BuiltinCarousel,
     DownloadsCarousel,
+    PlanetsCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,
