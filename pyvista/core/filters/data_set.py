@@ -9830,7 +9830,7 @@ class DataSetFilters:
         # Set the orientation of the output
         output_volume.direction_matrix = reference_volume.direction_matrix
 
-        return pyvista.wrap(output_volume)
+        return output_volume
 
     def voxelize_volume(  # type: ignore[misc]
         self: DataSet,
