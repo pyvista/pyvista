@@ -118,7 +118,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: docs-build
-          path: |  # Only vtksz files in 'doc/_build/_images/' are used. Exclude all others since these files may be large.
+          path:
+            | # Only vtksz files in 'doc/_build/_images/' are used. Exclude all others since these files may be large.
             doc/_build/html/
             !doc/_build/html/index-*.vtksz
             !doc/_build/html/api/**/*.vtksz
