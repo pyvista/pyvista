@@ -288,10 +288,8 @@ def test_voxelize(uniform):
         vox = pv.voxelize(uniform, 0.5)
     assert vox.n_cells
 
-
-def test_voxelize_filter(uniform):
-    vox = uniform.voxelize(spacing=0.5)
-    assert vox.n_cells
+    if pv._version.version_info[:2] > (0, 48):
+        raise RuntimeError('Remove this deprecated function.')
 
 
 def test_voxelize_non_uniform_density(uniform):
@@ -300,13 +298,6 @@ def test_voxelize_non_uniform_density(uniform):
     assert vox.n_cells
     with pytest.warns(pv.PyVistaDeprecationWarning):
         vox = pv.voxelize(uniform, np.array([0.5, 0.3, 0.2]))
-    assert vox.n_cells
-
-
-def test_voxelize_filter_non_uniform_spacing(uniform):
-    vox = uniform.voxelize(spacing=[0.5, 0.3, 0.2])
-    assert vox.n_cells
-    vox = uniform.voxelize(spacing=np.array([0.5, 0.3, 0.2]))
     assert vox.n_cells
 
 
@@ -321,28 +312,11 @@ def test_voxelize_invalid_density(rectilinear):
             pv.voxelize(rectilinear, {0.5, 0.3})
 
 
-def test_voxelize_filter_invalid_density(rectilinear):
-    # test error when density is not length-3
-    match = 'Array has shape (2,) which is not allowed.'
-    with pytest.raises(ValueError, match=re.escape(match)):
-        rectilinear.voxelize(spacing=[0.5, 0.3])
-    # test error when density is not an array-like
-    match = 'Object arrays are not supported.'
-    with pytest.raises(TypeError, match=match):
-        rectilinear.voxelize(spacing={0.5, 0.3})
-
-
 def test_voxelize_throws_point_cloud(hexbeam):
     mesh = pv.PolyData(hexbeam.points)
     with pytest.warns(pv.PyVistaDeprecationWarning):
         with pytest.raises(ValueError, match='must have faces'):
             pv.voxelize(mesh)
-
-
-def test_voxelize_filter_throws_point_cloud(hexbeam):
-    mesh = pv.PolyData(hexbeam.points)
-    with pytest.raises(ValueError, match='must have faces'):
-        mesh.voxelize()
 
 
 def test_voxelize_volume_default_density(uniform):
@@ -352,16 +326,14 @@ def test_voxelize_volume_default_density(uniform):
         actual = pv.voxelize_volume(uniform).n_cells
     assert actual == expected
 
+    if pv._version.version_info[:2] > (0, 48):
+        raise RuntimeError('Remove this deprecated function.')
+
 
 def test_voxelize_volume_invalid_density(rectilinear):
     with pytest.warns(pv.PyVistaDeprecationWarning):
         with pytest.raises(TypeError, match='expected number or array-like'):
             pv.voxelize_volume(rectilinear, {0.5, 0.3})
-
-
-def test_voxelize_volume_filter_invalid_density(rectilinear):
-    with pytest.raises(TypeError, match='Object arrays are not supported'):
-        rectilinear.voxelize_volume(spacing={0.5, 0.3})
 
 
 def test_voxelize_volume_no_face_mesh(rectilinear):
