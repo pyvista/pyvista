@@ -51,6 +51,10 @@ def voxelize(
 ):
     """Voxelize mesh to UnstructuredGrid.
 
+    .. deprecated:: 0.45
+
+        This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize` instead.
+
     Parameters
     ----------
     mesh : pyvista.DataSet
@@ -146,7 +150,11 @@ def voxelize(
     >>> pl.show()  # doctest:+SKIP
 
     """
-    warnings.warn('deprecated', PyVistaDeprecationWarning)
+    # Deprecated on v0.45.0, estimated removal on v0.48.0
+    warnings.warn(
+        '`pyvista.voxelize` is deprecated. Use `pyvista.DataSetFilters.voxelize` instead.',
+        PyVistaDeprecationWarning,
+    )
     return _voxelize_legacy(
         mesh=mesh,
         density=density,
@@ -244,6 +252,10 @@ def voxelize_volume(
     Creates a voxel volume that encloses the input mesh and discretizes the cells
     within the volume that intersect or are contained within the input mesh.
     ``InsideMesh``, an array in ``cell_data``, is ``1`` for cells inside and ``0`` outside.
+
+    .. deprecated:: 0.45
+
+        This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize_volume` instead.
 
     Parameters
     ----------
@@ -359,7 +371,11 @@ def voxelize_volume(
     >>> pl.show()  # doctest:+SKIP
 
     """
-    warnings.warn('deprecated', PyVistaDeprecationWarning)
+    # Deprecated on v0.45.0, estimated removal on v0.48.0
+    warnings.warn(
+        '`pyvista.voxelize_volume` is deprecated. Use `pyvista.DataSetFilters.voxelize_volume` instead.',
+        PyVistaDeprecationWarning,
+    )
     mesh = wrap(mesh)
     if density is None:
         density = mesh.length / 100
