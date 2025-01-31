@@ -4947,9 +4947,11 @@ def test_voxelize_volume(ant):
     assert np.array_equal(values, [foreground, background])
 
     # Test other keywords
-    vox = ant.voxelize_volume(cell_length_percentile=0.5)
-    assert vox.n_cells
-    vox = ant.voxelize_volume(cell_length_sample_size=100)
+    if pv.vtk_version_info >= (9, 2):
+        vox = ant.voxelize(cell_length_percentile=0.5)
+        assert vox.n_cells
+        vox = ant.voxelize(cell_length_sample_size=100)
+        assert vox.n_cells
     assert vox.n_cells
     vox = ant.voxelize_volume(mesh_length_fraction=1 / 100)
     assert vox.n_cells
@@ -4981,10 +4983,11 @@ def test_voxelize(ant):
     assert np.allclose(vox.bounds, ant.bounds)
 
     # Test other keywords
-    vox = ant.voxelize(cell_length_percentile=0.5)
-    assert vox.n_cells
-    vox = ant.voxelize(cell_length_sample_size=100)
-    assert vox.n_cells
+    if pv.vtk_version_info >= (9, 2):
+        vox = ant.voxelize(cell_length_percentile=0.5)
+        assert vox.n_cells
+        vox = ant.voxelize(cell_length_sample_size=100)
+        assert vox.n_cells
     vox = ant.voxelize(mesh_length_fraction=1 / 100)
     assert vox.n_cells
     vox = ant.voxelize(progress_bar=True)
