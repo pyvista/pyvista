@@ -120,8 +120,7 @@ jobs:
           name: docs-build
           path: |
             doc/_build/html/
-            !doc/_build/html/**/*.vtksz
-            doc/_build/html/_images/*.vtksz
+            !doc/_build/html/api/**/*.vtksz
 
       - name: Upload non-interactive HTML documentation
         if: always()
