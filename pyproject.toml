@@ -88,6 +88,7 @@ test = [
   'pytest_mock<3.15.0',
   'pyvista[pinned]',
   'scipy<1.14.2',
+  'shapely==2.0.6',
   'sphinx-book-theme<1.2.0',
   'sphinx-gallery<0.19.0',
   'sphinx<8.2.0',
