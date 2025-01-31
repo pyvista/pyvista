@@ -248,9 +248,6 @@ def _common_arg_parser(
 
     nan_color = Color(nan_color, opacity=nan_opacity, default_color=theme.nan_color)
 
-    if color is True:
-        color = theme.color
-
     if texture is False:
         texture = None
 
