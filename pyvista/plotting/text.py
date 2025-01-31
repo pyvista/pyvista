@@ -5,10 +5,13 @@ from __future__ import annotations
 import pathlib
 from pathlib import Path
 from typing import TYPE_CHECKING
+import warnings
 
 import pyvista
+from pyvista._version import version_info
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -267,11 +270,19 @@ class Label(_Prop3DMixin, Text):
     relative_position : VectorLike[float]
         Position of the text in XYZ coordinates relative to its :attr:`~pyvista.Prop3D.position`.
 
-    size : int
-        Size of the text label.
+    font_size : int, default: 50
+        Font size of the text label.
 
     prop : pyvista.TextProperty, optional
         The property of this actor.
+
+    size : int, optional
+        Font size of the text label.
+
+        .. deprecated:: 0.45
+
+            Use `font_size` instead. Maintained for backwards compatibility. Will be
+            removed in a future version.
 
     See Also
     --------
@@ -357,7 +368,7 @@ class Label(_Prop3DMixin, Text):
     """
 
     _new_attr_exceptions: ClassVar[tuple[str, ...]] = (
-        'size',
+        'font_size',
         'relative_position',
         '_relative_position',
         '_prop3d',
@@ -369,8 +380,9 @@ class Label(_Prop3DMixin, Text):
         position: VectorLike[float] = (0.0, 0.0, 0.0),
         relative_position: VectorLike[float] = (0.0, 0.0, 0.0),
         *,
-        size: int = 50,
+        font_size: int = 50,
         prop: pyvista.Property | None = None,
+        size: int | None = None,
     ):
         Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
@@ -379,7 +391,9 @@ class Label(_Prop3DMixin, Text):
         _Prop3DMixin.__init__(self)
         self.relative_position = relative_position  # type: ignore[assignment]
         self.position = position  # type: ignore[assignment]
-        self.size = size
+        self.font_size = font_size
+        if size is not None:
+            self.size = size
 
     @property
     def _label_position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -395,19 +409,46 @@ class Label(_Prop3DMixin, Text):
         valid_position = _validation.validate_array3(position)
         self.GetPositionCoordinate().SetValue(valid_position)
 
-    @property
+    @property  # type: ignore[override]
     def size(self) -> int:  # numpydoc ignore=RT01
         """Size of the text label.
+
+        .. warning::
+
+            The behavior of `size` will change in a future version. It currently
+            returns an integer with the label's font size, but will return a tuple with
+            its physical geometric size in the future. Use :attr:`font_size` instead.
 
         Notes
         -----
         The text property's font size used to control the size of the label.
 
         """
+        if version_info >= (0, 48):  # pragma: no cover
+            raise RuntimeError('Convert this deprecation warning into an error.')
+        if version_info >= (0, 49):  # pragma: no cover
+            raise RuntimeError('Remove this property.')
+
+        msg = (
+            'The behavior of `size` will change in a future version. It currently returns a float with\n'
+            "the label's font size, but will return a tuple with its physical geometric size in the future.\n"
+            'Use `font_size` instead.'
+        )
+        warnings.warn(msg, PyVistaFutureWarning)
         return self.prop.font_size
 
     @size.setter
     def size(self, size: int):
+        self.prop.font_size = size
+
+    @property
+    def font_size(self) -> int:  # numpydoc ignore=RT01
+        """Font size of the text label."""
+        return self.prop.font_size
+
+    @font_size.setter
+    def font_size(self, size: int) -> None:  # numpydoc ignore=RT01
+        """Font size of the text label."""
         self.prop.font_size = size
 
     @property

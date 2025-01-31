@@ -386,6 +386,32 @@ class Prop3D(_vtk.vtkProp3D):
         """
         return self.GetLength()
 
+    @property
+    def size(self) -> tuple[float, float, float]:
+        """Return the size of each axis of the prop's bounding box.
+
+        .. versionadded:: 0.45
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Size of each x-y-z axis.
+
+        Examples
+        --------
+        Get the size of a cube actor. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
+        by default.
+
+        >>> import pyvista as pv
+        >>> pl = pv.Plotter()
+        >>> actor = pl.add_mesh(pv.Cube())
+        >>> actor.size
+        (1.0, 1.0, 1.0)
+
+        """
+        bnds = self.bounds
+        return bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+
     def rotation_from(self, rotation: RotationLike) -> None:
         """Set the entity's orientation from a rotation.
 
@@ -592,3 +618,10 @@ class _Prop3DMixin(ABC):
         return np.linalg.norm(
             (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
         ).tolist()
+
+    @property
+    @wraps(Prop3D.size.fget)  # type: ignore[attr-defined]
+    def size(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
+        """Wrap :class:`pyvista.Prop3D.size."""
+        bnds = self.bounds
+        return bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min

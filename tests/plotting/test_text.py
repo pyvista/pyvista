@@ -47,7 +47,7 @@ def test_text_position(text):
 
 
 def test_label():
-    label = pv.Label('text', (1, 2, 3), size=42, prop=pv.Property())
+    label = pv.Label('text', (1, 2, 3), font_size=42, prop=pv.Property())
 
     assert label.input == 'text'
     label.input = 'new'
@@ -57,9 +57,9 @@ def test_label():
     label.position = (4, 5, 6)
     assert label.position == (4, 5, 6)
 
-    assert label.size == 42
-    label.size = 99
-    assert label.size == 99
+    assert label.font_size == 42
+    label.font_size = 99
+    assert label.font_size == 99
 
 
 def test_label_prop3d():
@@ -69,7 +69,15 @@ def test_label_prop3d():
     assert label.bounds == bounds
     assert label.center == position
     assert label.length == 0.0
+    assert label.font_size == 50.0
 
+    with pytest.warns(pv.PyVistaFutureWarning):
+        # Size will return a tuple in a future version and this test will fail
+        assert label.size == 50.0
+
+    with pytest.warns(pv.PyVistaFutureWarning):
+        # Size will return a tuple in a future version and this test will fail
+        assert pv.Label(size=10)
     # Test correct bounds with more complex transformations
     # Add offset along x-axis
     offset = 100

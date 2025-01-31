@@ -1233,6 +1233,31 @@ class DataSet(DataSetFilters, DataObject):
         return self.GetLength()
 
     @property
+    def size(self: Self) -> tuple[float, float, float]:
+        """Return the size of each axis of the dataset's bounding box.
+
+        .. versionadded:: 0.45
+
+        Returns
+        -------
+        tuple[float, float, float]
+            Size of each x-y-z axis.
+
+        Examples
+        --------
+        Get the size of a cube. The cube has edge lengths af ``(1.0, 1.0, 1.0)``
+        by default.
+
+        >>> import pyvista as pv
+        >>> mesh = pv.Cube()
+        >>> mesh.size
+        (1.0, 1.0, 1.0)
+
+        """
+        bnds = self.bounds
+        return bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
+
+    @property
     def center(self: Self) -> tuple[float, float, float]:
         """Return the center of the bounding box.
 
