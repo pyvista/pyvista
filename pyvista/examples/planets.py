@@ -17,7 +17,7 @@ def _download_dataset_texture(
     if texture:
         from pyvista.plotting.texture import Texture
 
-        return Texture(dataset)
+        return Texture(dataset)  # type: ignore[abstract]
     return dataset
 
 
