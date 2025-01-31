@@ -2740,6 +2740,10 @@ class PolyDataFilters(DataSetFilters):
     def flip_normals(self):
         """Flip normals of a triangular mesh by reversing the point ordering.
 
+        .. deprecated:: 0.45
+
+            This filter is deprecated. Use ``flip_faces(inplace=True)`` instead.
+
         Examples
         --------
         Flip the normals of a sphere and plot the normals before and
