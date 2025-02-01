@@ -82,6 +82,14 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
+    .. seealso::
+
+        :ref:`Sun Dataset <sun_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Sun Surface Dataset <sun_surface_dataset>`
+            Surface texture of the Sun.
+
     """
     return _dataset_sun.load(
         radius=radius,
@@ -120,6 +128,14 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> texture = examples.planets.download_moon_surface(texture=True)
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
+
+    .. seealso::
+
+        :ref:`Moon Dataset <moon_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Moon Surface Dataset <moon_surface_dataset>`
+            Surface texture of the Moon.
 
     """
     return _dataset_moon.load(
@@ -160,6 +176,14 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
+    .. seealso::
+
+        :ref:`Mercury Dataset <mercury_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Mercury Surface Dataset <mercury_surface_dataset>`
+            Surface texture of Mercury.
+
     """
     return _dataset_mercury.load(
         radius=radius,
@@ -198,6 +222,14 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> texture = examples.planets.download_venus_surface(texture=True)
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
+
+    .. seealso::
+
+        :ref:`Venus Dataset <venus_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Venus Surface Dataset <venus_surface_dataset>`
+            Surface texture of Venus.
 
     """
     return _dataset_venus.load(
@@ -238,6 +270,14 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
+    .. seealso::
+
+        :ref:`Earth Dataset <earth_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Earth Surface Dataset <earth_surface_dataset>`
+            Surface texture of the Earth.
+
     """
     return _dataset_earth.load(
         radius=radius,
@@ -276,6 +316,14 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
     >>> texture = examples.planets.download_mars_surface(texture=True)
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
+
+    .. seealso::
+
+        :ref:`Mars Dataset <mars_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Mars Surface Dataset <mars_surface_dataset>`
+            Surface texture of Mars.
 
     """
     return _dataset_mars.load(
@@ -316,6 +364,14 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
+    .. seealso::
+
+        :ref:`Jupiter Dataset <jupiter_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Jupiter Surface Dataset <jupiter_surface_dataset>`
+            Surface texture of Jupiter.
+
     """
     return _dataset_jupiter.load(
         radius=radius,
@@ -354,6 +410,20 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> texture = examples.planets.download_saturn_surface(texture=True)
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
+
+    .. seealso::
+
+        :ref:`Saturn Dataset <saturn_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Saturn Surface Dataset <saturn_surface_dataset>`
+            Surface texture of Saturn.
+
+        :ref:`Saturn Rings Dataset <saturn_rings_dataset>`
+            Load Saturn's rings as a textured disc.
+
+        :ref:`Saturn Ring Particles Dataset <saturn_ring_particles_dataset>`
+            Texture of Saturn's rings.
 
     """
     return _dataset_saturn.load(
@@ -395,6 +465,20 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     >>> texture = examples.planets.download_saturn_ring_particles(texture=True)
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
+
+    .. seealso::
+
+        :ref:`Saturn Rings Dataset <saturn_rings_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Saturn Ring Particles Dataset <saturn_ring_particles_dataset>`
+            Texture of Saturn's rings.
+
+        :ref:`Saturn Dataset <saturn_dataset>`
+            Load Saturn as a textured sphere.
+
+        :ref:`Saturn Surface Dataset <saturn_surface_dataset>`
+            Surface texture of Saturn.
 
     """
     return _dataset_saturn_rings.load(
@@ -445,6 +529,14 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
+    .. seealso::
+
+        :ref:`Uranus Dataset <uranus_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Uranus Surface Dataset <uranus_surface_dataset>`
+            Surface texture of Uranus.
+
     """
     return _dataset_uranus.load(
         radius=radius,
@@ -483,6 +575,14 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
     >>> texture = examples.planets.download_neptune_surface(texture=True)
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
+
+    .. seealso::
+
+        :ref:`Neptune Dataset <neptune_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Neptune Surface Dataset <neptune_surface_dataset>`
+            Surface texture of Neptune.
 
     """
     return _dataset_neptune.load(
@@ -523,6 +623,14 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
+    .. seealso::
+
+        :ref:`Pluto Dataset <pluto_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Pluto Surface Dataset <pluto_surface_dataset>`
+            Surface texture of Pluto.
+
     """
     return _dataset_pluto.load(
         radius=radius,
@@ -560,6 +668,14 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover
     >>> texture = examples.planets.download_sun_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
 
+    .. seealso::
+
+        :ref:`Sun Surface Dataset <sun_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Sun Dataset <sun_dataset>`
+            Load the Sun as a textured sphere.
+
     """
     return _download_dataset_texture(_dataset_sun_surface, load=load, texture=texture)
 
@@ -595,6 +711,14 @@ def download_moon_surface(texture=False, load=True):  # pragma: no cover
     >>> texture = examples.planets.download_moon_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
 
+    .. seealso::
+
+        :ref:`Moon Surface Dataset <moon_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Moon Dataset <moon_dataset>`
+            Load the Moon as a textured sphere.
+
     """
     return _download_dataset_texture(_dataset_moon_surface, load=load, texture=texture)
 
@@ -629,6 +753,14 @@ def download_mercury_surface(texture=False, load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> texture = examples.planets.download_mercury_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
+
+    .. seealso::
+
+        :ref:`Mercury Surface Dataset <mercury_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Mercury Dataset <mercury_dataset>`
+            Load Mercury as a textured sphere.
 
     """
     return _download_dataset_texture(_dataset_mercury_surface, load=load, texture=texture)
@@ -667,6 +799,14 @@ def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma
     >>> from pyvista import examples
     >>> texture = examples.planets.download_venus_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
+
+    .. seealso::
+
+        :ref:`Venus Surface Dataset <venus_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Venus Dataset <venus_dataset>`
+            Load Venus as a textured sphere.
 
     """
     if atmosphere:
@@ -710,6 +850,14 @@ def download_mars_surface(texture=False, load=True):  # pragma: no cover
     >>> texture = examples.planets.download_mars_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
 
+    .. seealso::
+
+        :ref:`Mars Surface Dataset <mars_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Mars Dataset <mars_dataset>`
+            Load Mars as a textured sphere.
+
     """
     return _download_dataset_texture(_dataset_mars_surface, load=load, texture=texture)
 
@@ -744,6 +892,14 @@ def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> texture = examples.planets.download_jupiter_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
+
+    .. seealso::
+
+        :ref:`Jupiter Surface Dataset <jupiter_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Jupiter Dataset <jupiter_dataset>`
+            Load Jupiter as a textured sphere.
 
     """
     return _download_dataset_texture(_dataset_jupiter_surface, load=load, texture=texture)
@@ -780,6 +936,20 @@ def download_saturn_surface(texture=False, load=True):  # pragma: no cover
     >>> texture = examples.planets.download_saturn_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
 
+    .. seealso::
+
+        :ref:`Saturn Surface Dataset <saturn_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Saturn Dataset <saturn_dataset>`
+            Load Saturn as a textured sphere.
+
+        :ref:`Saturn Ring Particles Dataset <saturn_ring_particles_dataset>`
+            Texture of Saturn's rings.
+
+        :ref:`Saturn Rings Dataset <saturn_rings_dataset>`
+            Load Saturn's rings as a textured disc.
+
     """
     return _download_dataset_texture(_dataset_saturn_surface, load=load, texture=texture)
 
@@ -813,6 +983,20 @@ def download_saturn_ring_particles(texture=False, load=True):  # pragma: no cove
     >>> from pyvista import examples
     >>> texture = examples.planets.download_saturn_ring_particles(texture=True)
     >>> texture.plot(cpos='xy')
+
+    .. seealso::
+
+        :ref:`Saturn Ring Particles Dataset <saturn_ring_particles_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Saturn Rings Dataset <saturn_rings_dataset>`
+            Load Saturn's rings as a textured disc.
+
+        :ref:`Saturn Surface Dataset <saturn_surface_dataset>`
+            Surface texture of Saturn.
+
+        :ref:`Saturn Dataset <saturn_dataset>`
+            Load Saturn as a textured sphere.
 
     """
     return _download_dataset_texture(_dataset_saturn_ring_particles, load=load, texture=texture)
@@ -849,6 +1033,14 @@ def download_uranus_surface(texture=False, load=True):  # pragma: no cover
     >>> texture = examples.planets.download_uranus_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
 
+    .. seealso::
+
+        :ref:`Uranus Surface Dataset <uranus_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Uranus Dataset <uranus_dataset>`
+            Load Uranus as a textured sphere.
+
     """
     return _download_dataset_texture(_dataset_uranus_surface, load=load, texture=texture)
 
@@ -884,6 +1076,14 @@ def download_neptune_surface(texture=False, load=True):  # pragma: no cover
     >>> texture = examples.planets.download_neptune_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
 
+    .. seealso::
+
+        :ref:`Neptune Surface Dataset <neptune_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Neptune Dataset <neptune_dataset>`
+            Load Neptune as a textured sphere.
+
     """
     return _download_dataset_texture(_dataset_neptune_surface, load=load, texture=texture)
 
@@ -918,6 +1118,14 @@ def download_pluto_surface(texture=False, load=True):  # pragma: no cover
     >>> from pyvista import examples
     >>> texture = examples.planets.download_pluto_surface(texture=True)
     >>> texture.plot(zoom='tight', show_axes=False)
+
+    .. seealso::
+
+        :ref:`Pluto Surface Dataset <pluto_surface_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Pluto Dataset <pluto_dataset>`
+            Load Pluto as a textured sphere.
 
     """
     return _download_dataset_texture(_dataset_pluto_surface, load=load, texture=texture)
@@ -959,7 +1167,17 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
     >>> pl.add_background_image(image_path)
     >>> pl.show()
 
-    See :func:`load_mars` for another example using this dataset.
+
+    .. seealso::
+
+        :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Mars Dataset <mars_dataset>`
+            Separate example which uses this dataset.
+
+        :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
+            Sky texture of the Milky Way galaxy.
 
     """
     return _download_dataset_texture(_dataset_stars_sky_background, load=load, texture=texture)
@@ -1000,6 +1218,14 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
     >>> image_path = examples.planets.download_milkyway_sky_background(load=False)
     >>> pl.add_background_image(image_path)
     >>> pl.show()
+
+    .. seealso::
+
+        :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
+            See this dataset in the Dataset Gallery for more info.
+
+        :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
+            Night sky stars texture.
 
     """
     return _download_dataset_texture(_dataset_milkyway_sky_background, load=load, texture=texture)
