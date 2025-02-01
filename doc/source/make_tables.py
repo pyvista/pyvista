@@ -1946,7 +1946,7 @@ class PlanetsCarousel(DatasetGalleryCarousel):
 
     name = 'planets_carousel'
     doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
-    badge = ModuleBadge('Planets', ref='planets_gallery')
+    badge = ModuleBadge('Planets', ref='modules_gallery')
 
     @classmethod
     def fetch_dataset_names(cls):
