@@ -115,7 +115,7 @@ docs = [
   'mypy==1.14.1',
   'numpydoc==1.8.0',
   'osmnx==2.0.1',
-  'pydata-sphinx-theme==0.15.4',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
+  'pydata-sphinx-theme==0.16.1',     # Do not upgrade, see https://github.com/pyvista/pyvista/pull/7095
   'pypandoc==1.15',
   'pytest-pyvista==0.1.8',
   'pytest-sphinx==0.6.3',
