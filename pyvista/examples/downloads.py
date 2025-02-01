@@ -30,6 +30,7 @@ from pathlib import Path
 from pathlib import PureWindowsPath
 import shutil
 import sys
+from typing import cast
 import warnings
 
 import numpy as np
@@ -7611,7 +7612,7 @@ _dataset_reservoir = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_whole_body_ct_male(load=True):  # pragma: no cover
+def download_whole_body_ct_male(load=True, *, high_resolution=False):  # pragma: no cover
     r"""Download a CT image of a male subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1397'`` from the TotalSegmentator dataset, version 2.0.1,
@@ -7652,11 +7653,25 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
 
         The label ids are the ids used by the included label map.
 
+    .. versionchanged:: 0.45
+
+        A downsampled version of this dataset with dimensions ``(160, 160, 273)``
+        is now returned. Previously, a high-resolution version with dimensions
+        ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
+        high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`resampled <pyvista.ImageDataFilters.resample>` version
+        with a ``0.5`` sampling rate is returned.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -7676,13 +7691,13 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     >>> ct_image = dataset['ct']
     >>> ct_image
     ImageData (...)
-      N Cells:      55561506
-      N Points:     56012800
-      X Bounds:     0.000e+00, 4.785e+02
-      Y Bounds:     0.000e+00, 4.785e+02
-      Z Bounds:     0.000e+00, 8.190e+02
-      Dimensions:   320, 320, 547
-      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Cells:      6876432
+      N Points:     6988800
+      X Bounds:     7.500e-01, 4.778e+02
+      Y Bounds:     7.500e-01, 4.778e+02
+      Z Bounds:     7.527e-01, 8.182e+02
+      Dimensions:   160, 160, 273
+      Spacing:      3.000e+00, 3.000e+00, 3.005e+00
       N Arrays:     1
 
     Get the segmentation label names and show the first three.
@@ -7723,7 +7738,7 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
     >>> _ = pl.add_volume(
     ...     ct_image,
     ...     cmap='bone',
-    ...     opacity='sigmoid_9',
+    ...     opacity='sigmoid_8',
     ...     show_scalar_bar=False,
     ... )
     >>> _ = pl.add_mesh(colored_mesh)
@@ -7750,13 +7765,15 @@ def download_whole_body_ct_male(load=True):  # pragma: no cover
             See additional examples using this dataset.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_whole_body_ct_male_high_res, load=load)
     return _download_dataset(_dataset_whole_body_ct_male, load=load)
 
 
-def _whole_body_ct_load_func(files):  # pragma: no cover
-    def _import_colors_dict():
+class _WholeBodyCTUtilities:  # pragma: no cover
+    @staticmethod
+    def import_colors_dict(module_path):
         # Import `colors` dict from downloaded `colors.py` module
-        module_path = files[1].path
         module_name = 'colors'
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         if spec is not None:
@@ -7769,56 +7786,74 @@ def _whole_body_ct_load_func(files):  # pragma: no cover
         else:
             raise RuntimeError('Unable to load colors.')
 
-    # Process the dataset to create a label map from the segmentation masks
-    dataset = files[0].load()
-    segmentations = dataset['segmentations']
-
-    # Create label map array from segmentation masks
-    # Initialize array with background values (zeros)
-    label_map_array = np.zeros((segmentations[0].n_points,), dtype=np.uint8)
-    label_names = sorted(segmentations.keys())
-    for i, name in enumerate(label_names):
-        label_map_array[segmentations[name].active_scalars == 1] = i + 1
-
-    # Add scalars to a new image
-    label_map_image = segmentations[0].copy()
-    label_map_image.clear_data()
-    label_map_image['label_map'] = label_map_array
-
-    # Add label map to dataset
-    dataset['label_map'] = label_map_image
-
-    # Add color and id mappings to dataset
-    names_to_colors = _import_colors_dict()
-    names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
-    dataset.user_dict['names_to_colors'] = names_to_colors
-    dataset.user_dict['names_to_ids'] = names_to_ids
-    dataset.user_dict['ids_to_colors'] = dict(
-        sorted({names_to_ids[name]: names_to_colors[name] for name in label_names}.items())
-    )
-
-    return dataset
-
-
-def _whole_body_ct_files_func(name):  # pragma: no cover
-    def func():
-        # Multiple files needed for read, but only one gets loaded
-        dataset = _SingleFileDownloadableDatasetLoader(
-            f'whole_body_ct/{name}.zip',
-            target_file=name,
+    @staticmethod
+    def add_metadata(dataset: pyvista.MultiBlock, colors_module_path: str):
+        # Add color and id mappings to dataset
+        segmentations = cast(pyvista.MultiBlock, dataset['segmentations'])
+        label_names = sorted(cast(list[str], segmentations.keys()))
+        names_to_colors = _WholeBodyCTUtilities.import_colors_dict(colors_module_path)
+        names_to_ids = {key: i + 1 for i, key in enumerate(label_names)}
+        dataset.user_dict['names_to_colors'] = names_to_colors
+        dataset.user_dict['names_to_ids'] = names_to_ids
+        dataset.user_dict['ids_to_colors'] = dict(
+            sorted({names_to_ids[name]: names_to_colors[name] for name in label_names}.items())
         )
-        colors = _DownloadableFile('whole_body_ct/colors.py')
-        return dataset, colors
 
-    return func
+    @staticmethod
+    def label_map_from_masks(masks: pyvista.MultiBlock):
+        # Create label map array from segmentation masks
+        # Initialize array with background values (zeros)
+        n_points = cast(pyvista.ImageData, masks[0]).n_points
+        label_map_array = np.zeros((n_points,), dtype=np.uint8)
+        label_names = sorted(cast(list[str], masks.keys()))
+        for i, name in enumerate(label_names):
+            mask = cast(pyvista.ImageData, masks[name])
+            label_map_array[mask.active_scalars == 1] = i + 1
+
+        # Add scalars to a new image
+        label_map_image = pyvista.ImageData()
+        label_map_image.copy_structure(cast(pyvista.ImageData, masks[0]))
+        label_map_image['label_map'] = label_map_array  # type: ignore[assignment]
+        return label_map_image
+
+    @staticmethod
+    def load_func(files):  # pragma: no cover
+        dataset_file, colors_module = files
+        dataset = dataset_file.load()
+
+        # Create label map and add to dataset
+        dataset['label_map'] = _WholeBodyCTUtilities.label_map_from_masks(dataset['segmentations'])
+
+        # Add metadata
+        _WholeBodyCTUtilities.add_metadata(dataset, colors_module.path)
+        return dataset
+
+    @staticmethod
+    def files_func(name):  # pragma: no cover
+        # Resampled version is saved as a multiblock
+        target_file = f'{name}.vtm' if 'resampled' in name else name
+
+        def func():
+            # Multiple files needed for read, but only one gets loaded
+            dataset = _SingleFileDownloadableDatasetLoader(
+                f'whole_body_ct/{name}.zip',
+                target_file=target_file,
+            )
+            colors = _DownloadableFile('whole_body_ct/colors.py')
+            return dataset, colors
+
+        return func
 
 
 _dataset_whole_body_ct_male = _MultiFileDownloadableDatasetLoader(
-    _whole_body_ct_files_func('s1397'), load_func=_whole_body_ct_load_func
+    _WholeBodyCTUtilities.files_func('s1397_resampled'), load_func=_WholeBodyCTUtilities.load_func
+)
+__dataset_whole_body_ct_male_high_res = _MultiFileDownloadableDatasetLoader(
+    _WholeBodyCTUtilities.files_func('s1397'), load_func=_WholeBodyCTUtilities.load_func
 )
 
 
-def download_whole_body_ct_female(load=True):  # pragma: no cover
+def download_whole_body_ct_female(load=True, *, high_resolution=False):  # pragma: no cover
     r"""Download a CT image of a female subject with 117 segmented anatomic structures.
 
     This dataset is subject ``'s1380'`` from the TotalSegmentator dataset, version 2.0.1,
@@ -7859,11 +7894,25 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
 
         The label ids are the ids used by the included label map.
 
+    .. versionchanged:: 0.45
+
+        A downsampled version of this dataset with dimensions ``(160, 160, 273)``
+        is now returned. Previously, a high-resolution version with dimensions
+        ``(320, 320, 547)`` was returned. Use ``high_resolution=True`` for the
+        high-resolution version.
+
     Parameters
     ----------
     load : bool, default: True
         Load the dataset after downloading it when ``True``.  Set this
         to ``False`` and only the filename will be returned.
+
+    high_resolution : bool, default: False
+        Set this to ``True`` to return a high-resolution version of this dataset.
+        By default, a :meth:`resampled <pyvista.ImageDataFilters.resample>` version
+        with a ``0.5`` sampling rate is returned.
+
+        .. versionadded:: 0.45
 
     Returns
     -------
@@ -7888,13 +7937,13 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
     >>> ct_image = dataset['ct']
     >>> ct_image
     ImageData (...)
-      N Cells:      55154462
-      N Points:     55603200
-      X Bounds:     0.000e+00, 4.785e+02
-      Y Bounds:     0.000e+00, 4.785e+02
-      Z Bounds:     0.000e+00, 8.130e+02
-      Dimensions:   320, 320, 543
-      Spacing:      1.500e+00, 1.500e+00, 1.500e+00
+      N Cells:      6825870
+      N Points:     6937600
+      X Bounds:     7.500e-01, 4.778e+02
+      Y Bounds:     7.500e-01, 4.778e+02
+      Z Bounds:     7.528e-01, 8.122e+02
+      Dimensions:   160, 160, 271
+      Spacing:      3.000e+00, 3.000e+00, 3.006e+00
       N Arrays:     1
 
     Get the segmentation label names and show the first three.
@@ -7962,11 +8011,16 @@ def download_whole_body_ct_female(load=True):  # pragma: no cover
             See additional examples using this dataset.
 
     """
+    if high_resolution:
+        return _download_dataset(__dataset_whole_body_ct_female_high_res, load=load)
     return _download_dataset(_dataset_whole_body_ct_female, load=load)
 
 
 _dataset_whole_body_ct_female = _MultiFileDownloadableDatasetLoader(
-    _whole_body_ct_files_func('s1380'), load_func=_whole_body_ct_load_func
+    _WholeBodyCTUtilities.files_func('s1380_resampled'), load_func=_WholeBodyCTUtilities.load_func
+)
+__dataset_whole_body_ct_female_high_res = _MultiFileDownloadableDatasetLoader(
+    _WholeBodyCTUtilities.files_func('s1380'), load_func=_WholeBodyCTUtilities.load_func
 )
 
 
