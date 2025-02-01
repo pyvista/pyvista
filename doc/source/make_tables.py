@@ -111,7 +111,7 @@ class DocTable:
     @classmethod
     def generate(cls):
         """Generate this table."""
-        print(f'generating tables... {cls.__name__}')
+        print(f'generating tables... {cls.__name__}', flush=True)
         assert cls.path is not None, f'Subclass {cls} should specify a path.'
         if isinstance(cls.path, property):
             cls.path = cls.path.fget(cls)
@@ -1537,7 +1537,7 @@ class DatasetCardFetcher:
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
                 # Load data
-                print(f'loading datasets... {dataset_name}')
+                print(f'loading datasets... {dataset_name}', flush=True)
                 try:
                     if isinstance(dataset_loader, _Downloadable):
                         dataset_loader.download()
