@@ -392,12 +392,12 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
     >>> import pyvista as pv
     >>> from pyvista import examples
     >>> mesh = examples.planets.load_saturn_rings()
-    >>> texture = examples.planets.download_saturn_rings(texture=True)
+    >>> texture = examples.planets.download_saturn_ring_particles(texture=True)
     >>> image_path = examples.planets.download_stars_sky_background(load=False)
     >>> mesh.plot(texture=texture, background=image_path)
 
     """
-    return _dataset_saturn_rings_disc.load(
+    return _dataset_saturn_rings.load(
         inner=inner,
         outer=outer,
         c_res=c_res,
@@ -414,7 +414,7 @@ def _load_saturn_rings_func(inner=0.25, outer=0.5, c_res=6):
     return disc
 
 
-_dataset_saturn_rings_disc = _DatasetLoader(_load_saturn_rings_func)
+_dataset_saturn_rings = _DatasetLoader(_load_saturn_rings_func)
 
 
 def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no cover
@@ -789,7 +789,7 @@ _dataset_saturn_surface = _SingleFileDownloadableDatasetLoader(
 )
 
 
-def download_saturn_rings(texture=False, load=True):  # pragma: no cover
+def download_saturn_ring_particles(texture=False, load=True):  # pragma: no cover
     """Download the texture of Saturn's rings.
 
     Textures obtained from `Solar Textures
@@ -811,14 +811,14 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
     Examples
     --------
     >>> from pyvista import examples
-    >>> texture = examples.planets.download_saturn_rings(texture=True)
+    >>> texture = examples.planets.download_saturn_ring_particles(texture=True)
     >>> texture.plot(cpos='xy')
 
     """
-    return _download_dataset_texture(_dataset_saturn_rings, load=load, texture=texture)
+    return _download_dataset_texture(_dataset_saturn_ring_particles, load=load, texture=texture)
 
 
-_dataset_saturn_rings = _SingleFileDownloadableDatasetLoader(
+_dataset_saturn_ring_particles = _SingleFileDownloadableDatasetLoader(
     'solar_textures/saturn_ring_alpha.png',
 )
 

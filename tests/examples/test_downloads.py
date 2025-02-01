@@ -3,9 +3,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from pathlib import PureWindowsPath
-from urllib.parse import urlparse
 
 import pytest
+import requests
 
 import pyvista as pv
 from pyvista import examples
@@ -30,21 +30,17 @@ def pytest_generate_tests(metafunc):
 
 
 def test_dataset_loader_name_matches_download_name(test_case: DatasetLoaderTestCase):
-    if test_case.dataset_name == 'saturn_rings_disc':
-        # Special case since we have both `load_saturn_rings` and `download_saturn_rings`
-        test_case.dataset_function = ('load_saturn_rings', pv.examples.planets.load_saturn_rings)
-
     if (msg := _get_mismatch_fail_msg(test_case)) is not None:
         pytest.fail(msg)
 
 
 def _is_valid_url(url):
-    """Check if a URL has a valid format."""
     try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-    except ValueError:
+        requests.get(url)
+    except requests.RequestException:
         return False
+    else:
+        return True
 
 
 @flaky_test(exceptions=(AttributeError,))

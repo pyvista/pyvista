@@ -57,7 +57,6 @@ if TYPE_CHECKING:
 
     from pyvista.plotting.colors import Color
 
-
 # Paths to directories in which resulting rst files and images are stored.
 CHARTS_TABLE_DIR = 'api/plotting/charts'
 CHARTS_IMAGE_DIR = 'images/charts'
@@ -1112,29 +1111,19 @@ class DatasetCard:
         # Get the corresponding function of the loader
         func = None
 
-        # Special case
-        if 'saturn_rings' in dataset_name:
-            # Dataset names *should* be unique, regardless if `load` or `download`,
-            # but saturn rings breaks this as we have separate load and download versions
-            if dataset_name == 'load_saturn_rings_disc':
-                func = pyvista.examples.planets.load_saturn_rings
-            else:
-                func = pyvista.examples.planets.download_saturn_rings
+        # Check if starts with `download`
+        func_name = 'download_' + dataset_name
+        if hasattr(pyvista.examples.downloads, func_name):
+            func = getattr(pyvista.examples.downloads, func_name)
+        elif hasattr(pyvista.examples.planets, func_name):
+            func = getattr(pyvista.examples.planets, func_name)
         else:
-            # General case - lookup the dataset function
-            # Check if starts with `download`
-            func_name = 'download_' + dataset_name
-            if hasattr(pyvista.examples.downloads, func_name):
-                func = getattr(pyvista.examples.downloads, func_name)
+            # Check if starts with `load`
+            func_name = 'load_' + dataset_name
+            if hasattr(pyvista.examples.examples, func_name):
+                func = getattr(pyvista.examples.examples, func_name)
             elif hasattr(pyvista.examples.planets, func_name):
                 func = getattr(pyvista.examples.planets, func_name)
-            else:
-                # Check if starts with `load`
-                func_name = 'load_' + dataset_name
-                if hasattr(pyvista.examples.examples, func_name):
-                    func = getattr(pyvista.examples.examples, func_name)
-                elif hasattr(pyvista.examples.planets, func_name):
-                    func = getattr(pyvista.examples.planets, func_name)
 
         if func is None:
             raise RuntimeError(f'Dataset function {func_name} does not exist.')
@@ -1522,7 +1511,7 @@ class DatasetCardFetcher:
         """Download and load all datasets and initialize a card object for each dataset."""
         cls._init_cards_from_module(pv.examples.examples)
         cls._init_cards_from_module(pv.examples.downloads)
-        # cls._init_cards_from_module(pv.examples.planets)
+        cls._init_cards_from_module(pv.examples.planets)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
@@ -1952,16 +1941,16 @@ class DownloadsCarousel(DatasetGalleryCarousel):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.downloads)
 
 
-# class PlanetsCarousel(DatasetGalleryCarousel):
-#     """Class to generate a carousel with cards from the planets module."""
-#
-#     name = 'planets_carousel'
-#     doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
-#     badge = ModuleBadge('Planets', ref='planets_gallery')
-#
-#     @classmethod
-#     def fetch_dataset_names(cls):
-#         return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.planets)
+class PlanetsCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the planets module."""
+
+    name = 'planets_carousel'
+    doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
+    badge = ModuleBadge('Planets', ref='planets_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.planets)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
@@ -2261,7 +2250,7 @@ CAROUSEL_LIST = [
     AllDatasetsCarousel,
     BuiltinCarousel,
     DownloadsCarousel,
-    # PlanetsCarousel,
+    PlanetsCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,
