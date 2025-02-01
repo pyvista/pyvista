@@ -90,6 +90,9 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
         :ref:`Sun Surface Dataset <sun_surface_dataset>`
             Surface texture of the Sun.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _dataset_sun.load(
         radius=radius,
@@ -136,6 +139,9 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
 
         :ref:`Moon Surface Dataset <moon_surface_dataset>`
             Surface texture of the Moon.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _dataset_moon.load(
@@ -184,6 +190,9 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
         :ref:`Mercury Surface Dataset <mercury_surface_dataset>`
             Surface texture of Mercury.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _dataset_mercury.load(
         radius=radius,
@@ -230,6 +239,9 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
 
         :ref:`Venus Surface Dataset <venus_surface_dataset>`
             Surface texture of Venus.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _dataset_venus.load(
@@ -278,6 +290,9 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
         :ref:`Earth Surface Dataset <earth_surface_dataset>`
             Surface texture of the Earth.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _dataset_earth.load(
         radius=radius,
@@ -325,6 +340,9 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
         :ref:`Mars Surface Dataset <mars_surface_dataset>`
             Surface texture of Mars.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _dataset_mars.load(
         radius=radius,
@@ -371,6 +389,9 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
         :ref:`Jupiter Surface Dataset <jupiter_surface_dataset>`
             Surface texture of Jupiter.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _dataset_jupiter.load(
@@ -424,6 +445,9 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
 
         :ref:`Saturn Ring Particles Dataset <saturn_ring_particles_dataset>`
             Texture of Saturn's rings.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _dataset_saturn.load(
@@ -479,6 +503,9 @@ def load_saturn_rings(inner=0.25, outer=0.5, c_res=6):  # pragma: no cover
 
         :ref:`Saturn Surface Dataset <saturn_surface_dataset>`
             Surface texture of Saturn.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _dataset_saturn_rings.load(
@@ -537,6 +564,9 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
         :ref:`Uranus Surface Dataset <uranus_surface_dataset>`
             Surface texture of Uranus.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _dataset_uranus.load(
         radius=radius,
@@ -583,6 +613,9 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
         :ref:`Neptune Surface Dataset <neptune_surface_dataset>`
             Surface texture of Neptune.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _dataset_neptune.load(
@@ -631,6 +664,9 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
         :ref:`Pluto Surface Dataset <pluto_surface_dataset>`
             Surface texture of Pluto.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _dataset_pluto.load(
         radius=radius,
@@ -676,6 +712,9 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover
         :ref:`Sun Dataset <sun_dataset>`
             Load the Sun as a textured sphere.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _download_dataset_texture(_dataset_sun_surface, load=load, texture=texture)
 
@@ -719,6 +758,9 @@ def download_moon_surface(texture=False, load=True):  # pragma: no cover
         :ref:`Moon Dataset <moon_dataset>`
             Load the Moon as a textured sphere.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _download_dataset_texture(_dataset_moon_surface, load=load, texture=texture)
 
@@ -761,6 +803,9 @@ def download_mercury_surface(texture=False, load=True):  # pragma: no cover
 
         :ref:`Mercury Dataset <mercury_dataset>`
             Load Mercury as a textured sphere.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_mercury_surface, load=load, texture=texture)
@@ -807,6 +852,9 @@ def download_venus_surface(atmosphere=True, texture=False, load=True):  # pragma
 
         :ref:`Venus Dataset <venus_dataset>`
             Load Venus as a textured sphere.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     if atmosphere:
@@ -858,6 +906,9 @@ def download_mars_surface(texture=False, load=True):  # pragma: no cover
         :ref:`Mars Dataset <mars_dataset>`
             Load Mars as a textured sphere.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _download_dataset_texture(_dataset_mars_surface, load=load, texture=texture)
 
@@ -900,6 +951,9 @@ def download_jupiter_surface(texture=False, load=True):  # pragma: no cover
 
         :ref:`Jupiter Dataset <jupiter_dataset>`
             Load Jupiter as a textured sphere.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_jupiter_surface, load=load, texture=texture)
@@ -950,6 +1004,9 @@ def download_saturn_surface(texture=False, load=True):  # pragma: no cover
         :ref:`Saturn Rings Dataset <saturn_rings_dataset>`
             Load Saturn's rings as a textured disc.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _download_dataset_texture(_dataset_saturn_surface, load=load, texture=texture)
 
@@ -998,6 +1055,9 @@ def download_saturn_ring_particles(texture=False, load=True):  # pragma: no cove
         :ref:`Saturn Dataset <saturn_dataset>`
             Load Saturn as a textured sphere.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _download_dataset_texture(_dataset_saturn_ring_particles, load=load, texture=texture)
 
@@ -1040,6 +1100,9 @@ def download_uranus_surface(texture=False, load=True):  # pragma: no cover
 
         :ref:`Uranus Dataset <uranus_dataset>`
             Load Uranus as a textured sphere.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_uranus_surface, load=load, texture=texture)
@@ -1084,6 +1147,9 @@ def download_neptune_surface(texture=False, load=True):  # pragma: no cover
         :ref:`Neptune Dataset <neptune_dataset>`
             Load Neptune as a textured sphere.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _download_dataset_texture(_dataset_neptune_surface, load=load, texture=texture)
 
@@ -1126,6 +1192,9 @@ def download_pluto_surface(texture=False, load=True):  # pragma: no cover
 
         :ref:`Pluto Dataset <pluto_dataset>`
             Load Pluto as a textured sphere.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_pluto_surface, load=load, texture=texture)
@@ -1179,6 +1248,9 @@ def download_stars_sky_background(texture=False, load=True):  # pragma: no cover
         :ref:`Milkyway Sky Background Dataset <milkyway_sky_background_dataset>`
             Sky texture of the Milky Way galaxy.
 
+        :ref:`planets_example`
+            Example plot of the solar system.
+
     """
     return _download_dataset_texture(_dataset_stars_sky_background, load=load, texture=texture)
 
@@ -1226,6 +1298,9 @@ def download_milkyway_sky_background(texture=False, load=True):  # pragma: no co
 
         :ref:`Stars Sky Background Dataset <stars_sky_background_dataset>`
             Night sky stars texture.
+
+        :ref:`planets_example`
+            Example plot of the solar system.
 
     """
     return _download_dataset_texture(_dataset_milkyway_sky_background, load=load, texture=texture)
