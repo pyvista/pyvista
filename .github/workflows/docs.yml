@@ -118,9 +118,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: docs-build
-          path: |
-            doc/_build/html/
-            !doc/_build/html/api/**/*.vtksz
+          path: doc/_build/html/
 
       - name: Upload non-interactive HTML documentation
         if: always()
