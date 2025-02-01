@@ -561,7 +561,7 @@ def download_sun_surface(texture=False, load=True):  # pragma: no cover
     >>> texture.plot(zoom='tight', show_axes=False)
 
     """
-    return _download_dataset_texture(_dataset_moon_surface, load=load, texture=texture)
+    return _download_dataset_texture(_dataset_sun_surface, load=load, texture=texture)
 
 
 _dataset_sun_surface = _SingleFileDownloadableDatasetLoader(
