@@ -374,18 +374,21 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         Load a mesh with active scalars and split it into two separate meshes.
-
-        >>> import pyvista as pv
-        >>> a = pv.Wavelet().clip(invert=True)
-        >>> b = pv.Wavelet().clip(invert=False)
+        
+        >>> mesh = pv.Wavelet()
+        >>> mesh.active_scalars_name
+        'RTData'
+        
+        >>> a = mesh.clip(invert=True)
+        >>> b = mesh.clip(invert=False)
 
         Enable color cycling and set ``color=True`` to force the meshes to be colored with the
         cycler's colors.
 
         >>> pv.global_theme.color_cycler = 'default'
         >>> pl = pv.Plotter()
-        >>> pl.add_mesh(a, color=True)
-        >>> pl.add_mesh(b, color=True)
+        >>> _ = pl.add_mesh(a, color=True)
+        >>> _ = pl.add_mesh(b, color=True)
         >>> pl.show()
 
         """
