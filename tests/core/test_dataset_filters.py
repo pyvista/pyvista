@@ -5088,7 +5088,7 @@ def test_voxelize_volume(ant):
     if pv.vtk_version_info >= (9, 2):
         vox = ant.voxelize(cell_length_percentile=0.5)
         assert vox.n_cells
-        vox = ant.voxelize(cell_length_sample_size=100)
+        vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
         assert vox.n_cells
     assert vox.n_cells
     vox = ant.voxelize_volume(mesh_length_fraction=1 / 100)
@@ -5124,7 +5124,7 @@ def test_voxelize(ant):
     if pv.vtk_version_info >= (9, 2):
         vox = ant.voxelize(cell_length_percentile=0.5)
         assert vox.n_cells
-        vox = ant.voxelize(cell_length_sample_size=100)
+        vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
         assert vox.n_cells
     vox = ant.voxelize(mesh_length_fraction=1 / 100)
     assert vox.n_cells
