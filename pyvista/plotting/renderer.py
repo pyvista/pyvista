@@ -374,11 +374,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         Load a mesh with active scalars and split it into two separate meshes.
-        
+
         >>> mesh = pv.Wavelet()
         >>> mesh.active_scalars_name
         'RTData'
-        
+
         >>> a = mesh.clip(invert=True)
         >>> b = mesh.clip(invert=False)
 
