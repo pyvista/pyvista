@@ -37,6 +37,7 @@ from .utilities.helpers import wrap
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from collections.abc import Iterator
+    from typing import Literal
 
     from ._typing_core import NumpyArray
 
@@ -171,7 +172,13 @@ class MultiBlock(
             if not is_pyvista_dataset(block):
                 self.SetBlock(i, wrap(block))
 
-    def recursive_iterator(self: MultiBlock, *, skip_none: bool = True) -> Iterator[DataSet | None]:
+    def recursive_iterator(
+        self: MultiBlock,
+        *,
+        skip_none: bool = True,
+        contents: Literal['names', 'blocks', 'items'] = 'blocks',
+        prepend_names: bool = False,
+    ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
         """Iterate over all nested datasets recursively.
 
         .. versionadded:: 0.45
@@ -181,25 +188,41 @@ class MultiBlock(
         skip_none : bool, default: True
             Do not include ``None`` blocks in the iterator.
 
+        contents : 'keys', 'blocks', 'items', default: 'blocks'
+            Values to include in the iterator.
+
+            - ``'names'``: return an iterator with nested block names (i.e. :meth:`keys`).
+            - ``'blocks'``: return an iterator with nested blocks.
+            - ``'items'``: return an iterator with nested ``(name, block)`` pairs.
+
+        prepend_names : bool, default: False
+            Prepend any parent block names to the child block names. This option
+            only applies when ``contents`` is ``'names'`` or ``'items'``.
+
+        Returns
+        -------
+        Iterator
+            Iterator of block names, blocks, or name/block pairs depending on ``contents``.
+
         Examples
         --------
         Load a :class:`MultiBlock` with nested datasets.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> dataset = examples.download_biplane()
+        >>> multi = examples.download_biplane()
 
         The dataset has eight :class:`MultiBlock` blocks.
 
-        >>> dataset.n_blocks
+        >>> multi.n_blocks
         8
 
-        >>> all(isinstance(block, pv.MultiBlock) for block in dataset)
+        >>> all(isinstance(block, pv.MultiBlock) for block in multi)
         True
 
         Get the iterator and show the count of all recursively nested datasets.
 
-        >>> iterator = dataset.recursive_iterator()
+        >>> iterator = multi.recursive_iterator()
         >>> iterator
         <generator object MultiBlock.recursive_iterator at ...>
 
@@ -209,17 +232,64 @@ class MultiBlock(
         By default, ``None`` blocks are excluded and all items are :class:`~pyvista.DataSet`
         objects.
 
-        >>> all(isinstance(item, pv.DataSet) for item in dataset.recursive_iterator())
+        >>> all(isinstance(item, pv.DataSet) for item in multi.recursive_iterator())
         True
 
+        Apply a filter inplace to all recursively nested datasets.
+
+        >>> [dataset.clip_scalar(inplace=True) for dataset in multi.recursive_iterator())
+
         """
-        for block in self:
+        _validation.check_contains(
+            ['keys', 'blocks', 'items'], must_contain=contents, name='contents'
+        )
+        for key, block in zip(self.keys(), self):
             if skip_none and block is None:
                 continue
             elif isinstance(block, MultiBlock):
-                yield from block.recursive_iterator(skip_none=skip_none)
+                yield from block.recursive_iterator(skip_none=skip_none, contents=contents)
             else:
-                yield block
+                if contents == 'keys':
+                    yield key
+                elif contents == 'blocks':
+                    yield block
+                elif contents == 'items':
+                    yield key, block
+                else:  # pragma: no cover
+                    raise RuntimeError(f"Unexpected contents '{contents}'")
+
+    def flatten(
+        self, name_mode: Literal['preserve', 'prepend', 'reset'] = 'preserve'
+    ) -> MultiBlock:
+        """Flatten this :class:`MultiBlock`.
+
+        Parameters
+        ----------
+        name_mode : 'preserve' | 'prepend' | 'reset', default: 'preserve'
+            Mode for naming keys in the flattened output.
+
+            - ``'preserve'``: The key names of all blocks are preserved.
+            - ``'prepend'``: Preserve the key names and prepend the parent's name
+              to each block.
+            - ``'reset'``: Reset the block names to default values.
+
+        Returns
+        -------
+        MultiBlock
+            Flattened ``MultiBlock``.
+
+        """
+        _validation.check_contains(
+            ['preserve', 'prepend', 'reset'], must_contain=name_mode, name='name_mode'
+        )
+        output = MultiBlock()
+        for name, block in self.recursive_iterator(contents='items', skip_none=False):
+            if name_mode == 'reset':
+                name = None
+            # TODO:
+            # elif name_mode == 'prepend':
+            output.append(block, name)
+        return output
 
     @property
     def bounds(self: MultiBlock) -> BoundsTuple:
