@@ -287,7 +287,7 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
         :ref:`Earth Dataset <earth_dataset>`
             See this dataset in the Dataset Gallery for more info.
 
-        :ref:`Earth Surface Dataset <earth_surface_dataset>`
+        :ref:`Globe Texture Dataset <globe_texture_dataset>`
             Surface texture of the Earth.
 
         :ref:`planets_example`
