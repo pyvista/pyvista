@@ -351,7 +351,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         renderer.
 
         .. note::
-            If a mesh has scalar data, set ``color=True`` in the call to :meth:`add_mesh`
+            If a mesh has scalar data, set ``color=True`` in the call to :meth:`~pyvista.Plotter.add_mesh`
             to color the mesh with the next color in the cycler. Otherwise the mesh's
             scalars are used to color the mesh by default.
 
