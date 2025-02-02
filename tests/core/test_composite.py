@@ -916,7 +916,18 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
     assert None in iterator_list
     assert all(isinstance(item, pv.DataSet) or item is None for item in iterator_list)
 
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(contents='names')
+    assert all(isinstance(item, str) for item in iterator)
+
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(contents='items')
+    for name, block in iterator:
+        assert isinstance(name, str)
+        assert isinstance(block, pv.DataSet) or block is None
+
 
 def test_flatten(multiblock_all_with_nested_and_none):
     flat = multiblock_all_with_nested_and_none.flatten()
     assert all(isinstance(item, pv.DataSet) or item is None for item in flat)
+
+    flat = multiblock_all_with_nested_and_none.flatten(contents='names')
+    assert all(isinstance(item, str) for item in flat)

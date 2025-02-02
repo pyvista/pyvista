@@ -241,22 +241,23 @@ class MultiBlock(
 
         """
         _validation.check_contains(
-            ['keys', 'blocks', 'items'], must_contain=contents, name='contents'
+            ['names', 'blocks', 'items'], must_contain=contents, name='contents'
         )
-        for key, block in zip(self.keys(), self):
+        for name, block in zip(self.keys(), self):
             if skip_none and block is None:
                 continue
             elif isinstance(block, MultiBlock):
                 yield from block.recursive_iterator(skip_none=skip_none, contents=contents)
+                # yield from zip(itertools.repeat(key), block.recursive_iterator(skip_none=skip_none, contents=contents))
             else:
-                if contents == 'keys':
-                    yield key
+                if contents == 'names':
+                    yield name
                 elif contents == 'blocks':
                     yield block
                 elif contents == 'items':
-                    yield key, block
+                    yield name, block
                 else:  # pragma: no cover
-                    raise RuntimeError(f"Unexpected contents '{contents}'")
+                    raise RuntimeError(f"Unexpected contents '{contents}'.")
 
     def flatten(
         self, name_mode: Literal['preserve', 'prepend', 'reset'] = 'preserve'
