@@ -13,7 +13,6 @@ import pyvista as pv
 from pyvista.plotting import system_supports_plotting
 
 # these are set here because we only need them for plotting tests
-pv.global_theme.load_theme(pv.plotting.themes._TestingTheme())
 pv.OFF_SCREEN = True
 SKIP_PLOTTING = not system_supports_plotting()
 
