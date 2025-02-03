@@ -1111,19 +1111,17 @@ class DatasetCard:
         # Get the corresponding function of the loader
         func = None
 
-        # Check if starts with `download`
+        # Get `download` function from downloads.py or planets.py
         func_name = 'download_' + dataset_name
         if hasattr(pyvista.examples.downloads, func_name):
             func = getattr(pyvista.examples.downloads, func_name)
         elif hasattr(pyvista.examples.planets, func_name):
             func = getattr(pyvista.examples.planets, func_name)
         else:
-            # Check if starts with `load`
+            # Get `load` function from examples.py
             func_name = 'load_' + dataset_name
             if hasattr(pyvista.examples.examples, func_name):
                 func = getattr(pyvista.examples.examples, func_name)
-            elif hasattr(pyvista.examples.planets, func_name):
-                func = getattr(pyvista.examples.planets, func_name)
 
         if func is None:
             raise RuntimeError(f'Dataset function {func_name} does not exist.')

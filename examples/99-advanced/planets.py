@@ -58,7 +58,7 @@ saturn_texture = examples.planets.download_saturn_surface(texture=True)
 inner = 60268.0 + 7000.0
 outer = 60268.0 + 80000.0
 saturn_rings = examples.planets.load_saturn_rings(inner=inner, outer=outer, c_res=50)
-saturn_rings_texture = examples.planets.download_saturn_ring_particles(texture=True)
+saturn_rings_texture = examples.planets.download_saturn_rings(texture=True)
 uranus = examples.planets.load_uranus(radius=25559.0)
 uranus_texture = examples.planets.download_uranus_surface(texture=True)
 neptune = examples.planets.load_neptune(radius=24764.0)

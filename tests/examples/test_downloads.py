@@ -24,6 +24,10 @@ def pytest_generate_tests(metafunc):
             pv.examples.downloads
         )
         test_cases_planets = _generate_dataset_loader_test_cases_from_module(pv.examples.planets)
+        # Exclude `load` functions
+        test_cases_planets = [
+            case for case in test_cases_planets if case.dataset_function[0].startswith('download')
+        ]
         test_cases = [*test_cases_downloads, *test_cases_planets]
         ids = [case.dataset_name for case in test_cases]
         metafunc.parametrize('test_case', test_cases, ids=ids)
@@ -48,7 +52,7 @@ def test_dataset_loader_source_url_blob(test_case: DatasetLoaderTestCase):
     try:
         # Skip test if not loadable
         sources = test_case.dataset_loader[1].source_url_blob
-    except (pv.VTKVersionError, AttributeError) as e:
+    except pv.VTKVersionError as e:
         reason = e.args[0]
         pytest.skip(reason)
 
