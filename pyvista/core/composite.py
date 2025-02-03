@@ -288,7 +288,7 @@ class MultiBlock(
         )
         output = MultiBlock()
         iterator = self.recursive_iterator(contents='items', skip_none=False)
-        for name, block in cast(Iterator[tuple[str | None, DataSet | None]], iterator):
+        for name, block in cast(Iterator[tuple[Union[str, None], Union[DataSet, None]]], iterator):
             if name_mode == 'reset':
                 name = None
             # TODO:
