@@ -22,10 +22,10 @@ warped = sphere.warp_by_vector()
 
 p = pv.Plotter(shape=(1, 2))
 p.subplot(0, 0)
-p.add_text("Before warp")
+p.add_text('Before warp')
 p.add_mesh(sphere, color='white')
 p.subplot(0, 1)
-p.add_text("After warp")
+p.add_text('After warp')
 p.add_mesh(warped, color='white')
 p.show()
 

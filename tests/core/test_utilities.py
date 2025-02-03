@@ -6,14 +6,16 @@ import json
 import os
 from pathlib import Path
 import pickle
+import platform
 import re
 import shutil
-import sys
 from unittest import mock
 import warnings
 
 import numpy as np
 import pytest
+from pytest_cases import parametrize
+from pytest_cases import parametrize_with_cases
 import vtk
 
 import pyvista as pv
@@ -34,6 +36,7 @@ from pyvista.core.utilities.arrays import vtk_id_list_to_array
 from pyvista.core.utilities.docs import linkcode_resolve
 from pyvista.core.utilities.fileio import get_ext
 from pyvista.core.utilities.helpers import is_inside_bounds
+from pyvista.core.utilities.misc import _classproperty
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.misc import check_valid_vector
 from pyvista.core.utilities.misc import has_module
@@ -42,6 +45,8 @@ from pyvista.core.utilities.observers import Observer
 from pyvista.core.utilities.points import vector_poly_data
 from pyvista.core.utilities.transform import Transform
 from pyvista.plotting.prop3d import _orientation_as_rotation_matrix
+from pyvista.plotting.widgets import _parse_interaction_event
+from tests.conftest import NUMPY_VERSION_INFO
 
 
 @pytest.fixture
@@ -50,7 +55,7 @@ def transform():
 
 
 def test_version():
-    assert "major" in str(pv.vtk_version_info)
+    assert 'major' in str(pv.vtk_version_info)
     ver = vtk.vtkVersion()
     assert ver.GetVTKMajorVersion() == pv.vtk_version_info.major
     assert ver.GetVTKMinorVersion() == pv.vtk_version_info.minor
@@ -90,9 +95,9 @@ def test_createvectorpolydata():
 @pytest.mark.parametrize(
     ('path', 'target_ext'),
     [
-        ("/data/mesh.stl", ".stl"),
-        ("/data/image.nii.gz", '.nii.gz'),
-        ("/data/other.gz", ".gz"),
+        ('/data/mesh.stl', '.stl'),
+        ('/data/image.nii.gz', '.nii.gz'),
+        ('/data/other.gz', '.gz'),
     ],
 )
 def test_get_ext(path, target_ext):
@@ -117,7 +122,7 @@ def test_read(tmpdir, use_pathlib):
         obj = fileio.read(filename)
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.npy'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.npy'))
     arr = np.random.default_rng().random((10, 10))
     np.save(filename, arr)
     with pytest.raises(IOError):  # noqa: PT011
@@ -177,7 +182,7 @@ def test_read_force_ext_wrong_extension(tmpdir):
     fname = tmpdir / 'airplane.vtu'
     ex.load_airplane().cast_to_unstructured_grid().save(fname)
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+        warnings.simplefilter('ignore')
         data = fileio.read(fname, force_ext='.vts')
     assert data.n_points == 0
 
@@ -186,7 +191,7 @@ def test_read_force_ext_wrong_extension(tmpdir):
     # the returned dataset is empty
     fname = ex.planefile
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+        warnings.simplefilter('ignore')
         data = fileio.read(fname, force_ext='.vtm')
     assert len(data) == 0
 
@@ -350,10 +355,10 @@ def test_voxelize_fit_bounds(function, uniform):
 def test_report():
     report = pv.Report(gpu=True)
     assert report is not None
-    assert "GPU Details : None" not in report.__repr__()
+    assert 'GPU Details : None' not in report.__repr__()
     report = pv.Report(gpu=False)
     assert report is not None
-    assert "GPU Details : None" in report.__repr__()
+    assert 'GPU Details : None' in report.__repr__()
 
 
 def test_line_segments_from_points():
@@ -406,7 +411,7 @@ def test_transform_vectors_sph_to_cart():
     lon = np.arange(0.0, 360.0, 40.0)  # longitude
     lat = np.arange(0.0, 181.0, 60.0)  # colatitude
     lev = [1]  # elevation (radius)
-    u, v = np.meshgrid(lon, lat, indexing="ij")
+    u, v = np.meshgrid(lon, lat, indexing='ij')
     w = u**2 - v**2
     uu, vv, ww = pv.transform_vectors_sph_to_cart(lon, lat, lev, u, v, w)
     assert np.allclose(
@@ -456,10 +461,10 @@ def test_vtkmatrix_to_from_array():
 def test_assert_empty_kwargs():
     kwargs = {}
     assert assert_empty_kwargs(**kwargs)
-    kwargs = {"foo": 6}
+    kwargs = {'foo': 6}
     with pytest.raises(TypeError):
         assert_empty_kwargs(**kwargs)
-    kwargs = {"foo": 6, "goo": "bad"}
+    kwargs = {'foo': 6, 'goo': 'bad'}
     with pytest.raises(TypeError):
         assert_empty_kwargs(**kwargs)
 
@@ -481,29 +486,29 @@ def test_progress_monitor():
 
 
 def test_observer():
-    msg = "KIND: In PATH, line 0\nfoo (ADDRESS): ALERT"
+    msg = 'KIND: In PATH, line 0\nfoo (ADDRESS): ALERT'
     obs = Observer()
-    ret = obs.parse_message("foo")
-    assert ret[3] == "foo"
+    ret = obs.parse_message('foo')
+    assert ret[3] == 'foo'
     ret = obs.parse_message(msg)
-    assert ret[3] == "ALERT"
-    for kind in ["WARNING", "ERROR"]:
-        obs.log_message(kind, "foo")
+    assert ret[3] == 'ALERT'
+    for kind in ['WARNING', 'ERROR']:
+        obs.log_message(kind, 'foo')
     # Pass positionally as that's what VTK will do
     obs(None, None, msg)
     assert obs.has_event_occurred()
-    assert obs.get_message() == "ALERT"
+    assert obs.get_message() == 'ALERT'
     assert obs.get_message(etc=True) == msg
 
     alg = vtk.vtkSphereSource()
     alg.GetExecutive()
     obs.observe(alg)
-    with pytest.raises(RuntimeError, match="algorithm"):
+    with pytest.raises(RuntimeError, match='algorithm'):
         obs.observe(alg)
 
 
 def test_check_valid_vector():
-    with pytest.raises(ValueError, match="length three"):
+    with pytest.raises(ValueError, match='length three'):
         check_valid_vector([0, 1])
     check_valid_vector([0, 1, 2])
 
@@ -617,7 +622,7 @@ def test_axis_angle_rotation():
 
 
 @pytest.mark.parametrize(
-    ("axis", "angle", "times"),
+    ('axis', 'angle', 'times'),
     [
         ([1, 0, 0], 90, 4),
         ([1, 0, 0], 180, 2),
@@ -675,13 +680,13 @@ def test_reflection():
 
 
 def test_merge(sphere, cube, datasets):
-    with pytest.raises(TypeError, match="Expected a sequence"):
+    with pytest.raises(TypeError, match='Expected a sequence'):
         pv.merge(None)
 
-    with pytest.raises(ValueError, match="Expected at least one"):
+    with pytest.raises(ValueError, match='Expected at least one'):
         pv.merge([])
 
-    with pytest.raises(TypeError, match="Expected pyvista.DataSet"):
+    with pytest.raises(TypeError, match='Expected pyvista.DataSet'):
         pv.merge([None, sphere])
 
     # check polydata
@@ -1007,8 +1012,12 @@ CASE_3 = (  # non-coplanar points
     ],
 )
 
+is_arm_mac = platform.system() == 'Darwin' and platform.machine() == 'arm64'
 
-@pytest.mark.skipif(sys.version_info < (3, 9), reason='Different results for some tests.')
+
+@pytest.mark.skipif(
+    NUMPY_VERSION_INFO < (1, 26) or is_arm_mac, reason='Different results for some tests.'
+)
 @pytest.mark.parametrize(
     ('points', 'expected_axes'),
     [CASE_0, CASE_1, CASE_2, CASE_3],
@@ -1051,6 +1060,8 @@ def test_principal_axes_return_std():
     assert np.allclose(ratios_in, ratios_out, atol=0.02)
 
 
+@pytest.mark.filterwarnings('ignore:Mean of empty slice:RuntimeWarning')
+@pytest.mark.filterwarnings('ignore:invalid value encountered in divide:RuntimeWarning')
 def test_principal_axes_empty():
     axes = principal_axes(np.empty((0, 3)))
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
@@ -1337,10 +1348,10 @@ def test_transform_rotate_vector(transform):
     assert np.allclose(identity, np.eye(4))
 
 
-def test_transform_concatenate_vtkmatrix(transform):
+def test_transform_compose_vtkmatrix(transform):
     scale_array = np.diag((1, 2, 3, 1))
     vtkmatrix = pv.vtkmatrix_from_array(scale_array)
-    transform.concatenate(vtkmatrix)
+    transform.compose(vtkmatrix)
     actual = transform.matrix
     expected = scale_array
     assert np.array_equal(actual, expected)
@@ -1363,38 +1374,48 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
-@pytest.mark.parametrize('copy', [True, False])
-@pytest.mark.parametrize(
-    ('obj', 'return_self', 'return_type', 'return_dtype'),
-    [
-        (list(VECTOR), False, np.ndarray, float),
-        (VECTOR, False, np.ndarray, float),
-        (np.array(VECTOR), False, np.ndarray, float),
-        (np.array([VECTOR]), False, np.ndarray, float),
-        (np.array(VECTOR, dtype=float), True, np.ndarray, float),
-        (np.array([VECTOR], dtype=float), True, np.ndarray, float),
-        (pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32),
-        (pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32),
-        (pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float),
-        (
+class CasesTransformApply:
+    def case_list_int(self):
+        return list(VECTOR), False, np.ndarray, float
+
+    def case_tuple_int(self):
+        return VECTOR, False, np.ndarray, float
+
+    def case_array1d_int(self):
+        return np.array(VECTOR), False, np.ndarray, float
+
+    def case_array2d_int(self):
+        return np.array([VECTOR]), False, np.ndarray, float
+
+    def case_array1d_float(self):
+        return np.array(VECTOR, dtype=float), True, np.ndarray, float
+
+    def case_array2d_float(self):
+        return np.array([VECTOR], dtype=float), True, np.ndarray, float
+
+    @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
+    def case_polydata_float32(self):
+        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
+
+    @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
+    def case_polydata_int(self):
+        return pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32
+
+    def case_polydata_float(self):
+        return pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float
+
+    def case_multiblock_float(self):
+        return (
             pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
             True,
             pv.MultiBlock,
             float,
-        ),
-    ],
-    ids=[
-        'list-int',
-        'tuple-int',
-        'array1d-int',
-        'array2d-int',
-        'array1d-float',
-        'array2d-float',
-        'polydata-float32',
-        'polydata-int',
-        'polydata-float',
-        'multiblock-float',
-    ],
+        )
+
+
+@parametrize(copy=[True, False])
+@parametrize_with_cases(
+    ('obj', 'return_self', 'return_type', 'return_dtype'), cases=CasesTransformApply
 )
 def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
     def _get_points_from_object(obj_):
@@ -1479,7 +1500,7 @@ def test_transform_multiply_mode_override(transform, transformed_actor, object_m
     transform.translate(transformed_actor.position, multiply_mode=override_mode)
 
     # Apply user matrix
-    transform.concatenate(transformed_actor.user_matrix, multiply_mode=override_mode)
+    transform.compose(transformed_actor.user_matrix, multiply_mode=override_mode)
 
     # Check result
     transform_matrix = transform.matrix
@@ -1534,7 +1555,7 @@ def test_transform_chain_methods():
         .scale(ones)
         .translate(zeros)
         .rotate(eye3)
-        .concatenate(eye4)
+        .compose(eye4)
         .invert()
         .post_multiply()
         .pre_multiply()
@@ -1543,12 +1564,12 @@ def test_transform_chain_methods():
     assert np.array_equal(matrix, eye4)
 
 
-def test_transform_add():
+def test_transform_mul():
     scale = Transform().scale(SCALE)
     translate = Transform().translate(VECTOR)
 
     transform = pv.Transform().post_multiply().translate(VECTOR).scale(SCALE)
-    transform_add = translate + scale
+    transform_add = translate * scale
     assert np.array_equal(transform_add.matrix, transform.matrix)
 
     # Validate with numpy matmul
@@ -1556,18 +1577,15 @@ def test_transform_add():
     assert np.array_equal(transform_add.matrix, matrix_numpy)
 
 
-@pytest.mark.parametrize(
-    'other', [VECTOR, Transform().translate(VECTOR), Transform().translate(VECTOR).matrix]
-)
-def test_transform_add_other(other):
+def test_transform_add():
     transform_base = pv.Transform().post_multiply().scale(SCALE)
     # Translate with `translate` and `+`
     transform_translate = transform_base.copy().translate(VECTOR)
-    transform_add = transform_base + other
+    transform_add = transform_base + VECTOR
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
     # Test multiply mode override to ensure post-multiply is always used
-    transform_add = transform_base.pre_multiply() + other
+    transform_add = transform_base.pre_multiply() + VECTOR
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
 
@@ -1583,16 +1601,19 @@ def test_transform_radd():
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
 
-@pytest.mark.parametrize('scale_factor', [SCALE, (SCALE, SCALE, SCALE)])
-def test_transform_mul(scale_factor):
+@pytest.mark.parametrize(
+    'other',
+    [SCALE, (SCALE, SCALE, SCALE), Transform().scale(SCALE), Transform().scale(SCALE).matrix],
+)
+def test_transform_mul_other(other):
     transform_base = pv.Transform().post_multiply().translate(VECTOR)
     # Scale with `scale` and `*`
-    transform_scale = transform_base.copy().scale(scale_factor)
-    transform_mul = transform_base * scale_factor
+    transform_scale = transform_base.copy().scale(SCALE)
+    transform_mul = transform_base * other
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
     # Test multiply mode override to ensure post-multiply is always used
-    transform_mul = transform_base.pre_multiply() * scale_factor
+    transform_mul = transform_base.pre_multiply() * other
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
 
@@ -1610,34 +1631,17 @@ def test_transform_rmul(scale_factor):
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
 
-def test_transform_matmul():
-    scale = Transform().scale(SCALE)
-    translate = Transform().translate(VECTOR)
-
-    transform = pv.Transform().pre_multiply().translate(VECTOR).scale(SCALE)
-    transform_matmul = translate @ scale
-    assert np.array_equal(transform_matmul.matrix, transform.matrix)
-
-    # Test multiply mode override to ensure pre-multiply is always used
-    transform_matmul = translate.post_multiply() @ scale.post_multiply()
-    assert np.array_equal(transform_matmul.matrix, transform.matrix)
-
-    # Validate with numpy matmul
-    matrix_numpy = translate.matrix @ scale.matrix
-    assert np.array_equal(transform_matmul.matrix, matrix_numpy)
-
-
 def test_transform_add_raises():
     match = (
         "Unsupported operand value(s) for +: 'Transform' and 'int'\n"
-        "The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape."
+        'The right-side argument must be a length-3 vector.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Transform() + 1
 
     match = (
         "Unsupported operand type(s) for +: 'Transform' and 'dict'\n"
-        "The right-side argument must be transform-like."
+        'The right-side argument must be a length-3 vector.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.Transform() + {}
@@ -1646,14 +1650,14 @@ def test_transform_add_raises():
 def test_transform_radd_raises():
     match = (
         "Unsupported operand value(s) for +: 'int' and 'Transform'\n"
-        "The left-side argument must be a length-3 vector."
+        'The left-side argument must be a length-3 vector.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         1 + pv.Transform()
 
     match = (
         "Unsupported operand type(s) for +: 'dict' and 'Transform'\n"
-        "The left-side argument must be a length-3 vector."
+        'The left-side argument must be a length-3 vector.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         {} + pv.Transform()
@@ -1662,14 +1666,14 @@ def test_transform_radd_raises():
 def test_transform_rmul_raises():
     match = (
         "Unsupported operand value(s) for *: 'tuple' and 'Transform'\n"
-        "The left-side argument must be a single number or a length-3 vector."
+        'The left-side argument must be a single number or a length-3 vector.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         (1, 2, 3, 4) * pv.Transform()
 
     match = (
         "Unsupported operand type(s) for *: 'dict' and 'Transform'\n"
-        "The left-side argument must be a single number or a length-3 vector."
+        'The left-side argument must be a single number or a length-3 vector.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         {} * pv.Transform()
@@ -1678,33 +1682,17 @@ def test_transform_rmul_raises():
 def test_transform_mul_raises():
     match = (
         "Unsupported operand value(s) for *: 'Transform' and 'tuple'\n"
-        "The right-side argument must be a single number or a length-3 vector."
+        'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Transform() * (1, 2, 3, 4)
 
     match = (
         "Unsupported operand type(s) for *: 'Transform' and 'dict'\n"
-        "The right-side argument must be a single number or a length-3 vector."
+        'The right-side argument must be transform-like.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.Transform() * {}
-
-
-def test_transform_matmul_raises():
-    match = (
-        "Unsupported operand value(s) for @: 'Transform' and 'tuple'\n"
-        "The right-side argument must be transform-like."
-    )
-    with pytest.raises(ValueError, match=re.escape(match)):
-        pv.Transform() @ (1, 2, 3, 4)
-
-    match = (
-        "Unsupported operand type(s) for @: 'Transform' and 'dict'\n"
-        "The right-side argument must be transform-like."
-    )
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.Transform() @ {}
 
 
 @pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
@@ -1719,7 +1707,7 @@ def test_transform_copy(multiply_mode):
 
 def test_transform_repr(transform):
     def _repr_no_first_line(trans):
-        return "\n".join(repr(trans).split('\n')[1:])
+        return '\n'.join(repr(trans).split('\n')[1:])
 
     # Test compact format with no unnecessary spacing
     repr_ = _repr_no_first_line(transform)
@@ -1732,7 +1720,7 @@ def test_transform_repr(transform):
     )
 
     # Test with floats which have many decimals
-    transform.concatenate(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
+    transform.compose(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
     repr_ = _repr_no_first_line(transform)
     assert repr_ == (
         '  Num Transformations: 1\n'
@@ -1741,3 +1729,124 @@ def test_transform_repr(transform):
         '            [ 0.        ,  0.        ,  1.        ,  0.        ],\n'
         '            [ 0.        ,  0.        ,  0.        ,  1.        ]]'
     )
+
+
+values = (0.1, 0.2, 0.3)
+SHEAR = np.eye(3)
+SHEAR[0, 1] = values[0]
+SHEAR[1, 0] = values[0]
+SHEAR[0, 2] = values[1]
+SHEAR[2, 0] = values[1]
+SHEAR[1, 2] = values[2]
+SHEAR[2, 1] = values[2]
+
+
+@pytest.mark.parametrize('do_shear', [True, False])
+@pytest.mark.parametrize('do_scale', [True, False])
+@pytest.mark.parametrize('do_reflection', [True, False])
+@pytest.mark.parametrize('do_rotate', [True, False])
+@pytest.mark.parametrize('do_translate', [True, False])
+def test_transform_decompose(transform, do_shear, do_scale, do_reflection, do_rotate, do_translate):
+    if do_shear:
+        transform.compose(SHEAR)
+    if do_scale:
+        transform.scale(VECTOR)
+    if do_reflection:
+        transform.scale(-1)
+    if do_rotate:
+        transform.rotate(ROTATION)
+    if do_translate:
+        transform.translate(VECTOR)
+
+    T, R, N, S, K = transform.decompose()
+
+    assert isinstance(T, np.ndarray)
+    assert isinstance(R, np.ndarray)
+    assert isinstance(N, np.ndarray)
+    assert isinstance(S, np.ndarray)
+    assert isinstance(K, np.ndarray)
+
+    expected_translation = VECTOR if do_translate else np.zeros((3,))
+    expected_rotation = ROTATION if do_rotate else np.eye(3)
+    expected_reflection = -1 if do_reflection else 1
+    expected_scale = VECTOR if do_scale else np.ones((3,))
+    expected_shear = SHEAR if do_shear else np.eye(3)
+
+    # Test decomposed translation and reflection always matches input exactly
+    assert np.allclose(T, expected_translation)
+    assert np.allclose(N, expected_reflection)
+    # Test rotation, scale, and shear always matches input exactly unless
+    # scale and shear and both specified
+    is_exact_decomposition = not (do_scale and do_shear)
+    assert np.allclose(R, expected_rotation) == is_exact_decomposition
+    assert np.allclose(S, expected_scale) == is_exact_decomposition
+    assert np.allclose(K, expected_shear) == is_exact_decomposition
+
+    # Test composition from decomposed elements matches input
+    T, R, N, S, K = transform.decompose(homogeneous=True)
+    recomposed = pv.Transform([T, R, N, S, K], multiply_mode='pre')
+    assert np.allclose(recomposed.matrix, transform.matrix)
+
+
+@pytest.mark.parametrize('homogeneous', [True, False])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_transform_decompose_dtype(dtype, homogeneous):
+    matrix = np.eye(4).astype(dtype)
+    T, R, N, S, K = transformations.decomposition(matrix, homogeneous=homogeneous)
+    assert np.issubdtype(T.dtype, dtype)
+    assert np.issubdtype(R.dtype, dtype)
+    assert np.issubdtype(N.dtype, dtype)
+    assert np.issubdtype(S.dtype, dtype)
+    assert np.issubdtype(K.dtype, dtype)
+
+
+@pytest.mark.parametrize(
+    ('event', 'expected'),
+    [
+        ('end', vtk.vtkCommand.EndInteractionEvent),
+        ('start', vtk.vtkCommand.StartInteractionEvent),
+        ('always', vtk.vtkCommand.InteractionEvent),
+        (vtk.vtkCommand.InteractionEvent,) * 2,
+        (vtk.vtkCommand.EndInteractionEvent,) * 2,
+        (vtk.vtkCommand.StartInteractionEvent,) * 2,
+    ],
+)
+def test_parse_interaction_event(
+    event: str | vtk.vtkCommand.EventIds,
+    expected: vtk.vtkCommand.EventIds,
+):
+    assert _parse_interaction_event(event) == expected
+
+
+def test_parse_interaction_event_raises_str():
+    with pytest.raises(
+        ValueError,
+        match='Expected.*start.*end.*always.*foo was given',
+    ):
+        _parse_interaction_event('foo')
+
+
+def test_parse_interaction_event_raises_wrong_type():
+    with pytest.raises(
+        TypeError,
+        match='.*either a str or.*vtk.vtkCommand.EventIds.*int.* was given',
+    ):
+        _parse_interaction_event(1)
+
+
+def test_classproperty():
+    magic_number = 42
+
+    @no_new_attr
+    class Foo:
+        @_classproperty
+        def prop(cls):
+            return magic_number
+
+    assert Foo.prop == magic_number
+    assert Foo().prop == magic_number
+
+    with pytest.raises(TypeError, match='object is not callable'):
+        Foo.prop()
+    with pytest.raises(TypeError, match='object is not callable'):
+        Foo().prop()

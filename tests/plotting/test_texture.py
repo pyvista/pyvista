@@ -165,7 +165,7 @@ def test_numpy_to_texture():
 @pytest.mark.parametrize('as_str', [True, False])
 @pytest.mark.parametrize('ndim', [3, 4])
 def test_save_ply_texture_array(sphere, ndim, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.ply'))
 
     texture = np.ones((sphere.n_points, ndim), np.uint8)
     texture[:, 2] = np.arange(sphere.n_points)[::-1]
@@ -182,7 +182,7 @@ def test_save_ply_texture_array(sphere, ndim, as_str, tmpdir):
 
 @pytest.mark.parametrize('as_str', [True, False])
 def test_save_ply_texture_array_catch(sphere, as_str, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.ply'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.ply'))
 
     texture = np.ones((sphere.n_points, 3), np.float32)
     if as_str:
@@ -225,9 +225,9 @@ def test_texture_coordinates():
 
 def test_multiple_texture_coordinates():
     mesh = examples.load_airplane()
-    mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
-    mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
-    assert not np.allclose(mesh["tex_a"], mesh["tex_b"])
+    mesh.texture_map_to_plane(inplace=True, name='tex_a', use_bounds=False)
+    mesh.texture_map_to_plane(inplace=True, name='tex_b', use_bounds=True)
+    assert not np.allclose(mesh['tex_a'], mesh['tex_b'])
 
 
 def test_inplace_no_overwrite_texture_coordinates():

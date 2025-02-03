@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -12,11 +13,7 @@ from pyvista import examples
 from pyvista.plotting.helpers import view_vectors
 from pyvista.report import GPUInfo
 
-HAS_IMAGEIO = True
-try:
-    import imageio  # noqa: F401
-except ModuleNotFoundError:
-    HAS_IMAGEIO = False
+HAS_IMAGEIO = bool(importlib.util.find_spec('imageio'))
 
 
 @pytest.mark.skip_plotting
@@ -83,7 +80,7 @@ def test_get_sg_image_scraper():
 
 
 def test_skybox(tmpdir):
-    path = str(tmpdir.mkdir("tmpdir"))
+    path = str(tmpdir.mkdir('tmpdir'))
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     filenames = []
     for suffix in sets:
@@ -115,7 +112,7 @@ def test_view_vectors():
         assert isinstance(viewup, np.ndarray)
         assert np.array_equal(viewup.shape, (3,))
 
-    with pytest.raises(ValueError, match="Unexpected value for direction"):
+    with pytest.raises(ValueError, match='Unexpected value for direction'):
         view_vectors('invalid')
 
 
@@ -141,7 +138,7 @@ def gif_file(tmpdir):
     return filename
 
 
-@pytest.mark.skipif(not HAS_IMAGEIO, reason="Requires imageio")
+@pytest.mark.skipif(not HAS_IMAGEIO, reason='Requires imageio')
 def test_gif_reader(gif_file):
     reader = pv.get_reader(gif_file)
     assert isinstance(reader, pv.GIFReader)
@@ -160,3 +157,5 @@ def test_gif_reader(gif_file):
         data_name = f'frame{i}'
         new_grid.point_data.set_array(data, data_name)
         assert np.allclose(grid[data_name], new_grid[data_name])
+
+    img.close()

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Tuple
 from typing import cast
 
 import numpy as np
@@ -36,11 +35,11 @@ def _validate_axes(axes):
     """
     axes = np.array(axes)
     if axes.shape != (3, 3):
-        raise ValueError("`axes` must be a (3, 3) array.")
+        raise ValueError('`axes` must be a (3, 3) array.')
 
     axes = axes / np.linalg.norm(axes, axis=1, keepdims=True)
     if not np.allclose(np.cross(axes[0], axes[1]), axes[2]):
-        raise ValueError("`axes` do not follow the right hand rule.")
+        raise ValueError('`axes` do not follow the right hand rule.')
 
     return axes
 
@@ -48,7 +47,7 @@ def _validate_axes(axes):
 def _check_callable(func, name='callback'):
     """Check if a variable is callable."""
     if func and not callable(func):
-        raise TypeError(f"`{name}` must be a callable, not {type(func)}.")
+        raise TypeError(f'`{name}` must be a callable, not {type(func)}.')
     return func
 
 
@@ -144,7 +143,7 @@ class AffineWidget3D:
     Notes
     -----
     After interacting with the actor, the transform will be stored within
-    :attr:`pyvista.Actor.user_matrix` but will not be applied to the
+    :attr:`pyvista.Prop3D.user_matrix` but will not be applied to the
     dataset. Use this matrix in conjunction with
     :func:`pyvista.DataSetFilters.transform` to transform the dataset.
 
@@ -175,10 +174,10 @@ class AffineWidget3D:
         plotter,
         actor,
         origin=None,
-        start=True,
+        start: bool = True,
         scale=0.15,
         line_radius=0.02,
-        always_visible=True,
+        always_visible: bool = True,
         axes_colors=None,
         axes=None,
         release_callback=None,
@@ -193,7 +192,7 @@ class AffineWidget3D:
         self._axes_inv = np.eye(4)
         self._pl = plotter
         self._main_actor = actor
-        self._selected_actor = None
+        self._selected_actor: pyvista.Actor | None = None
         self._init_position = None
         self._mouse_move_observer = None
         self._left_press_observer = None
@@ -203,8 +202,8 @@ class AffineWidget3D:
             self._main_actor.user_matrix = np.eye(4)
         self._cached_matrix = self._main_actor.user_matrix
 
-        self._arrows = []
-        self._circles = []
+        self._arrows = []  # type: ignore[var-annotated]
+        self._circles = []  # type: ignore[var-annotated]
         self._pressing_down = False
         origin = origin if origin else actor.center
         self._origin = np.array(origin)
@@ -365,14 +364,14 @@ class AffineWidget3D:
                     angle = -angle
 
                 trans = _vtk.vtkTransform()
-                trans.Translate(self._origin)
+                trans.Translate(self._origin)  # type: ignore[call-overload]
                 trans.RotateWXYZ(
                     angle,
                     self._axes[index][0],
                     self._axes[index][1],
                     self._axes[index][2],
                 )
-                trans.Translate(-self._origin)
+                trans.Translate(-self._origin)  # type: ignore[call-overload]
                 trans.Update()
                 rot_matrix = pyvista.array_from_vtkmatrix(trans.GetMatrix())
                 matrix = rot_matrix @ self._cached_matrix
@@ -445,7 +444,7 @@ class AffineWidget3D:
         return self._axes[:3, :3]
 
     @axes.setter
-    def axes(self, axes):  # numpydoc ignore=GL08
+    def axes(self, axes):
         mat = np.eye(4)
         mat[:3, :3] = _validate_axes(axes)
         mat[:3, -1] = self.origin
@@ -470,10 +469,10 @@ class AffineWidget3D:
             Widget origin.
 
         """
-        return cast(Tuple[float, float, float], tuple(self._origin))
+        return cast(tuple[float, float, float], tuple(self._origin))
 
     @origin.setter
-    def origin(self, value):  # numpydoc ignore=GL08
+    def origin(self, value):
         value = np.array(value)
         diff = value - self._origin
 
@@ -491,16 +490,16 @@ class AffineWidget3D:
         if not self._pl._picker_in_use:
             self._pl.enable_mesh_picking(show_message=False, show=False, picker='hardware')
         self._mouse_move_observer = self._pl.iren.add_observer(
-            "MouseMoveEvent",
+            'MouseMoveEvent',
             self._move_callback,
         )
         self._left_press_observer = self._pl.iren.add_observer(
-            "LeftButtonPressEvent",
+            'LeftButtonPressEvent',
             self._press_callback,
             interactor_style_fallback=False,
         )
         self._left_release_observer = self._pl.iren.add_observer(
-            "LeftButtonReleaseEvent",
+            'LeftButtonReleaseEvent',
             self._release_callback,
             interactor_style_fallback=False,
         )

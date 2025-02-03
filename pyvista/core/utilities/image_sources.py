@@ -10,8 +10,8 @@ from pyvista.core.utilities.misc import no_new_attr
 
 from .helpers import wrap
 
-if TYPE_CHECKING:  # pragma: no cover
-    from typing import Sequence
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 @no_new_attr
@@ -41,7 +41,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
     ...     center=(10, 10, 0),
     ...     radius=(3, 4, 5),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -76,7 +76,7 @@ class ImageEllipsoidSource(_vtk.vtkImageEllipsoidSource):
             The extent of the whole output image.
 
         """
-        self.SetWholeExtent(whole_extent)
+        self.SetWholeExtent(whole_extent)  # type: ignore[call-overload]
 
     @property
     def center(self) -> tuple[float, float, float]:
@@ -163,7 +163,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
     ...     whole_extent=(0, 200, 0, 200, 0, 0),
     ...     maxiter=100,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -196,7 +196,7 @@ class ImageMandelbrotSource(_vtk.vtkImageMandelbrotSource):
             The extent of the whole output image.
 
         """
-        self.SetWholeExtent(whole_extent)
+        self.SetWholeExtent(whole_extent)  # type: ignore[call-overload]
 
     @property
     def maxiter(self) -> int:
@@ -267,7 +267,7 @@ class ImageNoiseSource(_vtk.vtkImageNoiseSource):
     ...     maximum=255,
     ...     seed=0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -423,7 +423,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
     ...     amplitude=255,
     ...     direction=(1.0, 0.0, 0.0),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -503,7 +503,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
             The direction of the sinusoid.
 
         """
-        self.SetDirection(direction)
+        self.SetDirection(direction)  # type: ignore[call-overload]
 
     @property
     def period(self) -> float:
@@ -539,7 +539,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
             The phase of the sinusoid in pixel.
 
         """
-        return self.GetPhase()
+        return self.GetPhase()  # type: ignore[return-value]
 
     @phase.setter
     def phase(self, phase: Sequence[float]) -> None:
@@ -551,7 +551,7 @@ class ImageSinusoidSource(_vtk.vtkImageSinusoidSource):
             The phase of the sinusoid in pixel.
 
         """
-        self.SetPhase(phase)
+        self.SetPhase(phase)  # type: ignore[arg-type]
 
     @property
     def amplitude(self) -> float:
@@ -622,7 +622,7 @@ class ImageGaussianSource(_vtk.vtkImageGaussianSource):
     ...     maximum=255,
     ...     std=100.0,
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -783,7 +783,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
     ...     extent=(0, 20, 0, 20, 0, 0),
     ...     spacing=(1, 1, 1),
     ... )
-    >>> source.output.plot(cpos="xy")
+    >>> source.output.plot(cpos='xy')
 
     """
 
@@ -818,7 +818,7 @@ class ImageGridSource(_vtk.vtkImageGridSource):
             The origin of the grid.
 
         """
-        self.SetGridOrigin(origin)
+        self.SetGridOrigin(origin)  # type: ignore[arg-type]
 
     @property
     def extent(self) -> Sequence[int]:

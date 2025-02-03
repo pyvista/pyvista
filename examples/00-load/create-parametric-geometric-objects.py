@@ -111,7 +111,7 @@ dini.plot(color='lightblue')
 # +++++++
 
 enneper = pv.ParametricEnneper()
-enneper.plot(cpos="yz")
+enneper.plot(cpos='yz')
 
 # %%
 # Figure-8 Klein

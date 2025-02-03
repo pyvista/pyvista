@@ -9,7 +9,7 @@ pytestmark = pytest.mark.skip_plotting
 
 
 def test_compare_images_two_plotters_same(sphere, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
+    filename = str(tmpdir.mkdir('tmpdir').join('tmp.png'))
     pl1 = pv.Plotter()
     pl1.add_mesh(sphere)
     arr1 = pl1.screenshot(filename)
@@ -34,7 +34,7 @@ def test_compare_images_two_plotters_same(sphere, tmpdir):
 
 
 def test_compare_images_two_plotter_different(sphere, airplane, tmpdir):
-    tmppath = tmpdir.mkdir("tmpdir")
+    tmppath = tmpdir.mkdir('tmpdir')
     filename = str(tmppath.join('tmp.png'))
     filename2 = str(tmppath.join('tmp2.png'))
     pl1 = pv.Plotter()

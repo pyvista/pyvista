@@ -22,7 +22,7 @@ skip_mac = pytest.mark.skipif(
 
 
 @pytest.fixture(autouse=True)
-def skip_check_gc(skip_check_gc):  # noqa: PT004
+def skip_check_gc(skip_check_gc):
     """A large number of tests here fail gc."""
 
 
@@ -38,9 +38,9 @@ def vtk_array_to_tuple(arr):
 def to_vtk_scientific(val):
     parts = val.split('e')
     sign, exp = parts[1][0], parts[1][1:]
-    exp = exp.lstrip("0")  # Remove leading zeros of exponent
+    exp = exp.lstrip('0')  # Remove leading zeros of exponent
     return (
-        parts[0] + "e" + sign + exp if exp != "" else parts[0]
+        parts[0] + 'e' + sign + exp if exp != '' else parts[0]
     )  # Remove exponent altogether if it is 0
 
 
@@ -141,8 +141,8 @@ def axis(chart_2d):
 def test_pen():
     c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     w_thin, w_thick = 2, 10
-    s_dash, s_dot, s_inv = "--", ":", "|"
-    assert s_inv not in charts.Pen.LINE_STYLES, "New line styles added? Change this test."
+    s_dash, s_dot, s_inv = '--', ':', '|'
+    assert s_inv not in charts.Pen.LINE_STYLES, 'New line styles added? Change this test.'
 
     # Test constructor arguments
     pen = charts.Pen(color=c_red, width=w_thin, style=s_dash)
@@ -164,7 +164,7 @@ def test_pen():
 
     pen.style = s_dot
     assert pen.style == s_dot
-    assert pen.GetLineType() == charts.Pen.LINE_STYLES[s_dot]["id"]
+    assert pen.GetLineType() == charts.Pen.LINE_STYLES[s_dot]['id']
     with pytest.raises(ValueError):  # noqa: PT011
         pen.style = s_inv
 
@@ -217,19 +217,19 @@ def test_brush():
 
 
 def test_axis_init():
-    label = "Y axis"
+    label = 'Y axis'
     r_fix = [2, 5]
 
     # Test constructor arguments
     axis = charts.Axis(label=label, range=r_fix, grid=True)
     assert axis.label == label
     assert np.allclose(axis.range, r_fix)
-    assert axis.behavior == "fixed"
+    assert axis.behavior == 'fixed'
     assert axis.grid
 
 
 def test_axis_label(axis):
-    label = "Y axis"
+    label = 'Y axis'
     axis.label = label
     assert axis.label == label
     assert axis.GetTitle() == label
@@ -242,20 +242,20 @@ def test_axis_label(axis):
 def test_axis_range(axis):
     r_fix, r_auto = [2, 5], None
     axis.range = r_auto
-    assert axis.behavior == "auto"
+    assert axis.behavior == 'auto'
     axis.range = r_fix
     r = [0.0, 0.0]
     axis.GetRange(r)
     assert np.allclose(axis.range, r_fix)
     assert np.allclose(r, r_fix)
-    assert axis.behavior == "fixed"
+    assert axis.behavior == 'fixed'
 
-    assert axis.GetBehavior() == charts.Axis.BEHAVIORS["fixed"]
-    axis.behavior = "auto"
-    assert axis.behavior == "auto"
-    assert axis.GetBehavior() == charts.Axis.BEHAVIORS["auto"]
+    assert axis.GetBehavior() == charts.Axis.BEHAVIORS['fixed']
+    axis.behavior = 'auto'
+    assert axis.behavior == 'auto'
+    assert axis.GetBehavior() == charts.Axis.BEHAVIORS['auto']
     with pytest.raises(ValueError):  # noqa: PT011
-        axis.behavior = "invalid"
+        axis.behavior = 'invalid'
 
 
 def test_axis_margin(axis):
@@ -316,7 +316,7 @@ def test_axis_tick_count(axis):
 
 def test_axis_tick_locations(chart_2d, axis):
     tlocs, tlocs_large = [1, 5.5, 8], [5.2, 340, 9999.999]
-    tlabels = ["Foo", "Blub", "Spam"]
+    tlabels = ['Foo', 'Blub', 'Spam']
     tlocs0 = axis.tick_locations
     tlabels0 = axis.tick_labels
 
@@ -326,19 +326,19 @@ def test_axis_tick_locations(chart_2d, axis):
     assert np.allclose(axis.GetTickPositions(), tlocs)
     assert tuple(axis.tick_labels) == tuple(tlabels)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(tlabels)
-    axis.tick_labels = "2f"
+    axis.tick_labels = '2f'
     chart_2d.show()
-    assert tuple(axis.tick_labels) == tuple(f"{loc:.2f}" for loc in tlocs)
-    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(f"{loc:.2f}" for loc in tlocs)
+    assert tuple(axis.tick_labels) == tuple(f'{loc:.2f}' for loc in tlocs)
+    assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(f'{loc:.2f}' for loc in tlocs)
     assert axis.GetNotation() == charts.Axis.FIXED_NOTATION
     assert axis.GetPrecision() == 2
-    axis.tick_labels = "4e"
+    axis.tick_labels = '4e'
     axis.tick_locations = tlocs_large  # Add some more variety to labels
     chart_2d.show()
 
-    assert tuple(axis.tick_labels) == tuple(to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large)
+    assert tuple(axis.tick_labels) == tuple(to_vtk_scientific(f'{loc:.4e}') for loc in tlocs_large)
     assert vtk_array_to_tuple(axis.GetTickLabels()) == tuple(
-        to_vtk_scientific(f"{loc:.4e}") for loc in tlocs_large
+        to_vtk_scientific(f'{loc:.4e}') for loc in tlocs_large
     )
     assert axis.GetNotation() == charts.Axis.SCIENTIFIC_NOTATION
     assert axis.GetPrecision() == 4
@@ -393,14 +393,27 @@ def test_axis_label_font_size(chart_2d):
 
 
 @pytest.mark.skip_plotting
-@pytest.mark.parametrize("chart_f", [("chart_2d"), ("chart_box"), ("chart_pie"), ("chart_mpl")])
+@pytest.mark.parametrize(
+    'chart_f',
+    [
+        ('chart_2d'),
+        ('chart_box'),
+        ('chart_pie'),
+        pytest.param(
+            'chart_mpl',
+            marks=pytest.mark.filterwarnings(
+                r'ignore:No artists with labels found to put in legend\.  Note that artists whose label start with an underscore are ignored when legend\(\) is called with no argument\.:UserWarning'
+            ),
+        ),
+    ],
+)
 def test_chart_common(pl, chart_f, request):
     # Test the common chart functionalities
     chart = request.getfixturevalue(chart_f)
-    title = "Chart title"
+    title = 'Chart title'
     c_red, c_blue = (1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)
     bw = 10
-    bs = "--"
+    bs = '--'
 
     # Check scene and renderer properties
     assert chart._scene is None
@@ -472,15 +485,15 @@ def test_chart_common(pl, chart_f, request):
 
 
 @pytest.mark.parametrize(
-    "plot_f",
+    'plot_f',
     [
-        ("line_plot_2d"),
-        ("scatter_plot_2d"),
-        ("area_plot"),
-        ("bar_plot"),
-        ("stack_plot"),
-        ("box_plot"),
-        ("pie_plot"),
+        ('line_plot_2d'),
+        ('scatter_plot_2d'),
+        ('area_plot'),
+        ('bar_plot'),
+        ('stack_plot'),
+        ('box_plot'),
+        ('pie_plot'),
     ],
 )
 def test_plot_common(plot_f, request):
@@ -488,16 +501,16 @@ def test_plot_common(plot_f, request):
     plot = request.getfixturevalue(plot_f)
     c = (1.0, 0.0, 1.0, 1.0)
     w = 5
-    s = "-."
-    l = "Label"
+    s = '-.'
+    l = 'Label'
 
     plot.color = c
     assert plot.color == c
     assert plot.brush.color == c
 
-    if hasattr(plot, "GetPen"):
+    if hasattr(plot, 'GetPen'):
         assert plot.pen.__this__ == plot.GetPen().__this__
-    if hasattr(plot, "GetBrush"):
+    if hasattr(plot, 'GetBrush'):
         assert plot.brush.__this__ == plot.GetBrush().__this__
 
     plot.line_width = w
@@ -517,11 +530,11 @@ def test_plot_common(plot_f, request):
     assert plot.GetVisible()
 
 
-@pytest.mark.parametrize("plot_f", [("bar_plot"), ("stack_plot"), ("box_plot"), ("pie_plot")])
+@pytest.mark.parametrize('plot_f', [('bar_plot'), ('stack_plot'), ('box_plot'), ('pie_plot')])
 def test_multicomp_plot_common(plot_f, request):
     # Test the common multicomp plot functionalities
     plot = request.getfixturevalue(plot_f)
-    cs = "spectrum"
+    cs = 'spectrum'
     cs_colors = [
         (0.0, 0.0, 0.0, 1.0),
         (0.8941176470588236, 0.10196078431372549, 0.10980392156862745, 1.0),
@@ -532,11 +545,11 @@ def test_multicomp_plot_common(plot_f, request):
         (0.6509803921568628, 0.33725490196078434, 0.1568627450980392, 1.0),
     ]
     colors = [(1.0, 0.0, 1.0, 1.0), (0.0, 1.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0)]
-    labels = ["Foo", "Spam", "Bla"]
+    labels = ['Foo', 'Spam', 'Bla']
 
     plot.color_scheme = cs
     assert plot.color_scheme == cs
-    assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]["id"]
+    assert plot._color_series.GetColorScheme() == COLOR_SCHEMES[cs]['id']
     assert all(pc == cs for pc, cs in zip(plot.colors, cs_colors))
     series_colors = [
         pv.Color(plot._color_series.GetColor(i)).float_rgba for i in range(len(cs_colors))
@@ -571,14 +584,14 @@ def test_multicomp_plot_common(plot_f, request):
     assert plot.label == labels[0]
     plot.labels = None
     assert plot.labels == []
-    assert plot.label == ""
+    assert plot.label == ''
 
     plot.label = labels[1]
     assert tuple(plot.labels) == (labels[1],)
     assert plot.label == labels[1]
     plot.label = None
     assert plot.labels == []
-    assert plot.label == ""
+    assert plot.label == ''
 
 
 def test_lineplot2d(chart_2d, line_plot_2d):
@@ -586,8 +599,8 @@ def test_lineplot2d(chart_2d, line_plot_2d):
     y = [4, 1, 0, -1, -4]
     c = (1.0, 0.0, 1.0, 1.0)
     w = 5
-    s = "-."
-    l = "Line"
+    s = '-.'
+    l = 'Line'
 
     # Test constructor
     plot = charts.LinePlot2D(chart_2d, x, y, c, w, s, l)
@@ -610,11 +623,11 @@ def test_scatterplot2d(chart_2d, scatter_plot_2d):
     y = [4, 1, 0, -1, -4]
     c = (1.0, 0.0, 1.0, 1.0)
     sz = 5
-    st, st_inv = "o", "^"
-    l = "Scatter"
+    st, st_inv = 'o', '^'
+    l = 'Scatter'
     assert (
         st_inv not in charts.ScatterPlot2D.MARKER_STYLES
-    ), "New marker styles added? Change this test."
+    ), 'New marker styles added? Change this test.'
 
     # Test constructor
     plot = charts.ScatterPlot2D(chart_2d, x, y, c, sz, st, l)
@@ -636,10 +649,10 @@ def test_scatterplot2d(chart_2d, scatter_plot_2d):
     assert scatter_plot_2d.GetMarkerSize() == sz
 
     scatter_plot_2d.marker_style = None
-    assert scatter_plot_2d.marker_style == ""
+    assert scatter_plot_2d.marker_style == ''
     scatter_plot_2d.marker_style = st
     assert scatter_plot_2d.marker_style == st
-    assert scatter_plot_2d.GetMarkerStyle() == scatter_plot_2d.MARKER_STYLES[st]["id"]
+    assert scatter_plot_2d.GetMarkerStyle() == scatter_plot_2d.MARKER_STYLES[st]['id']
     with pytest.raises(ValueError):  # noqa: PT011
         scatter_plot_2d.marker_style = st_inv
 
@@ -649,7 +662,7 @@ def test_areaplot(chart_2d, area_plot):
     y1 = [4, 1, 0, -1, -4]
     y2 = [-4, -2, 0, 2, 4]
     c = (1.0, 0.0, 1.0, 1.0)
-    l = "Line"
+    l = 'Line'
 
     # Test constructor
     plot = charts.AreaPlot(chart_2d, x, y1, y2, c, l)
@@ -671,9 +684,9 @@ def test_barplot(chart_2d, bar_plot):
     x = [0, 1, 2]
     y = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
     c = [(1.0, 0.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0), (0.0, 1.0, 1.0, 1.0)]
-    ori, ori_inv = "H", "I"
-    l = ["Foo", "Spam", "Bla"]
-    assert ori_inv not in charts.BarPlot.ORIENTATIONS, "New orientations added? Change this test."
+    ori, ori_inv = 'H', 'I'
+    l = ['Foo', 'Spam', 'Bla']
+    assert ori_inv not in charts.BarPlot.ORIENTATIONS, 'New orientations added? Change this test.'
 
     # Test multi comp constructor
     plot = charts.BarPlot(chart_2d, x, y, c, ori, l)
@@ -718,7 +731,7 @@ def test_stackplot(chart_2d, stack_plot):
     x = [0, 1, 2]
     ys = [[1, 2, 3], [2, 1, 0], [1, 1, 1]]
     c = [(1.0, 0.0, 1.0, 1.0), (1.0, 1.0, 0.0, 1.0), (0.0, 1.0, 1.0, 1.0)]
-    l = ["Foo", "Spam", "Bla"]
+    l = ['Foo', 'Spam', 'Bla']
 
     # Test multi comp constructor
     plot = charts.StackPlot(chart_2d, x, ys, c, l)
@@ -755,20 +768,20 @@ def test_stackplot(chart_2d, stack_plot):
 def test_chart_2d(pl, chart_2d):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
-    lx = "X label"
-    ly = "Y label"
+    lx = 'X label'
+    ly = 'Y label'
     rx = [0, 5]
     ry = [0, 1]
     x = np.arange(11) - 5
     y = x**2
     ys = [np.sin(x), np.cos(x), np.tanh(x)]
     col = (1.0, 0.0, 1.0, 1.0)
-    cs = "citrus"
+    cs = 'citrus'
     sz = 5
-    ms = "d"
+    ms = 'd'
     w = 10
-    ls = "-."
-    ori = "V"
+    ls = '-.'
+    ori = 'V'
 
     # Test constructor
     chart = pv.Chart2D(size, loc, lx, ly, False)
@@ -791,12 +804,12 @@ def test_chart_2d(pl, chart_2d):
     )
 
     # Test parse_format
-    hex_colors = ["#fa09b6", "0xa53a8d", "#b02239f0", "0xcee6927f"]
-    colors = itertools.chain(pv.hexcolors, pv.plotting.colors.color_synonyms, [*hex_colors, ""])
+    hex_colors = ['#fa09b6', '0xa53a8d', '#b02239f0', '0xcee6927f']
+    colors = itertools.chain(pv.hexcolors, pv.plotting.colors.color_synonyms, [*hex_colors, ''])
     for m in charts.ScatterPlot2D.MARKER_STYLES:
         for l in charts.Pen.LINE_STYLES:
             for c in colors:
-                cp = "b" if c == "" else c
+                cp = 'b' if c == '' else c
                 assert (m, l, cp) == chart_2d._parse_format(m + l + c)
                 assert (m, l, cp) == chart_2d._parse_format(m + c + l)
                 assert (m, l, cp) == chart_2d._parse_format(l + m + c)
@@ -805,28 +818,28 @@ def test_chart_2d(pl, chart_2d):
                 assert (m, l, cp) == chart_2d._parse_format(c + l + m)
 
     # Test plotting methods
-    s, l = chart_2d.plot(x, y, "")
+    s, l = chart_2d.plot(x, y, '')
     assert s is None
     assert l is None
     assert len([*chart_2d.plots()]) == 0
-    s, l = chart_2d.plot(y, "-")
+    s, l = chart_2d.plot(y, '-')
     assert s is None
     assert l is not None
-    assert l in chart_2d.plots("line")
+    assert l in chart_2d.plots('line')
     chart_2d.remove_plot(l)
     assert len([*chart_2d.plots()]) == 0
-    s, l = chart_2d.plot(y, "x")
+    s, l = chart_2d.plot(y, 'x')
     assert s is not None
     assert l is None
-    assert s in chart_2d.plots("scatter")
-    chart_2d.clear("scatter")
+    assert s in chart_2d.plots('scatter')
+    chart_2d.clear('scatter')
     assert len([*chart_2d.plots()]) == 0
-    s, l = chart_2d.plot(x, y, "x-")
+    s, l = chart_2d.plot(x, y, 'x-')
     assert s is not None
     assert l is not None
-    assert s in chart_2d.plots("scatter")
-    assert l in chart_2d.plots("line")
-    chart_2d.plot(x, y, "x-")  # Check clearing of multiple plots (of the same type)
+    assert s in chart_2d.plots('scatter')
+    assert l in chart_2d.plots('line')
+    chart_2d.plot(x, y, 'x-')  # Check clearing of multiple plots (of the same type)
     chart_2d.clear()
     assert len([*chart_2d.plots()]) == 0
 
@@ -837,7 +850,7 @@ def test_chart_2d(pl, chart_2d):
     assert s.marker_size == sz
     assert s.marker_style == ms
     assert s.label == lx
-    assert s in chart_2d.plots("scatter")
+    assert s in chart_2d.plots('scatter')
     assert chart_2d.GetPlotIndex(s) >= 0
 
     l = chart_2d.line(x, y, col, w, ls, lx)
@@ -847,7 +860,7 @@ def test_chart_2d(pl, chart_2d):
     assert l.line_width == w
     assert l.line_style == ls
     assert l.label == lx
-    assert l in chart_2d.plots("line")
+    assert l in chart_2d.plots('line')
     assert chart_2d.GetPlotIndex(l) >= 0
 
     a = chart_2d.area(x, -y, y, col, lx)
@@ -856,7 +869,7 @@ def test_chart_2d(pl, chart_2d):
     assert np.allclose(a.y2, y)
     assert a.color == col
     assert a.label == lx
-    assert a in chart_2d.plots("area")
+    assert a in chart_2d.plots('area')
     assert chart_2d.GetPlotIndex(a) >= 0
 
     b = chart_2d.bar(x, -y, col, ori, lx)
@@ -865,7 +878,7 @@ def test_chart_2d(pl, chart_2d):
     assert b.color == col
     assert b.orientation == ori
     assert b.label == lx
-    assert b in chart_2d.plots("bar")
+    assert b in chart_2d.plots('bar')
     assert chart_2d.GetPlotIndex(b) >= 0
 
     s = chart_2d.stack(x, ys, cs, [lx, ly])
@@ -873,10 +886,10 @@ def test_chart_2d(pl, chart_2d):
     assert np.allclose(s.ys, ys)
     assert s.color_scheme == cs
     assert tuple(s.labels) == (lx, ly)
-    assert s in chart_2d.plots("stack")
+    assert s in chart_2d.plots('stack')
     assert chart_2d.GetPlotIndex(s) >= 0
 
-    inv_type = "blub"
+    inv_type = 'blub'
     with pytest.raises(KeyError):
         next(chart_2d.plots(inv_type))
     with pytest.raises(KeyError):
@@ -925,8 +938,8 @@ def test_chart_box(pl, chart_box, box_plot):
     loc = (0.25, 0.25)
     data = [[0, 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5, 6]]
     stats = [np.quantile(d, [0.0, 0.25, 0.5, 0.75, 1.0]) for d in data]
-    cs = "wild_flower"
-    ls = ["Datalabel"]
+    cs = 'wild_flower'
+    ls = ['Datalabel']
 
     # Test constructor
     chart = pv.ChartBox(data, cs, ls, size, loc)
@@ -961,8 +974,8 @@ def test_chart_pie(pl, chart_pie, pie_plot):
     size = (0.5, 0.5)
     loc = (0.25, 0.25)
     data = [3, 4, 5]
-    cs = "wild_flower"
-    ls = ["Tic", "Tac", "Toe"]
+    cs = 'wild_flower'
+    ls = ['Tic', 'Tac', 'Toe']
 
     # Test constructor
     chart = pv.ChartPie(data, cs, ls, size, loc)
@@ -1021,7 +1034,7 @@ def test_chart_mpl(pl, chart_mpl):
     assert np.allclose(chart._canvas.get_width_height(), (size[0] * r_w / 2, size[1] * r_h / 2))
 
     # test set position throw
-    with pytest.raises(ValueError, match="must be length 2"):
+    with pytest.raises(ValueError, match='must be length 2'):
         chart.position = (1, 2, 3)
 
 
@@ -1106,7 +1119,7 @@ def test_iren_context_style(pl):
     # Simulate double left click on the chart:
     pl.iren._mouse_left_button_click(int(0.75 * win_size[0]), int(0.75 * win_size[1]), count=2)
     assert chart.GetInteractive()
-    assert pl.iren._style == "Context"
+    assert pl.iren._style == 'Context'
     assert pl.iren._style_class == pl.iren._context_style
     assert pl.iren._context_style.GetScene().__this__ == chart._scene.__this__
 
@@ -1123,7 +1136,7 @@ def test_iren_context_style(pl):
     9,
     3,
     0,
-    reason="Chart interaction when using multiple renderers is bugged on older versions.",
+    reason='Chart interaction when using multiple renderers is bugged on older versions.',
 )
 def test_chart_interaction():
     # Setup multi renderer plotter with one chart in the top renderer and two charts

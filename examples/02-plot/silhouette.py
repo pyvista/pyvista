@@ -22,11 +22,11 @@ bunny = examples.download_bunny()
 plotter = pyvista.Plotter(shape=(1, 2))
 plotter.subplot(0, 0)
 plotter.add_mesh(bunny, color='lightblue', silhouette=True)
-plotter.add_text("Silhouette")
+plotter.add_text('Silhouette')
 plotter.view_xy()
 plotter.subplot(0, 1)
 plotter.add_mesh(bunny, color='lightblue')
-plotter.add_text("No silhouette")
+plotter.add_text('No silhouette')
 plotter.view_xy()
 plotter.show()
 
@@ -63,7 +63,7 @@ plotter.add_mesh(
     smooth_shading=True,
     silhouette=dict(color='red', line_width=8.0, decimate=None, feature_angle=True),
 )
-plotter.add_text("Silhouette with sharp edges")
+plotter.add_text('Silhouette with sharp edges')
 plotter.view_isometric()
 plotter.subplot(0, 1)
 plotter.add_mesh(
@@ -72,11 +72,11 @@ plotter.add_mesh(
     smooth_shading=True,
     silhouette=dict(color='red', line_width=8.0, decimate=None),
 )
-plotter.add_text("Silhouette without sharp edges")
+plotter.add_text('Silhouette without sharp edges')
 plotter.view_isometric()
 plotter.subplot(0, 2)
 plotter.add_mesh(cylinder, color='lightblue', smooth_shading=True)
-plotter.add_text("No silhouette")
+plotter.add_text('No silhouette')
 plotter.view_isometric()
 plotter.show()
 
@@ -88,7 +88,7 @@ plotter = pyvista.Plotter()
 plotter.set_background('black', 'blue')
 plotter.add_mesh(
     dragon,
-    color="green",
+    color='green',
     specular=1,
     smooth_shading=True,
     silhouette=dict(line_width=8, color='white'),

@@ -17,7 +17,7 @@ from trame.app import get_server
 from .vuetify2 import Viewer as Vue2Viewer
 from .vuetify3 import Viewer as Vue3Viewer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .base_viewer import BaseViewer
 
 _VIEWERS: dict[str, BaseViewer] = {}
@@ -52,7 +52,7 @@ def get_viewer(plotter, server=None, suppress_rendering=False):
         if suppress_rendering != plotter.suppress_rendering:
             plotter.suppress_rendering = suppress_rendering
             warnings.warn(
-                "Suppress rendering on the plotter is changed to " + str(suppress_rendering),
+                'Suppress rendering on the plotter is changed to ' + str(suppress_rendering),
                 UserWarning,
             )
         return viewer

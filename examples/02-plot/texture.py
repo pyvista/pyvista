@@ -95,11 +95,11 @@ A, b = 500, 100
 zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
 
 # Creating a custom RGB image
-cmap = get_cmap("nipy_spectral")
+cmap = get_cmap('nipy_spectral')
 norm = lambda x: (x - np.nanmin(x)) / (np.nanmax(x) - np.nanmin(x))
 hue = norm(zz.ravel())
 colors = (cmap(hue)[:, 0:3] * 255.0).astype(np.uint8)
-image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
+image = colors.reshape((xx.shape[0], xx.shape[1], 3), order='F')
 
 # Convert 3D numpy array to texture
 tex = pv.numpy_to_texture(image)
@@ -117,10 +117,10 @@ mesh = curvsurf.extract_surface()
 # Create a plotter object
 plotter = pv.Plotter(notebook=False, off_screen=True)
 
-actor = plotter.add_mesh(mesh, smooth_shading=True, color="white")
+actor = plotter.add_mesh(mesh, smooth_shading=True, color='white')
 
 # Open a gif
-plotter.open_gif("texture.gif")
+plotter.open_gif('texture.gif')
 
 # Update Z and write a frame for each updated position
 nframe = 15
@@ -133,7 +133,7 @@ for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     hue = norm(zz.ravel()) * 0.5 * (1.0 + np.sin(phase))
     colors = (cmap(hue)[:, 0:3] * 255.0).astype(np.uint8)
-    image = colors.reshape((xx.shape[0], xx.shape[1], 3), order="F")
+    image = colors.reshape((xx.shape[0], xx.shape[1], 3), order='F')
 
     # Convert 3D numpy array to texture
     actor.texture = pv.numpy_to_texture(image)
@@ -198,7 +198,7 @@ curvsurf.active_texture_coordinates = puppy_coords
 
 # use the puppy image
 tex = examples.download_puppy_texture()
-curvsurf.plot(texture=tex, cpos="xy")
+curvsurf.plot(texture=tex, cpos='xy')
 
 
 # %%

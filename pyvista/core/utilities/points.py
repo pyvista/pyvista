@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import overload
 import warnings
 
 import numpy as np
@@ -11,12 +13,19 @@ import pyvista
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from pyvista import PolyData
     from pyvista.core._typing_core import MatrixLike
+    from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import VectorLike
 
 
-def vtk_points(points, deep=True, force_float=False):
+def vtk_points(
+    points: VectorLike[float] | MatrixLike[float],
+    deep: bool = True,
+    force_float: bool = False,
+    allow_empty: bool = True,
+) -> _vtk.vtkPoints:
     """Convert numpy array or array-like to a ``vtkPoints`` object.
 
     Parameters
@@ -35,6 +44,12 @@ def vtk_points(points, deep=True, force_float=False):
         though this may lead to truncation of intermediate floats
         when transforming datasets.
 
+    allow_empty : bool, default: True
+        Allow ``points`` to be an empty array. If ``False``, points
+        must be strictly one- or two-dimensional.
+
+        .. versionadded:: 0.45
+
     Returns
     -------
     vtk.vtkPoints
@@ -50,57 +65,46 @@ def vtk_points(points, deep=True, force_float=False):
     (vtkmodules.vtkCommonCore.vtkPoints)0x7f0c2e26af40
 
     """
-    points = np.asanyarray(points)
+    try:
+        points_ = _validation.validate_arrayNx3(points, name='points')
+    except ValueError as e:
+        if 'points has shape (0,)' in repr(e) and allow_empty:
+            points_ = np.empty(shape=(0, 3), dtype=np.array(points).dtype)
+        else:
+            raise
 
-    # verify is numeric
-    if not np.issubdtype(points.dtype, np.number):
-        raise TypeError('Points must be a numeric type')
-
-    if force_float and not np.issubdtype(points.dtype, np.floating):
+    if force_float and not np.issubdtype(points_.dtype, np.floating):
         warnings.warn(
             'Points is not a float type. This can cause issues when '
             'transforming or applying filters. Casting to '
             '``np.float32``. Disable this by passing '
             '``force_float=False``.',
         )
-        points = points.astype(np.float32)
-
-    # check dimensionality
-    if points.ndim == 1:
-        points = points.reshape(-1, 3)
-    elif points.ndim > 2:
-        raise ValueError(f'Dimension of ``points`` should be 1 or 2, not {points.ndim}')
-
-    # verify shape
-    if points.shape[1] != 3:
-        raise ValueError(
-            'Points array must contain three values per point. '
-            f'Shape is {points.shape} and should be (X, 3)',
-        )
+        points_ = points_.astype(np.float32)
 
     # use the underlying vtk data if present to avoid memory leaks
-    if not deep and isinstance(points, pyvista.pyvista_ndarray) and points.VTKObject is not None:
-        vtk_object = points.VTKObject
+    if not deep and isinstance(points_, pyvista.pyvista_ndarray) and points_.VTKObject is not None:
+        vtk_object = points_.VTKObject
 
         # we can only use the underlying data if `points` is not a slice of
         # the VTK data object
-        if vtk_object.GetSize() == points.size:
+        if vtk_object.GetSize() == points_.size:
             vtkpts = _vtk.vtkPoints()
-            vtkpts.SetData(points.VTKObject)
+            vtkpts.SetData(points_.VTKObject)
             return vtkpts
         else:
             deep = True
 
     # points must be contiguous
-    points = np.require(points, requirements=['C'])
+    points_ = np.require(points_, requirements=['C'])
     vtkpts = _vtk.vtkPoints()
-    vtk_arr = _vtk.numpy_to_vtk(points, deep=deep)
+    vtk_arr = _vtk.numpy_to_vtk(points_, deep=deep)
     vtkpts.SetData(vtk_arr)
 
     return vtkpts
 
 
-def line_segments_from_points(points):
+def line_segments_from_points(points: VectorLike[float] | MatrixLike[float]) -> PolyData:
     """Generate non-connected line segments from points.
 
     Assumes points are ordered as line segments and an even number of
@@ -131,7 +135,7 @@ def line_segments_from_points(points):
 
     """
     if len(points) % 2 != 0:
-        raise ValueError("An even number of points must be given to define each segment.")
+        raise ValueError('An even number of points must be given to define each segment.')
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -143,12 +147,14 @@ def line_segments_from_points(points):
         )
     ]
     poly = pyvista.PolyData()
-    poly.points = points
+    poly.points = points  # type: ignore[assignment]
     poly.lines = lines
     return poly
 
 
-def lines_from_points(points, close=False):
+def lines_from_points(
+    points: VectorLike[float] | MatrixLike[float], close: bool = False
+) -> PolyData:
     """Make a connected line set given an array of points.
 
     Parameters
@@ -176,7 +182,7 @@ def lines_from_points(points, close=False):
 
     """
     poly = pyvista.PolyData()
-    poly.points = points
+    poly.points = points  # type: ignore[assignment]
     cells = np.full((len(points) - 1, 3), 2, dtype=np.int_)
     cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int_)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
@@ -186,7 +192,12 @@ def lines_from_points(points, close=False):
     return poly
 
 
-def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=None):
+def fit_plane_to_points(
+    points: MatrixLike[float],
+    return_meta: bool = False,
+    resolution: int = 10,
+    init_normal: VectorLike[float] | None = None,
+) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
     """Fit a plane to points using its :func:`principal_axes`.
 
     The plane is automatically sized and oriented to fit the extents of
@@ -297,7 +308,7 @@ def fit_plane_to_points(points, return_meta=False, resolution=10, init_normal=No
     ... ]
     >>> pl.show()
 
-    Use the metadata with :meth:`pyvista.DataSetFilter.clip` to split the mesh into
+    Use the metadata with :meth:`pyvista.DataSetFilters.clip` to split the mesh into
     two.
 
     >>> first_half, second_half = mesh.clip(
@@ -375,7 +386,7 @@ def fit_line_to_points(
     resolution: int = 1,
     init_direction: VectorLike[float] | None = None,
     return_meta: bool = False,
-):
+) -> PolyData | tuple[PolyData, float, NumpyArray[float]]:
     """Fit a line to points using its :func:`principal_axes`.
 
     The line is automatically sized and oriented to fit the extents of
@@ -506,7 +517,7 @@ def fit_line_to_points(
     return line_mesh
 
 
-def make_tri_mesh(points, faces):
+def make_tri_mesh(points: NumpyArray[float], faces: NumpyArray[int]) -> PolyData:
     """Construct a ``pyvista.PolyData`` mesh using points and faces arrays.
 
     Construct a mesh from an Nx3 array of points and an Mx3 array of
@@ -566,16 +577,18 @@ def make_tri_mesh(points, faces):
 
     """
     if points.shape[1] != 3:
-        raise ValueError("Points array should have shape (N, 3).")
+        raise ValueError('Points array should have shape (N, 3).')
     if faces.ndim != 2 or faces.shape[1] != 3:
-        raise ValueError("Face array should have shape (M, 3).")
+        raise ValueError('Face array should have shape (M, 3).')
     cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
     cells[:, 0] = 3
     cells[:, 1:] = faces
     return pyvista.PolyData(points, cells)
 
 
-def vector_poly_data(orig, vec):
+def vector_poly_data(
+    orig: VectorLike[float] | MatrixLike[float], vec: VectorLike[float] | MatrixLike[float]
+) -> PolyData:
     """Create a pyvista.PolyData object composed of vectors.
 
     Parameters
@@ -604,9 +617,7 @@ def vector_poly_data(orig, vec):
     >>> points = np.vstack((x.ravel(), y.ravel(), np.zeros(x.size))).T
     >>> u = x / np.sqrt(x**2 + y**2)
     >>> v = y / np.sqrt(x**2 + y**2)
-    >>> vectors = np.vstack(
-    ...     (u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))
-    ... ).T
+    >>> vectors = np.vstack((u.ravel() ** 3, v.ravel() ** 3, np.zeros(u.size))).T
     >>> pdata = pv.vector_poly_data(points, vectors)
     >>> pdata.point_data.keys()
     ['vectors', 'mag']
@@ -665,7 +676,27 @@ def vector_poly_data(orig, vec):
     return pyvista.PolyData(pdata)
 
 
-def principal_axes(points: MatrixLike[float], *, return_std: bool = False):
+@overload
+def principal_axes(points: MatrixLike[float]) -> NumpyArray[float]: ...
+@overload
+def principal_axes(
+    points: MatrixLike[float],
+    *,
+    return_std: Literal[True] = True,
+) -> tuple[NumpyArray[float], NumpyArray[float]]: ...
+@overload
+def principal_axes(
+    points: MatrixLike[float],
+    *,
+    return_std: Literal[False] = False,
+) -> NumpyArray[float]: ...
+@overload
+def principal_axes(
+    points: MatrixLike[float], *, return_std: bool = ...
+) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]: ...
+def principal_axes(
+    points: MatrixLike[float], *, return_std: bool = False
+) -> NumpyArray[float] | tuple[NumpyArray[float], NumpyArray[float]]:
     """Compute the principal axes of a set of points.
 
     Principal axes are orthonormal vectors that best fit a set of points. The axes

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 import os
 import sys
-from typing import Sequence
 
 import numpy as np
 
@@ -45,7 +45,9 @@ def _padded_bins(mesh, density):
     ]
 
 
-def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=False):
+def voxelize(
+    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+):
     """Voxelize mesh to UnstructuredGrid.
 
     Parameters
@@ -83,6 +85,14 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     Prior to version 0.39.0, this method improperly handled the order of
     structured coordinates.
 
+    See Also
+    --------
+    pyvista.voxelize_volume
+        Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
+
+    pyvista.DataSetFilters.voxelize_binary_mask
+        Similar function that returns a :class:`pyvista.ImageData` with point data.
+
     Examples
     --------
     Create an equal density voxelized mesh.
@@ -116,10 +126,8 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     >>> mesh = pv.Cube(x_length=0.25)
     >>> vox = pv.voxelize(mesh=mesh, density=0.2)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
     Create a voxelized mesh that fits the input mesh's bounds. The rectangular mesh is
@@ -128,10 +136,8 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
 
     >>> vox = pv.voxelize(mesh=mesh, density=0.2, fit_bounds=True)
     >>> pl = pv.Plotter()
-    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color="yellow")
-    >>> _ = pl.add_mesh(
-    ...     mesh=mesh, show_edges=True, line_width=5, opacity=0.4
-    ... )
+    >>> _ = pl.add_mesh(mesh=vox, show_edges=True, color='yellow')
+    >>> _ = pl.add_mesh(mesh=mesh, show_edges=True, line_width=5, opacity=0.4)
     >>> pl.show()
 
     """
@@ -206,7 +212,9 @@ def voxelize(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=
     return ugrid.extract_points(mask)
 
 
-def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_bounds=False):
+def voxelize_volume(
+    mesh, density=None, check_surface: bool = True, enclosed: bool = False, fit_bounds: bool = False
+):
     """Voxelize mesh to create a RectilinearGrid voxel volume.
 
     Creates a voxel volume that encloses the input mesh and discretizes the cells
@@ -246,6 +254,12 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
     See Also
     --------
     pyvista.voxelize
+        Similar function that returns a :class:`pyvista.UnstructuredGrid` of
+        :attr:`~pyvista.CellType.VOXEL` cells.
+
+    pyvista.DataSetFilters.voxelize_binary_mask
+        Similar function that returns a :class:`pyvista.ImageData` with point data.
+
     pyvista.DataSetFilters.select_enclosed_points
 
     Examples
@@ -359,7 +373,7 @@ def voxelize_volume(mesh, density=None, check_surface=True, enclosed=False, fit_
     mask_vol = selection.point_data['SelectedPoints'].view(np.bool_)
 
     # Get voxels that fall within input mesh boundaries
-    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))["vtkOriginalCellIds"])
+    cell_ids = np.unique(voi.extract_points(np.argwhere(mask_vol))['vtkOriginalCellIds'])
 
     # Create new element of grid where all cells _within_ mesh boundary are
     # given new name 'MeshCells' and a discrete value of 1
@@ -379,7 +393,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     ----------
     dataset : DataSet
         Input dataset used as a reference for the grid creation.
-    dimensions : tuple of int, default: (101, 101, 101)
+    dimensions : tuple[int, int, int], default: (101, 101, 101)
         The dimensions of the grid to be created. Each value in the tuple
         represents the number of grid points along the corresponding axis.
 
@@ -410,7 +424,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     dims = dimensions - 1
     dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
-    image.origin = bounds[::2]
+    image.origin = bounds[::2]  # type: ignore[assignment]
     return image
 
 
@@ -467,7 +481,7 @@ def transform_vectors_sph_to_cart(theta, phi, r, u, v, w):  # numpydoc ignore=RT
         Arrays of transformed x-, y-, z-components, respectively.
 
     """
-    xx, yy, _ = np.meshgrid(np.radians(theta), np.radians(phi), r, indexing="ij")
+    xx, yy, _ = np.meshgrid(np.radians(theta), np.radians(phi), r, indexing='ij')
     th, ph = xx.squeeze(), yy.squeeze()
 
     # Transform wind components from spherical to cartesian coordinates
@@ -548,9 +562,9 @@ def spherical_to_cartesian(r, phi, theta):
 
 def merge(
     datasets,
-    merge_points=True,
-    main_has_priority=True,
-    progress_bar=False,
+    merge_points: bool = True,
+    main_has_priority: bool = True,
+    progress_bar: bool = False,
 ):
     """Merge several datasets.
 
@@ -562,8 +576,8 @@ def merge(
 
     Parameters
     ----------
-    datasets : sequence[:class:`pyvista.Dataset`]
-        Sequence of datasets. Can be of any :class:`pyvista.Dataset`.
+    datasets : sequence[:class:`pyvista.DataSet`]
+        Sequence of datasets. Can be of any :class:`pyvista.DataSet`.
 
     merge_points : bool, default: True
         Merge equivalent points when ``True``.
@@ -594,14 +608,14 @@ def merge(
 
     """
     if not isinstance(datasets, Sequence):
-        raise TypeError(f"Expected a sequence, got {type(datasets).__name__}")
+        raise TypeError(f'Expected a sequence, got {type(datasets).__name__}')
 
     if len(datasets) < 1:
-        raise ValueError("Expected at least one dataset.")
+        raise ValueError('Expected at least one dataset.')
 
     first = datasets[0]
     if not isinstance(first, pyvista.DataSet):
-        raise TypeError(f"Expected pyvista.DataSet, not {type(first).__name__}")
+        raise TypeError(f'Expected pyvista.DataSet, not {type(first).__name__}')
 
     return datasets[0].merge(
         datasets[1:],
@@ -684,8 +698,8 @@ def sample_function(
     output_type: np.dtype = np.double,  # type: ignore[assignment, type-arg]
     capping: bool = False,
     cap_value: float = sys.float_info.max,
-    scalar_arr_name: str = "scalars",
-    normal_arr_name: str = "normals",
+    scalar_arr_name: str = 'scalars',
+    normal_arr_name: str = 'normals',
     progress_bar: bool = False,
 ):
     """Sample an implicit function over a structured point set.
@@ -763,9 +777,7 @@ def sample_function(
     >>> grid = pv.sample_function(
     ...     noise, [0, 3.0, -0, 1.0, 0, 1.0], dim=(60, 20, 20)
     ... )
-    >>> grid.plot(
-    ...     cmap='gist_earth_r', show_scalar_bar=False, show_edges=True
-    ... )
+    >>> grid.plot(cmap='gist_earth_r', show_scalar_bar=False, show_edges=True)
 
     Sample Perlin noise in 2D and plot it.
 
@@ -781,7 +793,7 @@ def sample_function(
 
     samp = _vtk.vtkSampleFunction()
     samp.SetImplicitFunction(function)
-    samp.SetSampleDimensions(dim)
+    samp.SetSampleDimensions(dim)  # type: ignore[call-overload]
     samp.SetModelBounds(bounds)
     samp.SetComputeNormals(compute_normals)
     samp.SetCapping(capping)

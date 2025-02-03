@@ -71,7 +71,7 @@ pset = pv.PointSet(inlet.points[::5])
 lines = air.streamlines_from_source(
     pset,
     vectors='U',
-    max_time=1.0,
+    max_length=1.0,
 )
 
 pl = pv.Plotter()

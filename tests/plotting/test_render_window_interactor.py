@@ -42,21 +42,21 @@ def test_observers():
 
     # Custom events
     assert not pl.iren.interactor.HasObserver(
-        "PickEvent",
-    ), "Subsequent PickEvent HasObserver tests are wrong if this fails."
+        'PickEvent',
+    ), 'Subsequent PickEvent HasObserver tests are wrong if this fails.'
     # Add different observers
     obs_move = pl.iren.add_observer(_vtk.vtkCommand.MouseMoveEvent, empty_callback)
     obs_double1 = pl.iren.add_observer(_vtk.vtkCommand.LeftButtonDoubleClickEvent, empty_callback)
-    obs_double2 = pl.iren.add_observer("LeftButtonDoubleClickEvent", empty_callback)
-    obs_picks = tuple(pl.iren.add_observer("PickEvent", empty_callback) for _ in range(5))
-    pl.iren.add_observer("SelectionChangedEvent", empty_callback)
-    assert pl.iren._observers[obs_move] == "MouseMoveEvent"
-    assert pl.iren.interactor.HasObserver("MouseMoveEvent")
-    assert pl.iren._observers[obs_double1] == "LeftButtonDoubleClickEvent"
-    assert pl.iren._observers[obs_double2] == "LeftButtonDoubleClickEvent"
-    assert pl.iren.interactor.HasObserver("LeftButtonDoubleClickEvent")
-    assert all(pl.iren._observers[obs_pick] == "PickEvent" for obs_pick in obs_picks)
-    assert pl.iren.interactor.HasObserver("SelectionChangedEvent")
+    obs_double2 = pl.iren.add_observer('LeftButtonDoubleClickEvent', empty_callback)
+    obs_picks = tuple(pl.iren.add_observer('PickEvent', empty_callback) for _ in range(5))
+    pl.iren.add_observer('SelectionChangedEvent', empty_callback)
+    assert pl.iren._observers[obs_move] == 'MouseMoveEvent'
+    assert pl.iren.interactor.HasObserver('MouseMoveEvent')
+    assert pl.iren._observers[obs_double1] == 'LeftButtonDoubleClickEvent'
+    assert pl.iren._observers[obs_double2] == 'LeftButtonDoubleClickEvent'
+    assert pl.iren.interactor.HasObserver('LeftButtonDoubleClickEvent')
+    assert all(pl.iren._observers[obs_pick] == 'PickEvent' for obs_pick in obs_picks)
+    assert pl.iren.interactor.HasObserver('SelectionChangedEvent')
     # Remove a specific observer
     pl.iren.remove_observer(obs_move)
     assert obs_move not in pl.iren._observers
@@ -67,7 +67,7 @@ def test_observers():
     # Remove all (remaining) observers
     pl.iren.remove_observers()
     assert len(pl.iren._observers) == 0
-    assert not pl.iren.interactor.HasObserver("PickEvent")
+    assert not pl.iren.interactor.HasObserver('PickEvent')
 
 
 def test_clear_key_event_callbacks():
@@ -86,7 +86,7 @@ def test_track_mouse_position():
     assert pl.mouse_position == (x, y)
 
     pl.iren.untrack_mouse_position()
-    assert "MouseMoveEvent" not in pl.iren._observers.values()
+    assert 'MouseMoveEvent' not in pl.iren._observers.values()
 
 
 @pytest.mark.skip_plotting
@@ -118,10 +118,10 @@ def test_track_click_position():
     events = []
 
     def single_click_callback(mouse_position):
-        events.append("single")
+        events.append('single')
 
     def double_click_callback(mouse_position):
-        events.append("double")
+        events.append('double')
 
     pl = pv.Plotter()
     pl.track_click_position(callback=single_click_callback, side='left', double=False)
@@ -131,23 +131,23 @@ def test_track_click_position():
     # Test single and double clicks:
     pl.iren._mouse_left_button_click(10, 10)
     assert len(events) == 1
-    assert events.pop(0) == "single"
+    assert events.pop(0) == 'single'
     pl.iren._mouse_left_button_click(50, 50, count=2)
     assert len(events) == 2
-    assert events.pop(1) == "double"
-    assert events.pop(0) == "single"
+    assert events.pop(1) == 'double'
+    assert events.pop(0) == 'single'
 
     # Test triple click behaviour:
     pl.iren._mouse_left_button_click(10, 10, count=3)
     assert len(events) == 3
-    assert events.pop(2) == "single"
-    assert events.pop(1) == "double"
-    assert events.pop(0) == "single"
+    assert events.pop(2) == 'single'
+    assert events.pop(1) == 'double'
+    assert events.pop(0) == 'single'
 
 
 @pytest.mark.skipif(
     type(_vtk.vtkRenderWindowInteractor()).__name__
-    not in ("vtkWin32RenderWindowInteractor", "vtkXRenderWindowInteractor"),
+    not in ('vtkWin32RenderWindowInteractor', 'vtkXRenderWindowInteractor'),
     reason='Other RenderWindowInteractors do not invoke TimerEvents during ProcessEvents.',
 )
 @pytest.mark.needs_vtk_version(
@@ -176,7 +176,7 @@ def test_timer():
             iren.process_events()
 
     # Setup interactor
-    iren.add_observer("TimerEvent", on_timer)
+    iren.add_observer('TimerEvent', on_timer)
     iren.initialize()
 
     # Test one-shot timer (only fired once for the extended duration)
@@ -290,7 +290,7 @@ def test_enable_custom_trackball_style():
 
     pl = pv.Plotter()
     with pytest.raises(ValueError, match="Action 'not an option' not in the allowed"):
-        pl.enable_custom_trackball_style(left="not an option")
+        pl.enable_custom_trackball_style(left='not an option')
 
 
 def test_enable_2d_style():

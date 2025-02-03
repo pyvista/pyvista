@@ -124,7 +124,7 @@ points = []
 for x in np.linspace(0.045, 0.105, 7, endpoint=True):
     points.extend([x, 0.2, z] for z in np.linspace(0, 0.03, 5))
 points = pv.PointSet(points)
-lines = air.streamlines_from_source(points, max_time=2.0)
+lines = air.streamlines_from_source(points, max_length=2.0)
 
 # Plot
 pl = pv.Plotter()

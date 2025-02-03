@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from . import _vtk
 from .prop3d import Prop3D
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ._property import Property
     from .mapper import _BaseMapper
 
@@ -42,10 +42,10 @@ class Volume(Prop3D, _vtk.vtkVolume):
         BoundsTuple(x_min=0.0, x_max=9.0, y_min=0.0, y_max=9.0, z_min=0.0, z_max=9.0)
 
         """
-        return self.GetMapper()
+        return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj):  # numpydoc ignore=GL08
+    def mapper(self, obj):
         self.SetMapper(obj)
 
     @property
@@ -68,5 +68,5 @@ class Volume(Prop3D, _vtk.vtkVolume):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):  # numpydoc ignore=GL08
-        self.SetProperty(obj)
+    def prop(self, obj: Property):
+        self.SetProperty(obj)  # type: ignore[arg-type]

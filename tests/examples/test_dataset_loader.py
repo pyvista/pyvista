@@ -28,7 +28,7 @@ from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 
@@ -69,11 +69,7 @@ def _generate_dataset_loader_test_cases_from_module(
 
     # Collect all `download_<name> or `load_<name>` functions
     def _is_dataset_function(name, item):
-        return (
-            isinstance(item, FunctionType)
-            and name.startswith('download_')
-            or name.startswith('load_')
-        )
+        return isinstance(item, FunctionType) and name.startswith(('download_', 'load_'))
 
     dataset_functions = {
         name: item for name, item in module_members.items() if _is_dataset_function(name, item)
@@ -109,13 +105,13 @@ def _get_mismatch_fail_msg(test_case: DatasetLoaderTestCase):
     if test_case.dataset_function is None:
         return (
             f"A file loader:\n\t'{test_case.dataset_loader[0]}'\n\t{test_case.dataset_loader[1]}\n"
-            f"was found but is missing a corresponding download function.\n\n"
+            f'was found but is missing a corresponding download function.\n\n'
             f"Expected to find a function named:\n\t'download_{test_case.dataset_name}'\nGot: {test_case.dataset_function}"
         )
     elif test_case.dataset_loader is None:
         return (
             f"A download function:\n\t'{test_case.dataset_function[0]}'\n\t{test_case.dataset_function[1]}\n"
-            f"was found but is missing a corresponding file loader.\n\n"
+            f'was found but is missing a corresponding file loader.\n\n'
             f"Expected to find a loader named:\n\t'_dataset_{test_case.dataset_name}'\nGot: {test_case.dataset_loader}"
         )
     else:
@@ -166,7 +162,7 @@ def examples_local_repository_tmp_dir(tmp_path):
     yield repository_path
 
     # teardown
-    downloads.FETCHER.base_url = "https://github.com/pyvista/vtk-data/raw/master/Data/"
+    downloads.FETCHER.base_url = 'https://github.com/pyvista/vtk-data/raw/master/Data/'
     downloads._FILE_CACHE = False
     [downloads.FETCHER.registry.pop(base, None) for base in downloadable_basenames]
 
@@ -617,8 +613,8 @@ def test_dataset_loader_from_nested_multiblock(dataset_loader_nested_multiblock)
     assert loader._total_size_bytes == 69732
     assert loader.total_size == '69.7 KB'
     assert loader.unique_extension == '.exo'
-    assert loader._reader is None
-    assert loader.unique_reader_type is None
+    assert isinstance(loader._reader, pv.ExodusIIReader)
+    assert loader.unique_reader_type is pv.ExodusIIReader
     assert type(loader.dataset) is pv.MultiBlock
     assert isinstance(loader.dataset_iterable[0], pv.MultiBlock)
     assert len(loader.dataset_iterable) == 12

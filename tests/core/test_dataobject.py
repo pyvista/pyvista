@@ -10,6 +10,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.utilities.fileio import save_pickle
 
 
 def test_eq_wrong_type(sphere):
@@ -130,6 +131,7 @@ def test_user_dict(data_object):
 
     data_object.user_dict = None
     assert field_name not in data_object.field_data.keys()
+    assert data_object.user_dict == {}
 
     match = (
         "User dict can only be set with type <class 'dict'> or <class 'collections.UserDict'>."
@@ -227,13 +229,24 @@ def _modifies_pickle_format():
 
 @pytest.mark.usefixtures('_modifies_pickle_format')
 @pytest.mark.parametrize('pickle_format', ['vtk', 'xml', 'legacy'])
-def test_pickle_serialize_deserialize(datasets, pickle_format):
+@pytest.mark.parametrize('file_ext', ['.pkl', '.pickle', '', None])
+def test_pickle_serialize_deserialize(datasets, pickle_format, file_ext, tmp_path):
     if pickle_format == 'vtk' and pv.vtk_version_info < (9, 3):
         pytest.xfail('VTK version not supported.')
 
     pv.set_pickle_format(pickle_format)
     for dataset in datasets:
-        dataset_2 = pickle.loads(pickle.dumps(dataset))
+        if file_ext is not None:
+            filepath_save = tmp_path / ('data_object' + file_ext)
+            if file_ext == '':
+                save_pickle(filepath_save, dataset)
+                filepath_read = tmp_path / ('data_object' + '.pkl')
+            else:
+                dataset.save(filepath_save)
+                filepath_read = filepath_save
+            dataset_2 = pv.read(filepath_read)
+        else:
+            dataset_2 = pickle.loads(pickle.dumps(dataset))
 
         # check python attributes are the same
         for attr in dataset.__dict__:

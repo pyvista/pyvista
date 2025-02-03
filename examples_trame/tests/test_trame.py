@@ -13,7 +13,7 @@ EXAMPLES_DIR = Path(__file__).parent.parent.absolute()
 def collect_example_files():
     test_files = []
     for dirpath, _, filenames in os.walk(EXAMPLES_DIR):
-        if THIS_PATH.match(dirpath) or dirpath.endswith("__pycache__"):
+        if THIS_PATH.match(dirpath) or dirpath.endswith('__pycache__'):
             continue
         for filename in filenames:
             full_path = Path(dirpath) / filename
@@ -25,9 +25,9 @@ def collect_example_files():
     return test_files
 
 
-@pytest.mark.parametrize("test_file", collect_example_files())
+@pytest.mark.parametrize('test_file', collect_example_files())
 def test_serve(test_file):
     returncode = subprocess.run(
-        ["python", EXAMPLES_DIR / test_file, "--serve", "--timeout", "1", "--port", "0"],
+        ['python', EXAMPLES_DIR / test_file, '--serve', '--timeout', '1', '--port', '0'],
     ).returncode
     assert returncode == 0

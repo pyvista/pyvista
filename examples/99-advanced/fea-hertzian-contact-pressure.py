@@ -31,9 +31,10 @@ from pyvista import examples
 # %%
 # Load the dataset
 # ~~~~~~~~~~~~~~~~
-# Start by loading the dataset using :mod:`pyvista.examples` module. This module
-# provides access to a range of datasets, including FEA (finite element
-# analysis) datasets that are useful for stress analysis.
+# Start by loading the dataset from the examples module with
+# :func:`~pyvista.examples.downloads.download_fea_hertzian_contact_cylinder`.
+# This module provides access to a range of datasets, including FEA
+# (finite element analysis) datasets that are useful for stress analysis.
 
 mesh = examples.download_fea_hertzian_contact_cylinder()
 mesh

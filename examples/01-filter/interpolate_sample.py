@@ -47,7 +47,7 @@ points = rng.uniform(low=[0, 0], high=[3, 1], size=(250, 2))
 # Make points be z=0
 points = np.hstack((points, np.zeros((250, 1))))
 point_mesh = pv.PolyData(points)
-point_mesh["ysquared"] = points[:, 1] ** 2
+point_mesh['ysquared'] = points[:, 1] ** 2
 
 # %%
 # The point cloud data looks like this.
@@ -100,13 +100,13 @@ pl.show()
 # While this filter is very useful for point clouds, it is possible to use
 # it to interpolate from the points on other mesh types. With
 # unstuitable choice of ``radius`` the interpolation doesn't look very good.
-# It is recommended consider using :func:`pyvista.DataSetFilters.sample`` in a
+# It is recommended consider using :func:`pyvista.DataSetFilters.sample` in a
 # case like this (see next section below). However, there may be cases with
 # non-point cloud meshes where :func:`pyvista.DataSetFilters.interpolate` is
 # still preferred.
 
 sphere = pv.SolidSphere(center=(0.5, 0.5, 0), outer_radius=1.0)
-sphere["ysquared"] = sphere.points[:, 1] ** 2
+sphere['ysquared'] = sphere.points[:, 1] ** 2
 output = grid.interpolate(sphere, radius=0.1)
 
 pl = pv.Plotter()
@@ -137,7 +137,7 @@ print(f"(min, max): {output['ysquared'].min()}, {output['ysquared'].min()}")
 #  Create the non-point cloud mesh that will be sampled from and plot it.
 
 grid = pv.ImageData(dimensions=(11, 11, 1), spacing=[3 / 10, 1 / 10, 1])
-grid["ysquared"] = grid.points[:, 1] ** 2
+grid['ysquared'] = grid.points[:, 1] ** 2
 
 pl = pv.Plotter()
 pl.add_mesh(grid, clim=[0, 1])
@@ -189,7 +189,7 @@ pl.show()
 # fiddling with distance weighting parameters.
 
 sphere = pv.SolidSphere(center=(0.5, 0.5, 0), outer_radius=1.0)
-sphere["ysquared"] = sphere.points[:, 1] ** 2
+sphere['ysquared'] = sphere.points[:, 1] ** 2
 output = grid.sample(sphere)
 
 pl = pv.Plotter()

@@ -34,7 +34,7 @@ import numpy as np
 
 import pyvista as pv
 
-pv.set_plot_theme("document")
+pv.set_plot_theme('document')
 
 
 # %%
@@ -59,7 +59,7 @@ pl.camera_position = 'xz'
 pl.add_mesh(sphere1, style='wireframe', color='green', line_width=5)
 
 # for this example
-pl.open_gif("collision_movie.gif")
+pl.open_gif('collision_movie.gif')
 
 # alternatively, to disable movie generation:
 # pl.show(auto_close=False, interactive=False)

@@ -11,9 +11,11 @@ import numpy as np
 import pyvista
 
 from . import _vtk_core as _vtk
-from .dataset import DataObject
+from .dataobject import DataObject
 from .datasetattributes import DataSetAttributes
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
+from .utilities.arrays import RowLiteral
 from .utilities.arrays import get_array
 from .utilities.arrays import row_array
 
@@ -33,7 +35,7 @@ class Table(DataObject, _vtk.vtkTable):
 
     """
 
-    def __init__(self, *args, deep=True, **kwargs):
+    def __init__(self, *args, deep: bool = True, **kwargs):
         """Initialize the table."""
         super().__init__()
         if len(args) == 1:
@@ -61,7 +63,7 @@ class Table(DataObject, _vtk.vtkTable):
         else:
             raise ValueError('Only 1D or 2D arrays are supported by Tables.')
 
-    def _from_arrays(self, arrays):
+    def _from_arrays(self, arrays) -> None:
         np_table = self._prepare_arrays(arrays)
         for i, array in enumerate(np_table):
             self.row_arrays[f'Array {i}'] = array
@@ -73,7 +75,7 @@ class Table(DataObject, _vtk.vtkTable):
         for name, array in array_dict.items():
             self.row_arrays[name] = array
 
-    def _from_pandas(self, data_frame):
+    def _from_pandas(self, data_frame) -> None:
         for name in data_frame.keys():
             self.row_arrays[name] = data_frame[name].values
 
@@ -90,7 +92,7 @@ class Table(DataObject, _vtk.vtkTable):
         return self.GetNumberOfRows()
 
     @n_rows.setter
-    def n_rows(self, n):  # numpydoc ignore=GL08
+    def n_rows(self, n) -> None:
         """Set the number of rows.
 
         Parameters
@@ -155,7 +157,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return DataSetAttributes(
             vtkobject=self.GetRowData(),
-            dataset=self,
+            dataset=self,  # type: ignore[arg-type]
             association=FieldAssociation.ROW,
         )
 
@@ -192,7 +194,7 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self.row_arrays.values()
 
-    def update(self, data):
+    def update(self, data) -> None:
         """Set the table data using a dict-like update.
 
         Parameters
@@ -247,15 +249,15 @@ class Table(DataObject, _vtk.vtkTable):
         """
         return self[index]
 
-    def __setitem__(self, name, scalars):
+    def __setitem__(self, name, scalars) -> None:
         """Add/set an array in the row_arrays."""
         self.row_arrays[name] = scalars
 
-    def _remove_array(self, _, key):
+    def _remove_array(self, _, key) -> None:
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
 
-    def __delitem__(self, name):
+    def __delitem__(self, name) -> None:
         """Remove an array by the specified name."""
         del self.row_arrays[name]
 
@@ -267,7 +269,7 @@ class Table(DataObject, _vtk.vtkTable):
     def _get_attrs(self):
         """Return the representation methods."""
         attrs = []
-        attrs.append(("N Rows", self.n_rows, "{}"))
+        attrs.append(('N Rows', self.n_rows, '{}'))
         return attrs
 
     def _repr_html_(self):
@@ -276,39 +278,40 @@ class Table(DataObject, _vtk.vtkTable):
         It includes header details and information about all arrays.
 
         """
-        fmt = ""
+        fmt = ''
         if self.n_arrays > 0:
             fmt += "<table style='width: 100%;'>"
-            fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
-            fmt += "<tr><td>"
+            fmt += '<tr><th>Header</th><th>Data Arrays</th></tr>'
+            fmt += '<tr><td>'
         # Get the header info
         fmt += self.head(display=False, html=True)
         # Fill out scalars arrays
         if self.n_arrays > 0:
-            fmt += "</td><td>"
-            fmt += "\n"
+            fmt += '</td><td>'
+            fmt += '\n'
             fmt += "<table style='width: 100%;'>\n"
-            titles = ["Name", "Type", "N Comp", "Min", "Max"]
-            fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
-            row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
-            row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
+            titles = ['Name', 'Type', 'N Comp', 'Min', 'Max']
+            fmt += '<tr>' + ''.join([f'<th>{t}</th>' for t in titles]) + '</tr>\n'
+            row = '<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n'
+            row = '<tr>' + ''.join(['<td>{}</td>' for i in range(len(titles))]) + '</tr>\n'
 
             def format_array(key):
                 """Format array information for printing (internal helper)."""
                 arr = row_array(self, key)
                 dl, dh = self.get_data_range(key)
-                dl = pyvista.FLOAT_FORMAT.format(dl)
-                dh = pyvista.FLOAT_FORMAT.format(dh)
-                ncomp = arr.shape[1] if arr.ndim > 1 else 1
-                return row.format(key, arr.dtype, ncomp, dl, dh)
+                dl = pyvista.FLOAT_FORMAT.format(dl)  # type: ignore[assignment]
+                dh = pyvista.FLOAT_FORMAT.format(dh)  # type: ignore[assignment]
+                ncomp = 0 if arr is None else arr.shape[1] if arr.ndim > 1 else 1
+                dtype = None if arr is None else arr.dtype
+                return row.format(key, dtype, ncomp, dl, dh)
 
             for i in range(self.n_arrays):
                 key = self.GetRowData().GetArrayName(i)
                 fmt += format_array(key)
 
-            fmt += "</table>\n"
-            fmt += "\n"
-            fmt += "</td></tr> </table>"
+            fmt += '</table>\n'
+            fmt += '\n'
+            fmt += '</td></tr> </table>'
         return fmt
 
     def __repr__(self):
@@ -346,7 +349,7 @@ class Table(DataObject, _vtk.vtkTable):
     def get_data_range(
         self,
         arr: str | None = None,
-        preference: str = 'row',
+        preference: FieldLiteral | RowLiteral = 'row',
     ) -> tuple[float, float]:
         """Get the min and max of a named array.
 
@@ -371,9 +374,9 @@ class Table(DataObject, _vtk.vtkTable):
             # use the first array in the row data
             arr = self.GetRowData().GetArrayName(0)
         if isinstance(arr, str):
-            arr = get_array(self, arr, preference=preference)
+            arr = get_array(self, arr, preference=preference)  # type: ignore[assignment]
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):  # type: ignore[attr-defined]
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import operator
 import re
 
 import numpy as np
@@ -7,133 +8,388 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core._validation._cast_array import _cast_to_tuple
+from pyvista.core.errors import PyVistaDeprecationWarning
 
-VTK93 = pv.vtk_version_info >= (9, 3)
+BOUNDARY_LABELS = 'boundary_labels'
 
 
 @pytest.fixture
-def logo():
-    return examples.load_logo()
+def beach():
+    return examples.download_beach()
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
+def variable_dimensionality_image(dimensions):
+    image = pv.ImageData(dimensions=dimensions)
+    image.point_data['image'] = 99
+    image.point_data['other'] = 42
+    image.cell_data['data'] = 142
+    return image
 
+
+@pytest.fixture
+def zero_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(1, 1, 1))
+
+
+@pytest.fixture
+def one_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(1, 2, 1))
+
+
+@pytest.fixture
+def two_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(2, 1, 2))
+
+
+@pytest.fixture
+def three_dimensionality_image():
+    return variable_dimensionality_image(dimensions=(2, 2, 2))
+
+
+@pytest.fixture
+def frog_tissues():
+    return examples.load_frog_tissues()
+
+
+def test_contour_labeled_deprecated():
+    match = 'This filter produces unexpected results and is deprecated.'
+    with pytest.raises(PyVistaDeprecationWarning, match=match):
+        pv.ImageData().contour_labeled()
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled(frog_tissues):
     # Extract surface for each label
-    mesh = label_map.contour_labeled()
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled()
 
-    assert label_map.point_data.active_scalars.max() == 29
+    assert frog_tissues.point_data.active_scalars.max() == 29
     assert 'BoundaryLabels' in mesh.cell_data
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_smoothing():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_smoothing(frog_tissues):
     # Extract smooth surface for each label
-    mesh = label_map.contour_labeled(smoothing=True)
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(smoothing=True)
     # this somehow mutates the object... also the n_labels is likely not correct
 
     assert 'BoundaryLabels' in mesh.cell_data
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_reduced_labels_count():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_reduced_labels_count(frog_tissues):
     # Extract surface for each label
-    mesh = label_map.contour_labeled(n_labels=2)
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(n_labels=2)
     # this somehow mutates the object... also the n_labels is likely not correct
 
     assert 'BoundaryLabels' in mesh.cell_data
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 2
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_triangle_output_mesh():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_triangle_output_mesh(frog_tissues):
     # Extract surface for each label
-    mesh = label_map.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(scalars='MetaImage', output_mesh_type='triangles')
 
     assert 'BoundaryLabels' in mesh.cell_data
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_boundary_output_style():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_boundary_output_style(frog_tissues):
     # Extract surface for each label
-    mesh = label_map.contour_labeled(output_style='boundary')
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(output_style='boundary')
 
     assert 'BoundaryLabels' in mesh.cell_data
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 29
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_invalid_output_mesh_type():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_invalid_output_mesh_type(frog_tissues):
+    # Extract surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(ValueError):  # noqa: PT011
+            frog_tissues.contour_labeled(output_mesh_type='invalid')
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_invalid_output_style(frog_tissues):
+    # Extract surface for each label
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(NotImplementedError):
+            frog_tissues.contour_labeled(output_style='selected')
+
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(ValueError):  # noqa: PT011
+            frog_tissues.contour_labeled(output_style='invalid')
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_scalars(frog_tissues):
+    # Create a new array with reduced number of labels
+    frog_tissues['labels'] = frog_tissues['MetaImage'] // 2
 
     # Extract surface for each label
-    with pytest.raises(ValueError):  # noqa: PT011
-        label_map.contour_labeled(output_mesh_type='invalid')
-
-
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_invalid_output_style():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
-    # Extract surface for each label
-    with pytest.raises(NotImplementedError):
-        label_map.contour_labeled(output_style='selected')
-
-    with pytest.raises(ValueError):  # noqa: PT011
-        label_map.contour_labeled(output_style='invalid')
-
-
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_scalars():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    # and create a new array with reduced number of labels
-    label_map = examples.load_frog_tissues()
-    label_map['labels'] = label_map['MetaImage'] // 2
-
-    # Extract surface for each label
-    mesh = label_map.contour_labeled(scalars='labels')
+    with pytest.warns(PyVistaDeprecationWarning):
+        mesh = frog_tissues.contour_labeled(scalars='labels')
 
     assert 'BoundaryLabels' in mesh.cell_data
     assert np.max(mesh['BoundaryLabels'][:, 0]) == 14
 
 
-@pytest.mark.skipif(not VTK93, reason='At least VTK 9.3 is required')
-def test_contour_labeled_with_invalid_scalars():
-    # Load a 3D label map (segmentation of a frog's tissue)
-    label_map = examples.load_frog_tissues()
-
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labeled_with_invalid_scalars(frog_tissues):
     # Nonexistent scalar key
-    with pytest.raises(KeyError):
-        label_map.contour_labeled(scalars='nonexistent_key')
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(KeyError):
+            frog_tissues.contour_labeled(scalars='nonexistent_key')
 
     # Using cell data
-    label_map.cell_data['cell_data'] = np.zeros(label_map.n_cells)
-    with pytest.raises(ValueError, match='Can only process point data'):
-        label_map.contour_labeled(scalars='cell_data')
+    frog_tissues.cell_data['cell_data'] = np.zeros(frog_tissues.n_cells)
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='Can only process point data'):
+            frog_tissues.contour_labeled(scalars='cell_data')
 
     # When no scalas are given and active scalars are not point data
-    label_map.set_active_scalars('cell_data', preference='cell')
-    with pytest.raises(ValueError, match='active scalars must be point array'):
-        label_map.contour_labeled()
+    frog_tissues.set_active_scalars('cell_data', preference='cell')
+    with pytest.warns(PyVistaDeprecationWarning):
+        with pytest.raises(ValueError, match='active scalars must be point array'):
+            frog_tissues.contour_labeled()
+
+
+@pytest.fixture
+def channels():
+    # ImageData with cell data
+    return examples.load_channels()
+
+
+@pytest.fixture
+def labeled_image():
+    # Create 4x3x3 image with two adjacent labels
+
+    # First label:
+    #   has a single point near center of image,
+    #   is adjacent to second label,
+    #   is otherwise surrounded by background,
+
+    # Second label:
+    #   has two points near center of image,
+    #   is adjacent to first label,
+    #   has one side touching image boundary,
+    #   is otherwise surrounded by background
+
+    dim = (4, 3, 3)
+    labels = np.zeros(np.prod(dim))
+    labels[17] = 2  # First label
+    labels[[18, 19]] = 5  # Second label
+    image = pv.ImageData(dimensions=dim)
+    image.point_data['labels'] = labels
+
+    label_ids = np.unique(image.point_data.active_scalars).tolist()
+    assert label_ids == [0, 2, 5]
+    return image
+
+
+@pytest.mark.parametrize('smoothing', [True, False, None])
+@pytest.mark.parametrize('output_mesh_type', ['triangles', 'quads'])
+@pytest.mark.parametrize('scalars', ['labels', None])
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_scalars_smoothing_output_mesh_type(
+    labeled_image,
+    smoothing,
+    output_mesh_type,
+    scalars,
+):
+    # Determine expected output
+    if output_mesh_type == 'triangles' or (output_mesh_type is None and smoothing):
+        expected_celltype = pv.CellType.TRIANGLE
+        cell_multiplier = 2  # quads are subdivided into 2 triangles
+    else:
+        assert output_mesh_type == 'quads' or not smoothing
+        expected_celltype = pv.CellType.QUAD
+        cell_multiplier = 1
+
+    # Do test
+    mesh = labeled_image.contour_labels(
+        scalars=scalars,
+        smoothing=smoothing,
+        output_mesh_type=output_mesh_type,
+    )
+    assert BOUNDARY_LABELS in mesh.cell_data
+    assert mesh.active_scalars_name == BOUNDARY_LABELS
+    assert all(cell.type == expected_celltype for cell in mesh.cell)
+
+    if smoothing:
+        assert mesh.area < 0.01
+    else:
+        assert mesh.area == (mesh.n_cells / cell_multiplier)
+
+
+def _remove_duplicate_points(polydata):
+    return polydata.clean(
+        point_merging=False,
+        lines_to_points=False,
+        polys_to_lines=False,
+        strips_to_polys=False,
+        inplace=False,
+    )
+
+
+@pytest.mark.parametrize(
+    'select_inputs',
+    [None, 2, 5, [2, 5]],
+    ids=['in_None', 'in_2', 'in_5', 'in_2_5'],
+)
+@pytest.mark.parametrize(
+    'select_outputs',
+    [None, 2, 5, [2, 5]],
+    ids=['out_None', 'out_2', 'out_5', 'out_2_5'],
+)
+@pytest.mark.parametrize('boundary_style', ['all', 'external', 'internal'])
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_boundary_style(
+    labeled_image,
+    select_inputs,
+    select_outputs,
+    boundary_style,
+):
+    assert labeled_image.active_scalars_name == 'labels'
+    ALL_LABEL_IDS = {2, 5}
+
+    # Make sure param values are iterable
+    select_inputs_iter = set(np.atleast_1d(select_inputs)) if select_inputs else ALL_LABEL_IDS
+    select_outputs_iter = set(np.atleast_1d(select_outputs)) if select_outputs else ALL_LABEL_IDS
+
+    # Compute expected boundary values
+    expected_internal_ids = set()
+    expected_external_ids = set()
+    if 2 in select_inputs_iter and 2 in select_outputs_iter:
+        expected_external_ids.add((2, 0))  # external boundary between id 2 and background id 0
+    if 5 in select_inputs_iter and 5 in select_outputs_iter:
+        expected_external_ids.add((5, 0))  # external boundary between id 5 and background id 0
+    if select_inputs_iter == ALL_LABEL_IDS:
+        expected_internal_ids.add((2, 5))  # internal boundary between ids 2 and 5
+
+    mesh = labeled_image.contour_labels(
+        select_inputs=select_inputs,
+        select_outputs=select_outputs,
+        boundary_style=boundary_style,
+        simplify_output=False,
+    )
+    # Test no duplicate points
+    cleaned = _remove_duplicate_points(mesh)
+    assert mesh.n_cells == cleaned.n_cells
+    assert mesh.n_points == cleaned.n_points
+
+    # Test that temp array created for select_inputs is removed
+    assert labeled_image.array_names == ['labels']
+    assert np.unique(labeled_image.active_scalars).tolist() == [0, 2, 5]
+
+    # Test output values
+    actual_output_values = set()
+    expected_output_values = set()
+    if mesh.n_cells > 0:
+        assert BOUNDARY_LABELS in mesh.cell_data
+        # Extract internal and external boundary meshes
+        internal_mesh = mesh.extract_values(0, component_mode='any', invert=True)
+        external_mesh = mesh.extract_values(0, component_mode='any')
+        # Get unique boundary values
+        actual_internal_values = (
+            set()
+            if internal_mesh.n_cells == 0
+            else set(_cast_to_tuple(internal_mesh[BOUNDARY_LABELS]))
+        )
+        actual_external_values = (
+            set()
+            if external_mesh.n_cells == 0
+            else set(_cast_to_tuple(external_mesh[BOUNDARY_LABELS]))
+        )
+
+        # Determine actual and expected values
+        if boundary_style == 'all':
+            actual_output_values = actual_internal_values | actual_external_values
+            expected_output_values = expected_internal_ids | expected_external_ids
+        if boundary_style == 'internal':
+            actual_output_values = actual_internal_values
+            expected_output_values = expected_internal_ids
+        if boundary_style == 'external':
+            actual_output_values = actual_external_values
+            expected_output_values = expected_external_ids
+
+    assert actual_output_values == expected_output_values
+
+
+ALL_LABEL_IDS = {0, 2, 5}
+
+
+@pytest.mark.parametrize('background_value', ALL_LABEL_IDS)
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_background_value(labeled_image, background_value):
+    assert background_value in labeled_image.active_scalars
+
+    mesh = labeled_image.contour_labels('all', background_value=background_value)
+    first_component = mesh.cell_data[BOUNDARY_LABELS][:, 0]
+    assert background_value not in first_component
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_pad_background(labeled_image):
+    mesh_closed = labeled_image.contour_labels(pad_background=True, output_mesh_type='quads')
+    mesh_open = labeled_image.contour_labels(pad_background=False, output_mesh_type='quads')
+    assert mesh_closed.n_cells - mesh_open.n_cells == 1
+
+
+@pytest.mark.parametrize('boundary_type', ['all', 'internal', 'external'])
+@pytest.mark.parametrize('simplify_output', [True, False, None])
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_simplify_output(labeled_image, boundary_type, simplify_output):
+    poly = labeled_image.contour_labels(boundary_type, simplify_output=simplify_output)
+    expected_ndim = (
+        1 if simplify_output or (simplify_output is None and boundary_type == 'external') else 2
+    )
+    assert poly[BOUNDARY_LABELS].ndim == expected_ndim
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_cell_data(channels):
+    # Extract voxelized surface from image with cell voxels in two ways
+    # Both should have an equal number of quad cells
+
+    voxel_surface_contoured = channels.contour_labels(
+        smoothing=False,
+        boundary_style='external',
+    )
+    voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
+
+    assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_raises(labeled_image):
+    # Nonexistent scalar key
+    with pytest.raises(KeyError):
+        labeled_image.contour_labels(scalars='nonexistent_key')
+
+    # Empty inputs
+    with pytest.raises(pv.MissingDataError, match='No data available'):
+        pv.ImageData().contour_labels()
+
+
+@pytest.mark.skipif(
+    pv.vtk_version_info >= (9, 3, 0),
+    reason='Requires VTK<9.3.0',
+)
+def test_contour_labels_raises_vtkversionerror():
+    match = 'Surface nets 3D require VTK 9.3.0 or newer.'
+    with pytest.raises(pv.VTKVersionError, match=match):
+        pv.ImageData().contour_labels()
 
 
 @pytest.fixture
@@ -225,30 +481,105 @@ def test_cells_to_points_scalars(uniform):
         uniform.cells_to_points('Spatial Point Data')
 
 
-def test_points_to_cells_and_cells_to_points_dimensions(uniform, logo):
+def test_points_to_cells_and_cells_to_points_dimensions(
+    uniform,
+    beach,
+    zero_dimensionality_image,
+    one_dimensionality_image,
+    two_dimensionality_image,
+    three_dimensionality_image,
+):
     assert uniform.dimensions == (10, 10, 10)
     assert uniform.points_to_cells().dimensions == (11, 11, 11)
     assert uniform.cells_to_points().dimensions == (9, 9, 9)
+    assert uniform.points_to_cells(dimensionality='preserve').dimensions == (11, 11, 11)
+    assert uniform.cells_to_points(dimensionality='preserve').dimensions == (9, 9, 9)
 
-    assert logo.dimensions == (1920, 718, 1)
-    assert logo.points_to_cells().dimensions == (1921, 719, 1)
-    assert logo.cells_to_points().dimensions == (1919, 717, 1)
+    assert beach.dimensions == (100, 100, 1)
+    assert beach.points_to_cells().dimensions == (101, 101, 1)
+    assert beach.cells_to_points().dimensions == (99, 99, 1)
+    assert beach.points_to_cells(dimensionality='preserve').dimensions == (101, 101, 1)
+    assert beach.cells_to_points(dimensionality='preserve').dimensions == (99, 99, 1)
+
+    assert zero_dimensionality_image.dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(
+        dimensionality=(True, True, True)
+    ).dimensions == (2, 2, 2)
+    assert zero_dimensionality_image.points_to_cells(
+        dimensionality=(True, True, False)
+    ).dimensions == (2, 2, 1)
+    assert zero_dimensionality_image.points_to_cells(
+        dimensionality=(False, False, False)
+    ).dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=0).dimensions == (1, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=1).dimensions == (2, 1, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=2).dimensions == (2, 2, 1)
+    assert zero_dimensionality_image.points_to_cells(dimensionality=3).dimensions == (2, 2, 2)
+    assert zero_dimensionality_image.cells_to_points(dimensionality=0).dimensions == (1, 1, 1)
+
+    assert one_dimensionality_image.dimensions == (1, 2, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='1D').dimensions == (1, 3, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (2, 3, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (2, 3, 2)
+    assert one_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert one_dimensionality_image.points_to_cells(dimensionality='1D').cells_to_points(
+        dimensionality='1D'
+    ).dimensions == (1, 2, 1)
+
+    assert two_dimensionality_image.dimensions == (2, 1, 2)
+    assert two_dimensionality_image.points_to_cells(dimensionality='2D').dimensions == (3, 1, 3)
+    assert two_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (3, 2, 3)
+    assert two_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert two_dimensionality_image.points_to_cells(dimensionality='2D').cells_to_points(
+        dimensionality='2D'
+    ).dimensions == (2, 1, 2)
+
+    assert three_dimensionality_image.dimensions == (2, 2, 2)
+    assert three_dimensionality_image.points_to_cells(dimensionality='3D').dimensions == (3, 3, 3)
+    assert three_dimensionality_image.cells_to_points(dimensionality='0D').dimensions == (1, 1, 1)
+    assert three_dimensionality_image.points_to_cells(dimensionality='3D').cells_to_points(
+        dimensionality='3D'
+    ).dimensions == (2, 2, 2)
 
 
-@pytest.fixture
-def single_point_image():
-    image = pv.ImageData(dimensions=(1, 1, 1))
-    image.point_data['image'] = 99
-    image.point_data['other'] = 42
-    return image
+@pytest.mark.parametrize(
+    'extent', [(-25, -19, -14, -10, -7, -5), (1, 2, 3, 4, 5, 6), (0, 2, 0, 4, 0, 6)]
+)
+def test_points_to_cells_and_cells_to_points_round_trip_equal(extent):
+    before = pv.ImageData()
+    before.index_to_physical_matrix = np.diag((-1, 2, 3, 1))
+    before.extent = extent
+    before.point_data['data'] = range(before.n_points)
+    after = before.points_to_cells().cells_to_points()
+    assert before == after
+
+
+def test_points_to_cells_and_cells_to_points_dimensions_incorrect_number_data():
+    image = pv.ImageData(dimensions=(1, 2, 2))
+    with pytest.raises(
+        ValueError,
+        match=(
+            r'Cannot re-mesh points to cells. The dimensions of the input \(1, 2, 2\) is not compatible'
+            r' with the dimensions of the output \(2, 2, 2\) and would require to map 4 points on 1 cells.'
+        ),
+    ):
+        image.points_to_cells(dimensionality=[True, False, False])
+    with pytest.raises(
+        ValueError,
+        match=(
+            r'Cannot re-mesh cells to points. The dimensions of the input \(1, 2, 2\) is not compatible'
+            r' with the dimensions of the output \(1, 2, 2\) and would require to map 1 cells on 4 points.'
+        ),
+    ):
+        image.cells_to_points(dimensionality='2D')
 
 
 @pytest.mark.parametrize('pad_size', [1, 2])
 @pytest.mark.parametrize('pad_value', [-1, 0, 1, 2])
-@pytest.mark.parametrize('pad_singleton_dims', [True, False])
-def test_pad_image(single_point_image, pad_size, pad_value, pad_singleton_dims):
-    image_point_value = single_point_image['image'][0]
-    if pad_singleton_dims:
+@pytest.mark.parametrize('dimensionality', [(True, True, True), (False, False, False)])
+def test_pad_image(zero_dimensionality_image, pad_size, pad_value, dimensionality):
+    image_point_value = zero_dimensionality_image['image'][0]
+    if all(dimensionality):
         # Input is expected to be padded
         dim = pad_size * 2 + 1
         expected_dimensions = (dim, dim, dim)
@@ -261,10 +592,10 @@ def test_pad_image(single_point_image, pad_size, pad_value, pad_singleton_dims):
         expected_dimensions = (1, 1, 1)
         expected_array = image_point_value
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
         pad_value=pad_value,
-        pad_singleton_dims=pad_singleton_dims,
+        dimensionality=dimensionality,
     )
     assert padded.dimensions == expected_dimensions
 
@@ -285,17 +616,17 @@ def test_pad_image(single_point_image, pad_size, pad_value, pad_singleton_dims):
     ],
 )
 def test_pad_image_pad_size_axis(
-    single_point_image,
+    zero_dimensionality_image,
     pad_size,
     expected_dimensions,
     expected_bounds,
 ):
-    image_point_value = single_point_image['image'][0]
+    image_point_value = zero_dimensionality_image['image'][0]
     pad_value = 7
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensionality=(True, True, True),
         pad_value=pad_value,
     )
     assert padded.dimensions == expected_dimensions
@@ -321,22 +652,22 @@ def test_pad_image_pad_size_axis(
     ],
 )
 def test_pad_image_pad_size_bounds(
-    single_point_image,
+    zero_dimensionality_image,
     pad_size,
     expected_dimensions,
     expected_bounds,
 ):
-    image_point_value = single_point_image['image'][0]
-    other_point_value = single_point_image['other'][0]
+    image_point_value = zero_dimensionality_image['image'][0]
+    other_point_value = zero_dimensionality_image['other'][0]
     pad_value = 7
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensionality=(True, True, True),
         pad_value=pad_value,
         pad_all_scalars=True,
     )
-    assert single_point_image.active_scalars_name == 'image'
+    assert zero_dimensionality_image.active_scalars_name == 'image'
     assert padded.active_scalars_name == 'image'
     assert padded.dimensions == expected_dimensions
     assert padded.bounds == expected_bounds
@@ -355,8 +686,8 @@ def test_pad_image_pad_size_bounds(
 
 @pytest.mark.parametrize('all_scalars', [True, False])
 @pytest.mark.parametrize(('scalars', 'expected_scalars'), [(None, 'image'), ('other', 'other')])
-def test_pad_image_scalars(single_point_image, all_scalars, scalars, expected_scalars):
-    padded = single_point_image.pad_image(0, scalars=scalars, pad_all_scalars=all_scalars)
+def test_pad_image_scalars(zero_dimensionality_image, all_scalars, scalars, expected_scalars):
+    padded = zero_dimensionality_image.pad_image(0, scalars=scalars, pad_all_scalars=all_scalars)
     assert padded.active_scalars_name == expected_scalars
     actual_array_names = padded.array_names
     if all_scalars:
@@ -390,30 +721,30 @@ def test_pad_image_wrap_mirror(uniform, pad_value):
         assert np.array_equal(padded_scalars3D[1:-1, 0, 0], scalars3D[:, 0, 0])
 
 
-def test_pad_image_multi_component(single_point_image):
-    single_point_image.clear_data()
+def test_pad_image_multi_component(zero_dimensionality_image):
+    zero_dimensionality_image.clear_data()
     new_value = np.array([10, 20, 30, 40])
-    single_point_image['scalars'] = [new_value]
+    zero_dimensionality_image['scalars'] = [new_value]
 
-    dims = np.array(single_point_image.dimensions)
+    dims = np.array(zero_dimensionality_image.dimensions)
     pad_size = 10
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         new_value,
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensionality=(True, True, True),
         pad_all_scalars=True,
         progress_bar=True,
     )
     assert np.array_equal(len(padded.active_scalars), np.prod(dims + pad_size * 2))
     assert np.all(padded.active_scalars == new_value)
 
-    single_point_image['scalars2'] = [new_value * 2]
+    zero_dimensionality_image['scalars2'] = [new_value * 2]
 
-    padded = single_point_image.pad_image(
+    padded = zero_dimensionality_image.pad_image(
         'wrap',
         pad_size=pad_size,
-        pad_singleton_dims=True,
+        dimensionality=(True, True, True),
         pad_all_scalars=True,
     )
     assert np.array_equal(len(padded.active_scalars), np.prod(dims + pad_size * 2))
@@ -421,50 +752,513 @@ def test_pad_image_multi_component(single_point_image):
     assert np.all(padded['scalars2'] == new_value * 2)
 
 
-def test_pad_image_raises(single_point_image, uniform, logo):
+def test_pad_image_raises(zero_dimensionality_image, uniform, beach):
     match = 'Pad size cannot be negative. Got -1.'
     with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(pad_size=-1)
+        zero_dimensionality_image.pad_image(pad_size=-1)
 
-    match = "Pad size must have 1, 2, 3, 4, or 6 values, got 5 instead."
+    match = 'Pad size must have 1, 2, 3, 4, or 6 values, got 5 instead.'
     with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(pad_size=(1, 2, 3, 4, 5))
+        zero_dimensionality_image.pad_image(pad_size=(1, 2, 3, 4, 5))
 
     match = 'Pad size must be one dimensional. Got 2 dimensions.'
     with pytest.raises(ValueError, match=match):
-        single_point_image.pad_image(pad_size=[[1]])
+        zero_dimensionality_image.pad_image(pad_size=[[1]])
 
-    match = "Pad size must be integers. Got dtype float64."
+    match = 'Pad size must be integers. Got dtype float64.'
     with pytest.raises(TypeError, match=match):
-        single_point_image.pad_image(pad_size=1.0)
+        zero_dimensionality_image.pad_image(pad_size=1.0)
 
     match = "Scalars 'Spatial Cell Data' must be associated with point data. Got cell data instead."
     with pytest.raises(ValueError, match=match):
         uniform.pad_image(scalars='Spatial Cell Data')
 
-    match = (
-        "Pad value 0.1 with dtype 'float64' is not compatible with dtype 'uint8' of array PNGImage."
-    )
+    match = "Pad value 0.1 with dtype 'float64' is not compatible with dtype 'uint8' of array ImageFile."
     with pytest.raises(TypeError, match=re.escape(match)):
-        logo.pad_image(0.1)
+        beach.pad_image(0.1)
 
     match = "Invalid pad value foo. Must be 'mirror' or 'wrap', or a number/component vector for constant padding."
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image('foo')
+        beach.pad_image('foo')
 
     match = "Invalid pad value [[2]]. Must be 'mirror' or 'wrap', or a number/component vector for constant padding."
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image([[2]])
+        beach.pad_image([[2]])
 
-    match = "Number of components (2) in pad value (0, 0) must match the number components (4) in array 'PNGImage'."
+    match = "Number of components (2) in pad value (0, 0) must match the number components (3) in array 'ImageFile'."
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image((0, 0))
+        beach.pad_image((0, 0))
 
-    logo['single'] = range(logo.n_points)  # Create data with varying num array components
+    beach['single'] = range(beach.n_points)  # Create data with varying num array components
     match = (
-        "Cannot pad array 'single' with value (0, 0, 0, 0). Number of components (1) in 'single' must match the number of components (4) in value."
-        "\nTry setting `pad_all_scalars=False` or update the array."
+        "Cannot pad array 'single' with value (0, 0, 0). Number of components (1) in 'single' must match the number of components (3) in value."
+        '\nTry setting `pad_all_scalars=False` or update the array.'
     )
-    logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=False)
+    beach.pad_image(pad_value=(0, 0, 0), pad_all_scalars=False)
     with pytest.raises(ValueError, match=re.escape(match)):
-        logo.pad_image(pad_value=(0, 0, 0, 0), pad_all_scalars=True)
+        beach.pad_image(pad_value=(0, 0, 0), pad_all_scalars=True)
+
+
+def test_pad_image_deprecation(zero_dimensionality_image):
+    match = 'Use of `pad_singleton_dims=True` is deprecated. Use `dimensionality="3D"` instead'
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=True)
+        if pv._version.version_info[:2] > (0, 47):
+            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+        if pv._version.version_info[:2] > (0, 48):
+            raise RuntimeError('Remove `pad_singleton_dims`.')
+
+    match = (
+        'Use of `pad_singleton_dims=False` is deprecated. Use `dimensionality="preserve"` instead'
+    )
+    with pytest.warns(PyVistaDeprecationWarning, match=match):
+        zero_dimensionality_image.pad_image(pad_value=1, pad_singleton_dims=False)
+        if pv._version.version_info[:2] > (0, 47):
+            raise RuntimeError('Passing `pad_singleton_dims` should raise an error.')
+        if pv._version.version_info[:2] > (0, 48):
+            raise RuntimeError('Remove `pad_singleton_dims`.')
+
+
+@pytest.fixture
+def segmented_grid():
+    segmented_grid = pv.ImageData(dimensions=(4, 3, 3))
+    segmented_grid.cell_data['Data'] = [0, 0, 0, 1, 0, 1, 1, 2, 0, 0, 0, 0]
+    return segmented_grid
+
+
+def test_label_connectivity(segmented_grid):
+    # Test default parameters
+    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range='foreground')
+    assert isinstance(connected, pv.ImageData)
+    assert connected.bounds == segmented_grid.bounds
+    assert 'RegionId' in connected.cell_data
+    assert connected.cell_data['RegionId'].dtype == 'uint8'
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+    # Test that the first region id corresponds to the largest region (2 cells)
+    assert sizes[0] == 2
+
+
+def test_label_connectivity_point_data(segmented_grid):
+    # Test default parameters
+    segmented_points = segmented_grid.cells_to_points()
+    connected, labels, sizes = segmented_points.label_connectivity(scalar_range='foreground')
+    assert isinstance(connected, pv.ImageData)
+    assert connected.bounds == segmented_points.bounds
+    assert 'RegionId' in connected.point_data
+    assert connected.point_data['RegionId'].dtype == 'uint8'
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+
+
+def test_label_connectivity_scalar(segmented_grid):
+    segmented_grid.cell_data['AdditionalData'] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    segmented_grid.set_active_scalars(name='AdditionalData')
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        scalars='Data', scalar_range='foreground'
+    )
+    assert all(labels == [1, 2, 3])
+
+
+def test_label_connectivity_largest_region(segmented_grid):
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        scalar_range='foreground', extraction_mode='largest'
+    )
+    # Test that only one region was labelled
+    assert all(labels == [1])
+    # Test that the first region id corresponds to the largest region (2 cells)
+    assert sizes[0] == 2
+
+
+def test_label_connectivity_seed_points(segmented_grid):
+    points = [(2, 1, 0), (0, 0, 1)]
+    with pytest.warns(
+        UserWarning,
+        match='Points is not a float type. This can cause'
+        ' issues when transforming or applying filters. Casting to ``np.float32``.'
+        ' Disable this by passing ``force_float=False``.',
+    ):
+        connected, labels, sizes = segmented_grid.label_connectivity(
+            scalar_range='foreground',
+            extraction_mode='seeded',
+            point_seeds=points,
+            label_mode='seeds',
+        )
+    # Test that two regions were labelled
+    assert all(labels == [1, 2])
+    # Test that the second region id corresponds to the largest region (2 cells) which
+    # corresponds to the second seed coordinates
+    assert sizes[1] == 2
+
+
+def test_label_connectivity_seed_points_vtkDataSet(segmented_grid):
+    points = pv.PolyData()
+    points.points = [(2, 1, 0), (0, 0, 1)]
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        scalar_range='foreground',
+        extraction_mode='seeded',
+        point_seeds=points,
+        label_mode='seeds',
+    )
+    # Test that two regions were labelled
+    assert all(labels == [1, 2])
+    # Test that the second region id corresponds to the largest region (2 cells) which
+    # corresponds to the second seed coordinates
+    assert sizes[1] == 2
+
+
+def test_label_connectivity_scalar_range_whole_number(segmented_grid):
+    # Exclude the cell with a 2 value
+    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[1, 1])
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+    # Test that the first region id has 1 cell
+    assert sizes[0] == 1
+
+
+def test_label_connectivity_scalar_range_fractional_number(segmented_grid):
+    # Exclude the cell with a 2 value
+    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range=[0.5, 1.5])
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+    # Test that the first region id has 1 cell
+    assert sizes[0] == 1
+
+
+def test_label_connectivity_auto_scalar_range(segmented_grid):
+    # Exclude the cell with a 2 value
+    connected, labels, sizes = segmented_grid.label_connectivity(scalar_range='auto')
+    # Test that only one connected regions was labelled
+    assert all(labels == 1)
+    # Test that the region has 12 cell
+    assert sizes[0] == 12
+
+
+def test_label_connectivity_scalar_range_default_vtk(segmented_grid):
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        scalar_range='vtk_default', inplace=True
+    )
+    # Test that three distinct connected regions were labelled
+    assert all(labels == [1, 2, 3])
+    # Test that float are re-casted to int for inplace operation
+    assert np.issubdtype(connected.cell_data['Data'].dtype, np.integer)
+
+
+def test_label_connectivity_constant_label(segmented_grid):
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        label_mode='constant', constant_value=10
+    )
+    assert all(l in (0, 10) for l in labels)
+
+
+def test_label_connectivity_inplace_with_float_casting(segmented_grid):
+    segmented_points = segmented_grid.cells_to_points()
+    connected, labels, sizes = segmented_grid.label_connectivity(
+        inplace=True, scalar_range=[0.5, 2.5]
+    )
+    assert connected == segmented_grid
+    assert 'RegionId' in connected.cell_data
+    assert np.issubdtype(connected.cell_data['Data'].dtype, np.integer)
+
+    connected, labels, sizes = segmented_points.label_connectivity(
+        inplace=True, scalar_range=[0.5, 2.5]
+    )
+    assert connected == segmented_points
+    assert 'RegionId' in connected.point_data
+    assert np.issubdtype(connected.point_data['Data'].dtype, np.integer)
+
+
+def test_label_connectivity_invalid_parameters(segmented_grid):
+    with pytest.raises(
+        ValueError,
+        match='Invalid `extraction_mode` "invalid", use "all", "largest", or "seeded".',
+    ):
+        _ = segmented_grid.label_connectivity(extraction_mode='invalid')
+    with pytest.raises(
+        ValueError, match='`point_seeds` must be specified when `extraction_mode="seeded"`.'
+    ):
+        _ = segmented_grid.label_connectivity(extraction_mode='seeded')
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            'points has shape () which is not allowed. Shape must be one of [3, (-1, 3)].'
+        ),
+    ):
+        _ = segmented_grid.label_connectivity(extraction_mode='seeded', point_seeds=2.0)
+    with pytest.raises(
+        ValueError, match='Invalid `label_mode` "invalid", use "size", "constant", or "seeds".'
+    ):
+        _ = segmented_grid.label_connectivity(label_mode='invalid')
+    with pytest.raises(
+        ValueError, match='`point_seeds` must be specified when `label_mode="seeds"`.'
+    ):
+        _ = segmented_grid.label_connectivity(label_mode='seeds')
+    with pytest.raises(
+        ValueError, match='Data Range with 2 elements must be sorted in ascending order'
+    ):
+        _ = segmented_grid.label_connectivity(scalar_range=[2.0, 1.0])
+    with pytest.raises(ValueError, match='Shape must be 2'):
+        _ = segmented_grid.label_connectivity(scalar_range=[1.0, 2.0, 3.0])
+    with pytest.raises(
+        ValueError,
+        match='`constant_value` must be provided when `extraction_mode`is "constant".',
+    ):
+        _ = segmented_grid.label_connectivity(label_mode='constant')
+
+
+@pytest.mark.parametrize(
+    ('image_dims', 'operation_mask', 'operator', 'expected_dims_mask', 'expected_dims_result'),
+    [
+        ((1, 1, 1), (True, True, True), operator.add, True, (2, 4, 6)),
+        ((1, 1, 1), (False, False, False), operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), (True, False, True), operator.add, (True, False, True), (2, 1, 6)),
+        ((1, 1, 1), 'preserve', operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), '0D', operator.add, False, (1, 1, 1)),
+        ((1, 1, 1), '1D', operator.add, (True, False, False), (2, 1, 1)),
+        ((1, 1, 2), '1D', operator.add, (False, False, True), (1, 1, 7)),
+        ((1, 1, 1), '2D', operator.add, (True, True, False), (2, 4, 1)),
+        ((1, 1, 2), '2D', operator.add, (True, False, True), (2, 1, 7)),
+        ((1, 2, 2), '2D', operator.add, (False, True, True), (1, 5, 7)),
+        ((1, 1, 1), '3D', operator.add, (True, True, True), (2, 4, 6)),
+        ((10, 10, 10), '3D', operator.sub, (True, True, True), (9, 7, 5)),
+    ],
+)
+def test_validate_dim_operation(
+    image_dims, operation_mask, operator, expected_dims_mask, expected_dims_result
+):
+    image = pv.ImageData(dimensions=image_dims)
+    dims_mask, dims_result = image._validate_dimensional_operation(
+        operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
+    )
+    assert (dims_mask == expected_dims_mask).all()
+    assert (dims_result == expected_dims_result).all()
+
+
+@pytest.mark.parametrize(
+    ('image_dims', 'operation_mask', 'operator', 'error', 'error_message'),
+    [
+        (
+            (1, 1, 1),
+            'invalid',
+            operator.add,
+            ValueError,
+            '`invalid` is not a valid `operation_mask`. Use one of [0, 1, 2, 3, "0D", "1D", "2D", "3D", "preserve"].',
+        ),
+        (
+            (1, 1, 1),
+            (True, True, True, True),
+            operator.add,
+            ValueError,
+            'Array has shape (4,) which is not allowed.',
+        ),
+        (
+            (1, 1, 1),
+            4,
+            operator.add,
+            TypeError,
+            "Array has incorrect dtype of 'int64'. The dtype must be a subtype of <class 'bool'>.",
+        ),
+        (
+            (2, 2, 2),
+            '1D',
+            operator.add,
+            ValueError,
+            'The operation requires to add at least [1 3 5] dimension(s) to (2, 2, 2). A 1D ImageData with dims (>1, 1, 1) cannot be obtained.',
+        ),
+        (
+            (2, 1, 2),
+            '3D',
+            operator.sub,
+            ValueError,
+            'The operation requires to sub at least [1 3 5] dimension(s) to (2, 1, 2). A 3D ImageData with dims (>1, >1, >1) cannot be obtained.',
+        ),
+        (
+            (1, 2, 5),
+            (True, False, True),
+            operator.sub,
+            ValueError,
+            'The mask (True, False, True), size [1 3 5], and operation sub would result in [0 2 0] which contains <= 0 dimensions.',
+        ),
+    ],
+)
+def test_validate_dim_operation_invalid_parameters(
+    image_dims, operation_mask, operator, error, error_message
+):
+    image = pv.ImageData(dimensions=image_dims)
+    with pytest.raises(error, match=re.escape(error_message)):
+        image._validate_dimensional_operation(
+            operation_mask=operation_mask, operator=operator, operation_size=(1, 3, 5)
+        )
+
+
+@pytest.mark.parametrize('spacing', [None, [0.3, 0.4, 0.5]])
+@pytest.mark.parametrize('direction_matrix', [None, np.diag((-1, 1, 1))])
+@pytest.mark.parametrize('origin', [None, (1.1, 2.2, 3.3)])
+@pytest.mark.parametrize('dimensions', [None, (5, 6, 7)])
+@pytest.mark.parametrize('offset', [None, (-100, -101, -102)])
+def test_resample_reference_image(uniform, spacing, direction_matrix, origin, dimensions, offset):
+    uniform = pv.ImageData(dimensions=(4, 4, 4))
+    uniform['data'] = np.arange(uniform.n_points, dtype=float)
+    reference = uniform.copy()
+    if spacing is not None:
+        reference.spacing = spacing
+    if direction_matrix is not None:
+        reference.direction_matrix = direction_matrix
+    if origin is not None:
+        reference.origin = origin
+    if dimensions is not None:
+        reference.dimensions = dimensions
+    if offset is not None:
+        reference.offset = offset
+    reference['data'] = range(reference.n_points)
+
+    resampled = uniform.resample(reference_image=reference, progress_bar=True)
+    assert isinstance(resampled, pv.ImageData)
+    assert resampled is not uniform
+    assert resampled is not reference
+    assert np.array_equal(resampled.dimensions, reference.dimensions)
+    assert np.array_equal(resampled.offset, reference.offset)
+    assert np.allclose(resampled.index_to_physical_matrix, reference.index_to_physical_matrix)
+    assert len(resampled.active_scalars) == resampled.n_points
+    assert resampled.active_scalars_name == uniform.active_scalars_name
+    assert np.allclose(resampled.bounds, reference.bounds)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('sample_rate', 1.5),
+        ('sample_rate', 2.0),
+        ('sample_rate', 0.5),
+        ('dimensions', (15, 15, 15)),
+    ],
+)
+@pytest.mark.parametrize('extend_border', [True, False])
+def test_resample_extend_border(uniform, extend_border, name, value):
+    kwarg = {name: value}
+    resampled = uniform.resample(**kwarg, extend_border=extend_border)
+    expected_dimensions = uniform.dimensions * np.array(value) if name == 'sample_rate' else value
+
+    assert np.array_equal(resampled.dimensions, expected_dimensions)
+    assert len(resampled.active_scalars) == resampled.n_points
+    assert resampled.active_scalars_name == uniform.active_scalars_name
+
+    if extend_border:
+        sample_rate = np.array(resampled.dimensions) / uniform.dimensions
+        expected_spacing = uniform.spacing / sample_rate
+        assert np.allclose(resampled.spacing, expected_spacing)
+        assert not np.allclose(resampled.bounds, uniform.bounds)
+
+        # Test bounds are the same when represented as cells
+        expected_cell_bounds = uniform.points_to_cells().bounds
+        actual_cell_bounds = resampled.points_to_cells().bounds
+        assert np.allclose(actual_cell_bounds, expected_cell_bounds)
+    else:
+        assert np.allclose(resampled.bounds, uniform.bounds)
+
+
+@pytest.mark.parametrize('dtype', ['uint8', 'int16', 'int', 'float'])
+@pytest.mark.parametrize(
+    'interpolation', ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman']
+)
+@pytest.mark.parametrize('sample_rate', [0.5, 2.0])
+def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
+    array = uniform.active_scalars
+    uniform[uniform.active_scalars_name] = array.astype(dtype)
+    resampled = uniform.resample(sample_rate, interpolation=interpolation)
+
+    actual_dtype = resampled.active_scalars.dtype
+    assert actual_dtype == dtype
+
+    # Test anti-aliasing
+    anti_aliased = uniform.resample(sample_rate, interpolation=interpolation, anti_aliasing=True)
+    expected_dimensions = np.array(uniform.dimensions) * sample_rate
+    assert np.array_equal(resampled.dimensions, expected_dimensions)
+
+    # expect different result if down-sampling only
+    resampled_array = resampled.active_scalars
+    anti_aliased_array = anti_aliased.active_scalars
+    if sample_rate < 1.0:
+        assert not np.allclose(resampled_array, anti_aliased_array)
+    else:
+        assert np.allclose(resampled_array, anti_aliased_array)
+
+
+@pytest.mark.parametrize(
+    ('name', 'value'),
+    [
+        ('scalars', 'Spatial Point Data'),
+        ('scalars', 'Spatial Cell Data'),
+        ('preference', 'point'),
+        ('preference', 'cell'),
+    ],
+)
+def test_resample_scalars(uniform, name, value):
+    kwargs = {name: value}
+    if name == 'preference':
+        # Make array names ambiguous
+        scalars = 'data'
+        uniform.rename_array('Spatial Point Data', scalars)
+        uniform.rename_array('Spatial Cell Data', scalars)
+        kwargs['scalars'] = scalars
+
+    resampled = uniform.resample(**kwargs)
+
+    if 'cell' in value.lower():
+        assert len(resampled.cell_data) == 1
+        assert len(resampled.point_data) == 0
+    else:
+        assert len(resampled.cell_data) == 0
+        assert len(resampled.point_data) == 1
+
+
+def test_resample_cell_data(uniform):
+    uniform.point_data.clear()
+    input_cell_dimensions = np.array(uniform.dimensions) - 1
+    sample_rate = np.array((2, 3, 4))
+
+    # Test sample rate
+    resampled = uniform.resample(sample_rate)
+    resample_cell_dimensions = np.array(resampled.dimensions) - 1
+    expected_cell_dimensions = input_cell_dimensions * sample_rate
+    assert np.array_equal(resample_cell_dimensions, expected_cell_dimensions)
+    assert np.allclose(uniform.bounds, resampled.bounds)
+
+    # Test dimensions
+    output_dimensions = (12, 13, 14)
+    resampled = uniform.resample(dimensions=output_dimensions)
+    assert np.array_equal(resampled.dimensions, output_dimensions)
+    assert np.allclose(uniform.bounds, resampled.bounds)
+
+
+def test_resample_inplace(uniform):
+    resampled = uniform.resample()
+    assert resampled is not uniform
+    resampled = uniform.resample(inplace=True)
+    assert resampled is uniform
+
+
+def test_resample_raises(uniform):
+    match = (
+        'Cannot specify a reference image along with `dimensions` or `sample_rate` parameters.\n'
+        '`reference_image` must define the geometry exclusively.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, reference_image=uniform)
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(dimensions=(2, 2, 2), reference_image=uniform)
+
+    match = (
+        'Cannot specify a sample rate along with `reference_image` or `sample_rate` parameters.\n'
+        '`sample_rate` must define the sampling geometry exclusively.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(sample_rate=2, dimensions=(2, 2, 2))
+
+    match = '`extend_border` cannot be set when resampling cell data.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(scalars='Spatial Cell Data', extend_border=True)
+
+    match = '`extend_border` cannot be set when a `image_reference` is provided.'
+    with pytest.raises(ValueError, match=re.escape(match)):
+        uniform.resample(reference_image=uniform, extend_border=True)

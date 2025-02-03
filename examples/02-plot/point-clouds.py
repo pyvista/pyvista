@@ -149,7 +149,7 @@ pl.show()
 # Orbit a Point Cloud
 # ~~~~~~~~~~~~~~~~~~~
 # Generate a plot orbiting around a point cloud. Color based on the distance
-# from the center of the cloud.
+# from the center of the cloud using :func:`~pyvista.Plotter.generate_orbital_path`.
 
 cloud = examples.download_cloud_dark_matter()
 scalars = np.linalg.norm(cloud.points - cloud.center, axis=1)
@@ -167,7 +167,7 @@ pl.add_mesh(
 pl.background_color = 'k'
 pl.show(auto_close=False)
 path = pl.generate_orbital_path(n_points=36, shift=cloud.length, factor=3.0)
-pl.open_gif("orbit_cloud.gif")
+pl.open_gif('orbit_cloud.gif')
 pl.orbit_on_path(path, write_frames=True)
 pl.close()
 # %%

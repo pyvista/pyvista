@@ -29,7 +29,7 @@ import vtk
 
 import pyvista
 
-pyvista.set_plot_theme("document")
+pyvista.set_plot_theme('document')
 
 # %%
 # A user defined subclass of :class:`pyvista.PolyData`, ``FooData`` is defined.
@@ -55,20 +55,20 @@ class FooData(pyvista.PolyData):  # noqa: D101
 #
 
 foo_sphere = FooData(pyvista.Sphere(theta_resolution=100, phi_resolution=100))
-print("Original foo sphere:")
-print(f"Type: {type(foo_sphere)}")
-print(f"Maximum point index: {foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print('Original foo sphere:')
+print(f'Type: {type(foo_sphere)}')
+print(f'Maximum point index: {foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
-# Using an inplace operation like :func:`pyvista.DataSet.rotate_y` does not
+# Using an inplace operation like :func:`pyvista.DataSetFilters.rotate_y` does not
 # affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)
-print("\nRotated foo sphere:")
-print(f"Type: {type(foo_sphere)}")
-print(f"Maximum point index: {foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print('\nRotated foo sphere:')
+print(f'Type: {type(foo_sphere)}')
+print(f'Maximum point index: {foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
 # However, filter operations can return different ``DataSet`` types including
@@ -76,17 +76,17 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # :func:`decimate <pyvista.PolyDataFilters.decimate>` method returns a
 # :class:`pyvista.PolyData` object.
 
-print("\nDecimated foo sphere:")
+print('\nDecimated foo sphere:')
 decimated_foo_sphere = foo_sphere.decimate(0.5)
-print(f"Type: {type(decimated_foo_sphere)}")
+print(f'Type: {type(decimated_foo_sphere)}')
 
 # %%
 # It is now required to explicitly wrap the object into ``FooData``.
 
 decimated_foo_sphere = FooData(foo_sphere.decimate(0.5))
-print(f"Type: {type(decimated_foo_sphere)}")
-print(f"Maximum point index: {decimated_foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print(f'Type: {type(decimated_foo_sphere)}')
+print(f'Maximum point index: {decimated_foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
 # Automatically Managing Types
@@ -107,30 +107,30 @@ pyvista._wrappers['vtkPolyData'] = FooData
 # objects to obtain a ``FooData`` object.
 
 foo_sphere = pyvista.Sphere(theta_resolution=100, phi_resolution=100)
-print("Original foo sphere:")
-print(f"Type: {type(foo_sphere)}")
-print(f"Maximum point index: {foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print('Original foo sphere:')
+print(f'Type: {type(foo_sphere)}')
+print(f'Maximum point index: {foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
-# Using an inplace operation like :func:`rotate_y <pyvista.DataSet.rotate_y>` does not
+# Using an inplace operation like :func:`rotate_y <pyvista.DataSetFilters.rotate_y>` does not
 # affect the type of the object.
 
 foo_sphere.rotate_y(90, inplace=True)
-print("\nRotated foo sphere:")
-print(f"Type: {type(foo_sphere)}")
-print(f"Maximum point index: {foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print('\nRotated foo sphere:')
+print(f'Type: {type(foo_sphere)}')
+print(f'Maximum point index: {foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
 # Filter operations that return :class:`pyvista.PolyData` now return
 # ``FooData``
 
-print("\nDecimated foo sphere:")
+print('\nDecimated foo sphere:')
 decimated_foo_sphere = foo_sphere.decimate(0.5)
-print(f"Type: {type(decimated_foo_sphere)}")
-print(f"Maximum point index: {decimated_foo_sphere.max_point}")
-print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}")
+print(f'Type: {type(decimated_foo_sphere)}')
+print(f'Maximum point index: {decimated_foo_sphere.max_point}')
+print(f'Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}')
 
 # %%
 # Users can still create a native :class:`pyvista.PolyData` object, but
@@ -138,12 +138,12 @@ print(f"Location of maximum point: {foo_sphere.points[foo_sphere.max_point, :]}"
 # it is recommended to use the directly managing types method.
 
 poly_object = pyvista.PolyData(vtk.vtkPolyData())
-print(f"Type: {type(poly_object)}")
+print(f'Type: {type(poly_object)}')
 # catch error
 try:
     poly_object.rotate_y(90, inplace=True)
 except TypeError:
-    print("This operation fails")
+    print('This operation fails')
 
 # %%
 # Usage of ``pyvista._wrappers`` may require resetting the default value

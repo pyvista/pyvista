@@ -31,7 +31,7 @@ from sphinx.util import logging
 from sphinx.util.console import red
 from sphinx.util.inspect import safe_getattr
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from sphinx.application import Sphinx
 
 logger = logging.getLogger(__name__)
@@ -152,7 +152,7 @@ class CoverageBuilder(Builder):
             for filename, undoc in self.c_undoc.items():
                 write_header(op, filename)
                 for typ, name in sorted(undoc):
-                    op.write(' * %-50s [%9s]\n' % (name, typ))
+                    op.write(f' * {name:<50} [{typ:>9}]\n')
                     if self.config.coverage_show_missing_items:
                         if self.app.quiet or self.app.warningiserror:
                             logger.warning(
@@ -166,7 +166,7 @@ class CoverageBuilder(Builder):
                                 red('undocumented  ')
                                 + 'c   '
                                 + 'api       '
-                                + '%-30s' % (name + " [%9s]" % typ)
+                                + f'{name + f" [{typ:>9}]":<30}'
                                 + red(' - in file ')
                                 + filename,
                             )
@@ -312,7 +312,7 @@ class CoverageBuilder(Builder):
                                         red('undocumented  ')
                                         + 'py  '
                                         + 'function  '
-                                        + '%-30s' % func
+                                        + f'{func:<30}'
                                         + red(' - in module ')
                                         + name,
                                     )
@@ -334,7 +334,7 @@ class CoverageBuilder(Builder):
                                             red('undocumented  ')
                                             + 'py  '
                                             + 'class     '
-                                            + '%-30s' % class_name
+                                            + f'{class_name:<30}'
                                             + red(' - in module ')
                                             + name,
                                         )
@@ -358,7 +358,7 @@ class CoverageBuilder(Builder):
                                                 red('undocumented  ')
                                                 + 'py  '
                                                 + 'method    '
-                                                + '%-30s' % (class_name + '.' + meth)
+                                                + f'{class_name + "." + meth:<30}'
                                                 + red(' - in module ')
                                                 + name,
                                             )

@@ -9,7 +9,7 @@ not enabled by default in :attr:`pyvista.global_theme
 have issues with this routine.
 
 For this example, we will showcase the difference that depth peeling
-provides.
+provides. See :func:`~pyvista.Plotter.enable_depth_peeling`.
 
 """
 
@@ -28,16 +28,16 @@ for i, c in enumerate(centers):
     spheres.append(pv.Sphere(center=c, radius=radii[i]))
 
 # %%
-dargs = dict(opacity=0.5, color="red", smooth_shading=True)
+dargs = dict(opacity=0.5, color='red', smooth_shading=True)
 
 p = pv.Plotter(shape=(1, 2))
 
 p.add_mesh(spheres, **dargs)
 p.enable_depth_peeling(10)
-p.add_text("Depth Peeling")
+p.add_text('Depth Peeling')
 
 p.subplot(0, 1)
-p.add_text("Standard")
+p.add_text('Standard')
 p.add_mesh(spheres.copy(), **dargs)
 
 p.link_views()
@@ -56,10 +56,10 @@ p = pv.Plotter(shape=(1, 2))
 
 p.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
 p.add_mesh(room, opacity=0.5, color='lightblue')
-p.add_text("Depth Peeling")
+p.add_text('Depth Peeling')
 
 p.subplot(0, 1)
-p.add_text("Standard")
+p.add_text('Standard')
 p.add_mesh(room.copy(), opacity=0.5, color='lightblue')
 
 p.link_views()
@@ -73,16 +73,16 @@ p.show()
 # surfaces.
 
 mesh = examples.download_brain().contour(5)
-cmap = "viridis_r"
+cmap = 'viridis_r'
 
 p = pv.Plotter(shape=(1, 2))
 
 p.add_mesh(mesh, opacity=0.5, cmap=cmap)
 p.enable_depth_peeling(10)
-p.add_text("Depth Peeling")
+p.add_text('Depth Peeling')
 
 p.subplot(0, 1)
-p.add_text("Standard")
+p.add_text('Standard')
 p.add_mesh(mesh.copy(), opacity=0.5, cmap=cmap)
 
 p.link_views()

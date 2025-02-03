@@ -164,19 +164,21 @@ def warp_low_pass_noise(cfreq, scalar_ptp=None):
     warped_raw = output.warp_by_scalar()
 
     # on the right: scale to fixed warped height
-    output_scaled = output.translate((-11, 11, 0), inplace=False)
+    output_scaled = output.copy()
     output_scaled['scalars_warp'] = output['scalars'] / np.ptp(output['scalars']) * scalar_ptp
     warped_scaled = output_scaled.warp_by_scalar('scalars_warp')
     warped_scaled.active_scalars_name = 'scalars'
     # push center back to xy plane due to peaks near 0 frequency
     warped_scaled.translate((0, 0, -warped_scaled.center[-1]), inplace=True)
+    # position it next to the left image
+    warped_scaled = warped_scaled.translate((-11, 11, 0), inplace=True)
 
     return warped_raw + warped_scaled
 
 
 # Initialize the plotter and plot off-screen to save the animation as a GIF.
 plotter = pv.Plotter(notebook=False, off_screen=True)
-plotter.open_gif("low_pass.gif", fps=8)
+plotter.open_gif('low_pass.gif', fps=8)
 
 # add the initial mesh
 init_mesh = warp_low_pass_noise(1e-2)
@@ -187,7 +189,7 @@ for freq in np.geomspace(1e-2, 10, 25):
     plotter.clear()
     mesh = warp_low_pass_noise(freq)
     plotter.add_mesh(mesh, show_scalar_bar=False, lighting=False, n_colors=128)
-    plotter.add_text(f"Cutoff Frequency: {freq:.2f}", color="black")
+    plotter.add_text(f'Cutoff Frequency: {freq:.2f}', color='black')
     plotter.write_frame()
 
 # write the last frame a few times to "pause" the gif

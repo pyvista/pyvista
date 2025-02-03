@@ -40,7 +40,7 @@ def _cell_bounds(points, bound_position=0.5):
 
     """
     if points.ndim != 1:
-        raise ValueError("Only 1D points are allowed.")
+        raise ValueError('Only 1D points are allowed.')
     diffs = np.diff(points)
     delta = diffs[0] * bound_position
     return np.concatenate([[points[0] - delta], points + delta])
@@ -81,12 +81,12 @@ levels = [RADIUS * 1.01]
 grid_scalar = pv.grid_from_sph_coords(xx_bounds, yy_bounds, levels)
 
 # And fill its cell arrays with the scalar data
-grid_scalar.cell_data["example"] = np.array(scalar).swapaxes(-2, -1).ravel("C")
+grid_scalar.cell_data['example'] = np.array(scalar).swapaxes(-2, -1).ravel('C')
 
 # Make a plot
 p = pv.Plotter()
 p.add_mesh(pv.Sphere(radius=RADIUS))
-p.add_mesh(grid_scalar, clim=[0.1, 2.0], opacity=0.5, cmap="plasma")
+p.add_mesh(grid_scalar, clim=[0.1, 2.0], opacity=0.5, cmap='plasma')
 p.show()
 
 
@@ -105,7 +105,7 @@ inv_axes = [*range(u_vec.ndim)[::-1]]
 # Transform vectors to cartesian coordinates
 vectors = np.stack(
     [
-        i.transpose(inv_axes).swapaxes(-2, -1).ravel("C")
+        i.transpose(inv_axes).swapaxes(-2, -1).ravel('C')
         for i in pv.transform_vectors_sph_to_cart(
             x,
             y_polar,
@@ -125,12 +125,12 @@ vectors *= RADIUS * 0.1
 grid_winds = pv.grid_from_sph_coords(x, y_polar, wind_level)
 
 # Add vectors to the grid
-grid_winds.point_data["example"] = vectors
+grid_winds.point_data['example'] = vectors
 
 # Show the result
 p = pv.Plotter()
 p.add_mesh(pv.Sphere(radius=RADIUS))
-p.add_mesh(grid_winds.glyph(orient="example", scale="example", tolerance=0.005))
+p.add_mesh(grid_winds.glyph(orient='example', scale='example', tolerance=0.005))
 p.show()
 
 
@@ -156,7 +156,7 @@ levels = z_scale * (np.arange(scalar_3d.shape[0] + 1)) ** 2 + z_offset
 grid_scalar_3d = pv.grid_from_sph_coords(xx_bounds, yy_bounds, levels)
 
 # Add data to the grid
-grid_scalar_3d.cell_data["example"] = np.array(scalar_3d).swapaxes(-2, -1).ravel("C")
+grid_scalar_3d.cell_data['example'] = np.array(scalar_3d).swapaxes(-2, -1).ravel('C')
 
 # Create a set of isosurfaces
 surfaces = grid_scalar_3d.cell_data_to_point_data().contour(isosurfaces=[1, 5, 10, 15])

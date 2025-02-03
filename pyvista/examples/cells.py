@@ -1675,7 +1675,7 @@ def CubicLine() -> UnstructuredGrid:
 
 
 def _make_isoparametric_unstructured_grid(vtk_cell: _vtk.vtkCell):
-    cell = pyvista.Cell(vtk_cell)
+    cell = pyvista.Cell(vtk_cell)  # type: ignore[abstract]
 
     # Create points
     pcoords = cell.GetParametricCoords()

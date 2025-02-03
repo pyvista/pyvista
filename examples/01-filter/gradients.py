@@ -28,8 +28,8 @@ mesh
 # Now compute the gradients of the ``vectors`` vector field in the point data
 # of that mesh. This is as simple as calling
 # :func:`pyvista.DataSetFilters.compute_derivative`.
-mesh_g = mesh.compute_derivative(scalars="vectors")
-mesh_g["gradient"]
+mesh_g = mesh.compute_derivative(scalars='vectors')
+mesh_g['gradient']
 
 # %%
 # .. note:: You can also use :func:`pyvista.DataSetFilters.compute_derivative` for
@@ -44,13 +44,13 @@ mesh_g["gradient"]
 def gradients_to_dict(arr):
     """Label the gradients into a dictionary."""
     keys = np.array(
-        ["du/dx", "du/dy", "du/dz", "dv/dx", "dv/dy", "dv/dz", "dw/dx", "dw/dy", "dw/dz"],
+        ['du/dx', 'du/dy', 'du/dz', 'dv/dx', 'dv/dy', 'dv/dz', 'dw/dx', 'dw/dy', 'dw/dz'],
     )
     keys = keys.reshape((3, 3))[:, : arr.shape[1]].ravel()
-    return dict(zip(keys, mesh_g["gradient"].T))
+    return dict(zip(keys, mesh_g['gradient'].T))
 
 
-gradients = gradients_to_dict(mesh_g["gradient"])
+gradients = gradients_to_dict(mesh_g['gradient'])
 gradients
 
 # %%
@@ -67,7 +67,7 @@ p = pv.Plotter(shape=keys.shape)
 for (i, j), name in np.ndenumerate(keys):
     p.subplot(i, j)
     p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    p.add_mesh(mesh_g.outline(), color="k")
+    p.add_mesh(mesh_g.outline(), color='k')
 p.link_views()
 p.view_isometric()
 p.show()
@@ -76,9 +76,9 @@ p.show()
 # %%
 # And there you have it, the gradients for a vector field. We could also do
 # this for a scalar  field like for the ``scalars`` field in the given dataset.
-mesh_g = mesh.compute_derivative(scalars="scalars")
+mesh_g = mesh.compute_derivative(scalars='scalars')
 
-gradients = gradients_to_dict(mesh_g["gradient"])
+gradients = gradients_to_dict(mesh_g['gradient'])
 gradients
 
 # %%
@@ -93,7 +93,7 @@ for (i, j), name in np.ndenumerate(keys):
     name = keys[i, j]
     p.subplot(i, j)
     p.add_mesh(mesh_g.contour(scalars=name), scalars=name, opacity=0.75)
-    p.add_mesh(mesh_g.outline(), color="k")
+    p.add_mesh(mesh_g.outline(), color='k')
 p.link_views()
 p.view_isometric()
 p.show()

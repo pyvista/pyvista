@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import traceback
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -10,6 +11,10 @@ import pyvista
 from pyvista.core.errors import PyVistaPipelineError
 from pyvista.core.utilities.helpers import wrap
 from pyvista.plotting import _vtk
+
+if TYPE_CHECKING:
+    from pyvista.core.utilities.arrays import CellLiteral
+    from pyvista.core.utilities.arrays import PointLiteral
 
 
 def algorithm_to_mesh_handler(mesh_or_algo, port=0):
@@ -135,7 +140,7 @@ class PreserveTypeAlgorithmBase(_vtk.VTKPythonAlgorithmBase):
         return inp
 
     # THIS IS CRUCIAL to preserve data type through filter
-    def RequestDataObject(self, _request, inInfo, outInfo):
+    def RequestDataObject(self, _request, inInfo, outInfo) -> int:
         """Preserve data type.
 
         Parameters
@@ -187,13 +192,13 @@ class ActiveScalarsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, name: str, preference: str = 'point'):
+    def __init__(self, name: str, preference: PointLiteral | CellLiteral = 'point'):
         """Initialize algorithm."""
         super().__init__()
         self.scalars_name = name
         self.preference = preference
 
-    def RequestData(self, _request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
 
         Parameters
@@ -241,7 +246,7 @@ class PointSetToPolyDataAlgorithm(_vtk.VTKPythonAlgorithmBase):
             outputType='vtkPolyData',
         )
 
-    def RequestData(self, _request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
 
         Parameters
@@ -291,7 +296,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
 
     """
 
-    def __init__(self, point_ids=True, cell_ids=True):
+    def __init__(self, point_ids: bool = True, cell_ids: bool = True):
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
@@ -299,7 +304,7 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         self.point_ids = point_ids
         self.cell_ids = cell_ids
 
-    def RequestData(self, _request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution.
 
         Parameters
@@ -349,7 +354,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
             outputType='vtkUnstructuredGrid',
         )
 
-    def RequestData(self, _request, inInfo, outInfo):
+    def RequestData(self, _request, inInfo, outInfo) -> int:
         """Perform algorithm execution based on the input data and produce the output.
 
         Parameters
@@ -379,7 +384,7 @@ class CrinkleAlgorithm(_vtk.VTKPythonAlgorithmBase):
         return 1
 
 
-def outline_algorithm(inp, generate_faces=False):
+def outline_algorithm(inp, generate_faces: bool = False):
     """Add vtkOutlineFilter to pipeline.
 
     Parameters
@@ -401,7 +406,9 @@ def outline_algorithm(inp, generate_faces=False):
     return alg
 
 
-def extract_surface_algorithm(inp, pass_pointid=False, pass_cellid=False, nonlinear_subdivision=1):
+def extract_surface_algorithm(
+    inp, pass_pointid: bool = False, pass_cellid: bool = False, nonlinear_subdivision=1
+):
     """Add vtkDataSetSurfaceFilter to pipeline.
 
     Parameters
@@ -475,7 +482,7 @@ def pointset_to_polydata_algorithm(inp):
     return alg
 
 
-def add_ids_algorithm(inp, point_ids=True, cell_ids=True):
+def add_ids_algorithm(inp, point_ids: bool = True, cell_ids: bool = True):
     """Add a filter that adds point and/or cell IDs.
 
     Parameters
@@ -520,7 +527,7 @@ def crinkle_algorithm(clip, source):
     return alg
 
 
-def cell_data_to_point_data_algorithm(inp, pass_cell_data=False):
+def cell_data_to_point_data_algorithm(inp, pass_cell_data: bool = False):
     """Add a filter that converts cell data to point data.
 
     Parameters
@@ -542,7 +549,7 @@ def cell_data_to_point_data_algorithm(inp, pass_cell_data=False):
     return alg
 
 
-def point_data_to_cell_data_algorithm(inp, pass_point_data=False):
+def point_data_to_cell_data_algorithm(inp, pass_point_data: bool = False):
     """Add a filter that converts point data to cell data.
 
     Parameters

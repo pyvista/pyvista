@@ -35,6 +35,8 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 
         .. card::
             :class-body: sd-px-0 sd-py-0 sd-rounded-3
+            :link: pyvista.examples.cells.{}
+            :link-type: any
 
             .. image:: /../_build/plot_directive/api/examples/_autosummary/pyvista-examples-cells-{}-1_00_00.png
 
@@ -45,8 +47,8 @@ _GRID_TEMPLATE_WITH_IMAGE = """
 """
 
 
-def _indent_paragraph(string, level):
-    indentation = "".join(['    '] * level)
+def _indent_paragraph(string: str, level: int) -> str:
+    indentation = ''.join(['    '] * level)
     return textwrap.indent(textwrap.dedent(string).strip(), indentation)
 
 
@@ -54,29 +56,29 @@ def _indent_paragraph(string, level):
 _BADGE_COLORS = dict(linear='primary', primary='success', dimension='secondary', geometry='muted')
 
 
-def _generate_linear_badge(is_linear: bool):
+def _generate_linear_badge(is_linear: bool) -> str:
     text = 'Linear' if is_linear else 'Non-linear'
     return f":bdg-{_BADGE_COLORS['linear']}:`{text}`"
 
 
-def _generate_primary_badge(is_primary: bool):
+def _generate_primary_badge(is_primary: bool) -> str:
     text = 'Primary' if is_primary else 'Composite'
     return f":bdg-{_BADGE_COLORS['primary']}:`{text}`"
 
 
-def _generate_dimension_badge(dimension: int):
+def _generate_dimension_badge(dimension: int) -> str:
     return f":bdg-{_BADGE_COLORS['dimension']}:`{dimension}D`"
 
 
-def _generate_points_badge(num_points: int):
+def _generate_points_badge(num_points: int) -> str:
     return f":bdg-{_BADGE_COLORS['geometry']}:`Points: {num_points}`"
 
 
-def _generate_edges_badge(num_edges: int):
+def _generate_edges_badge(num_edges: int) -> str:
     return f":bdg-{_BADGE_COLORS['geometry']}:`Edges: {num_edges}`"
 
 
-def _generate_faces_badge(num_faces: int):
+def _generate_faces_badge(num_faces: int) -> str:
     return f":bdg-{_BADGE_COLORS['geometry']}:`Faces: {num_faces}`"
 
 
@@ -160,9 +162,9 @@ class CellType(IntEnum):
 
     """
 
-    def __new__(
-        cls,
-        value,
+    def __new__(  # noqa: PYI034
+        cls: type[CellType],
+        value: int,
         _cell_class: type[_vtk.vtkCell] | None = None,
         _short_doc: str | None = None,
         _long_doc: str | None = None,
@@ -170,7 +172,7 @@ class CellType(IntEnum):
         _points_override: Literal['variable', 'n/a'] | None = None,
         _edges_override: Literal['variable', 'n/a'] | None = None,
         _faces_override: Literal['variable', 'n/a'] | None = None,
-    ):
+    ) -> CellType:
         """Create new enum.
 
         Optionally specify documentation info.
@@ -230,18 +232,18 @@ class CellType(IntEnum):
         if _cell_class or _short_doc or _long_doc or _example:
             if _cell_class:
                 cell = _cell_class()
-                linear_badge = _generate_linear_badge(cell.IsLinear())
-                primary_badge = _generate_primary_badge(cell.IsPrimaryCell())
+                linear_badge = _generate_linear_badge(cell.IsLinear())  # type: ignore[arg-type]
+                primary_badge = _generate_primary_badge(cell.IsPrimaryCell())  # type: ignore[arg-type]
                 dimension_badge = _generate_dimension_badge(cell.GetCellDimension())
 
                 points = _points_override if _points_override else cell.GetNumberOfPoints()
-                points_badge = _generate_points_badge(points)
+                points_badge = _generate_points_badge(points)  # type: ignore[arg-type]
 
                 edges = _edges_override if _edges_override else cell.GetNumberOfEdges()
-                edges_badge = _generate_edges_badge(edges)
+                edges_badge = _generate_edges_badge(edges)  # type: ignore[arg-type]
 
                 faces = _faces_override if _faces_override else cell.GetNumberOfFaces()
-                faces_badge = _generate_faces_badge(faces)
+                faces_badge = _generate_faces_badge(faces)  # type: ignore[arg-type]
 
                 badges = (
                     _indent_paragraph(
@@ -269,7 +271,9 @@ class CellType(IntEnum):
             self.__doc__ += (
                 _GRID_TEMPLATE_NO_IMAGE.format(badges, _short_doc, _long_doc)
                 if _example is None
-                else _GRID_TEMPLATE_WITH_IMAGE.format(_example, badges, _short_doc, _long_doc)
+                else _GRID_TEMPLATE_WITH_IMAGE.format(
+                    _example, _example, badges, _short_doc, _long_doc
+                )
             )
 
         return self
@@ -284,7 +288,7 @@ class CellType(IntEnum):
     VERTEX = _CellTypeTuple(
         value=_vtk.VTK_VERTEX,
         cell_class=_vtk.vtkVertex,
-        example="Vertex",
+        example='Vertex',
         short_doc="""
         Represents a point in 3D space.
 
@@ -294,7 +298,7 @@ class CellType(IntEnum):
     POLY_VERTEX = _CellTypeTuple(
         value=_vtk.VTK_POLY_VERTEX,
         cell_class=_vtk.vtkPolyVertex,
-        example="PolyVertex",
+        example='PolyVertex',
         points_override='variable',
         short_doc="""
         Represents a set of points in 3D space.
@@ -306,7 +310,7 @@ class CellType(IntEnum):
     LINE = _CellTypeTuple(
         value=_vtk.VTK_LINE,
         cell_class=_vtk.vtkLine,
-        example="Line",
+        example='Line',
         short_doc="""
         Represents a 1D line.
 
@@ -317,7 +321,7 @@ class CellType(IntEnum):
     POLY_LINE = _CellTypeTuple(
         value=_vtk.VTK_POLY_LINE,
         cell_class=_vtk.vtkPolyLine,
-        example="PolyLine",
+        example='PolyLine',
         points_override='variable',
         short_doc="""
         Represents a set of 1D lines.
@@ -333,7 +337,7 @@ class CellType(IntEnum):
     TRIANGLE = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE,
         cell_class=_vtk.vtkTriangle,
-        example="Triangle",
+        example='Triangle',
         short_doc="""
         Represents a 2D triangle.
 
@@ -348,7 +352,7 @@ class CellType(IntEnum):
     TRIANGLE_STRIP = _CellTypeTuple(
         value=_vtk.VTK_TRIANGLE_STRIP,
         cell_class=_vtk.vtkTriangleStrip,
-        example="TriangleStrip",
+        example='TriangleStrip',
         points_override='variable',
         edges_override='variable',
         short_doc="""
@@ -372,7 +376,7 @@ class CellType(IntEnum):
     POLYGON = _CellTypeTuple(
         value=_vtk.VTK_POLYGON,
         cell_class=_vtk.vtkPolygon,
-        example="Polygon",
+        example='Polygon',
         points_override='variable',
         edges_override='variable',
         short_doc="""
@@ -421,7 +425,7 @@ class CellType(IntEnum):
     QUAD = _CellTypeTuple(
         value=_vtk.VTK_QUAD,
         cell_class=_vtk.vtkQuad,
-        example="Quadrilateral",
+        example='Quadrilateral',
         short_doc="""
         Represents a 2D quadrilateral.
 
@@ -438,7 +442,7 @@ class CellType(IntEnum):
     TETRA = _CellTypeTuple(
         value=_vtk.VTK_TETRA,
         cell_class=_vtk.vtkTetra,
-        example="Tetrahedron",
+        example='Tetrahedron',
         short_doc="""
         Represents a 3D tetrahedron.
 
@@ -454,7 +458,7 @@ class CellType(IntEnum):
     VOXEL = _CellTypeTuple(
         value=_vtk.VTK_VOXEL,
         cell_class=_vtk.vtkVoxel,
-        example="Voxel",
+        example='Voxel',
         short_doc="""
         Represents a 3D orthogonal parallelepiped.
 
@@ -478,7 +482,7 @@ class CellType(IntEnum):
     HEXAHEDRON = _CellTypeTuple(
         value=_vtk.VTK_HEXAHEDRON,
         cell_class=_vtk.vtkHexahedron,
-        example="Hexahedron",
+        example='Hexahedron',
         short_doc="""
         Represents a 3D rectangular hexahedron.
 
@@ -498,7 +502,7 @@ class CellType(IntEnum):
     WEDGE = _CellTypeTuple(
         value=_vtk.VTK_WEDGE,
         cell_class=_vtk.vtkWedge,
-        example="Wedge",
+        example='Wedge',
         short_doc="""
         Represents a linear 3D wedge.
 
@@ -517,7 +521,7 @@ class CellType(IntEnum):
     PYRAMID = _CellTypeTuple(
         value=_vtk.VTK_PYRAMID,
         cell_class=_vtk.vtkPyramid,
-        example="Pyramid",
+        example='Pyramid',
         short_doc="""
         Represents a 3D pyramid.
 
@@ -538,7 +542,7 @@ class CellType(IntEnum):
     PENTAGONAL_PRISM = _CellTypeTuple(
         value=_vtk.VTK_PENTAGONAL_PRISM,
         cell_class=_vtk.vtkPentagonalPrism,
-        example="PentagonalPrism",
+        example='PentagonalPrism',
         short_doc="""
         Represents a convex 3D prism with a pentagonal base and five quadrilateral faces.
 
@@ -557,7 +561,7 @@ class CellType(IntEnum):
     HEXAGONAL_PRISM = _CellTypeTuple(
         value=_vtk.VTK_HEXAGONAL_PRISM,
         cell_class=_vtk.vtkHexagonalPrism,
-        example="HexagonalPrism",
+        example='HexagonalPrism',
         short_doc="""
         Represents a 3D prism with hexagonal base and six quadrilateral faces.
 
@@ -789,7 +793,7 @@ class CellType(IntEnum):
         The last point lies in the center of the cell ``(0,1,2,3,4,5,6,7)``.
         """,
     )
-    if hasattr(_vtk, "VTK_TRIQUADRATIC_PYRAMID"):
+    if hasattr(_vtk, 'VTK_TRIQUADRATIC_PYRAMID'):
         TRIQUADRATIC_PYRAMID = _CellTypeTuple(
             value=_vtk.VTK_TRIQUADRATIC_PYRAMID,
             cell_class=_vtk.vtkTriQuadraticPyramid,

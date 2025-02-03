@@ -87,7 +87,7 @@ Status badges
   :target: https://github.com/prettier/prettier
   :alt: prettier
 
-.. |python| image:: https://img.shields.io/badge/python-3.8+-blue.svg
+.. |python| image:: https://img.shields.io/badge/python-3.9+-blue.svg
    :target: https://www.python.org/downloads/
 
 .. |NumFOCUS Affiliated| image:: https://img.shields.io/badge/affiliated-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A
@@ -191,7 +191,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.8::
+using ``pip`` on Python >= 3.9::
 
     pip install pyvista
 
@@ -284,7 +284,7 @@ visibility by citing our work.
 
 BibTex:
 
-.. code::
+.. code:: latex
 
     @article{sullivan2019pyvista,
       doi = {10.21105/joss.01450},

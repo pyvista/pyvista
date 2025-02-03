@@ -1,18 +1,18 @@
 from __future__ import annotations
 
+import importlib.util
+
 import numpy as np
 import pytest
 
 import pyvista as pv
 
-has_ipython = True
-try:
-    import IPython  # noqa: F401
+has_ipython = bool(importlib.util.find_spec('IPython'))
+if has_ipython:
     from PIL.Image import Image
-except:
-    has_ipython = False
 
-skip_no_ipython = pytest.mark.skipif(not has_ipython, reason="Requires IPython package")
+
+skip_no_ipython = pytest.mark.skipif(not has_ipython, reason='Requires IPython package')
 
 
 def test_set_jupyter_backend_fail():

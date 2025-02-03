@@ -20,7 +20,7 @@ from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from trame_client.ui.core import AbstractLayout
 
 
@@ -137,7 +137,7 @@ class Viewer(BaseViewer):
         with vuetify.VRow(
             v_show=v_show,
             classes='pa-0 ma-0 align-center fill-height',
-            style="flex-wrap: nowrap",
+            style='flex-wrap: nowrap',
         ) as row:
             server = row.server
             # Listen to state changes
@@ -206,7 +206,7 @@ class Viewer(BaseViewer):
             with vuetify.VRow(
                 v_show=(self.SERVER_RENDERING, default_server_rendering),
                 classes='pa-0 ma-0 align-center fill-height',
-                style="flex-wrap: nowrap; flex: unset",
+                style='flex-wrap: nowrap; flex: unset',
             ):
                 checkbox(
                     model=(self.PARALLEL, False),
@@ -312,7 +312,7 @@ class Viewer(BaseViewer):
                 ) as self.menu:
                     with vuetify.VRow(
                         classes='pa-0 ma-0 align-center fill-height',
-                        style="flex-wrap: nowrap",
+                        style='flex-wrap: nowrap',
                     ):
                         button(
                             click=f'{self.SHOW_UI}=!{self.SHOW_UI}',

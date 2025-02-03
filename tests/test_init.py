@@ -3,21 +3,36 @@ from __future__ import annotations
 import os
 import sys
 
-developer_note = """
-vtk has been directly imported in vtk>=9
-Please see:
-https://github.com/pyvista/pyvista/pull/1163
-"""
+import pytest
 
 
-def test_vtk_not_loaded():
-    """This test verifies that the vtk module isn't loaded when using vtk>=9
+def _module_is_loaded(module: str) -> bool:
+    """This function checks if the specified module is loaded after calling `import pyvista`
 
     We use ``os.system`` because we need to test the import of pyvista
     outside of the pytest unit test framework as pytest loads vtk.
-
     """
-    exe_str = "import pyvista; import sys; assert 'vtk' not in sys.modules"
+    exe_str = f"import pyvista; import sys; assert '{module}' not in sys.modules"
 
-    # anything other than 0 indicates an error
-    assert not os.system(f'{sys.executable} -c "{exe_str}"'), developer_note
+    # anything other than 0 indicates the assertion raised
+    return os.system(f'{sys.executable} -c "{exe_str}"') != 0
+
+
+def test_vtk_not_loaded():
+    error_msg = """
+    vtk has been directly imported in vtk>=9
+    Please see:
+    https://github.com/pyvista/pyvista/pull/1163
+    """
+    assert not _module_is_loaded('vtk'), error_msg
+
+
+@pytest.mark.parametrize('module', ['matplotlib', 'scipy'])
+def test_large_dependencies_not_imported(module: str):
+    error_msg = f"""
+    Module `{module}` was loaded at root `import pyvista`.
+    This can drastically slow down initial import times.
+    Please see
+    https://github.com/pyvista/pyvista/pull/7023
+    """
+    assert not _module_is_loaded(module), error_msg

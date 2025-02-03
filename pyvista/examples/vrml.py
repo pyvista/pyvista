@@ -23,7 +23,7 @@ def download_teapot():  # pragma: no cover
     >>> pl.show()
 
     """
-    return download_file("vrml/teapot.wrl")
+    return download_file('vrml/teapot.wrl')
 
 
 def download_sextant():  # pragma: no cover
@@ -44,7 +44,7 @@ def download_sextant():  # pragma: no cover
     >>> pl.show()
 
     """
-    return download_file("vrml/sextant.wrl")
+    return download_file('vrml/sextant.wrl')
 
 
 def download_grasshopper():  # pragma: no cover
@@ -72,4 +72,4 @@ def download_grasshopper():  # pragma: no cover
     >>> pl.show()
 
     """
-    return download_file("grasshopper/grasshop.wrl")
+    return download_file('grasshopper/grasshop.wrl')

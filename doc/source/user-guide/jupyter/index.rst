@@ -34,9 +34,10 @@ either :func:`Plotter.show() <pyvista.Plotter.show>` or :func:`dataset.plot()
 :func:`pyvista.set_jupyter_backend`. For further details:
 
 
-.. code:: python
+.. code-block:: python
 
-   import pyvista as pv
-   pv.set_jupyter_backend('trame')
+    import pyvista as pv
+
+    pv.set_jupyter_backend('trame')
 
 .. autofunction:: pyvista.set_jupyter_backend

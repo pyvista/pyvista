@@ -18,33 +18,34 @@ concurrency:
 env:
   ALLOW_PLOTTING: true
   SHELLOPTS: "errexit:pipefail"
+  PYTEST_ADDOPTS: "--color=yes"
 
 jobs:
   macOS:
-    # https://github.com/pyvista/pyvista/pull/5960
-    runs-on: macos-12
     name: Mac OS Unit Testing
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11"]
+        config:
+          - { os: macos-13, python-version: "3.9" }
+          - { os: macos-14, python-version: "3.10" }
+          - { os: macos-latest, python-version: "3.11" }
+          - { os: macos-latest, python-version: "3.12" }
+    runs-on: ${{ matrix.config.os }}
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.config.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.config.python-version }}
           cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements_test.txt
 
-      - name: Install PyVista
-        run: pip install . --no-deps
-
-      - name: Install test dependencies
-        run: pip install vtk -r requirements_test.txt
+      - name: Install PyVista test dependencies
+        run: pip install .[test]
 
       - name: Report
         run: python -c "import pyvista;print(pyvista.Report(gpu=False));from pyvista import examples;print('User data path:', examples.USER_DATA_PATH)"
@@ -59,7 +60,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug_images-${{ github.job }}-${{ join(matrix.* , '-') }}
+          name: debug_images-${{ github.job }}-${{ join(matrix.config.* , '-') }}
           path: debug_images
 
   LinuxConda:
@@ -67,12 +68,13 @@ jobs:
     if: false
     env:
       CONDA_ALWAYS_YES: 1
-      conda_env: pyvista-vtk
       DISPLAY: ":99.0"
       PYVISTA_OFF_SCREEN: True
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v2
@@ -107,14 +109,14 @@ jobs:
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
           conda config --add channels conda-forge
-          conda env create --quiet -n ${{ env.conda_env }} --file environment.yml --experimental-solver=libmamba
-          conda activate ${{ env.conda_env }}
+          conda env create --quiet -n pyvista-vtk --file environment.yml --experimental-solver=libmamba
+          conda activate pyvista-vtk
           conda list
 
       - name: Install PyVista
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
+          conda activate pyvista-vtk
           pip install -e .
           which python
           python -c "import pyvista; print(pyvista.Report(gpu=False))"
@@ -123,14 +125,14 @@ jobs:
       - name: Test Core API
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
-          pip install -r requirements_test.txt
+          conda activate pyvista-vtk
+          pip install .[test]
           pytest -v --ignore=tests/plotting
 
       - name: Test Core Plotting
         run: |
           source /usr/share/miniconda/etc/profile.d/conda.sh
-          conda activate ${{ env.conda_env }}
+          conda activate pyvista-vtk
           pytest -v tests/plotting --cov-report html --fail_extra_image_cache --generated_image_dir debug_images
 
       - name: Upload Generated Images
@@ -150,7 +152,7 @@ jobs:
       matrix:
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
-          - python-version: "3.8"
+          - python-version: "3.9"
             vtk-version: "9.0.3" # Requires numpy~=1.23
             numpy-version: "1.23"
           - python-version: "3.9"
@@ -172,15 +174,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+          persist-credentials: false
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements_test.txt
 
       - uses: actions/cache@v4
         with:
@@ -204,7 +204,7 @@ jobs:
         run: python -c "import pyvista; print(pyvista.Report());"
 
       - name: Install Testing Requirements
-        run: pip install -r requirements_test.txt
+        run: pip install .[test]
 
       - name: Set up numpy
         if: ${{ matrix.numpy-version != 'latest' && matrix.numpy-version != 'nightly' }}
@@ -222,15 +222,15 @@ jobs:
           pip install --pre --no-deps -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
 
       - name: Core Testing (no GL)
-        run: python -m pytest --cov=pyvista -v tests/core tests/examples
+        run: python -m pytest --cov=pyvista --cov-branch -v tests/core tests/examples
 
-      - uses: awalsh128/cache-apt-pkgs-action@v1.1.3
+      - uses: awalsh128/cache-apt-pkgs-action@v1.4.3
         with:
           packages: libgl1-mesa-glx xvfb
           version: 3.0
 
       - name: Plotting Testing (uses GL)
-        run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
+        run: xvfb-run -a python -m pytest --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache -v --ignore=tests/core --ignore=tests/examples --generated_image_dir debug_images
 
       - name: Upload Generated Images
         if: always()
@@ -274,27 +274,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements_test.txt
 
       - name: Set up headless display
         uses: pyvista/setup-headless-display-action@v2
 
-      - name: Install PyVista
-        run: pip install . --no-deps
-
-      - name: Install test dependencies
-        run: pip install vtk -r requirements_test.txt
+      - name: Install PyVista test dependencies
+        run: pip install .[test]
 
       - name: Report
         run: python -c "import pyvista; print(pyvista.Report(gpu=False)); from pyvista import examples; print('User data path:', examples.USER_DATA_PATH)"

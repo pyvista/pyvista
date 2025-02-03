@@ -14,6 +14,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
@@ -188,24 +189,24 @@ def test_invalid_file():
 
 
 @pytest.mark.parametrize(
-    ("arr", "value"),
+    ('arr', 'value'),
     [
-        ("faces", [3, 1, 2, 3, 3, 0, 1]),
-        ("strips", np.array([5, 4, 3, 2, 0])),
-        ("lines", [4, 0, 1, 2, 2, 3, 4]),
-        ("verts", [1, 0, 1]),
-        ("faces", [[3, 0, 1], [3, 2, 1], [4, 0, 1]]),
-        ("faces", [[2, 0, 1], [2, 2, 1], [1, 0, 1]]),
+        ('faces', [3, 1, 2, 3, 3, 0, 1]),
+        ('strips', np.array([5, 4, 3, 2, 0])),
+        ('lines', [4, 0, 1, 2, 2, 3, 4]),
+        ('verts', [1, 0, 1]),
+        ('faces', [[3, 0, 1], [3, 2, 1], [4, 0, 1]]),
+        ('faces', [[2, 0, 1], [2, 2, 1], [1, 0, 1]]),
     ],
 )
 def test_invalid_connectivity_arrays(arr, value):
     generator = np.random.default_rng(seed=None)
     points = generator.random((10, 3))
     mesh = pv.PolyData(points)
-    with pytest.raises(CellSizeError, match="Cell array size is invalid"):
+    with pytest.raises(CellSizeError, match='Cell array size is invalid'):
         setattr(mesh, arr, value)
 
-    with pytest.raises(CellSizeError, match=f"`{arr}` cell array size is invalid"):
+    with pytest.raises(CellSizeError, match=f'`{arr}` cell array size is invalid'):
         _ = pv.PolyData(points, **{arr: value})
 
 
@@ -284,15 +285,15 @@ def test_geodesic(sphere):
     start, end = 0, sphere.n_points - 1
     geodesic = sphere.geodesic(start, end)
     assert isinstance(geodesic, pv.PolyData)
-    assert "vtkOriginalPointIds" in geodesic.array_names
-    ids = geodesic.point_data["vtkOriginalPointIds"]
+    assert 'vtkOriginalPointIds' in geodesic.array_names
+    ids = geodesic.point_data['vtkOriginalPointIds']
     assert np.allclose(geodesic.points, sphere.points[ids])
 
     # check keep_order
     geodesic_legacy = sphere.geodesic(start, end, keep_order=False)
-    assert geodesic_legacy["vtkOriginalPointIds"][0] == end
+    assert geodesic_legacy['vtkOriginalPointIds'][0] == end
     geodesic_ordered = sphere.geodesic(start, end, keep_order=True)
-    assert geodesic_ordered["vtkOriginalPointIds"][0] == start
+    assert geodesic_ordered['vtkOriginalPointIds'][0] == start
 
     # finally, inplace
     geodesic_inplace = sphere.geodesic(start, end, inplace=True)
@@ -340,7 +341,7 @@ def test_ray_trace_origin():
 def test_multi_ray_trace(sphere):
     trimesh = pytest.importorskip('trimesh')
     if not trimesh.ray.has_embree:
-        pytest.skip("Requires Embree")
+        pytest.skip('Requires Embree')
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 5]]
     directions = [[0, 0, -1]] * 4
     points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions)
@@ -453,7 +454,7 @@ def test_append(
 
 
 def test_append_raises(sphere: pv.PolyData):
-    with pytest.raises(TypeError, match="All meshes need to be of PolyData type"):
+    with pytest.raises(TypeError, match='All meshes need to be of PolyData type'):
         sphere.append_polydata(sphere.cast_to_unstructured_grid())
 
 
@@ -624,7 +625,7 @@ def test_invalid_curvature(sphere):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pv.core.pointset.PolyData._WRITERS)
 def test_save(sphere, extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp{extension}'))
+    filename = str(tmpdir.mkdir('tmpdir').join(f'tmp{extension}'))
     sphere.save(filename, binary)
 
     if binary:
@@ -652,7 +653,7 @@ def test_save(sphere, extension, binary, tmpdir):
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    path = pathlib.Path(str(tmpdir.mkdir('tmpdir').join('tmp.vtk')))
     sphere.save(path)
     assert path.is_file()
 
@@ -956,7 +957,7 @@ def test_remove_points_fail(sphere, plane):
 
 def test_vertice_cells_on_read(tmpdir):
     point_cloud = pv.PolyData(np.random.default_rng().random((100, 3)))
-    filename = str(tmpdir.mkdir("tmpdir").join('foo.ply'))
+    filename = str(tmpdir.mkdir('tmpdir').join('foo.ply'))
     point_cloud.save(filename)
     recovered = pv.read(filename)
     assert recovered.n_cells == 100
@@ -1140,17 +1141,39 @@ def test_extrude_capping_warnings():
         arc.extrude_rotate()
 
 
-def test_flip_normals(sphere, plane):
-    sphere_flipped = sphere.copy()
-    sphere_flipped.flip_normals()
+def test_flip_normals(sphere):
+    with pytest.warns(PyVistaDeprecationWarning):
+        sphere.flip_normals()
 
-    sphere.compute_normals(inplace=True)
-    sphere_flipped.compute_normals(inplace=True)
-    assert np.allclose(sphere_flipped.point_data['Normals'], -sphere.point_data['Normals'])
 
-    # invalid case
-    with pytest.raises(NotAllTrianglesError):
-        plane.flip_normals()
+@pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
+def test_flip_normal_vectors(mesh):
+    mesh = mesh.compute_normals()
+    flipped = mesh.flip_normal_vectors(inplace=True, progress_bar=True)
+    assert flipped is mesh
+
+    flipped = mesh.flip_normal_vectors()
+    assert flipped is not mesh
+
+    assert np.allclose(flipped.point_data['Normals'], -mesh.point_data['Normals'])
+    assert np.allclose(flipped.cell_data['Normals'], -mesh.cell_data['Normals'])
+
+    # Test ordering is unaffected
+    assert np.allclose(flipped.faces, mesh.faces)
+
+
+@pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
+def test_flip_faces(mesh):
+    flipped = mesh.flip_faces(inplace=True, progress_bar=True)
+    assert flipped is mesh
+
+    flipped = mesh.flip_faces()
+    assert flipped is not mesh
+
+    assert np.allclose(flipped.regular_faces[0], mesh.regular_faces[0][::-1])
+
+    # Test normals are unaffected
+    assert np.allclose(flipped.point_data['Normals'], mesh.point_data['Normals'])
 
 
 def test_n_verts():
@@ -1175,7 +1198,7 @@ def test_n_faces_strict():
 
 
 @pytest.fixture
-def default_n_faces():  # noqa: PT004
+def default_n_faces():
     pv.PolyData._WARNED_DEPRECATED_NONSTRICT_N_FACES = False
     pv.PolyData._USE_STRICT_N_FACES = False
     yield
@@ -1184,11 +1207,11 @@ def default_n_faces():  # noqa: PT004
 
 
 def test_n_faces(default_n_faces):
-    if pv._version.version_info >= (0, 46):
-        raise RuntimeError("Convert non-strict n_faces use to error")
+    if pv._version.version_info[:2] > (0, 46):
+        raise RuntimeError('Convert non-strict n_faces use to error')
 
-    if pv._version.version_info >= (0, 49):
-        raise RuntimeError("Convert default n_faces behavior to strict")
+    if pv._version.version_info[:2] > (0, 49):
+        raise RuntimeError('Convert default n_faces behavior to strict')
 
     mesh = pv.PolyData(
         [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)],
@@ -1205,7 +1228,7 @@ def test_n_faces(default_n_faces):
 
     # Shouldn't raise deprecation warning the second time
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter('error')
         nf1 = mesh.n_faces
 
     assert nf1 == nf
@@ -1226,7 +1249,7 @@ def test_geodesic_disconnected(sphere, sphere_shifted):
     combined = sphere + sphere_shifted
     start_vertex = 0
     end_vertex = combined.n_points - 1
-    match = f"There is no path between vertices {start_vertex} and {end_vertex}."
+    match = f'There is no path between vertices {start_vertex} and {end_vertex}.'
 
     with pytest.raises(ValueError, match=match):
         combined.geodesic(start_vertex, end_vertex)
@@ -1311,10 +1334,10 @@ def test_n_faces_etc_deprecated(cells: str):
     kwargs = {cells: [3, 0, 1, 2], n_cells: 1}  # e.g. specify faces and n_faces
     with pytest.warns(pv.PyVistaDeprecationWarning):
         _ = pv.PolyData(np.zeros((3, 3)), **kwargs)
-        if pv._version.version_info >= (0, 47):
-            raise RuntimeError(f"Convert `PolyData` `{n_cells}` deprecation warning to error")
-        if pv._version.version_info >= (0, 48):
-            raise RuntimeError(f"Remove `PolyData` `{n_cells} constructor kwarg")
+        if pv._version.version_info[:2] > (0, 47):
+            raise RuntimeError(f'Convert `PolyData` `{n_cells}` deprecation warning to error')
+        if pv._version.version_info[:2] > (0, 48):
+            raise RuntimeError(f'Remove `PolyData` `{n_cells} constructor kwarg')
 
 
 @pytest.mark.parametrize('inplace', [True, False])
