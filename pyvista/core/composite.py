@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from collections.abc import MutableSequence
-from itertools import zip_longest
+import itertools
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
@@ -178,6 +178,7 @@ class MultiBlock(
         skip_none: bool = True,
         contents: Literal['names', 'blocks', 'items'] = 'blocks',
         prepend_names: bool = False,
+        separator: str = '::',
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
         """Iterate over all nested blocks recursively.
 
@@ -199,10 +200,14 @@ class MultiBlock(
             Prepend any parent block names to the child block names. This option
             only applies when ``contents`` is ``'names'`` or ``'items'``.
 
+        separator : str, default: '::'
+            String separator to use when ``prepend_names`` is enabled. The separator
+            is inserted between parent and child block names.
+
         Returns
         -------
         Iterator
-            Iterator of block names, blocks, or name-block pairs depending on ``contents``.
+            Iterator of names, blocks, or name-block pairs depending on ``contents``.
 
         Examples
         --------
@@ -246,12 +251,40 @@ class MultiBlock(
         _validation.check_contains(
             ['names', 'blocks', 'items'], must_contain=contents, name='contents'
         )
-        for name, block in zip(self.keys(), self):
+        return self._recursive_iterator(
+            names=self.keys(),
+            skip_none=skip_none,
+            contents=contents,
+            prepend_names=prepend_names,
+            separator=separator,
+        )
+
+    def _recursive_iterator(
+        self,
+        *,
+        names: Iterable[str | None],
+        skip_none: bool,
+        contents: Literal['names', 'blocks', 'items'],
+        prepend_names: bool,
+        separator: str,
+    ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
+        for name, block in zip(names, self):
             if skip_none and block is None:
                 continue
             elif isinstance(block, MultiBlock):
-                yield from block.recursive_iterator(skip_none=skip_none, contents=contents)
-                # yield from zip(itertools.repeat(key), block.recursive_iterator(skip_none=skip_none, contents=contents))
+                keys = block.keys()
+                if prepend_names:
+                    # Include parent name with the block names
+                    names = [f'{name}{separator}{block_name}' for block_name in keys]
+                else:
+                    names = keys
+                yield from block._recursive_iterator(
+                    names=names,
+                    skip_none=skip_none,
+                    contents=contents,
+                    prepend_names=prepend_names,
+                    separator=separator,
+                )
             else:
                 if contents == 'names':
                     yield name
@@ -827,7 +860,7 @@ class MultiBlock(
             name = index
         elif isinstance(index, slice):
             index_iter = range(self.n_blocks)[index]
-            for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
+            for i, (idx, d) in enumerate(itertools.zip_longest(index_iter, data)):
                 if idx is None:
                     self.insert(
                         index_iter[-1] + 1 + (i - len(index_iter)),

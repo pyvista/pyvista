@@ -925,6 +925,20 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
         assert isinstance(block, pv.DataSet) or block is None
 
 
+@pytest.mark.parametrize('prepend_names', [True, False])
+@pytest.mark.parametrize('separator', ['::', '--'])
+def test_recursive_iterator_prepend_names(separator, prepend_names):
+    nested = MultiBlock(dict(a=MultiBlock(dict(b=MultiBlock(dict(c=None)), d=None)), e=None))
+    expected_names = ['a::b::c', 'a::d', 'e'] if prepend_names else ['c', 'd', 'e']
+    expected_names = [name.replace('::', separator) for name in expected_names]
+
+    iterator = nested.recursive_iterator(
+        prepend_names=prepend_names, separator=separator, contents='names', skip_none=False
+    )
+    names = list(iterator)
+    assert names == expected_names
+
+
 def test_flatten(multiblock_all_with_nested_and_none):
     root_names = multiblock_all_with_nested_and_none.keys()[:-1]
     nested_names = multiblock_all_with_nested_and_none[-1].keys()
