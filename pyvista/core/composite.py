@@ -179,7 +179,7 @@ class MultiBlock(
         contents: Literal['names', 'blocks', 'items'] = 'blocks',
         prepend_names: bool = False,
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
-        """Iterate over all nested datasets recursively.
+        """Iterate over all nested blocks recursively.
 
         .. versionadded:: 0.45
 
@@ -188,7 +188,7 @@ class MultiBlock(
         skip_none : bool, default: True
             Do not include ``None`` blocks in the iterator.
 
-        contents : 'keys', 'blocks', 'items', default: 'blocks'
+        contents : 'names', 'blocks', 'items', default: 'blocks'
             Values to include in the iterator.
 
             - ``'names'``: return an iterator with nested block names (i.e. :meth:`keys`).
@@ -202,7 +202,7 @@ class MultiBlock(
         Returns
         -------
         Iterator
-            Iterator of block names, blocks, or name/block pairs depending on ``contents``.
+            Iterator of block names, blocks, or name-block pairs depending on ``contents``.
 
         Examples
         --------
@@ -220,7 +220,7 @@ class MultiBlock(
         >>> all(isinstance(block, pv.MultiBlock) for block in multi)
         True
 
-        Get the iterator and show the count of all recursively nested datasets.
+        Get the iterator and show the count of all recursively nested blocks.
 
         >>> iterator = multi.recursive_iterator()
         >>> iterator
@@ -235,9 +235,9 @@ class MultiBlock(
         >>> all(isinstance(item, pv.DataSet) for item in multi.recursive_iterator())
         True
 
-        Apply a filter inplace to all recursively nested datasets.
+        Use the iterator to apply a filter inplace to all recursively nested datasets.
 
-        >>> [
+        >>> _ = [
         ...     dataset.clip_scalar(inplace=True)
         ...     for dataset in multi.recursive_iterator()
         ... ]
@@ -270,12 +270,12 @@ class MultiBlock(
         Parameters
         ----------
         name_mode : 'preserve' | 'prepend' | 'reset', default: 'preserve'
-            Mode for naming keys in the flattened output.
+            Mode for naming blocks in the flattened output.
 
-            - ``'preserve'``: The key names of all blocks are preserved.
-            - ``'prepend'``: Preserve the key names and prepend the parent's name
-              to each block.
-            - ``'reset'``: Reset the block names to default values.
+            - ``'preserve'``: The names of all blocks are preserved.
+            - ``'prepend'``: Preserve the block names and prepend the parent names.
+            - ``'reset'``: Reset the block names to default values
+              (i.e. ``'Block-00'``, ``'Block-01'``, etc.).
 
         Returns
         -------
@@ -288,7 +288,8 @@ class MultiBlock(
         )
         output = MultiBlock()
         iterator = self.recursive_iterator(contents='items', skip_none=False)
-        for name, block in cast(Iterator[tuple[Union[str, None], Union[DataSet, None]]], iterator):
+        typed_iterator = cast(Iterator[tuple[Union[str, None], Union[DataSet, None]]], iterator)
+        for name, block in typed_iterator:
             if name_mode == 'reset':
                 name = None
             # TODO:
