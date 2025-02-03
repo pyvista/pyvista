@@ -2218,7 +2218,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         """
         if time_point < 0 or time_point >= self.number_time_points:
             raise ValueError(
-                f'Time point ({time_point}) out of range [0, {self.number_time_points-1}]'
+                f'Time point ({time_point}) out of range [0, {self.number_time_points - 1}]'
             )
 
         self.set_active_time_value(self.time_values[time_point])

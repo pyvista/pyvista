@@ -131,7 +131,7 @@ pl.show()
 grid = pv.ImageData(dimensions=(11, 11, 1), spacing=[3 / 10, 1 / 10, 1])
 output = grid.sample(point_mesh)
 # value of (0, 0) shows that no data was sampled
-print(f"(min, max): {output['ysquared'].min()}, {output['ysquared'].min()}")
+print(f'(min, max): {output["ysquared"].min()}, {output["ysquared"].min()}')
 
 # %%
 #  Create the non-point cloud mesh that will be sampled from and plot it.
