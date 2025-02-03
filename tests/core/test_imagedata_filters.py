@@ -1161,16 +1161,31 @@ def test_resample_extend_border(uniform, extend_border, name, value):
         assert np.allclose(resampled.bounds, uniform.bounds)
 
 
-@pytest.mark.parametrize('dtype', ['uint8', 'int', 'float'])
-@pytest.mark.parametrize('interpolation', ['linear', 'nearest', 'cubic'])
-def test_resample_interpolation(uniform, interpolation, dtype):
+@pytest.mark.parametrize('dtype', ['uint8', 'int16', 'int', 'float'])
+@pytest.mark.parametrize(
+    'interpolation', ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman']
+)
+@pytest.mark.parametrize('sample_rate', [0.5, 2.0])
+def test_resample_interpolation(uniform, interpolation, dtype, sample_rate):
     array = uniform.active_scalars
     uniform[uniform.active_scalars_name] = array.astype(dtype)
-    resampled = uniform.resample(interpolation=interpolation)
+    resampled = uniform.resample(sample_rate, interpolation=interpolation)
 
-    expected_dtype = float if interpolation in ['linear', 'cubic'] else dtype
     actual_dtype = resampled.active_scalars.dtype
-    assert actual_dtype == expected_dtype
+    assert actual_dtype == dtype
+
+    # Test anti-aliasing
+    anti_aliased = uniform.resample(sample_rate, interpolation=interpolation, anti_aliasing=True)
+    expected_dimensions = np.array(uniform.dimensions) * sample_rate
+    assert np.array_equal(resampled.dimensions, expected_dimensions)
+
+    # expect different result if down-sampling only
+    resampled_array = resampled.active_scalars
+    anti_aliased_array = anti_aliased.active_scalars
+    if sample_rate < 1.0:
+        assert not np.allclose(resampled_array, anti_aliased_array)
+    else:
+        assert np.allclose(resampled_array, anti_aliased_array)
 
 
 @pytest.mark.parametrize(

@@ -70,7 +70,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.124.8',
+  'hypothesis<6.124.9',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
   'ipython<9.0.0',
@@ -108,7 +108,7 @@ docs = [
   'imageio-ffmpeg==0.6.0',
   'imageio==2.37.0',
   'jupyter_sphinx==0.5.3',
-  'jupyterlab==4.3.4',
+  'jupyterlab==4.3.5',
   'lxml==5.3.0',
   'meshio==5.3.5',
   'mypy-extensions==1.0.0',
@@ -138,7 +138,7 @@ docs = [
   'trame-vtk==2.8.14',
   'trame-vuetify==2.8.1',
   'trame==3.7.6',
-  'trimesh==4.6.0',
+  'trimesh==4.6.1',
 ]
 
 dev = ['pre-commit', 'pyvista[test,typing]']
