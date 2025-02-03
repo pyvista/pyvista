@@ -182,6 +182,8 @@ class MultiBlock(
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
         """Iterate over all nested blocks recursively.
 
+        The iteration is performed depth-first.
+
         .. versionadded:: 0.45
 
         Parameters
@@ -209,6 +211,10 @@ class MultiBlock(
         Iterator
             Iterator of names, blocks, or name-block pairs depending on ``contents``.
 
+        See Also
+        --------
+        flatten
+
         Examples
         --------
         Load a :class:`MultiBlock` with nested datasets.
@@ -229,7 +235,7 @@ class MultiBlock(
 
         >>> iterator = multi.recursive_iterator()
         >>> iterator
-        <generator object MultiBlock.recursive_iterator at ...>
+        <generator object MultiBlock._recursive_iterator at ...>
 
         >>> len(list(iterator))
         59
@@ -304,6 +310,15 @@ class MultiBlock(
     ) -> MultiBlock:
         """Flatten this :class:`MultiBlock`.
 
+        Recursively iterate through the ``MultiBlock`` and store all blocks in a single
+        :class:`MultiBlock` instance. All nested :class:~pyvista.DataSet` and ``None``
+        blocks are preserved.
+
+        .. warning::
+
+            Any field data directly associated with any nested ``MultiBlock``s is not
+            handled by this method and will be lost.
+
         Parameters
         ----------
         name_mode : 'preserve' | 'prepend' | 'reset', default: 'preserve'
@@ -326,6 +341,54 @@ class MultiBlock(
         -------
         MultiBlock
             Flattened ``MultiBlock``.
+
+        See Also
+        --------
+        recursive_iterator
+
+        Examples
+        --------
+        Create a nested :class:`MultiBlock` with three levels of nesting and
+        three end nodes.
+
+        >>> import pyvista as pv
+        >>> nested = pv.MultiBlock(
+        ...     {
+        ...         'nested1': pv.MultiBlock(
+        ...             {
+        ...                 'nested2': pv.MultiBlock({'poly': pv.PolyData()}),
+        ...                 'image': pv.ImageData(),
+        ...             }
+        ...         ),
+        ...         'none': None,
+        ...     }
+        ... )
+        >>> nested.n_blocks
+        2
+
+        Flatten the ``MultiBlock``. The nested blocks are removed and only the three
+        end nodes are returned.
+
+        >>> flat = nested.flatten()
+        >>> flat.n_blocks
+        3
+
+        By default, the block names are preserved.
+
+        >>> flat.keys()
+        ['poly', 'image', 'none']
+
+        Prepend the names of parent blocks to the names instead.
+
+        >>> flat = nested.flatten(name_mode='prepend')
+        >>> flat.keys()
+        ['nested1::nested2::poly', 'nested1::image', 'none']
+
+        Reset the names to default values instead.
+
+        >>> flat = nested.flatten(name_mode='reset')
+        >>> flat.keys()
+        ['Block-00', 'Block-01', 'Block-02']
 
         """
         _validation.check_contains(
