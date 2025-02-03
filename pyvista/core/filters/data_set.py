@@ -9691,7 +9691,8 @@ class DataSetFilters:
         surface = wrap(self).extract_geometry()
         if not (surface.faces.size or surface.strips.size):
             # we have a point cloud or an empty mesh
-            raise ValueError('Input mesh must have faces for voxelization.')
+            msg = 'Input mesh must have faces for voxelization.'
+            raise ValueError(msg)
 
         def _preprocess_polydata(poly_in):
             return poly_in.compute_normals().triangulate()
@@ -9705,9 +9706,8 @@ class DataSetFilters:
                 or cell_length_sample_size is not None
                 or mesh_length_fraction is not None
             ):
-                raise TypeError(
-                    'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
-                )
+                msg = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+                raise TypeError(msg)
             _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
             # The image stencil filters do not support orientation, so we apply the
             # inverse direction matrix to "remove" orientation from the polydata
@@ -9716,7 +9716,8 @@ class DataSetFilters:
         else:
             # Compute reference volume geometry
             if spacing is not None and dimensions is not None:
-                raise TypeError('Spacing and dimensions cannot both be set. Set one or the other.')
+                msg = 'Spacing and dimensions cannot both be set. Set one or the other.'
+                raise TypeError(msg)
 
             # Need to preprocess so that we have a triangle mesh for computing
             # cell length percentile
@@ -9724,17 +9725,15 @@ class DataSetFilters:
 
             if spacing is None:
                 if cell_length_percentile is not None and mesh_length_fraction is not None:
-                    raise TypeError(
-                        'Cell length percentile and mesh length fraction cannot both be set. Set one or the other.'
-                    )
+                    msg = 'Cell length percentile and mesh length fraction cannot both be set. Set one or the other.'
+                    raise TypeError(msg)
 
                 less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
                 if (
                     cell_length_percentile is not None or cell_length_sample_size is not None
                 ) and less_than_vtk92:
-                    raise TypeError(
-                        'Cell length percentile and sample size requires VTK 9.2 or greater.'
-                    )
+                    msg = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
+                    raise TypeError(msg)
 
                 if mesh_length_fraction is not None or less_than_vtk92:
                     # Compute spacing from mesh length
@@ -9765,13 +9764,13 @@ class DataSetFilters:
             else:
                 # Spacing is specified directly. Make sure other params are not set.
                 if cell_length_percentile is not None:
-                    raise TypeError(
-                        'Spacing and cell length percentile cannot both be set. Set one or the other.'
-                    )
+                    msg = 'Spacing and cell length percentile cannot both be set. Set one or the other.'
+                    raise TypeError(msg)
                 if mesh_length_fraction is not None:
-                    raise TypeError(
+                    msg = (
                         'Spacing and mesh length fraction cannot both be set. Set one or the other.'
                     )
+                    raise TypeError(msg)
 
             # Get initial spacing (will be adjusted later)
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
@@ -9790,9 +9789,8 @@ class DataSetFilters:
                 initial_dimensions[initial_dimensions < 1] = 1
                 dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
             elif rounding_func is not None:
-                raise TypeError(
-                    'Rounding func cannot be set when dimensions is specified. Set one or the other.'
-                )
+                msg = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+                raise TypeError(msg)
 
             reference_volume = pyvista.ImageData()
             reference_volume.dimensions = dimensions  # type: ignore[assignment]

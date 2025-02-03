@@ -2739,8 +2739,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetSeedData(point_seeds)
         else:
             msg = (
-                f'Invalid `extraction_mode` "{extraction_mode}",'
-                ' use "all", "largest", or "seeded".'
+                f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "seeded".'
             )
             raise ValueError(msg)
 
@@ -3430,7 +3429,8 @@ class ImageDataFilters(DataSetFilters):
             interpolator = _vtk.vtkImageSincInterpolator()
             interpolator.SetWindowFunctionToBlackman()
         else:  # pragma: no cover
-            raise RuntimeError(f"Unexpected interpolation mode '{interpolation}'.")
+            msg = f"Unexpected interpolation mode '{interpolation}'."
+            raise RuntimeError(msg)
 
         if anti_aliasing and np.any(magnification_factors < 1.0):
             if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
