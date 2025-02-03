@@ -6,6 +6,7 @@ to VTK algorithms and PyVista filtering/plotting routines.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from collections.abc import MutableSequence
 from itertools import zip_longest
 import pathlib
@@ -36,7 +37,6 @@ from .utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Iterator
     from typing import Literal
 
     from ._typing_core import NumpyArray
@@ -284,7 +284,8 @@ class MultiBlock(
             ['preserve', 'prepend', 'reset'], must_contain=name_mode, name='name_mode'
         )
         output = MultiBlock()
-        for name, block in self.recursive_iterator(contents='items', skip_none=False):
+        iterator = self.recursive_iterator(contents='items', skip_none=False)
+        for name, block in cast(Iterator[tuple[str | None, DataSet | None]], iterator):
             if name_mode == 'reset':
                 name = None
             # TODO:
