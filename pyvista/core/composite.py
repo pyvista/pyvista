@@ -311,12 +311,12 @@ class MultiBlock(
         """Flatten this :class:`MultiBlock`.
 
         Recursively iterate through the ``MultiBlock`` and store all blocks in a single
-        :class:`MultiBlock` instance. All nested :class:~pyvista.DataSet` and ``None``
+        :class:`MultiBlock` instance. All nested :class:`~pyvista.DataSet` and ``None``
         blocks are preserved.
 
         .. warning::
 
-            Any field data directly associated with any nested ``MultiBlock``s is not
+            Any field data directly associated with any nested ``MultiBlock``(s) is not
             handled by this method and will be lost.
 
         Parameters
@@ -326,8 +326,7 @@ class MultiBlock(
 
             - ``'preserve'``: The names of all blocks are preserved.
             - ``'prepend'``: Preserve the block names and prepend the parent names.
-            - ``'reset'``: Reset the block names to default values
-              (i.e. ``'Block-00'``, ``'Block-01'``, etc.).
+            - ``'reset'``: Reset the block names to default values.
 
         separator : str, default: '::'
             String separator to use when ``name_mode`` is ``'prepend'``. The separator
@@ -366,8 +365,8 @@ class MultiBlock(
         >>> nested.n_blocks
         2
 
-        Flatten the ``MultiBlock``. The nested blocks are removed and only the three
-        end nodes are returned.
+        Flatten the ``MultiBlock``. The nested ``MultiBlock``s are removed and only the
+        three end nodes are returned.
 
         >>> flat = nested.flatten()
         >>> flat.n_blocks
