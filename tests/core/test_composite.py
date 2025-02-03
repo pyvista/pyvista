@@ -958,3 +958,13 @@ def test_flatten(multiblock_all_with_nested_and_none):
     flat = multiblock_all_with_nested_and_none.flatten(name_mode='reset')
     expected_names = [f'Block-{i:02}' for i in range(expected_n_blocks)]
     assert flat.keys() == expected_names
+
+
+@pytest.mark.parametrize('copy', [True, False])
+def test_flatten_copy(multiblock_all, copy):
+    multi_in = multiblock_all
+    multi_out = multiblock_all.flatten(copy=copy)
+    assert multi_in is not multi_out
+    for block_in, block_out in zip(multi_in, multi_out):
+        assert block_in == block_out
+        assert (block_in is block_out) == (not copy)

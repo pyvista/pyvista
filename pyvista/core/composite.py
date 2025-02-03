@@ -300,6 +300,7 @@ class MultiBlock(
         *,
         name_mode: Literal['preserve', 'prepend', 'reset'] = 'preserve',
         separator: str = '::',
+        copy: bool = True,
     ) -> MultiBlock:
         """Flatten this :class:`MultiBlock`.
 
@@ -317,6 +318,10 @@ class MultiBlock(
             String separator to use when ``name_mode`` is ``'prepend'``. The separator
             is inserted between parent and child block names.
 
+        copy : bool, default: True
+            Return a deep copy of all nested blocks in the flattened ``MultiBlock``.
+            If ``False``, shallow copies are returned.
+
         Returns
         -------
         MultiBlock
@@ -327,11 +332,14 @@ class MultiBlock(
             ['preserve', 'prepend', 'reset'], must_contain=name_mode, name='name_mode'
         )
         prepend_names = name_mode == 'prepend'
-        output = MultiBlock()
-        iterator = self.recursive_iterator(
+        multi = self.copy() if copy else self
+        iterator = multi.recursive_iterator(
             contents='items', skip_none=False, prepend_names=prepend_names, separator=separator
         )
         typed_iterator = cast(Iterator[tuple[Union[str, None], Union[DataSet, None]]], iterator)
+
+        # Generate output
+        output = MultiBlock()
         for name, block in typed_iterator:
             if name_mode == 'reset':
                 name = None
