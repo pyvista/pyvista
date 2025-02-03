@@ -628,6 +628,11 @@ class Renderers:
         Setting to ``None`` will disable the use of the color cycler on this
         renderer.
 
+        .. note::
+            If a mesh has scalar data, set ``color=True`` in the call to :meth:`add_mesh`
+            to color the mesh with the next color in the cycler. Otherwise the mesh's
+            scalars are used to color the mesh by default.
+
         Parameters
         ----------
         color_cycler : str | cycler.Cycler | sequence[ColorLike]
