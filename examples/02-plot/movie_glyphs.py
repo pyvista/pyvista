@@ -51,7 +51,7 @@ plotter.add_mesh(
 )
 
 # Open a gif
-plotter.open_gif("glyph_wave.gif")
+plotter.open_gif('glyph_wave.gif')
 
 # Update Z and write a frame for each updated mesh
 nframe = 30

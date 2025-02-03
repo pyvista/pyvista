@@ -46,7 +46,7 @@ pl.show()
 # %%
 # Plot with SSAO
 # ~~~~~~~~~~~~~~
-# Now plot this with SSAO. Note how adjacent cubes affect the lighting of each
+# Now plot this with SSAO using :func:`~pyvista.Plotter.enable_ssao`. Note how adjacent cubes affect the lighting of each
 # other to make it look less artificial.
 #
 # With a low ``kernel_size``, the image will be rendered quickly at the expense

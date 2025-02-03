@@ -35,7 +35,7 @@ surface = surfaces[0].copy()
 
 # %%
 
-filename = "isovalue.gif"
+filename = 'isovalue.gif'
 
 plotter = pv.Plotter(off_screen=True)
 # Open a movie file

@@ -28,9 +28,10 @@ must be all triangle meshes, which you can check with
 .. note::
    For merging, the ``+`` operator can be used between any two meshes
    in PyVista which simply calls the ``.merge()`` filter to combine
-   any two meshes.  This is different from ``boolean_union`` as it
-   simply superimposes the two meshes without performing additional
-   calculations on the result.
+   any two meshes.  This is different from the operator ``|`` in PyVista
+   which simply calls the ``boolean_union`` filter as it simply superimposes
+   the two meshes without performing additional calculations on the result.
+   The ``&`` operator in PyVista simply calls the ``boolean_intersection``.
 
 .. warning::
    If your boolean operations don't react the way you think they
@@ -63,7 +64,7 @@ sphere_b = pv.Sphere(center=(0.5, 0, 0))
 # Order of operands does not matter for boolean union (the operation is
 # commutative).
 
-result = sphere_a.boolean_union(sphere_b)
+result = sphere_a | sphere_b
 pl = pv.Plotter()
 _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
 _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
@@ -85,7 +86,7 @@ pl.show()
 #
 # Order of operands matters for boolean difference.
 
-result = sphere_a.boolean_difference(sphere_b)
+result = sphere_a - sphere_b
 pl = pv.Plotter()
 _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
 _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
@@ -107,7 +108,7 @@ pl.show()
 # Order of operands does not matter for boolean intersection (the
 # operation is commutative).
 
-result = sphere_a.boolean_intersection(sphere_b)
+result = sphere_a & sphere_b
 pl = pv.Plotter()
 _ = pl.add_mesh(sphere_a, color='r', style='wireframe', line_width=3)
 _ = pl.add_mesh(sphere_b, color='b', style='wireframe', line_width=3)
@@ -117,12 +118,15 @@ pl.show()
 
 
 # %%
-# Behavior due to flipped normals
+# Behavior due to flipped faces
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Note that these boolean filters behave differently depending on the
-# orientation of the normals.
+# orientation of the faces. This is because the orientation determines
+# which parts are considered to be the "outside" or the "inside" portion
+# of the mesh. This example uses :meth:`~pyvista.PolyDataFilters.flip_faces`
+# to flip the faces.
 #
-# Boolean difference with both cube and sphere normals pointed
+# Boolean difference with both cube and sphere faces oriented
 # outward.  This is the "normal" behavior.
 
 cube = pv.Cube().triangulate().subdivide(3)
@@ -132,32 +136,28 @@ result.plot(color='lightblue')
 
 
 # %%
-# Boolean difference with cube normals outward, sphere inward.
+# Boolean difference with cube faces outward, sphere faces inward.
 
 cube = pv.Cube().triangulate().subdivide(3)
-sphere = pv.Sphere(radius=0.6)
-sphere.flip_normals()
+sphere = pv.Sphere(radius=0.6).flip_faces()
 result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
 # %%
-# Boolean difference with cube normals inward, sphere outward.
+# Boolean difference with cube faces inward, sphere faces outward.
 
-cube = pv.Cube().triangulate().subdivide(3)
-cube.flip_normals()
+cube = pv.Cube().triangulate().subdivide(3).flip_faces()
 sphere = pv.Sphere(radius=0.6)
 result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 
 
 # %%
-# Both cube and sphere normals inward.
+# Both cube and sphere faces inward.
 
-cube = pv.Cube().triangulate().subdivide(3)
-cube.flip_normals()
-sphere = pv.Sphere(radius=0.6)
-sphere.flip_normals()
+cube = pv.Cube().triangulate().subdivide(3).flip_faces()
+sphere = pv.Sphere(radius=0.6).flip_faces()
 result = cube.boolean_difference(sphere)
 result.plot(color='lightblue')
 # %%

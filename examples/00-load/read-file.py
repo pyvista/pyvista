@@ -43,7 +43,7 @@ cpos = mesh.plot()
 
 plotter = pv.Plotter(off_screen=True)
 plotter.add_mesh(mesh)
-plotter.show(screenshot="myscreenshot.png")
+plotter.show(screenshot='myscreenshot.png')
 
 
 # %%
@@ -73,7 +73,7 @@ mesh.plot(cpos=cpos)
 # %%
 # Example OBJ file
 mesh = examples.download_doorman()
-mesh.plot(cpos="xy")
+mesh.plot(cpos='xy')
 
 
 # %%

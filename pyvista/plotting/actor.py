@@ -14,7 +14,7 @@ from . import _vtk
 from ._property import Property
 from .prop3d import Prop3D
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .mapper import _BaseMapper
 
 
@@ -85,7 +85,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     _new_attr_exceptions: ClassVar[list[str]] = ['_name']
 
-    def __init__(self, mapper=None, prop=None, name=None):
+    def __init__(self, mapper=None, prop=None, name=None) -> None:
         """Initialize actor."""
         super().__init__()
         if mapper is not None:
@@ -104,7 +104,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self._name
 
     @name.setter
-    def name(self, value: str):  # numpydoc ignore=GL08
+    def name(self, value: str):
         if not value:
             raise ValueError('Name must be truthy.')
         self._name = value
@@ -140,10 +140,10 @@ class Actor(Prop3D, _vtk.vtkActor):
           N Arrays:   1
 
         """
-        return self.GetMapper()
+        return self.GetMapper()  # type: ignore[return-value]
 
     @mapper.setter
-    def mapper(self, obj):  # numpydoc ignore=GL08
+    def mapper(self, obj) -> None:
         self.SetMapper(obj)
 
     @property
@@ -165,7 +165,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetProperty()
 
     @prop.setter
-    def prop(self, obj: Property):  # numpydoc ignore=GL08
+    def prop(self, obj: Property) -> None:
         self.SetProperty(obj)
 
     @property
@@ -200,13 +200,13 @@ class Actor(Prop3D, _vtk.vtkActor):
         return self.GetTexture()
 
     @texture.setter
-    def texture(self, obj):  # numpydoc ignore=GL08
+    def texture(self, obj) -> None:
         self.SetTexture(obj)
 
     @property
     def memory_address(self):  # numpydoc ignore=RT01
         """Return the memory address of this actor."""
-        return self.GetAddressAsString("")
+        return self.GetAddressAsString('')
 
     @property
     def pickable(self) -> bool:  # numpydoc ignore=RT01
@@ -228,7 +228,7 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetPickable())
 
     @pickable.setter
-    def pickable(self, value):  # numpydoc ignore=GL08
+    def pickable(self, value) -> None:
         self.SetPickable(value)
 
     @property
@@ -251,10 +251,10 @@ class Actor(Prop3D, _vtk.vtkActor):
         return bool(self.GetVisibility())
 
     @visibility.setter
-    def visibility(self, value: bool):  # numpydoc ignore=GL08
+    def visibility(self, value: bool) -> None:
         self.SetVisibility(value)
 
-    def plot(self, **kwargs):
+    def plot(self, **kwargs) -> None:
         """Plot just the actor.
 
         This may be useful when interrogating or debugging individual actors.
@@ -279,10 +279,10 @@ class Actor(Prop3D, _vtk.vtkActor):
 
         """
         pl = pyvista.Plotter()
-        pl.add_actor(self)
+        pl.add_actor(self)  # type: ignore[arg-type]
         pl.show(**kwargs)
 
-    def copy(self, deep=True) -> Actor:
+    def copy(self, deep: bool = True) -> Actor:
         """Create a copy of this actor.
 
         Parameters
@@ -326,10 +326,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     def __repr__(self):
         """Representation of the actor."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnd = self.bounds
         attr = [
             f'{type(self).__name__} ({hex(id(self))})',
@@ -390,8 +387,8 @@ class Actor(Prop3D, _vtk.vtkActor):
         """
         if self.GetBackfaceProperty() is None:
             self.SetBackfaceProperty(self.prop.copy())
-        return self.GetBackfaceProperty()
+        return self.GetBackfaceProperty()  # type: ignore[return-value]
 
     @backface_prop.setter
-    def backface_prop(self, value: pyvista.Property):  # numpydoc ignore=GL08
+    def backface_prop(self, value: pyvista.Property) -> None:
         self.SetBackfaceProperty(value)

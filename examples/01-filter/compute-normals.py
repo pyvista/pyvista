@@ -20,7 +20,7 @@ from pyvista import examples
 # method.
 
 mesh = examples.download_topo_global()
-mesh.plot(cmap="gist_earth", show_scalar_bar=False)
+mesh.plot(cmap='gist_earth', show_scalar_bar=False)
 
 # %%
 # Now we have a surface dataset of the globe loaded - unfortunately, the
@@ -37,7 +37,7 @@ mesh.compute_normals(inplace=True)  # this activates the normals as well
 warp = mesh.warp_by_scalar(factor=0.5e-5)
 
 # And let's see it
-warp.plot(cmap="gist_earth", show_scalar_bar=False)
+warp.plot(cmap='gist_earth', show_scalar_bar=False)
 
 
 # %%

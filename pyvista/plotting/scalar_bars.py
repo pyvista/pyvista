@@ -53,8 +53,8 @@ class ScalarBars:
     def _remove_mapper_from_plotter(
         self,
         actor,
-        reset_camera=False,
-        render=False,
+        reset_camera: bool = False,
+        render: bool = False,
     ):  # numpydoc ignore=PR01,RT01
         """Remove an actor's mapper from the given plotter's _scalar_bar_mappers.
 
@@ -85,7 +85,7 @@ class ScalarBars:
                     self._plotter._scalar_bar_slots.add(slot)
             return
 
-    def remove_scalar_bar(self, title=None, render=True):
+    def remove_scalar_bar(self, title=None, render: bool = True):
         """Remove a scalar bar.
 
         Parameters
@@ -144,19 +144,19 @@ class ScalarBars:
         """Return a scalar bar actor."""
         return self._scalar_bar_actors[index]
 
-    def keys(self):
+    def keys(self):  # numpydoc ignore=RT01
         """Scalar bar keys."""
         return self._scalar_bar_actors.keys()
 
-    def values(self):
+    def values(self):  # numpydoc ignore=RT01
         """Scalar bar values."""
         return self._scalar_bar_actors.values()
 
-    def items(self):
+    def items(self):  # numpydoc ignore=RT01
         """Scalar bar items."""
         return self._scalar_bar_actors.items()
 
-    def __contains__(self, key):
+    def __contains__(self, key) -> bool:
         """Check if a title is a valid actors."""
         return key in self._scalar_bar_actors
 
@@ -165,13 +165,13 @@ class ScalarBars:
         title='',
         mapper=None,
         n_labels=5,
-        italic=False,
-        bold=False,
+        italic: bool = False,
+        bold: bool = False,
         title_font_size=None,
         label_font_size=None,
         color=None,
         font_family=None,
-        shadow=False,
+        shadow: bool = False,
         width=None,
         height=None,
         position_x=None,
@@ -179,17 +179,17 @@ class ScalarBars:
         vertical=None,
         interactive=None,
         fmt=None,
-        use_opacity=True,
-        outline=False,
-        nan_annotation=False,
+        use_opacity: bool = True,
+        outline: bool = False,
+        nan_annotation: bool = False,
         below_label=None,
         above_label=None,
         background_color=None,
         n_colors=None,
-        fill=False,
-        render=False,
+        fill: bool = False,
+        render: bool = False,
         theme=None,
-        unconstrained_font_size=False,
+        unconstrained_font_size: bool = False,
     ):
         """Create scalar bar using the ranges as set by the last input mesh.
 
@@ -545,13 +545,13 @@ class ScalarBars:
 
             scalar_widget.On()
             if vertical is True or vertical is None:
-                rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
+                rep.SetOrientation(1)  # type: ignore[attr-defined] # 0 = Horizontal, 1 = Vertical
             else:
                 # y position determined empirically
                 y = -position_y / 2 - height - scalar_bar.GetPosition()[1]
-                rep.GetPositionCoordinate().SetValue(width, y)
-                rep.GetPosition2Coordinate().SetValue(height, width)
-                rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
+                rep.GetPositionCoordinate().SetValue(width, y)  # type: ignore[attr-defined]
+                rep.GetPosition2Coordinate().SetValue(height, width)  # type: ignore[attr-defined]
+                rep.SetOrientation(0)  # type: ignore[attr-defined] # 0 = Horizontal, 1 = Vertical
             self._scalar_bar_widgets[title] = scalar_widget
 
         if use_opacity:

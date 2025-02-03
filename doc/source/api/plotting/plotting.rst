@@ -89,7 +89,7 @@ scene as well as has some useful menu functions for common scene
 manipulation or export tasks. To get started, try instantiating the
 :class:`pyvistaqt.BackgroundPlotter`:
 
-.. code:: python
+.. code-block:: python
 
     import pyvista as pv
     import pyvistaqt as pvqt
@@ -127,8 +127,15 @@ values change through time:
 
 
     plotter = pvqt.BackgroundPlotter()
-    plotter.add_mesh(globe, lighting=False, show_edges=True, texture=texture, scalars='scalars')
+    plotter.add_mesh(
+        globe,
+        lighting=False,
+        show_edges=True,
+        texture=texture,
+        scalars='scalars',
+    )
     plotter.view_isometric()
+
 
     # shrink globe in the background
     def shrink():
@@ -137,6 +144,7 @@ values change through time:
             # Update scalars
             globe.point_data['scalars'] = np.random.rand(globe.n_points)
             time.sleep(0.5)
+
 
     thread = Thread(target=shrink)
     thread.start()

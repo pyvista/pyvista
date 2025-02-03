@@ -46,11 +46,11 @@ p.show()
 # their visibility in the scene.
 
 colors = [
-    ["ff0000", "28e5da", "0000ff"],
-    ["ffff00", "c8bebe", "f79292"],
-    ["fffff0", "f18c1d", "23dcaa"],
-    ["d785ec", "9d5b13", "e4e0b1"],
-    ["894509", "af45f5", "fff000"],
+    ['ff0000', '28e5da', '0000ff'],
+    ['ffff00', 'c8bebe', 'f79292'],
+    ['fffff0', 'f18c1d', '23dcaa'],
+    ['d785ec', '9d5b13', 'e4e0b1'],
+    ['894509', 'af45f5', 'fff000'],
 ]
 
 

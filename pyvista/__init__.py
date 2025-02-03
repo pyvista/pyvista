@@ -1,29 +1,30 @@
 """PyVista package for 3D plotting and mesh analysis."""
 
-# ruff: noqa: F401
 from __future__ import annotations
 
 import os
 import sys
 from typing import TYPE_CHECKING
+from typing import Literal
+from typing import cast
 import warnings
 
-from pyvista._plot import plot
-from pyvista._version import __version__
-from pyvista._version import version_info
+from pyvista._plot import plot as plot
+from pyvista._version import __version__ as __version__
+from pyvista._version import version_info as version_info
 from pyvista.core import *
-from pyvista.core import _validation
-from pyvista.core._vtk_core import vtk_version_info
+from pyvista.core import _validation as _validation
+from pyvista.core._vtk_core import vtk_version_info as vtk_version_info
 from pyvista.core.cell import _get_vtk_id_type
 from pyvista.core.utilities.observers import send_errors_to_logging
-from pyvista.core.wrappers import _wrappers
-from pyvista.jupyter import set_jupyter_backend
-from pyvista.report import GPUInfo
-from pyvista.report import Report
-from pyvista.report import get_gpu_info
+from pyvista.core.wrappers import _wrappers as _wrappers
+from pyvista.jupyter import set_jupyter_backend as set_jupyter_backend
+from pyvista.report import GPUInfo as GPUInfo
+from pyvista.report import Report as Report
+from pyvista.report import get_gpu_info as get_gpu_info
 
 # get the int type from vtk
-ID_TYPE = _get_vtk_id_type()
+ID_TYPE = cast(int, _get_vtk_id_type())
 
 # determine if using at least vtk 9.0.0
 if vtk_version_info.major < 9:  # pragma: no cover
@@ -35,18 +36,18 @@ if vtk_version_info.major < 9:  # pragma: no cover
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
-OFF_SCREEN = os.environ.get("PYVISTA_OFF_SCREEN", "false").lower() == "true"
+OFF_SCREEN = os.environ.get('PYVISTA_OFF_SCREEN', 'false').lower() == 'true'
 
 # flag for when building the sphinx_gallery
-BUILDING_GALLERY = os.environ.get("PYVISTA_BUILDING_GALLERY", "false").lower() == "true"
+BUILDING_GALLERY = os.environ.get('PYVISTA_BUILDING_GALLERY', 'false').lower() == 'true'
 
 # A threshold for the max cells to compute a volume for when repr-ing
 REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
-FIGURE_PATH = os.environ.get("PYVISTA_FIGURE_PATH", None)
+FIGURE_PATH = os.environ.get('PYVISTA_FIGURE_PATH', None)
 
-ON_SCREENSHOT = os.environ.get("PYVISTA_ON_SCREENSHOT", "false").lower() == "true"
+ON_SCREENSHOT = os.environ.get('PYVISTA_ON_SCREENSHOT', 'false').lower() == 'true'
 
 # Send VTK messages to the logging module:
 send_errors_to_logging()
@@ -56,10 +57,10 @@ PLOT_DIRECTIVE_THEME = None
 
 # Set a parameter to control default print format for floats outside
 # of the plotter
-FLOAT_FORMAT = "{:.3e}"
+FLOAT_FORMAT = '{:.3e}'
 
 # Serialization format to be used when pickling `DataObject`
-PICKLE_FORMAT = 'xml'
+PICKLE_FORMAT: Literal['vtk', 'xml', 'legacy'] = 'vtk' if vtk_version_info >= (9, 3) else 'xml'
 
 # Name used for unnamed scalars
 DEFAULT_SCALARS_NAME = 'Data'
@@ -68,12 +69,12 @@ MAX_N_COLOR_BARS = 10
 
 
 # Import all modules for type checkers and linters
-if TYPE_CHECKING:  # pragma: no cover
-    from pyvista import demos
-    from pyvista import examples
-    from pyvista import ext
-    from pyvista import trame
-    from pyvista import utilities
+if TYPE_CHECKING:
+    from pyvista import demos as demos
+    from pyvista import examples as examples
+    from pyvista import ext as ext
+    from pyvista import trame as trame
+    from pyvista import utilities as utilities
     from pyvista.plotting import *
 
 
@@ -105,7 +106,7 @@ def __getattr__(name):
 
     # avoid recursive import
     if 'pyvista.plotting' not in sys.modules:
-        import pyvista.plotting
+        import pyvista.plotting  # noqa: F401
 
     try:
         feature = inspect.getattr_static(sys.modules['pyvista.plotting'], name)

@@ -13,9 +13,10 @@ from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
 from pyvista.core.utilities.arrays import array_from_vtkmatrix
 from pyvista.core.utilities.arrays import vtkmatrix_from_array
+from pyvista.core.utilities.transform import Transform
 from pyvista.plotting import _vtk
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core import RotationLike
     from pyvista.core._typing_core import TransformLike
@@ -41,7 +42,7 @@ class Prop3D(_vtk.vtkProp3D):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Prop3D."""
         super().__init__()
 
@@ -65,8 +66,8 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetScale()
 
     @scale.setter
-    def scale(self, value: float | VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetScale(value)
+    def scale(self, value: float | VectorLike[float]) -> None:
+        self.SetScale(value)  # type: ignore[arg-type]
 
     @property
     def position(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -90,10 +91,10 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetPosition()
 
     @position.setter
-    def position(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetPosition(value)
+    def position(self, value: VectorLike[float]) -> None:
+        self.SetPosition(value)  # type: ignore[call-overload]
 
-    def rotate_x(self, angle: float):
+    def rotate_x(self, angle: float) -> None:
         """Rotate the entity about the x-axis.
 
         Parameters
@@ -124,7 +125,7 @@ class Prop3D(_vtk.vtkProp3D):
         """
         self.RotateX(angle)
 
-    def rotate_y(self, angle: float):
+    def rotate_y(self, angle: float) -> None:
         """Rotate the entity about the y-axis.
 
         Parameters
@@ -155,7 +156,7 @@ class Prop3D(_vtk.vtkProp3D):
         """
         self.RotateY(angle)
 
-    def rotate_z(self, angle: float):
+    def rotate_z(self, angle: float) -> None:
         """Rotate the entity about the z-axis.
 
         Parameters
@@ -262,8 +263,8 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrientation()
 
     @orientation.setter
-    def orientation(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetOrientation(value)
+    def orientation(self, value: VectorLike[float]) -> None:
+        self.SetOrientation(value)  # type: ignore[call-overload]
 
     @property
     def origin(self) -> tuple[float, float, float]:  # numpydoc ignore=RT01
@@ -277,8 +278,8 @@ class Prop3D(_vtk.vtkProp3D):
         return self.GetOrigin()
 
     @origin.setter
-    def origin(self, value: VectorLike[float]):  # numpydoc ignore=GL08
-        self.SetOrigin(value)
+    def origin(self, value: VectorLike[float]) -> None:
+        self.SetOrigin(value)  # type: ignore[arg-type]
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
@@ -309,6 +310,7 @@ class Prop3D(_vtk.vtkProp3D):
         >>> actor = pl.add_mesh(pv.Sphere(center=(0.5, 0.5, 1)))
         >>> actor.center  # doctest:+SKIP
         (0.5, 0.5, 1)
+
         """
         return self.GetCenter()
 
@@ -341,11 +343,11 @@ class Prop3D(_vtk.vtkProp3D):
         >>> import pyvista as pv
         >>> mesh = pv.Cube()
         >>> pl = pv.Plotter()
-        >>> _ = pl.add_mesh(mesh, color="b")
+        >>> _ = pl.add_mesh(mesh, color='b')
         >>> actor = pl.add_mesh(
         ...     mesh,
-        ...     color="r",
-        ...     style="wireframe",
+        ...     color='r',
+        ...     style='wireframe',
         ...     line_width=5,
         ...     lighting=False,
         ... )
@@ -365,7 +367,7 @@ class Prop3D(_vtk.vtkProp3D):
         return array_from_vtkmatrix(self.GetUserMatrix())
 
     @user_matrix.setter
-    def user_matrix(self, value: TransformLike):  # numpydoc ignore=GL08
+    def user_matrix(self, value: TransformLike) -> None:
         array = np.eye(4) if value is None else _validation.validate_transform4x4(value)
         self.SetUserMatrix(vtkmatrix_from_array(array))
 
@@ -380,16 +382,19 @@ class Prop3D(_vtk.vtkProp3D):
         >>> actor = pl.add_mesh(pv.Sphere())
         >>> actor.length
         1.7272069317100354
+
         """
         return self.GetLength()
 
-    def rotation_from(self, rotation: RotationLike):
+    def rotation_from(self, rotation: RotationLike) -> None:
         """Set the entity's orientation from a rotation.
 
         Set the rotation of this entity from a 3x3 rotation matrix. This includes
         NumPy arrays, a vtkMatrix3x3, and SciPy ``Rotation`` objects.
 
         This method may be used as an alternative for setting the :attr:`orientation`.
+
+        .. versionadded:: 0.45
 
         Parameters
         ----------
@@ -413,7 +418,7 @@ class Prop3D(_vtk.vtkProp3D):
         (0.0, -180.0, -89.99999999999999)
 
         """
-        self.orientation = _rotation_matrix_as_orientation(rotation)
+        self.orientation = _rotation_matrix_as_orientation(rotation)  # type: ignore[arg-type]
 
 
 def _rotation_matrix_as_orientation(
@@ -439,12 +444,7 @@ def _rotation_matrix_as_orientation(
         Tuple with x-y-z axis rotation angles in degrees.
 
     """
-    array_3x3 = _validation.validate_transform3x3(array, name='rotation')
-    array_4x4 = np.eye(4)
-    array_4x4[:3, :3] = array_3x3
-    transform = _vtk.vtkTransform()
-    transform.SetMatrix(array_4x4.ravel())
-    return transform.GetOrientation()
+    return Transform().rotate(array).GetOrientation()
 
 
 def _orientation_as_rotation_matrix(orientation: VectorLike[float]) -> NumpyArray[float]:
@@ -483,7 +483,7 @@ class _Prop3DMixin(ABC):
     their behavior, e.g. manually apply a transformation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         from pyvista import Actor  # Avoid circular import
 
         self._prop3d = Actor()
@@ -496,8 +496,8 @@ class _Prop3DMixin(ABC):
 
     @scale.setter
     @wraps(Prop3D.scale.fset)
-    def scale(self, scale: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.scale = scale
+    def scale(self, scale: VectorLike[float]) -> None:
+        self._prop3d.scale = scale  # type: ignore[assignment]
         self._post_set_update()
 
     @property
@@ -508,8 +508,8 @@ class _Prop3DMixin(ABC):
 
     @position.setter
     @wraps(Prop3D.position.fset)
-    def position(self, position: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.position = position
+    def position(self, position: VectorLike[float]) -> None:
+        self._prop3d.position = position  # type: ignore[assignment]
         self._post_set_update()
 
     @property
@@ -520,8 +520,8 @@ class _Prop3DMixin(ABC):
 
     @orientation.setter
     @wraps(Prop3D.orientation.fset)
-    def orientation(self, orientation: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.orientation = orientation
+    def orientation(self, orientation: VectorLike[float]) -> None:
+        self._prop3d.orientation = orientation  # type: ignore[assignment]
         self._post_set_update()
 
     @property
@@ -532,8 +532,8 @@ class _Prop3DMixin(ABC):
 
     @origin.setter
     @wraps(Prop3D.origin.fset)
-    def origin(self, origin: VectorLike[float]):  # numpydoc ignore=GL08
-        self._prop3d.origin = origin
+    def origin(self, origin: VectorLike[float]) -> None:
+        self._prop3d.origin = origin  # type: ignore[assignment]
         self._post_set_update()
 
     @property
@@ -544,8 +544,8 @@ class _Prop3DMixin(ABC):
 
     @user_matrix.setter
     @wraps(Prop3D.user_matrix.fset)
-    def user_matrix(self, matrix: TransformLike):  # numpydoc ignore=GL08
-        self._prop3d.user_matrix = matrix
+    def user_matrix(self, matrix: TransformLike) -> None:
+        self._prop3d.user_matrix = matrix  # type: ignore[assignment]
         self._post_set_update()
 
     @property

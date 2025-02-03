@@ -30,7 +30,7 @@ rng = np.random.default_rng(seed=0)
 
 # Define some helpers - ignore these and use your own data.
 def generate_points(subset=0.02):
-    """A helper to make a 3D NumPy array of points (n_points by 3)"""
+    """Make a 3D NumPy array of points (n_points by 3)."""
     dataset = examples.download_lidar()
     ids = rng.integers(
         low=0,
@@ -79,7 +79,7 @@ point_cloud.plot(eye_dome_lighting=True)
 data = points[:, -1]
 
 # Add that data to the mesh with the name "uniform dist"
-point_cloud["elevation"] = data
+point_cloud['elevation'] = data
 
 # %%
 # And now we can plot the point cloud with that random data. PyVista is smart

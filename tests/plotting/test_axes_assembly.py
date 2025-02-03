@@ -8,17 +8,17 @@ import pytest
 import pyvista as pv
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes_assembly():
     return pv.AxesAssembly()
 
 
-@pytest.fixture()
+@pytest.fixture
 def axes_assembly_symmetric():
     return pv.AxesAssemblySymmetric()
 
 
-@pytest.fixture()
+@pytest.fixture
 def planes_assembly():
     return pv.PlanesAssembly()
 
@@ -28,43 +28,43 @@ def test_axes_assembly_repr(axes_assembly):
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
         "  Shaft type:                 'cylinder'",
-        "  Shaft radius:               0.025",
-        "  Shaft length:               (0.8, 0.8, 0.8)",
+        '  Shaft radius:               0.025',
+        '  Shaft length:               (0.8, 0.8, 0.8)',
         "  Tip type:                   'cone'",
-        "  Tip radius:                 0.1",
-        "  Tip length:                 (0.2, 0.2, 0.2)",
-        "  Symmetric:                  False",
-        "  Symmetric bounds:           False",
+        '  Tip radius:                 0.1',
+        '  Tip length:                 (0.2, 0.2, 0.2)',
+        '  Symmetric:                  False',
+        '  Symmetric bounds:           False',
         "  X label:                    'X'",
         "  Y label:                    'Y'",
         "  Z label:                    'Z'",
         "  Label color:                Color(name='black', hex='#000000ff', opacity=255)",
-        "  Show labels:                True",
-        "  Label position:             (0.8, 0.8, 0.8)",
-        "  X Color:                                     ",
+        '  Show labels:                True',
+        '  Label position:             (0.8, 0.8, 0.8)',
+        '  X Color:                                     ',
         "      Shaft                   Color(name='tomato', hex='#ff6347ff', opacity=255)",
         "      Tip                     Color(name='tomato', hex='#ff6347ff', opacity=255)",
-        "  Y Color:                                     ",
+        '  Y Color:                                     ',
         "      Shaft                   Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
         "      Tip                     Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
-        "  Z Color:                                     ",
+        '  Z Color:                                     ',
         "      Shaft                   Color(name='mediumblue', hex='#0000cdff', opacity=255)",
         "      Tip                     Color(name='mediumblue', hex='#0000cdff', opacity=255)",
-        "  Position:                   (0.0, 0.0, 0.0)",
-        "  Orientation:                (0.0, -0.0, 0.0)",
-        "  Origin:                     (0.0, 0.0, 0.0)",
-        "  Scale:                      (1.0, 1.0, 1.0)",
-        "  User matrix:                Identity",
-        "  X Bounds                    -1.000E-01, 1.000E+00",
-        "  Y Bounds                    -1.000E-01, 1.000E+00",
-        "  Z Bounds                    -1.000E-01, 1.000E+00",
+        '  Position:                   (0.0, 0.0, 0.0)',
+        '  Orientation:                (0.0, -0.0, 0.0)',
+        '  Origin:                     (0.0, 0.0, 0.0)',
+        '  Scale:                      (1.0, 1.0, 1.0)',
+        '  User matrix:                Identity',
+        '  X Bounds                    -1.000E-01, 1.000E+00',
+        '  Y Bounds                    -1.000E-01, 1.000E+00',
+        '  Z Bounds                    -1.000E-01, 1.000E+00',
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
 
     axes_assembly.user_matrix = np.eye(4) * 2
     repr_ = repr(axes_assembly)
-    assert "User matrix:                Set" in repr_
+    assert 'User matrix:                Set' in repr_
 
 
 def test_axes_assembly_x_color(axes_assembly):
@@ -118,7 +118,7 @@ def test_axes_assembly_color_inputs(axes_assembly):
         axes_assembly.z_color = ['red', 'green', 'blue']
 
 
-@pytest.fixture()
+@pytest.fixture
 def _config_axes_theme():
     # Store values
     x_color = pv.global_theme.axes.x_color
@@ -154,16 +154,18 @@ def test_axes_assembly_theme(axes_assembly):
 
 
 def test_axes_assembly_label_position(axes_assembly):
-    assert axes_assembly.label_position == (0.8, 0.8, 0.8)
-    label_position = (1, 2, 3)
+    assert np.allclose(axes_assembly.label_position, (0.8, 0.8, 0.8))
+    label_position = (1.0, 2.0, 3.0)
     axes_assembly.label_position = label_position
-    assert axes_assembly.label_position == label_position
+    assert np.allclose(axes_assembly.label_position, label_position)
 
 
 def test_axes_assembly_label_position_init():
-    label_position = 2
+    label_position = 2.0
     axes_assembly = pv.AxesAssembly(label_position=label_position)
-    assert axes_assembly.label_position == (label_position, label_position, label_position)
+    assert np.allclose(
+        axes_assembly.label_position, (label_position, label_position, label_position)
+    )
 
 
 def test_axes_assembly_labels(axes_assembly):
@@ -253,90 +255,90 @@ def test_axes_assembly_label_size_init():
 
 
 def test_axes_assembly_origin(axes_assembly):
-    assert axes_assembly.origin == (0, 0, 0)
-    origin = (1, 2, 3)
+    assert np.allclose(axes_assembly.origin, (0.0, 0.0, 0.0))
+    origin = (1.0, 2.0, 3.0)
     axes_assembly.origin = origin
-    assert axes_assembly.origin == origin
+    assert np.allclose(axes_assembly.origin, origin)
 
 
 def test_axes_assembly_origin_init():
-    origin = (1, 2, 3)
+    origin = (1.0, 2.0, 3.0)
     axes_assembly = pv.AxesAssembly(origin=origin)
-    assert axes_assembly.origin == origin
+    assert np.allclose(axes_assembly.origin, origin)
 
 
 def test_axes_assembly_scale(axes_assembly):
-    assert axes_assembly.scale == (1.0, 1.0, 1.0)
-    scale = (1, 2, 3)
+    assert np.allclose(axes_assembly.scale, (1.0, 1.0, 1.0))
+    scale = (1.0, 2.0, 3.0)
     axes_assembly.scale = scale
-    assert axes_assembly.scale == scale
+    assert np.allclose(axes_assembly.scale, scale)
 
 
 def test_axes_assembly_scale_init():
-    scale = (1, 2, 3)
+    scale = (1.0, 2.0, 3.0)
     axes_assembly = pv.AxesAssembly(scale=scale)
-    assert axes_assembly.scale == scale
+    assert np.allclose(axes_assembly.scale, scale)
 
 
 def test_axes_assembly_position(axes_assembly):
-    assert axes_assembly.position == (0, 0, 0)
-    position = (1, 2, 3)
+    assert np.allclose(axes_assembly.position, (0.0, 0.0, 0.0))
+    position = (1.0, 2.0, 3.0)
     axes_assembly.position = position
-    assert axes_assembly.position == position
+    assert np.allclose(axes_assembly.position, position)
 
 
 def test_axes_assembly_position_init():
-    position = (1, 2, 3)
+    position = (1.0, 2.0, 3.0)
     axes_assembly = pv.AxesAssembly(position=position)
-    assert axes_assembly.position == position
+    assert np.allclose(axes_assembly.position, position)
 
 
 def test_axes_assembly_orientation(axes_assembly):
-    assert axes_assembly.orientation == (0, 0, 0)
-    orientation = (1, 2, 4)
+    assert np.allclose(axes_assembly.orientation, (0.0, 0.0, 0.0))
+    orientation = (1.0, 2.0, 4.0)
     axes_assembly.orientation = orientation
-    assert axes_assembly.orientation == orientation
+    assert np.allclose(axes_assembly.orientation, orientation)
 
 
 def test_axes_assembly_orientation_init():
-    orientation = (1, 2, 4)
+    orientation = (1.0, 2.0, 4.0)
     axes_assembly = pv.AxesAssembly(orientation=orientation)
-    assert axes_assembly.orientation == orientation
+    assert np.allclose(axes_assembly.orientation, orientation)
 
 
 def test_axes_assembly_user_matrix(axes_assembly):
-    assert np.array_equal(axes_assembly.user_matrix, np.eye(4))
-    user_matrix = np.diag((2, 3, 4, 1))
+    assert np.allclose(axes_assembly.user_matrix, np.eye(4))
+    user_matrix = np.diag((2.0, 3.0, 4.0, 1.0))
     axes_assembly.user_matrix = user_matrix
-    assert np.array_equal(axes_assembly.user_matrix, user_matrix)
+    assert np.allclose(axes_assembly.user_matrix, user_matrix)
 
 
 def test_axes_assembly_user_matrix_init():
-    user_matrix = np.diag((2, 3, 4, 1))
+    user_matrix = np.diag((2.0, 3.0, 4.0, 1.0))
     axes_assembly = pv.AxesAssembly(user_matrix=user_matrix)
-    assert np.array_equal(axes_assembly.user_matrix, user_matrix)
+    assert np.allclose(axes_assembly.user_matrix, user_matrix)
 
 
 def test_axes_assembly_center(axes_assembly):
     # Test param matches value from underlying dataset
     dataset = axes_assembly._shaft_and_tip_geometry_source.output
-    assert axes_assembly.center == tuple(dataset.center)
+    assert np.allclose(axes_assembly.center, dataset.center)
 
 
 def test_axes_assembly_bounds(axes_assembly):
     # Test param matches value from underlying dataset
     dataset = axes_assembly._shaft_and_tip_geometry_source.output
-    assert axes_assembly.bounds == tuple(dataset.bounds)
+    assert np.allclose(axes_assembly.bounds, dataset.bounds)
 
 
 def test_axes_assembly_length(axes_assembly):
     # Test param matches value from underlying dataset
     dataset = axes_assembly._shaft_and_tip_geometry_source.output
-    assert axes_assembly.length == dataset.length
+    assert np.allclose(axes_assembly.length, dataset.length)
 
 
 def test_axes_assembly_symmetric(axes_assembly_symmetric):
-    assert axes_assembly_symmetric.bounds == (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    assert np.allclose(axes_assembly_symmetric.bounds, (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0))
 
 
 def test_axes_assembly_symmetric_set_get_labels(axes_assembly_symmetric):
@@ -376,11 +378,11 @@ def test_axes_assembly_symmetric_init_label(test_property):
 def test_axes_assembly_set_get_part_prop_all(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 1.0)
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (1.0, 1.0, 1.0, 1.0, 1.0, 1.0)
+    assert np.allclose(val, (1.0, 1.0, 1.0, 1.0, 1.0, 1.0))
 
     axes_assembly.set_actor_prop('ambient', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.1, 0.2, 0.3, 0.4, 0.5, 0.6)
+    assert np.allclose(val, (0.1, 0.2, 0.3, 0.4, 0.5, 0.6))
 
 
 def test_axes_assembly_set_get_actor_prop_all_color(axes_assembly):
@@ -396,7 +398,7 @@ def test_axes_assembly_set_get_actor_prop_all_color(axes_assembly):
         float_rgb,
         float_rgb,
     ]
-    assert actual_rgb == expected_rgb
+    assert np.allclose(actual_rgb, expected_rgb)
 
     expected_rgb = [
         tuple(np.array(float_rgb) * 10 / 255),
@@ -409,19 +411,19 @@ def test_axes_assembly_set_get_actor_prop_all_color(axes_assembly):
     axes_assembly.set_actor_prop('color', expected_rgb)
     val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
-    assert actual_rgb == expected_rgb
+    assert np.allclose(actual_rgb, expected_rgb)
 
 
 def test_axes_assembly_set_get_actor_prop_axis(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.5, axis=0)
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.5, 0.0, 0.0, 0.5, 0.0, 0.0)
+    assert np.allclose(val, (0.5, 0.0, 0.0, 0.5, 0.0, 0.0))
 
     axes_assembly.set_actor_prop('ambient', [0.1, 0.2], axis='x')
     val = axes_assembly.get_actor_prop('ambient')
-    assert val.x_shaft == 0.1
-    assert val.x_tip == 0.2
-    assert val == (0.1, 0.0, 0.0, 0.2, 0.0, 0.0)
+    assert np.allclose(val.x_shaft, 0.1)
+    assert np.allclose(val.x_tip, 0.2)
+    assert np.allclose(val, (0.1, 0.0, 0.0, 0.2, 0.0, 0.0))
 
 
 def test_axes_assembly_set_get_actor_prop_axis_color(axes_assembly):
@@ -437,7 +439,7 @@ def test_axes_assembly_set_get_actor_prop_axis_color(axes_assembly):
         pv.Color('seagreen').float_rgb,
         pv.Color('mediumblue').float_rgb,
     ]
-    assert actual_rgb == expected_rgb
+    assert np.allclose(actual_rgb, expected_rgb)
 
     color1, color2 = tuple(np.array(float_rgb) * 10 / 255), tuple(np.array(float_rgb) * 40 / 255)
     axes_assembly.set_actor_prop('color', [color1, color2], axis=0)
@@ -451,17 +453,17 @@ def test_axes_assembly_set_get_actor_prop_axis_color(axes_assembly):
         pv.Color('seagreen').float_rgb,
         pv.Color('mediumblue').float_rgb,
     ]
-    assert actual_rgb == expected_rgb
+    assert np.allclose(actual_rgb, expected_rgb)
 
 
 def test_axes_assembly_set_get_actor_prop_axis_and_tip(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.7, axis=1, part=1)
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.0, 0.0, 0.0, 0.0, 0.7, 0.0)
+    assert np.allclose(val, (0.0, 0.0, 0.0, 0.0, 0.7, 0.0))
 
     axes_assembly.set_actor_prop('ambient', [0.7], axis='y', part='tip')
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.0, 0.0, 0.0, 0.0, 0.7, 0.0)
+    assert np.allclose(val, (0.0, 0.0, 0.0, 0.0, 0.7, 0.0))
 
 
 def test_axes_assembly_set_get_actor_prop_axis_and_tip_color(axes_assembly):
@@ -477,32 +479,32 @@ def test_axes_assembly_set_get_actor_prop_axis_and_tip_color(axes_assembly):
         float_rgb,
         pv.Color('mediumblue').float_rgb,
     ]
-    assert actual_rgb == expected_rgb
+    assert np.allclose(actual_rgb, expected_rgb)
 
     axes_assembly.set_actor_prop('color', [float_rgb], axis=1, part=1)
     val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
-    assert actual_rgb == expected_rgb
+    assert np.allclose(actual_rgb, expected_rgb)
 
 
 def test_axes_assembly_set_get_actor_prop_axis_and_shaft(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.1, axis=2, part=0)
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.0, 0.0, 0.1, 0.0, 0.0, 0.0)
+    assert np.allclose(val, (0.0, 0.0, 0.1, 0.0, 0.0, 0.0))
 
     axes_assembly.set_actor_prop('ambient', [0.1], axis='z', part='shaft')
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.0, 0.0, 0.1, 0.0, 0.0, 0.0)
+    assert np.allclose(val, (0.0, 0.0, 0.1, 0.0, 0.0, 0.0))
 
 
 def test_axes_assembly_set_get_actor_prop_shaft(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.3, part='shaft')
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.3, 0.3, 0.3, 0.0, 0.0, 0.0)
+    assert np.allclose(val, (0.3, 0.3, 0.3, 0.0, 0.0, 0.0))
 
     axes_assembly.set_actor_prop('ambient', [0.1, 0.2, 0.4], part=0)
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.1, 0.2, 0.4, 0.0, 0.0, 0.0)
+    assert np.allclose(val, (0.1, 0.2, 0.4, 0.0, 0.0, 0.0))
 
 
 def test_axes_assembly_set_get_actor_prop_shaft_color(axes_assembly):
@@ -518,22 +520,22 @@ def test_axes_assembly_set_get_actor_prop_shaft_color(axes_assembly):
         pv.Color('seagreen').float_rgb,
         pv.Color('mediumblue').float_rgb,
     ]
-    assert actual_rgb == expected_rgb
+    assert np.allclose(actual_rgb, expected_rgb)
 
     axes_assembly.set_actor_prop('color', [float_rgb], part=0)
     val = axes_assembly.get_actor_prop('color')
     actual_rgb = [color.float_rgb for color in val]
-    assert actual_rgb == expected_rgb
+    assert np.allclose(actual_rgb, expected_rgb)
 
 
 def test_axes_assembly_set_get_actor_prop_tip(axes_assembly):
     axes_assembly.set_actor_prop('ambient', 0.3, part='tip')
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.0, 0.0, 0.0, 0.3, 0.3, 0.3)
+    assert np.allclose(val, (0.0, 0.0, 0.0, 0.3, 0.3, 0.3))
 
     axes_assembly.set_actor_prop('ambient', [0.1, 0.2, 0.4], part=1)
     val = axes_assembly.get_actor_prop('ambient')
-    assert val == (0.0, 0.0, 0.0, 0.1, 0.2, 0.4)
+    assert np.allclose(val, (0.0, 0.0, 0.0, 0.1, 0.2, 0.4))
 
 
 def test_axes_assembly_set_get_actor_prop_raises(axes_assembly):
@@ -558,35 +560,35 @@ def test_planes_assembly_repr(planes_assembly):
     repr_ = repr(planes_assembly)
     actual_lines = repr_.splitlines()[1:]
     expected_lines = [
-        "  Resolution:                 (2, 2, 2)",
+        '  Resolution:                 (2, 2, 2)',
         "  Normal sign:                ('+', '+', '+')",
         "  X label:                    'YZ'",
         "  Y label:                    'ZX'",
         "  Z label:                    'XY'",
         "  Label color:                Color(name='black', hex='#000000ff', opacity=255)",
-        "  Show labels:                True",
-        "  Label position:             (0.5, 0.5, 0.5)",
+        '  Show labels:                True',
+        '  Label position:             (0.5, 0.5, 0.5)',
         "  Label edge:                 ('right', 'right', 'right')",
-        "  Label offset:               0.05",
+        '  Label offset:               0.05',
         "  Label mode:                 '3D'",
         "  X Color:                    Color(name='tomato', hex='#ff6347ff', opacity=255)",
         "  Y Color:                    Color(name='seagreen', hex='#2e8b57ff', opacity=255)",
         "  Z Color:                    Color(name='mediumblue', hex='#0000cdff', opacity=255)",
-        "  Position:                   (0.0, 0.0, 0.0)",
-        "  Orientation:                (0.0, -0.0, 0.0)",
-        "  Origin:                     (0.0, 0.0, 0.0)",
-        "  Scale:                      (1.0, 1.0, 1.0)",
-        "  User matrix:                Identity",
-        "  X Bounds                    -1.000E+00, 1.000E+00",
-        "  Y Bounds                    -1.000E+00, 1.000E+00",
-        "  Z Bounds                    -1.000E+00, 1.000E+00",
+        '  Position:                   (0.0, 0.0, 0.0)',
+        '  Orientation:                (0.0, -0.0, 0.0)',
+        '  Origin:                     (0.0, 0.0, 0.0)',
+        '  Scale:                      (1.0, 1.0, 1.0)',
+        '  User matrix:                Identity',
+        '  X Bounds                    -1.000E+00, 1.000E+00',
+        '  Y Bounds                    -1.000E+00, 1.000E+00',
+        '  Z Bounds                    -1.000E+00, 1.000E+00',
     ]
     assert len(actual_lines) == len(expected_lines)
     assert actual_lines == expected_lines
 
     planes_assembly.user_matrix = np.eye(4) * 2
     repr_ = repr(planes_assembly)
-    assert "User matrix:                Set" in repr_
+    assert 'User matrix:                Set' in repr_
 
 
 def test_planes_assembly_x_color(planes_assembly):
@@ -673,16 +675,16 @@ def test_planes_assembly_label_mode_init():
 
 
 def test_planes_assembly_opacity(planes_assembly):
-    assert planes_assembly.opacity == (0.3, 0.3, 0.3)
+    assert np.allclose(planes_assembly.opacity, (0.3, 0.3, 0.3))
     opacity = 0.0, 0.1, 0.2
     planes_assembly.opacity = opacity
-    assert planes_assembly.opacity == opacity
+    assert np.allclose(planes_assembly.opacity, opacity)
 
 
 def test_planes_assembly_opacity_init():
     opacity = 0.5
     planes_assembly = pv.PlanesAssembly(opacity=opacity)
-    assert planes_assembly.opacity == (opacity, opacity, opacity)
+    assert np.allclose(planes_assembly.opacity, (opacity, opacity, opacity))
 
 
 def test_planes_assembly_label_size(planes_assembly):

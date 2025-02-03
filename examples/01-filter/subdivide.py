@@ -41,18 +41,18 @@ def plot_subdivisions(mesh, a, b):
     for i in range(3):
         p.subplot(i, 0)
         p.add_mesh(mesh, **display_args)
-        p.add_text("Original Mesh")
+        p.add_text('Original Mesh')
 
     def row_plot(row, subfilter):
         subs = [a, b]
         for i in range(2):
             p.subplot(row, i + 1)
             p.add_mesh(mesh.subdivide(subs[i], subfilter=subfilter), **display_args)
-            p.add_text(f"{subfilter} subdivision of {subs[i]}")
+            p.add_text(f'{subfilter} subdivision of {subs[i]}')
 
-    row_plot(0, "linear")
-    row_plot(1, "butterfly")
-    row_plot(2, "loop")
+    row_plot(0, 'linear')
+    row_plot(1, 'butterfly')
+    row_plot(2, 'loop')
 
     p.link_views()
     p.view_isometric()

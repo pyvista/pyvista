@@ -6,7 +6,7 @@ import pyvista as pv
 from pyvista.plotting.volume_property import VolumeProperty
 
 
-@pytest.fixture()
+@pytest.fixture
 def vol_prop():
     return VolumeProperty()
 
@@ -82,4 +82,4 @@ def test_volume_property_copy(vol_prop):
 
 def test_volume_property_repr(vol_prop):
     assert 'Interpolation type:' in repr(vol_prop)
-    assert "nearest" in repr(vol_prop)
+    assert 'nearest' in repr(vol_prop)

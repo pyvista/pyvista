@@ -9,7 +9,7 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from pyvista.core._typing_core import ArrayLike
     from pyvista.core._typing_core import NumpyArray
     from pyvista.core._typing_core._aliases import _ArrayLikeOrScalar
@@ -32,6 +32,7 @@ def _cast_to_list(
     -------
     list
         List or nested list array.
+
     """
     return _cast_to_numpy(arr).tolist()
 
@@ -50,6 +51,7 @@ def _cast_to_tuple(
     -------
     tuple
         Tuple or nested tuple array.
+
     """
     arr = _cast_to_numpy(arr).tolist()
 
@@ -133,11 +135,11 @@ def _cast_to_numpy(
             # we requested a copy but didn't end up with one
             out = out.copy()
     except (ValueError, VisibleDeprecationWarning) as e:
-        raise ValueError(f"Input cannot be cast as {np.ndarray}.") from e
+        raise ValueError(f'Input cannot be cast as {np.ndarray}.') from e
     if must_be_real and not issubclass(out.dtype.type, (np.floating, np.integer)):
-        raise TypeError(f"Array must have real numbers. Got dtype {out.dtype.type}")
+        raise TypeError(f'Array must have real numbers. Got dtype {out.dtype.type}')
     elif out.dtype.name == 'object':
         raise TypeError(
-            f"Object arrays are not supported. Got {arr} when casting to a NumPy array."
+            f'Object arrays are not supported. Got {arr} when casting to a NumPy array.'
         )
     return out

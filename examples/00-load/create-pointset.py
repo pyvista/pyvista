@@ -26,7 +26,7 @@ lidar = examples.download_lidar()
 tstart = time.time()
 clipped = lidar.clip(origin=(0, 0, 1.76e3), normal=(0, 0, 1))
 t_elapsed = time.time() - tstart
-print(f"Time to clip with a PolyData {t_elapsed:.2f} seconds.")
+print(f'Time to clip with a PolyData {t_elapsed:.2f} seconds.')
 
 # %%
 # Plot the clipped polydata
@@ -43,7 +43,7 @@ if pv.vtk_version_info >= (9, 1):
     tstart = time.time()
     clipped_pset = lidar_pset.clip(origin=(0, 0, 1.76e3), normal=(0, 0, 1))
     t_elapsed = time.time() - tstart
-    print(f"Time to clip with a PointSet {t_elapsed:.2f} seconds.")
+    print(f'Time to clip with a PointSet {t_elapsed:.2f} seconds.')
 
 # %%
 # Plot the same dataset.

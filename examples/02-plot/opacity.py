@@ -58,12 +58,12 @@ p.show()
 # - ``'sigmoid_r'``: vary (increase) opacity on a sigmoidal s-curve across the plotted scalar range from high to low
 
 # Show the linear opacity transfer function
-mesh.plot(opacity="linear")
+mesh.plot(opacity='linear')
 
 # %%
 
 # Show the sigmoid opacity transfer function
-mesh.plot(opacity="sigmoid")
+mesh.plot(opacity='sigmoid')
 
 # %%
 # It's also possible to use your own transfer function that will be linearly
@@ -105,19 +105,19 @@ knee = examples.download_knee()
 # And here we inspect the DICOM image with a few different opacity mappings:
 p = pv.Plotter(shape=(2, 2), border=False)
 
-p.add_mesh(knee, cmap="bone", scalar_bar_args={'title': "No Opacity"})
+p.add_mesh(knee, cmap='bone', scalar_bar_args={'title': 'No Opacity'})
 p.view_xy()
 
 p.subplot(0, 1)
-p.add_mesh(knee, cmap="bone", opacity="linear", scalar_bar_args={'title': "Linear Opacity"})
+p.add_mesh(knee, cmap='bone', opacity='linear', scalar_bar_args={'title': 'Linear Opacity'})
 p.view_xy()
 
 p.subplot(1, 0)
-p.add_mesh(knee, cmap="bone", opacity="sigmoid", scalar_bar_args={'title': "Sigmoidal Opacity"})
+p.add_mesh(knee, cmap='bone', opacity='sigmoid', scalar_bar_args={'title': 'Sigmoidal Opacity'})
 p.view_xy()
 
 p.subplot(1, 1)
-p.add_mesh(knee, cmap="bone", opacity="geom_r", scalar_bar_args={'title': "Log Scale Opacity"})
+p.add_mesh(knee, cmap='bone', opacity='geom_r', scalar_bar_args={'title': 'Log Scale Opacity'})
 p.view_xy()
 
 p.show()

@@ -14,7 +14,7 @@ PyVista supports three types of anti-aliasing:
 By default, MSAA anti-aliasing is enabled using 8 samples. This is the default
 for VTK.
 
-.. code:: python
+.. code-block:: python
 
    >>> import pyvista as pv
    >>> pv.global_theme.multi_samples
@@ -41,8 +41,8 @@ mesh = pv.Icosphere()
 # %%
 # No Anti-Aliasing
 # ~~~~~~~~~~~~~~~~
-# First, let's show a plot without any anti-aliasing.
-
+# First, let's show a plot without any anti-aliasing
+# using :func:`~pyvista.Plotter.disable_anti_aliasing`.
 pl = pv.Plotter()
 pl.add_mesh(mesh, style='wireframe', color='k', line_width=2)
 pl.disable_anti_aliasing()
@@ -71,6 +71,7 @@ pl.show()
 
 # %%
 # You can increase the smoothing by increasing multi_samples
+# using :func:`~pyvista.Plotter.enable_anti_aliasing`.
 
 pl = pv.Plotter()
 pl.add_mesh(mesh, style='wireframe', color='k', line_width=2)

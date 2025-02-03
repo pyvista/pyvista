@@ -18,7 +18,7 @@ from pyvista import examples
 # %%
 # Glyphying can be done via the :func:`pyvista.DataSetFilters.glyph` filter
 
-mesh = examples.download_carotid().threshold(145, scalars="scalars")
+mesh = examples.download_carotid().threshold(145, scalars='scalars')
 mask = mesh['scalars'] < 210
 mesh['scalars'][mask] = 0  # null out smaller vectors
 
@@ -26,7 +26,7 @@ mesh['scalars'][mask] = 0  # null out smaller vectors
 geom = pv.Arrow()  # This could be any dataset
 
 # Perform the glyph
-glyphs = mesh.glyph(orient="vectors", scale="scalars", factor=0.003, geom=geom)
+glyphs = mesh.glyph(orient='vectors', scale='scalars', factor=0.003, geom=geom)
 
 # plot using the plotting class
 pl = pv.Plotter()
@@ -55,8 +55,8 @@ vectors = np.vstack(
 ).T
 
 # add and scale
-sphere["vectors"] = vectors * 0.3
-sphere.set_active_vectors("vectors")
+sphere['vectors'] = vectors * 0.3
+sphere.set_active_vectors('vectors')
 
 # plot just the arrows
 sphere.arrows.plot()
@@ -65,8 +65,8 @@ sphere.arrows.plot()
 # Plot the arrows and the sphere.
 
 p = pv.Plotter()
-p.add_mesh(sphere.arrows, lighting=False, scalar_bar_args={'title': "Vector Magnitude"})
-p.add_mesh(sphere, color="grey", ambient=0.6, opacity=0.5, show_edges=False)
+p.add_mesh(sphere.arrows, lighting=False, scalar_bar_args={'title': 'Vector Magnitude'})
+p.add_mesh(sphere, color='grey', ambient=0.6, opacity=0.5, show_edges=False)
 p.show()
 
 
@@ -83,11 +83,11 @@ p.show()
 mesh = examples.load_random_hills()
 
 # create a subset of arrows using the glyph filter
-arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
+arrows = mesh.glyph(scale='Normals', orient='Normals', tolerance=0.05)
 
 p = pv.Plotter()
-p.add_mesh(arrows, color="black")
-p.add_mesh(mesh, scalars="Elevation", cmap="terrain", smooth_shading=True)
+p.add_mesh(arrows, color='black')
+p.add_mesh(mesh, scalars='Elevation', cmap='terrain', smooth_shading=True)
 p.show()
 # %%
 # .. tags:: filter

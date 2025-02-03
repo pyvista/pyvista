@@ -20,7 +20,7 @@ from pyvista.trame.views import PyVistaRemoteView
 
 from .base_viewer import BaseViewer
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from trame_client.ui.core import AbstractLayout
 
 
@@ -102,6 +102,7 @@ class Viewer(BaseViewer):
         -------
         VAppLayout (vue2)
             A layout this viewer can be embedded in.
+
         """
         return VAppLayout(*args, **kwargs)
 

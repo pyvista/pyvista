@@ -54,19 +54,19 @@ PYVISTA_GALLERY_FORCE_STATIC = True
 # sphinx_gallery_end_ignore
 
 pl = pv.Plotter()
-actor, mapper = pl.add_composite(blocks, color="w", pbr=True, metallic=True)
+actor, mapper = pl.add_composite(blocks, color='w', pbr=True, metallic=True)
 
 
 def callback(index, *args):
     """Change a block to red if color is unset, and back to the actor color if set."""
     if mapper.block_attr[index].color is None:
-        mapper.block_attr[index].color = "r"
+        mapper.block_attr[index].color = 'r'
     else:
         mapper.block_attr[index].color = None
 
 
-pl.enable_block_picking(callback, side="left")
-pl.background_color = "w"
+pl.enable_block_picking(callback, side='left')
+pl.background_color = 'w'
 pl.show()
 # %%
 # .. tags:: plot

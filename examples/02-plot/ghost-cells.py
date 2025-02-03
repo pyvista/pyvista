@@ -23,7 +23,7 @@ mesh = vol.cast_to_unstructured_grid()
 # %%
 # Decide which cells are ghosted with a criteria (feel free to adjust this
 # or manually create this array to hide specific cells).
-ghosts = np.argwhere(mesh["facies"] < 1.0)
+ghosts = np.argwhere(mesh['facies'] < 1.0)
 
 # This will act on the mesh inplace to mark those cell indices as ghosts
 mesh.remove_cells(ghosts, inplace=True)

@@ -1,11 +1,11 @@
 [[redirects]]
-from = "/version/stable/*"
-to = "/:splat"
-status = 301
 force = true
+from = "/version/stable/*"
+status = 301
+to = "/:splat"
 
 [[redirects]]
-from = "/version/dev/*"
-to = "https://dev.pyvista.org/:splat"
-status = 301
 force = true
+from = "/version/dev/*"
+status = 301
+to = "https://dev.pyvista.org/:splat"

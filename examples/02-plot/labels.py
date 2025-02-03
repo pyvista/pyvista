@@ -34,14 +34,14 @@ poly = pv.PolyData(rng.random((10, 3)))
 # Add string labels to the point data - this associates a label with every
 # node:
 
-poly["My Labels"] = [f"Label {i}" for i in range(poly.n_points)]
+poly['My Labels'] = [f'Label {i}' for i in range(poly.n_points)]
 poly
 
 # %%
-# Now plot the points with labels:
+# Now plot the points with labels using :func:`~pyvista.Plotter.add_point_labels`.
 
 plotter = pv.Plotter()
-plotter.add_point_labels(poly, "My Labels", point_size=20, font_size=36)
+plotter.add_point_labels(poly, 'My Labels', point_size=20, font_size=36)
 plotter.show()
 
 
@@ -82,9 +82,9 @@ mesh = examples.load_uniform().slice()
 p = pv.Plotter()
 
 # Add the mesh:
-p.add_mesh(mesh, scalars="Spatial Point Data", show_edges=True)
+p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)
 # Add the points with scalar labels:
-p.add_point_scalar_labels(mesh, "Spatial Point Data", point_size=20, font_size=36)
+p.add_point_scalar_labels(mesh, 'Spatial Point Data', point_size=20, font_size=36)
 
 # Use a nice camera position:
 p.camera_position = [(7, 4, 5), (4.4, 7.0, 7.2), (0.8, 0.5, 0.25)]

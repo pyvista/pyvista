@@ -24,7 +24,7 @@ from pyvista import examples
 
 # Load a simple example mesh
 dataset = examples.load_uniform()
-dataset.set_active_scalars("Spatial Cell Data")
+dataset.set_active_scalars('Spatial Cell Data')
 
 # %%
 # We can then calculate the volume of every cell in the array using the
@@ -35,7 +35,7 @@ dataset.set_active_scalars("Spatial Cell Data")
 sized = dataset.compute_cell_sizes()
 
 # Grab volumes for all cells in the mesh
-cell_volumes = sized.cell_data["Volume"]
+cell_volumes = sized.cell_data['Volume']
 
 # %%
 # We can also compute the total volume of the mesh using the ``.volume``
@@ -60,11 +60,11 @@ threshed.plot(show_grid=True, cpos=[-2, 5, 3])
 # Create a classifying array to ID each body
 rng = dataset.get_data_range()
 cval = ((rng[1] - rng[0]) * 0.20) + rng[0]
-classifier = threshed.cell_data["Spatial Cell Data"] > cval
+classifier = threshed.cell_data['Spatial Cell Data'] > cval
 
 # Compute cell volumes
 sizes = threshed.compute_cell_sizes()
-volumes = sizes.cell_data["Volume"]
+volumes = sizes.cell_data['Volume']
 
 # Split volumes based on classifier and get the volumes
 idx = np.argwhere(classifier)
@@ -72,9 +72,9 @@ hvol = np.sum(volumes[idx])
 idx = np.argwhere(~classifier)
 lvol = np.sum(volumes[idx])
 
-print(f"Low grade volume: {lvol}")
-print(f"High grade volume: {hvol}")
-print(f"Original volume: {dataset.volume}")
+print(f'Low grade volume: {lvol}')
+print(f'High grade volume: {hvol}')
+print(f'Original volume: {dataset.volume}')
 
 # %%
 # Or better yet, you could simply extract the largest volume from your
@@ -109,13 +109,13 @@ largest.plot(show_grid=True, cpos=[-2, 5, 3])
 
 # Load a simple example mesh
 dataset = examples.load_uniform()
-dataset.set_active_scalars("Spatial Cell Data")
+dataset.set_active_scalars('Spatial Cell Data')
 threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
 
 bodies = threshed.split_bodies()
 
 for i, body in enumerate(bodies):
-    print(f"Body {i} volume: {body.volume:.3f}")
+    print(f'Body {i} volume: {body.volume:.3f}')
 
 # %%
 
@@ -150,17 +150,17 @@ for key in bodies.keys():
         del bodies[key]
         continue
     # Now lets add a volume array to all blocks
-    b.cell_data["TOTAL VOLUME"] = np.full(b.n_cells, vol)
+    b.cell_data['TOTAL VOLUME'] = np.full(b.n_cells, vol)
 
 # %%
 # Print out the volumes for each body:
 
 for i, body in enumerate(bodies):
-    print(f"Body {i:02d} volume: {body.volume:.3f}")
+    print(f'Body {i:02d} volume: {body.volume:.3f}')
 
 # %%
 # And visualize all the different volumes:
 
-bodies.plot(scalars="TOTAL VOLUME", cmap="viridis", show_grid=True)
+bodies.plot(scalars='TOTAL VOLUME', cmap='viridis', show_grid=True)
 # %%
 # .. tags:: filter

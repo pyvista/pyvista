@@ -50,7 +50,7 @@ plot_example()
 # %%
 # Demo the ``'ParaView'`` theme.
 
-pv.set_plot_theme("paraview")
+pv.set_plot_theme('paraview')
 
 plot_example()
 
@@ -58,14 +58,14 @@ plot_example()
 # %%
 # Demo the ``'dark'`` theme.
 
-pv.set_plot_theme("dark")
+pv.set_plot_theme('dark')
 
 plot_example()
 
 # %%
 # Demo the ``'document'`` theme.  This theme is used on our online examples.
 
-pv.set_plot_theme("document")
+pv.set_plot_theme('document')
 
 plot_example()
 
@@ -76,7 +76,7 @@ plotter = pv.Plotter()
 plotter.add_mesh(mesh)
 plotter.show_grid()
 # Here we set the gradient
-plotter.set_background("royalblue", top="aliceblue")
+plotter.set_background('royalblue', top='aliceblue')
 cpos = plotter.show()
 
 
@@ -171,6 +171,6 @@ cpos = pl.show()
 
 # %%
 # Reset to use the document theme
-pv.set_plot_theme("document")
+pv.set_plot_theme('document')
 # %%
 # .. tags:: plot
