@@ -1366,10 +1366,10 @@ def test_transform_rotate_vector(transform):
     assert np.allclose(identity, np.eye(4))
 
 
-def test_transform_concatenate_vtkmatrix(transform):
+def test_transform_compose_vtkmatrix(transform):
     scale_array = np.diag((1, 2, 3, 1))
     vtkmatrix = pv.vtkmatrix_from_array(scale_array)
-    transform.concatenate(vtkmatrix)
+    transform.compose(vtkmatrix)
     actual = transform.matrix
     expected = scale_array
     assert np.array_equal(actual, expected)
@@ -1518,7 +1518,7 @@ def test_transform_multiply_mode_override(transform, transformed_actor, object_m
     transform.translate(transformed_actor.position, multiply_mode=override_mode)
 
     # Apply user matrix
-    transform.concatenate(transformed_actor.user_matrix, multiply_mode=override_mode)
+    transform.compose(transformed_actor.user_matrix, multiply_mode=override_mode)
 
     # Check result
     transform_matrix = transform.matrix
@@ -1573,7 +1573,7 @@ def test_transform_chain_methods():
         .scale(ones)
         .translate(zeros)
         .rotate(eye3)
-        .concatenate(eye4)
+        .compose(eye4)
         .invert()
         .post_multiply()
         .pre_multiply()
@@ -1738,7 +1738,7 @@ def test_transform_repr(transform):
     )
 
     # Test with floats which have many decimals
-    transform.concatenate(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
+    transform.compose(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
     repr_ = _repr_no_first_line(transform)
     assert repr_ == (
         '  Num Transformations: 1\n'
@@ -1766,7 +1766,7 @@ SHEAR[2, 1] = values[2]
 @pytest.mark.parametrize('do_translate', [True, False])
 def test_transform_decompose(transform, do_shear, do_scale, do_reflection, do_rotate, do_translate):
     if do_shear:
-        transform.concatenate(SHEAR)
+        transform.compose(SHEAR)
     if do_scale:
         transform.scale(VECTOR)
     if do_reflection:

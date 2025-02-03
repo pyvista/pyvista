@@ -3919,6 +3919,20 @@ def test_color_cycler():
         pl.set_color_cycler(5)
 
 
+def test_color_cycler_true():
+    pv.global_theme.color_cycler = 'default'
+    a = pv.Wavelet().clip(invert=True)
+    b = pv.Wavelet().clip(invert=False)
+
+    pl = pv.Plotter()
+    a0 = pl.add_mesh(a, color=True)
+    a1 = pl.add_mesh(b, color=True)
+    pl.show()
+
+    assert a0.prop.color.hex_rgb == matplotlib_default_colors[0]
+    assert a1.prop.color.hex_rgb == matplotlib_default_colors[1]
+
+
 def test_plotter_render_callback():
     n_ren = [0]
 

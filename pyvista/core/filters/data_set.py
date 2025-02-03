@@ -443,7 +443,7 @@ class DataSetFilters:
         aligned.transform(translation, inplace=True)
 
         if return_matrix:
-            return aligned, rotation.concatenate(translation).matrix
+            return aligned, rotation.compose(translation).matrix
         return aligned
 
     def clip(  # type: ignore[misc]
@@ -7223,7 +7223,7 @@ class DataSetFilters:
             # from the filter output but manually transform the structure
             output.copy_structure(self)  # type: ignore[arg-type]
             current_matrix = output.index_to_physical_matrix
-            new_matrix = pyvista.Transform(current_matrix).concatenate(t).matrix
+            new_matrix = pyvista.Transform(current_matrix).compose(t).matrix
             output.index_to_physical_matrix = new_matrix
 
             output.point_data.update(res.point_data, copy=False)
