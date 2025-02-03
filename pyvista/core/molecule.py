@@ -28,6 +28,7 @@ class Molecule(_vtk.vtkMolecule):
         -------
         int
             Number of atoms in the molecule.
+
         """
         return self.GetNumberOfAtoms()
 
@@ -39,6 +40,7 @@ class Molecule(_vtk.vtkMolecule):
         -------
         int
             Number of bonds in the molecule.
+
         """
         return self.GetNumberOfBonds()
 
@@ -54,6 +56,7 @@ class Molecule(_vtk.vtkMolecule):
         -------
         int
             Index of the atom.
+
         """
         return self.AppendAtom(self.n_atoms + 1, position[0], position[1], position[2])
 
@@ -72,5 +75,6 @@ class Molecule(_vtk.vtkMolecule):
         -------
         int
             Index of the bond.
+
         """
         return self.AppendBond(atom1, atom2, 1)
