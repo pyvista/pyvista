@@ -221,7 +221,7 @@ def build_url(
             server_proxy_prefix = pyvista.global_theme.trame.server_proxy_prefix
         # server_proxy_prefix assumes trailing slash
         src = (
-            f"{server_proxy_prefix if server_proxy_prefix else ''}{_server.port}/index.html{params}"
+            f'{server_proxy_prefix if server_proxy_prefix else ""}{_server.port}/index.html{params}'
         )
     else:
         src = f'{protocol}://{host}:{_server.port}/index.html{params}'

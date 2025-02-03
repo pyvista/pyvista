@@ -122,7 +122,7 @@ def test_title_offset(cube_axes_actor):
 
     with pytest.warns(
         UserWarning,
-        match=rf'Setting title_offset with a sequence is only supported from vtk >= 9\.3. Considering only the second value \(ie\. y-offset\) of {(y:=0.02)}',
+        match=rf'Setting title_offset with a sequence is only supported from vtk >= 9\.3. Considering only the second value \(ie\. y-offset\) of {(y := 0.02)}',
     ):
         cube_axes_actor.title_offset = [0.01, y]
     assert cube_axes_actor.title_offset == y
