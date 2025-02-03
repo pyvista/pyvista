@@ -237,7 +237,10 @@ class MultiBlock(
 
         Apply a filter inplace to all recursively nested datasets.
 
-        >>> [dataset.clip_scalar(inplace=True) for dataset in multi.recursive_iterator())
+        >>> [
+        ...     dataset.clip_scalar(inplace=True)
+        ...     for dataset in multi.recursive_iterator()
+        ... ]
 
         """
         _validation.check_contains(
