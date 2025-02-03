@@ -2620,8 +2620,7 @@ class DataSetFilters:
             indices = np.arange(len(geoms))
         elif not isinstance(indices, (np.ndarray, Sequence)):
             msg = (
-                'If "geom" is a sequence then "indices" must '
-                'also be a sequence of the same length.'
+                'If "geom" is a sequence then "indices" must also be a sequence of the same length.'
             )
             raise TypeError(msg)
         if len(indices) != len(geoms) and len(geoms) != 1:
@@ -9346,6 +9345,7 @@ class DataSetFilters:
                         f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
                         f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
                     )
+                    raise ValueError(msg)
                 keys: Iterable[float]
                 values: Iterable[Any]
 
