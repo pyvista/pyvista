@@ -926,12 +926,13 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
 
 
 def test_flatten(multiblock_all_with_nested_and_none):
-    flat = multiblock_all_with_nested_and_none.flatten()
-    assert all(isinstance(item, pv.DataSet) or item is None for item in flat)
     root_names = multiblock_all_with_nested_and_none.keys()[:-1]
     nested_names = multiblock_all_with_nested_and_none[-1].keys()
     expected_names = [*root_names, *nested_names]
     expected_n_blocks = len(root_names) + len(nested_names)
+
+    flat = multiblock_all_with_nested_and_none.flatten(name_mode='preserve')
+    assert all(isinstance(item, pv.DataSet) or item is None for item in flat)
     assert len(flat) == expected_n_blocks
     assert flat.keys() == expected_names
 
