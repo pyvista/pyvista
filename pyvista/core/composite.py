@@ -296,7 +296,10 @@ class MultiBlock(
                     raise RuntimeError(f"Unexpected contents '{contents}'.")
 
     def flatten(
-        self, name_mode: Literal['preserve', 'prepend', 'reset'] = 'preserve'
+        self,
+        *,
+        name_mode: Literal['preserve', 'prepend', 'reset'] = 'preserve',
+        separator: str = '::',
     ) -> MultiBlock:
         """Flatten this :class:`MultiBlock`.
 
@@ -310,6 +313,10 @@ class MultiBlock(
             - ``'reset'``: Reset the block names to default values
               (i.e. ``'Block-00'``, ``'Block-01'``, etc.).
 
+        separator : str, default: '::'
+            String separator to use when ``name_mode`` is ``'prepend'``. The separator
+            is inserted between parent and child block names.
+
         Returns
         -------
         MultiBlock
@@ -319,14 +326,15 @@ class MultiBlock(
         _validation.check_contains(
             ['preserve', 'prepend', 'reset'], must_contain=name_mode, name='name_mode'
         )
+        prepend_names = name_mode == 'prepend'
         output = MultiBlock()
-        iterator = self.recursive_iterator(contents='items', skip_none=False)
+        iterator = self.recursive_iterator(
+            contents='items', skip_none=False, prepend_names=prepend_names, separator=separator
+        )
         typed_iterator = cast(Iterator[tuple[Union[str, None], Union[DataSet, None]]], iterator)
         for name, block in typed_iterator:
             if name_mode == 'reset':
                 name = None
-            # TODO:
-            # elif name_mode == 'prepend':
             output.append(block, name)
         return output
 

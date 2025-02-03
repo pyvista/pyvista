@@ -938,6 +938,11 @@ def test_recursive_iterator_prepend_names(separator, prepend_names):
     names = list(iterator)
     assert names == expected_names
 
+    # Test iterator with flatten method
+    name_mode = 'prepend' if prepend_names else 'preserve'
+    flattened = nested.flatten(name_mode=name_mode, separator=separator)
+    assert flattened.keys() == expected_names
+
 
 def test_flatten(multiblock_all_with_nested_and_none):
     root_names = multiblock_all_with_nested_and_none.keys()[:-1]
