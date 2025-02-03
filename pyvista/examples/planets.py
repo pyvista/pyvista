@@ -83,7 +83,7 @@ def load_sun(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no c
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_sun`
+        :func:`~pyvista.examples.planets.download_sun_surface`
             Download the surface of the Sun.
 
         :ref:`planets_example`
@@ -127,7 +127,7 @@ def load_moon(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_moon`
+        :func:`~pyvista.examples.planets.download_moon_surface`
             Download the surface of the Moon.
 
         :ref:`planets_example`
@@ -171,7 +171,7 @@ def load_mercury(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_mercury`
+        :func:`~pyvista.examples.planets.download_mercury_surface`
             Download the surface of Mercury.
 
         :ref:`planets_example`
@@ -215,7 +215,7 @@ def load_venus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_venus`
+        :func:`~pyvista.examples.planets.download_venus_surface`
             Download the surface of the Venus.
 
         :ref:`planets_example`
@@ -259,7 +259,7 @@ def load_earth(radius=1.0, lat_resolution=50, lon_resolution=100):
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_earth`
+        :func:`~pyvista.examples.examples.load_globe_texture`
             Download the surface of the Earth.
 
         :ref:`planets_example`
@@ -303,7 +303,7 @@ def load_mars(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no 
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_mars`
+        :func:`~pyvista.examples.planets.download_mars_surface`
             Download the surface of Mars.
 
         :ref:`planets_example`
@@ -347,7 +347,7 @@ def load_jupiter(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_mars`
+        :func:`~pyvista.examples.planets.download_jupiter_surface`
             Download the surface of Jupiter.
 
         :ref:`planets_example`
@@ -391,7 +391,7 @@ def load_saturn(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_saturn_surface
+        :func:`~pyvista.examples.planets.download_saturn_surface`
             Download the surface of Saturn.
 
         :func:`~pyvista.examples.planets.load_saturn_rings`
@@ -495,7 +495,7 @@ def load_uranus(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: n
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_uranus`
+        :func:`~pyvista.examples.planets.download_uranus_surface`
             Download the surface of Uranus.
 
         :ref:`planets_example`
@@ -539,7 +539,7 @@ def load_neptune(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: 
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_neptune`
+        :func:`~pyvista.examples.planets.download_neptune_surface`
             Download the surface of Neptune.
 
         :ref:`planets_example`
@@ -583,7 +583,7 @@ def load_pluto(radius=1.0, lat_resolution=50, lon_resolution=100):  # pragma: no
 
     .. seealso::
 
-        :func:`~pyvista.examples.planets.download_pluto`
+        :func:`~pyvista.examples.planets.download_pluto_surface`
             Download the surface of Pluto.
 
         :ref:`planets_example`
@@ -971,7 +971,7 @@ def download_saturn_rings(texture=False, load=True):  # pragma: no cover
         :func:`~pyvista.examples.planets.load_saturn`
             Load the planet Saturn as a textured sphere.
 
-        :func:`~pyvista.examples.planets.download_saturn`
+        :func:`~pyvista.examples.planets.download_saturn_surface`
             Download the surface of Saturn.
 
         :ref:`planets_example`
