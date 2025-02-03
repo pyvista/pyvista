@@ -325,6 +325,14 @@ class MultiBlock(
             Mode for naming blocks in the flattened output.
 
             - ``'preserve'``: The names of all blocks are preserved.
+
+                .. warning::
+
+                    :class:`MultiBlock` does not enforce unique names/keys. If any name
+                    is duplicated in any nested blocks, then the names of these blocks
+                    in the flattened ``MultiBlock`` will also be duplicated and may be
+                    ambiguous.
+
             - ``'prepend'``: Preserve the block names and prepend the parent names.
             - ``'reset'``: Reset the block names to default values.
 
