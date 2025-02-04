@@ -410,6 +410,7 @@ class MultiBlock(
 
         # Generate output
         output = MultiBlock()
+        output.field_data.update(self.field_data, copy=copy)
         for name, block in typed_iterator:
             if name_mode == 'reset':
                 name = None

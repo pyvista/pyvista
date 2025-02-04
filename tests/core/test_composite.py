@@ -963,8 +963,15 @@ def test_flatten(multiblock_all_with_nested_and_none):
 @pytest.mark.parametrize('copy', [True, False])
 def test_flatten_copy(multiblock_all, copy):
     multi_in = multiblock_all
+    data_before = np.array([1, 2, 3])
+    multi_in.field_data['foo'] = data_before
+
     multi_out = multiblock_all.flatten(copy=copy)
     assert multi_in is not multi_out
     for block_in, block_out in zip(multi_in, multi_out):
         assert block_in == block_out
         assert (block_in is block_out) == (not copy)
+
+    data_after = multi_out.field_data['foo']
+    shares_memory = np.shares_memory(data_after, data_before)
+    assert shares_memory == (not copy)
