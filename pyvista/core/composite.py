@@ -328,10 +328,8 @@ class MultiBlock(
 
                 .. warning::
 
-                    ``MultiBlock`` keys do not enforce unique values. If any name
-                    is duplicated in any nested blocks, then the names of these blocks
-                    in the flattened ``MultiBlock`` will also be duplicated and may be
-                    ambiguous.
+                    This may result in duplicate key namss if the same block name is
+                    re-used in any nested blocks,
 
             - ``'prepend'``: Preserve the block names and prepend the parent names.
             - ``'reset'``: Reset the block names to default values.
