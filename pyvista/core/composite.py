@@ -324,11 +324,11 @@ class MultiBlock(
         name_mode : 'preserve' | 'prepend' | 'reset', default: 'preserve'
             Mode for naming blocks in the flattened output.
 
-            - ``'preserve'``: The names of all blocks are preserved.     
+            - ``'preserve'``: The names of all blocks are preserved.
             - ``'prepend'``: Preserve the block names and prepend the parent names.
             - ``'reset'``: Reset the block names to default values.
 
-        separator : str, default: '::'
+        separator : str, default: ``'::'``
             String separator to use when ``name_mode`` is ``'prepend'``. The separator
             is inserted between parent and child block names.
 
