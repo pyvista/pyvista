@@ -9,7 +9,7 @@ can be used in their creation.
 
 Each example should have a reference tag/key in the form:
 
-``.. _<example-name>_example:``
+``.. _<example_name>_example:``
 
 The ``.. _`` is necessary. Everything that follows is your reference tag, which
 can potentially be used within a docstring. As convention, we keep all
@@ -21,7 +21,7 @@ covers.
 
 New examples should be added as python scripts to:
 
-``examples/<index>-<directory-name>/<some-example>.py``
+``examples/<index>-<directory-name>/<some_example>.py``
 
 .. note::
    Avoid creating new directories unless absolutely necessary.If you *must*
@@ -29,9 +29,9 @@ New examples should be added as python scripts to:
    reference, a title and a single sentence description of the folder.
    Otherwise the new folder will be ignored by Sphinx.
 
-Example file names should be hyphen separated snake case:
+Example file names should be underscore-separated snake case:
 
-``some-example.py``
+``some_example.py``
 
 After this preamble is complete, the first code block begins. This is where you
 typically set up your imports.
