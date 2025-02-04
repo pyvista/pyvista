@@ -328,7 +328,7 @@ class MultiBlock(
 
                 .. warning::
 
-                    ``MultiBlock`` :meth:`keys` do not enforce unique values. If any name
+                    ``MultiBlock`` keys do not enforce unique values. If any name
                     is duplicated in any nested blocks, then the names of these blocks
                     in the flattened ``MultiBlock`` will also be duplicated and may be
                     ambiguous.
