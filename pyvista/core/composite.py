@@ -174,9 +174,9 @@ class MultiBlock(
 
     def recursive_iterator(
         self: MultiBlock,
+        contents: Literal['names', 'blocks', 'items'] = 'blocks',
         *,
         skip_none: bool = True,
-        contents: Literal['names', 'blocks', 'items'] = 'blocks',
         prepend_names: bool = False,
         separator: str = '::',
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
@@ -188,15 +188,15 @@ class MultiBlock(
 
         Parameters
         ----------
-        skip_none : bool, default: True
-            Do not include ``None`` blocks in the iterator.
-
         contents : 'names', 'blocks', 'items', default: 'blocks'
             Values to include in the iterator.
 
             - ``'names'``: return an iterator with nested block names (i.e. :meth:`keys`).
             - ``'blocks'``: return an iterator with nested blocks.
             - ``'items'``: return an iterator with nested ``(name, block)`` pairs.
+
+        skip_none : bool, default: True
+            Do not include ``None`` blocks in the iterator.
 
         prepend_names : bool, default: False
             Prepend any parent block names to the child block names. This option
@@ -252,6 +252,34 @@ class MultiBlock(
         ...     dataset.clip_scalar(inplace=True)
         ...     for dataset in multi.recursive_iterator()
         ... ]
+
+        Iterate through nested block names.
+
+        >>> iterator = multi.recursive_iterator('names')
+        >>> next(iterator)
+        'Unnamed block ID: 1'
+
+        Prepend parent block names.
+
+        >>> iterator = multi.recursive_iterator('names', prepend_names=True)
+        >>> next(iterator)
+        'Element Blocks::Unnamed block ID: 1'
+
+        Iterate through name-block pairs. Prepend parent block names again using a
+        custom separator.
+
+        >>> iterator = multi.recursive_iterator(
+        ...     'items', prepend_names=True, separator='->'
+        ... )
+        >>> next(iterator)
+        ('Element Blocks->Unnamed block ID: 1',
+         UnstructuredGrid (...)
+           N Cells:    8
+           N Points:   27
+           X Bounds:   4.486e-01, 1.249e+00
+           Y Bounds:   1.372e+00, 1.872e+00
+           Z Bounds:   -6.351e-01, 3.649e-01
+           N Arrays:   4)
 
         """
         _validation.check_contains(
@@ -310,9 +338,9 @@ class MultiBlock(
     ) -> MultiBlock:
         """Flatten this :class:`MultiBlock`.
 
-        Recursively iterate through the ``MultiBlock`` and store all blocks in a single
+        Recursively iterate through all blocks and store them in a single
         :class:`MultiBlock` instance. All nested :class:`~pyvista.DataSet` and ``None``
-        blocks are preserved.
+        blocks are preserved, and any nested ``MultiBlock`` container blocks are removed.
 
         .. warning::
 
@@ -328,10 +356,9 @@ class MultiBlock(
             - ``'prepend'``: Preserve the block names and prepend the parent names.
             - ``'reset'``: Reset the block names to default values.
 
-        separator : str
-            String separator to use when ``name_mode`` is ``'prepend'``. The separator
-            is inserted between parent and child block names. Two colons are used
-            by default.
+        separator : str, default: '::'
+            String separator to use when ``name_mode='prepend'`` is used. The separator
+            is inserted between parent and child block names.
 
         copy : bool, default: True
             Return a deep copy of all nested blocks in the flattened ``MultiBlock``.
