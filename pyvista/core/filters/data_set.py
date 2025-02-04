@@ -9832,7 +9832,7 @@ class DataSetFilters:
 
         return output_volume
 
-    def voxelize_volume(  # type: ignore[misc]
+    def voxelize_rectilinear(  # type: ignore[misc]
         self: DataSet,
         *,
         background_value: int | float = 0,  # noqa: PYI041
@@ -9938,7 +9938,7 @@ class DataSetFilters:
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = pv.examples.load_nut()
-        >>> vox = mesh.voxelize_volume()
+        >>> vox = mesh.voxelize_rectilinear()
 
         Plot the mesh together with its volume.
 
@@ -9953,7 +9953,7 @@ class DataSetFilters:
 
         Create an equal density voxel volume and plot the result.
 
-        >>> vox = mesh.voxelize_volume(spacing=0.15)
+        >>> vox = mesh.voxelize_rectilinear(spacing=0.15)
         >>> cpos = [(15, 3, 15), (0, 0, 0), (0, 0, 0)]
         >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
 
@@ -9964,7 +9964,7 @@ class DataSetFilters:
 
         Create a voxel volume from unequal density dimensions and plot result.
 
-        >>> vox = mesh.voxelize_volume(spacing=(0.15, 0.15, 0.5))
+        >>> vox = mesh.voxelize_rectilinear(spacing=(0.15, 0.15, 0.5))
         >>> vox.plot(scalars='mask', show_edges=True, cpos=cpos)
 
         Slice the unequal density voxel volume to view the ``mask`` scalars.

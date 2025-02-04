@@ -5052,33 +5052,33 @@ def test_voxelize_binary_mask_input(hexbeam):
         mesh.voxelize_binary_mask()
 
 
-def test_voxelize_volume(ant):
-    vox = ant.voxelize_volume()
+def test_voxelize_rectilinear(ant):
+    vox = ant.voxelize_rectilinear()
     assert isinstance(vox, pv.RectilinearGrid)
 
     # Test dimensions
     dims = np.array((10, 20, 30))
-    vox = ant.voxelize_volume(dimensions=dims)
+    vox = ant.voxelize_rectilinear(dimensions=dims)
     assert np.array_equal(vox.dimensions, dims + 1)
 
     # Test spacing by voxelizing as a single cell
     bnds = ant.bounds
     size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
     single_cell_dims = np.array((2, 2, 2))
-    vox = ant.voxelize_volume(spacing=size)
+    vox = ant.voxelize_rectilinear(spacing=size)
     assert np.allclose(vox.dimensions, single_cell_dims)
     assert np.allclose(vox.bounds, ant.bounds)
 
     # Test reference volume - specify both dimensions and spacing
     reference_volume = pv.ImageData(dimensions=single_cell_dims - 1, spacing=size)
-    vox = ant.voxelize_volume(reference_volume=reference_volume)
+    vox = ant.voxelize_rectilinear(reference_volume=reference_volume)
     assert np.allclose(vox.dimensions, single_cell_dims)
     assert np.allclose(vox.bounds, ant.bounds)
 
     # Test scalar values
     foreground = 2
     background = 3
-    vox = ant.voxelize_volume(foreground_value=foreground, background_value=background)
+    vox = ant.voxelize_rectilinear(foreground_value=foreground, background_value=background)
     assert 'mask' in vox.cell_data
     assert vox.array_names == ['mask']
     values = np.unique(vox['mask'])
@@ -5091,16 +5091,16 @@ def test_voxelize_volume(ant):
         vox = ant.voxelize(cell_length_sample_size=ant.n_cells)
         assert vox.n_cells
     assert vox.n_cells
-    vox = ant.voxelize_volume(mesh_length_fraction=1 / 100)
+    vox = ant.voxelize_rectilinear(mesh_length_fraction=1 / 100)
     assert vox.n_cells
-    vox = ant.voxelize_volume(progress_bar=True)
+    vox = ant.voxelize_rectilinear(progress_bar=True)
     assert vox.n_cells
-    vox = ant.voxelize_volume(spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
+    vox = ant.voxelize_rectilinear(spacing=(0.1, 0.2, 0.3), rounding_func=np.ceil)
     assert vox.n_cells
 
     # Test invalid input
     with pytest.raises(TypeError, match='Object arrays are not supported'):
-        ant.voxelize_volume(spacing={0.5, 0.3})
+        ant.voxelize_rectilinear(spacing={0.5, 0.3})
 
 
 def test_voxelize(ant):
@@ -5116,7 +5116,7 @@ def test_voxelize(ant):
     # Test spacing by voxelizing as a single cell
     bnds = ant.bounds
     size = bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min
-    vox = ant.voxelize_volume(spacing=size)
+    vox = ant.voxelize(spacing=size)
     assert np.allclose(vox.n_cells, 1)
     assert np.allclose(vox.bounds, ant.bounds)
 
