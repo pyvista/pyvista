@@ -95,7 +95,9 @@ cpos = [
     (1216322.4753436751, 344033.0310674846, 3331.052985309526),
     (-0.17716571330686096, -0.25634368781817973, 0.9502106207279767),
 ]
-
+# sphinx_gallery_start_ignore
+PYVISTA_GALLERY_FORCE_STATIC = True
+# sphinx_gallery_end_ignore
 p = pv.Plotter()
 p.add_mesh(grid, cmap='seismic', clim=[-1, 1])
 p.add_mesh(pv.PolyData(path), color='orange')
