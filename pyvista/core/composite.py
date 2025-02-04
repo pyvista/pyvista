@@ -37,6 +37,7 @@ from .utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from collections.abc import Sequence
     from typing import Literal
 
     from ._typing_core import NumpyArray
@@ -172,17 +173,21 @@ class MultiBlock(
             if not is_pyvista_dataset(block):
                 self.SetBlock(i, wrap(block))
 
+    def _items(self) -> Iterator[tuple[str | None, _TypeMultiBlockLeaf]]:
+        names = self.keys()
+        blocks = self
+        return zip(names, blocks)
+
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['names', 'blocks', 'items'] = 'blocks',
+        order: Literal['breadth', 'depth', 'adaptive'] = 'adaptive',
         *,
         skip_none: bool = True,
         prepend_names: bool = False,
         separator: str = '::',
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
         """Iterate over all nested blocks recursively.
-
-        The iteration is performed depth-first.
 
         .. versionadded:: 0.45
 
@@ -191,9 +196,26 @@ class MultiBlock(
         contents : 'names', 'blocks', 'items', default: 'blocks'
             Values to include in the iterator.
 
-            - ``'names'``: return an iterator with nested block names (i.e. :meth:`keys`).
-            - ``'blocks'``: return an iterator with nested blocks.
-            - ``'items'``: return an iterator with nested ``(name, block)`` pairs.
+            - ``'names'``: Return an iterator with nested block names (i.e. :meth:`keys`).
+            - ``'blocks'``: Return an iterator with nested blocks.
+            - ``'items'``: Return an iterator with nested ``(name, block)`` pairs.
+
+        order : 'breadth', 'depth', 'adaptive', default: 'adaptive'
+            Order in which to iterate through nested blocks.
+
+            - ``'breadth'``: Iterate breadth-first. All blocks in the current
+              ``MultiBlock`` will be returned before iterating through any nested blocks.
+            - ``'depth'``: Iterate depth-first. All nested ``MultiBlock`` blocks will be
+              iterated through before iterating through other blocks.
+            - ``'adaptive'``: Iterate breadth-first initially but iterate through
+              any nested blocks when they are encountered.
+
+            .. note::
+
+                ``'adaptive'`` iterates through the ``MultiBlock`` recursively as-is.
+                ``'breadth'`` reorders the blocks to iterate through nested blocks last.
+                ``'depth'`` reorders the blocks to iterate through nested blocks first.
+
 
         skip_none : bool, default: True
             Do not include ``None`` blocks in the iterator.
@@ -285,10 +307,14 @@ class MultiBlock(
         _validation.check_contains(
             ['names', 'blocks', 'items'], must_contain=contents, name='contents'
         )
+        _validation.check_contains(
+            ['breadth', 'depth', 'adaptive'], must_contain=order, name='order'
+        )
         return self._recursive_iterator(
             names=self.keys(),
-            skip_none=skip_none,
             contents=contents,
+            order=order,
+            skip_none=skip_none,
             prepend_names=prepend_names,
             separator=separator,
         )
@@ -297,12 +323,35 @@ class MultiBlock(
         self,
         *,
         names: Iterable[str | None],
-        skip_none: bool,
         contents: Literal['names', 'blocks', 'items'],
+        order: Literal['breadth', 'depth', 'adaptive'],
+        skip_none: bool,
         prepend_names: bool,
         separator: str,
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
-        for name, block in zip(names, self):
+        if order == 'adaptive':
+            blocks: Sequence[_TypeMultiBlockLeaf] = self
+        else:
+            # Need to reorder blocks
+            multi_blocks = []
+            multi_names = []
+            other_blocks = []
+            other_names = []
+            for name, block in self._items():
+                if isinstance(block, MultiBlock):
+                    multi_names.append(name)
+                    multi_blocks.append(block)
+                else:
+                    other_names.append(name)
+                    other_blocks.append(block)
+            if order == 'breadth':
+                names = [*other_names, *multi_names]
+                blocks = [*other_blocks, *multi_blocks]
+            else:  # 'depth'
+                names = [*multi_names, *other_names]
+                blocks = [*multi_blocks, *other_blocks]
+
+        for name, block in zip(names, blocks):
             if skip_none and block is None:
                 continue
             elif isinstance(block, MultiBlock):
@@ -314,8 +363,9 @@ class MultiBlock(
                     names = keys
                 yield from block._recursive_iterator(
                     names=names,
-                    skip_none=skip_none,
                     contents=contents,
+                    order=order,
+                    skip_none=skip_none,
                     prepend_names=prepend_names,
                     separator=separator,
                 )

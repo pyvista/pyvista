@@ -944,6 +944,43 @@ def test_recursive_iterator_prepend_names(separator, prepend_names):
     assert flattened.keys() == expected_names
 
 
+def test_recursive_iterator_order():
+    nested = pv.MultiBlock(dict(image=pv.ImageData(), poly=pv.PolyData()))
+    multi = pv.MultiBlock(dict(grid=pv.UnstructuredGrid()))
+    nested.insert(1, multi)
+    assert isinstance(nested[0], pv.ImageData)
+    assert isinstance(nested[1], pv.MultiBlock)
+    assert isinstance(nested[1][0], pv.UnstructuredGrid)
+    assert isinstance(nested[2], pv.PolyData)
+
+    # Test adaptive, expect nested dataset in center
+    iterator = list(nested.recursive_iterator('items', order='adaptive'))
+    assert iterator[0][0] == 'image'
+    assert iterator[1][0] == 'grid'
+    assert iterator[2][0] == 'poly'
+    assert isinstance(iterator[0][1], pv.ImageData)
+    assert isinstance(iterator[1][1], pv.UnstructuredGrid)
+    assert isinstance(iterator[2][1], pv.PolyData)
+
+    # Test breadth, expect nested dataset last
+    iterator = list(nested.recursive_iterator('items', order='breadth'))
+    assert iterator[0][0] == 'image'
+    assert iterator[1][0] == 'poly'
+    assert iterator[2][0] == 'grid'
+    assert isinstance(iterator[0][1], pv.ImageData)
+    assert isinstance(iterator[1][1], pv.PolyData)
+    assert isinstance(iterator[2][1], pv.UnstructuredGrid)
+
+    # Test depth, expect nested dataset first
+    iterator = list(nested.recursive_iterator('items', order='depth'))
+    assert iterator[0][0] == 'grid'
+    assert iterator[1][0] == 'image'
+    assert iterator[2][0] == 'poly'
+    assert isinstance(iterator[0][1], pv.UnstructuredGrid)
+    assert isinstance(iterator[1][1], pv.ImageData)
+    assert isinstance(iterator[2][1], pv.PolyData)
+
+
 def test_flatten(multiblock_all_with_nested_and_none):
     root_names = multiblock_all_with_nested_and_none.keys()[:-1]
     nested_names = multiblock_all_with_nested_and_none[-1].keys()
