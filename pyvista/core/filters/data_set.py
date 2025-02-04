@@ -9415,7 +9415,7 @@ class DataSetFilters:
 
         .. note::
             This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
-            This differs from :func:`voxelize` and :func:`voxelize_volume`
+            This differs from :func:`voxelize` and :func:`voxelize_rectilinear`
             which return meshes with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
 
@@ -9499,7 +9499,7 @@ class DataSetFilters:
             Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
             :attr:`~pyvista.CellType.VOXEL` cells.
 
-        voxelize_volume
+        voxelize_rectilinear
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
         pyvista.ImageDataFilters.contour_labels
@@ -10060,7 +10060,7 @@ class DataSetFilters:
 
         See Also
         --------
-        voxelize_volume
+        voxelize_rectilinear
             Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
 
         voxelize_binary_mask

@@ -92,7 +92,7 @@ def voxelize(
 
     See Also
     --------
-    pyvista.DataSetFilters.voxelize_volume
+    pyvista.DataSetFilters.voxelize_rectilinear
         Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
 
     pyvista.DataSetFilters.voxelize_binary_mask
@@ -255,7 +255,7 @@ def voxelize_volume(
 
     .. deprecated:: 0.45
 
-        This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize_volume` instead.
+        This function is deprecated. Use :meth:`pyvista.DataSetFilters.voxelize_rectilinear` instead.
 
     Parameters
     ----------
@@ -373,7 +373,7 @@ def voxelize_volume(
     """
     # Deprecated on v0.45.0, estimated removal on v0.48.0
     warnings.warn(
-        '`pyvista.voxelize_volume` is deprecated. Use `pyvista.DataSetFilters.voxelize_volume` instead.',
+        '`pyvista.voxelize_volume` is deprecated. Use `pyvista.DataSetFilters.voxelize_rectilinear` instead.',
         PyVistaDeprecationWarning,
     )
     mesh = wrap(mesh)
