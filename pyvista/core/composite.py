@@ -316,7 +316,7 @@ class MultiBlock(
 
         .. warning::
 
-            Any field data directly associated with any nested ``MultiBlock``(s) is not
+            Any field data directly associated with any nested ``MultiBlock`` is not
             handled by this method and will be lost.
 
         Parameters
@@ -328,7 +328,7 @@ class MultiBlock(
 
                 .. warning::
 
-                    :class:`MultiBlock` does not enforce unique names/keys. If any name
+                    The ``MultiBlock``'s :meth:`keys` do not enforce unique values. If any name
                     is duplicated in any nested blocks, then the names of these blocks
                     in the flattened ``MultiBlock`` will also be duplicated and may be
                     ambiguous.
