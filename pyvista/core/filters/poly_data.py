@@ -16,6 +16,7 @@ from pyvista.core import _vtk_core as _vtk
 from pyvista.core._typing_core import NumpyArray
 from pyvista.core.errors import MissingDataError
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters import _get_output
@@ -1133,150 +1134,6 @@ class PolyDataFilters(DataSetFilters):
 
         return mesh
 
-    def decimate_quadric(
-        self,
-        reduction,
-        volume_preservation: bool = False,
-        regularize: bool = False,
-        regularization: float = 0.05,
-        map_point_data: bool = True,
-        use_scalars_attributes: bool = False,
-        scalars_weight: float = 0.1,
-        use_vectors_attributes: bool = False,
-        vectors_weight: float = 0.1,
-        use_tensors_attributes: bool = False,
-        tensors_weight: float = 0.1,
-        use_normals_attributes: bool = False,
-        normals_weight: float = 0.1,
-        use_tcoords_attributes: bool = False,
-        tcoords_weight: float = 0.1,
-        inplace: bool = False,
-        progress_bar: bool = False,
-    ):
-        """Reduce the number of triangles in a triangular mesh.
-
-        This approach is based on the work of Garland and Heckbert who
-        first presented the quadric error measure at Siggraph '97 "Surface
-        Simplification Using Quadric Error Metrics". For details of the
-        algorithm Michael Garland's Ph.D. thesis is also recommended. Hughues
-        Hoppe's Vis '99 paper, "New Quadric Metric for Simplifying Meshes
-        with Appearance Attributes" is also a good take on the subject
-        especially as it pertains to the error metric applied to attributes.
-
-        Parameters
-        ----------
-        reduction : float
-            Reduction factor. A value of 0.9 will leave 10% of the
-            original number of vertices.
-
-        volume_preservation : bool
-            Decide whether to activate volume preservation which greatly
-            reduces errors in triangle normal direction. If off, volume
-            preservation is disabled and if AttributeErrorMetric is active,
-            these errors can be large. By default VolumePreservation is off
-
-        regularize: bool
-            Property determining whether or not to use the regularization
-            method, related to adding a probabilistic uncertainty to the
-            position and normals of the quadrics. The goal using these
-            parameters is to regularize the point finding algorithm so as
-            to have better quality mesh elements at the cost of a slightly
-            lower precision on the geometry potentially (mostly at sharp
-            edges). Can also be useful for decimating meshes that have been
-            triangulated on noisy data.
-
-        regularization: float
-            User defined variable that can be used to adjust the level of
-            regularization. One can think of it as the standard deviation
-            of the probability distribution of normals in the context of
-            noisy data.
-
-        map_point_data: bool
-            Mapping point data to the output during decimation.
-
-        use_{scalars,vectors,tensors,normals,tcoords}_attributes: bool
-            Control wether or not to take into account the corresponding
-            point attributes for the decimation
-
-        {scalars,vectors,tensors,normals,tcoords}_weight: float
-            Weight to give to the point attribute for the decimation.
-
-        inplace : bool, default: False
-            Whether to update the mesh in-place.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.PolyData
-            Decimated mesh.
-
-        See Also
-        --------
-        decimate_pro
-            Another option for triangular meshes.
-        decimate_polyline
-            For use with polylines.
-
-        Examples
-        --------
-        Decimate a sphere.  First plot the sphere.
-
-        >>> import pyvista as pv
-        >>> sphere = pv.Sphere(phi_resolution=60, theta_resolution=60)
-        >>> sphere.plot(show_edges=True, line_width=2)
-
-        Now decimate it and plot it.
-
-        >>> decimated = sphere.decimate_quadric(0.75)
-        >>> decimated.plot(show_edges=True, line_width=2)
-
-        See :ref:`decimate_example` for more examples using this filter.
-
-        """
-        if not self.is_all_triangles:  # type: ignore[attr-defined]
-            raise NotAllTrianglesError('Input mesh for decimation must be all triangles.')
-
-        alg = _vtk.vtkQuadricDecimation()
-        alg.SetInputData(self)
-
-        # geometry
-        alg.SetTargetReduction(reduction)
-        alg.SetVolumePreservation(volume_preservation)
-        alg.SetRegularize(regularize)
-        alg.SetRegularization(regularization)
-
-        # point data
-        alg.SetMapPointData(map_point_data)
-        use_attributes = (
-            use_scalars_attributes
-            or use_vectors_attributes
-            or use_tensors_attributes
-            or use_normals_attributes
-            or use_tcoords_attributes
-        )
-        alg.SetAttributeErrorMetric(use_attributes)
-        alg.SetScalarsAttribute(use_scalars_attributes)
-        alg.SetScalarsWeight(scalars_weight)
-        alg.SetVectorsAttribute(use_vectors_attributes)
-        alg.SetVectorsWeight(vectors_weight)
-        alg.SetTensorsAttribute(use_tensors_attributes)
-        alg.SetTensorsWeight(tensors_weight)
-        alg.SetNormalsAttribute(use_normals_attributes)
-        alg.SetNormalsWeight(normals_weight)
-        alg.SetTCoordsAttribute(use_tcoords_attributes)
-        alg.SetTCoordsWeight(tcoords_weight)
-
-        _update_alg(alg, progress_bar, 'Decimating Mesh')
-
-        mesh = _get_output(alg)
-        if inplace:
-            self.copy_from(mesh, deep=False)  # type: ignore[attr-defined]
-            return self
-
-        return mesh
-
     def decimate_polyline(
         self,
         reduction: float,
@@ -1707,12 +1564,14 @@ class PolyDataFilters(DataSetFilters):
         self,
         target_reduction,
         volume_preservation: bool = False,
-        attribute_error: bool = False,
-        scalars: bool = True,
-        vectors: bool = True,
-        normals: bool = False,
-        tcoords: bool = True,
-        tensors: bool = True,
+        boundary_constraints: bool = False,
+        boundary_weight: float = 1.0,
+        enable_all_attribute_error: bool = False,
+        # scalars: bool,  # kwargs for default value
+        # vectors: bool,  # kwargs for default value
+        # normals: bool,  # kwargs for default value
+        # tcoords: bool,  # kwargs for default value
+        # tensors: bool,  # kwargs for default value
         scalars_weight=0.1,
         vectors_weight=0.1,
         normals_weight=0.1,
@@ -1720,6 +1579,7 @@ class PolyDataFilters(DataSetFilters):
         tensors_weight=0.1,
         inplace: bool = False,
         progress_bar: bool = False,
+        **kwargs
     ):
         """Reduce the number of triangles in a triangular mesh using ``vtkQuadricDecimation``.
 
@@ -1737,28 +1597,32 @@ class PolyDataFilters(DataSetFilters):
             volume preservation is disabled and if ``attribute_error``
             is active, these errors can be large.
 
-        attribute_error : bool, default: False
-            Decide whether to include data attributes in the error metric. If
-            ``False``, then only geometric error is used to control the
-            decimation. If ``True``, the following flags are used to specify
-            which attributes are to be included in the error calculation.
+        boundary_constraints: bool, default: False
+            Use the legacy weighting by boundary_edge_length instead of by
+            boundary_edge_length^2 for backwards compatibility
 
-        scalars : bool, default: True
-            If attribute errors are to be included in the metric (i.e.,
-            ``attribute_error`` is ``True``), then these flags control
-            which attributes are to be included in the error
-            calculation.
+        boundary_weight: float, default: 1.0
+           A floating point factor to weigh the boundary quadric constraints
+           by: higher factors further constrain the boundary.
 
-        vectors : bool, default: True
+        enable_all_attribute_error: bool, default: False
+            This flag control the default value of all attribute metrics to
+            eventually include them in the error calculation
+
+        scalars : bool, default: False
+            This flags control specifically if the **scalar** attributes
+            are to be included in the error calculation.
+
+        vectors : bool, default: False
             See ``scalars`` parameter.
 
         normals : bool, default: False
             See ``scalars`` parameter.
 
-        tcoords : bool, default: True
+        tcoords : bool, default: False
             See ``scalars`` parameter.
 
-        tensors : bool, default: True
+        tensors : bool, default: False
             See ``scalars`` parameter.
 
         scalars_weight : float, default: 0.1
@@ -1817,20 +1681,49 @@ class PolyDataFilters(DataSetFilters):
 
         See :ref:`decimate_example` for more examples using this filter.
 
+        Decimate taking scalars attributes into account:
+
+        >>> sphere.decimate(0.5, scalars = True)
+
+        Decimate taking all attributes **except** normals into account:
+
+        >>> sphere.decimate(0.5, enable_all_attribute_error = True, normals = False)
+
         """
+
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             raise NotAllTrianglesError('Input mesh for decimation must be all triangles.')
+
+        has_attribute_error = kwargs.pop('attribute_error', False)
+        if has_attribute_error:  # pragma: no cover
+            warnings.warn(
+                "Use of `attribute_error=True` is deprecated."
+                "Use 'enable_all_attribute_error' instead.",
+                PyVistaDeprecationWarning,
+            )
+            enable_all_attribute_error = True
+
+        # Get each attributes if defined, otherwise fallback to the
+        # enable_all_attribute_error value
+        use_scalars = kwargs.pop('scalars', enable_all_attribute_error)
+        use_vectors = kwargs.pop('vectors', enable_all_attribute_error)
+        use_normals = kwargs.pop('normals', enable_all_attribute_error)
+        use_tcoords = kwargs.pop('tcoords', enable_all_attribute_error)
+        use_tensors = kwargs.pop('tensors', enable_all_attribute_error)
+        use_attribute = use_scalars or use_vectors or use_normals or use_tcoords or use_tensors
 
         # create decimation filter
         alg = _vtk.vtkQuadricDecimation()
 
         alg.SetVolumePreservation(volume_preservation)
-        alg.SetAttributeErrorMetric(attribute_error)
-        alg.SetScalarsAttribute(scalars)
-        alg.SetVectorsAttribute(vectors)
-        alg.SetNormalsAttribute(normals)
-        alg.SetTCoordsAttribute(tcoords)
-        alg.SetTensorsAttribute(tensors)
+        alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
+        alg.SetBoundaryWeightFactor(boundary_weight)
+        alg.SetAttributeErrorMetric(use_attribute)
+        alg.SetScalarsAttribute(use_scalars)
+        alg.SetVectorsAttribute(use_vectors)
+        alg.SetNormalsAttribute(use_normals)
+        alg.SetTCoordsAttribute(use_tcoords)
+        alg.SetTensorsAttribute(use_tensors)
         alg.SetScalarsWeight(scalars_weight)
         alg.SetVectorsWeight(vectors_weight)
         alg.SetNormalsWeight(normals_weight)
