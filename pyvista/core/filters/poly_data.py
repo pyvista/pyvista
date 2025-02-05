@@ -1564,6 +1564,7 @@ class PolyDataFilters(DataSetFilters):
         self,
         target_reduction,
         volume_preservation: bool = False,
+        attribute_error: bool | None = None,
         scalars: bool | None = None,
         vectors: bool | None = None,
         normals: bool | None = None,
@@ -1579,7 +1580,6 @@ class PolyDataFilters(DataSetFilters):
         boundary_constraints: bool = False,
         boundary_weight: float = 1.0,
         enable_all_attribute_error: bool = False,
-        **kwargs
     ):
         """Reduce the number of triangles in a triangular mesh using ``vtkQuadricDecimation``.
 
@@ -1607,6 +1607,14 @@ class PolyDataFilters(DataSetFilters):
             eventually include them in the error calculation
 
             .. versionadded:: 0.45.0
+
+        attribute_error : bool, default: False
+            Decide whether to include data attributes in the error metric. If
+            ``False``, then only geometric error is used to control the
+            decimation. If ``True``, the following flags are used to specify
+            which attributes are to be included in the error calculation.
+
+            .. deprecated:: 0.45.0
 
         scalars : bool, default: False
             This flags control specifically if the **scalar** attributes
@@ -1649,8 +1657,8 @@ class PolyDataFilters(DataSetFilters):
             .. versionadded:: 0.45.0
 
         boundary_weight: float, default: 1.0
-           A floating point factor to weigh the boundary quadric constraints
-           by: higher factors further constrain the boundary.
+            A floating point factor to weigh the boundary quadric constraints
+            by: higher factors further constrain the boundary.
 
             .. versionadded:: 0.45.0
 
@@ -1659,9 +1667,6 @@ class PolyDataFilters(DataSetFilters):
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
-
-        **kwargs : dict, optional
-            Used for handling deprecated parameters.
 
         Returns
         -------
@@ -1709,7 +1714,7 @@ class PolyDataFilters(DataSetFilters):
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             raise NotAllTrianglesError('Input mesh for decimation must be all triangles.')
 
-        has_attribute_error = kwargs.pop('attribute_error', False)
+        has_attribute_error = False if attribute_error is None else attribute_error
         if has_attribute_error:  # pragma: no cover
             warnings.warn(
                 "Since 0.45, use of `attribute_error=True` is deprecated."
@@ -1722,17 +1727,12 @@ class PolyDataFilters(DataSetFilters):
 
         # Get each attributes if defined, otherwise fallback to the
         # enable_all_attribute_error value
-        use_scalars = kwargs.pop('scalars', enable_all_attribute_error)
-        use_vectors = kwargs.pop('vectors', enable_all_attribute_error)
-        use_normals = kwargs.pop('normals', enable_all_attribute_error)
-        use_tcoords = kwargs.pop('tcoords', enable_all_attribute_error)
-        use_tensors = kwargs.pop('tensors', enable_all_attribute_error)
+        use_scalars = enable_all_attribute_error if scalars is None else scalars
+        use_vectors = enable_all_attribute_error if vectors is None else vectors
+        use_normals = enable_all_attribute_error if normals is None else normals
+        use_tcoords = enable_all_attribute_error if tcoords is None else tcoords
+        use_tensors = enable_all_attribute_error if tensors is None else tensors
         use_attribute = use_scalars or use_vectors or use_normals or use_tcoords or use_tensors
-
-        if not assert_empty_kwargs():
-            warnings.warn(
-                "Unused arguments in decimater: ", kwargs
-            )
 
         # create decimation filter
         alg = _vtk.vtkQuadricDecimation()
