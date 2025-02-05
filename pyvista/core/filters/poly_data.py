@@ -1701,11 +1701,11 @@ class PolyDataFilters(DataSetFilters):
 
         Decimate taking scalars attributes into account:
 
-        >>> sphere.decimate(0.5, scalars = True)
+        >>> decimated = sphere.decimate(0.5, scalars = True)
 
         Decimate taking all attributes **except** normals into account:
 
-        >>> sphere.decimate(0.5, enable_all_attribute_error = True, normals = False)
+        >>> decimated = sphere.decimate(0.5, enable_all_attribute_error = True, normals = False)
 
         See :ref:`decimate_example` for more examples using this filter.
 
