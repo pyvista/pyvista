@@ -328,6 +328,7 @@ class MultiBlock(
         prepend_names: bool,
         separator: str,
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
+        # Determine ordering of blocks and names to iterate through
         if order == 'hybrid':
             blocks: Sequence[_TypeMultiBlockLeaf] = self
         else:
@@ -350,6 +351,7 @@ class MultiBlock(
                 names = [*multi_names, *other_names]
                 blocks = [*multi_blocks, *other_blocks]
 
+        # Iterator through names and blocks
         for name, block in zip(names, blocks):
             if (skip_none and block is None) or (
                 skip_empty and hasattr(block, 'n_points') and block.n_points == 0
@@ -384,6 +386,7 @@ class MultiBlock(
     def flatten(
         self,
         *,
+        order: Literal['breadth', 'depth', 'hybrid'] = 'hybrid',
         name_mode: Literal['preserve', 'prepend', 'reset'] = 'preserve',
         separator: str = '::',
         copy: bool = True,
@@ -401,6 +404,17 @@ class MultiBlock(
 
         Parameters
         ----------
+        order : 'breadth', 'depth', 'hybrid', default: 'hybrid'
+            Order in which to flatten the contents.
+
+            - ``'breadth'``: Flatten breadth-first. This option reorders the blocks to
+              flatten nested ``MultiBlock`` blocks last.
+            - ``'depth'``: Flatten depth-first. This option reorders the blocks to
+              flatten nested ``MultiBlock`` blocks first.
+            - ``'hybrid'``: Flatten breadth-first initially but flatten any nested
+              blocks when they are encountered. This flattens the ``MultiBlock``
+              recursively as-is without reordering.
+
         name_mode : 'preserve' | 'prepend' | 'reset', default: 'preserve'
             Mode for naming blocks in the flattened output.
 
@@ -449,8 +463,13 @@ class MultiBlock(
         ...         'none': None,
         ...     }
         ... )
+
+        The root ``MultiBlock`` has two blocks.
         >>> nested.n_blocks
         2
+
+        >>> type(nested[0]), type(nested[1])
+        (pyvista.core.composite.MultiBlock, NoneType)
 
         Flatten the ``MultiBlock``. The nested ``MultiBlock`` containers are removed
         and only their contents are returned (i.e. the three end nodes).
@@ -479,6 +498,13 @@ class MultiBlock(
         >>> flat.keys()
         ['Block-00', 'Block-01', 'Block-02']
 
+        Flatten the ``MultiBlock`` using a breadth-first ordering. Note the difference
+        between this ordering of blocks and the default ordering returned earlier.
+
+        >>> flat = nested.flatten(order='breadth')
+        >>> type(flat[0]), type(flat[1]), type(flat[2])
+        (NoneType, pyvista.core.grid.ImageData, pyvista.core.pointset.PolyData)
+
         """
         _validation.check_contains(
             ['preserve', 'prepend', 'reset'], must_contain=name_mode, name='name_mode'
@@ -486,7 +512,12 @@ class MultiBlock(
         prepend_names = name_mode == 'prepend'
         multi = self.copy() if copy else self
         iterator = multi.recursive_iterator(
-            contents='items', skip_none=False, prepend_names=prepend_names, separator=separator
+            contents='items',
+            order=order,
+            skip_none=False,
+            skip_empty=False,
+            prepend_names=prepend_names,
+            separator=separator,
         )
         typed_iterator = cast(Iterator[tuple[Union[str, None], Union[DataSet, None]]], iterator)
 
