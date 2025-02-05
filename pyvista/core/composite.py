@@ -404,7 +404,8 @@ class MultiBlock(
 
             - ``'preserve'``: The names of all blocks are preserved.
             - ``'prepend'``: Preserve the block names and prepend the parent names.
-            - ``'reset'``: Reset the block names to default values.
+            - ``'reset'``: Reset the block names to default
+              values.
 
         separator : str, default: '::'
             String separator to use when ``name_mode='prepend'`` is used. The separator
