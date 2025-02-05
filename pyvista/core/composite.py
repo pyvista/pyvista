@@ -397,6 +397,23 @@ class MultiBlock(
             Any field data directly associated with any nested ``MultiBlock`` is not
             handled by this method and will be lost.
 
+        Parameters
+        ----------
+        name_mode : 'preserve' | 'prepend' | 'reset', default: 'preserve'
+            Mode for naming blocks in the flattened output.
+
+            - ``'preserve'``: The names of all blocks are preserved.
+            - ``'prepend'``: Preserve the block names and prepend the parent names.
+            - ``'reset'``: Reset the block names to default values.
+
+        separator : str, default: '::'
+            String separator to use when ``name_mode='prepend'`` is used. The separator
+            is inserted between parent and child block names.
+
+        copy : bool, default: True
+            Return a deep copy of all nested blocks in the flattened ``MultiBlock``.
+            If ``False``, shallow copies are returned.
+
         Returns
         -------
         MultiBlock
