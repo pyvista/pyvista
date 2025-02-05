@@ -184,6 +184,7 @@ class MultiBlock(
         order: Literal['breadth', 'depth', 'adaptive'] = 'adaptive',
         *,
         skip_none: bool = True,
+        skip_empty: bool = True,
         prepend_names: bool = False,
         separator: str = '::',
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
@@ -220,6 +221,9 @@ class MultiBlock(
         skip_none : bool, default: True
             Do not include ``None`` blocks in the iterator.
 
+        skip_empty : bool, default: True
+            Do not include empty meshes in the iterator.
+
         prepend_names : bool, default: False
             Prepend any parent block names to the child block names. This option
             only applies when ``contents`` is ``'names'`` or ``'items'``.
@@ -236,6 +240,7 @@ class MultiBlock(
         See Also
         --------
         flatten
+        clean
 
         Examples
         --------
@@ -263,7 +268,7 @@ class MultiBlock(
         59
 
         By default, ``None`` blocks are excluded and all items are :class:`~pyvista.DataSet`
-        objects.
+        objects. Empty meshes are also excluded by default.
 
         >>> all(isinstance(item, pv.DataSet) for item in multi.recursive_iterator())
         True
@@ -271,7 +276,7 @@ class MultiBlock(
         Use the iterator to apply a filter inplace to all recursively nested datasets.
 
         >>> _ = [
-        ...     dataset.clip_scalar(inplace=True)
+        ...     dataset.connectivity(inplace=True)
         ...     for dataset in multi.recursive_iterator()
         ... ]
 
@@ -301,7 +306,7 @@ class MultiBlock(
            X Bounds:   4.486e-01, 1.249e+00
            Y Bounds:   1.372e+00, 1.872e+00
            Z Bounds:   -6.351e-01, 3.649e-01
-           N Arrays:   4)
+           N Arrays:   6)
 
         """
         _validation.check_contains(
@@ -315,6 +320,7 @@ class MultiBlock(
             contents=contents,
             order=order,
             skip_none=skip_none,
+            skip_empty=skip_empty,
             prepend_names=prepend_names,
             separator=separator,
         )
@@ -326,6 +332,7 @@ class MultiBlock(
         contents: Literal['names', 'blocks', 'items'],
         order: Literal['breadth', 'depth', 'adaptive'],
         skip_none: bool,
+        skip_empty: bool,
         prepend_names: bool,
         separator: str,
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
@@ -352,7 +359,9 @@ class MultiBlock(
                 blocks = [*multi_blocks, *other_blocks]
 
         for name, block in zip(names, blocks):
-            if skip_none and block is None:
+            if (skip_none and block is None) or (
+                skip_empty and hasattr(block, 'n_points') and block.n_points == 0
+            ):
                 continue
             elif isinstance(block, MultiBlock):
                 keys = block.keys()
@@ -366,6 +375,7 @@ class MultiBlock(
                     contents=contents,
                     order=order,
                     skip_none=skip_none,
+                    skip_empty=skip_empty,
                     prepend_names=prepend_names,
                     separator=separator,
                 )
@@ -428,6 +438,7 @@ class MultiBlock(
         See Also
         --------
         recursive_iterator
+        clean
 
         Examples
         --------
@@ -449,12 +460,15 @@ class MultiBlock(
         >>> nested.n_blocks
         2
 
-        Flatten the ``MultiBlock``. The nested ``MultiBlock``s are removed and only the
-        three end nodes are returned.
+        Flatten the ``MultiBlock``. The nested ``MultiBlock`` containers are removed
+        and only their contents are returned (i.e. the three end nodes).
 
         >>> flat = nested.flatten()
         >>> flat.n_blocks
         3
+
+        >>> type(flat[0]), type(flat[1]), type(flat[2])
+        (pyvista.core.pointset.PolyData, pyvista.core.grid.ImageData, NoneType)
 
         By default, the block names are preserved.
 
