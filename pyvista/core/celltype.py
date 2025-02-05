@@ -124,7 +124,7 @@ class CellType(IntEnum):
         :ref:`linear_cells_example`
             Detailed example using linear cells.
 
-        :ref:`examples_cells`
+        :ref:`pyvista.examples.cells`
             Examples creating a mesh comprising a single cell.
 
     Examples

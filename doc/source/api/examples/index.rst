@@ -23,7 +23,7 @@ used with:
    >>> blade_mesh = examples.download_turbine_blade()
    >>> blade_mesh.plot()
 
-Finally, PyVista contains some demos which can be used to quickly
+PyVista also contains some demos which can be used to quickly
 demonstrate features.
 
 .. pyvista-plot::
@@ -58,6 +58,7 @@ API Reference
    examples.planets
    examples.vrml
    examples.download_3ds
+   examples.cells
    demos.demos
 
 Usage Considerations
@@ -122,52 +123,3 @@ directory to PyVista via ``VTK_DATA_PATH``. Note how the path ends in
 
    git clone https://github.com/pyvista/vtk-data.git
    export VTK_DATA_PATH=/home/alex/python/vtk-data/Data
-
-.. _examples_cells:
-
-Cells
------
-PyVista contains several functions that create single cell
-:class:`pyvista.UnstructuredGrid` objects that can be used to learn about VTK
-cell types.
-
-.. currentmodule:: pyvista.examples.cells
-
-.. autosummary::
-   :toctree: _autosummary
-
-   plot_cell
-   Empty
-   Vertex
-   PolyVertex
-   Line
-   PolyLine
-   Triangle
-   TriangleStrip
-   Polygon
-   Pixel
-   Quadrilateral
-   Tetrahedron
-   Voxel
-   Hexahedron
-   Wedge
-   Pyramid
-   PentagonalPrism
-   HexagonalPrism
-   QuadraticEdge
-   QuadraticTriangle
-   QuadraticQuadrilateral
-   QuadraticPolygon
-   QuadraticTetrahedron
-   QuadraticHexahedron
-   QuadraticWedge
-   QuadraticPyramid
-   BiQuadraticQuadrilateral
-   TriQuadraticHexahedron
-   TriQuadraticPyramid
-   QuadraticLinearQuadrilateral
-   QuadraticLinearWedge
-   BiQuadraticQuadraticWedge
-   BiQuadraticQuadraticHexahedron
-   BiQuadraticTriangle
-   CubicLine
