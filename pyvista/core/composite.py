@@ -403,6 +403,12 @@ class MultiBlock(
             Mode for naming blocks in the flattened output.
 
             - ``'preserve'``: The names of all blocks are preserved.
+
+              .. warning::
+
+                  This mode may result in duplicate key names if the same block name is
+                  re-used in any nested blocks.
+
             - ``'prepend'``: Preserve the block names and prepend the parent names.
             - ``'reset'``: Reset the block names to default values.
 
