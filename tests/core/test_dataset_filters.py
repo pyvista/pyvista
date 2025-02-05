@@ -4951,11 +4951,11 @@ def test_voxelize_binary_mask_dimensions(sphere):
     assert mask.dimensions == dims
 
 
-def test_voxelize_binary_mask_auto_spacing(ant):
+def test_voxelize_binary_mask_spacing(ant):
     # Test default
     mask_no_input = ant.voxelize_binary_mask()
     if pv.vtk_version_info < (9, 2):
-        expected_mask = ant.voxelize_binary_mask(mesh_length_fraction=1 / 100)
+        expected_mask = ant.voxelize_binary_mask(spacing=ant.length / 100)
     else:
         expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
     assert mask_no_input.spacing == expected_mask.spacing
@@ -4971,11 +4971,17 @@ def test_voxelize_binary_mask_auto_spacing(ant):
         assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
 
     # Test mesh length
-    mask_fraction_200 = ant.voxelize_binary_mask(mesh_length_fraction=1 / 200)
-    mask_fraction_500 = ant.voxelize_binary_mask(mesh_length_fraction=1 / 500)
+    mask_fraction_200 = ant.voxelize_binary_mask(spacing=ant.length / 200)
+    mask_fraction_500 = ant.voxelize_binary_mask(spacing=ant.length / 500)
     assert np.all(np.array(mask_fraction_200.spacing) > mask_fraction_500.spacing)
     # Check spacing matches mesh length. Use atol since spacing is approximate.
     assert np.allclose(mask_fraction_500.spacing, ant.length / 500, atol=1e-3)
+
+    match = 'Spacing and cell length percentile cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        ant.voxelize_binary_mask(spacing=0.1, cell_length_percentile=0.1)
+    with pytest.raises(TypeError, match=match):
+        ant.voxelize_binary_mask(spacing=0.1, cell_length_sample_size=ant.n_cells)
 
 
 # This test is flaky because of random sampling that cannot be controlled.
