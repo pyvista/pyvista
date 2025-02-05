@@ -1564,9 +1564,6 @@ class PolyDataFilters(DataSetFilters):
         self,
         target_reduction,
         volume_preservation: bool = False,
-        boundary_constraints: bool = False,
-        boundary_weight: float = 1.0,
-        enable_all_attribute_error: bool = False,
         # scalars: bool,  # kwargs for default value
         # vectors: bool,  # kwargs for default value
         # normals: bool,  # kwargs for default value
@@ -1579,9 +1576,17 @@ class PolyDataFilters(DataSetFilters):
         tensors_weight=0.1,
         inplace: bool = False,
         progress_bar: bool = False,
+        boundary_constraints: bool = False,
+        boundary_weight: float = 1.0,
+        enable_all_attribute_error: bool = False,
         **kwargs
     ):
         """Reduce the number of triangles in a triangular mesh using ``vtkQuadricDecimation``.
+
+        .. versionchanged:: 0.45
+          scalars, vectors, normals, tcoords and tensors are now disabled by default.
+          They can be enabled alltogether using `enable_all_attribute_error`.
+
 
         Parameters
         ----------
@@ -1597,17 +1602,11 @@ class PolyDataFilters(DataSetFilters):
             volume preservation is disabled and if ``attribute_error``
             is active, these errors can be large.
 
-        boundary_constraints: bool, default: False
-            Use the legacy weighting by boundary_edge_length instead of by
-            boundary_edge_length^2 for backwards compatibility
-
-        boundary_weight: float, default: 1.0
-           A floating point factor to weigh the boundary quadric constraints
-           by: higher factors further constrain the boundary.
-
         enable_all_attribute_error: bool, default: False
             This flag control the default value of all attribute metrics to
             eventually include them in the error calculation
+
+            .. versionadded:: 0.45.0
 
         scalars : bool, default: False
             This flags control specifically if the **scalar** attributes
@@ -1618,6 +1617,7 @@ class PolyDataFilters(DataSetFilters):
 
         normals : bool, default: False
             See ``scalars`` parameter.
+            .. versionadded:: 0.45.0
 
         tcoords : bool, default: False
             See ``scalars`` parameter.
@@ -1642,11 +1642,26 @@ class PolyDataFilters(DataSetFilters):
         tensors_weight : float, default: 0.1
             See ``scalars_weight`` parameter.
 
+        boundary_constraints: bool, default: False
+            Use the legacy weighting by boundary_edge_length instead of by
+            boundary_edge_length^2 for backwards compatibility
+
+            .. versionadded:: 0.45.0
+
+        boundary_weight: float, default: 1.0
+           A floating point factor to weigh the boundary quadric constraints
+           by: higher factors further constrain the boundary.
+
+            .. versionadded:: 0.45.0
+
         inplace : bool, default: False
             Whether to update the mesh in-place.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
+
+        **kwargs : dict, optional
+            Used for handling deprecated parameters.
 
         Returns
         -------
@@ -1679,8 +1694,6 @@ class PolyDataFilters(DataSetFilters):
         >>> decimated = sphere.decimate(0.75)
         >>> decimated.plot(show_edges=True, line_width=2)
 
-        See :ref:`decimate_example` for more examples using this filter.
-
         Decimate taking scalars attributes into account:
 
         >>> sphere.decimate(0.5, scalars = True)
@@ -1688,6 +1701,8 @@ class PolyDataFilters(DataSetFilters):
         Decimate taking all attributes **except** normals into account:
 
         >>> sphere.decimate(0.5, enable_all_attribute_error = True, normals = False)
+
+        See :ref:`decimate_example` for more examples using this filter.
 
         """
 
@@ -1697,7 +1712,7 @@ class PolyDataFilters(DataSetFilters):
         has_attribute_error = kwargs.pop('attribute_error', False)
         if has_attribute_error:  # pragma: no cover
             warnings.warn(
-                "Use of `attribute_error=True` is deprecated."
+                "Since 0.45, use of `attribute_error=True` is deprecated."
                 "Use 'enable_all_attribute_error' instead.",
                 PyVistaDeprecationWarning,
             )
@@ -1711,6 +1726,11 @@ class PolyDataFilters(DataSetFilters):
         use_tcoords = kwargs.pop('tcoords', enable_all_attribute_error)
         use_tensors = kwargs.pop('tensors', enable_all_attribute_error)
         use_attribute = use_scalars or use_vectors or use_normals or use_tcoords or use_tensors
+
+        if not assert_empty_kwargs():
+            warnings.warn(
+                "Unused arguments in decimater: ", kwargs
+            )
 
         # create decimation filter
         alg = _vtk.vtkQuadricDecimation()
