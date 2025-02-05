@@ -406,10 +406,6 @@ class MultiBlock(
             - 'prepend': Preserve the block names and prepend the parent names.
             - 'reset': Reset the block names to default values.
 
-        separator : str, default: '::'
-            String separator to use when ``name_mode='prepend'`` is used. The separator
-            is inserted between parent and child block names.
-
         copy : bool, default: True
             Return a deep copy of all nested blocks in the flattened ``MultiBlock``.
             If ``False``, shallow copies are returned.
