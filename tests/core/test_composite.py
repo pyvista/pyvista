@@ -966,7 +966,7 @@ def test_recursive_iterator_order():
     assert isinstance(nested[2], pv.PolyData)
 
     # Test adaptive, expect nested dataset in center
-    iterator = list(nested.recursive_iterator('items', order='adaptive', skip_empty=False))
+    iterator = list(nested.recursive_iterator('items', order='hybrid', skip_empty=False))
     assert iterator[0][0] == 'image'
     assert iterator[1][0] == 'grid'
     assert iterator[2][0] == 'poly'

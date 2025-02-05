@@ -181,7 +181,7 @@ class MultiBlock(
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['names', 'blocks', 'items'] = 'blocks',
-        order: Literal['breadth', 'depth', 'adaptive'] = 'adaptive',
+        order: Literal['breadth', 'depth', 'hybrid'] = 'hybrid',
         *,
         skip_none: bool = True,
         skip_empty: bool = True,
@@ -201,22 +201,16 @@ class MultiBlock(
             - ``'blocks'``: Return an iterator with nested blocks.
             - ``'items'``: Return an iterator with nested ``(name, block)`` pairs.
 
-        order : 'breadth', 'depth', 'adaptive', default: 'adaptive'
+        order : 'breadth', 'depth', 'hybrid', default: 'hybrid'
             Order in which to iterate through nested blocks.
 
-            - ``'breadth'``: Iterate breadth-first. All blocks in the current
-              ``MultiBlock`` will be returned before iterating through any nested blocks.
-            - ``'depth'``: Iterate depth-first. All nested ``MultiBlock`` blocks will be
-              iterated through before iterating through other blocks.
-            - ``'adaptive'``: Iterate breadth-first initially but iterate through
-              any nested blocks when they are encountered.
-
-            .. note::
-
-                ``'adaptive'`` iterates through the ``MultiBlock`` recursively as-is.
-                ``'breadth'`` reorders the blocks to iterate through nested blocks last.
-                ``'depth'`` reorders the blocks to iterate through nested blocks first.
-
+            - ``'breadth'``: Iterate breadth-first. This option reorders the blocks to
+              iterate through nested ``MultiBlock`` blocks last.
+            - ``'depth'``: Iterate depth-first. This option reorders the blocks to
+              iterate through nested ``MultiBlock`` blocks first.
+            - ``'hybrid'``: Iterate breadth-first initially but iterate through
+              any nested blocks when they are encountered. This iterates through the
+              ``MultiBlock`` recursively as-is without reordering.
 
         skip_none : bool, default: True
             Do not include ``None`` blocks in the iterator.
@@ -312,9 +306,7 @@ class MultiBlock(
         _validation.check_contains(
             ['names', 'blocks', 'items'], must_contain=contents, name='contents'
         )
-        _validation.check_contains(
-            ['breadth', 'depth', 'adaptive'], must_contain=order, name='order'
-        )
+        _validation.check_contains(['breadth', 'depth', 'hybrid'], must_contain=order, name='order')
         return self._recursive_iterator(
             names=self.keys(),
             contents=contents,
@@ -330,13 +322,13 @@ class MultiBlock(
         *,
         names: Iterable[str | None],
         contents: Literal['names', 'blocks', 'items'],
-        order: Literal['breadth', 'depth', 'adaptive'],
+        order: Literal['breadth', 'depth', 'hybrid'],
         skip_none: bool,
         skip_empty: bool,
         prepend_names: bool,
         separator: str,
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
-        if order == 'adaptive':
+        if order == 'hybrid':
             blocks: Sequence[_TypeMultiBlockLeaf] = self
         else:
             # Need to reorder blocks
