@@ -1564,11 +1564,11 @@ class PolyDataFilters(DataSetFilters):
         self,
         target_reduction,
         volume_preservation: bool = False,
-        # scalars: bool,  # kwargs for default value
-        # vectors: bool,  # kwargs for default value
-        # normals: bool,  # kwargs for default value
-        # tcoords: bool,  # kwargs for default value
-        # tensors: bool,  # kwargs for default value
+        scalars: bool | None = None,
+        vectors: bool | None = None,
+        normals: bool | None = None,
+        tcoords: bool | None = None,
+        tensors: bool | None = None,
         scalars_weight=0.1,
         vectors_weight=0.1,
         normals_weight=0.1,
@@ -1584,8 +1584,8 @@ class PolyDataFilters(DataSetFilters):
         """Reduce the number of triangles in a triangular mesh using ``vtkQuadricDecimation``.
 
         .. versionchanged:: 0.45
-          scalars, vectors, normals, tcoords and tensors are now disabled by default.
-          They can be enabled alltogether using `enable_all_attribute_error`.
+          ``scalars``, ``vectors``, ``normals``, ``tcoords`` and ``tensors`` are now disabled by default.
+          They can be enabled alltogether using ``enable_all_attribute_error``.
 
 
         Parameters
@@ -1717,6 +1717,8 @@ class PolyDataFilters(DataSetFilters):
                 PyVistaDeprecationWarning,
             )
             enable_all_attribute_error = True
+            if normals is None:
+                normals = False
 
         # Get each attributes if defined, otherwise fallback to the
         # enable_all_attribute_error value
