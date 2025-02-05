@@ -353,7 +353,7 @@ class MultiBlock(
         # Iterator through names and blocks
         for name, block in zip(names, blocks):
             if (skip_none and block is None) or (
-                skip_empty and hasattr(block, 'n_points') and block.n_points == 0
+                skip_empty and hasattr(block, 'n_points') and block.n_points == 0  # type: ignore[union-attr]
             ):
                 continue
             elif isinstance(block, MultiBlock):
