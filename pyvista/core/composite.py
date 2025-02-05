@@ -402,6 +402,8 @@ class MultiBlock(
             Any field data directly associated with any nested ``MultiBlock`` is not
             handled by this method and will be lost.
 
+        .. versionadded:: 0.45
+
         Parameters
         ----------
         order : 'breadth', 'depth', 'hybrid', default: 'hybrid'
