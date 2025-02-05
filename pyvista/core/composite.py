@@ -293,14 +293,13 @@ class MultiBlock(
         ...     'items', prepend_names=True, separator='->'
         ... )
         >>> next(iterator)
-        ('Element Blocks->Unnamed block ID: 1',
-         UnstructuredGrid (...)
-           N Cells:    8
-           N Points:   27
-           X Bounds:   4.486e-01, 1.249e+00
-           Y Bounds:   1.372e+00, 1.872e+00
-           Z Bounds:   -6.351e-01, 3.649e-01
-           N Arrays:   6)
+        ('Element Blocks->Unnamed block ID: 1', UnstructuredGrid (...)
+          N Cells:    8
+          N Points:   27
+          X Bounds:   4.486e-01, 1.249e+00
+          Y Bounds:   1.372e+00, 1.872e+00
+          Z Bounds:   -6.351e-01, 3.649e-01
+          N Arrays:   6)
 
         """
         _validation.check_contains(
@@ -471,7 +470,7 @@ class MultiBlock(
         2
 
         >>> type(nested[0]), type(nested[1])
-        (pyvista.core.composite.MultiBlock, NoneType)
+        (<class 'pyvista.core.composite.MultiBlock'>, <class 'NoneType'>)
 
         Flatten the ``MultiBlock``. The nested ``MultiBlock`` containers are removed
         and only their contents are returned (i.e. the three end nodes).
@@ -481,7 +480,7 @@ class MultiBlock(
         3
 
         >>> type(flat[0]), type(flat[1]), type(flat[2])
-        (pyvista.core.pointset.PolyData, pyvista.core.grid.ImageData, NoneType)
+        (<class 'pyvista.core.pointset.PolyData'>, <class 'pyvista.core.grid.ImageData'>, <class 'NoneType'>)
 
         By default, the block names are preserved.
 
@@ -505,7 +504,7 @@ class MultiBlock(
 
         >>> flat = nested.flatten(order='breadth')
         >>> type(flat[0]), type(flat[1]), type(flat[2])
-        (NoneType, pyvista.core.grid.ImageData, pyvista.core.pointset.PolyData)
+        (<class 'NoneType'>, <class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>)
 
         """
         _validation.check_contains(
