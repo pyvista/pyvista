@@ -9708,12 +9708,11 @@ class DataSetFilters:
                         cell_length_sample_size,
                         progress_bar=progress_bar,
                     )
-            else:
-                # Spacing is specified directly. Make sure other params are not set.
-                if cell_length_percentile is not None or cell_length_sample_size is not None:
-                    raise TypeError(
-                        'Spacing and cell length options cannot both be set. Set one or the other.'
-                    )
+            # Spacing is specified directly. Make sure other params are not set.
+            elif cell_length_percentile is not None or cell_length_sample_size is not None:
+                raise TypeError(
+                    'Spacing and cell length options cannot both be set. Set one or the other.'
+                )
 
             # Get initial spacing (will be adjusted later)
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
