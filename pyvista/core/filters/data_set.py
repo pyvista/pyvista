@@ -9362,7 +9362,6 @@ class DataSetFilters:
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
-        mesh_length_fraction: float | None = None,
         progress_bar: bool = False,
     ):
         """Voxelize mesh as a binary :class:`~pyvista.ImageData` mask.
@@ -9394,16 +9393,13 @@ class DataSetFilters:
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
 
-        #. Specify ``mesh_length_fraction``. The spacing is computed as a fraction of
-           the mesh's diagonal length.
-
         Use ``reference_volume`` for full control of the output mask's geometry. For
         all other options, the geometry is implicitly defined such that the generated
         mask fits the bounds of the input surface.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
         used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``mesh_length_fraction=1/100``.
+        spacing is set to ``1/100`` of the input mesh's length.
 
         .. versionadded:: 0.45.0
 
@@ -9475,11 +9471,6 @@ class DataSetFilters:
             Number of samples to use for the cumulative distribution function (CDF)
             when using the ``cell_length_percentile`` option. ``100 000`` samples are
             used by default.
-
-        mesh_length_fraction : float, optional
-            Fraction of the surface mesh's length to use for computing the default
-            ``spacing``. Set this to any fractional value (e.g. ``1/100``) to enable
-            this option. This is used as an alternative to using ``cell_length_percentile``.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -9678,7 +9669,6 @@ class DataSetFilters:
                 or rounding_func is not None
                 or cell_length_percentile is not None
                 or cell_length_sample_size is not None
-                or mesh_length_fraction is not None
             ):
                 raise TypeError(
                     'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
@@ -9698,11 +9688,6 @@ class DataSetFilters:
             poly_ijk = _preprocess_polydata(surface)
 
             if spacing is None:
-                if cell_length_percentile is not None and mesh_length_fraction is not None:
-                    raise TypeError(
-                        'Cell length percentile and mesh length fraction cannot both be set. Set one or the other.'
-                    )
-
                 less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
                 if (
                     cell_length_percentile is not None or cell_length_sample_size is not None
@@ -9711,18 +9696,9 @@ class DataSetFilters:
                         'Cell length percentile and sample size requires VTK 9.2 or greater.'
                     )
 
-                if mesh_length_fraction is not None or less_than_vtk92:
+                if less_than_vtk92:
                     # Compute spacing from mesh length
-                    mesh_length_fraction = (
-                        1 / 100
-                        if mesh_length_fraction is None
-                        else _validation.validate_number(
-                            mesh_length_fraction,
-                            must_have_dtype=float,
-                            must_be_in_range=[0.0, 1.0],
-                        )
-                    )
-                    spacing = surface.length * mesh_length_fraction
+                    spacing = surface.length / 100
                 else:
                     # Estimate spacing from cell length percentile
                     cell_length_percentile = (
@@ -9739,13 +9715,9 @@ class DataSetFilters:
                     )
             else:
                 # Spacing is specified directly. Make sure other params are not set.
-                if cell_length_percentile is not None:
+                if cell_length_percentile is not None or cell_length_sample_size is not None:
                     raise TypeError(
-                        'Spacing and cell length percentile cannot both be set. Set one or the other.'
-                    )
-                if mesh_length_fraction is not None:
-                    raise TypeError(
-                        'Spacing and mesh length fraction cannot both be set. Set one or the other.'
+                        'Spacing and cell length options cannot both be set. Set one or the other.'
                     )
 
             # Get initial spacing (will be adjusted later)
