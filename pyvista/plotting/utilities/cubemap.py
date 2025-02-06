@@ -114,9 +114,7 @@ def _cubemap_from_paths(image_paths):
         if not Path(image_path).is_file():
             file_str = '\n'.join(image_paths)
             raise FileNotFoundError(
-                f'Unable to locate {image_path}\n'
-                'Expected to find the following files:\n'
-                f'{file_str}',
+                f'Unable to locate {image_path}\nExpected to find the following files:\n{file_str}',
             )
 
     texture = pyvista.Texture()  # type: ignore[abstract]
