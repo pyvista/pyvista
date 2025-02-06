@@ -9719,7 +9719,7 @@ class DataSetFilters:
                 # Spacing is specified directly. Make sure other params are not set.
                 if cell_length_percentile is not None or cell_length_sample_size is not None:
                     raise TypeError(
-                        'Spacing and cell length percentile cannot both be set. Set one or the other.'
+                        'Spacing and cell length options cannot both be set. Set one or the other.'
                     )
 
             # Get initial spacing (will be adjusted later)
