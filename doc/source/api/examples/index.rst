@@ -9,7 +9,8 @@ datasets.
 Built-in
 --------
 Several built-in datasets are included and are available for offline use.
-For example, load the built-in :func:`~pyvista.examples.load_random_hills` dataset:
+For example, load the built-in :func:`~pyvista.examples.examples.load_random_hills`
+dataset:
 
 .. pyvista-plot::
 
@@ -28,7 +29,7 @@ Downloads
 ---------
 Many datasets are too large to be included with PyVista, but can be
 downloaded and cached locally. For example, we can download the
-:func:`~pyvista.examples.download_turbine_blade` dataset:
+:func:`~pyvista.examples.downloads.download_turbine_blade` dataset:
 
 .. pyvista-plot::
 
@@ -60,7 +61,7 @@ See the API reference for more demos:
 .. autosummary::
    :toctree: _autosummary
 
-   examples.demos
+   demos.demos
 
 Planets
 -------
