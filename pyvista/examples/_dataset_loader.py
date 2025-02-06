@@ -707,20 +707,35 @@ def _dataset_from_plotter(plotter: pv.Plotter) -> pv.DataSet | pv.MultiBlock:
     return pv.MultiBlock(datasets)
 
 
+def _plotter_from_scene_file(file: str, file_type: Literal['vrml', '3ds', 'gltf']) -> pv.Plotter:
+    plotter = pv.Plotter()
+    importer = getattr(plotter, f'import_{file_type}')
+    importer(file)
+    return plotter
+
+
 def _download_dataset_scene(
     file: _DownloadableFile,
     load_as: Literal['plotter', 'dataset'] | None,
     file_type: Literal['vrml', '3ds', 'gltf'],
 ):
+    """Download a file and load it as a plotter or dataset."""
     filepath = _download_dataset(file, load=False)
     if load_as:
-        plotter = pv.Plotter()
-        importer = getattr(plotter, f'import_{file_type}')
-        importer(filepath)
+        plotter = _plotter_from_scene_file(filepath, file_type)
         if load_as == 'plotter':
             return plotter
         return _dataset_from_plotter(plotter)
     return filepath
+
+
+def _read_scene_as_dataset(file: str, file_type: Literal['vrml', '3ds', 'gltf']):
+    plotter = _plotter_from_scene_file(file, file_type)
+    return _dataset_from_plotter(plotter)
+
+
+def _read_vrml_as_dataset(file):
+    return _read_scene_as_dataset(file, file_type='vrml')
 
 
 def _load_as_multiblock(

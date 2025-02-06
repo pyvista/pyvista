@@ -6,6 +6,8 @@ from typing import Literal
 
 from pyvista.examples._dataset_loader import _download_dataset_scene
 from pyvista.examples._dataset_loader import _DownloadableFile
+from pyvista.examples._dataset_loader import _read_vrml_as_dataset
+from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
 
 
 def download_teapot(load_as: Literal['plotter', 'dataset'] | None = None):  # pragma: no cover
@@ -49,11 +51,14 @@ def download_teapot(load_as: Literal['plotter', 'dataset'] | None = None):  # pr
     True
 
     """
-    return _download_dataset_scene(_dataset_teapot, load_as=load_as, file_type='vrml')
+    return _download_dataset_scene(__dataset_teapot_file, load_as=load_as, file_type='vrml')
 
 
-_dataset_teapot = _DownloadableFile(
+__dataset_teapot_file = _DownloadableFile(
     'vrml/teapot.wrl',
+)
+_dataset_grasshopper = _SingleFileDownloadableDatasetLoader(
+    'vrml/teapot.wrl', read_func=_read_vrml_as_dataset
 )
 
 
@@ -68,7 +73,7 @@ def download_sextant(load_as: Literal['plotter', 'dataset'] | None = None):  # p
 
     Returns
     -------
-    str | Plotter | DataSet
+    str | Plotter | MultiBlock
         Filename, plotter, or dataset depending on ``load_as``.
 
         .. versionadded:: 0.45
@@ -92,15 +97,18 @@ def download_sextant(load_as: Literal['plotter', 'dataset'] | None = None):  # p
     properties such as colors and textures.
 
     >>> pl = examples.vrml.download_sextant(load_as='dataset')
-    >>> isinstance(pl, pv.DataSet)
+    >>> isinstance(pl, pv.MultiBlock)
     True
 
     """
-    return _download_dataset_scene(_dataset_sextant, load_as=load_as, file_type='vrml')
+    return _download_dataset_scene(__dataset_sextant_file, load_as=load_as, file_type='vrml')
 
 
-_dataset_sextant = _DownloadableFile(
+__dataset_sextant_file = _DownloadableFile(
     'vrml/sextant.wrl',
+)
+_dataset_sextant = _SingleFileDownloadableDatasetLoader(
+    'vrml/sextant.wrl', read_func=_read_vrml_as_dataset
 )
 
 
@@ -148,9 +156,12 @@ def download_grasshopper(load_as: Literal['plotter', 'dataset'] | None = None): 
     True
 
     """
-    return _download_dataset_scene(_dataset_grasshopper, load_as=load_as, file_type='vrml')
+    return _download_dataset_scene(__dataset_grasshopper_file, load_as=load_as, file_type='vrml')
 
 
-_dataset_grasshopper = _DownloadableFile(
+__dataset_grasshopper_file = _DownloadableFile(
     'grasshopper/grasshop.wrl',
+)
+_dataset_grasshopper = _SingleFileDownloadableDatasetLoader(
+    'grasshopper/grasshop.wrl', read_func=_read_vrml_as_dataset
 )
