@@ -1218,7 +1218,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        :meth:`~pyvista.PolyDataFilters.voxelize_binary_mask`
+        :meth:`~pyvista.DataSetFilters.voxelize_binary_mask`
             Filter that generates binary labeled :class:`~pyvista.ImageData` from
             :class:`~pyvista.PolyData` surface contours. Can beloosely considered as
             an inverse of this filter.
@@ -2728,8 +2728,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetSeedData(point_seeds)
         else:
             raise ValueError(
-                f'Invalid `extraction_mode` "{extraction_mode}",'
-                ' use "all", "largest", or "seeded".'
+                f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "seeded".'
             )
 
         if label_mode == 'size':
@@ -2931,10 +2930,13 @@ class ImageDataFilters(DataSetFilters):
     def resample(  # type: ignore[misc]
         self: ImageData,
         sample_rate: float | VectorLike[float] | None = None,
-        interpolation: Literal['nearest', 'linear', 'cubic'] = 'nearest',
+        interpolation: Literal[
+            'nearest', 'linear', 'cubic', 'lanczos', 'hamming', 'blackman'
+        ] = 'nearest',
         *,
         reference_image: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
+        anti_aliasing: bool = False,
         extend_border: bool | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
@@ -2974,16 +2976,22 @@ class ImageDataFilters(DataSetFilters):
             for each axis. Values greater than ``1.0`` will up-sample the axis and
             values less than ``1.0`` will down-sample it. Values must be greater than ``0``.
 
-        interpolation : 'nearest' | 'linear' | 'cubic', default: 'nearest'
+        interpolation : 'nearest' | 'linear' | 'cubic', 'lanczos', 'hamming', 'blackman', default: 'nearest'
             Interpolation mode to use. By default, ``'nearest'`` is used which
             duplicates (if upsampling) or removes (if downsampling) values but
-            does not modify them. The ``'linear'`` and ``'cubic'`` options use linear
-            and cubic interpolation, respectively, and may modify the values.
+            does not modify them. The ``'linear'`` and ``'cubic'`` modes use linear
+            and cubic interpolation, respectively, and may modify the values. The
+            ``'lanczos'``, ``'hamming'``, and ``'blackman'`` use a windowed sinc filter
+            and may be used to preserve sharp details and/or reduce image artifacts.
 
-            .. note:
+            .. note::
 
-                Integer scalars are converted to floats if ``'linear'`` or
-                ``'cubic'`` interpolation is used.
+                - use ``'nearest'`` for pixel art or categorical data such as segmentation masks
+                - use ``'linear'`` for speed-critical tasks
+                - use ``'cubic'`` for upscaling or general-purpose resampling
+                - use ``'lanczos'`` for high-detail downsampling (at the cost of some ringing)
+                - use ``'blackman'`` for minimizing ringing artifacts (at the cost of some detail)
+                - use ``'hamming'`` for a balance between detail-preservation and reducing ringing
 
         reference_image : ImageData, optional
             Reference image to use. If specified, the input is resampled
@@ -3001,6 +3009,10 @@ class ImageDataFilters(DataSetFilters):
                 `cell` data, each dimension should be one more than the number of
                 desired output cells (since there are ``N`` cells and ``N+1`` points
                 along each axis). See examples.
+
+        anti_aliasing : bool, default: False
+            Enable antialiasing. This will blur the image as part of the resampling
+            to reduce image artifacts when down-sampling. Has no effect when up-sampling.
 
         extend_border : bool, optional
             Extend the apparent input border by approximately half the
@@ -3080,17 +3092,18 @@ class ImageDataFilters(DataSetFilters):
         Use ``sample_rate`` to up-sample the image. ``'nearest'`` interpolation is
         used by default.
 
-        >>> upsampled = image.resample(sample_rate=2)
+        >>> upsampled = image.resample(sample_rate=2.0)
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        Use ``'linear'`` interpolation instead.
+        Use ``'linear'`` interpolation. Note that the argument names ``sample_rate``
+        and ``interpolation`` may be omitted.
 
-        >>> upsampled = image.resample(sample_rate=2, interpolation='linear')
+        >>> upsampled = image.resample(2.0, 'linear')
         >>> plot = image_plotter(upsampled)
         >>> plot.show()
 
-        Use ``'cubic'`` interpolation instead. Here we also specify the output
+        Use ``'cubic'`` interpolation. Here we also specify the output
         ``dimensions`` explicitly instead of using ``sample_rate``.
 
         >>> upsampled = image.resample(dimensions=(6, 4, 1), interpolation='cubic')
@@ -3252,21 +3265,36 @@ class ImageDataFilters(DataSetFilters):
         >>> gourds_resampled.dimensions
         (1600, 1200, 1)
 
-        Downsample the puppy image to 1/10th its original resolution.
+        Downsample the puppy image to 1/10th its original resolution using ``'lanczos'``
+        interpolation.
 
-        >>> downsampled = puppy.resample(0.1)
+        >>> downsampled = puppy.resample(0.1, 'lanczos')
         >>> downsampled.dimensions
         (160, 120, 1)
 
         Compare the downsampled image to the original and zoom in to show detail.
 
-        >>> plt = pv.Plotter(shape=(1, 2))
-        >>> _ = plt.add_mesh(puppy, rgba=True, show_edges=False, lighting=False)
-        >>> plt.subplot(0, 1)
-        >>> _ = plt.add_mesh(downsampled, rgba=True, show_edges=False, lighting=False)
-        >>> plt.link_views()
-        >>> plt.view_xy()
-        >>> plt.camera.zoom(3.0)
+        >>> def compare_images_plotter(image1, image2):
+        ...     plt = pv.Plotter(shape=(1, 2))
+        ...     _ = plt.add_mesh(image1, rgba=True, show_edges=False, lighting=False)
+        ...     plt.subplot(0, 1)
+        ...     _ = plt.add_mesh(image2, rgba=True, show_edges=False, lighting=False)
+        ...     plt.link_views()
+        ...     plt.view_xy()
+        ...     plt.camera.zoom(3.0)
+        ...     return plt
+
+        >>> plt = compare_images_plotter(puppy, downsampled)
+        >>> plt.show()
+
+        Note that downsampling can create image artifacts caused by aliasing. Enable
+        anti-aliasing to smooth the image before resampling.
+
+        >>> downsampled2 = puppy.resample(0.1, 'lanczos', anti_aliasing=True)
+
+        Compare down-sampling with aliasing (left) to without aliasing (right).
+
+        >>> plt = compare_images_plotter(downsampled, downsampled2)
         >>> plt.show()
 
         """
@@ -3281,12 +3309,14 @@ class ImageDataFilters(DataSetFilters):
 
         # Validate interpolation and modify scalars as needed
         input_dtype = active_scalars.dtype
-        has_int_scalars = np.issubdtype(input_dtype, np.integer)
+        has_int_scalars = input_dtype == np.int64
         _validation.check_contains(
-            ['linear', 'nearest', 'cubic'], must_contain=interpolation, name='interpolation'
+            ['linear', 'nearest', 'cubic', 'lanczos', 'hamming', 'blackman'],
+            must_contain=interpolation,
+            name='interpolation',
         )
         if has_int_scalars:
-            # Need floats for interpolation but also to avoid crashing in some cases
+            # int (long long) is not supported by the filter so we cast to float
             input_image = self.copy(deep=False)
             input_image[name] = active_scalars.astype(float)
         else:
@@ -3322,9 +3352,7 @@ class ImageDataFilters(DataSetFilters):
             _validation.check_instance(reference_image, pyvista.ImageData, name='reference_image')
             reference_image_provided = True
 
-        # Ideally vtkImageResample would directly support setting output dimensions
-        # (e.g. via SetOutputExtent) but this doesn't work, so instead we are
-        # stuck using SetMagnificationFactors to indirectly set the dimensions.
+        # Use SetMagnificationFactors to indirectly set the dimensions.
         # To compute the magnification factors we first define input (old) and output
         # (new) dimensions.
         old_dimensions = np.array(input_image.dimensions)
@@ -3350,7 +3378,7 @@ class ImageDataFilters(DataSetFilters):
                 reference_image.dimensions = dimensions_  # type: ignore[assignment]
             new_dimensions = np.array(reference_image.dimensions)
 
-        # Compute the magnification factors to use with vtkImageResample
+        # Compute the magnification factors to use with the filter
         # Note that SetMagnificationFactors will multiply the factors by the extent
         # but we want to multiply the dimensions. These values are off by one.
         singleton_dims = old_dimensions == 1
@@ -3359,21 +3387,45 @@ class ImageDataFilters(DataSetFilters):
             magnification_factors = (new_dimensions - 1) / (old_dimensions - 1)
         magnification_factors[singleton_dims] = 1
 
-        resample = _vtk.vtkImageResample()
-        resample.SetInputData(input_image)
-        resample.SetMagnificationFactors(*magnification_factors)
+        resize_filter = _vtk.vtkImageResize()
+        resize_filter.SetInputData(input_image)
+        resize_filter.SetResizeMethodToMagnificationFactors()
+        resize_filter.SetMagnificationFactors(*magnification_factors)
 
         # Set interpolation mode
-        if interpolation == 'linear':
-            resample.SetInterpolationModeToLinear()
+        interpolator: _vtk.vtkAbstractImageInterpolator
+        if interpolation == 'nearest':
+            interpolator = _vtk.vtkImageInterpolator()
+            interpolator.SetInterpolationModeToNearest()
+        elif interpolation == 'linear':
+            interpolator = _vtk.vtkImageInterpolator()
+            interpolator.SetInterpolationModeToLinear()
         elif interpolation == 'cubic':
-            resample.SetInterpolationModeToCubic()
-        else:  # 'nearest'
-            resample.SetInterpolationModeToNearestNeighbor()
+            interpolator = _vtk.vtkImageInterpolator()
+            interpolator.SetInterpolationModeToCubic()
+        elif interpolation == 'lanczos':
+            interpolator = _vtk.vtkImageSincInterpolator()
+            interpolator.SetWindowFunctionToLanczos()
+        elif interpolation == 'hamming':
+            interpolator = _vtk.vtkImageSincInterpolator()
+            interpolator.SetWindowFunctionToHamming()
+        elif interpolation == 'blackman':
+            interpolator = _vtk.vtkImageSincInterpolator()
+            interpolator.SetWindowFunctionToBlackman()
+        else:  # pragma: no cover
+            raise RuntimeError(f"Unexpected interpolation mode '{interpolation}'.")
+
+        if anti_aliasing and np.any(magnification_factors < 1.0):
+            if isinstance(interpolator, _vtk.vtkImageSincInterpolator):
+                interpolator.AntialiasingOn()
+            else:
+                resize_filter.SetInputData(input_image.gaussian_smooth())
+
+        resize_filter.SetInterpolator(interpolator)
 
         # Get output
-        _update_alg(resample, progress_bar=progress_bar)
-        output_image = _get_output(resample).copy(deep=False)
+        _update_alg(resize_filter, progress_bar=progress_bar)
+        output_image = _get_output(resize_filter).copy(deep=False)
 
         # Set geometry from the reference
         output_image.direction_matrix = reference_image.direction_matrix
@@ -3408,7 +3460,7 @@ class ImageDataFilters(DataSetFilters):
                     (bnds.x_max - bnds.x_min, bnds.y_max - bnds.y_min, bnds.z_max - bnds.z_min)
                 )
                 if processing_cell_scalars:
-                    new_spacing = (size + input_image.spacing) / (output_dimensions)
+                    new_spacing = (size + input_image.spacing) / output_dimensions
                 else:
                     with np.errstate(divide='ignore', invalid='ignore'):
                         # Ignore division by zero, this is fixed with singleton_dims on the next line
@@ -3421,7 +3473,7 @@ class ImageDataFilters(DataSetFilters):
         if output_image.active_scalars_name == 'ImageScalars':
             output_image.rename_array('ImageScalars', name)
 
-        if has_int_scalars and interpolation == 'nearest':
+        if has_int_scalars:
             # Can safely cast to int to match input
             output_image.point_data[name] = output_image.point_data[name].astype(input_dtype)
 
