@@ -1322,8 +1322,7 @@ class PolyDataFilters(DataSetFilters):
         poly_data = self
         if not isinstance(poly_data, pyvista.PolyData):
             poly_data = pyvista.PolyData(poly_data)  # type: ignore[arg-type]
-        if n_sides < 3:
-            n_sides = 3
+        n_sides = max(n_sides, 3)
         tube = _vtk.vtkTubeFilter()
         tube.SetInputDataObject(poly_data)
         # User Defined Parameters
