@@ -2837,8 +2837,8 @@ class Theme(_ThemeConfig):
         mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
         if mapper not in mappers:
             raise ValueError(
-                f"Mapper ({mapper}) unknown. Available volume mappers "
-                f"include:\n {', '.join(mappers)}",
+                f'Mapper ({mapper}) unknown. Available volume mappers '
+                f'include:\n {", ".join(mappers)}',
             )
 
         self._volume_mapper = mapper

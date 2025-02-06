@@ -1405,13 +1405,13 @@ def test_exodus_reader_core():
         assert tp == i, 'Check underlying reader time step setting'
 
         t = i * dt
-        assert np.isclose(
-            e_reader.time_point_value(i), t, atol=1e-8, rtol=1e-8
-        ), 'Check correct times'
+        assert np.isclose(e_reader.time_point_value(i), t, atol=1e-8, rtol=1e-8), (
+            'Check correct times'
+        )
 
-        assert np.isclose(
-            e_reader.active_time_value, t, atol=1e-8, rtol=1e-8
-        ), 'Check correct time set'
+        assert np.isclose(e_reader.active_time_value, t, atol=1e-8, rtol=1e-8), (
+            'Check correct time set'
+        )
 
     # check time setting based on time
     for i, t in enumerate(e_reader.time_values):
