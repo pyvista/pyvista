@@ -1117,6 +1117,12 @@ class DatasetCard:
             func = getattr(pyvista.examples.downloads, func_name)
         elif hasattr(pyvista.examples.planets, func_name):
             func = getattr(pyvista.examples.planets, func_name)
+        elif hasattr(pyvista.examples.vrml, func_name):
+            func = getattr(pyvista.examples.vrml, func_name)
+        elif hasattr(pyvista.examples.download_3ds, func_name):
+            func = getattr(pyvista.examples.download_3ds, func_name)
+        elif hasattr(pyvista.examples.gltf, func_name):
+            func = getattr(pyvista.examples.gltf, func_name)
         else:
             # Get `load` function from examples.py
             func_name = 'load_' + dataset_name
@@ -1510,6 +1516,9 @@ class DatasetCardFetcher:
         cls._init_cards_from_module(pv.examples.examples)
         cls._init_cards_from_module(pv.examples.downloads)
         cls._init_cards_from_module(pv.examples.planets)
+        cls._init_cards_from_module(pv.examples.vrml)
+        cls._init_cards_from_module(pv.examples.download_3ds)
+        cls._init_cards_from_module(pv.examples.gltf)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
@@ -2285,6 +2294,9 @@ CAROUSEL_LIST = [
     BuiltinCarousel,
     DownloadsCarousel,
     PlanetsCarousel,
+    VrmlCarousel,
+    Download3dsCarousel,
+    GltfCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,
