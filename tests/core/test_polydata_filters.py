@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 import pyvista as pv
@@ -104,68 +103,6 @@ def test_protein_ribbon():
     tgqp = examples.download_3gqp()
     ribbon = tgqp.protein_ribbon()
     assert ribbon.n_cells
-
-
-@pytest.fixture
-def oriented_image():
-    image = pv.ImageData()
-    image.spacing = (1.1, 1.2, 1.3)
-    image.dimensions = (10, 11, 12)
-    image.direction_matrix = pv.Transform().rotate_vector((4, 5, 6), 30).matrix[:3, :3]
-    image['scalars'] = np.ones((image.n_points,))
-    return image
-
-
-@pytest.fixture
-def oriented_polydata(oriented_image):
-    oriented_poly = oriented_image.pad_image().contour_labels(smoothing=False)
-    assert np.allclose(oriented_poly.bounds, oriented_image.points_to_cells().bounds, atol=0.1)
-    return oriented_poly
-
-
-@pytest.mark.needs_vtk_version(9, 3, 0)
-def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
-    mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
-    assert mask.bounds == oriented_image.bounds
-    mask_as_surface = mask.pad_image().contour_labels(smoothing=False)
-    assert mask_as_surface.bounds == oriented_polydata.bounds
-
-
-def test_voxelize_binary_mask_raises(sphere):
-    match = 'Spacing and dimensions cannot both be set. Set one or the other.'
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), spacing=(4, 5, 6))
-
-    match = 'Spacing and cell length percentile cannot both be set. Set one or the other.'
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(spacing=(4, 5, 6), cell_length_percentile=0.2)
-
-    match = 'Spacing and mesh length fraction cannot both be set. Set one or the other.'
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(spacing=(4, 5, 6), mesh_length_fraction=0.2)
-
-    match = (
-        'Cell length percentile and mesh length fraction cannot both be set. Set one or the other.'
-    )
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(mesh_length_fraction=1 / 100, cell_length_percentile=0.2)
-
-    match = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
-    with pytest.raises(TypeError, match=match):
-        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), rounding_func=np.round)
-
-    for parameter in [
-        'dimensions',
-        'spacing',
-        'rounding_func',
-        'cell_length_percentile',
-        'cell_length_sample_size',
-        'mesh_length_fraction',
-    ]:
-        kwargs = {parameter: 0}  # Give parameter any value for test
-        match = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
-        with pytest.raises(TypeError, match=match):
-            sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)
 
 
 def test_ruled_surface():
