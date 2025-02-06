@@ -1701,23 +1701,24 @@ class PolyDataFilters(DataSetFilters):
 
         Decimate taking scalars attributes into account:
 
-        >>> decimated = sphere.decimate(0.5, scalars = True)
+        >>> decimated = sphere.decimate(0.5, scalars=True)
 
         Decimate taking all attributes **except** normals into account:
 
-        >>> decimated = sphere.decimate(0.5, enable_all_attribute_error = True, normals = False)
+        >>> decimated = sphere.decimate(
+        ...     0.5, enable_all_attribute_error=True, normals=False
+        ... )
 
         See :ref:`decimate_example` for more examples using this filter.
 
         """
-
         if not self.is_all_triangles:  # type: ignore[attr-defined]
             raise NotAllTrianglesError('Input mesh for decimation must be all triangles.')
 
         has_attribute_error = False if attribute_error is None else attribute_error
         if has_attribute_error:  # pragma: no cover
             warnings.warn(
-                "Since 0.45, use of `attribute_error=True` is deprecated."
+                'Since 0.45, use of `attribute_error=True` is deprecated.'
                 "Use 'enable_all_attribute_error' instead.",
                 PyVistaDeprecationWarning,
             )
@@ -1752,7 +1753,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTargetReduction(target_reduction)
         if pyvista.vtk_version_info < (9, 3, 0):
             if boundary_constraints:
-                warnings.warn("`boundary_constraints` requires vtk >= 9.3.")
+                warnings.warn('`boundary_constraints` requires vtk >= 9.3.')
         else:
             alg.SetWeighBoundaryConstraintsByLength(boundary_constraints)
             alg.SetBoundaryWeightFactor(boundary_weight)
