@@ -466,6 +466,7 @@ class MultiBlock(
         ... )
 
         The root ``MultiBlock`` has two blocks.
+
         >>> nested.n_blocks
         2
 
