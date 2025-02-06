@@ -58,28 +58,28 @@ _BADGE_COLORS = dict(linear='primary', primary='success', dimension='secondary',
 
 def _generate_linear_badge(is_linear: bool) -> str:
     text = 'Linear' if is_linear else 'Non-linear'
-    return f":bdg-{_BADGE_COLORS['linear']}:`{text}`"
+    return f':bdg-{_BADGE_COLORS["linear"]}:`{text}`'
 
 
 def _generate_primary_badge(is_primary: bool) -> str:
     text = 'Primary' if is_primary else 'Composite'
-    return f":bdg-{_BADGE_COLORS['primary']}:`{text}`"
+    return f':bdg-{_BADGE_COLORS["primary"]}:`{text}`'
 
 
 def _generate_dimension_badge(dimension: int) -> str:
-    return f":bdg-{_BADGE_COLORS['dimension']}:`{dimension}D`"
+    return f':bdg-{_BADGE_COLORS["dimension"]}:`{dimension}D`'
 
 
 def _generate_points_badge(num_points: int) -> str:
-    return f":bdg-{_BADGE_COLORS['geometry']}:`Points: {num_points}`"
+    return f':bdg-{_BADGE_COLORS["geometry"]}:`Points: {num_points}`'
 
 
 def _generate_edges_badge(num_edges: int) -> str:
-    return f":bdg-{_BADGE_COLORS['geometry']}:`Edges: {num_edges}`"
+    return f':bdg-{_BADGE_COLORS["geometry"]}:`Edges: {num_edges}`'
 
 
 def _generate_faces_badge(num_faces: int) -> str:
-    return f":bdg-{_BADGE_COLORS['geometry']}:`Faces: {num_faces}`"
+    return f':bdg-{_BADGE_COLORS["geometry"]}:`Faces: {num_faces}`'
 
 
 class _CellTypeTuple(NamedTuple):
