@@ -66,8 +66,7 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
     if interaction_event not in event_map:
         expected = ', '.join(f'`{e}`' for e in event_map)
         raise ValueError(
-            f'Expected value for `interaction_event` is {expected}.'
-            f' {interaction_event} was given.',
+            f'Expected value for `interaction_event` is {expected}. {interaction_event} was given.',
         )
 
     return event_map[interaction_event]
