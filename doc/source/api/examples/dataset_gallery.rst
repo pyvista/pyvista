@@ -32,6 +32,18 @@ Datasets in this section are organized by the module they are imported from.
 
             .. include:: /api/examples/dataset-gallery/planets_carousel.rst
 
+        .. tab-item:: 3DS
+
+            .. include:: /api/examples/dataset-gallery/3ds_carousel.rst
+
+        .. tab-item:: GLTF
+
+            .. include:: /api/examples/dataset-gallery/gltf_carousel.rst
+
+        .. tab-item:: VRML
+
+            .. include:: /api/examples/dataset-gallery/vrml_carousel.rst
+
 
 Browse Datasets by Type
 -----------------------

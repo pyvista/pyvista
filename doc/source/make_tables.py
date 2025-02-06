@@ -1919,7 +1919,7 @@ class BuiltinCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards for built-in datasets."""
 
     name = 'builtin_carousel'
-    doc = 'Built-in datasets that ship with pyvista. Available through :mod:`examples <pyvista.examples.examples>` module.'
+    doc = 'Built-in datasets that ship with pyvista. Available through :mod:`~pyvista.examples.examples` module.'
     badge = ModuleBadge('Built-in', ref='modules_gallery')
 
     @classmethod
@@ -1931,7 +1931,7 @@ class DownloadsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the downloads module."""
 
     name = 'downloads_carousel'
-    doc = 'Datasets from the :mod:`downloads <pyvista.examples.downloads>` module.'
+    doc = 'Datasets from the :mod:`~pyvista.examples.downloads` module.'
     badge = ModuleBadge('Downloads', ref='modules_gallery')
 
     @classmethod
@@ -1943,12 +1943,48 @@ class PlanetsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the planets module."""
 
     name = 'planets_carousel'
-    doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
+    doc = 'Datasets from the :mod:`~pyvista.examples.planets` module.'
     badge = ModuleBadge('Planets', ref='modules_gallery')
 
     @classmethod
     def fetch_dataset_names(cls):
         return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.planets)
+
+
+class VrmlCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the vrml module."""
+
+    name = 'vrml_carousel'
+    doc = 'Datasets from the :mod:`~pyvista.examples.vrml` module.'
+    badge = ModuleBadge('VRML', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.vrml)
+
+
+class Download3dsCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the 3ds module."""
+
+    name = '3ds_carousel'
+    doc = 'Datasets from the :mod:`~pyvista.examples.download_3ds` module.'
+    badge = ModuleBadge('3DS', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.download_3ds)
+
+
+class GltfCarousel(DatasetGalleryCarousel):
+    """Class to generate a carousel with cards from the gltf module."""
+
+    name = 'gltf_carousel'
+    doc = 'Datasets from the :mod:`~pyvista.examples.gltf` module.'
+    badge = ModuleBadge('GLTF', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.gltf)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
