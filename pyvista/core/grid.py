@@ -486,8 +486,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         """
         raise AttributeError(
-            'The dimensions of a `RectilinearGrid` are implicitly '
-            'defined and thus cannot be set.',
+            'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
         )
 
     def cast_to_structured_grid(self: Self) -> StructuredGrid:
