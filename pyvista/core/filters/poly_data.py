@@ -1437,8 +1437,7 @@ class PolyDataFilters(DataSetFilters):
             sfilter = _vtk.vtkLoopSubdivisionFilter()  # type: ignore[assignment]
         else:
             raise ValueError(
-                'Subdivision filter must be one of the following: '
-                "'butterfly', 'loop', or 'linear'",
+                "Subdivision filter must be one of the following: 'butterfly', 'loop', or 'linear'",
             )
 
         # Subdivide
