@@ -821,9 +821,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     @property
     def actors(self):  # numpydoc ignore=RT01
         """Return a dictionary of actors assigned to this renderer."""
-        names = self._actors.keys()
-        values = list(self._actors)
-        return dict(zip(names, values))
+        return dict(self._actors.items())
 
     def add_actor(
         self,
