@@ -364,11 +364,11 @@ class _NameMixin:
                 if hasattr(self, 'GetAddressAsString')
                 else hex(id(self))
             )
-            self._name = f'{type(self).__name__}({address})'
+            return f'{type(self).__name__}({address})'
         return self._name
 
     @name.setter
     def name(self, value: str) -> None:
         if not value:
             raise ValueError('Name must be truthy.')
-        self._name = value
+        self._name = str(value)
