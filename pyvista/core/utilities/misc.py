@@ -358,7 +358,7 @@ class _NameMixin:
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
         """Get or set the unique name identifier used by PyVista."""
-        if not hasattr(self, '_name') or self._name is None:  # type: ignore[has-type]
+        if not hasattr(self, '_name') or self._name is None:
             address = (
                 self.GetAddressAsString('')
                 if hasattr(self, 'GetAddressAsString')

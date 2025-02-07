@@ -394,7 +394,7 @@ class Label(_Prop3DMixin, Text):
         Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
         self.SetTextScaleModeToNone()  # Use font size to control size of text
-        self._name = name
+        self._name = name  # type: ignore[assignment]
 
         _Prop3DMixin.__init__(self)
         self.relative_position = relative_position  # type: ignore[assignment]
