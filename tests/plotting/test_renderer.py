@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.plotting.prop_collection import _PropCollection
 from pyvista.plotting.renderer import ACTOR_LOC_MAP
 
 
@@ -362,3 +363,41 @@ def test_viewport():
     assert pl.renderers[0].viewport == (0.0, 0.0, 0.5, 1.0)
     pl.renderers[0].viewport = (0.125, 0.25, 0.375, 0.75)
     assert pl.renderers[0].viewport == (0.125, 0.25, 0.375, 0.75)
+
+
+def test_actors_prop_collection():
+    pl = pv.Plotter()
+    prop_collection = pl.renderer._actors
+    assert isinstance(prop_collection, _PropCollection)
+    assert prop_collection._prop_collection is pl.renderer.GetViewProps()
+    assert len(prop_collection) == 0
+
+    sphere = pv.Sphere()
+    pl.add_mesh(sphere, name='sphere')
+    assert pl.renderer._actors is prop_collection
+    assert len(prop_collection) == 1
+    assert prop_collection.keys() == ['sphere']
+    items = list(prop_collection.items())
+    assert len(items) == 1
+    name, actor = items[0]
+    assert name == 'sphere'
+    assert isinstance(actor, pv.Actor)
+    assert actor.mapper.dataset is sphere
+
+    cone = pv.Cone()
+    cone_actor = pv.Actor(name='cone', mapper=pv.DataSetMapper(dataset=cone))
+    prop_collection.append(cone_actor)
+    assert len(prop_collection) == 2
+    assert prop_collection.keys() == ['sphere', 'cone']
+
+    axes = pv.AxesAssembly(name='axes')
+    prop_collection.insert(0, axes)
+    assert len(prop_collection) == 3
+    assert prop_collection.keys() == ['axes', 'sphere', 'cone']
+
+    axes2 = pv.AxesAssembly()
+    prop_collection.insert(-1, axes2)
+    assert len(prop_collection) == 4
+    assert prop_collection.keys()[0:2] == ['axes', 'sphere']
+    assert prop_collection.keys()[2].startswith('AxesAssembly(Addr=0x')
+    assert prop_collection.keys()[3] == 'cone'

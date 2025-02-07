@@ -33,7 +33,7 @@ from .colors import get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .mapper import DataSetMapper
-from .prop_collection import PropCollection
+from .prop_collection import _PropCollection
 from .render_passes import RenderPasses
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
@@ -287,7 +287,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors = PropCollection(self.GetViewProps())
+        self._actors = _PropCollection(self.GetViewProps())
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
@@ -3506,7 +3506,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._empty_str = None
 
         # Remove ref to `vtkPropCollection` held by vtkRenderer
-        del self._actors
+        if hasattr(self, '_actors'):
+            del self._actors
 
     def on_plotter_render(self) -> None:
         """Notify renderer components of explicit plotter render call."""

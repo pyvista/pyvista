@@ -1,4 +1,4 @@
-"""Wrapper for vtlPropCollection."""
+"""Wrapper for vtkPropCollection."""
 
 from __future__ import annotations
 
@@ -10,9 +10,14 @@ import numpy as np
 from pyvista.plotting import _vtk
 
 
-class PropCollection(MutableSequence[_vtk.vtkProp]):  # noqa: D101
+class _PropCollection(MutableSequence[_vtk.vtkProp]):
+    """Sequence wrapper for a vtkPropCollection with a dict-like interface.
+
+    .. versionadded:: 0.45
+
+    """
+
     def __init__(self, prop_collection: _vtk.vtkPropCollection):
-        """Initialize with the object to be wrapped."""
         super().__init__()
         self._prop_collection = prop_collection
 
@@ -41,19 +46,23 @@ class PropCollection(MutableSequence[_vtk.vtkProp]):  # noqa: D101
     def __setitem__(self, key, value):
         self._prop_collection.ReplaceItem(key, value)
 
-    def insert(self, index, value):  # noqa: D102
-        self._prop_collection.InsertItem(index, value)
+    def insert(self, index, value):
+        while index < 0:
+            index = len(self) + index
+        if index > len(self):
+            index = len(self)
+        self._prop_collection.InsertItem(index - 1, value)
 
-    def append(self, value: _vtk.vtkProp):  # noqa: D102
+    def append(self, value: _vtk.vtkProp):
         self._prop_collection.AddItem(value)
 
-    def keys(self) -> list[str]:  # noqa: D102
+    def keys(self) -> list[str]:
         return [
             prop.name if hasattr(prop, 'name') else prop.GetAddressAsString('') for prop in self
         ]
 
-    def items(self) -> Iterable[tuple[str, _vtk.vtkProp]]:  # noqa: D102
-        return zip(self.keys(), self)
+    def items(self) -> Iterable[tuple[str, _vtk.vtkProp]]:
+        yield from zip(self.keys(), self)
 
     def __del__(self):
         del self._prop_collection
