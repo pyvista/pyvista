@@ -89,7 +89,7 @@ See the API reference for details:
 
    examples.vrml
    examples.download_3ds
-
+    examples.gltf
 Cells
 -----
 Many examples of VTK :class:`cell types <pyvista.CellType>` are
