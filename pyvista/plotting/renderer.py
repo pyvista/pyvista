@@ -3505,6 +3505,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             self._empty_str.SetReferenceCount(0)
             self._empty_str = None
 
+        # Remove ref to `vtkPropCollection` held by vtkRenderer
+        del self._actors
+
     def on_plotter_render(self) -> None:
         """Notify renderer components of explicit plotter render call."""
         if self._charts is not None:
@@ -3552,7 +3555,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def __del__(self) -> None:
         """Delete the renderer."""
         self.deep_clean()
-        del self._actors
 
     def enable_hidden_line_removal(self) -> None:
         """Enable hidden line removal."""
