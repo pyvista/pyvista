@@ -332,6 +332,7 @@ extend-select = [
   'PLR0402',
   'PLR1711',
   'PLR1714',
+  'PLR1730',
   'PLW0127',
   'PT',
   'PTH',
