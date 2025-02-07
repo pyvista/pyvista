@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import pyvista
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
+from pyvista.core.utilities.misc import NameMixin
 from pyvista.core.utilities.misc import _check_range
 from pyvista.core.utilities.misc import no_new_attr
 
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
 
 
 @no_new_attr
-class CornerAnnotation(_vtk.vtkCornerAnnotation):
+class CornerAnnotation(_vtk.vtkCornerAnnotation, NameMixin):
     """Text annotation in four corners.
 
     This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
@@ -154,7 +155,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation):
 
 
 @no_new_attr
-class Text(_vtk.vtkTextActor):
+class Text(_vtk.vtkTextActor, NameMixin):
     r"""Define text by default theme.
 
     Parameters
@@ -169,6 +170,11 @@ class Text(_vtk.vtkTextActor):
 
     prop : pyvista.TextProperty, optional
         The property of this actor.
+
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
+        .. versionadded:: 0.45
 
     Examples
     --------
@@ -192,19 +198,6 @@ class Text(_vtk.vtkTextActor):
         if prop is None:
             self.prop = TextProperty()
         self._name = name
-
-    @property
-    def name(self) -> str:  # numpydoc ignore=RT01
-        """Get or set the unique name identifier used by PyVista."""
-        if self._name is None:
-            self._name = f'{type(self).__name__}({self.GetAddressAsString("")})'
-        return self._name
-
-    @name.setter
-    def name(self, value: str):
-        if not value:
-            raise ValueError('Name must be truthy.')
-        self._name = value
 
     @property
     def input(self):

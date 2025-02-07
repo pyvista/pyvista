@@ -342,3 +342,21 @@ class _classproperty(property):
 
     def __get__(self: property, owner_self: Any, owner_cls: type | None = None) -> Any:
         return self.fget(owner_cls)  # type: ignore[misc]
+
+
+class NameMixin:
+    """Add a 'name' property to a class."""
+
+    @property
+    def name(self) -> str:  # numpydoc ignore=RT01
+        """Get or set the unique name identifier used by PyVista."""
+        if not hasattr(self, '_name') or self._name is None:
+            if hasattr(self, 'GetAddressAsString'):
+                self._name = f'{type(self).__name__}({self.GetAddressAsString("")})'
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        if not value:
+            raise ValueError('Name must be truthy.')
+        self._name = value
