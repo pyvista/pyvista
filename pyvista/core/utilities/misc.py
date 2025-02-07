@@ -17,6 +17,7 @@ import numpy as np
 
 if TYPE_CHECKING:
     from typing import Any
+    from typing import ClassVar
 
     from .._typing_core import ArrayLike
     from .._typing_core import NumpyArray
@@ -344,10 +345,7 @@ class _classproperty(property):
         return self.fget(owner_cls)  # type: ignore[misc]
 
 
-from typing import ClassVar
-
-
-class NameMixin:
+class _NameMixin:
     """Add a 'name' property to a class.
 
     .. versionadded:: 0.45
@@ -360,17 +358,17 @@ class NameMixin:
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
         """Get or set the unique name identifier used by PyVista."""
-        if not hasattr(self, '_name') or self._name is None:  # type: ignore[has-type]
+        if not hasattr(self, '_name') or self._name is None:
             address = (
                 self.GetAddressAsString('')
                 if hasattr(self, 'GetAddressAsString')
                 else hex(id(self))
             )
-            self._name = f'{type(self).__name__}({address})'
+            return f'{type(self).__name__}({address})'
         return self._name
 
     @name.setter
     def name(self, value: str) -> None:
         if not value:
             raise ValueError('Name must be truthy.')
-        self._name = value
+        self._name = str(value)
