@@ -8,7 +8,7 @@ from typing import ClassVar
 import numpy as np
 
 import pyvista
-from pyvista.core.utilities.misc import NameMixin
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 @no_new_attr
-class Actor(Prop3D, NameMixin, _vtk.vtkActor):
+class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
     """Wrap vtkActor.
 
     This class represents the geometry & properties in a rendered

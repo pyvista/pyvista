@@ -345,7 +345,7 @@ class _classproperty(property):
         return self.fget(owner_cls)  # type: ignore[misc]
 
 
-class NameMixin:
+class _NameMixin:
     """Add a 'name' property to a class.
 
     .. versionadded:: 0.45

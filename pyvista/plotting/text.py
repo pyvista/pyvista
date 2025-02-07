@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 import pyvista
 from pyvista.core import _validation
 from pyvista.core._typing_core import BoundsTuple
-from pyvista.core.utilities.misc import NameMixin
 from pyvista.core.utilities.misc import _check_range
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 @no_new_attr
-class CornerAnnotation(NameMixin, _vtk.vtkCornerAnnotation):
+class CornerAnnotation(_NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
 
     This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
@@ -161,7 +161,7 @@ class CornerAnnotation(NameMixin, _vtk.vtkCornerAnnotation):
 
 
 @no_new_attr
-class Text(NameMixin, _vtk.vtkTextActor):
+class Text(_NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
