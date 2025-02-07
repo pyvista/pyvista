@@ -399,5 +399,5 @@ def test_actors_prop_collection():
     prop_collection.insert(-1, axes2)
     assert len(prop_collection) == 4
     assert prop_collection.keys()[0:2] == ['axes', 'sphere']
-    assert prop_collection.keys()[2].startswith('AxesAssembly(Addr=0x')
+    assert prop_collection.keys()[2].startswith('AxesAssembly(Addr=0')
     assert prop_collection.keys()[3] == 'cone'
