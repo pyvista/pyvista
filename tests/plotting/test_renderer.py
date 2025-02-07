@@ -365,18 +365,29 @@ def test_viewport():
     assert pl.renderers[0].viewport == (0.125, 0.25, 0.375, 0.75)
 
 
-def test_actors_prop_collection():
+def test_actors_prop_collection_init():
     pl = pv.Plotter()
     prop_collection = pl.renderer._actors
     assert isinstance(prop_collection, _PropCollection)
     assert prop_collection._prop_collection is pl.renderer.GetViewProps()
     assert len(prop_collection) == 0
 
-    sphere = pv.Sphere()
-    pl.add_mesh(sphere, name='sphere')
-    assert pl.renderer._actors is prop_collection
+    pl.add_mesh(pv.Sphere())
+
     assert len(prop_collection) == 1
-    assert prop_collection.keys() == ['sphere']
+    keys = list(pl.renderer.actors.keys())
+    assert len(keys) == 1
+    assert keys[0].startswith('PolyData(Addr=0')
+    assert pl.renderer._actors is prop_collection
+
+
+def test_actors_prop_collection():
+    pl = pv.Plotter()
+    prop_collection = pl.renderer._actors
+    sphere = pv.Sphere()
+    sphere_actor = pl.add_mesh(sphere, name='sphere')
+
+    # Test items
     items = list(prop_collection.items())
     assert len(items) == 1
     name, actor = items[0]
@@ -384,20 +395,80 @@ def test_actors_prop_collection():
     assert isinstance(actor, pv.Actor)
     assert actor.mapper.dataset is sphere
 
+    # Test append
     cone = pv.Cone()
     cone_actor = pv.Actor(name='cone', mapper=pv.DataSetMapper(dataset=cone))
     prop_collection.append(cone_actor)
     assert len(prop_collection) == 2
     assert prop_collection.keys() == ['sphere', 'cone']
 
+    # Test insert
     axes = pv.AxesAssembly(name='axes')
     prop_collection.insert(0, axes)
     assert len(prop_collection) == 3
     assert prop_collection.keys() == ['axes', 'sphere', 'cone']
 
-    axes2 = pv.AxesAssembly()
-    prop_collection.insert(-1, axes2)
+    # Test insert negative index
+    cube = pv.Cube()
+    cube_actor = pv.Actor(name='cube', mapper=pv.DataSetMapper(dataset=cube))
+    prop_collection.insert(-1, cube_actor)
     assert len(prop_collection) == 4
-    assert prop_collection.keys()[0:2] == ['axes', 'sphere']
-    assert prop_collection.keys()[2].startswith('AxesAssembly(Addr=0')
-    assert prop_collection.keys()[3] == 'cone'
+    assert prop_collection.keys() == ['axes', 'sphere', 'cone', 'cube']
+
+    # Test insert large index
+    label = pv.Label(name='label')
+    prop_collection.insert(42, label)
+    assert len(prop_collection) == 5
+    assert prop_collection.keys() == ['axes', 'sphere', 'cone', 'cube', 'label']
+
+    # Test delitem index
+    del prop_collection[0]
+    assert len(prop_collection) == 4
+    assert prop_collection.keys() == ['sphere', 'cone', 'cube', 'label']
+
+    # Test delitem negative index
+    del prop_collection[-1]
+    assert len(prop_collection) == 3
+    assert prop_collection.keys() == ['sphere', 'cone', 'cube']
+
+    # Test delitem index out of range
+    with pytest.raises(IndexError):
+        del prop_collection[3]
+    del prop_collection[2]
+    assert len(prop_collection) == 2
+    assert prop_collection.keys() == ['sphere', 'cone']
+
+    # Test delitem name
+    del prop_collection['sphere']
+    assert len(prop_collection) == 1
+    assert prop_collection.keys() == ['cone']
+
+    # Test setitem index
+    prop_collection[0] = cube_actor
+    assert len(prop_collection) == 1
+    assert prop_collection.keys() == ['cube']
+
+    # Test setitem negative index
+    prop_collection[-1] = sphere_actor
+    assert len(prop_collection) == 1
+    assert prop_collection.keys() == ['sphere']
+
+    # Test setitem name
+    sphere_actor2 = pv.Actor(name='sphere2', mapper=pv.DataSetMapper(pv.Sphere()))
+    match = "Name of the new actor 'sphere2' must match the key name 'sphere'."
+    with pytest.raises(ValueError, match=match):
+        prop_collection['sphere'] = sphere_actor2
+    sphere_actor2.name = 'sphere'
+    prop_collection['sphere'] = sphere_actor2
+    assert len(prop_collection) == 1
+    assert prop_collection.keys() == ['sphere']
+    assert prop_collection[0] is sphere_actor2
+
+    # Test raises
+    match = 'Key must be an index or a string, got dict.'
+    with pytest.raises(TypeError, match=match):
+        del prop_collection[{}]
+    with pytest.raises(TypeError, match=match):
+        _ = prop_collection[{}]
+    with pytest.raises(TypeError, match=match):
+        prop_collection[{}] = pv.Actor()
