@@ -173,10 +173,8 @@ class MultiBlock(
             if not is_pyvista_dataset(block):
                 self.SetBlock(i, wrap(block))
 
-    def _items(self) -> Iterator[tuple[str | None, _TypeMultiBlockLeaf]]:
-        names = self.keys()
-        blocks = self
-        return zip(names, blocks)
+    def _items(self) -> Iterable[tuple[str | None, _TypeMultiBlockLeaf]]:
+        yield from zip(self.keys(), self)
 
     def recursive_iterator(
         self: MultiBlock,
@@ -424,7 +422,7 @@ class MultiBlock(
               .. warning::
 
                   This mode may result in duplicate key names if the same block name is
-                  re-used in any nested blocks.
+                  reused in any nested blocks.
 
             - ``'prepend'``: Preserve the block names and prepend the parent names.
             - ``'reset'``: Reset the block names to default values.
