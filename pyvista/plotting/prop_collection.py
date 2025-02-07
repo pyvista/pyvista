@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from collections.abc import MutableSequence
 
 import numpy as np
@@ -46,7 +47,10 @@ class PropCollection(MutableSequence[_vtk.vtkProp]):  # noqa: D101
     def append(self, value: _vtk.vtkProp):  # noqa: D102
         self._prop_collection.AddItem(value)
 
-    def keys(self):  # noqa: D102
+    def keys(self) -> list[str]:  # noqa: D102
         return [
             prop.name if hasattr(prop, 'name') else prop.GetAddressAsString('') for prop in self
         ]
+
+    def items(self) -> Iterable[tuple[str, _vtk.vtkProp]]:  # noqa: D102
+        return zip(self.keys(), self)
