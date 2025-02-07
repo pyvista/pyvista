@@ -113,7 +113,6 @@ view file and instance metadata for all datasets.
 
    /api/examples/dataset_gallery
 
-
 Usage Considerations
 --------------------
 .. warning::
