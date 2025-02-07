@@ -25,6 +25,8 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
     def __getitem__(self, key):
         if isinstance(key, (int, np.integer)):
             # lookup from index number
+            if key < 0:
+                key = len(self) + key
             if key < 0 or key >= len(self):
                 raise IndexError('Index out of range.')
             return self._prop_collection.GetItemAsObject(int(key))
@@ -44,9 +46,9 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
     def __delitem__(self, key):
         if isinstance(key, (int, np.integer)):
             # remove by index
-            while key < 0:
+            if key < 0:
                 key = len(self) + key
-            if key >= len(self):
+            if key < 0 or key >= len(self):
                 raise IndexError('Index out of range.')
             self._prop_collection.RemoveItem(int(key))
         elif isinstance(key, str):
@@ -60,9 +62,9 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         _validation.check_instance(value, _vtk.vtkProp)
         if isinstance(key, (int, np.integer)):
             # set by index
-            while key < 0:
+            if key < 0:
                 key = len(self) + key
-            if key >= len(self):
+            if key < 0 or key >= len(self):
                 raise IndexError('Index out of range.')
             self._prop_collection.ReplaceItem(key, value)
         elif isinstance(key, str):
@@ -78,7 +80,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
 
     def insert(self, index, value):
         _validation.check_instance(value, _vtk.vtkProp)
-        while index < 0:
+        if index < 0:
             index = len(self) + index + 1
         index = min(index, len(self))
         self._prop_collection.InsertItem(index - 1, value)

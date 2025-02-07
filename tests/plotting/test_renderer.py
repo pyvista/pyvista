@@ -453,6 +453,10 @@ def test_actors_prop_collection():
     assert len(prop_collection) == 1
     assert prop_collection.keys() == ['sphere']
 
+    # Test setitem index error
+    with pytest.raises(IndexError, match='Index out of range.'):
+        prop_collection[-2] = sphere_actor
+
     # Test setitem name
     sphere_actor2 = pv.Actor(name='sphere2', mapper=pv.DataSetMapper(pv.Sphere()))
     match = "Name of the new actor 'sphere2' must match the key name 'sphere'."
@@ -464,7 +468,7 @@ def test_actors_prop_collection():
     assert prop_collection.keys() == ['sphere']
     assert prop_collection[0] is sphere_actor2
 
-    # Test raises
+    # Test invalid types
     match = 'Key must be an index or a string, got dict.'
     with pytest.raises(TypeError, match=match):
         del prop_collection[{}]
