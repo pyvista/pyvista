@@ -80,7 +80,7 @@ instead of using :func:`pyvista.read`. These formats represent 3D geometry,
 materials, and scene structure.
 
 Examples of file formats supported by PyVista include ``VRML``
-(VirtualReality Modeling Language), ``3DS`` (3D Studio), and 
+(VirtualReality Modeling Language), ``3DS`` (3D Studio), and
 ``glTF`` (Graphics Library Transmission Format).
 See the API reference for details:
 
