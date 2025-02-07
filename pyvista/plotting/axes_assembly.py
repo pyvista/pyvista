@@ -156,7 +156,7 @@ class _XYZAssembly(_Prop3DMixin, NameMixin, _vtk.vtkPropAssembly):
         self.origin = origin  # type: ignore[assignment]
         self.user_matrix = user_matrix  # type: ignore[assignment]
 
-        self._name = name
+        self._name = name  # type: ignore[assignment]
 
     @property
     def parts(self):
