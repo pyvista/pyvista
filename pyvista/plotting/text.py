@@ -48,6 +48,11 @@ class CornerAnnotation(NameMixin, _vtk.vtkCornerAnnotation):
     linear_font_scale_factor : float, optional
         Linear font scale factor.
 
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     Examples
     --------
     Create text annotation in four corners.
@@ -58,7 +63,7 @@ class CornerAnnotation(NameMixin, _vtk.vtkCornerAnnotation):
 
     """
 
-    def __init__(self, position, text, prop=None, linear_font_scale_factor=None):
+    def __init__(self, position, text, prop=None, linear_font_scale_factor=None, name=None):
         """Initialize a new text annotation descriptor."""
         super().__init__()
         self.set_text(position, text)
@@ -66,6 +71,7 @@ class CornerAnnotation(NameMixin, _vtk.vtkCornerAnnotation):
             self.prop = TextProperty()
         if linear_font_scale_factor is not None:
             self.linear_font_scale_factor = linear_font_scale_factor
+        self._name = name
 
     def get_text(self, position):
         """Get the text to be displayed for each corner.

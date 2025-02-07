@@ -348,7 +348,11 @@ from typing import ClassVar
 
 
 class NameMixin:
-    """Add a 'name' property to a class."""
+    """Add a 'name' property to a class.
+
+    .. versionadded:: 0.45
+
+    """
 
     # In case subclasses use @no_new_attr mixin
     _new_attr_exceptions: ClassVar[Sequence[str]] = ('_name',)
