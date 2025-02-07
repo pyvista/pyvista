@@ -171,3 +171,4 @@ cell types.
    BiQuadraticQuadraticHexahedron
    BiQuadraticTriangle
    CubicLine
+   Polyhedron
