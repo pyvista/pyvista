@@ -17,6 +17,7 @@ import numpy as np
 
 if TYPE_CHECKING:
     from typing import Any
+    from typing import ClassVar
 
     from .._typing_core import ArrayLike
     from .._typing_core import NumpyArray
@@ -342,9 +343,6 @@ class _classproperty(property):
 
     def __get__(self: property, owner_self: Any, owner_cls: type | None = None) -> Any:
         return self.fget(owner_cls)  # type: ignore[misc]
-
-
-from typing import ClassVar
 
 
 class NameMixin:

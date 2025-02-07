@@ -286,6 +286,11 @@ class Label(_Prop3DMixin, Text):
     prop : pyvista.TextProperty, optional
         The property of this actor.
 
+    name : str, optional
+        The name of this actor used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     See Also
     --------
     pyvista.Plotter.add_point_labels
@@ -384,10 +389,12 @@ class Label(_Prop3DMixin, Text):
         *,
         size: int = 50,
         prop: pyvista.Property | None = None,
+        name: str | None = None,
     ):
         Text.__init__(self, text=text, prop=prop)
         self.GetPositionCoordinate().SetCoordinateSystemToWorld()
         self.SetTextScaleModeToNone()  # Use font size to control size of text
+        self._name = name
 
         _Prop3DMixin.__init__(self)
         self.relative_position = relative_position  # type: ignore[assignment]
