@@ -49,8 +49,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
     def insert(self, index, value):
         while index < 0:
             index = len(self) + index
-        if index > len(self):
-            index = len(self)
+        index = min(index, len(self))
         self._prop_collection.InsertItem(index - 1, value)
 
     def append(self, value: _vtk.vtkProp):
