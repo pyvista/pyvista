@@ -351,12 +351,12 @@ class NameMixin:
     """Add a 'name' property to a class."""
 
     # In case subclasses use @no_new_attr mixin
-    _new_attr_exceptions: ClassVar[tuple[str]] = ('_name',)
+    _new_attr_exceptions: ClassVar[Sequence[str]] = ('_name',)
 
     @property
     def name(self) -> str:  # numpydoc ignore=RT01
         """Get or set the unique name identifier used by PyVista."""
-        if not hasattr(self, '_name') or self._name is None:
+        if not hasattr(self, '_name') or self._name is None:  # type: ignore[has-type]
             address = (
                 self.GetAddressAsString('')
                 if hasattr(self, 'GetAddressAsString')
