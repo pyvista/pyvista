@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
 
 @no_new_attr
-class CornerAnnotation(_vtk.vtkCornerAnnotation, NameMixin):
+class CornerAnnotation(NameMixin, _vtk.vtkCornerAnnotation):
     """Text annotation in four corners.
 
     This is an annotation object that manages four text actors / mappers to provide annotation in the four corners of a viewport.
@@ -155,7 +155,7 @@ class CornerAnnotation(_vtk.vtkCornerAnnotation, NameMixin):
 
 
 @no_new_attr
-class Text(_vtk.vtkTextActor, NameMixin):
+class Text(NameMixin, _vtk.vtkTextActor):
     r"""Define text by default theme.
 
     Parameters
