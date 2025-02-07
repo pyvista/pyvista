@@ -180,7 +180,9 @@ class Text(_vtk.vtkTextActor):
 
     """
 
-    def __init__(self, text=None, position=None, prop=None):
+    _new_attr_exceptions: ClassVar[list[str]] = ['_name']
+
+    def __init__(self, text=None, position=None, prop=None, name=None):
         """Initialize a new text descriptor."""
         super().__init__()
         if text is not None:
@@ -189,6 +191,20 @@ class Text(_vtk.vtkTextActor):
             self.position = position
         if prop is None:
             self.prop = TextProperty()
+        self._name = name
+
+    @property
+    def name(self) -> str:  # numpydoc ignore=RT01
+        """Get or set the unique name identifier used by PyVista."""
+        if self._name is None:
+            self._name = f'{type(self).__name__}({self.GetAddressAsString("")})'
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        if not value:
+            raise ValueError('Name must be truthy.')
+        self._name = value
 
     @property
     def input(self):

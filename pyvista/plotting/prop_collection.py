@@ -14,6 +14,7 @@ class PropCollection(MutableSequence[_vtk.vtkProp]):  # noqa: D101
         """Initialize with the object to be wrapped."""
         super().__init__()
         self._prop_collection = prop_collection
+        self._names_dict = {}
 
     def __getitem__(self, item):
         if isinstance(item, (int, np.integer)):
