@@ -34,7 +34,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
                 index = names.index(key)
                 return self._prop_collection.GetItemAsObject(index)
             except ValueError:
-                raise KeyError(f"No item found with name '{key}'")
+                raise KeyError(f"No item found with name '{key}'.")
         raise TypeError(f'Key must be an index or a string, got {type(key).__name__}.')
 
     def __len__(self):
@@ -47,7 +47,11 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
             self._prop_collection.RemoveItem(key)
         elif isinstance(key, str):
             # remove by name
-            index = self.keys().index(key)
+            names = self.keys()
+            try:
+                index = names.index(key)
+            except ValueError:
+                raise KeyError(f"No item found with name '{key}'.")
             del self[index]
         else:
             raise TypeError(f'Key must be an index or a string, got {type(key).__name__}.')
@@ -69,8 +73,11 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         else:
             raise TypeError(f'Key must be an index or a string, got {type(key).__name__}.')
 
-    def insert(self, index, value):
+    def insert(self, index, value) -> None:
         _validation.check_instance(value, _vtk.vtkProp)
+        if len(self) == 0:
+            self.append(value)
+            return
         if index < 0:
             index = len(self) + index + 1
         index = min(index, len(self))
@@ -92,6 +99,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         yield from zip(self.keys(), self)
 
     def __del__(self):
+        self._prop_collection = None
         del self._prop_collection
 
     def _validate_index(self, index: int | np.integer) -> int:

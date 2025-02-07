@@ -2647,7 +2647,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         >>> pl.show()
 
         """
-        name: str | None = None
         if isinstance(actor, str):
             name = actor
             keys = list(self._actors.keys())

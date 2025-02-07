@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import vtk
 
 import pyvista as pv
 from pyvista.plotting.prop_collection import _PropCollection
@@ -381,93 +382,122 @@ def test_actors_prop_collection_init():
     assert pl.renderer._actors is prop_collection
 
 
+@pytest.fixture
+def prop_collection():
+    vtk_collection = vtk.vtkPropCollection()
+    coll = _PropCollection(vtk_collection)
+    yield coll
+    del vtk_collection
+    del coll._prop_collection
+
+
 def test_actors_prop_collection():
     pl = pv.Plotter()
-    prop_collection = pl.renderer._actors
+    collection = pl.renderer._actors
+    assert isinstance(collection, _PropCollection)
     sphere = pv.Sphere()
-    sphere_actor = pl.add_mesh(sphere, name='sphere')
+    pl.add_mesh(sphere, name='sphere')
 
     # Test items
-    items = list(prop_collection.items())
+    items = list(collection.items())
     assert len(items) == 1
     name, actor = items[0]
     assert name == 'sphere'
     assert isinstance(actor, pv.Actor)
     assert actor.mapper.dataset is sphere
 
-    # Test append
-    cone = pv.Cone()
-    cone_actor = pv.Actor(name='cone', mapper=pv.DataSetMapper(dataset=cone))
-    prop_collection.append(cone_actor)
-    assert len(prop_collection) == 2
-    assert prop_collection.keys() == ['sphere', 'cone']
 
-    # Test insert
+def test_prop_collection_append(prop_collection):
+    a = pv.Actor(name='a')
+    b = pv.Actor(name='b')
+
+    prop_collection.append(a)
+    assert prop_collection.keys() == ['a']
+    assert prop_collection[0] is a
+
+    prop_collection.append(b)
+    assert prop_collection.keys() == ['a', 'b']
+    assert prop_collection[1] is b
+
+
+def test_prop_collection_insert(prop_collection):
     axes = pv.AxesAssembly(name='axes')
     prop_collection.insert(0, axes)
-    assert len(prop_collection) == 3
-    assert prop_collection.keys() == ['axes', 'sphere', 'cone']
+    assert prop_collection.keys() == ['axes']
 
-    # Test insert negative index
-    cube = pv.Cube()
-    cube_actor = pv.Actor(name='cube', mapper=pv.DataSetMapper(dataset=cube))
-    prop_collection.insert(-1, cube_actor)
-    assert len(prop_collection) == 4
-    assert prop_collection.keys() == ['axes', 'sphere', 'cone', 'cube']
+    # Test negative index
+    cube = pv.Actor(name='cube')
+    prop_collection.insert(-1, cube)
+    assert prop_collection.keys() == ['axes', 'cube']
 
-    # Test insert large index
+    # Test large index
     label = pv.Label(name='label')
     prop_collection.insert(42, label)
-    assert len(prop_collection) == 5
-    assert prop_collection.keys() == ['axes', 'sphere', 'cone', 'cube', 'label']
+    assert prop_collection.keys() == ['axes', 'cube', 'label']
+
+
+def test_prop_collection_delitem(prop_collection):
+    prop_collection.append(pv.Actor(name='a'))
+    prop_collection.append(pv.Actor(name='b'))
+    prop_collection.append(pv.Actor(name='c'))
+    prop_collection.append(pv.Actor(name='d'))
+    assert prop_collection.keys() == ['a', 'b', 'c', 'd']
 
     # Test delitem index
     del prop_collection[0]
-    assert len(prop_collection) == 4
-    assert prop_collection.keys() == ['sphere', 'cone', 'cube', 'label']
+    assert prop_collection.keys() == ['b', 'c', 'd']
 
     # Test delitem negative index
     del prop_collection[-1]
-    assert len(prop_collection) == 3
-    assert prop_collection.keys() == ['sphere', 'cone', 'cube']
+    assert prop_collection.keys() == ['b', 'c']
 
     # Test delitem index out of range
     with pytest.raises(IndexError):
-        del prop_collection[3]
-    del prop_collection[2]
-    assert len(prop_collection) == 2
-    assert prop_collection.keys() == ['sphere', 'cone']
+        del prop_collection[2]
+    del prop_collection[1]
+    assert prop_collection.keys() == ['b']
 
     # Test delitem name
-    del prop_collection['sphere']
-    assert len(prop_collection) == 1
-    assert prop_collection.keys() == ['cone']
+    del prop_collection['b']
+    assert prop_collection.keys() == []
+
+    with pytest.raises(KeyError, match=r'No item found with name \'b\'.'):
+        del prop_collection['b']
+
+
+def test_prop_collection_setitem(prop_collection):
+    a = pv.Actor(name='a')
+    b = pv.Actor(name='b')
+    c = pv.Actor(name='c')
+    prop_collection.append(a)
+    prop_collection.append(b)
+    prop_collection.append(c)
+    assert prop_collection.keys() == ['a', 'b', 'c']
 
     # Test setitem index
-    prop_collection[0] = cube_actor
-    assert len(prop_collection) == 1
-    assert prop_collection.keys() == ['cube']
+    prop_collection[0] = b
+    assert prop_collection.keys() == ['b', 'b', 'c']
 
     # Test setitem negative index
-    prop_collection[-1] = sphere_actor
-    assert len(prop_collection) == 1
-    assert prop_collection.keys() == ['sphere']
+    prop_collection[-1] = a
+    assert prop_collection.keys() == ['b', 'b', 'a']
 
     # Test setitem index error
     with pytest.raises(IndexError, match='Index out of range.'):
-        prop_collection[-2] = sphere_actor
+        prop_collection[-4] = c
 
     # Test setitem name
-    sphere_actor2 = pv.Actor(name='sphere2', mapper=pv.DataSetMapper(pv.Sphere()))
-    match = "Name of the new actor 'sphere2' must match the key name 'sphere'."
+    a2 = pv.Actor(name='a2', mapper=pv.DataSetMapper(pv.Sphere()))
+    match = "Name of the new actor 'a2' must match the key name 'a'."
     with pytest.raises(ValueError, match=match):
-        prop_collection['sphere'] = sphere_actor2
-    sphere_actor2.name = 'sphere'
-    prop_collection['sphere'] = sphere_actor2
-    assert len(prop_collection) == 1
-    assert prop_collection.keys() == ['sphere']
-    assert prop_collection[0] is sphere_actor2
+        prop_collection['a'] = a2
+    a2.name = 'a'
+    prop_collection['a'] = a2
+    assert prop_collection.keys() == ['b', 'b', 'a']
+    assert prop_collection['a'] is a2
 
+
+def test_prop_collection_raises(prop_collection):
     # Test invalid types
     match = 'Key must be an index or a string, got dict.'
     with pytest.raises(TypeError, match=match):
