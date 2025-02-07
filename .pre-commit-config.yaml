@@ -14,7 +14,7 @@ repos:
         types_or: [rst]
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         args: ["doc examples examples_trame pyvista tests", "*.py *.rst *.md"]
