@@ -33,6 +33,7 @@ from .colors import get_cycler
 from .errors import InvalidCameraError
 from .helpers import view_vectors
 from .mapper import DataSetMapper
+from .prop_collection import PropCollection
 from .render_passes import RenderPasses
 from .tools import create_axes_marker
 from .tools import create_axes_orientation_box
@@ -286,7 +287,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Initialize the renderer."""
         super().__init__()
-        self._actors: dict[str, _vtk.vtkActor] = {}
+        self._actors = PropCollection(self.GetViewProps())
         self.parent = parent  # weakref.proxy to the plotter from Renderers
         self._theme = parent.theme
         self.bounding_box_actor: Actor | None = None
@@ -497,7 +498,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for ax in range(3):
                 update_axis(ax)
 
-        for actor in self._actors.values():
+        for actor in self._actors:
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
             if (
@@ -820,7 +821,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     @property
     def actors(self):  # numpydoc ignore=RT01
         """Return a dictionary of actors assigned to this renderer."""
-        return self._actors
+        names = self._actors.keys()
+        values = list(self._actors)
+        return dict(zip(names, values))
 
     def add_actor(
         self,
@@ -896,7 +899,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if hasattr(actor, 'SetScale'):
             actor.SetScale(np.array(actor.GetScale()) * np.array(self.scale))
         self.AddActor(actor)  # must add actor before resetting camera
-        self._actors[name] = actor
 
         if reset_camera or (not self.camera_set and reset_camera is None and not rv):
             self.reset_camera(render)
@@ -992,8 +994,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             labels_off=labels_off,
         )
         self.AddActor(self._marker_actor)
-        memory_address = self._marker_actor.GetAddressAsString('')
-        self._actors[memory_address] = self._marker_actor
         self.Modified()
         return self._marker_actor
 
@@ -2682,13 +2682,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         with contextlib.suppress(AttributeError, ReferenceError):
             self.parent.scalar_bars._remove_mapper_from_plotter(actor)
         self.RemoveActor(actor)
-
-        if name is None:
-            for k, v in self._actors.items():
-                if v == actor:
-                    name = k
-        if name is not None:
-            self._actors.pop(name, None)
         self.update_bounds_axes()
         if reset_camera or (not self.camera_set and reset_camera is None):
             self.reset_camera(render=render)
@@ -3553,7 +3546,6 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         self.remove_floors(render=render)
         self.remove_legend(render=render)
         self.RemoveAllViewProps()
-        self._actors = {}
         self._camera = None
         self._bounding_box = None  # type: ignore[assignment]
         self._marker_actor = None
@@ -3564,6 +3556,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def __del__(self) -> None:
         """Delete the renderer."""
         self.deep_clean()
+        del self._actors
 
     def enable_hidden_line_removal(self) -> None:
         """Enable hidden line removal."""
