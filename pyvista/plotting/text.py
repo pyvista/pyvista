@@ -180,7 +180,7 @@ class Text(_vtk.vtkTextActor):
 
     """
 
-    _new_attr_exceptions: ClassVar[list[str]] = ['_name']
+    _new_attr_exceptions: ClassVar[tuple[str]] = ('_name',)
 
     def __init__(self, text=None, position=None, prop=None, name=None):
         """Initialize a new text descriptor."""
