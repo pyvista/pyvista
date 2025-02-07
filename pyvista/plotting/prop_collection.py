@@ -25,10 +25,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
     def __getitem__(self, key):
         if isinstance(key, (int, np.integer)):
             # lookup from index number
-            if key < 0:
-                key = len(self) + key
-            if key < 0 or key >= len(self):
-                raise IndexError('Index out of range.')
+            key = self._validate_index(key)
             return self._prop_collection.GetItemAsObject(int(key))
         elif isinstance(key, str):
             # lookup from actor name
@@ -46,11 +43,8 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
     def __delitem__(self, key):
         if isinstance(key, (int, np.integer)):
             # remove by index
-            if key < 0:
-                key = len(self) + key
-            if key < 0 or key >= len(self):
-                raise IndexError('Index out of range.')
-            self._prop_collection.RemoveItem(int(key))
+            key = self._validate_index(key)
+            self._prop_collection.RemoveItem(key)
         elif isinstance(key, str):
             # remove by name
             index = self.keys().index(key)
@@ -62,10 +56,7 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         _validation.check_instance(value, _vtk.vtkProp)
         if isinstance(key, (int, np.integer)):
             # set by index
-            if key < 0:
-                key = len(self) + key
-            if key < 0 or key >= len(self):
-                raise IndexError('Index out of range.')
+            key = self._validate_index(key)
             self._prop_collection.ReplaceItem(key, value)
         elif isinstance(key, str):
             if hasattr(value, 'name') and value.name != key:
@@ -102,3 +93,10 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
 
     def __del__(self):
         del self._prop_collection
+
+    def _validate_index(self, index: int | np.integer) -> int:
+        if index < 0:
+            index = len(self) + index
+        if index < 0 or index >= len(self):
+            raise IndexError('Index out of range.')
+        return int(index)
