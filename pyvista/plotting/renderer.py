@@ -885,15 +885,13 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         if isinstance(actor, _vtk.vtkMapper):
             actor = Actor(mapper=actor, name=name)
 
-        if isinstance(actor, Actor) and name:
-            # WARNING: this will override the name if already set on Actor
-            actor.name = name
-
         if name is None:
-            # Fallback for non-wrapped actors
-            # e.g., vtkScalarBarActor
-            name = actor.name if isinstance(actor, Actor) else actor.GetAddressAsString('')
-
+            name = (
+                actor.name
+                if (hasattr(actor, 'name') and actor.name)
+                else actor.GetAddressAsString('')
+            )
+        actor.name = name
         actor.SetPickable(pickable)
         # Apply this renderer's scale to the actor (which can be further scaled)
         if hasattr(actor, 'SetScale'):
