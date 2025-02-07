@@ -978,9 +978,11 @@ class CellType(IntEnum):
         example='Polyhedron',
         short_doc="""
         Represents a 3D cell defined by a set of polygonal faces.
+
         """,
         long_doc="""
         Polyhedrons must:
+
         - be watertight: the faces describing the polyhedron should define
           an enclosed volume with a clear “inside” and “outside”
         - have planar faces: all points defining a face should be in the
