@@ -26,7 +26,7 @@ class PropCollection(MutableSequence[_vtk.vtkProp]):  # noqa: D101
             # lookup from actor name
             names = self.keys()
             try:
-                index = names.index(item)  # Find the index of the name
+                index = names.index(item)
                 return self._prop_collection.GetItemAsObject(index)
             except ValueError:
                 raise KeyError(f"No item found with name '{item}'")
@@ -54,3 +54,6 @@ class PropCollection(MutableSequence[_vtk.vtkProp]):  # noqa: D101
 
     def items(self) -> Iterable[tuple[str, _vtk.vtkProp]]:  # noqa: D102
         return zip(self.keys(), self)
+
+    def __del__(self):
+        del self._prop_collection
