@@ -27,6 +27,7 @@ from pyvista.examples._dataset_loader import _load_as_multiblock
 from pyvista.examples._dataset_loader import _MultiFileDownloadableDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDatasetLoader
 from pyvista.examples._dataset_loader import _SingleFileDownloadableDatasetLoader
+from pyvista.examples.planets import _download_dataset_texture
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -675,3 +676,17 @@ def test_format_file_size():
     assert _format_file_size(999949000000) == '999.9 GB'
     assert _format_file_size(999950000000) == '1000.0 GB'
     assert _format_file_size(1000000000000) == '1000.0 GB'
+
+
+def test_download_dataset_texture():
+    loader = _SingleFileDownloadableDatasetLoader(
+        'beach.nrrd',
+    )
+    loaded = _download_dataset_texture(loader, texture=True, load=True)
+    assert isinstance(loaded, pv.Texture)
+
+    loaded = _download_dataset_texture(loader, texture=False, load=True)
+    assert isinstance(loaded, pv.ImageData)
+
+    loaded = _download_dataset_texture(loader, texture=False, load=False)
+    assert isinstance(loaded, str)

@@ -1326,8 +1326,7 @@ class PolyDataFilters(DataSetFilters):
         poly_data = self
         if not isinstance(poly_data, pyvista.PolyData):
             poly_data = pyvista.PolyData(poly_data)  # type: ignore[arg-type]
-        if n_sides < 3:
-            n_sides = 3
+        n_sides = max(n_sides, 3)
         tube = _vtk.vtkTubeFilter()
         tube.SetInputDataObject(poly_data)
         # User Defined Parameters
@@ -1443,9 +1442,8 @@ class PolyDataFilters(DataSetFilters):
         elif subfilter == 'loop':
             sfilter = _vtk.vtkLoopSubdivisionFilter()  # type: ignore[assignment]
         else:
-            msg = (
-                'Subdivision filter must be one of the following: '
-                "'butterfly', 'loop', or 'linear'"
+            raise ValueError(
+                "Subdivision filter must be one of the following: 'butterfly', 'loop', or 'linear'",
             )
             raise ValueError(msg)
 
