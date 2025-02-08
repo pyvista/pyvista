@@ -337,6 +337,11 @@ def test_axes_assembly_length(axes_assembly):
     assert np.allclose(axes_assembly.length, dataset.length)
 
 
+def test_axes_assembly_name():
+    axes = pv.PlanesAssembly(name='axes')
+    assert axes.name == 'axes'
+
+
 def test_axes_assembly_symmetric(axes_assembly_symmetric):
     assert np.allclose(axes_assembly_symmetric.bounds, (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0))
 
@@ -373,6 +378,11 @@ def test_axes_assembly_symmetric_init_label(test_property):
     kwargs = {test_property: label}
     axes_assembly = pv.AxesAssemblySymmetric(**kwargs)
     assert getattr(axes_assembly, test_property) == label
+
+
+def test_axes_assembly_symmetric_name():
+    axes = pv.PlanesAssembly(name='axes')
+    assert axes.name == 'axes'
 
 
 def test_axes_assembly_set_get_part_prop_all(axes_assembly):
@@ -707,3 +717,8 @@ def test_planes_assembly_camera(planes_assembly):
     camera = pv.Camera()
     planes_assembly.camera = camera
     assert planes_assembly.camera is camera
+
+
+def test_planes_assembly_name():
+    planes = pv.PlanesAssembly(name='planes')
+    assert planes.name == 'planes'
