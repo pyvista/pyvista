@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from collections.abc import MutableSequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from pyvista import _validation
 from pyvista.plotting import _vtk
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class _PropCollection(MutableSequence[_vtk.vtkProp]):
@@ -99,10 +103,9 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         yield from zip(self.keys(), self)
 
     def __del__(self):
-        self._prop_collection = None
-        del self._prop_collection
+        self._prop_collection = None  # type: ignore[assignment]
 
-    def _validate_index(self, index: int | np.integer) -> int:
+    def _validate_index(self, index: int | np.integer[Any]) -> int:
         if index < 0:
             index = len(self) + index
         if index < 0 or index >= len(self):
