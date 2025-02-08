@@ -114,8 +114,8 @@ def _cubemap_from_paths(image_paths):
     for image_path in image_paths:
         if not Path(image_path).is_file():
             file_str = '\n'.join(image_paths)
-            raise FileNotFoundError(
-                f'Unable to locate {image_path}\nExpected to find the following files:\n{file_str}',
+            msg = (
+                f'Unable to locate {image_path}\nExpected to find the following files:\n{file_str}'
             )
             raise FileNotFoundError(msg)
 

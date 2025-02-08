@@ -1129,7 +1129,8 @@ class DatasetCard:
                 func = getattr(pyvista.examples.examples, func_name)
 
         if func is None:
-            raise RuntimeError(f'Dataset function {func_name} does not exist.')
+            msg = f'Dataset function {func_name} does not exist.'
+            raise RuntimeError(msg)
 
         # Get the card's header info
         func_ref = f':func:`~{_get_fullname(func)}`'

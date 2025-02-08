@@ -375,5 +375,6 @@ class _NameMixin:
     @name.setter
     def name(self, value: str) -> None:
         if not value:
-            raise ValueError('Name must be truthy.')
+            msg = 'Name must be truthy.'
+            raise ValueError(msg)
         self._name = str(value)

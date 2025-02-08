@@ -1186,13 +1186,11 @@ def check_length(
         check_sorted((min_length, max_length), name='Range')
 
     if min_length is not None and array_len < min_length:
-        raise ValueError(
-            f'{name} must have a minimum length of {min_length}. Got length {array_len} instead.',
-        )
+        msg = f'{name} must have a minimum length of {min_length}. Got length {array_len} instead.'
+        raise ValueError(msg)
     if max_length is not None and array_len > max_length:
-        raise ValueError(
-            f'{name} must have a maximum length of {max_length}. Got length {array_len} instead.',
-        )
+        msg = f'{name} must have a maximum length of {max_length}. Got length {array_len} instead.'
+        raise ValueError(msg)
 
 
 def _validate_shape_value(shape: _ShapeLike) -> _Shape:

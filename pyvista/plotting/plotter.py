@@ -4378,9 +4378,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'ugrid': UnstructuredGridVolumeRayCastMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers_lookup.keys():
-            raise TypeError(
-                f'Mapper ({mapper}) unknown. Available volume mappers include: {", ".join(mappers_lookup.keys())}',
-            )
+            msg = f'Mapper ({mapper}) unknown. Available volume mappers include: {", ".join(mappers_lookup.keys())}'
+            raise TypeError(msg)
         self.mapper = mappers_lookup[mapper](theme=self._theme)  # type: ignore[assignment]
 
         # Set scalars range
@@ -6009,9 +6008,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             '.tex': writer.SetFileFormatToTeX,
         }
         if extension not in modes:
-            raise ValueError(
+            msg = (
                 f'Extension ({extension}) is an invalid choice.\n\n'
-                f'Valid options include: {", ".join(modes.keys())}',
+                f'Valid options include: {", ".join(modes.keys())}'
+            )
+            raise ValueError(
+                msg,
             )
             raise ValueError(msg)
         writer.CompressOff()

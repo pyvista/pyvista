@@ -2738,7 +2738,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
         else:
-            raise ValueError(
+            msg = (
                 f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "seeded".'
             )
             raise ValueError(msg)
