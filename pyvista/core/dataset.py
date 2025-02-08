@@ -1461,7 +1461,7 @@ class DataSet(DataSetFilters, DataObject):
             name = index
             preference = 'cell'
         else:
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 f'Index ({index}) not understood.'
                 ' Index must be a string name or a tuple of string name and string preference.'
             )
@@ -1486,7 +1486,7 @@ class DataSet(DataSetFilters, DataObject):
         #   there would be the same number of cells as points but we'd want
         #   the data to be on the nodes.
         if scalars is None:
-            msg = 'Empty array unable to be added.'
+            msg = 'Empty array unable to be added.'  # type: ignore[unreachable]
             raise TypeError(msg)
         else:
             scalars = np.asanyarray(scalars)
@@ -1849,7 +1849,7 @@ class DataSet(DataSetFilters, DataObject):
             msg = 'Given point must be a length three sequence.'
             raise TypeError(msg)
         if not isinstance(n, int):
-            msg = '`n` must be a positive integer.'
+            msg = '`n` must be a positive integer.'  # type: ignore[unreachable]
             raise TypeError(msg)
         if n < 1:
             msg = '`n` must be a positive integer.'
@@ -2439,7 +2439,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if isinstance(self, _vtk.vtkExplicitStructuredGrid):
-            msg = 'For an ExplicitStructuredGrid, use the `neighbors` method'
+            msg = 'For an ExplicitStructuredGrid, use the `neighbors` method'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         # Build links as recommended:
@@ -2841,7 +2841,7 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         if not isinstance(ind, (int, np.integer)):
-            msg = f'ind must be an int, got {type(ind)}'
+            msg = f'ind must be an int, got {type(ind)}'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         if not 0 <= ind < self.n_cells:

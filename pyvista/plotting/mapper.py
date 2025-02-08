@@ -1139,7 +1139,7 @@ class _BaseVolumeMapper(_BaseMapper):
                 )
                 raise ValueError(msg)
         else:
-            msg = f'`blend_mode` should be either an int or str, not `{type(value)}`'
+            msg = f'`blend_mode` should be either an int or str, not `{type(value)}`'  # type: ignore[unreachable]
             raise TypeError(msg)
 
     def __del__(self) -> None:

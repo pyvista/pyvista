@@ -506,7 +506,7 @@ class MultiBlock(
         # always wrap since we may need to reference the VTK memory address
         wrapped = wrap(dataset)
         if isinstance(wrapped, pyvista_ndarray):
-            msg = 'dataset should not be or contain an array'
+            msg = 'dataset should not be or contain an array'  # type: ignore[unreachable]
             raise TypeError(msg)
         dataset = wrapped
         self.n_blocks += 1
@@ -1348,7 +1348,7 @@ class MultiBlock(
         elif scalars.ndim > 1:
             # multi-component
             if not isinstance(component, (int, type(None))):
-                msg = '`component` must be either None or an integer'
+                msg = '`component` must be either None or an integer'  # type: ignore[unreachable]
                 raise TypeError(msg)
             if component is not None:
                 if component >= scalars.shape[1] or component < 0:

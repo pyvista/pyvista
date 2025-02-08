@@ -76,7 +76,7 @@ def check_valid_vector(point: VectorLike[float], name: str = '') -> None:
 
     """
     if not isinstance(point, (Sequence, np.ndarray)):
-        msg = f'{name} must be a length three iterable of floats.'
+        msg = f'{name} must be a length three iterable of floats.'  # type: ignore[unreachable]
         raise TypeError(msg)
     if len(point) != 3:
         if name == '':
@@ -173,7 +173,7 @@ class AnnotatedIntEnum(int, enum.Enum):
         elif isinstance(value, str):
             return cls.from_str(value)
         else:
-            msg = f'{cls.__name__} has no value matching {value}'
+            msg = f'{cls.__name__} has no value matching {value}'  # type: ignore[unreachable]
             raise ValueError(msg)
 
 

@@ -98,7 +98,7 @@ class RectilinearGridFilters:
             elif isinstance(mixed, (np.ndarray, Sequence)):
                 self.cell_data['_MIXED_CELLS_'] = mixed  # type: ignore[attr-defined]
             elif not isinstance(mixed, bool):
-                msg = '`mixed` must be either a sequence of ints or bool'
+                msg = '`mixed` must be either a sequence of ints or bool'  # type: ignore[unreachable]
                 raise TypeError(msg)
             alg.SetTetraPerCellTo5And12()
         else:

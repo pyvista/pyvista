@@ -707,8 +707,7 @@ def check_ndim(
             check_integer(ndim, strict=True, name='ndim')
             expected = f'one of {ndim}'
         msg = (
-            f'{name} has the incorrect number of dimensions. '
-            f'Got {array_ndim}, expected {expected}.'
+            f'{name} has the incorrect number of dimensions. Got {array_ndim}, expected {expected}.'
         )
         raise ValueError(msg)
 
@@ -906,7 +905,7 @@ def check_instance(
 
     """
     if not isinstance(name, str):
-        msg = f'Name must be a string, got {type(name)} instead.'
+        msg = f'Name must be a string, got {type(name)} instead.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     # Get class info from generics
@@ -1187,16 +1186,10 @@ def check_length(
         check_sorted((min_length, max_length), name='Range')
 
     if min_length is not None and array_len < min_length:
-        msg = (
-            f'{name} must have a minimum length of {min_length}. '
-            f'Got length {array_len} instead.'
-        )
+        msg = f'{name} must have a minimum length of {min_length}. Got length {array_len} instead.'
         raise ValueError(msg)
     if max_length is not None and array_len > max_length:
-        msg = (
-            f'{name} must have a maximum length of {max_length}. '
-            f'Got length {array_len} instead.'
-        )
+        msg = f'{name} must have a maximum length of {max_length}. Got length {array_len} instead.'
         raise ValueError(msg)
 
 
@@ -1206,7 +1199,7 @@ def _validate_shape_value(shape: _ShapeLike) -> _Shape:
         # `None` is used to mean `any shape is allowed` by the array
         #  validation methods, so raise an error here.
         #  Also, setting `None` as a shape is deprecated by NumPy.
-        msg = '`None` is not a valid shape. Use `()` instead.'
+        msg = '`None` is not a valid shape. Use `()` instead.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     # Return early for common inputs

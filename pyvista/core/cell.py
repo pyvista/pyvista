@@ -118,7 +118,7 @@ class Cell(DataObject, _vtk.vtkGenericCell):
         super().__init__()
         if vtk_cell is not None:
             if not isinstance(vtk_cell, _vtk.vtkCell):
-                msg = f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}'
+                msg = f'`vtk_cell` must be a vtkCell, not {type(vtk_cell)}'  # type: ignore[unreachable]
                 raise TypeError(msg)
             # cell type must be set first before deep or shallow copy
             if cell_type is None:

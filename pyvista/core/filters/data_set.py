@@ -1567,7 +1567,7 @@ class DataSetFilters:
             alg.SetComponentModeToUseSelected()
             dim = arr.shape[1]
             if not isinstance(component, (int, np.integer)):
-                msg = 'component must be int'
+                msg = 'component must be int'  # type: ignore[unreachable]
                 raise TypeError(msg)
             if component > (dim - 1) or component < 0:
                 msg = f'scalars has {dim} components: supplied component {component} not in range'
@@ -1578,7 +1578,7 @@ class DataSetFilters:
         elif component_mode == 'any':
             alg.SetComponentModeToUseAny()
         else:
-            msg = f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"
+            msg = f"component_mode must be 'component', 'all', or 'any' got: {component_mode}"  # type: ignore[unreachable]
             raise ValueError(msg)
 
         # Run the threshold
@@ -2159,7 +2159,7 @@ class DataSetFilters:
         elif method == 'flying_edges':
             alg = _vtk.vtkFlyingEdges3D()  # type: ignore[assignment]
         else:
-            msg = f"Method '{method}' is not supported"
+            msg = f"Method '{method}' is not supported"  # type: ignore[unreachable]
             raise ValueError(msg)
 
         if isinstance(scalars, str):
@@ -2620,7 +2620,7 @@ class DataSetFilters:
             # use default "categorical" indices
             indices = np.arange(len(geoms))
         elif not isinstance(indices, (np.ndarray, Sequence)):
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 'If "geom" is a sequence then "indices" must also be a sequence of the same length.'
             )
             raise TypeError(msg)
@@ -2746,7 +2746,7 @@ class DataSetFilters:
         elif color_mode == 'vector':
             alg.SetColorModeToColorByVector()
         else:
-            msg = f"Invalid color mode '{color_mode}'"
+            msg = f"Invalid color mode '{color_mode}'"  # type: ignore[unreachable]
             raise ValueError(msg)
 
         if rng is not None:
@@ -3015,7 +3015,7 @@ class DataSetFilters:
             elif isinstance(scalar_range, Sequence):
                 num_elements = len(scalar_range)
             else:
-                msg = 'Scalar range must be a numpy array or a sequence.'
+                msg = 'Scalar range must be a numpy array or a sequence.'  # type: ignore[unreachable]
                 raise TypeError(msg)
             if num_elements != 2:
                 msg = 'Scalar range must have two elements defining the min and max.'
@@ -3124,7 +3124,7 @@ class DataSetFilters:
             alg.SetClosestPoint(*closest_point)
 
         else:
-            msg = f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"
+            msg = f"Invalid value for `extraction_mode` '{extraction_mode}'. Expected one of the following: 'all', 'largest', 'specified', 'cell_seed', 'point_seed', or 'closest'"  # type: ignore[unreachable]
             raise ValueError(msg)
 
         _update_alg(alg, progress_bar, 'Finding and Labeling Connected Regions.')
@@ -3874,7 +3874,7 @@ class DataSetFilters:
 
         """
         if not isinstance(surface, pyvista.PolyData):
-            msg = '`surface` must be `pyvista.PolyData`'
+            msg = '`surface` must be `pyvista.PolyData`'  # type: ignore[unreachable]
             raise TypeError(msg)
         if check_surface and surface.n_open_edges > 0:
             msg = (
@@ -4192,7 +4192,7 @@ class DataSetFilters:
         elif strategy == 'closest_point':
             interpolator.SetNullPointsStrategyToClosestPoint()
         else:
-            msg = f'strategy `{strategy}` not supported.'
+            msg = f'strategy `{strategy}` not supported.'  # type: ignore[unreachable]
             raise ValueError(msg)
         interpolator.SetPassPointArrays(pass_point_data)
         interpolator.SetPassCellArrays(pass_cell_data)
@@ -6905,7 +6905,7 @@ class DataSetFilters:
         # Check if scalars array given
         scalars_ = set_default_active_scalars(self).name if scalars is None else scalars
         if not isinstance(scalars_, str):
-            msg = 'scalars array must be given as a string name'
+            msg = 'scalars array must be given as a string name'  # type: ignore[unreachable]
             raise TypeError(msg)
         if not any((gradient, divergence, vorticity, qcriterion)):
             msg = 'must set at least one of gradient, divergence, vorticity, or qcriterion'
@@ -8929,7 +8929,7 @@ class DataSetFilters:
         if output_scalars is None:
             output_scalars = default_output_scalars
         if not isinstance(output_scalars, str):
-            msg = f'Output scalars must be a string, got {type(output_scalars)} instead.'
+            msg = f'Output scalars must be a string, got {type(output_scalars)} instead.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         # Do packing

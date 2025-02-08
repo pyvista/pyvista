@@ -49,7 +49,7 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
 
     """
     if not isinstance(interaction_event, (_vtk.vtkCommand.EventIds, str)):
-        msg = (
+        msg = (  # type: ignore[unreachable]
             'Expected type for `interaction_event` is either a str '
             'or an instance of `vtk.vtkCommand.EventIds`.'
             f' ({type(interaction_event)}) was given.'
@@ -67,8 +67,7 @@ def _parse_interaction_event(interaction_event: InteractionEventType):
     if interaction_event not in event_map:
         expected = ', '.join(f'`{e}`' for e in event_map)
         msg = (
-            f'Expected value for `interaction_event` is {expected}.'
-            f' {interaction_event} was given.'
+            f'Expected value for `interaction_event` is {expected}. {interaction_event} was given.'
         )
         raise ValueError(msg)
 

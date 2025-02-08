@@ -178,7 +178,7 @@ class DataObject:
             writer.Write()
 
         if self._WRITERS is None:
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 f'{self.__class__.__name__} writers are not specified,'
                 ' this should be a dict of (file extension: vtkWriter type)'
             )
@@ -623,7 +623,7 @@ class DataObject:
         elif isinstance(dict_, UserDict):
             self._user_dict.data = dict_.data
         else:
-            msg = f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.'
+            msg = f'User dict can only be set with type {dict} or {UserDict}.\nGot {type(dict_)} instead.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
     def _config_user_dict(self: Self) -> None:

@@ -1380,7 +1380,7 @@ class _SliderConfig(_ThemeConfig):
     @classic.setter
     def classic(self, config: _SliderStyleConfig):
         if not isinstance(config, _SliderStyleConfig):
-            msg = 'Configuration type must be `_SliderStyleConfig`'
+            msg = 'Configuration type must be `_SliderStyleConfig`'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._classic = config
 
@@ -1392,7 +1392,7 @@ class _SliderConfig(_ThemeConfig):
     @modern.setter
     def modern(self, config: _SliderStyleConfig):
         if not isinstance(config, _SliderStyleConfig):
-            msg = 'Configuration type must be `_SliderStyleConfig`'
+            msg = 'Configuration type must be `_SliderStyleConfig`'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._modern = config
 
@@ -2120,7 +2120,7 @@ class Theme(_ThemeConfig):
     @trame.setter
     def trame(self, config: _TrameConfig):
         if not isinstance(config, _TrameConfig):
-            msg = 'Configuration type must be `_TrameConfig`.'
+            msg = 'Configuration type must be `_TrameConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._trame = config
 
@@ -2304,7 +2304,7 @@ class Theme(_ThemeConfig):
     @font.setter
     def font(self, config: _Font):
         if not isinstance(config, _Font):
-            msg = 'Configuration type must be `_Font`.'
+            msg = 'Configuration type must be `_Font`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._font = config
 
@@ -2546,7 +2546,7 @@ class Theme(_ThemeConfig):
     @colorbar_horizontal.setter
     def colorbar_horizontal(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            msg = 'Configuration type must be `_ColorbarConfig`.'
+            msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._colorbar_horizontal = config
 
@@ -2572,7 +2572,7 @@ class Theme(_ThemeConfig):
     @colorbar_vertical.setter
     def colorbar_vertical(self, config: _ColorbarConfig):
         if not isinstance(config, _ColorbarConfig):
-            msg = 'Configuration type must be `_ColorbarConfig`.'
+            msg = 'Configuration type must be `_ColorbarConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._colorbar_vertical = config
 
@@ -2773,7 +2773,7 @@ class Theme(_ThemeConfig):
                 msg = 'anti_aliasing must be either "ssaa", "msaa", or "fxaa"'
                 raise ValueError(msg)
         elif anti_aliasing is not None:
-            msg = 'anti_aliasing must be either "ssaa", "msaa", "fxaa", or None'
+            msg = 'anti_aliasing must be either "ssaa", "msaa", "fxaa", or None'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         self._anti_aliasing = anti_aliasing  # type: ignore[assignment]
@@ -2850,8 +2850,8 @@ class Theme(_ThemeConfig):
         mappers = ['fixed_point', 'gpu', 'open_gl', 'smart']
         if mapper not in mappers:
             msg = (
-                f"Mapper ({mapper}) unknown. Available volume mappers "
-                f"include:\n {', '.join(mappers)}"
+                f'Mapper ({mapper}) unknown. Available volume mappers '
+                f'include:\n {", ".join(mappers)}'
             )
             raise ValueError(msg)
 
@@ -2895,7 +2895,7 @@ class Theme(_ThemeConfig):
     @depth_peeling.setter
     def depth_peeling(self, config: _DepthPeelingConfig):
         if not isinstance(config, _DepthPeelingConfig):
-            msg = 'Configuration type must be `_DepthPeelingConfig`.'
+            msg = 'Configuration type must be `_DepthPeelingConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._depth_peeling = config
 
@@ -2918,7 +2918,7 @@ class Theme(_ThemeConfig):
     @silhouette.setter
     def silhouette(self, config: _SilhouetteConfig):
         if not isinstance(config, _SilhouetteConfig):
-            msg = 'Configuration type must be `_SilhouetteConfig`'
+            msg = 'Configuration type must be `_SilhouetteConfig`'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._silhouette = config
 
@@ -2930,7 +2930,7 @@ class Theme(_ThemeConfig):
     @slider_styles.setter
     def slider_styles(self, config: _SliderConfig):
         if not isinstance(config, _SliderConfig):
-            msg = 'Configuration type must be `_SliderConfig`.'
+            msg = 'Configuration type must be `_SliderConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._slider_styles = config
 
@@ -2959,7 +2959,7 @@ class Theme(_ThemeConfig):
     @axes.setter
     def axes(self, config: _AxesConfig):
         if not isinstance(config, _AxesConfig):
-            msg = 'Configuration type must be `_AxesConfig`.'
+            msg = 'Configuration type must be `_AxesConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._axes = config
 
@@ -3200,7 +3200,7 @@ class Theme(_ThemeConfig):
     @lighting_params.setter
     def lighting_params(self, config: _LightingConfig):
         if not isinstance(config, _LightingConfig):
-            msg = 'Configuration type must be `_LightingConfig`.'
+            msg = 'Configuration type must be `_LightingConfig`.'  # type: ignore[unreachable]
             raise TypeError(msg)
         self._lighting_params = config
 

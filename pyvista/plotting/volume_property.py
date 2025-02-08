@@ -142,7 +142,7 @@ class VolumeProperty(_vtk.vtkVolumeProperty):
 
         """
         if not isinstance(lookup_table, pyvista.LookupTable):
-            msg = '`lookup_table` must be a `pyvista.LookupTable`'
+            msg = '`lookup_table` must be a `pyvista.LookupTable`'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         self.SetColor(lookup_table.to_color_tf())

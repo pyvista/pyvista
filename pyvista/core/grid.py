@@ -488,10 +488,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             Ignored dimensions.
 
         """
-        msg = (
-            'The dimensions of a `RectilinearGrid` are implicitly '
-            'defined and thus cannot be set.'
-        )
+        msg = 'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.'
         raise AttributeError(msg)
 
     def cast_to_structured_grid(self: Self) -> StructuredGrid:
@@ -631,7 +628,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             elif isinstance(uinput, (str, Path)):
                 self._from_file(uinput)
             else:
-                msg = (
+                msg = (  # type: ignore[unreachable]
                     'First argument, ``uinput`` must be either ``vtk.vtkImageData`` '
                     f'or a path, not {type(uinput)}.  Use keyword arguments to '
                     'specify dimensions, spacing, and origin. For example:\n\n'

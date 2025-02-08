@@ -2307,7 +2307,7 @@ class PlatonicSolidSource(_vtk.vtkPlatonicSolidSource):
             self.SetSolidType(self._kinds[kind])
             return
 
-        msg = f'Invalid Platonic solid index type "{type(kind).__name__}".'
+        msg = f'Invalid Platonic solid index type "{type(kind).__name__}".'  # type: ignore[unreachable]
         raise ValueError(msg)
 
     @property
@@ -3705,7 +3705,7 @@ class AxesGeometrySource:
             name = 'custom'
             part = geometry.copy()
         else:
-            msg = f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.'
+            msg = f'Geometry must be a string or pyvista.DataSet. Got {type(geometry)}.'  # type: ignore[unreachable]
             raise TypeError(msg)
         part_poly = part if isinstance(part, pyvista.PolyData) else part.extract_geometry()
         part_poly = AxesGeometrySource._normalize_part(part_poly)

@@ -4234,7 +4234,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 volume = wrap(volume)
                 if not is_pyvista_dataset(volume):
-                    msg = f'Object type ({type(volume)}) not supported for plotting in PyVista.'
+                    msg = f'Object type ({type(volume)}) not supported for plotting in PyVista.'  # type: ignore[unreachable]
                     raise TypeError(msg)
         else:
             # HACK: Make a copy so the original object is not altered.
@@ -4379,7 +4379,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'ugrid': UnstructuredGridVolumeRayCastMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers_lookup.keys():
-            msg = f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers_lookup.keys())}"
+            msg = f'Mapper ({mapper}) unknown. Available volume mappers include: {", ".join(mappers_lookup.keys())}'
             raise TypeError(msg)
         self.mapper = mappers_lookup[mapper](theme=self._theme)  # type: ignore[assignment]
 
@@ -6010,8 +6010,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         }
         if extension not in modes:
             msg = (
-                f"Extension ({extension}) is an invalid choice.\n\n"
-                f"Valid options include: {', '.join(modes.keys())}"
+                f'Extension ({extension}) is an invalid choice.\n\n'
+                f'Valid options include: {", ".join(modes.keys())}'
             )
             raise ValueError(msg)
         writer.CompressOff()

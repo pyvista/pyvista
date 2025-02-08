@@ -457,7 +457,7 @@ def read_exodus(
         elif isinstance(sideset, str):
             name = sideset
         else:
-            msg = f'Could not parse sideset ID/name: {sideset}'
+            msg = f'Could not parse sideset ID/name: {sideset}'  # type: ignore[unreachable]
             raise ValueError(msg)
 
         reader.SetSideSetArrayStatus(name, 1)
@@ -890,7 +890,7 @@ def save_pickle(filename: str | Path, mesh: DataObject) -> None:
     if not filename_str.endswith(PICKLE_EXT):
         filename_str += '.pkl'
     if not isinstance(mesh, pyvista.DataObject):
-        msg = f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'
+        msg = f'Only {pyvista.DataObject} are supported for pickling. Got {mesh.__class__} instead.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     with open(filename_str, 'wb') as f:  # noqa: PTH123

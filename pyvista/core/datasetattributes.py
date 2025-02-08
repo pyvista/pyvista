@@ -241,7 +241,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         Accepts an array name.
         """
         if not isinstance(key, str):
-            msg = 'Only strings are valid keys for DataSetAttributes.'
+            msg = 'Only strings are valid keys for DataSetAttributes.'  # type: ignore[unreachable]
             raise TypeError(msg)
         return self.get_array(key)
 
@@ -250,7 +250,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     ) -> None:  # numpydoc ignore=PR01,RT01
         """Implement setting with the ``[]`` operator."""
         if not isinstance(key, str):
-            msg = 'Only strings are valid keys for DataSetAttributes.'
+            msg = 'Only strings are valid keys for DataSetAttributes.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         has_arr = key in self
@@ -275,7 +275,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
     def __delitem__(self: Self, key: str) -> None:
         """Implement del with array name or index."""
         if not isinstance(key, str):
-            msg = 'Only strings are valid keys for DataSetAttributes.'
+            msg = 'Only strings are valid keys for DataSetAttributes.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         self.remove(key)
@@ -616,7 +616,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if not isinstance(name, str):
-            msg = '`name` must be a string'
+            msg = '`name` must be a string'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         vtk_arr = self._prepare_array(data, name, deep_copy)
@@ -770,7 +770,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if data is None:
-            msg = '``data`` cannot be None.'
+            msg = '``data`` cannot be None.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         # convert to numpy type if necessary
@@ -909,7 +909,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if not isinstance(key, str):
-            msg = 'Only strings are valid keys for DataSetAttributes.'
+            msg = 'Only strings are valid keys for DataSetAttributes.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         if key not in self:
@@ -955,7 +955,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         if not isinstance(key, str):
-            msg = 'Only strings are valid keys for DataSetAttributes.'
+            msg = 'Only strings are valid keys for DataSetAttributes.'  # type: ignore[unreachable]
             raise TypeError(msg)
 
         if key not in self:
@@ -1504,7 +1504,7 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
         """
         self._raise_no_texture_coordinates()
         if not isinstance(texture_coordinates, np.ndarray):
-            msg = 'Texture coordinates must be a numpy array'
+            msg = 'Texture coordinates must be a numpy array'  # type: ignore[unreachable]
             raise TypeError(msg)
         if texture_coordinates.ndim != 2:
             msg = 'Texture coordinates must be a 2-dimensional array'

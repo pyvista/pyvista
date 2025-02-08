@@ -223,7 +223,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
     @tick_location.setter
     def tick_location(self, value: str):
         if not isinstance(value, str):
-            msg = f'`tick_location` must be a string, not {type(value)}'
+            msg = f'`tick_location` must be a string, not {type(value)}'  # type: ignore[unreachable]
             raise TypeError(msg)
         value = value.lower()
         if value in ('inside'):
@@ -308,7 +308,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
 
         if vtk_geq_9_3:
             if isinstance(offset, float):
-                msg = f'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a sequence of (x,y) offsets. Setting the x offset to {(x:=0.0)}'
+                msg = f'Setting title_offset with a float is deprecated from vtk >= 9.3. Accepts now a sequence of (x,y) offsets. Setting the x offset to {(x := 0.0)}'
                 warnings.warn(msg, UserWarning)
                 self.SetTitleOffset([x, offset])
             else:
@@ -316,7 +316,7 @@ class CubeAxesActor(_vtk.vtkCubeAxesActor):
             return
 
         if isinstance(offset, MutableSequence):
-            msg = f'Setting title_offset with a sequence is only supported from vtk >= 9.3. Considering only the second value (ie. y-offset) of {(y:=offset[1])}'
+            msg = f'Setting title_offset with a sequence is only supported from vtk >= 9.3. Considering only the second value (ie. y-offset) of {(y := offset[1])}'
             warnings.warn(msg, UserWarning)
             self.SetTitleOffset(y)
             return

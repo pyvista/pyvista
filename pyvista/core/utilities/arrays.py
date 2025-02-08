@@ -105,7 +105,7 @@ def parse_field_choice(
     elif isinstance(field, FieldAssociation):
         return field
     else:
-        msg = f'Data field ({field}) not supported.'
+        msg = f'Data field ({field}) not supported.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
 
@@ -136,7 +136,7 @@ def _coerce_pointslike_arg(
         points = np.asarray(points)
 
     if not isinstance(points, np.ndarray):
-        msg = 'Given points must be convertible to a numerical array.'
+        msg = 'Given points must be convertible to a numerical array.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     if points.ndim > 2:
@@ -196,7 +196,7 @@ def copy_vtk_array(array: _vtkArrayType, deep: bool = True) -> _vtkArrayType:
 
     """
     if not isinstance(array, (_vtk.vtkDataArray, _vtk.vtkAbstractArray)):
-        msg = f'Invalid type {type(array)}.'
+        msg = f'Invalid type {type(array)}.'  # type: ignore[unreachable]
         raise TypeError(msg)
 
     new_array = type(array)()
@@ -759,7 +759,7 @@ def array_from_vtkmatrix(matrix: _vtk.vtkMatrix3x3 | _vtk.vtkMatrix4x4) -> Numpy
     elif isinstance(matrix, _vtk.vtkMatrix4x4):
         shape = (4, 4)
     else:
-        msg = (
+        msg = (  # type: ignore[unreachable]
             'Expected vtk.vtkMatrix3x3 or vtk.vtkMatrix4x4 input,'
             f' got {type(matrix).__name__} instead.'
         )

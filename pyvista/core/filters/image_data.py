@@ -993,7 +993,7 @@ class ImageDataFilters(DataSetFilters):
         elif output_mesh_type == 'triangles':
             alg.SetOutputMeshTypeToTriangles()
         else:
-            msg = f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'
+            msg = f'Invalid output mesh type "{output_mesh_type}", use "quads" or "triangles"'  # type: ignore[unreachable]
             raise ValueError(msg)
         if output_style == 'default':
             alg.SetOutputStyleToDefault()
@@ -2738,7 +2738,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetExtractionModeToSeededRegions()
             alg.SetSeedData(point_seeds)
         else:
-            msg = (
+            msg = (  # type: ignore[unreachable]
                 f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "seeded".'
             )
             raise ValueError(msg)
@@ -2757,7 +2757,7 @@ class ImageDataFilters(DataSetFilters):
                 raise ValueError(msg)
             alg.SetLabelModeToSeedScalar()
         else:
-            msg = f'Invalid `label_mode` "{label_mode}", use "size", "constant", or "seeds".'
+            msg = f'Invalid `label_mode` "{label_mode}", use "size", "constant", or "seeds".'  # type: ignore[unreachable]
             raise ValueError(msg)
 
         _update_alg(alg, progress_bar, 'Identifying and Labelling Connected Regions')
@@ -3429,7 +3429,7 @@ class ImageDataFilters(DataSetFilters):
             interpolator = _vtk.vtkImageSincInterpolator()
             interpolator.SetWindowFunctionToBlackman()
         else:  # pragma: no cover
-            msg = f"Unexpected interpolation mode '{interpolation}'."
+            msg = f"Unexpected interpolation mode '{interpolation}'."  # type: ignore[unreachable]
             raise RuntimeError(msg)
 
         if anti_aliasing and np.any(magnification_factors < 1.0):
