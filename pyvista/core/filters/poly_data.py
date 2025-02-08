@@ -1583,7 +1583,7 @@ class PolyDataFilters(DataSetFilters):
 
         .. versionchanged:: 0.45
           ``scalars``, ``vectors``, ``normals``, ``tcoords`` and ``tensors`` are now disabled by default.
-          They can be enabled alltogether using ``enable_all_attribute_error``.
+          They can be enabled all together using ``enable_all_attribute_error``.
 
 
         Parameters
