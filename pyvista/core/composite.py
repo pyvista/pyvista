@@ -499,7 +499,7 @@ class MultiBlock(
         Flatten the ``MultiBlock`` using a breadth-first ordering. Note the difference
         between this ordering of blocks and the default ordering returned earlier.
 
-        >>> flat = nested.flatten(order='breadth')
+        >>> flat = nested.flatten(order='nested_last')
         >>> type(flat[0]), type(flat[1]), type(flat[2])
         (<class 'NoneType'>, <class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>)
 
