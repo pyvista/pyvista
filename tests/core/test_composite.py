@@ -966,7 +966,7 @@ def test_recursive_iterator_order():
     assert isinstance(nested[2], pv.PolyData)
 
     # Test adaptive, expect nested dataset in center
-    iterator = list(nested.recursive_iterator('items', order='hybrid', skip_empty=False))
+    iterator = list(nested.recursive_iterator('items', order=None, skip_empty=False))
     assert iterator[0][0] == 'image'
     assert iterator[1][0] == 'grid'
     assert iterator[2][0] == 'poly'
@@ -975,7 +975,7 @@ def test_recursive_iterator_order():
     assert isinstance(iterator[2][1], pv.PolyData)
 
     # Test breadth, expect nested dataset last
-    iterator = list(nested.recursive_iterator('items', order='breadth', skip_empty=False))
+    iterator = list(nested.recursive_iterator('items', order='nested_last', skip_empty=False))
     assert iterator[0][0] == 'image'
     assert iterator[1][0] == 'poly'
     assert iterator[2][0] == 'grid'
@@ -984,7 +984,7 @@ def test_recursive_iterator_order():
     assert isinstance(iterator[2][1], pv.UnstructuredGrid)
 
     # Test depth, expect nested dataset first
-    iterator = list(nested.recursive_iterator('items', order='depth', skip_empty=False))
+    iterator = list(nested.recursive_iterator('items', order='nested_first', skip_empty=False))
     assert iterator[0][0] == 'grid'
     assert iterator[1][0] == 'image'
     assert iterator[2][0] == 'poly'

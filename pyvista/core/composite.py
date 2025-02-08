@@ -179,7 +179,7 @@ class MultiBlock(
     def recursive_iterator(
         self: MultiBlock,
         contents: Literal['names', 'blocks', 'items'] = 'blocks',
-        order: Literal['breadth', 'depth', 'hybrid'] = 'hybrid',
+        order: Literal['nested_first', 'nested_last'] | None = None,
         *,
         skip_none: bool = True,
         skip_empty: bool = True,
@@ -199,16 +199,14 @@ class MultiBlock(
             - ``'blocks'``: Return an iterator with nested blocks.
             - ``'items'``: Return an iterator with nested ``(name, block)`` pairs.
 
-        order : 'breadth', 'depth', 'hybrid', default: 'hybrid'
+        order : 'nested_first', 'nested_last', optional
             Order in which to iterate through nested blocks.
 
-            - ``'breadth'``: Iterate breadth-first. This option reorders the blocks to
-              iterate through nested ``MultiBlock`` blocks last.
-            - ``'depth'``: Iterate depth-first. This option reorders the blocks to
-              iterate through nested ``MultiBlock`` blocks first.
-            - ``'hybrid'``: Iterate breadth-first initially but iterate through
-              any nested blocks when they are encountered. This iterates through the
-              ``MultiBlock`` recursively as-is without reordering.
+            - ``'nested_first'``: Iterate through nested ``MultiBlock`` blocks first.
+            - ``'nested_last'``: Iterate through nested ``MultiBlock`` blocks last.
+
+            By default, the ``MultiBlock`` is iterated recursively as-is without
+            changing the order.
 
         skip_none : bool, default: True
             Do not include ``None`` blocks in the iterator.
@@ -303,7 +301,9 @@ class MultiBlock(
         _validation.check_contains(
             ['names', 'blocks', 'items'], must_contain=contents, name='contents'
         )
-        _validation.check_contains(['breadth', 'depth', 'hybrid'], must_contain=order, name='order')
+        _validation.check_contains(
+            ['nested_first', 'nested_last', None], must_contain=order, name='order'
+        )
         return self._recursive_iterator(
             names=self.keys(),
             contents=contents,
@@ -319,14 +319,14 @@ class MultiBlock(
         *,
         names: Iterable[str | None],
         contents: Literal['names', 'blocks', 'items'],
-        order: Literal['breadth', 'depth', 'hybrid'],
+        order: Literal['nested_first', 'nested_last'] | None = None,
         skip_none: bool,
         skip_empty: bool,
         prepend_names: bool,
         separator: str,
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
         # Determine ordering of blocks and names to iterate through
-        if order == 'hybrid':
+        if order is None:
             blocks: Sequence[_TypeMultiBlockLeaf] = self
         else:
             # Need to reorder blocks
@@ -341,7 +341,7 @@ class MultiBlock(
                 else:
                     other_names.append(name)
                     other_blocks.append(block)
-            if order == 'breadth':
+            if order == 'nested_last':
                 names = [*other_names, *multi_names]
                 blocks = [*other_blocks, *multi_blocks]
             else:  # 'depth'
@@ -383,7 +383,7 @@ class MultiBlock(
     def flatten(
         self,
         *,
-        order: Literal['breadth', 'depth', 'hybrid'] = 'hybrid',
+        order: Literal['nested_first', 'nested_last'] | None = None,
         name_mode: Literal['preserve', 'prepend', 'reset'] = 'preserve',
         separator: str = '::',
         copy: bool = True,
@@ -403,16 +403,14 @@ class MultiBlock(
 
         Parameters
         ----------
-        order : 'breadth', 'depth', 'hybrid', default: 'hybrid'
+        order : 'nested_last', 'nested_first', optional
             Order in which to flatten the contents.
 
-            - ``'breadth'``: Flatten breadth-first. This option reorders the blocks to
-              flatten nested ``MultiBlock`` blocks last.
-            - ``'depth'``: Flatten depth-first. This option reorders the blocks to
-              flatten nested ``MultiBlock`` blocks first.
-            - ``'hybrid'``: Flatten breadth-first initially but flatten any nested
-              blocks when they are encountered. This flattens the ``MultiBlock``
-              recursively as-is without reordering.
+            - ``'nested_first'``: Flatten nested ``MultiBlock`` blocks first.
+            - ``'nested_last'``: Flatten nested ``MultiBlock`` blocks last.
+
+            By default, the ``MultiBlock`` is flattened recursively as-is without
+            changing the order.
 
         name_mode : 'preserve' | 'prepend' | 'reset', default: 'preserve'
             Mode for naming blocks in the flattened output.
