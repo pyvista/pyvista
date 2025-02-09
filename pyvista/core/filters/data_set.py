@@ -43,6 +43,7 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from pyvista import Color
     from pyvista import DataSet
+    from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PolyData
     from pyvista import RectilinearGrid
@@ -9428,7 +9429,7 @@ class DataSetFilters:
         foreground_value : int, default: 1
             Foreground value of the generated mask.
 
-        reference_volume : pyvista.ImageData, optional
+        reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
 
@@ -9479,7 +9480,7 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.ImageData
+        ImageData
             Generated binary mask with a ``'mask'``  point data array. The data array
             has dtype :class:`numpy.uint8` if the foreground and background values are
             unsigned and less than 256.
@@ -9501,7 +9502,7 @@ class DataSetFilters:
             Convert voxels represented as points to :attr:`~pyvista.CellType.VOXEL`
             cells.
 
-        pyvista.ImageData
+        ImageData
             Class used to build custom ``reference_volume``.
 
         Examples
@@ -9804,12 +9805,12 @@ class DataSetFilters:
 
         return output_volume
 
-    def _voxelize_binary_masK_cells(  # type: ignore[misc]
+    def _voxelize_binary_mask_cells(  # type: ignore[misc]
         self: DataSet,
         *,
         background_value: float = 0.0,
         foreground_value: float = 1.0,
-        reference_volume: pyvista.ImageData | None = None,
+        reference_volume: ImageData | None,
         dimensions: VectorLike[int] | None,
         spacing: float | VectorLike[float] | None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
@@ -9841,7 +9842,7 @@ class DataSetFilters:
         *,
         background_value: int | float = 0,  # noqa: PYI041
         foreground_value: int | float = 1,  # noqa: PYI041
-        reference_volume: pyvista.ImageData | None = None,
+        reference_volume: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
@@ -9887,7 +9888,7 @@ class DataSetFilters:
         foreground_value : int, default: 1
             Foreground value of the generated grid.
 
-        reference_volume : pyvista.ImageData, optional
+        reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, and ``spacing`` as the reference.
 
@@ -9943,17 +9944,17 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.RectilinearGrid
+        RectilinearGrid
             RectilinearGrid as voxelized volume with discretized cells.
 
         See Also
         --------
         voxelize
-            Similar function that returns a :class:`pyvista.UnstructuredGrid` of
+            Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
             :attr:`~pyvista.CellType.VOXEL` cells.
 
         voxelize_binary_mask
-            Similar function that returns a :class:`pyvista.ImageData` with point data.
+            Similar function that returns a :class:`~pyvista.ImageData` with point data.
 
         Examples
         --------
@@ -9998,7 +9999,7 @@ class DataSetFilters:
         >>> slices.plot(scalars='mask', show_edges=True, cpos=cpos)
 
         """
-        voxel_cells = self._voxelize_binary_masK_cells(
+        voxel_cells = self._voxelize_binary_mask_cells(
             background_value=background_value,
             foreground_value=foreground_value,
             reference_volume=reference_volume,
@@ -10014,6 +10015,7 @@ class DataSetFilters:
     def voxelize(  # type: ignore[misc]
         self: DataSet,
         *,
+        reference_volume: ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
@@ -10049,6 +10051,10 @@ class DataSetFilters:
 
         Parameters
         ----------
+        reference_volume : ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            and ``spacing`` as the reference.
+
         dimensions : VectorLike[int], optional
             Dimensions of the voxelized mesh. Set this value to control the
             dimensions explicitly. If unset, the dimensions are defined implicitly
@@ -10101,16 +10107,16 @@ class DataSetFilters:
 
         Returns
         -------
-        pyvista.UnstructuredGrid
+        UnstructuredGrid
             Voxelized unstructured grid of the original mesh.
 
         See Also
         --------
         voxelize_rectilinear
-            Similar function that returns a :class:`pyvista.RectilinearGrid` with cell data.
+            Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
         voxelize_binary_mask
-            Similar function that returns a :class:`pyvista.ImageData` with point data.
+            Similar function that returns a :class:`~pyvista.ImageData` with point data.
 
         Examples
         --------
@@ -10142,7 +10148,8 @@ class DataSetFilters:
         >>> vox.plot(show_edges=True)
 
         """
-        voxel_cells = self._voxelize_binary_masK_cells(
+        voxel_cells = self._voxelize_binary_mask_cells(
+            reference_volume=reference_volume,
             dimensions=dimensions,
             spacing=spacing,
             rounding_func=rounding_func,
