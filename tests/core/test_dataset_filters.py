@@ -5118,7 +5118,7 @@ def test_voxelize_rectilinear(ant):
     # Test dimensions
     dims = np.array((10, 20, 30))
     vox = ant.voxelize_rectilinear(dimensions=dims)
-    assert np.array_equal(vox.dimensions, dims + 1)
+    assert np.array_equal(vox.dimensions, dims)
 
     # Test spacing by voxelizing as a single cell
     bnds = ant.bounds
@@ -5168,7 +5168,7 @@ def test_voxelize(ant):
     # Test dimensions
     dims = np.array((10, 20, 30))
     vox = pv.Cube().voxelize(dimensions=dims)
-    assert np.array_equal(vox.n_cells, np.prod(dims))
+    assert np.array_equal(vox.n_points, np.prod(dims))
 
     # Test spacing by voxelizing as a single cell
     bnds = ant.bounds

@@ -9368,7 +9368,7 @@ class DataSetFilters:
     ):
         """Voxelize mesh as a binary :class:`~pyvista.ImageData` mask.
 
-        The binary mask is a point data array where points inside and outside of the
+        The binary mask is a point data array ``mask`` where points inside and outside of the
         input surface are labelled with ``foreground_value`` and ``background_value``,
         respectively.
 
@@ -9804,6 +9804,38 @@ class DataSetFilters:
 
         return output_volume
 
+    def _voxelize_binary_masK_cells(
+        self: DataSet,
+        *,
+        background_value: float = 0.0,
+        foreground_value: float = 1.0,
+        reference_volume: pyvista.ImageData | None = None,
+        dimensions: VectorLike[int] | None,
+        spacing: float | VectorLike[float] | None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None,
+        cell_length_percentile: float | None,
+        cell_length_sample_size: int | None,
+        progress_bar: bool,
+    ):
+        if dimensions is not None:
+            dimensions = _validation.validate_array3(
+                dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
+            )
+            dimensions = dimensions - 1
+
+        binary_mask = self.voxelize_binary_mask(
+            background_value=background_value,
+            foreground_value=foreground_value,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            progress_bar=progress_bar,
+        )
+        return binary_mask.points_to_cells(dimensionality='3D', copy=False)
+
     def voxelize_rectilinear(  # type: ignore[misc]
         self: DataSet,
         *,
@@ -9819,31 +9851,58 @@ class DataSetFilters:
     ) -> RectilinearGrid:
         """Voxelize mesh to create a RectilinearGrid voxel volume.
 
-        Creates a voxel volume that encloses the input mesh and discretizes the cells
-        within the volume that intersect or are contained within the input mesh.
+        The voxelization can be controlled in several ways:
 
-        A ``'mask'`` cell data array is included with the output. Cells with a value
-        of ``1`` are inside the mesh and ``0`` are outside of it.
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           surface's cells using the specified percentile.
+
+        Use ``reference_volume`` for full control of the output grid's geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        grid fits the bounds of the input mesh.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        used by default to estimate the spacing. On systems with VTK < 9.2, the default
+        spacing is set to ``1/100`` of the input mesh's length.
+
+        A point data array ``mask`` is included where points inside and outside of the
+        input surface are labelled with ``foreground_value`` and ``background_value``,
+        respectively.
+
+        .. note::
+
+            This method is a wrapper around :meth:`voxelize_binary_mask`. See that
+            method for additional information.
 
         Parameters
         ----------
         background_value : int, default: 0
-            Background value of the generated mask.
+            Background value of the generated grid.
 
         foreground_value : int, default: 1
-            Foreground value of the generated mask.
+            Foreground value of the generated grid.
 
         reference_volume : pyvista.ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, and ``spacing`` as the reference.
 
         dimensions : VectorLike[int], optional
-            Dimensions of the generated mask image. Set this value to control the
+            Dimensions of the generated rectilinear grid. Set this value to control the
             dimensions explicitly. If unset, the dimensions are defined implicitly
             through other parameter. See summary and examples for details.
 
+            .. note::
+
+                Dimensions is the number of points along each axis, not cells. Set
+                dimensions to ``N+1`` instead for ``N`` cells along each axis.
+
         spacing : float | VectorLike[float], optional
-            Approximate spacing to use for the generated mask image. Set this value
+            Approximate spacing to use for the generated grid. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
 
@@ -9939,7 +9998,7 @@ class DataSetFilters:
         >>> slices.plot(scalars='mask', show_edges=True, cpos=cpos)
 
         """
-        binary_mask = self.voxelize_binary_mask(
+        voxel_cells = self._voxelize_binary_masK_cells(
             background_value=background_value,
             foreground_value=foreground_value,
             reference_volume=reference_volume,
@@ -9950,7 +10009,6 @@ class DataSetFilters:
             cell_length_sample_size=cell_length_sample_size,
             progress_bar=progress_bar,
         )
-        voxel_cells = binary_mask.points_to_cells(dimensionality='3D', copy=False)
         return voxel_cells.cast_to_rectilinear_grid()
 
     def voxelize(  # type: ignore[misc]
@@ -9965,15 +10023,44 @@ class DataSetFilters:
     ) -> UnstructuredGrid:
         """Voxelize mesh to UnstructuredGrid.
 
+        The voxelization can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           surface's cells using the specified percentile.
+
+        Use ``reference_volume`` for full control of the output geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        mesh fits the bounds of the input mesh.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        used by default to estimate the spacing. On systems with VTK < 9.2, the default
+        spacing is set to ``1/100`` of the input mesh's length.
+
+        .. note::
+
+            This method is a wrapper around :meth:`voxelize_binary_mask`. See that
+            method for additional information.
+
         Parameters
         ----------
         dimensions : VectorLike[int], optional
-            Dimensions of the generated mask image. Set this value to control the
+            Dimensions of the voxelized mesh. Set this value to control the
             dimensions explicitly. If unset, the dimensions are defined implicitly
             through other parameter. See summary and examples for details.
 
+            .. note::
+
+                Dimensions is the number of points along each axis, not cells. Set
+                dimensions to ``N+1`` instead for ``N`` cells along each axis.
+
         spacing : float | VectorLike[float], optional
-            Approximate spacing to use for the generated mask image. Set this value
+            Approximate spacing to use for the generated mesh. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
 
@@ -10055,7 +10142,7 @@ class DataSetFilters:
         >>> vox.plot(show_edges=True)
 
         """
-        binary_mask = self.voxelize_binary_mask(
+        voxel_cells = self._voxelize_binary_masK_cells(
             dimensions=dimensions,
             spacing=spacing,
             rounding_func=rounding_func,
@@ -10063,7 +10150,6 @@ class DataSetFilters:
             cell_length_sample_size=cell_length_sample_size,
             progress_bar=progress_bar,
         )
-        voxel_cells = binary_mask.points_to_cells(dimensionality='3D', copy=False)
         ugrid = voxel_cells.threshold(0.5)
         del ugrid.cell_data['mask']
         return ugrid
