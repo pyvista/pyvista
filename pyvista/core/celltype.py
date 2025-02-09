@@ -127,7 +127,7 @@ class CellType(IntEnum):
         :ref:`polyhedron_example`
             Example creating a mesh with :attr:`~pyvista.CellType.POLYHEDRON` cells.
 
-        :ref:`examples_cells`
+        :mod:`pyvista.examples.cells`
             Examples creating a mesh comprising a single cell.
 
     Examples
