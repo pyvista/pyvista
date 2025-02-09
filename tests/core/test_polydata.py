@@ -14,6 +14,7 @@ import pyvista as pv
 from pyvista import examples
 from pyvista.core.errors import CellSizeError
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import PyVistaFutureWarning
 
 radius = 0.5
@@ -1144,17 +1145,39 @@ def test_extrude_capping_warnings():
     pv.vtk_version_info >= (9, 4, 0),
     reason='Something has changed in VTK 9.4.0 that causes this test to fail',
 )
-def test_flip_normals(sphere, plane):
-    sphere_flipped = sphere.copy()
-    sphere_flipped.flip_normals()
+def test_flip_normals(sphere):
+    with pytest.warns(PyVistaDeprecationWarning):
+        sphere.flip_normals()
 
-    sphere.compute_normals(inplace=True)
-    sphere_flipped.compute_normals(inplace=True)
-    assert np.allclose(sphere_flipped.point_data['Normals'], -sphere.point_data['Normals'])
 
-    # invalid case
-    with pytest.raises(NotAllTrianglesError):
-        plane.flip_normals()
+@pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
+def test_flip_normal_vectors(mesh):
+    mesh = mesh.compute_normals()
+    flipped = mesh.flip_normal_vectors(inplace=True, progress_bar=True)
+    assert flipped is mesh
+
+    flipped = mesh.flip_normal_vectors()
+    assert flipped is not mesh
+
+    assert np.allclose(flipped.point_data['Normals'], -mesh.point_data['Normals'])
+    assert np.allclose(flipped.cell_data['Normals'], -mesh.cell_data['Normals'])
+
+    # Test ordering is unaffected
+    assert np.allclose(flipped.faces, mesh.faces)
+
+
+@pytest.mark.parametrize('mesh', [pv.Sphere(), pv.Plane()])
+def test_flip_faces(mesh):
+    flipped = mesh.flip_faces(inplace=True, progress_bar=True)
+    assert flipped is mesh
+
+    flipped = mesh.flip_faces()
+    assert flipped is not mesh
+
+    assert np.allclose(flipped.regular_faces[0], mesh.regular_faces[0][::-1])
+
+    # Test normals are unaffected
+    assert np.allclose(flipped.point_data['Normals'], mesh.point_data['Normals'])
 
 
 def test_n_verts():

@@ -28,10 +28,9 @@ Datasets in this section are organized by the module they are imported from.
 
             .. include:: /api/examples/dataset-gallery/downloads_carousel.rst
 
-            ..
-                TODO: add planets
-                .. tab-item:: Planets
-                .. include:: /api/examples/dataset-gallery/planets_carousel.rst
+        .. tab-item:: Planets
+
+            .. include:: /api/examples/dataset-gallery/planets_carousel.rst
 
 
 Browse Datasets by Type
