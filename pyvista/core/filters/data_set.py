@@ -9369,7 +9369,7 @@ class DataSetFilters:
     ):
         """Voxelize mesh as a binary :class:`~pyvista.ImageData` mask.
 
-        The binary mask is a point data array ``mask`` where points inside and outside of the
+        The binary mask is a point data array where points inside and outside of the
         input surface are labelled with ``foreground_value`` and ``background_value``,
         respectively.
 
