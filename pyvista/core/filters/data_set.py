@@ -9804,7 +9804,7 @@ class DataSetFilters:
 
         return output_volume
 
-    def _voxelize_binary_masK_cells(
+    def _voxelize_binary_masK_cells(  # type: ignore[misc]
         self: DataSet,
         *,
         background_value: float = 0.0,
@@ -9818,10 +9818,10 @@ class DataSetFilters:
         progress_bar: bool,
     ):
         if dimensions is not None:
-            dimensions = _validation.validate_array3(
+            dimensions_ = _validation.validate_array3(
                 dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
             )
-            dimensions = dimensions - 1
+            dimensions = cast(NumpyArray[int], dimensions_) - 1
 
         binary_mask = self.voxelize_binary_mask(
             background_value=background_value,
