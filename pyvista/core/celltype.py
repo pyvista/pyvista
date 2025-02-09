@@ -124,7 +124,10 @@ class CellType(IntEnum):
         :ref:`linear_cells_example`
             Detailed example using linear cells.
 
-        :ref:`examples_cells`
+        :ref:`polyhedron_example`
+            Example creating a mesh with :attr:`~pyvista.CellType.POLYHEDRON` cells.
+
+        :mod:`pyvista.examples.cells`
             Examples creating a mesh comprising a single cell.
 
     Examples
@@ -972,6 +975,30 @@ class CellType(IntEnum):
     POLYHEDRON = _CellTypeTuple(
         value=_vtk.VTK_POLYHEDRON,
         cell_class=_vtk.vtkPolyhedron,
+        example='Polyhedron',
+        short_doc="""
+        Represents a 3D cell defined by a set of polygonal faces.
+
+        """,
+        long_doc="""
+        Polyhedrons must:
+
+        - be watertight: the faces describing the polyhedron should define
+          an enclosed volume with a clear “inside” and “outside”
+        - have planar faces: all points defining a face should be in the
+          same 2D plane
+        - not be self-intersecting: for example, a face of the polyhedron
+          can't intersect other ones
+        - not contain zero-thickness portions: adjacent faces should not
+          overlap each other even partially
+        - not contain disconnected elements: detached vertice(s), edge(s) or face(s)
+        - be simply connected: vtkPolyhedron must describe a single polyhedron
+        - not contain duplicate elements: each point index and each face
+          description should be unique
+        - not contain “internal” or “external” faces: for each face,
+          one side should be “inside” the cell, the other side “outside”
+
+        """,
         points_override='variable',
         edges_override='variable',
         faces_override='variable',

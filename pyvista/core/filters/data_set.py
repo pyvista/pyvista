@@ -9204,7 +9204,7 @@ class DataSetFilters:
         >>> colored_labels.plot()
 
         Color the mesh with fewer colors than there are label values. In this case
-        the ``'cycle'`` mode is used by default and the colors are re-used.
+        the ``'cycle'`` mode is used by default and the colors are reused.
 
         >>> colored_labels = labeled_data.color_labels(['red', 'lime', 'blue'])
         >>> colored_labels.plot()

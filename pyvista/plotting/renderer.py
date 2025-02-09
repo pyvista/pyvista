@@ -489,10 +489,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         def _update_bounds(bounds) -> None:
             def update_axis(ax) -> None:
-                if bounds[ax * 2] < the_bounds[ax * 2]:
-                    the_bounds[ax * 2] = bounds[ax * 2]
-                if bounds[ax * 2 + 1] > the_bounds[ax * 2 + 1]:
-                    the_bounds[ax * 2 + 1] = bounds[ax * 2 + 1]
+                the_bounds[ax * 2] = min(bounds[ax * 2], the_bounds[ax * 2])
+                the_bounds[ax * 2 + 1] = max(bounds[ax * 2 + 1], the_bounds[ax * 2 + 1])
 
             for ax in range(3):
                 update_axis(ax)
