@@ -3074,7 +3074,7 @@ class StackPlot(_MultiCompPlot, _vtk.vtkPlotStacked):
             self.visible = False
 
 
-class Chart2D(_vtk.vtkPyVistaOverride, _Chart, _vtk.vtkChartXY):
+class Chart2D(_Chart, _vtk.vtkChartXY):
     """2D chart class similar to a ``matplotlib`` figure.
 
     Parameters
