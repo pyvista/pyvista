@@ -8,6 +8,7 @@ from typing import ClassVar
 import numpy as np
 
 import pyvista
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 
 
 @no_new_attr
-class Actor(Prop3D, _vtk.vtkActor):
+class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
     """Wrap vtkActor.
 
     This class represents the geometry & properties in a rendered
@@ -95,19 +96,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         else:
             self.prop = prop
         self._name = name
-
-    @property
-    def name(self) -> str:  # numpydoc ignore=RT01
-        """Get or set the unique name identifier used by PyVista."""
-        if self._name is None:
-            self._name = f'{type(self).__name__}({self.memory_address})'
-        return self._name
-
-    @name.setter
-    def name(self, value: str):
-        if not value:
-            raise ValueError('Name must be truthy.')
-        self._name = value
 
     @property
     def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01

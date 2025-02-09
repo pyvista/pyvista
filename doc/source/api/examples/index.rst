@@ -58,6 +58,7 @@ API Reference
    examples.planets
    examples.vrml
    examples.download_3ds
+   examples.gltf
    demos.demos
 
 Usage Considerations
@@ -171,3 +172,4 @@ cell types.
    BiQuadraticQuadraticHexahedron
    BiQuadraticTriangle
    CubicLine
+   Polyhedron

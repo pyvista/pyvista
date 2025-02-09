@@ -250,7 +250,7 @@ def test_actor_center(klass, actor, dummy_actor):
 
 def test_actor_name(actor):
     actor.name = 1
-    assert actor._name == 1
+    assert actor._name == '1'
 
     with pytest.raises(ValueError, match='Name must be truthy'):
         actor.name = None
