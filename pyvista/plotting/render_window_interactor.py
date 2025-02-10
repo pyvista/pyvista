@@ -1045,7 +1045,7 @@ class RenderWindowInteractor:
             callback = partial(try_callback, wheel_zoom_callback)
 
             for event in 'MouseWheelForwardEvent', 'MouseWheelBackwardEvent':
-                self._style_class.add_observer(event, callback)  # pyright: ignore[reportAttributeAccessIssue]
+                self._style_class.add_observer(event, callback)  # type: ignore[attr-defined]
 
         if shift_pans:
 
