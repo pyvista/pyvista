@@ -2466,10 +2466,9 @@ def test_where_is():
         assert isinstance(loc, tuple)
 
 
-def test_log_scale():
-    mesh = examples.load_uniform()
+def test_log_scale(uniform):
     plotter = pv.Plotter()
-    plotter.add_mesh(mesh, log_scale=True)
+    plotter.add_mesh(uniform, log_scale=True, clim=[-1, uniform.get_data_range()[1]])
     plotter.show()
 
 
