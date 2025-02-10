@@ -1750,7 +1750,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetTCoordsWeight(tcoords_weight)
         alg.SetTensorsWeight(tensors_weight)
         alg.SetTargetReduction(target_reduction)
-        if pyvista.vtk_version_info < (9, 3, 0):
+        if pyvista.vtk_version_info < (9, 3, 0):  # pragma: no cover
             if boundary_constraints:
                 warnings.warn('`boundary_constraints` requires vtk >= 9.3.')
         else:
