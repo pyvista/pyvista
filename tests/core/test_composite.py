@@ -974,7 +974,7 @@ def test_recursive_iterator_order():
     assert isinstance(iterator[1][1], pv.UnstructuredGrid)
     assert isinstance(iterator[2][1], pv.PolyData)
 
-    # Test breadth, expect nested dataset last
+    # Expect nested dataset last
     iterator = list(nested.recursive_iterator('items', order='nested_last', skip_empty=False))
     assert iterator[0][0] == 'image'
     assert iterator[1][0] == 'poly'
@@ -983,7 +983,7 @@ def test_recursive_iterator_order():
     assert isinstance(iterator[1][1], pv.PolyData)
     assert isinstance(iterator[2][1], pv.UnstructuredGrid)
 
-    # Test depth, expect nested dataset first
+    # Expect nested dataset first
     iterator = list(nested.recursive_iterator('items', order='nested_first', skip_empty=False))
     assert iterator[0][0] == 'grid'
     assert iterator[1][0] == 'image'

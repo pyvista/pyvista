@@ -344,7 +344,7 @@ class MultiBlock(
             if order == 'nested_last':
                 names = [*other_names, *multi_names]
                 blocks = [*other_blocks, *multi_blocks]
-            else:  # 'depth'
+            else:
                 names = [*multi_names, *other_names]
                 blocks = [*multi_blocks, *other_blocks]
 
