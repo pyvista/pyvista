@@ -370,15 +370,14 @@ class MultiBlock(
                     prepend_names=prepend_names,
                     separator=separator,
                 )
-            else:
-                if contents == 'names':
-                    yield name
-                elif contents == 'blocks':
-                    yield block
-                elif contents == 'items':
-                    yield name, block
-                else:  # pragma: no cover
-                    raise RuntimeError(f"Unexpected contents '{contents}'.")
+            elif contents == 'names':
+                yield name
+            elif contents == 'blocks':
+                yield block
+            elif contents == 'items':
+                yield name, block
+            else:  # pragma: no cover
+                raise RuntimeError(f"Unexpected contents '{contents}'.")
 
     def flatten(
         self,
