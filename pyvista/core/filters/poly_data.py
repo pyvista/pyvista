@@ -1599,12 +1599,6 @@ class PolyDataFilters(DataSetFilters):
             volume preservation is disabled and if ``attribute_error``
             is active, these errors can be large.
 
-        enable_all_attribute_error: bool, default: False
-            This flag control the default value of all attribute metrics to
-            eventually include them in the error calculation
-
-            .. versionadded:: 0.45.0
-
         attribute_error : bool, default: False
             Decide whether to include data attributes in the error metric. If
             ``False``, then only geometric error is used to control the
@@ -1622,7 +1616,7 @@ class PolyDataFilters(DataSetFilters):
 
         normals : bool, default: False
             See ``scalars`` parameter.
-            .. versionadded:: 0.45.0
+            .. versionchanged:: 0.45.0
 
         tcoords : bool, default: False
             See ``scalars`` parameter.
@@ -1647,6 +1641,12 @@ class PolyDataFilters(DataSetFilters):
         tensors_weight : float, default: 0.1
             See ``scalars_weight`` parameter.
 
+        inplace : bool, default: False
+            Whether to update the mesh in-place.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
         boundary_constraints: bool, default: False
             Use the legacy weighting by boundary_edge_length instead of by
             boundary_edge_length^2 for backwards compatibility.
@@ -1661,11 +1661,11 @@ class PolyDataFilters(DataSetFilters):
 
             .. versionadded:: 0.45.0
 
-        inplace : bool, default: False
-            Whether to update the mesh in-place.
+        enable_all_attribute_error: bool, default: False
+            This flag control the default value of all attribute metrics to
+            eventually include them in the error calculation
 
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
+            .. versionadded:: 0.45.0
 
         Returns
         -------
