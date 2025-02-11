@@ -9869,6 +9869,8 @@ class DataSetFilters:
         input surface are labelled with ``foreground_value`` and ``background_value``,
         respectively.
 
+        .. versionadded:: 0.45
+
         .. note::
 
             This method is a wrapper around :meth:`voxelize_binary_mask`. See that
@@ -10037,6 +10039,8 @@ class DataSetFilters:
         If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
         used by default to estimate the spacing. On systems with VTK < 9.2, the default
         spacing is set to ``1/100`` of the input mesh's length.
+
+        .. versionadded:: 0.45
 
         .. note::
 
