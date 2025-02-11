@@ -255,4 +255,4 @@ pl.camera.zoom(1.5)
 pl.show()
 
 # %%
-# .. tags:: plot
+# .. tags:: medical, plot
