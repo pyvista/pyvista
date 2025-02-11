@@ -1023,7 +1023,7 @@ class RenderWindowInteractor:
                 """Zoom in or out on mouse wheel roll."""
                 if event == 'MouseWheelForwardEvent':
                     # zoom in
-                    zoom_factor = 1 / factor
+                    zoom_factor = 1.0 / factor
                 elif event == 'MouseWheelBackwardEvent':
                     # zoom out
                     zoom_factor = factor
