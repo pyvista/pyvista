@@ -246,3 +246,6 @@ skeleton = [
 
 # Plot the labels associated with these terms.
 plot_anatomy(skeleton)
+
+# %%
+# .. tags:: medical
