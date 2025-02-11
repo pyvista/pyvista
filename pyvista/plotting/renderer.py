@@ -885,7 +885,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             name = (
                 actor.name
                 if (hasattr(actor, 'name') and actor.name)
-                else actor.GetAddressAsString('')
+                else f'{type(actor).__name__}({actor.GetAddressAsString('')})'
             )
         actor.name = name
         actor.SetPickable(pickable)
