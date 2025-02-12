@@ -43,6 +43,7 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
+_RecursiveIteratorItem = Union[int, tuple[int, ...], str, DataSet, None]
 
 
 class MultiBlock(
@@ -186,7 +187,7 @@ class MultiBlock(
         nested_ids: bool = False,
         prepend_names: bool = False,
         separator: str = '::',
-    ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
+    ) -> Iterator[int | tuple[int,...]|str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]] | Iterator[tuple[int|tuple[int,...],str | None, DataSet | None]]:
         """Iterate over all nested blocks recursively.
 
         .. versionadded:: 0.45
@@ -314,7 +315,6 @@ class MultiBlock(
                 raise TypeError('Order cannot be set when iterator contents include block ids.')
         elif nested_ids:
             raise ValueError('Nested ids option only applies when ids are returned.')
-
         if prepend_names and contents not in ['names', 'items', 'all']:
             raise ValueError('Prepend names option only applies when names are returned.')
 
@@ -342,7 +342,7 @@ class MultiBlock(
         nested_ids: bool,
         prepend_names: bool,
         separator: str,
-    ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
+    ) -> Iterator[int | tuple[int,...]|str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]] | Iterator[tuple[int|tuple[int,...],str | None, DataSet | None]]:
         # Determine ordering of blocks and names to iterate through
         if order is None:
             blocks: Sequence[_TypeMultiBlockLeaf] = self
