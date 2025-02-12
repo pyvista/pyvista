@@ -10120,6 +10120,7 @@ class DataSetFilters:
         --------
         Create a voxelized mesh with uniform spacing.
 
+        >>> import numpy as np
         >>> import pyvista as pv
         >>> from pyvista import examples
         >>> mesh = examples.download_bunny_coarse()
@@ -10139,10 +10140,12 @@ class DataSetFilters:
         >>> vox.bounds
         BoundsTuple(x_min=-0.13155962526798248, x_max=0.18016336858272552, y_min=-0.12048563361167908, y_max=0.18769524991512299, z_min=-0.14300920069217682, z_max=0.09650979936122894)
 
-        Create a voxelized mesh with specific dimensions.
+        Create a voxelized mesh with ``3 x 4 x 5`` cells. Since ``dimensions`` is the
+        number of points, not cells, we need to add ``1`` to get the number of desired cells.
 
-        >>> mesh = pv.Sphere()
-        >>> vox = mesh.voxelize(dimensions=(10, 20, 30))
+        >>> mesh = pv.Box()
+        >>> cell_dimensions = np.array((3, 4, 5))
+        >>> vox = mesh.voxelize(dimensions=cell_dimensions + 1)
         >>> vox.plot(show_edges=True)
 
         """
