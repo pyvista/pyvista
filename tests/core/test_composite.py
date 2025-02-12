@@ -956,6 +956,16 @@ def test_recursive_iterator_prepend_names(separator, prepend_names):
     assert flattened.keys() == expected_names
 
 
+@pytest.mark.parametrize('nested_ids', [True, False])
+def test_recursive_iterator_ids(nested_ids):
+    nested = MultiBlock(dict(a=MultiBlock(dict(b=MultiBlock(dict(c=None)), d=None)), e=None))
+    expected_ids = [(0, 0, 0), (0, 1), (1,)] if nested_ids else [0, 1, 1]
+
+    iterator = nested.recursive_iterator(nested_ids=nested_ids, contents='ids', skip_none=False)
+    ids = list(iterator)
+    assert ids == expected_ids
+
+
 def test_recursive_iterator_order():
     nested = pv.MultiBlock(dict(image=pv.ImageData(), poly=pv.PolyData()))
     multi = pv.MultiBlock(dict(grid=pv.UnstructuredGrid()))

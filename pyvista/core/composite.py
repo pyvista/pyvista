@@ -178,11 +178,12 @@ class MultiBlock(
 
     def recursive_iterator(
         self: MultiBlock,
-        contents: Literal['names', 'blocks', 'items'] = 'blocks',
+        contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
         order: Literal['nested_first', 'nested_last'] | None = None,
         *,
         skip_none: bool = True,
         skip_empty: bool = True,
+        nested_ids: bool = False,
         prepend_names: bool = False,
         separator: str = '::',
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
@@ -213,6 +214,10 @@ class MultiBlock(
 
         skip_empty : bool, default: True
             Do not include empty meshes in the iterator.
+
+        nested_ids : bool, default: False
+            Prepend any parent block names to the child block names. This option
+            only applies when ``contents`` is ``'names'`` or ``'items'``.
 
         prepend_names : bool, default: False
             Prepend any parent block names to the child block names. This option
@@ -299,17 +304,19 @@ class MultiBlock(
 
         """
         _validation.check_contains(
-            ['names', 'blocks', 'items'], must_contain=contents, name='contents'
+            ['ids', 'names', 'blocks', 'items', 'all'], must_contain=contents, name='contents'
         )
         _validation.check_contains(
             ['nested_first', 'nested_last', None], must_contain=order, name='order'
         )
         return self._recursive_iterator(
             names=self.keys(),
+            ids=[[i] for i in range(self.n_blocks)],
             contents=contents,
             order=order,
             skip_none=skip_none,
             skip_empty=skip_empty,
+            nested_ids=nested_ids,
             prepend_names=prepend_names,
             separator=separator,
         )
@@ -318,10 +325,12 @@ class MultiBlock(
         self,
         *,
         names: Iterable[str | None],
-        contents: Literal['names', 'blocks', 'items'],
+        ids: Iterable[list[int]],
+        contents: Literal['ids', 'names', 'blocks', 'items', 'all'],
         order: Literal['nested_first', 'nested_last'] | None = None,
         skip_none: bool,
         skip_empty: bool,
+        nested_ids: bool,
         prepend_names: bool,
         separator: str,
     ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
@@ -332,50 +341,66 @@ class MultiBlock(
             # Need to reorder blocks
             multi_blocks = []
             multi_names = []
+            multi_ids = []
             other_blocks = []
             other_names = []
-            for name, block in self._items():
+            other_ids = []
+            for i, (name, block) in enumerate(self._items()):
                 if isinstance(block, MultiBlock):
+                    multi_ids.append(i)
                     multi_names.append(name)
                     multi_blocks.append(block)
                 else:
+                    other_ids.append(i)
                     other_names.append(name)
                     other_blocks.append(block)
             if order == 'nested_last':
+                ids = [*other_ids, *multi_ids]
                 names = [*other_names, *multi_names]
                 blocks = [*other_blocks, *multi_blocks]
             else:
+                ids = [*multi_ids, *other_ids]
                 names = [*multi_names, *other_names]
                 blocks = [*multi_blocks, *other_blocks]
 
         # Iterator through names and blocks
-        for name, block in zip(names, blocks):
+        for id_, name, block in zip(ids, names, blocks):
             if (skip_none and block is None) or (
                 skip_empty and hasattr(block, 'n_points') and block.n_points == 0  # type: ignore[union-attr]
             ):
                 continue
             elif isinstance(block, MultiBlock):
-                keys = block.keys()
+                names = block.keys()
+                block_ids = [[i] for i in range(self.n_blocks)]
+                if nested_ids:
+                    # Include parent id with the block ids
+                    for block_id in block_ids:
+                        block_id.insert(0, id_[-1])
                 if prepend_names:
                     # Include parent name with the block names
-                    names = [f'{name}{separator}{block_name}' for block_name in keys]
-                else:
-                    names = keys
+                    names = [f'{name}{separator}{block_name}' for block_name in names]
                 yield from block._recursive_iterator(
                     names=names,
+                    ids=block_ids,
                     contents=contents,
                     order=order,
                     skip_none=skip_none,
                     skip_empty=skip_empty,
+                    nested_ids=nested_ids,
                     prepend_names=prepend_names,
                     separator=separator,
                 )
+            elif contents == 'ids':
+                yield tuple(id_) if nested_ids else id_[0]
             elif contents == 'names':
                 yield name
             elif contents == 'blocks':
                 yield block
             elif contents == 'items':
                 yield name, block
+            elif contents == 'all':
+                id_out = tuple(id_) if nested_ids else id_[0]
+                yield id_out, name, block
             else:  # pragma: no cover
                 raise RuntimeError(f"Unexpected contents '{contents}'.")
 
@@ -495,7 +520,7 @@ class MultiBlock(
         >>> flat.keys()
         ['Block-00', 'Block-01', 'Block-02']
 
-        Flatten the ``MultiBlock`` using a breadth-first ordering. Note the difference
+        Flatten the ``MultiBlock`` with nested multi-blocks flattened last. Note the difference
         between this ordering of blocks and the default ordering returned earlier.
 
         >>> flat = nested.flatten(order='nested_last')
