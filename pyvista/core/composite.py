@@ -187,7 +187,11 @@ class MultiBlock(
         nested_ids: bool = False,
         prepend_names: bool = False,
         separator: str = '::',
-    ) -> Iterator[int | tuple[int,...]|str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]] | Iterator[tuple[int|tuple[int,...],str | None, DataSet | None]]:
+    ) -> (
+        Iterator[int | tuple[int, ...] | str | DataSet | None]
+        | Iterator[tuple[str | None, DataSet | None]]
+        | Iterator[tuple[int | tuple[int, ...], str | None, DataSet | None]]
+    ):
         """Iterate over all nested blocks recursively.
 
         .. versionadded:: 0.45
@@ -342,7 +346,11 @@ class MultiBlock(
         nested_ids: bool,
         prepend_names: bool,
         separator: str,
-    ) -> Iterator[int | tuple[int,...]|str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]] | Iterator[tuple[int|tuple[int,...],str | None, DataSet | None]]:
+    ) -> (
+        Iterator[int | tuple[int, ...] | str | DataSet | None]
+        | Iterator[tuple[str | None, DataSet | None]]
+        | Iterator[tuple[int | tuple[int, ...], str | None, DataSet | None]]
+    ):
         # Determine ordering of blocks and names to iterate through
         if order is None:
             blocks: Sequence[_TypeMultiBlockLeaf] = self
