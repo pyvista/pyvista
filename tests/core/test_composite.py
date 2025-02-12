@@ -928,11 +928,20 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
 
 
 def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator(contents='names')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('ids')
+    assert all(isinstance(item, int) for item in iterator)
+
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('names')
     assert all(isinstance(item, str) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator(contents='items')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('items')
     for name, block in iterator:
+        assert isinstance(name, str)
+        assert isinstance(block, pv.DataSet) or block is None
+
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('all')
+    for id_, name, block in iterator:
+        assert isinstance(id_, int)
         assert isinstance(name, str)
         assert isinstance(block, pv.DataSet) or block is None
 
@@ -966,41 +975,86 @@ def test_recursive_iterator_ids(nested_ids):
     assert ids == expected_ids
 
 
+def test_recursive_iterator_raises():
+    multi = pv.MultiBlock()
+    match = 'Order cannot be set when iterator contents include block ids.'
+    with pytest.raises(TypeError, match=match):
+        multi.recursive_iterator('ids', order='nested_first')
+
+    match = 'Nested ids option only applies when ids are returned.'
+    with pytest.raises(ValueError, match=match):
+        multi.recursive_iterator('names', nested_ids=True)
+    with pytest.raises(ValueError, match=match):
+        multi.recursive_iterator('items', nested_ids=True)
+
+    match = 'Prepend names option only applies when names are returned.'
+    with pytest.raises(ValueError, match=match):
+        multi.recursive_iterator('ids', prepend_names=True)
+    with pytest.raises(ValueError, match=match):
+        multi.recursive_iterator('blocks', prepend_names=True)
+
+
 def test_recursive_iterator_order():
-    nested = pv.MultiBlock(dict(image=pv.ImageData(), poly=pv.PolyData()))
-    multi = pv.MultiBlock(dict(grid=pv.UnstructuredGrid()))
+    # Generated nested MultiBlock dataset with three DataSet nodes
+    image = pv.ImageData()
+    poly = pv.PolyData()
+    grid = pv.UnstructuredGrid()
+    nested = pv.MultiBlock(dict(image=image, poly=poly))
+    multi = pv.MultiBlock(dict(grid=grid))
     nested.insert(1, multi)
     assert isinstance(nested[0], pv.ImageData)
     assert isinstance(nested[1], pv.MultiBlock)
     assert isinstance(nested[1][0], pv.UnstructuredGrid)
     assert isinstance(nested[2], pv.PolyData)
 
+    common_kwargs = dict(skip_empty=False)
+
+    iterator = nested.recursive_iterator('all', order=None, nested_ids=True, **common_kwargs)
+    ids0, names0, block0 = next(iterator)
+    ids1, names1, block1 = next(iterator)
+    ids2, names2, block2 = next(iterator)
+
+    # Ids should refer to original datasets in input
+    assert ids0 == (0,)
+    assert ids1 == (1, 0)
+    assert ids2 == (2,)
+    assert nested[ids0[0]] is image
+    assert nested[ids1[0]][ids1[1]] is grid
+    assert nested[ids2[0]] is poly
+
     # Expect nested dataset in center
-    iterator = list(nested.recursive_iterator('items', order=None, skip_empty=False))
-    assert iterator[0][0] == 'image'
-    assert iterator[1][0] == 'grid'
-    assert iterator[2][0] == 'poly'
-    assert isinstance(iterator[0][1], pv.ImageData)
-    assert isinstance(iterator[1][1], pv.UnstructuredGrid)
-    assert isinstance(iterator[2][1], pv.PolyData)
+    assert names0 == 'image'
+    assert names1 == 'grid'
+    assert names2 == 'poly'
+    assert isinstance(block0, pv.ImageData)
+    assert isinstance(block1, pv.UnstructuredGrid)
+    assert isinstance(block2, pv.PolyData)
+
+    iterator = nested.recursive_iterator('items', order='nested_last', **common_kwargs)
+    names0, block0 = next(iterator)
+    names1, block1 = next(iterator)
+    names2, block2 = next(iterator)
 
     # Expect nested dataset last
-    iterator = list(nested.recursive_iterator('items', order='nested_last', skip_empty=False))
-    assert iterator[0][0] == 'image'
-    assert iterator[1][0] == 'poly'
-    assert iterator[2][0] == 'grid'
-    assert isinstance(iterator[0][1], pv.ImageData)
-    assert isinstance(iterator[1][1], pv.PolyData)
-    assert isinstance(iterator[2][1], pv.UnstructuredGrid)
+    assert names0 == 'image'
+    assert names1 == 'poly'
+    assert names2 == 'grid'
+    assert isinstance(block0, pv.ImageData)
+    assert isinstance(block1, pv.PolyData)
+    assert isinstance(block2, pv.UnstructuredGrid)
+
+    iterator = nested.recursive_iterator('items', order='nested_first', **common_kwargs)
+    names0, block0 = next(iterator)
+    names1, block1 = next(iterator)
+    names2, block2 = next(iterator)
 
     # Expect nested dataset first
-    iterator = list(nested.recursive_iterator('items', order='nested_first', skip_empty=False))
-    assert iterator[0][0] == 'grid'
-    assert iterator[1][0] == 'image'
-    assert iterator[2][0] == 'poly'
-    assert isinstance(iterator[0][1], pv.UnstructuredGrid)
-    assert isinstance(iterator[1][1], pv.ImageData)
-    assert isinstance(iterator[2][1], pv.PolyData)
+    assert names0 == 'grid'
+    assert names1 == 'image'
+    assert names2 == 'poly'
+    assert isinstance(block0, pv.UnstructuredGrid)
+    assert isinstance(block1, pv.ImageData)
+    assert isinstance(block2, pv.PolyData)
 
 
 def test_flatten(multiblock_all_with_nested_and_none):

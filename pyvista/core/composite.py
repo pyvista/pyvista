@@ -309,6 +309,15 @@ class MultiBlock(
         _validation.check_contains(
             ['nested_first', 'nested_last', None], must_contain=order, name='order'
         )
+        if contents in ['ids', 'all']:
+            if order is not None:
+                raise TypeError('Order cannot be set when iterator contents include block ids.')
+        elif nested_ids:
+            raise ValueError('Nested ids option only applies when ids are returned.')
+
+        if prepend_names and contents not in ['names', 'all']:
+            raise ValueError('Prepend names option only applies when names are returned.')
+
         return self._recursive_iterator(
             names=self.keys(),
             ids=[[i] for i in range(self.n_blocks)],
@@ -341,29 +350,23 @@ class MultiBlock(
             # Need to reorder blocks
             multi_blocks = []
             multi_names = []
-            multi_ids = []
             other_blocks = []
             other_names = []
-            other_ids = []
-            for i, (name, block) in enumerate(self._items()):
+            for name, block in self._items():
                 if isinstance(block, MultiBlock):
-                    multi_ids.append(i)
                     multi_names.append(name)
                     multi_blocks.append(block)
                 else:
-                    other_ids.append(i)
                     other_names.append(name)
                     other_blocks.append(block)
             if order == 'nested_last':
-                ids = [*other_ids, *multi_ids]
                 names = [*other_names, *multi_names]
                 blocks = [*other_blocks, *multi_blocks]
             else:
-                ids = [*multi_ids, *other_ids]
                 names = [*multi_names, *other_names]
                 blocks = [*multi_blocks, *other_blocks]
 
-        # Iterator through names and blocks
+        # Iterate through ids, names, blocks
         for id_, name, block in zip(ids, names, blocks):
             if (skip_none and block is None) or (
                 skip_empty and hasattr(block, 'n_points') and block.n_points == 0  # type: ignore[union-attr]
