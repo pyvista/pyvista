@@ -315,7 +315,7 @@ class MultiBlock(
         elif nested_ids:
             raise ValueError('Nested ids option only applies when ids are returned.')
 
-        if prepend_names and contents not in ['names', 'all']:
+        if prepend_names and contents not in ['names', 'items', 'all']:
             raise ValueError('Prepend names option only applies when names are returned.')
 
         return self._recursive_iterator(
