@@ -150,12 +150,10 @@ jobs:
     name: Linux Unit Testing
     runs-on: ${{ matrix.os }}
     strategy:
-    fail-fast: false
-    matrix:
-      os: [ ubuntu-20.04, ubuntu-24.04, ubuntu-24.04-arm, ubuntu-22.04-arm]
-
-      # see discussion at https://github.com/pyvista/pyvista/issues/2867
+      fail-fast: false
       matrix:
+        os: [ ubuntu-20.04, ubuntu-24.04, ubuntu-24.04-arm, ubuntu-22.04-arm]
+      # see discussion at https://github.com/pyvista/pyvista/issues/2867
         include:
           # numeric numpy versions are ~= conditions, e.g. "1.23" means "numpy~=1.23.0"
           - python-version: "3.9"
