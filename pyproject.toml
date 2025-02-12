@@ -331,6 +331,8 @@ extend-select = [
   'PLR0402',
   'PLR1711',
   'PLR1714',
+  'PLR1730',
+  'PLR5501',
   'PLW0127',
   'PT',
   'PTH',
@@ -460,6 +462,7 @@ ignore = [
   'MY101', # to be removed once https://github.com/pyvista/pyvista/issues/6279 is closed
   'PC111', # ruff is taking care of docstring formatting https://github.com/pyvista/pyvista/pull/6991
   'PC140', # mypy deliberately removed from pre-commit in https://github.com/pyvista/pyvista/pull/6741
+  'PY004', # we have a 'doc' folder, not 'docs'
   'PY007', # tox support
   'RTD',   # RTD: the documentation is not hosted by ReadTheDocs
 ]

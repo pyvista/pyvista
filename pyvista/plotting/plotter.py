@@ -2387,8 +2387,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             stime = 1
 
         curr_time = time.time()
-        if Plotter.last_update_time > curr_time:
-            Plotter.last_update_time = curr_time
+        Plotter.last_update_time = min(Plotter.last_update_time, curr_time)
 
         if self.iren is not None:  # type: ignore[has-type]
             update_rate = self.iren.get_desired_update_rate()  # type: ignore[has-type]
@@ -3625,12 +3624,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # each pipeline request
                 algo = active_scalars_algorithm(algo, original_scalar_name, preference=preference)
                 mesh, algo = algorithm_to_mesh_handler(algo)
-            else:
-                # Otherwise, make sure the mesh object's scalars are set
-                if field == FieldAssociation.POINT:
-                    mesh.point_data.active_scalars_name = original_scalar_name
-                elif field == FieldAssociation.CELL:
-                    mesh.cell_data.active_scalars_name = original_scalar_name
+            # Otherwise, make sure the mesh object's scalars are set
+            elif field == FieldAssociation.POINT:
+                mesh.point_data.active_scalars_name = original_scalar_name
+            elif field == FieldAssociation.CELL:
+                mesh.cell_data.active_scalars_name = original_scalar_name
 
         # Compute surface normals if using smooth shading
         if smooth_shading:
@@ -6135,8 +6133,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         bnds = self.bounds
         radius = (bnds.x_max - bnds.x_min) * factor
         y = (bnds.y_max - bnds.y_min) * factor
-        if y > radius:
-            radius = y
+        radius = max(y, radius)
         center += np.array(viewup) * shift
         return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
 
