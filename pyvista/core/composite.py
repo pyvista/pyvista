@@ -6,8 +6,9 @@ to VTK algorithms and PyVista filtering/plotting routines.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from collections.abc import MutableSequence
-from itertools import zip_longest
+import itertools
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
@@ -36,7 +37,8 @@ from .utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Iterator
+    from collections.abc import Sequence
+    from typing import Literal
 
     from ._typing_core import NumpyArray
 
@@ -171,15 +173,64 @@ class MultiBlock(
             if not is_pyvista_dataset(block):
                 self.SetBlock(i, wrap(block))
 
-    def recursive_iterator(self: MultiBlock, *, skip_none: bool = True) -> Iterator[DataSet | None]:
-        """Iterate over all nested datasets recursively.
+    def _items(self) -> Iterable[tuple[str | None, _TypeMultiBlockLeaf]]:
+        yield from zip(self.keys(), self)
+
+    def recursive_iterator(
+        self: MultiBlock,
+        contents: Literal['names', 'blocks', 'items'] = 'blocks',
+        order: Literal['nested_first', 'nested_last'] | None = None,
+        *,
+        skip_none: bool = True,
+        skip_empty: bool = True,
+        prepend_names: bool = False,
+        separator: str = '::',
+    ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
+        """Iterate over all nested blocks recursively.
 
         .. versionadded:: 0.45
 
         Parameters
         ----------
+        contents : 'names', 'blocks', 'items', default: 'blocks'
+            Values to include in the iterator.
+
+            - ``'names'``: Return an iterator with nested block names (i.e. :meth:`keys`).
+            - ``'blocks'``: Return an iterator with nested blocks.
+            - ``'items'``: Return an iterator with nested ``(name, block)`` pairs.
+
+        order : 'nested_first', 'nested_last', optional
+            Order in which to iterate through nested blocks.
+
+            - ``'nested_first'``: Iterate through nested ``MultiBlock`` blocks first.
+            - ``'nested_last'``: Iterate through nested ``MultiBlock`` blocks last.
+
+            By default, the ``MultiBlock`` is iterated recursively as-is without
+            changing the order.
+
         skip_none : bool, default: True
             Do not include ``None`` blocks in the iterator.
+
+        skip_empty : bool, default: True
+            Do not include empty meshes in the iterator.
+
+        prepend_names : bool, default: False
+            Prepend any parent block names to the child block names. This option
+            only applies when ``contents`` is ``'names'`` or ``'items'``.
+
+        separator : str, default: '::'
+            String separator to use when ``prepend_names`` is enabled. The separator
+            is inserted between parent and child block names.
+
+        Returns
+        -------
+        Iterator
+            Iterator of names, blocks, or name-block pairs depending on ``contents``.
+
+        See Also
+        --------
+        flatten
+        clean
 
         Examples
         --------
@@ -187,39 +238,294 @@ class MultiBlock(
 
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> dataset = examples.download_biplane()
+        >>> multi = examples.download_biplane()
 
         The dataset has eight :class:`MultiBlock` blocks.
 
-        >>> dataset.n_blocks
+        >>> multi.n_blocks
         8
 
-        >>> all(isinstance(block, pv.MultiBlock) for block in dataset)
+        >>> all(isinstance(block, pv.MultiBlock) for block in multi)
         True
 
-        Get the iterator and show the count of all recursively nested datasets.
+        Get the iterator and show the count of all recursively nested blocks.
 
-        >>> iterator = dataset.recursive_iterator()
+        >>> iterator = multi.recursive_iterator()
         >>> iterator
-        <generator object MultiBlock.recursive_iterator at ...>
+        <generator object MultiBlock._recursive_iterator at ...>
 
         >>> len(list(iterator))
         59
 
         By default, ``None`` blocks are excluded and all items are :class:`~pyvista.DataSet`
-        objects.
+        objects. Empty meshes are also excluded by default.
 
-        >>> all(isinstance(item, pv.DataSet) for item in dataset.recursive_iterator())
+        >>> all(isinstance(item, pv.DataSet) for item in multi.recursive_iterator())
         True
 
+        Use the iterator to apply a filter inplace to all recursively nested datasets.
+
+        >>> _ = [
+        ...     dataset.connectivity(inplace=True)
+        ...     for dataset in multi.recursive_iterator()
+        ... ]
+
+        Iterate through nested block names.
+
+        >>> iterator = multi.recursive_iterator('names')
+        >>> next(iterator)
+        'Unnamed block ID: 1'
+
+        Prepend parent block names.
+
+        >>> iterator = multi.recursive_iterator('names', prepend_names=True)
+        >>> next(iterator)
+        'Element Blocks::Unnamed block ID: 1'
+
+        Iterate through name-block pairs. Prepend parent block names again using a
+        custom separator.
+
+        >>> iterator = multi.recursive_iterator(
+        ...     'items', prepend_names=True, separator='->'
+        ... )
+        >>> next(iterator)
+        ('Element Blocks->Unnamed block ID: 1', UnstructuredGrid (...)
+          N Cells:    8
+          N Points:   27
+          X Bounds:   4.486e-01, 1.249e+00
+          Y Bounds:   1.372e+00, 1.872e+00
+          Z Bounds:   -6.351e-01, 3.649e-01
+          N Arrays:   6)
+
         """
-        for block in self:
-            if skip_none and block is None:
+        _validation.check_contains(
+            ['names', 'blocks', 'items'], must_contain=contents, name='contents'
+        )
+        _validation.check_contains(
+            ['nested_first', 'nested_last', None], must_contain=order, name='order'
+        )
+        return self._recursive_iterator(
+            names=self.keys(),
+            contents=contents,
+            order=order,
+            skip_none=skip_none,
+            skip_empty=skip_empty,
+            prepend_names=prepend_names,
+            separator=separator,
+        )
+
+    def _recursive_iterator(
+        self,
+        *,
+        names: Iterable[str | None],
+        contents: Literal['names', 'blocks', 'items'],
+        order: Literal['nested_first', 'nested_last'] | None = None,
+        skip_none: bool,
+        skip_empty: bool,
+        prepend_names: bool,
+        separator: str,
+    ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
+        # Determine ordering of blocks and names to iterate through
+        if order is None:
+            blocks: Sequence[_TypeMultiBlockLeaf] = self
+        else:
+            # Need to reorder blocks
+            multi_blocks = []
+            multi_names = []
+            other_blocks = []
+            other_names = []
+            for name, block in self._items():
+                if isinstance(block, MultiBlock):
+                    multi_names.append(name)
+                    multi_blocks.append(block)
+                else:
+                    other_names.append(name)
+                    other_blocks.append(block)
+            if order == 'nested_last':
+                names = [*other_names, *multi_names]
+                blocks = [*other_blocks, *multi_blocks]
+            else:
+                names = [*multi_names, *other_names]
+                blocks = [*multi_blocks, *other_blocks]
+
+        # Iterator through names and blocks
+        for name, block in zip(names, blocks):
+            if (skip_none and block is None) or (
+                skip_empty and hasattr(block, 'n_points') and block.n_points == 0  # type: ignore[union-attr]
+            ):
                 continue
             elif isinstance(block, MultiBlock):
-                yield from block.recursive_iterator(skip_none=skip_none)
-            else:
+                keys = block.keys()
+                if prepend_names:
+                    # Include parent name with the block names
+                    names = [f'{name}{separator}{block_name}' for block_name in keys]
+                else:
+                    names = keys
+                yield from block._recursive_iterator(
+                    names=names,
+                    contents=contents,
+                    order=order,
+                    skip_none=skip_none,
+                    skip_empty=skip_empty,
+                    prepend_names=prepend_names,
+                    separator=separator,
+                )
+            elif contents == 'names':
+                yield name
+            elif contents == 'blocks':
                 yield block
+            elif contents == 'items':
+                yield name, block
+            else:  # pragma: no cover
+                raise RuntimeError(f"Unexpected contents '{contents}'.")
+
+    def flatten(
+        self,
+        *,
+        order: Literal['nested_first', 'nested_last'] | None = None,
+        name_mode: Literal['preserve', 'prepend', 'reset'] = 'preserve',
+        separator: str = '::',
+        copy: bool = True,
+    ) -> MultiBlock:
+        """Flatten this :class:`MultiBlock`.
+
+        Recursively iterate through all blocks and store them in a single
+        :class:`MultiBlock` instance. All nested :class:`~pyvista.DataSet` and ``None``
+        blocks are preserved, and any nested ``MultiBlock`` container blocks are removed.
+
+        .. warning::
+
+            Any field data directly associated with any nested ``MultiBlock`` is not
+            handled by this method and will be lost.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        order : 'nested_last', 'nested_first', optional
+            Order in which to flatten the contents.
+
+            - ``'nested_first'``: Flatten nested ``MultiBlock`` blocks first.
+            - ``'nested_last'``: Flatten nested ``MultiBlock`` blocks last.
+
+            By default, the ``MultiBlock`` is flattened recursively as-is without
+            changing the order.
+
+        name_mode : 'preserve' | 'prepend' | 'reset', default: 'preserve'
+            Mode for naming blocks in the flattened output.
+
+            - ``'preserve'``: The names of all blocks are preserved.
+
+              .. warning::
+
+                  This mode may result in duplicate key names if the same block name is
+                  reused in any nested blocks.
+
+            - ``'prepend'``: Preserve the block names and prepend the parent names.
+            - ``'reset'``: Reset the block names to default values.
+
+        separator : str, default: '::'
+            String separator to use when ``name_mode='prepend'`` is used. The separator
+            is inserted between parent and child block names.
+
+        copy : bool, default: True
+            Return a deep copy of all nested blocks in the flattened ``MultiBlock``.
+            If ``False``, shallow copies are returned.
+
+        Returns
+        -------
+        MultiBlock
+            Flattened ``MultiBlock``.
+
+        See Also
+        --------
+        recursive_iterator
+        clean
+
+        Examples
+        --------
+        Create a nested :class:`MultiBlock` with three levels of nesting and
+        three end nodes.
+
+        >>> import pyvista as pv
+        >>> nested = pv.MultiBlock(
+        ...     {
+        ...         'nested1': pv.MultiBlock(
+        ...             {
+        ...                 'nested2': pv.MultiBlock({'poly': pv.PolyData()}),
+        ...                 'image': pv.ImageData(),
+        ...             }
+        ...         ),
+        ...         'none': None,
+        ...     }
+        ... )
+
+        The root ``MultiBlock`` has two blocks.
+
+        >>> nested.n_blocks
+        2
+
+        >>> type(nested[0]), type(nested[1])
+        (<class 'pyvista.core.composite.MultiBlock'>, <class 'NoneType'>)
+
+        Flatten the ``MultiBlock``. The nested ``MultiBlock`` containers are removed
+        and only their contents are returned (i.e. the three end nodes).
+
+        >>> flat = nested.flatten()
+        >>> flat.n_blocks
+        3
+
+        >>> type(flat[0]), type(flat[1]), type(flat[2])
+        (<class 'pyvista.core.pointset.PolyData'>, <class 'pyvista.core.grid.ImageData'>, <class 'NoneType'>)
+
+        By default, the block names are preserved.
+
+        >>> flat.keys()
+        ['poly', 'image', 'none']
+
+        Prepend the names of parent blocks to the names instead.
+
+        >>> flat = nested.flatten(name_mode='prepend')
+        >>> flat.keys()
+        ['nested1::nested2::poly', 'nested1::image', 'none']
+
+        Reset the names to default values instead.
+
+        >>> flat = nested.flatten(name_mode='reset')
+        >>> flat.keys()
+        ['Block-00', 'Block-01', 'Block-02']
+
+        Flatten the ``MultiBlock`` using a breadth-first ordering. Note the difference
+        between this ordering of blocks and the default ordering returned earlier.
+
+        >>> flat = nested.flatten(order='nested_last')
+        >>> type(flat[0]), type(flat[1]), type(flat[2])
+        (<class 'NoneType'>, <class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>)
+
+        """
+        _validation.check_contains(
+            ['preserve', 'prepend', 'reset'], must_contain=name_mode, name='name_mode'
+        )
+        prepend_names = name_mode == 'prepend'
+        multi = self.copy() if copy else self
+        iterator = multi.recursive_iterator(
+            contents='items',
+            order=order,
+            skip_none=False,
+            skip_empty=False,
+            prepend_names=prepend_names,
+            separator=separator,
+        )
+        typed_iterator = cast(Iterator[tuple[Union[str, None], Union[DataSet, None]]], iterator)
+
+        # Generate output
+        output = MultiBlock()
+        output.field_data.update(self.field_data, copy=copy)
+        for name, block in typed_iterator:
+            if name_mode == 'reset':
+                name = None
+            output.append(block, name)
+        return output
 
     @property
     def bounds(self: MultiBlock) -> BoundsTuple:
@@ -751,7 +1057,7 @@ class MultiBlock(
             name = index
         elif isinstance(index, slice):
             index_iter = range(self.n_blocks)[index]
-            for i, (idx, d) in enumerate(zip_longest(index_iter, data)):
+            for i, (idx, d) in enumerate(itertools.zip_longest(index_iter, data)):
                 if idx is None:
                     self.insert(
                         index_iter[-1] + 1 + (i - len(index_iter)),
