@@ -70,7 +70,7 @@ class BackgroundRenderer(Renderer):
             self._prior_window_size = self.parent.window_size
 
         actor = self._actors['background']
-        image_data = actor.GetInput()  # type: ignore[attr-defined]
+        image_data = actor.GetInput()
         origin = image_data.GetOrigin()
         extent = image_data.GetExtent()
         spacing = image_data.GetSpacing()
