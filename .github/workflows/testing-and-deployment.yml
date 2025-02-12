@@ -66,9 +66,9 @@ jobs:
   LinuxConda:
     runs-on: ${{ matrix.os }}
     strategy:
-    fail-fast: false
-    matrix:
-      os: [ ubuntu-20.04, ubuntu-24.04, ubuntu-24.04-arm, ubuntu-22.04-arm ]
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-20.04, ubuntu-24.04, ubuntu-24.04-arm, ubuntu-22.04-arm ]
     if: false
     env:
       CONDA_ALWAYS_YES: 1
