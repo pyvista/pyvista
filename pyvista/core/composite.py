@@ -200,9 +200,11 @@ class MultiBlock(
         contents : 'names', 'blocks', 'items', default: 'blocks'
             Values to include in the iterator.
 
+            - ``'ids'``: Return an iterator with nested indices.
             - ``'names'``: Return an iterator with nested block names (i.e. :meth:`keys`).
             - ``'blocks'``: Return an iterator with nested blocks.
             - ``'items'``: Return an iterator with nested ``(name, block)`` pairs.
+            - ``'all'``: Return an iterator with nested ``(index, name, block)`` triplets.
 
         order : 'nested_first', 'nested_last', optional
             Order in which to iterate through nested blocks.
@@ -352,8 +354,8 @@ class MultiBlock(
     def _recursive_iterator(
         self,
         *,
-        names: Iterable[str | None],
         ids: Iterable[list[int]],
+        names: Iterable[str | None],
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'],
         order: Literal['nested_first', 'nested_last'] | None = None,
         skip_none: bool,
