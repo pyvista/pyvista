@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from collections.abc import MutableSequence
+from collections.abc import Sequence
 import itertools
 import pathlib
 from typing import TYPE_CHECKING
@@ -37,7 +38,6 @@ from .utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Sequence
     from typing import Literal
 
     from ._typing_core import NumpyArray
@@ -178,26 +178,38 @@ class MultiBlock(
 
     def recursive_iterator(
         self: MultiBlock,
-        contents: Literal['names', 'blocks', 'items'] = 'blocks',
+        contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
         order: Literal['nested_first', 'nested_last'] | None = None,
         *,
         skip_none: bool = True,
         skip_empty: bool = True,
+        nested_ids: bool = False,
         prepend_names: bool = False,
         separator: str = '::',
-    ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
+    ) -> (
+        Iterator[int | tuple[int, ...] | str | DataSet | None]
+        | Iterator[tuple[str | None, DataSet | None]]
+        | Iterator[tuple[int | tuple[int, ...], str | None, DataSet | None]]
+    ):
         """Iterate over all nested blocks recursively.
 
         .. versionadded:: 0.45
 
         Parameters
         ----------
-        contents : 'names', 'blocks', 'items', default: 'blocks'
+        contents : 'ids' | 'names' | 'blocks' | 'items', default: 'blocks'
             Values to include in the iterator.
 
+            - ``'ids'``: Return an iterator with nested block indices.
             - ``'names'``: Return an iterator with nested block names (i.e. :meth:`keys`).
             - ``'blocks'``: Return an iterator with nested blocks.
             - ``'items'``: Return an iterator with nested ``(name, block)`` pairs.
+            - ``'all'``: Return an iterator with nested ``(index, name, block)`` triplets.
+
+            .. note::
+
+                Use the ``nested_ids`` and ``prepend_names`` options to modify how
+                the blocks ids and names are represented, respectively.
 
         order : 'nested_first', 'nested_last', optional
             Order in which to iterate through nested blocks.
@@ -214,9 +226,15 @@ class MultiBlock(
         skip_empty : bool, default: True
             Do not include empty meshes in the iterator.
 
+        nested_ids : bool, default: False
+            Prepend parent block indices to the child block indices. If ``True``, a
+            tuple of indices is returned for each block. If ``False``, a single integer
+            index is returned for each block. This option only applies when ``contents``
+            is ``'ids'`` or ``'all'``.
+
         prepend_names : bool, default: False
             Prepend any parent block names to the child block names. This option
-            only applies when ``contents`` is ``'names'`` or ``'items'``.
+            only applies when ``contents`` is ``'names'``, ``'items'``, or ``'all'``.
 
         separator : str, default: '::'
             String separator to use when ``prepend_names`` is enabled. The separator
@@ -297,19 +315,43 @@ class MultiBlock(
           Z Bounds:   -6.351e-01, 3.649e-01
           N Arrays:   6)
 
+        Compute the length of the longest ``MultiBlock`` using ``'ids'``. Here we also
+        allow empty meshes and none blocks so that all blocks are considered.
+
+        >>> iterator = multi.recursive_iterator(
+        ...     'ids', skip_empty=False, skip_none=False
+        ... )
+        >>> max_n_blocks = max(iterator) + 1
+        >>> max_n_blocks
+        46
+
+        Use the iterator to replace all blocks with new blocks. Similar to a previous
+        example, we use a filter but this time the operation is not performed in place.
+
+        >>> iterator = multi.recursive_iterator('all', nested_ids=True)
+        >>> for ids, _, block in iterator:
+        ...     multi.replace(ids, block.connectivity())
+
         """
         _validation.check_contains(
-            ['names', 'blocks', 'items'], must_contain=contents, name='contents'
+            ['ids', 'names', 'blocks', 'items', 'all'], must_contain=contents, name='contents'
         )
         _validation.check_contains(
             ['nested_first', 'nested_last', None], must_contain=order, name='order'
         )
+        if nested_ids and contents not in ['ids', 'all']:
+            raise ValueError('Nested ids option only applies when ids are returned.')
+        if prepend_names and contents not in ['names', 'items', 'all']:
+            raise ValueError('Prepend names option only applies when names are returned.')
+
         return self._recursive_iterator(
+            ids=[[i] for i in range(self.n_blocks)],
             names=self.keys(),
             contents=contents,
             order=order,
             skip_none=skip_none,
             skip_empty=skip_empty,
+            nested_ids=nested_ids,
             prepend_names=prepend_names,
             separator=separator,
         )
@@ -317,65 +359,91 @@ class MultiBlock(
     def _recursive_iterator(
         self,
         *,
+        ids: Iterable[list[int]],
         names: Iterable[str | None],
-        contents: Literal['names', 'blocks', 'items'],
+        contents: Literal['ids', 'names', 'blocks', 'items', 'all'],
         order: Literal['nested_first', 'nested_last'] | None = None,
         skip_none: bool,
         skip_empty: bool,
+        nested_ids: bool,
         prepend_names: bool,
         separator: str,
-    ) -> Iterator[str | DataSet | None] | Iterator[tuple[str | None, DataSet | None]]:
+    ) -> (
+        Iterator[int | tuple[int, ...] | str | DataSet | None]
+        | Iterator[tuple[str | None, DataSet | None]]
+        | Iterator[tuple[int | tuple[int, ...], str | None, DataSet | None]]
+    ):
         # Determine ordering of blocks and names to iterate through
         if order is None:
             blocks: Sequence[_TypeMultiBlockLeaf] = self
         else:
             # Need to reorder blocks
-            multi_blocks = []
+            multi_ids = []
             multi_names = []
-            other_blocks = []
+            multi_blocks = []
+            other_ids = []
             other_names = []
-            for name, block in self._items():
+            other_blocks = []
+            for id_, name, block in zip(ids, names, self):
                 if isinstance(block, MultiBlock):
+                    multi_ids.append(id_)
                     multi_names.append(name)
                     multi_blocks.append(block)
                 else:
+                    other_ids.append(id_)
                     other_names.append(name)
                     other_blocks.append(block)
             if order == 'nested_last':
+                ids = [*other_ids, *multi_ids]
                 names = [*other_names, *multi_names]
                 blocks = [*other_blocks, *multi_blocks]
             else:
+                ids = [*multi_ids, *other_ids]
                 names = [*multi_names, *other_names]
                 blocks = [*multi_blocks, *other_blocks]
 
-        # Iterator through names and blocks
-        for name, block in zip(names, blocks):
+        # Iterate through ids, names, blocks
+        for id_, name, block in zip(ids, names, blocks):
             if (skip_none and block is None) or (
-                skip_empty and hasattr(block, 'n_points') and block.n_points == 0  # type: ignore[union-attr]
+                skip_empty and hasattr(block, 'n_points') and block.n_points == 0
             ):
                 continue
             elif isinstance(block, MultiBlock):
-                keys = block.keys()
+                # Process names
+                names = block.keys()
                 if prepend_names:
                     # Include parent name with the block names
-                    names = [f'{name}{separator}{block_name}' for block_name in keys]
+                    names = [f'{name}{separator}{block_name}' for block_name in names]
+
+                # Process ids
+                if nested_ids:
+                    # Include parent id with the block ids
+                    ids = [[*id_, i] for i in range(block.n_blocks)]
                 else:
-                    names = keys
+                    ids = [[i] for i in range(block.n_blocks)]
+
                 yield from block._recursive_iterator(
+                    ids=ids,
                     names=names,
                     contents=contents,
                     order=order,
                     skip_none=skip_none,
                     skip_empty=skip_empty,
+                    nested_ids=nested_ids,
                     prepend_names=prepend_names,
                     separator=separator,
                 )
+            elif contents == 'ids':
+                yield tuple(id_) if nested_ids else id_[0]
             elif contents == 'names':
                 yield name
             elif contents == 'blocks':
                 yield block
             elif contents == 'items':
                 yield name, block
+            elif contents == 'all':
+                id_out = tuple(id_) if nested_ids else id_[0]
+                yield id_out, name, block
             else:  # pragma: no cover
                 raise RuntimeError(f"Unexpected contents '{contents}'.")
 
@@ -495,7 +563,7 @@ class MultiBlock(
         >>> flat.keys()
         ['Block-00', 'Block-01', 'Block-02']
 
-        Flatten the ``MultiBlock`` using a breadth-first ordering. Note the difference
+        Flatten the ``MultiBlock`` with nested multi-blocks flattened last. Note the difference
         between this ordering of blocks and the default ordering returned earlier.
 
         >>> flat = nested.flatten(order='nested_last')
@@ -979,19 +1047,22 @@ class MultiBlock(
     def _ipython_key_completions_(self: MultiBlock) -> list[str | None]:
         return self.keys()
 
-    def replace(self: MultiBlock, index: int, dataset: _TypeMultiBlockLeaf) -> None:
+    def replace(self: MultiBlock, index: int | Sequence[int], dataset: _TypeMultiBlockLeaf) -> None:
         """Replace dataset at index while preserving key name.
 
         Parameters
         ----------
-        index : int
-            Index of the block to replace.
+        index : int | Sequence[int]
+            Index of the block to replace. Specify a sequence of indices to replace
+            a nested block.
+
         dataset : pyvista.DataSet or pyvista.MultiBlock
             Dataset for replacing the one at index.
 
         Examples
         --------
         >>> import pyvista as pv
+        >>> from pyvista import examples
         >>> import numpy as np
         >>> data = {
         ...     'cube': pv.Cube(),
@@ -1004,10 +1075,45 @@ class MultiBlock(
         >>> np.allclose(blocks[1].center, [10.0, 10.0, 10.0])
         True
 
+        Load a dataset with nested blocks.
+
+        >>> multi = examples.download_biplane()
+
+        Get one of the blocks and extract its surface.
+
+        >>> block = multi[0][42]
+        >>> surface = block.extract_geometry()
+
+        Replace the block.
+
+        >>> multi.replace((0, 42), surface)
+
+        This is similar to replacing the block directly with indexing but the block
+        name is also preserved.
+
+        >>> multi[0][42] = surface
+
         """
+        if isinstance(index, Sequence):
+            self._replace_nested(index, dataset)
+            return
         name = self.get_block_name(index)
         self[index] = dataset
         self.set_block_name(index, name)
+        return
+
+    def _replace_nested(self, indices: Sequence[int], block: _TypeMultiBlockLeaf) -> None:
+        _validation.check_length(indices, min_length=1, name='index')
+        # Navigate through the indices except the last one
+        target: _TypeMultiBlockLeaf = self
+        for ind in indices[:-1:]:
+            if target is None or isinstance(target, pyvista.DataSet):
+                raise IndexError(f'Invalid indices {indices}.')
+            target = target[ind]
+        if not isinstance(target, MultiBlock):
+            raise IndexError(f'Invalid indices {indices}.')
+        # Replace the block
+        target.replace(indices[-1], block)
 
     @overload
     def __setitem__(
