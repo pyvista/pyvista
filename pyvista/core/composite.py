@@ -377,7 +377,7 @@ class MultiBlock(
             elif contents == 'items':
                 yield name, block
             else:  # pragma: no cover
-                msg = f"Unexpected contents '{contents}'."
+                msg = f"Unexpected contents '{contents}'."  # type: ignore[unreachable]
                 raise RuntimeError(msg)
 
     def flatten(
