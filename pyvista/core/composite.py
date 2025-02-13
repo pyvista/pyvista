@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from ._typing_core import NumpyArray
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
-_RecursiveIteratorItem = Union[int, tuple[int, ...], str, DataSet, None]
 
 
 class MultiBlock(
@@ -380,7 +379,7 @@ class MultiBlock(
         # Iterate through ids, names, blocks
         for id_, name, block in zip(ids, names, blocks):
             if (skip_none and block is None) or (
-                skip_empty and hasattr(block, 'n_points') and block.n_points == 0  # type: ignore[union-attr]
+                skip_empty and hasattr(block, 'n_points') and block.n_points == 0
             ):
                 continue
             elif isinstance(block, MultiBlock):
