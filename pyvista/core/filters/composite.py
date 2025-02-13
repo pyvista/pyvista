@@ -26,8 +26,8 @@ if TYPE_CHECKING:
 class CompositeFilters:
     """An internal class to manage filters/algorithms for composite datasets."""
 
-    def _generic_filter(
-        self,
+    def _generic_filter(  # type:ignore[misc]
+        self: MultiBlock,
         function: str | Callable[..., Any],
         args: tuple[Any, ...] | None = None,
         kwargs: dict[str, Any] | None = None,
@@ -100,12 +100,12 @@ class CompositeFilters:
 
         def apply_filter(block_):
             func = getattr(block_, function) if isinstance(function, str) else function
-            return func(**kwargs) if args is None else func(*args, **kwargs)
+            return func(**kwargs_) if args is None else func(*args, **kwargs_)
 
-        kwargs = kwargs if kwargs else {}
+        kwargs_ = kwargs if kwargs else {}
 
         # Apply filter in-place
-        inplace = kwargs.get('inplace')
+        inplace = kwargs_.get('inplace')
         if inplace:
             iterator = self.recursive_iterator('blocks', skip_none=skip_none, skip_empty=skip_empty)
             for block in iterator:
@@ -118,10 +118,10 @@ class CompositeFilters:
         iterator = output.recursive_iterator(
             'all', skip_none=skip_none, skip_empty=False, nested_ids=True
         )
-        for ids, _, block in iterator:
+        for ids, _, block in iterator:  # type: ignore[misc, attr-defined]
             # Only copy the block if skip empty
-            copy_block = block is not None and skip_empty and block.n_points == 0
-            new_block = block.copy() if copy_block else apply_filter(block)
+            copy_block = block is not None and skip_empty and block.n_points == 0  # type: ignore[union-attr]
+            new_block = block.copy() if copy_block else apply_filter(block)  # type: ignore[union-attr]
             output.replace(ids, new_block)
         return output
 
@@ -325,8 +325,8 @@ class CompositeFilters:
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
 
-    def transform(
-        self,
+    def transform(  # type:ignore[misc]
+        self: MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool | None = None,
