@@ -38,8 +38,10 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
                 index = names.index(key)
                 return self._prop_collection.GetItemAsObject(index)
             except ValueError:
-                raise KeyError(f"No item found with name '{key}'.")
-        raise TypeError(f'Key must be an index or a string, got {type(key).__name__}.')
+                msg = f"No item found with name '{key}'."
+                raise KeyError(msg)
+        msg = f'Key must be an index or a string, got {type(key).__name__}.'
+        raise TypeError(msg)
 
     def __len__(self):
         return self._prop_collection.GetNumberOfItems()
@@ -55,10 +57,12 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
             try:
                 index = names.index(key)
             except ValueError:
-                raise KeyError(f"No item found with name '{key}'.")
+                msg = f"No item found with name '{key}'."
+                raise KeyError(msg)
             del self[index]
         else:
-            raise TypeError(f'Key must be an index or a string, got {type(key).__name__}.')
+            msg = f'Key must be an index or a string, got {type(key).__name__}.'
+            raise TypeError(msg)
 
     def __setitem__(self, key, value):
         _validation.check_instance(value, _vtk.vtkProp)
@@ -68,14 +72,14 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
             self._prop_collection.ReplaceItem(key, value)
         elif isinstance(key, str):
             if hasattr(value, 'name') and value.name != key:
-                raise ValueError(
-                    f"Name of the new actor '{value.name}' must match the key name '{key}'."
-                )
+                msg = f"Name of the new actor '{value.name}' must match the key name '{key}'."
+                raise ValueError(msg)
             # set by name
             index = self.keys().index(key)
             self[index] = value
         else:
-            raise TypeError(f'Key must be an index or a string, got {type(key).__name__}.')
+            msg = f'Key must be an index or a string, got {type(key).__name__}.'
+            raise TypeError(msg)
 
     def insert(self, index, value) -> None:
         _validation.check_instance(value, _vtk.vtkProp)
@@ -109,5 +113,6 @@ class _PropCollection(MutableSequence[_vtk.vtkProp]):
         if index < 0:
             index = len(self) + index
         if index < 0 or index >= len(self):
-            raise IndexError('Index out of range.')
+            msg = 'Index out of range.'
+            raise IndexError(msg)
         return int(index)

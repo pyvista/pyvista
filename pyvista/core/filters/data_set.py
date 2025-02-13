@@ -419,9 +419,8 @@ class DataSetFilters:
             if np.dot(axes[2], axis_2_direction) >= 0:
                 pass  # nothing to do, sign is correct
             elif axis_0_direction is not None and axis_1_direction is not None:
-                raise ValueError(
-                    f'Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation.'
-                )
+                msg = f'Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation.'
+                raise ValueError(msg)
             else:
                 axes[2] *= -1
                 # Need to also flip a second vector to keep system as right-handed
@@ -9736,9 +9735,8 @@ class DataSetFilters:
                     )
             # Spacing is specified directly. Make sure other params are not set.
             elif cell_length_percentile is not None or cell_length_sample_size is not None:
-                raise TypeError(
-                    'Spacing and cell length options cannot both be set. Set one or the other.'
-                )
+                msg = 'Spacing and cell length options cannot both be set. Set one or the other.'
+                raise TypeError(msg)
 
             # Get initial spacing (will be adjusted later)
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
@@ -9870,7 +9868,8 @@ def _set_threshold_limit(alg, value, method, invert):
             alg.SetUpperThreshold(value)
             alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
         else:
-            raise ValueError('Invalid method choice. Either `lower` or `upper`')
+            msg = 'Invalid method choice. Either `lower` or `upper`'
+            raise ValueError(msg)
     # ThresholdByLower, ThresholdByUpper, ThresholdBetween
     elif isinstance(value, (np.ndarray, Sequence)):
         alg.ThresholdBetween(value[0], value[1])
@@ -9880,7 +9879,8 @@ def _set_threshold_limit(alg, value, method, invert):
     elif method.lower() == 'upper':
         alg.ThresholdByUpper(value)
     else:
-        raise ValueError('Invalid method choice. Either `lower` or `upper`')
+        msg = 'Invalid method choice. Either `lower` or `upper`'
+        raise ValueError(msg)
 
 
 def _swap_axes(vectors, values):

@@ -2103,12 +2103,13 @@ class ImageDataFilters(DataSetFilters):
                     f' {self.n_points} points on {new_image.n_cells} cells.'
                 )
         elif new_image.n_points != self.n_cells:
-            raise ValueError(
+            msg = (
                 'Cannot re-mesh cells to points. The dimensions of the input'
                 f' {self.dimensions} is not compatible with the dimensions of the'
                 f' output {new_image.dimensions} and would require to map'
                 f' {self.n_cells} cells on {new_image.n_points} points.'
             )
+            raise ValueError(msg)
 
         # Copy field data
         new_image.field_data.update(self.field_data)

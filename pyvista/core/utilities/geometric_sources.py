@@ -991,10 +991,11 @@ class Text3DSource(vtkVectorText):
         elif name in Text3DSource._new_attr_exceptions:
             object.__setattr__(self, name, value)
         else:
-            raise AttributeError(
+            msg = (
                 f'Attribute "{name}" does not exist and cannot be added to type '
-                f'{self.__class__.__name__}',
+                f'{self.__class__.__name__}'
             )
+            raise AttributeError(msg)
 
     @property
     def string(self: Text3DSource) -> str:  # numpydoc ignore=RT01
