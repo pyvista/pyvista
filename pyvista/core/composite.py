@@ -1083,7 +1083,8 @@ class MultiBlock(
 
         >>> multi.replace((0, 42), surface)
 
-        This is equivalent to replacing the block directly with indexing.
+        This is similar to replacing the block directly with indexing but the block
+        name is also preserved.
 
         >>> multi[0][42] = surface
 

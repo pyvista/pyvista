@@ -267,12 +267,12 @@ def test_replace_nested():
     assert nested.keys() == expected_keys
     assert nested.flatten().keys() == expected_flat_keys
 
+    match = re.escape('Invalid indices (0, 0, 0).')
+    with pytest.raises(IndexError, match=match):
+        nested.replace((0, 0, 0), None)
     match = re.escape('Invalid indices (0, 0).')
     with pytest.raises(IndexError, match=match):
         nested.replace((0, 0), None)
-    match = re.escape('Invalid indices (1, 0, 0).')
-    with pytest.raises(IndexError, match=match):
-        nested.replace((1, 0, 0), None)
 
 
 def test_reverse(sphere):
