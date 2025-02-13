@@ -230,49 +230,49 @@ def test_slicing_multiple_in_setitem(sphere):
     assert len(multi) == 9
 
 
-def test_replace_nested():
+@pytest.fixture
+def nested_fixture():
     image = pv.ImageData()
     poly = pv.PolyData()
     grid = pv.UnstructuredGrid()
     nested = pv.MultiBlock(dict(image=image, poly=poly))
     multi = pv.MultiBlock(dict(grid=grid))
     nested.insert(1, multi, 'multi')
+    return nested
 
-    assert nested[0] is image
-    assert nested[1][0] is grid
-    assert nested[2] is poly
+@pytest.mark.parametrize(
+    "replace_indices",
+    [
+        ((0,)),
+        ((1, 0),),
+        ((2,),),
+    ]
+)
+def test_replace_nested(nested_fixture, replace_indices):
+    nested = nested_fixture
     expected_keys = ['image', 'multi', 'poly']
     expected_flat_keys = ['image', 'grid', 'poly']
+    
+    original_values = [nested[0], nested[1][0], nested[2]]
+    nested.replace(replace_indices, None)
+    
+    assert all(
+        (nested[idx] is None if idx == replace_indices else nested[idx] is original_values[i])
+        for i, idx in enumerate([(0,), (1, 0), (2,)])
+    )
+    
     assert nested.keys() == expected_keys
     assert nested.flatten().keys() == expected_flat_keys
 
-    nested.replace((0,), None)
-    assert nested[0] is None
-    assert nested[1][0] is grid
-    assert nested[2] is poly
-    assert nested.keys() == expected_keys
-    assert nested.flatten().keys() == expected_flat_keys
-
-    nested.replace((1, 0), None)
-    assert nested[0] is None
-    assert nested[1][0] is None
-    assert nested[2] is poly
-    assert nested.keys() == expected_keys
-    assert nested.flatten().keys() == expected_flat_keys
-
-    nested.replace((2,), None)
-    assert nested[0] is None
-    assert nested[1][0] is None
-    assert nested[2] is None
-    assert nested.keys() == expected_keys
-    assert nested.flatten().keys() == expected_flat_keys
-
-    match = re.escape('Invalid indices (0, 0, 0).')
+@pytest.mark.parametrize("invalid_indices", [
+    ((0, 0, 0), 'Invalid indices (0, 0, 0).'),
+    ((0, 0), 'Invalid indices (0, 0).'),
+])
+def test_replace_nested_invalid_indices(nested_fixture, invalid_indices):
+    nested = nested_fixture
+    match = re.escape(invalid_indices[1])
     with pytest.raises(IndexError, match=match):
-        nested.replace((0, 0, 0), None)
-    match = re.escape('Invalid indices (0, 0).')
-    with pytest.raises(IndexError, match=match):
-        nested.replace((0, 0), None)
+        nested.replace(invalid_indices[0], None)
 
 
 def test_reverse(sphere):
