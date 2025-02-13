@@ -170,7 +170,7 @@ def test_multi_block_set_get_ers():
     with pytest.raises(TypeError):
         data = multi[[0, 1]]
 
-    with pytest.raises(TypeError):
+    with pytest.raises(IndexError):
         multi[1, 'foo'] = data
 
 
@@ -228,6 +228,34 @@ def test_slicing_multiple_in_setitem(sphere):
     assert multi[1] == pv.Cube()
     assert multi.count(pv.Cube()) == 1
     assert len(multi) == 9
+
+
+def test_setitem_with_tuple():
+    image = pv.ImageData()
+    poly = pv.PolyData()
+    grid = pv.UnstructuredGrid()
+    nested = pv.MultiBlock(dict(image=image, poly=poly))
+    multi = pv.MultiBlock(dict(grid=grid))
+    nested.insert(1, multi)
+
+    assert nested[0] is image
+    assert nested[1][0] is grid
+    assert nested[2] is poly
+
+    nested[(0,)] = None
+    assert nested[0] is None
+    assert nested[1][0] is grid
+    assert nested[2] is poly
+
+    nested[(1, 0)] = None
+    assert nested[0] is None
+    assert nested[1][0] is None
+    assert nested[2] is poly
+
+    nested[(2,)] = None
+    assert nested[0] is None
+    assert nested[1][0] is None
+    assert nested[2] is None
 
 
 def test_reverse(sphere):

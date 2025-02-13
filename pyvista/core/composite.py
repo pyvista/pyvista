@@ -220,12 +220,14 @@ class MultiBlock(
             Do not include empty meshes in the iterator.
 
         nested_ids : bool, default: False
-            Prepend any parent block names to the child block names. This option
-            only applies when ``contents`` is ``'names'`` or ``'items'``.
+            Prepend parent block indices to the child block indices. If ``True``, a
+            tuple of indices is returned for each block. If ``False``, a single integer
+            index is returned for each block. This option only applies when ``contents``
+            is ``'ids'`` or ``'all'``.
 
         prepend_names : bool, default: False
             Prepend any parent block names to the child block names. This option
-            only applies when ``contents`` is ``'names'`` or ``'items'``.
+            only applies when ``contents`` is ``'names'``, ``'items'``, or ``'all'``.
 
         separator : str, default: '::'
             String separator to use when ``prepend_names`` is enabled. The separator
@@ -305,6 +307,23 @@ class MultiBlock(
           Y Bounds:   1.372e+00, 1.872e+00
           Z Bounds:   -6.351e-01, 3.649e-01
           N Arrays:   6)
+
+        Compute the length of the longest ``MultiBlock`` using ``'ids'``. Here we also
+        allow empty meshes and none blocks so that all blocks are considered.
+
+        >>> iterator = multi.recursive_iterator(
+        ...     'ids', skip_empty=False, skip_none=False
+        ... )
+        >>> max_n_blocks = max(iterator) + 1
+        >>> max_n_blocks
+        46
+
+        Use the iterator to replace all blocks with new blocks. Similar to a previous
+        example, we use a filter but this time the operation is not performed in place.
+
+        >>> iterator = multi.recursive_iterator('all')
+        >>> for index, _, block in iterator:
+        >>>     multi[index] = block.connectivity()
 
         """
         _validation.check_contains(
@@ -1067,7 +1086,7 @@ class MultiBlock(
 
     def __setitem__(
         self: MultiBlock,
-        index: int | str | slice,
+        index: int | str | slice | tuple[int, ...],
         data,
     ) -> None:
         """Set a block with a VTK data object.
@@ -1109,6 +1128,17 @@ class MultiBlock(
                     del self[index_iter[-1] + 1]  # delete next entry
                 else:
                     self[idx] = d  #
+            return
+        elif isinstance(index, tuple):
+            _validation.check_length(index, min_length=1, name='index')
+            # Get the target nested multiblock by "drilling down" to the second-last index
+            target_multiblock = self
+            for ind in index[:-1:]:
+                target_multiblock = target_multiblock[ind]
+            if not isinstance(target_multiblock, MultiBlock):
+                raise IndexError(f'Invalid index {index}.')
+            # Set the data using the last index
+            target_multiblock[index[-1]] = data
             return
         else:
             i = index
