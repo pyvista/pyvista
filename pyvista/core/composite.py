@@ -197,14 +197,19 @@ class MultiBlock(
 
         Parameters
         ----------
-        contents : 'names', 'blocks', 'items', default: 'blocks'
+        contents : 'ids' | 'names' | 'blocks' | 'items', default: 'blocks'
             Values to include in the iterator.
 
-            - ``'ids'``: Return an iterator with nested indices.
+            - ``'ids'``: Return an iterator with nested block indices.
             - ``'names'``: Return an iterator with nested block names (i.e. :meth:`keys`).
             - ``'blocks'``: Return an iterator with nested blocks.
             - ``'items'``: Return an iterator with nested ``(name, block)`` pairs.
             - ``'all'``: Return an iterator with nested ``(index, name, block)`` triplets.
+
+            .. note::
+
+                Use the ``nested_ids`` and ``prepend_names`` options to modify how
+                the blocks ids and names are represented, respectively.
 
         order : 'nested_first', 'nested_last', optional
             Order in which to iterate through nested blocks.
@@ -325,7 +330,7 @@ class MultiBlock(
 
         >>> iterator = multi.recursive_iterator('all', nested_ids=True)
         >>> for ids, _, block in iterator:
-        ...     multi._replace_nested(ids, block.connectivity())
+        ...     multi.replace(ids, block.connectivity())
 
         """
         _validation.check_contains(
