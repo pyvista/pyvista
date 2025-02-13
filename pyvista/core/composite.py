@@ -1134,7 +1134,7 @@ class MultiBlock(
             # Get the target nested multiblock by "drilling down" to the second-last index
             target_multiblock = self
             for ind in index[:-1:]:
-                target_multiblock = target_multiblock[ind]
+                target_multiblock = target_multiblock[ind]  # type: ignore[assignment]
             if not isinstance(target_multiblock, MultiBlock):
                 raise IndexError(f'Invalid index {index}.')
             # Set the data using the last index
