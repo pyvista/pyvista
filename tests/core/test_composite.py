@@ -902,12 +902,16 @@ def test_transform_filter_inplace_default_warns(multiblock_poly):
 
 
 def test_recursive_iterator(multiblock_all_with_nested_and_none):
-    # Test default skips None blocks by default
+    # include an empty mesh
+    multiblock_all_with_nested_and_none.append(pv.PolyData())
+
+    # Test default skips None blocks and empty meshes by default
     iterator = multiblock_all_with_nested_and_none.recursive_iterator()
     assert isinstance(iterator, Generator)
     iterator_list = list(iterator)
     assert None not in iterator_list
     assert all(isinstance(item, pv.DataSet) for item in iterator_list)
+    assert all(item.n_points > 0 for item in iterator_list)
 
     # Test do not skip None blocks
     iterator = multiblock_all_with_nested_and_none.recursive_iterator(skip_none=False)
@@ -915,3 +919,108 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
     iterator_list = list(iterator)
     assert None in iterator_list
     assert all(isinstance(item, pv.DataSet) or item is None for item in iterator_list)
+
+    # Test do not skip empty blocks
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(skip_empty=False)
+    assert isinstance(iterator, Generator)
+    iterator_list = list(iterator)
+    assert any(item.n_points == 0 for item in iterator_list)
+
+
+def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(contents='names')
+    assert all(isinstance(item, str) for item in iterator)
+
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(contents='items')
+    for name, block in iterator:
+        assert isinstance(name, str)
+        assert isinstance(block, pv.DataSet) or block is None
+
+
+@pytest.mark.parametrize('prepend_names', [True, False])
+@pytest.mark.parametrize('separator', ['::', '--'])
+def test_recursive_iterator_prepend_names(separator, prepend_names):
+    nested = MultiBlock(dict(a=MultiBlock(dict(b=MultiBlock(dict(c=None)), d=None)), e=None))
+    expected_names = ['a::b::c', 'a::d', 'e'] if prepend_names else ['c', 'd', 'e']
+    expected_names = [name.replace('::', separator) for name in expected_names]
+
+    iterator = nested.recursive_iterator(
+        prepend_names=prepend_names, separator=separator, contents='names', skip_none=False
+    )
+    names = list(iterator)
+    assert names == expected_names
+
+    # Test iterator with flatten method
+    name_mode = 'prepend' if prepend_names else 'preserve'
+    flattened = nested.flatten(name_mode=name_mode, separator=separator)
+    assert flattened.keys() == expected_names
+
+
+def test_recursive_iterator_order():
+    nested = pv.MultiBlock(dict(image=pv.ImageData(), poly=pv.PolyData()))
+    multi = pv.MultiBlock(dict(grid=pv.UnstructuredGrid()))
+    nested.insert(1, multi)
+    assert isinstance(nested[0], pv.ImageData)
+    assert isinstance(nested[1], pv.MultiBlock)
+    assert isinstance(nested[1][0], pv.UnstructuredGrid)
+    assert isinstance(nested[2], pv.PolyData)
+
+    # Expect nested dataset in center
+    iterator = list(nested.recursive_iterator('items', order=None, skip_empty=False))
+    assert iterator[0][0] == 'image'
+    assert iterator[1][0] == 'grid'
+    assert iterator[2][0] == 'poly'
+    assert isinstance(iterator[0][1], pv.ImageData)
+    assert isinstance(iterator[1][1], pv.UnstructuredGrid)
+    assert isinstance(iterator[2][1], pv.PolyData)
+
+    # Expect nested dataset last
+    iterator = list(nested.recursive_iterator('items', order='nested_last', skip_empty=False))
+    assert iterator[0][0] == 'image'
+    assert iterator[1][0] == 'poly'
+    assert iterator[2][0] == 'grid'
+    assert isinstance(iterator[0][1], pv.ImageData)
+    assert isinstance(iterator[1][1], pv.PolyData)
+    assert isinstance(iterator[2][1], pv.UnstructuredGrid)
+
+    # Expect nested dataset first
+    iterator = list(nested.recursive_iterator('items', order='nested_first', skip_empty=False))
+    assert iterator[0][0] == 'grid'
+    assert iterator[1][0] == 'image'
+    assert iterator[2][0] == 'poly'
+    assert isinstance(iterator[0][1], pv.UnstructuredGrid)
+    assert isinstance(iterator[1][1], pv.ImageData)
+    assert isinstance(iterator[2][1], pv.PolyData)
+
+
+def test_flatten(multiblock_all_with_nested_and_none):
+    root_names = multiblock_all_with_nested_and_none.keys()[:-1]
+    nested_names = multiblock_all_with_nested_and_none[-1].keys()
+    expected_names = [*root_names, *nested_names]
+    expected_n_blocks = len(root_names) + len(nested_names)
+
+    flat = multiblock_all_with_nested_and_none.flatten(name_mode='preserve')
+    assert all(isinstance(item, pv.DataSet) or item is None for item in flat)
+    assert len(flat) == expected_n_blocks
+    assert flat.keys() == expected_names
+
+    flat = multiblock_all_with_nested_and_none.flatten(name_mode='reset')
+    expected_names = [f'Block-{i:02}' for i in range(expected_n_blocks)]
+    assert flat.keys() == expected_names
+
+
+@pytest.mark.parametrize('copy', [True, False])
+def test_flatten_copy(multiblock_all, copy):
+    multi_in = multiblock_all
+    data_before = np.array([1, 2, 3])
+    multi_in.field_data['foo'] = data_before
+
+    multi_out = multiblock_all.flatten(copy=copy)
+    assert multi_in is not multi_out
+    for block_in, block_out in zip(multi_in, multi_out):
+        assert block_in == block_out
+        assert (block_in is block_out) == (not copy)
+
+    data_after = multi_out.field_data['foo']
+    shares_memory = np.shares_memory(data_after, data_before)
+    assert shares_memory == (not copy)

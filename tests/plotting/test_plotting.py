@@ -151,6 +151,7 @@ def test_import_gltf(verify_image_cache):
         pl.import_gltf('not a file')
 
     pl.import_gltf(filename)
+    assert np.allclose(pl.bounds, (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     pl.show()
 
 
@@ -187,6 +188,7 @@ def test_import_vrml():
         pl.import_vrml('not a file')
 
     pl.import_vrml(filename)
+    assert np.allclose(pl.bounds, (-0.5, 0.5, -0.5, 0.5, -0.5, 0.5))
     pl.show()
 
 
@@ -213,6 +215,17 @@ def test_import_3ds():
         pl.import_3ds('not a file')
 
     pl.import_3ds(filename)
+    assert np.allclose(
+        pl.bounds,
+        (
+            -5.379246234893799,
+            5.364696979522705,
+            -1.9769330024719238,
+            2.731842041015625,
+            -7.883847236633301,
+            5.437096118927002,
+        ),
+    )
     pl.show()
 
 
@@ -225,6 +238,7 @@ def test_import_obj():
         pl.import_obj('not a file')
 
     pl.import_obj(download_obj_file)
+    assert np.allclose(pl.bounds, (-10.0, 10.0, 0.0, 4.5, -10.0, 10.0))
     pl.show()
 
 
@@ -2474,10 +2488,9 @@ def test_where_is():
         assert isinstance(loc, tuple)
 
 
-def test_log_scale():
-    mesh = examples.load_uniform()
+def test_log_scale(uniform):
     plotter = pv.Plotter()
-    plotter.add_mesh(mesh, log_scale=True)
+    plotter.add_mesh(uniform, log_scale=True, clim=[-1, uniform.get_data_range()[1]])
     plotter.show()
 
 

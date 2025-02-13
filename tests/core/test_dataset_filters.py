@@ -897,6 +897,12 @@ def test_glyph(datasets, sphere):
         sphere.glyph(geom=geoms, indices=indices[:-1])
 
 
+def test_glyph_warns_ambiguous_data(sphere):
+    sphere.compute_normals(inplace=True)
+    with pytest.warns(Warning):
+        sphere.glyph(scale=True)
+
+
 def test_glyph_cell_point_data(sphere):
     sphere['vectors_cell'] = np.ones([sphere.n_cells, 3])
     sphere['vectors_points'] = np.ones([sphere.n_points, 3])
