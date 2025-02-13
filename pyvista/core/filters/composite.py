@@ -105,7 +105,7 @@ class CompositeFilters:
                     nested = ' '
                 else:
                     nested = ' nested '
-                    index = ids_
+                    index = ''.join([f'[{id_}]' for id_ in ids_])
                 msg = f"The filter '{func_name}' could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
                 raise RuntimeError(msg) from e
             return output_

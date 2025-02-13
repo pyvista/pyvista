@@ -1169,3 +1169,10 @@ def test_generic_filter(multiblock_all_with_nested_and_none):
         multiblock_all_with_nested_and_none._generic_filter(
             'resample',
         )
+
+    multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
+    match = "The filter 'resample' could not be applied to the nested block at index [0][1] with name 'Block-01' and type RectilinearGrid."
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        multi._generic_filter(
+            'resample',
+        )
