@@ -92,9 +92,7 @@ class CompositeFilters:
 
         Apply the :meth:`~pyvista.DataSetFilters.explode` filter to all blocks.
 
-        >>> filtered = multi._generic_filter(
-        ...     'explode', kwargs=dict(explode_factor=0.5)
-        ... )
+        >>> filtered = multi._generic_filter('explode', kwargs=dict(factor=0.5))
 
         """
 
