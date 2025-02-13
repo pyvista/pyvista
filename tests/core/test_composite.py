@@ -230,32 +230,42 @@ def test_slicing_multiple_in_setitem(sphere):
     assert len(multi) == 9
 
 
-def test_set_nested():
+def test_replace_nested():
     image = pv.ImageData()
     poly = pv.PolyData()
     grid = pv.UnstructuredGrid()
     nested = pv.MultiBlock(dict(image=image, poly=poly))
     multi = pv.MultiBlock(dict(grid=grid))
-    nested.insert(1, multi)
+    nested.insert(1, multi, 'multi')
 
     assert nested[0] is image
     assert nested[1][0] is grid
     assert nested[2] is poly
+    expected_keys = ['image', 'multi', 'poly']
+    expected_flat_keys = ['image', 'grid', 'poly']
+    assert nested.keys() == expected_keys
+    assert nested.flatten().keys() == expected_flat_keys
 
-    nested.set_nested((0,), None)
+    nested._replace_nested((0,), None)
     assert nested[0] is None
     assert nested[1][0] is grid
     assert nested[2] is poly
+    assert nested.keys() == expected_keys
+    assert nested.flatten().keys() == expected_flat_keys
 
-    nested.set_nested((1, 0), None)
+    nested._replace_nested((1, 0), None)
     assert nested[0] is None
     assert nested[1][0] is None
     assert nested[2] is poly
+    assert nested.keys() == expected_keys
+    assert nested.flatten().keys() == expected_flat_keys
 
-    nested.set_nested((2,), None)
+    nested._replace_nested((2,), None)
     assert nested[0] is None
     assert nested[1][0] is None
     assert nested[2] is None
+    assert nested.keys() == expected_keys
+    assert nested.flatten().keys() == expected_flat_keys
 
 
 def test_reverse(sphere):
