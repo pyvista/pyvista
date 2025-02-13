@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -53,10 +54,10 @@ class CompositeFilters:
         function : Callable | str
             Callable function or name of the method to apply to each block.
 
-        *args : tuple, optional
+        *args : Any, optional
             Arguments to use with the specified ``function``.
 
-        **kwargs : dict, optional
+        **kwargs : Any, optional
             Keyword arguments to use with the specified ``function``.
 
         Returns
@@ -86,15 +87,42 @@ class CompositeFilters:
         >>> type(filtered[0]), type(filtered[1]), type(filtered[2])
         (<class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
 
-        Apply the :meth:`~pyvista.DataSetFilters.explode` filter to all blocks.
+        Use the :meth:`~pyvista.DataSetFilters.partition` filter on all blocks.
+        Any arguments can be specified as though the filter is being used directly.
 
-        >>> filtered = multi._generic_filter('explode', kwargs=dict(factor=0.5))
+        >>> filtered = multi._generic_filter('partition', 4, as_composite=True)
+
+        Any function can be used as long as it returns a :class:`pyvista.DataSet`.
+        For example, we can normalize each block independently to have bounds between
+        ``-1.0`` and ``1.0``.
+
+        >>> def normalize_bounds(dataset):
+        ...     import numpy as np
+        ...
+        ...     dataset = dataset.translate(-np.array(dataset.center))
+        ...     bounds = dataset.bounds
+        ...     x_scale = 1 / (bounds.x_max - bounds.x_min)
+        ...     y_scale = 1 / (bounds.y_max - bounds.y_min)
+        ...     z_scale = 1 / (bounds.z_max - bounds.z_min)
+        ...     return dataset.scale((x_scale, y_scale, z_scale))
+
+        >>> multi._generic_filter(normalize_bounds)
+        >>> multi
+        MultiBlock (...)
+          N Blocks:   3
+          X Bounds:   -5.000e-01, 5.000e-01
+          Y Bounds:   -5.000e-01, 5.000e-01
+          Z Bounds:   -5.000e-01, 5.000e-01
 
         """
 
         def apply_filter(ids_, name_, block_):
             try:
-                func = getattr(block_, function) if isinstance(function, str) else function
+                func = (
+                    getattr(block_, function)
+                    if isinstance(function, str)
+                    else functools.partial(function, block_)
+                )
                 output_ = func(**kwargs) if len(args) == 0 else func(*args, **kwargs)
             except (AttributeError, ValueError, TypeError, RuntimeError) as e:
                 # Construct a helpful error message
