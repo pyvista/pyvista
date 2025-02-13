@@ -999,7 +999,7 @@ def test_recursive_iterator_prepend_names(separator, prepend_names):
 @pytest.mark.parametrize('nested_ids', [True, False])
 def test_recursive_iterator_ids(nested_ids):
     nested = MultiBlock(dict(a=MultiBlock(dict(b=MultiBlock(dict(c=None)), d=None)), e=None))
-    expected_ids = [(0, 0, 0), (0, 1), (1,)] if nested_ids else [0, 1, 1]
+    expected_ids = [[0, 0, 0], [0, 1], [1]] if nested_ids else [0, 1, 1]
 
     iterator = nested.recursive_iterator('ids', nested_ids=nested_ids, skip_none=False)
     ids = list(iterator)
@@ -1043,9 +1043,9 @@ def test_recursive_iterator_order():
     ids2, names2, block2 = next(iterator)
 
     # Ids should refer to original datasets in input
-    assert ids0 == (0,)
-    assert ids1 == (1, 0)
-    assert ids2 == (2,)
+    assert ids0 == [0]
+    assert ids1 == [1, 0]
+    assert ids2 == [2]
     assert nested[ids0[0]] is image
     assert nested[ids1[0]][ids1[1]] is grid
     assert nested[ids2[0]] is poly
@@ -1063,9 +1063,9 @@ def test_recursive_iterator_order():
     ids2, names2, block2 = next(iterator)
 
     # Ids should refer to original datasets in input
-    assert ids0 == (0,)
-    assert ids1 == (2,)
-    assert ids2 == (1, 0)
+    assert ids0 == [0]
+    assert ids1 == [2]
+    assert ids2 == [1, 0]
     assert nested[ids0[0]] is image
     assert nested[ids1[0]] is poly
     assert nested[ids2[0]][ids2[1]] is grid
@@ -1083,9 +1083,9 @@ def test_recursive_iterator_order():
     ids2, names2, block2 = next(iterator)
 
     # Ids should refer to original datasets in input
-    assert ids0 == (1, 0)
-    assert ids1 == (0,)
-    assert ids2 == (2,)
+    assert ids0 == [1, 0]
+    assert ids1 == [0]
+    assert ids2 == [2]
     assert nested[ids0[0]][ids0[1]] is grid
     assert nested[ids1[0]] is image
     assert nested[ids2[0]] is poly
