@@ -240,34 +240,39 @@ def nested_fixture():
     nested.insert(1, multi, 'multi')
     return nested
 
+
 @pytest.mark.parametrize(
-    "replace_indices",
+    'replace_indices',
     [
         ((0,)),
         ((1, 0),),
         ((2,),),
-    ]
+    ],
 )
 def test_replace_nested(nested_fixture, replace_indices):
     nested = nested_fixture
     expected_keys = ['image', 'multi', 'poly']
     expected_flat_keys = ['image', 'grid', 'poly']
-    
+
     original_values = [nested[0], nested[1][0], nested[2]]
     nested.replace(replace_indices, None)
-    
+
     assert all(
         (nested[idx] is None if idx == replace_indices else nested[idx] is original_values[i])
         for i, idx in enumerate([(0,), (1, 0), (2,)])
     )
-    
+
     assert nested.keys() == expected_keys
     assert nested.flatten().keys() == expected_flat_keys
 
-@pytest.mark.parametrize("invalid_indices", [
-    ((0, 0, 0), 'Invalid indices (0, 0, 0).'),
-    ((0, 0), 'Invalid indices (0, 0).'),
-])
+
+@pytest.mark.parametrize(
+    'invalid_indices',
+    [
+        ((0, 0, 0), 'Invalid indices (0, 0, 0).'),
+        ((0, 0), 'Invalid indices (0, 0).'),
+    ],
+)
 def test_replace_nested_invalid_indices(nested_fixture, invalid_indices):
     nested = nested_fixture
     match = re.escape(invalid_indices[1])
