@@ -322,8 +322,8 @@ class MultiBlock(
         example, we use a filter but this time the operation is not performed in place.
 
         >>> iterator = multi.recursive_iterator('all', nested_ids=True)
-        >>> for index, _, block in iterator:
-        ...     multi[index] = block.connectivity()
+        >>> for ids, _, block in iterator:
+        ...     multi.set_nested(ids, block.connectivity())
 
         """
         _validation.check_contains(
@@ -587,6 +587,50 @@ class MultiBlock(
                 name = None
             output.append(block, name)
         return output
+
+    def set_nested(self, indices: Sequence[int], block: _TypeMultiBlockLeaf) -> None:
+        """Set a value in a ragged array or nested lists using arbitrary indices.
+
+        Parameters
+        ----------
+        indices : Sequence[int]
+            Indices specifying the path to the element to set.
+
+        block : MultiBlock | DataSet | None
+            Value to set at the specified index.
+
+        Examples
+        --------
+        Create a :class:`MultiBlock` instance.
+
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock()
+
+        Set the first block as another ``MultiBlock``.
+
+        >>> multi.set_nested((0,), pv.MultiBlock())
+
+        Insert a sphere mesh in the nested ``MultiBlock``.
+
+        >>> mesh = pv.Sphere()
+        >>> multi.set_nested((0, 0), mesh)
+
+        This is equivalent to setting the mesh with indexing.
+
+        >>> multi[0][0] = mesh
+
+        """
+        _validation.check_length(indices, min_length=1, name='index')
+        # Navigate through the indices except the last one
+        target: _TypeMultiBlockLeaf = self
+        for ind in indices[:-1:]:
+            if target is None or isinstance(target, pyvista.DataSet):
+                raise IndexError(f'Invalid indices {indices}.')
+            target = target[ind]
+        if not isinstance(target, MultiBlock):
+            raise IndexError(f'Invalid indices {indices}.')
+        # Set the final value
+        target[indices[-1]] = block
 
     @property
     def bounds(self: MultiBlock) -> BoundsTuple:
@@ -1086,7 +1130,7 @@ class MultiBlock(
 
     def __setitem__(
         self: MultiBlock,
-        index: int | str | slice | tuple[int, ...],
+        index: int | str | slice,
         data,
     ) -> None:
         """Set a block with a VTK data object.
@@ -1128,19 +1172,6 @@ class MultiBlock(
                     del self[index_iter[-1] + 1]  # delete next entry
                 else:
                     self[idx] = d  #
-            return
-        elif isinstance(index, tuple):
-            _validation.check_length(index, min_length=1, name='index')
-            # Get the target nested multiblock by "drilling down" to the second-last index
-            target_multiblock: _TypeMultiBlockLeaf = self
-            for ind in index[:-1:]:
-                if target_multiblock is None or isinstance(target_multiblock, pyvista.DataSet):
-                    raise IndexError(f'Invalid index {index}.')
-                target_multiblock = target_multiblock[ind]
-            if not isinstance(target_multiblock, MultiBlock):
-                raise IndexError(f'Invalid index {index}.')
-            # Set the data using the last index
-            target_multiblock[index[-1]] = data
             return
         else:
             i = index

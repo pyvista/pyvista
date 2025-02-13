@@ -170,7 +170,7 @@ def test_multi_block_set_get_ers():
     with pytest.raises(TypeError):
         data = multi[[0, 1]]
 
-    with pytest.raises(IndexError):
+    with pytest.raises(TypeError):
         multi[1, 'foo'] = data
 
 
@@ -230,7 +230,7 @@ def test_slicing_multiple_in_setitem(sphere):
     assert len(multi) == 9
 
 
-def test_setitem_with_tuple():
+def test_set_nested():
     image = pv.ImageData()
     poly = pv.PolyData()
     grid = pv.UnstructuredGrid()
@@ -242,17 +242,17 @@ def test_setitem_with_tuple():
     assert nested[1][0] is grid
     assert nested[2] is poly
 
-    nested[(0,)] = None
+    nested.set_nested((0,), None)
     assert nested[0] is None
     assert nested[1][0] is grid
     assert nested[2] is poly
 
-    nested[(1, 0)] = None
+    nested.set_nested((1, 0), None)
     assert nested[0] is None
     assert nested[1][0] is None
     assert nested[2] is poly
 
-    nested[(2,)] = None
+    nested.set_nested((2,), None)
     assert nested[0] is None
     assert nested[1][0] is None
     assert nested[2] is None
