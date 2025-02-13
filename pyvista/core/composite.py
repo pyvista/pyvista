@@ -391,13 +391,13 @@ class MultiBlock(
                 if nested_ids:
                     # Include parent id with the block ids
                     new_ids = []
-                    for block_id in range(self.n_blocks):
+                    for block_id in range(block.n_blocks):
                         new_id = id_.copy()
                         new_id.append(block_id)
                         new_ids.append(new_id)
                     block_ids = new_ids
                 else:
-                    block_ids = [[i] for i in range(self.n_blocks)]
+                    block_ids = [[i] for i in range(block.n_blocks)]
 
                 yield from block._recursive_iterator(
                     names=names,
