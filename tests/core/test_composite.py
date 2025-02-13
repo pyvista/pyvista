@@ -1147,3 +1147,25 @@ def test_flatten_copy(multiblock_all, copy):
     data_after = multi_out.field_data['foo']
     shares_memory = np.shares_memory(data_after, data_before)
     assert shares_memory == (not copy)
+
+
+def test_generic_filter(multiblock_all_with_nested_and_none):
+    # Include empty mesh
+    empty_mesh = pv.PolyData()
+    multiblock_all_with_nested_and_none.append(empty_mesh)
+    flat_inputs = multiblock_all_with_nested_and_none.flatten()
+
+    output = multiblock_all_with_nested_and_none._generic_filter('cast_to_unstructured_grid')
+
+    flat_outputs = output.flatten()
+    assert None in flat_outputs
+
+    assert flat_inputs.n_blocks == flat_outputs.n_blocks
+    for block in flat_outputs:
+        assert isinstance(block, pv.UnstructuredGrid) or block is None
+
+    match = "The filter 'resample' could not be applied to the block at index 1 with name 'Block-01' and type RectilinearGrid."
+    with pytest.raises(RuntimeError, match=match):
+        multiblock_all_with_nested_and_none._generic_filter(
+            'resample',
+        )
