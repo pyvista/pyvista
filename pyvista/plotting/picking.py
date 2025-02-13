@@ -1143,7 +1143,11 @@ class PickingMethods(PickingInterface):  # numpydoc ignore=PR01
             picked = pyvista.MultiBlock()
             renderer = self_().iren.get_poked_renderer()  # type: ignore[union-attr]
             for actor in renderer.actors.values():
-                if actor.GetMapper() and actor.GetPickable():
+                if (
+                    (mapper := actor.GetMapper())
+                    and hasattr(mapper, 'GetInputAsDataSet')
+                    and actor.GetPickable()
+                ):
                     input_mesh = pyvista.wrap(actor.GetMapper().GetInputAsDataSet())
                     input_mesh.cell_data['orig_extract_id'] = np.arange(input_mesh.n_cells)
                     extract = _vtk.vtkExtractGeometry()
