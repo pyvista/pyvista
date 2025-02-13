@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from collections.abc import MutableSequence
+from collections.abc import Sequence
 import itertools
 import pathlib
 from typing import TYPE_CHECKING
@@ -37,7 +38,6 @@ from .utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Sequence
     from typing import Literal
 
     from ._typing_core import NumpyArray
@@ -979,19 +979,22 @@ class MultiBlock(
     def _ipython_key_completions_(self: MultiBlock) -> list[str | None]:
         return self.keys()
 
-    def replace(self: MultiBlock, index: int, dataset: _TypeMultiBlockLeaf) -> None:
+    def replace(self: MultiBlock, index: int | Sequence[int], dataset: _TypeMultiBlockLeaf) -> None:
         """Replace dataset at index while preserving key name.
 
         Parameters
         ----------
-        index : int
-            Index of the block to replace.
+        index : int | Sequence[int]
+            Index of the block to replace. Specify a sequence of indices to replace
+            a nested block.
+
         dataset : pyvista.DataSet or pyvista.MultiBlock
             Dataset for replacing the one at index.
 
         Examples
         --------
         >>> import pyvista as pv
+        >>> from pyvista import examples
         >>> import numpy as np
         >>> data = {
         ...     'cube': pv.Cube(),
@@ -1004,10 +1007,44 @@ class MultiBlock(
         >>> np.allclose(blocks[1].center, [10.0, 10.0, 10.0])
         True
 
+        Load a dataset with nested blocks.
+
+        >>> multi = examples.download_biplane()
+
+        Get one of the blocks and extract its surface.
+
+        >>> block = multi[0][42]
+        >>> surface = block.extract_geometry()
+
+        Replace the block.
+
+        >>> multi.replace((0, 42), surface)
+
+        This is equivalent to replacing the block directly with indexing.
+
+        >>> multi[0][42] = surface
+
         """
+        if isinstance(index, Sequence):
+            self._replace_nested(index, dataset)
+            return
         name = self.get_block_name(index)
         self[index] = dataset
         self.set_block_name(index, name)
+        return
+
+    def _replace_nested(self, indices: Sequence[int], block: _TypeMultiBlockLeaf) -> None:
+        _validation.check_length(indices, min_length=1, name='index')
+        # Navigate through the indices except the last one
+        target: _TypeMultiBlockLeaf = self
+        for ind in indices[:-1:]:
+            if target is None or isinstance(target, pyvista.DataSet):
+                raise IndexError(f'Invalid indices {indices}.')
+            target = target[ind]
+        if not isinstance(target, MultiBlock):
+            raise IndexError(f'Invalid indices {indices}.')
+        # Replace the block
+        target.replace(indices[-1], block)
 
     @overload
     def __setitem__(

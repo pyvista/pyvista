@@ -230,6 +230,51 @@ def test_slicing_multiple_in_setitem(sphere):
     assert len(multi) == 9
 
 
+def test_replace_nested():
+    image = pv.ImageData()
+    poly = pv.PolyData()
+    grid = pv.UnstructuredGrid()
+    nested = pv.MultiBlock(dict(image=image, poly=poly))
+    multi = pv.MultiBlock(dict(grid=grid))
+    nested.insert(1, multi, 'multi')
+
+    assert nested[0] is image
+    assert nested[1][0] is grid
+    assert nested[2] is poly
+    expected_keys = ['image', 'multi', 'poly']
+    expected_flat_keys = ['image', 'grid', 'poly']
+    assert nested.keys() == expected_keys
+    assert nested.flatten().keys() == expected_flat_keys
+
+    nested.replace((0,), None)
+    assert nested[0] is None
+    assert nested[1][0] is grid
+    assert nested[2] is poly
+    assert nested.keys() == expected_keys
+    assert nested.flatten().keys() == expected_flat_keys
+
+    nested.replace((1, 0), None)
+    assert nested[0] is None
+    assert nested[1][0] is None
+    assert nested[2] is poly
+    assert nested.keys() == expected_keys
+    assert nested.flatten().keys() == expected_flat_keys
+
+    nested.replace((2,), None)
+    assert nested[0] is None
+    assert nested[1][0] is None
+    assert nested[2] is None
+    assert nested.keys() == expected_keys
+    assert nested.flatten().keys() == expected_flat_keys
+
+    match = re.escape('Invalid indices (0, 0).')
+    with pytest.raises(IndexError, match=match):
+        nested.replace((0, 0), None)
+    match = re.escape('Invalid indices (1, 0, 0).')
+    with pytest.raises(IndexError, match=match):
+        nested.replace((1, 0, 0), None)
+
+
 def test_reverse(sphere):
     multi = MultiBlock({f'{i}': sphere for i in range(3)})
     multi.append(pv.Cube(), 'cube')
