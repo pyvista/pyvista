@@ -2102,6 +2102,7 @@ class ImageDataFilters(DataSetFilters):
                     f' output {new_image.dimensions} and would require to map'
                     f' {self.n_points} points on {new_image.n_cells} cells.'
                 )
+                raise ValueError(msg)
         elif new_image.n_points != self.n_cells:
             msg = (
                 'Cannot re-mesh cells to points. The dimensions of the input'
