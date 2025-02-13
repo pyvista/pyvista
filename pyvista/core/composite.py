@@ -1132,9 +1132,11 @@ class MultiBlock(
         elif isinstance(index, tuple):
             _validation.check_length(index, min_length=1, name='index')
             # Get the target nested multiblock by "drilling down" to the second-last index
-            target_multiblock = self
+            target_multiblock: _TypeMultiBlockLeaf = self
             for ind in index[:-1:]:
-                target_multiblock = target_multiblock[ind]  # type: ignore[assignment]
+                if target_multiblock is None or isinstance(target_multiblock, pyvista.DataSet):
+                    raise IndexError(f'Invalid index {index}.')
+                target_multiblock = target_multiblock[ind]
             if not isinstance(target_multiblock, MultiBlock):
                 raise IndexError(f'Invalid index {index}.')
             # Set the data using the last index
