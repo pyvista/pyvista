@@ -321,7 +321,7 @@ class MultiBlock(
         Use the iterator to replace all blocks with new blocks. Similar to a previous
         example, we use a filter but this time the operation is not performed in place.
 
-        >>> iterator = multi.recursive_iterator('all')
+        >>> iterator = multi.recursive_iterator('all', nested_ids=True)
         >>> for index, _, block in iterator:
         >>>     multi[index] = block.connectivity()
 
