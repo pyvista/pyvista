@@ -323,7 +323,7 @@ class MultiBlock(
 
         >>> iterator = multi.recursive_iterator('all', nested_ids=True)
         >>> for index, _, block in iterator:
-        >>>     multi[index] = block.connectivity()
+        ...     multi[index] = block.connectivity()
 
         """
         _validation.check_contains(
