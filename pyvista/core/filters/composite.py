@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 class CompositeFilters:
     """An internal class to manage filters/algorithms for composite datasets."""
 
-    def _generic_filter(  # type:ignore[misc]
+    def generic_filter(  # type:ignore[misc]
         self: MultiBlock,
         function: str | Callable[..., Any],
         *args,
@@ -82,7 +82,7 @@ class CompositeFilters:
         Use the generic filter to apply :meth:`~pyvista.DataSetFilters.cast_to_unstructured_grid`
         to all blocks.
 
-        >>> filtered = multi._generic_filter('cast_to_unstructured_grid')
+        >>> filtered = multi.generic_filter('cast_to_unstructured_grid')
 
         >>> type(filtered[0]), type(filtered[1]), type(filtered[2])
         (<class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
@@ -90,7 +90,7 @@ class CompositeFilters:
         Use the :meth:`~pyvista.DataSetFilters.partition` filter on all blocks.
         Any arguments can be specified as though the filter is being used directly.
 
-        >>> filtered = multi._generic_filter('partition', 4, as_composite=True)
+        >>> filtered = multi.generic_filter('partition', 4, as_composite=True)
 
         Any function can be used as long as it returns a :class:`pyvista.DataSet`.
         For example, we can normalize each block independently to have bounds between
@@ -106,7 +106,7 @@ class CompositeFilters:
         ...     z_scale = 1 / (bounds.z_max - bounds.z_min)
         ...     return dataset.scale((x_scale, y_scale, z_scale))
 
-        >>> multi._generic_filter(normalize_bounds)
+        >>> multi.generic_filter(normalize_bounds)
         >>> multi
         MultiBlock (...)
           N Blocks:   3
@@ -417,7 +417,7 @@ class CompositeFilters:
 
         inplace = check_inplace(cls=type(self), inplace=inplace)
 
-        return self._generic_filter(
+        return self.generic_filter(
             'transform',
             pyvista.Transform(trans),
             transform_all_input_vectors=transform_all_input_vectors,
