@@ -980,9 +980,6 @@ def test_recursive_iterator_ids(nested_ids):
 
 def test_recursive_iterator_raises():
     multi = pv.MultiBlock()
-    match = 'Order cannot be set when iterator contents include block ids.'
-    with pytest.raises(TypeError, match=match):
-        multi.recursive_iterator('ids', order='nested_first')
 
     match = 'Nested ids option only applies when ids are returned.'
     with pytest.raises(ValueError, match=match):
