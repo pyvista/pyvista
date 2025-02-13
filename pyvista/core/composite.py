@@ -603,23 +603,24 @@ class MultiBlock(
 
         Examples
         --------
-        Create a :class:`MultiBlock` instance.
+        Load a dataset with nested blocks.
 
         >>> import pyvista as pv
-        >>> multi = pv.MultiBlock()
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
 
-        Set the first block as another ``MultiBlock``.
+        Get one of the blocks and extract its surface.
 
-        >>> multi.set_nested((0,), pv.MultiBlock())
+        >>> block = multi[0][42]
+        >>> surface = block.extract_geometry()
 
-        Insert a sphere mesh in the nested ``MultiBlock``.
+        Replace the block.
 
-        >>> mesh = pv.Sphere()
-        >>> multi.set_nested((0, 0), mesh)
+        >>> multi.set_nested((0, 42), surface)
 
-        This is equivalent to setting the mesh with indexing.
+        This is equivalent to replacing the block directly with indexing.
 
-        >>> multi[0][0] = mesh
+        >>> multi[0][42] = surface
 
         """
         _validation.check_length(indices, min_length=1, name='index')
