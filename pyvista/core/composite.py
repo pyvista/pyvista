@@ -427,7 +427,7 @@ class MultiBlock(
                     separator=separator,
                 )
             elif contents == 'ids':
-                yield id_ if nested_ids else id_[0]
+                yield tuple(id_) if nested_ids else id_[0]
             elif contents == 'names':
                 yield name
             elif contents == 'blocks':
@@ -435,7 +435,7 @@ class MultiBlock(
             elif contents == 'items':
                 yield name, block
             elif contents == 'all':
-                id_out = id_ if nested_ids else id_[0]
+                id_out = tuple(id_) if nested_ids else id_[0]
                 yield id_out, name, block
             else:  # pragma: no cover
                 raise RuntimeError(f"Unexpected contents '{contents}'.")
@@ -1129,7 +1129,7 @@ class MultiBlock(
                 else:
                     self[idx] = d  #
             return
-        elif isinstance(index, list):
+        elif isinstance(index, tuple):
             _validation.check_length(index, min_length=1, name='index')
             # Get the target nested multiblock by "drilling down" to the second-last index
             target_multiblock: _TypeMultiBlockLeaf = self
