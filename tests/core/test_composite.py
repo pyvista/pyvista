@@ -934,6 +934,9 @@ def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('names')
     assert all(isinstance(item, str) for item in iterator)
 
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('blocks')
+    assert all(isinstance(item, pv.DataSet) for item in iterator)
+
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('items')
     for name, block in iterator:
         assert isinstance(name, str)
@@ -1007,9 +1010,9 @@ def test_recursive_iterator_order():
     assert isinstance(nested[1][0], pv.UnstructuredGrid)
     assert isinstance(nested[2], pv.PolyData)
 
-    common_kwargs = dict(skip_empty=False)
+    common_kwargs = dict(skip_empty=False, nested_ids=True, contents='all')
 
-    iterator = nested.recursive_iterator('all', order=None, nested_ids=True, **common_kwargs)
+    iterator = nested.recursive_iterator(order=None, **common_kwargs)
     ids0, names0, block0 = next(iterator)
     ids1, names1, block1 = next(iterator)
     ids2, names2, block2 = next(iterator)
@@ -1021,7 +1024,6 @@ def test_recursive_iterator_order():
     assert nested[ids0[0]] is image
     assert nested[ids1[0]][ids1[1]] is grid
     assert nested[ids2[0]] is poly
-
     # Expect nested dataset in center
     assert names0 == 'image'
     assert names1 == 'grid'
@@ -1030,11 +1032,18 @@ def test_recursive_iterator_order():
     assert isinstance(block1, pv.UnstructuredGrid)
     assert isinstance(block2, pv.PolyData)
 
-    iterator = nested.recursive_iterator('items', order='nested_last', **common_kwargs)
-    names0, block0 = next(iterator)
-    names1, block1 = next(iterator)
-    names2, block2 = next(iterator)
+    iterator = nested.recursive_iterator(order='nested_last', **common_kwargs)
+    ids0, names0, block0 = next(iterator)
+    ids1, names1, block1 = next(iterator)
+    ids2, names2, block2 = next(iterator)
 
+    # Ids should refer to original datasets in input
+    assert ids0 == (0,)
+    assert ids1 == (2,)
+    assert ids2 == (1, 0)
+    assert nested[ids0[0]] is image
+    assert nested[ids1[0]] is poly
+    assert nested[ids2[0]][ids2[1]] is grid
     # Expect nested dataset last
     assert names0 == 'image'
     assert names1 == 'poly'
@@ -1043,11 +1052,18 @@ def test_recursive_iterator_order():
     assert isinstance(block1, pv.PolyData)
     assert isinstance(block2, pv.UnstructuredGrid)
 
-    iterator = nested.recursive_iterator('items', order='nested_first', **common_kwargs)
-    names0, block0 = next(iterator)
-    names1, block1 = next(iterator)
-    names2, block2 = next(iterator)
+    iterator = nested.recursive_iterator(order='nested_first', **common_kwargs)
+    ids0, names0, block0 = next(iterator)
+    ids1, names1, block1 = next(iterator)
+    ids2, names2, block2 = next(iterator)
 
+    # Ids should refer to original datasets in input
+    assert ids0 == (1, 0)
+    assert ids1 == (0,)
+    assert ids2 == (2,)
+    assert nested[ids0[0]][ids0[1]] is grid
+    assert nested[ids1[0]] is image
+    assert nested[ids2[0]] is poly
     # Expect nested dataset first
     assert names0 == 'grid'
     assert names1 == 'image'

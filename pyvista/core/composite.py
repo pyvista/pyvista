@@ -314,17 +314,14 @@ class MultiBlock(
         _validation.check_contains(
             ['nested_first', 'nested_last', None], must_contain=order, name='order'
         )
-        if contents in ['ids', 'all']:
-            if order is not None:
-                raise TypeError('Order cannot be set when iterator contents include block ids.')
-        elif nested_ids:
+        if nested_ids and contents not in ['ids', 'all']:
             raise ValueError('Nested ids option only applies when ids are returned.')
         if prepend_names and contents not in ['names', 'items', 'all']:
             raise ValueError('Prepend names option only applies when names are returned.')
 
         return self._recursive_iterator(
-            names=self.keys(),
             ids=[[i] for i in range(self.n_blocks)],
+            names=self.keys(),
             contents=contents,
             order=order,
             skip_none=skip_none,
@@ -356,21 +353,27 @@ class MultiBlock(
             blocks: Sequence[_TypeMultiBlockLeaf] = self
         else:
             # Need to reorder blocks
-            multi_blocks = []
+            multi_ids = []
             multi_names = []
-            other_blocks = []
+            multi_blocks = []
+            other_ids = []
             other_names = []
-            for name, block in self._items():
+            other_blocks = []
+            for id_, name, block in zip(ids, names, self):
                 if isinstance(block, MultiBlock):
+                    multi_ids.append(id_)
                     multi_names.append(name)
                     multi_blocks.append(block)
                 else:
+                    other_ids.append(id_)
                     other_names.append(name)
                     other_blocks.append(block)
             if order == 'nested_last':
+                ids = [*other_ids, *multi_ids]
                 names = [*other_names, *multi_names]
                 blocks = [*other_blocks, *multi_blocks]
             else:
+                ids = [*multi_ids, *other_ids]
                 names = [*multi_names, *other_names]
                 blocks = [*multi_blocks, *other_blocks]
 
@@ -390,18 +393,13 @@ class MultiBlock(
                 # Process ids
                 if nested_ids:
                     # Include parent id with the block ids
-                    new_ids = []
-                    for block_id in range(block.n_blocks):
-                        new_id = id_.copy()
-                        new_id.append(block_id)
-                        new_ids.append(new_id)
-                    block_ids = new_ids
+                    ids = [[*id_, i] for i in range(block.n_blocks)]
                 else:
-                    block_ids = [[i] for i in range(block.n_blocks)]
+                    ids = [[i] for i in range(block.n_blocks)]
 
                 yield from block._recursive_iterator(
+                    ids=ids,
                     names=names,
-                    ids=block_ids,
                     contents=contents,
                     order=order,
                     skip_none=skip_none,
