@@ -515,6 +515,7 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     assert (output is multi) == inplace
     for block_in, block_out in zip(multi, output):
         assert (block_in is block_out) == inplace or (block_in is None)
+        assert type(block_in) is type(block_out)
     assert np.allclose(bounds_before + NUMBER, bounds_after)
     assert n_blocks_before == n_blocks_after
     assert keys_before == keys_after

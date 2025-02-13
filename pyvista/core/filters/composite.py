@@ -15,6 +15,9 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from typing import Any
+    from typing import Callable
+
     from pyvista import MultiBlock
     from pyvista.core._typing_core import TransformLike
 
@@ -22,6 +25,105 @@ if TYPE_CHECKING:
 @abstract_class
 class CompositeFilters:
     """An internal class to manage filters/algorithms for composite datasets."""
+
+    def _generic_filter(
+        self,
+        function: str | Callable[..., Any],
+        args: tuple[Any, ...] | None = None,
+        kwargs: dict[str, Any] | None = None,
+        skip_none: bool = True,
+        skip_empty: bool = False,
+    ) -> MultiBlock:
+        """Apply any filter to all nested blocks recursively.
+
+        This filter applies a user-specified function or method to all blocks in
+        this :class:`~pyvista.MultiBlock`.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        function : Callable | str
+            Callable function or method to apply to each block.
+
+        args : tuple, optional
+            Arguments to use with the specified ``function``.
+
+        kwargs : dict, optional
+            Keyword arguments to use with the specified ``function``.
+
+            .. note::
+
+                If the filter includes an ``inplace`` keyword, then this ``MultiBlock``
+                is also modified in-place.
+
+        skip_none : bool, default: True
+            Do not apply the filter to ``None`` blocks.
+
+        skip_empty : bool, default: False
+            Do not apply the filter to empty meshes.
+
+        Returns
+        -------
+        MultiBlock
+            Filtered dataset.
+
+        Examples
+        --------
+        Create a :class:`~pyvista.MultiBlock` with various mesh types.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> volume = examples.load_uniform()
+        >>> poly = examples.load_ant()
+        >>> unstructured = examples.load_tetbeam()
+        >>> multi = pv.MultiBlock([volume, poly, unstructured])
+
+        >>> type(multi[0]), type(multi[1]), type(multi[2])
+        (<class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
+
+        Use the generic filter to apply :meth:`~pyvista.DataSetFilters.cast_to_unstructured_grid`
+        to all blocks.
+
+        >>> filtered = multi._generic_filter('cast_to_unstructured_grid')
+
+        >>> type(filtered[0]), type(filtered[1]), type(filtered[2])
+        (<class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
+
+        Apply the :meth:`~pyvista.DataSetFilters.explode` filter to all blocks.
+
+        >>> filtered = multi._generic_filter(
+        ...     'explode', kwargs=dict(explode_factor=0.5)
+        ... )
+
+        """
+
+        def apply_filter(block_):
+            func = getattr(block_, function) if isinstance(function, str) else function
+            return func(**kwargs) if args is None else func(*args, **kwargs)
+
+        kwargs = kwargs if kwargs else {}
+
+        # Apply filter in-place
+        inplace = kwargs.get('inplace')
+        if inplace:
+            iterator = self.recursive_iterator('blocks', skip_none=skip_none, skip_empty=skip_empty)
+            for block in iterator:
+                apply_filter(block)
+            return self
+
+        # Create a copy and replace all the blocks
+        output = pyvista.MultiBlock()
+        output.shallow_copy(self, recursive=True)
+        iterator = output.recursive_iterator(
+            'all', skip_none=skip_none, skip_empty=False, nested_ids=True
+        )
+        for ids, _, block in iterator:
+            # Only copy the block if skip empty
+            copy_block = block is not None and skip_empty and block.n_points == 0
+            new_block = block.copy() if copy_block else apply_filter(block)
+            output.replace(ids, new_block)
+        return output
 
     def extract_geometry(self):
         """Extract the surface the geometry of all blocks.
@@ -283,15 +385,10 @@ class CompositeFilters:
 
         inplace = check_inplace(cls=type(self), inplace=inplace)
 
-        trans = pyvista.Transform(trans)
-        output = self if inplace else self.copy()  # type: ignore[attr-defined]
-        for name in self.keys():  # type: ignore[attr-defined]
-            block = output[name]  # type: ignore[index]
-            if block is not None:
-                block.transform(
-                    trans,
-                    transform_all_input_vectors=transform_all_input_vectors,
-                    inplace=True,
-                    progress_bar=progress_bar,
-                )
-        return output
+        filter_kwargs = dict(
+            trans=pyvista.Transform(trans),
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+            progress_bar=progress_bar,
+        )
+        return self._generic_filter('transform', kwargs=filter_kwargs)
