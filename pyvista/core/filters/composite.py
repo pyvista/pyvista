@@ -31,7 +31,7 @@ class CompositeFilters:
 
     def generic_filter(  # type:ignore[misc]
         self: MultiBlock,
-        function: str | Callable[[MultiBlock | DataSet, *tuple[Any, ...]], _TypeMultiBlockLeaf],
+        function: str | Callable[[DataSet, *tuple[Any, ...]], _TypeMultiBlockLeaf],
         /,
         *args,
         **kwargs,
@@ -56,7 +56,9 @@ class CompositeFilters:
         Parameters
         ----------
         function : Callable | str
-            Callable function or name of the method to apply to each block.
+            Callable function or name of the method to apply to each block. The function
+            should accept a :class:`~pyvista.DataSet` as input and return either a
+            :class:`~pyvista.DataSet` or :class:`~pyvista.MultiBlock` as output.
 
         *args : Any, optional
             Arguments to use with the specified ``function``.
@@ -68,6 +70,13 @@ class CompositeFilters:
         -------
         MultiBlock
             Filtered dataset.
+
+        Raises
+        ------
+        RuntimeError
+            Raised if the filter cannot be applied to any block for any reason. This
+            overrides ``TypeError``, ``ValueError``, ``AttributeError`` errors when
+            filtering.
 
         Examples
         --------
@@ -102,7 +111,9 @@ class CompositeFilters:
         independently to have bounds between ``-0.5`` and ``0.5``.
 
         >>> def normalize_bounds(dataset):
+        ...     # Center the dataset
         ...     dataset = dataset.translate(-np.array(dataset.center))
+        ...     # Scale the dataset
         ...     bounds = dataset.bounds
         ...     x_scale = 1 / (bounds.x_max - bounds.x_min)
         ...     y_scale = 1 / (bounds.y_max - bounds.y_min)
