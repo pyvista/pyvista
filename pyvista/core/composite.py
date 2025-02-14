@@ -902,7 +902,9 @@ class MultiBlock(
     ) -> _TypeMultiBlockLeaf:
         """Get a block by its index or name.
 
-        If the name is non-unique then returns the first occurrence.
+        If the name is non-unique then returns the first occurrence. This
+        method is similar to using ``[]`` for indexing except this method also
+        supports indexing nested blocks.
 
         .. versionadded:: 0.45
 
@@ -925,12 +927,13 @@ class MultiBlock(
         Examples
         --------
         >>> import pyvista as pv
-        >>> from pyvista import examples
-        >>> data = {'poly': pv.PolyData(), 'img': pv.ImageData()}
-        >>> blocks = pv.MultiBlock(data)
-        >>> blocks.get('poly')
-        PolyData ...
-        >>> blocks.get('cone')
+        >>> blocks = pv.MultiBlock([pv.PolyData(), pv.ImageData()])
+        >>> nested = pv.MultiBlock([blocks])
+
+        >>> nested.get_block(0)
+        MultiBlock ...
+        >>> blocks.get_block((0, 1))
+        ImageData ...
 
         """
         if isinstance(index, Sequence) and not isinstance(index, str):
