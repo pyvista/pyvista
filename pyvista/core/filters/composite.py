@@ -79,7 +79,7 @@ class CompositeFilters:
         >>> type(multi[0]), type(multi[1]), type(multi[2])
         (<class 'pyvista.core.grid.ImageData'>, <class 'pyvista.core.pointset.PolyData'>, <class 'pyvista.core.pointset.UnstructuredGrid'>)
 
-        Use the generic filter to apply :meth:`~pyvista.DataSetFilters.cast_to_unstructured_grid`
+        Use the generic filter to apply :meth:`~pyvista.DataSet.cast_to_unstructured_grid`
         to all blocks.
 
         >>> filtered = multi.generic_filter('cast_to_unstructured_grid')
@@ -93,7 +93,7 @@ class CompositeFilters:
         >>> filtered = multi.generic_filter('partition', 4, as_composite=True)
 
         Any function can be used as long as it returns a :class:`~pyvista.DataSet` or
-        :class:`~pyvista.MutliBlock.`. For example, we can normalize each block
+        :class:`~pyvista.MultiBlock.`. For example, we can normalize each block
         independently to have bounds between ``-0.5`` and ``0.5``.
 
         >>> def normalize_bounds(dataset):
