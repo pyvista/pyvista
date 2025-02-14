@@ -73,7 +73,7 @@ class DataSetFilters:
             self.cell_data['cell_ids'] = np.arange(self.n_cells)
 
         if isinstance(self, _vtk.vtkPolyData):
-            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
+            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData() # type: ignore[unreachable]
         # elif isinstance(self, vtk.vtkImageData):
         #     alg = vtk.vtkClipVolume()
         #     alg.SetMixed3DCellGeneration(True)
@@ -822,7 +822,7 @@ class DataSetFilters:
 
         """
         if isinstance(self, _vtk.vtkPolyData):
-            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()
+            alg: _vtk.vtkClipPolyData | _vtk.vtkTableBasedClipDataSet = _vtk.vtkClipPolyData()# type: ignore[unreachable]
         else:
             alg = _vtk.vtkTableBasedClipDataSet()
 
@@ -847,7 +847,7 @@ class DataSetFilters:
             result1 = _get_output(alg, oport=1)
             if isinstance(self, _vtk.vtkPolyData):
                 # For some reason vtkClipPolyData with SetGenerateClippedOutput on leaves unreferenced vertices
-                result0, result1 = (r.clean() for r in (result0, result1))
+                result0, result1 = (r.clean() for r in (result0, result1))# type: ignore[unreachable]
             return result0, result1
         return result0
 
@@ -6956,7 +6956,7 @@ class DataSetFilters:
         _update_alg(alg, progress_bar, 'Shrinking Mesh')
         output = _get_output(alg)
         if isinstance(self, _vtk.vtkPolyData):
-            return output.extract_surface()
+            return output.extract_surface()# type: ignore[unreachable]
         return output
 
     def tessellate(  # type: ignore[misc]
