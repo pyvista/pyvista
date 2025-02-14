@@ -92,9 +92,9 @@ class CompositeFilters:
 
         >>> filtered = multi.generic_filter('partition', 4, as_composite=True)
 
-        Any function can be used as long as it returns a :class:`pyvista.DataSet`.
-        For example, we can normalize each block independently to have bounds between
-        ``-1.0`` and ``1.0``.
+        Any function can be used as long as it returns a :class:`~pyvista.DataSet` or
+        :class:`~pyvista.MutliBlock.`. For example, we can normalize each block
+        independently to have bounds between ``-0.5`` and ``0.5``.
 
         >>> def normalize_bounds(dataset):
         ...     import numpy as np
@@ -106,7 +106,7 @@ class CompositeFilters:
         ...     z_scale = 1 / (bounds.z_max - bounds.z_min)
         ...     return dataset.scale((x_scale, y_scale, z_scale))
 
-        >>> multi.generic_filter(normalize_bounds)
+        >>> multi = multi.generic_filter(normalize_bounds)
         >>> multi
         MultiBlock (...)
           N Blocks:   3
