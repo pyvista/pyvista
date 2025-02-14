@@ -16,11 +16,12 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from typing import Any
     from typing import Callable
 
+    from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista.core._typing_core import TransformLike
+    from pyvista.core.composite import _TypeMultiBlockLeaf
 
 
 @abstract_class
@@ -29,7 +30,8 @@ class CompositeFilters:
 
     def generic_filter(  # type:ignore[misc]
         self: MultiBlock,
-        function: str | Callable[..., Any],
+        function: str | Callable[[MultiBlock | DataSet, ...], _TypeMultiBlockLeaf],
+        /,
         *args,
         **kwargs,
     ) -> MultiBlock:
@@ -39,6 +41,7 @@ class CompositeFilters:
         this :class:`~pyvista.MultiBlock`.
 
         .. note::
+
             The filter is not applied to any ``None`` blocks. These are simply skipped
             and passed through to the output.
 
@@ -71,6 +74,7 @@ class CompositeFilters:
 
         >>> import pyvista as pv
         >>> from pyvista import examples
+        >>> import numpy as np
         >>> volume = examples.load_uniform()
         >>> poly = examples.load_ant()
         >>> unstructured = examples.load_tetbeam()
@@ -97,8 +101,6 @@ class CompositeFilters:
         independently to have bounds between ``-0.5`` and ``0.5``.
 
         >>> def normalize_bounds(dataset):
-        ...     import numpy as np
-        ...
         ...     dataset = dataset.translate(-np.array(dataset.center))
         ...     bounds = dataset.bounds
         ...     x_scale = 1 / (bounds.x_max - bounds.x_min)
