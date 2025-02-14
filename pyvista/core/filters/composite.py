@@ -419,10 +419,15 @@ class CompositeFilters:
 
         inplace = check_inplace(cls=type(self), inplace=inplace)
 
-        return self.generic_filter(
-            'transform',
-            pyvista.Transform(trans),
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-            progress_bar=progress_bar,
-        )
+        trans = pyvista.Transform(trans)
+        output = self if inplace else self.copy()  # type: ignore[attr-defined]
+        for name in self.keys():  # type: ignore[attr-defined]
+            block = output[name]  # type: ignore[index]
+            if block is not None:
+                block.transform(
+                    trans,
+                    transform_all_input_vectors=transform_all_input_vectors,
+                    inplace=True,
+                    progress_bar=progress_bar,
+                )
+        return output
