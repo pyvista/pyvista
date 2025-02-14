@@ -174,6 +174,14 @@ def test_multi_block_set_get_ers():
         multi[1, 'foo'] = data
 
 
+def test_set_block_name_by_name(ant):
+    old_name = 'foo'
+    new_name = 'bar'
+    multi = pv.MultiBlock({old_name: ant})
+    multi.set_block_name(old_name, new_name)
+    assert multi.keys() == [new_name]
+
+
 def test_replace():
     spheres = {f'{i}': pv.Sphere(phi_resolution=i + 3) for i in range(10)}
     multi = MultiBlock(spheres)

@@ -938,13 +938,17 @@ class MultiBlock(
             return parent[final_index]
         return self[index]
 
-    def set_block_name(self: MultiBlock, index: int, name: str | None) -> None:
+    def set_block_name(self: MultiBlock, index: int | str, name: str | None) -> None:
         """Set a block's string name at the specified index.
 
         Parameters
         ----------
-        index : int
+        index : int | str
             Index or the dataset within the multiblock.
+
+           .. versionadded:: 0.45
+
+                Allow indexing by name.
 
         name : str, optional
             Name to assign to the block at ``index``. If ``None``, no name is
@@ -966,7 +970,9 @@ class MultiBlock(
         """
         if name is None:
             return
-        index = range(self.n_blocks)[index]
+        index = (
+            self.get_index_by_name(index) if isinstance(index, str) else range(self.n_blocks)[index]
+        )
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
@@ -1037,7 +1043,7 @@ class MultiBlock(
             Index or name of the block to replace. Specify a sequence of indices to replace
             a nested block.
 
-            .. versionchanged:: 0.45
+            .. versionadded:: 0.45
 
                 Allow indexing nested blocks.
 
@@ -1083,7 +1089,7 @@ class MultiBlock(
             parent, final_index = self._navigate_to_parent(index)
             parent.replace(final_index, dataset)
             return
-        name = self.get_block_name(index)
+        name = index if isinstance(index, str) else self.get_block_name(index)
         self[index] = dataset
         self.set_block_name(index, name)
         return
