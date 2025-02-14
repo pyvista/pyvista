@@ -31,7 +31,7 @@ class CompositeFilters:
 
     def generic_filter(  # type:ignore[misc]
         self: MultiBlock,
-        function: str | Callable[[DataSet, *tuple[Any, ...]], _TypeMultiBlockLeaf],
+        function: str | Callable[..., _TypeMultiBlockLeaf],
         /,
         *args,
         **kwargs,
@@ -107,7 +107,7 @@ class CompositeFilters:
         >>> filtered = multi.generic_filter('partition', 4, as_composite=True)
 
         Any function can be used as long as it returns a :class:`~pyvista.DataSet` or
-        :class:`~pyvista.MultiBlock.`. For example, we can normalize each block
+        :class:`~pyvista.MultiBlock`. For example, we can normalize each block
         independently to have bounds between ``-0.5`` and ``0.5``.
 
         >>> def normalize_bounds(dataset):
