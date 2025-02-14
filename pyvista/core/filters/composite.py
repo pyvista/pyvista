@@ -16,6 +16,7 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
+    from typing import Any
     from typing import Callable
 
     from pyvista import DataSet
@@ -30,7 +31,7 @@ class CompositeFilters:
 
     def generic_filter(  # type:ignore[misc]
         self: MultiBlock,
-        function: str | Callable[[MultiBlock | DataSet, ...], _TypeMultiBlockLeaf],
+        function: str | Callable[[MultiBlock | DataSet, *tuple[Any, ...]], _TypeMultiBlockLeaf],
         /,
         *args,
         **kwargs,
@@ -359,8 +360,8 @@ class CompositeFilters:
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
 
-    def transform(  # type:ignore[misc]
-        self: MultiBlock,
+    def transform(
+        self,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool | None = None,
