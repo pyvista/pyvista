@@ -142,7 +142,7 @@ import jinja2  # Sphinx dependency.
 # enable offscreen to hide figures when generating them.
 import pyvista
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 pyvista.BUILDING_GALLERY = True
@@ -534,7 +534,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         counter = document.attributes.get('_plot_counter', 0) + 1
         document.attributes['_plot_counter'] = counter
         base, ext = os.path.splitext(os.path.basename(source_file_name))  # noqa: PTH119, PTH122
-        output_base = '%s-%d.py' % (base, counter)
+        output_base = f'{base}-{counter}.py'
         function_name = None
         caption = options.get('caption', '')
 

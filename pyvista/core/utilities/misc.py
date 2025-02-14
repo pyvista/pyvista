@@ -15,8 +15,9 @@ import warnings
 
 import numpy as np
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing import Any
+    from typing import ClassVar
 
     from .._typing_core import ArrayLike
     from .._typing_core import NumpyArray
@@ -250,12 +251,12 @@ class conditional_decorator:
 
     """
 
-    def __init__(self, dec, condition) -> None:  # noqa: ANN001, ANN101
+    def __init__(self, dec, condition) -> None:  # noqa: ANN001
         """Initialize."""
         self.decorator = dec
         self.condition = condition
 
-    def __call__(self, func):  # noqa: ANN001, ANN101, ANN204
+    def __call__(self, func):  # noqa: ANN001, ANN204
         """Call the decorated function if condition is matched."""
         if not self.condition:
             # Return the function unchanged, not decorated.
@@ -342,3 +343,32 @@ class _classproperty(property):
 
     def __get__(self: property, owner_self: Any, owner_cls: type | None = None) -> Any:
         return self.fget(owner_cls)  # type: ignore[misc]
+
+
+class _NameMixin:
+    """Add a 'name' property to a class.
+
+    .. versionadded:: 0.45
+
+    """
+
+    # In case subclasses use @no_new_attr mixin
+    _new_attr_exceptions: ClassVar[Sequence[str]] = ('_name',)
+
+    @property
+    def name(self) -> str:  # numpydoc ignore=RT01
+        """Get or set the unique name identifier used by PyVista."""
+        if not hasattr(self, '_name') or self._name is None:
+            address = (
+                self.GetAddressAsString('')
+                if hasattr(self, 'GetAddressAsString')
+                else hex(id(self))
+            )
+            return f'{type(self).__name__}({address})'
+        return self._name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        if not value:
+            raise ValueError('Name must be truthy.')
+        self._name = str(value)

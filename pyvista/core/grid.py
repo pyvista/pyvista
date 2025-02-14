@@ -16,7 +16,7 @@ import numpy as np
 import pyvista
 from pyvista.core import _validation
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing_extensions import Self
 
     from pyvista import StructuredGrid
@@ -308,7 +308,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         # We also know this is 3-length so make it so in typing
         out = tuple(np.meshgrid(self.x, self.y, self.z, indexing='ij'))
         # Python 3.8 does not allow subscripting tuple, but only used for type checking
-        if TYPE_CHECKING:  # pragma: no cover
+        if TYPE_CHECKING:
             out = cast(tuple[NumpyArray[float], NumpyArray[float], NumpyArray[float]], out)
         return out
 
@@ -486,8 +486,7 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
 
         """
         raise AttributeError(
-            'The dimensions of a `RectilinearGrid` are implicitly '
-            'defined and thus cannot be set.',
+            'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
         )
 
     def cast_to_structured_grid(self: Self) -> StructuredGrid:
@@ -529,20 +528,29 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         set, remainder of arguments are ignored.
 
     dimensions : sequence[int], optional
-        Dimensions of the uniform grid.
+        :attr:`dimensions` of the uniform grid.
 
     spacing : sequence[float], default: (1.0, 1.0, 1.0)
-        Spacing of the uniform grid in each dimension. Must be positive.
+        :attr:`spacing` of the uniform grid in each dimension. Must be positive.
 
     origin : sequence[float], default: (0.0, 0.0, 0.0)
-        Origin of the uniform grid.
+        :attr:`origin` of the uniform grid.
 
     deep : bool, default: False
         Whether to deep copy a ``vtk.vtkImageData`` object.  Keyword only.
 
     direction_matrix : RotationLike, optional
-        The direction matrix is a 3x3 matrix which controls the orientation of the
-        image data.
+        The :attr:`direction_matrix` is a 3x3 matrix which controls the orientation of
+        the image data.
+
+        .. versionadded:: 0.45
+
+    offset : int | VectorLike[int], default: (0, 0, 0)
+        The offset defines the minimum :attr:`extent` of the image. Offset values
+        can be positive or negative. In physical space, the offset is relative
+        to the image's :attr:`origin`.
+
+        .. versionadded:: 0.45
 
     Examples
     --------
@@ -603,6 +611,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         deep: bool = False,
         direction_matrix: RotationLike | None = None,
+        offset: int | VectorLike[int] | None = None,
     ) -> None:
         """Initialize the uniform grid."""
         super().__init__()
@@ -634,6 +643,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             self.spacing = spacing  # type: ignore[assignment]
             if direction_matrix is not None:
                 self.direction_matrix = direction_matrix  # type: ignore[assignment]
+            if offset is not None:
+                self.offset = offset  # type: ignore[assignment]
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -889,6 +900,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         """Return or set the extent of the ImageData.
 
         The extent is simply the first and last indices for each of the three axes.
+        It encodes information about the image's :attr:`offset` and :attr:`dimensions`.
 
         Examples
         --------
@@ -903,13 +915,18 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         >>> grid.extent
         (2, 5, 2, 5, 2, 5)
 
-        Note how this also modifies the grid bounds and dimensions. Since we
-        use default spacing of 1 here, the bounds match the extent exactly.
+        Note how this also modifies the grid's :attr:`offset`, :attr:`dimensions`,
+        and :attr:`bounds`. Since we use default spacing of 1 here, the bounds
+        match the extent exactly.
+
+        >>> grid.offset
+        (2, 2, 2)
+
+        >>> grid.dimensions
+        (4, 4, 4)
 
         >>> grid.bounds
         BoundsTuple(x_min=2.0, x_max=5.0, y_min=2.0, y_max=5.0, z_min=2.0, z_max=5.0)
-        >>> grid.dimensions
-        (4, 4, 4)
 
         """
         return self.GetExtent()
@@ -920,6 +937,65 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             new_extent, must_be_integer=True, must_have_length=6, to_list=True, dtype_out=int
         )
         self.SetExtent(new_extent_)
+
+    @property
+    def offset(self: Self) -> tuple[int, int, int]:  # numpydoc ignore=RT01
+        """Return or set the index offset of the ImageData.
+
+        The offset is simply the first indices for each of the three axes
+        and defines the minimum :attr:`extent` of the image. Offset values
+        can be positive or negative. In physical space, the offset is relative
+        to the image's :attr:`origin`.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        Create a ``ImageData`` and show that the offset is zeros by default.
+
+        >>> import pyvista as pv
+        >>> grid = pv.ImageData(dimensions=(10, 10, 10))
+        >>> grid.offset
+        (0, 0, 0)
+
+        The offset defines the minimum extent.
+        >>> grid.extent
+        (0, 9, 0, 9, 0, 9)
+
+        Set the offset to a new value for all axes.
+
+        >>> grid.offset = 2
+        >>> grid.offset
+        (2, 2, 2)
+
+        Show the extent again. Note how all values have increased by the offset value.
+
+        >>> grid.extent
+        (2, 11, 2, 11, 2, 11)
+
+        Set the offset for each axis separately and show the extent again.
+
+        >>> grid.offset = (-1, -2, -3)
+        >>> grid.extent
+        (-1, 8, -2, 7, -3, 6)
+
+        """
+        return self.extent[::2]
+
+    @offset.setter
+    def offset(self: Self, offset: int | VectorLike[int]) -> None:
+        offset_ = _validation.validate_array3(
+            offset, broadcast=True, must_be_integer=True, dtype_out=int
+        )
+        dims = self.dimensions
+        self.extent = (
+            offset_[0],
+            offset_[0] + dims[0] - 1,
+            offset_[1],
+            offset_[1] + dims[1] - 1,
+            offset_[2],
+            offset_[2] + dims[2] - 1,
+        )
 
     @wraps(RectilinearGridFilters.to_tetrahedra)
     def to_tetrahedra(self: Self, *args, **kwargs) -> UnstructuredGrid:  # numpydoc ignore=PR01,RT01
@@ -932,6 +1008,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
 
         The direction matrix is a 3x3 matrix which controls the orientation of the
         image data.
+
+        .. versionadded:: 0.45
 
         Returns
         -------
@@ -953,6 +1031,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
             :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
             properties.
+
+        .. versionadded:: 0.45
 
         Returns
         -------
@@ -983,6 +1063,8 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             Setting this property modifies the object's :class:`~pyvista.ImageData.origin`,
             :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
             properties.
+
+        .. versionadded:: 0.45
 
         Returns
         -------

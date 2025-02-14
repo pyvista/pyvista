@@ -37,7 +37,7 @@ class Transform(_vtk.vtkTransform):
     represented as a 4x4 homogeneous transformation matrix.
 
     The transformation methods (e.g. :meth:`translate`, :meth:`rotate`,
-    :meth:`concatenate`) can operate in either :meth:`pre_multiply` or
+    :meth:`compose`) can operate in either :meth:`pre_multiply` or
     :meth:`post_multiply` mode. In pre-multiply mode, any additional transformations
     will occur *before* any transformations represented by the current :attr:`matrix`.
     In post-multiply mode (the default), the additional transformation will occur
@@ -59,7 +59,7 @@ class Transform(_vtk.vtkTransform):
 
     point : VectorLike[float], optional
         Point to use when concatenating some transformations such as scale, rotation, etc.
-        If set, two additional transformations are concatenated and added to
+        If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
 
             - :meth:`translate` to ``point`` before the transformation
@@ -79,7 +79,7 @@ class Transform(_vtk.vtkTransform):
 
     Examples
     --------
-    Create a transformation and use ``+`` to concatenate a translation.
+    Create a transformation and use ``+`` to compose a translation.
 
     >>> import numpy as np
     >>> import pyvista as pv
@@ -98,7 +98,7 @@ class Transform(_vtk.vtkTransform):
     ... )
     True
 
-    Create a transformation and use ``*`` to concatenate a scaling matrix.
+    Create a transformation and use ``*`` to compose a scaling matrix.
 
     >>> scale_factor = 2.0
     >>> scaling_T = pv.Transform() * scale_factor
@@ -113,11 +113,11 @@ class Transform(_vtk.vtkTransform):
     >>> np.array_equal(scaling_T.matrix, pv.Transform().scale(scale_factor).matrix)
     True
 
-    Concatenate the two transformations using addition. This will concatenate with
+    Compose the two transformations using ``*``. This will compose with
     post-multiplication such that the transformations are applied in order from left to
     right, i.e. translate first, then scale.
 
-    >>> transform_post = translation_T + scaling_T
+    >>> transform_post = translation_T * scaling_T
     >>> transform_post.matrix
     array([[ 2. ,  0. ,  0. , -1.2],
            [ 0. ,  2. ,  0. , -1.6],
@@ -131,7 +131,7 @@ class Transform(_vtk.vtkTransform):
     >>> np.array_equal(transform_post.matrix, mat_mul)
     True
 
-    Alternatively, concatenate the transformations by chaining the methods with a
+    Alternatively, compose the transformations by chaining the methods with a
     single :class:`Transform` instance. Note that post-multiply is used by default.
 
     >>> transform_post = pv.Transform()
@@ -165,23 +165,11 @@ class Transform(_vtk.vtkTransform):
            [0., 0., 2., 0.],
            [0., 0., 0., 1.]])
 
-    Create a similar transform but use pre-multiplication this time. Concatenate the
+    Create a similar transform but use pre-multiplication this time. Compose the
     transformations in the same order as before using :meth:`translate` and :meth:`scale`.
 
     >>> transform_pre = pv.Transform().pre_multiply()
     >>> _ = transform_pre.translate(position).scale(scale_factor)
-
-    Alternatively, create the transform using matrix multiplication. Matrix
-    multiplication concatenates the transformations using pre-multiply semantics such
-    that the transformations are applied in order from right to left, i.e. scale first,
-    then translate.
-
-    >>> transform_pre = translation_T @ scaling_T
-    >>> transform_pre.matrix
-    array([[ 2. ,  0. ,  0. , -0.6],
-           [ 0. ,  2. ,  0. , -0.8],
-           [ 0. ,  0. ,  2. ,  2.1],
-           [ 0. ,  0. ,  0. ,  1. ]])
 
     This is equivalent to using matrix multiplication directly on the arrays:
 
@@ -208,15 +196,15 @@ class Transform(_vtk.vtkTransform):
     Note how the meshes have different positions since post- and pre-multiplication
     produce different transformations.
 
-    >>> mesh_post = pv.Sphere().transform(transform_post)
-    >>> mesh_pre = pv.Cone().transform(transform_pre)
+    >>> mesh_post = pv.Sphere().transform(transform_post, inplace=False)
+    >>> mesh_pre = pv.Cone().transform(transform_pre, inplace=False)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_post, color='goldenrod')
     >>> _ = pl.add_mesh(mesh_pre, color='teal')
     >>> _ = pl.add_axes_at_origin()
     >>> pl.show()
 
-    Get the concatenated inverse transformation matrix of the pre-multiplication case.
+    Get the composed inverse transformation matrix of the pre-multiplication case.
 
     >>> inverse_matrix = transform_pre.inverse_matrix
     >>> inverse_matrix
@@ -243,7 +231,7 @@ class Transform(_vtk.vtkTransform):
     Transform the mesh by its inverse to restore it to its original un-scaled state
     and positioning at the origin.
 
-    >>> mesh_pre_inverted = mesh_pre.transform(inverse_matrix)
+    >>> mesh_pre_inverted = mesh_pre.transform(inverse_matrix, inplace=False)
     >>> pl = pv.Plotter()
     >>> _ = pl.add_mesh(mesh_pre_inverted, color='teal')
     >>> _ = pl.add_axes_at_origin()
@@ -264,33 +252,24 @@ class Transform(_vtk.vtkTransform):
         self.check_finite = True
         if trans is not None:
             if isinstance(trans, Sequence):
-                [self.concatenate(t) for t in trans]
+                [self.compose(t) for t in trans]
             else:
                 self.matrix = trans  # type: ignore[assignment]
 
-    def __add__(self: Transform, other: VectorLike[float] | TransformLike) -> Transform:
-        """:meth:`concatenate` this transform using post-multiply semantics.
-
-        Use :meth:`translate` for length-3 vector inputs, and :meth:`concatenate`
-        otherwise for transform-like inputs.
-        """
-        copied = self.copy()
+    def __add__(self: Transform, other: VectorLike[float]) -> Transform:
+        """:meth:`translate` this transform using post-multiply semantics."""
         try:
-            transform = copied.translate(other, multiply_mode='post')  # type: ignore[arg-type]
-        except (ValueError, TypeError):
-            try:
-                transform = copied.concatenate(other, multiply_mode='post')
-            except TypeError:
-                raise TypeError(
-                    f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be transform-like.'
-                )
-            except ValueError:
-                raise ValueError(
-                    f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                    f'The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape.'
-                )
-        return transform
+            return self.copy().translate(other, multiply_mode='post')
+        except TypeError:
+            raise TypeError(
+                f"Unsupported operand type(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f'The right-side argument must be a length-3 vector.'
+            )
+        except ValueError:
+            raise ValueError(
+                f"Unsupported operand value(s) for +: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                f'The right-side argument must be a length-3 vector.'
+            )
 
     def __radd__(self: Transform, other: VectorLike[float]) -> Transform:
         """:meth:`translate` this transform using pre-multiply semantics."""
@@ -307,21 +286,29 @@ class Transform(_vtk.vtkTransform):
                 f'The left-side argument must be a length-3 vector.'
             )
 
-    def __mul__(self: Transform, other: float | VectorLike[float]) -> Transform:
-        """:meth:`scale` this transform using post-multiply semantics."""
-        try:
-            return self.copy().scale(other, multiply_mode='post')
+    def __mul__(self: Transform, other: float | VectorLike[float] | TransformLike) -> Transform:
+        """:meth:`compose` this transform using post-multiply semantics.
 
-        except TypeError:
-            raise TypeError(
-                f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be a single number or a length-3 vector.'
-            )
-        except ValueError:
-            raise ValueError(
-                f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be a single number or a length-3 vector.'
-            )
+        Use :meth:`scale` for single numbers and length-3 vector inputs, and
+        :meth:`compose` otherwise for transform-like inputs.
+        """
+        copied = self.copy()
+        try:
+            transform = copied.scale(other, multiply_mode='post')  # type: ignore[arg-type]
+        except (ValueError, TypeError):
+            try:
+                transform = copied.compose(other, multiply_mode='post')
+            except TypeError:
+                raise TypeError(
+                    f"Unsupported operand type(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f'The right-side argument must be transform-like.'
+                )
+            except ValueError:
+                raise ValueError(
+                    f"Unsupported operand value(s) for *: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
+                    f'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
+                )
+        return transform
 
     def __rmul__(self: Transform, other: float | VectorLike[float]) -> Transform:
         """:meth:`scale` this transform using pre-multiply semantics."""
@@ -336,21 +323,6 @@ class Transform(_vtk.vtkTransform):
             raise ValueError(
                 f"Unsupported operand value(s) for *: '{type(other).__name__}' and '{self.__class__.__name__}'\n"
                 f'The left-side argument must be a single number or a length-3 vector.'
-            )
-
-    def __matmul__(self: Transform, other: TransformLike) -> Transform:
-        """:meth:`concatenate` this transform using pre-multiply semantics."""
-        try:
-            return self.copy().concatenate(other, multiply_mode='pre')
-        except TypeError:
-            raise TypeError(
-                f"Unsupported operand type(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be transform-like.'
-            )
-        except ValueError:
-            raise ValueError(
-                f"Unsupported operand value(s) for @: '{self.__class__.__name__}' and '{type(other).__name__}'\n"
-                f'The right-side argument must be transform-like.'
             )
 
     def copy(self: Transform) -> Transform:
@@ -416,7 +388,7 @@ class Transform(_vtk.vtkTransform):
     def point(self: Transform) -> tuple[float, float, float] | None:  # numpydoc ignore=RT01
         """Point to use when concatenating some transformations such as scale, rotation, etc.
 
-        If set, two additional transformations are concatenated and added to
+        If set, two additional transformations are composed and added to
         the :attr:`matrix_list`:
 
             - :meth:`translate` to ``point`` before the transformation
@@ -443,7 +415,7 @@ class Transform(_vtk.vtkTransform):
         Set this to ``'post'`` to set it to :meth:`post_multiply`.
 
         In pre-multiply mode, any additional transformations (e.g. using
-        :meth:`translate`,:meth:`concatenate`, etc.) will occur *before* any
+        :meth:`translate`, :meth:`compose`, etc.) will occur *before* any
         transformations represented by the current :attr:`matrix`.
         In post-multiply mode, the additional transformation will occur *after* any
         transformations represented by the current matrix.
@@ -461,7 +433,7 @@ class Transform(_vtk.vtkTransform):
         """Set the multiplication mode to pre-multiply.
 
         In pre-multiply mode, any additional transformations (e.g. using
-        :meth:`translate`,:meth:`concatenate`, etc.) will occur *before* any
+        :meth:`translate`, :meth:`compose`, etc.) will occur *before* any
         transformations represented by the current :attr:`matrix`.
 
         Examples
@@ -480,7 +452,7 @@ class Transform(_vtk.vtkTransform):
         """Set the multiplication mode to post-multiply.
 
         In post-multiply mode, any additional transformations (e.g. using
-        :meth:`translate`,:meth:`concatenate`, etc.) will occur *after* any
+        :meth:`translate`, :meth:`compose`, etc.) will occur *after* any
         transformations represented by the current :attr:`matrix`.
 
         Examples
@@ -501,9 +473,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a scale matrix.
+        """Compose a scale matrix.
 
-        Create a scale matrix and :meth:`concatenate` it with the current
+        Create a scale matrix and :meth:`compose` it with the current
         transformation :attr:`matrix` according to pre-multiply or post-multiply
         semantics.
 
@@ -519,7 +491,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to scale from. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the scaling
@@ -537,7 +509,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a scale matrix.
+        Compose a scale matrix.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform().scale(1, 2, 3)
@@ -547,7 +519,7 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 3., 0.],
                [0., 0., 0., 1.]])
 
-        Concatenate a second scale matrix using ``*``.
+        Compose a second scale matrix using ``*``.
 
         >>> transform = transform * 2
         >>> transform.matrix
@@ -590,9 +562,7 @@ class Transform(_vtk.vtkTransform):
         )
         transform = _vtk.vtkTransform()
         transform.Scale(valid_factor)
-        return self._concatenate_with_translations(
-            transform, point=point, multiply_mode=multiply_mode
-        )
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
 
     def reflect(
         self: Transform,
@@ -600,9 +570,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a reflection matrix.
+        """Compose a reflection matrix.
 
-        Create a reflection matrix and :meth:`concatenate` it with the current
+        Create a reflection matrix and :meth:`compose` it with the current
         transformation :attr:`matrix` according to pre-multiply or post-multiply
         semantics.
 
@@ -617,7 +587,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to reflect about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the reflection
@@ -635,7 +605,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a reflection matrix.
+        Compose a reflection matrix.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
@@ -646,7 +616,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0., -1.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second reflection matrix.
+        Compose a second reflection matrix.
 
         >>> _ = transform.reflect((1, 0, 0))
         >>> transform.matrix
@@ -662,9 +632,7 @@ class Transform(_vtk.vtkTransform):
             name='reflection normal',
         )
         transform = reflection(valid_normal)
-        return self._concatenate_with_translations(
-            transform, point=point, multiply_mode=multiply_mode
-        )
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
 
     def flip_x(
         self: Transform,
@@ -672,9 +640,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a reflection about the x-axis.
+        """Compose a reflection about the x-axis.
 
-        Create a reflection about the x-axis and :meth:`concatenate` it
+        Create a reflection about the x-axis and :meth:`compose` it
         with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -685,7 +653,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to reflect about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the reflection
@@ -703,7 +671,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a reflection about the x-axis.
+        Compose a reflection about the x-axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
@@ -714,7 +682,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0.,  1.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second reflection, but this time about a point.
+        Compose a second reflection, but this time about a point.
 
         >>> _ = transform.flip_x(point=(4, 5, 6))
         >>> transform.matrix
@@ -732,9 +700,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a reflection about the y-axis.
+        """Compose a reflection about the y-axis.
 
-        Create a reflection about the y-axis and :meth:`concatenate` it
+        Create a reflection about the y-axis and :meth:`compose` it
         with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -745,7 +713,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to reflect about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the reflection
@@ -763,7 +731,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a reflection about the y-axis.
+        Compose a reflection about the y-axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
@@ -774,7 +742,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0.,  1.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second reflection, but this time about a point.
+        Compose a second reflection, but this time about a point.
 
         >>> _ = transform.flip_y(point=(4, 5, 6))
         >>> transform.matrix
@@ -792,9 +760,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a reflection about the z-axis.
+        """Compose a reflection about the z-axis.
 
-        Create a reflection about the z-axis and :meth:`concatenate` it
+        Create a reflection about the z-axis and :meth:`compose` it
         with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -805,7 +773,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to reflect about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the reflection
@@ -823,7 +791,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a reflection about the z-axis.
+        Compose a reflection about the z-axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform()
@@ -834,7 +802,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0., -1.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second reflection, but this time about a point.
+        Compose a second reflection, but this time about a point.
 
         >>> _ = transform.flip_z(point=(4, 5, 6))
         >>> transform.matrix
@@ -851,9 +819,9 @@ class Transform(_vtk.vtkTransform):
         *vector: float | VectorLike[float],
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a translation matrix.
+        """Compose a translation matrix.
 
-        Create a translation matrix and :meth:`concatenate` it with the current
+        Create a translation matrix and :meth:`compose` it with the current
         transformation :attr:`matrix` according to pre-multiply or post-multiply
         semantics.
 
@@ -877,7 +845,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a translation matrix.
+        Compose a translation matrix.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform().translate(1, 2, 3)
@@ -887,7 +855,7 @@ class Transform(_vtk.vtkTransform):
                [0., 0., 1., 3.],
                [0., 0., 0., 1.]])
 
-        Concatenate a second translation matrix using ``+``.
+        Compose a second translation matrix using ``+``.
 
         >>> transform = transform + (1, 1, 1)
         >>> transform.matrix
@@ -904,7 +872,7 @@ class Transform(_vtk.vtkTransform):
         )
         transform = _vtk.vtkTransform()
         transform.Translate(valid_vector)
-        return self.concatenate(transform, multiply_mode=multiply_mode)
+        return self.compose(transform, multiply_mode=multiply_mode)
 
     def rotate(
         self: Transform,
@@ -913,9 +881,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a rotation matrix.
+        """Compose a rotation matrix.
 
-        Create a rotation matrix and :meth:`concatenate` it with the current
+        Create a rotation matrix and :meth:`compose` it with the current
         transformation :attr:`matrix` according to pre-multiply or post-multiply
         semantics. The rotation may be right-handed or left-handed.
 
@@ -929,7 +897,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the rotation
@@ -947,7 +915,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a rotation matrix. In this case the rotation rotates about the
+        Compose a rotation matrix. In this case the rotation rotates about the
         z-axis by 90 degrees.
 
         >>> import pyvista as pv
@@ -959,7 +927,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0.,  1.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second rotation matrix. In this case we use the same rotation as
+        Compose a second rotation matrix. In this case we use the same rotation as
         before.
 
         >>> _ = transform.rotate(rotation_z_90)
@@ -999,7 +967,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         valid_rotation = _validation.validate_rotation(rotation)
-        return self._concatenate_with_translations(
+        return self._compose_with_translations(
             valid_rotation, point=point, multiply_mode=multiply_mode
         )
 
@@ -1010,9 +978,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a rotation about the x-axis.
+        """Compose a rotation about the x-axis.
 
-        Create a matrix for rotation about the x-axis and :meth:`concatenate`
+        Create a matrix for rotation about the x-axis and :meth:`compose`
         it with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -1026,7 +994,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the rotation
@@ -1044,7 +1012,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a rotation about the x-axis.
+        Compose a rotation about the x-axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform().rotate_x(90)
@@ -1054,7 +1022,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  1.,  0.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second rotation about the x-axis.
+        Compose a second rotation about the x-axis.
 
         >>> _ = transform.rotate_x(45)
 
@@ -1068,9 +1036,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         transform = axis_angle_rotation((1, 0, 0), angle, deg=True)
-        return self._concatenate_with_translations(
-            transform, point=point, multiply_mode=multiply_mode
-        )
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
 
     def rotate_y(
         self: Transform,
@@ -1079,9 +1045,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a rotation about the y-axis.
+        """Compose a rotation about the y-axis.
 
-        Create a matrix for rotation about the y-axis and :meth:`concatenate`
+        Create a matrix for rotation about the y-axis and :meth:`compose`
         it with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -1095,7 +1061,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the rotation
@@ -1113,7 +1079,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a rotation about the y-axis.
+        Compose a rotation about the y-axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform().rotate_y(90)
@@ -1123,7 +1089,7 @@ class Transform(_vtk.vtkTransform):
                [-1.,  0.,  0.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second rotation about the y-axis.
+        Compose a second rotation about the y-axis.
 
         >>> _ = transform.rotate_y(45)
 
@@ -1137,9 +1103,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         transform = axis_angle_rotation((0, 1, 0), angle, deg=True)
-        return self._concatenate_with_translations(
-            transform, point=point, multiply_mode=multiply_mode
-        )
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
 
     def rotate_z(
         self: Transform,
@@ -1148,9 +1112,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a rotation about the z-axis.
+        """Compose a rotation about the z-axis.
 
-        Create a matrix for rotation about the z-axis and :meth:`concatenate`
+        Create a matrix for rotation about the z-axis and :meth:`compose`
         it with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -1164,7 +1128,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the rotation
@@ -1182,7 +1146,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a rotation about the z-axis.
+        Compose a rotation about the z-axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform().rotate_z(90)
@@ -1192,7 +1156,7 @@ class Transform(_vtk.vtkTransform):
                [ 0.,  0.,  1.,  0.],
                [ 0.,  0.,  0.,  1.]])
 
-        Concatenate a second rotation about the z-axis.
+        Compose a second rotation about the z-axis.
 
         >>> _ = transform.rotate_z(45)
 
@@ -1206,9 +1170,7 @@ class Transform(_vtk.vtkTransform):
 
         """
         transform = axis_angle_rotation((0, 0, 1), angle, deg=True)
-        return self._concatenate_with_translations(
-            transform, point=point, multiply_mode=multiply_mode
-        )
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
 
     def rotate_vector(
         self: Transform,
@@ -1218,9 +1180,9 @@ class Transform(_vtk.vtkTransform):
         point: VectorLike[float] | None = None,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a rotation about a vector.
+        """Compose a rotation about a vector.
 
-        Create a matrix for rotation about the vector and :meth:`concatenate`
+        Create a matrix for rotation about the vector and :meth:`compose`
         it with the current transformation :attr:`matrix` according to pre-multiply or
         post-multiply semantics.
 
@@ -1237,7 +1199,7 @@ class Transform(_vtk.vtkTransform):
         point : VectorLike[float], optional
             Point to rotate about. By default, the object's :attr:`point` is used,
             but this can be overridden.
-            If set, two additional transformations are concatenated and added to
+            If set, two additional transformations are composed and added to
             the :attr:`matrix_list`:
 
                 - :meth:`translate` to ``point`` before the rotation
@@ -1255,7 +1217,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate a rotation of 30 degrees about the ``(1, 1, 1)`` axis.
+        Compose a rotation of 30 degrees about the ``(1, 1, 1)`` axis.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform().rotate_vector((1, 1, 1), 30)
@@ -1265,7 +1227,7 @@ class Transform(_vtk.vtkTransform):
                [-0.24401694,  0.33333333,  0.9106836 ,  0.        ],
                [ 0.        ,  0.        ,  0.        ,  1.        ]])
 
-        Concatenate a second rotation of 45 degrees about the ``(1, 2, 3)`` axis.
+        Compose a second rotation of 45 degrees about the ``(1, 2, 3)`` axis.
 
         >>> _ = transform.rotate_vector((1, 2, 3), 45)
         >>> transform.matrix
@@ -1276,19 +1238,17 @@ class Transform(_vtk.vtkTransform):
 
         """
         transform = axis_angle_rotation(vector, angle, deg=True)
-        return self._concatenate_with_translations(
-            transform, point=point, multiply_mode=multiply_mode
-        )
+        return self._compose_with_translations(transform, point=point, multiply_mode=multiply_mode)
 
-    def concatenate(
+    def compose(
         self: Transform,
         transform: TransformLike,
         *,
         multiply_mode: Literal['pre', 'post'] | None = None,
     ) -> Transform:  # numpydoc ignore=RT01
-        """Concatenate a transformation matrix.
+        """Compose a transformation matrix.
 
-        Create a 4x4 matrix from any transform-like input and concatenate it with the
+        Create a 4x4 matrix from any transform-like input and compose it with the
         current transformation :attr:`matrix` according to pre-multiply or post-multiply
         semantics.
 
@@ -1306,7 +1266,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Define an arbitrary 4x4 affine transformation matrix and concatenate it.
+        Define an arbitrary 4x4 affine transformation matrix and compose it.
 
         >>> import pyvista as pv
         >>> array = [
@@ -1315,17 +1275,17 @@ class Transform(_vtk.vtkTransform):
         ...     [0, 0, 1, 1.5],
         ...     [0, 0, 0, 2],
         ... ]
-        >>> transform = pv.Transform().concatenate(array)
+        >>> transform = pv.Transform().compose(array)
         >>> transform.matrix
         array([[ 0.707, -0.707,  0.   ,  0.   ],
                [ 0.707,  0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   ,  1.   ,  1.5  ],
                [ 0.   ,  0.   ,  0.   ,  2.   ]])
 
-        Define a second transformation and use ``+`` to concatenate it.
+        Define a second transformation and use ``+`` to compose it.
 
         >>> array = [[1, 0, 0], [0, 0, -1], [0, -1, 0]]
-        >>> transform = transform + array
+        >>> transform = transform * array
         >>> transform.matrix
         array([[ 0.707, -0.707,  0.   ,  0.   ],
                [ 0.   ,  0.   , -1.   , -1.5  ],
@@ -1384,7 +1344,7 @@ class Transform(_vtk.vtkTransform):
     @matrix.setter
     def matrix(self: Transform, trans: TransformLike) -> None:
         self.identity()
-        self.concatenate(trans)
+        self.compose(trans)
 
     @property
     def inverse_matrix(self: Transform) -> NumpyArray[float]:
@@ -1419,7 +1379,7 @@ class Transform(_vtk.vtkTransform):
         Notes
         -----
         The list comprises all 4x4 transformation matrices. Use :attr:`matrix` instead
-        to get the concatenated result as a single 4x4 matrix.
+        to get the composed result as a single 4x4 matrix.
 
         See Also
         --------
@@ -1444,7 +1404,7 @@ class Transform(_vtk.vtkTransform):
         Notes
         -----
         The list comprises all 4x4 inverse transformation matrices. Use
-        :attr:`inverse_matrix` instead to get the concatenated result as a single
+        :attr:`inverse_matrix` instead to get the composed result as a single
         4x4 matrix.
 
         See Also
@@ -1465,7 +1425,7 @@ class Transform(_vtk.vtkTransform):
 
     @property
     def n_transformations(self: Transform) -> int:  # numpydoc ignore: RT01
-        """Return the current number of concatenated transformations."""
+        """Return the current number of composed transformations."""
         return self.GetNumberOfConcatenatedTransforms()
 
     @overload
@@ -1560,7 +1520,7 @@ class Transform(_vtk.vtkTransform):
 
         Apply a transformation to a points array.
 
-        >>> points = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> points = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
         >>> transformed_points = transform.apply(points)
         >>> transformed_points
         array([[ 2.,  4.,  6.],
@@ -1572,14 +1532,14 @@ class Transform(_vtk.vtkTransform):
         >>> transformed_dataset = transform.apply(dataset)
         >>> transformed_dataset.points
         pyvista_ndarray([[ 2.,  4.,  6.],
-                         [ 8., 10., 12.]], dtype=float32)
+                         [ 8., 10., 12.]])
 
         Apply the inverse.
 
         >>> inverted_dataset = transform.apply(dataset, inverse=True)
         >>> inverted_dataset.points
         pyvista_ndarray([[0.5, 1. , 1.5],
-                         [2. , 2.5, 3. ]], dtype=float32)
+                         [2. , 2.5, 3. ]])
 
         """
         inplace = not copy
@@ -1722,12 +1682,12 @@ class Transform(_vtk.vtkTransform):
         >>> T  # translation
         array([4., 5., 6.])
 
-        Concatenate a shear component using pre-multiplication so that shearing is
+        Compose a shear component using pre-multiplication so that shearing is
         the first transformation.
 
         >>> shear = np.eye(4)
         >>> shear[0, 1] = 0.1  # xy shear
-        >>> _ = transform.concatenate(shear, multiply_mode='pre')
+        >>> _ = transform.compose(shear, multiply_mode='pre')
 
         Repeat the decomposition and show its components. Note how the decomposed shear
         does not perfectly match the input shear matrix values. The values of the
@@ -1777,7 +1737,7 @@ class Transform(_vtk.vtkTransform):
         >>> np.allclose(recomposed.matrix, transform.matrix)
         True
 
-        Concatenate a reflection and decompose the transform again.
+        Compose a reflection and decompose the transform again.
 
         >>> _ = transform.flip_x()
         >>> T, R, N, S, K = transform.decompose()
@@ -1819,7 +1779,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate an arbitrary transformation.
+        Compose an arbitrary transformation.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform().scale(2.0)
@@ -1870,7 +1830,7 @@ class Transform(_vtk.vtkTransform):
 
         Examples
         --------
-        Concatenate an arbitrary transformation.
+        Compose an arbitrary transformation.
 
         >>> import pyvista as pv
         >>> transform = pv.Transform().scale(2.0)
@@ -1901,7 +1861,7 @@ class Transform(_vtk.vtkTransform):
         """
         return bool(self.GetInverseFlag())
 
-    def _concatenate_with_translations(
+    def _compose_with_translations(
         self: Transform,
         transform: TransformLike,
         point: VectorLike[float] | None = None,
@@ -1911,12 +1871,12 @@ class Transform(_vtk.vtkTransform):
             point=point, multiply_mode=multiply_mode
         )
         if translate_before:
-            self.concatenate(translate_before, multiply_mode=multiply_mode)
+            self.compose(translate_before, multiply_mode=multiply_mode)
 
-        self.concatenate(transform, multiply_mode=multiply_mode)
+        self.compose(transform, multiply_mode=multiply_mode)
 
         if translate_after:
-            self.concatenate(translate_after, multiply_mode=multiply_mode)
+            self.compose(translate_after, multiply_mode=multiply_mode)
 
         return self
 

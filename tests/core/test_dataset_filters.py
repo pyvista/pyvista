@@ -33,6 +33,7 @@ from pyvista.core.errors import NotAllTrianglesError
 from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.errors import VTKVersionError
 from pyvista.core.filters.data_set import _swap_axes
+from tests.conftest import flaky_test
 
 normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
@@ -894,6 +895,12 @@ def test_glyph(datasets, sphere):
     with pytest.raises(ValueError):  # noqa: PT011
         # wrong length for the indices
         sphere.glyph(geom=geoms, indices=indices[:-1])
+
+
+def test_glyph_warns_ambiguous_data(sphere):
+    sphere.compute_normals(inplace=True)
+    with pytest.warns(Warning):
+        sphere.glyph(scale=True)
 
 
 def test_glyph_cell_point_data(sphere):
@@ -3682,7 +3689,13 @@ def test_transform_imagedata_warns_with_shear(uniform):
         match='The transformation matrix has a shear component which has been removed. \n'
         'Shear is not supported when setting `ImageData` `index_to_physical_matrix`.',
     ):
-        uniform.transform(shear)
+        uniform.transform(shear, inplace=True)
+
+
+def test_transform_filter_inplace_default_warns(cube):
+    expected_msg = 'The default value of `inplace` for the filter `PolyData.transform` will change in the future.'
+    with pytest.warns(PyVistaDeprecationWarning, match=expected_msg):
+        _ = cube.transform(np.eye(4))
 
 
 def test_reflect_mesh_about_point(datasets):
@@ -3783,7 +3796,7 @@ def test_transform_should_match_vtk_transformation(rotate_amounts, translate_amo
 
     # Apply transform with pyvista filter
     grid_a = grid.copy()
-    grid_a.transform(trans)
+    grid_a.transform(trans, inplace=True)
 
     # Apply transform with vtk filter
     grid_b = grid.copy()
@@ -3808,7 +3821,7 @@ def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amount
     trans_rotate_only.Update()
 
     grid_copy = grid.copy()
-    grid_copy.transform(trans_rotate_only)
+    grid_copy.transform(trans_rotate_only, inplace=True)
 
     from pyvista.core.utilities.transformations import apply_transformation_to_points
 
@@ -3819,7 +3832,7 @@ def test_transform_should_match_vtk_transformation_non_homogeneous(rotate_amount
 
 def test_translate_should_not_fail_given_none(grid):
     bounds = grid.bounds
-    grid.transform(None)
+    grid.transform(None, inplace=True)
     assert grid.bounds == bounds
 
 
@@ -3844,7 +3857,7 @@ def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
     assume(array.shape not in [(3, 3), (4, 4)])
     match = 'Shape must be one of [(3, 3), (4, 4)]'
     with pytest.raises(ValueError, match=re.escape(match)):
-        grid.transform(array)
+        grid.transform(array, inplace=True)
 
 
 @pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
@@ -4436,7 +4449,7 @@ def test_bounding_box_as_composite(sphere, as_composite, mesh_type):
 def test_oriented_bounding_box():
     rotation = pv.transformations.axis_angle_rotation((1, 2, 3), 30)
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
-    box_mesh.transform(rotation)
+    box_mesh.transform(rotation, inplace=True)
     obb = box_mesh.oriented_bounding_box()
     assert obb.bounds == box_mesh.bounds
 
@@ -4451,7 +4464,7 @@ def test_bounding_box_return_meta(oriented, as_composite):
 
     # Transform a box manually and get its OBB
     box_mesh = pv.Cube(x_length=1, y_length=2, z_length=3)
-    box_mesh.transform(rotation)
+    box_mesh.transform(rotation, inplace=True)
     obb, point, axes = box_mesh.bounding_box(
         oriented=oriented, return_meta=True, as_composite=as_composite
     )
@@ -4564,6 +4577,7 @@ def test_align_xyz_three_axis_directions(planar_mesh):
         )
 
 
+@pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
 def test_align_xyz_swap_axes():
     # create planar data with equal variance in x and z
     points = np.array([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]])
@@ -4735,3 +4749,363 @@ def test_pack_labels_preference(uniform):
     expected_shape = mesh.cell_data['labels_in'].shape
     actual_shape = packed.cell_data['packed_labels'].shape
     assert np.array_equal(actual_shape, expected_shape)
+
+
+@pytest.mark.parametrize('coloring_mode', ['index', 'cycle', None])
+def test_color_labels(uniform, coloring_mode):
+    default_cmap = pv.get_cmap_safe('glasbey_category10')
+    original_scalars_name = uniform.active_scalars_name
+
+    if coloring_mode == 'index':
+        # Test invalid input
+        match = (
+            "Index coloring mode cannot be used with scalars 'Spatial Point Data'. Scalars must be positive integers \n"
+            'and the max value (729.0) must be less than the number of colors (256).'
+        )
+        with pytest.raises(ValueError, match=re.escape(match)):
+            uniform.color_labels(coloring_mode=coloring_mode)
+
+        # Use pack labels so that index mapping can be used
+        uniform = uniform.pack_labels(output_scalars=original_scalars_name)
+
+    colored_mesh = uniform.color_labels(coloring_mode=coloring_mode)
+    assert colored_mesh is not uniform
+    assert uniform.active_scalars_name == original_scalars_name
+    colors_name = original_scalars_name + '_rgb'
+    assert [0, 0, 0] not in np.unique(colored_mesh[colors_name], axis=0).tolist()
+
+    label_ids = np.unique(uniform.active_scalars)
+    for i, label_id in enumerate(label_ids):
+        data_ids = np.where(uniform[original_scalars_name] == label_id)[0]
+        expected_color_rgb = pv.Color(default_cmap.colors[i]).int_rgb
+        for data_id in data_ids:
+            actual_rgba = colored_mesh[colors_name][data_id]
+            assert np.allclose(actual_rgba, expected_color_rgb)
+
+    # Test in place
+    colored_mesh = uniform.color_labels(coloring_mode=coloring_mode, inplace=True)
+    assert colored_mesh is uniform
+
+
+VIRIDIS_RGB = [pv.Color(c).int_rgb for c in pv.get_cmap_safe('viridis').colors]
+COLORS_DICT = {0: 'red', 1: (0, 0, 0), 2: 'blue', 3: (1.0, 1.0, 1.0), 4: 'orange', 5: 'green'}
+COLORS_DICT_RGB = [pv.Color(c).int_rgb for c in COLORS_DICT.values()]
+RED_RGB = pv.Color('red').int_rgb
+
+
+@pytest.mark.parametrize(
+    ('color_input', 'expected_rgb'),
+    [
+        ('viridis', VIRIDIS_RGB),
+        (COLORS_DICT, COLORS_DICT_RGB),
+        (COLORS_DICT_RGB, COLORS_DICT_RGB),
+        ('red', [RED_RGB, RED_RGB, RED_RGB, RED_RGB]),
+    ],
+    ids=['cmap', 'dict', 'sequence', 'named_color'],
+)
+def test_color_labels_inputs(labeled_image, color_input, expected_rgb):
+    label_scalars = labeled_image.active_scalars
+    colored = labeled_image.color_labels(color_input)
+    color_scalars = colored.active_scalars
+    for id_ in np.unique(label_scalars):
+        assert np.allclose(color_scalars[label_scalars == id_], expected_rgb[id_])
+
+
+@pytest.mark.parametrize('color_type', ['int_rgb', 'int_rgba', 'float_rgb', 'float_rgba'])
+def test_color_labels_color_type_partial_dict(labeled_image, color_type):
+    input_scalars_name = labeled_image.active_scalars_name
+    colored = labeled_image.color_labels({0: RED_RGB}, color_type=color_type)
+    color_scalars = colored.active_scalars
+    color_scalars_name = colored.active_scalars_name
+    unique = np.unique(color_scalars, axis=0)
+
+    expected_color = getattr(pv.Color(RED_RGB), color_type)
+    if 'float' in color_type:
+        assert np.array_equal(expected_color, unique[0])
+        assert np.array_equal([np.nan] * len(expected_color), unique[1], equal_nan=True)
+        assert color_scalars.dtype == float
+    else:
+        assert np.array_equal(expected_color, unique[1])
+        assert np.array_equal([0] * len(expected_color), unique[0])
+        assert color_scalars.dtype == np.uint8
+    if 'rgba' in color_type:
+        assert color_scalars_name == input_scalars_name + '_rgba'
+    else:
+        assert color_scalars_name == input_scalars_name + '_rgb'
+
+
+@pytest.mark.parametrize('color_type', ['float_rgb', 'float_rgba'])
+def test_color_labels_color_type_cmap(labeled_image, color_type):
+    labels = pv.ImageData(dimensions=(256, 1, 1))
+    labels['256'] = range(256)
+    colored = labels.color_labels('viridis', color_type=color_type)
+    cmap_colors = pv.get_cmap_safe('viridis').colors
+    for i, color in enumerate(colored.active_scalars):
+        expected_color = cmap_colors[i]
+        if 'rgba' in color_type:
+            expected_color.append(1.0)
+        assert np.array_equal(color, expected_color)
+
+
+LABEL_DATA = [-1, -2, 1]
+
+
+@pytest.mark.parametrize(
+    ('negative_indexing', 'cmap_index'), [(True, LABEL_DATA), (False, np.argsort(LABEL_DATA))]
+)
+def test_color_labels_negative_index(labeled_image, negative_indexing, cmap_index):
+    labels = pv.ImageData(dimensions=(3, 1, 1))
+    labels['data'] = LABEL_DATA
+    colored = labels.color_labels('viridis', negative_indexing=negative_indexing)
+    color_array = colored.active_scalars
+
+    assert np.array_equal(color_array[0], VIRIDIS_RGB[cmap_index[0]])
+    assert np.array_equal(color_array[1], VIRIDIS_RGB[cmap_index[1]])
+    assert np.array_equal(color_array[2], VIRIDIS_RGB[cmap_index[2]])
+
+
+def test_color_labels_scalars(uniform):
+    # Test active scalars
+    active_before = uniform.active_scalars_name
+    for name in uniform.array_names:
+        colored = uniform.color_labels(scalars=name)
+        assert name in colored.active_scalars_name
+    assert uniform.active_scalars_name == active_before
+
+    # Give cell data and point data the same name
+    GENERIC = 'generic'
+    for name in uniform.array_names:
+        uniform.rename_array(name, GENERIC)
+    assert all(name == GENERIC for name in uniform.array_names)
+
+    # Test preference
+    for name in uniform.array_names:
+        colored = uniform.color_labels(scalars=name, preference='point')
+        assert GENERIC + '_rgb' in colored.point_data
+
+        colored = uniform.color_labels(scalars=name, preference='cell')
+        assert GENERIC + '_rgb' in colored.cell_data
+
+    # Test output scalars
+    CUSTOM = 'custom'
+    colored = uniform.color_labels(output_scalars=CUSTOM)
+    assert CUSTOM in colored.array_names
+
+
+def test_color_labels_invalid_input(uniform):
+    match = 'Coloring mode cannot be set when a color dictionary is specified.'
+    with pytest.raises(TypeError, match=match):
+        uniform.color_labels({}, coloring_mode='index')
+
+    match = "Colormap 'bwr' must be a ListedColormap, got LinearSegmentedColormap instead."
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels('bwr')
+
+    match = (
+        'Invalid colors. Colors must be one of:\n'
+        '  - sequence of color-like values,\n'
+        '  - dict with color-like values,\n'
+        '  - named colormap string.'
+    )
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels([[1]])
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels('fake')
+
+    match = "Negative indexing is not supported with 'cycle' mode enabled."
+    with pytest.raises(ValueError, match=match):
+        uniform.color_labels(coloring_mode='cycle', negative_indexing=True)
+
+    match = 'Multi-component scalars are not supported for coloring. Scalar array Normals must be one-dimensional.'
+    with pytest.raises(ValueError, match=match):
+        pv.Sphere().color_labels(scalars='Normals')
+
+
+@pytest.fixture
+def frog_tissues_image():
+    return examples.load_frog_tissues()
+
+
+@pytest.fixture
+def frog_tissues_contour(frog_tissues_image):
+    return frog_tissues_image.contour_labels(smoothing=False)
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_voxelize_binary_mask(frog_tissues_image, frog_tissues_contour):
+    mask = frog_tissues_contour.voxelize_binary_mask(
+        reference_volume=frog_tissues_image, progress_bar=True
+    )
+
+    expected_voxels = frog_tissues_image.points_to_cells().threshold(0.5)
+    actual_voxels = mask.points_to_cells().threshold(0.5)
+
+    assert expected_voxels.bounds == actual_voxels.bounds
+    assert expected_voxels.n_cells == actual_voxels.n_cells
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_voxelize_binary_mask_no_reference(frog_tissues_image, frog_tissues_contour):
+    mask = frog_tissues_contour.voxelize_binary_mask()
+    assert np.allclose(mask.points_to_cells().bounds, frog_tissues_contour.bounds)
+
+
+def test_voxelize_binary_mask_dimensions(sphere):
+    dims = (10, 11, 12)
+    mask = sphere.voxelize_binary_mask(dimensions=dims)
+    assert np.allclose(mask.points_to_cells().bounds, sphere.bounds)
+    assert mask.dimensions == dims
+
+
+def test_voxelize_binary_mask_spacing(ant):
+    # Test default
+    mask_no_input = ant.voxelize_binary_mask()
+    if pv.vtk_version_info < (9, 2):
+        expected_mask = ant.voxelize_binary_mask(spacing=ant.length / 100)
+    else:
+        expected_mask = ant.voxelize_binary_mask(cell_length_percentile=0.1)
+    assert mask_no_input.spacing == expected_mask.spacing
+
+    # Test cell length
+    if pv.vtk_version_info < (9, 2):
+        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
+        with pytest.raises(TypeError, match=match):
+            ant.voxelize_binary_mask(cell_length_percentile=0.2)
+    else:
+        mask_percentile_20 = ant.voxelize_binary_mask(cell_length_percentile=0.2)
+        mask_percentile_50 = ant.voxelize_binary_mask(cell_length_percentile=0.5)
+        assert np.all(np.array(mask_percentile_20.spacing) < mask_percentile_50.spacing)
+
+    # Test mesh length
+    mask_fraction_200 = ant.voxelize_binary_mask(spacing=ant.length / 200)
+    mask_fraction_500 = ant.voxelize_binary_mask(spacing=ant.length / 500)
+    assert np.all(np.array(mask_fraction_200.spacing) > mask_fraction_500.spacing)
+    # Check spacing matches mesh length. Use atol since spacing is approximate.
+    assert np.allclose(mask_fraction_500.spacing, ant.length / 500, atol=1e-3)
+
+
+# This test is flaky because of random sampling that cannot be controlled.
+# Sometimes the sampling produces the same output.
+# https://github.com/pyvista/pyvista/pull/6728
+@flaky_test(times=5)
+def test_voxelize_binary_mask_cell_length_sample_size(ant):
+    if pv.vtk_version_info < (9, 2):
+        match = 'Cell length percentile and sample size requires VTK 9.2 or greater.'
+        with pytest.raises(TypeError, match=match):
+            ant.voxelize_binary_mask(cell_length_percentile=0.2)
+    else:
+        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=100)
+        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=200)
+        assert mask_samples_1.spacing != mask_samples_2.spacing
+
+        mask_samples_1 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+        mask_samples_2 = ant.voxelize_binary_mask(cell_length_sample_size=ant.n_cells)
+        assert mask_samples_1.spacing == mask_samples_2.spacing
+
+
+@pytest.mark.parametrize(
+    'rounding_func',
+    [np.round, np.ceil, np.floor, lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]],
+)
+def test_voxelize_binary_mask_rounding_func(sphere, rounding_func):
+    spacing = np.array((1.1, 1.2, 1.3))
+    mask = sphere.voxelize_binary_mask(spacing=spacing, rounding_func=rounding_func)
+    assert np.allclose(mask.points_to_cells().bounds, sphere.bounds)
+    if rounding_func == np.round:
+        assert np.any(mask.spacing > spacing)
+        assert np.any(mask.spacing < spacing)
+    elif rounding_func == np.ceil:
+        assert np.all(mask.spacing < spacing)
+    elif rounding_func == np.floor:
+        assert np.all(mask.spacing > spacing)
+    else:  # rounding_func == lambda x: [np.round(x[0]), np.ceil(x[1]), np.floor(x[2])]]
+        assert mask.spacing[1] < spacing[1]
+        assert mask.spacing[2] > spacing[2]
+
+
+@pytest.mark.parametrize('foreground', [1, 2.1])
+@pytest.mark.parametrize('background', [-1, 0])
+def test_voxelize_binary_mask_foreground_background(sphere, foreground, background):
+    mask = sphere.voxelize_binary_mask(foreground_value=foreground, background_value=background)
+    unique, counts = np.unique(mask['mask'], return_counts=True)
+    assert np.array_equal(unique, [background, foreground])
+    # Test we have more foreground than background (not always true, but is true for a sphere mesh)
+    assert counts[1] > counts[0]
+
+    # Test dtype
+    if (
+        isinstance(foreground, int)
+        and isinstance(background, int)
+        and foreground >= 0
+        and background >= 0
+    ):
+        assert mask['mask'].dtype == np.uint8
+    elif isinstance(foreground, int) and isinstance(background, int):
+        assert mask['mask'].dtype == int
+    else:
+        assert mask['mask'].dtype == float
+
+
+def test_voxelize_binary_mask_input(hexbeam):
+    # Test unstructured grid works
+    assert isinstance(hexbeam, pv.UnstructuredGrid)
+    mask = hexbeam.voxelize_binary_mask()
+    assert mask.n_points
+
+    # Test point cloud does not
+    mesh = pv.PolyData(hexbeam.points)
+    with pytest.raises(ValueError, match='Input mesh must have faces for voxelization'):
+        mesh.voxelize_binary_mask()
+
+
+@pytest.fixture
+def oriented_image():
+    image = pv.ImageData()
+    image.spacing = (1.1, 1.2, 1.3)
+    image.dimensions = (10, 11, 12)
+    image.direction_matrix = pv.Transform().rotate_vector((4, 5, 6), 30).matrix[:3, :3]
+    image['scalars'] = np.ones((image.n_points,))
+    return image
+
+
+@pytest.fixture
+def oriented_polydata(oriented_image):
+    oriented_poly = oriented_image.pad_image().contour_labels(smoothing=False)
+    assert np.allclose(oriented_poly.bounds, oriented_image.points_to_cells().bounds, atol=0.1)
+    return oriented_poly
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_voxelize_binary_mask_orientation(oriented_image, oriented_polydata):
+    mask = oriented_polydata.voxelize_binary_mask(reference_volume=oriented_image)
+    assert mask.bounds == oriented_image.bounds
+    mask_as_surface = mask.pad_image().contour_labels(smoothing=False)
+    assert mask_as_surface.bounds == oriented_polydata.bounds
+
+
+def test_voxelize_binary_mask_raises(sphere):
+    match = 'Spacing and dimensions cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), spacing=(4, 5, 6))
+
+    match = 'Spacing and cell length options cannot both be set. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.voxelize_binary_mask(spacing=(4, 5, 6), cell_length_percentile=0.2)
+    with pytest.raises(TypeError, match=match):
+        sphere.voxelize_binary_mask(spacing=0.1, cell_length_sample_size=sphere.n_cells)
+
+    match = 'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+    with pytest.raises(TypeError, match=match):
+        sphere.voxelize_binary_mask(dimensions=(1, 2, 3), rounding_func=np.round)
+
+    for parameter in [
+        'dimensions',
+        'spacing',
+        'rounding_func',
+        'cell_length_percentile',
+        'cell_length_sample_size',
+    ]:
+        kwargs = {parameter: 0}  # Give parameter any value for test
+        match = 'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+        with pytest.raises(TypeError, match=match):
+            sphere.voxelize_binary_mask(reference_volume=pv.ImageData(), **kwargs)

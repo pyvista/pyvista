@@ -23,7 +23,7 @@ from pyvista.core.utilities.arrays import vtkmatrix_from_array
 
 from .colors import Color
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from ..core._typing_core import TransformLike
     from ._typing import ColorLike
 

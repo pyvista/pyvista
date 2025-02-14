@@ -133,13 +133,13 @@ these can be loaded with:
 
 This mesh can then be written to a .vtk file using:
 
-.. code:: python
+.. code-block:: python
 
     mesh.save('plane.vtk')
 
 These meshes are identical.
 
-.. code:: python
+.. code-block:: python
 
     import numpy as np
 
@@ -318,7 +318,7 @@ Loading from File
 ~~~~~~~~~~~~~~~~~
 Structured grids can be loaded from a ``vtk`` file.
 
-.. code:: python
+.. code-block:: python
 
     grid = pv.StructuredGrid(filename)
 

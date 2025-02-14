@@ -18,7 +18,7 @@ from .errors import CellSizeError
 from .errors import PyVistaDeprecationWarning
 from .utilities.cells import numpy_to_idarr
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
     from typing import Any
 

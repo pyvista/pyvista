@@ -14,6 +14,8 @@ import warnings
 
 import numpy as np
 import pytest
+from pytest_cases import parametrize
+from pytest_cases import parametrize_with_cases
 import vtk
 
 import pyvista as pv
@@ -1058,6 +1060,8 @@ def test_principal_axes_return_std():
     assert np.allclose(ratios_in, ratios_out, atol=0.02)
 
 
+@pytest.mark.filterwarnings('ignore:Mean of empty slice:RuntimeWarning')
+@pytest.mark.filterwarnings('ignore:invalid value encountered in divide:RuntimeWarning')
 def test_principal_axes_empty():
     axes = principal_axes(np.empty((0, 3)))
     assert np.allclose(axes, DEFAULT_PRINCIPAL_AXES)
@@ -1344,10 +1348,10 @@ def test_transform_rotate_vector(transform):
     assert np.allclose(identity, np.eye(4))
 
 
-def test_transform_concatenate_vtkmatrix(transform):
+def test_transform_compose_vtkmatrix(transform):
     scale_array = np.diag((1, 2, 3, 1))
     vtkmatrix = pv.vtkmatrix_from_array(scale_array)
-    transform.concatenate(vtkmatrix)
+    transform.compose(vtkmatrix)
     actual = transform.matrix
     expected = scale_array
     assert np.array_equal(actual, expected)
@@ -1370,38 +1374,48 @@ def test_transform_invert(transform):
     assert transform.is_inverted is False
 
 
-@pytest.mark.parametrize('copy', [True, False])
-@pytest.mark.parametrize(
-    ('obj', 'return_self', 'return_type', 'return_dtype'),
-    [
-        (list(VECTOR), False, np.ndarray, float),
-        (VECTOR, False, np.ndarray, float),
-        (np.array(VECTOR), False, np.ndarray, float),
-        (np.array([VECTOR]), False, np.ndarray, float),
-        (np.array(VECTOR, dtype=float), True, np.ndarray, float),
-        (np.array([VECTOR], dtype=float), True, np.ndarray, float),
-        (pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32),
-        (pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32),
-        (pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float),
-        (
+class CasesTransformApply:
+    def case_list_int(self):
+        return list(VECTOR), False, np.ndarray, float
+
+    def case_tuple_int(self):
+        return VECTOR, False, np.ndarray, float
+
+    def case_array1d_int(self):
+        return np.array(VECTOR), False, np.ndarray, float
+
+    def case_array2d_int(self):
+        return np.array([VECTOR]), False, np.ndarray, float
+
+    def case_array1d_float(self):
+        return np.array(VECTOR, dtype=float), True, np.ndarray, float
+
+    def case_array2d_float(self):
+        return np.array([VECTOR], dtype=float), True, np.ndarray, float
+
+    @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
+    def case_polydata_float32(self):
+        return pv.PolyData(np.atleast_2d(VECTOR)), True, pv.PolyData, np.float32
+
+    @pytest.mark.filterwarnings('ignore:Points is not a float type.*:UserWarning')
+    def case_polydata_int(self):
+        return pv.PolyData(np.atleast_2d(VECTOR).astype(int)), True, pv.PolyData, np.float32
+
+    def case_polydata_float(self):
+        return pv.PolyData(np.atleast_2d(VECTOR).astype(float)), True, pv.PolyData, float
+
+    def case_multiblock_float(self):
+        return (
             pv.MultiBlock([pv.PolyData(np.atleast_2d(VECTOR).astype(float))]),
             True,
             pv.MultiBlock,
             float,
-        ),
-    ],
-    ids=[
-        'list-int',
-        'tuple-int',
-        'array1d-int',
-        'array2d-int',
-        'array1d-float',
-        'array2d-float',
-        'polydata-float32',
-        'polydata-int',
-        'polydata-float',
-        'multiblock-float',
-    ],
+        )
+
+
+@parametrize(copy=[True, False])
+@parametrize_with_cases(
+    ('obj', 'return_self', 'return_type', 'return_dtype'), cases=CasesTransformApply
 )
 def test_transform_apply(transform, obj, return_self, return_type, return_dtype, copy):
     def _get_points_from_object(obj_):
@@ -1486,7 +1500,7 @@ def test_transform_multiply_mode_override(transform, transformed_actor, object_m
     transform.translate(transformed_actor.position, multiply_mode=override_mode)
 
     # Apply user matrix
-    transform.concatenate(transformed_actor.user_matrix, multiply_mode=override_mode)
+    transform.compose(transformed_actor.user_matrix, multiply_mode=override_mode)
 
     # Check result
     transform_matrix = transform.matrix
@@ -1541,7 +1555,7 @@ def test_transform_chain_methods():
         .scale(ones)
         .translate(zeros)
         .rotate(eye3)
-        .concatenate(eye4)
+        .compose(eye4)
         .invert()
         .post_multiply()
         .pre_multiply()
@@ -1550,12 +1564,12 @@ def test_transform_chain_methods():
     assert np.array_equal(matrix, eye4)
 
 
-def test_transform_add():
+def test_transform_mul():
     scale = Transform().scale(SCALE)
     translate = Transform().translate(VECTOR)
 
     transform = pv.Transform().post_multiply().translate(VECTOR).scale(SCALE)
-    transform_add = translate + scale
+    transform_add = translate * scale
     assert np.array_equal(transform_add.matrix, transform.matrix)
 
     # Validate with numpy matmul
@@ -1563,18 +1577,15 @@ def test_transform_add():
     assert np.array_equal(transform_add.matrix, matrix_numpy)
 
 
-@pytest.mark.parametrize(
-    'other', [VECTOR, Transform().translate(VECTOR), Transform().translate(VECTOR).matrix]
-)
-def test_transform_add_other(other):
+def test_transform_add():
     transform_base = pv.Transform().post_multiply().scale(SCALE)
     # Translate with `translate` and `+`
     transform_translate = transform_base.copy().translate(VECTOR)
-    transform_add = transform_base + other
+    transform_add = transform_base + VECTOR
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
     # Test multiply mode override to ensure post-multiply is always used
-    transform_add = transform_base.pre_multiply() + other
+    transform_add = transform_base.pre_multiply() + VECTOR
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
 
@@ -1590,16 +1601,19 @@ def test_transform_radd():
     assert np.array_equal(transform_add.matrix, transform_translate.matrix)
 
 
-@pytest.mark.parametrize('scale_factor', [SCALE, (SCALE, SCALE, SCALE)])
-def test_transform_mul(scale_factor):
+@pytest.mark.parametrize(
+    'other',
+    [SCALE, (SCALE, SCALE, SCALE), Transform().scale(SCALE), Transform().scale(SCALE).matrix],
+)
+def test_transform_mul_other(other):
     transform_base = pv.Transform().post_multiply().translate(VECTOR)
     # Scale with `scale` and `*`
-    transform_scale = transform_base.copy().scale(scale_factor)
-    transform_mul = transform_base * scale_factor
+    transform_scale = transform_base.copy().scale(SCALE)
+    transform_mul = transform_base * other
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
     # Test multiply mode override to ensure post-multiply is always used
-    transform_mul = transform_base.pre_multiply() * scale_factor
+    transform_mul = transform_base.pre_multiply() * other
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
 
@@ -1617,34 +1631,17 @@ def test_transform_rmul(scale_factor):
     assert np.array_equal(transform_mul.matrix, transform_scale.matrix)
 
 
-def test_transform_matmul():
-    scale = Transform().scale(SCALE)
-    translate = Transform().translate(VECTOR)
-
-    transform = pv.Transform().pre_multiply().translate(VECTOR).scale(SCALE)
-    transform_matmul = translate @ scale
-    assert np.array_equal(transform_matmul.matrix, transform.matrix)
-
-    # Test multiply mode override to ensure pre-multiply is always used
-    transform_matmul = translate.post_multiply() @ scale.post_multiply()
-    assert np.array_equal(transform_matmul.matrix, transform.matrix)
-
-    # Validate with numpy matmul
-    matrix_numpy = translate.matrix @ scale.matrix
-    assert np.array_equal(transform_matmul.matrix, matrix_numpy)
-
-
 def test_transform_add_raises():
     match = (
         "Unsupported operand value(s) for +: 'Transform' and 'int'\n"
-        'The right-side argument must be a length-3 vector or have 3x3 or 4x4 shape.'
+        'The right-side argument must be a length-3 vector.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Transform() + 1
 
     match = (
         "Unsupported operand type(s) for +: 'Transform' and 'dict'\n"
-        'The right-side argument must be transform-like.'
+        'The right-side argument must be a length-3 vector.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.Transform() + {}
@@ -1685,33 +1682,17 @@ def test_transform_rmul_raises():
 def test_transform_mul_raises():
     match = (
         "Unsupported operand value(s) for *: 'Transform' and 'tuple'\n"
-        'The right-side argument must be a single number or a length-3 vector.'
+        'The right-side argument must be a single number or a length-3 vector or have 3x3 or 4x4 shape.'
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         pv.Transform() * (1, 2, 3, 4)
 
     match = (
         "Unsupported operand type(s) for *: 'Transform' and 'dict'\n"
-        'The right-side argument must be a single number or a length-3 vector.'
+        'The right-side argument must be transform-like.'
     )
     with pytest.raises(TypeError, match=re.escape(match)):
         pv.Transform() * {}
-
-
-def test_transform_matmul_raises():
-    match = (
-        "Unsupported operand value(s) for @: 'Transform' and 'tuple'\n"
-        'The right-side argument must be transform-like.'
-    )
-    with pytest.raises(ValueError, match=re.escape(match)):
-        pv.Transform() @ (1, 2, 3, 4)
-
-    match = (
-        "Unsupported operand type(s) for @: 'Transform' and 'dict'\n"
-        'The right-side argument must be transform-like.'
-    )
-    with pytest.raises(TypeError, match=re.escape(match)):
-        pv.Transform() @ {}
 
 
 @pytest.mark.parametrize('multiply_mode', ['pre', 'post'])
@@ -1739,7 +1720,7 @@ def test_transform_repr(transform):
     )
 
     # Test with floats which have many decimals
-    transform.concatenate(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
+    transform.compose(pv.transformations.axis_angle_rotation((0, 0, 1), 45))
     repr_ = _repr_no_first_line(transform)
     assert repr_ == (
         '  Num Transformations: 1\n'
@@ -1767,7 +1748,7 @@ SHEAR[2, 1] = values[2]
 @pytest.mark.parametrize('do_translate', [True, False])
 def test_transform_decompose(transform, do_shear, do_scale, do_reflection, do_rotate, do_translate):
     if do_shear:
-        transform.concatenate(SHEAR)
+        transform.compose(SHEAR)
     if do_scale:
         transform.scale(VECTOR)
     if do_reflection:

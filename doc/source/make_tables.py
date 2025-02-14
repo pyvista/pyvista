@@ -111,6 +111,7 @@ class DocTable:
     @classmethod
     def generate(cls):
         """Generate this table."""
+        print(f'generating tables... {cls.__name__}', flush=True)
         assert cls.path is not None, f'Subclass {cls} should specify a path.'
         if isinstance(cls.path, property):
             cls.path = cls.path.fget(cls)
@@ -1108,12 +1109,22 @@ class DatasetCard:
         header = ' '.join([word.capitalize() for word in index_name.split('_')])
 
         # Get the corresponding function of the loader
-        try:
-            func_name = 'download_' + dataset_name
+        func = None
+
+        # Get `download` function from downloads.py or planets.py
+        func_name = 'download_' + dataset_name
+        if hasattr(pyvista.examples.downloads, func_name):
             func = getattr(pyvista.examples.downloads, func_name)
-        except AttributeError:
+        elif hasattr(pyvista.examples.planets, func_name):
+            func = getattr(pyvista.examples.planets, func_name)
+        else:
+            # Get `load` function from examples.py
             func_name = 'load_' + dataset_name
-            func = getattr(pyvista.examples.examples, func_name)
+            if hasattr(pyvista.examples.examples, func_name):
+                func = getattr(pyvista.examples.examples, func_name)
+
+        if func is None:
+            raise RuntimeError(f'Dataset function {func_name} does not exist.')
 
         # Get the card's header info
         func_ref = f':func:`~{_get_fullname(func)}`'
@@ -1498,6 +1509,7 @@ class DatasetCardFetcher:
         """Download and load all datasets and initialize a card object for each dataset."""
         cls._init_cards_from_module(pv.examples.examples)
         cls._init_cards_from_module(pv.examples.downloads)
+        cls._init_cards_from_module(pv.examples.planets)
         cls.DATASET_CARDS_OBJ = dict(sorted(cls.DATASET_CARDS_OBJ.items()))
 
     @classmethod
@@ -1523,6 +1535,7 @@ class DatasetCardFetcher:
                 cls._add_dataset_card(dataset_name, dataset_loader)
 
                 # Load data
+                print(f'loading datasets... {dataset_name}', flush=True)
                 try:
                     if isinstance(dataset_loader, _Downloadable):
                         dataset_loader.download()
@@ -1656,16 +1669,15 @@ class DatasetCardFetcher:
             if pv.MultiBlock in types_list:
                 types_list.remove(pv.MultiBlock)
                 num_datasets = len(types_list)
+                num_types = len(set(types_list))
+
+                is_single = num_datasets == 1
+                is_homo = num_datasets >= 2 and num_types == 1
+                is_hetero = num_datasets >= 2 and num_types > 1
                 if (
-                    num_datasets == 1
-                    and kind == 'single'
-                    or (
-                        num_datasets >= 2
-                        and len(set(types_list)) == 1
-                        and kind == 'homo'
-                        or len(set(types_list)) > 1
-                        and kind == 'hetero'
-                    )
+                    (is_single and kind == 'single')
+                    or (is_homo and kind == 'homo')
+                    or (is_hetero and kind == 'hetero')
                 ):
                     dataset_names.append(name)
         return dataset_names
@@ -1930,10 +1942,13 @@ class DownloadsCarousel(DatasetGalleryCarousel):
 class PlanetsCarousel(DatasetGalleryCarousel):
     """Class to generate a carousel with cards from the planets module."""
 
-    # TODO: add planets datasets
     name = 'planets_carousel'
     doc = 'Datasets from the :mod:`planets <pyvista.examples.planets>` module.'
-    badge = ModuleBadge('Planets', ref='planets_gallery')
+    badge = ModuleBadge('Planets', ref='modules_gallery')
+
+    @classmethod
+    def fetch_dataset_names(cls):
+        return DatasetCardFetcher.fetch_dataset_names_by_module(pyvista.examples.planets)
 
 
 class PointSetCarousel(DatasetGalleryCarousel):
@@ -2233,6 +2248,7 @@ CAROUSEL_LIST = [
     AllDatasetsCarousel,
     BuiltinCarousel,
     DownloadsCarousel,
+    PlanetsCarousel,
     PointSetCarousel,
     PolyDataCarousel,
     UnstructuredGridCarousel,

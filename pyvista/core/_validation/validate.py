@@ -42,7 +42,7 @@ from pyvista.core._vtk_core import vtkMatrix3x3
 from pyvista.core._vtk_core import vtkMatrix4x4
 from pyvista.core._vtk_core import vtkTransform
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
     import numpy.typing as npt
@@ -442,7 +442,7 @@ def validate_axes(
             must_contain=must_have_orientation,
             name=f'{name} orientation',
         )
-    elif must_have_orientation is None and len(axes) == 2:
+    elif len(axes) == 2:
         raise ValueError(f'{name} orientation must be specified when only two vectors are given.')
 
     # Validate axes array
@@ -454,11 +454,10 @@ def validate_axes(
         axes_array[1] = validate_array3(axes[1], name=f'{name} Vector[1]')
         if len(axes) == 3:
             axes_array[2] = validate_array3(axes[2], name=f'{name} Vector[2]')
-        else:  # len(axes) == 2
-            if must_have_orientation == 'right':
-                axes_array[2] = np.cross(axes_array[0], axes_array[1])
-            else:
-                axes_array[2] = np.cross(axes_array[1], axes_array[0])
+        elif must_have_orientation == 'right':
+            axes_array[2] = np.cross(axes_array[0], axes_array[1])
+        else:
+            axes_array[2] = np.cross(axes_array[1], axes_array[0])
     check_finite(axes_array, name=name)
 
     if np.isclose(np.dot(axes_array[0], axes_array[1]), 1) or np.isclose(
@@ -1231,7 +1230,7 @@ def validate_dimensionality(
         dimensionality_as_array = np.char.replace(dimensionality_as_array, 'D', '')
 
     try:
-        dimensionality_as_array = dimensionality_as_array.astype(np.integer)
+        dimensionality_as_array = dimensionality_as_array.astype(np.int64)
     except ValueError:
         raise ValueError(
             f'`{dimensionality}` is not a valid dimensionality.'
@@ -1277,7 +1276,7 @@ def _validate_color_sequence(
                     color_list = color_list * n_colors
 
                 # Only return if we have the correct number of colors
-                if n_colors is not None and len(color_list) == n_colors:
+                if n_colors is None or len(color_list) == n_colors:
                     return tuple(color_list)
             except ValueError:
                 pass

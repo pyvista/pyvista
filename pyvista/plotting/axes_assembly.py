@@ -21,6 +21,7 @@ from pyvista.core.utilities.geometric_sources import AxesGeometrySource
 from pyvista.core.utilities.geometric_sources import OrthogonalPlanesSource
 from pyvista.core.utilities.geometric_sources import _AxisEnum
 from pyvista.core.utilities.geometric_sources import _PartEnum
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.plotting import _vtk
 from pyvista.plotting.actor import Actor
 from pyvista.plotting.colors import Color
@@ -29,7 +30,7 @@ from pyvista.plotting.prop3d import _Prop3DMixin
 from pyvista.plotting.text import Label
 from pyvista.plotting.text import TextProperty
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Iterator
     import sys
 
@@ -75,7 +76,7 @@ class _XYZTuple(NamedTuple):
     z: Any
 
 
-class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
+class _XYZAssembly(_Prop3DMixin, _NameMixin, _vtk.vtkPropAssembly):
     DEFAULT_LABELS = _XYZTuple('X', 'Y', 'Z')
 
     def __init__(
@@ -99,6 +100,7 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         origin: VectorLike[float],
         scale: float | VectorLike[float],
         user_matrix: MatrixLike[float] | None,
+        name: str | None = None,
     ):
         super().__init__()
 
@@ -153,6 +155,8 @@ class _XYZAssembly(_Prop3DMixin, _vtk.vtkPropAssembly):
         self.scale = scale  # type: ignore[assignment]
         self.origin = origin  # type: ignore[assignment]
         self.user_matrix = user_matrix  # type: ignore[assignment]
+
+        self._name = name  # type: ignore[assignment]
 
     @property
     def parts(self):
@@ -352,6 +356,11 @@ class AxesAssembly(_XYZAssembly):
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
@@ -448,6 +457,7 @@ class AxesAssembly(_XYZAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
@@ -475,6 +485,7 @@ class AxesAssembly(_XYZAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
         self._set_default_label_props()
 
@@ -489,10 +500,7 @@ class AxesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the axes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         geometry_repr = repr(self._shaft_and_tip_geometry_source).splitlines()[1:]
@@ -974,6 +982,11 @@ class AxesAssemblySymmetric(AxesAssembly):
         A 4x4 transformation matrix applied to the axes. Defaults to the identity matrix.
         The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.AxesGeometrySource`.
 
@@ -1039,6 +1052,7 @@ class AxesAssemblySymmetric(AxesAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_AxesGeometryKwargs],
     ):
         # Init shaft and tip actors
@@ -1067,6 +1081,7 @@ class AxesAssemblySymmetric(AxesAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
         self._set_default_label_props()
 
@@ -1346,6 +1361,11 @@ class PlanesAssembly(_XYZAssembly):
         A 4x4 transformation matrix applied to the assembly. Defaults to the identity
         matrix. The user matrix is the last transformation applied to the actor.
 
+    name : str, optional
+        The name of this assembly used when tracking on a plotter.
+
+        .. versionadded:: 0.45
+
     **kwargs
         Keyword arguments passed to :class:`pyvista.OrthogonalPlanesSource`.
 
@@ -1448,6 +1468,7 @@ class PlanesAssembly(_XYZAssembly):
         origin: VectorLike[float] = (0.0, 0.0, 0.0),
         scale: float | VectorLike[float] = (1.0, 1.0, 1.0),
         user_matrix: MatrixLike[float] | None = None,
+        name: str | None = None,
         **kwargs: Unpack[_OrthogonalPlanesKwargs],
     ):
         # Init plane actors
@@ -1488,6 +1509,7 @@ class PlanesAssembly(_XYZAssembly):
             origin=origin,
             scale=scale,
             user_matrix=user_matrix,
+            name=name,
         )
 
         self.opacity = opacity  # type: ignore[assignment]
@@ -1510,10 +1532,7 @@ class PlanesAssembly(_XYZAssembly):
 
     def __repr__(self):
         """Representation of the planes assembly."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnds = self.bounds
 
         attr = [
@@ -1967,7 +1986,8 @@ class _AxisActor(_vtk.vtkAxisActor):
         self.SetUseBounds(False)
 
         # Format title positioning
-        self.SetTitleOffset(0)
+        offset = (0,) if pv.vtk_version_info < (9, 3) else (0, 0)
+        self.SetTitleOffset(*offset)
         self.SetLabelOffset(0)
 
         # For 2D mode only

@@ -6,7 +6,10 @@ from collections.abc import Iterable
 from collections.abc import Sequence
 import contextlib
 import functools
+import itertools
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
 from typing import Literal
 from typing import cast
 import warnings
@@ -37,7 +40,8 @@ from pyvista.core.utilities.misc import abstract_class
 from pyvista.core.utilities.misc import assert_empty_kwargs
 from pyvista.core.utilities.transform import Transform
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
+    from pyvista import Color
     from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista import PolyData
@@ -47,6 +51,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from pyvista.core._typing_core import VectorLike
     from pyvista.core._typing_core import _DataObjectType
     from pyvista.core._typing_core import _DataSetType
+    from pyvista.plotting._typing import ColorLike
 
 
 @abstract_class
@@ -412,20 +417,19 @@ class DataSetFilters:
         if axis_2_direction is not None:
             if np.dot(axes[2], axis_2_direction) >= 0:
                 pass  # nothing to do, sign is correct
+            elif axis_0_direction is not None and axis_1_direction is not None:
+                raise ValueError(
+                    f'Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation.'
+                )
             else:
-                if axis_0_direction is not None and axis_1_direction is not None:
-                    raise ValueError(
-                        f'Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation.'
-                    )
+                axes[2] *= -1
+                # Need to also flip a second vector to keep system as right-handed
+                if axis_1_direction is not None:
+                    # Second axis has been set, so modify first axis
+                    axes[0] *= -1
                 else:
-                    axes[2] *= -1
-                    # Need to also flip a second vector to keep system as right-handed
-                    if axis_1_direction is not None:
-                        # Second axis has been set, so modify first axis
-                        axes[0] *= -1
-                    else:
-                        # First axis has been set, so modify second axis
-                        axes[1] *= -1
+                    # First axis has been set, so modify second axis
+                    axes[1] *= -1
 
         rotation = Transform().rotate(axes)
         aligned = self.transform(rotation, inplace=False)
@@ -435,7 +439,7 @@ class DataSetFilters:
         aligned.transform(translation, inplace=True)
 
         if return_matrix:
-            return aligned, rotation.concatenate(translation).matrix
+            return aligned, rotation.compose(translation).matrix
         return aligned
 
     def clip(  # type: ignore[misc]
@@ -2141,7 +2145,7 @@ class DataSetFilters:
         filter.
 
         """
-        if method is None or method == 'contour':
+        if method == 'contour':
             alg = _vtk.vtkContourFilter()
         elif method == 'marching_cubes':
             alg = _vtk.vtkMarchingCubes()  # type: ignore[assignment]
@@ -2635,22 +2639,19 @@ class DataSetFilters:
         if isinstance(scale, str):
             dataset.set_active_scalars(scale, preference='cell')
             do_scale = True
-        else:
-            if scale:
-                try:
-                    set_default_active_scalars(self)
-                except MissingDataError:
-                    warnings.warn('No data to use for scale. scale will be set to False.')
-                    do_scale = False
-                except AmbiguousDataError as err:
-                    warnings.warn(
-                        f'{err}\nIt is unclear which one to use. scale will be set to False.'
-                    )
-                    do_scale = False
-                else:
-                    do_scale = True
-            else:
+        elif scale:
+            try:
+                set_default_active_scalars(self)
+            except MissingDataError:
+                warnings.warn('No data to use for scale. scale will be set to False.')
                 do_scale = False
+            except AmbiguousDataError as err:
+                warnings.warn(f'{err}\nIt is unclear which one to use. scale will be set to False.')
+                do_scale = False
+            else:
+                do_scale = True
+        else:
+            do_scale = False
 
         if do_scale:
             if dataset.active_scalars is not None:
@@ -3138,16 +3139,15 @@ class DataSetFilters:
             # PolyData with 'largest' mode generates bad output with unreferenced points
             output_needs_fixing = True
 
-        else:
-            # All other extraction modes / cases may generate incorrect scalar arrays
-            # e.g. 'largest' may output scalars with shape that does not match output mesh
-            # e.g. 'seed' method scalars may have one RegionId, yet may contain many
-            # disconnected regions. Therefore, check for correct scalars size
-            if label_regions:
-                invalid_cell_scalars = output.n_cells != output.cell_data['RegionId'].size
-                invalid_point_scalars = output.n_points != output.point_data['RegionId'].size
-                if invalid_cell_scalars or invalid_point_scalars:
-                    output_needs_fixing = True
+        # All other extraction modes / cases may generate incorrect scalar arrays
+        # e.g. 'largest' may output scalars with shape that does not match output mesh
+        # e.g. 'seed' method scalars may have one RegionId, yet may contain many
+        # disconnected regions. Therefore, check for correct scalars size
+        elif label_regions:
+            invalid_cell_scalars = output.n_cells != output.cell_data['RegionId'].size
+            invalid_point_scalars = output.n_points != output.point_data['RegionId'].size
+            if invalid_cell_scalars or invalid_point_scalars:
+                output_needs_fixing = True
 
         if output_needs_fixing and output.n_cells > 0:
             # Fix bad output recursively using 'all' mode which has known good output
@@ -3886,7 +3886,7 @@ class DataSetFilters:
         progress_bar: bool = False,
         locator: Literal['cell', 'cell_tree', 'obb_tree', 'static_cell']
         | _vtk.vtkAbstractCellLocator
-        | None = None,
+        | None = 'static_cell',
         pass_field_data: bool = True,
         mark_blank: bool = True,
         snap_to_closest_point: bool = False,
@@ -3931,9 +3931,9 @@ class DataSetFilters:
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
-        locator : vtkAbstractCellLocator or str, optional
+        locator : vtkAbstractCellLocator or str or None, default: 'static_cell'
             Prototype cell locator to perform the ``FindCell()``
-            operation.  Default uses the DataSet ``FindCell`` method.
+            operation.  If ``None``, uses the DataSet ``FindCell`` method.
             Valid strings with mapping to vtk cell locators are
 
                 * 'cell' - vtkCellLocator
@@ -3961,6 +3961,10 @@ class DataSetFilters:
         See Also
         --------
         pyvista.DataSetFilters.interpolate
+            Interpolate values from one mesh onto another.
+
+        :meth:`pyvista.ImageDataFilters.resample`
+            Resample image data to modify its dimensions and spacing.
 
         Examples
         --------
@@ -4105,6 +4109,10 @@ class DataSetFilters:
         See Also
         --------
         pyvista.DataSetFilters.sample
+            Resample array data from one mesh onto another.
+
+        :meth:`pyvista.ImageDataFilters.resample`
+            Resample image data to modify its dimensions and spacing.
 
         Examples
         --------
@@ -5411,8 +5419,9 @@ class DataSetFilters:
         if invert:
             ind_: VectorLike[int]
             _, ind_ = numpy_to_idarr(ind, return_ind=True)  # type: ignore[misc]
-            ind_ = [i for i in range(self.n_cells) if i not in ind_]
-            ids = numpy_to_idarr(ind_)
+            mask = np.ones(self.n_cells, bool)
+            mask[ind_] = False
+            ids = numpy_to_idarr(mask)
         else:
             ids = numpy_to_idarr(ind)
 
@@ -7023,7 +7032,7 @@ class DataSetFilters:
         self: DataSet,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
-        inplace: bool = True,
+        inplace: bool | None = None,
         progress_bar: bool = False,
     ):
         """Transform this mesh with a 4x4 transform.
@@ -7056,6 +7065,9 @@ class DataSetFilters:
             :class:`~pyvista.ImageData.spacing`, and :class:`~pyvista.ImageData.direction_matrix`
             properties.
 
+        .. deprecated:: 0.45.0
+            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
+
         Parameters
         ----------
         trans : TransformLike
@@ -7067,7 +7079,7 @@ class DataSetFilters:
             transformed. Otherwise, only the normals and vectors are
             transformed.  See the warning for more details.
 
-        inplace : bool, default: False
+        inplace : bool, default: True
             When ``True``, modifies the dataset inplace.
 
         progress_bar : bool, default: False
@@ -7104,10 +7116,14 @@ class DataSetFilters:
         ...         [0, 0, 0, 1],
         ...     ]
         ... )
-        >>> transformed = mesh.transform(transform_matrix)
+        >>> transformed = mesh.transform(transform_matrix, inplace=False)
         >>> transformed.plot(show_edges=True)
 
         """
+        from ._deprecate_transform_inplace_default_true import check_inplace
+
+        inplace = check_inplace(cls=type(self), inplace=inplace)
+
         if inplace and isinstance(self, pyvista.RectilinearGrid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
@@ -7199,7 +7215,7 @@ class DataSetFilters:
             # from the filter output but manually transform the structure
             output.copy_structure(self)  # type: ignore[arg-type]
             current_matrix = output.index_to_physical_matrix
-            new_matrix = pyvista.Transform(current_matrix).concatenate(t).matrix
+            new_matrix = pyvista.Transform(current_matrix).compose(t).matrix
             output.index_to_physical_matrix = new_matrix
 
             output.point_data.update(res.point_data, copy=False)
@@ -8491,7 +8507,7 @@ class DataSetFilters:
             if box_style == 'outline':
                 face.copy_from(pyvista.lines_from_points(face.points))
             if oriented:
-                face.transform(inverse_matrix)
+                face.transform(inverse_matrix, inplace=True)
 
         # Get output
         alg_output = box if as_composite else _multiblock_to_polydata(box)
@@ -8941,6 +8957,855 @@ class DataSetFilters:
 
             return result
 
+    def color_labels(  # type: ignore[misc]
+        self: DataSet,
+        colors: str
+        | ColorLike
+        | Sequence[ColorLike]
+        | dict[float, ColorLike] = 'glasbey_category10',
+        *,
+        coloring_mode: Literal['index', 'cycle'] | None = None,
+        color_type: Literal['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'] = 'int_rgb',
+        negative_indexing: bool = False,
+        scalars: str | None = None,
+        preference: Literal['point', 'cell'] = 'cell',
+        output_scalars: str | None = None,
+        inplace: bool = False,
+    ):
+        """Add RGB(A) scalars to labeled data.
+
+        This filter adds a color array to map label values to specific colors.
+        The mapping can be specified explicitly with a dictionary or implicitly
+        with a colormap or sequence of colors. The implicit mapping is controlled
+        with two coloring modes:
+
+        -   ``'index'`` : The input scalar values (label ids) are used as index values for
+            indexing the specified ``colors``. This creates a direct relationship
+            between labels and colors such that a given label will always have the same
+            color, regardless of the number of labels present in the dataset.
+
+            This option is used by default for unsigned 8-bit integer inputs, i.e.
+            scalars with whole numbers and a maximum range of ``[0, 255]``.
+
+        -   ``'cycle'`` : The specified ``colors`` are cycled through sequentially,
+            and each unique value in the input scalars is assigned a color in increasing
+            order. Unlike with ``'index'`` mode, the colors are not directly mapped to
+            the labels, but instead depends on the number of labels at the input.
+
+            This option is used by default for floating-point inputs or for inputs
+            with values out of the range ``[0, 255]``.
+
+        By default, a new ``'int_rgb'`` array is added with the same name as the
+        specified ``scalars`` but with ``_rgb`` appended.
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        pyvista.DataSetFilters.connectivity
+            Label data based on its connectivity.
+
+        pyvista.ImageDataFilters.contour_labels
+            Generate contours from labeled image data. The contours may be colored with this filter.
+
+        pack_labels
+            Make labeled data contiguous. May be used as a pre-processing step before
+            coloring.
+
+        :ref:`anatomical_groups_example`
+            Additional examples using this filter.
+
+        Parameters
+        ----------
+        colors : str | ColorLike | Sequence[ColorLike] | dict[float, ColorLike], default: 'glasbey_category10'
+            Color(s) to use. Specify a dictionary to explicitly control the mapping
+            from label values to colors. Alternatively, specify colors only using a
+            colormap or a sequence of colors and use ``coloring_mode`` to implicitly
+            control the mapping. A single color is also supported to color the entire
+            mesh with one color.
+
+            By default, a variation of the ``'glasbey'`` categorical colormap is used
+            where the first 10 colors are the same default colors used by ``matplotlib``.
+            See `colorcet categorical colormaps <https://colorcet.holoviz.org/user_guide/Categorical.html#>`_
+            for more information.
+
+            .. note::
+                When a dictionary is specified, any scalar values for which a key is
+                not provided is assigned default RGB(A) values of ``nan`` for float colors
+                or ``0``  for integer colors (see ``color_type``). To ensure the color
+                array has no default values, be sure to provide a mapping for any and
+                all possible input label values.
+
+        coloring_mode : 'index' | 'cycle', optional
+            Control how colors are mapped to label values. Has no effect if ``colors``
+            is a dictionary. Specify one of:
+
+            - ``'index'``: The input scalar values (label ids) are used as index
+              values for indexing the specified ``colors``.
+            - ``'cycle'``: The specified ``colors`` are cycled through sequentially,
+              and each unique value in the input scalars is assigned a color in increasing
+              order. Colors are repeated if there are fewer colors than unique values
+              in the input ``scalars``.
+
+            By default, ``'index'`` mode is used if the values can be used to index
+            the input ``colors``, and ``'cycle'`` mode is used otherwise.
+
+        color_type : 'int_rgb' | 'float_rgb' | 'int_rgba' | 'float_rgba', default: 'int_rgb'
+            Type of the color array to store. By default, the colors are stored as
+            RGB integers to reduce memory usage.
+
+            .. note::
+                The color type affects the default value for unspecified colors when
+                a dictionary is used. See ``colors`` for details.
+
+        negative_indexing : bool, default: False
+            Allow indexing ``colors`` with negative values. Only valid when
+            ``coloring_mode`` is ``'index'``. This option is useful for coloring data
+            with two independent categories since positive values will be colored
+            differently than negative values.
+
+        scalars : str, optional
+            Name of scalars with labels. Defaults to currently active scalars.
+
+        preference : str, default: "cell"
+            When ``scalars`` is specified, this is the preferred array
+            type to search for in the dataset.  Must be either
+            ``'point'`` or ``'cell'``.
+
+        output_scalars : str, optional
+            Name of the color scalars array. By default, the output array
+            is the same as ``scalars`` with `_rgb`` or ``_rgba`` appended
+            depending on ``color_type``.
+
+        inplace : bool, default: False
+            If ``True``, the mesh is updated in-place.
+
+        Returns
+        -------
+        pyvista.DataSet
+            Dataset with RGB(A) scalars. Output type matches input type.
+
+        Examples
+        --------
+        Load labeled data and crop it with :meth:`~pyvista.ImageDataFilters.extract_subset`
+        to simplify the data.
+
+        >>> from pyvista import examples
+        >>> import numpy as np
+        >>> image_labels = examples.load_channels()
+        >>> image_labels = image_labels.extract_subset(voi=(75, 109, 75, 109, 85, 100))
+
+        Plot the dataset with default coloring using a categorical color map. The
+        plotter by default uniformly samples from all 256 colors in the color map based
+        on the data's range.
+
+        >>> image_labels.plot(cmap='glasbey_category10')
+
+        Show label ids of the dataset.
+
+        >>> label_ids = np.unique(image_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([0, 1, 2, 3, 4])
+
+        Color the labels with the filter then plot them. Note that the
+        ``'glasbey_category10'`` color map is used by default.
+
+        >>> colored_labels = image_labels.color_labels()
+        >>> colored_labels.plot()
+
+        Since the labels are unsigned integers, the ``'index'`` coloring mode is used
+        by default. Unlike the uniform sampling used by the plotter in the previous
+        plot, the colormap is instead indexed using the label values. This ensures
+        that labels have a consistent coloring regardless of the input. For example,
+        we can crop the dataset further.
+
+        >>> subset_labels = image_labels.extract_subset(voi=(15, 34, 28, 34, 12, 15))
+
+        And show that only three labels remain.
+
+        >>> label_ids = np.unique(subset_labels.active_scalars)
+        >>> label_ids
+        pyvista_ndarray([1, 2, 3])
+
+        Despite the changes to the dataset, the regions have the same coloring
+        as before.
+
+        >>> colored_labels = subset_labels.color_labels()
+        >>> colored_labels.plot()
+
+        Use the ``'cycle'`` coloring mode instead to map label values to colors
+        sequentially.
+
+        >>> colored_labels = subset_labels.color_labels(coloring_mode='cycle')
+        >>> colored_labels.plot()
+
+        Map the colors explicitly using a dictionary.
+
+        >>> colors = {0: 'black', 1: 'red', 2: 'lime', 3: 'blue', 4: 'yellow'}
+        >>> colored_labels = image_labels.color_labels(colors)
+        >>> colored_labels.plot()
+
+        Omit the background value from the mapping and specify float colors. When
+        floats are specified, values without a mapping are assigned ``nan`` values
+        and are not plotted by default.
+
+        >>> colors.pop(0)
+        'black'
+        >>> colored_labels = image_labels.color_labels(colors, color_type='float_rgba')
+        >>> colored_labels.plot()
+
+        Modify the scalars and make two of the labels negative.
+
+        >>> scalars = image_labels.active_scalars
+        >>> scalars[scalars > 2] *= -1
+        >>> np.unique(scalars)
+        pyvista_ndarray([-4, -3,  0,  1,  2])
+
+        Color the mesh and enable ``negative_indexing``. With this option enabled,
+        the ``'index'`` coloring mode is used by default, and therefore the positive
+        values ``0``, ``1``, and ``2`` are colored with the first, second, and third
+        color in the colormap, respectively. Negative values ``-3`` and ``-4`` are
+        colored with the third-last and fourth-last color in the colormap, respectively.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=True)
+        >>> colored_labels.plot()
+
+        If ``negative_indexing`` is disabled, the coloring defaults to the
+        ``'cycle'`` coloring mode instead.
+
+        >>> colored_labels = image_labels.color_labels(negative_indexing=False)
+        >>> colored_labels.plot()
+
+        Load the :func:`~pyvista.examples.downloads.download_foot_bones` dataset.
+
+        >>> dataset = examples.download_foot_bones()
+
+        Label the bones using :meth:`~pyvista.DataSetFilters.connectivity` and show
+        the label values.
+
+        >>> labeled_data = dataset.connectivity()
+        >>> np.unique(labeled_data.active_scalars)
+        pyvista_ndarray([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
+                         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25])
+
+        Color the dataset with default arguments. Despite having 26 separately colored
+        regions, the colors from the default glasbey-style colormap are all relatively
+        distinct.
+
+        >>> colored_labels = labeled_data.color_labels()
+        >>> colored_labels.plot()
+
+        Color the mesh with fewer colors than there are label values. In this case
+        the ``'cycle'`` mode is used by default and the colors are reused.
+
+        >>> colored_labels = labeled_data.color_labels(['red', 'lime', 'blue'])
+        >>> colored_labels.plot()
+
+        Color all labels with a single color.
+
+        >>> colored_labels = labeled_data.color_labels('red')
+        >>> colored_labels.plot()
+
+
+        """
+        # Lazy import since these are from plotting module
+        import matplotlib.colors
+
+        from pyvista.core._validation.validate import _validate_color_sequence
+        from pyvista.plotting._typing import ColorLike
+        from pyvista.plotting.colors import get_cmap_safe
+
+        def _local_validate_color_sequence(seq: ColorLike | Sequence[ColorLike]) -> Sequence[Color]:
+            try:
+                return _validate_color_sequence(seq)
+            except ValueError:
+                raise ValueError(
+                    'Invalid colors. Colors must be one of:\n'
+                    '  - sequence of color-like values,\n'
+                    '  - dict with color-like values,\n'
+                    '  - named colormap string.\n'
+                    f'Got: {seq}'
+                )
+
+        def _is_index_like(array_, max_value):
+            min_value = -max_value if negative_indexing else 0
+            return (array_ == np.floor(array_)) & (array_ >= min_value) & (array_ <= max_value)
+
+        _validation.check_contains(
+            ['int_rgb', 'float_rgb', 'int_rgba', 'float_rgba'],
+            must_contain=color_type,
+            name='color_type',
+        )
+
+        if 'rgba' in color_type:
+            num_components = 4
+            scalars_suffix = '_rgba'
+        else:
+            num_components = 3
+            scalars_suffix = '_rgb'
+        if 'float' in color_type:
+            default_channel_value = np.nan
+            color_dtype = 'float'
+        else:
+            default_channel_value = 0
+            color_dtype = 'uint8'
+
+        if scalars is None:
+            field, name = set_default_active_scalars(self)
+        else:
+            name = scalars
+            field = get_array_association(self, name, preference=preference, err=True)
+        output_mesh = self if inplace else self.copy()
+        data = output_mesh.point_data if field == FieldAssociation.POINT else output_mesh.cell_data
+        array = data[name]
+
+        if isinstance(colors, dict):
+            if coloring_mode is not None:
+                raise TypeError('Coloring mode cannot be set when a color dictionary is specified.')
+            colors_ = _local_validate_color_sequence(cast(list[ColorLike], list(colors.values())))
+            color_rgb_sequence = [getattr(c, color_type) for c in colors_]
+            items = zip(colors.keys(), color_rgb_sequence)
+
+        else:
+            if array.ndim > 1:
+                raise ValueError(
+                    f'Multi-component scalars are not supported for coloring. Scalar array {scalars} must be one-dimensional.'
+                )
+            _is_rgb_sequence = False
+            if isinstance(colors, str):
+                try:
+                    cmap = get_cmap_safe(colors)
+                except ValueError:
+                    pass
+                else:
+                    if not isinstance(cmap, matplotlib.colors.ListedColormap):
+                        raise ValueError(
+                            f"Colormap '{colors}' must be a ListedColormap, got {cmap.__class__.__name__} instead."
+                        )
+                    # Avoid unnecessary conversion and set color sequence directly in float cases
+                    cmap_colors = cast(list[list[float]], cmap.colors)
+                    if color_type == 'float_rgb':
+                        color_rgb_sequence = cmap_colors
+                        _is_rgb_sequence = True
+                    elif color_type == 'float_rgba':
+                        color_rgb_sequence = [(*c, 1.0) for c in cmap_colors]
+                        _is_rgb_sequence = True
+                    else:
+                        colors = cmap_colors
+
+            if not _is_rgb_sequence:
+                color_rgb_sequence = [
+                    getattr(c, color_type) for c in _local_validate_color_sequence(colors)
+                ]
+                if len(color_rgb_sequence) == 1:
+                    color_rgb_sequence = color_rgb_sequence * len(array)
+
+            n_colors = len(color_rgb_sequence)
+            if coloring_mode is None:
+                coloring_mode = (
+                    'index' if np.all(_is_index_like(array, max_value=n_colors)) else 'cycle'
+                )
+
+            _validation.check_contains(
+                ['index', 'cycle'], must_contain=coloring_mode, name='coloring_mode'
+            )
+            if coloring_mode == 'index':
+                if not np.all(_is_index_like(array, max_value=n_colors)):
+                    raise ValueError(
+                        f"Index coloring mode cannot be used with scalars '{name}'. Scalars must be positive integers \n"
+                        f'and the max value ({self.get_data_range(name)[1]}) must be less than the number of colors ({n_colors}).'
+                    )
+                keys: Iterable[float]
+                values: Iterable[Any]
+
+                keys_ = np.arange(n_colors)
+                values_ = color_rgb_sequence
+                if negative_indexing:
+                    keys_ = np.append(keys_, keys_[::-1] - len(keys_))
+                    values_.extend(values_[::-1])
+                keys = keys_
+                values = values_
+            elif coloring_mode == 'cycle':
+                if negative_indexing:
+                    raise ValueError(
+                        "Negative indexing is not supported with 'cycle' mode enabled."
+                    )
+                keys = np.unique(array)
+                values = itertools.cycle(color_rgb_sequence)
+
+            items = zip(keys, values)
+
+        colors_out = np.full((len(array), num_components), default_channel_value, dtype=color_dtype)
+        for label, color in items:
+            colors_out[array == label, :] = color
+
+        colors_name = name + scalars_suffix if output_scalars is None else output_scalars
+        data[colors_name] = colors_out
+        output_mesh.set_active_scalars(colors_name)
+
+        return output_mesh
+
+    def voxelize_binary_mask(  # type: ignore[misc]
+        self: DataSet,
+        *,
+        background_value: int | float = 0,  # noqa: PYI041
+        foreground_value: int | float = 1,  # noqa: PYI041
+        reference_volume: pyvista.ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        progress_bar: bool = False,
+    ):
+        """Voxelize mesh as a binary :class:`~pyvista.ImageData` mask.
+
+        The binary mask is a point data array where points inside and outside of the
+        input surface are labelled with ``foreground_value`` and ``background_value``,
+        respectively.
+
+        This filter implements `vtkPolyDataToImageStencil
+        <https://vtk.org/doc/nightly/html/classvtkPolyDataToImageStencil.html>`_. This
+        algorithm operates as follows:
+
+        * The algorithm iterates through the z-slice of the ``reference_volume``.
+        * For each slice, it cuts the input :class:`~pyvista.PolyData` surface to create
+          2D polylines at that z position. It attempts to close any open polylines.
+        * For each x position along the polylines, the corresponding y positions are
+          determined.
+        * For each slice, the grid points are labelled as foreground or background based
+          on their xy coordinates.
+
+        The voxelization can be controlled in several ways:
+
+        #. Specify the output geometry using a ``reference_volume``.
+
+        #. Specify the ``spacing`` explicitly.
+
+        #. Specify the ``dimensions`` explicitly.
+
+        #. Specify the ``cell_length_percentile``. The spacing is estimated from the
+           surface's cells using the specified percentile.
+
+        Use ``reference_volume`` for full control of the output mask's geometry. For
+        all other options, the geometry is implicitly defined such that the generated
+        mask fits the bounds of the input surface.
+
+        If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
+        used by default to estimate the spacing. On systems with VTK < 9.2, the default
+        spacing is set to ``1/100`` of the input mesh's length.
+
+        .. versionadded:: 0.45.0
+
+        .. note::
+            For best results, ensure the input surface is a closed surface. The
+            surface is considered closed if it has zero :attr:`~pyvista.PolyData.n_open_edges`.
+
+        .. note::
+            This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
+            This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
+            which return meshes with voxel cells. See :ref:`image_representations_example`
+            for examples demonstrating the difference.
+
+        .. note::
+            This filter does not discard internal surfaces, due, for instance, to
+            intersecting meshes. Instead, the intersection will be considered as
+            background which may produce unexpected results. See `Examples`.
+
+        Parameters
+        ----------
+        background_value : int, default: 0
+            Background value of the generated mask.
+
+        foreground_value : int, default: 1
+            Foreground value of the generated mask.
+
+        reference_volume : pyvista.ImageData, optional
+            Volume to use as a reference. The output will have the same ``dimensions``,
+            ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
+
+        dimensions : VectorLike[int], optional
+            Dimensions of the generated mask image. Set this value to control the
+            dimensions explicitly. If unset, the dimensions are defined implicitly
+            through other parameter. See summary and examples for details.
+
+        spacing : VectorLike[float], optional
+            Approximate spacing to use for the generated mask image. Set this value
+            to control the spacing explicitly. If unset, the spacing is defined
+            implicitly through other parameters. See summary and examples for details.
+
+        rounding_func : Callable[VectorLike[float], VectorLike[int]], optional
+            Control how the dimensions are rounded to integers based on the provided or
+            calculated ``spacing``. Should accept a length-3 vector containing the
+            dimension values along the three directions and return a length-3 vector.
+            :func:`numpy.round` is used by default.
+
+            Rounding the dimensions implies rounding the actual spacing.
+
+            Has no effect if ``reference_volume`` or ``dimensions`` are specified.
+
+        cell_length_percentile : float, optional
+            Cell length percentage ``p`` to use for computing the default ``spacing``.
+            Default is ``0.1`` (10th percentile) and must be between ``0`` and ``1``.
+            The ``p``-th percentile is computed from the cumulative distribution function
+            (CDF) of lengths which are representative of the cell length scales present
+            in the input. The CDF is computed by:
+
+            #. Triangulating the input cells.
+            #. Sampling a subset of up to ``cell_length_sample_size`` cells.
+            #. Computing the distance between two random points in each cell.
+            #. Inserting the distance into an ordered set to create the CDF.
+
+            Has no effect if ``dimension`` or ``reference_volume`` are specified.
+
+            .. note::
+                This option is only available for VTK 9.2 or greater.
+
+        cell_length_sample_size : int, optional
+            Number of samples to use for the cumulative distribution function (CDF)
+            when using the ``cell_length_percentile`` option. ``100 000`` samples are
+            used by default.
+
+        progress_bar : bool, default: False
+            Display a progress bar to indicate progress.
+
+        Returns
+        -------
+        pyvista.ImageData
+            Generated binary mask with a ``'mask'``  point data array. The data array
+            has dtype :class:`numpy.uint8` if the foreground and background values are
+            unsigned and less than 256.
+
+        See Also
+        --------
+        voxelize
+            Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
+            :attr:`~pyvista.CellType.VOXEL` cells.
+
+        voxelize_volume
+            Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
+
+        pyvista.ImageDataFilters.contour_labels
+            Filter that generates surface contours from labeled image data. Can be
+            loosely considered as an inverse of this filter.
+
+        pyvista.ImageDataFilters.points_to_cells
+            Convert voxels represented as points to :attr:`~pyvista.CellType.VOXEL`
+            cells.
+
+        pyvista.ImageData
+            Class used to build custom ``reference_volume``.
+
+        Examples
+        --------
+        Generate a binary mask from a coarse mesh.
+
+        >>> import numpy as np
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> poly = examples.download_bunny_coarse()
+        >>> mask = poly.voxelize_binary_mask()
+
+        The mask is stored as :class:`~pyvista.ImageData` with point data scalars
+        (zeros for background, ones for foreground).
+
+        >>> mask
+        ImageData (...)
+          N Cells:      7056
+          N Points:     8228
+          X Bounds:     -1.245e-01, 1.731e-01
+          Y Bounds:     -1.135e-01, 1.807e-01
+          Z Bounds:     -1.359e-01, 9.140e-02
+          Dimensions:   22, 22, 17
+          Spacing:      1.417e-02, 1.401e-02, 1.421e-02
+          N Arrays:     1
+
+        >>> np.unique(mask.point_data['mask'])
+        pyvista_ndarray([0, 1], dtype=uint8)
+
+        To visualize it as voxel cells, use :meth:`~pyvista.ImageDataFilters.points_to_cells`,
+        then use :meth:`~pyvista.DataSetFilters.threshold` to extract the foreground.
+
+        We also plot the voxel cells in blue and the input poly data in green for
+        comparison.
+
+        >>> def mask_and_polydata_plotter(mask, poly):
+        ...     voxel_cells = mask.points_to_cells().threshold(0.5)
+        ...
+        ...     plot = pv.Plotter()
+        ...     _ = plot.add_mesh(voxel_cells, color='blue')
+        ...     _ = plot.add_mesh(poly, color='lime')
+        ...     plot.camera_position = 'xy'
+        ...     return plot
+
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        The spacing of the mask image is automatically adjusted to match the
+        density of the input.
+
+        Repeat the previous example with a finer mesh.
+
+        >>> poly = examples.download_bunny()
+        >>> mask = poly.voxelize_binary_mask()
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        Control the spacing manually instead. Here, a very coarse spacing is used.
+
+        >>> mask = poly.voxelize_binary_mask(spacing=(0.01, 0.04, 0.02))
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        Note that the spacing is only approximate. Check the mask's actual spacing.
+
+        >>> mask.spacing
+        (0.009731187485158443, 0.03858340159058571, 0.020112216472625732)
+
+        The actual values may be greater or less than the specified values. Use
+        ``rounding_func=np.floor`` to force all values to be greater.
+
+        >>> mask = poly.voxelize_binary_mask(
+        ...     spacing=(0.01, 0.04, 0.02), rounding_func=np.floor
+        ... )
+        >>> mask.spacing
+        (0.01037993331750234, 0.05144453545411428, 0.020112216472625732)
+
+        Set the dimensions instead of the spacing.
+
+        >>> mask = poly.voxelize_binary_mask(dimensions=(10, 20, 30))
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        >>> mask.dimensions
+        (10, 20, 30)
+
+        Create a mask using a reference volume. First generate polydata from
+        an existing mask.
+
+        >>> volume = examples.load_frog_tissues()
+        >>> poly = volume.contour_labels()
+
+        Now create the mask from the polydata using the volume as a reference.
+
+        >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
+        >>> plot = mask_and_polydata_plotter(mask, poly)
+        >>> plot.show()
+
+        Visualize the effect of internal surfaces.
+
+        >>> mesh = pv.Cylinder() + pv.Cylinder((0, 0.75, 0))
+        >>> binary_mask = mesh.voxelize_binary_mask(
+        ...     dimensions=(1, 100, 50)
+        ... ).points_to_cells()
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask)
+        >>> _ = plot.add_mesh(mesh.slice(), color='red')
+        >>> plot.show(cpos='yz')
+
+        Note how the intersection is excluded from the mask.
+        To include the voxels delimited by internal surfaces in the foreground, the internal
+        surfaces should be removed, for instance by applying a boolean union. Note that
+        this operation in unreliable in VTK but may be performed with external tools such
+        as `vtkbool <https://github.com/zippy84/vtkbool>`_.
+
+        Alternatively, the intersecting parts of the mesh can be processed sequentially.
+
+        >>> cylinder_1 = pv.Cylinder()
+        >>> cylinder_2 = pv.Cylinder((0, 0.75, 0))
+
+        >>> reference_volume = pv.ImageData(
+        ...     dimensions=(1, 100, 50),
+        ...     spacing=(1, 0.0175, 0.02),
+        ...     origin=(0, -0.5 + 0.0175 / 2, -0.5 + 0.02 / 2),
+        ... )
+
+        >>> binary_mask_1 = cylinder_1.voxelize_binary_mask(
+        ...     reference_volume=reference_volume
+        ... ).points_to_cells()
+        >>> binary_mask_2 = cylinder_2.voxelize_binary_mask(
+        ...     reference_volume=reference_volume
+        ... ).points_to_cells()
+
+        >>> binary_mask_1['mask'] = binary_mask_1['mask'] | binary_mask_2['mask']
+
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask_1)
+        >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
+        >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
+        >>> plot.show(cpos='yz')
+
+        When multiple internal surfaces are nested, they are successively treated as
+        interfaces between background and foreground.
+
+        >>> mesh = pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
+        >>> binary_mask = mesh.voxelize_binary_mask(
+        ...     dimensions=(1, 50, 50)
+        ... ).points_to_cells()
+        >>> plot = pv.Plotter()
+        >>> _ = plot.add_mesh(binary_mask)
+        >>> _ = plot.add_mesh(mesh.slice(), color='red')
+        >>> plot.show(cpos='yz')
+
+        """
+        surface = wrap(self).extract_geometry()
+        if not (surface.faces.size or surface.strips.size):
+            # we have a point cloud or an empty mesh
+            raise ValueError('Input mesh must have faces for voxelization.')
+
+        def _preprocess_polydata(poly_in):
+            return poly_in.compute_normals().triangulate()
+
+        if reference_volume is not None:
+            if (
+                dimensions is not None
+                or spacing is not None
+                or rounding_func is not None
+                or cell_length_percentile is not None
+                or cell_length_sample_size is not None
+            ):
+                raise TypeError(
+                    'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
+                )
+            _validation.check_instance(reference_volume, pyvista.ImageData, name='reference volume')
+            # The image stencil filters do not support orientation, so we apply the
+            # inverse direction matrix to "remove" orientation from the polydata
+            poly_ijk = surface.transform(reference_volume.direction_matrix.T, inplace=False)
+            poly_ijk = _preprocess_polydata(poly_ijk)
+        else:
+            # Compute reference volume geometry
+            if spacing is not None and dimensions is not None:
+                raise TypeError('Spacing and dimensions cannot both be set. Set one or the other.')
+
+            # Need to preprocess so that we have a triangle mesh for computing
+            # cell length percentile
+            poly_ijk = _preprocess_polydata(surface)
+
+            if spacing is None:
+                less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
+                if (
+                    cell_length_percentile is not None or cell_length_sample_size is not None
+                ) and less_than_vtk92:
+                    raise TypeError(
+                        'Cell length percentile and sample size requires VTK 9.2 or greater.'
+                    )
+
+                if less_than_vtk92:
+                    # Compute spacing from mesh length
+                    spacing = surface.length / 100
+                else:
+                    # Estimate spacing from cell length percentile
+                    cell_length_percentile = (
+                        0.1 if cell_length_percentile is None else cell_length_percentile
+                    )
+                    cell_length_sample_size = (
+                        100_000 if cell_length_sample_size is None else cell_length_sample_size
+                    )
+                    spacing = _length_distribution_percentile(
+                        poly_ijk,
+                        cell_length_percentile,
+                        cell_length_sample_size,
+                        progress_bar=progress_bar,
+                    )
+            # Spacing is specified directly. Make sure other params are not set.
+            elif cell_length_percentile is not None or cell_length_sample_size is not None:
+                raise TypeError(
+                    'Spacing and cell length options cannot both be set. Set one or the other.'
+                )
+
+            # Get initial spacing (will be adjusted later)
+            initial_spacing = _validation.validate_array3(spacing, broadcast=True)
+
+            # Get size of poly data for computing dimensions
+            bnds = surface.bounds
+            x_size = bnds.x_max - bnds.x_min
+            y_size = bnds.y_max - bnds.y_min
+            z_size = bnds.z_max - bnds.z_min
+            sizes = np.array((x_size, y_size, z_size))
+
+            if dimensions is None:
+                rounding_func = np.round if rounding_func is None else rounding_func
+                initial_dimensions = sizes / initial_spacing
+                # Make sure we don't round dimensions to zero, make it one instead
+                initial_dimensions[initial_dimensions < 1] = 1
+                dimensions = np.array(rounding_func(initial_dimensions), dtype=int)
+            elif rounding_func is not None:
+                raise TypeError(
+                    'Rounding func cannot be set when dimensions is specified. Set one or the other.'
+                )
+
+            reference_volume = pyvista.ImageData()
+            reference_volume.dimensions = dimensions  # type: ignore[assignment]
+            # Dimensions are now fixed, now adjust spacing to match poly data bounds
+            # Since we are dealing with voxels as points, we want the bounds of the
+            # points to be 1/2 spacing width smaller than the polydata bounds
+            final_spacing = sizes / np.array(reference_volume.dimensions)
+            reference_volume.spacing = final_spacing
+            reference_volume.origin = np.array(surface.bounds[::2]) + final_spacing / 2
+
+        # Init output structure. The image stencil filters do not support
+        # orientation, so we do not set the direction matrix
+        binary_mask = pyvista.ImageData()
+        binary_mask.dimensions = reference_volume.dimensions
+        binary_mask.spacing = reference_volume.spacing
+        binary_mask.origin = reference_volume.origin
+
+        # Init output scalars. Use uint8 dtype if possible.
+        scalars_shape = (binary_mask.n_points,)
+        scalars_dtype: type[np.uint8 | float | int]
+        if all(
+            isinstance(val, int) and val < 256 and val >= 0
+            for val in (background_value, foreground_value)
+        ):
+            scalars_dtype = np.uint8
+        elif all(round(val) == val for val in (background_value, foreground_value)):
+            scalars_dtype = np.int_
+        else:
+            scalars_dtype = np.float64
+        scalars = (  # Init with background value
+            np.zeros(scalars_shape, dtype=scalars_dtype)
+            if background_value == 0
+            else np.ones(scalars_shape, dtype=scalars_dtype) * background_value
+        )
+        binary_mask['mask'] = scalars  # type: ignore[assignment]
+
+        # Make sure that we have a clean triangle-strip polydata
+        # Note: Poly was partially pre-processed earlier
+        poly_ijk = poly_ijk.strip()
+
+        # Convert polydata to stencil
+        poly_to_stencil = _vtk.vtkPolyDataToImageStencil()
+        poly_to_stencil.SetInputData(poly_ijk)
+        poly_to_stencil.SetOutputSpacing(*reference_volume.spacing)
+        poly_to_stencil.SetOutputOrigin(*reference_volume.origin)  # type: ignore[call-overload]
+        poly_to_stencil.SetOutputWholeExtent(*reference_volume.extent)
+        _update_alg(poly_to_stencil, progress_bar, 'Converting polydata')
+
+        # Convert stencil to image
+        stencil = _vtk.vtkImageStencil()
+        stencil.SetInputData(binary_mask)
+        stencil.SetStencilConnection(poly_to_stencil.GetOutputPort())
+        stencil.ReverseStencilOn()
+        stencil.SetBackgroundValue(foreground_value)
+        _update_alg(stencil, progress_bar, 'Generating binary mask')
+        output_volume = _get_output(stencil)
+
+        # Set the orientation of the output
+        output_volume.direction_matrix = reference_volume.direction_matrix
+
+        return output_volume
+
+
+def _length_distribution_percentile(poly, percentile, cell_length_sample_size, progress_bar):
+    percentile = _validation.validate_number(
+        percentile, must_be_in_range=[0.0, 1.0], name='percentile'
+    )
+    distribution = _vtk.vtkLengthDistribution()
+    distribution.SetInputData(poly)
+    distribution.SetSampleSize(cell_length_sample_size)
+    _update_alg(distribution, progress_bar, 'Computing cell length distribution')
+    return distribution.GetLengthQuantile(percentile)
+
 
 def _set_threshold_limit(alg, value, method, invert):
     """Set vtkThreshold limits and function.
@@ -8972,28 +9837,25 @@ def _set_threshold_limit(alg, value, method, invert):
             alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
             alg.SetLowerThreshold(value[0])
             alg.SetUpperThreshold(value[1])
+        # Single value
+        elif method.lower() == 'lower':
+            alg.SetLowerThreshold(value)
+            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
+        elif method.lower() == 'upper':
+            alg.SetUpperThreshold(value)
+            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
         else:
-            # Single value
-            if method.lower() == 'lower':
-                alg.SetLowerThreshold(value)
-                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
-            elif method.lower() == 'upper':
-                alg.SetUpperThreshold(value)
-                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
-            else:
-                raise ValueError('Invalid method choice. Either `lower` or `upper`')
-    else:  # pragma: no cover
-        # ThresholdByLower, ThresholdByUpper, ThresholdBetween
-        if isinstance(value, (np.ndarray, Sequence)):
-            alg.ThresholdBetween(value[0], value[1])
-        else:
-            # Single value
-            if method.lower() == 'lower':
-                alg.ThresholdByLower(value)
-            elif method.lower() == 'upper':
-                alg.ThresholdByUpper(value)
-            else:
-                raise ValueError('Invalid method choice. Either `lower` or `upper`')
+            raise ValueError('Invalid method choice. Either `lower` or `upper`')
+    # ThresholdByLower, ThresholdByUpper, ThresholdBetween
+    elif isinstance(value, (np.ndarray, Sequence)):
+        alg.ThresholdBetween(value[0], value[1])
+    # Single value
+    elif method.lower() == 'lower':
+        alg.ThresholdByLower(value)
+    elif method.lower() == 'upper':
+        alg.ThresholdByUpper(value)
+    else:
+        raise ValueError('Invalid method choice. Either `lower` or `upper`')
 
 
 def _swap_axes(vectors, values):
@@ -9018,9 +9880,8 @@ def _swap_axes(vectors, values):
         # Sort all axes by largest 'x' component
         vectors = vectors[np.argsort(np.abs(vectors)[:, 0])[::-1]]
         _swap(1, 2)
-    else:
-        if np.isclose(values[0], values[1]):
-            _swap(0, 1)
-        elif np.isclose(values[1], values[2]):
-            _swap(1, 2)
+    elif np.isclose(values[0], values[1]):
+        _swap(0, 1)
+    elif np.isclose(values[1], values[2]):
+        _swap(1, 2)
     return vectors

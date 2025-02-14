@@ -8,18 +8,19 @@ from typing import ClassVar
 import numpy as np
 
 import pyvista
+from pyvista.core.utilities.misc import _NameMixin
 from pyvista.core.utilities.misc import no_new_attr
 
 from . import _vtk
 from ._property import Property
 from .prop3d import Prop3D
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .mapper import _BaseMapper
 
 
 @no_new_attr
-class Actor(Prop3D, _vtk.vtkActor):
+class Actor(Prop3D, _NameMixin, _vtk.vtkActor):
     """Wrap vtkActor.
 
     This class represents the geometry & properties in a rendered
@@ -95,19 +96,6 @@ class Actor(Prop3D, _vtk.vtkActor):
         else:
             self.prop = prop
         self._name = name
-
-    @property
-    def name(self) -> str:  # numpydoc ignore=RT01
-        """Get or set the unique name identifier used by PyVista."""
-        if self._name is None:
-            self._name = f'{type(self).__name__}({self.memory_address})'
-        return self._name
-
-    @name.setter
-    def name(self, value: str):
-        if not value:
-            raise ValueError('Name must be truthy.')
-        self._name = value
 
     @property
     def mapper(self) -> _BaseMapper:  # numpydoc ignore=RT01
@@ -326,10 +314,7 @@ class Actor(Prop3D, _vtk.vtkActor):
 
     def __repr__(self):
         """Representation of the actor."""
-        if self.user_matrix is None or np.array_equal(self.user_matrix, np.eye(4)):
-            mat_info = 'Identity'
-        else:
-            mat_info = 'Set'
+        mat_info = 'Identity' if np.array_equal(self.user_matrix, np.eye(4)) else 'Set'
         bnd = self.bounds
         attr = [
             f'{type(self).__name__} ({hex(id(self))})',

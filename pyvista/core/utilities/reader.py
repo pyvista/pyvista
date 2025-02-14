@@ -25,7 +25,7 @@ from .fileio import _process_filename
 from .helpers import wrap
 from .misc import abstract_class
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 HDF_HELP = 'https://docs.vtk.org/en/latest/design_documents/VTKFileFormats.html#vtkhdf-file-format'
@@ -236,7 +236,7 @@ class BaseVTKReader(ABC):
     """Simulate a VTK reader."""
 
     def __init__(self: BaseVTKReader) -> None:
-        self._data_object = None
+        self._data_object: pyvista.DataObject | None = None
         self._observers: list[int | Callable[[Any], Any]] = []
 
     def SetFileName(self, filename) -> None:
@@ -1998,7 +1998,7 @@ class _PVDReader(BaseVTKReader):
 
     def Update(self) -> None:
         """Read data and store it."""
-        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])  # type: ignore[assignment]
+        self._data_object = pyvista.MultiBlock([reader.read() for reader in self._active_readers])
 
     def _SetActiveTime(self, time_value) -> None:
         """Set active time."""
@@ -2218,7 +2218,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         """
         if time_point < 0 or time_point >= self.number_time_points:
             raise ValueError(
-                f'Time point ({time_point}) out of range [0, {self.number_time_points-1}]'
+                f'Time point ({time_point}) out of range [0, {self.number_time_points - 1}]'
             )
 
         self.set_active_time_value(self.time_values[time_point])
@@ -2490,7 +2490,16 @@ class HDRReader(BaseReader):
     'parched_canal_4k.hdr'
     >>> reader = pv.get_reader(filename)
     >>> mesh = reader.read()
-    >>> mesh.plot()
+    >>> mesh
+    ImageData (...)
+      N Cells:      8382465
+      N Points:     8388608
+      X Bounds:     0.000e+00, 4.095e+03
+      Y Bounds:     0.000e+00, 2.047e+03
+      Z Bounds:     0.000e+00, 0.000e+00
+      Dimensions:   4096, 2048, 1
+      Spacing:      1.000e+00, 1.000e+00, 1.000e+00
+      N Arrays:     1
 
     """
 
@@ -2609,18 +2618,20 @@ class _GIFReader(BaseVTKReader):
         from PIL import ImageSequence
 
         img = Image.open(self._filename)
-        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))  # type: ignore[assignment]
+        self._data_object = pyvista.ImageData(dimensions=(img.size[0], img.size[1], 1))
 
         # load each frame to the grid (RGB since gifs do not support transparency
         self._n_frames = img.n_frames  # type: ignore[attr-defined]
         for i, frame in enumerate(ImageSequence.Iterator(img)):
             self._current_frame = i
             data = np.array(frame.convert('RGB').getdata(), dtype=np.uint8)
-            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[attr-defined]
+            self._data_object.point_data.set_array(data, f'frame{i}')  # type: ignore[arg-type]
             self.UpdateObservers(6)
 
-        if 'frame0' in self._data_object.point_data:  # type: ignore[attr-defined]
-            self._data_object.point_data.active_scalars_name = 'frame0'  # type: ignore[attr-defined]
+        if 'frame0' in self._data_object.point_data:
+            self._data_object.point_data.active_scalars_name = 'frame0'
+
+        img.close()
 
 
 class GIFReader(BaseReader):
