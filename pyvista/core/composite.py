@@ -932,7 +932,7 @@ class MultiBlock(
 
         >>> nested.get_block(0)
         MultiBlock ...
-        >>> blocks.get_block((0, 1))
+        >>> nested.get_block((0, 1))
         ImageData ...
 
         """
