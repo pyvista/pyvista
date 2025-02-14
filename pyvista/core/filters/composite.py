@@ -153,7 +153,7 @@ class CompositeFilters:
         # Create a copy and replace all the blocks
         output = pyvista.MultiBlock()
         output.shallow_copy(self, recursive=True)
-        for ids, name, block in get_iterator(output):  # type: ignore[misc, attr-defined]
+        for ids, name, block in get_iterator(output):
             output.replace(ids, apply_filter(ids, name, block))
         return output
 
