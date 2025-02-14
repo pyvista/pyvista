@@ -268,15 +268,6 @@ def test_replace_nested(nested_fixture, replace_indices):
     assert nested.flatten().keys() == expected_flat_keys
 
 
-def test_get_block(nested_fixture):
-    index = (1, 0)
-    name = 'grid'
-    block_by_index = nested_fixture[index[0]].get_block(index[1])
-    block_by_nested_index = nested_fixture.get_block(index)
-    block_by_name = nested_fixture[index[0]].get_block(name)
-    assert block_by_name is block_by_index is block_by_nested_index
-
-
 @pytest.mark.parametrize(
     'invalid_indices',
     [
@@ -289,6 +280,15 @@ def test_replace_nested_invalid_indices(nested_fixture, invalid_indices):
     match = re.escape(invalid_indices[1])
     with pytest.raises(IndexError, match=match):
         nested.replace(invalid_indices[0], None)
+
+
+def test_get_block(nested_fixture):
+    index = (1, 0)
+    name = 'grid'
+    block_by_index = nested_fixture[index[0]].get_block(index[1])
+    block_by_nested_index = nested_fixture.get_block(index)
+    block_by_name = nested_fixture[index[0]].get_block(name)
+    assert block_by_name is block_by_index is block_by_nested_index
 
 
 def test_reverse(sphere):
