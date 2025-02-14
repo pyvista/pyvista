@@ -16,10 +16,8 @@ from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
 
 if TYPE_CHECKING:
-    from typing import Any
     from typing import Callable
 
-    from pyvista import DataSet
     from pyvista import MultiBlock
     from pyvista.core._typing_core import TransformLike
     from pyvista.core.composite import _TypeMultiBlockLeaf
