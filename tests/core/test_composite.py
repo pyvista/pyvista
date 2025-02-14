@@ -1158,28 +1158,37 @@ def test_generic_filter(multiblock_all_with_nested_and_none, function):
     multiblock_all_with_nested_and_none.append(empty_mesh)
 
     output = multiblock_all_with_nested_and_none.generic_filter(function)
-    flat_outputs = output.flatten()
+    flat_output = output.flatten()
     # Make sure no `None` blocks were removed
-    assert None in flat_outputs
+    assert None in flat_output
     # Check output
-    for block in flat_outputs:
+    for block in flat_output:
         assert isinstance(block, pv.UnstructuredGrid) or block is None
 
 
 @pytest.mark.parametrize('inplace', [True, False])
 def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
     # Include empty mesh
+    input_ = multiblock_all_with_nested_and_none
     empty_mesh = pv.PolyData()
     multiblock_all_with_nested_and_none.append(empty_mesh)
-    flat_inputs = multiblock_all_with_nested_and_none.flatten()
-    output = multiblock_all_with_nested_and_none.generic_filter(
-        'extract_largest', inplace, progress_bar=True
-    )
-    flat_outputs = output.flatten()
+    flat_inputs = multiblock_all_with_nested_and_none.flatten(copy=False)
 
-    assert flat_inputs.n_blocks == flat_outputs.n_blocks
-    for block_in, block_out in zip(flat_inputs, flat_outputs):
-        assert block_in is not block_out or block_out is None
+    output = multiblock_all_with_nested_and_none.generic_filter(
+        'extract_largest',
+        inplace=inplace,
+    )
+    flat_output = output.flatten(copy=False)
+
+    assert flat_inputs.n_blocks == flat_output.n_blocks
+    for block_in, block_out in zip(flat_inputs, flat_output):
+        assert ((block_in is block_out) == inplace) or block_out is None
+
+    # Test root MultiBlock
+    assert (input_ is output) == inplace
+    # Test nested MultiBlock container
+    assert isinstance(input_[6], pv.MultiBlock)
+    assert (input_[6] is output[6]) == inplace
 
 
 def test_generic_filter_raises(multiblock_all_with_nested_and_none):
