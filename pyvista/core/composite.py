@@ -183,7 +183,7 @@ class MultiBlock(
         *,
         skip_none: bool = True,
         skip_empty: bool = True,
-        nested_ids: bool = False,
+        nested_ids: bool | None = None,
         prepend_names: bool = False,
         separator: str = '::',
     ) -> (
@@ -226,7 +226,7 @@ class MultiBlock(
         skip_empty : bool, default: True
             Do not include empty meshes in the iterator.
 
-        nested_ids : bool, default: False
+        nested_ids : bool, default: True
             Prepend parent block indices to the child block indices. If ``True``, a
             tuple of indices is returned for each block. If ``False``, a single integer
             index is returned for each block. This option only applies when ``contents``
@@ -315,15 +315,11 @@ class MultiBlock(
           Z Bounds:   -6.351e-01, 3.649e-01
           N Arrays:   6)
 
-        Compute the length of the longest ``MultiBlock`` using ``'ids'``. Here we also
-        allow empty meshes and none blocks so that all blocks are considered.
+        Iterate through ids. The ids are returned as a tuple by default.
 
-        >>> iterator = multi.recursive_iterator(
-        ...     'ids', skip_empty=False, skip_none=False
-        ... )
-        >>> max_n_blocks = max(iterator) + 1
-        >>> max_n_blocks
-        46
+        >>> iterator = multi.recursive_iterator('ids')
+        >>> next(iterator)
+        (0, 0)
 
         Use the iterator to replace all blocks with new blocks. Similar to a previous
         example, we use a filter but this time the operation is not performed in place.
@@ -339,6 +335,7 @@ class MultiBlock(
         _validation.check_contains(
             ['nested_first', 'nested_last', None], must_contain=order, name='order'
         )
+        nested_ids = contents in ['ids', 'all'] if nested_ids is None else nested_ids
         if nested_ids and contents not in ['ids', 'all']:
             raise ValueError('Nested ids option only applies when ids are returned.')
         if prepend_names and contents not in ['names', 'items', 'all']:
@@ -1000,7 +997,7 @@ class MultiBlock(
 
         >>> nested.get_block(0)
         MultiBlock ...
-        >>> blocks.get_block((0, 1))
+        >>> nested.get_block((0, 1))
         ImageData ...
 
         """
