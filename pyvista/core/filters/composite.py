@@ -128,7 +128,7 @@ class CompositeFilters:
 
         The generic filter will fail if the filter can only be applied to some blocks
         but not others. For example, it is not possible to use the
-        :meth:`~pyvista.ImageDataFilter.resample` filter generically since the
+        :meth:`~pyvista.ImageDataFilters.resample` filter generically since the
         ``MultiBlock`` above is heterogeneous and contains some blocks which are not
         :class:`~pyvista.ImageData`.
 
