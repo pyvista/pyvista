@@ -10,7 +10,7 @@ import pytest
 from pyvista.typing.mypy_plugin import promote_type
 
 TEST_DIR = str(Path(__file__).parent)
-ROOT_DIR = str(Path(__file__).resolve().parents[2])
+ROOT_DIR = str(Path(TEST_DIR).parent.parent.parent)
 assert 'tests' in os.listdir(ROOT_DIR)
 MYPY_PLUGIN_MODULE = str(Path(ROOT_DIR) / 'pyvista' / 'typing' / 'mypy_plugin.py')
 MYPY_CONFIG_FILE_NO_PLUGIN = str(Path(TEST_DIR) / 'mypy_no_plugin.ini')
@@ -96,7 +96,6 @@ def _run_mypy_code(code, use_plugin, tmp_path):
 
     cwd = Path.cwd()
     try:
-        os.chdir(ROOT_DIR)
         # Use '--follow-imports=skip' to only analyze the files passed to mypy
         # otherwise it will analyze the entire pyvista library
         args = [sys.executable, '-m', 'mypy', '--show-traceback', '--follow-imports=skip']
