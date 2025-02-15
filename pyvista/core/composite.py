@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from collections.abc import MutableSequence
+from collections.abc import Sequence
 import itertools
 import pathlib
 from typing import TYPE_CHECKING
@@ -37,7 +38,6 @@ from .utilities.helpers import wrap
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from collections.abc import Sequence
     from typing import Literal
 
     from ._typing_core import NumpyArray
@@ -854,17 +854,17 @@ class MultiBlock(
 
     def get(
         self: MultiBlock,
-        index: str,
+        index: int | str,
         default: _TypeMultiBlockLeaf = None,
     ) -> _TypeMultiBlockLeaf:
-        """Get a block by its name.
+        """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
         Returns ``default`` if name isn't in the dataset.
 
         Parameters
         ----------
-        index : str
+        index : int | str
             Index or name of the dataset within the multiblock.
 
         default : pyvista.DataSet or pyvista.MultiBlock, optional
@@ -874,6 +874,11 @@ class MultiBlock(
         -------
         pyvista.DataSet or pyvista.MultiBlock or None
             Dataset from the given index if it exists.
+
+        See Also
+        --------
+        get_block
+            Get a block and raise an ``IndexError`` if index is not found.
 
         Examples
         --------
@@ -891,13 +896,62 @@ class MultiBlock(
         except KeyError:
             return default
 
-    def set_block_name(self: MultiBlock, index: int, name: str | None) -> None:
+    def get_block(
+        self: MultiBlock,
+        index: int | Sequence[int] | str,
+    ) -> _TypeMultiBlockLeaf:
+        """Get a block by its index or name.
+
+        If the name is non-unique then returns the first occurrence. This
+        method is similar to using ``[]`` for indexing except this method also
+        supports indexing nested blocks.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        index : int | Sequence[int] | str
+            Index or name of the dataset within the multiblock. Specify a sequence of
+            indices to replace a nested block.
+
+        Returns
+        -------
+        pyvista.DataSet or pyvista.MultiBlock or None
+            Dataset from the given index if it exists.
+
+        See Also
+        --------
+        get
+            Get a block and return a default value instead of raising an ``IndexError``.
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> blocks = pv.MultiBlock([pv.PolyData(), pv.ImageData()])
+        >>> nested = pv.MultiBlock([blocks])
+
+        >>> nested.get_block(0)
+        MultiBlock ...
+        >>> nested.get_block((0, 1))
+        ImageData ...
+
+        """
+        if isinstance(index, Sequence) and not isinstance(index, str):
+            parent, final_index = self._navigate_to_parent(index)
+            return parent[final_index]
+        return self[index]
+
+    def set_block_name(self: MultiBlock, index: int | str, name: str | None) -> None:
         """Set a block's string name at the specified index.
 
         Parameters
         ----------
-        index : int
+        index : int | str
             Index or the dataset within the multiblock.
+
+           .. versionadded:: 0.45
+
+                Allow indexing by name.
 
         name : str, optional
             Name to assign to the block at ``index``. If ``None``, no name is
@@ -919,7 +973,9 @@ class MultiBlock(
         """
         if name is None:
             return
-        index = range(self.n_blocks)[index]
+        index = (
+            self.get_index_by_name(index) if isinstance(index, str) else range(self.n_blocks)[index]
+        )
         self.GetMetaData(index).Set(_vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
@@ -979,19 +1035,28 @@ class MultiBlock(
     def _ipython_key_completions_(self: MultiBlock) -> list[str | None]:
         return self.keys()
 
-    def replace(self: MultiBlock, index: int, dataset: _TypeMultiBlockLeaf) -> None:
+    def replace(
+        self: MultiBlock, index: int | Sequence[int] | str, dataset: _TypeMultiBlockLeaf
+    ) -> None:
         """Replace dataset at index while preserving key name.
 
         Parameters
         ----------
-        index : int
-            Index of the block to replace.
+        index : int | Sequence[int] | str
+            Index or name of the block to replace. Specify a sequence of indices to replace
+            a nested block.
+
+            .. versionadded:: 0.45
+
+                Allow indexing nested blocks.
+
         dataset : pyvista.DataSet or pyvista.MultiBlock
             Dataset for replacing the one at index.
 
         Examples
         --------
         >>> import pyvista as pv
+        >>> from pyvista import examples
         >>> import numpy as np
         >>> data = {
         ...     'cube': pv.Cube(),
@@ -1004,10 +1069,46 @@ class MultiBlock(
         >>> np.allclose(blocks[1].center, [10.0, 10.0, 10.0])
         True
 
+        Load a dataset with nested blocks.
+
+        >>> multi = examples.download_biplane()
+
+        Get one of the blocks and extract its surface.
+
+        >>> block = multi[0][42]
+        >>> surface = block.extract_geometry()
+
+        Replace the block.
+
+        >>> multi.replace((0, 42), surface)
+
+        This is similar to replacing the block directly with indexing but the block
+        name is also preserved.
+
+        >>> multi[0][42] = surface
+
         """
-        name = self.get_block_name(index)
+        if isinstance(index, Sequence) and not isinstance(index, str):
+            parent, final_index = self._navigate_to_parent(index)
+            parent.replace(final_index, dataset)
+            return
+        name = index if isinstance(index, str) else self.get_block_name(index)
         self[index] = dataset
         self.set_block_name(index, name)
+        return
+
+    def _navigate_to_parent(self, indices: Sequence[int]) -> tuple[MultiBlock, int]:
+        """Navigate to the parent MultiBlock and return (parent, final_index)."""
+        _validation.check_length(indices, min_length=1, name='index')
+        # Navigate through the indices except the last one
+        target: _TypeMultiBlockLeaf = self
+        for ind in indices[:-1]:
+            if target is None or isinstance(target, pyvista.DataSet):
+                raise IndexError(f'Invalid indices {indices}.')
+            target = target[ind]
+        if not isinstance(target, MultiBlock):
+            raise IndexError(f'Invalid indices {indices}.')
+        return target, indices[-1]
 
     @overload
     def __setitem__(
