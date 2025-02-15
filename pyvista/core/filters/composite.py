@@ -132,20 +132,18 @@ class CompositeFilters:
         ``MultiBlock`` above is heterogeneous and contains some blocks which are not
         :class:`~pyvista.ImageData`.
 
-        >>> multi.generic_filter('resample', 0.5)
-        Traceback (most recent call last):
-        ...
-        RuntimeError: ...
+        >>> multi.generic_filter('resample', 0.5)  # doctest:+SKIP
+        RuntimeError: The filter 'resample' could not be applied to the block at index 1 with name 'Block-01' and type PolyData.
 
         Use a custom function instead to apply the generic filter conditionally. Here we
         filter the image blocks but simply pass-through a copy of any other blocks.
 
-        >>> def conditional_resample(dataset):
+        >>> def conditional_resample(dataset, *args, **kwargs):
         ...     if isinstance(dataset, pv.ImageData):
-        ...         return dataset.resample(0.5)
+        ...         return dataset.resample(*args, **kwargs)
         ...     return dataset.copy()
 
-        >>> filtered = multi.generic_filter(conditional_resample)
+        >>> filtered = multi.generic_filter(conditional_resample, 0.5)
 
         """
 
