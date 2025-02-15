@@ -118,13 +118,34 @@ class CompositeFilters:
         ...     z_scale = 1 / (bounds.z_max - bounds.z_min)
         ...     return dataset.scale((x_scale, y_scale, z_scale))
 
-        >>> multi = multi.generic_filter(normalize_bounds)
-        >>> multi
+        >>> filtered = multi.generic_filter(normalize_bounds)
+        >>> filtered
         MultiBlock (...)
           N Blocks:   3
           X Bounds:   -5.000e-01, 5.000e-01
           Y Bounds:   -5.000e-01, 5.000e-01
           Z Bounds:   -5.000e-01, 5.000e-01
+
+        The generic filter will fail if the filter can only be applied to some blocks
+        but not others. For example, it is not possible to use the
+        :meth:`~pyvista.ImageDataFilter.resample` filter generically since the
+        ``MultiBlock`` above is heterogeneous and contains some blocks which are not
+        :class:`~pyvista.ImageData`.
+
+        >>> multi.generic_filter('resample', 0.5)
+        Traceback (most recent call last):
+        ...
+        RuntimeError: ...
+
+        Use a custom function instead to apply the generic filter conditionally. Here we
+        filter the image blocks but simply pass-through a copy of any other blocks.
+
+        >>> def conditional_resample(dataset):
+        ...     if isinstance(dataset, pv.ImageData):
+        ...         return dataset.resample(0.5)
+        ...     return dataset.copy()
+
+        >>> filtered = multi.generic_filter(conditional_resample)
 
         """
 
