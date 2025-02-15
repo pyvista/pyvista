@@ -95,9 +95,6 @@ def _run_mypy_code(code, use_plugin, tmp_path):
         file.write(code)
 
     cwd = Path.cwd()
-    pypath = os.environ['PYTHONPATH']
-    # Set PYTHONPATH to the root dir to ensure mypy finds the plugin
-    os.environ['PYTHONPATH'] = ROOT_DIR
     try:
         os.chdir(ROOT_DIR)
         # Use '--follow-imports=skip' to only analyze the files passed to mypy
@@ -113,4 +110,3 @@ def _run_mypy_code(code, use_plugin, tmp_path):
         return subprocess.run(args, capture_output=True)
     finally:
         os.chdir(cwd)
-        os.environ['PYTHONPATH'] = pypath
