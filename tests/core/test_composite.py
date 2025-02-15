@@ -1055,19 +1055,11 @@ def test_recursive_iterator_raises():
         multi.recursive_iterator('blocks', prepend_names=True)
 
 
-def test_recursive_iterator_order():
-    # Generated nested MultiBlock dataset with three DataSet nodes
-    image = pv.ImageData()
-    poly = pv.PolyData()
-    grid = pv.UnstructuredGrid()
-    nested = pv.MultiBlock(dict(image=image, poly=poly))
-    multi = pv.MultiBlock(dict(grid=grid))
-    nested.insert(1, multi)
-    assert isinstance(nested[0], pv.ImageData)
-    assert isinstance(nested[1], pv.MultiBlock)
-    assert isinstance(nested[1][0], pv.UnstructuredGrid)
-    assert isinstance(nested[2], pv.PolyData)
-
+def test_recursive_iterator_order(nested_fixture):
+    nested = nested_fixture
+    image = nested_fixture['image']
+    poly = nested_fixture['poly']
+    grid = nested_fixture['multi']['grid']
     common_kwargs = dict(skip_empty=False, nested_ids=True, contents='all')
 
     iterator = nested.recursive_iterator(order=None, **common_kwargs)
