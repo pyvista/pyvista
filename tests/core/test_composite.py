@@ -1055,72 +1055,40 @@ def test_recursive_iterator_raises():
         multi.recursive_iterator('blocks', prepend_names=True)
 
 
-def test_recursive_iterator_order(nested_fixture):
+@pytest.mark.parametrize(
+    ('order', 'expected_ids', 'expected_names'),
+    [
+        ('nested_first', [(1, 0), (0,), (2,)], ['grid', 'image', 'poly']),
+        ('nested_last', [(0,), (2,), (1, 0)], ['image', 'poly', 'grid']),
+        (None, [(0,), (1, 0), (2,)], ['image', 'grid', 'poly']),
+    ],
+)
+def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_names):
     nested = nested_fixture
     image = nested_fixture['image']
     poly = nested_fixture['poly']
     grid = nested_fixture['multi']['grid']
     common_kwargs = dict(skip_empty=False, nested_ids=True, contents='all')
 
-    iterator = nested.recursive_iterator(order=None, **common_kwargs)
+    iterator = nested.recursive_iterator(order=order, **common_kwargs)
     ids0, names0, block0 = next(iterator)
     ids1, names1, block1 = next(iterator)
     ids2, names2, block2 = next(iterator)
 
-    # Ids should refer to original datasets in input
-    assert ids0 == (0,)
-    assert ids1 == (1, 0)
-    assert ids2 == (2,)
-    assert nested[ids0[0]] is image
-    assert nested[ids1[0]][ids1[1]] is grid
-    assert nested[ids2[0]] is poly
-    # Expect nested dataset in center
-    assert names0 == 'image'
-    assert names1 == 'grid'
-    assert names2 == 'poly'
-    assert isinstance(block0, pv.ImageData)
-    assert isinstance(block1, pv.UnstructuredGrid)
-    assert isinstance(block2, pv.PolyData)
+    # Test ids
+    assert ids0 == expected_ids[0]
+    assert ids1 == expected_ids[1]
+    assert ids2 == expected_ids[2]
 
-    iterator = nested.recursive_iterator(order='nested_last', **common_kwargs)
-    ids0, names0, block0 = next(iterator)
-    ids1, names1, block1 = next(iterator)
-    ids2, names2, block2 = next(iterator)
+    # Test names
+    assert names0 == expected_names[0]
+    assert names1 == expected_names[1]
+    assert names2 == expected_names[2]
 
-    # Ids should refer to original datasets in input
-    assert ids0 == (0,)
-    assert ids1 == (2,)
-    assert ids2 == (1, 0)
-    assert nested[ids0[0]] is image
-    assert nested[ids1[0]] is poly
-    assert nested[ids2[0]][ids2[1]] is grid
-    # Expect nested dataset last
-    assert names0 == 'image'
-    assert names1 == 'poly'
-    assert names2 == 'grid'
-    assert isinstance(block0, pv.ImageData)
-    assert isinstance(block1, pv.PolyData)
-    assert isinstance(block2, pv.UnstructuredGrid)
-
-    iterator = nested.recursive_iterator(order='nested_first', **common_kwargs)
-    ids0, names0, block0 = next(iterator)
-    ids1, names1, block1 = next(iterator)
-    ids2, names2, block2 = next(iterator)
-
-    # Ids should refer to original datasets in input
-    assert ids0 == (1, 0)
-    assert ids1 == (0,)
-    assert ids2 == (2,)
-    assert nested[ids0[0]][ids0[1]] is grid
-    assert nested[ids1[0]] is image
-    assert nested[ids2[0]] is poly
-    # Expect nested dataset first
-    assert names0 == 'grid'
-    assert names1 == 'image'
-    assert names2 == 'poly'
-    assert isinstance(block0, pv.UnstructuredGrid)
-    assert isinstance(block1, pv.ImageData)
-    assert isinstance(block2, pv.PolyData)
+    # Test blocks
+    assert nested.get_block(ids0) is locals()[names0]
+    assert nested.get_block(ids1) is locals()[names1]
+    assert nested.get_block(ids2) is locals()[names2]
 
 
 def test_flatten(multiblock_all_with_nested_and_none):
