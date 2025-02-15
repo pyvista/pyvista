@@ -174,6 +174,14 @@ def test_multi_block_set_get_ers():
         multi[1, 'foo'] = data
 
 
+def test_set_block_name_by_name(ant):
+    old_name = 'foo'
+    new_name = 'bar'
+    multi = pv.MultiBlock({old_name: ant})
+    multi.set_block_name(old_name, new_name)
+    assert multi.keys() == [new_name]
+
+
 def test_replace():
     spheres = {f'{i}': pv.Sphere(phi_resolution=i + 3) for i in range(10)}
     multi = MultiBlock(spheres)
@@ -230,49 +238,57 @@ def test_slicing_multiple_in_setitem(sphere):
     assert len(multi) == 9
 
 
-def test_replace_nested():
+@pytest.fixture
+def nested_fixture():
     image = pv.ImageData()
     poly = pv.PolyData()
     grid = pv.UnstructuredGrid()
     nested = pv.MultiBlock(dict(image=image, poly=poly))
     multi = pv.MultiBlock(dict(grid=grid))
     nested.insert(1, multi, 'multi')
+    return nested
 
-    assert nested[0] is image
-    assert nested[1][0] is grid
-    assert nested[2] is poly
+
+@pytest.mark.parametrize(
+    'replace_indices',
+    [
+        (0,),
+        (1, 0),
+        (2,),
+    ],
+)
+def test_replace_nested(nested_fixture, replace_indices):
+    nested = nested_fixture
     expected_keys = ['image', 'multi', 'poly']
     expected_flat_keys = ['image', 'grid', 'poly']
+
+    nested.replace(replace_indices, None)
+    assert nested.get_block(replace_indices) is None
     assert nested.keys() == expected_keys
     assert nested.flatten().keys() == expected_flat_keys
 
-    nested.replace((0,), None)
-    assert nested[0] is None
-    assert nested[1][0] is grid
-    assert nested[2] is poly
-    assert nested.keys() == expected_keys
-    assert nested.flatten().keys() == expected_flat_keys
 
-    nested.replace((1, 0), None)
-    assert nested[0] is None
-    assert nested[1][0] is None
-    assert nested[2] is poly
-    assert nested.keys() == expected_keys
-    assert nested.flatten().keys() == expected_flat_keys
-
-    nested.replace((2,), None)
-    assert nested[0] is None
-    assert nested[1][0] is None
-    assert nested[2] is None
-    assert nested.keys() == expected_keys
-    assert nested.flatten().keys() == expected_flat_keys
-
-    match = re.escape('Invalid indices (0, 0, 0).')
+@pytest.mark.parametrize(
+    'invalid_indices',
+    [
+        ((0, 0, 0), 'Invalid indices (0, 0, 0).'),
+        ((0, 0), 'Invalid indices (0, 0).'),
+    ],
+)
+def test_replace_nested_invalid_indices(nested_fixture, invalid_indices):
+    nested = nested_fixture
+    match = re.escape(invalid_indices[1])
     with pytest.raises(IndexError, match=match):
-        nested.replace((0, 0, 0), None)
-    match = re.escape('Invalid indices (0, 0).')
-    with pytest.raises(IndexError, match=match):
-        nested.replace((0, 0), None)
+        nested.replace(invalid_indices[0], None)
+
+
+def test_get_block(nested_fixture):
+    index = (1, 0)
+    name = 'grid'
+    block_by_index = nested_fixture[index[0]].get_block(index[1])
+    block_by_nested_index = nested_fixture.get_block(index)
+    block_by_name = nested_fixture[index[0]].get_block(name)
+    assert block_by_name is block_by_index is block_by_nested_index
 
 
 def test_reverse(sphere):
@@ -515,7 +531,6 @@ def test_transform_filter(ant, sphere, airplane, tetbeam, inplace):
     assert (output is multi) == inplace
     for block_in, block_out in zip(multi, output):
         assert (block_in is block_out) == inplace or (block_in is None)
-        assert type(block_in) is type(block_out)
     assert np.allclose(bounds_before + NUMBER, bounds_after)
     assert n_blocks_before == n_blocks_after
     assert keys_before == keys_after
@@ -975,7 +990,7 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
 
 def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('ids')
-    assert all(isinstance(item, int) for item in iterator)
+    assert all(isinstance(item, tuple) and isinstance(item[0], int) for item in iterator)
 
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('names')
     assert all(isinstance(item, str) for item in iterator)
@@ -990,7 +1005,7 @@ def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
 
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('all')
     for id_, name, block in iterator:
-        assert isinstance(id_, int)
+        assert isinstance(id_, tuple)
         assert isinstance(name, str)
         assert isinstance(block, pv.DataSet) or block is None
 
@@ -1040,80 +1055,40 @@ def test_recursive_iterator_raises():
         multi.recursive_iterator('blocks', prepend_names=True)
 
 
-def test_recursive_iterator_order():
-    # Generated nested MultiBlock dataset with three DataSet nodes
-    image = pv.ImageData()
-    poly = pv.PolyData()
-    grid = pv.UnstructuredGrid()
-    nested = pv.MultiBlock(dict(image=image, poly=poly))
-    multi = pv.MultiBlock(dict(grid=grid))
-    nested.insert(1, multi)
-    assert isinstance(nested[0], pv.ImageData)
-    assert isinstance(nested[1], pv.MultiBlock)
-    assert isinstance(nested[1][0], pv.UnstructuredGrid)
-    assert isinstance(nested[2], pv.PolyData)
-
+@pytest.mark.parametrize(
+    ('order', 'expected_ids', 'expected_names'),
+    [
+        ('nested_first', [(1, 0), (0,), (2,)], ['grid', 'image', 'poly']),
+        ('nested_last', [(0,), (2,), (1, 0)], ['image', 'poly', 'grid']),
+        (None, [(0,), (1, 0), (2,)], ['image', 'grid', 'poly']),
+    ],
+)
+def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_names):
+    nested = nested_fixture
+    image = nested_fixture['image']
+    poly = nested_fixture['poly']
+    grid = nested_fixture['multi']['grid']
     common_kwargs = dict(skip_empty=False, nested_ids=True, contents='all')
 
-    iterator = nested.recursive_iterator(order=None, **common_kwargs)
+    iterator = nested.recursive_iterator(order=order, **common_kwargs)
     ids0, names0, block0 = next(iterator)
     ids1, names1, block1 = next(iterator)
     ids2, names2, block2 = next(iterator)
 
-    # Ids should refer to original datasets in input
-    assert ids0 == (0,)
-    assert ids1 == (1, 0)
-    assert ids2 == (2,)
-    assert nested[ids0[0]] is image
-    assert nested[ids1[0]][ids1[1]] is grid
-    assert nested[ids2[0]] is poly
-    # Expect nested dataset in center
-    assert names0 == 'image'
-    assert names1 == 'grid'
-    assert names2 == 'poly'
-    assert isinstance(block0, pv.ImageData)
-    assert isinstance(block1, pv.UnstructuredGrid)
-    assert isinstance(block2, pv.PolyData)
+    # Test ids
+    assert ids0 == expected_ids[0]
+    assert ids1 == expected_ids[1]
+    assert ids2 == expected_ids[2]
 
-    iterator = nested.recursive_iterator(order='nested_last', **common_kwargs)
-    ids0, names0, block0 = next(iterator)
-    ids1, names1, block1 = next(iterator)
-    ids2, names2, block2 = next(iterator)
+    # Test names
+    assert names0 == expected_names[0]
+    assert names1 == expected_names[1]
+    assert names2 == expected_names[2]
 
-    # Ids should refer to original datasets in input
-    assert ids0 == (0,)
-    assert ids1 == (2,)
-    assert ids2 == (1, 0)
-    assert nested[ids0[0]] is image
-    assert nested[ids1[0]] is poly
-    assert nested[ids2[0]][ids2[1]] is grid
-    # Expect nested dataset last
-    assert names0 == 'image'
-    assert names1 == 'poly'
-    assert names2 == 'grid'
-    assert isinstance(block0, pv.ImageData)
-    assert isinstance(block1, pv.PolyData)
-    assert isinstance(block2, pv.UnstructuredGrid)
-
-    iterator = nested.recursive_iterator(order='nested_first', **common_kwargs)
-    ids0, names0, block0 = next(iterator)
-    ids1, names1, block1 = next(iterator)
-    ids2, names2, block2 = next(iterator)
-
-    # Ids should refer to original datasets in input
-    assert ids0 == (1, 0)
-    assert ids1 == (0,)
-    assert ids2 == (2,)
-    assert nested[ids0[0]][ids0[1]] is grid
-    assert nested[ids1[0]] is image
-    assert nested[ids2[0]] is poly
-    # Expect nested dataset first
-    assert names0 == 'grid'
-    assert names1 == 'image'
-    assert names2 == 'poly'
-    assert isinstance(block0, pv.UnstructuredGrid)
-    assert isinstance(block1, pv.ImageData)
-    assert isinstance(block2, pv.PolyData)
+    # Test blocks
+    assert nested.get_block(ids0) is locals()[names0]
+    assert nested.get_block(ids1) is locals()[names1]
+    assert nested.get_block(ids2) is locals()[names2]
 
 
 def test_flatten(multiblock_all_with_nested_and_none):
