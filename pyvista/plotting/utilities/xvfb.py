@@ -54,7 +54,8 @@ def start_xvfb(wait=3, window_size=None):
     from pyvista import global_theme
 
     if os.name != 'posix':
-        raise OSError('`start_xvfb` is only supported on Linux')
+        msg = '`start_xvfb` is only supported on Linux'
+        raise OSError(msg)
 
     if os.system('which Xvfb > /dev/null'):
         raise OSError(XVFB_INSTALL_NOTES)

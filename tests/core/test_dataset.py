@@ -1443,11 +1443,13 @@ def test_active_t_coords_deprecated(mesh):
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         t_coords = mesh.active_t_coords
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
     with pytest.warns(PyVistaDeprecationWarning, match='texture_coordinates'):
         mesh.active_t_coords = t_coords
         if pv._version.version_info[:2] > (0, 46):
-            raise RuntimeError('Remove this deprecated property')
+            msg = 'Remove this deprecated property'
+            raise RuntimeError(msg)
 
 
 def test_active_array_info_deprecated(mesh):
@@ -1455,4 +1457,5 @@ def test_active_array_info_deprecated(mesh):
     with pytest.warns(PyVistaDeprecationWarning, match=match):
         pv.core.dataset.ActiveArrayInfo(association=pv.FieldAssociation.POINT, name='name')
         if pv._version.version_info[:2] > (0, 48):
-            raise RuntimeError('Remove this deprecated class')
+            msg = 'Remove this deprecated class'
+            raise RuntimeError(msg)
