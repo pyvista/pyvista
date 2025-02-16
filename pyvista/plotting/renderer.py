@@ -485,8 +485,36 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
     @property
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
-        """Return the bounds of all actors present in the rendering window."""
+        """Return the bounds of all VISIBLE actors present in the rendering window.
+
+        Actors with ``visibility`` disabled or with ``use_bounds`` disabled are `not`
+        included in the bounds.
+
+        Returns
+        -------
+        BoundsTuple
+            Bounds of all visible actors in the active renderer.
+
+        """
+        return self.compute_bounds()
+
+    def compute_bounds(
+        self,
+        force_visibility: bool = False,
+        force_use_bounds: bool = False,
+        ignored_actors: list[str] | None = None,
+    ) -> BoundsTuple:
+        """Return the bounds of actors present in the renderer.
+
+        Returns
+        -------
+        BoundsTuple
+            Bounds of selected actors in the active renderer.
+
+        """
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
+        if ignored_actors is None:
+            ignored_actors = []
 
         def _update_bounds(bounds) -> None:
             def update_axis(ax) -> None:
@@ -496,8 +524,14 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             for ax in range(3):
                 update_axis(ax)
 
-        for actor in self._actors:
+        for name, actor in self._actors.items():
+            if actor.UseBoundsOff() and not force_use_bounds:
+                continue
+            if actor.VisibilityOff() and not force_visibility:
+                continue
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
+                continue
+            if name in ignored_actors:
                 continue
             if (
                 hasattr(actor, 'GetBounds')
