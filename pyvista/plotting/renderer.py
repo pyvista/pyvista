@@ -490,26 +490,63 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         Actors with ``visibility`` disabled or with ``use_bounds`` disabled are `not`
         included in the bounds.
 
+        .. versionchanged:: 0.45
+
+            Only the bounds of visible actors are now returned. Previously, the bounds
+            of all actors was returned, regardless of visibility.
+
         Returns
         -------
         BoundsTuple
             Bounds of all visible actors in the active renderer.
+
+        See Also
+        --------
+        compute_bounds
+            Compute the bounds with options to enable or disable actor visibility.
 
         """
         return self.compute_bounds()
 
     def compute_bounds(
         self,
+        *,
         force_visibility: bool = False,
         force_use_bounds: bool = False,
-        ignored_actors: list[str] | None = None,
+        ignored_actors: Sequence[str | _vtk.vtkProp | type[_vtk.vtkProp]] | None = None,
     ) -> BoundsTuple:
         """Return the bounds of actors present in the renderer.
+
+        By default, only visible actors are included in the bounds computation.
+        Optionally, the bounds of all actors may be computed, regardless if they
+        have their :attr:`~pyvista.Actor.visibility` or :attr:`~pyvista.Actor.use_bounds`
+        disabled. Specific actors may also be removed from the computation.
+
+        .. versionadded:: 0.45
+
+        Parameters
+        ----------
+        force_visibility : bool, default: False
+            Include actors with :attr:`~pyvista.Actor.visibility` disabled in the
+            computation. By default, invisible actors are excluded.
+
+        force_use_bounds : bool, default: False
+            Include actors with :attr:`~pyvista.Actor.use_bounds` disabled in the
+            computation. By default, actors with use bounds disabled are excluded.
+
+        ignored_actors : sequence[str | vtkProp | type[vtkProp]]
+            List of actors to ignore. The bounds of any actors included will be ignored.
+            Specify actors by name, type, or by instance.
 
         Returns
         -------
         BoundsTuple
             Bounds of selected actors in the active renderer.
+
+        See Also
+        --------
+        bounds
+            Bounds of all specified actors.
 
         """
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
