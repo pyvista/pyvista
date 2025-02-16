@@ -174,6 +174,14 @@ def test_multi_block_set_get_ers():
         multi[1, 'foo'] = data
 
 
+def test_set_block_name_by_name(ant):
+    old_name = 'foo'
+    new_name = 'bar'
+    multi = pv.MultiBlock({old_name: ant})
+    multi.set_block_name(old_name, new_name)
+    assert multi.keys() == [new_name]
+
+
 def test_replace():
     spheres = {f'{i}': pv.Sphere(phi_resolution=i + 3) for i in range(10)}
     multi = MultiBlock(spheres)
@@ -228,6 +236,59 @@ def test_slicing_multiple_in_setitem(sphere):
     assert multi[1] == pv.Cube()
     assert multi.count(pv.Cube()) == 1
     assert len(multi) == 9
+
+
+@pytest.fixture
+def nested_fixture():
+    image = pv.ImageData()
+    poly = pv.PolyData()
+    grid = pv.UnstructuredGrid()
+    nested = pv.MultiBlock(dict(image=image, poly=poly))
+    multi = pv.MultiBlock(dict(grid=grid))
+    nested.insert(1, multi, 'multi')
+    return nested
+
+
+@pytest.mark.parametrize(
+    'replace_indices',
+    [
+        (0,),
+        (1, 0),
+        (2,),
+    ],
+)
+def test_replace_nested(nested_fixture, replace_indices):
+    nested = nested_fixture
+    expected_keys = ['image', 'multi', 'poly']
+    expected_flat_keys = ['image', 'grid', 'poly']
+
+    nested.replace(replace_indices, None)
+    assert nested.get_block(replace_indices) is None
+    assert nested.keys() == expected_keys
+    assert nested.flatten().keys() == expected_flat_keys
+
+
+@pytest.mark.parametrize(
+    'invalid_indices',
+    [
+        ((0, 0, 0), 'Invalid indices (0, 0, 0).'),
+        ((0, 0), 'Invalid indices (0, 0).'),
+    ],
+)
+def test_replace_nested_invalid_indices(nested_fixture, invalid_indices):
+    nested = nested_fixture
+    match = re.escape(invalid_indices[1])
+    with pytest.raises(IndexError, match=match):
+        nested.replace(invalid_indices[0], None)
+
+
+def test_get_block(nested_fixture):
+    index = (1, 0)
+    name = 'grid'
+    block_by_index = nested_fixture[index[0]].get_block(index[1])
+    block_by_nested_index = nested_fixture.get_block(index)
+    block_by_name = nested_fixture[index[0]].get_block(name)
+    assert block_by_name is block_by_index is block_by_nested_index
 
 
 def test_reverse(sphere):
@@ -928,11 +989,23 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
 
 
 def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator(contents='names')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('ids')
+    assert all(isinstance(item, tuple) and isinstance(item[0], int) for item in iterator)
+
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('names')
     assert all(isinstance(item, str) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator(contents='items')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('blocks')
+    assert all(isinstance(item, pv.DataSet) for item in iterator)
+
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('items')
     for name, block in iterator:
+        assert isinstance(name, str)
+        assert isinstance(block, pv.DataSet) or block is None
+
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('all')
+    for id_, name, block in iterator:
+        assert isinstance(id_, tuple)
         assert isinstance(name, str)
         assert isinstance(block, pv.DataSet) or block is None
 
@@ -945,7 +1018,7 @@ def test_recursive_iterator_prepend_names(separator, prepend_names):
     expected_names = [name.replace('::', separator) for name in expected_names]
 
     iterator = nested.recursive_iterator(
-        prepend_names=prepend_names, separator=separator, contents='names', skip_none=False
+        'names', prepend_names=prepend_names, separator=separator, skip_none=False
     )
     names = list(iterator)
     assert names == expected_names
@@ -956,41 +1029,54 @@ def test_recursive_iterator_prepend_names(separator, prepend_names):
     assert flattened.keys() == expected_names
 
 
-def test_recursive_iterator_order():
-    nested = pv.MultiBlock(dict(image=pv.ImageData(), poly=pv.PolyData()))
-    multi = pv.MultiBlock(dict(grid=pv.UnstructuredGrid()))
-    nested.insert(1, multi)
-    assert isinstance(nested[0], pv.ImageData)
-    assert isinstance(nested[1], pv.MultiBlock)
-    assert isinstance(nested[1][0], pv.UnstructuredGrid)
-    assert isinstance(nested[2], pv.PolyData)
+@pytest.mark.parametrize('nested_ids', [True, False])
+def test_recursive_iterator_ids(nested_ids):
+    nested = MultiBlock(dict(a=MultiBlock(dict(b=MultiBlock(dict(c=None)), d=None)), e=None))
+    expected_ids = [(0, 0, 0), (0, 1), (1,)] if nested_ids else [0, 1, 1]
 
-    # Expect nested dataset in center
-    iterator = list(nested.recursive_iterator('items', order=None, skip_empty=False))
-    assert iterator[0][0] == 'image'
-    assert iterator[1][0] == 'grid'
-    assert iterator[2][0] == 'poly'
-    assert isinstance(iterator[0][1], pv.ImageData)
-    assert isinstance(iterator[1][1], pv.UnstructuredGrid)
-    assert isinstance(iterator[2][1], pv.PolyData)
+    iterator = nested.recursive_iterator('ids', nested_ids=nested_ids, skip_none=False)
+    ids = list(iterator)
+    assert ids == expected_ids
 
-    # Expect nested dataset last
-    iterator = list(nested.recursive_iterator('items', order='nested_last', skip_empty=False))
-    assert iterator[0][0] == 'image'
-    assert iterator[1][0] == 'poly'
-    assert iterator[2][0] == 'grid'
-    assert isinstance(iterator[0][1], pv.ImageData)
-    assert isinstance(iterator[1][1], pv.PolyData)
-    assert isinstance(iterator[2][1], pv.UnstructuredGrid)
 
-    # Expect nested dataset first
-    iterator = list(nested.recursive_iterator('items', order='nested_first', skip_empty=False))
-    assert iterator[0][0] == 'grid'
-    assert iterator[1][0] == 'image'
-    assert iterator[2][0] == 'poly'
-    assert isinstance(iterator[0][1], pv.UnstructuredGrid)
-    assert isinstance(iterator[1][1], pv.ImageData)
-    assert isinstance(iterator[2][1], pv.PolyData)
+def test_recursive_iterator_raises():
+    multi = pv.MultiBlock()
+
+    match = 'Nested ids option only applies when ids are returned.'
+    with pytest.raises(ValueError, match=match):
+        multi.recursive_iterator('names', nested_ids=True)
+    with pytest.raises(ValueError, match=match):
+        multi.recursive_iterator('items', nested_ids=True)
+
+    match = 'Prepend names option only applies when names are returned.'
+    with pytest.raises(ValueError, match=match):
+        multi.recursive_iterator('ids', prepend_names=True)
+    with pytest.raises(ValueError, match=match):
+        multi.recursive_iterator('blocks', prepend_names=True)
+
+
+@pytest.mark.parametrize(
+    ('order', 'expected_ids', 'expected_names'),
+    [
+        ('nested_first', [(1, 0), (0,), (2,)], ['grid', 'image', 'poly']),
+        ('nested_last', [(0,), (2,), (1, 0)], ['image', 'poly', 'grid']),
+        (None, [(0,), (1, 0), (2,)], ['image', 'grid', 'poly']),
+    ],
+)
+def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_names):
+    # Store instances of each mesh for testing iterator blocks
+    expected_meshes = dict(
+        image=nested_fixture['image'],
+        poly=nested_fixture['poly'],
+        grid=nested_fixture['multi']['grid'],
+    )
+
+    common_kwargs = dict(skip_empty=False, nested_ids=True, contents='all')
+    iterator = nested_fixture.recursive_iterator(order=order, **common_kwargs)
+    for i, (ids, name, block) in enumerate(iterator):
+        assert ids == expected_ids[i]
+        assert name == expected_names[i]
+        assert block is expected_meshes[name]
 
 
 def test_flatten(multiblock_all_with_nested_and_none):
