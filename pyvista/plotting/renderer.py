@@ -566,8 +566,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 continue
             if not actor.GetVisibility() and not force_visibility:
                 continue
-            if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
-                continue
+            # if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
+            #     continue
             if name in ignored_actors:
                 continue
             if (
