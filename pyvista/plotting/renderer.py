@@ -4322,4 +4322,4 @@ def _fixup_bounds(bounds) -> BoundsTuple:
     the_bounds = np.asarray(bounds)
     if np.any(the_bounds[::2] > the_bounds[1::2]):
         the_bounds[:] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-    return BoundsTuple(*the_bounds)
+    return BoundsTuple(*the_bounds.tolist())
