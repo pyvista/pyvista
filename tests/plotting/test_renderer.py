@@ -506,3 +506,40 @@ def test_prop_collection_raises(prop_collection):
         _ = prop_collection[{}]
     with pytest.raises(TypeError, match=match):
         prop_collection[{}] = pv.Actor()
+
+
+def test_compute_bounds(airplane):
+    DEFAULT_BOUNDS = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    ACTOR_NAME = 'name'
+
+    def assert_default_bounds(plot_):
+        assert plot_.bounds == plot_.compute_bounds() == DEFAULT_BOUNDS
+
+    def assert_actor_bounds(plot_, actor_, mesh_):
+        assert plot_.bounds == plot_.compute_bounds() == actor_.bounds == mesh_.bounds
+
+    # Test default bounds
+    pl = pv.Plotter()
+    assert_default_bounds(pl)
+    actor = pl.add_mesh(airplane)
+    actor.name = ACTOR_NAME
+    assert_actor_bounds(pl, actor, airplane)
+
+    # Test visibility
+    actor.visibility = False
+    assert_default_bounds(pl)
+    assert pl.compute_bounds(force_visibility=True) == actor.bounds
+    actor.visibility = True
+    assert_actor_bounds(pl, actor, airplane)
+
+    # Test use bounds
+    actor.use_bounds = False
+    assert_default_bounds(pl)
+    assert pl.compute_bounds(force_use_bounds=True) == actor.bounds
+    actor.use_bounds = True
+    assert_actor_bounds(pl, actor, airplane)
+
+    # Test ignore actors
+    assert pl.compute_bounds(ignore_actors=[actor]) == DEFAULT_BOUNDS
+    assert pl.compute_bounds(ignore_actors=[type(actor)]) == DEFAULT_BOUNDS
+    assert pl.compute_bounds(ignore_actors=[ACTOR_NAME]) == DEFAULT_BOUNDS

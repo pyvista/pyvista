@@ -487,8 +487,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
     def bounds(self) -> BoundsTuple:  # numpydoc ignore=RT01
         """Return the bounds of all VISIBLE actors present in the rendering window.
 
-        Actors with ``visibility`` disabled or with ``use_bounds`` disabled are `not`
-        included in the bounds.
+        Actors with :attr:`~pyvista.Actor.visibility` or :attr:`~pyvista.Actor.use_bounds`
+        disabled are `not` included in the bounds.
 
         .. versionchanged:: 0.45
 
@@ -513,7 +513,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
         *,
         force_visibility: bool = False,
         force_use_bounds: bool = False,
-        ignored_actors: Sequence[str | _vtk.vtkProp | type[_vtk.vtkProp]] | None = None,
+        ignore_actors: Sequence[str | _vtk.vtkProp | type[_vtk.vtkProp]] | None = None,
     ) -> BoundsTuple:
         """Return the bounds of actors present in the renderer.
 
@@ -534,7 +534,7 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Include actors with :attr:`~pyvista.Actor.use_bounds` disabled in the
             computation. By default, actors with use bounds disabled are excluded.
 
-        ignored_actors : sequence[str | vtkProp | type[vtkProp]]
+        ignore_actors : sequence[str | vtkProp | type[vtkProp]]
             List of actors to ignore. The bounds of any actors included will be ignored.
             Specify actors by name, type, or by instance.
 
@@ -550,8 +550,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
 
         """
         the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
-        if ignored_actors is None:
-            ignored_actors = []
+        if ignore_actors is None:
+            ignore_actors = []
+
+        ignored_types = [actor_type for actor_type in ignore_actors if isinstance(actor_type, type)]
 
         def _update_bounds(bounds) -> None:
             def update_axis(ax) -> None:
@@ -566,9 +568,11 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 continue
             if not actor.GetVisibility() and not force_visibility:
                 continue
-            # if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
-            #     continue
-            if name in ignored_actors:
+            if (  # Check if the actor should be ignored
+                name in ignore_actors
+                or actor in ignore_actors
+                or any(isinstance(actor, actor_type) for actor_type in ignored_types)
+            ):
                 continue
             if (
                 hasattr(actor, 'GetBounds')
