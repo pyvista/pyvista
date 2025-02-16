@@ -243,7 +243,11 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*NumpyArray'),
     (r'py:.*', '.*_ArrayLikeOrScalar'),
     (r'py:.*', '.*NumberType'),
-    (r'py:.*', '.*Concrete.*Type'),
+    (r'py:.*', '.*_GridType'),
+    (r'py:.*', '.*_PointGridType'),
+    (r'py:.*', '.*_PointSetType'),
+    (r'py:.*', '.*_DataSetType'),
+    (r'py:.*', '.*_DataObjectType'),
     (r'py:.*', '.*_WrappableVTKDataObjectType'),
     (r'py:.*', '.*_VTKWriterType'),
     (r'py:.*', '.*NormalsLiteral'),
@@ -255,6 +259,9 @@ nitpick_ignore_regex = [
     (r'py:.*', '.*PolyData'),
     (r'py:.*', '.*UnstructuredGrid'),
     (r'py:.*', '.*_TypeMultiBlockLeaf'),
+    (r'py:.*', '.*Grid'),
+    (r'py:.*', '.*PointGrid'),
+    (r'py:.*', '.*_PointSet'),
     #
     # PyVista array-related types
     (r'py:.*', 'ActiveArrayInfo'),
