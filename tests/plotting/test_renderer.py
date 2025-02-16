@@ -510,7 +510,6 @@ def test_prop_collection_raises(prop_collection):
 
 def test_compute_bounds(airplane):
     DEFAULT_BOUNDS = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
-    ACTOR_NAME = 'name'
 
     def assert_default_bounds(plot_):
         assert plot_.bounds == plot_.compute_bounds() == DEFAULT_BOUNDS
@@ -522,7 +521,6 @@ def test_compute_bounds(airplane):
     pl = pv.Plotter()
     assert_default_bounds(pl)
     actor = pl.add_mesh(airplane)
-    actor.name = ACTOR_NAME
     assert_actor_bounds(pl, actor, airplane)
 
     # Test visibility
@@ -542,4 +540,4 @@ def test_compute_bounds(airplane):
     # Test ignore actors
     assert pl.compute_bounds(ignore_actors=[actor]) == DEFAULT_BOUNDS
     assert pl.compute_bounds(ignore_actors=[type(actor)]) == DEFAULT_BOUNDS
-    assert pl.compute_bounds(ignore_actors=[ACTOR_NAME]) == DEFAULT_BOUNDS
+    assert pl.compute_bounds(ignore_actors=[actor.name]) == DEFAULT_BOUNDS
