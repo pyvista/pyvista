@@ -1064,31 +1064,19 @@ def test_recursive_iterator_raises():
     ],
 )
 def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_names):
-    nested = nested_fixture
-    image = nested_fixture['image']
-    poly = nested_fixture['poly']
-    grid = nested_fixture['multi']['grid']
+    # Store instances of each mesh for testing iterator blocks
+    expected_meshes = dict(
+        image=nested_fixture['image'],
+        poly=nested_fixture['poly'],
+        grid=nested_fixture['multi']['grid'],
+    )
+
     common_kwargs = dict(skip_empty=False, nested_ids=True, contents='all')
-
-    iterator = nested.recursive_iterator(order=order, **common_kwargs)
-    ids0, names0, block0 = next(iterator)
-    ids1, names1, block1 = next(iterator)
-    ids2, names2, block2 = next(iterator)
-
-    # Test ids
-    assert ids0 == expected_ids[0]
-    assert ids1 == expected_ids[1]
-    assert ids2 == expected_ids[2]
-
-    # Test names
-    assert names0 == expected_names[0]
-    assert names1 == expected_names[1]
-    assert names2 == expected_names[2]
-
-    # Test blocks
-    assert nested.get_block(ids0) is locals()[names0]
-    assert nested.get_block(ids1) is locals()[names1]
-    assert nested.get_block(ids2) is locals()[names2]
+    iterator = nested_fixture.recursive_iterator(order=order, **common_kwargs)
+    for i, (ids, name, block) in enumerate(iterator):
+        assert ids == expected_ids[i]
+        assert name == expected_names[i]
+        assert nested_fixture.get_block(ids) is expected_meshes[name]
 
 
 def test_flatten(multiblock_all_with_nested_and_none):
