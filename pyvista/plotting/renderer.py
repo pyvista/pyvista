@@ -892,8 +892,16 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             cast(Charts, self._charts).remove_chart(chart_or_index)
 
     @property
-    def actors(self):  # numpydoc ignore=RT01
-        """Return a dictionary of actors assigned to this renderer."""
+    def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
+        """Return a dictionary of actors assigned to this renderer.
+
+        .. note::
+
+            This may include 2D actors such as :class:`~pyvista.Text`, 3D actors such
+            as :class:`~pyvista.Actor`, and assemblies such as :class:`~pyvista.AxesAssembly`.
+            The actors may also be unwrapped VTK objects.
+
+        """
         return dict(self._actors.items())
 
     def add_actor(

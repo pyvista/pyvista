@@ -1599,6 +1599,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
         """Return the actors of the active renderer.
 
+        .. note::
+
+            This may include 2D actors such as :class:`~pyvista.Text`, 3D actors such
+            as :class:`~pyvista.Actor`, and assemblies such as :class:`~pyvista.AxesAssembly`.
+            The actors may also be unwrapped VTK objects.
+
         Returns
         -------
         dict
