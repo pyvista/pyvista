@@ -506,7 +506,8 @@ class Renderer(_vtk.vtkOpenGLRenderer):
             Compute the bounds with options to enable or disable actor visibility.
 
         """
-        return self.compute_bounds()
+        bounds = self.ComputeVisiblePropBounds()
+        return _fixup_bounds(bounds)
 
     def compute_bounds(
         self,
@@ -574,18 +575,10 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 or any(isinstance(actor, actor_type) for actor_type in ignored_types)
             ):
                 continue
-            if (
-                hasattr(actor, 'GetBounds')
-                and actor.GetBounds() is not None
-                and id(actor) != id(self.bounding_box_actor)
-            ):
-                _update_bounds(actor.GetBounds())
+            if hasattr(actor, 'GetBounds') and (actor_bounds := actor.GetBounds()) is not None:
+                _update_bounds(actor_bounds)
 
-        if np.any(np.abs(the_bounds)):
-            the_bounds[the_bounds == np.inf] = -1.0
-            the_bounds[the_bounds == -np.inf] = 1.0
-
-        return BoundsTuple(*the_bounds.tolist())
+        return _fixup_bounds(the_bounds)
 
     @property
     def length(self):  # numpydoc ignore=RT01
@@ -4323,3 +4316,10 @@ def _line_for_legend():
     legendface.points = np.array(points)  # type: ignore[assignment]
     legendface.faces = [4, 0, 1, 2, 3]  # type: ignore[assignment]
     return legendface
+
+
+def _fixup_bounds(bounds) -> BoundsTuple:
+    the_bounds = np.asarray(bounds)
+    if np.any(the_bounds[::2] > the_bounds[1::2]):
+        the_bounds[:] = (-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)
+    return BoundsTuple(*the_bounds)
