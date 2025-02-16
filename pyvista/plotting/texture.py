@@ -150,9 +150,9 @@ class Texture(DataObject, _vtk.vtkTexture):
     def _from_file(self, filename, **kwargs):
         try:
             image = pyvista.read(filename, **kwargs)
-            if image.n_points < 2:
+            if image.n_points < 2:  # pragma: no cover
                 msg = 'Problem reading the image with VTK.'
-                raise RuntimeError(msg)  # pragma: no cover
+                raise RuntimeError(msg)
             self._from_image_data(image)
         except (KeyError, ValueError, OSError):
             self._from_array(_try_imageio_imread(filename))  # pragma: no cover
