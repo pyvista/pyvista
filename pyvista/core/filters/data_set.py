@@ -2981,9 +2981,9 @@ class DataSetFilters:
                     ids_to_keep |= set(extracted['vtkOriginalCellIds'])
                 ids_to_remove = list(all_ids - ids_to_keep)
                 if len(ids_to_remove) != 0:
-                    if pyvista.vtk_version_info < (9, 1, 0):
+                    if pyvista.vtk_version_info < (9, 1, 0):  # pragma: no cover
                         msg = '`connectivity` with PolyData requires vtk>=9.1.0'
-                        raise VTKVersionError(msg)  # pragma: no cover
+                        raise VTKVersionError(msg)
                     remove = _vtk.vtkRemovePolyData()
                     remove.SetInputData(before_extraction)
                     remove.SetCellIds(numpy_to_idarr(ids_to_remove))
@@ -6806,9 +6806,9 @@ class DataSetFilters:
         >>> plotter.show()
 
         """
-        if pyvista.vtk_version_info < (9, 3, 0):
+        if pyvista.vtk_version_info < (9, 3, 0):  # pragma: no cover
             msg = '`vtkBoundaryMeshQuality` requires vtk>=9.3.0'
-            raise VTKVersionError(msg)  # pragma: no cover
+            raise VTKVersionError(msg)
         alg = _vtk.vtkBoundaryMeshQuality()
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Compute Boundary Mesh Quality')
@@ -8141,7 +8141,7 @@ class DataSetFilters:
         if pyvista.vtk_version_info < (9, 1, 0):
             msg = '`partition` requires vtk>=9.1.0'
             raise VTKVersionError(msg)  # pragma: no cover
-        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):
+        if not hasattr(_vtk, 'vtkRedistributeDataSetFilter'):  # pragma: no cover
             msg = (
                 '`partition` requires vtkRedistributeDataSetFilter, but it '
                 f'was not found in VTK {pyvista.vtk_version_info}'

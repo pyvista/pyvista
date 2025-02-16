@@ -3688,7 +3688,7 @@ class AxesGeometrySource:
                 must_contain=geometry,
                 name='Geometry',
             )
-            msg = f"Geometry '{geometry}' is not implemented"
+            msg = f"Geometry '{geometry}' is not implemented"  # pragma: no cover
             raise NotImplementedError(msg)  # pragma: no cover
 
     @staticmethod

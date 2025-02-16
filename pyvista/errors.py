@@ -53,7 +53,7 @@ def __getattr__(name):
         if feature is not None:
             break
     else:
-        msg = f'Module `pyvista.errors` has been deprecated and we could not automatically find `{name}`. This feature has moved.'
+        msg = f'Module `pyvista.errors` has been deprecated and we could not automatically find `{name}`. This feature has moved.'  # pragma: no cover
         raise AttributeError(msg) from None  # pragma: no cover
 
     message = f'The `pyvista.errors` module has been deprecated. `{name}` is now imported as: `{import_path}`.'
