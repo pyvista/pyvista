@@ -337,9 +337,11 @@ class MultiBlock(
         )
         nested_ids = contents in ['ids', 'all'] if nested_ids is None else nested_ids
         if nested_ids and contents not in ['ids', 'all']:
-            raise ValueError('Nested ids option only applies when ids are returned.')
+            msg = 'Nested ids option only applies when ids are returned.'
+            raise ValueError(msg)
         if prepend_names and contents not in ['names', 'items', 'all']:
-            raise ValueError('Prepend names option only applies when names are returned.')
+            msg = 'Prepend names option only applies when names are returned.'
+            raise ValueError(msg)
 
         return self._recursive_iterator(
             ids=[[i] for i in range(self.n_blocks)],
@@ -1174,10 +1176,12 @@ class MultiBlock(
         target: _TypeMultiBlockLeaf = self
         for ind in indices[:-1]:
             if target is None or isinstance(target, pyvista.DataSet):
-                raise IndexError(f'Invalid indices {indices}.')
+                msg = f'Invalid indices {indices}.'
+                raise IndexError(msg)
             target = target[ind]
         if not isinstance(target, MultiBlock):
-            raise IndexError(f'Invalid indices {indices}.')
+            msg = f'Invalid indices {indices}.'
+            raise IndexError(msg)
         return target, indices[-1]
 
     @overload
