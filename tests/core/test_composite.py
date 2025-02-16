@@ -1076,7 +1076,7 @@ def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_
     for i, (ids, name, block) in enumerate(iterator):
         assert ids == expected_ids[i]
         assert name == expected_names[i]
-        assert nested_fixture.get_block(ids) is expected_meshes[name]
+        assert block is expected_meshes[name]
 
 
 def test_flatten(multiblock_all_with_nested_and_none):
