@@ -525,9 +525,9 @@ class Renderer(_vtk.vtkOpenGLRenderer):
                 update_axis(ax)
 
         for name, actor in self._actors.items():
-            if actor.UseBoundsOff() and not force_use_bounds:
+            if not actor.GetUseBounds() and not force_use_bounds:
                 continue
-            if actor.VisibilityOff() and not force_visibility:
+            if not actor.GetVisibility() and not force_visibility:
                 continue
             if isinstance(actor, (_vtk.vtkCubeAxesActor, _vtk.vtkLightActor)):
                 continue
