@@ -418,20 +418,19 @@ class DataSetFilters:
         if axis_2_direction is not None:
             if np.dot(axes[2], axis_2_direction) >= 0:
                 pass  # nothing to do, sign is correct
+            elif axis_0_direction is not None and axis_1_direction is not None:
+                raise ValueError(
+                    f'Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation.'
+                )
             else:
-                if axis_0_direction is not None and axis_1_direction is not None:
-                    raise ValueError(
-                        f'Invalid `axis_2_direction` {axis_2_direction}. This direction results in a left-handed transformation.'
-                    )
+                axes[2] *= -1
+                # Need to also flip a second vector to keep system as right-handed
+                if axis_1_direction is not None:
+                    # Second axis has been set, so modify first axis
+                    axes[0] *= -1
                 else:
-                    axes[2] *= -1
-                    # Need to also flip a second vector to keep system as right-handed
-                    if axis_1_direction is not None:
-                        # Second axis has been set, so modify first axis
-                        axes[0] *= -1
-                    else:
-                        # First axis has been set, so modify second axis
-                        axes[1] *= -1
+                    # First axis has been set, so modify second axis
+                    axes[1] *= -1
 
         rotation = Transform().rotate(axes)
         aligned = self.transform(rotation, inplace=False)
@@ -2641,22 +2640,19 @@ class DataSetFilters:
         if isinstance(scale, str):
             dataset.set_active_scalars(scale, preference='cell')
             do_scale = True
-        else:
-            if scale:
-                try:
-                    set_default_active_scalars(self)
-                except MissingDataError:
-                    warnings.warn('No data to use for scale. scale will be set to False.')
-                    do_scale = False
-                except AmbiguousDataError as err:
-                    warnings.warn(
-                        f'{err}\nIt is unclear which one to use. scale will be set to False.'
-                    )
-                    do_scale = False
-                else:
-                    do_scale = True
-            else:
+        elif scale:
+            try:
+                set_default_active_scalars(self)
+            except MissingDataError:
+                warnings.warn('No data to use for scale. scale will be set to False.')
                 do_scale = False
+            except AmbiguousDataError as err:
+                warnings.warn(f'{err}\nIt is unclear which one to use. scale will be set to False.')
+                do_scale = False
+            else:
+                do_scale = True
+        else:
+            do_scale = False
 
         if do_scale:
             if dataset.active_scalars is not None:
@@ -3144,16 +3140,15 @@ class DataSetFilters:
             # PolyData with 'largest' mode generates bad output with unreferenced points
             output_needs_fixing = True
 
-        else:
-            # All other extraction modes / cases may generate incorrect scalar arrays
-            # e.g. 'largest' may output scalars with shape that does not match output mesh
-            # e.g. 'seed' method scalars may have one RegionId, yet may contain many
-            # disconnected regions. Therefore, check for correct scalars size
-            if label_regions:
-                invalid_cell_scalars = output.n_cells != output.cell_data['RegionId'].size
-                invalid_point_scalars = output.n_points != output.point_data['RegionId'].size
-                if invalid_cell_scalars or invalid_point_scalars:
-                    output_needs_fixing = True
+        # All other extraction modes / cases may generate incorrect scalar arrays
+        # e.g. 'largest' may output scalars with shape that does not match output mesh
+        # e.g. 'seed' method scalars may have one RegionId, yet may contain many
+        # disconnected regions. Therefore, check for correct scalars size
+        elif label_regions:
+            invalid_cell_scalars = output.n_cells != output.cell_data['RegionId'].size
+            invalid_point_scalars = output.n_points != output.point_data['RegionId'].size
+            if invalid_cell_scalars or invalid_point_scalars:
+                output_needs_fixing = True
 
         if output_needs_fixing and output.n_cells > 0:
             # Fix bad output recursively using 'all' mode which has known good output
@@ -9202,7 +9197,7 @@ class DataSetFilters:
         >>> colored_labels.plot()
 
         Color the mesh with fewer colors than there are label values. In this case
-        the ``'cycle'`` mode is used by default and the colors are re-used.
+        the ``'cycle'`` mode is used by default and the colors are reused.
 
         >>> colored_labels = labeled_data.color_labels(['red', 'lime', 'blue'])
         >>> colored_labels.plot()
@@ -9362,7 +9357,6 @@ class DataSetFilters:
         rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
         cell_length_percentile: float | None = None,
         cell_length_sample_size: int | None = None,
-        mesh_length_fraction: float | None = None,
         progress_bar: bool = False,
     ):
         """Voxelize mesh as a binary :class:`~pyvista.ImageData` mask.
@@ -9394,16 +9388,13 @@ class DataSetFilters:
         #. Specify the ``cell_length_percentile``. The spacing is estimated from the
            surface's cells using the specified percentile.
 
-        #. Specify ``mesh_length_fraction``. The spacing is computed as a fraction of
-           the mesh's diagonal length.
-
         Use ``reference_volume`` for full control of the output mask's geometry. For
         all other options, the geometry is implicitly defined such that the generated
         mask fits the bounds of the input surface.
 
         If no inputs are provided, ``cell_length_percentile=0.1`` (10th percentile) is
         used by default to estimate the spacing. On systems with VTK < 9.2, the default
-        spacing is set to ``mesh_length_fraction=1/100``.
+        spacing is set to ``1/100`` of the input mesh's length.
 
         .. versionadded:: 0.45.0
 
@@ -9475,11 +9466,6 @@ class DataSetFilters:
             Number of samples to use for the cumulative distribution function (CDF)
             when using the ``cell_length_percentile`` option. ``100 000`` samples are
             used by default.
-
-        mesh_length_fraction : float, optional
-            Fraction of the surface mesh's length to use for computing the default
-            ``spacing``. Set this to any fractional value (e.g. ``1/100``) to enable
-            this option. This is used as an alternative to using ``cell_length_percentile``.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
@@ -9678,7 +9664,6 @@ class DataSetFilters:
                 or rounding_func is not None
                 or cell_length_percentile is not None
                 or cell_length_sample_size is not None
-                or mesh_length_fraction is not None
             ):
                 raise TypeError(
                     'Cannot specify a reference volume with other geometry parameters. `reference_volume` must define the geometry exclusively.'
@@ -9698,11 +9683,6 @@ class DataSetFilters:
             poly_ijk = _preprocess_polydata(surface)
 
             if spacing is None:
-                if cell_length_percentile is not None and mesh_length_fraction is not None:
-                    raise TypeError(
-                        'Cell length percentile and mesh length fraction cannot both be set. Set one or the other.'
-                    )
-
                 less_than_vtk92 = pyvista.vtk_version_info < (9, 2)
                 if (
                     cell_length_percentile is not None or cell_length_sample_size is not None
@@ -9711,18 +9691,9 @@ class DataSetFilters:
                         'Cell length percentile and sample size requires VTK 9.2 or greater.'
                     )
 
-                if mesh_length_fraction is not None or less_than_vtk92:
+                if less_than_vtk92:
                     # Compute spacing from mesh length
-                    mesh_length_fraction = (
-                        1 / 100
-                        if mesh_length_fraction is None
-                        else _validation.validate_number(
-                            mesh_length_fraction,
-                            must_have_dtype=float,
-                            must_be_in_range=[0.0, 1.0],
-                        )
-                    )
-                    spacing = surface.length * mesh_length_fraction
+                    spacing = surface.length / 100
                 else:
                     # Estimate spacing from cell length percentile
                     cell_length_percentile = (
@@ -9737,16 +9708,11 @@ class DataSetFilters:
                         cell_length_sample_size,
                         progress_bar=progress_bar,
                     )
-            else:
-                # Spacing is specified directly. Make sure other params are not set.
-                if cell_length_percentile is not None:
-                    raise TypeError(
-                        'Spacing and cell length percentile cannot both be set. Set one or the other.'
-                    )
-                if mesh_length_fraction is not None:
-                    raise TypeError(
-                        'Spacing and mesh length fraction cannot both be set. Set one or the other.'
-                    )
+            # Spacing is specified directly. Make sure other params are not set.
+            elif cell_length_percentile is not None or cell_length_sample_size is not None:
+                raise TypeError(
+                    'Spacing and cell length options cannot both be set. Set one or the other.'
+                )
 
             # Get initial spacing (will be adjusted later)
             initial_spacing = _validation.validate_array3(spacing, broadcast=True)
@@ -9872,28 +9838,25 @@ def _set_threshold_limit(alg, value, method, invert):
             alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_BETWEEN)
             alg.SetLowerThreshold(value[0])
             alg.SetUpperThreshold(value[1])
+        # Single value
+        elif method.lower() == 'lower':
+            alg.SetLowerThreshold(value)
+            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
+        elif method.lower() == 'upper':
+            alg.SetUpperThreshold(value)
+            alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
         else:
-            # Single value
-            if method.lower() == 'lower':
-                alg.SetLowerThreshold(value)
-                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_LOWER)
-            elif method.lower() == 'upper':
-                alg.SetUpperThreshold(value)
-                alg.SetThresholdFunction(_vtk.vtkThreshold.THRESHOLD_UPPER)
-            else:
-                raise ValueError('Invalid method choice. Either `lower` or `upper`')
-    else:  # pragma: no cover
-        # ThresholdByLower, ThresholdByUpper, ThresholdBetween
-        if isinstance(value, (np.ndarray, Sequence)):
-            alg.ThresholdBetween(value[0], value[1])
-        else:
-            # Single value
-            if method.lower() == 'lower':
-                alg.ThresholdByLower(value)
-            elif method.lower() == 'upper':
-                alg.ThresholdByUpper(value)
-            else:
-                raise ValueError('Invalid method choice. Either `lower` or `upper`')
+            raise ValueError('Invalid method choice. Either `lower` or `upper`')
+    # ThresholdByLower, ThresholdByUpper, ThresholdBetween
+    elif isinstance(value, (np.ndarray, Sequence)):
+        alg.ThresholdBetween(value[0], value[1])
+    # Single value
+    elif method.lower() == 'lower':
+        alg.ThresholdByLower(value)
+    elif method.lower() == 'upper':
+        alg.ThresholdByUpper(value)
+    else:
+        raise ValueError('Invalid method choice. Either `lower` or `upper`')
 
 
 def _swap_axes(vectors, values):
@@ -9918,9 +9881,8 @@ def _swap_axes(vectors, values):
         # Sort all axes by largest 'x' component
         vectors = vectors[np.argsort(np.abs(vectors)[:, 0])[::-1]]
         _swap(1, 2)
-    else:
-        if np.isclose(values[0], values[1]):
-            _swap(0, 1)
-        elif np.isclose(values[1], values[2]):
-            _swap(1, 2)
+    elif np.isclose(values[0], values[1]):
+        _swap(0, 1)
+    elif np.isclose(values[1], values[2]):
+        _swap(1, 2)
     return vectors

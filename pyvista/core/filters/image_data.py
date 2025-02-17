@@ -2093,14 +2093,13 @@ class ImageDataFilters(DataSetFilters):
                     f' output {new_image.dimensions} and would require to map'
                     f' {self.n_points} points on {new_image.n_cells} cells.'
                 )
-        else:  # cells_to_points
-            if new_image.n_points != self.n_cells:
-                raise ValueError(
-                    'Cannot re-mesh cells to points. The dimensions of the input'
-                    f' {self.dimensions} is not compatible with the dimensions of the'
-                    f' output {new_image.dimensions} and would require to map'
-                    f' {self.n_cells} cells on {new_image.n_points} points.'
-                )
+        elif new_image.n_points != self.n_cells:
+            raise ValueError(
+                'Cannot re-mesh cells to points. The dimensions of the input'
+                f' {self.dimensions} is not compatible with the dimensions of the'
+                f' output {new_image.dimensions} and would require to map'
+                f' {self.n_cells} cells on {new_image.n_points} points.'
+            )
 
         # Copy field data
         new_image.field_data.update(self.field_data)
@@ -2728,8 +2727,7 @@ class ImageDataFilters(DataSetFilters):
             alg.SetSeedData(point_seeds)
         else:
             raise ValueError(
-                f'Invalid `extraction_mode` "{extraction_mode}",'
-                ' use "all", "largest", or "seeded".'
+                f'Invalid `extraction_mode` "{extraction_mode}", use "all", "largest", or "seeded".'
             )
 
         if label_mode == 'size':

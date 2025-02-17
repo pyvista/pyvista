@@ -124,23 +124,6 @@ def test_check_subdtype():
         check_subdtype(np.array([1 + 1j, 2, 3]), (np.integer, np.floating))
 
 
-@pytest.mark.filterwarnings(
-    'ignore:Converting `np.inexact` or `np.floating` to a dtype is deprecated. The current result is `float64` which is not strictly correct.:DeprecationWarning'
-)
-def test_check_subdtype_changes_type():
-    # test coercing some types (e.g. np.number) can lead to unexpected
-    # failed `np.issubtype` checks due to an implicit change of type
-    int_array = np.array([1, 2, 3])
-    dtype_expected = np.number
-    check_subdtype(int_array, dtype_expected)  # int is subtype of np.number
-
-    dtype_coerced = np.dtype(dtype_expected)
-    assert dtype_coerced.type is np.float64  # np.number is coerced (by NumPy) as a float
-    with pytest.raises(TypeError):
-        # this check will now fail since int is not subtype of float
-        check_subdtype(int_array, dtype_coerced)
-
-
 def test_validate_number():
     validate_number([2.0])
     num = validate_number(1)
@@ -589,31 +572,29 @@ def test_check_instance(obj, classinfo, allow_subclass, name):
             with pytest.raises(TypeError, match=f'{name} must be an instance of'):
                 check_instance(obj, classinfo, name=name)
 
-    else:
-        if type(classinfo) is tuple:
-            if type(obj) in classinfo:
-                check_type(obj, classinfo)
-            else:
-                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_type(obj, classinfo)
-        elif get_origin(classinfo) is Union:
-            if type(obj) in get_args(classinfo):
-                check_type(obj, classinfo)
-            else:
-                with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
-                    check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match='Object must have one of the following types'):
-                    check_type(obj, classinfo)
+    elif type(classinfo) is tuple:
+        if type(obj) in classinfo:
+            check_type(obj, classinfo)
         else:
-            if type(obj) is classinfo:
+            with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
+                check_type(obj, classinfo, name=name)
+            with pytest.raises(TypeError, match='Object must have one of the following types'):
                 check_type(obj, classinfo)
-            else:
-                with pytest.raises(TypeError, match=f'{name} must have type'):
-                    check_type(obj, classinfo, name=name)
-                with pytest.raises(TypeError, match='Object must have type'):
-                    check_type(obj, classinfo)
+    elif get_origin(classinfo) is Union:
+        if type(obj) in get_args(classinfo):
+            check_type(obj, classinfo)
+        else:
+            with pytest.raises(TypeError, match=f'{name} must have one of the following types'):
+                check_type(obj, classinfo, name=name)
+            with pytest.raises(TypeError, match='Object must have one of the following types'):
+                check_type(obj, classinfo)
+    elif type(obj) is classinfo:
+        check_type(obj, classinfo)
+    else:
+        with pytest.raises(TypeError, match=f'{name} must have type'):
+            check_type(obj, classinfo, name=name)
+        with pytest.raises(TypeError, match='Object must have type'):
+            check_type(obj, classinfo)
 
     match = "Name must be a string, got <class 'int'> instead."
     with pytest.raises(TypeError, match=match):
