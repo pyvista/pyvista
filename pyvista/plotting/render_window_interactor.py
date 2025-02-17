@@ -975,6 +975,11 @@ class RenderWindowInteractor:
         latitude/longitude markers that can be used to estimate/control
         position.
 
+        .. versionchanged:: 0.45
+            mouse_wheel_zooms and shift_pans parameters are not True by
+            default to be more intuitive. We also improved the scroll
+            zooming factor to be less jumpy.
+
         Parameters
         ----------
         mouse_wheel_zooms : bool, default: True
