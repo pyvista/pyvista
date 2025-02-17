@@ -465,11 +465,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         importer.SetRenderWindow(self.render_window)
         importer.Update()
 
-        # register last actor in actors
-        actor = self.renderer.GetActors().GetLastItem()
-        name = actor.GetAddressAsString('')
-        self.renderer._actors[name] = actor
-
         # set camera position to a three.js viewing perspective
         if set_camera:
             self.camera_position = 'xy'
@@ -1601,7 +1596,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     #### Properties from Renderer ####
 
     @property
-    def actors(self) -> dict[str, _vtk.vtkActor]:  # numpydoc ignore=RT01
+    def actors(self) -> dict[str, _vtk.vtkProp]:  # numpydoc ignore=RT01
         """Return the actors of the active renderer.
 
         Returns
@@ -2156,7 +2151,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         for renderer in self.renderers:
-            for actor in renderer._actors.values():
+            for actor in renderer._actors:
                 if hasattr(actor, 'GetProperty'):
                     prop = actor.GetProperty()
                     if hasattr(prop, 'SetPointSize'):
@@ -6499,7 +6494,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return [
             tuple(self.renderers.index_to_loc(index).tolist())
             for index in range(len(self.renderers))
-            if name in self.renderers[index]._actors
+            if name in self.renderers[index]._actors.keys()
         ]
 
 
