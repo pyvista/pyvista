@@ -99,8 +99,10 @@ from vtkmodules.vtkRenderingCore import vtkPointGaussianMapper as vtkPointGaussi
 from vtkmodules.vtkRenderingCore import vtkPointPicker as vtkPointPicker
 from vtkmodules.vtkRenderingCore import vtkPolyDataMapper as vtkPolyDataMapper
 from vtkmodules.vtkRenderingCore import vtkPolyDataMapper2D as vtkPolyDataMapper2D
+from vtkmodules.vtkRenderingCore import vtkProp as vtkProp
 from vtkmodules.vtkRenderingCore import vtkProp3D as vtkProp3D
 from vtkmodules.vtkRenderingCore import vtkPropAssembly as vtkPropAssembly
+from vtkmodules.vtkRenderingCore import vtkPropCollection as vtkPropCollection
 from vtkmodules.vtkRenderingCore import vtkProperty as vtkProperty
 from vtkmodules.vtkRenderingCore import vtkPropPicker as vtkPropPicker
 from vtkmodules.vtkRenderingCore import vtkRenderedAreaPicker as vtkRenderedAreaPicker
