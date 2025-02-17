@@ -982,17 +982,16 @@ class RenderWindowInteractor:
 
         Parameters
         ----------
-        mouse_wheel_zooms : bool, default: True
-            Whether to use the mouse wheel for zooming. By default
-            zooming can be performed with right click and drag.
-            Pass a float value for to control the zoom factor,
-            default is 1.05.
+        mouse_wheel_zooms : bool | float, default: True
+            Whether to use the mouse wheel for zooming. If ``False``,
+            you can still zoom with right click and drag. Pass a float
+            value for to control the zoom factor, default is ``1.05``.
 
         shift_pans : bool, default: True
-            Whether shift + left mouse button pans the scene. By default
-            shift + left mouse button rotates the view restricted to
-            only horizontal or vertical movements, and panning is done
-            holding down the middle mouse button.
+            Whether shift + left mouse button pans the scene. If
+            ``False``, shift + left mouse button rotates the view
+            restricted to only horizontal or vertical movements, and
+            panning is done holding down the middle mouse button.
 
         Examples
         --------
