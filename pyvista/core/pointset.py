@@ -234,8 +234,7 @@ class _PointSet(DataSet):
         if inplace:
             self.points += np.asarray(xyz)  # type: ignore[misc]
             return self
-        return pyvista.DataSetFilters.translate(
-            self,
+        return self.translate(
             xyz,
             transform_all_input_vectors=transform_all_input_vectors,
             inplace=inplace,
