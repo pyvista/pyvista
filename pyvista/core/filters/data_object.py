@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 class DataObjectFilters:
     """A set of common filters that can be applied to any DataSet or MultiBlock."""
 
-    def transform(  # type: ignore[misc]
+    def transform(
         self: ConcreteDataSetType | MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
@@ -240,7 +240,7 @@ class DataObjectFilters:
             output.copy_from(res, deep=True)
         return output
 
-    def reflect(  # type: ignore[misc]
+    def reflect(
         self: ConcreteDataSetType | MultiBlock,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
@@ -297,7 +297,7 @@ class DataObjectFilters:
             progress_bar=progress_bar,
         )
 
-    def rotate_x(  # type: ignore[misc]
+    def rotate_x(
         self: ConcreteDataSetType | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -361,7 +361,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def rotate_y(  # type: ignore[misc]
+    def rotate_y(
         self: ConcreteDataSetType | MultiBlock,
         angle: float,
         point: VectorLike[float] | None = None,
@@ -424,7 +424,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def rotate_z(  # type: ignore[misc]
+    def rotate_z(
         self: ConcreteDataSetType | MultiBlock,
         angle: float,
         point: VectorLike[float] = (0.0, 0.0, 0.0),
@@ -488,7 +488,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def rotate_vector(  # type: ignore[misc]
+    def rotate_vector(
         self: ConcreteDataSetType | MultiBlock,
         vector: VectorLike[float],
         angle: float,
@@ -556,7 +556,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def rotate(  # type: ignore[misc]
+    def rotate(
         self: ConcreteDataSetType | MultiBlock,
         rotation: RotationLike,
         point: VectorLike[float] | None = None,
@@ -630,7 +630,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def translate(  # type: ignore[misc]
+    def translate(
         self: ConcreteDataSetType | MultiBlock,
         xyz: VectorLike[float],
         transform_all_input_vectors: bool = False,
@@ -686,7 +686,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def scale(  # type: ignore[misc]
+    def scale(
         self: ConcreteDataSetType | MultiBlock,
         xyz: float | VectorLike[float],
         transform_all_input_vectors: bool = False,
@@ -751,7 +751,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def flip_x(  # type: ignore[misc]
+    def flip_x(
         self: ConcreteDataSetType | MultiBlock,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -813,7 +813,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def flip_y(  # type: ignore[misc]
+    def flip_y(
         self: ConcreteDataSetType | MultiBlock,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -875,7 +875,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def flip_z(  # type: ignore[misc]
+    def flip_z(
         self: ConcreteDataSetType | MultiBlock,
         point: VectorLike[float] | None = None,
         transform_all_input_vectors: bool = False,
@@ -937,7 +937,7 @@ class DataObjectFilters:
             inplace=inplace,
         )
 
-    def flip_normal(  # type: ignore[misc]
+    def flip_normal(
         self: ConcreteDataSetType | MultiBlock,
         normal: VectorLike[float],
         point: VectorLike[float] | None = None,
