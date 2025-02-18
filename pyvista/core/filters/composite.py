@@ -11,6 +11,7 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 
 @abstract_class
-class CompositeFilters:
+class CompositeFilters(DataObjectFilters):
     """An internal class to manage filters/algorithms for composite datasets."""
 
     def generic_filter(  # type:ignore[misc]

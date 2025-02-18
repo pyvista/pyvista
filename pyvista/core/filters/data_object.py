@@ -120,6 +120,15 @@ class DataObjectFilters:
 
         inplace = check_inplace(cls=type(self), inplace=inplace)
 
+        if isinstance(self, pyvista.MultiBlock):
+            return self.generic_filter(
+                'transform',
+                trans=trans,
+                transform_all_input_vectors=transform_all_input_vectors,
+                inplace=inplace,
+                progress_bar=progress_bar,
+            )
+
         if inplace and isinstance(self, pyvista.RectilinearGrid):
             raise TypeError(f'Cannot transform a {self.__class__} inplace')
 
