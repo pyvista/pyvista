@@ -99,7 +99,7 @@ pl.show()
 #
 # For this example, we will first sample the results from the
 # :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.ImageData` using
-# :func:`sample() <pyvista.DataSetFilters.sample>`. This is so we can visualize
+# :func:`sample() <pyvista.DataObjectFilters.sample>`. This is so we can visualize
 # it using :func:`add_volume() <pyvista.Plotter.add_volume>`
 
 # sphinx_gallery_start_ignore

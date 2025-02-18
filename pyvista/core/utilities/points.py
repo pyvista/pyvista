@@ -308,7 +308,7 @@ def fit_plane_to_points(
     ... ]
     >>> pl.show()
 
-    Use the metadata with :meth:`pyvista.DataSetFilters.clip` to split the mesh into
+    Use the metadata with :meth:`pyvista.DataObjectFilters.clip` to split the mesh into
     two.
 
     >>> first_half, second_half = mesh.clip(

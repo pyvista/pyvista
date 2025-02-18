@@ -69,7 +69,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -307,7 +307,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -1672,9 +1672,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         cells_to_points
             Inverse of this filter to represent cells as points.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
 
         Parameters
@@ -1870,9 +1870,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         points_to_cells
             Inverse of this filter to represent points as cells.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
 
         Parameters
@@ -3045,7 +3045,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        :meth:`~pyvista.DataSetFilters.sample`
+        :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.
 
         :meth:`~pyvista.DataSetFilters.interpolate`

@@ -4,7 +4,7 @@
 Detailed Resampling
 ~~~~~~~~~~~~~~~~~~~
 
-This example uses :func:`pyvista.DataSetFilters.sample`.
+This example uses :func:`pyvista.DataObjectFilters.sample`.
 :func:`pyvista.DataSetFilters.interpolate` is similar, and the two
 methods are compared in :ref:`interpolate_sample_example`.
 

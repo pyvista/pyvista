@@ -11,6 +11,7 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
 
 
 @abstract_class
-class CompositeFilters:
+class CompositeFilters(DataObjectFilters):
     """An internal class to manage filters/algorithms for composite datasets."""
 
     def generic_filter(  # type:ignore[misc]
@@ -258,34 +259,6 @@ class CompositeFilters:
         alg.SetTolerance(tolerance)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
-
-    clip = DataSetFilters.clip
-
-    clip_box = DataSetFilters.clip_box
-
-    slice = DataSetFilters.slice
-
-    slice_orthogonal = DataSetFilters.slice_orthogonal
-
-    slice_along_axis = DataSetFilters.slice_along_axis
-
-    slice_along_line = DataSetFilters.slice_along_line
-
-    extract_all_edges = DataSetFilters.extract_all_edges
-
-    elevation = DataSetFilters.elevation
-
-    compute_cell_sizes = DataSetFilters.compute_cell_sizes
-
-    cell_centers = DataSetFilters.cell_centers
-
-    cell_data_to_point_data = DataSetFilters.cell_data_to_point_data
-
-    point_data_to_cell_data = DataSetFilters.point_data_to_cell_data
-
-    sample = DataSetFilters.sample
-
-    triangulate = DataSetFilters.triangulate
 
     def outline(  # type: ignore[misc]
         self: MultiBlock,
