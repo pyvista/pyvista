@@ -2638,7 +2638,7 @@ class DataSetFilters(DataObjectFilters):
 
         If the cell topology is more useful for interpolating, e.g. from a
         discretized FEM or CFD simulation, use
-        :func:`pyvista.DataSetFilters.sample` instead.
+        :func:`pyvista.DataObjectFilters.sample` instead.
 
         Parameters
         ----------
@@ -2691,7 +2691,7 @@ class DataSetFilters(DataObjectFilters):
 
         See Also
         --------
-        pyvista.DataSetFilters.sample
+        pyvista.DataObjectFilters.sample
             Resample array data from one mesh onto another.
 
         :meth:`pyvista.ImageDataFilters.resample`

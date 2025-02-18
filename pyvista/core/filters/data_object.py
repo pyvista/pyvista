@@ -1462,9 +1462,9 @@ class DataObjectFilters:
 #
 # cell_centers = DataSetFilters.cell_centers
 #
-# cell_data_to_point_data = DataSetFilters.cell_data_to_point_data
+# cell_data_to_point_data = DataObjectFilters.cell_data_to_point_data
 #
-# point_data_to_cell_data = DataSetFilters.point_data_to_cell_data
+# point_data_to_cell_data = DataObjectFilters.cell_data_to_point_data
 #
 # sample = DataSetFilters.sample
 #

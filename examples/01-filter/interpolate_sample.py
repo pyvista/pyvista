@@ -8,13 +8,13 @@ There are two main methods of interpolating or sampling data from a target mesh
 in PyVista. :func:`pyvista.DataSetFilters.interpolate` uses a distance weighting
 kernel to interpolate point data from nearby points of the target mesh onto
 the desired points.
-:func:`pyvista.DataSetFilters.sample` interpolates data using the
+:func:`pyvista.DataObjectFilters.sample` interpolates data using the
 interpolation scheme of the enclosing cell from the target mesh.
 
 If the target mesh is a point cloud, i.e. there is no connectivity in the cell
 structure, then :func:`pyvista.DataSetFilters.interpolate` is typically
 preferred.  If interpolation is desired within the cells of the target mesh, then
-:func:`pyvista.DataSetFilters.sample` is typically desired.
+:func:`pyvista.DataObjectFilters.sample` is typically desired.
 
 Here the two methods are compared and contrasted using a simple example of
 sampling data from a mesh in a rectangular domain. This example demonstrates the
@@ -100,7 +100,7 @@ pl.show()
 # While this filter is very useful for point clouds, it is possible to use
 # it to interpolate from the points on other mesh types. With
 # unstuitable choice of ``radius`` the interpolation doesn't look very good.
-# It is recommended consider using :func:`pyvista.DataSetFilters.sample` in a
+# It is recommended consider using :func:`pyvista.DataObjectFilters.sample` in a
 # case like this (see next section below). However, there may be cases with
 # non-point cloud meshes where :func:`pyvista.DataSetFilters.interpolate` is
 # still preferred.
@@ -120,7 +120,7 @@ pl.show()
 # ++++++++++++++++++++++++++++++++++++++
 # This example is in many ways the opposite of the prior one.
 # A mesh with cell connectivity that spans 2 dimensions is
-# sampled at discrete points using :func:`pyvista.DataSetFilters.sample`.
+# sampled at discrete points using :func:`pyvista.DataObjectFilters.sample`.
 # Importantly, the cell connectivity enables direct interpolation
 # inside the domain without needing distance or weighting parametization.
 #
@@ -160,7 +160,7 @@ pl.view_xy()
 pl.show()
 
 # %%
-# Instead of sampling onto a point cloud, :func:`pyvista.DataSetFilters.sample`
+# Instead of sampling onto a point cloud, :func:`pyvista.DataObjectFilters.sample`
 # can sample using other mesh types.  For example, sampling onto a rotated subset
 # of the grid.
 #
@@ -184,7 +184,7 @@ pl.show()
 
 # %%
 # Repeat the sphere interpolation example, but using
-# :func:`pyvista.DataSetFilters.sample`. This method
+# :func:`pyvista.DataObjectFilters.sample`. This method
 # is directly able to sample from the mesh in this case without
 # fiddling with distance weighting parameters.
 
