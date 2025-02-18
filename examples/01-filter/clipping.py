@@ -92,8 +92,8 @@ p.show()
 #
 # This option is available for :func:`pyvista.DataObjectFilters.clip`,
 # :func:`pyvista.DataObjectFilters.clip_box`, and
-# :func:`pyvista.DataObjectFilters.clip_surface`, but not available when clipping
-# by scalar in :func:`pyvista.DataObjectFilters.clip_scalar`.
+# :func:`pyvista.DataSetFilters.clip_surface`, but not available when clipping
+# by scalar in :func:`pyvista.DataSetFilters.clip_scalar`.
 
 # Input mesh
 mesh = pv.Wavelet()

@@ -1839,7 +1839,7 @@ class DataSetFilters(DataObjectFilters):
             .. note::
                This filter requires point scalars to determine region
                connectivity. If cell scalars are provided, they are first
-               converted to point scalars with :func:`cell_data_to_point_data`
+               converted to point scalars with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`
                before applying the filter. The converted point scalars are
                removed from the output after applying the filter.
 
