@@ -432,7 +432,7 @@ class DataObjectFilters:
         """Rotate mesh about the z-axis.
 
         .. note::
-            See also the notes at :func:`transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -760,7 +760,7 @@ class DataObjectFilters:
         ----------
         point : sequence[float], optional
             Point to rotate about.  Defaults to center of mesh at
-            :attr:`center <pyvista.DataSet.center>`.
+            :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
@@ -821,7 +821,7 @@ class DataObjectFilters:
         ----------
         point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
-            :attr:`center <pyvista.DataSet.center>`.
+            :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
@@ -882,7 +882,7 @@ class DataObjectFilters:
         ----------
         point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
-            :attr:`center <pyvista.DataSet.center>`.
+            :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
@@ -947,7 +947,7 @@ class DataObjectFilters:
 
         point : VectorLike[float], optional
             Point to rotate about.  Defaults to center of mesh at
-            :attr:`center <pyvista.DataSet.center>`.
+            :attr:`~pyvista.DataSet.center`.
 
         transform_all_input_vectors : bool, default: False
             When ``True``, all input vectors are
