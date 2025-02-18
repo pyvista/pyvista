@@ -29,6 +29,7 @@ from .errors import PyVistaFutureWarning as PyVistaFutureWarning
 from .errors import PyVistaPipelineError as PyVistaPipelineError
 from .errors import VTKVersionError as VTKVersionError
 from .filters import CompositeFilters as CompositeFilters
+from .filters import DataObjectFilters as DataObjectFilters
 from .filters import DataSetFilters as DataSetFilters
 from .filters import ImageDataFilters as ImageDataFilters
 from .filters import PolyDataFilters as PolyDataFilters
