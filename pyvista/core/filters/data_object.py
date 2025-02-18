@@ -307,8 +307,7 @@ class DataObjectFilters:
         """Rotate mesh about the x-axis.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -371,8 +370,7 @@ class DataObjectFilters:
         """Rotate mesh about the y-axis.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -434,8 +432,7 @@ class DataObjectFilters:
         """Rotate mesh about the z-axis.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform>` which is used by this filter
             under the hood.
 
         Parameters
@@ -499,8 +496,7 @@ class DataObjectFilters:
         """Rotate mesh about a vector.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -566,8 +562,7 @@ class DataObjectFilters:
         """Rotate mesh about a point with a rotation matrix or ``Rotation`` object.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -639,8 +634,7 @@ class DataObjectFilters:
         """Translate the mesh.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -696,8 +690,7 @@ class DataObjectFilters:
         """Scale the mesh.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -760,8 +753,7 @@ class DataObjectFilters:
         """Flip mesh about the x-axis.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -822,8 +814,7 @@ class DataObjectFilters:
         """Flip mesh about the y-axis.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -884,8 +875,7 @@ class DataObjectFilters:
         """Flip mesh about the z-axis.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
@@ -947,8 +937,7 @@ class DataObjectFilters:
         """Flip mesh about the normal.
 
         .. note::
-            See also the notes at :func:`transform()
-            <DataSetFilters.transform>` which is used by this filter
+            See also the notes at :func:`transform` which is used by this filter
             under the hood.
 
         Parameters
