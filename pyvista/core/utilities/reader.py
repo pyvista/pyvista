@@ -2144,7 +2144,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         )
         key = vtkStreaming.TIME_STEPS()
 
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
     def time_point_value(self, time_point):
@@ -2175,7 +2175,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
         )
         key = vtkStreaming.UPDATE_TIME_STEP()
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         return vtkinfo.Get(key)
 
     @property
@@ -2202,7 +2202,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
         )
         key = vtkStreaming.UPDATE_TIME_STEP()
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         vtkinfo.Set(key, time_value)
 
     def set_active_time_point(self, time_point):
@@ -3384,7 +3384,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
         )
         key = vtkStreaming.TIME_STEPS()
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
     def time_point_value(self, time_point):
