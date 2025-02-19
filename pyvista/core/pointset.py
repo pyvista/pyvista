@@ -243,7 +243,7 @@ class _PointSet(DataSet):
         )
 
 
-class PointSet(_PointSet, _vtk.vtkPointSet):
+class PointSet(_PointSet, _vtk.vtkPointSet):  # type: ignore[misc]
     """Concrete class for storing a set of points.
 
     This is a concrete class representing a set of points that specifies the
@@ -507,7 +507,7 @@ class PointSet(_PointSet, _vtk.vtkPointSet):
         raise PointSetCellOperationError
 
 
-class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):
+class PolyData(_PointSet, PolyDataFilters, _vtk.vtkPolyData):  # type: ignore[misc]
     """Dataset consisting of surface geometry (e.g. vertices, lines, and polygons).
 
     Can be initialized in several ways:
@@ -1749,7 +1749,7 @@ class PointGrid(_PointSet):
         return trisurf.plot_curvature(curv_type, **kwargs)
 
 
-class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):
+class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredGrid):  # type: ignore[misc]
     """Dataset used for arbitrary combinations of all possible cell types.
 
     Can be initialized by the following:
@@ -2085,7 +2085,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             )  # pragma: no cover
         faces = self.GetPolyhedronFaces()  # vtkCellArray
         if faces is None:
-            return np.array([], dtype=int)
+            return np.array([], dtype=int)  # type: ignore[unreachable]
         return convert_array(faces.GetData())
 
     @property
@@ -2125,7 +2125,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
             )  # pragma: no cover
         faces = self.GetPolyhedronFaceLocations()  # vtkCellArray
         if faces is None:
-            return np.array([], dtype=int)
+            return np.array([], dtype=int)  # type: ignore[unreachable]
         return convert_array(faces.GetData())
 
     @property
@@ -2383,7 +2383,7 @@ class UnstructuredGrid(PointGrid, UnstructuredGridFilters, _vtk.vtkUnstructuredG
         return grid
 
 
-class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
+class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):  # type: ignore[misc]
     """Dataset used for topologically regular arrays of data.
 
     Can be initialized in one of the following several ways:
@@ -2826,7 +2826,7 @@ class StructuredGrid(PointGrid, StructuredGridFilters, _vtk.vtkStructuredGrid):
         return array.reshape(cell_dims, order='F')
 
 
-class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):
+class ExplicitStructuredGrid(PointGrid, _vtk.vtkExplicitStructuredGrid):  # type: ignore[misc]
     """Extend the functionality of the ``vtk.vtkExplicitStructuredGrid`` class.
 
     Can be initialized by the following:
