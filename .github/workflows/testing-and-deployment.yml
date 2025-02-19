@@ -64,7 +64,7 @@ jobs:
           path: debug_images
 
   LinuxConda:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     if: false
     env:
       CONDA_ALWAYS_YES: 1
@@ -144,7 +144,7 @@ jobs:
 
   Linux:
     name: Linux Unit Testing
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
 
