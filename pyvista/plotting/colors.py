@@ -765,15 +765,18 @@ class Color:
         """
         if isinstance(val, str):
             # From hexadecimal value
-            val = int(Color.strip_hex_prefix(val), 16)
-        elif np.issubdtype(np.asarray(val).dtype, np.floating) and np.ndim(val) == 0:
-            # From float
-            val = int(round(255 * val))
-        if (
-            isinstance(val, int)
-            or (np.issubdtype(np.asarray(val).dtype, np.integer) and np.size(val) == 1)
-        ) and 0 <= val <= 255:
-            # From integer
+            return int(Color.strip_hex_prefix(val), 16)
+        elif isinstance(val, float):
+            return int(round(255 * val))
+        elif (isinstance(val, int) and 0 <= val <= 255) or isinstance(val, np.uint8):
+            return val
+        elif np.issubdtype(np.asanyarray(val).dtype, np.floating) and np.ndim(val) == 0:
+            return int(round(255 * val))
+        elif (
+            np.issubdtype(np.asanyarray(val).dtype, np.integer)
+            and np.ndim(val) == 0
+            and 0 <= val <= 255
+        ):
             return int(val)
         else:
             raise ValueError(f'Unsupported color channel value provided: {val}')
