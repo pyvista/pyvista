@@ -770,10 +770,9 @@ class Color:
             # From float
             val = int(round(255 * val))
         if (
-            np.issubdtype(np.asarray(val).dtype, np.integer)
-            and np.size(val) == 1
-            and 0 <= val <= 255
-        ):
+            isinstance(val, int)
+            or (np.issubdtype(np.asarray(val).dtype, np.integer) and np.size(val) == 1)
+        ) and 0 <= val <= 255:
             # From integer
             return int(val)
         else:
