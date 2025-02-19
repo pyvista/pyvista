@@ -742,7 +742,7 @@ class MultiBlock(
 
     def get_data_range(  # type: ignore[override]
         self: MultiBlock,
-        name: str,
+        name: str | None,
         allow_missing: bool = False,
         preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
@@ -750,8 +750,9 @@ class MultiBlock(
 
         Parameters
         ----------
-        name : str
-            Name of the array.
+        name : str, optional
+            The name of the array to get the range. If ``None``, the
+            active scalars are used.
 
         allow_missing : bool, default: False
             Allow a block to be missing the named array.
