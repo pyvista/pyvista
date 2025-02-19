@@ -231,9 +231,8 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         run: |
-          PYTEST_CMD="xvfb-run -s '-maxclients 2048' -a python -m pytest"
-
-          COMMON_ARGS="
+          PYTEST_CMD=(python -m pytest)
+          COMMON_ARGS=(
             -v
             --cov=pyvista
             --cov-append
@@ -241,17 +240,19 @@ jobs:
             --cov-branch
             --fail_extra_image_cache
             --generated_image_dir debug_images
-          "
-
+          )
+          
           # Run plotting tests, except for charts
-          $PYTEST_CMD \
+          xvfb-run -s '-maxclients 2048' -a "${PYTEST_CMD[@]}" \
             --ignore=tests/core \
             --ignore=tests/examples \
             --ignore=tests/plotting/test_charts.py \
-            $COMMON_ARGS
-
+            "${COMMON_ARGS[@]}"
+          
           # Run charts tests
-          $PYTEST_CMD tests/plotting/test_charts.py $COMMON_ARGS
+          xvfb-run -s '-maxclients 2048' -a "${PYTEST_CMD[@]}" \
+            tests/plotting/test_charts.py \
+            "${COMMON_ARGS[@]}"
 
       - name: Upload Generated Images
         if: always()
