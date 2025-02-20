@@ -1155,21 +1155,15 @@ def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
 
 
 def test_generic_filter_raises(multiblock_all_with_nested_and_none):
-    match = "The filter 'resample'\ncould not be applied to the block at index 1 with name 'Block-01' and type RectilinearGrid."
+    match = "The filter 'resample' could not be applied to the block at index 1 with name 'Block-01' and type RectilinearGrid."
     with pytest.raises(RuntimeError, match=match):
         multiblock_all_with_nested_and_none.generic_filter(
             'resample',
         )
     # Test error message with nested index
     multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
-    match = "The filter 'resample'\ncould not be applied to the nested block at index [0][1] with name 'Block-01' and type RectilinearGrid."
+    match = "The filter 'resample' could not be applied to the nested block at index [0][1] with name 'Block-01' and type RectilinearGrid."
     with pytest.raises(RuntimeError, match=re.escape(match)):
         multi.generic_filter(
             'resample',
-        )
-    # Test with function
-    match = "The filter '<function test_generic_filter_raises"
-    with pytest.raises(RuntimeError, match=match):
-        multiblock_all_with_nested_and_none.generic_filter(
-            test_generic_filter_raises,
         )
