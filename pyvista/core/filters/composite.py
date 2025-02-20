@@ -388,8 +388,8 @@ class CompositeFilters:
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
 
-    def transform(
-        self,
+    def transform(  # type: ignore[misc]
+        self: MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool | None = None,
