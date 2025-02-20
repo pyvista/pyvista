@@ -868,6 +868,10 @@ def test_to_polydata(multiblock_all_with_nested_and_none):
     dataset_b = nested_mblock.as_polydata_blocks()
     assert dataset_b.is_all_polydata
 
+    # Return True if empty
+    empty = pv.MultiBlock()
+    assert empty.is_all_polydata
+
 
 def test_as_unstructured_grid_blocks(multiblock_all_with_nested_and_none):
     multi = multiblock_all_with_nested_and_none
