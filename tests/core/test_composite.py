@@ -1183,3 +1183,22 @@ def test_generic_filter_raises(multiblock_all_with_nested_and_none):
         multiblock_all_with_nested_and_none.generic_filter(
             test_generic_filter_raises,
         )
+
+
+def test_is_homogeneous(multiblock_all_with_nested_and_none):
+    # Empty case
+    assert pv.MultiBlock().is_homogeneous is True
+
+    # Heterogeneous case
+    heterogeneous = multiblock_all_with_nested_and_none
+    assert heterogeneous.is_homogeneous is False
+
+    # Homogeneous case
+    homogeneous = multiblock_all_with_nested_and_none.as_polydata_blocks()
+    assert homogeneous.is_homogeneous
+    assert homogeneous.is_homogeneous is pv.PolyData
+
+    # None blocks only
+    homogeneous = pv.MultiBlock([pv.MultiBlock([None]), None])
+    assert homogeneous.is_homogeneous
+    assert homogeneous.is_homogeneous is type(None)
