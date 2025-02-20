@@ -41,13 +41,16 @@ class CompositeFilters:
 
         .. note::
 
-            The filter is not applied to any ``None`` blocks. These are simply skipped
-            and passed through to the output.
+            If an ``inplace`` keyword is used, this ``MultiBlock`` is modified
+            in-place along with all blocks.
 
         .. note::
 
-            If an ``inplace`` keyword is used, this ``MultiBlock`` is modified
-            in-place along with all blocks.
+            By default, the filter is not applied to any ``None`` blocks. These are
+            simply skipped and passed through to the output.
+
+            For advanced use, it is possible to apply the filter to ``None`` blocks
+            by using the undocumented keyword ``_skip_none=False``.
 
         .. versionadded:: 0.45
 
@@ -75,6 +78,12 @@ class CompositeFilters:
             Raised if the filter cannot be applied to any block for any reason. This
             overrides ``TypeError``, ``ValueError``, ``AttributeError`` errors when
             filtering.
+
+        See Also
+        --------
+        pyvista.MultiBlock.flatten
+        pyvista.MultiBlock.recursive_iterator
+        clean
 
         Examples
         --------
@@ -146,6 +155,10 @@ class CompositeFilters:
         >>> filtered = multi.generic_filter(conditional_resample, 0.5)
 
         """
+        # Skip None blocks by default
+        skip_none = kwargs.pop('_skip_none', True)
+        # Do not skip empty blocks by default
+        skip_empty = kwargs.pop('_skip_empty', False)
 
         def apply_filter(ids_, name_, block_):
             try:
@@ -157,7 +170,6 @@ class CompositeFilters:
                 output_ = func(**kwargs) if len(args) == 0 else func(*args, **kwargs)
             except (AttributeError, ValueError, TypeError, RuntimeError) as e:
                 # Construct a helpful error message
-                func_name = function if isinstance(function, str) else type(function).__name__
                 obj_name = type(block).__name__
                 if len(ids_) == 1:
                     index = ids_[0]
@@ -165,27 +177,33 @@ class CompositeFilters:
                 else:
                     nested = ' nested '
                     index = ''.join([f'[{id_}]' for id_ in ids_])
-                msg = f"The filter '{func_name}' could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
+                msg = (
+                    f"The filter '{function}'"
+                    f"\ncould not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
+                )
                 raise RuntimeError(msg) from e
             return output_
 
-        def get_iterator(multi):
+        def get_iterator(multi, skip_none_, skip_empty_):
             return multi.recursive_iterator(
-                'all', skip_none=True, skip_empty=False, nested_ids=True
+                'all', skip_none=skip_none_, skip_empty=skip_empty_, nested_ids=True
             )
 
         # Apply filter in-place
         inplace = kwargs.get('inplace')
         if inplace:
-            for ids, name, block in get_iterator(self):
+            for ids, name, block in get_iterator(self, skip_none, skip_empty):
                 apply_filter(ids, name, block)
             return self
 
         # Create a copy and replace all the blocks
         output = pyvista.MultiBlock()
         output.shallow_copy(self, recursive=True)
-        for ids, name, block in get_iterator(output):
-            output.replace(ids, apply_filter(ids, name, block))
+        for ids, name, block in get_iterator(output, skip_none, skip_empty):
+            filtered = apply_filter(ids, name, block)
+            # Only replace if necessary
+            if filtered is not block:
+                output.replace(ids, filtered)
         return output
 
     def extract_geometry(self):
