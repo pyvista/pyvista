@@ -77,7 +77,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@v3
+        uses: pyvista/setup-headless-display-action@v2
 
       - name: Cache Conda Packages
         uses: actions/cache@v4
@@ -145,6 +145,8 @@ jobs:
   Linux:
     name: Linux Unit Testing
     runs-on: ubuntu-20.04
+    env:
+      PYTEST_PLOTTING_ARGS: "-v --cov=pyvista --cov-append --cov-report=xml --cov-branch --fail_extra_image_cache --generated_image_dir debug_images"
     strategy:
       fail-fast: false
 
@@ -231,28 +233,16 @@ jobs:
 
       - name: Plotting Testing (uses GL)
         run: |
-          PYTEST_CMD=(python -m pytest)
-          COMMON_ARGS=(
-            -v
-            --cov=pyvista
-            --cov-append
-            --cov-report=xml
-            --cov-branch
-            --fail_extra_image_cache
-            --generated_image_dir debug_images
-          )
-          
-          # Run plotting tests, except for charts
-          xvfb-run -s '-maxclients 2048' -a "${PYTEST_CMD[@]}" \
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
             --ignore=tests/core \
             --ignore=tests/examples \
             --ignore=tests/plotting/test_charts.py \
-            "${COMMON_ARGS[@]}"
-          
-          # Run charts tests
-          xvfb-run -s '-maxclients 2048' -a "${PYTEST_CMD[@]}" \
-            tests/plotting/test_charts.py \
-            "${COMMON_ARGS[@]}"
+            $PYTEST_PLOTTING_ARGS
+
+      - name: Plotting Testing (charts only)
+        run: |
+          xvfb-run -s '-maxclients 2048' -a python -m pytest \
+            tests/plotting/test_charts.py $PYTEST_PLOTTING_ARGS
 
       - name: Upload Generated Images
         if: always()
@@ -309,7 +299,7 @@ jobs:
           cache: "pip"
 
       - name: Set up headless display
-        uses: pyvista/setup-headless-display-action@v3
+        uses: pyvista/setup-headless-display-action@v2
 
       - name: Install PyVista test dependencies
         run: pip install .[test]
