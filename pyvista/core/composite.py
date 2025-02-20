@@ -1841,7 +1841,7 @@ class MultiBlock(
         except StopIteration:
             # Empty, return ``True`` by default
             return True
-        first_block_type = cast(type[DataSet | None], type(first_block))
+        first_block_type = cast(type[Union[DataSet, None]], type(first_block))
         return (
             first_block_type
             if all(isinstance(block, first_block_type) for block in iterator)
