@@ -1110,3 +1110,60 @@ def test_flatten_copy(multiblock_all, copy):
     data_after = multi_out.field_data['foo']
     shares_memory = np.shares_memory(data_after, data_before)
     assert shares_memory == (not copy)
+
+
+@pytest.mark.parametrize(
+    'function', [lambda x: x.cast_to_unstructured_grid(), 'cast_to_unstructured_grid']
+)
+def test_generic_filter(multiblock_all_with_nested_and_none, function):
+    # Include empty mesh
+    empty_mesh = pv.PolyData()
+    multiblock_all_with_nested_and_none.append(empty_mesh)
+
+    output = multiblock_all_with_nested_and_none.generic_filter(function)
+    flat_output = output.flatten()
+    # Make sure no `None` blocks were removed
+    assert None in flat_output
+    # Check output
+    for block in flat_output:
+        assert isinstance(block, pv.UnstructuredGrid) or block is None
+
+
+@pytest.mark.parametrize('inplace', [True, False])
+def test_generic_filter_inplace(multiblock_all_with_nested_and_none, inplace):
+    # Include empty mesh
+    input_ = multiblock_all_with_nested_and_none
+    empty_mesh = pv.PolyData()
+    multiblock_all_with_nested_and_none.append(empty_mesh)
+    flat_inputs = multiblock_all_with_nested_and_none.flatten(copy=False)
+
+    output = multiblock_all_with_nested_and_none.generic_filter(
+        'extract_largest',
+        inplace=inplace,
+    )
+    flat_output = output.flatten(copy=False)
+
+    assert flat_inputs.n_blocks == flat_output.n_blocks
+    for block_in, block_out in zip(flat_inputs, flat_output):
+        assert ((block_in is block_out) == inplace) or block_out is None
+
+    # Test root MultiBlock
+    assert (input_ is output) == inplace
+    # Test nested MultiBlock container
+    assert isinstance(input_[6], pv.MultiBlock)
+    assert (input_[6] is output[6]) == inplace
+
+
+def test_generic_filter_raises(multiblock_all_with_nested_and_none):
+    match = "The filter 'resample' could not be applied to the block at index 1 with name 'Block-01' and type RectilinearGrid."
+    with pytest.raises(RuntimeError, match=match):
+        multiblock_all_with_nested_and_none.generic_filter(
+            'resample',
+        )
+    # Test error message with nested index
+    multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
+    match = "The filter 'resample' could not be applied to the nested block at index [0][1] with name 'Block-01' and type RectilinearGrid."
+    with pytest.raises(RuntimeError, match=re.escape(match)):
+        multi.generic_filter(
+            'resample',
+        )
