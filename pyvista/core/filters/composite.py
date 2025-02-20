@@ -46,8 +46,8 @@ class CompositeFilters:
 
         .. note::
 
-            By default, the filter is not applied to any ``None`` blocks. These are
-            simply skipped and passed through to the output.
+            By default, the specified ``function`` is not applied to any ``None``
+            blocks. These are simply skipped and passed through to the output.
 
             For advanced use, it is possible to apply the filter to ``None`` blocks
             by using the undocumented keyword ``_skip_none=False``.
@@ -83,7 +83,7 @@ class CompositeFilters:
         --------
         pyvista.MultiBlock.flatten
         pyvista.MultiBlock.recursive_iterator
-        clean
+        pyvista.MultiBlock.clean
 
         Examples
         --------
@@ -155,10 +155,17 @@ class CompositeFilters:
         >>> filtered = multi.generic_filter(conditional_resample, 0.5)
 
         """
-        # Skip None blocks by default
-        skip_none = kwargs.pop('_skip_none', True)
-        # Do not skip empty blocks by default
-        skip_empty = kwargs.pop('_skip_empty', False)
+        # Set default undocumented kwargs. A function is used here to prevent IDEs from
+        # suggesting these keywords to users.
+
+        def get_iterator_kwargs(kwargs_) -> tuple[bool, bool]:
+            # Skip None blocks by default
+            skip_none_: bool = kwargs_.pop('_skip_none', True)
+            # Do not skip empty blocks by default
+            skip_empty_: bool = kwargs_.pop('_skip_empty', False)
+            return skip_none_, skip_empty_
+
+        skip_none, skip_empty = get_iterator_kwargs(kwargs)
 
         def apply_filter(ids_, name_, block_):
             try:

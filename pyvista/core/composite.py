@@ -181,8 +181,8 @@ class MultiBlock(
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
         order: Literal['nested_first', 'nested_last'] | None = None,
         *,
-        skip_none: bool = True,
-        skip_empty: bool = True,
+        skip_none: bool = False,
+        skip_empty: bool = False,
         nested_ids: bool | None = None,
         prepend_names: bool = False,
         separator: str = '::',
@@ -220,11 +220,11 @@ class MultiBlock(
             By default, the ``MultiBlock`` is iterated recursively as-is without
             changing the order.
 
-        skip_none : bool, default: True
-            Do not include ``None`` blocks in the iterator.
+        skip_none : bool, default: False
+            If ``True``, do not include ``None`` blocks in the iterator.
 
-        skip_empty : bool, default: True
-            Do not include empty meshes in the iterator.
+        skip_empty : bool, default: False
+            If ``True``, do not include empty meshes in the iterator.
 
         nested_ids : bool, default: True
             Prepend parent block indices to the child block indices. If ``True``, a
@@ -248,8 +248,11 @@ class MultiBlock(
         See Also
         --------
         flatten
+            Uses the iterator internally to flatten a :class:`MultiBlock`.
         pyvista.CompositeFilters.generic_filter
+            Uses the iterator internally to apply filters to all blocks.
         clean
+            Remove ``None`` and/or empty mesh blocks.
 
         Examples
         --------
@@ -276,8 +279,8 @@ class MultiBlock(
         >>> len(list(iterator))
         59
 
-        By default, ``None`` blocks are excluded and all items are :class:`~pyvista.DataSet`
-        objects. Empty meshes are also excluded by default.
+        Check if all blocks are class:`~pyvista.DataSet` objects. Note that ``None``
+        blocks are included by default, so this may not be ``True`` in all cases.
 
         >>> all(isinstance(item, pv.DataSet) for item in multi.recursive_iterator())
         True
@@ -1727,6 +1730,11 @@ class MultiBlock(
         pyvista.MultiBlock
             MultiBlock containing only :class:`pyvista.PolyData` datasets.
 
+        See Also
+        --------
+        is_all_polydata
+        as_unstructured_grid_blocks
+
         Notes
         -----
         Null blocks are converted to empty :class:`pyvista.PolyData`
@@ -1766,6 +1774,10 @@ class MultiBlock(
         MultiBlock
             MultiBlock containing only :class:`~pyvista.UnstructuredGrid` datasets.
 
+        See Also
+        --------
+        as_polydata_blocks
+
         Notes
         -----
         Null blocks are converted to empty :class:`~pyvista.UnstructuredGrid`
@@ -1800,14 +1812,41 @@ class MultiBlock(
             Return ``True`` when all blocks are :class:`pyvista.PolyData`.
 
         """
-        for block in self:
-            if isinstance(block, MultiBlock):
-                if not block.is_all_polydata:
-                    return False
-            elif not isinstance(block, pyvista.PolyData):
-                return False
+        block_type = self.is_homogeneous
+        return block_type is True or block_type is pyvista.PolyData
 
-        return True
+    @property
+    def is_homogeneous(self: MultiBlock) -> type[DataSet | None] | bool:
+        """Return the type of all blocks when all the blocks have the same type.
+
+        The type(s) of all blocks are recursively checked. If all blocks have the same
+        type, that type is returned. Otherwise, ``False`` is returned. If the
+        ``MultiBlock`` is empty (i.e. has no :class:`~pyvista.DataSet` or ``None``
+        blocks), then ``True`` is returned by default.
+
+        .. note::
+            The output value is not strictly a ``bool`` since it may return a type.
+            But, the value is nevertheless "truthy" and can be used like a boolean.
+
+        Returns
+        -------
+        bool | type[DataSet] | NoneType
+            Return ``True`` if empty, the block type if homogeneous, and ``False``
+            otherwise.
+
+        """
+        iterator = self.recursive_iterator('blocks')
+        try:
+            first_block = next(iterator)
+        except StopIteration:
+            # Empty, return ``True`` by default
+            return True
+        first_block_type = cast(type[DataSet | None], type(first_block))
+        return (
+            first_block_type
+            if all(isinstance(block, first_block_type) for block in iterator)
+            else False
+        )
 
     def _activate_plotting_scalars(
         self: MultiBlock,
