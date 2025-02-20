@@ -744,7 +744,7 @@ class Color:
 
     @staticmethod
     def convert_color_channel(
-        val: float | np.floating[Any] | str,
+        val: float | np.floating[Any] | np.integer[Any] | str,
     ) -> int:
         """Convert the given color channel value to the integer representation.
 
@@ -769,8 +769,10 @@ class Color:
         elif isinstance(val, float):
             val = int(round(255 * val))
 
-        if (isinstance(val, int) and 0 <= val <= 255) or isinstance(val, np.uint8):
-            return val
+        if isinstance(val, int) and 0 <= val <= 255:
+            return val  # type: ignore[return-value]
+        elif isinstance(val, np.uint8):
+            return int(val)
         elif np.issubdtype(np.asanyarray(val).dtype, np.floating) and np.ndim(val) == 0:
             return int(round(255 * val))
         elif (
