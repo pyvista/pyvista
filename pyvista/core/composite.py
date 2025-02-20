@@ -40,6 +40,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import Literal
 
+    from pyvista import PolyData
+
     from ._typing_core import NumpyArray
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
@@ -1741,7 +1743,7 @@ class MultiBlock(
         """
 
         # Define how to process each block
-        def block_filter(block: DataSet | None) -> DataSet:
+        def block_filter(block: DataSet | None) -> PolyData:
             if block is None:
                 return pyvista.PolyData()
             elif isinstance(block, pyvista.PointSet):
