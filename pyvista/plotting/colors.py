@@ -765,10 +765,11 @@ class Color:
         """
         if isinstance(val, str):
             # From hexadecimal value
-            return int(Color.strip_hex_prefix(val), 16)
+            val = int(Color.strip_hex_prefix(val), 16)
         elif isinstance(val, float):
-            return int(round(255 * val))
-        elif (isinstance(val, int) and 0 <= val <= 255) or isinstance(val, np.uint8):
+            val = int(round(255 * val))
+
+        if (isinstance(val, int) and 0 <= val <= 255) or isinstance(val, np.uint8):
             return val
         elif np.issubdtype(np.asanyarray(val).dtype, np.floating) and np.ndim(val) == 0:
             return int(round(255 * val))
