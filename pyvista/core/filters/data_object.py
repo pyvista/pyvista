@@ -1,4 +1,4 @@
-"""Filters module with a class of common filters that can be applied to any vtkDataSet."""
+"""A set of common filters that can be applied to any DataSet or MultiBlock."""
 
 from __future__ import annotations
 
