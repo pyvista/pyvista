@@ -4,6 +4,7 @@ from collections import UserDict
 import json
 import multiprocessing
 import pickle
+import re
 
 import numpy as np
 import pytest
@@ -355,3 +356,14 @@ def test_pickle_invalid_format(sphere):
     pv.PICKLE_FORMAT = 'invalid_format'
     with pytest.raises(ValueError, match=match):
         pickle.dumps(sphere)
+
+
+def test_save_raises_no_writers(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(pv.PolyData, '_WRITERS', None)
+    with pytest.raises(
+        NotImplementedError,
+        match=re.escape(
+            'PolyData writers are not specified, this should be a dict of (file extension: vtkWriter type)'
+        ),
+    ):
+        pv.Sphere().save('foo.vtp')

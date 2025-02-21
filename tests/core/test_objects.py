@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pytest
 import vtk
 
 import pyvista as pv
 from pyvista import examples
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 try:
     import pandas as pd
@@ -213,3 +218,12 @@ def test_get_data_range():
     nanmin, nanmax = table.get_data_range()
     assert nanmin == np.nanmin(arrays[:, 0])
     assert nanmax == np.nanmax(arrays[:, 0])
+
+
+def test_from_dict_raises(mocker: MockerFixture):
+    m = mocker.MagicMock()
+    m.ndim = 1
+    with pytest.raises(
+        ValueError, match='Dictionary must contain only NumPy arrays with maximum of 2D.'
+    ):
+        pv.Table(dict(a=m))
