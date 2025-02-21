@@ -1559,8 +1559,8 @@ class Transform(_vtk.vtkTransform):
 
         >>> transformed = transform.apply(dataset, inverse=True)
         >>> transformed.points
-        pyvista_ndarray([[0.5, 1. , 1.5],
-                         [2. , 2.5, 3. ]])
+        pyvista_ndarray([[0.5, 1. , 1. ],
+                         [2. , 2.5, 2.5]])
 
         """
         _validation.check_contains(
