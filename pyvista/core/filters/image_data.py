@@ -1066,8 +1066,8 @@ class ImageDataFilters(DataSetFilters):
 
         .. note::
 
-            The implementation of this filter computes all boundary contours
-            by default and then removes any undesired boundary cells in post-processing.
+            This filter's implementation computes all boundary contours by default and
+            then removes any undesired boundary cells in post-processing.
             This improves the quality of the output, but can negatively affect the
             filter's performance. Use ``fast_mode=True`` to avoid computing internal
             boundaries altogether and improve the filter's performance.
