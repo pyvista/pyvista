@@ -147,17 +147,19 @@ class CompositeFilters:
 
         """
 
-        def apply_filter(ids_, name_, block_):
+        def apply_filter(function_, ids_, name_, block_):
             try:
-                func = (
-                    getattr(block_, function)
-                    if isinstance(function, str)
-                    else functools.partial(function, block_)
+                function_ = (
+                    getattr(block_, function_)
+                    if isinstance(function_, str)
+                    else functools.partial(function_, block_)
                 )
-                output_ = func(**kwargs) if len(args) == 0 else func(*args, **kwargs)
+                output_ = function_(**kwargs) if len(args) == 0 else function_(*args, **kwargs)
             except (AttributeError, ValueError, TypeError, RuntimeError) as e:
                 # Construct a helpful error message
-                func_name = function if isinstance(function, str) else type(function).__name__
+                func_name = (
+                    function_.func if isinstance(function_, functools.partial) else function_
+                )
                 obj_name = type(block).__name__
                 if len(ids_) == 1:
                     index = ids_[0]
@@ -165,7 +167,10 @@ class CompositeFilters:
                 else:
                     nested = ' nested '
                     index = ''.join([f'[{id_}]' for id_ in ids_])
-                msg = f"The filter '{func_name}' could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
+                msg = (
+                    f"The filter '{func_name}'\n"
+                    f"could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
+                )
                 raise RuntimeError(msg) from e
             return output_
 
@@ -178,14 +183,14 @@ class CompositeFilters:
         inplace = kwargs.get('inplace')
         if inplace:
             for ids, name, block in get_iterator(self):
-                apply_filter(ids, name, block)
+                apply_filter(function, ids, name, block)
             return self
 
         # Create a copy and replace all the blocks
         output = pyvista.MultiBlock()
         output.shallow_copy(self, recursive=True)
         for ids, name, block in get_iterator(output):
-            output.replace(ids, apply_filter(ids, name, block))
+            output.replace(ids, apply_filter(function, ids, name, block))
         return output
 
     def extract_geometry(self):
