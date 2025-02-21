@@ -1019,6 +1019,7 @@ class ImageDataFilters(DataSetFilters):
         select_outputs: int | VectorLike[int] | None = None,
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
+        fast_mode: bool = False,
         scalars: str | None = None,
         compute_normals: bool = True,
         simplify_output: bool | None = None,
@@ -1058,10 +1059,17 @@ class ImageDataFilters(DataSetFilters):
 
             E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
-
         By default, this filter returns ``'external'`` contours only. Optionally,
-        only the ``'internal`'' contours or ``'all'`` contours (i.e. internal and
+        only the ``'internal'`` contours or ``'all'`` contours (i.e. internal and
         external) may be returned.
+
+        .. note::
+
+            The implementation of this filter computes all boundary contours
+            by default and then removes any undesired boundary cells in post-processing.
+            This improves the quality of the output, but can negatively affect the
+            filter's performance. Use ``fast_mode=True`` to avoid computing internal
+            boundaries altogether and improve the filter's performance.
 
         .. note::
 
@@ -1133,6 +1141,12 @@ class ImageDataFilters(DataSetFilters):
             otherwise. The mesh type can be forced to be triangles or quads; however,
             if smoothing is enabled and the type is ``'quads'``, the generated quads
             may not be planar.
+
+        fast_mode: bool, default: False
+            Set this to ``True`` to generate external contours quickly. This can
+            substantially reduce computation times but will generate jagged, non-smooth
+            boundaries between labels. This option is only available if no inputs or
+            outputs are selected and if only external contours are generated.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars. If cell
@@ -1386,6 +1400,15 @@ class ImageDataFilters(DataSetFilters):
         >>> surf = image.contour_labels(smoothing_scale=0.5)
         >>> labels_plotter(surf, zoom=1.5).show()
 
+        Use ``fast_mode`` to compute the contours more quickly. Note that this
+        produces jagged and non-smooth boundaries between labels, which may not be
+        desirable. Also note how the top of the surface is perfectly flat compared
+        to the default output (see first example above) since fast mode ignores the
+        effects of all internal boundaries.
+
+        >>> surf = image.contour_labels(fast_mode=True)
+        >>> labels_plotter(surf, zoom=1.5).show()
+
         """
         temp_scalars_name = '_PYVISTA_TEMP'
 
@@ -1545,12 +1568,18 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        _configure_boundaries(
-            alg,
-            cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
-            select_inputs,
-            select_outputs,
-        )
+        if fast_mode:
+            if select_inputs is not None or select_outputs is not None:
+                raise TypeError('Selecting inputs and/or outputs is not supported by `fast_mode`.')
+            if boundary_style != 'external':
+                raise ValueError('Only external boundaries are supported by `fast_mode`.')
+        else:
+            _configure_boundaries(
+                alg,
+                cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
+                select_inputs,
+                select_outputs,
+            )
         _configure_smoothing(
             alg,
             alg_input.spacing,
@@ -1584,7 +1613,7 @@ class ImageDataFilters(DataSetFilters):
                 # Mesh may also have non-zero points but this is cleaned later
                 output.cell_data[VTK_NAME] = np.empty((0, 0))
             output.rename_array(VTK_NAME, PV_NAME)
-            if boundary_style in ['external', 'internal']:
+            if boundary_style in ['external', 'internal'] and not fast_mode:
                 # Output contains all boundary cells, need to remove cells we don't want
                 is_external = np.any(labels_array == background_value, axis=1)
                 remove = is_external if boundary_style == 'internal' else ~is_external

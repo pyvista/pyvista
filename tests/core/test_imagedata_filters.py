@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import operator
 import re
+import time
 
 import numpy as np
 import pytest
@@ -369,6 +370,28 @@ def test_contour_labels_cell_data(channels):
     voxel_surface_extracted = channels.extract_values(ranges=[1, 4]).extract_surface()
 
     assert voxel_surface_contoured.n_cells == voxel_surface_extracted.n_cells
+
+
+@pytest.mark.needs_vtk_version(9, 3, 0)
+def test_contour_labels_fast_mode(channels):
+    start = time.perf_counter()
+    channels.contour_labels(fast_mode=False, compute_normals=False)
+    time_slow = time.perf_counter() - start
+
+    start = time.perf_counter()
+    channels.contour_labels(fast_mode=True, compute_normals=False)
+    time_fast = time.perf_counter() - start
+    assert time_fast < time_slow / 2
+
+    match = 'Only external boundaries are supported by `fast_mode`.'
+    with pytest.raises(ValueError, match=match):
+        channels.contour_labels('internal', fast_mode=True)
+
+    match = 'Selecting inputs and/or outputs is not supported by `fast_mode`.'
+    with pytest.raises(TypeError, match=match):
+        channels.contour_labels(fast_mode=True, select_inputs=[0])
+    with pytest.raises(TypeError, match=match):
+        channels.contour_labels(fast_mode=True, select_outputs=[0])
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
