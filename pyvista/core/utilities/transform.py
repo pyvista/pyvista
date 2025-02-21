@@ -1435,30 +1435,30 @@ class Transform(_vtk.vtkTransform):
         self: Transform,
         obj: VectorLike[float] | MatrixLike[float],
         /,
+        mode: Literal['points', 'vectors'] | None = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-        transform_all_input_vectors: bool = ...,
     ) -> NumpyArray[float]: ...
     @overload
     def apply(
         self: Transform,
         obj: ConcreteDataSetType,
         /,
+        mode: Literal['all_vectors'] | None = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-        transform_all_input_vectors: bool = ...,
     ) -> ConcreteDataSetType: ...
     @overload
     def apply(
         self: Transform,
         obj: MultiBlock,
         /,
+        mode: Literal['all_vectors'] | None = ...,
         *,
         inverse: bool = ...,
         copy: bool = ...,
-        transform_all_input_vectors: bool = ...,
     ) -> MultiBlock: ...
     def apply(
         self: Transform,
