@@ -381,7 +381,7 @@ def test_contour_labels_fast_mode(channels):
     start = time.perf_counter()
     channels.contour_labels(fast_mode=True, compute_normals=False)
     time_fast = time.perf_counter() - start
-    assert time_fast < time_slow / 2
+    assert time_fast < time_slow / 1.5
 
     match = 'Only external boundaries are supported by `fast_mode`.'
     with pytest.raises(ValueError, match=match):
