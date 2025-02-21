@@ -1627,13 +1627,15 @@ class ImageDataFilters(DataSetFilters):
             )
 
         if orient_faces and output.n_cells > 0:
+            # Orient the faces but discard the normals array
             output.compute_normals(
-                cell_normals=False,
+                cell_normals=True,
                 point_normals=False,
                 consistent_normals=True,
                 auto_orient_normals=True,
                 inplace=True,
             )
+            del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
