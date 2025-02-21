@@ -1405,7 +1405,7 @@ class ImageDataFilters(DataSetFilters):
         produces jagged and non-smooth boundaries between labels, which may not be
         desirable. Also note how the top of the surface is perfectly flat compared
         to the default output (see first example above) since fast mode ignores the
-        effects of all internal boundaries.
+        smoothing effects of all internal boundaries.
 
         >>> surf = image.contour_labels(fast_mode=True)
         >>> labels_plotter(surf, zoom=1.5).show()
