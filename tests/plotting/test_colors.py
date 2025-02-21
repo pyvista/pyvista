@@ -116,6 +116,7 @@ def test_color_invalid_opacity(opacity):
         (300, 0, 0),
         (0, -10, 0),
         (0, 0, 1.5),
+        np.array((0, 0, 1.5), dtype=np.float16),
         (-0.5, 0, 0),
         (0, 0),
         '#hh0000',

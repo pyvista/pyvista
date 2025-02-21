@@ -763,21 +763,27 @@ class Color:
             ``0`` and ``255``).
 
         """
+        # Check for numpy inputs to avoid unnecessary calls to np.issubdtype
+        arr = None
+        if isinstance(val, (np.ndarray, np.generic)):
+            arr = np.asanyarray(val)
+
+        # Convert non-integers to int
         if isinstance(val, str):
             # From hexadecimal value
             val = int(Color.strip_hex_prefix(val), 16)
-        elif isinstance(val, float):
+        elif isinstance(val, float) or (
+            arr is not None and np.issubdtype(arr.dtype, np.floating) and arr.ndim == 0
+        ):
             val = int(round(255 * val))
 
+        # Check integers
         if isinstance(val, int) and 0 <= val <= 255:
             return val  # type: ignore[return-value]
-        elif isinstance(val, np.uint8):
-            return int(val)
-        elif np.issubdtype(np.asanyarray(val).dtype, np.floating) and np.ndim(val) == 0:
-            return int(round(255 * val))
-        elif (
-            np.issubdtype(np.asanyarray(val).dtype, np.integer)
-            and np.ndim(val) == 0
+        elif isinstance(val, np.uint8) or (
+            arr is not None
+            and np.issubdtype(arr.dtype, np.integer)
+            and arr.ndim == 0
             and 0 <= val <= 255
         ):
             return int(val)
