@@ -884,6 +884,7 @@ class ImageDataFilters(DataSetFilters):
                     pad_background=False,  # old filter generates open surfaces at input edges
                     compute_normals=False,  # old filter does not compute normals
                     simplify_output=False,  # old filter returns multi-component scalars
+                    fast_mode=True,  # old filter uses a fast implementation by default
                 )
 
         Parameters
