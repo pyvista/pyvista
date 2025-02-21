@@ -1020,7 +1020,7 @@ class ImageDataFilters(DataSetFilters):
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
-        compute_normals: bool = True,
+        orient_faces: bool = True,
         simplify_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
@@ -1140,12 +1140,16 @@ class ImageDataFilters(DataSetFilters):
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
 
-        compute_normals : bool, default: True
-            Compute point and cell normals for the contoured output using
-            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
-            enabled by default. If ``False``, the generated polygons may have
-            inconsistent ordering and orientation (and may negatively impact
-            the shading used for rendering).
+        orient_faces : bool, default: True
+            Orient the faces of the generated contours so that they have consistent
+            ordering and face outward. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation, which can negatively impact
+            downstream calculations and the shading used for rendering.
+
+            .. note::
+
+                Orienting the faces can be computationally expensive for large meshes.
+                Consider disabling this option to improve this filter's performance.
 
             .. warning::
 
@@ -1622,8 +1626,14 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
-        if compute_normals and output.n_cells > 0:
-            output.compute_normals(auto_orient_normals=True, inplace=True)
+        if orient_faces and output.n_cells > 0:
+            output.compute_normals(
+                cell_normals=False,
+                point_normals=False,
+                consistent_normals=True,
+                auto_orient_normals=True,
+                inplace=True,
+            )
         return output
 
     def points_to_cells(  # type: ignore[misc]

@@ -1896,6 +1896,12 @@ class PolyDataFilters(DataSetFilters):
         See :ref:`surface_normal_example` for more examples using this filter.
 
         """
+        if (self.n_verts + self.n_lines) == self.n_cells:  # type: ignore[attr-defined]
+            raise TypeError(
+                'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
+                'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).',
+            )
+
         # track original point indices
         if split_vertices:
             self.point_data.set_array(  # type: ignore[attr-defined]
@@ -1916,19 +1922,7 @@ class PolyDataFilters(DataSetFilters):
         _update_alg(normal, progress_bar, 'Computing Normals')
 
         mesh = _get_output(normal)
-        try:
-            mesh['Normals']
-        except KeyError:
-            if (self.n_verts + self.n_lines) == self.n_cells:  # type: ignore[attr-defined]
-                raise TypeError(
-                    'Normals cannot be computed for PolyData containing only vertex cells (e.g. point clouds)\n'
-                    'and/or line cells. The PolyData cells must be polygons (e.g. triangle cells).',
-                )
-            else:  # pragma: no cover
-                raise RuntimeError(
-                    'Normals could not be computed for unknown reasons.\n'
-                    'Please report the issue at https://github.com/pyvista/pyvista/issues.',
-                )
+
         if point_normals:
             mesh.GetPointData().SetActiveNormals('Normals')
         if cell_normals:
