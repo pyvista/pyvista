@@ -1526,15 +1526,15 @@ class Transform(_vtk.vtkTransform):
         >>> import pyvista as pv
         >>> point = (1.0, 2.0, 3.0)
         >>> transform = pv.Transform().scale(2).translate((0.0, 0.0, 1.0))
-        >>> transformed_point = transform.apply(point)
-        >>> transformed_point
+        >>> transformed = transform.apply(point)
+        >>> transformed
         array([2., 4., 7.])
 
         Apply a transformation to a points array.
 
         >>> array = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-        >>> transformed_points = transform.apply(array)
-        >>> transformed_points
+        >>> transformed = transform.apply(array)
+        >>> transformed
         array([[ 2.,  4.,  7.],
                [ 8., 10., 13.]])
 
@@ -1542,23 +1542,23 @@ class Transform(_vtk.vtkTransform):
         use the ``'vectors'`` mode. Note how the translation component is not applied
         to vectors.
 
-        >>> transformed_vectors = transform.apply(array, 'vectors')
-        >>> transformed_vectors
+        >>> transformed = transform.apply(array, 'vectors')
+        >>> transformed
         array([[ 2.,  4.,  6.],
                [ 8., 10., 12.]])
 
         Apply a transformation to a dataset.
 
         >>> dataset = pv.PolyData(array)
-        >>> transformed_dataset = transform.apply(dataset)
-        >>> transformed_dataset.points
+        >>> transformed = transform.apply(dataset)
+        >>> transformed.points
         pyvista_ndarray([[ 2.,  4.,  6.],
                          [ 8., 10., 12.]])
 
         Apply the inverse.
 
-        >>> inverted_dataset = transform.apply(dataset, inverse=True)
-        >>> inverted_dataset.points
+        >>> transformed = transform.apply(dataset, inverse=True)
+        >>> transformed.points
         pyvista_ndarray([[0.5, 1. , 1.5],
                          [2. , 2.5, 3. ]])
 
