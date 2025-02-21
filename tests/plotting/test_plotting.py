@@ -4664,7 +4664,7 @@ def test_contour_labels_boundary_style(
     fixed_kwargs = dict(
         smoothing_distance=0.3,
         output_mesh_type='quads',
-        compute_normals=False,
+        orient_faces=False,
         simplify_output=False,
     )
 
