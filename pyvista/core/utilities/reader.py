@@ -2145,7 +2145,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         )
         key = vtkStreaming.TIME_STEPS()
 
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
     def time_point_value(self, time_point):
@@ -2176,7 +2176,7 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
         )
         key = vtkStreaming.UPDATE_TIME_STEP()
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         return vtkinfo.Get(key)
 
     @property
@@ -2203,10 +2203,8 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
         )
         key = vtkStreaming.UPDATE_TIME_STEP()
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         vtkinfo.Set(key, time_value)
-
-        self.reader.Update()
 
     def set_active_time_point(self, time_point):
         """Set active time or iteration by index.
@@ -3174,7 +3172,6 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
         """
         self.reader.SetApplyDisplacements(True)
         self.reader.SetDisplacementMagnitude(displacement_magnitude)
-        self.reader.Update()
 
     def disable_displacements(self):
         """Nodal positions are not 'displaced'."""
@@ -3389,7 +3386,7 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
             'vtkCommonExecutionModel', 'vtkStreamingDemandDrivenPipeline'
         )
         key = vtkStreaming.TIME_STEPS()
-        vtkinfo = self.reader.GetExecutive().GetOutputInformation(0)
+        vtkinfo = self.reader.GetOutputInformation(0)
         return [vtkinfo.Get(key, i) for i in range(self.number_time_points)]
 
     def time_point_value(self, time_point):
@@ -3445,7 +3442,6 @@ class ExodusIIReader(BaseReader, PointCellDataSelection, TimeReader):
 
         """
         self.reader.SetTimeStep(time_point)
-        self.reader.Update()
 
 
 class ExodusIIBlockSet:
