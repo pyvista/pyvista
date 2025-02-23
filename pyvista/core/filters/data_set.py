@@ -5969,7 +5969,61 @@ class DataSetFilters:
         >>> point_cloud.plot(**plot_kwargs)
 
         """
+        validated = self._validate_extract_values(
+            values=values,
+            ranges=ranges,
+            scalars=scalars,
+            preference=preference,
+            component_mode=component_mode,
+            split=split,
+        )
+        if isinstance(validated, dict):
+            valid_values = validated.pop('values')
+            valid_ranges = validated.pop('ranges')
+            value_names = validated.pop('value_names')
+            range_names = validated.pop('range_names')
+        else:
+            # Return empty dataset
+            return validated
 
+        # Set default for include cells
+        if include_cells is None:
+            include_cells = self.n_cells > 0
+
+        kwargs = dict(
+            **validated,
+            adjacent_cells=adjacent_cells,
+            include_cells=include_cells,
+            pass_point_ids=pass_point_ids,
+            pass_cell_ids=pass_cell_ids,
+            progress_bar=progress_bar,
+            invert=invert,
+        )
+
+        if split:
+            return self._split_values(
+                values=valid_values,
+                ranges=valid_ranges,
+                value_names=value_names,
+                range_names=range_names,
+                **kwargs,
+            )
+
+        return self._extract_values(
+            values=valid_values,
+            ranges=valid_ranges,
+            **kwargs,
+        )
+
+    def _validate_extract_values(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        values,
+        ranges,
+        scalars,
+        preference,
+        component_mode,
+        split,
+    ):
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
             scalars_ = set_default_active_scalars(self).name if scalars_ is None else scalars_
@@ -6102,47 +6156,30 @@ class DataSetFilters:
             component_mode,
         )
 
-        # Set default for include cells
-        if include_cells is None:
-            include_cells = self.n_cells > 0
-
-        kwargs = dict(
+        return dict(
+            values=valid_values,
+            ranges=valid_ranges,
+            value_names=value_names,
+            range_names=range_names,
             array=array,
             association=association,
             component_logic=component_logic,
-            invert=invert,
-            adjacent_cells=adjacent_cells,
-            include_cells=include_cells,
-            pass_point_ids=pass_point_ids,
-            pass_cell_ids=pass_cell_ids,
-            progress_bar=progress_bar,
         )
 
-        if split:
-            multi = pyvista.MultiBlock()
-            # Split values and ranges separately and combine into single multiblock
-            if values is not None:
-                value_names = value_names if value_names else [None] * len(valid_values)
-                for (
-                    name,
-                    val,
-                ) in zip(value_names, valid_values):
-                    multi.append(self._extract_values(values=[val], **kwargs), name)
-            if ranges is not None:
-                range_names = range_names if range_names else [None] * len(valid_ranges)
-                for (
-                    name,
-                    rng,
-                ) in zip(range_names, valid_ranges):
-                    multi.append(self._extract_values(ranges=[rng], **kwargs), name)
-            return multi
-
-        return DataSetFilters._extract_values(
-            self,
-            values=valid_values,
-            ranges=valid_ranges,
-            **kwargs,
-        )
+    def _split_values(  # type:ignore[misc]
+        self: ConcreteDataSetType, values, ranges, value_names, range_names, **kwargs
+    ):
+        # Split values and ranges separately and combine into single multiblock
+        multi = pyvista.MultiBlock()
+        if values is not None:
+            value_names = value_names if value_names else [None] * len(values)
+            for name, val in zip(value_names, values):
+                multi.append(self._extract_values(values=[val], **kwargs), name)
+        if ranges is not None:
+            range_names = range_names if range_names else [None] * len(ranges)
+            for name, rng in zip(range_names, ranges):
+                multi.append(self._extract_values(ranges=[rng], **kwargs), name)
+        return multi
 
     def _extract_values(  # type: ignore[misc]
         self: ConcreteDataSetType,
