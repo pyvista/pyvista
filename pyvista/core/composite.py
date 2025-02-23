@@ -1742,19 +1742,27 @@ class MultiBlock(
         MultiBlocks with null blocks.
 
         """
+        # we make a shallow copy here to avoid modifying the original dataset
+        dataset = self.copy(deep=False)
 
-        # Define how to process each block
-        def block_filter(block: DataSet | None) -> DataSet:
-            if block is None:
-                return pyvista.PolyData()
-            elif isinstance(block, pyvista.PointSet):
-                return block.cast_to_polydata(deep=True)
-            elif isinstance(block, pyvista.PolyData):
-                return block.copy(deep=False) if copy else block
+        # Loop through the multiblock and convert to polydata
+        for i, block in enumerate(dataset):
+            if block is not None:
+                if isinstance(block, MultiBlock):
+                    dataset.replace(i, block.as_polydata_blocks(copy=copy))
+                elif isinstance(block, pyvista.PointSet):
+                    dataset.replace(i, block.cast_to_polydata(deep=True))
+                elif not isinstance(block, pyvista.PolyData):
+                    dataset.replace(i, block.extract_surface())
+                elif copy:
+                    # dataset is a PolyData
+                    dataset.replace(i, block.copy(deep=False))
             else:
-                return block.extract_surface()  # type: ignore[misc]
+                # must have empty polydata within these datasets as some
+                # downstream filters don't work on null pointers (i.e. None)
+                dataset[i] = pyvista.PolyData()
 
-        return self.generic_filter(block_filter, _skip_none=False)
+        return dataset
 
     def as_unstructured_grid_blocks(
         self: MultiBlock, copy: bool | Literal['deep', 'shallow'] = False
