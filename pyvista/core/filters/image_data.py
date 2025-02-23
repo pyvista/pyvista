@@ -3508,6 +3508,7 @@ class ImageDataFilters(DataSetFilters):
             | dict[tuple[float, float], str]
         ) = None,
         fill_value: float = 0,
+        replacement_value: float | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
@@ -3563,6 +3564,12 @@ class ImageDataFilters(DataSetFilters):
             Value used to fill the image. Non-selected parts of the image will have
             this value.
 
+        replacement_value : float, optional
+            Replacement value for the output array. If provided, selected values will
+            be replaced with the given value. If no value is given, the selected values
+            are retained and returned as-is. Setting this value is useful for
+            generating a binarized output array.
+
         scalars : str, optional
             Name of scalars to select from. Defaults to currently active scalars.
 
@@ -3613,7 +3620,7 @@ class ImageDataFilters(DataSetFilters):
 
         Examples
         --------
-        Load a CT medical image. Here we load :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
+        Load a CT image. Here we load :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
 
         >>> import pyvista as pv
         >>> from pyvista import examples
@@ -3625,7 +3632,7 @@ class ImageDataFilters(DataSetFilters):
         >>> ct_image.get_data_range()
         (np.int16(-1348), np.int16(3409))
 
-        Select intensity values corresponding to bone.
+        Select intensity values above ``150`` to select the bones.
 
         >>> bone_range = [150, float('inf')]
         >>> fill_value = -1000  # fill with intensity values corresponding to air
@@ -3651,6 +3658,48 @@ class ImageDataFilters(DataSetFilters):
         >>> pl.camera.up = (0, 0, 1)
         >>> pl.show()
 
+        Use ``'replacement_value'`` to binarize the selected values instead. The fill
+        value, or background, is ``0`` by default.
+
+        >>> bone_mask = ct_image.select_values(ranges=bone_range, replacement_value=1)
+        >>> bone_mask.get_data_range()
+        (np.int16(0), np.int16(1))
+
+        Generate a surface contour of the mask and plot it.
+
+        >>> surf = bone_mask.contour_labels()
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(surf, color=True)
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.show()
+
+        Load a color image. Here we load :func:`~pyvista.examples.downloads.download_beach`.
+
+        >>> image = examples.download_beach()
+        >>> plot_kwargs = dict(
+        ...     cpos='xy', rgb=True, lighting=False, zoom='tight', show_axes=False
+        ... )
+        >>> image.plot(**plot_kwargs)
+
+        Select components from the image which have a strong red component.
+        Use ``replacement_value`` to replace these pixels with a pure red color
+        and ``fill_value`` to fill the rest of the image with white pixels.
+
+        >>> white = [255, 255, 255]
+        >>> red = [255, 0, 0]
+        >>> red_range = [200, 255]
+        >>> red_component = 0
+        >>> selected = image.select_values(
+        ...     ranges=red_range,
+        ...     component_mode=red_component,
+        ...     replacement_value=red,
+        ...     fill_value=white,
+        ... )
+
+        >>> selected.plot(**plot_kwargs)
+
         """
         validated = self._validate_extract_values(
             values=values,
@@ -3674,6 +3723,7 @@ class ImageDataFilters(DataSetFilters):
             **validated,
             as_imagedata=True,
             image_fill_value=fill_value,
+            image_replacement_value=replacement_value,
             progress_bar=progress_bar,
             invert=invert,
             adjacent_cells=None,

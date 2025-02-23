@@ -6002,6 +6002,7 @@ class DataSetFilters:
             invert=invert,
             as_imagedata=False,
             image_fill_value=None,
+            image_replacement_value=None,
         )
 
         if split:
@@ -6204,6 +6205,7 @@ class DataSetFilters:
         pass_cell_ids,
         as_imagedata,
         image_fill_value,
+        image_replacement_value,
     ):
         """Extract values using validated input.
 
@@ -6240,9 +6242,13 @@ class DataSetFilters:
         id_mask = np.invert(id_mask) if invert else id_mask
 
         if as_imagedata:
-            # Process mask array
-            array_out = np.full_like(array, fill_value=image_fill_value)
-            array_out[id_mask] = array[id_mask]
+            # Generate output array
+            input_array = get_array(self, name=array_name, preference=association)
+            array_out = np.full_like(input_array, fill_value=image_fill_value)
+            replacement_values = (
+                input_array[id_mask] if image_replacement_value is None else image_replacement_value
+            )
+            array_out[id_mask] = replacement_values
 
             output = pyvista.ImageData()
             output.copy_structure(cast(pyvista.ImageData, self))
