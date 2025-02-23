@@ -1772,17 +1772,14 @@ class MultiBlock(
             Return ``True`` when all blocks are :class:`pyvista.PolyData`.
 
         """
-        block_type = self.is_homogeneous
-        return block_type in [True, pyvista.PolyData]
+        return self.is_homogeneous is pyvista.PolyData
 
     @property
-    def is_homogeneous(self: MultiBlock) -> type[DataSet | None] | bool:
+    def is_homogeneous(self: MultiBlock) -> type[DataSet | None] | Literal[False]:
         """Return the type of all blocks when all the blocks have the same type.
 
         The type(s) of all blocks are recursively checked. If all blocks have the same
-        type, that type is returned. Otherwise, ``False`` is returned. If the
-        ``MultiBlock`` is empty (i.e. has no :class:`~pyvista.DataSet` or ``None``
-        blocks), then ``True`` is returned by default.
+        type, that type is returned. Otherwise, ``False`` is returned.
 
         .. note::
             The output value is not strictly a ``bool`` since it may return a type.
@@ -1799,8 +1796,8 @@ class MultiBlock(
         try:
             first_block = next(iterator)
         except StopIteration:
-            # Empty, return ``True`` by default
-            return True
+            return False
+
         first_block_type = cast(type[Union[DataSet, None]], type(first_block))
         return (
             first_block_type
