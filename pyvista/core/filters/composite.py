@@ -41,13 +41,16 @@ class CompositeFilters:
 
         .. note::
 
-            The filter is not applied to any ``None`` blocks. These are simply skipped
-            and passed through to the output.
+            If an ``inplace`` keyword is used, this ``MultiBlock`` is modified
+            in-place along with all blocks.
 
         .. note::
 
-            If an ``inplace`` keyword is used, this ``MultiBlock`` is modified
-            in-place along with all blocks.
+            By default, the specified ``function`` is not applied to any ``None``
+            blocks. These are simply skipped and passed through to the output.
+
+            For advanced use, it is possible to apply the filter to ``None`` blocks
+            by using the undocumented keyword ``_skip_none=False``.
 
         .. versionadded:: 0.45
 
@@ -75,6 +78,12 @@ class CompositeFilters:
             Raised if the filter cannot be applied to any block for any reason. This
             overrides ``TypeError``, ``ValueError``, ``AttributeError`` errors when
             filtering.
+
+        See Also
+        --------
+        pyvista.MultiBlock.flatten
+        pyvista.MultiBlock.recursive_iterator
+        pyvista.MultiBlock.clean
 
         Examples
         --------
@@ -146,6 +155,17 @@ class CompositeFilters:
         >>> filtered = multi.generic_filter(conditional_resample, 0.5)
 
         """
+        # Set default undocumented kwargs. A function is used here to prevent IDEs from
+        # suggesting these keywords to users.
+
+        def get_iterator_kwargs(kwargs_) -> tuple[bool, bool]:
+            # Skip None blocks by default
+            skip_none_: bool = kwargs_.pop('_skip_none', True)
+            # Do not skip empty blocks by default
+            skip_empty_: bool = kwargs_.pop('_skip_empty', False)
+            return skip_none_, skip_empty_
+
+        skip_none, skip_empty = get_iterator_kwargs(kwargs)
 
         def apply_filter(function_, ids_, name_, block_):
             try:
@@ -174,23 +194,26 @@ class CompositeFilters:
                 raise RuntimeError(msg) from e
             return output_
 
-        def get_iterator(multi):
+        def get_iterator(multi, skip_none_, skip_empty_):
             return multi.recursive_iterator(
-                'all', skip_none=True, skip_empty=False, nested_ids=True
+                'all', skip_none=skip_none_, skip_empty=skip_empty_, nested_ids=True
             )
 
         # Apply filter in-place
         inplace = kwargs.get('inplace')
         if inplace:
-            for ids, name, block in get_iterator(self):
+            for ids, name, block in get_iterator(self, skip_none, skip_empty):
                 apply_filter(function, ids, name, block)
             return self
 
         # Create a copy and replace all the blocks
         output = pyvista.MultiBlock()
         output.shallow_copy(self, recursive=True)
-        for ids, name, block in get_iterator(output):
-            output.replace(ids, apply_filter(function, ids, name, block))
+        for ids, name, block in get_iterator(output, skip_none, skip_empty):
+            filtered = apply_filter(function, ids, name, block)
+            # Only replace if necessary
+            if filtered is not block:
+                output.replace(ids, filtered)
         return output
 
     def extract_geometry(self):
