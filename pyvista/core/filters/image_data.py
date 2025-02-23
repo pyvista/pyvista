@@ -3623,7 +3623,7 @@ class ImageDataFilters(DataSetFilters):
         Show the initial data range.
 
         >>> ct_image.get_data_range()
-        (np.int16(-1295), np.int16(3265))
+        (np.int16(-1348), np.int16(3409))
 
         Select intensity values corresponding to bone.
 
@@ -3636,7 +3636,7 @@ class ImageDataFilters(DataSetFilters):
         Show the new data range.
 
         >>> ct_image.get_data_range()
-        (np.int16(-1000), np.int16(3265))
+        (np.int16(-1000), np.int16(3409))
 
         Plot the selected values. Use ``'foreground'`` opacity to make the fill value
         transparent and the selected values opaque.
