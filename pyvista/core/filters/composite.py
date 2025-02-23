@@ -411,8 +411,8 @@ class CompositeFilters:
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
 
-    def transform(
-        self,
+    def transform(  # type: ignore[misc]
+        self: MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool | None = None,
@@ -471,15 +471,10 @@ class CompositeFilters:
 
         inplace = check_inplace(cls=type(self), inplace=inplace)
 
-        trans = pyvista.Transform(trans)
-        output = self if inplace else self.copy()  # type: ignore[attr-defined]
-        for name in self.keys():  # type: ignore[attr-defined]
-            block = output[name]  # type: ignore[index]
-            if block is not None:
-                block.transform(
-                    trans,
-                    transform_all_input_vectors=transform_all_input_vectors,
-                    inplace=True,
-                    progress_bar=progress_bar,
-                )
-        return output
+        return self.generic_filter(
+            'transform',
+            trans=trans,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+            progress_bar=progress_bar,
+        )
