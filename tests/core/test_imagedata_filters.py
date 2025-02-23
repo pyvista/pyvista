@@ -1262,3 +1262,15 @@ def test_resample_raises(uniform):
     match = '`extend_border` cannot be set when a `image_reference` is provided.'
     with pytest.raises(ValueError, match=re.escape(match)):
         uniform.resample(reference_image=uniform, extend_border=True)
+
+
+def test_extract_image_values(uniform):
+    extracted = uniform.extract_image_values(ranges=uniform.get_data_range())
+    assert isinstance(extracted, pv.ImageData)
+    assert extracted is not uniform
+    assert np.allclose(extracted.active_scalars, uniform.active_scalars)
+
+    unique_values = np.unique(uniform.active_scalars)
+    extracted = uniform.extract_image_values(values=unique_values, split=True)
+    assert isinstance(extracted, pv.MultiBlock)
+    assert len(extracted) == len(unique_values)
