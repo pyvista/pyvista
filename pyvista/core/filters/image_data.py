@@ -1020,7 +1020,6 @@ class ImageDataFilters(DataSetFilters):
         select_outputs: int | VectorLike[int] | None = None,
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
-        fast_mode: bool = False,
         scalars: str | None = None,
         compute_normals: bool = True,
         simplify_output: bool | None = None,
