@@ -1782,6 +1782,7 @@ class MultiBlock(
         type, that type is returned. Otherwise, ``False`` is returned.
 
         .. note::
+
             The output value is not strictly a ``bool`` since it may return a type.
             But, the value is nevertheless "truthy" and can be used like a boolean.
 
@@ -1790,6 +1791,24 @@ class MultiBlock(
         bool | type[DataSet] | NoneType
             Return ``True`` if empty, the block type if homogeneous, and ``False``
             otherwise.
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
+
+        Check if all the blocks have the same type.
+
+        >>> result = multi.is_homogeneous
+        >>> result
+        <class 'pyvista.core.pointset.UnstructuredGrid'>
+
+        Convert to a ``bool`` if desired.
+
+        >>> bool(result)
+        True
 
         """
         iterator = self.recursive_iterator('blocks')
