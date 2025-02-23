@@ -167,16 +167,19 @@ class CompositeFilters:
 
         skip_none, skip_empty = get_iterator_kwargs(kwargs)
 
-        def apply_filter(ids_, name_, block_):
+        def apply_filter(function_, ids_, name_, block_):
             try:
-                func = (
-                    getattr(block_, function)
-                    if isinstance(function, str)
-                    else functools.partial(function, block_)
+                function_ = (
+                    getattr(block_, function_)
+                    if isinstance(function_, str)
+                    else functools.partial(function_, block_)
                 )
-                output_ = func(**kwargs) if len(args) == 0 else func(*args, **kwargs)
+                output_ = function_(**kwargs) if len(args) == 0 else function_(*args, **kwargs)
             except (AttributeError, ValueError, TypeError, RuntimeError) as e:
                 # Construct a helpful error message
+                func_name = (
+                    function_.func if isinstance(function_, functools.partial) else function_
+                )
                 obj_name = type(block).__name__
                 if len(ids_) == 1:
                     index = ids_[0]
@@ -185,8 +188,8 @@ class CompositeFilters:
                     nested = ' nested '
                     index = ''.join([f'[{id_}]' for id_ in ids_])
                 msg = (
-                    f"The filter '{function}'"
-                    f"\ncould not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
+                    f"The filter '{func_name}'\n"
+                    f"could not be applied to the{nested}block at index {index} with name '{name_}' and type {obj_name}."
                 )
                 raise RuntimeError(msg) from e
             return output_
@@ -200,14 +203,14 @@ class CompositeFilters:
         inplace = kwargs.get('inplace')
         if inplace:
             for ids, name, block in get_iterator(self, skip_none, skip_empty):
-                apply_filter(ids, name, block)
+                apply_filter(function, ids, name, block)
             return self
 
         # Create a copy and replace all the blocks
         output = pyvista.MultiBlock()
         output.shallow_copy(self, recursive=True)
         for ids, name, block in get_iterator(output, skip_none, skip_empty):
-            filtered = apply_filter(ids, name, block)
+            filtered = apply_filter(function, ids, name, block)
             # Only replace if necessary
             if filtered is not block:
                 output.replace(ids, filtered)
@@ -413,8 +416,8 @@ class CompositeFilters:
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
 
-    def transform(
-        self,
+    def transform(  # type: ignore[misc]
+        self: MultiBlock,
         trans: TransformLike,
         transform_all_input_vectors: bool = False,
         inplace: bool | None = None,
@@ -473,15 +476,10 @@ class CompositeFilters:
 
         inplace = check_inplace(cls=type(self), inplace=inplace)
 
-        trans = pyvista.Transform(trans)
-        output = self if inplace else self.copy()  # type: ignore[attr-defined]
-        for name in self.keys():  # type: ignore[attr-defined]
-            block = output[name]  # type: ignore[index]
-            if block is not None:
-                block.transform(
-                    trans,
-                    transform_all_input_vectors=transform_all_input_vectors,
-                    inplace=True,
-                    progress_bar=progress_bar,
-                )
-        return output
+        return self.generic_filter(
+            'transform',
+            trans=trans,
+            transform_all_input_vectors=transform_all_input_vectors,
+            inplace=inplace,
+            progress_bar=progress_bar,
+        )
