@@ -355,6 +355,16 @@ def get_array(
     else:
         preference_ = parse_field_choice(preference)
 
+        if preference_ not in [
+            FieldAssociation.CELL,
+            FieldAssociation.POINT,
+            FieldAssociation.NONE,
+        ]:
+            raise ValueError(
+                f'`preference` must be either "cell", "point", "field" for a '
+                f'{type(mesh)}, not "{preference}".',
+            )
+
         parr = point_array(mesh, name)
         carr = cell_array(mesh, name)
         farr = field_array(mesh, name)
