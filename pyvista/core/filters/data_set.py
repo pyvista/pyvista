@@ -6243,7 +6243,7 @@ class DataSetFilters:
 
         if as_imagedata:
             # Generate output array
-            input_array = get_array(self, name=array_name, preference=association)
+            input_array = cast(pyvista.pyvista_ndarray, get_array(self, name=array_name, preference=association))
             array_out = np.full_like(input_array, fill_value=image_fill_value)
             replacement_values = (
                 input_array[id_mask] if image_replacement_value is None else image_replacement_value
