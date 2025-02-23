@@ -850,22 +850,27 @@ def test_set_active_scalars_mixed(multiblock_poly):
             assert block.point_data.active_scalars_name == 'data'
 
 
-def test_to_polydata(multiblock_all):
+def test_to_polydata(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
     if pv.vtk_version_info >= (9, 1, 0):
-        multiblock_all.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
-    assert not multiblock_all.is_all_polydata
+        multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
+    assert not multi.is_all_polydata
 
-    dataset_a = multiblock_all.as_polydata_blocks()
+    dataset_a = multi.as_polydata_blocks()
     if pv.vtk_version_info >= (9, 1, 0):
         assert dataset_a[-1].n_points == 1
-    assert not multiblock_all.is_all_polydata
+    assert not multi.is_all_polydata
     assert dataset_a.is_all_polydata
 
     # verify nested works
-    nested_mblock = pv.MultiBlock([multiblock_all, multiblock_all])
+    nested_mblock = pv.MultiBlock([multi, multi])
     assert not nested_mblock.is_all_polydata
     dataset_b = nested_mblock.as_polydata_blocks()
     assert dataset_b.is_all_polydata
+
+    # Return True if empty
+    empty = pv.MultiBlock()
+    assert empty.is_all_polydata
 
 
 def test_compute_normals(multiblock_poly):
@@ -1178,3 +1183,22 @@ def test_generic_filter_raises(multiblock_all_with_nested_and_none):
         multiblock_all_with_nested_and_none.generic_filter(
             test_generic_filter_raises,
         )
+
+
+def test_is_homogeneous(multiblock_all_with_nested_and_none):
+    # Empty case
+    assert pv.MultiBlock().is_homogeneous is True
+
+    # Heterogeneous case
+    heterogeneous = multiblock_all_with_nested_and_none
+    assert heterogeneous.is_homogeneous is False
+
+    # Homogeneous case
+    homogeneous = multiblock_all_with_nested_and_none.as_polydata_blocks()
+    assert homogeneous.is_homogeneous
+    assert homogeneous.is_homogeneous is pv.PolyData
+
+    # None blocks only
+    homogeneous = pv.MultiBlock([pv.MultiBlock([None]), None])
+    assert homogeneous.is_homogeneous
+    assert homogeneous.is_homogeneous is type(None)

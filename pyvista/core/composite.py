@@ -1772,14 +1772,41 @@ class MultiBlock(
             Return ``True`` when all blocks are :class:`pyvista.PolyData`.
 
         """
-        for block in self:
-            if isinstance(block, MultiBlock):
-                if not block.is_all_polydata:
-                    return False
-            elif not isinstance(block, pyvista.PolyData):
-                return False
+        block_type = self.is_homogeneous
+        return block_type is True or block_type is pyvista.PolyData
 
-        return True
+    @property
+    def is_homogeneous(self: MultiBlock) -> type[DataSet | None] | bool:
+        """Return the type of all blocks when all the blocks have the same type.
+
+        The type(s) of all blocks are recursively checked. If all blocks have the same
+        type, that type is returned. Otherwise, ``False`` is returned. If the
+        ``MultiBlock`` is empty (i.e. has no :class:`~pyvista.DataSet` or ``None``
+        blocks), then ``True`` is returned by default.
+
+        .. note::
+            The output value is not strictly a ``bool`` since it may return a type.
+            But, the value is nevertheless "truthy" and can be used like a boolean.
+
+        Returns
+        -------
+        bool | type[DataSet] | NoneType
+            Return ``True`` if empty, the block type if homogeneous, and ``False``
+            otherwise.
+
+        """
+        iterator = self.recursive_iterator('blocks')
+        try:
+            first_block = next(iterator)
+        except StopIteration:
+            # Empty, return ``True`` by default
+            return True
+        first_block_type = cast(type[Union[DataSet, None]], type(first_block))
+        return (
+            first_block_type
+            if all(isinstance(block, first_block_type) for block in iterator)
+            else False
+        )
 
     def _activate_plotting_scalars(
         self: MultiBlock,
