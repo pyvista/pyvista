@@ -1577,7 +1577,7 @@ class ImageDataFilters(DataSetFilters):
         if boundary_style == 'strict_external':
             # Use default alg parameters
             if select_inputs is not None or select_outputs is not None:
-                raise TypeError('Selecting inputs and/or outputs is not supported by `fast_mode`.')
+                raise TypeError('Selecting inputs and/or outputs is not supported by `strict_external`.')
         else:
             _configure_boundaries(
                 alg,
