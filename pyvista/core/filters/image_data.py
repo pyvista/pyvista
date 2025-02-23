@@ -1013,7 +1013,7 @@ class ImageDataFilters(DataSetFilters):
 
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
-        boundary_style: Literal['external', 'internal', 'all'] = 'external',
+        boundary_style: Literal['external', 'internal', 'all', 'strict_external'] = 'external',
         *,
         background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
@@ -1065,25 +1065,30 @@ class ImageDataFilters(DataSetFilters):
 
         .. note::
 
-            This filter's implementation computes all boundary contours by default and
-            then removes any undesired boundary cells in post-processing.
-            This improves the quality of the output, but can negatively affect the
-            filter's performance. Use ``fast_mode=True`` to avoid computing internal
-            boundaries altogether and improve the filter's performance.
-
-        .. note::
-
             This filter requires VTK version ``9.3.0`` or greater.
 
         .. versionadded:: 0.45
 
         Parameters
         ----------
-        boundary_style : 'external' | 'internal' | 'all', default: 'external'
+        boundary_style : 'external' | 'internal' | 'all' | 'strict_external', default: 'external'
             Style of boundary polygons to generate. ``'internal'`` polygons are generated
             between two connected foreground regions. ``'external'`` polygons are
-            generated between foreground background. ``'all'``  includes both internal
-            and external boundary polygons.
+            generated between foreground and background regions. ``'all'``  includes
+            both internal and external boundary polygons.
+
+            These styles are generated such that ``internal + external = all``.
+            Internally, the filter computes all boundary polygons by default and
+            then removes any undesired polygons in post-processing.
+            This improves the quality of the output, but can negatively affect the
+            filter's performance since all boundaries are always initially computed.
+
+            The ``'strict_external'`` style can be used as a fast alternative to
+            ``'external'``. This style `strictly` generates external polygons and does
+            not compute or consider internal boundaries. This computation is fast, but
+            also results in jagged, non-smooth boundaries between regions. The
+            ``select_inputs`` and ``select_outputs`` options cannot be used with this
+            style.
 
         background_value : int, default: 0
             Background value of the input image. All other values are considered
@@ -1141,12 +1146,6 @@ class ImageDataFilters(DataSetFilters):
             otherwise. The mesh type can be forced to be triangles or quads; however,
             if smoothing is enabled and the type is ``'quads'``, the generated quads
             may not be planar.
-
-        fast_mode: bool, default: False
-            Set this to ``True`` to generate external contours quickly. This can
-            substantially reduce computation times but will generate jagged, non-smooth
-            boundaries between labels. This option is only available if no inputs or
-            outputs are selected and if only external contours are generated.
 
         scalars : str, optional
             Name of scalars to process. Defaults to currently active scalars. If cell
@@ -1249,6 +1248,9 @@ class ImageDataFilters(DataSetFilters):
 
         :meth:`~pyvista.DataSetFilters.pack_labels`
             Function used internally by SurfaceNets to generate contiguous label data.
+
+        :meth:`~pyvista.DataSetFilters.color_labels`
+            Color labeled data, e.g. labeled volumes or contours.
 
         :ref:`contouring_example`, :ref:`anatomical_groups_example`
             Additional examples using this filter.
@@ -1400,13 +1402,13 @@ class ImageDataFilters(DataSetFilters):
         >>> surf = image.contour_labels(smoothing_scale=0.5)
         >>> labels_plotter(surf, zoom=1.5).show()
 
-        Use ``fast_mode`` to compute the contours more quickly. Note that this
-        produces jagged and non-smooth boundaries between labels, which may not be
-        desirable. Also note how the top of the surface is perfectly flat compared
-        to the default output (see first example above) since fast mode ignores the
-        smoothing effects of all internal boundaries.
+        Use the ``'strict_external'`` style to compute external contours quickly. Note
+        that this produces jagged and non-smooth boundaries between regions, which may
+        not be desirable. Also note how the top of the surface is perfectly flat compared
+        to the default ``'external'`` style (see first example above) since the strict
+        style ignores the smoothing effects of all internal boundaries.
 
-        >>> surf = image.contour_labels(fast_mode=True)
+        >>> surf = image.contour_labels('strict_external')
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
@@ -1552,7 +1554,9 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
         _validation.check_contains(
-            ['all', 'internal', 'external'], must_contain=boundary_style, name='boundary_style'
+            ['all', 'internal', 'external', 'strict_external'],
+            must_contain=boundary_style,
+            name='boundary_style',
         )
         _validation.check_contains(
             [None, 'quads', 'triangles'], must_contain=output_mesh_type, name='output_mesh_type'
@@ -1568,11 +1572,10 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        if fast_mode:
+        if boundary_style == 'strict_external':
+            # Use default alg parameters
             if select_inputs is not None or select_outputs is not None:
                 raise TypeError('Selecting inputs and/or outputs is not supported by `fast_mode`.')
-            if boundary_style != 'external':
-                raise ValueError('Only external boundaries are supported by `fast_mode`.')
         else:
             _configure_boundaries(
                 alg,
@@ -1613,17 +1616,18 @@ class ImageDataFilters(DataSetFilters):
                 # Mesh may also have non-zero points but this is cleaned later
                 output.cell_data[VTK_NAME] = np.empty((0, 0))
             output.rename_array(VTK_NAME, PV_NAME)
-            if boundary_style in ['external', 'internal'] and not fast_mode:
+            if boundary_style in ['external', 'internal']:
                 # Output contains all boundary cells, need to remove cells we don't want
                 is_external = np.any(labels_array == background_value, axis=1)
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
+        is_external = 'external' in boundary_style
         if simplify_output is None:
-            simplify_output = boundary_style == 'external'
+            simplify_output = is_external
         if simplify_output:
             # Simplify scalars to a single component
-            if boundary_style != 'external':
+            if not is_external:
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
                 is_internal = (

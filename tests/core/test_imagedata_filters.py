@@ -373,25 +373,25 @@ def test_contour_labels_cell_data(channels):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-def test_contour_labels_fast_mode(channels):
+def test_contour_labels_strict_external(channels):
     start = time.perf_counter()
-    channels.contour_labels(fast_mode=False, compute_normals=False)
+    channels.contour_labels('external', compute_normals=False)
     time_slow = time.perf_counter() - start
 
     start = time.perf_counter()
-    channels.contour_labels(fast_mode=True, compute_normals=False)
+    contours = channels.contour_labels('strict_external', compute_normals=False)
     time_fast = time.perf_counter() - start
     assert time_fast < time_slow / 1.5
 
-    match = 'Only external boundaries are supported by `fast_mode`.'
-    with pytest.raises(ValueError, match=match):
-        channels.contour_labels('internal', fast_mode=True)
+    # Test output is simplified correctly
+    assert contours.active_scalars.ndim == 1
+    assert np.all(contours.active_scalars > 0)
 
     match = 'Selecting inputs and/or outputs is not supported by `fast_mode`.'
     with pytest.raises(TypeError, match=match):
-        channels.contour_labels(fast_mode=True, select_inputs=[0])
+        channels.contour_labels('strict_external', select_inputs=[0])
     with pytest.raises(TypeError, match=match):
-        channels.contour_labels(fast_mode=True, select_outputs=[0])
+        channels.contour_labels('strict_external', select_outputs=[0])
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
