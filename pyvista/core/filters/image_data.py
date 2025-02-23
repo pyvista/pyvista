@@ -3493,7 +3493,7 @@ class ImageDataFilters(DataSetFilters):
             return self
         return output_image
 
-    def extract_image_values(  # type: ignore[misc]
+    def select_values(  # type: ignore[misc]
         self: ImageData,
         values: None
         | (
@@ -3515,39 +3515,15 @@ class ImageDataFilters(DataSetFilters):
         split: bool = False,
         progress_bar: bool = False,
     ):
-        """Return a subset of the mesh based on the value(s) of point or cell data.
+        """Select values of interest to keep and fill the rest with a constant.
 
-        Points and cells may be extracted with a single value, multiple values, a range
+        Point or cell data may be selected with a single value, multiple values, a range
         of values, or any mix of values and ranges. This enables threshold-like
-        filtering of data in a discontinuous manner to extract a single label or groups
-        of labels from categorical data, or to extract multiple regions from continuous
-        data. Extracted values may optionally be split into separate meshes.
+        filtering of data in a discontinuous manner to select a single label or groups
+        of labels from categorical data, or to select multiple regions from continuous
+        data. Selected values may optionally be split into separate meshes.
 
-        This filter operates on point data and cell data distinctly:
-
-        **Point data**
-
-            All cells with at least one point with the specified value(s) are returned.
-            Optionally, set ``adjacent_cells`` to ``False`` to only extract points from
-            cells where all points in the cell strictly have the specified value(s).
-            In these cases, a point is only included in the output if that point is part
-            of an extracted cell.
-
-            Alternatively, set ``include_cells`` to ``False`` to exclude cells from
-            the operation completely and extract all points with a specified value.
-
-        **Cell Data**
-
-            Only the cells (and their points) with the specified values(s) are included
-            in the output.
-
-        Internally, :meth:`~pyvista.DataSetFilters.extract_points` is called to extract
-        points for point data, and :meth:`~pyvista.DataSetFilters.extract_cells` is
-        called to extract cells for cell data.
-
-        By default, two arrays are included with the output: ``'vtkOriginalPointIds'``
-        and ``'vtkOriginalCellIds'``. These arrays can be used to link the filtered
-        points or cells directly to the input.
+        The selected values are stored in an array with the same name as the input.
 
         .. versionadded:: 0.45
 
@@ -3584,11 +3560,11 @@ class ImageDataFilters(DataSetFilters):
                 - ``[float('-inf'), 0]`` to extract values less than or equal to zero.
 
         fill_value : float, default: 0
-            Value used to fill the image. Parts of the image that are not extracted
-            will have this value.
+            Value used to fill the image. Non-selected parts of the image will have
+            this value.
 
         scalars : str, optional
-            Name of scalars to extract with. Defaults to currently active scalars.
+            Name of scalars to select from. Defaults to currently active scalars.
 
         preference : str, default: 'point'
             When ``scalars`` is specified, this is the preferred array type to search
@@ -3605,31 +3581,28 @@ class ImageDataFilters(DataSetFilters):
             - ``'multi'``: the entire multi-component item must have the specified value.
 
         invert : bool, default: False
-            Invert the extraction values. If ``True`` extract the points (with cells)
-            which do *not* have the specified values.
+            Invert the selection. If ``True`` values are selected which do *not* have
+            the specified values.
 
         split : bool, default: False
             If ``True``, each value in ``values`` and each range in ``range`` is
-            extracted independently and returned as a :class:`~pyvista.MultiBlock`.
+            selected independently and returned as a :class:`~pyvista.MultiBlock`.
             The number of blocks returned equals the number of input values and ranges.
             The blocks may be named if a dictionary is used as input. See ``values``
             and ``ranges`` for details.
 
             .. note::
-                Output blocks may contain empty meshes if no values meet the extraction
-                criteria. This can impact plotting since empty meshes cannot be plotted
-                by default. Use :meth:`pyvista.MultiBlock.clean` on the output to remove
-                empty meshes, or set ``pv.global_theme.allow_empty_mesh = True`` to
-                enable plotting empty meshes.
+                Output blocks may contain meshes with only the ``fill_value`` if no
+                values meet the selection criteria.
 
         progress_bar : bool, default: False
             Display a progress bar to indicate progress.
 
         See Also
         --------
+        image_threshold
         :meth:`~pyvista.DataSetFilters.extract_values`
         :meth:`~pyvista.DataSetFilters.split_values`
-        image_threshold
         :meth:`~pyvista.DataSetFilters.threshold`
 
         Returns
@@ -3645,7 +3618,7 @@ class ImageDataFilters(DataSetFilters):
             preference=preference,
             component_mode=component_mode,
             split=split,
-            as_imagedata=False,
+            as_imagedata=True,
         )
         if isinstance(validated, dict):
             valid_values = validated.pop('values')

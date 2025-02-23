@@ -5845,7 +5845,7 @@ class DataSetFilters:
         See Also
         --------
         split_values, extract_points, extract_cells, threshold, partition
-        :meth:`~pyvista.ImageDataFilters.extract_image_values`
+        :meth:`~pyvista.ImageDataFilters.select_values`
 
         Returns
         -------

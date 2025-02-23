@@ -1264,13 +1264,17 @@ def test_resample_raises(uniform):
         uniform.resample(reference_image=uniform, extend_border=True)
 
 
-def test_extract_image_values(uniform):
-    extracted = uniform.extract_image_values(ranges=uniform.get_data_range())
-    assert isinstance(extracted, pv.ImageData)
-    assert extracted is not uniform
-    assert np.allclose(extracted.active_scalars, uniform.active_scalars)
+def test_select_values(uniform):
+    selected = uniform.select_values(ranges=uniform.get_data_range())
+    assert isinstance(selected, pv.ImageData)
+    assert selected is not uniform
+    assert np.allclose(selected.active_scalars, uniform.active_scalars)
 
     unique_values = np.unique(uniform.active_scalars)
-    extracted = uniform.extract_image_values(values=unique_values, split=True)
-    assert isinstance(extracted, pv.MultiBlock)
-    assert len(extracted) == len(unique_values)
+    selected = uniform.select_values(values=unique_values, split=True)
+    assert isinstance(selected, pv.MultiBlock)
+    assert isinstance(selected[0], pv.ImageData)
+    assert len(selected) == len(unique_values)
+
+    selected = pv.ImageData().select_values()
+    assert isinstance(selected, pv.ImageData)
