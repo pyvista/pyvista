@@ -1786,6 +1786,8 @@ class MultiBlock(
             The output value is not strictly a ``bool`` since it may return a type.
             But, the value is nevertheless "truthy" and can be used like a boolean.
 
+        .. versionadded:: 0.45
+
         Returns
         -------
         bool | type[DataSet] | NoneType
