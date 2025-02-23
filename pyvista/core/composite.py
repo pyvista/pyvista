@@ -1773,7 +1773,7 @@ class MultiBlock(
 
         """
         block_type = self.is_homogeneous
-        return block_type is True or block_type is pyvista.PolyData
+        return block_type in [True, pyvista.PolyData]
 
     @property
     def is_homogeneous(self: MultiBlock) -> type[DataSet | None] | bool:
