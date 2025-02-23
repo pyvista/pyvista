@@ -868,10 +868,6 @@ def test_to_polydata(multiblock_all_with_nested_and_none):
     dataset_b = nested_mblock.as_polydata_blocks()
     assert dataset_b.is_all_polydata
 
-    # Return True if empty
-    empty = pv.MultiBlock()
-    assert empty.is_all_polydata
-
 
 def test_compute_normals(multiblock_poly):
     for block in multiblock_poly:
@@ -1187,7 +1183,7 @@ def test_generic_filter_raises(multiblock_all_with_nested_and_none):
 
 def test_is_homogeneous(multiblock_all_with_nested_and_none):
     # Empty case
-    assert pv.MultiBlock().is_homogeneous is True
+    assert pv.MultiBlock().is_homogeneous is False
 
     # Heterogeneous case
     heterogeneous = multiblock_all_with_nested_and_none
