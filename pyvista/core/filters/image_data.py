@@ -879,12 +879,12 @@ class ImageDataFilters(DataSetFilters):
             .. code-block:: python
 
                 image.contour_labels(
+                    boundary_style='strict_external',  # old filter strictly computes external polygons
                     smoothing=False,  # old filter does not apply smoothing
                     output_mesh_type='quads',  # old filter generates quads
                     pad_background=False,  # old filter generates open surfaces at input edges
                     compute_normals=False,  # old filter does not compute normals
                     simplify_output=False,  # old filter returns multi-component scalars
-                    fast_mode=True,  # old filter uses a fast implementation by default
                 )
 
         Parameters
@@ -1192,7 +1192,7 @@ class ImageDataFilters(DataSetFilters):
               will be positive and internal boundaries will be negative in this case.
 
             By default, the output is simplified when ``boundary_type`` is
-            ``'external'``, and is not simplified otherwise.
+            ``'external'`` or ``'strict_external'``, and is not simplified otherwise.
 
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
@@ -1286,8 +1286,9 @@ class ImageDataFilters(DataSetFilters):
         >>> image.dimensions
         (35, 35, 16)
 
-        Plot the cropped image for context. Configure the color map to generate
-        consistent coloring of the regions for all plots.
+        Plot the cropped image for context. Use :meth:`~pyvista.DataSetFilters.color_labels`
+        to generate consistent coloring of the regions for all plots. Negative indexing
+        is used for plotting internal boundaries.
 
         >>> def labels_plotter(mesh, zoom=None):
         ...     colored_mesh = mesh.color_labels(negative_indexing=True)
@@ -1352,7 +1353,8 @@ class ImageDataFilters(DataSetFilters):
 
         Simplify the output so that each internal multi-component boundary value is
         assigned a unique negative integer value instead. This makes it easier to
-        visualize the result.
+        visualize the result with :meth:`~pyvista.DataSetFilters.color_labels` using
+        the ``negative_indexing`` option.
 
         >>> contours = image.contour_labels('internal', simplify_output=True)
         >>> contours['boundary_labels'].ndim
