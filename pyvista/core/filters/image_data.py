@@ -3607,8 +3607,49 @@ class ImageDataFilters(DataSetFilters):
 
         Returns
         -------
-        pyvista.UnstructuredGrid or pyvista.MultiBlock
-            An extracted mesh or a composite of extracted meshes, depending on ``split``.
+        pyvista.ImageData or pyvista.MultiBlock
+            Image with selected values or a composite of meshes with selected
+            values, depending on ``split``.
+
+        Examples
+        --------
+        Load a CT medical image. Here we load :func:`~pyvista.examples.downloads.download_whole_body_ct_male`.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.download_whole_body_ct_male()
+        >>> ct_image = dataset['ct']
+
+        Show the initial data range.
+
+        >>> ct_image.get_data_range()
+        (np.int16(-1295), np.int16(3265))
+
+        Select intensity values corresponding to bone.
+
+        >>> bone_range = [150, float('inf')]
+        >>> fill_value = -1000  # fill with intensity values corresponding to air
+        >>> bone_image = ct_image.select_values(
+        ...     ranges=bone_range, fill_value=fill_value
+        ... )
+
+        Show the new data range.
+
+        >>> ct_image.get_data_range()
+        (np.int16(-1000), np.int16(3265))
+
+        Plot the selected values. Use ``'foreground'`` opacity to make the fill value
+        transparent and the selected values opaque.
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_volume(
+        ...     bone_image,
+        ...     opacity='foreground',
+        ...     cmap='bone',
+        ... )
+        >>> pl.view_zx()
+        >>> pl.camera.up = (0, 0, 1)
+        >>> pl.show()
 
         """
         validated = self._validate_extract_values(

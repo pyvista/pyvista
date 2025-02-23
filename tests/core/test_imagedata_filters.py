@@ -1276,5 +1276,13 @@ def test_select_values(uniform):
     assert isinstance(selected[0], pv.ImageData)
     assert len(selected) == len(unique_values)
 
+    # Test empty input
     selected = pv.ImageData().select_values()
     assert isinstance(selected, pv.ImageData)
+
+
+@pytest.mark.parametrize('dtype', [np.uint16, int, float])
+def test_select_values_dtype(uniform, dtype):
+    uniform[uniform.active_scalars_name] = uniform.active_scalars.astype(dtype)
+    selected = uniform.select_values([0])
+    assert selected.active_scalars.dtype == dtype
