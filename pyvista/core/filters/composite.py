@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from typing import Callable
 
     from pyvista import MultiBlock
-    from pyvista.core._typing_core import TransformLike
     from pyvista.core.composite import _TypeMultiBlockLeaf
 
 
@@ -388,71 +387,3 @@ class CompositeFilters(DataObjectFilters):
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
-
-    def transform(  # type: ignore[misc]
-        self: MultiBlock,
-        trans: TransformLike,
-        transform_all_input_vectors: bool = False,
-        inplace: bool | None = None,
-        progress_bar: bool = False,
-    ):
-        """Transform all blocks in this composite dataset.
-
-        .. note::
-            See also the notes at :func:`pyvista.DataSetFilters.transform` which is
-            used by this filter under the hood.
-
-        .. deprecated:: 0.45.0
-            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
-
-        Parameters
-        ----------
-        trans : TransformLike
-            Accepts any transformation input such as a :class:`~pyvista.Transform`
-            or a 3x3 or 4x4 array.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all arrays with three components are transformed.
-            Otherwise, only the normals and vectors are transformed.
-
-        inplace : bool, default: True
-            When ``True``, modifies the dataset inplace.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.MultiBlock
-            Transformed dataset. Return type of all blocks matches input unless
-            input dataset is a :class:`pyvista.ImageData`, in which
-            case the output datatype is a :class:`pyvista.StructuredGrid`.
-
-        See Also
-        --------
-        :class:`pyvista.Transform`
-            Describe linear transformations via a 4x4 matrix.
-
-        Examples
-        --------
-        Translate a mesh by ``(50, 100, 200)``. Here a :class:`~pyvista.Transform` is
-        used, but any :class:`~pyvista.TransformLike` is accepted.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.MultiBlock([pv.Sphere(), pv.Plane()])
-        >>> transform = pv.Transform().translate(50, 100, 200)
-        >>> transformed = mesh.transform(transform, inplace=False)
-        >>> transformed.plot(show_edges=True)
-
-        """
-        from ._deprecate_transform_inplace_default_true import check_inplace
-
-        inplace = check_inplace(cls=type(self), inplace=inplace)
-
-        return self.generic_filter(
-            'transform',
-            trans=trans,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-            progress_bar=progress_bar,
-        )
