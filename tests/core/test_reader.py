@@ -1275,6 +1275,17 @@ def test_nek5000_reader():
         key in nek_data.point_data.keys() for key in ['Pressure', 'Velocity', 'Velocity Magnitude']
     )
 
+    # test merge points routines
+    assert nek_data.n_points == 8 * 8 * 16 * 16, 'Check n_points without merging points'
+
+    nek_reader = pv.get_reader(filename)
+    assert nek_reader.reader.GetCleanGrid() == 0
+    nek_reader.enable_merge_points()
+    assert nek_reader.reader.GetCleanGrid() == 1
+
+    nek_data1 = nek_reader.read()
+    assert nek_data1.n_points == (7 * 16 + 1) * (7 * 16 + 1), 'Check n_points with merging points'
+
 
 @pytest.mark.parametrize(
     ('data_object', 'ext'),
