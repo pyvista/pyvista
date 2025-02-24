@@ -283,6 +283,17 @@ def test_is_inside_bounds():
     assert not is_inside_bounds((12, 12, 12), bnds)
 
 
+def test_is_inside_bounds_raises():
+    with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
+        is_inside_bounds(point=np.array([0]), bounds=(0,))
+
+    with pytest.raises(ValueError, match='Bounds mismatch point dimensionality'):
+        is_inside_bounds(point=np.array([0]), bounds=(0, 1, 3, 4, 5))
+
+    with pytest.raises(TypeError, match=re.escape("Unknown input data type (<class 'NoneType'>).")):
+        is_inside_bounds(point=None, bounds=(0,))
+
+
 def test_voxelize(uniform):
     vox = pv.voxelize(uniform, 0.5)
     assert vox.n_cells
