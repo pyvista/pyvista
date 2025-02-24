@@ -1792,7 +1792,14 @@ class MultiBlock(
             Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """
-        return all(isinstance(block, pyvista.PolyData) for block in self.recursive_iterator())
+        for block in self:
+            if isinstance(block, MultiBlock):
+                if not block.is_all_polydata:
+                    return False
+            elif not isinstance(block, pyvista.PolyData):
+                return False
+
+        return True
 
     @property
     def nested_block_types(self) -> set[type[DataSet | None]]:  # numpydoc ignore=RT01
