@@ -3516,7 +3516,7 @@ class ImageDataFilters(DataSetFilters):
         split: bool = False,
         progress_bar: bool = False,
     ):
-        """Select values of interest to keep and fill the rest with a constant.
+        """Select values of interest and fill the rest with a constant.
 
         Point or cell data may be selected with a single value, multiple values, a range
         of values, or any mix of values and ranges. This enables threshold-like
@@ -3542,7 +3542,7 @@ class ImageDataFilters(DataSetFilters):
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
-        ranges : array_like | dict, optional
+        ranges : ArrayLike[float] | dict, optional
             Range(s) of values to extract. Can be a single range (i.e. a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
@@ -3642,7 +3642,7 @@ class ImageDataFilters(DataSetFilters):
 
         Show the new data range.
 
-        >>> ct_image.get_data_range()
+        >>> bone_image.get_data_range()
         (np.int16(-1000), np.int16(3409))
 
         Plot the selected values. Use ``'foreground'`` opacity to make the fill value
