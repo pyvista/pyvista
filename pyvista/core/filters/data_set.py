@@ -1475,8 +1475,16 @@ class DataSetFilters(DataObjectFilters):
         See Also
         --------
         threshold_percent
-        :meth:`~pyvista.ImageDataFilters.image_threshold`
+            Threshold a dataset by a percentage of its scalar range.
+
         :meth:`~pyvista.DataSetFilters.extract_values`
+            Threshold-like filter for extracting specific values and ranges.
+
+        :meth:`~pyvista.ImageDataFilters.image_threshold`
+            Similar method for thresholding :class:`~pyvista.ImageData`.
+
+        :meth:`~pyvista.ImageDataFilters.select_values`
+            Threshold-like filter for :class:`~pyvista.ImageData` to keep some values and replace others.
 
         Returns
         -------
@@ -1528,7 +1536,8 @@ class DataSetFilters(DataObjectFilters):
         ...     show_edges=True,
         ... )
 
-        See :ref:`common_filter_example` for more examples using this filter.
+        See :ref:`common_filter_example` and :ref:`image_representations_example`
+        for more examples using this filter.
 
         """
         # set the scalars to threshold on
@@ -1643,6 +1652,11 @@ class DataSetFilters(DataObjectFilters):
         -------
         pyvista.UnstructuredGrid
             Dataset containing geometry that meets the threshold requirements.
+
+        See Also
+        --------
+        threshold
+            Threshold a dataset by value.
 
         Examples
         --------

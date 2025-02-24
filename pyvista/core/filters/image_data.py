@@ -409,7 +409,10 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
+        select_values
+            Threshold-like method for keeping some values and replacing others.
         :meth:`~pyvista.DataSetFilters.threshold`
+            General threshold method that returns a :class:`~pyvista.UnstructuredGrid`.
 
         Examples
         --------
