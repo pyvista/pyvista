@@ -30,6 +30,7 @@ from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import parse_field_choice
 from .utilities.geometric_objects import Box
@@ -181,8 +182,8 @@ class MultiBlock(
         contents: Literal['ids', 'names', 'blocks', 'items', 'all'] = 'blocks',
         order: Literal['nested_first', 'nested_last'] | None = None,
         *,
-        skip_none: bool = True,
-        skip_empty: bool = True,
+        skip_none: bool = False,
+        skip_empty: bool = False,
         nested_ids: bool | None = None,
         prepend_names: bool = False,
         separator: str = '::',
@@ -220,11 +221,11 @@ class MultiBlock(
             By default, the ``MultiBlock`` is iterated recursively as-is without
             changing the order.
 
-        skip_none : bool, default: True
-            Do not include ``None`` blocks in the iterator.
+        skip_none : bool, default: False
+            If ``True``, do not include ``None`` blocks in the iterator.
 
-        skip_empty : bool, default: True
-            Do not include empty meshes in the iterator.
+        skip_empty : bool, default: False
+            If ``True``, do not include empty meshes in the iterator.
 
         nested_ids : bool, default: True
             Prepend parent block indices to the child block indices. If ``True``, a
@@ -248,7 +249,11 @@ class MultiBlock(
         See Also
         --------
         flatten
+            Uses the iterator internally to flatten a :class:`MultiBlock`.
+        pyvista.CompositeFilters.generic_filter
+            Uses the iterator internally to apply filters to all blocks.
         clean
+            Remove ``None`` and/or empty mesh blocks.
 
         Examples
         --------
@@ -275,8 +280,8 @@ class MultiBlock(
         >>> len(list(iterator))
         59
 
-        By default, ``None`` blocks are excluded and all items are :class:`~pyvista.DataSet`
-        objects. Empty meshes are also excluded by default.
+        Check if all blocks are class:`~pyvista.DataSet` objects. Note that ``None``
+        blocks are included by default, so this may not be ``True`` in all cases.
 
         >>> all(isinstance(item, pv.DataSet) for item in multi.recursive_iterator())
         True
@@ -508,6 +513,7 @@ class MultiBlock(
         See Also
         --------
         recursive_iterator
+        pyvista.CompositeFilters.generic_filter
         clean
 
         Examples
@@ -743,17 +749,28 @@ class MultiBlock(
         return sum(block.volume for block in self if block)
 
     def get_data_range(  # type: ignore[override]
-        self: MultiBlock, name: str, allow_missing: bool = False
+        self: MultiBlock,
+        name: str | None,
+        allow_missing: bool = False,
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
         ----------
-        name : str
-            Name of the array.
+        name : str, optional
+            The name of the array to get the range. If ``None``, the
+            active scalars are used.
 
         allow_missing : bool, default: False
             Allow a block to be missing the named array.
+
+        preference : str, default: "cell"
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
+
+            .. versionadded:: 0.45
 
         Returns
         -------
@@ -768,7 +785,7 @@ class MultiBlock(
                 continue
             # get the scalars if available - recursive
             try:
-                tmi, tma = data.get_data_range(name)
+                tmi, tma = data.get_data_range(name, preference=preference)
             except KeyError:
                 if allow_missing:
                     continue

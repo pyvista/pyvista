@@ -4428,7 +4428,7 @@ class CubeFacesSource(CubeSource):
                 points += vector
 
             # Set poly as a single quad cell
-            face_poly.points = points  # type: ignore[union-attr]
+            face_poly.points = points  # type: ignore[union-attr, has-type]
             face_poly.faces = [4, 0, 1, 2, 3]  # type: ignore[union-attr]
 
             if frame_width is not None:
@@ -4438,7 +4438,7 @@ class CubeFacesSource(CubeSource):
                     points, face_center, frame_scale
                 )
                 # Set poly as four quad cells of the frame
-                face_poly.points = frame_points  # type: ignore[union-attr]
+                face_poly.points = frame_points  # type: ignore[union-attr, has-type]
                 face_poly.faces = frame_faces  # type: ignore[union-attr]
 
     @property

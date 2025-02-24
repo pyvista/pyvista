@@ -233,7 +233,9 @@ class DataObject:
                     del fdata[key]
 
     @abstractmethod
-    def get_data_range(self: Self) -> tuple[float, float]:  # pragma: no cover
+    def get_data_range(
+        self: Self, name: str | None, preference: FieldAssociation | str
+    ) -> tuple[float, float]:  # pragma: no cover
         """Get the non-NaN min and max of a named array."""
         msg = f'{type(self)} mesh type does not have a `get_data_range` method.'
         raise NotImplementedError(msg)

@@ -148,7 +148,7 @@ class AffineWidget3D:
     After interacting with the actor, the transform will be stored within
     :attr:`pyvista.Prop3D.user_matrix` but will not be applied to the
     dataset. Use this matrix in conjunction with
-    :func:`pyvista.DataSetFilters.transform` to transform the dataset.
+    :func:`pyvista.DataObjectFilters.transform` to transform the dataset.
 
     Requires VTK >= v9.2
 
