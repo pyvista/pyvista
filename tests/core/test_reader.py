@@ -1268,6 +1268,12 @@ def test_nek5000_reader():
         nek_reader.enable_point_array(name)
         assert nek_reader.point_array_status(name)
 
+    # check default clean grid option
+    assert nek_reader.reader.GetCleanGrid() == 0
+
+    # check default spectral element IDs
+    assert nek_reader.reader.GetSpectralElementIds() == 0
+
     # check read() method produces the correct dataset
     nek_data = nek_reader.read()
     assert isinstance(nek_data, pv.UnstructuredGrid), 'Check read type is valid'
@@ -1280,13 +1286,26 @@ def test_nek5000_reader():
     assert 'spectral element id' not in nek_data.cell_data
 
     nek_reader = pv.get_reader(filename)
-    assert nek_reader.reader.GetCleanGrid() == 0
+
+    # check enable merge points
     nek_reader.enable_merge_points()
     assert nek_reader.reader.GetCleanGrid() == 1
 
-    assert nek_reader.reader.GetSpectralElementIds() == 0
+    # positively check disable merge points
+    nek_reader.disable_merge_points()
+    assert nek_reader.reader.GetCleanGrid() == 0
+
+    # re-enable
+    nek_reader.enable_merge_points()
+
+    # check enabling of spectral element IDs
     nek_reader.enable_spectral_element_ids()
     assert nek_reader.reader.GetSpectralElementIds() == 1
+
+    # positively check disable spectral element IDs
+    nek_reader.disable_spectral_element_ids()
+    assert nek_reader.reader.GetSpectralElementIds() == 0
+    nek_reader.enable_spectral_element_ids()
 
     nek_data = nek_reader.read()
     assert nek_data.n_points == (7 * 16 + 1) * (7 * 16 + 1), 'Check n_points with merging points'
