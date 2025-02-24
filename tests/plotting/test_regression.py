@@ -1,11 +1,67 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+import re
+from typing import TYPE_CHECKING
+
+import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista.plotting.utilities import regression
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 # skip all tests if unable to render
 pytestmark = pytest.mark.skip_plotting
+
+
+def test_wrap_image_raises(mocker: MockerFixture):
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Expecting a X by Y by (3 or 4) array'),
+    ):
+        pv.wrap_image_array(np.array([0]))
+
+    m = mocker.MagicMock()
+    m.ndim = 3
+    m.shape = [0, 0, 0]
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Expecting a X by Y by (3 or 4) array'),
+    ):
+        pv.wrap_image_array(m)
+
+    m.shape = [0, 0, 3]
+    m.dtype = float
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Expecting a np.uint8 array'),
+    ):
+        pv.wrap_image_array(m)
+
+
+def test_commpare_images_raises(mocker: MockerFixture):
+    @dataclass
+    class foo:
+        n_calls: int = 0
+
+        def __call__(self, v):
+            self.n_calls += 1
+            return bar(self.n_calls)
+
+    @dataclass
+    class bar:
+        n_calls: int
+
+        def GetDimensions(self):
+            return self.n_calls
+
+    mocker.patch.object(regression, 'remove_alpha', new=foo())
+
+    with pytest.raises(RuntimeError, match='Input images are not the same size.'):
+        pv.compare_images(pv.ImageData(), pv.ImageData())
 
 
 def test_compare_images_two_plotters_same(sphere, tmpdir):
