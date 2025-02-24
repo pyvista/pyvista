@@ -1807,6 +1807,12 @@ class MultiBlock(
 
         .. versionadded:: 0.45
 
+        See Also
+        --------
+        is_homogeneous
+        is_heterogeneous
+        recursive_iterator
+
         """
         return {
             type(block)
@@ -1818,6 +1824,12 @@ class MultiBlock(
         """Return ``True`` if all nested blocks have the same type.
 
         .. versionadded:: 0.45
+
+        See Also
+        --------
+        is_heterogeneous
+        nested_block_types
+        recursive_iterator
 
         Examples
         --------
@@ -1844,6 +1856,12 @@ class MultiBlock(
         """Return ``True`` any two nested blocks have different type.
 
         .. versionadded:: 0.45
+
+        See Also
+        --------
+        is_homoogeneous
+        nested_block_types
+        recursive_iterator
 
         Examples
         --------
