@@ -3824,6 +3824,6 @@ class ImageDataFilters(DataSetFilters):
         array_out[id_mask] = replacement_values
 
         output = pyvista.ImageData()
-        output.copy_structure(cast(pyvista.ImageData, self))
+        output.copy_structure(self)
         output[array_name] = array_out
         return output
