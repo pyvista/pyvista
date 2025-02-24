@@ -1781,7 +1781,7 @@ class MultiBlock(
 
         Parameters
         ----------
-        copy : bool | 'deep' | 'shallow', default: True
+        copy : bool | 'deep' | 'shallow', default: False
             Option to create a deep or shallow copy of any datasets that are already a
             :class:`~pyvista.UnstructuredGrid`. When ``False``, any datasets that are
             already UnstructuredGrid will not be copied. If ``True`` or ``'deep'``, a
