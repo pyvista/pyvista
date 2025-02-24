@@ -6005,11 +6005,17 @@ class DataSetFilters(DataObjectFilters):
             component_mode=component_mode,
             split=split,
         )
-        if isinstance(validated, dict):
-            valid_values = validated.pop('values')
-            valid_ranges = validated.pop('ranges')
-            value_names = validated.pop('value_names')
-            range_names = validated.pop('range_names')
+        if isinstance(validated, tuple):
+            (
+                valid_values,
+                valid_ranges,
+                value_names,
+                range_names,
+                array,
+                _,
+                association,
+                component_logic,
+            ) = validated
         else:
             # Return empty dataset
             return validated
@@ -6019,32 +6025,32 @@ class DataSetFilters(DataObjectFilters):
             include_cells = self.n_cells > 0
 
         kwargs = dict(
-            **validated,
+            values=valid_values,
+            ranges=valid_ranges,
+            array=array,
+            association=association,
+            component_logic=component_logic,
+            invert=invert,
             adjacent_cells=adjacent_cells,
             include_cells=include_cells,
             pass_point_ids=pass_point_ids,
             pass_cell_ids=pass_cell_ids,
             progress_bar=progress_bar,
-            invert=invert,
         )
 
         if split:
             return self._split_values(
-                values=valid_values,
-                ranges=valid_ranges,
+                method=self._extract_values,
                 value_names=value_names,
                 range_names=range_names,
                 **kwargs,
             )
 
-        return self._extract_values(
-            values=valid_values,
-            ranges=valid_ranges,
-            **kwargs,
-        )
+        return self._extract_values(**kwargs)
 
     def _validate_extract_values(  # type: ignore[misc]
         self: ConcreteDataSetType,
+        *,
         values,
         ranges,
         scalars,
@@ -6186,50 +6192,40 @@ class DataSetFilters(DataObjectFilters):
             component_mode,
         )
 
-        return dict(
-            values=valid_values,
-            ranges=valid_ranges,
-            value_names=value_names,
-            range_names=range_names,
-            array=array,
-            array_name=array_name,
-            association=association,
-            component_logic=component_logic,
+        return (
+            valid_values,
+            valid_ranges,
+            value_names,
+            range_names,
+            array,
+            array_name,
+            association,
+            component_logic,
         )
 
     def _split_values(  # type:ignore[misc]
-        self: ConcreteDataSetType, values, ranges, value_names, range_names, **kwargs
+        self: ConcreteDataSetType, *, method, values, ranges, value_names, range_names, **kwargs
     ):
         # Split values and ranges separately and combine into single multiblock
         multi = pyvista.MultiBlock()
         if values is not None:
             value_names = value_names if value_names else [None] * len(values)
             for name, val in zip(value_names, values):
-                multi.append(self._extract_values(values=[val], **kwargs), name)
+                multi.append(method(values=[val], **kwargs), name)
         if ranges is not None:
             range_names = range_names if range_names else [None] * len(ranges)
             for name, rng in zip(range_names, ranges):
-                multi.append(self._extract_values(ranges=[rng], **kwargs), name)
+                multi.append(method(ranges=[rng], **kwargs), name)
         return multi
 
-    def _extract_values(  # type: ignore[misc]
+    def _apply_component_logic_to_array(  # type: ignore[misc]
         self: ConcreteDataSetType,
+        *,
         values=None,
         ranges=None,
-        *,
         array,
-        array_name,
-        association,
         component_logic,
         invert,
-        adjacent_cells=None,
-        include_cells=None,
-        progress_bar=None,
-        pass_point_ids=None,
-        pass_cell_ids=None,
-        as_imagedata=None,
-        image_fill_value=None,
-        image_replacement_value=None,
     ):
         """Extract values using validated input.
 
@@ -6263,23 +6259,30 @@ class DataSetFilters(DataObjectFilters):
                     logic = np.ones_like(array, dtype=np.bool_)
                 _update_id_mask(logic)
 
-        id_mask = np.invert(id_mask) if invert else id_mask
+        return np.invert(id_mask) if invert else id_mask
 
-        if as_imagedata:
-            # Generate output array
-            input_array = cast(
-                pyvista.pyvista_ndarray, get_array(self, name=array_name, preference=association)
-            )
-            array_out = np.full_like(input_array, fill_value=image_fill_value)
-            replacement_values = (
-                input_array[id_mask] if image_replacement_value is None else image_replacement_value
-            )
-            array_out[id_mask] = replacement_values
-
-            output = pyvista.ImageData()
-            output.copy_structure(cast(pyvista.ImageData, self))
-            output[array_name] = array_out
-            return output
+    def _extract_values(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        values=None,
+        ranges=None,
+        *,
+        array,
+        component_logic,
+        invert,
+        association,
+        adjacent_cells,
+        include_cells,
+        progress_bar,
+        pass_point_ids,
+        pass_cell_ids,
+    ):
+        id_mask = self._apply_component_logic_to_array(
+            values=values,
+            ranges=ranges,
+            array=array,
+            component_logic=component_logic,
+            invert=invert,
+        )
 
         # Extract point or cell ids
         if association == FieldAssociation.POINT:

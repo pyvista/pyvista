@@ -22,6 +22,7 @@ from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.arrays import FieldAssociation
+from pyvista.core.utilities.arrays import get_array
 from pyvista.core.utilities.arrays import set_default_active_scalars
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -3554,7 +3555,6 @@ class ImageDataFilters(DataSetFilters):
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
         invert: bool = False,
         split: bool = False,
-        progress_bar: bool = False,
     ):
         """Select values of interest and fill the rest with a constant.
 
@@ -3642,9 +3642,6 @@ class ImageDataFilters(DataSetFilters):
             .. note::
                 Output blocks may contain meshes with only the ``fill_value`` if no
                 values meet the selection criteria.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
 
         See Also
         --------
@@ -3758,35 +3755,75 @@ class ImageDataFilters(DataSetFilters):
             split=split,
             mesh_type=pyvista.ImageData,
         )
-        if isinstance(validated, dict):
-            valid_values = validated.pop('values')
-            valid_ranges = validated.pop('ranges')
-            value_names = validated.pop('value_names')
-            range_names = validated.pop('range_names')
+        if isinstance(validated, tuple):
+            (
+                valid_values,
+                valid_ranges,
+                value_names,
+                range_names,
+                array,
+                array_name,
+                association,
+                component_logic,
+            ) = validated
         else:
             # Return empty dataset
             return validated
 
         kwargs = dict(
-            **validated,
-            as_imagedata=True,
-            image_fill_value=fill_value,
-            image_replacement_value=replacement_value,
-            progress_bar=progress_bar,
+            values=valid_values,
+            ranges=valid_ranges,
+            array=array,
+            association=association,
+            component_logic=component_logic,
             invert=invert,
+            array_name=array_name,
+            fill_value=fill_value,
+            replacement_value=replacement_value,
         )
 
         if split:
             return self._split_values(
-                values=valid_values,
-                ranges=valid_ranges,
+                method=self._select_values,
                 value_names=value_names,
                 range_names=range_names,
                 **kwargs,
             )
 
-        return self._extract_values(
-            values=valid_values,
-            ranges=valid_ranges,
-            **kwargs,
+        return self._select_values(**kwargs)
+
+    def _select_values(  # type: ignore[misc]
+        self: ImageData,
+        values=None,
+        ranges=None,
+        *,
+        array,
+        component_logic,
+        invert,
+        association,
+        array_name,
+        fill_value,
+        replacement_value,
+    ):
+        id_mask = self._apply_component_logic_to_array(
+            values=values,
+            ranges=ranges,
+            array=array,
+            component_logic=component_logic,
+            invert=invert,
         )
+
+        # Generate output array
+        input_array = cast(
+            pyvista.pyvista_ndarray, get_array(self, name=array_name, preference=association)
+        )
+        array_out = np.full_like(input_array, fill_value=fill_value)
+        replacement_values = (
+            input_array[id_mask] if replacement_value is None else replacement_value
+        )
+        array_out[id_mask] = replacement_values
+
+        output = pyvista.ImageData()
+        output.copy_structure(cast(pyvista.ImageData, self))
+        output[array_name] = array_out
+        return output
