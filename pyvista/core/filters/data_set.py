@@ -6051,7 +6051,7 @@ class DataSetFilters(DataObjectFilters):
         preference,
         component_mode,
         split,
-        mesh_type = None,
+        mesh_type=None,
     ):
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
@@ -6222,14 +6222,14 @@ class DataSetFilters(DataObjectFilters):
         association,
         component_logic,
         invert,
-        adjacent_cells = None,
-        include_cells = None,
-        progress_bar = None,
-        pass_point_ids = None,
-        pass_cell_ids = None,
-        as_imagedata = None,
-        image_fill_value = None,
-        image_replacement_value = None,
+        adjacent_cells=None,
+        include_cells=None,
+        progress_bar=None,
+        pass_point_ids=None,
+        pass_cell_ids=None,
+        as_imagedata=None,
+        image_fill_value=None,
+        image_replacement_value=None,
     ):
         """Extract values using validated input.
 
