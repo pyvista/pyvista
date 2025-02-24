@@ -1803,7 +1803,7 @@ class MultiBlock(
         """
         return {
             type(block)
-            for block in cast(Iterator[DataSet | None], self.recursive_iterator('blocks'))
+            for block in cast(Iterator[Union[DataSet, None]], self.recursive_iterator('blocks'))
         }
 
     @property
