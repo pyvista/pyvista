@@ -1277,14 +1277,20 @@ def test_nek5000_reader():
 
     # test merge points routines
     assert nek_data.n_points == 8 * 8 * 16 * 16, 'Check n_points without merging points'
+    assert 'spectral element id' not in nek_data.cell_data
 
     nek_reader = pv.get_reader(filename)
     assert nek_reader.reader.GetCleanGrid() == 0
     nek_reader.enable_merge_points()
     assert nek_reader.reader.GetCleanGrid() == 1
 
-    nek_data1 = nek_reader.read()
-    assert nek_data1.n_points == (7 * 16 + 1) * (7 * 16 + 1), 'Check n_points with merging points'
+    assert nek_reader.reader.GetSpectralElementIds() == 0
+    nek_reader.enable_spectral_element_ids()
+    assert nek_reader.reader.GetSpectralElementIds() == 1
+
+    nek_data = nek_reader.read()
+    assert nek_data.n_points == (7 * 16 + 1) * (7 * 16 + 1), 'Check n_points with merging points'
+    assert 'spectral element id' in nek_data.cell_data
 
 
 @pytest.mark.parametrize(

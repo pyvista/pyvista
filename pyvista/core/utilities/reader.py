@@ -2127,6 +2127,14 @@ class Nek5000Reader(BaseReader, PointCellDataSelection, TimeReader):
         """Disable merging coincident GLL points from different spectral elements on read."""
         self.reader.CleanGridOff()
 
+    def enable_spectral_element_ids(self):
+        """Enable spectral element IDs to be shown as cell data."""
+        self.reader.SpectralElementIdsOn()
+
+    def disable_spectral_element_ids(self):
+        """Disable spectral element IDs to be shown as cell data."""
+        self.reader.SpectralElementIdsOff()
+
     @property
     def number_time_points(self):
         """Return number of time points or iterations available to read.
