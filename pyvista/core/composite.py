@@ -30,6 +30,7 @@ from .filters import CompositeFilters
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
+from .utilities.arrays import FieldLiteral
 from .utilities.arrays import PointLiteral
 from .utilities.arrays import parse_field_choice
 from .utilities.geometric_objects import Box
@@ -39,6 +40,8 @@ from .utilities.helpers import wrap
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import Literal
+
+    from pyvista import PolyData
 
     from ._typing_core import NumpyArray
 
@@ -745,17 +748,28 @@ class MultiBlock(
         return sum(block.volume for block in self if block)
 
     def get_data_range(  # type: ignore[override]
-        self: MultiBlock, name: str, allow_missing: bool = False
+        self: MultiBlock,
+        name: str | None,
+        allow_missing: bool = False,
+        preference: PointLiteral | CellLiteral | FieldLiteral = 'cell',
     ) -> tuple[float, float]:
         """Get the min/max of an array given its name across all blocks.
 
         Parameters
         ----------
-        name : str
-            Name of the array.
+        name : str, optional
+            The name of the array to get the range. If ``None``, the
+            active scalars are used.
 
         allow_missing : bool, default: False
             Allow a block to be missing the named array.
+
+        preference : str, default: "cell"
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
+
+            .. versionadded:: 0.45
 
         Returns
         -------
@@ -770,7 +784,7 @@ class MultiBlock(
                 continue
             # get the scalars if available - recursive
             try:
-                tmi, tma = data.get_data_range(name)
+                tmi, tma = data.get_data_range(name, preference=preference)
             except KeyError:
                 if allow_missing:
                     continue
@@ -1716,7 +1730,7 @@ class MultiBlock(
         return field_asc, scalars
 
     def as_polydata_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:
-        """Convert all the datasets within this MultiBlock to :class:`pyvista.PolyData`.
+        """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
         Parameters
         ----------
@@ -1730,6 +1744,13 @@ class MultiBlock(
         pyvista.MultiBlock
             MultiBlock containing only :class:`pyvista.PolyData` datasets.
 
+        See Also
+        --------
+        is_all_polydata
+            Check if all blocks are :class:`~pyvista.PolyData`.
+        :meth:`~pyvista.CompositeFilters.extract_geometry`
+            Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
+
         Notes
         -----
         Null blocks are converted to empty :class:`pyvista.PolyData`
@@ -1737,39 +1758,38 @@ class MultiBlock(
         MultiBlocks with null blocks.
 
         """
-        # we make a shallow copy here to avoid modifying the original dataset
-        dataset = self.copy(deep=False)
 
-        # Loop through the multiblock and convert to polydata
-        for i, block in enumerate(dataset):
-            if block is not None:
-                if isinstance(block, MultiBlock):
-                    dataset.replace(i, block.as_polydata_blocks(copy=copy))
-                elif isinstance(block, pyvista.PointSet):
-                    dataset.replace(i, block.cast_to_polydata(deep=True))
-                elif not isinstance(block, pyvista.PolyData):
-                    dataset.replace(i, block.extract_surface())
-                elif copy:
-                    # dataset is a PolyData
-                    dataset.replace(i, block.copy(deep=False))
+        # Define how to process each block
+        def block_filter(block: DataSet | None) -> PolyData:
+            if block is None:
+                return pyvista.PolyData()
+            elif isinstance(block, pyvista.PointSet):
+                return block.cast_to_polydata(deep=True)
+            elif isinstance(block, pyvista.PolyData):
+                return block.copy(deep=False) if copy else block
             else:
-                # must have empty polydata within these datasets as some
-                # downstream filters don't work on null pointers (i.e. None)
-                dataset[i] = pyvista.PolyData()
+                return block.extract_surface()  # type: ignore[misc]
 
-        return dataset
+        return self.generic_filter(block_filter, _skip_none=False)
 
     @property
     def is_all_polydata(self: MultiBlock) -> bool:
-        """Return ``True`` when all the blocks are :class:`pyvista.PolyData`.
+        """Return ``True`` when all the blocks are :class:`~pyvista.PolyData`.
 
         This method will recursively check if any internal blocks are also
-        :class:`pyvista.PolyData`.
+        :class:`~pyvista.PolyData`.
 
         Returns
         -------
         bool
-            Return ``True`` when all blocks are :class:`pyvista.PolyData`.
+            Return ``True`` when all blocks are :class:`~pyvista.PolyData`.
+
+        See Also
+        --------
+        as_polydata_blocks
+            Convert all blocks to :class:`~pyvista.PolyData`.
+        :meth:`~pyvista.CompositeFilters.extract_geometry`
+            Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """
         return all(isinstance(block, pyvista.PolyData) for block in self.recursive_iterator())
