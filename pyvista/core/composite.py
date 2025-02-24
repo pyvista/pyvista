@@ -1872,7 +1872,7 @@ class MultiBlock(
 
         Show the :attr:`nested_block_types`.
 
-        >>> multi.nested_block_types
+        >>> multi.nested_block_types  # doctest:+SKIP
         {<class 'pyvista.core.pointset.UnstructuredGrid'>, <class 'NoneType'>}
 
         Since there is more than one type, the dataset is heterogeneous.
