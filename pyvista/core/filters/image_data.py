@@ -3547,8 +3547,8 @@ class ImageDataFilters(DataSetFilters):
             | dict[tuple[float, float], str]
         )
         | None = None,
-        fill_value: float = 0,
-        replacement_value: float | None = None,
+        fill_value: float | VectorLike[float] = 0,
+        replacement_value: float | VectorLike[float] | None = None,
         scalars: str | None = None,
         preference: Literal['point', 'cell'] = 'point',
         component_mode: Literal['any', 'all', 'multi'] | int = 'all',
@@ -3600,15 +3600,16 @@ class ImageDataFilters(DataSetFilters):
                 - ``[0, float('inf')]`` to extract values greater than or equal to zero.
                 - ``[float('-inf'), 0]`` to extract values less than or equal to zero.
 
-        fill_value : float, default: 0
-            Value used to fill the image. Non-selected parts of the image will have
-            this value.
+        fill_value : float | VectorLike[float], default: 0
+            Value used to fill the image. Can be a single value or a multi-component
+            vector. Non-selected parts of the image will have this value.
 
-        replacement_value : float, optional
-            Replacement value for the output array. If provided, selected values will
-            be replaced with the given value. If no value is given, the selected values
-            are retained and returned as-is. Setting this value is useful for
-            generating a binarized output array.
+        replacement_value : float | VectorLike[float], optional
+            Replacement value for the output array. Can be a single value or a
+            multi-component vector. If provided, selected values will be replaced with
+            the given value. If no value is given, the selected values are retained and
+            returned as-is. Setting this value is useful for generating a binarized
+            output array.
 
         scalars : str, optional
             Name of scalars to select from. Defaults to currently active scalars.
