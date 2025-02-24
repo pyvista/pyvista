@@ -1781,7 +1781,10 @@ class MultiBlock(
         .. versionadded:: 0.45
 
         """
-        return {type(block) for block in self.recursive_iterator('blocks')}
+        return {
+            type(block)
+            for block in cast(Iterator[DataSet | None], self.recursive_iterator('blocks'))
+        }
 
     @property
     def is_homogeneous(self: MultiBlock) -> bool:  # numpydoc ignore=RT01
