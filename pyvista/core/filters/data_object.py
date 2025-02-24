@@ -130,12 +130,14 @@ class DataObjectFilters:
             )
 
         if inplace and isinstance(self, pyvista.RectilinearGrid):
-            raise TypeError(f'Cannot transform a {self.__class__} inplace')
+            msg = f'Cannot transform a {self.__class__} inplace'
+            raise TypeError(msg)
 
         t = trans if isinstance(trans, Transform) else Transform(trans)
 
         if t.matrix[3, 3] == 0:
-            raise ValueError('Transform element (3,3), the inverse scale term, is zero')
+            msg = 'Transform element (3,3), the inverse scale term, is zero'
+            raise ValueError(msg)
 
         # vtkTransformFilter truncates the result if the input is an integer type
         # so convert input points and relevant vectors to float
