@@ -3755,7 +3755,7 @@ class ImageDataFilters(DataSetFilters):
             preference=preference,
             component_mode=component_mode,
             split=split,
-            as_imagedata=True,
+            mesh_type=pyvista.ImageData,
         )
         if isinstance(validated, dict):
             valid_values = validated.pop('values')
@@ -3773,10 +3773,6 @@ class ImageDataFilters(DataSetFilters):
             image_replacement_value=replacement_value,
             progress_bar=progress_bar,
             invert=invert,
-            adjacent_cells=None,
-            include_cells=None,
-            pass_point_ids=None,
-            pass_cell_ids=None,
         )
 
         if split:

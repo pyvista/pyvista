@@ -6004,7 +6004,6 @@ class DataSetFilters(DataObjectFilters):
             preference=preference,
             component_mode=component_mode,
             split=split,
-            as_imagedata=False,
         )
         if isinstance(validated, dict):
             valid_values = validated.pop('values')
@@ -6027,9 +6026,6 @@ class DataSetFilters(DataObjectFilters):
             pass_cell_ids=pass_cell_ids,
             progress_bar=progress_bar,
             invert=invert,
-            as_imagedata=False,
-            image_fill_value=None,
-            image_replacement_value=None,
         )
 
         if split:
@@ -6055,7 +6051,7 @@ class DataSetFilters(DataObjectFilters):
         preference,
         component_mode,
         split,
-        as_imagedata,
+        mesh_type = None,
     ):
         def _validate_scalar_array(scalars_, preference_):
             # Get the scalar array and field association to use for extraction
@@ -6167,7 +6163,8 @@ class DataSetFilters(DataObjectFilters):
 
         if self.n_points == 0:
             # Empty input, return empty output
-            out = pyvista.ImageData() if as_imagedata else pyvista.UnstructuredGrid()
+            mesh_type = pyvista.UnstructuredGrid if mesh_type is None else mesh_type
+            out = mesh_type()
             if split:
                 # Do basic validation just to get num blocks for multiblock
                 _, values_ = _get_inputs_from_dict(values)
@@ -6225,14 +6222,14 @@ class DataSetFilters(DataObjectFilters):
         association,
         component_logic,
         invert,
-        adjacent_cells,
-        include_cells,
-        progress_bar,
-        pass_point_ids,
-        pass_cell_ids,
-        as_imagedata,
-        image_fill_value,
-        image_replacement_value,
+        adjacent_cells = None,
+        include_cells = None,
+        progress_bar = None,
+        pass_point_ids = None,
+        pass_cell_ids = None,
+        as_imagedata = None,
+        image_fill_value = None,
+        image_replacement_value = None,
     ):
         """Extract values using validated input.
 
