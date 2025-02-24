@@ -2413,32 +2413,3 @@ class DataObjectFilters:
                 raise VTKVersionError('`snap_to_closest_point=True` requires vtk 9.3.0 or newer')
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
-
-
-# clip = DataSetFilters.clip
-#
-# clip_box = DataSetFilters.clip_box
-#
-# slice = DataSetFilters.slice
-#
-# slice_orthogonal = DataSetFilters.slice_orthogonal
-#
-# slice_along_axis = DataSetFilters.slice_along_axis
-#
-# slice_along_line = DataSetFilters.slice_along_line
-#
-# extract_all_edges = DataSetFilters.extract_all_edges
-#
-# elevation = DataSetFilters.elevation
-#
-# compute_cell_sizes = DataSetFilters.compute_cell_sizes
-#
-# cell_centers = DataSetFilters.cell_centers
-#
-# cell_data_to_point_data = DataObjectFilters.cell_data_to_point_data
-#
-# point_data_to_cell_data = DataObjectFilters.cell_data_to_point_data
-#
-# sample = DataSetFilters.sample
-#
-# triangulate = DataSetFilters.triangulate
