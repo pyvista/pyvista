@@ -6211,18 +6211,18 @@ class DataSetFilters(DataObjectFilters):
         if values is not None:
             value_names = value_names if value_names else [None] * len(values)
             for name, val in zip(value_names, values):
-                multi.append(method(values=[val], **kwargs), name)
+                multi.append(method(values=[val], ranges=None, **kwargs), name)
         if ranges is not None:
             range_names = range_names if range_names else [None] * len(ranges)
             for name, rng in zip(range_names, ranges):
-                multi.append(method(ranges=[rng], **kwargs), name)
+                multi.append(method(values=None, ranges=[rng], **kwargs), name)
         return multi
 
     def _apply_component_logic_to_array(  # type: ignore[misc]
         self: ConcreteDataSetType,
         *,
-        values=None,
-        ranges=None,
+        values,
+        ranges,
         array,
         component_logic,
         invert,
@@ -6263,9 +6263,9 @@ class DataSetFilters(DataObjectFilters):
 
     def _extract_values(  # type: ignore[misc]
         self: ConcreteDataSetType,
-        values=None,
-        ranges=None,
         *,
+        values,
+        ranges,
         array,
         component_logic,
         invert,

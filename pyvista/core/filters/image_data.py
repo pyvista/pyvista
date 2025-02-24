@@ -3794,9 +3794,9 @@ class ImageDataFilters(DataSetFilters):
 
     def _select_values(  # type: ignore[misc]
         self: ImageData,
-        values=None,
-        ranges=None,
         *,
+        values,
+        ranges,
         array,
         component_logic,
         invert,
