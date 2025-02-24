@@ -666,13 +666,25 @@ def test_multi_block_save_lines(tmpdir):
 
 
 def test_multi_block_data_range():
-    volume = pv.Wavelet()
+    # Create ambiguous point and cell data
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    point_data_value = 99
+    cell_data_value = 42
+    volume.point_data['data'] = np.ones((volume.n_points,)) * point_data_value
+    volume.cell_data['data'] = np.ones((volume.n_cells,)) * cell_data_value
+
+    # Create multiblock
     a = volume.slice_along_axis(5, 'x')
     with pytest.raises(KeyError):
         a.get_data_range('foo')
-    mi, ma = a.get_data_range(volume.active_scalars_name)
-    assert mi is not None
-    assert ma is not None
+    mi, ma = a.get_data_range(volume.active_scalars_name, preference='point')
+    assert mi == point_data_value
+    assert ma == point_data_value
+
+    mi, ma = a.get_data_range(volume.active_scalars_name, preference='cell')
+    assert mi == cell_data_value
+    assert ma == cell_data_value
+
     # Test on a nested MultiBlock
     b = volume.slice_along_axis(5, 'y')
     slices = pv.MultiBlock([a, b])
@@ -879,7 +891,7 @@ def test_as_unstructured_grid_blocks(multiblock_all_with_nested_and_none):
         multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
 
     new_multi = multi.as_unstructured_grid_blocks()
-    assert all(isinstance(block, pv.UnstructuredGrid) for block in new_multi.flatten())
+    assert all(isinstance(block, pv.UnstructuredGrid) for block in new_multi.recursive_iterator())
 
 
 def test_compute_normals(multiblock_poly):
@@ -1182,10 +1194,9 @@ def test_generic_filter_raises(multiblock_all_with_nested_and_none):
             'resample',
         )
     # Test with invalid kwargs
-    multi = pv.MultiBlock([multiblock_all_with_nested_and_none])
     match = "The filter '<bound method DataSetFilters.align_xyz of ImageData"
     with pytest.raises(RuntimeError, match=re.escape(match)):
-        multi.generic_filter('align_xyz', foo='bar')
+        multiblock_all_with_nested_and_none.generic_filter('align_xyz', foo='bar')
     # Test with function
     match = "The filter '<function test_generic_filter_raises"
     with pytest.raises(RuntimeError, match=match):
