@@ -8,7 +8,9 @@ import warnings
 import numpy as np
 
 import pyvista
+from pyvista._version import version_info
 from pyvista.core import _vtk_core as _vtk
+from pyvista.core.errors import PyVistaDeprecationWarning
 from pyvista.core.filters import _update_alg
 from pyvista.core.utilities import Transform
 
@@ -116,9 +118,26 @@ class DataObjectFilters:
         >>> transformed.plot(show_edges=True)
 
         """
-        from ._deprecate_transform_inplace_default_true import check_inplace
+        # Deprecated v0.45, convert to error in v0.48, remove v0.51
+        if inplace is None:
+            # if inplace is None user has not explicitly opted into inplace behavior
+            if version_info >= (0, 48):  # pragma: no cover
+                raise RuntimeError(
+                    'Convert this deprecation warning into an error '
+                    'and update the docstring default value/type for inplace.'
+                )
+            if version_info >= (0, 51):  # pragma: no cover
+                raise RuntimeError(
+                    'Remove this deprecation and update the docstring value/type for inplace.'
+                )
 
-        inplace = check_inplace(cls=type(self), inplace=inplace)
+            msg = (
+                f'The default value of `inplace` for the filter `{self.__class__.__name__}.transform` will change in the future. '
+                'Previously it defaulted to `True`, but will change to `False`. '
+                'Explicitly set `inplace` to `True` or `False` to silence this warning.'
+            )
+            warnings.warn(msg, PyVistaDeprecationWarning)
+            inplace = True  # The old default behavior
 
         if isinstance(self, pyvista.MultiBlock):
             return self.generic_filter(
