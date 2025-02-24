@@ -1772,27 +1772,22 @@ class MultiBlock(
             Return ``True`` when all blocks are :class:`pyvista.PolyData`.
 
         """
-        return self.is_homogeneous is pyvista.PolyData
+        return all(isinstance(block, pyvista.PolyData) for block in self.recursive_iterator())
 
     @property
-    def is_homogeneous(self: MultiBlock) -> type[DataSet | None] | Literal[False]:
-        """Return the type of all blocks when all the blocks have the same type.
-
-        The type(s) of all blocks are recursively checked. If all blocks have the same
-        type, that type is returned. Otherwise, ``False`` is returned.
-
-        .. note::
-
-            The output value is not strictly a ``bool`` since it may return a type.
-            But, the value is nevertheless "truthy" and can be used like a boolean.
+    def nested_block_types(self) -> set[type[DataSet | None]]:  # numpydoc ignore=RT01
+        """Return a set of all nested block type(s).
 
         .. versionadded:: 0.45
 
-        Returns
-        -------
-        bool | type[DataSet] | NoneType
-            Return ``True`` if empty, the block type if homogeneous, and ``False``
-            otherwise.
+        """
+        return {type(block) for block in self.recursive_iterator('blocks')}
+
+    @property
+    def is_homogeneous(self: MultiBlock) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` if all nested blocks have the same type.
+
+        .. versionadded:: 0.45
 
         Examples
         --------
@@ -1801,30 +1796,44 @@ class MultiBlock(
         >>> from pyvista import examples
         >>> multi = examples.download_biplane()
 
-        Check if all the blocks have the same type.
+        Show the :attr:`nested_block_types`.
 
-        >>> result = multi.is_homogeneous
-        >>> result
-        <class 'pyvista.core.pointset.UnstructuredGrid'>
+        >>> multi.nested_block_types
+        {pyvista.core.pointset.UnstructuredGrid}
 
-        Convert to a ``bool`` if desired.
+        Since there is only one type, the dataset is homogeneous.
 
-        >>> bool(result)
+        >>> multi.is_homogeneous
         True
 
         """
-        iterator = self.recursive_iterator('blocks')
-        try:
-            first_block = next(iterator)
-        except StopIteration:
-            return False
+        return len(self.nested_block_types) == 1
 
-        first_block_type = cast(type[Union[DataSet, None]], type(first_block))
-        return (
-            first_block_type
-            if all(isinstance(block, first_block_type) for block in iterator)
-            else False
-        )
+    @property
+    def is_heterogeneous(self: MultiBlock) -> bool:  # numpydoc ignore=RT01
+        """Return ``True`` any two nested blocks have different type.
+
+        .. versionadded:: 0.45
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_mug`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_mug()
+
+        Show the :attr:`nested_block_types`.
+
+        >>> multi.nested_block_types
+        {NoneType, pyvista.core.pointset.UnstructuredGrid}
+
+        Since there is more than one type, the dataset is heterogeneous.
+
+        >>> multi.is_heterogeneous
+        True
+
+        """
+        return len(self.nested_block_types) > 1
 
     def _activate_plotting_scalars(
         self: MultiBlock,
