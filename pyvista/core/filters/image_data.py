@@ -3495,18 +3495,18 @@ class ImageDataFilters(DataSetFilters):
 
     def select_values(  # type: ignore[misc]
         self: ImageData,
-        values: None
-        | (
+        values: (
             float | VectorLike[float] | MatrixLike[float] | dict[str, float] | dict[float, str]
-        ) = None,
+        )
+        | None = None,
         *,
-        ranges: None
-        | (
+        ranges: (
             VectorLike[float]
             | MatrixLike[float]
             | dict[str, VectorLike[float]]
             | dict[tuple[float, float], str]
-        ) = None,
+        )
+        | None = None,
         fill_value: float = 0,
         replacement_value: float | None = None,
         scalars: str | None = None,
