@@ -11,6 +11,7 @@ import pyvista
 from pyvista.core import _vtk_core as _vtk
 from pyvista.core.filters import _get_output
 from pyvista.core.filters import _update_alg
+from pyvista.core.filters.data_object import DataObjectFilters
 from pyvista.core.filters.data_set import DataSetFilters
 from pyvista.core.utilities.helpers import wrap
 from pyvista.core.utilities.misc import abstract_class
@@ -19,12 +20,11 @@ if TYPE_CHECKING:
     from typing import Callable
 
     from pyvista import MultiBlock
-    from pyvista.core._typing_core import TransformLike
     from pyvista.core.composite import _TypeMultiBlockLeaf
 
 
 @abstract_class
-class CompositeFilters:
+class CompositeFilters(DataObjectFilters):
     """An internal class to manage filters/algorithms for composite datasets."""
 
     def generic_filter(  # type:ignore[misc]
@@ -41,13 +41,16 @@ class CompositeFilters:
 
         .. note::
 
-            The filter is not applied to any ``None`` blocks. These are simply skipped
-            and passed through to the output.
+            If an ``inplace`` keyword is used, this ``MultiBlock`` is modified
+            in-place along with all blocks.
 
         .. note::
 
-            If an ``inplace`` keyword is used, this ``MultiBlock`` is modified
-            in-place along with all blocks.
+            By default, the specified ``function`` is not applied to any ``None``
+            blocks. These are simply skipped and passed through to the output.
+
+            For advanced use, it is possible to apply the filter to ``None`` blocks
+            by using the undocumented keyword ``_skip_none=False``.
 
         .. versionadded:: 0.45
 
@@ -75,6 +78,12 @@ class CompositeFilters:
             Raised if the filter cannot be applied to any block for any reason. This
             overrides ``TypeError``, ``ValueError``, ``AttributeError`` errors when
             filtering.
+
+        See Also
+        --------
+        pyvista.MultiBlock.flatten
+        pyvista.MultiBlock.recursive_iterator
+        pyvista.MultiBlock.clean
 
         Examples
         --------
@@ -146,6 +155,17 @@ class CompositeFilters:
         >>> filtered = multi.generic_filter(conditional_resample, 0.5)
 
         """
+        # Set default undocumented kwargs. A function is used here to prevent IDEs from
+        # suggesting these keywords to users.
+
+        def get_iterator_kwargs(kwargs_) -> tuple[bool, bool]:
+            # Skip None blocks by default
+            skip_none_: bool = kwargs_.pop('_skip_none', True)
+            # Do not skip empty blocks by default
+            skip_empty_: bool = kwargs_.pop('_skip_empty', False)
+            return skip_none_, skip_empty_
+
+        skip_none, skip_empty = get_iterator_kwargs(kwargs)
 
         def apply_filter(function_, ids_, name_, block_):
             try:
@@ -174,23 +194,26 @@ class CompositeFilters:
                 raise RuntimeError(msg) from e
             return output_
 
-        def get_iterator(multi):
+        def get_iterator(multi, skip_none_, skip_empty_):
             return multi.recursive_iterator(
-                'all', skip_none=True, skip_empty=False, nested_ids=True
+                'all', skip_none=skip_none_, skip_empty=skip_empty_, nested_ids=True
             )
 
         # Apply filter in-place
         inplace = kwargs.get('inplace')
         if inplace:
-            for ids, name, block in get_iterator(self):
+            for ids, name, block in get_iterator(self, skip_none, skip_empty):
                 apply_filter(function, ids, name, block)
             return self
 
         # Create a copy and replace all the blocks
         output = pyvista.MultiBlock()
         output.shallow_copy(self, recursive=True)
-        for ids, name, block in get_iterator(output):
-            output.replace(ids, apply_filter(function, ids, name, block))
+        for ids, name, block in get_iterator(output, skip_none, skip_empty):
+            filtered = apply_filter(function, ids, name, block)
+            # Only replace if necessary
+            if filtered is not block:
+                output.replace(ids, filtered)
         return output
 
     def extract_geometry(self):
@@ -392,71 +415,3 @@ class CompositeFilters:
         alg.SetInputData(self)
         _update_alg(alg, progress_bar, 'Computing Normals')
         return _get_output(alg)
-
-    def transform(  # type: ignore[misc]
-        self: MultiBlock,
-        trans: TransformLike,
-        transform_all_input_vectors: bool = False,
-        inplace: bool | None = None,
-        progress_bar: bool = False,
-    ):
-        """Transform all blocks in this composite dataset.
-
-        .. note::
-            See also the notes at :func:`pyvista.DataSetFilters.transform` which is
-            used by this filter under the hood.
-
-        .. deprecated:: 0.45.0
-            `inplace` was previously defaulted to `True`. In the future this will change to `False`.
-
-        Parameters
-        ----------
-        trans : TransformLike
-            Accepts any transformation input such as a :class:`~pyvista.Transform`
-            or a 3x3 or 4x4 array.
-
-        transform_all_input_vectors : bool, default: False
-            When ``True``, all arrays with three components are transformed.
-            Otherwise, only the normals and vectors are transformed.
-
-        inplace : bool, default: True
-            When ``True``, modifies the dataset inplace.
-
-        progress_bar : bool, default: False
-            Display a progress bar to indicate progress.
-
-        Returns
-        -------
-        pyvista.MultiBlock
-            Transformed dataset. Return type of all blocks matches input unless
-            input dataset is a :class:`pyvista.ImageData`, in which
-            case the output datatype is a :class:`pyvista.StructuredGrid`.
-
-        See Also
-        --------
-        :class:`pyvista.Transform`
-            Describe linear transformations via a 4x4 matrix.
-
-        Examples
-        --------
-        Translate a mesh by ``(50, 100, 200)``. Here a :class:`~pyvista.Transform` is
-        used, but any :class:`~pyvista.TransformLike` is accepted.
-
-        >>> import pyvista as pv
-        >>> mesh = pv.MultiBlock([pv.Sphere(), pv.Plane()])
-        >>> transform = pv.Transform().translate(50, 100, 200)
-        >>> transformed = mesh.transform(transform, inplace=False)
-        >>> transformed.plot(show_edges=True)
-
-        """
-        from ._deprecate_transform_inplace_default_true import check_inplace
-
-        inplace = check_inplace(cls=type(self), inplace=inplace)
-
-        return self.generic_filter(
-            'transform',
-            trans=trans,
-            transform_all_input_vectors=transform_all_input_vectors,
-            inplace=inplace,
-            progress_bar=progress_bar,
-        )

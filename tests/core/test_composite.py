@@ -666,13 +666,25 @@ def test_multi_block_save_lines(tmpdir):
 
 
 def test_multi_block_data_range():
-    volume = pv.Wavelet()
+    # Create ambiguous point and cell data
+    volume = pv.ImageData(dimensions=(10, 10, 10))
+    point_data_value = 99
+    cell_data_value = 42
+    volume.point_data['data'] = np.ones((volume.n_points,)) * point_data_value
+    volume.cell_data['data'] = np.ones((volume.n_cells,)) * cell_data_value
+
+    # Create multiblock
     a = volume.slice_along_axis(5, 'x')
     with pytest.raises(KeyError):
         a.get_data_range('foo')
-    mi, ma = a.get_data_range(volume.active_scalars_name)
-    assert mi is not None
-    assert ma is not None
+    mi, ma = a.get_data_range(volume.active_scalars_name, preference='point')
+    assert mi == point_data_value
+    assert ma == point_data_value
+
+    mi, ma = a.get_data_range(volume.active_scalars_name, preference='cell')
+    assert mi == cell_data_value
+    assert ma == cell_data_value
+
     # Test on a nested MultiBlock
     b = volume.slice_along_axis(5, 'y')
     slices = pv.MultiBlock([a, b])
@@ -966,26 +978,26 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
     # include an empty mesh
     multiblock_all_with_nested_and_none.append(pv.PolyData())
 
-    # Test default skips None blocks and empty meshes by default
+    # Test default does not skip None blocks or empty meshes by default
     iterator = multiblock_all_with_nested_and_none.recursive_iterator()
-    assert isinstance(iterator, Generator)
-    iterator_list = list(iterator)
-    assert None not in iterator_list
-    assert all(isinstance(item, pv.DataSet) for item in iterator_list)
-    assert all(item.n_points > 0 for item in iterator_list)
-
-    # Test do not skip None blocks
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator(skip_none=False)
     assert isinstance(iterator, Generator)
     iterator_list = list(iterator)
     assert None in iterator_list
     assert all(isinstance(item, pv.DataSet) or item is None for item in iterator_list)
+    assert any(item.n_points == 0 for item in iterator_list if item is not None)
 
-    # Test do not skip empty blocks
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator(skip_empty=False)
+    # Test skip None blocks
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(skip_none=True)
     assert isinstance(iterator, Generator)
     iterator_list = list(iterator)
-    assert any(item.n_points == 0 for item in iterator_list)
+    assert None not in iterator_list
+    assert all(isinstance(item, pv.DataSet) for item in iterator_list)
+
+    # Test skip empty blocks
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator(skip_empty=True)
+    assert isinstance(iterator, Generator)
+    iterator_list = list(iterator)
+    assert all(item.n_points > 0 for item in iterator_list if item is not None)
 
 
 def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
@@ -996,7 +1008,7 @@ def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
     assert all(isinstance(item, str) for item in iterator)
 
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('blocks')
-    assert all(isinstance(item, pv.DataSet) for item in iterator)
+    assert all(isinstance(item, pv.DataSet) or item is None for item in iterator)
 
     iterator = multiblock_all_with_nested_and_none.recursive_iterator('items')
     for name, block in iterator:
