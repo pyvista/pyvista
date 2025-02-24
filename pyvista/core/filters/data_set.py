@@ -5856,8 +5856,23 @@ class DataSetFilters(DataObjectFilters):
 
         See Also
         --------
-        split_values, extract_points, extract_cells, threshold, partition
+        split_values
+            Wrapper around this filter to split values and return a :class:`~pyvista.MultiBlock` by default.
+
         :meth:`~pyvista.ImageDataFilters.select_values`
+            Similar filter specialized for :class:`~pyvista.ImageData`.
+
+        extract_points
+            Extract a subset of a mesh's points.
+
+        extract_cells
+            Extract a subset of a mesh's cells.
+
+        threshold
+             Similar filter for thresholding a mesh by value.
+
+        partition
+            Split a mesh into a number of sub-parts.
 
         Returns
         -------

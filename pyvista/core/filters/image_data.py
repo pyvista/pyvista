@@ -3648,9 +3648,16 @@ class ImageDataFilters(DataSetFilters):
         See Also
         --------
         image_threshold
+            Similar filter for thresholding :class:`~pyvista.ImageData`.
+
         :meth:`~pyvista.DataSetFilters.extract_values`
+            Similar threshold-like filter for extracting values from any dataset.
+
         :meth:`~pyvista.DataSetFilters.split_values`
+            Split a mesh by value into separate meshes.
+
         :meth:`~pyvista.DataSetFilters.threshold`
+            Generalized thresholding filter which returns a :class:`~pyvista.UnstructuredGrid`.
 
         Returns
         -------
