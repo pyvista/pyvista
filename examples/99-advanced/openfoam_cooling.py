@@ -62,7 +62,7 @@ pl.show()
 # Let's plot the velocity of the air.
 #
 # Start by clipping the air dataset with :func:`clip()
-# <pyvista.DataSetFilters.clip>` and plotting it alongside the electronics.
+# <pyvista.DataObjectFilters.clip>` and plotting it alongside the electronics.
 #
 # As you can see, the air enters from the front of the case (left) and is being
 # pushed out of the "back" of the case via a fan.
@@ -151,7 +151,7 @@ pl.show()
 #
 # For this example, we will first sample the results from the
 # :class:`pyvista.UnstructuredGrid` onto a :class:`pyvista.ImageData` using
-# :func:`sample() <pyvista.DataSetFilters.sample>`. This is so we can visualize
+# :func:`sample() <pyvista.DataObjectFilters.sample>`. This is so we can visualize
 # it using :func:`add_volume() <pyvista.Plotter.add_volume>`
 
 
