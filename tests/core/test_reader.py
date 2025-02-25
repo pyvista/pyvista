@@ -1275,6 +1275,7 @@ def test_nek5000_reader():
     assert nek_reader.reader.GetSpectralElementIds() == 0
 
     # check read() method produces the correct dataset
+    nek_reader.set_active_time_point(0)
     nek_data = nek_reader.read()
     assert isinstance(nek_data, pv.UnstructuredGrid), 'Check read type is valid'
     assert all(
@@ -1285,6 +1286,15 @@ def test_nek5000_reader():
     assert nek_data.n_points == 8 * 8 * 16 * 16, 'Check n_points without merging points'
     assert 'spectral element id' not in nek_data.cell_data
 
+    # check that different arrays are returned when the time is changed
+    # after an initial read() call
+    nek_reader.set_active_time_point(1)
+    nek_data1 = nek_reader.read()
+    for scalar in nek_data.point_data.keys():
+        assert not np.array_equal(nek_data.point_data[scalar], nek_data1.point_data[scalar])
+
+    # Note that for some reason merging points after an initial read()
+    # has no effect so re-creating reader
     nek_reader = pv.get_reader(filename)
 
     # check enable merge points
