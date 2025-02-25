@@ -338,12 +338,42 @@ class MultiBlock(
         >>> next(iterator)
         (0, 0)
 
-        Use the iterator to replace all blocks with new blocks. Similar to a previous
+        Use :meth:`get_block` and get the next block indicated by the nested ids.
+
+        >>> multi.get(next(iterator))
+        UnstructuredGrid ...
+
+        Use the iterator to :attr:`replace` all blocks with new blocks. Similar to a previous
         example, we use a filter but this time the operation is not performed in place.
 
         >>> iterator = multi.recursive_iterator('all', nested_ids=True)
         >>> for ids, _, block in iterator:
         ...     multi.replace(ids, block.connectivity())
+
+        Use ``node_type='parent'`` to get information about :class:`MultiBlock` nodes.
+
+        >>> iterator = multi.recursive_iterator(node_type='parent')
+
+        The iterator has ``8`` items. In this case this matches the number of blocks
+        in the root block.
+
+        >>> len(list(iterator))
+        8
+
+        Use ``skip_empty`` to skip :class:`MultiBlock` nodes which have length ``0``
+        and return their block ids.
+
+        >>> iterator = multi.recursive_iterator(
+        ...     'ids', node_type='parent', skip_empty=True
+        ... )
+        >>> ids = list(iterator)
+
+        There are two non-empty blocks at index ``0`` and ``4``.
+
+        >>> len(ids)
+        2
+        >>> ids
+        [(0,), (4,)]
 
         """
         _validation.check_contains(
