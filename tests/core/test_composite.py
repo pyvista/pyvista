@@ -5,11 +5,11 @@ import itertools
 import pathlib
 import platform
 import re
-from types import NoneType
 import weakref
 
 import numpy as np
 import pytest
+from typing_extensions import NoneType
 import vtk
 
 import pyvista as pv
