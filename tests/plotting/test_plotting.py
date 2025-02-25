@@ -4598,9 +4598,9 @@ def test_direction_objects(direction_obj_test_case):
 
 
 @pytest.mark.needs_vtk_version(9, 3, 0)
-@pytest.mark.parametrize('compute_normals', [True, False])
-def test_contour_labels_compute_normals(labeled_image, compute_normals):  # noqa: F811
-    contour = labeled_image.contour_labels(background_value=5, compute_normals=compute_normals)
+@pytest.mark.parametrize('orient_faces', [True, False])
+def test_contour_labels_orient_faces(labeled_image, orient_faces):  # noqa: F811
+    contour = labeled_image.contour_labels(background_value=5, orient_faces=orient_faces)
     contour.clear_data()
     contour.plot_normals()
 
@@ -4664,7 +4664,7 @@ def test_contour_labels_boundary_style(
     fixed_kwargs = dict(
         smoothing_distance=0.3,
         output_mesh_type='quads',
-        compute_normals=False,
+        orient_faces=False,
         simplify_output=False,
     )
 
@@ -4717,7 +4717,7 @@ def test_contour_labels_smoothing_constraint(
         smoothing_distance=smoothing_distance,
         smoothing_scale=smoothing_scale,
         pad_background=False,
-        compute_normals=False,
+        orient_faces=False,
     )
 
     # Translate so origin is in bottom left corner
@@ -4750,7 +4750,7 @@ def test_contour_labels_compare_select_inputs_select_outputs(
         smoothing=smoothing,
         smoothing_distance=0.8,
         output_mesh_type='quads',
-        compute_normals=False,
+        orient_faces=False,
     )
     mesh_select_inputs = labeled_image.contour_labels(select_inputs=2, **common_kwargs)
     mesh_select_outputs = labeled_image.contour_labels(select_outputs=2, **common_kwargs)
