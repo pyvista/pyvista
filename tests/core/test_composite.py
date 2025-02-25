@@ -9,7 +9,6 @@ import weakref
 
 import numpy as np
 import pytest
-from typing_extensions import NoneType
 import vtk
 
 import pyvista as pv
@@ -1019,7 +1018,8 @@ def test_recursive_iterator_node_type():
 
 
 @pytest.mark.parametrize(
-    ('block_mode', 'expected_types'), [('parent', pv.MultiBlock), ('child', (pv.DataSet, NoneType))]
+    ('block_mode', 'expected_types'),
+    [('parent', pv.MultiBlock), ('child', (pv.DataSet, type(None)))],
 )
 def test_recursive_iterator_contents(
     multiblock_all_with_nested_and_none, block_mode, expected_types
