@@ -1859,7 +1859,7 @@ class MultiBlock(
 
         See Also
         --------
-        is_homoogeneous
+        is_homogeneous
         nested_block_types
         recursive_iterator
 
