@@ -69,7 +69,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -307,7 +307,7 @@ class ImageDataFilters(DataSetFilters):
         -----
         This filter only supports point data. For inputs with cell data, consider
         re-meshing the cell data as point data with :meth:`~pyvista.ImageDataFilters.cells_to_points`
-        or resampling the cell data to point data with :func:`~pyvista.DataSetFilters.cell_data_to_point_data`.
+        or resampling the cell data to point data with :func:`~pyvista.DataObjectFilters.cell_data_to_point_data`.
 
         Examples
         --------
@@ -879,10 +879,11 @@ class ImageDataFilters(DataSetFilters):
             .. code-block:: python
 
                 image.contour_labels(
+                    boundary_style='strict_external',  # old filter strictly computes external polygons
                     smoothing=False,  # old filter does not apply smoothing
                     output_mesh_type='quads',  # old filter generates quads
                     pad_background=False,  # old filter generates open surfaces at input edges
-                    compute_normals=False,  # old filter does not compute normals
+                    orient_faces=False,  # old filter does not orient faces
                     simplify_output=False,  # old filter returns multi-component scalars
                 )
 
@@ -1012,7 +1013,7 @@ class ImageDataFilters(DataSetFilters):
 
     def contour_labels(  # type: ignore[misc]
         self: ImageData,
-        boundary_style: Literal['external', 'internal', 'all'] = 'external',
+        boundary_style: Literal['external', 'internal', 'all', 'strict_external'] = 'external',
         *,
         background_value: int = 0,
         select_inputs: int | VectorLike[int] | None = None,
@@ -1020,7 +1021,7 @@ class ImageDataFilters(DataSetFilters):
         pad_background: bool = True,
         output_mesh_type: Literal['quads', 'triangles'] | None = None,
         scalars: str | None = None,
-        compute_normals: bool = True,
+        orient_faces: bool = True,
         simplify_output: bool | None = None,
         smoothing: bool = True,
         smoothing_iterations: int = 16,
@@ -1058,9 +1059,8 @@ class ImageDataFilters(DataSetFilters):
 
             E.g. ``[1, 2]`` for the boundary between regions ``1`` and ``2``.
 
-
         By default, this filter returns ``'external'`` contours only. Optionally,
-        only the ``'internal`'' contours or ``'all'`` contours (i.e. internal and
+        only the ``'internal'`` contours or ``'all'`` contours (i.e. internal and
         external) may be returned.
 
         .. note::
@@ -1071,11 +1071,24 @@ class ImageDataFilters(DataSetFilters):
 
         Parameters
         ----------
-        boundary_style : 'external' | 'internal' | 'all', default: 'external'
+        boundary_style : 'external' | 'internal' | 'all' | 'strict_external', default: 'external'
             Style of boundary polygons to generate. ``'internal'`` polygons are generated
             between two connected foreground regions. ``'external'`` polygons are
-            generated between foreground background. ``'all'``  includes both internal
-            and external boundary polygons.
+            generated between foreground and background regions. ``'all'``  includes
+            both internal and external boundary polygons.
+
+            These styles are generated such that ``internal + external = all``.
+            Internally, the filter computes all boundary polygons by default and
+            then removes any undesired polygons in post-processing.
+            This improves the quality of the output, but can negatively affect the
+            filter's performance since all boundaries are always initially computed.
+
+            The ``'strict_external'`` style can be used as a fast alternative to
+            ``'external'``. This style `strictly` generates external polygons and does
+            not compute or consider internal boundaries. This computation is fast, but
+            also results in jagged, non-smooth boundaries between regions. The
+            ``select_inputs`` and ``select_outputs`` options cannot be used with this
+            style.
 
         background_value : int, default: 0
             Background value of the input image. All other values are considered
@@ -1140,12 +1153,16 @@ class ImageDataFilters(DataSetFilters):
             :meth:`~pyvista.ImageDataFilters.cells_to_points` to transform the cell
             data into point data.
 
-        compute_normals : bool, default: True
-            Compute point and cell normals for the contoured output using
-            :meth:`~pyvista.PolyDataFilters.compute_normals` with ``auto_orient_normals``
-            enabled by default. If ``False``, the generated polygons may have
-            inconsistent ordering and orientation (and may negatively impact
-            the shading used for rendering).
+        orient_faces : bool, default: True
+            Orient the faces of the generated contours so that they have consistent
+            ordering and face outward. If ``False``, the generated polygons may have
+            inconsistent ordering and orientation, which can negatively impact
+            downstream calculations and the shading used for rendering.
+
+            .. note::
+
+                Orienting the faces can be computationally expensive for large meshes.
+                Consider disabling this option to improve this filter's performance.
 
             .. warning::
 
@@ -1179,7 +1196,7 @@ class ImageDataFilters(DataSetFilters):
               will be positive and internal boundaries will be negative in this case.
 
             By default, the output is simplified when ``boundary_type`` is
-            ``'external'``, and is not simplified otherwise.
+            ``'external'`` or ``'strict_external'``, and is not simplified otherwise.
 
         smoothing : bool, default: True
             Smooth the generated surface using a constrained smoothing filter. Each
@@ -1236,6 +1253,9 @@ class ImageDataFilters(DataSetFilters):
         :meth:`~pyvista.DataSetFilters.pack_labels`
             Function used internally by SurfaceNets to generate contiguous label data.
 
+        :meth:`~pyvista.DataSetFilters.color_labels`
+            Color labeled data, e.g. labeled volumes or contours.
+
         :ref:`contouring_example`, :ref:`anatomical_groups_example`
             Additional examples using this filter.
 
@@ -1270,8 +1290,9 @@ class ImageDataFilters(DataSetFilters):
         >>> image.dimensions
         (35, 35, 16)
 
-        Plot the cropped image for context. Configure the color map to generate
-        consistent coloring of the regions for all plots.
+        Plot the cropped image for context. Use :meth:`~pyvista.DataSetFilters.color_labels`
+        to generate consistent coloring of the regions for all plots. Negative indexing
+        is used for plotting internal boundaries.
 
         >>> def labels_plotter(mesh, zoom=None):
         ...     colored_mesh = mesh.color_labels(negative_indexing=True)
@@ -1336,7 +1357,8 @@ class ImageDataFilters(DataSetFilters):
 
         Simplify the output so that each internal multi-component boundary value is
         assigned a unique negative integer value instead. This makes it easier to
-        visualize the result.
+        visualize the result with :meth:`~pyvista.DataSetFilters.color_labels` using
+        the ``negative_indexing`` option.
 
         >>> contours = image.contour_labels('internal', simplify_output=True)
         >>> contours['boundary_labels'].ndim
@@ -1384,6 +1406,15 @@ class ImageDataFilters(DataSetFilters):
         less than one may help preserve sharp features (e.g. corners).
 
         >>> surf = image.contour_labels(smoothing_scale=0.5)
+        >>> labels_plotter(surf, zoom=1.5).show()
+
+        Use the ``'strict_external'`` style to compute external contours quickly. Note
+        that this produces jagged and non-smooth boundaries between regions, which may
+        not be desirable. Also note how the top of the surface is perfectly flat compared
+        to the default ``'external'`` style (see first example above) since the strict
+        style ignores the smoothing effects of all internal boundaries.
+
+        >>> surf = image.contour_labels('strict_external')
         >>> labels_plotter(surf, zoom=1.5).show()
 
         """
@@ -1529,7 +1560,9 @@ class ImageDataFilters(DataSetFilters):
             raise VTKVersionError('Surface nets 3D require VTK 9.3.0 or newer.')
 
         _validation.check_contains(
-            ['all', 'internal', 'external'], must_contain=boundary_style, name='boundary_style'
+            ['all', 'internal', 'external', 'strict_external'],
+            must_contain=boundary_style,
+            name='boundary_style',
         )
         _validation.check_contains(
             [None, 'quads', 'triangles'], must_contain=output_mesh_type, name='output_mesh_type'
@@ -1545,12 +1578,19 @@ class ImageDataFilters(DataSetFilters):
         alg.SetInputData(alg_input)
 
         _set_output_mesh_type(alg)
-        _configure_boundaries(
-            alg,
-            cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
-            select_inputs,
-            select_outputs,
-        )
+        if boundary_style == 'strict_external':
+            # Use default alg parameters
+            if select_inputs is not None or select_outputs is not None:
+                raise TypeError(
+                    'Selecting inputs and/or outputs is not supported by `strict_external`.'
+                )
+        else:
+            _configure_boundaries(
+                alg,
+                cast(pyvista.pyvista_ndarray, alg_input.active_scalars),
+                select_inputs,
+                select_outputs,
+            )
         _configure_smoothing(
             alg,
             alg_input.spacing,
@@ -1590,11 +1630,12 @@ class ImageDataFilters(DataSetFilters):
                 remove = is_external if boundary_style == 'internal' else ~is_external
                 output.remove_cells(remove, inplace=True)
 
+        is_external = 'external' in boundary_style
         if simplify_output is None:
-            simplify_output = boundary_style == 'external'
+            simplify_output = is_external
         if simplify_output:
             # Simplify scalars to a single component
-            if boundary_style != 'external':
+            if not is_external:
                 # Replace internal boundary values with negative integers
                 labels_array = output.cell_data[PV_NAME]
                 is_internal = (
@@ -1622,8 +1663,16 @@ class ImageDataFilters(DataSetFilters):
                 inplace=True,
             )
 
-        if compute_normals and output.n_cells > 0:
-            output.compute_normals(auto_orient_normals=True, inplace=True)
+        if orient_faces and output.n_cells > 0:
+            # Orient the faces but discard the normals array
+            output.compute_normals(
+                cell_normals=True,
+                point_normals=False,
+                consistent_normals=True,
+                auto_orient_normals=True,
+                inplace=True,
+            )
+            del output.cell_data['Normals']
         return output
 
     def points_to_cells(  # type: ignore[misc]
@@ -1672,9 +1721,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         cells_to_points
             Inverse of this filter to represent cells as points.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
 
         Parameters
@@ -1870,9 +1919,9 @@ class ImageDataFilters(DataSetFilters):
         --------
         points_to_cells
             Inverse of this filter to represent points as cells.
-        :meth:`~pyvista.DataSetFilters.cell_data_to_point_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample cell data as point data without modifying the container.
-        :meth:`~pyvista.DataSetFilters.point_data_to_cell_data`
+        :meth:`~pyvista.DataObjectFilters.cell_data_to_point_data`
             Resample point data as cell data without modifying the container.
 
         Parameters
@@ -3045,7 +3094,7 @@ class ImageDataFilters(DataSetFilters):
 
         See Also
         --------
-        :meth:`~pyvista.DataSetFilters.sample`
+        :meth:`~pyvista.DataObjectFilters.sample`
             Resample array data from one mesh onto another.
 
         :meth:`~pyvista.DataSetFilters.interpolate`

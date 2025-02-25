@@ -211,11 +211,14 @@ def test_table_iter():
         assert np.allclose(array, arrays[:, i])
 
 
-def test_get_data_range():
+@pytest.mark.parametrize('preference', ['row', None])
+def test_get_data_range_table(preference):
     nr, nc = 50, 3
     arrays = np.random.default_rng().random((nr, nc))
     table = pv.Table(arrays)
-    nanmin, nanmax = table.get_data_range()
+    nanmin, nanmax = (
+        table.get_data_range(preference=preference) if preference else table.get_data_range()
+    )
     assert nanmin == np.nanmin(arrays[:, 0])
     assert nanmax == np.nanmax(arrays[:, 0])
 
