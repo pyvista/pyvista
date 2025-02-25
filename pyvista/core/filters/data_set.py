@@ -3896,8 +3896,10 @@ class DataSetFilters(DataObjectFilters):
         the points of `mesh1`.  This function interpolates within an
         enclosing cell.  This contrasts with
         :func:`pyvista.DataSetFilters.interpolate` that uses a distance
-        weighting for nearby points.  If there is cell topology, `sample` is
-        usually preferred.
+        weighting for nearby points.  If there is cell interpolate function, e.g. from a
+        discretized FEM or CFD simulation, `sample` is usually preferred.
+        See `Interpolation Functions <https://examples.vtk.org/site/VTKBook/08Chapter8/#82-interpolation-functions>`_
+        for more information.
 
         The point data 'vtkValidPointMask' stores whether the point could be sampled
         with a value of 1 meaning successful sampling. And a value of 0 means
@@ -4026,7 +4028,10 @@ class DataSetFilters(DataObjectFilters):
             except AttributeError:  # pragma: no cover
                 raise VTKVersionError('`snap_to_closest_point=True` requires vtk 9.3.0 or newer')
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
-        return _get_output(alg)
+        result = _get_output(alg)
+        if sum(result['vtkValidPointMask']) > 0:
+            warnings.warn('Some points could not be sampled.')
+        return result
 
     def interpolate(  # type: ignore[misc]
         self: ConcreteDataSetType,
