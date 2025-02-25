@@ -1802,6 +1802,38 @@ class MultiBlock(
         return True
 
     @property
+    def block_types(self) -> set[type[_TypeMultiBlockLeaf]]:  # numpydoc ignore=RT01
+        """Return a set of all block type(s).
+
+        .. versionadded:: 0.45
+
+        See Also
+        --------
+        nested_block_types
+
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
+
+        The dataset has eight nested multi-block blocks, so the block types
+        only contains :class:`MultiBlock`.
+
+        >>> multi.block_types
+        {<class 'pyvista.core.composite.MultiBlock'>}
+
+        The nested blocks only contain a single mesh type so the nested block types
+        only contains :class:`~pyvista.UnstructuredGrid`.
+
+        >>> multi.nested_block_types
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+
+        """
+        return {type(block) for block in self}
+
+    @property
     def nested_block_types(self) -> set[type[DataSet | None]]:  # numpydoc ignore=RT01
         """Return a set of all nested block type(s).
 
@@ -1809,14 +1841,33 @@ class MultiBlock(
 
         See Also
         --------
+        block_types
         is_homogeneous
         is_heterogeneous
         recursive_iterator
 
+        Examples
+        --------
+        Load a dataset with nested multi-blocks. Here we load :func:`~pyvista.examples.downloads.download_biplane`.
+
+        >>> from pyvista import examples
+        >>> multi = examples.download_biplane()
+
+        The dataset has eight nested multi-block blocks, so the block types
+        only contains :class:`MultiBlock`.
+
+        >>> multi.block_types
+        {<class 'pyvista.core.composite.MultiBlock'>}
+
+        The nested blocks only contain a single mesh type so the nested block types
+        only contains :class:`~pyvista.UnstructuredGrid`.
+
+        >>> multi.nested_block_types
+        {<class 'pyvista.core.pointset.UnstructuredGrid'>}
+
         """
         return {
-            type(block)
-            for block in cast(Iterator[Union[DataSet, None]], self.recursive_iterator('blocks'))
+            type(block) for block in cast(Iterator[Union[DataSet, None]], self.recursive_iterator())
         }
 
     @property
