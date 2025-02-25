@@ -340,7 +340,7 @@ class MultiBlock(
 
         Use :meth:`get_block` and get the next block indicated by the nested ids.
 
-        >>> multi.get(next(iterator))
+        >>> multi.get_block(next(iterator))
         UnstructuredGrid ...
 
         Use the iterator to :attr:`replace` all blocks with new blocks. Similar to a previous
