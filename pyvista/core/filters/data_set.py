@@ -42,8 +42,11 @@ from pyvista.core.utilities.transform import Transform
 if TYPE_CHECKING:
     from pyvista import Color
     from pyvista import DataSet
+    from pyvista import ImageData
     from pyvista import MultiBlock
     from pyvista import PolyData
+    from pyvista import RectilinearGrid
+    from pyvista import UnstructuredGrid
     from pyvista.core._typing_core import ConcreteDataObjectType
     from pyvista.core._typing_core import ConcreteDataSetType
     from pyvista.core._typing_core import MatrixLike
@@ -6992,11 +6995,19 @@ class DataSetFilters(DataObjectFilters):
 
         return output_mesh
 
-    def voxelize_binary_mask(  # type: ignore[misc]
+    def voxelize_(
         self: DataSet,
+        mesh_type: [
+            ImageData
+            | RectilinearGrid
+            | PolyData
+            | UnstructuredGrid
+            | Literal['image', 'rectilinear', 'poly', 'unstructured']
+        ],
+        voxel_type: Literal['points', 'cells'],
         *,
-        background_value: int | float = 0,  # noqa: PYI041
-        foreground_value: int | float = 1,  # noqa: PYI041
+        background_value: float = 0,
+        foreground_value: float = 1,
         reference_volume: pyvista.ImageData | None = None,
         dimensions: VectorLike[int] | None = None,
         spacing: float | VectorLike[float] | None = None,
@@ -7005,7 +7016,7 @@ class DataSetFilters(DataObjectFilters):
         cell_length_sample_size: int | None = None,
         progress_bar: bool = False,
     ):
-        """Voxelize mesh as a binary :class:`~pyvista.ImageData` mask.
+        """Voxelize a mesh as regularly-spaced point or cell geometry.
 
         The binary mask is a point data array where points inside and outside of the
         input surface are labelled with ``foreground_value`` and ``background_value``,
@@ -7050,7 +7061,7 @@ class DataSetFilters(DataObjectFilters):
 
         .. note::
             This filter returns voxels represented as point data, not :attr:`~pyvista.CellType.VOXEL` cells.
-            This differs from :func:`~pyvista.voxelize` and :func:`~pyvista.voxelize_volume`
+            This differs from :func:`voxelize` and :func:`voxelize_rectilinear`
             which return meshes with voxel cells. See :ref:`image_representations_example`
             for examples demonstrating the difference.
 
@@ -7061,23 +7072,44 @@ class DataSetFilters(DataObjectFilters):
 
         Parameters
         ----------
-        background_value : int, default: 0
-            Background value of the generated mask.
+        mesh_type : ImageData | RectilinearGrid | PolyData | UnstructuredGrid | str
+            Return type of the voxelied mesh. Specify the class or the class name as
+            a string. The full class name or a shortned version are both accepted, e.g.
+            either ``'ImageData'`` or ``'image'`` for :class:`~pyvista.ImageData`.
 
-        foreground_value : int, default: 1
-            Foreground value of the generated mask.
+        voxel_type : 'points' | 'cells'
+            Type of voxels to generate.
 
-        reference_volume : pyvista.ImageData, optional
+        background_value : float, default: 0
+            Background value of the voxelized mesh. Has no effect when the output
+            ``mesh_type`` is :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`.
+
+        foreground_value : float, optional
+            Foreground value of the voxelize mesh. By default, this value is ``1``
+            when the ``mesh_type`` is :class:`~pyvista.ImageData` or :class:`~pyvista.RectilinearGrid`,
+            for :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid` since
+            these types have both foreground and background voxels.
+
+            For :class:`~pyvista.PolyData` or :class:`~pyvista.UnstructuredGrid`, no
+            scalar values are included by default. Set this value to include a scalar
+            array with this value for these mesh types.
+
+        reference_volume : ImageData, optional
             Volume to use as a reference. The output will have the same ``dimensions``,
             ``origin``, ``spacing``, and ``direction_matrix`` as the reference.
 
         dimensions : VectorLike[int], optional
-            Dimensions of the generated mask image. Set this value to control the
+            Dimensions of the generated voxelized mesh. Set this value to control the
             dimensions explicitly. If unset, the dimensions are defined implicitly
             through other parameter. See summary and examples for details.
 
-        spacing : VectorLike[float], optional
-            Approximate spacing to use for the generated mask image. Set this value
+            .. note::
+
+                Dimensions is the number of points along each axis, not cells. Set
+                dimensions to ``N+1`` instead for ``N`` cells along each axis.
+
+        spacing : float | VectorLike[float], optional
+            Approximate spacing to use for the generated voxelized mesh. Set this value
             to control the spacing explicitly. If unset, the spacing is defined
             implicitly through other parameters. See summary and examples for details.
 
@@ -7103,7 +7135,7 @@ class DataSetFilters(DataObjectFilters):
             #. Computing the distance between two random points in each cell.
             #. Inserting the distance into an ordered set to create the CDF.
 
-            Has no effect if ``dimension`` or ``reference_volume`` are specified.
+            Has no effect if ``dimensions`` or ``reference_volume`` are specified.
 
             .. note::
                 This option is only available for VTK 9.2 or greater.
@@ -7118,7 +7150,7 @@ class DataSetFilters(DataObjectFilters):
 
         Returns
         -------
-        pyvista.ImageData
+        ImageData
             Generated binary mask with a ``'mask'``  point data array. The data array
             has dtype :class:`numpy.uint8` if the foreground and background values are
             unsigned and less than 256.
@@ -7129,7 +7161,7 @@ class DataSetFilters(DataObjectFilters):
             Similar function that returns a :class:`~pyvista.UnstructuredGrid` of
             :attr:`~pyvista.CellType.VOXEL` cells.
 
-        voxelize_volume
+        voxelize_rectilinear
             Similar function that returns a :class:`~pyvista.RectilinearGrid` with cell data.
 
         pyvista.ImageDataFilters.contour_labels
@@ -7140,162 +7172,122 @@ class DataSetFilters(DataObjectFilters):
             Convert voxels represented as points to :attr:`~pyvista.CellType.VOXEL`
             cells.
 
-        pyvista.ImageData
+        ImageData
             Class used to build custom ``reference_volume``.
 
         Examples
         --------
-        Generate a binary mask from a coarse mesh.
+        Create a voxelized mesh with uniform spacing.
 
         >>> import numpy as np
         >>> import pyvista as pv
         >>> from pyvista import examples
-        >>> poly = examples.download_bunny_coarse()
-        >>> mask = poly.voxelize_binary_mask()
+        >>> mesh = examples.download_bunny_coarse()
+        >>> vox = mesh.voxelize(spacing=0.01)
+        >>> vox.plot(show_edges=True)
 
-        The mask is stored as :class:`~pyvista.ImageData` with point data scalars
-        (zeros for background, ones for foreground).
+        Create a voxelized mesh using non-uniform spacing.
 
-        >>> mask
-        ImageData (...)
-          N Cells:      7056
-          N Points:     8228
-          X Bounds:     -1.245e-01, 1.731e-01
-          Y Bounds:     -1.135e-01, 1.807e-01
-          Z Bounds:     -1.359e-01, 9.140e-02
-          Dimensions:   22, 22, 17
-          Spacing:      1.417e-02, 1.401e-02, 1.421e-02
-          N Arrays:     1
+        >>> vox = mesh.voxelize(spacing=(0.01, 0.005, 0.002))
+        >>> vox.plot(show_edges=True)
 
-        >>> np.unique(mask.point_data['mask'])
-        pyvista_ndarray([0, 1], dtype=uint8)
+        The bounds of the voxelized mesh always match the bounds of the input.
 
-        To visualize it as voxel cells, use :meth:`~pyvista.ImageDataFilters.points_to_cells`,
-        then use :meth:`~pyvista.DataSetFilters.threshold` to extract the foreground.
+        >>> mesh.bounds
+        BoundsTuple(x_min=-0.13155962526798248, x_max=0.18016336858272552, y_min=-0.12048563361167908, y_max=0.18769524991512299, z_min=-0.14300920069217682, z_max=0.09850578755140305)
 
-        We also plot the voxel cells in blue and the input poly data in green for
-        comparison.
+        >>> vox.bounds
+        BoundsTuple(x_min=-0.13155962526798248, x_max=0.18016336858272552, y_min=-0.12048563361167908, y_max=0.18769524991512299, z_min=-0.14300920069217682, z_max=0.09650979936122894)
 
-        >>> def mask_and_polydata_plotter(mask, poly):
-        ...     voxel_cells = mask.points_to_cells().threshold(0.5)
-        ...
-        ...     plot = pv.Plotter()
-        ...     _ = plot.add_mesh(voxel_cells, color='blue')
-        ...     _ = plot.add_mesh(poly, color='lime')
-        ...     plot.camera_position = 'xy'
-        ...     return plot
+        Create a voxelized mesh with ``3 x 4 x 5`` cells. Since ``dimensions`` is the
+        number of points, not cells, we need to add ``1`` to get the number of desired cells.
 
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
-
-        The spacing of the mask image is automatically adjusted to match the
-        density of the input.
-
-        Repeat the previous example with a finer mesh.
-
-        >>> poly = examples.download_bunny()
-        >>> mask = poly.voxelize_binary_mask()
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
-
-        Control the spacing manually instead. Here, a very coarse spacing is used.
-
-        >>> mask = poly.voxelize_binary_mask(spacing=(0.01, 0.04, 0.02))
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
-
-        Note that the spacing is only approximate. Check the mask's actual spacing.
-
-        >>> mask.spacing
-        (0.009731187485158443, 0.03858340159058571, 0.020112216472625732)
-
-        The actual values may be greater or less than the specified values. Use
-        ``rounding_func=np.floor`` to force all values to be greater.
-
-        >>> mask = poly.voxelize_binary_mask(
-        ...     spacing=(0.01, 0.04, 0.02), rounding_func=np.floor
-        ... )
-        >>> mask.spacing
-        (0.01037993331750234, 0.05144453545411428, 0.020112216472625732)
-
-        Set the dimensions instead of the spacing.
-
-        >>> mask = poly.voxelize_binary_mask(dimensions=(10, 20, 30))
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
-
-        >>> mask.dimensions
-        (10, 20, 30)
-
-        Create a mask using a reference volume. First generate polydata from
-        an existing mask.
-
-        >>> volume = examples.load_frog_tissues()
-        >>> poly = volume.contour_labels()
-
-        Now create the mask from the polydata using the volume as a reference.
-
-        >>> mask = poly.voxelize_binary_mask(reference_volume=volume)
-        >>> plot = mask_and_polydata_plotter(mask, poly)
-        >>> plot.show()
-
-        Visualize the effect of internal surfaces.
-
-        >>> mesh = pv.Cylinder() + pv.Cylinder((0, 0.75, 0))
-        >>> binary_mask = mesh.voxelize_binary_mask(
-        ...     dimensions=(1, 100, 50)
-        ... ).points_to_cells()
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask)
-        >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos='yz')
-
-        Note how the intersection is excluded from the mask.
-        To include the voxels delimited by internal surfaces in the foreground, the internal
-        surfaces should be removed, for instance by applying a boolean union. Note that
-        this operation in unreliable in VTK but may be performed with external tools such
-        as `vtkbool <https://github.com/zippy84/vtkbool>`_.
-
-        Alternatively, the intersecting parts of the mesh can be processed sequentially.
-
-        >>> cylinder_1 = pv.Cylinder()
-        >>> cylinder_2 = pv.Cylinder((0, 0.75, 0))
-
-        >>> reference_volume = pv.ImageData(
-        ...     dimensions=(1, 100, 50),
-        ...     spacing=(1, 0.0175, 0.02),
-        ...     origin=(0, -0.5 + 0.0175 / 2, -0.5 + 0.02 / 2),
-        ... )
-
-        >>> binary_mask_1 = cylinder_1.voxelize_binary_mask(
-        ...     reference_volume=reference_volume
-        ... ).points_to_cells()
-        >>> binary_mask_2 = cylinder_2.voxelize_binary_mask(
-        ...     reference_volume=reference_volume
-        ... ).points_to_cells()
-
-        >>> binary_mask_1['mask'] = binary_mask_1['mask'] | binary_mask_2['mask']
-
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask_1)
-        >>> _ = plot.add_mesh(cylinder_1.slice(), color='red')
-        >>> _ = plot.add_mesh(cylinder_2.slice(), color='red')
-        >>> plot.show(cpos='yz')
-
-        When multiple internal surfaces are nested, they are successively treated as
-        interfaces between background and foreground.
-
-        >>> mesh = pv.Tube(radius=2) + pv.Tube(radius=3) + pv.Tube(radius=4)
-        >>> binary_mask = mesh.voxelize_binary_mask(
-        ...     dimensions=(1, 50, 50)
-        ... ).points_to_cells()
-        >>> plot = pv.Plotter()
-        >>> _ = plot.add_mesh(binary_mask)
-        >>> _ = plot.add_mesh(mesh.slice(), color='red')
-        >>> plot.show(cpos='yz')
+        >>> mesh = pv.Box()
+        >>> cell_dimensions = np.array((3, 4, 5))
+        >>> vox = mesh.voxelize(dimensions=cell_dimensions + 1)
+        >>> vox.plot(show_edges=True)
 
         """
-        surface = wrap(self).extract_geometry()
+        _validation.check_contains(['points', 'cells'], must_contain=voxel_type, name='voxel_type')
+        if isinstance(mesh_type, str):
+            # Allow capital letters and partial matches, e.g. 'ImageData' or 'image'
+            mesh_type = mesh_type.lower()
+            if 'image' in mesh_type:
+                mesh_type_ = pyvista.ImageData
+            elif 'rectilinear' in mesh_type:
+                mesh_type_ = pyvista.RectilinearGrid
+            elif 'poly' in mesh_type:
+                mesh_type_ = pyvista.PolyData
+            elif 'unstructured' in mesh_type:
+                mesh_type_ = pyvista.UnstructuredGrid
+        else:
+            mesh_type_ = mesh_type
+        _validation.check_contains(
+            [
+                pyvista.ImageData,
+                pyvista.RectilinearGrid,
+                pyvista.PolyData,
+                pyvista.UnstructuredGrid,
+                'image',
+                'rectilinear',
+                'poly',
+                'unstructured',
+            ],
+            must_contain=mesh_type,
+            name='output_type',
+        )
+
+        if voxel_type == 'cells' and dimensions is not None:
+            # points_to_cells increases dimensions by 1 later so we reduce by 1 here
+            dimensions_ = _validation.validate_array3(
+                dimensions, must_be_integer=True, dtype_out=int, name='dimensions'
+            )
+            dimensions = cast(NumpyArray[int], dimensions_) - 1
+
+        # Voxelize as image points
+        image_voxels = self._voxelize_as_image_points(
+            background_value=background_value,
+            foreground_value=foreground_value,
+            reference_volume=reference_volume,
+            dimensions=dimensions,
+            spacing=spacing,
+            rounding_func=rounding_func,
+            cell_length_percentile=cell_length_percentile,
+            cell_length_sample_size=cell_length_sample_size,
+            progress_bar=progress_bar,
+        )
+
+        # Convert to voxel cells
+        if voxel_type == 'cells' or mesh_type_ in [pyvista.PolyData, pyvista.UnstructuredGrid]:
+            image_voxels = image_voxels.points_to_cells(dimensionality='3D', copy=False)
+
+        # Convert mesh type
+        if mesh_type_ is pyvista.ImageData:
+            return image_voxels
+        elif mesh_type_ is pyvista.RectilinearGrid:
+            return image_voxels.cast_to_rectilinear_grid()
+
+        ugrid = image_voxels.threshold(0.5)
+        del ugrid.cell_data['mask']
+        if voxel_type == 'points':
+            poly = pyvista.PolyData(ugrid.cell_centers())
+            return poly if mesh_type_ is pyvista.PolyData else poly.cast_to_unstructured_grid()
+        return ugrid if mesh_type_ is pyvista.UnstructuredGrid else ugrid.extract_geometry()
+
+    def _voxelize_as_image_points(  # type: ignore[misc]
+        self: ConcreteDataSetType,
+        *,
+        background_value: int | float = 0,  # noqa: PYI041
+        foreground_value: int | float = 1,  # noqa: PYI041
+        reference_volume: pyvista.ImageData | None = None,
+        dimensions: VectorLike[int] | None = None,
+        spacing: float | VectorLike[float] | None = None,
+        rounding_func: Callable[[VectorLike[float]], VectorLike[int]] | None = None,
+        cell_length_percentile: float | None = None,
+        cell_length_sample_size: int | None = None,
+        progress_bar: bool = False,
+    ):
+        surface = self if isinstance(self, pyvista.PolyData) else wrap(self).extract_geometry()
         if not (surface.faces.size or surface.strips.size):
             # we have a point cloud or an empty mesh
             raise ValueError('Input mesh must have faces for voxelization.')
