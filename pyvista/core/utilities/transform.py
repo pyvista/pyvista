@@ -1497,7 +1497,7 @@ class Transform(_vtk.vtkTransform):
             If the input is a dataset, use the ``'all_vectors'`` mode to transform `all`
             input vectors in datasets. Otherwise, only the points, normals and active
             vectors are transformed. This mode is equivalent to setting
-            ``transform_all_input_vectors=True`` with :meth:`pyvista.DataSetFilters.transform`.
+            ``transform_all_input_vectors=True`` with :meth:`pyvista.DataObjectFilters.transform`.
 
         inverse : bool, default: False
             Apply the transformation using the :attr:`inverse_matrix` instead of the
