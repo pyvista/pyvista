@@ -191,7 +191,8 @@ class Observer:
     def observe(self, algorithm):
         """Make this an observer of an algorithm."""
         if self.__observing:
-            raise RuntimeError('This error observer is already observing an algorithm.')
+            msg = 'This error observer is already observing an algorithm.'
+            raise RuntimeError(msg)
         if hasattr(algorithm, 'GetExecutive') and algorithm.GetExecutive() is not None:
             algorithm.GetExecutive().AddObserver(self.event_type, self)
         algorithm.AddObserver(self.event_type, self)
@@ -227,7 +228,8 @@ class ProgressMonitor:
     def __init__(self, algorithm, message=''):
         """Initialize observer."""
         if not importlib.util.find_spec('tqdm'):
-            raise ImportError('Please install `tqdm` to monitor algorithms.')
+            msg = 'Please install `tqdm` to monitor algorithms.'
+            raise ImportError(msg)
         self.event_type = _vtk.vtkCommand.ProgressEvent
         self.progress = 0.0
         self._last_progress = self.progress

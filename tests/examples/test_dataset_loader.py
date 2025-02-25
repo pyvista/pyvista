@@ -62,7 +62,8 @@ def _generate_dataset_loader_test_cases_from_module(
             dataset_name = func.split('load_')[1]
             key = 'dataset_function'
         else:
-            raise RuntimeError(f'Invalid case specified: {(func, dataset_function)}')
+            msg = f'Invalid case specified: {(func, dataset_function)}'
+            raise RuntimeError(msg)
         test_cases_dict.setdefault(dataset_name, {})
         test_cases_dict[dataset_name][key] = (func, dataset_function)
 
