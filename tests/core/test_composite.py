@@ -1018,29 +1018,27 @@ def test_recursive_iterator_node_type():
 
 
 @pytest.mark.parametrize(
-    ('block_mode', 'expected_types'),
+    ('node_type', 'expected_types'),
     [('parent', pv.MultiBlock), ('child', (pv.DataSet, type(None)))],
 )
 def test_recursive_iterator_contents(
-    multiblock_all_with_nested_and_none, block_mode, expected_types
+    multiblock_all_with_nested_and_none, node_type, expected_types
 ):
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('ids', node_type=block_mode)
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('ids', node_type=node_type)
     assert all(isinstance(item, tuple) and isinstance(item[0], int) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('names', node_type=block_mode)
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('names', node_type=node_type)
     assert all(isinstance(item, str) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator(
-        'blocks', node_type=block_mode
-    )
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('blocks', node_type=node_type)
     assert all(isinstance(item, expected_types) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('items', node_type=block_mode)
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('items', node_type=node_type)
     for name, block in iterator:
         assert isinstance(name, str)
         assert isinstance(block, expected_types)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('all', node_type=block_mode)
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('all', node_type=node_type)
     for id_, name, block in iterator:
         assert isinstance(id_, tuple)
         assert isinstance(name, str)

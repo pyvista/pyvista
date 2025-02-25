@@ -226,7 +226,7 @@ class MultiBlock(
 
         node_type : 'parent' | 'child', default: 'child'
             Type of node blocks to generate ``contents`` from. If ``'parent'``, the
-            contents are generated from :class:`MultiBlock` nodes.  If ``'parent'``, the
+            contents are generated from :class:`MultiBlock` nodes.  If ``'child'``, the
             contents are generated from :class:`~pyvista.DataSet` and ``None`` nodes.
 
         skip_none : bool, default: False
