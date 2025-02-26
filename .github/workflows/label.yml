@@ -6,6 +6,8 @@ on:
 jobs:
   triage:
     runs-on: ubuntu-20.04
+    # Skip the job if the pull request already has any labels
+    if: github.event.pull_request.labels | length == 0
     steps:
       - name: Label based on changed files
         uses: actions/labeler@v5
