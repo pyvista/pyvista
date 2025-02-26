@@ -242,7 +242,7 @@ After logging into the remote server, install Miniconda and related packages:
     # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
     # https://stackoverflow.com/q/32389599
     # https://askubuntu.com/q/629692
-    sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
+    sudo apt update && sudo apt install python-qt4
 
 Then, configure the headless display:
 
@@ -286,7 +286,7 @@ related packages:
     # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
     # https://stackoverflow.com/q/32389599
     # https://askubuntu.com/q/629692
-    sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
+    sudo apt update && sudo apt install python-qt4
 
 VTK Link to Jupyter
 ^^^^^^^^^^^^^^^^^^^
