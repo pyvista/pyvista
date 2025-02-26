@@ -1299,7 +1299,8 @@ def test_select_values(uniform):
     assert isinstance(selected[0], pv.ImageData)
     assert len(selected) == len(unique_values)
 
-    # Test empty input
+
+def test_select_values_empty_input():
     selected = pv.ImageData().select_values()
     assert isinstance(selected, pv.ImageData)
 
