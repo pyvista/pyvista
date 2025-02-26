@@ -594,9 +594,11 @@ class MultiBlock(
         root_field_data = self.field_data
         deep_copy = operation in ['move', 'deep_copy']
 
-        for index, block_name, nested_multi in self.recursive_iterator(
+        iterator = self.recursive_iterator(
             'all', node_type='parent', prepend_names=prepend_names, separator=separator
-        ):
+        )
+        typed_iterator = cast(Iterator[tuple[tuple[int, ...], str, MultiBlock]], iterator)
+        for index, block_name, nested_multi in typed_iterator:
             nested_field_data = nested_multi.field_data
             if prepend_names:
                 # Shallow-copy the field data to a temp mesh so we can rename the arrays
@@ -612,9 +614,9 @@ class MultiBlock(
             # Raise error if duplicate keys
             for array_name in field_data_to_copy:
                 if array_name in root_field_data:
-                    index = ''.join([f'[{ind}]' for ind in index])
+                    index_fmt = ''.join([f'[{ind}]' for ind in index])
                     raise ValueError(
-                        f"The field data array '{array_name}' from nested MultiBlock at index {index}\n"
+                        f"The field data array '{array_name}' from nested MultiBlock at index {index_fmt}\n"
                         f"also exists in the root MultiBlock's field data and cannot be moved."
                     )
 
