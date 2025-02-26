@@ -137,7 +137,7 @@ docs = [
   'sympy==1.13.3',
   'trame-vtk==2.8.15',
   'trame-vuetify==2.8.1',
- 'trame==3.8.0',
+  'trame==3.8.0',
   'trimesh==4.6.3',
 ]
 
