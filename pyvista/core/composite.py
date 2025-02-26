@@ -41,6 +41,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import Literal
 
+    from pyvista import PolyData
+
     from ._typing_core import NumpyArray
 
 _TypeMultiBlockLeaf = Union['MultiBlock', DataSet, None]
@@ -1740,7 +1742,7 @@ class MultiBlock(
         return field_asc, scalars
 
     def as_polydata_blocks(self: MultiBlock, copy: bool = False) -> MultiBlock:
-        """Convert all the datasets within this MultiBlock to :class:`pyvista.PolyData`.
+        """Convert all the datasets within this MultiBlock to :class:`~pyvista.PolyData`.
 
         Parameters
         ----------
@@ -1754,6 +1756,13 @@ class MultiBlock(
         pyvista.MultiBlock
             MultiBlock containing only :class:`pyvista.PolyData` datasets.
 
+        See Also
+        --------
+        is_all_polydata
+            Check if all blocks are :class:`~pyvista.PolyData`.
+        :meth:`~pyvista.CompositeFilters.extract_geometry`
+            Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
+
         Notes
         -----
         Null blocks are converted to empty :class:`pyvista.PolyData`
@@ -1761,49 +1770,41 @@ class MultiBlock(
         MultiBlocks with null blocks.
 
         """
-        # we make a shallow copy here to avoid modifying the original dataset
-        dataset = self.copy(deep=False)
 
-        # Loop through the multiblock and convert to polydata
-        for i, block in enumerate(dataset):
-            if block is not None:
-                if isinstance(block, MultiBlock):
-                    dataset.replace(i, block.as_polydata_blocks(copy=copy))
-                elif isinstance(block, pyvista.PointSet):
-                    dataset.replace(i, block.cast_to_polydata(deep=True))
-                elif not isinstance(block, pyvista.PolyData):
-                    dataset.replace(i, block.extract_surface())
-                elif copy:
-                    # dataset is a PolyData
-                    dataset.replace(i, block.copy(deep=False))
+        # Define how to process each block
+        def block_filter(block: DataSet | None) -> PolyData:
+            if block is None:
+                return pyvista.PolyData()
+            elif isinstance(block, pyvista.PointSet):
+                return block.cast_to_polydata(deep=True)
+            elif isinstance(block, pyvista.PolyData):
+                return block.copy(deep=False) if copy else block
             else:
-                # must have empty polydata within these datasets as some
-                # downstream filters don't work on null pointers (i.e. None)
-                dataset[i] = pyvista.PolyData()
+                return block.extract_surface()  # type: ignore[misc]
 
-        return dataset
+        return self.generic_filter(block_filter, _skip_none=False)
 
     @property
     def is_all_polydata(self: MultiBlock) -> bool:
-        """Return ``True`` when all the blocks are :class:`pyvista.PolyData`.
+        """Return ``True`` when all the blocks are :class:`~pyvista.PolyData`.
 
         This method will recursively check if any internal blocks are also
-        :class:`pyvista.PolyData`.
+        :class:`~pyvista.PolyData`.
 
         Returns
         -------
         bool
-            Return ``True`` when all blocks are :class:`pyvista.PolyData`.
+            Return ``True`` when all blocks are :class:`~pyvista.PolyData`.
+
+        See Also
+        --------
+        as_polydata_blocks
+            Convert all blocks to :class:`~pyvista.PolyData`.
+        :meth:`~pyvista.CompositeFilters.extract_geometry`
+            Convert this :class:`~pyvista.MultiBlock` to :class:`~pyvista.PolyData`.
 
         """
-        for block in self:
-            if isinstance(block, MultiBlock):
-                if not block.is_all_polydata:
-                    return False
-            elif not isinstance(block, pyvista.PolyData):
-                return False
-
-        return True
+        return all(isinstance(block, pyvista.PolyData) for block in self.recursive_iterator())
 
     def _activate_plotting_scalars(
         self: MultiBlock,

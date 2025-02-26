@@ -1705,7 +1705,7 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         pass_cell_data : bool, default: False
             Run the :func:`cell_data_to_point_data()
-            <pyvista.DataSetFilters.cell_data_to_point_data>` filter and pass
+            <pyvista.DataObjectFilters.cell_data_to_point_data>` filter and pass
             cell data fields to the new pointset.
 
         Returns
@@ -1744,7 +1744,7 @@ class DataSet(DataSetFilters, DataObject):
         ----------
         pass_cell_data : bool, default: False
             Run the :func:`cell_data_to_point_data()
-            <pyvista.DataSetFilters.cell_data_to_point_data>` filter and pass
+            <pyvista.DataObjectFilters.cell_data_to_point_data>` filter and pass
             cell data fields to the new pointset.
 
         Returns
