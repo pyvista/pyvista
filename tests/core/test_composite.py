@@ -1138,15 +1138,42 @@ def test_nested_field_data_to_root(operation, prepend_names, separator, name_in,
         )
 
 
-def test_nested_field_data_to_root_duplicate_names():
+def test_nested_field_data_to_root_duplicate_keys():
     name, value = 'data', [42]
     multi = pv.MultiBlock()
     multi.field_data[name] = value
     root = pv.MultiBlock([multi])
     root.field_data[name] = value
     match = (
-        "The field data array 'data' from nested MultiBlock at index [0]\n"
-        "also exists in the root MultiBlock's field data and cannot be moved."
+        "The field data array 'data' from nested MultiBlock at index [0] with name 'Block-00'\n"
+        "also exists in the root MultiBlock's field data and cannot be moved.\n"
+        'Use `append_names=True` to make the array names unique.'
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        root.nested_field_data_to_root()
+
+    name, value = 'data', [42]
+    multi = pv.MultiBlock()
+    multi.field_data[name] = value
+    multi.user_dict[name] = value
+    root = pv.MultiBlock({name: multi})
+    root.user_dict[name] = value
+    match = (
+        "The root user dict cannot be updated with data from nested MultiBlock at index [0] with name 'data'.\n"
+        "The key 'data' already exists in the root user dict and would be overwritten."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        root.nested_field_data_to_root(prepend_names=True)
+
+    # Test nested user dict key overrides root user dict key
+    name, value = 'data', [42]
+    multi = pv.MultiBlock()
+    multi.user_dict[name] = value
+    root = pv.MultiBlock([multi])
+    root.user_dict[name] = value
+    match = (
+        "The root user dict cannot be updated with data from nested MultiBlock at index [0] with name 'Block-00'.\n"
+        "The key 'data' already exists in the root user dict and would be overwritten."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         root.nested_field_data_to_root()

@@ -13,6 +13,7 @@ import itertools
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
+from typing import NoReturn
 from typing import Union
 from typing import cast
 from typing import overload
@@ -27,7 +28,8 @@ from ._typing_core import BoundsTuple
 from .dataobject import USER_DICT_KEY
 from .dataobject import DataObject
 from .dataset import DataSet
-from .filters import CompositeFilters
+from .filters.composite import CompositeFilters
+from .filters.composite import _format_nested_index
 from .pyvista_ndarray import pyvista_ndarray
 from .utilities.arrays import CellLiteral
 from .utilities.arrays import FieldAssociation
@@ -620,10 +622,11 @@ class MultiBlock(
             'all', node_type='parent', prepend_names=prepend_names, separator=separator
         )
         typed_iterator = cast(Iterator[tuple[tuple[int, ...], str, MultiBlock]], iterator)
+
         for index, block_name, nested_multi in typed_iterator:
             nested_field_data = nested_multi.field_data
             if prepend_names:
-                # Shallow-copy the field data to a temp mesh so we can rename the arrays
+                # Add the field data to a temp mesh so we can rename the arrays
                 temp_mesh = pyvista.ImageData()
                 temp_field_data = temp_mesh.field_data
                 for old_name in nested_field_data:
@@ -636,23 +639,38 @@ class MultiBlock(
             for array_name in field_data_to_copy:
                 # Check for nested user-dict data
                 if array_name.endswith(USER_DICT_KEY):
-                    # Check if the new key already exists in the root user dict
-                    if block_name in self.user_dict.keys():
-                        raise ValueError
+                    root_user_dict = self.user_dict
+                    root_user_dict_keys = root_user_dict.keys()
+
+                    def raise_key_error(
+                        duplicate_key: str, block_name_: str, index_: tuple[int, ...]
+                    ) -> NoReturn:
+                        index_fmt = _format_nested_index(index_)
+                        msg = (
+                            f"The root user dict cannot be updated with data from nested MultiBlock at index {index_fmt} with name '{block_name_}'.\n"
+                            f"The key '{duplicate_key}' already exists in the root user dict and would be overwritten."
+                        )
+                        raise ValueError(msg)
+
                     if prepend_names:
-                        self.user_dict[block_name] = dict(nested_multi.user_dict)
+                        if block_name in root_user_dict_keys:
+                            raise_key_error(block_name, block_name, index)
+                        root_user_dict[block_name] = dict(nested_multi.user_dict)
                     else:
-                        self.user_dict.update(nested_multi.user_dict)
+                        for nested_key in nested_multi.user_dict.keys():
+                            if nested_key in root_user_dict_keys:
+                                raise_key_error(nested_key, block_name, index)
+                        root_user_dict.update(nested_multi.user_dict)
 
                 elif array_name in root_field_data:
                     # Raise error if duplicate keys
-                    index_fmt = ''.join([f'[{ind}]' for ind in index])
+                    index_fmt = _format_nested_index(index)
                     msg = (
-                        f"The field data array '{array_name}' from nested MultiBlock at index {index_fmt}\n"
+                        f"The field data array '{array_name}' from nested MultiBlock at index {index_fmt} with name '{block_name}'\n"
                         f"also exists in the root MultiBlock's field data and cannot be moved."
                     )
                     if not prepend_names:
-                        msg += '\nUse `append_named=True` to make the array names unique.'
+                        msg += '\nUse `append_names=True` to make the array names unique.'
                     raise ValueError(msg)
 
                 else:
