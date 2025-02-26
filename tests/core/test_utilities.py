@@ -1428,7 +1428,7 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
         )
 
     points_in_array = np.array(_get_points_from_object(obj))
-    out = transform.scale(SCALE).apply(obj, copy=copy, transform_all_input_vectors=True)
+    out = transform.scale(SCALE).apply(obj, copy=copy)
 
     if not copy and return_self:
         assert out is obj
@@ -1445,6 +1445,43 @@ def test_transform_apply(transform, obj, return_self, return_type, return_dtype,
     inverted_points = _get_points_from_object(inverted)
     assert np.array_equal(inverted_points, points_in_array)
     assert not transform.is_inverted
+
+
+def test_transform_apply_mode():
+    # Test scaling arrays
+    array = np.array((0.0, 0.0, 1.0))
+    scale = Transform() * SCALE
+    transformed = scale.apply(array, 'points')
+    assert np.allclose(transformed, array * SCALE)
+    transformed = scale.apply(array, 'vectors')
+    assert np.allclose(transformed, array * SCALE)
+
+    # Test translating arrays
+    offset = np.array((1.0, 0.0, 0.0))
+    translate = Transform() + offset
+    transformed = translate.apply(array, 'points')
+    assert np.allclose(transformed, array + offset)
+    transformed = translate.apply(array, 'vectors')
+    assert np.allclose(transformed, array)
+
+    # Test datasets
+    mesh = pv.PolyData(array)
+    mesh['vector'] = [array]
+    transformed = scale.apply(mesh)
+    assert np.allclose(transformed['vector'], mesh['vector'])
+    transformed = scale.apply(mesh, 'all_vectors')
+    assert np.allclose(transformed['vector'], mesh['vector'] * SCALE)
+
+    # Test raises
+    match = "Transformation mode 'points' is not supported for datasets."
+    with pytest.raises(ValueError, match=match):
+        scale.apply(mesh, 'points')
+    match = "Transformation mode 'vectors' is not supported for datasets."
+    with pytest.raises(ValueError, match=match):
+        scale.apply(mesh, 'vectors')
+    match = "Transformation mode 'all_vectors' is not supported for arrays."
+    with pytest.raises(ValueError, match=match):
+        scale.apply(array, 'all_vectors')
 
 
 @pytest.mark.parametrize('attr', ['matrix_list', 'inverse_matrix_list'])
