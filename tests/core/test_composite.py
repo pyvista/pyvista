@@ -1138,6 +1138,20 @@ def test_nested_field_data_to_root(operation, prepend_names, separator, name_in,
         )
 
 
+def test_nested_field_data_to_root_duplicate_names():
+    name, value = 'data', [42]
+    multi = pv.MultiBlock()
+    multi.field_data[name] = value
+    root = pv.MultiBlock([multi])
+    root.field_data[name] = value
+    match = (
+        "The field data array 'data' from nested MultiBlock at index [0]\n"
+        "also exists in the root MultiBlock's field data and cannot be moved."
+    )
+    with pytest.raises(ValueError, match=re.escape(match)):
+        root.nested_field_data_to_root()
+
+
 def test_flatten(multiblock_all_with_nested_and_none):
     root_names = multiblock_all_with_nested_and_none.keys()[:-1]
     nested_names = multiblock_all_with_nested_and_none[-1].keys()
