@@ -233,6 +233,117 @@ def test_write_frame_raises():
         pl.write_frame()
 
 
+def test_add_lines_raises():
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='Label must be a string'):
+        pl.add_lines(
+            np.array([[0, 1, 0], [1, 0, 0], [1, 1, 0], [2, 0, 0]]),
+            label=1,
+        )
+
+
+@pytest.mark.parametrize('points', [1, None, 'foo'])
+def test_add_point_labels_raises(points):
+    pl = pv.Plotter()
+    with pytest.raises(
+        TypeError,
+        match=re.escape(f'Points type not usable: {type(points)}'),
+    ):
+        pl.add_point_labels(points=points, labels='foo')
+
+
+def test_add_point_labels_algo_raises(mocker: MockerFixture):
+    from pyvista.plotting import plotter
+
+    m = mocker.patch.object(plotter, 'algorithm_to_mesh_handler')
+    m.return_value = pv.PolyData(), vtk.vtkAlgorithm()
+
+    pl = pv.Plotter()
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            'If using a vtkAlgorithm input, the labels must be a named array on the dataset.'
+        ),
+    ):
+        pl.add_point_labels(points=np.array([0.0, 0.0, 0.0]), labels=['foo'])
+
+
+def test_add_point_labels_label_not_found_raises():
+    pl = pv.Plotter()
+    with pytest.raises(
+        ValueError,
+        match=re.escape("Array 'foo' not found in point data."),
+    ):
+        pl.add_point_labels(points=pv.Sphere().points, labels='foo')
+
+
+def test_add_point_labels_shape_raises():
+    pl = pv.Plotter()
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Shape (foo) not understood'),
+    ):
+        pl.add_point_labels(
+            points=pv.Sphere().points,
+            labels=[f'{i}' for i in pv.Sphere().points],
+            shape='foo',
+        )
+
+
+def test_save_image_raises(mocker: MockerFixture):
+    pl = pv.Plotter()
+    im = mocker.MagicMock()
+    im.size = False
+    with pytest.raises(
+        ValueError,
+        match=re.escape('Empty image. Have you run plot() first?'),
+    ):
+        pl._save_image(im, filename='foo', return_img=True)
+
+
+def test_save_graphic_raises():
+    pl = pv.Plotter()
+    pl.close()
+
+    with pytest.raises(
+        AttributeError, match='This plotter is closed and unable to save a screenshot.'
+    ):
+        pl.save_graphic(filename='foo.svg')
+
+    pl = pv.Plotter()
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            'Extension (.not_supported) is an invalid choice.\n\nValid options include: .svg, .eps, .ps, .pdf, .tex'
+        ),
+    ):
+        pl.save_graphic(filename='foo.not_supported')
+
+
+def test_add_background_image_raises():
+    pl = pv.Plotter()
+    pl.add_background_image(pv.examples.mapfile)
+
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            'A background image already exists.  Remove it with ``remove_background_image`` before adding one'
+        ),
+    ):
+        pl.add_background_image(pv.examples.mapfile)
+
+
+def test_show_after_closed_raises():
+    pl = pv.Plotter()
+    pl.close()
+
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape('This plotter has been closed and cannot be shown'),
+    ):
+        pl.show()
+
+
 def test_plotter_line_point_smoothing():
     pl = pv.Plotter()
     assert bool(pl.render_window.GetLineSmoothing()) is False
