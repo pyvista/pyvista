@@ -1100,10 +1100,18 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         """
         for name, array in array_dict.items():
-            if copy:
-                self[name] = array.copy() if hasattr(array, 'copy') else copylib.copy(array)
-            else:
-                self[name] = array
+            self._update_array(name, array, copy)
+
+    def _update_array(
+        self: Self,
+        name: str,
+        array: NumpyArray[float],
+        copy: bool,
+    ) -> None:
+        if copy:
+            self[name] = array.copy() if hasattr(array, 'copy') else copylib.copy(array)
+        else:
+            self[name] = array
 
     def _raise_index_out_of_bounds(self: Self, index: Any) -> None:
         """Raise a KeyError if array index is out of bounds."""

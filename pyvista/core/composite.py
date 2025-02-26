@@ -10,7 +10,6 @@ from collections.abc import Iterator
 from collections.abc import MutableSequence
 from collections.abc import Sequence
 import itertools
-import json
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
@@ -615,7 +614,7 @@ class MultiBlock(
 
         """
         root_field_data = self.field_data
-        deep_copy = operation in ['move', 'deep_copy']
+        copy = operation in ['move', 'deep_copy']
 
         iterator = self.recursive_iterator(
             'all', node_type='parent', prepend_names=prepend_names, separator=separator
@@ -634,9 +633,19 @@ class MultiBlock(
             else:
                 field_data_to_copy = nested_field_data
 
-            # Raise error if duplicate keys
             for array_name in field_data_to_copy:
-                if array_name in root_field_data:
+                # Check for nested user-dict data
+                if array_name.endswith(USER_DICT_KEY):
+                    # Check if the new key already exists in the root user dict
+                    if block_name in self.user_dict.keys():
+                        raise ValueError
+                    if prepend_names:
+                        self.user_dict[block_name] = dict(nested_multi.user_dict)
+                    else:
+                        self.user_dict.update(nested_multi.user_dict)
+
+                elif array_name in root_field_data:
+                    # Raise error if duplicate keys
                     index_fmt = ''.join([f'[{ind}]' for ind in index])
                     msg = (
                         f"The field data array '{array_name}' from nested MultiBlock at index {index_fmt}\n"
@@ -646,26 +655,13 @@ class MultiBlock(
                         msg += '\nUse `append_named=True` to make the array names unique.'
                     raise ValueError(msg)
 
-            # Move or copy the field data
-            root_field_data.update(field_data_to_copy, copy=deep_copy)
+                else:
+                    # Copy the field data
+                    array = field_data_to_copy[array_name]
+                    root_field_data._update_array(array_name, array, copy)
+
             if operation == 'move':
                 nested_field_data.clear()
-
-        if prepend_names:
-            # Check for nested user-dict data
-            end_string = separator + USER_DICT_KEY
-            for array_name in root_field_data:
-                if array_name.endswith(end_string):
-                    # Nested block has a user dict JSON string we need to process
-                    new_name = array_name.split(end_string)[0]
-
-                    # Check if the new key already exists in the root user dict
-                    if USER_DICT_KEY in root_field_data and new_name in self.user_dict.keys():
-                        raise ValueError
-
-                    # Add nested user dict to root user dict
-                    nested_dict = json.loads(str(root_field_data[array_name]))
-                    self.user_dict[new_name] = nested_dict
 
     def flatten(
         self,

@@ -1152,26 +1152,26 @@ def test_nested_field_data_to_root_duplicate_names():
         root.nested_field_data_to_root()
 
 
-def test_nested_field_data_to_root_user_dict():
-    block_name = 'nested'
-    multi_dict = dict(data=42)
-    root_dict = dict(more_data=7)
+@pytest.mark.parametrize('prepend_names', [True, False])
+def test_nested_field_data_to_root_user_dict(prepend_names):
+    block_name = 'nested_block'
+    multi_dict = dict(nested_data=42)
+    root_dict = dict(root_data=7)
     expected_user_dict = root_dict.copy()
-    expected_user_dict[block_name] = multi_dict
+    if prepend_names:
+        expected_user_dict[block_name] = multi_dict
+    else:
+        expected_user_dict.update(multi_dict)
 
+    # Add user dict to root and nested
     multi = pv.MultiBlock()
     multi.user_dict = multi_dict
     root = pv.MultiBlock({block_name: multi})
     root.user_dict = root_dict
 
-    # Test error raised since both blocks have a user dict
-    with pytest.raises(ValueError, match='_PYVISTA_USER_DICT'):
-        root.nested_field_data_to_root()
-
     # Test root user dict is updated with nested user dict data
-    root.nested_field_data_to_root(prepend_names=True)
+    root.nested_field_data_to_root(prepend_names=prepend_names)
     actual_user_dict = dict(root.user_dict)
-    assert block_name in actual_user_dict.keys()
     assert actual_user_dict == expected_user_dict
 
 
