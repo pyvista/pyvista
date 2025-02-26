@@ -10,7 +10,6 @@ import warnings
 import numpy as np
 
 import pyvista
-
 from pyvista._version import version_info
 from pyvista.core import _validation
 from pyvista.core import _vtk_core as _vtk
