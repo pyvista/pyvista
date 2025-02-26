@@ -1152,6 +1152,29 @@ def test_nested_field_data_to_root_duplicate_names():
         root.nested_field_data_to_root()
 
 
+def test_nested_field_data_to_root_user_dict():
+    block_name = 'nested'
+    multi_dict = dict(data=42)
+    root_dict = dict(more_data=7)
+    expected_user_dict = root_dict.copy()
+    expected_user_dict[block_name] = multi_dict
+
+    multi = pv.MultiBlock()
+    multi.user_dict = multi_dict
+    root = pv.MultiBlock({block_name: multi})
+    root.user_dict = root_dict
+
+    # Test error raised since both blocks have a user dict
+    with pytest.raises(ValueError, match='_PYVISTA_USER_DICT'):
+        root.nested_field_data_to_root()
+
+    # Test root user dict is updated with nested user dict data
+    root.nested_field_data_to_root(prepend_names=True)
+    actual_user_dict = dict(root.user_dict)
+    assert block_name in actual_user_dict.keys()
+    assert actual_user_dict == expected_user_dict
+
+
 def test_flatten(multiblock_all_with_nested_and_none):
     root_names = multiblock_all_with_nested_and_none.keys()[:-1]
     nested_names = multiblock_all_with_nested_and_none[-1].keys()

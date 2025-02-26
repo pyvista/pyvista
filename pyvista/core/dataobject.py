@@ -36,8 +36,8 @@ if TYPE_CHECKING:
 
     from ._typing_core import NumpyArray
 
-# vector array names
-DEFAULT_VECTOR_KEY = '_vectors'
+DEFAULT_VECTOR_KEY = '_vectors'  # vector array names
+USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
 @abstract_class
@@ -607,8 +607,8 @@ class DataObject:
     ) -> None:
         # Setting None removes the field data array
         if dict_ is None:
-            if '_PYVISTA_USER_DICT' in self.field_data.keys():
-                del self.field_data['_PYVISTA_USER_DICT']
+            if USER_DICT_KEY in self.field_data.keys():
+                del self.field_data[USER_DICT_KEY]
             if hasattr(self, '_user_dict'):
                 del self._user_dict
             return
@@ -625,7 +625,7 @@ class DataObject:
 
     def _config_user_dict(self: Self) -> None:
         """Init serialized dict array and ensure it is added to field_data."""
-        field_name = '_PYVISTA_USER_DICT'
+        field_name = USER_DICT_KEY
         field_data = self.field_data
 
         if not hasattr(self, '_user_dict'):

@@ -10,6 +10,7 @@ from collections.abc import Iterator
 from collections.abc import MutableSequence
 from collections.abc import Sequence
 import itertools
+import json
 import pathlib
 from typing import TYPE_CHECKING
 from typing import Any
@@ -24,6 +25,7 @@ from pyvista.core import _validation
 
 from . import _vtk_core as _vtk
 from ._typing_core import BoundsTuple
+from .dataobject import USER_DICT_KEY
 from .dataobject import DataObject
 from .dataset import DataSet
 from .filters import CompositeFilters
@@ -392,6 +394,10 @@ class MultiBlock(
                 raise ValueError("Cannot skip None blocks when the node type is 'parent'.")
             if order is not None:
                 raise TypeError("Cannot set order when the node type is 'parent'.")
+        _validation.check_instance(separator, str, name='separator')
+        if not separator:
+            msg = 'String separator cannot be empty.'
+            raise ValueError(msg)
 
         return self._recursive_iterator(
             ids=[[i] for i in range(self.n_blocks)],
@@ -518,16 +524,27 @@ class MultiBlock(
             This operation only applies to nested :class:`MultiBlock` blocks. Field data
             associated with :class:`~pyvista.DataSet` blocks is `not` affected.
 
+        .. note::
+            If any nested :class:`MultiBlock` blocks define a :attr:`~pyvista.DataObject.user_dict`,
+            the root user-dict is also updated to include the nested block's user-dict
+            data.
+
         Parameters
         ----------
         operation : 'move' | 'shallow_copy' | 'deep_copy', default: 'move'
             Operation to apply to the nested field data.
 
             - ``'move'`` : Move the data to the root block. Any nested ``MultiBlock``
-              will no longer have any field data.
+              blocks will no longer have any field data.
             - ``'shallow_copy'`` : Shallow-copy the data from nested ``MultiBlock``
               blocks to the root block. Both the root and nested blocks will share
               the same keys but the data itself is not copied.
+
+              .. note::
+
+                This option does not apply to any nested :attr:`~pyvista.DataObject.user_dict`
+                data. User-dict data is always deep-copied.
+
             - ``'deep_copy'`` : Deep-copy the data from nested ``MultiBlock``
               blocks to the root block. Both the root and nested blocks will share
               the same keys `and` the data is copied.
@@ -537,6 +554,12 @@ class MultiBlock(
             of any nested field data before assigning it to the root block. By default,
             the names of all field data arrays from any nested ``MultiBlock`` blocks are
             preserved.
+
+            .. note::
+                If any nested :class:`MultiBlock` blocks define a :attr:`~pyvista.DataObject.user_dict`,
+                a new key with the parent block name is added to the root user-dict when
+                ``prepend_names=True``. If ``False``, the root user-dict is directly
+                updated from any nested user-dict.
 
         separator : str, default: '::'
             String separator to use when ``prepend_names`` is enabled. The separator
@@ -615,15 +638,34 @@ class MultiBlock(
             for array_name in field_data_to_copy:
                 if array_name in root_field_data:
                     index_fmt = ''.join([f'[{ind}]' for ind in index])
-                    raise ValueError(
+                    msg = (
                         f"The field data array '{array_name}' from nested MultiBlock at index {index_fmt}\n"
                         f"also exists in the root MultiBlock's field data and cannot be moved."
                     )
+                    if not prepend_names:
+                        msg += '\nUse `append_named=True` to make the array names unique.'
+                    raise ValueError(msg)
 
             # Move or copy the field data
             root_field_data.update(field_data_to_copy, copy=deep_copy)
             if operation == 'move':
                 nested_field_data.clear()
+
+        if prepend_names:
+            # Check for nested user-dict data
+            end_string = separator + USER_DICT_KEY
+            for array_name in root_field_data:
+                if array_name.endswith(end_string):
+                    # Nested block has a user dict JSON string we need to process
+                    new_name = array_name.split(end_string)[0]
+
+                    # Check if the new key already exists in the root user dict
+                    if USER_DICT_KEY in root_field_data and new_name in self.user_dict.keys():
+                        raise ValueError
+
+                    # Add nested user dict to root user dict
+                    nested_dict = json.loads(str(root_field_data[array_name]))
+                    self.user_dict[new_name] = nested_dict
 
     def flatten(
         self,
