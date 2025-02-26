@@ -3583,23 +3583,23 @@ class ImageDataFilters(DataSetFilters):
         Parameters
         ----------
         values : float | ArrayLike[float] | dict, optional
-            Value(s) to extract. Can be a number, an iterable of numbers, or a dictionary
+            Value(s) to select. Can be a number, an iterable of numbers, or a dictionary
             with numeric entries. For ``dict`` inputs, either its keys or values may be
             numeric, and the other field must be strings. The numeric field is used as
             the input for this parameter, and if ``split`` is ``True``, the string field
             is used to set the block names of the returned :class:`~pyvista.MultiBlock`.
 
             .. note::
-                When extracting multi-component values with ``component_mode=multi``,
+                When selecting multi-component values with ``component_mode=multi``,
                 each value is specified as a multi-component scalar. In this case,
                 ``values`` can be a single vector or an array of row vectors.
 
         ranges : ArrayLike[float] | dict, optional
-            Range(s) of values to extract. Can be a single range (i.e. a sequence of
+            Range(s) of values to select. Can be a single range (i.e. a sequence of
             two numbers in the form ``[lower, upper]``), a sequence of ranges, or a
             dictionary with range entries. Any combination of ``values`` and ``ranges``
             may be specified together. The endpoints of the ranges are included in the
-            extraction. Ranges cannot be set when ``component_mode=multi``.
+            selection. Ranges cannot be set when ``component_mode=multi``.
 
             For ``dict`` inputs, either its keys or values may be numeric, and the other
             field must be strings. The numeric field is used as the input for this
@@ -3609,8 +3609,8 @@ class ImageDataFilters(DataSetFilters):
             .. note::
                 Use ``+/-`` infinity to specify an unlimited bound, e.g.:
 
-                - ``[0, float('inf')]`` to extract values greater than or equal to zero.
-                - ``[float('-inf'), 0]`` to extract values less than or equal to zero.
+                - ``[0, float('inf')]`` to select values greater than or equal to zero.
+                - ``[float('-inf'), 0]`` to select values less than or equal to zero.
 
         fill_value : float | VectorLike[float], default: 0
             Value used to fill the image. Can be a single value or a multi-component
