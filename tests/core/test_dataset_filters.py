@@ -440,7 +440,7 @@ def test_outline_composite(multiblock_all):
     # vtk 9.0.0 returns polydata
     assert isinstance(output, (pv.MultiBlock, pv.PolyData))
     if isinstance(output, pv.MultiBlock):
-        assert output.n_blocks == composite.n_blocks
+        assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_outline_corners(datasets):
