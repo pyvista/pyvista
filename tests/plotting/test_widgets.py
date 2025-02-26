@@ -1,4 +1,5 @@
 from __future__ import annotations
+import re
 
 from typing import TYPE_CHECKING
 from unittest.mock import ANY
@@ -52,6 +53,67 @@ def r_mat_to_euler_angles(R):
         yaw = 0
 
     return roll, pitch, yaw
+
+
+def test_add_plane_widget_raises():
+    pl = pv.Plotter()
+    with pytest.raises(RuntimeError, match='assign_to_axis not understood'):
+        pl.add_plane_widget(lambda *x: True, assign_to_axis='foo')
+
+
+def test_add_slider_widget_raises():
+    pl = pv.Plotter()
+    pl.close()
+    with pytest.raises(RuntimeError, match='Cannot add a widget to a closed plotter.'):
+        pl.add_slider_widget(lambda *x: True, rng=[0, 1])
+
+
+def test_add_mesh_threshold_raises():
+    pl = pv.Plotter()
+    with pytest.raises(
+        TypeError, match='MultiBlock datasets are not supported for threshold widget.'
+    ):
+        pl.add_mesh_threshold(mesh=pv.MultiBlock())
+
+    pl = pv.Plotter()
+    with pytest.raises(ValueError, match='No arrays present to threshold.'):
+        pl.add_mesh_threshold(mesh=pv.PolyData())
+
+
+def test_add_mesh_isovalue_raises():
+    pl = pv.Plotter()
+    with pytest.raises(TypeError, match='MultiBlock datasets are not supported for this widget.'):
+        pl.add_mesh_isovalue(mesh=pv.MultiBlock())
+
+    pl = pv.Plotter()
+    with pytest.raises(
+        TypeError, match='PointSets are 0-dimensional and thus cannot produce contours.'
+    ):
+        pl.add_mesh_isovalue(mesh=pv.PointSet())
+
+    pl = pv.Plotter()
+    with pytest.raises(
+        ValueError, match='Input dataset for the contour filter must have data arrays.'
+    ):
+        pl.add_mesh_isovalue(mesh=pv.PolyData())
+
+    pl = pv.Plotter()
+    sp = pv.Sphere()
+    sp.cell_data['foo'] = 1
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            'Contour filter only works on Point data. Array (foo) is in the Cell data.'
+        ),
+    ):
+        pl.add_mesh_isovalue(mesh=sp, scalars='foo')
+
+
+def test_add_measurement_widget_raises():
+    pl = pv.Plotter()
+    pl.close()
+    with pytest.raises(RuntimeError, match='Cannot add a widget to a closed plotter.'):
+        pl.add_measurement_widget()
 
 
 def test_widget_box(uniform):
