@@ -85,11 +85,6 @@ class GetOutput:
         return self._mock.call_args_list[-1][0][0]
 
 
-@pytest.fixture
-def composite(datasets):
-    return pv.MultiBlock(datasets)
-
-
 @pytest.fixture(scope='module')
 def uniform_vec():
     nx, ny, nz = 20, 15, 5
@@ -200,10 +195,10 @@ def test_clip_filter_scalar_multiple():
     assert np.isclose(mesh_clip_z['z'].max(), 0.0)
 
 
-def test_clip_filter_composite(composite):
+def test_clip_filter_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.clip(normal=normals[0], invert=False)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.clip(normal=normals[0], invert=False)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_clip_box(datasets):
@@ -245,10 +240,10 @@ def test_clip_box(datasets):
     assert clp is not None
 
 
-def test_clip_box_composite(composite):
+def test_clip_box_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.clip_box(invert=False, progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.clip_box(invert=False, progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_clip_surface():
@@ -311,10 +306,10 @@ def test_slice_filter(datasets):
     assert result.n_points < 1
 
 
-def test_slice_filter_composite(composite):
+def test_slice_filter_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.slice(normal=normals[0], progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.slice(normal=normals[0], progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_slice_orthogonal_filter(datasets):
@@ -328,10 +323,10 @@ def test_slice_orthogonal_filter(datasets):
             assert isinstance(slc, pv.PolyData)
 
 
-def test_slice_orthogonal_filter_composite(composite):
+def test_slice_orthogonal_filter_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.slice_orthogonal(progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.slice_orthogonal(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_slice_along_axis(datasets):
@@ -350,10 +345,10 @@ def test_slice_along_axis(datasets):
         dataset.slice_along_axis(axis='u')
 
 
-def test_slice_along_axis_composite(composite):
+def test_slice_along_axis_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.slice_along_axis(progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.slice_along_axis(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_threshold(datasets):
@@ -582,16 +577,16 @@ def test_outline(datasets):
         assert isinstance(outline, pv.PolyData)
 
 
-def test_outline_composite(composite):
+def test_outline_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.outline(progress_bar=True)
+    output = multiblock_all.outline(progress_bar=True)
     assert isinstance(output, pv.PolyData)
-    output = composite.outline(nested=True, progress_bar=True)
+    output = multiblock_all.outline(nested=True, progress_bar=True)
 
     # vtk 9.0.0 returns polydata
     assert isinstance(output, (pv.MultiBlock, pv.PolyData))
     if isinstance(output, pv.MultiBlock):
-        assert output.n_blocks == composite.n_blocks
+        assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_outline_corners(datasets):
@@ -601,21 +596,21 @@ def test_outline_corners(datasets):
         assert isinstance(outline, pv.PolyData)
 
 
-def test_outline_corners_composite(composite):
+def test_outline_corners_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.outline_corners(progress_bar=True)
+    output = multiblock_all.outline_corners(progress_bar=True)
     assert isinstance(output, pv.PolyData)
-    output = composite.outline_corners(nested=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.outline_corners(nested=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
-def test_extract_geometry(datasets, composite):
+def test_extract_geometry(datasets, multiblock_all):
     for dataset in datasets:
         geom = dataset.extract_geometry(progress_bar=True)
         assert geom is not None
         assert isinstance(geom, pv.PolyData)
     # Now test composite data structures
-    output = composite.extract_geometry()
+    output = multiblock_all.extract_geometry()
     assert isinstance(output, pv.PolyData)
 
 
@@ -647,10 +642,10 @@ def test_extract_all_edges_no_data():
     assert edges.n_arrays == 0
 
 
-def test_wireframe_composite(composite):
+def test_wireframe_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.extract_all_edges(progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.extract_all_edges(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_delaunay_2d_unstructured(datasets):
@@ -743,10 +738,10 @@ def test_elevation(uniform):
         elev = dataset.elevation(scalar_range={1, 2}, progress_bar=True)
 
 
-def test_elevation_composite(composite):
+def test_elevation_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.elevation(progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.elevation(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_texture_map_to_plane():
@@ -805,10 +800,10 @@ def test_compute_cell_sizes(datasets):
     assert np.allclose(grid.volume, volume)
 
 
-def test_compute_cell_sizes_composite(composite):
+def test_compute_cell_sizes_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.compute_cell_sizes(progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.compute_cell_sizes(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_cell_centers(datasets):
@@ -826,10 +821,10 @@ def test_cell_center_pointset(airplane):
     assert isinstance(result, pv.PolyData)
 
 
-def test_cell_centers_composite(composite):
+def test_cell_centers_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.cell_centers(progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.cell_centers(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_glyph(datasets, sphere):
@@ -1531,10 +1526,10 @@ def test_cell_data_to_point_data():
     _ = data.ctp()
 
 
-def test_cell_data_to_point_data_composite(composite):
+def test_cell_data_to_point_data_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.cell_data_to_point_data(progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.cell_data_to_point_data(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_point_data_to_cell_data():
@@ -1545,10 +1540,10 @@ def test_point_data_to_cell_data():
     _ = data.ptc()
 
 
-def test_point_data_to_cell_data_composite(composite):
+def test_point_data_to_cell_data_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.point_data_to_cell_data(progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.point_data_to_cell_data(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_triangulate():
@@ -1558,10 +1553,10 @@ def test_triangulate():
     assert np.any(tri.cells)
 
 
-def test_triangulate_composite(composite):
+def test_triangulate_composite(multiblock_all):
     # Now test composite data structures
-    output = composite.triangulate(progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.triangulate(progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_delaunay_3d():
@@ -2861,13 +2856,13 @@ def test_extract_values_raises(grid4x4):
         grid4x4.extract_values(values=[0, 1], component_mode='multi')
 
 
-def test_slice_along_line_composite(composite):
+def test_slice_along_line_composite(multiblock_all):
     # Now test composite data structures
-    a = [composite.bounds.x_min, composite.bounds.y_min, composite.bounds.z_min]
-    b = [composite.bounds.x_max, composite.bounds.y_max, composite.bounds.z_max]
+    a = [multiblock_all.bounds.x_min, multiblock_all.bounds.y_min, multiblock_all.bounds.z_min]
+    b = [multiblock_all.bounds.x_max, multiblock_all.bounds.y_max, multiblock_all.bounds.z_max]
     line = pv.Line(a, b, resolution=10)
-    output = composite.slice_along_line(line, progress_bar=True)
-    assert output.n_blocks == composite.n_blocks
+    output = multiblock_all.slice_along_line(line, progress_bar=True)
+    assert output.n_blocks == multiblock_all.n_blocks
 
 
 def test_interpolate():
