@@ -6,7 +6,7 @@ Extract Cell Centers
 
 Extract the coordinates of the centers of all cells or faces in a mesh.
 
-Here we use :func:`cell_centers <pyvista.DataSetFilters.cell_centers>`.
+Here we use :func:`cell_centers <pyvista.DataObjectFilters.cell_centers>`.
 
 """
 
@@ -65,9 +65,9 @@ pl.show(cpos=cpos)
 # %%
 # Edge centers
 # ~~~~~~~~~~~~
-# You can use :func:`cell_centers <pyvista.DataSetFilters.cell_centers>` in
+# You can use :func:`cell_centers <pyvista.DataObjectFilters.cell_centers>` in
 # combination with :func:`extract_all_edges
-# <pyvista.DataSetFilters.extract_all_edges>` to get the center of all edges of
+# <pyvista.DataObjectFilters.extract_all_edges>` to get the center of all edges of
 # a mesh.
 
 # create a simple mesh and extract all the edges and then centers of the mesh.
