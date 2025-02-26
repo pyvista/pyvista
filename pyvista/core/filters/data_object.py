@@ -1225,7 +1225,8 @@ class DataObjectFilters:
         elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
             if poly.n_cells != 6:
-                raise ValueError('The bounds mesh must have only 6 faces.')
+                msg = 'The bounds mesh must have only 6 faces.'
+                raise ValueError(msg)
             bounds = []
             poly.compute_normals(inplace=True)
             for cid in range(6):
@@ -1585,9 +1586,8 @@ class DataObjectFilters:
                 ax_label = cast(XYZLiteral, ax_str)
                 ax_index = label_to_index[ax_label]
             else:
-                raise ValueError(
-                    f'Axis ({axis!r}) not understood. Choose one of {labels}.',
-                ) from None
+                msg = f'Axis ({axis!r}) not understood. Choose one of {labels}.'
+                raise ValueError(msg) from None
         # get the locations along that axis
         if bounds is None:
             bounds = self.bounds
@@ -1691,10 +1691,12 @@ class DataObjectFilters:
         """
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
-            raise ValueError('Input line must have only one cell.')
+            msg = 'Input line must have only one cell.'
+            raise ValueError(msg)
         polyline = line.GetCell(0)
         if not isinstance(polyline, _vtk.vtkPolyLine):
-            raise TypeError(f'Input line must have a PolyLine cell, not ({type(polyline)})')
+            msg = f'Input line must have a PolyLine cell, not ({type(polyline)})'
+            raise TypeError(msg)
         # Generate PolyPlane
         polyplane = _vtk.vtkPolyPlane()
         polyplane.SetPolyLine(polyline)
@@ -1765,10 +1767,11 @@ class DataObjectFilters:
             try:
                 alg.SetUseAllPoints(use_all_points)
             except AttributeError:  # pragma: no cover
-                raise VTKVersionError(
+                msg = (
                     'This version of VTK does not support `use_all_points=True`. '
-                    'VTK v9.1 or newer is required.',
+                    'VTK v9.1 or newer is required.'
                 )
+                raise VTKVersionError(msg)
         # Suppress improperly used INFO for debugging messages in vtkExtractEdges
         verbosity = _vtk.vtkLogger.GetCurrentVerbosityCutoff()
         _vtk.vtkLogger.SetStderrVerbosity(_vtk.vtkLogger.VERBOSITY_OFF)
@@ -2403,15 +2406,15 @@ class DataObjectFilters:
                 try:
                     locator = locator_map[locator]
                 except KeyError as err:
-                    raise ValueError(
-                        f'locator must be a string from {locator_map.keys()}, got {locator}',
-                    ) from err
+                    msg = f'locator must be a string from {locator_map.keys()}, got {locator}'
+                    raise ValueError(msg) from err
             alg.SetCellLocatorPrototype(locator)
 
         if snap_to_closest_point:
             try:
                 alg.SnapToCellWithClosestPointOn()
             except AttributeError:  # pragma: no cover
-                raise VTKVersionError('`snap_to_closest_point=True` requires vtk 9.3.0 or newer')
+                msg = '`snap_to_closest_point=True` requires vtk 9.3.0 or newer'
+                raise VTKVersionError(msg)
         _update_alg(alg, progress_bar, 'Resampling array Data from a Passed Mesh onto Mesh')
         return _get_output(alg)
