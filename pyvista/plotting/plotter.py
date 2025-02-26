@@ -6006,9 +6006,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 f'Extension ({extension}) is an invalid choice.\n\n'
                 f'Valid options include: {", ".join(modes.keys())}'
             )
-            raise ValueError(
-                msg,
-            )
             raise ValueError(msg)
         writer.CompressOff()
         if pyvista.vtk_version_info < (9, 2, 2):  # pragma no cover
