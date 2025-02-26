@@ -881,6 +881,15 @@ def test_to_polydata(multiblock_all_with_nested_and_none):
     assert dataset_b.is_all_polydata
 
 
+def test_as_unstructured_grid_blocks(multiblock_all_with_nested_and_none):
+    multi = multiblock_all_with_nested_and_none
+    if pv.vtk_version_info >= (9, 1, 0):
+        multi.append(pv.PointSet([0.0, 0.0, 1.0]))  # missing pointset
+
+    new_multi = multi.as_unstructured_grid_blocks()
+    assert all(isinstance(block, pv.UnstructuredGrid) for block in new_multi.recursive_iterator())
+
+
 def test_compute_normals(multiblock_poly):
     for block in multiblock_poly:
         block.clear_data()
