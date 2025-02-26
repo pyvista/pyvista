@@ -539,7 +539,7 @@ class MultiBlock(
             preserved.
 
         separator : str, default: '::'
-            String separator to use when ``name_mode='prepend'`` is used. The separator
+            String separator to use when ``prepend_names`` is enabled. The separator
             is inserted between parent and child block names.
 
         Raises
@@ -548,9 +548,51 @@ class MultiBlock(
             If any field data keys in nested :class:`MultiBlock` blocks are duplicated
             in the root block. This prevents the root field data from being overwritten.
 
+        Examples
+        --------
+        Create a :class:`MultiBlock` with field data.
+
+        >>> import pyvista as pv
+        >>> multi = pv.MultiBlock()
+        >>> multi.field_data['data'] = [1, 2, 3]
+
+        Nest the dataset inside another ``MultiBlock``.
+
+        >>> root = pv.MultiBlock([multi])
+
+        Show that the root block does not have any field data.
+
+        >>> root.field_data.keys()
+        []
+
+        Move the nested field data to the root.
+
+        >>> root.nested_field_data_to_root()
+
+        The field data is now at the root.
+
+        >>> root.field_data.keys()
+        ['data']
+
+        And no longer exists in the nested ``MultiBlock``.
+
+        >>> multi.field_data.keys()
+        []
+
+        Add more field data to the nested block.
+
+        >>> multi.field_data['more_data'] = [4, 5, 6]
+
+        Move it to the root again, but this time prepend the name of the block the data
+        came from.
+
+        >>> root.nested_field_data_to_root(prepend_names=True)
+        >>> root.field_data.keys()
+        ['data', 'Block-00::more_data']
+
         """
         root_field_data = self.field_data
-        copy = operation in ['move', 'deep_copy']
+        deep_copy = operation in ['move', 'deep_copy']
 
         for block_name, nested_multi in self.recursive_iterator(
             'items', node_type='parent', prepend_names=prepend_names, separator=separator
@@ -575,7 +617,7 @@ class MultiBlock(
                     )
 
             # Move or copy the field data
-            root_field_data.update(field_data_to_copy, copy=copy)
+            root_field_data.update(field_data_to_copy, copy=deep_copy)
             if operation == 'move':
                 nested_field_data.clear()
 
