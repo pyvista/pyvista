@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 import pyvista as pv
+from pyvista import _vtk
 from pyvista.core.errors import VTKVersionError
 
 if TYPE_CHECKING:
@@ -25,10 +26,11 @@ def get_classes_with_attribute(attr: str) -> tuple[tuple[str], tuple[type]]:
             try:
                 issubclass(module_attr, object)
             except TypeError:
-                pass  # not a class
-            else:
-                if hasattr(module_attr, attr):
-                    class_types.append(module_attr)
+                continue  # not a class
+            if issubclass(module_attr, (_vtk.vtkTextActor, _vtk.vtkCornerAnnotation)):
+                return  # Skip these classes
+            if hasattr(module_attr, attr):
+                class_types.append(module_attr)
 
     # Get from core and plotting separately since plotting module has a lazy importer
     _get_classes_from_module(pv.core)
@@ -104,7 +106,9 @@ def test_bounds_tuple(class_with_bounds):
 def test_center_tuple(class_with_center):
     # Define kwargs as required for some cases.
     kwargs = {}
-    if class_with_center is pv.Renderer:
+    if class_with_center is pv.CubeAxesActor:
+        kwargs['camera'] = pv.Camera()
+    elif class_with_center is pv.Renderer:
         kwargs['parent'] = pv.Plotter()
 
     instance = try_init_object(class_with_center, kwargs)
