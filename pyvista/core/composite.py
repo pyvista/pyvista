@@ -526,14 +526,23 @@ class MultiBlock(
     ) -> None:
         """Move or copy field data from all nested :class:`MultiBlock` blocks.
 
+        Any nested :class:`MultiBlock` blocks will have its :attr:`~pyvista.DataObject.field_data`
+        contents moved to the root block, (i.e. `this` ``MultiBock``). By default, this
+        data will be cleared from the nested block(s) but a copy may be made instead.
+
+        If any nested :class:`MultiBlock` blocks define a :attr:`~pyvista.DataObject.user_dict`,
+        the root user-dict is also updated to include the nested block's user-dict
+        data.
+
+        All field data and user-dict keys are directly updated from the nested blocks
+        by default. Optionally, different modes are provided to control the key names
+        and/or how the data is moved. The move is done safely such that no key values
+        will be overwritten and no data will be lost. If any nested keys are duplicates
+        of the root keys, an error is raised.
+
         .. note::
             This operation only applies to nested :class:`MultiBlock` blocks. Field data
             associated with :class:`~pyvista.DataSet` blocks is `not` affected.
-
-        .. note::
-            If any nested :class:`MultiBlock` blocks define a :attr:`~pyvista.DataObject.user_dict`,
-            the root user-dict is also updated to include the nested block's user-dict
-            data.
 
         Parameters
         ----------
@@ -690,7 +699,6 @@ class MultiBlock(
                 # Check for nested user-dict data
                 if array_name.endswith(USER_DICT_KEY):
                     root_user_dict = self.user_dict
-                    root_user_dict_keys = root_user_dict.keys()
 
                     def raise_key_error(
                         duplicate_key: str, block_name_: str, index_: tuple[int, ...]
@@ -703,6 +711,8 @@ class MultiBlock(
                         raise ValueError(msg)
 
                     if user_dict_mode in 'preserve':
+                        # Check if the keys already exist before updating
+                        root_user_dict_keys = root_user_dict.keys()
                         for nested_key in nested_multi.user_dict.keys():
                             if nested_key in root_user_dict_keys:
                                 raise_key_error(nested_key, block_name, index)
@@ -714,17 +724,20 @@ class MultiBlock(
                             if user_dict_mode == 'prepend'
                             else block_name.split(separator)[-1]
                         )
+                        # Update the parent keys instead of the root keys if 'nested'
                         if user_dict_mode == 'nested':
                             parent, _ = self._navigate_to_parent(index)
                             dict_to_update = parent.user_dict
                         else:
                             dict_to_update = root_user_dict
+
+                        # Check if the keys already exist before updating
                         if new_key in dict_to_update:
                             raise_key_error(new_key, block_name, index)
                         dict_to_update[new_key] = dict(nested_multi.user_dict)
 
                 elif array_name in root_field_data:
-                    # Raise error if duplicate keys
+                    # Duplicate keys - raise error
                     index_fmt = _format_nested_index(index)
                     msg = (
                         f"The field data array '{array_name}' from nested MultiBlock at index {index_fmt} with name '{block_name}'\n"

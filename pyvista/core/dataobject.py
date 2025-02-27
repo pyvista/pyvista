@@ -36,7 +36,8 @@ if TYPE_CHECKING:
 
     from ._typing_core import NumpyArray
 
-DEFAULT_VECTOR_KEY = '_vectors'  # vector array names
+# vector array names
+DEFAULT_VECTOR_KEY = '_vectors'
 USER_DICT_KEY = '_PYVISTA_USER_DICT'
 
 
