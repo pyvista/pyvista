@@ -1094,6 +1094,9 @@ def test_recursive_iterator_raises():
     with pytest.raises(ValueError, match=match):
         multi.recursive_iterator('blocks', prepend_names=True)
 
+    with pytest.raises(ValueError, match='String separator cannot be empty.'):
+        multi.recursive_iterator(separator='')
+
 
 @pytest.mark.parametrize(
     ('order', 'expected_ids', 'expected_names'),
