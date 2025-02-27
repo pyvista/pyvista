@@ -467,6 +467,9 @@ class MultiBlock(
             ):
                 continue
             elif isinstance(block, MultiBlock):
+                if skip_empty and len(block) == 0:
+                    continue
+
                 # Process names
                 names = block.keys()
                 if prepend_names:
@@ -481,7 +484,7 @@ class MultiBlock(
                     ids = [[i] for i in range(block.n_blocks)]
 
                 # Yield from multiblock but fall-through in some cases for 'parent' mode
-                if node_type == 'child' or block.is_nested or (len(block) == 0 and skip_empty):
+                if node_type == 'child' or block.is_nested:
                     yield from block._recursive_iterator(
                         ids=ids,
                         names=names,
@@ -494,7 +497,8 @@ class MultiBlock(
                         prepend_names=prepend_names,
                         separator=separator,
                     )
-                    continue
+                    if node_type == 'child':
+                        continue
             elif node_type == 'parent':
                 continue
 
@@ -568,7 +572,8 @@ class MultiBlock(
             - ``'flat'``: Create a new key in the root user dict for each nested
               ``MultiBlock`` that has a user-dict.
             - ``'prepend'``: Similar to ``'flat'`` except the key names are prepended
-              with the parent block names.
+              with the parent block names. If there is only a single level of nesting
+              this is equivalent to ``'flat'``.
 
         separator : str, default: '::'
             String separator to use when ``prepend_names`` is enabled. The separator
@@ -626,6 +631,11 @@ class MultiBlock(
         _validation.check_contains(
             ['prepend', 'preserve'], must_contain=field_data_mode, name='field_data_mode'
         )
+        _validation.check_contains(
+            ['prepend', 'preserve', 'flat', 'nested'],
+            must_contain=user_dict_mode,
+            name='user_dict_mode',
+        )
 
         root_field_data = self.field_data
         copy = operation in ['move', 'deep_copy']
@@ -665,15 +675,23 @@ class MultiBlock(
                         )
                         raise ValueError(msg)
 
-                    if user_dict_mode == 'prepend':
-                        if block_name in root_user_dict_keys:
-                            raise_key_error(block_name, block_name, index)
-                        root_user_dict[block_name] = dict(nested_multi.user_dict)
-                    elif user_dict_mode == 'preserve':
+                    if user_dict_mode in ['prepend', 'flat']:
+                        new_key = (
+                            block_name
+                            if user_dict_mode == 'prepend'
+                            else block_name.split(separator)[-1]
+                        )
+                        if new_key in root_user_dict_keys:
+                            raise_key_error(new_key, block_name, index)
+                        root_user_dict[new_key] = dict(nested_multi.user_dict)
+                    elif user_dict_mode in 'preserve':
                         for nested_key in nested_multi.user_dict.keys():
                             if nested_key in root_user_dict_keys:
                                 raise_key_error(nested_key, block_name, index)
                         root_user_dict.update(nested_multi.user_dict)
+
+                    else:  # pragma: nocover
+                        raise RuntimeError(f'Unknown user_dict_mode {user_dict_mode}.')
 
                 elif array_name in root_field_data:
                     # Raise error if duplicate keys
