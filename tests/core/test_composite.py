@@ -1147,6 +1147,7 @@ VALUE1 = 'value1'
 NAME2 = 'name2'
 VALUE2 = 'value2'
 NAME3 = 'name3'
+VALUE3 = 'value3'
 
 
 def _make_nested_multiblock(
@@ -1222,19 +1223,30 @@ def test_nested_field_data_to_root_duplicate_key_errors():
 
 @pytest.mark.parametrize('user_dict_mode', ['preserve', 'prepend', 'flat'])
 def test_nested_field_data_user_dict_mode(user_dict_mode):
-    block_name = NAME3
-    nested_dict = {NAME1: VALUE1}
-    root_dict = {NAME2: VALUE2}
+    block_name1 = 'level1'
+    block_name2 = 'level2'
+
+    root_dict = {NAME1: VALUE1}
+    nested_dict1 = {NAME2: VALUE2}
+    nested_dict2 = {NAME3: VALUE3}
+
     expected_user_dict = root_dict.copy()
-    if user_dict_mode in ['prepend', 'flat']:
-        expected_user_dict[block_name] = nested_dict
+    if user_dict_mode == 'flat':
+        expected_user_dict[block_name1] = nested_dict1
+        expected_user_dict[block_name2] = nested_dict2
+    if user_dict_mode == 'prepend':
+        expected_user_dict[block_name1] = nested_dict1
+        expected_user_dict[block_name1 + '::' + block_name2] = nested_dict2
     elif user_dict_mode == 'preserve':
-        expected_user_dict.update(nested_dict)
+        expected_user_dict.update(nested_dict1)
+        expected_user_dict.update(nested_dict2)
 
     root = _make_nested_multiblock(
         root_user_dict=root_dict,
-        nested1_user_dict=nested_dict,
-        nested1_block_name=block_name,
+        nested1_user_dict=nested_dict1,
+        nested1_block_name=block_name1,
+        nested2_user_dict=nested_dict2,
+        nested2_block_name=block_name2,
     )
 
     # Test root user dict is updated with nested user dict data
