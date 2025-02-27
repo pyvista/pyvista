@@ -561,7 +561,7 @@ class MultiBlock(
             - ``'preserve'``: The array names of nested field data are preserved.
             - ``'prepend'``: Preserve the array names and prepend the parent names.
 
-        user_dict_mode : 'preserve' | 'flat' | 'nested', default: 'preserve'
+        user_dict_mode : 'preserve' | 'prepend' | 'flat' | 'nested', default: 'preserve'
             Mode for naming the root :attr:`~pyvista.DataObject.user_dict` keys when
             nested :class:`MultiBlock` blocks define a user-dict.
 
@@ -689,9 +689,7 @@ class MultiBlock(
                             else block_name.split(separator)[-1]
                         )
                         if user_dict_mode == 'nested':
-                            parent = self
-                            for ind in index[:-1]:
-                                parent = parent[ind]
+                            parent, _ = self._navigate_to_parent(index)
                             dict_to_update = parent.user_dict
                         else:
                             dict_to_update = root_user_dict
