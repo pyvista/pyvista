@@ -572,8 +572,12 @@ class MultiBlock(
             - ``'flat'``: Create a new key in the root user dict for each nested
               ``MultiBlock`` that has a user-dict.
             - ``'prepend'``: Similar to ``'flat'`` except the key names are prepended
-              with the parent block names. If there is only a single level of nesting
-              this is equivalent to ``'flat'``.
+              with the parent block names.
+
+            .. note::
+                If there is only a single level of nesting the ``'flat'``, ``'nested'``
+                and ``'prepend'`` modes are all equivalent. They only differ when there
+                is at least two levels of nesting.
 
         separator : str, default: '::'
             String separator to use when ``prepend_names`` is enabled. The separator
@@ -626,6 +630,33 @@ class MultiBlock(
         >>> root.move_nested_field_data_to_root(field_data_mode='prepend')
         >>> root.field_data.keys()
         ['data', 'Block-00::more_data']
+
+        The :attr:`~pyvista.DataObject.user_dict` is also field data which is moved to
+        the root block's user-dict.
+
+        Add sample data to the nested block and move it to the root.
+
+        >>> data = dict(foo='bar')
+        >>> multi.user_dict = data
+        >>> root.move_nested_field_data_to_root()
+
+        Check the root's user-dict. By default, the key names are preserved and the root
+        dict is updated with the nested dict.
+
+        >>> root.user_dict
+        {"foo": "bar"}
+
+        Clear the field data and re-add data to the nested user-dict.
+
+        >>> root.clear_field_data()
+        >>> multi.user_dict = data
+
+        Move the data again but use the ``'flat'`` mode. This time, a new key is added
+        which matches the nested block's name.
+
+        >>> root.move_nested_field_data_to_root(user_dict_mode='flat')
+        >>> root.user_dict
+        {"Block-00": {"foo": "bar"}}
 
         """
         _validation.check_contains(

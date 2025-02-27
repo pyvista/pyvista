@@ -19,6 +19,7 @@ from pyvista import PyVistaDeprecationWarning
 from pyvista import RectilinearGrid
 from pyvista import StructuredGrid
 from pyvista import examples as ex
+from pyvista.core.dataobject import USER_DICT_KEY
 
 skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason='Flaky Mac tests')
 
@@ -1256,6 +1257,10 @@ def test_move_nested_field_data_user_dict_mode(user_dict_mode):
     root.move_nested_field_data_to_root(user_dict_mode=user_dict_mode, separator=separator)
     actual_user_dict = dict(root.user_dict)
     assert actual_user_dict == expected_user_dict
+    assert USER_DICT_KEY not in root[0].field_data
+    assert root[0].user_dict == {}
+    assert USER_DICT_KEY not in root[0][0].field_data
+    assert root[0][0].user_dict == {}
 
 
 def test_flatten(multiblock_all_with_nested_and_none):
