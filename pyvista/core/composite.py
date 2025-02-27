@@ -537,7 +537,7 @@ class MultiBlock(
         All field data and user-dict keys are directly updated from the nested blocks
         by default. Optionally, different modes are provided to control the key names
         and/or how the data is moved. The move is done safely such that no key values
-        will be overwritten and no data will be lost. If any nested keys are duplicates
+        will be overwritten and no data is lost. If any nested keys are duplicates
         of the root keys, an error is raised.
 
         .. note::
@@ -547,13 +547,12 @@ class MultiBlock(
         Parameters
         ----------
         copy : bool, optional
-            Set this value to copy the data.
-            If ``True``, deep-copy the data from nested ``MultiBlock`` blocks to the
-            root block. Both the root and nested blocks will share the same keys and
-            refer to separate copies of the data. If ``False``, both the root and
-            nested blocks will share the same keys but refer to the same data. By
-            default, no copy is made; the nested field data is moved to the root block
-            and cleared from the nested ``MultiBlock`` blocks.
+            Set this value to copy the data. If ``True``, deep-copy the data from nested
+            ``MultiBlock`` blocks to the root block. Both the root and nested blocks
+            will share the same keys and refer to separate copies of the data. If
+            ``False``, both the root and nested blocks will share the same keys but
+            refer to the same data. By default, no copy is made; the nested field data
+            is moved to the root block and cleared from the nested ``MultiBlock`` blocks.
 
             .. note::
 
