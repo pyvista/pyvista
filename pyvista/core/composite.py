@@ -523,6 +523,7 @@ class MultiBlock(
         field_data_mode: Literal['preserve', 'prepend'] = 'preserve',
         user_dict_mode: Literal['preserve', 'prepend', 'flat', 'nested'] = 'preserve',
         separator: str = '::',
+        safe_update: bool = True,
     ) -> None:
         """Move or copy field data from all nested :class:`MultiBlock` blocks.
 
@@ -587,11 +588,17 @@ class MultiBlock(
             String separator to use when ``prepend_names`` is enabled. The separator
             is inserted between parent and child block names.
 
+        safe_update : bool, default: True
+            Update the root data safely without overwriting existing data. If ``True``,
+            an error is raised if any nested keys match the root block's keys. If
+            ``False``, nested data is moved without checking if a key already exists,
+            and data may be overwritten.
+
         Raises
         ------
         ValueError
             If any field data keys in nested :class:`MultiBlock` blocks are duplicated
-            in the root block. This prevents the root field data from being overwritten.
+            in the root block and ``safe_update`` is ``True``.
 
         Examples
         --------
@@ -710,11 +717,12 @@ class MultiBlock(
                         raise ValueError(msg)
 
                     if user_dict_mode in 'preserve':
-                        # Check if the keys already exist before updating
-                        root_user_dict_keys = root_user_dict.keys()
-                        for nested_key in nested_multi.user_dict.keys():
-                            if nested_key in root_user_dict_keys:
-                                raise_key_error(nested_key, block_name, index)
+                        if safe_update:
+                            # Check if the keys already exist before updating
+                            root_user_dict_keys = root_user_dict.keys()
+                            for nested_key in nested_multi.user_dict.keys():
+                                if nested_key in root_user_dict_keys:
+                                    raise_key_error(nested_key, block_name, index)
                         root_user_dict.update(nested_multi.user_dict)
                     else:
                         # Remove prepended names
@@ -730,12 +738,13 @@ class MultiBlock(
                         else:
                             dict_to_update = root_user_dict
 
-                        # Check if the keys already exist before updating
-                        if new_key in dict_to_update:
-                            raise_key_error(new_key, block_name, index)
+                        if safe_update:
+                            # Check if the keys already exist before updating
+                            if new_key in dict_to_update:
+                                raise_key_error(new_key, block_name, index)
                         dict_to_update[new_key] = dict(nested_multi.user_dict)
 
-                elif array_name in root_field_data:
+                elif safe_update and array_name in root_field_data:
                     # Duplicate keys - raise error
                     index_fmt = _format_nested_index(index)
                     msg = (

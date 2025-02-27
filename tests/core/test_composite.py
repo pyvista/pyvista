@@ -1199,6 +1199,7 @@ def test_move_nested_field_data_to_root_duplicate_key_errors():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         root.move_nested_field_data_to_root()
+    root.move_nested_field_data_to_root(safe_update=False)
 
     # Test block name key overrides root user dict key
     root = _make_nested_multiblock(
@@ -1210,6 +1211,7 @@ def test_move_nested_field_data_to_root_duplicate_key_errors():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         root.move_nested_field_data_to_root(user_dict_mode='prepend')
+    root.move_nested_field_data_to_root(safe_update=False)
 
     # Test nested user dict key overrides root user dict key
     root = _make_nested_multiblock(
@@ -1221,6 +1223,7 @@ def test_move_nested_field_data_to_root_duplicate_key_errors():
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         root.move_nested_field_data_to_root()
+    root.move_nested_field_data_to_root(safe_update=False)
 
 
 @pytest.mark.parametrize('user_dict_mode', ['preserve', 'prepend', 'flat', 'nested'])
