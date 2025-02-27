@@ -10,6 +10,7 @@ import pytest
 
 import pyvista as pv
 from pyvista import examples
+from pyvista.core.dataobject import USER_DICT_KEY
 from pyvista.core.utilities.fileio import save_pickle
 
 
@@ -113,25 +114,20 @@ def test_metadata_save(hexbeam, tmpdir):
 
 @pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
 def test_user_dict(data_object):
-    field_name = '_PYVISTA_USER_DICT'
-    assert field_name not in data_object.field_data.keys()
+    assert USER_DICT_KEY not in data_object.field_data.keys()
 
     data_object.user_dict['abc'] = 123
-    assert field_name in data_object.field_data.keys()
+    assert USER_DICT_KEY in data_object.field_data.keys()
 
     new_dict = dict(ham='eggs')
     data_object.user_dict = new_dict
     assert data_object.user_dict == new_dict
-    assert data_object.field_data[field_name] == json.dumps(new_dict)
+    assert data_object.field_data[USER_DICT_KEY] == json.dumps(new_dict)
 
     new_dict = UserDict(test='string')
     data_object.user_dict = new_dict
     assert data_object.user_dict == new_dict
-    assert data_object.field_data[field_name] == json.dumps(new_dict.data)
-
-    data_object.user_dict = None
-    assert field_name not in data_object.field_data.keys()
-    assert data_object.user_dict == {}
+    assert data_object.field_data[USER_DICT_KEY] == json.dumps(new_dict.data)
 
     match = (
         "User dict can only be set with type <class 'dict'> or <class 'collections.UserDict'>."
@@ -139,6 +135,33 @@ def test_user_dict(data_object):
     )
     with pytest.raises(TypeError, match=match):
         data_object.user_dict = 42
+
+
+@pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
+@pytest.mark.parametrize('method', ['set_none', 'clear', 'clear_field_data'])
+def test_user_dict_removal(data_object, method):
+    # Create dict for test and copy it since we want to test that the source dict itself
+    # isn't cleared when clearing the user_dict
+    expected_dict = dict(a=0)
+    actual_dict = expected_dict.copy()
+
+    # Set user dict
+    data_object.user_dict = actual_dict
+    assert data_object.user_dict == expected_dict
+
+    # Clear it
+    if method == 'clear':
+        data_object.field_data.clear()
+    elif method == 'clear_field_data':
+        data_object.clear_field_data()
+    elif method == 'set_none':
+        data_object.user_dict = None
+    else:
+        raise RuntimeError(f'Invalid test method {method}.')
+
+    assert USER_DICT_KEY not in data_object.field_data.keys()
+    assert data_object.user_dict == {}
+    assert actual_dict == expected_dict
 
 
 @pytest.mark.parametrize('value', [dict(a=0), ['list'], ('tuple', 1), 'string', 0, 1.1, True, None])
