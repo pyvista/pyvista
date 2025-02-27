@@ -60,7 +60,8 @@ def algorithm_to_mesh_handler(mesh_or_algo, port=0):
             # This is known to happen with vtkPointSet and VTKPythonAlgorithmBase
             #     see workaround in PreserveTypeAlgorithmBase.
             #     This check remains as a fail-safe.
-            raise PyVistaPipelineError('The passed algorithm is failing to produce an output.')
+            msg = 'The passed algorithm is failing to produce an output.'  # type: ignore[unreachable]
+            raise PyVistaPipelineError(msg)
         # NOTE: Return the vtkAlgorithmOutput only if port is non-zero. Segfaults can sometimes
         #       happen with vtkAlgorithmOutput. This logic will mostly avoid those issues.
         #       See https://gitlab.kitware.com/vtk/vtk/-/issues/18776
@@ -300,7 +301,8 @@ class AddIDsAlgorithm(PreserveTypeAlgorithmBase):
         """Initialize algorithm."""
         super().__init__()
         if not point_ids and not cell_ids:  # pragma: no cover
-            raise ValueError('IDs must be set for points or cells or both.')
+            msg = 'IDs must be set for points or cells or both.'
+            raise ValueError(msg)
         self.point_ids = point_ids
         self.cell_ids = cell_ids
 

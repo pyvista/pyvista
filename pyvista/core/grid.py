@@ -199,7 +199,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             elif isinstance(args[0], (np.ndarray, Sequence)):
                 self._from_arrays(np.asanyarray(args[0]), None, None, check_duplicates)  # type: ignore[arg-type]
             else:
-                raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
+                msg = f'Type ({type(args[0])}) not understood by `RectilinearGrid`'
+                raise TypeError(msg)
 
         elif len(args) == 3 or len(args) == 2:
             arg0_is_arr = isinstance(args[0], (np.ndarray, Sequence))
@@ -221,7 +222,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
                     check_duplicates,
                 )
             else:
-                raise TypeError('Arguments not understood by `RectilinearGrid`.')
+                msg = 'Arguments not understood by `RectilinearGrid`.'
+                raise TypeError(msg)
 
     def __repr__(self: Self) -> str:
         """Return the default representation."""
@@ -358,11 +360,12 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
         This setter overrides the base class's setter to ensure a user
         does not attempt to set them.
         """
-        raise AttributeError(
+        msg = (
             'The points cannot be set. The points of '
             '`RectilinearGrid` are defined in each axial direction. Please '
-            'use the `x`, `y`, and `z` setters individually.',
+            'use the `x`, `y`, and `z` setters individually.'
         )
+        raise AttributeError(msg)
 
     @property
     def x(self: Self) -> NumpyArray[float]:
@@ -485,9 +488,8 @@ class RectilinearGrid(Grid, RectilinearGridFilters, _vtk.vtkRectilinearGrid):
             Ignored dimensions.
 
         """
-        raise AttributeError(
-            'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.',
-        )
+        msg = 'The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.'
+        raise AttributeError(msg)
 
     def cast_to_structured_grid(self: Self) -> StructuredGrid:
         """Cast this rectilinear grid to a structured grid.
@@ -626,7 +628,7 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
             elif isinstance(uinput, (str, Path)):
                 self._from_file(uinput)
             else:
-                raise TypeError(
+                msg = (  # type: ignore[unreachable]
                     'First argument, ``uinput`` must be either ``vtk.vtkImageData`` '
                     f'or a path, not {type(uinput)}.  Use keyword arguments to '
                     'specify dimensions, spacing, and origin. For example:\n\n'
@@ -634,8 +636,9 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
                     '    ...     dimensions=(10, 10, 10),\n'
                     '    ...     spacing=(2, 1, 5),\n'
                     '    ...     origin=(10, 35, 50),\n'
-                    '    ... )\n',
+                    '    ... )\n'
                 )
+                raise TypeError(msg)
         else:
             if dimensions is not None:
                 self.dimensions = dimensions  # type: ignore[assignment]
@@ -718,11 +721,12 @@ class ImageData(Grid, ImageDataFilters, _vtk.vtkImageData):
         attempt to set them. See https://github.com/pyvista/pyvista/issues/713.
 
         """
-        raise AttributeError(
+        msg = (
             'The points cannot be set. The points of '
             '`ImageData`/`vtkImageData` are implicitly defined by the '
-            '`origin`, `spacing`, and `dimensions` of the grid.',
+            '`origin`, `spacing`, and `dimensions` of the grid.'
         )
+        raise AttributeError(msg)
 
     @property
     def x(self: Self) -> NumpyArray[float]:  # numpydoc ignore=RT01
