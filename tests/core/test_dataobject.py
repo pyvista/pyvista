@@ -140,6 +140,19 @@ def test_user_dict(data_object):
 @pytest.mark.parametrize('data_object', [pv.PolyData(), pv.MultiBlock()])
 @pytest.mark.parametrize('method', ['set_none', 'clear', 'clear_field_data'])
 def test_user_dict_removal(data_object, method):
+    def clear_user_dict():
+        if method == 'clear':
+            data_object.field_data.clear()
+        elif method == 'clear_field_data':
+            data_object.clear_field_data()
+        elif method == 'set_none':
+            data_object.user_dict = None
+        else:
+            raise RuntimeError(f'Invalid test method {method}.')
+
+    # Clear before and after to ensure full test coverage of branches
+    clear_user_dict()
+
     # Create dict for test and copy it since we want to test that the source dict itself
     # isn't cleared when clearing the user_dict
     expected_dict = dict(a=0)
@@ -150,14 +163,7 @@ def test_user_dict_removal(data_object, method):
     assert data_object.user_dict == expected_dict
 
     # Clear it
-    if method == 'clear':
-        data_object.field_data.clear()
-    elif method == 'clear_field_data':
-        data_object.clear_field_data()
-    elif method == 'set_none':
-        data_object.user_dict = None
-    else:
-        raise RuntimeError(f'Invalid test method {method}.')
+    clear_user_dict()
 
     assert USER_DICT_KEY not in data_object.field_data.keys()
     assert data_object.user_dict == {}

@@ -607,10 +607,10 @@ class DataObject:
     ) -> None:
         # Setting None removes the field data array
         if dict_ is None:
-            if USER_DICT_KEY in self.field_data.keys():
-                del self.field_data[USER_DICT_KEY]
             if hasattr(self, '_user_dict'):
                 del self._user_dict
+            if USER_DICT_KEY in self.field_data.keys():
+                del self.field_data[USER_DICT_KEY]
             return
 
         self._config_user_dict()
