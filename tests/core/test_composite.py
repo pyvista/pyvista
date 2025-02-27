@@ -1142,6 +1142,7 @@ NAME1 = 'name1'
 VALUE1 = 'value1'
 NAME2 = 'name2'
 VALUE2 = 'value2'
+NAME3 = 'name3'
 
 
 def _make_nested_multiblock(
@@ -1154,28 +1155,24 @@ def _make_nested_multiblock(
 ):
     nested = pv.MultiBlock()
     if nested_field_data:
-        key, value = nested_field_data
-        nested.field_data[key] = value
+        nested.field_data.update(nested_field_data)
     if nested_user_dict:
-        key, value = nested_user_dict
-        nested.user_dict[key] = value
+        nested.user_dict.update(nested_user_dict)
 
     root = pv.MultiBlock([nested])
     if nested_block_name:
         root.set_block_name(0, nested_block_name)
     if root_field_data:
-        key, value = root_field_data
-        root.field_data[key] = value
+        root.field_data.update(root_field_data)
     if root_user_dict:
-        key, value = root_user_dict
-        root.user_dict[key] = value
+        root.user_dict.update(root_user_dict)
     return root
 
 
 def test_nested_field_data_to_root_duplicate_key_errors():
     # Test nested field data key overrides root field data key
     root = _make_nested_multiblock(
-        root_field_data=(NAME1, VALUE1), nested_field_data=(NAME1, VALUE1)
+        root_field_data={NAME1: VALUE1}, nested_field_data={NAME1: VALUE1}
     )
     match = (
         "The field data array 'name1' from nested MultiBlock at index [0] with name 'Block-00'\n"
@@ -1187,7 +1184,7 @@ def test_nested_field_data_to_root_duplicate_key_errors():
 
     # Test block name key overrides root user dict key
     root = _make_nested_multiblock(
-        root_user_dict=(NAME1, VALUE1), nested_user_dict=(NAME2, VALUE2), nested_block_name=NAME1
+        root_user_dict={NAME1: VALUE1}, nested_user_dict={NAME2: VALUE2}, nested_block_name=NAME1
     )
     match = (
         "The root user dict cannot be updated with data from nested MultiBlock at index [0] with name 'name1'.\n"
@@ -1197,7 +1194,7 @@ def test_nested_field_data_to_root_duplicate_key_errors():
         root.nested_field_data_to_root(user_dict_mode='prepend')
 
     # Test nested user dict key overrides root user dict key
-    root = _make_nested_multiblock(root_user_dict=(NAME1, VALUE1), nested_user_dict=(NAME1, VALUE1))
+    root = _make_nested_multiblock(root_user_dict={NAME1: VALUE1}, nested_user_dict={NAME1: VALUE1})
     match = (
         "The root user dict cannot be updated with data from nested MultiBlock at index [0] with name 'Block-00'.\n"
         "The key 'name1' already exists in the root user dict and would be overwritten."
@@ -1208,20 +1205,20 @@ def test_nested_field_data_to_root_duplicate_key_errors():
 
 @pytest.mark.parametrize('user_dict_mode', ['preserve', 'prepend'])
 def test_nested_field_data_user_dict_mode(user_dict_mode):
-    block_name = 'nested_block'
-    multi_dict = dict(nested_data=42)
+    block_name = NAME3
+    nested_dict = dict(nested_data=42)
     root_dict = dict(root_data=7)
     expected_user_dict = root_dict.copy()
     if user_dict_mode == 'prepend':
-        expected_user_dict[block_name] = multi_dict
+        expected_user_dict[block_name] = nested_dict
     else:
-        expected_user_dict.update(multi_dict)
+        expected_user_dict.update(nested_dict)
 
-    # Add user dict to root and nested
-    multi = pv.MultiBlock()
-    multi.user_dict = multi_dict
-    root = pv.MultiBlock({block_name: multi})
-    root.user_dict = root_dict
+    root = _make_nested_multiblock(
+        root_user_dict=root_dict,
+        nested_user_dict=nested_dict,
+        nested_block_name=block_name,
+    )
 
     # Test root user dict is updated with nested user dict data
     root.nested_field_data_to_root(user_dict_mode=user_dict_mode)
