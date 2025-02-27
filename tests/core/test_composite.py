@@ -1001,26 +1001,48 @@ def test_recursive_iterator(multiblock_all_with_nested_and_none):
     assert all(item.n_points > 0 for item in iterator_list if item is not None)
 
 
-def test_recursive_iterator_contents(multiblock_all_with_nested_and_none):
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('ids')
+def test_recursive_iterator_node_type():
+    empty = pv.MultiBlock()
+    assert len(list(empty.recursive_iterator(node_type='parent'))) == 0
+
+    nested_empty = pv.MultiBlock([empty])
+    assert len(list(nested_empty.recursive_iterator(node_type='parent'))) == 1
+    assert len(list(nested_empty.recursive_iterator(node_type='parent', skip_empty=True))) == 0
+
+    match = "Cannot skip None blocks when the node type is 'parent'."
+    with pytest.raises(ValueError, match=match):
+        empty.recursive_iterator(skip_none=True, node_type='parent')
+    match = "Cannot set order when the node type is 'parent'."
+    with pytest.raises(TypeError, match=match):
+        empty.recursive_iterator(order='nested_first', node_type='parent')
+
+
+@pytest.mark.parametrize(
+    ('node_type', 'expected_types'),
+    [('parent', pv.MultiBlock), ('child', (pv.DataSet, type(None)))],
+)
+def test_recursive_iterator_contents(
+    multiblock_all_with_nested_and_none, node_type, expected_types
+):
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('ids', node_type=node_type)
     assert all(isinstance(item, tuple) and isinstance(item[0], int) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('names')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('names', node_type=node_type)
     assert all(isinstance(item, str) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('blocks')
-    assert all(isinstance(item, pv.DataSet) or item is None for item in iterator)
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('blocks', node_type=node_type)
+    assert all(isinstance(item, expected_types) for item in iterator)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('items')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('items', node_type=node_type)
     for name, block in iterator:
         assert isinstance(name, str)
-        assert isinstance(block, pv.DataSet) or block is None
+        assert isinstance(block, expected_types)
 
-    iterator = multiblock_all_with_nested_and_none.recursive_iterator('all')
+    iterator = multiblock_all_with_nested_and_none.recursive_iterator('all', node_type=node_type)
     for id_, name, block in iterator:
         assert isinstance(id_, tuple)
         assert isinstance(name, str)
-        assert isinstance(block, pv.DataSet) or block is None
+        assert isinstance(block, expected_types)
 
 
 @pytest.mark.parametrize('prepend_names', [True, False])
