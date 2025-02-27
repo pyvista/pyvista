@@ -497,7 +497,7 @@ def test_arrows_ndim_raises(mocker: MockerFixture):
 
 def test_set_active_scalars_raises(mocker: MockerFixture):
     sphere = pv.Sphere(radius=3.14)
-    sphere.point_data[f := 'foo'] = 1
+    sphere.point_data[(f := 'foo')] = 1
 
     m = mocker.patch.object(dataset, 'get_array_association')
     m.return_value = 1
@@ -511,7 +511,7 @@ def test_set_active_scalars_raises(mocker: MockerFixture):
 
 def test_set_active_scalars_raises_vtk(mocker: MockerFixture):
     sphere = pv.Sphere(radius=3.14)
-    sphere.point_data[f := 'foo'] = 1
+    sphere.point_data[(f := 'foo')] = 1
 
     m = mocker.patch.object(sphere, 'GetPointData')
     m().SetActiveScalars.return_value = -1
