@@ -4266,6 +4266,13 @@ def test_voxelize_volume():
     vox.plot(scalars='InsideMesh', show_edges=True, cpos=cpos)
 
 
+def test_voxelize_as_multiblock(ant):
+    sphere = pv.Sphere(center=(1, -1, 0)).scale(20)
+    mesh = pv.MultiBlock([ant, sphere])
+    vox = mesh.voxelize_as('unstructured', 'cells')
+    vox.plot(show_edges=True)
+
+
 def test_enable_custom_trackball_style():
     def setup_plot():
         mesh = pv.Cube()

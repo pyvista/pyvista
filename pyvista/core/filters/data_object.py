@@ -2646,6 +2646,8 @@ class DataObjectFilters:
                 mesh_type_ = pyvista.PolyData
             elif 'unstructured' in mesh_type:
                 mesh_type_ = pyvista.UnstructuredGrid
+            elif 'multi' in mesh_type:
+                mesh_type_ = pyvista.MultiBlock
         else:
             mesh_type_ = mesh_type
         _validation.check_contains(
@@ -2654,14 +2656,32 @@ class DataObjectFilters:
                 pyvista.RectilinearGrid,
                 pyvista.PolyData,
                 pyvista.UnstructuredGrid,
+                pyvista.MultiBlock,
                 'image',
                 'rectilinear',
                 'poly',
                 'unstructured',
+                'multi',
             ],
             must_contain=mesh_type,
             name='output_type',
         )
+
+        if isinstance(self, pyvista.MultiBlock):
+            return self.generic_filter(
+                'voxelize_as',
+                mesh_type=mesh_type,
+                voxel_type=voxel_type,
+                background_value=background_value,
+                foreground_value=foreground_value,
+                reference_volume=reference_volume,
+                dimensions=dimensions,
+                spacing=spacing,
+                rounding_func=rounding_func,
+                cell_length_percentile=cell_length_percentile,
+                cell_length_sample_size=cell_length_sample_size,
+                progress_bar=progress_bar,
+            )
 
         if voxel_type == 'cells' and dimensions is not None:
             # points_to_cells increases dimensions by 1 later so we reduce by 1 here
@@ -2714,9 +2734,9 @@ class DataObjectFilters:
         progress_bar: bool = False,
     ):
         surface = self if isinstance(self, pyvista.PolyData) else wrap(self).extract_geometry()
-        if not (surface.faces.size or surface.strips.size):
-            # we have a point cloud or an empty mesh
-            raise ValueError('Input mesh must have faces for voxelization.')
+        # if not (surface.faces.size or surface.strips.size):
+        #     # we have a point cloud or an empty mesh
+        #     raise ValueError('Input mesh must have faces for voxelization.')
 
         def _preprocess_polydata(poly_in):
             return poly_in.compute_normals().triangulate()
