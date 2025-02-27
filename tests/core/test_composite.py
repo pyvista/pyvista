@@ -1193,7 +1193,7 @@ def test_nested_field_data_to_root_duplicate_key_errors():
     match = (
         "The field data array 'name1' from nested MultiBlock at index [0] with name 'Block-00'\n"
         "also exists in the root MultiBlock's field data and cannot be moved.\n"
-        'Use `append_names=True` to make the array names unique.'
+        "Use `field_data_mode='prepend'` to make the array names unique."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
         root.nested_field_data_to_root()
@@ -1221,14 +1221,13 @@ def test_nested_field_data_to_root_duplicate_key_errors():
         root.nested_field_data_to_root()
 
 
-@pytest.mark.parametrize('user_dict_mode', ['preserve', 'prepend', 'flat'])
+@pytest.mark.parametrize('user_dict_mode', ['preserve', 'prepend', 'flat', 'nested'])
 def test_nested_field_data_user_dict_mode(user_dict_mode):
     block_name1 = 'level1'
     block_name2 = 'level2'
-
-    root_dict = {NAME1: VALUE1}
-    nested_dict1 = {NAME2: VALUE2}
-    nested_dict2 = {NAME3: VALUE3}
+    root_dict = {'root': 0}
+    nested_dict1 = {'nested1': 1}
+    nested_dict2 = {'nested2': 2}
 
     expected_user_dict = root_dict.copy()
     if user_dict_mode == 'flat':
@@ -1240,6 +1239,10 @@ def test_nested_field_data_user_dict_mode(user_dict_mode):
     elif user_dict_mode == 'preserve':
         expected_user_dict.update(nested_dict1)
         expected_user_dict.update(nested_dict2)
+    elif user_dict_mode == 'nested':
+        nested_dict = nested_dict1.copy()
+        nested_dict[block_name2] = nested_dict2
+        expected_user_dict[block_name1] = nested_dict
 
     root = _make_nested_multiblock(
         root_user_dict=root_dict,

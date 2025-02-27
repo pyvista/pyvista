@@ -483,7 +483,7 @@ class MultiBlock(
                 else:
                     ids = [[i] for i in range(block.n_blocks)]
 
-                # Yield from multiblock but fall-through in some cases for 'parent' mode
+                # Yield from multiblock but fall-through in some cases for 'parent' nodes
                 if node_type == 'child' or block.is_nested:
                     yield from block._recursive_iterator(
                         ids=ids,
@@ -647,6 +647,7 @@ class MultiBlock(
         typed_iterator = cast(Iterator[tuple[tuple[int, ...], str, MultiBlock]], iterator)
 
         for index, block_name, nested_multi in typed_iterator:
+            # Get nested field data to be moved
             nested_field_data = nested_multi.field_data
             if prepend_names:
                 # Add the field data to a temp mesh so we can rename the arrays
@@ -675,23 +676,28 @@ class MultiBlock(
                         )
                         raise ValueError(msg)
 
-                    if user_dict_mode in ['prepend', 'flat']:
+                    if user_dict_mode in 'preserve':
+                        for nested_key in nested_multi.user_dict.keys():
+                            if nested_key in root_user_dict_keys:
+                                raise_key_error(nested_key, block_name, index)
+                        root_user_dict.update(nested_multi.user_dict)
+                    else:
+                        # Remove prepended names
                         new_key = (
                             block_name
                             if user_dict_mode == 'prepend'
                             else block_name.split(separator)[-1]
                         )
-                        if new_key in root_user_dict_keys:
+                        if user_dict_mode == 'nested':
+                            parent = self
+                            for ind in index[:-1]:
+                                parent = parent[ind]
+                            dict_to_update = parent.user_dict
+                        else:
+                            dict_to_update = root_user_dict
+                        if new_key in dict_to_update:
                             raise_key_error(new_key, block_name, index)
-                        root_user_dict[new_key] = dict(nested_multi.user_dict)
-                    elif user_dict_mode in 'preserve':
-                        for nested_key in nested_multi.user_dict.keys():
-                            if nested_key in root_user_dict_keys:
-                                raise_key_error(nested_key, block_name, index)
-                        root_user_dict.update(nested_multi.user_dict)
-
-                    else:  # pragma: nocover
-                        raise RuntimeError(f'Unknown user_dict_mode {user_dict_mode}.')
+                        dict_to_update[new_key] = dict(nested_multi.user_dict)
 
                 elif array_name in root_field_data:
                     # Raise error if duplicate keys
@@ -701,13 +707,13 @@ class MultiBlock(
                         f"also exists in the root MultiBlock's field data and cannot be moved."
                     )
                     if not prepend_names:
-                        msg += '\nUse `append_names=True` to make the array names unique.'
+                        msg += "\nUse `field_data_mode='prepend'` to make the array names unique."
                     raise ValueError(msg)
 
                 else:
                     # Copy the field data
                     array = field_data_to_copy[array_name]
-                    if not prepend_names:
+                    if field_data_mode != 'prepend':
                         # Remove prepended names
                         array_name = array_name.split(separator)[-1]
                     root_field_data._update_array(array_name, array, copy)
