@@ -516,7 +516,7 @@ class MultiBlock(
             else:  # pragma: no cover
                 raise RuntimeError(f"Unexpected contents '{contents}'.")
 
-    def nested_field_data_to_root(
+    def move_nested_field_data_to_root(
         self,
         operation: Literal['move', 'shallow_copy', 'deep_copy'] = 'move',
         *,
@@ -604,7 +604,7 @@ class MultiBlock(
 
         Move the nested field data to the root.
 
-        >>> root.nested_field_data_to_root()
+        >>> root.move_nested_field_data_to_root()
 
         The field data is now at the root.
 
@@ -623,7 +623,7 @@ class MultiBlock(
         Move it to the root again, but this time prepend the name of the block the data
         came from.
 
-        >>> root.nested_field_data_to_root(prepend_names=True)
+        >>> root.move_nested_field_data_to_root(field_data_mode='prepend')
         >>> root.field_data.keys()
         ['data', 'Block-00::more_data']
 
