@@ -740,7 +740,7 @@ class MultiBlock(
                     if field_data_mode != 'prepend':
                         # Remove prepended names
                         array_name = array_name.split(separator)[-1]
-                    root_field_data._update_array(array_name, array, copy)
+                    root_field_data._update_array(array_name, array, bool(copy))
 
             if copy is None:
                 nested_field_data.clear()
