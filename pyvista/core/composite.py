@@ -516,7 +516,8 @@ class MultiBlock(
         self,
         operation: Literal['move', 'shallow_copy', 'deep_copy'] = 'move',
         *,
-        prepend_names: bool = False,
+        field_data_mode: Literal['preserve', 'prepend'] = 'preserve',
+        user_dict_mode: Literal['preserve', 'prepend', 'nested'] = 'preserve',
         separator: str = '::',
     ) -> None:
         """Move or copy field data from all nested :class:`MultiBlock` blocks.
@@ -550,17 +551,24 @@ class MultiBlock(
               blocks to the root block. Both the root and nested blocks will share
               the same keys `and` the data is copied.
 
-        prepend_names : bool, default: False
-            If ``True``, prepend any parent block names to the field data array names
-            of any nested field data before assigning it to the root block. By default,
-            the names of all field data arrays from any nested ``MultiBlock`` blocks are
-            preserved.
+        field_data_mode : 'preserve' | 'prepend', default: 'preserve'
+            Mode for naming the root field data keys when moving nested field data.
 
-            .. note::
-                If any nested :class:`MultiBlock` blocks define a :attr:`~pyvista.DataObject.user_dict`,
-                a new key with the parent block name is added to the root user-dict when
-                ``prepend_names=True``. If ``False``, the root user-dict is directly
-                updated from any nested user-dict.
+            - ``'preserve'``: The array names of nested field data are preserved.
+            - ``'prepend'``: Preserve the array names and prepend the parent names.
+
+        user_dict_mode : 'preserve' | 'flat' | 'nested', default: 'preserve'
+            Mode for naming the root :attr:`~pyvista.DataObject.user_dict` keys when
+            nested :class:`MultiBlock` blocks define a user-dict.
+
+            - ``'preserve'``: Update the root user dict directly with the items of any
+              nested user-dict.
+            - ``'nested'``: Create nested keys in the root user-dict which match the
+              nested hierarchy of any nested ``MultiBlock`` blocks.
+            - ``'flat'``: Create a new key in the root user dict for each nested
+              ``MultiBlock`` that has a user-dict.
+            - ``'prepend'``: Similar to ``'flat'`` except the key names are prepended
+              with the parent block names.
 
         separator : str, default: '::'
             String separator to use when ``prepend_names`` is enabled. The separator
@@ -615,11 +623,16 @@ class MultiBlock(
         ['data', 'Block-00::more_data']
 
         """
+        _validation.check_contains(
+            ['prepend', 'preserve'], must_contain=field_data_mode, name='field_data_mode'
+        )
+
         root_field_data = self.field_data
         copy = operation in ['move', 'deep_copy']
+        prepend_names = field_data_mode == 'prepend'
 
         iterator = self.recursive_iterator(
-            'all', node_type='parent', prepend_names=prepend_names, separator=separator
+            'all', node_type='parent', prepend_names=True, separator=separator
         )
         typed_iterator = cast(Iterator[tuple[tuple[int, ...], str, MultiBlock]], iterator)
 
@@ -652,11 +665,11 @@ class MultiBlock(
                         )
                         raise ValueError(msg)
 
-                    if prepend_names:
+                    if user_dict_mode == 'prepend':
                         if block_name in root_user_dict_keys:
                             raise_key_error(block_name, block_name, index)
                         root_user_dict[block_name] = dict(nested_multi.user_dict)
-                    else:
+                    elif user_dict_mode == 'preserve':
                         for nested_key in nested_multi.user_dict.keys():
                             if nested_key in root_user_dict_keys:
                                 raise_key_error(nested_key, block_name, index)
@@ -676,6 +689,9 @@ class MultiBlock(
                 else:
                     # Copy the field data
                     array = field_data_to_copy[array_name]
+                    if not prepend_names:
+                        # Remove prepended names
+                        array_name = array_name.split(separator)[-1]
                     root_field_data._update_array(array_name, array, copy)
 
             if operation == 'move':

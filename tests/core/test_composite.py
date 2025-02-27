@@ -1116,15 +1116,15 @@ def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_
 
 @pytest.mark.parametrize('operation', ['move', 'shallow_copy', 'deep_copy'])
 @pytest.mark.parametrize(
-    ('prepend_names', 'separator', 'name_in', 'name_out'),
-    [(True, '//', 'data', 'Block-00//data'), (False, '::', 'data', 'data')],
+    ('field_data_mode', 'separator', 'name_in', 'name_out'),
+    [('prepend', '//', 'data', 'Block-00//data'), ('preserve', '::', 'data', 'data')],
 )
-def test_nested_field_data_to_root(operation, prepend_names, separator, name_in, name_out):
+def test_nested_field_data_to_root(operation, field_data_mode, separator, name_in, name_out):
     value = [42]
     multi = pv.MultiBlock()
     multi.field_data[name_in] = value
     root = pv.MultiBlock([multi])
-    root.nested_field_data_to_root(operation, prepend_names=prepend_names, separator=separator)
+    root.nested_field_data_to_root(operation, field_data_mode=field_data_mode, separator=separator)
     assert root.field_data.keys() == [name_out]
     assert np.array_equal(root.field_data[name_out], value)
 
@@ -1194,7 +1194,7 @@ def test_nested_field_data_to_root_duplicate_key_errors():
         "The key 'name1' already exists in the root user dict and would be overwritten."
     )
     with pytest.raises(ValueError, match=re.escape(match)):
-        root.nested_field_data_to_root(prepend_names=True)
+        root.nested_field_data_to_root(user_dict_mode='prepend')
 
     # Test nested user dict key overrides root user dict key
     root = _make_nested_multiblock(root_user_dict=(NAME1, VALUE1), nested_user_dict=(NAME1, VALUE1))
@@ -1206,13 +1206,13 @@ def test_nested_field_data_to_root_duplicate_key_errors():
         root.nested_field_data_to_root()
 
 
-@pytest.mark.parametrize('prepend_names', [True, False])
-def test_nested_field_data_to_root_user_dict(prepend_names):
+@pytest.mark.parametrize('user_dict_mode', ['preserve', 'prepend'])
+def test_nested_field_data_user_dict_mode(user_dict_mode):
     block_name = 'nested_block'
     multi_dict = dict(nested_data=42)
     root_dict = dict(root_data=7)
     expected_user_dict = root_dict.copy()
-    if prepend_names:
+    if user_dict_mode == 'prepend':
         expected_user_dict[block_name] = multi_dict
     else:
         expected_user_dict.update(multi_dict)
@@ -1224,7 +1224,7 @@ def test_nested_field_data_to_root_user_dict(prepend_names):
     root.user_dict = root_dict
 
     # Test root user dict is updated with nested user dict data
-    root.nested_field_data_to_root(prepend_names=prepend_names)
+    root.nested_field_data_to_root(user_dict_mode=user_dict_mode)
     actual_user_dict = dict(root.user_dict)
     assert actual_user_dict == expected_user_dict
 
