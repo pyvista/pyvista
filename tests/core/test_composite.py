@@ -1119,30 +1119,29 @@ def test_recursive_iterator_order(nested_fixture, order, expected_ids, expected_
         assert block is expected_meshes[name]
 
 
-@pytest.mark.parametrize('operation', ['move', 'shallow_copy', 'deep_copy'])
+@pytest.mark.parametrize('copy', [True, False, None])
 @pytest.mark.parametrize(
     ('field_data_mode', 'separator', 'name_in', 'name_out'),
     [('prepend', '//', 'data', 'Block-00//data'), ('preserve', '::', 'data', 'data')],
 )
-def test_move_nested_field_data_to_root(operation, field_data_mode, separator, name_in, name_out):
+def test_move_nested_field_data_to_root(copy, field_data_mode, separator, name_in, name_out):
     value = [42]
     multi = pv.MultiBlock()
     multi.field_data[name_in] = value
     root = pv.MultiBlock([multi])
     root.move_nested_field_data_to_root(
-        operation, field_data_mode=field_data_mode, separator=separator
+        copy=copy, field_data_mode=field_data_mode, separator=separator
     )
     assert root.field_data.keys() == [name_out]
     assert np.array_equal(root.field_data[name_out], value)
 
-    if operation == 'move':
+    if copy is None:
         assert name_in not in multi.field_data
     else:
         assert name_in in multi.field_data
-        shallow_copy = operation == 'shallow_copy'
-        assert (
-            np.shares_memory(multi.field_data[name_in], root.field_data[name_out]) == shallow_copy
-        )
+        data_in = multi.field_data[name_in]
+        data_out = root.field_data[name_out]
+        assert np.shares_memory(data_in, data_out) == (copy is False)
 
 
 def _make_nested_multiblock(

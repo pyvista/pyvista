@@ -518,10 +518,10 @@ class MultiBlock(
 
     def move_nested_field_data_to_root(
         self,
-        operation: Literal['move', 'shallow_copy', 'deep_copy'] = 'move',
         *,
+        copy: bool | None = None,
         field_data_mode: Literal['preserve', 'prepend'] = 'preserve',
-        user_dict_mode: Literal['preserve', 'prepend', 'nested'] = 'preserve',
+        user_dict_mode: Literal['preserve', 'prepend', 'flat', 'nested'] = 'preserve',
         separator: str = '::',
     ) -> None:
         """Move or copy field data from all nested :class:`MultiBlock` blocks.
@@ -537,23 +537,19 @@ class MultiBlock(
 
         Parameters
         ----------
-        operation : 'move' | 'shallow_copy' | 'deep_copy', default: 'move'
-            Operation to apply to the nested field data.
+        copy : bool, optional
+            Set this value to copy the data.
+            If ``True``, deep-copy the data from nested ``MultiBlock`` blocks to the
+            root block. Both the root and nested blocks will share the same keys and
+            refer to separate copies of the data. If ``False``, both the root and
+            nested blocks will share the same keys but refer to the same data. By
+            default, no copy is made; the nested field data is moved to the root block
+            and cleared from the nested ``MultiBlock`` blocks.
 
-            - ``'move'`` : Move the data to the root block. Any nested ``MultiBlock``
-              blocks will no longer have any field data.
-            - ``'shallow_copy'`` : Shallow-copy the data from nested ``MultiBlock``
-              blocks to the root block. Both the root and nested blocks will share
-              the same keys but the data itself is not copied.
-
-              .. note::
+            .. note::
 
                 This option does not apply to any nested :attr:`~pyvista.DataObject.user_dict`
                 data. User-dict data is always deep-copied.
-
-            - ``'deep_copy'`` : Deep-copy the data from nested ``MultiBlock``
-              blocks to the root block. Both the root and nested blocks will share
-              the same keys `and` the data is copied.
 
         field_data_mode : 'preserve' | 'prepend', default: 'preserve'
             Mode for naming the root field data keys when moving nested field data.
@@ -669,7 +665,6 @@ class MultiBlock(
         )
 
         root_field_data = self.field_data
-        copy = operation in ['move', 'deep_copy']
         prepend_names = field_data_mode == 'prepend'
 
         iterator = self.recursive_iterator(
@@ -747,7 +742,7 @@ class MultiBlock(
                         array_name = array_name.split(separator)[-1]
                     root_field_data._update_array(array_name, array, copy)
 
-            if operation == 'move':
+            if copy is None:
                 nested_field_data.clear()
 
     def flatten(
