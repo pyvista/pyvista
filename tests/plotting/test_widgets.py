@@ -87,12 +87,6 @@ def test_add_mesh_isovalue_raises():
 
     pl = pv.Plotter()
     with pytest.raises(
-        TypeError, match='PointSets are 0-dimensional and thus cannot produce contours.'
-    ):
-        pl.add_mesh_isovalue(mesh=pv.PointSet())
-
-    pl = pv.Plotter()
-    with pytest.raises(
         ValueError, match='Input dataset for the contour filter must have data arrays.'
     ):
         pl.add_mesh_isovalue(mesh=pv.PolyData())
@@ -107,6 +101,15 @@ def test_add_mesh_isovalue_raises():
         ),
     ):
         pl.add_mesh_isovalue(mesh=sp, scalars='foo')
+
+
+@pytest.mark.needs_vtk_version(9, 1, 0)
+def test_add_mesh_isovalue_pointset_raises():
+    pl = pv.Plotter()
+    with pytest.raises(
+        TypeError, match='PointSets are 0-dimensional and thus cannot produce contours.'
+    ):
+        pl.add_mesh_isovalue(mesh=pv.PointSet())
 
 
 def test_add_measurement_widget_raises():
