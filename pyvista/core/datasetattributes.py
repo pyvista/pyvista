@@ -909,6 +909,8 @@ class DataSetAttributes(_vtk.VTKObjectWrapper):
 
         with contextlib.suppress(KeyError):
             self.dataset._association_bitarray_names[self.association.name].remove(key)  # type: ignore[union-attr]
+        if hasattr(self.dataset, '_user_dict'):
+            del self.dataset._user_dict
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 

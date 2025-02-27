@@ -644,8 +644,6 @@ class DataObject:
             else:
                 # User dict is correctly configured, do nothing
                 return
-        else:
-            self._user_dict.clear()
 
         # Set field data array directly instead of calling 'set_array'
         # This skips the call to '_prepare_array' which will otherwise
