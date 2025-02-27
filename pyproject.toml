@@ -70,7 +70,7 @@ test = [
   'cmocean<4.0.4',
   'colorcet<3.2.0',
   'embreex<2.17.8; sys_platform != "darwin" or platform_machine != "arm64"', # Does not work with arm-based macs
-  'hypothesis<6.124.9',
+  'hypothesis<6.127.3',
   'imageio-ffmpeg<0.6.0',
   'imageio<2.37.0',
   'ipython<9.0.0',
@@ -138,7 +138,7 @@ docs = [
   'trame-vtk==2.8.15',
   'trame-vuetify==2.8.1',
   'trame==3.8.0',
-  'trimesh==4.6.1',
+  'trimesh==4.6.3',
 ]
 
 dev = ['pre-commit', 'pyvista[test,typing]']
